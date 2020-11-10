@@ -43,14 +43,30 @@ let platform = {
 
     drawImage(context, image, ...params) {
         context.directives.push(`drawImage(${image.src}, ${params.join(', ')})`);
-    }
+    },
 
+    clearRect(context, x, y, w, h) {
+        context.directives.push(`clearRect(${x}, ${y}, ${w}, ${h})`);
+    },
+
+    save(context) {
+        context.directives.push(`save()`);
+    },
+
+    restore(context) {
+        context.directives.push(`restore()`);
+    },
+
+    resetTransform(context) {
+        context.directives.push(`resetTransform()`);
+    }
 }
 
 describe("App fundamentals", ()=> {
 
     before(() => {
         setDrawPlatform(platform);
+        DImage.resetCache();
     });
 
     it("Checks DDraw creation", () => {
@@ -138,6 +154,80 @@ describe("App fundamentals", ()=> {
             assert(layer._context.directives[0]).equalsTo('drawImage(here/where/image.typ, 15, 10)');
     });
 
+    it("Checks deferred drawing on DDraw", () => {
+        given:
+            var draw = buildBasicDrawWithOneLayerNamedLayer1();
+            var layer = draw.getLayer("layer1");
+        when: /* draws an unloaded image */
+            layer._context.directives = [];
+            var image1 = DImage.getImage("here/where/one.typ");
+            var image2 = DImage.getImage("here/where/two.typ");
+            var image3 = DImage.getImage("here/where/three.typ");
+            layer.drawImage(image1, 10, 10);
+            layer.drawRect(10, 15, 20, 25);
+            layer.drawImage(image2, 10, 10);
+            draw.setTranslate(10, 15);
+            layer.drawImage(image3, 10, 10);
+            layer.fillRect(10, 15, 20, 25);
+        then:
+            assert(layer._context.directives.length).equalsTo(0);
+        when: /* loads the first image: the requested draw directive is done for image1 only **/
+            image1._root.onload();
+        then:
+            assert(layer._context.directives.length).equalsTo(3);
+            assert(layer._context.directives[0]).equalsTo('drawImage(here/where/one.typ, 10, 10)');
+            assert(layer._context.directives[1]).equalsTo('rect(10, 15, 20, 25)');
+            assert(layer._context.directives[2]).equalsTo('stroke()');
+        when: /* load on image that is not the next to draw : no drawing are done */
+            layer._context.directives = [];
+            image3._root.onload();
+        then:
+            assert(layer._context.directives.length).equalsTo(0);
+        when: /* load on image that is not the next to draw : no drawing are done */
+            image2._root.onload();
+        then:
+            assert(layer._context.directives[0]).equalsTo('drawImage(here/where/two.typ, 10, 10)');
+            assert(layer._context.directives[1]).equalsTo('setTransform(1, 0, 0, 1, 10, 15)');
+            assert(layer._context.directives[2]).equalsTo('drawImage(here/where/three.typ, 10, 10)');
+            assert(layer._context.directives[3]).equalsTo('rect(10, 15, 20, 25)');
+            assert(layer._context.directives[4]).equalsTo('fill()');
+    });
+
+    it("Checks DDraw resize", () => {
+        given:
+            var draw = buildBasicDrawWithOneLayerNamedLayer1();
+            var layer = draw.getLayer("layer1");
+        when: /* draws an unloaded image */
+            draw.setSize(400, 350);
+        then:
+            assert(draw.width).equalsTo(400);
+            assert(draw.height).equalsTo(350);
+            assert(layer.root.width).equalsTo(400);
+            assert(layer.root.height).equalsTo(350);
+    });
+
+    it("Checks DDraw clearance", () => {
+        given:
+            var draw = buildBasicDrawWithOneLayerNamedLayer1();
+            var layer = draw.getLayer("layer1");
+        when:
+            layer._context.directives = [];
+            var image = DImage.getImage("here/where/image.typ");
+            layer.drawImage(image, 10, 15);
+            draw.clear();
+        then:
+            assert(layer._context.directives.length).equalsTo(4);
+            assert(layer._context.directives[0]).equalsTo('save()');
+            assert(layer._context.directives[1]).equalsTo('resetTransform()');
+            assert(layer._context.directives[2]).equalsTo('clearRect(0, 0, 500, 300)');
+            assert(layer._context.directives[3]).equalsTo('restore()');
+        when: /* Check that clearance cancels all deferred operations */
+            layer._context.directives = [];
+            image._root.onload();
+        then:
+            assert(layer._context.directives.length).equalsTo(0);
+    });
+
     it("Checks all methods of the target platform", () => {
         given:
             setDrawPlatform(targetPlatform());
@@ -155,6 +245,11 @@ describe("App fundamentals", ()=> {
             CanvasRenderingContext2D.prototype.fill = function(...params) {
                 assert(params.length).equalsTo(0);
                 fillInvoked = true;
+            }
+            var clearRectInvoked = false;
+            CanvasRenderingContext2D.prototype.clearRect = function(...params) {
+                assert(params).arrayEqualsTo([0, 0, 500, 300]);
+                clearRectInvoked = true;
             }
             var drawImageInvoked = false;
             CanvasRenderingContext2D.prototype.drawImage = function(image, ...params) {
@@ -182,6 +277,10 @@ describe("App fundamentals", ()=> {
         then:
             assert(rectInvoked).isTrue();
             assert(fillInvoked).isTrue();
+        when:
+            layer.clear();
+        then:
+            assert(clearRectInvoked).isTrue();
         when:
             var image = {
                 draw(layer, ...params) {

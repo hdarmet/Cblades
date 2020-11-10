@@ -40,8 +40,23 @@ let _targetPlatform = {
 
     drawImage(context, image, ...params) {
         context.drawImage(image, ...params);
-    }
+    },
 
+    clearRect(context, x, y, w, h) {
+        context.clearRect(x, y, w, h);
+    },
+
+    save(context) {
+        context.save();
+    },
+
+    restore(context) {
+        context.restore();
+    },
+
+    resetTransform(context) {
+        context.resetTransform();
+    }
 }
 
 let _platform = _targetPlatform;
@@ -86,15 +101,23 @@ export class DImage {
     }
 
     draw(layer, ...params) {
-        if (this._todos) {
-            this._todos.push(()=>{
-                _platform.drawImage(layer._context, this._root, ...params);
-            });
-        }
-        else {
+        let todo = ()=>{
             _platform.drawImage(layer._context, this._root, ...params);
         }
+        if (this._todos) {
+            this._todos.push(()=>{
+                layer._continue(todo);
+            });
+            layer._defer(todo);
+        }
+        else {
+            layer._execute(todo);
+        }
         return this;
+    }
+
+    static resetCache() {
+        images.clear();
     }
 
     static getImage(path) {
@@ -117,19 +140,62 @@ export class DLayer {
         this._root = _platform.createElement("canvas");
         this._context = _platform.getContext(this._root, "2d");
         _platform.setAttribute(this._root, "style", "position: absolute");
-        _platform.setAttribute(this._root, "width", width);
-        _platform.setAttribute(this._root, "height", height);
+        this._setSize(width, height);
+    }
+
+    _execute(todo) {
+        if (this._todos) {
+            this._todos.push(todo);
+        }
+        else {
+            todo();
+        }
+    }
+
+    _defer(todo) {
+        if (!this._todos) {
+            this._todos = [];
+        }
+        todo._deferred = true;
+        this._todos.push(todo);
+    }
+
+    _continue(todo) {
+        delete todo._deferred;
+        if (this._todos && this._todos[0]===todo) {
+            let deferred = false;
+            let todos = this._todos;
+            delete this._todos;
+            for (let todo of todos) {
+                if (!deferred) {
+                    if (!todo._deferred) {
+                        todo();
+                    } else {
+                        deferred = true;
+                        this._todos = [];
+                        this._todos.push(todo);
+                    }
+                }
+                else {
+                    this._todos.push(todo);
+                }
+            }
+        }
     }
 
     drawRect(x, y, w, h) {
-        _platform.rect(this._context, x, y, w, h);
-        _platform.stroke(this._context);
+        this._execute(()=> {
+            _platform.rect(this._context, x, y, w, h);
+            _platform.stroke(this._context);
+        });
         return this;
     }
 
     fillRect(x, y, w, h) {
-        _platform.rect(this._context, x, y, w, h);
-        _platform.fill(this._context);
+        this._execute(()=> {
+            _platform.rect(this._context, x, y, w, h);
+            _platform.fill(this._context);
+        });
         return this;
     }
 
@@ -139,8 +205,25 @@ export class DLayer {
     }
 
     setTransform(...params) {
-        _platform.setTransform(this._context, ...params);
+        this._execute(()=> {
+            _platform.setTransform(this._context, ...params);
+        });
         return this;
+    }
+
+    _setSize(width, height) {
+        this._width = width;
+        this._height = height;
+        _platform.setAttribute(this._root, "width", width);
+        _platform.setAttribute(this._root, "height", height);
+    }
+
+    clear() {
+        _platform.save(this._context);
+        _platform.resetTransform(this._context);
+        _platform.clearRect(this._context, 0, 0, this._width, this._height);
+        _platform.restore(this._context);
+        delete this._todos;
     }
 
     get root() {
@@ -196,6 +279,21 @@ export class DDraw {
 
     get height() {
         return this._height;
+    }
+
+    setSize(width, height) {
+        this._width = width;
+        this._height = height;
+        _platform.setAttribute(this.root, "style", `width: ${width}px; height:${height}px; border: 1px solid; position: relative`);
+        for (let layer of this._layers.values()) {
+            layer._setSize(width, height);
+        }
+    }
+
+    clear() {
+        for (let layer of this._layers.values()) {
+            layer.clear();
+        }
     }
 
 }
