@@ -62,7 +62,7 @@ let platform = {
     }
 }
 
-describe("App fundamentals", ()=> {
+describe("Drawing fundamentals", ()=> {
 
     before(() => {
         setDrawPlatform(platform);

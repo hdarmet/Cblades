@@ -81,7 +81,7 @@ export function setDrawPlatform(platform) {
 /**
  * Image cache
  */
-let images = new Map();
+let _images = new Map();
 /**
  * DImage is a wrapper class on DOM Image, used essentially to optimize (with an image cache) and simplify (hide
  * asynchronous behavior) image management.
@@ -117,14 +117,14 @@ export class DImage {
     }
 
     static resetCache() {
-        images.clear();
+        _images.clear();
     }
 
     static getImage(path) {
-        let image = images.get(path);
+        let image = _images.get(path);
         if (!image) {
             image = new DImage(path);
-            images.set(path, image);
+            _images.set(path, image);
         }
         return image;
     }

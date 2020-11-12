@@ -6,8 +6,11 @@
 </head>
 <body>
 <p>That is Cursed Blades</p>
+<!--
 <script type="module" src="../jslib/draw.js"></script>
+-->
 <script type="module">
+    /*
     import {
         DDraw, DImage
     } from "../jslib/draw.js";
@@ -23,6 +26,22 @@
     }
     //draw.clear();
     draw.setSize(400, 400);
+    */
+    import {
+        DImage
+    } from "../jslib/draw.js";
+    import {
+        DBoard, DElement, DImageArtifact
+    } from "../jslib/board.js";
+    let board = new DBoard(500, 300, "map", "units", "markers");
+    console.log(board.root);
+    document.body.appendChild(board.root);
+    let image = DImage.getImage("../images/civilians1.png");
+    let artifact = new DImageArtifact("units", image, 250, 150, 50, 50);
+    let element = new DElement(artifact);
+    element.show(board);
+    board.paint();
+
 </script>
 </body>
 </html>
