@@ -4,6 +4,9 @@ import {
     DDraw, DImage
 } from "./draw.js";
 
+/**
+ * Wrap something that can be shown on a given layer
+ */
 export class DArtifact {
 
     constructor(levelName, px, py) {
@@ -51,6 +54,9 @@ export class DArtifact {
     }
 }
 
+/**
+ * Image wrapper artifact
+ */
 export class DImageArtifact extends DArtifact {
 
     constructor(levelName, image, px, py, w, h) {
@@ -61,7 +67,7 @@ export class DImageArtifact extends DArtifact {
     }
 
     paint() {
-        console.assert(this._layer);
+        console.assert(this._level);
         this._level.drawImage(this._root, this.x-this.width/2, this.y-this.height/2, this.width, this.height);
     }
 
@@ -74,6 +80,9 @@ export class DImageArtifact extends DArtifact {
     }
 }
 
+/**
+ * Gather/combine artifacts that represents a given concept
+ */
 export class DElement {
 
     constructor(...artifacts) {
@@ -102,6 +111,9 @@ export class DElement {
 
 }
 
+/**
+ * A visualization level in a board. Accept artifacts
+ */
 export class DLevel {
 
     constructor(layer) {
@@ -141,6 +153,9 @@ export class DLevel {
     }
 }
 
+/**
+ * Playing board. Accept elements. Dispatch element's artifacts on its own levels.
+ */
 export class DBoard {
 
     constructor(width, height, ...levels) {
@@ -159,6 +174,14 @@ export class DBoard {
 
     getLevel(levelName) {
         return this._levels.get(levelName);
+    }
+
+    get viewPortWidth() {
+        return this._draw.width;
+    }
+
+    get viewPortHeight() {
+        return this._draw.height;
     }
 
     get root() {

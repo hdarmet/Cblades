@@ -1,19 +1,31 @@
 'use strict';
 
+/**
+ * Comapre two numbers and return true if there are very similar, even if not strictly equal.
+ */
 export function same(v1, v2) {
     if (v1===v2) return true;
     if (v1!==0 && v2!==0 && (!v1 || !v2)) return false;
     return v1-v2>-0.0001 && v1-v2<0.0001;
 }
 
+/**
+ * Convert angle degree value to radian value
+ */
 function radian(deg) {
     return ((deg % 360) * Math.PI) / 180;
 }
 
+/**
+ * Convert angle radian value to degree value
+ */
 function degree(rad) {
     return ((rad * 180) / Math.PI) % 360;
 }
 
+/**
+ * Point object in a 2D space
+ */
 export class Point2D {
 
     constructor(x, y) {
@@ -47,6 +59,9 @@ export class Point2D {
     }
 }
 
+/**
+ * Affine Matrix in a 2D Space
+ */
 export class Matrix2D {
 
     constructor(a=1, b=0, c=0, d=1, e=0, f=0) {

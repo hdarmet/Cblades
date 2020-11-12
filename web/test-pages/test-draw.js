@@ -6,68 +6,23 @@ import {
 import {
     DDraw, DImage, setDrawPlatform, getDrawPlatform, targetPlatform
 } from "../jslib/draw.js";
-
-let platform = {
-
-    createElement(tagName) {
-        return {tagName, children:[]};
-    },
-
-    setAttribute(element, attrName, attrValue) {
-        element[attrName] = attrValue;
-    },
-
-    appendChild(parent, child) {
-        parent.children.push(child);
-    },
-
-    getContext(element, contextName) {
-        return {host:element, directives:[]};
-    },
-
-    rect(context, x, y, w, h) {
-        context.directives.push(`rect(${x}, ${y}, ${w}, ${h})`);
-    },
-
-    stroke(context) {
-        context.directives.push(`stroke()`);
-    },
-
-    fill(context) {
-        context.directives.push(`fill()`);
-    },
-
-    setTransform(context, a, b, c, d, e, f) {
-        context.directives.push(`setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`);
-    },
-
-    drawImage(context, image, ...params) {
-        context.directives.push(`drawImage(${image.src}, ${params.join(', ')})`);
-    },
-
-    clearRect(context, x, y, w, h) {
-        context.directives.push(`clearRect(${x}, ${y}, ${w}, ${h})`);
-    },
-
-    save(context) {
-        context.directives.push(`save()`);
-    },
-
-    restore(context) {
-        context.directives.push(`restore()`);
-    },
-
-    resetTransform(context) {
-        context.directives.push(`resetTransform()`);
-    }
-}
+import {
+    mockPlatform, getContextDirectives, resetContextDirectives
+} from "./mocks.js";
 
 describe("Drawing fundamentals", ()=> {
 
     before(() => {
-        setDrawPlatform(platform);
+        setDrawPlatform(mockPlatform);
         DImage.resetCache();
     });
+
+    function getDirectives(layer) {
+        return getContextDirectives(layer._context);
+    }
+    function resetDirectives(layer) {
+        resetContextDirectives(layer._context);
+    }
 
     it("Checks DDraw creation", () => {
         when:
@@ -84,7 +39,7 @@ describe("Drawing fundamentals", ()=> {
             assert(layer.root.style).equalsTo("position: absolute");
             assert(layer.root.width).equalsTo(500);
             assert(layer.root.height).equalsTo(300);
-            assert(layer._context.directives[0]).equalsTo('setTransform(1, 0, 0, 1, 0, 0)');
+            assert(getDirectives(layer)[0]).equalsTo('setTransform(1, 0, 0, 1, 0, 0)');
     });
 
     function buildBasicDrawWithOneLayerNamedLayer1() {
@@ -98,17 +53,17 @@ describe("Drawing fundamentals", ()=> {
             var draw = buildBasicDrawWithOneLayerNamedLayer1();
             var layer = draw.getLayer("layer1");
         when:
-            layer._context.directives = [];
+            resetDirectives(layer);
             layer.drawRect(10, 15, 20, 25);
         then:
-            assert(layer._context.directives[0]).equalsTo('rect(10, 15, 20, 25)');
-            assert(layer._context.directives[1]).equalsTo('stroke()');
+            assert(getDirectives(layer)[0]).equalsTo('rect(10, 15, 20, 25)');
+            assert(getDirectives(layer)[1]).equalsTo('stroke()');
         when:
-            layer._context.directives = [];
+            resetDirectives(layer);
             layer.fillRect(15, 10, 25, 20);
         then:
-            assert(layer._context.directives[0]).equalsTo('rect(15, 10, 25, 20)');
-            assert(layer._context.directives[1]).equalsTo('fill()');
+            assert(getDirectives(layer)[0]).equalsTo('rect(15, 10, 25, 20)');
+            assert(getDirectives(layer)[1]).equalsTo('fill()');
     });
 
     it("Checks set transform on DDraw", () => {
@@ -116,10 +71,10 @@ describe("Drawing fundamentals", ()=> {
             var draw = buildBasicDrawWithOneLayerNamedLayer1();
         var layer = draw.getLayer("layer1");
         when:
-            layer._context.directives = [];
+            resetDirectives(layer);
             draw.setTransform(6, 5, 4, 3, 2, 1);
         then:
-            assert(layer._context.directives[0]).equalsTo('setTransform(6, 5, 4, 3, 2, 1)');
+            assert(getDirectives(layer)[0]).equalsTo('setTransform(6, 5, 4, 3, 2, 1)');
     });
 
     it("Checks set translate on DDraw", () => {
@@ -127,10 +82,10 @@ describe("Drawing fundamentals", ()=> {
             var draw = buildBasicDrawWithOneLayerNamedLayer1();
         var layer = draw.getLayer("layer1");
         when:
-            layer._context.directives = [];
+            resetDirectives(layer);
         draw.setTranslate(10, 15);
         then:
-            assert(layer._context.directives[0]).equalsTo('setTransform(1, 0, 0, 1, 10, 15)');
+            assert(getDirectives(layer)[0]).equalsTo('setTransform(1, 0, 0, 1, 10, 15)');
     });
 
     it("Checks image drawing on DDraw", () => {
@@ -138,20 +93,20 @@ describe("Drawing fundamentals", ()=> {
             var draw = buildBasicDrawWithOneLayerNamedLayer1();
             var layer = draw.getLayer("layer1");
         when: /* draws an unloaded image */
-            layer._context.directives = [];
+            resetDirectives(layer);
             var image = DImage.getImage("here/where/image.typ");
             layer.drawImage(image, 10, 15);
         then:
-            assert(layer._context.directives.length).equalsTo(0);
+            assert(getDirectives(layer).length).equalsTo(0);
         when: /* loads the image: the requested draw directive is done then**/
             image._root.onload();
         then:
-            assert(layer._context.directives[0]).equalsTo('drawImage(here/where/image.typ, 10, 15)');
+            assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/image.typ, 10, 15)');
         when: /* draw an already loaded image */
-            layer._context.directives = [];
+            resetDirectives(layer);;
             layer.drawImage(image, 15, 10);
         then:
-            assert(layer._context.directives[0]).equalsTo('drawImage(here/where/image.typ, 15, 10)');
+            assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/image.typ, 15, 10)');
     });
 
     it("Checks deferred drawing on DDraw", () => {
@@ -159,7 +114,7 @@ describe("Drawing fundamentals", ()=> {
             var draw = buildBasicDrawWithOneLayerNamedLayer1();
             var layer = draw.getLayer("layer1");
         when: /* draws an unloaded image */
-            layer._context.directives = [];
+            resetDirectives(layer);
             var image1 = DImage.getImage("here/where/one.typ");
             var image2 = DImage.getImage("here/where/two.typ");
             var image3 = DImage.getImage("here/where/three.typ");
@@ -170,27 +125,27 @@ describe("Drawing fundamentals", ()=> {
             layer.drawImage(image3, 10, 10);
             layer.fillRect(10, 15, 20, 25);
         then:
-            assert(layer._context.directives.length).equalsTo(0);
+            assert(getDirectives(layer).length).equalsTo(0);
         when: /* loads the first image: the requested draw directive is done for image1 only **/
             image1._root.onload();
         then:
-            assert(layer._context.directives.length).equalsTo(3);
-            assert(layer._context.directives[0]).equalsTo('drawImage(here/where/one.typ, 10, 10)');
-            assert(layer._context.directives[1]).equalsTo('rect(10, 15, 20, 25)');
-            assert(layer._context.directives[2]).equalsTo('stroke()');
+            assert(getDirectives(layer).length).equalsTo(3);
+            assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/one.typ, 10, 10)');
+            assert(getDirectives(layer)[1]).equalsTo('rect(10, 15, 20, 25)');
+            assert(getDirectives(layer)[2]).equalsTo('stroke()');
         when: /* load on image that is not the next to draw : no drawing are done */
-            layer._context.directives = [];
+            resetDirectives(layer);
             image3._root.onload();
         then:
-            assert(layer._context.directives.length).equalsTo(0);
+            assert(getDirectives(layer).length).equalsTo(0);
         when: /* load on image that is not the next to draw : no drawing are done */
             image2._root.onload();
         then:
-            assert(layer._context.directives[0]).equalsTo('drawImage(here/where/two.typ, 10, 10)');
-            assert(layer._context.directives[1]).equalsTo('setTransform(1, 0, 0, 1, 10, 15)');
-            assert(layer._context.directives[2]).equalsTo('drawImage(here/where/three.typ, 10, 10)');
-            assert(layer._context.directives[3]).equalsTo('rect(10, 15, 20, 25)');
-            assert(layer._context.directives[4]).equalsTo('fill()');
+            assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/two.typ, 10, 10)');
+            assert(getDirectives(layer)[1]).equalsTo('setTransform(1, 0, 0, 1, 10, 15)');
+            assert(getDirectives(layer)[2]).equalsTo('drawImage(here/where/three.typ, 10, 10)');
+            assert(getDirectives(layer)[3]).equalsTo('rect(10, 15, 20, 25)');
+            assert(getDirectives(layer)[4]).equalsTo('fill()');
     });
 
     it("Checks DDraw resize", () => {
@@ -211,21 +166,21 @@ describe("Drawing fundamentals", ()=> {
             var draw = buildBasicDrawWithOneLayerNamedLayer1();
             var layer = draw.getLayer("layer1");
         when:
-            layer._context.directives = [];
+            resetDirectives(layer);
             var image = DImage.getImage("here/where/image.typ");
             layer.drawImage(image, 10, 15);
             draw.clear();
         then:
-            assert(layer._context.directives.length).equalsTo(4);
-            assert(layer._context.directives[0]).equalsTo('save()');
-            assert(layer._context.directives[1]).equalsTo('resetTransform()');
-            assert(layer._context.directives[2]).equalsTo('clearRect(0, 0, 500, 300)');
-            assert(layer._context.directives[3]).equalsTo('restore()');
+            assert(getDirectives(layer).length).equalsTo(4);
+            assert(getDirectives(layer)[0]).equalsTo('save()');
+            assert(getDirectives(layer)[1]).equalsTo('resetTransform()');
+            assert(getDirectives(layer)[2]).equalsTo('clearRect(0, 0, 500, 300)');
+            assert(getDirectives(layer)[3]).equalsTo('restore()');
         when: /* Check that clearance cancels all deferred operations */
-            layer._context.directives = [];
+            resetDirectives(layer);
             image._root.onload();
         then:
-            assert(layer._context.directives.length).equalsTo(0);
+            assert(getDirectives(layer).length).equalsTo(0);
     });
 
     it("Checks all methods of the target platform", () => {
