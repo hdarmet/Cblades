@@ -1,5 +1,9 @@
 'use strict';
 
+import {
+    Matrix2D
+} from "./geometry.js";
+
 /**
  * plateform is a facade used to abstract the real (DOM) platform. Useful when this platform has to be replaced by a
  * fake one for tests purposes.
@@ -257,16 +261,16 @@ export class DDraw {
         return this._layers.get(name);
     }
 
-    setTransform(...params) {
-        this._transform = params;
+    setTransform(matrix) {
+        this._transform = matrix.toArray();
         for (let layer of this._layers.values()) {
             layer.setTransform(...this._transform);
         }
         return this;
     }
 
-    setTranslate(x, y) {
-        return this.setTransform(1, 0, 0, 1, x, y);
+    setTranslate(point) {
+        return this.setTransform(Matrix2D.translate(point));
     }
 
     get root() {

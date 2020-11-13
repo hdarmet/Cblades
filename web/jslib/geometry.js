@@ -54,6 +54,10 @@ export class Point2D {
         return "point("+this.x+", "+this.y+")";
     }
 
+    toArray() {
+        return [this.x, this.y];
+    }
+
     clone() {
         return new Point2D(this.x, this.y);
     }
@@ -269,6 +273,11 @@ export class Matrix2D {
     toString() {
         return "matrix("+this.a+", "+this.b+", "+this.c+", "+this.d+", "+this.e+", "+this.f+")";
     }
+
+    toArray() {
+        return [this.a, this.b, this.c, this.d, this.e, this.f];
+    }
+
 }
 Matrix2D.translate = function(point) {
     return new Matrix2D()._translate(point);

@@ -21,6 +21,7 @@ describe("Geometry", ()=> {
             assert(point.sameTo(new Point2D(30.00005, 40.00005))).isTrue();
             assert(point.sameTo(new Point2D(30.00015, 40.00015))).isFalse();
             assert(point.toString()).equalsTo("point(30, 40)");
+            assert(point.toArray()).arrayEqualsTo([30, 40]);
         when:
             var clonePoint = point.clone();
         then:
@@ -143,7 +144,7 @@ describe("Geometry", ()=> {
             assert(ipoint.y).equalsTo(15);
     });
 
-    it("Checks Matrix equalsTo, toString and identity", () => {
+    it("Checks Matrix equalsTo, toString, toArray and identity", () => {
         when:
             var matrix1 = new Matrix2D(1, 2, 3, 4, 5, 6);
             var matrix2 = new Matrix2D(1, 2, 3, 4, 5, 6);
@@ -152,6 +153,7 @@ describe("Geometry", ()=> {
             assert(matrix1.equalsTo(matrix2)).isTrue();
             assert(matrix1.equalsTo(dmatrix)).isFalse();
             assert(matrix1.toString()).equalsTo("matrix(1, 2, 3, 4, 5, 6)");
+            assert(matrix1.toArray()).arrayEqualsTo([1, 2, 3, 4, 5, 6]);
             assert(Matrix2D.getIdentity().isIdentity).isTrue();
         when:
             var smatrix1 = new Matrix2D(1.00005, 2.00005, 3.00005, 4.00005, 5.00005, 6.00005);

@@ -7,6 +7,9 @@ import {
     DDraw, DImage, setDrawPlatform, getDrawPlatform, targetPlatform
 } from "../jslib/draw.js";
 import {
+    Point2D, Matrix2D
+} from "../jslib/geometry.js";
+import {
     mockPlatform, getContextDirectives, resetContextDirectives
 } from "./mocks.js";
 
@@ -72,7 +75,7 @@ describe("Drawing fundamentals", ()=> {
         var layer = draw.getLayer("layer1");
         when:
             resetDirectives(layer);
-            draw.setTransform(6, 5, 4, 3, 2, 1);
+            draw.setTransform(new Matrix2D(6, 5, 4, 3, 2, 1));
         then:
             assert(getDirectives(layer)[0]).equalsTo('setTransform(6, 5, 4, 3, 2, 1)');
     });
@@ -83,7 +86,7 @@ describe("Drawing fundamentals", ()=> {
         var layer = draw.getLayer("layer1");
         when:
             resetDirectives(layer);
-        draw.setTranslate(10, 15);
+            draw.setTranslate(new Point2D(10, 15));
         then:
             assert(getDirectives(layer)[0]).equalsTo('setTransform(1, 0, 0, 1, 10, 15)');
     });
@@ -121,7 +124,7 @@ describe("Drawing fundamentals", ()=> {
             layer.drawImage(image1, 10, 10);
             layer.drawRect(10, 15, 20, 25);
             layer.drawImage(image2, 10, 10);
-            draw.setTranslate(10, 15);
+            draw.setTranslate(new Point2D(10, 15));
             layer.drawImage(image3, 10, 10);
             layer.fillRect(10, 15, 20, 25);
         then:
