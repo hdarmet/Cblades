@@ -6,41 +6,66 @@
 </head>
 <body>
 <p>That is Cursed Blades</p>
+
 <!--
 <script type="module" src="../jslib/draw.js"></script>
 -->
 <script type="module">
-    /*
-    import {
-        DDraw, DImage
-    } from "../jslib/draw.js";
-    let draw = new DDraw(500, 300);
-    document.body.appendChild(draw.root);
-    draw.createLayer("l1").drawRect(0, 0, 50, 50);
-    draw.setTranslate(10, 10);
-    draw.createLayer("l2").drawRect(50, 50, 50, 50);
-    for (let i=0; i<1; i++) {
-        for (let j=0; j<1; j++) {
-            draw.getLayer("l2").drawImage(DImage.getImage("../images/civilians1.png"), 90 + i, 90 + j, 50, 50);
-        }
-    }
-    //draw.clear();
-    draw.setSize(400, 400);
-    */
+
     import {
         DImage
     } from "../jslib/draw.js";
     import {
         DBoard, DElement, DImageArtifact
     } from "../jslib/board.js";
-    let board = new DBoard(500, 300, "map", "units", "markers");
+
+    let board = new DBoard(500, 300, 500, 300, "map", "units", "markers");
     console.log(board.root);
     document.body.appendChild(board.root);
     let image = DImage.getImage("../images/civilians1.png");
-    let artifact = new DImageArtifact("units", image, 250, 150, 50, 50);
+    let artifact = new DImageArtifact("units", image, 0, 0, 50, 50);
     let element = new DElement(artifact);
     element.show(board);
     board.paint();
+
+    board.root.addEventListener('mouseup',event=>{
+        let point = board._boardXY(event.offsetX, event.offsetY);
+        board.recenter(event.offsetX, event.offsetY);
+        //element.move(point.x, point.y);
+        board.paint();
+    },true);
+    board.root.addEventListener('mousedown',event=>{
+        let point = board._boardXY(event.offsetX, event.offsetY);
+        //board.recenter(event.offsetX, event.offsetY);
+        //element.move(point.x, point.y);
+        board.paint();
+    },true);
+    board.root.addEventListener('mousemove',event=>{
+        if (board.isOnLeftBorder(event.offsetX, event.offsetY)) {
+            board.scrollOnLeft()
+        }
+        if (board.isOnRightBorder(event.offsetX, event.offsetY)) {
+            board.scrollOnRight()
+        }
+        if (board.isOnTopBorder(event.offsetX, event.offsetY)) {
+            board.scrollOnTop()
+        }
+        if (board.isOnBottomBorder(event.offsetX, event.offsetY)) {
+            board.scrollOnBottom()
+        }
+        board.paint();
+    },true);
+    board.root.addEventListener('wheel',event=>{
+        console.log(event.offsetX, event.offsetY, event.deltaX+event.deltaY+event.deltaZ);
+        if (event.deltaX+event.deltaY+event.deltaZ>0) {
+            board.zoomIn(event.offsetX, event.offsetY);
+        }
+        else {
+            board.zoomOut(event.offsetX, event.offsetY);
+        }
+        board.paint();
+        event.preventDefault();
+    },true);
 
 </script>
 </body>

@@ -1,5 +1,9 @@
 'use strict';
 
+function round(v) {
+    return Math.round(v*10000)/10000;
+}
+
 export let mockPlatform = {
 
     createElement(tagName) {
@@ -19,7 +23,7 @@ export let mockPlatform = {
     },
 
     rect(context, x, y, w, h) {
-        context.directives.push(`rect(${x}, ${y}, ${w}, ${h})`);
+        context.directives.push(`rect(${round(x)}, ${round(y)}, ${round(w)}, ${round(h)})`);
     },
 
     stroke(context) {
@@ -31,7 +35,7 @@ export let mockPlatform = {
     },
 
     setTransform(context, a, b, c, d, e, f) {
-        context.directives.push(`setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`);
+        context.directives.push(`setTransform(${round(a)}, ${round(b)}, ${round(c)}, ${round(d)}, ${round(e)}, ${round(f)})`);
     },
 
     drawImage(context, image, ...params) {
@@ -39,7 +43,7 @@ export let mockPlatform = {
     },
 
     clearRect(context, x, y, w, h) {
-        context.directives.push(`clearRect(${x}, ${y}, ${w}, ${h})`);
+        context.directives.push(`clearRect(${round(x)}, ${round(y)}, ${round(w)}, ${round(h)})`);
     },
 
     save(context) {

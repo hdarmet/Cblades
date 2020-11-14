@@ -1,11 +1,15 @@
 'use strict';
 
 import {
-    DDraw, DImage
+    Matrix2D, Point2D
+} from "./geometry.js";
+import {
+    DDraw
 } from "./draw.js";
 import {
     Memento
 } from "./mechanisms.js";
+
 
 /**
  * Wrap something that can be shown on a given layer
@@ -29,9 +33,9 @@ export class DArtifact {
     }
 
     _revert(memento) {
-        this._level && this._level.makeDirty();
+        this._level && this._level.markDirty();
         this._level = memento.level;
-        this._level && this._level.makeDirty();
+        this._level && this._level.markDirty();
         this._px = memento.px;
         this._py = memento.py;
         this._x = memento.x;
@@ -202,7 +206,7 @@ export class DLevel {
         this._dirty = true;
     }
 
-    makeDirty() {
+    markDirty() {
         this._dirty = true;
     }
 
@@ -253,12 +257,22 @@ export class DLevel {
  */
 export class DBoard {
 
-    constructor(width, height, ...levels) {
-        this._draw = new DDraw(width, height);
+    constructor(width, height, viewPortWidth, viewPortHeight, ...levels) {
+        this._draw = new DDraw(viewPortWidth, viewPortHeight);
+        this._width = width;
+        this._height = height;
+        this._x = 0;
+        this._y = 0;
+        this._zoomFactor = this.minZoomFactor;
+        this._maxZoomFactor = DBoard.DEFAULT_MAX_ZOOM_FACTOR;
+        this._zoomIncrement = DBoard.DEFAULT_ZOOM_INCREMENT;
+        this._scrollIncrement = DBoard.DEFAULT_SCROLL_INCREMENT;
+        this._borderWidth = DBoard.DEFAULT_BORDER_WIDTH;
         this._levels = new Map();
         for (let levelName of levels) {
             this._levels.set(levelName, new DLevel(this._draw.createLayer(levelName)));
         }
+        this._requestRepaint();
     }
 
     paint() {
@@ -269,6 +283,171 @@ export class DBoard {
 
     getLevel(levelName) {
         return this._levels.get(levelName);
+    }
+
+    _requestRepaint() {
+        let boardCenter = this._viewPortXY(0, 0);
+        let matrix =
+            Matrix2D.translate(boardCenter).concat(
+                Matrix2D.scale(new Point2D(this._zoomFactor, this._zoomFactor), boardCenter)
+            );
+        this._draw.setTransform(matrix);
+        for (let level of this._levels.values()) {
+            level.markDirty();
+        }
+    }
+
+    _boardXY(vx, vy) {
+        let x = (vx-this.viewPortWidth/2)/this._zoomFactor+this._x;
+        let y = (vy-this.viewPortHeight/2)/this._zoomFactor+this._y;
+        return new Point2D(x, y);
+    }
+
+    _viewPortXY(x, y) {
+        let vx = (x-this._x)*this._zoomFactor + this.viewPortWidth/2;
+        let vy = (y-this._y)*this._zoomFactor + this.viewPortHeight/2;
+        return new Point2D(vx, vy);
+    }
+
+    zoom(vx, vy, zoomFactor) {
+        let anchor = this._boardXY(vx, vy);
+        this._zoomFactor = zoomFactor;
+        this._x = anchor.x-(vx-this.viewPortWidth/2)/zoomFactor;
+        this._y = anchor.y-(vy-this.viewPortHeight/2)/zoomFactor;
+        this._adjust();
+        this._requestRepaint();
+    }
+
+    setZoomSettings(zoomIncrement, maxZoomFactor) {
+        this._zoomIncrement = zoomIncrement;
+        this._maxZoomFactor = maxZoomFactor;
+    }
+
+    get zoomIncrement() {
+        return this._zoomIncrement;
+    }
+
+    get minZoomFactor() {
+        return Math.max(this.viewPortWidth/this.width, this.viewPortHeight/this.height);
+    }
+
+    get maxZoomFactor() {
+        return this._maxZoomFactor;
+    }
+
+    zoomIn(vx, vy) {
+        this.zoom(vx, vy, this.zoomFactor/this.zoomIncrement);
+    }
+
+    zoomOut(vx, vy) {
+        this.zoom(vx,vy, this.zoomFactor*this.zoomIncrement);
+    }
+
+    center(x, y) {
+        this._x = x;
+        this._y = y;
+        this._adjust();
+        this._requestRepaint();
+    }
+
+    recenter(vx, vy) {
+        let point = this._boardXY(vx, vy);
+        this.center(point.x, point.y);
+    }
+
+    setScrollSettings(scrollIncrement, borderWidth) {
+        this._scrollIncrement = scrollIncrement;
+        this._borderWidth = borderWidth;
+    }
+
+    isOnLeftBorder(vx, vy) {
+        return vx <= this._borderWidth;
+    }
+
+    isOnRightBorder(vx, vy) {
+        return this.viewPortWidth-vx <= this._borderWidth;
+    }
+
+    isOnTopBorder(vx, vy) {
+        return vy <= this._borderWidth;
+    }
+
+    isOnBottomBorder(vx, vy) {
+        return this.viewPortHeight-vy <= this._borderWidth;
+    }
+
+    _scroll(dx, dy) {
+        this._x += dx/this.zoomFactor;
+        this._y += dy/this.zoomFactor;
+        this._adjust();
+        this._requestRepaint();
+    }
+
+    scrollOnLeft() {
+        this._scroll(-this._scrollIncrement, 0);
+    }
+
+    scrollOnRight() {
+        this._scroll(this._scrollIncrement, 0);
+    }
+
+    scrollOnTop() {
+        this._scroll(0, -this._scrollIncrement);
+    }
+
+    scrollOnBottom() {
+        this._scroll(0, this._scrollIncrement);
+    }
+
+    _adjust() {
+        let repaint = false;
+        if (this._zoomFactor<this.minZoomFactor) {
+            this._zoomFactor=this.minZoomFactor;
+            repaint = true;
+        }
+        if (this._zoomFactor>this.maxZoomFactor) {
+            this._zoomFactor=this.maxZoomFactor;
+            repaint = true;
+        }
+        let deltaX = this.viewPortWidth/2/this._zoomFactor;
+        if (deltaX>this.width/2+this.x) {
+            this._x = deltaX-this.width/2;
+            repaint = true;
+        }
+        if (deltaX>this.width/2-this.x) {
+            this._x = this.width/2-deltaX;
+            repaint = true;
+        }
+        let deltaY = this.viewPortHeight/2/this._zoomFactor;
+        if (deltaY>this.height/2+this.y) {
+            this._y = deltaY-this.height/2;
+            repaint = true;
+        }
+        if (deltaY>this.height/2-this.y) {
+            this._y = this.height/2-deltaY;
+            repaint = true;
+        }
+        return repaint;
+    }
+
+    get zoomFactor() {
+        return this._zoomFactor;
+    }
+
+    get x() {
+        return this._x;
+    }
+
+    get y() {
+        return this._y;
+    }
+
+    get width() {
+        return this._width;
+    }
+
+    get height() {
+        return this._height;
     }
 
     get viewPortWidth() {
@@ -284,3 +463,7 @@ export class DBoard {
     }
 
 }
+DBoard.DEFAULT_MAX_ZOOM_FACTOR = 10;
+DBoard.DEFAULT_ZOOM_INCREMENT = 1.5;
+DBoard.DEFAULT_BORDER_WIDTH = 10;
+DBoard.DEFAULT_SCROLL_INCREMENT = 10;
