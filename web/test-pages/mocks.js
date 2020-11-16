@@ -56,7 +56,34 @@ export let mockPlatform = {
 
     resetTransform(context) {
         context.directives.push(`resetTransform()`);
+    },
+
+    setTimeout(handler, timeout, ...args) {
+        return window.setTimeout(handler, timeout, ...args);
+    },
+
+    clearTimeout(token) {
+        window.clearTimeout(token);
+    },
+
+    addEventListener(element, event, func, option=true) {
+        if (!element.listeners) {
+            element.listeners = {};
+        }
+        if (!element.listeners[event]) {
+            element.listeners[event] = [];
+        }
+        element.listeners[event].push(func);
+    },
+
+    dispatchEvent(element, eventType, event) {
+        if (element.listeners && element.listeners[eventType]) {
+            for (let listener of element.listeners[eventType]) {
+                listener(event);
+            }
+        }
     }
+
 }
 
 export function getContextDirectives(context) {

@@ -18,6 +18,18 @@ let _targetPlatform = {
         element.setAttribute(attrName, attrValue);
     },
 
+    addEventListener(element, event, func, option=true) {
+        element.addEventListener(event, func, option);
+    },
+
+    setTimeout(handler, timeout, ...args) {
+        return window.setTimeout(handler, timeout, ...args);
+    },
+
+    clearTimeout(token) {
+        window.clearTimeout(token);
+    },
+
     appendChild(parent, child) {
         parent.appendChild(child);
     },
@@ -298,6 +310,33 @@ export class DDraw {
         for (let layer of this._layers.values()) {
             layer.clear();
         }
+    }
+
+    onMouseClick(func) {
+        _platform.addEventListener(this.root, 'click', event => {
+            func(event);
+            event.preventDefault();
+        }, true);
+    }
+
+    onMouseMove(func) {
+        _platform.addEventListener(this.root, 'mousemove', event => {
+            let funcWrapper = event => {
+                let toBeContinued = func(event);
+                _platform.clearTimeout(this._mouseMoveToken);
+                if (toBeContinued) {
+                    this._mouseMoveToken = _platform.setTimeout(funcWrapper, 10, event);
+                }
+            }
+            funcWrapper(event);
+        }, true);
+    }
+
+    onMouseWheel(func) {
+        _platform.addEventListener(this._root, 'wheel', event => {
+            func(event);
+            event.preventDefault();
+        },true);
     }
 
 }

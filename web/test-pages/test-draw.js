@@ -186,6 +186,52 @@ describe("Drawing fundamentals", ()=> {
             assert(getDirectives(layer).length).equalsTo(0);
     });
 
+    it("Checks DDraw onMouseclick", () => {
+        given:
+            var draw = buildBasicDrawWithOneLayerNamedLayer1();
+            var clicked = false;
+            draw.onMouseClick(function(event) {
+                assert(event).isDefined();
+                clicked = true;
+            });
+        when:
+            var mouseEvent = new MouseEvent("click");
+            mockPlatform.dispatchEvent(draw.root, "click", mouseEvent);
+            assert(clicked).isTrue();
+    });
+
+    it("Checks DDraw onMouseWheel", () => {
+        given:
+            var draw = buildBasicDrawWithOneLayerNamedLayer1();
+            var wheeled = false;
+            draw.onMouseWheel(function(event) {
+                assert(event).isDefined();
+                wheeled = true;
+            });
+        when:
+            var mouseEvent = new MouseEvent("wheel");
+            mockPlatform.dispatchEvent(draw.root, "wheel", mouseEvent);
+            assert(wheeled).isTrue();
+    });
+
+    it("Checks DDraw onMouseMove", () => {
+        given:
+            var draw = buildBasicDrawWithOneLayerNamedLayer1();
+            var moved = 2;
+            draw.onMouseMove(function(event) {
+                moved===2 && assert(event).isDefined();
+                return !!--moved;
+            });
+        when:
+            var mouseEvent = new MouseEvent("mousemove");
+            mockPlatform.dispatchEvent(draw.root, "mousemove", mouseEvent);
+            assert(moved).equalsTo(1);
+            executeTimeouts();  // executed again
+            assert(moved).equalsTo(0);
+            executeTimeouts();  // execution string exhausted
+            assert(moved).equalsTo(0);
+    });
+
     it("Checks all methods of the target platform", () => {
         given:
             setDrawPlatform(targetPlatform());
@@ -214,6 +260,26 @@ describe("Drawing fundamentals", ()=> {
                 assert(image.src).equalsTo('here/where/image.typ');
                 assert(params).arrayEqualsTo([15, 10]);
                 drawImageInvoked = true;
+            }
+            var setTimeoutInvoked = false;
+            Window.prototype.setTimeout = function(handler, timeout, ...args) {
+                assert(handler()).equalsTo(true);
+                assert(timeout).equalsTo(100);
+                assert(args).arrayEqualsTo([1, 2]);
+                setTimeoutInvoked = true;
+                return "token";
+            }
+            var clearTimeoutInvoked = false;
+            Window.prototype.clearTimeout = function(token) {
+                assert(token).equalsTo("token");
+                clearTimeoutInvoked = true;
+            }
+            var addEventListenerInvoked = false;
+            EventTarget.prototype.addEventListener = function(eventType, eventListener, ...args) {
+                assert(eventType).equalsTo("click");
+                eventListener({preventDefault(){}});
+                assert(args).arrayEqualsTo([true]);
+                addEventListenerInvoked = true;
             }
         when:
             var draw = new DDraw(500, 300);
@@ -248,6 +314,33 @@ describe("Drawing fundamentals", ()=> {
             layer.drawImage(image, 15, 10);
         then:
             assert(drawImageInvoked).isTrue();
+        when:
+            try {
+                var testSetTimeout = window.setTimeout; // remove test setTimeout
+                delete window.setTimeout;
+                var token = getDrawPlatform().setTimeout(function () {return true;}, 100, 1, 2);
+            }
+            finally {
+                window.setTimeout = testSetTimeout;
+            }
+        then:
+            assert(token).equalsTo("token");
+            assert(setTimeoutInvoked).isTrue();
+        when:
+            try {
+                var testClearTimeout = window.clearTimeout; // remove test setTimeout
+                delete window.clearTimeout;
+                var token = getDrawPlatform().clearTimeout("token");
+            }
+            finally {
+                window.clearTimeout = testClearTimeout;
+            }
+        then:
+            assert(clearTimeoutInvoked).isTrue();
+        when:
+            draw.onMouseClick(function(event) {return true});
+        then:
+            assert(addEventListenerInvoked).isTrue();
     });
 });
 

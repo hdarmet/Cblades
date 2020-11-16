@@ -27,45 +27,15 @@
     let element = new DElement(artifact);
     element.show(board);
     board.paint();
-
-    board.root.addEventListener('mouseup',event=>{
-        let point = board._boardXY(event.offsetX, event.offsetY);
-        board.recenter(event.offsetX, event.offsetY);
-        //element.move(point.x, point.y);
-        board.paint();
-    },true);
-    board.root.addEventListener('mousedown',event=>{
-        let point = board._boardXY(event.offsetX, event.offsetY);
+    board.onMouseClick(event=>{
+        let point = board.getBoardXY(event.offsetX, event.offsetY);
         //board.recenter(event.offsetX, event.offsetY);
-        //element.move(point.x, point.y);
+        element.move(point.x, point.y);
         board.paint();
-    },true);
-    board.root.addEventListener('mousemove',event=>{
-        if (board.isOnLeftBorder(event.offsetX, event.offsetY)) {
-            board.scrollOnLeft()
-        }
-        if (board.isOnRightBorder(event.offsetX, event.offsetY)) {
-            board.scrollOnRight()
-        }
-        if (board.isOnTopBorder(event.offsetX, event.offsetY)) {
-            board.scrollOnTop()
-        }
-        if (board.isOnBottomBorder(event.offsetX, event.offsetY)) {
-            board.scrollOnBottom()
-        }
-        board.paint();
-    },true);
-    board.root.addEventListener('wheel',event=>{
-        console.log(event.offsetX, event.offsetY, event.deltaX+event.deltaY+event.deltaZ);
-        if (event.deltaX+event.deltaY+event.deltaZ>0) {
-            board.zoomIn(event.offsetX, event.offsetY);
-        }
-        else {
-            board.zoomOut(event.offsetX, event.offsetY);
-        }
-        board.paint();
-        event.preventDefault();
-    },true);
+    });
+    board.scrollOnBordersOnMouseMove();
+    board.zoomInOutOnMouseWheel();
+
 
 </script>
 </body>

@@ -286,7 +286,7 @@ export class DBoard {
     }
 
     _requestRepaint() {
-        let boardCenter = this._viewPortXY(0, 0);
+        let boardCenter = this.getViewPortXY(0, 0);
         let matrix =
             Matrix2D.translate(boardCenter).concat(
                 Matrix2D.scale(new Point2D(this._zoomFactor, this._zoomFactor), boardCenter)
@@ -297,20 +297,20 @@ export class DBoard {
         }
     }
 
-    _boardXY(vx, vy) {
+    getBoardXY(vx, vy) {
         let x = (vx-this.viewPortWidth/2)/this._zoomFactor+this._x;
         let y = (vy-this.viewPortHeight/2)/this._zoomFactor+this._y;
         return new Point2D(x, y);
     }
 
-    _viewPortXY(x, y) {
+    getViewPortXY(x, y) {
         let vx = (x-this._x)*this._zoomFactor + this.viewPortWidth/2;
         let vy = (y-this._y)*this._zoomFactor + this.viewPortHeight/2;
         return new Point2D(vx, vy);
     }
 
     zoom(vx, vy, zoomFactor) {
-        let anchor = this._boardXY(vx, vy);
+        let anchor = this.getBoardXY(vx, vy);
         this._zoomFactor = zoomFactor;
         this._x = anchor.x-(vx-this.viewPortWidth/2)/zoomFactor;
         this._y = anchor.y-(vy-this.viewPortHeight/2)/zoomFactor;
@@ -351,7 +351,7 @@ export class DBoard {
     }
 
     recenter(vx, vy) {
-        let point = this._boardXY(vx, vy);
+        let point = this.getBoardXY(vx, vy);
         this.center(point.x, point.y);
     }
 
@@ -460,6 +460,57 @@ export class DBoard {
 
     get root() {
         return this._draw.root;
+    }
+
+    onMouseClick(func) {
+        this._draw.onMouseClick(func);
+    }
+
+    scrollOnBorders(event) {
+        let repaint = false;
+        if (this.isOnLeftBorder(event.offsetX, event.offsetY)) {
+            repaint = true;
+            this.scrollOnLeft()
+        }
+        if (this.isOnRightBorder(event.offsetX, event.offsetY)) {
+            repaint = true;
+            this.scrollOnRight()
+        }
+        if (this.isOnTopBorder(event.offsetX, event.offsetY)) {
+            repaint = true;
+            this.scrollOnTop()
+        }
+        if (this.isOnBottomBorder(event.offsetX, event.offsetY)) {
+            repaint = true;
+            this.scrollOnBottom()
+        }
+        if (repaint) {
+            this.paint();
+        }
+        return repaint;
+    }
+
+    scrollOnBordersOnMouseMove() {
+        this._draw.onMouseMove(event=> {
+            return this.scrollOnBorders(event);
+        });
+    }
+
+    zoomInOut(event) {
+        if (event.deltaX+event.deltaY+event.deltaZ>0) {
+            this.zoomIn(event.offsetX, event.offsetY);
+        }
+        else {
+            this.zoomOut(event.offsetX, event.offsetY);
+        }
+        this.paint();
+        return true;
+    }
+
+    zoomInOutOnMouseWheel() {
+        this._draw.onMouseWheel(event=> {
+            return this.zoomInOut(event);
+        });
     }
 
 }

@@ -358,4 +358,84 @@ describe("Board", ()=> {
             assert(board.isOnLeftBorder(21, 150)).isFalse();
     });
 
+    function createMouseEvent(eventType, args) {
+        return {
+            type: eventType,
+            ...args,
+            defaultStatus: true,
+            preventDefault() {this.defaultStatus=false;}
+        };
+    }
+
+    it("Checks onMouse reflex", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var level = board.getLevel("units");
+            var element = createImageElement("../images/unit.png", 0, 0);
+            element.setLocation(100, 50);
+            element.setOnBoard(board);
+        when:
+            resetDirectives(level);
+            board.onMouseClick(event=> {
+                let point = board.getBoardXY(event.offsetX, event.offsetY);
+                element.move(point.x, point.y);
+                board.paint();
+            });
+            var event = createMouseEvent("click", {
+                offsetX: 260, offsetY:170
+            });
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            assertLevelIsCleared(0, level);
+            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, -5, 15, 50, 50)");
+            assert(event.defaultStatus).isFalse();
+    });
+
+    it("Checks zoomInOut/onMouseWheel reflex", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var level = board.getLevel("units");
+            board.zoomInOutOnMouseWheel();
+        when:
+            resetDirectives(level);
+            let event = createMouseEvent("wheel", {
+                offsetX: 260, offsetY:170, deltaX:0, deltaY:-125, deltaZ:0
+            });
+            mockPlatform.dispatchEvent(board.root, "wheel", event);
+        then:
+            assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 245, 140)");
+            assertLevelIsCleared(1, level);
+        when:
+            resetDirectives(level);
+            event = createMouseEvent("wheel", {
+                offsetX: 260, offsetY:170, deltaX:0, deltaY:125, deltaZ:0
+            });
+            mockPlatform.dispatchEvent(board.root, "wheel", event);
+        then:
+            assert(getDirectives(level)[0]).equalsTo("setTransform(0.5, 0, 0, 0.5, 250, 150)");
+            assertLevelIsCleared(1, level);
+    });
+
+    it("Checks scrollOnBorders/onMouseMove reflex", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var level = board.getLevel("units");
+            board.zoomOut(250,150); // Mandatory to have space to move
+            board.scrollOnBordersOnMouseMove();
+        when:
+            resetDirectives(level);
+            let event = createMouseEvent("mousemove", {offsetX: 5, offsetY:5});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(level)[1]).equalsTo("setTransform(0.75, 0, 0, 0.75, 260, 160)");
+            assertLevelIsCleared(2, level);
+        when:
+            resetDirectives(level);
+            event = createMouseEvent("mousemove", {offsetX: 495, offsetY:295});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(level)[1]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
+            assertLevelIsCleared(2, level);
+    });
+
 });

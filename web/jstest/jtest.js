@@ -311,8 +311,8 @@ export class TestSuite {
             try {
                 _itCount++;
                 this._timeouts = [];
-                setTimeout = (action, delay)=> {
-                    this._timeouts.push({delay, action});
+                setTimeout = (action, delay, ...args)=> {
+                    this._timeouts.push({_delay:delay, _action:action, _args:args});
                 };
                 for (let before of this._befores) {
                     before();
@@ -366,10 +366,12 @@ export class TestSuite {
 
     _executeTimeouts() {
         this._timeouts.sort((timeout1, timeout2)=>timeout1.delay-timeout2.delay);
-        for (let timeout of this._timeouts) {
-            timeout._action();
-        }
+        let timeouts = [...this._timeouts]
         this._timeouts = [];
+        for (let timeout of timeouts) {
+            timeout._action(...timeout._args);
+        }
+
     }
 
 }
