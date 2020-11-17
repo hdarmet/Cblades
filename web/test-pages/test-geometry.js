@@ -1,13 +1,22 @@
 'use strict';
 
 import {
-    describe, it, before, assert, executeTimeouts
+    describe, it, assert
 } from "../jstest/jtest.js";
 import {
-    Point2D, Matrix2D
+    Point2D, Matrix2D, same
 } from "../jslib/geometry.js";
 
 describe("Geometry", ()=> {
+
+    it("Checks 'same' method", () => {
+        assert(same(1, 1)).isTrue();
+        assert(same(0, 0)).isTrue();
+        assert(same(1, undefined)).isFalse();
+        assert(same(undefined, 1)).isFalse();
+        assert(same(1.00005, 1)).isTrue();
+        assert(same(1.00015, 1)).isFalse();
+    });
 
     it("Checks point class", () => {
         when:

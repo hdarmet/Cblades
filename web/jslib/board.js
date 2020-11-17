@@ -268,11 +268,50 @@ export class DBoard {
         this._zoomIncrement = DBoard.DEFAULT_ZOOM_INCREMENT;
         this._scrollIncrement = DBoard.DEFAULT_SCROLL_INCREMENT;
         this._borderWidth = DBoard.DEFAULT_BORDER_WIDTH;
+        this._focusPoint = new Point2D(this.viewPortWidth/2, this.viewPortHeight/2);
+        this._createLevels(levels);
+        this._initMouseClickActions();
+        this._initKeyDownActions();
+        this._requestRepaint();
+    }
+
+    _createLevels(levels) {
         this._levels = new Map();
         for (let levelName of levels) {
             this._levels.set(levelName, new DLevel(this._draw.createLayer(levelName)));
         }
-        this._requestRepaint();
+    }
+
+    _initMouseClickActions() {
+        this._mouseClickActions = [];
+        this._draw.onMouseClick(event => {
+            let newTransaction = false;
+            for (let action of this._mouseClickActions) {
+                if (action(event)) {
+                    newTransaction = true;
+                }
+            }
+            this.paint();
+            if (newTransaction) {
+                Memento.open();
+            }
+        });
+    }
+
+    _initKeyDownActions() {
+        this._keyDownActions = [];
+        this._draw.onKeyDown(event => {
+            let newTransaction = false;
+            for (let action of this._keyDownActions) {
+                if (action(event)) {
+                    newTransaction = true;
+                }
+            }
+            this.paint();
+            if (newTransaction) {
+                Memento.open();
+            }
+        });
     }
 
     paint() {
@@ -463,7 +502,11 @@ export class DBoard {
     }
 
     onMouseClick(func) {
-        this._draw.onMouseClick(func);
+        this._mouseClickActions.push(func);
+    }
+
+    onKeyDown(func) {
+        this._keyDownActions.push(func);
     }
 
     scrollOnBorders(event) {
@@ -510,6 +553,65 @@ export class DBoard {
     zoomInOutOnMouseWheel() {
         this._draw.onMouseWheel(event=> {
             return this.zoomInOut(event);
+        });
+    }
+
+    scrollOnArrowKeys(event) {
+        if (event.key === 'ArrowLeft') {
+            this.scrollOnLeft();
+        }
+        if (event.key === 'ArrowRight') {
+            this.scrollOnRight();
+        }
+        if (event.key === 'ArrowUp') {
+            this.scrollOnTop();
+        }
+        if (event.key === 'ArrowDown') {
+            this.scrollOnBottom();
+        }
+        return false;
+    }
+
+    scrollOnKeyDown() {
+        this.onKeyDown(event => {
+           this.scrollOnArrowKeys(event);
+        });
+    }
+
+    setFocusPointOnClick(event) {
+        this._focusPoint = new Point2D(event.offsetX, event.offsetY);
+    }
+
+    zoomOnPageKeys(event) {
+        if (event.key === 'PageUp') {
+            this.zoomIn(this._focusPoint.x, this._focusPoint.y);
+        }
+        if (event.key === 'PageDown') {
+            this.zoomOut(this._focusPoint.x, this._focusPoint.y);
+        }
+    }
+
+    zoomOnKeyDown() {
+        this.onMouseClick(event => {
+            this.setFocusPointOnClick(event);
+        });
+        this.onKeyDown(event => {
+            this.zoomOnPageKeys(event);
+        });
+    }
+
+    undoRedoOnCtrlZY(event) {
+        if ((event.key === 'z') && event.ctrlKey) {
+            Memento.undo();
+        }
+        if ((event.key === 'y') && event.ctrlKey) {
+            Memento.redo();
+        }
+    }
+
+    undoRedoOnKeyDown() {
+        this.onKeyDown(event => {
+            this.undoRedoOnCtrlZY(event);
         });
     }
 

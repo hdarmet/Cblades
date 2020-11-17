@@ -33,6 +33,7 @@ describe("Drawing fundamentals", ()=> {
         then:
             assert(draw.root.tagName).equalsTo('div');
             assert(draw.root.style).equalsTo("width: 500px; height:300px; border: 1px solid; position: relative");
+            assert(draw.root.tabindex).equalsTo("0");
             assert(draw.width).equalsTo(500);
             assert(draw.height).equalsTo(300);
         when:
@@ -230,6 +231,20 @@ describe("Drawing fundamentals", ()=> {
             assert(moved).equalsTo(0);
             executeTimeouts();  // execution string exhausted
             assert(moved).equalsTo(0);
+    });
+
+    it("Checks DDraw onKeyDown", () => {
+        given:
+            var draw = buildBasicDrawWithOneLayerNamedLayer1();
+            var keyDown = false;
+            draw.onKeyDown(function(event) {
+                assert(event).isDefined();
+                keyDown = true;
+            });
+        when:
+            var keyEvent = new KeyboardEvent("keydown");
+            mockPlatform.dispatchEvent(draw.root, "keydown", keyEvent);
+            assert(keyDown).isTrue();
     });
 
     it("Checks all methods of the target platform", () => {

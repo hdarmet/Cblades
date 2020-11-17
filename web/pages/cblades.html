@@ -18,6 +18,9 @@
     import {
         DBoard, DElement, DImageArtifact
     } from "../jslib/board.js";
+    import {
+        Memento
+    } from "../jslib/mechanisms.js";
 
     let board = new DBoard(500, 300, 500, 300, "map", "units", "markers");
     console.log(board.root);
@@ -31,12 +34,14 @@
         let point = board.getBoardXY(event.offsetX, event.offsetY);
         //board.recenter(event.offsetX, event.offsetY);
         element.move(point.x, point.y);
-        board.paint();
+        return true;
     });
     board.scrollOnBordersOnMouseMove();
     board.zoomInOutOnMouseWheel();
-
-
+    board.scrollOnKeyDown()
+    board.zoomOnKeyDown();
+    board.undoRedoOnKeyDown();
+    Memento.activate();
 </script>
 </body>
 </html>

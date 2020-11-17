@@ -257,6 +257,7 @@ export class DDraw {
         this._width = width;
         this._height = height;
         _platform.setAttribute(this.root, "style", `width: ${width}px; height:${height}px; border: 1px solid; position: relative`);
+        _platform.setAttribute(this.root, "tabindex", "0");
         this._layers = new Map();
         this._transform = [1, 0, 0, 1, 0, 0];
     }
@@ -314,6 +315,13 @@ export class DDraw {
 
     onMouseClick(func) {
         _platform.addEventListener(this.root, 'click', event => {
+            func(event);
+            event.preventDefault();
+        }, true);
+    }
+
+    onKeyDown(func) {
+        _platform.addEventListener(this.root, 'keydown', event => {
             func(event);
             event.preventDefault();
         }, true);
