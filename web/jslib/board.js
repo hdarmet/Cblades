@@ -1,7 +1,7 @@
 'use strict';
 
 import {
-    Matrix2D, Point2D
+    Matrix2D, Point2D, Area2D
 } from "./geometry.js";
 import {
     DDraw
@@ -52,13 +52,12 @@ export class DArtifact {
         this._angle = memento.angle;
     }
 
-    setLocation(x, y) {
-        this._x = x+this.px;
-        this._y = y+this.py;
-        this._level && this._level.refreshArtifact(this);
-    }
-
-    setRotation(angle) {
+    setPosition(x, y, angle) {
+        let elementRotation = angle ? Matrix2D.rotate(angle, new Point2D(0, 0)) : null;
+        let center = elementRotation ? elementRotation.point(new Point2D(this._px, this._py)) :
+            new Point2D(this._px, this._py);
+        this._x = x+center.x;
+        this._y = y+center.y;
         this._angle = angle+this._pangle;
         this._level && this._level.refreshArtifact(this);
     }
@@ -75,14 +74,9 @@ export class DArtifact {
         delete this._level;
     }
 
-    move(x, y) {
+    position(x, y, angle) {
         Memento.register(this);
-        this.setLocation(x, y);
-    }
-
-    rotate(angle) {
-        Memento.register(this);
-        this.setRotation(angle);
+        this.setPosition(x, y, angle);
     }
 
     show(board) {
@@ -126,6 +120,12 @@ export class DArtifact {
     get pangle() {
         return this._pangle;
     }
+
+    get transform() {
+        let translation = this.x || this.y ? Matrix2D.translate(new Point2D(this.x, this.y)) : null;
+        let rotation = this.angle ? Matrix2D.rotate(this.angle, new Point2D(this.x, this.y)) : null;
+        return translation ? rotation ? translation.concat(rotation) : translation : rotation;
+    }
 }
 
 /**
@@ -153,6 +153,12 @@ export class DImageArtifact extends DArtifact {
     get height() {
         return this._height;
     }
+
+    get boundingRect() {
+        console.assert(this._level);
+        return Area2D.rectBoundingArea(this.transform, -this.width/2, -this.height/2, this.width, this.height);
+    }
+
 }
 
 /**
@@ -163,6 +169,8 @@ export class DElement {
     constructor(...artifacts) {
         this._artifacts = [...artifacts];
         this._angle = 0;
+        this._x = 0;
+        this._y = 0;
         for (let artifact of this._artifacts) {
             artifact._setElement(this);
         }
@@ -189,19 +197,21 @@ export class DElement {
         this._y = memento.y;
     }
 
+    _setPositionArtifacts() {
+        for (let artifact of this._artifacts) {
+            artifact.setPosition(this._x, this.y, this._angle);
+        }
+    }
+
     setLocation(x, y) {
         this._x = x;
         this._y = y;
-        for (let artifact of this._artifacts) {
-            artifact.setLocation(x, y);
-        }
+        this._setPositionArtifacts();
     }
 
     setRotation(angle) {
         this._angle = angle;
-        for (let artifact of this._artifacts) {
-            artifact.setRotation(angle);
-        }
+        this._setPositionArtifacts();
     }
 
     setOnBoard(board) {
@@ -218,21 +228,23 @@ export class DElement {
         }
     }
 
+    _positionArtifacts() {
+        for (let artifact of this._artifacts) {
+            artifact.position(this._x, this.y, this._angle);
+        }
+    }
+
     move(x, y) {
         Memento.register(this);
         this._x = x;
         this._y = y;
-        for (let artifact of this._artifacts) {
-            artifact.move(x, y);
-        }
+        this._positionArtifacts();
     }
 
     rotate(angle) {
         Memento.register(this);
         this._angle = angle;
-        for (let artifact of this._artifacts) {
-            artifact.rotate(angle);
-        }
+        this._positionArtifacts();
     }
 
     show(board) {

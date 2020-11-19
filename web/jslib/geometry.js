@@ -1,6 +1,13 @@
 'use strict';
 
 /**
+ * round a number to its 10000e decimal
+ */
+function round(v) {
+    return Math.round(v*10000)/10000;
+}
+
+/**
  * Comapre two numbers and return true if there are very similar, even if not strictly equal.
  */
 export function same(v1, v2) {
@@ -12,15 +19,30 @@ export function same(v1, v2) {
 /**
  * Convert angle degree value to radian value
  */
-function radian(deg) {
+export function radian(deg) {
     return ((deg % 360) * Math.PI) / 180;
 }
 
 /**
  * Convert angle radian value to degree value
  */
-function degree(rad) {
+export function degree(rad) {
     return ((rad * 180) / Math.PI) % 360;
+}
+
+/**
+ * Checks if a point is inside a polygon
+ */
+export function inside(target, polygon) {
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        let xi = polygon[i].x, yi = polygon[i].y;
+        let xj = polygon[j].x, yj = polygon[j].y;
+        let intersect = ((yi > target.y) !== (yj > target.y))
+            && (target.x < (xj - xi) * (target.y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside;
 }
 
 /**
@@ -51,7 +73,7 @@ export class Point2D {
     }
 
     toString() {
-        return "point("+this.x+", "+this.y+")";
+        return "point("+round(this.x)+", "+round(this.y)+")";
     }
 
     toArray() {
@@ -61,6 +83,73 @@ export class Point2D {
     clone() {
         return new Point2D(this.x, this.y);
     }
+}
+
+/**
+ * Kind of Rect that are defined by a left/top + right/bottom coordinates
+ * Used essentially to compute bounding Rects
+ */
+export class Area2D {
+
+    constructor(left, top, right, bottom) {
+        this.left = left;
+        this.right = right;
+        this.top = top;
+        this.bottom = bottom;
+    }
+
+    inside(point) {
+        return point.x>=this.left && point.x<=this.right
+            && point.y>=this.top && point.y<=this.bottom;
+    }
+
+    intersect(area) {
+        return this.left<=area.right && this.right>=area.left
+            && this.top<=area.bottom && this.bottom>=area.top;
+    }
+
+    equalsTo(area) {
+        return this.left===area.left && this.top===area.top
+            && this.right===area.right && this.bottom===area.bottom;
+    }
+
+    sameTo(area) {
+        return same(area.left, this.left) && same(area.top, this.top)
+            && same(area.right, this.right) && same(area.bottom, this.bottom);
+    }
+
+    toString() {
+        return "area("+round(this.left)+", "+round(this.top)+", "+round(this.right)+", "+round(this.bottom)+")";
+    }
+
+    toArray() {
+        return [this.left, this.top, this.right, this.bottom];
+    }
+
+    clone() {
+        return new Area2D(this.left, this.top, this.right, this.bottom);
+    }
+}
+Area2D.boundingArea = function(...polygon) {
+    let minx = polygon[0].x;
+    let maxx = polygon[0].x;
+    let miny = polygon[0].y;
+    let maxy = polygon[0].y;
+    for (let i=1; i<polygon.length; i++) {
+        if (polygon[i].x<minx) minx = polygon[i].x;
+        if (polygon[i].x>maxx) maxx = polygon[i].x;
+        if (polygon[i].y<miny) miny = polygon[i].y;
+        if (polygon[i].y>maxy) maxy = polygon[i].y;
+    }
+    return new Area2D(minx, miny, maxx, maxy);
+}
+Area2D.rectBoundingArea = function(transform, x, y, w, h) {
+    if (!transform) return new Area2D(x, y, x+w, y+h);
+    let upLeft = transform.point(new Point2D(x, y));
+    let upRight = transform.point(new Point2D(x+w, y));
+    let downLeft = transform.point(new Point2D(x, y+h));
+    let downRight = transform.point(new Point2D(x+w, y+h));
+    return Area2D.boundingArea(upLeft, upRight, downLeft, downRight);
 }
 
 /**
@@ -271,7 +360,9 @@ export class Matrix2D {
     }
 
     toString() {
-        return "matrix("+this.a+", "+this.b+", "+this.c+", "+this.d+", "+this.e+", "+this.f+")";
+        return "matrix("+round(this.a)+", "+round(this.b)+", "+
+            round(this.c)+", "+round(this.d)+", "+
+            round(this.e)+", "+round(this.f)+")";
     }
 
     toArray() {

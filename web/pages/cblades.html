@@ -26,8 +26,10 @@
     console.log(board.root);
     document.body.appendChild(board.root);
     let image = DImage.getImage("../images/civilians1.png");
+    let imageMarker = DImage.getImage("../images/tired.png");
     let artifact = new DImageArtifact("units", image, 0, 0, 50, 50);
-    let element = new DElement(artifact);
+    let artifactMarker = new DImageArtifact("markers", imageMarker, -25, -25, 30, 30);
+    let element = new DElement(artifact, artifactMarker);
     element.setRotation(30);
     element.show(board);
     board.paint();

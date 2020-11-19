@@ -4,7 +4,7 @@ import {
     describe, it, assert
 } from "../jstest/jtest.js";
 import {
-    Point2D, Matrix2D, same
+    Point2D, Matrix2D, Area2D, same, inside
 } from "../jslib/geometry.js";
 
 describe("Geometry", ()=> {
@@ -18,7 +18,16 @@ describe("Geometry", ()=> {
         assert(same(1.00015, 1)).isFalse();
     });
 
-    it("Checks point class", () => {
+    it("Checks 'inside' method", () => {
+        let polygon = [
+            new Point2D(0, 0), new Point2D(10, 10),
+            new Point2D(0, 20), new Point2D(-10, 10)
+        ];
+        assert(inside(new Point2D(0, 5), polygon)).isTrue();
+        assert(inside(new Point2D(3, 3), polygon)).isFalse();
+    });
+
+    it("Checks Point class", () => {
         when:
             var point = new Point2D(30, 40);
         then:
@@ -36,6 +45,48 @@ describe("Geometry", ()=> {
         then:
             assert(clonePoint.x).equalsTo(30);
             assert(clonePoint.y).equalsTo(40);
+    });
+
+    it("Checks Area class", () => {
+        when:
+            var area = new Area2D(10, 20, 40, 60);
+        then:
+            assert(area.left).equalsTo(10);
+            assert(area.top).equalsTo(20);
+            assert(area.right).equalsTo(40);
+            assert(area.bottom).equalsTo(60);
+            assert(area.equalsTo(new Area2D(10, 20,40, 60))).isTrue();
+            assert(area.equalsTo(new Area2D(10, 20, 40, 50))).isFalse();
+            assert(area.sameTo(new Area2D(10.00005, 20.00005,39.99995, 59.99995))).isTrue();
+            assert(area.sameTo(new Area2D(10.00015, 20.00015,39.99985, 59.99985))).isFalse();
+            assert(area.toString()).equalsTo("area(10, 20, 40, 60)");
+            assert(area.toArray()).arrayEqualsTo([10, 20, 40, 60]);
+            assert(area.inside(new Point2D(15, 25))).isTrue();
+            assert(area.inside(new Point2D(5, 25))).isFalse();
+            assert(area.inside(new Point2D(45, 25))).isFalse();
+            assert(area.inside(new Point2D(15, 15))).isFalse();
+            assert(area.inside(new Point2D(15, 65))).isFalse();
+            assert(area.intersect(new Area2D(15, 25, 35, 55))).isTrue();
+            assert(area.intersect(new Area2D(5, 15, 45, 75))).isTrue();
+            assert(area.intersect(new Area2D(5, 15, 35, 55))).isTrue();
+            assert(area.intersect(new Area2D(15, 25, 55, 75))).isTrue();
+            assert(area.intersect(new Area2D(45, 25, 55, 75))).isFalse();
+            assert(area.intersect(new Area2D(15, 65, 35, 75))).isFalse();
+            assert(area.intersect(new Area2D(-5, 25, 5, 75))).isFalse();
+            assert(area.intersect(new Area2D(15, 65, 35, 75))).isFalse();
+        when:
+            var cloneArea = area.clone();
+        then:
+            assert(cloneArea.left).equalsTo(10);
+            assert(cloneArea.top).equalsTo(20);
+            assert(cloneArea.right).equalsTo(40);
+            assert(cloneArea.bottom).equalsTo(60);
+        when:
+            var transform = Matrix2D.translate(new Point2D(20, 30))
+                .concat(Matrix2D.rotate(90, new Point2D(20, 30)));
+        then:
+            assert(Area2D.rectBoundingArea(transform, -10, -20, 40, 50).toString())
+                .equalsTo("area(-10, 20, 40, 60)");
     });
 
     it("Checks Matrix creation and identity", () => {

@@ -109,6 +109,38 @@ describe("Board", ()=> {
             assert(getDirectives(level)[3]).equalsTo("restore()");
     });
 
+    it("Checks default element settings", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var level = board.getLevel("units");
+        when:
+            var image = DImage.getImage("../images/unit.png");
+            image._root.onload();
+            var artifact1 = new DImageArtifact("units", image, 0, 0, 50, 50);
+            var artifact2 = new DImageArtifact("units", image, 0, 0, 50, 50, 60);
+            var artifact3 = new DImageArtifact("units", image, 10, 15, 50, 50);
+            var element = new DElement(artifact1, artifact2, artifact3);
+            resetDirectives(level);
+            element.setOnBoard(board);
+            board.paint();
+        then:
+            assert(element.angle).equalsTo(0);
+            assert(element.x).equalsTo(0);
+            assert(element.y).equalsTo(0);
+            assert(artifact1.pangle).equalsTo(0);
+            assert(artifact1.angle).equalsTo(0);
+            assert(artifact1.px).equalsTo(0);
+            assert(artifact1.py).equalsTo(0);
+            assert(artifact1.x).equalsTo(0);
+            assert(artifact1.y).equalsTo(0);
+            assert(artifact1.transform).isNotDefined();
+            assert(artifact1.boundingRect.toString()).equalsTo("area(-25, -25, 25, 25)");
+            assert(artifact2.transform.toString()).equalsTo("matrix(0.5, 0.866, -0.866, 0.5, 0, 0)");
+            assert(artifact2.boundingRect.toString()).equalsTo("area(-34.1506, -34.1506, 34.1506, 34.1506)");
+            assert(artifact3.transform.toString()).equalsTo("matrix(1, 0, 0, 1, 10, 15)");
+            assert(artifact3.boundingRect.toString()).equalsTo("area(-15, -10, 35, 40)");
+    });
+
     it("Checks element containing multiple artifacts", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
@@ -126,7 +158,7 @@ describe("Board", ()=> {
             resetDirectives(level);
             element.setOnBoard(board);
             board.paint();
-        then: /* No paint here... */
+        then:
             assert(element.angle).equalsTo(90);
             assert(element.x).equalsTo(100);
             assert(element.y).equalsTo(50);
@@ -134,23 +166,27 @@ describe("Board", ()=> {
             assert(artifact1.angle).equalsTo(90);
             assert(artifact1.px).equalsTo(-10);
             assert(artifact1.py).equalsTo(-15);
-            assert(artifact1.x).equalsTo(90);
-            assert(artifact1.y).equalsTo(35);
+            assert(artifact1.x).equalsTo(115);
+            assert(artifact1.y).equalsTo(40);
+            assert(artifact1.transform.toString()).equalsTo("matrix(0, 1, -1, 0, 115, 40)");
+            assert(artifact1.boundingRect.toString()).equalsTo("area(90, 15, 140, 65)");
             assert(artifact2.pangle).equalsTo(45);
             assert(artifact2.angle).equalsTo(135);
             assert(artifact2.px).equalsTo(10);
             assert(artifact2.py).equalsTo(15);
-            assert(artifact2.x).equalsTo(110);
-            assert(artifact2.y).equalsTo(65);
+            assert(artifact2.x).equalsTo(85);
+            assert(artifact2.y).equalsTo(60);
+            assert(artifact2.transform.toString()).equalsTo("matrix(-0.7071, 0.7071, -0.7071, -0.7071, 85, 60)");
+            assert(artifact2.boundingRect.toString()).equalsTo("area(49.6447, 24.6447, 120.3553, 95.3553)");
             assert(getDirectives(level).length).equalsTo(12);
             assertLevelIsCleared(0, level);
             assert(getDirectives(level)[4]).equalsTo("save()");
-            assert(getDirectives(level)[5]).equalsTo("setTransform(0, 1, -1, 0, 375, 95)");
-            assert(getDirectives(level)[6]).equalsTo("drawImage(../images/unit1.png, 65, 10, 50, 50)");
+            assert(getDirectives(level)[5]).equalsTo("setTransform(0, 1, -1, 0, 405, 75)");
+            assert(getDirectives(level)[6]).equalsTo("drawImage(../images/unit1.png, 90, 15, 50, 50)");
             assert(getDirectives(level)[7]).equalsTo("restore()");
             assert(getDirectives(level)[8]).equalsTo("save()");
-            assert(getDirectives(level)[9]).equalsTo("setTransform(-0.7071, 0.7071, -0.7071, -0.7071, 483.7437, 183.1802)");
-            assert(getDirectives(level)[10]).equalsTo("drawImage(../images/unit2.png, 85, 40, 50, 50)");
+            assert(getDirectives(level)[9]).equalsTo("setTransform(-0.7071, 0.7071, -0.7071, -0.7071, 437.5305, 192.3223)");
+            assert(getDirectives(level)[10]).equalsTo("drawImage(../images/unit2.png, 60, 35, 50, 50)");
             assert(getDirectives(level)[11]).equalsTo("restore()");
     });
 
