@@ -197,6 +197,54 @@ describe("Board", ()=> {
         return new DElement(artifact);
     }
 
+    it("Checks that if element is not in visible area, no drawing order is issued", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            board.zoom(250, 150,1);
+            var level = board.getLevel("units");
+            var element = createImageElement("../images/unit.png", 0, 0);
+            element.setLocation(100, 50);
+        when:
+            resetDirectives(level);
+            element.setOnBoard(board);  // VisibleArtifacts not defined here
+            board.paint();              // Created starting form here
+        then:
+            assert(getDirectives(level)).arrayContains("/images/unit.png");
+        when:
+            resetDirectives(level);
+            element.setLocation(-400, 50);
+            board.paint();
+        then:
+            assert(getDirectives(level)).arrayNotContains("/images/unit.png");
+        when:
+            resetDirectives(level);
+            element.setLocation(100, 50);
+            board.paint();
+        then:
+            assert(getDirectives(level)).arrayContains("/images/unit.png");
+        when:
+            resetDirectives(level);
+            element.removeFromBoard();
+            board.paint();
+        then:
+            assert(getDirectives(level)).arrayNotContains("/images/unit.png");
+        when:
+            resetDirectives(level);
+            element.setLocation(-400, 50);
+            element.setOnBoard(board);
+            board.paint();
+        then:
+            assert(getDirectives(level)).arrayNotContains("/images/unit.png");
+        when:
+            resetDirectives(level);
+            element.removeFromBoard(board);
+            element.setLocation(100, 50);   // VisibleArtifacts defined here
+            element.setOnBoard(board);
+            board.paint();
+        then:
+            assert(getDirectives(level)).arrayContains("/images/unit.png");
+    });
+
     it("Checks element showing in transaction", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);

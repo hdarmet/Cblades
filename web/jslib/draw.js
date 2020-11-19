@@ -1,7 +1,7 @@
 'use strict';
 
 import {
-    Matrix2D
+    Matrix2D, Area2D
 } from "./geometry.js";
 
 /**f
@@ -259,6 +259,11 @@ export class DLayer {
         _platform.clearRect(this._context, 0, 0, this._width, this._height);
         _platform.restore(this._context);
         delete this._todos;
+    }
+
+    get visibleArea() {
+        let transform = this.draw.transform.invert();
+        return Area2D.rectBoundingArea(transform, 0, 0, this._width, this._height);
     }
 
     get root() {

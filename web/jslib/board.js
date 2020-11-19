@@ -41,9 +41,9 @@ export class DArtifact {
     }
 
     _revert(memento) {
-        this._level && this._level.markDirty();
+        this._level && this._level.invalidate();
         this._level = memento.level;
-        this._level && this._level.markDirty();
+        this._level && this._level.invalidate();
         this._px = memento.px;
         this._py = memento.py;
         this._pangle = memento.pangle;
@@ -63,6 +63,7 @@ export class DArtifact {
     }
 
     setOnBoard(board) {
+        console.assert(board);
         console.assert(!this._level);
         this._level = board.getLevel(this._levelName);
         this._level.addArtifact(this);
@@ -302,19 +303,21 @@ export class DLevel {
         this._dirty = true;
     }
 
-    markDirty() {
-        this._dirty = true;
-    }
-
     addArtifact(artifact) {
         console.assert(!this._artifacts.has(artifact));
         this._artifacts.add(artifact);
+        if (this._visibleArtifacts && artifact.boundingRect.intersect(this.visibleArea)) {
+            this._visibleArtifacts.add(artifact);
+        }
         this._dirty = true;
     }
 
     removeArtifact(artifact) {
         console.assert(this._artifacts.has(artifact));
         this._artifacts.delete(artifact);
+        if (this._visibleArtifacts && this._visibleArtifacts.has(artifact)) {
+            this._visibleArtifacts.delete(artifact);
+        }
         this._dirty = true;
     }
 
@@ -330,13 +333,45 @@ export class DLevel {
 
     refreshArtifact(artifact) {
         console.assert(this._artifacts.has(artifact));
+        if (this._visibleArtifacts) {
+            let intersect = artifact.boundingRect.intersect(this.visibleArea);
+            let visible = this._visibleArtifacts.has(artifact);
+            if (!intersect && visible) {
+                this._visibleArtifacts.delete(artifact);
+            }
+            else if (intersect && !visible) {
+                this._visibleArtifacts.add(artifact);
+            }
+        }
         this._dirty = true;
+    }
+
+    invalidate() {
+        delete this._visibleArtifacts;
+        this._dirty = true;
+    }
+
+    get visibleArea() {
+        return this._layer.visibleArea;
+    }
+
+    get visibleArtifacts() {
+        if (!this._visibleArtifacts) {
+            let levelArea = this.visibleArea;
+            this._visibleArtifacts = new Set();
+            for (let artifact of this._artifacts) {
+                if (artifact.boundingRect.intersect(levelArea)) {
+                    this._visibleArtifacts.add(artifact);
+                }
+            }
+        }
+        return this._visibleArtifacts.values();
     }
 
     paint() {
         if (this._dirty) {
             this._layer.clear();
-            for (let artifact of this._artifacts) {
+            for (let artifact of this.visibleArtifacts) {
                 artifact.paint();
             }
         }
@@ -430,7 +465,7 @@ export class DBoard {
             );
         this._draw.setTransform(matrix);
         for (let level of this._levels.values()) {
-            level.markDirty();
+            level.invalidate();
         }
     }
 

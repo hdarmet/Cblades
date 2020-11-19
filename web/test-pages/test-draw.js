@@ -74,13 +74,14 @@ describe("Drawing fundamentals", ()=> {
     it("Checks set transform on DDraw", () => {
         given:
             var draw = buildBasicDrawWithOneLayerNamedLayer1();
-        var layer = draw.getLayer("layer1");
+            var layer = draw.getLayer("layer1");
         when:
             resetDirectives(layer);
-            draw.setTransform(new Matrix2D(6, 5, 4, 3, 2, 1));
+            draw.setTransform(new Matrix2D(2, 0, 0, 2, 20, 20));
         then:
-            assert(draw.transform.toArray()).arrayEqualsTo([6, 5, 4, 3, 2, 1]);
-            assert(getDirectives(layer)[0]).equalsTo('setTransform(6, 5, 4, 3, 2, 1)');
+            assert(draw.transform.toArray()).arrayEqualsTo([2, 0, 0, 2, 20, 20]);
+            assert(getDirectives(layer)[0]).equalsTo('setTransform(2, 0, 0, 2, 20, 20)');
+            assert(layer.visibleArea.toString()).equalsTo("area(-10, -10, 240, 140)");
     });
 
     it("Checks set translate on DDraw", () => {

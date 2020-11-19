@@ -65,6 +65,31 @@ export class Assertor {
         }
     }
 
+    _notContains(model, value) {
+        if (value && value.indexOf(model)!==-1) {
+            throw new AssertionFailed(`${value} contains ${model}`);
+        }
+    }
+
+    _arrayContains(model, values) {
+        if (values) {
+            for (let value of values) {
+                if (value.indexOf(model) !== -1) return;
+            }
+        }
+        throw new AssertionFailed(`${value} does not contain ${model}`);
+    }
+
+    _arrayNotContains(model, values) {
+        if (values) {
+            for (let value of values) {
+                if (value.indexOf(model) !== -1) {
+                    throw new AssertionFailed(`${value} contains ${model}`);
+                }
+            }
+        }
+    }
+
     _arrayEquals(model, value) {
         if (!model || !(model instanceof Array)) {
             throw new AssertionError(`${model} is not an array.`);
@@ -222,6 +247,21 @@ export class Assertor {
         return this;
     }
 
+    notContains(model) {
+        this._notContains(model, this._value);
+        return this;
+    }
+
+    arrayContains(model) {
+        this._arrayContains(model, this._value);
+        return this;
+    }
+
+    arrayNotContains(model) {
+        this._arrayNotContains(model, this._value);
+        return this;
+    }
+
     arrayEqualsTo(model) {
         this._arrayEquals(model, this._value);
         return this;
@@ -276,7 +316,7 @@ function executeNextSuite(suite) {
         _suites[next]._execute();
     }
     else {
-        console.log(`${_itCount} tests executed. ${_itCount-_itFailed} passed. ${_itFailed} failed.`);
+        console.log(`${_itCount} tests executed. ${_itCount-_itFailed} passed. ${_itFailed} failed. ${new Date().getTime() - _startTime} ms `);
     }
 }
 
