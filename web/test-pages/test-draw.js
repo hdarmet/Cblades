@@ -43,6 +43,7 @@ describe("Drawing fundamentals", ()=> {
             assert(layer.root.style).equalsTo("position: absolute");
             assert(layer.root.width).equalsTo(500);
             assert(layer.root.height).equalsTo(300);
+            assert(layer.draw).equalsTo(draw);
             assert(getDirectives(layer)[0]).equalsTo('setTransform(1, 0, 0, 1, 0, 0)');
     });
 
@@ -78,6 +79,7 @@ describe("Drawing fundamentals", ()=> {
             resetDirectives(layer);
             draw.setTransform(new Matrix2D(6, 5, 4, 3, 2, 1));
         then:
+            assert(draw.transform.toArray()).arrayEqualsTo([6, 5, 4, 3, 2, 1]);
             assert(getDirectives(layer)[0]).equalsTo('setTransform(6, 5, 4, 3, 2, 1)');
     });
 
@@ -92,25 +94,38 @@ describe("Drawing fundamentals", ()=> {
             assert(getDirectives(layer)[0]).equalsTo('setTransform(1, 0, 0, 1, 10, 15)');
     });
 
-    it("Checks image drawing on DDraw", () => {
+    it("Checks image drawing with transform on DDraw", () => {
         given:
             var draw = buildBasicDrawWithOneLayerNamedLayer1();
             var layer = draw.getLayer("layer1");
         when: /* draws an unloaded image */
             resetDirectives(layer);
             var image = DImage.getImage("here/where/image.typ");
-            layer.drawImage(image, 10, 15);
-        then:
-            assert(getDirectives(layer).length).equalsTo(0);
+            layer.withTransform(Matrix2D.rotate(90, new Point2D(10, 15)),
+                () => layer.drawImage(image, 10, 15)
+            );
+        then: /* Image is not drawn, but transform is set */
+            assert(getDirectives(layer).length).equalsTo(2);
+            assert(getDirectives(layer)[0]).equalsTo('save()');
+            assert(getDirectives(layer)[1]).equalsTo('setTransform(0, 1, -1, 0, 25, 5)');
         when: /* loads the image: the requested draw directive is done then**/
+            resetDirectives(layer);
             image._root.onload();
         then:
+            assert(getDirectives(layer).length).equalsTo(2);
             assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/image.typ, 10, 15)');
+            assert(getDirectives(layer)[1]).equalsTo('restore()');
         when: /* draw an already loaded image */
-            resetDirectives(layer);;
-            layer.drawImage(image, 15, 10);
+            resetDirectives(layer);
+            layer.withTransform(Matrix2D.rotate(90, new Point2D(15, 10)),
+                ()=>layer.drawImage(image, 15, 10)
+            );
         then:
-            assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/image.typ, 15, 10)');
+            assert(getDirectives(layer).length).equalsTo(4);
+            assert(getDirectives(layer)[0]).equalsTo('save()');
+            assert(getDirectives(layer)[1]).equalsTo('setTransform(0, 1, -1, 0, 25, -5)');
+            assert(getDirectives(layer)[2]).equalsTo('drawImage(here/where/image.typ, 15, 10)');
+            assert(getDirectives(layer)[3]).equalsTo('restore()');
     });
 
     it("Checks deferred drawing on DDraw", () => {
@@ -150,6 +165,27 @@ describe("Drawing fundamentals", ()=> {
             assert(getDirectives(layer)[2]).equalsTo('drawImage(here/where/three.typ, 10, 10)');
             assert(getDirectives(layer)[3]).equalsTo('rect(10, 15, 20, 25)');
             assert(getDirectives(layer)[4]).equalsTo('fill()');
+    });
+
+    it("Checks image drawing on DDraw", () => {
+        given:
+            var draw = buildBasicDrawWithOneLayerNamedLayer1();
+        var layer = draw.getLayer("layer1");
+        when: /* draws an unloaded image */
+            resetDirectives(layer);
+        var image = DImage.getImage("here/where/image.typ");
+        layer.drawImage(image, 10, 15);
+        then:
+            assert(getDirectives(layer).length).equalsTo(0);
+        when: /* loads the image: the requested draw directive is done then**/
+            image._root.onload();
+        then:
+            assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/image.typ, 10, 15)');
+        when: /* draw an already loaded image */
+            resetDirectives(layer);;
+        layer.drawImage(image, 15, 10);
+        then:
+            assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/image.typ, 15, 10)');
     });
 
     it("Checks DDraw resize", () => {

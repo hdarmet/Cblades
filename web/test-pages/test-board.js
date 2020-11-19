@@ -42,18 +42,18 @@ describe("Board", ()=> {
             var board = new DBoard(500, 300, 500, 300, "map", "units", "markers");
         then:
             assert(board.root.tagName).equalsTo('div');
-        assert(board.root.style).equalsTo("width: 500px; height:300px; border: 1px solid; position: relative");
-        assert(board.viewPortWidth).equalsTo(500);
-        assert(board.viewPortHeight).equalsTo(300);
+            assert(board.root.style).equalsTo("width: 500px; height:300px; border: 1px solid; position: relative");
+            assert(board.viewPortWidth).equalsTo(500);
+            assert(board.viewPortHeight).equalsTo(300);
         when:
             var levelMap = board.getLevel("map");
-        var levelUnits = board.getLevel("units");
-        var levelMarkers = board.getLevel("markers");
+            var levelUnits = board.getLevel("units");
+            var levelMarkers = board.getLevel("markers");
         then:
             assert(levelMap).isDefined();
-        assert(levelUnits).isDefined();
-        assert(levelMarkers).isDefined();
-        assert(levelMap._layer).is(DLayer);
+            assert(levelUnits).isDefined();
+            assert(levelMarkers).isDefined();
+            assert(levelMap._layer).is(DLayer);
     });
 
     function createBoardWithMapUnitsAndMarkersLevels(width, height, viewPortWidth, viewPortHeight) {
@@ -71,204 +71,287 @@ describe("Board", ()=> {
     it("Checks element creation/displaying/removing", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
-        var level = board.getLevel("units");
+            var level = board.getLevel("units");
         when:
             var image = DImage.getImage("../images/unit.png");
-        image._root.onload();
-        var artifact = new DImageArtifact("units", image, 0, 0, 50, 50);
-        var element = new DElement(artifact);
-        element.setLocation(100, 50);
-        resetDirectives(level);
-        element.setOnBoard(board);
+            image._root.onload();
+            var artifact = new DImageArtifact("units", image, 0, 0, 50, 50);
+            var element = new DElement(artifact);
+            element.setLocation(100, 50);
+            resetDirectives(level);
+            element.setOnBoard(board);
         then: /* No paint here... */
+            assert(artifact.board).equalsTo(board);
+            assert(element.board).equalsTo(board);
             assert(getDirectives(level).length).equalsTo(0);
         when:
             board.paint();
         then:
             assert(getDirectives(level).length).equalsTo(5);
-        assertLevelIsCleared(0, level)
-        /* draws content */
-        assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
+            assertLevelIsCleared(0, level)
+            /* draws content */
+            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
         when:
             resetDirectives(level);
-        element.setLocation(110, 70);
-        board.paint();
+            element.setLocation(110, 70);
+            board.paint();
         then:
             assert(getDirectives(level).length).equalsTo(5);
-        assertLevelIsCleared(0, level);
-        assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 85, 45, 50, 50)");
+            assertLevelIsCleared(0, level);
+            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 85, 45, 50, 50)");
         when:
             resetDirectives(level);
-        element.removeFromBoard();
-        board.paint();
+            element.removeFromBoard();
+            board.paint();
         then:
             assert(getDirectives(level).length).equalsTo(4);
-        assertLevelIsCleared(0, level);
-        assert(getDirectives(level)[3]).equalsTo("restore()");
+            assertLevelIsCleared(0, level);
+            assert(getDirectives(level)[3]).equalsTo("restore()");
+    });
+
+    it("Checks element containing multiple artifacts", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var level = board.getLevel("units");
+        when:
+            var image1 = DImage.getImage("../images/unit1.png");
+            image1._root.onload();
+            var image2 = DImage.getImage("../images/unit2.png");
+            image2._root.onload();
+            var artifact1 = new DImageArtifact("units", image1, -10, -15, 50, 50);
+            var artifact2 = new DImageArtifact("units", image2, 10, 15, 50, 50, 45);
+            var element = new DElement(artifact1, artifact2);
+            element.setLocation(100, 50);
+            element.setRotation(90);
+            resetDirectives(level);
+            element.setOnBoard(board);
+            board.paint();
+        then: /* No paint here... */
+            assert(element.angle).equalsTo(90);
+            assert(element.x).equalsTo(100);
+            assert(element.y).equalsTo(50);
+            assert(artifact1.pangle).equalsTo(0);
+            assert(artifact1.angle).equalsTo(90);
+            assert(artifact1.px).equalsTo(-10);
+            assert(artifact1.py).equalsTo(-15);
+            assert(artifact1.x).equalsTo(90);
+            assert(artifact1.y).equalsTo(35);
+            assert(artifact2.pangle).equalsTo(45);
+            assert(artifact2.angle).equalsTo(135);
+            assert(artifact2.px).equalsTo(10);
+            assert(artifact2.py).equalsTo(15);
+            assert(artifact2.x).equalsTo(110);
+            assert(artifact2.y).equalsTo(65);
+            assert(getDirectives(level).length).equalsTo(12);
+            assertLevelIsCleared(0, level);
+            assert(getDirectives(level)[4]).equalsTo("save()");
+            assert(getDirectives(level)[5]).equalsTo("setTransform(0, 1, -1, 0, 375, 95)");
+            assert(getDirectives(level)[6]).equalsTo("drawImage(../images/unit1.png, 65, 10, 50, 50)");
+            assert(getDirectives(level)[7]).equalsTo("restore()");
+            assert(getDirectives(level)[8]).equalsTo("save()");
+            assert(getDirectives(level)[9]).equalsTo("setTransform(-0.7071, 0.7071, -0.7071, -0.7071, 483.7437, 183.1802)");
+            assert(getDirectives(level)[10]).equalsTo("drawImage(../images/unit2.png, 85, 40, 50, 50)");
+            assert(getDirectives(level)[11]).equalsTo("restore()");
     });
 
     function createImageElement(path, x, y) {
-        var image = DImage.getImage(path, x, y);
+        let image = DImage.getImage(path, x, y);
         image._root.onload();
-        var artifact = new DImageArtifact("units", image, x, y, 50, 50);
+        let artifact = new DImageArtifact("units", image, x, y, 50, 50);
         return new DElement(artifact);
     }
 
     it("Checks element showing in transaction", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
-        var level = board.getLevel("units");
-        var element = createImageElement("../images/unit.png", 0, 0);
-        element.setLocation(100, 50);
-        Memento.activate();
+            var level = board.getLevel("units");
+            var element = createImageElement("../images/unit.png", 0, 0);
+            element.setLocation(100, 50);
+            Memento.activate();
         when:
             resetDirectives(level);
-        element.show(board);
-        board.paint();
+            element.show(board);
+            board.paint();
         then:
+            assert(element.board).equalsTo(board);
             assert(getDirectives(level).length).equalsTo(5);
-        assertLevelIsCleared(0, level);
-        assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
+            assertLevelIsCleared(0, level);
+            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
         when:
             resetDirectives(level);
-        Memento.undo();
-        board.paint();
+            Memento.undo();
+            board.paint();
         then:
+            assert(element.board).isNotDefined();
             assert(getDirectives(level).length).equalsTo(4);
-        assertLevelIsCleared(0, level);
+            assertLevelIsCleared(0, level);
     });
 
     it("Checks element hiding in transaction", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
-        var level = board.getLevel("units");
-        var element = createImageElement("../images/unit.png", 0, 0);
-        element.setLocation(100, 50);
-        element.setOnBoard(board);
-        Memento.activate();
+            var level = board.getLevel("units");
+            var element = createImageElement("../images/unit.png", 0, 0);
+            element.setLocation(100, 50);
+            element.setOnBoard(board);
+            Memento.activate();
         when:
             resetDirectives(level);
-        element.hide(board);
-        board.paint();
+            element.hide(board);
+            board.paint();
         then:
+            assert(element.board).isNotDefined();
             assert(getDirectives(level).length).equalsTo(4);
-        assertLevelIsCleared(0, level);
+            assertLevelIsCleared(0, level);
         when:
             resetDirectives(level);
-        Memento.undo();
-        board.paint();
+            Memento.undo();
+            board.paint();
         then:
+            assert(element.board).equalsTo(board);
             assert(getDirectives(level).length).equalsTo(5);
-        assertLevelIsCleared(0, level);
-        assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
+            assertLevelIsCleared(0, level);
+            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
     });
 
     it("Checks element moves in transaction", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
-        var level = board.getLevel("units");
-        var element = createImageElement("../images/unit.png", 0, 0);
-        element.setLocation(100, 50);
-        element.setOnBoard(board);
-        Memento.activate();
+            var level = board.getLevel("units");
+            var element = createImageElement("../images/unit.png", 0, 0);
+            element.setLocation(100, 50);
+            element.setOnBoard(board);
+            Memento.activate();
         when:
             resetDirectives(level);
-        element.move(150, 100);
-        board.paint();
+            element.move(150, 100);
+            board.paint();
         then:
             assert(getDirectives(level).length).equalsTo(5);
-        assertLevelIsCleared(0, level);
-        assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 125, 75, 50, 50)");
+            assertLevelIsCleared(0, level);
+            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 125, 75, 50, 50)");
         when:
             resetDirectives(level);
-        Memento.undo();
-        board.paint();
+            Memento.undo();
+            board.paint();
         then:
             assert(getDirectives(level).length).equalsTo(5);
-        assertLevelIsCleared(0, level);
-        assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
+            assertLevelIsCleared(0, level);
+            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
+    });
+
+    it("Checks element rotation in transaction", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var level = board.getLevel("units");
+            var element = createImageElement("../images/unit.png", 0, 0);
+            element.setRotation(90);
+            element.setOnBoard(board);
+            Memento.activate();
+        when:
+            resetDirectives(level);
+            element.rotate(180);
+            board.paint();
+        then:
+            assert(getDirectives(level).length).equalsTo(8);
+            assertLevelIsCleared(0, level);
+            assert(getDirectives(level)[4]).equalsTo("save()");
+            assert(getDirectives(level)[5]).equalsTo("setTransform(-1, 0, 0, -1, 250, 150)");
+            assert(getDirectives(level)[6]).equalsTo("drawImage(../images/unit.png, -25, -25, 50, 50)");
+            assert(getDirectives(level)[7]).equalsTo("restore()");
+        when:
+            resetDirectives(level);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(level).length).equalsTo(8);
+            assertLevelIsCleared(0, level);
+            assert(getDirectives(level)[4]).equalsTo("save()");
+            assert(getDirectives(level)[5]).equalsTo("setTransform(0, 1, -1, 0, 250, 150)");
+            assert(getDirectives(level)[6]).equalsTo("drawImage(../images/unit.png, -25, -25, 50, 50)");
+            assert(getDirectives(level)[7]).equalsTo("restore()");
     });
 
     it("Checks zooming", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
-        var level = board.getLevel("units");
+            var level = board.getLevel("units");
         then:
             assert(board.minZoomFactor).equalsTo(0.5);
-        assert(getDirectives(level)[1]).equalsTo("setTransform(0.5, 0, 0, 0.5, 250, 150)");
+            assert(getDirectives(level)[1]).equalsTo("setTransform(0.5, 0, 0, 0.5, 250, 150)");
         when:
             resetDirectives(level);
-        board.zoomOut(250, 150);
-        board.paint();
+            board.zoomOut(250, 150);
+            board.paint();
         then:
             assert(board.zoomFactor).equalsTo(0.75);
-        assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
-        assertLevelIsCleared(1, level);
+            assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
+            assertLevelIsCleared(1, level);
         when:
             resetDirectives(level);
-        board.zoomOut(260, 160);
-        board.paint();
+            board.zoomOut(260, 160);
+            board.paint();
         then:
             assert(board.zoomFactor).equalsTo(1.125);
-        assert(getDirectives(level)[0]).equalsTo("setTransform(1.125, 0, 0, 1.125, 245, 145)");
-        assertLevelIsCleared(1, level);
+            assert(getDirectives(level)[0]).equalsTo("setTransform(1.125, 0, 0, 1.125, 245, 145)");
+            assertLevelIsCleared(1, level);
         when:
             resetDirectives(level);
-        board.zoomIn(255, 155);
-        board.paint();
+            board.zoomIn(255, 155);
+            board.paint();
         then:
             assert(board.zoomFactor).equalsTo(0.75);
-        assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 248.3333, 148.3333)");
-        assertLevelIsCleared(1, level);
+            assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 248.3333, 148.3333)");
+            assertLevelIsCleared(1, level);
     });
 
     it("Checks scrolling", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
-        var level = board.getLevel("units");
+            var level = board.getLevel("units");
         when:
             resetDirectives(level);
-        board.zoomOut(250, 150); // Mandatory to have space to move
-        board.paint();
+            board.zoomOut(250, 150); // Mandatory to have space to move
+            board.paint();
         then:
             assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
         when:
             resetDirectives(level);
-        board.scrollOnLeft();
-        board.paint();
+            board.scrollOnLeft();
+            board.paint();
         then:
             assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 260, 150)");
-        assertLevelIsCleared(1, level);
+            assertLevelIsCleared(1, level);
         when:
             resetDirectives(level);
-        board.scrollOnRight();
-        board.paint();
+            board.scrollOnRight();
+            board.paint();
         then:
             assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
-        assertLevelIsCleared(1, level);
+            assertLevelIsCleared(1, level);
         when:
             resetDirectives(level);
-        board.scrollOnTop();
-        board.paint();
+            board.scrollOnTop();
+            board.paint();
         then:
             assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 160)");
-        assertLevelIsCleared(1, level);
+            assertLevelIsCleared(1, level);
         when:
             resetDirectives(level);
-        board.scrollOnBottom();
-        board.paint();
+            board.scrollOnBottom();
+            board.paint();
         then:
             assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
-        assertLevelIsCleared(1, level);
+            assertLevelIsCleared(1, level);
     });
 
     it("Checks zoom settings", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
-        var level = board.getLevel("units");
+            var level = board.getLevel("units");
         when:
             board.setZoomSettings(2, 12);
-        board.zoomOut(250, 150);
+            board.zoomOut(250, 150);
         then:
             assert(board.zoomFactor).equalsTo(1);
         when:
@@ -277,8 +360,8 @@ describe("Board", ()=> {
             assert(board.zoomFactor).equalsTo(2);
         when:
             board.zoomOut(250, 150); // ZoomFactor = 4
-        board.zoomOut(250, 150); // ZoomFactor = 8
-        board.zoomOut(250, 150); // ZoomFactor = 16>12 => 12
+            board.zoomOut(250, 150); // ZoomFactor = 8
+            board.zoomOut(250, 150); // ZoomFactor = 16>12 => 12
         then:
             assert(board.zoomFactor).equalsTo(12);
     });
@@ -286,27 +369,27 @@ describe("Board", ()=> {
     it("Checks recenter", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
-        var level = board.getLevel("units");
-        board.zoomOut(250, 150); // Mandatory to have space to move
-        board.paint();
+            var level = board.getLevel("units");
+            board.zoomOut(250, 150); // Mandatory to have space to move
+            board.paint();
         when:
             resetDirectives(level);
-        board.recenter(260, 170);
-        board.paint();
+            board.recenter(260, 170);
+            board.paint();
         then:
             assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 240, 130)");
-        assertLevelIsCleared(1, level);
+            assertLevelIsCleared(1, level);
     });
 
     it("Checks adjustement", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
-        var level = board.getLevel("units");
-        board.setZoomSettings(2, 8);
-        board.paint();
+            var level = board.getLevel("units");
+            board.setZoomSettings(2, 8);
+            board.paint();
         when:
             assert(board.zoomFactor).equalsTo(0.5);
-        board.zoom(250, 150, 0.2); // Try to zoom in above limits
+            board.zoom(250, 150, 0.2); // Try to zoom in above limits
         then:
             assert(board.zoomFactor).equalsTo(0.5);
         when:
@@ -315,15 +398,15 @@ describe("Board", ()=> {
             assert(board.zoomFactor).equalsTo(8);
         when:
             board.zoom(250, 150, 1);
-        board.center(-499, -299); // Try to center next left/top border
+            board.center(-499, -299); // Try to center next left/top border
         then:
             assert(board.x).equalsTo(-250);
-        assert(board.y).equalsTo(-150);
+            assert(board.y).equalsTo(-150);
         when:
             board.center(499, 299); // Try to center next right/bottom border
         then:
             assert(board.x).equalsTo(250);
-        assert(board.y).equalsTo(150);
+            assert(board.y).equalsTo(150);
     });
 
     it("Checks border detection", () => {
@@ -331,35 +414,35 @@ describe("Board", ()=> {
             var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
         when:
             assert(board.isOnLeftBorder(9, 150)).isTrue();
-        assert(board.isOnLeftBorder(11, 150)).isFalse();
-        assert(board.isOnRightBorder(491, 150)).isTrue();
-        assert(board.isOnRightBorder(489, 150)).isFalse();
-        assert(board.isOnTopBorder(150, 9)).isTrue();
-        assert(board.isOnTopBorder(150, 11)).isFalse();
-        assert(board.isOnBottomBorder(150, 29150)).isTrue();
-        assert(board.isOnBottomBorder(150, 289)).isFalse();
+            assert(board.isOnLeftBorder(11, 150)).isFalse();
+            assert(board.isOnRightBorder(491, 150)).isTrue();
+            assert(board.isOnRightBorder(489, 150)).isFalse();
+            assert(board.isOnTopBorder(150, 9)).isTrue();
+            assert(board.isOnTopBorder(150, 11)).isFalse();
+            assert(board.isOnBottomBorder(150, 29150)).isTrue();
+            assert(board.isOnBottomBorder(150, 289)).isFalse();
     });
 
     it("Checks scroll settings", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
-        var level = board.getLevel("units");
+            var level = board.getLevel("units");
         when:
             resetDirectives(level);
-        board.zoomOut(250, 150); // Mandatory to have space to move
-        board.paint();
+            board.zoomOut(250, 150); // Mandatory to have space to move
+            board.paint();
         then:
             assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
         when:
             resetDirectives(level);
-        board.setScrollSettings(25, 20);
-        board.scrollOnLeft();
-        board.paint();
+            board.setScrollSettings(25, 20);
+            board.scrollOnLeft();
+            board.paint();
         then:
             assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 275, 150)");
-        assertLevelIsCleared(1, level);
-        assert(board.isOnLeftBorder(19, 150)).isTrue();
-        assert(board.isOnLeftBorder(21, 150)).isFalse();
+            assertLevelIsCleared(1, level);
+            assert(board.isOnLeftBorder(19, 150)).isTrue();
+            assert(board.isOnLeftBorder(21, 150)).isFalse();
     });
 
     function createEvent(eventType, args) {

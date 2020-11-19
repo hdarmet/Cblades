@@ -28,12 +28,14 @@
     let image = DImage.getImage("../images/civilians1.png");
     let artifact = new DImageArtifact("units", image, 0, 0, 50, 50);
     let element = new DElement(artifact);
+    element.setRotation(30);
     element.show(board);
     board.paint();
     board.onMouseClick(event=>{
         let point = board.getBoardXY(event.offsetX, event.offsetY);
         //board.recenter(event.offsetX, event.offsetY);
         element.move(point.x, point.y);
+        element.rotate(element.angle+60);
         return true;
     });
     board.scrollOnBordersOnMouseMove();

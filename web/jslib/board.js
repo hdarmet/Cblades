@@ -16,19 +16,27 @@ import {
  */
 export class DArtifact {
 
-    constructor(levelName, px, py) {
+    constructor(levelName, px, py, pangle=0) {
         this._levelName = levelName;
         this._px = px;
         this._py = py;
+        this._pangle = pangle;
         this._x = px;
         this._y = py;
+        this._angle = pangle;
+    }
+
+    _setElement(element) {
+        this._element = element;
     }
 
     _memento() {
         return {
             level: this._level,
             px:this._px, py:this._py,
-            x:this._x, y:this._y
+            pangle:this._pangle,
+            x:this._x, y:this._y,
+            angle:this._angle
         }
     }
 
@@ -38,13 +46,20 @@ export class DArtifact {
         this._level && this._level.markDirty();
         this._px = memento.px;
         this._py = memento.py;
+        this._pangle = memento.pangle;
         this._x = memento.x;
         this._y = memento.y;
+        this._angle = memento.angle;
     }
 
     setLocation(x, y) {
         this._x = x+this.px;
         this._y = y+this.py;
+        this._level && this._level.refreshArtifact(this);
+    }
+
+    setRotation(angle) {
+        this._angle = angle+this._pangle;
         this._level && this._level.refreshArtifact(this);
     }
 
@@ -65,6 +80,11 @@ export class DArtifact {
         this.setLocation(x, y);
     }
 
+    rotate(angle) {
+        Memento.register(this);
+        this.setRotation(angle);
+    }
+
     show(board) {
         Memento.register(this);
         console.assert(!this._level);
@@ -79,12 +99,20 @@ export class DArtifact {
         delete this._level;
     }
 
+    get board() {
+        return this._element.board;
+    }
+
     get x() {
         return this._x;
     }
 
     get y() {
         return this._y;
+    }
+
+    get angle() {
+        return this._angle;
     }
 
     get px() {
@@ -94,6 +122,10 @@ export class DArtifact {
     get py() {
         return this._py;
     }
+
+    get pangle() {
+        return this._pangle;
+    }
 }
 
 /**
@@ -101,8 +133,8 @@ export class DArtifact {
  */
 export class DImageArtifact extends DArtifact {
 
-    constructor(levelName, image, px, py, w, h) {
-        super(levelName, px, py);
+    constructor(levelName, image, px, py, w, h, pangle=0) {
+        super(levelName, px, py, pangle);
         this._root = image;
         this._width = w;
         this._height = h;
@@ -110,7 +142,8 @@ export class DImageArtifact extends DArtifact {
 
     paint() {
         console.assert(this._level);
-        this._level.drawImage(this._root, this.x-this.width/2, this.y-this.height/2, this.width, this.height);
+        let transform = this.angle ? Matrix2D.rotate(this.angle, new Point2D(this.x, this.y)) : null;
+        this._level.drawImage(transform, this._root, this.x-this.width/2, this.y-this.height/2, this.width, this.height);
     }
 
     get width() {
@@ -129,15 +162,29 @@ export class DElement {
 
     constructor(...artifacts) {
         this._artifacts = [...artifacts];
-    }
-
-    _memento() {
-        return {
-            x:this._x, y:this._y
+        this._angle = 0;
+        for (let artifact of this._artifacts) {
+            artifact._setElement(this);
         }
     }
 
+    _memento() {
+        let memento = {
+            x:this._x, y:this._y
+        }
+        if (this._board) {
+            memento.board = this._board;
+        }
+        return memento;
+    }
+
     _revert(memento) {
+        if (memento.board) {
+            this._board = memento.board;
+        }
+        else {
+            delete this._board;
+        }
         this._x = memento.x;
         this._y = memento.y;
     }
@@ -150,13 +197,22 @@ export class DElement {
         }
     }
 
+    setRotation(angle) {
+        this._angle = angle;
+        for (let artifact of this._artifacts) {
+            artifact.setRotation(angle);
+        }
+    }
+
     setOnBoard(board) {
+        this._board = board;
         for (let artifact of this._artifacts) {
             artifact.setOnBoard(board);
         }
     }
 
     removeFromBoard() {
+        delete this._board;
         for (let artifact of this._artifacts) {
             artifact.removeFromBoard();
         }
@@ -171,16 +227,44 @@ export class DElement {
         }
     }
 
+    rotate(angle) {
+        Memento.register(this);
+        this._angle = angle;
+        for (let artifact of this._artifacts) {
+            artifact.rotate(angle);
+        }
+    }
+
     show(board) {
+        Memento.register(this);
+        this._board = board;
         for (let artifact of this._artifacts) {
             artifact.show(board);
         }
     }
 
     hide() {
+        Memento.register(this);
+        delete this._board;
         for (let artifact of this._artifacts) {
             artifact.hide();
         }
+    }
+
+    get x() {
+        return this._x;
+    }
+
+    get y() {
+        return this._y;
+    }
+
+    get angle() {
+        return this._angle;
+    }
+
+    get board() {
+        return this._board;
     }
 
 }
@@ -247,8 +331,10 @@ export class DLevel {
         delete this._dirty;
     }
 
-    drawImage(image, x, y, w, h) {
-        this._layer.drawImage(image, x, y, w, h);
+    drawImage(transform, image, x, y, w, h) {
+        this._layer.withTransform(transform, () => {
+            this._layer.drawImage(image, x, y, w, h);
+        });
     }
 }
 

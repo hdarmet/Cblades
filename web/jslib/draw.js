@@ -4,7 +4,7 @@ import {
     Matrix2D
 } from "./geometry.js";
 
-/**
+/**f
  * plateform is a facade used to abstract the real (DOM) platform. Useful when this platform has to be replaced by a
  * fake one for tests purposes.
  */
@@ -159,6 +159,10 @@ export class DLayer {
         this._setSize(width, height);
     }
 
+    setDraw(draw) {
+        this._draw = draw;
+    }
+
     _execute(todo) {
         if (this._todos) {
             this._todos.push(todo);
@@ -199,6 +203,21 @@ export class DLayer {
         }
     }
 
+    withTransform(matrix, action) {
+        if (matrix) {
+            this._execute(()=>{
+                _platform.save(this._context);
+                _platform.setTransform(this._context, ...matrix.concat(this.draw.transform).toArray());
+            });
+        }
+        action();
+        if (matrix) {
+            this._execute(()=>{
+                _platform.restore(this._context);
+            });
+        }
+    }
+
     drawRect(x, y, w, h) {
         this._execute(()=> {
             _platform.rect(this._context, x, y, w, h);
@@ -220,9 +239,9 @@ export class DLayer {
         return this;
     }
 
-    setTransform(...params) {
+    setTransform(matrix) {
         this._execute(()=> {
-            _platform.setTransform(this._context, ...params);
+            _platform.setTransform(this._context, ...matrix.toArray());
         });
         return this;
     }
@@ -245,6 +264,10 @@ export class DLayer {
     get root() {
         return this._root;
     }
+
+    get draw() {
+        return this._draw;
+    }
 }
 
 /**
@@ -259,14 +282,15 @@ export class DDraw {
         _platform.setAttribute(this.root, "style", `width: ${width}px; height:${height}px; border: 1px solid; position: relative`);
         _platform.setAttribute(this.root, "tabindex", "0");
         this._layers = new Map();
-        this._transform = [1, 0, 0, 1, 0, 0];
+        this._transform = Matrix2D.getIdentity();
     }
 
     createLayer(name) {
         let layer = new DLayer(name, this._width, this._height);
+        layer.setDraw(this);
         this._layers.set(name, layer);
         _platform.appendChild(this._root, layer.root);
-        layer.setTransform(...this._transform);
+        layer.setTransform(this._transform);
         return layer;
     }
 
@@ -275,9 +299,9 @@ export class DDraw {
     }
 
     setTransform(matrix) {
-        this._transform = matrix.toArray();
+        this._transform = matrix.clone();
         for (let layer of this._layers.values()) {
-            layer.setTransform(...this._transform);
+            layer.setTransform(this._transform);
         }
         return this;
     }
@@ -296,6 +320,10 @@ export class DDraw {
 
     get height() {
         return this._height;
+    }
+
+    get transform() {
+        return this._transform;
     }
 
     setSize(width, height) {
