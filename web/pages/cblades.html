@@ -7,9 +7,6 @@
 <body>
 <p>That is Cursed Blades</p>
 
-<!--
-<script type="module" src="../jslib/draw.js"></script>
--->
 <script type="module">
 
     import {
@@ -21,24 +18,32 @@
     import {
         Memento
     } from "../jslib/mechanisms.js";
+    import {
+        Point2D, Dimension2D
+    } from "../jslib/geometry.js";
 
-    let board = new DBoard(500, 300, 500, 300, "map", "units", "markers");
+    let board = new DBoard(new Dimension2D(500, 300), new Dimension2D(500, 300), "map", "units", "markers");
     console.log(board.root);
     document.body.appendChild(board.root);
     let image = DImage.getImage("../images/civilians1.png");
     let imageMarker = DImage.getImage("../images/tired.png");
-    let artifact = new DImageArtifact("units", image, 0, 0, 50, 50);
-    let artifactMarker = new DImageArtifact("markers", imageMarker, -25, -25, 30, 30);
+    let artifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+    let artifactMarker = new DImageArtifact("markers", imageMarker, new Point2D(-25, -25), new Dimension2D(30, 30));
     let element = new DElement(artifact, artifactMarker);
     element.setRotation(30);
     element.show(board);
     board.paint();
     board.onMouseClick(event=>{
-        let point = board.getBoardXY(event.offsetX, event.offsetY);
-        //board.recenter(event.offsetX, event.offsetY);
-        element.move(point.x, point.y);
-        element.rotate(element.angle+60);
-        return true;
+        let offset = new Point2D(event.offsetX, event.offsetY);
+        let artifact = board.getArtifactOnViewportPoint(offset);
+        if (artifact) {
+            let element = artifact.element;
+            let point = board.getBoardXY(offset);
+            //board.recenter(offset);
+            element.move(point);
+            element.rotate(element.angle+60);
+            return true;
+        }
     });
     board.scrollOnBordersOnMouseMove();
     board.zoomInOutOnMouseWheel();

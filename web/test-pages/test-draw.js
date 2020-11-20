@@ -7,7 +7,7 @@ import {
     DDraw, DImage, setDrawPlatform, getDrawPlatform, targetPlatform
 } from "../jslib/draw.js";
 import {
-    Point2D, Matrix2D
+    Point2D, Matrix2D, Dimension2D
 } from "../jslib/geometry.js";
 import {
     mockPlatform, getContextDirectives, resetContextDirectives
@@ -29,13 +29,13 @@ describe("Drawing fundamentals", ()=> {
 
     it("Checks DDraw creation", () => {
         when:
-            var draw = new DDraw(500, 300);
+            var draw = new DDraw(new Dimension2D(500, 300));
         then:
             assert(draw.root.tagName).equalsTo('div');
             assert(draw.root.style).equalsTo("width: 500px; height:300px; border: 1px solid; position: relative");
             assert(draw.root.tabindex).equalsTo("0");
-            assert(draw.width).equalsTo(500);
-            assert(draw.height).equalsTo(300);
+            assert(draw.dimension.w).equalsTo(500);
+            assert(draw.dimension.h).equalsTo(300);
         when:
             var layer = draw.createLayer("layer1");
         then:
@@ -48,7 +48,7 @@ describe("Drawing fundamentals", ()=> {
     });
 
     function buildBasicDrawWithOneLayerNamedLayer1() {
-        let draw = new DDraw(500, 300);
+        let draw = new DDraw(new Dimension2D(500, 300));
         draw.createLayer("layer1");
         return draw;
     }
@@ -59,13 +59,13 @@ describe("Drawing fundamentals", ()=> {
             var layer = draw.getLayer("layer1");
         when:
             resetDirectives(layer);
-            layer.drawRect(10, 15, 20, 25);
+            layer.drawRect(new Point2D(10, 15), new Dimension2D(20, 25));
         then:
             assert(getDirectives(layer)[0]).equalsTo('rect(10, 15, 20, 25)');
             assert(getDirectives(layer)[1]).equalsTo('stroke()');
         when:
             resetDirectives(layer);
-            layer.fillRect(15, 10, 25, 20);
+            layer.fillRect(new Point2D(15, 10), new Dimension2D(25, 20));
         then:
             assert(getDirectives(layer)[0]).equalsTo('rect(15, 10, 25, 20)');
             assert(getDirectives(layer)[1]).equalsTo('fill()');
@@ -139,11 +139,11 @@ describe("Drawing fundamentals", ()=> {
             var image2 = DImage.getImage("here/where/two.typ");
             var image3 = DImage.getImage("here/where/three.typ");
             layer.drawImage(image1, 10, 10);
-            layer.drawRect(10, 15, 20, 25);
+            layer.drawRect(new Point2D(10, 15), new Dimension2D(20, 25));
             layer.drawImage(image2, 10, 10);
             draw.setTranslate(new Point2D(10, 15));
             layer.drawImage(image3, 10, 10);
-            layer.fillRect(10, 15, 20, 25);
+            layer.fillRect(new Point2D(10, 15), new Dimension2D(20, 25));
         then:
             assert(getDirectives(layer).length).equalsTo(0);
         when: /* loads the first image: the requested draw directive is done for image1 only **/
@@ -171,11 +171,11 @@ describe("Drawing fundamentals", ()=> {
     it("Checks image drawing on DDraw", () => {
         given:
             var draw = buildBasicDrawWithOneLayerNamedLayer1();
-        var layer = draw.getLayer("layer1");
+            var layer = draw.getLayer("layer1");
         when: /* draws an unloaded image */
             resetDirectives(layer);
-        var image = DImage.getImage("here/where/image.typ");
-        layer.drawImage(image, 10, 15);
+            var image = DImage.getImage("here/where/image.typ");
+            layer.drawImage(image, 10, 15);
         then:
             assert(getDirectives(layer).length).equalsTo(0);
         when: /* loads the image: the requested draw directive is done then**/
@@ -183,8 +183,8 @@ describe("Drawing fundamentals", ()=> {
         then:
             assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/image.typ, 10, 15)');
         when: /* draw an already loaded image */
-            resetDirectives(layer);;
-        layer.drawImage(image, 15, 10);
+            resetDirectives(layer);
+            layer.drawImage(image, 15, 10);
         then:
             assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/image.typ, 15, 10)');
     });
@@ -194,10 +194,10 @@ describe("Drawing fundamentals", ()=> {
             var draw = buildBasicDrawWithOneLayerNamedLayer1();
             var layer = draw.getLayer("layer1");
         when: /* draws an unloaded image */
-            draw.setSize(400, 350);
+            draw.setSize(new Dimension2D(400, 350));
         then:
-            assert(draw.width).equalsTo(400);
-            assert(draw.height).equalsTo(350);
+            assert(draw.dimension.w).equalsTo(400);
+            assert(draw.dimension.h).equalsTo(350);
             assert(layer.root.width).equalsTo(400);
             assert(layer.root.height).equalsTo(350);
     });
@@ -334,7 +334,7 @@ describe("Drawing fundamentals", ()=> {
                 addEventListenerInvoked = true;
             }
         when:
-            var draw = new DDraw(500, 300);
+            var draw = new DDraw(new Dimension2D(500, 300));
         then:
             assert(draw.root).is(HTMLDivElement);
         when:
@@ -343,13 +343,13 @@ describe("Drawing fundamentals", ()=> {
             assert(layer.root).is(HTMLCanvasElement);
             assert(layer._context).is(CanvasRenderingContext2D);
         when:
-            layer.drawRect(10, 15, 20, 25);
+            layer.drawRect(new Point2D(10, 15), new Dimension2D(20, 25));
         then:
             assert(rectInvoked).isTrue();
             assert(strokeInvoked).isTrue();
         when:
             var rectInvoked = false;
-            layer.fillRect(10, 15, 20, 25);
+            layer.fillRect(new Point2D(10, 15), new Dimension2D(20, 25));
         then:
             assert(rectInvoked).isTrue();
             assert(fillInvoked).isTrue();

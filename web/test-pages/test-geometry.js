@@ -4,7 +4,7 @@ import {
     describe, it, assert
 } from "../jstest/jtest.js";
 import {
-    Point2D, Matrix2D, Area2D, same, inside
+    Point2D, Dimension2D, Matrix2D, Area2D, same, inside
 } from "../jslib/geometry.js";
 
 describe("Geometry", ()=> {
@@ -45,6 +45,25 @@ describe("Geometry", ()=> {
         then:
             assert(clonePoint.x).equalsTo(30);
             assert(clonePoint.y).equalsTo(40);
+    });
+
+    it("Checks Dimension class", () => {
+        when:
+            var dimension = new Dimension2D(30, 40);
+        then:
+            assert(dimension.w).equalsTo(30);
+            assert(dimension.h).equalsTo(40);
+            assert(dimension.equalsTo(new Dimension2D(30, 40))).isTrue();
+            assert(dimension.equalsTo(new Dimension2D(40, 30))).isFalse();
+            assert(dimension.sameTo(new Dimension2D(30.00005, 40.00005))).isTrue();
+            assert(dimension.sameTo(new Dimension2D(30.00015, 40.00015))).isFalse();
+            assert(dimension.toString()).equalsTo("dimension(30, 40)");
+            assert(dimension.toArray()).arrayEqualsTo([30, 40]);
+        when:
+            var clonedDimension = dimension.clone();
+        then:
+            assert(clonedDimension.w).equalsTo(30);
+            assert(clonedDimension.h).equalsTo(40);
     });
 
     it("Checks Area class", () => {

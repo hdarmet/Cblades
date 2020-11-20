@@ -1,7 +1,7 @@
 'use strict';
 
 import {
-    Matrix2D, Area2D
+    Matrix2D, Area2D, Point2D, Dimension2D
 } from "./geometry.js";
 
 /**f
@@ -151,12 +151,12 @@ export class DImage {
  */
 export class DLayer {
 
-    constructor(name, width, height) {
+    constructor(name, dimension) {
         this._name = name;
         this._root = _platform.createElement("canvas");
         this._context = _platform.getContext(this._root, "2d");
         _platform.setAttribute(this._root, "style", "position: absolute");
-        this._setSize(width, height);
+        this._setSize(dimension);
     }
 
     setDraw(draw) {
@@ -218,17 +218,17 @@ export class DLayer {
         }
     }
 
-    drawRect(x, y, w, h) {
+    drawRect(anchor, dimension) {
         this._execute(()=> {
-            _platform.rect(this._context, x, y, w, h);
+            _platform.rect(this._context, anchor.x, anchor.y, dimension.w, dimension.h);
             _platform.stroke(this._context);
         });
         return this;
     }
 
-    fillRect(x, y, w, h) {
+    fillRect(anchor, dimension) {
         this._execute(()=> {
-            _platform.rect(this._context, x, y, w, h);
+            _platform.rect(this._context, anchor.x, anchor.y, dimension.w, dimension.h);
             _platform.fill(this._context);
         });
         return this;
@@ -246,24 +246,23 @@ export class DLayer {
         return this;
     }
 
-    _setSize(width, height) {
-        this._width = width;
-        this._height = height;
-        _platform.setAttribute(this._root, "width", width);
-        _platform.setAttribute(this._root, "height", height);
+    _setSize(dimension) {
+        this._dimension = dimension;
+        _platform.setAttribute(this._root, "width", this._dimension.w);
+        _platform.setAttribute(this._root, "height", this._dimension.h);
     }
 
     clear() {
         _platform.save(this._context);
         _platform.resetTransform(this._context);
-        _platform.clearRect(this._context, 0, 0, this._width, this._height);
+        _platform.clearRect(this._context, 0, 0, this._dimension.w, this._dimension.h);
         _platform.restore(this._context);
         delete this._todos;
     }
 
     get visibleArea() {
         let transform = this.draw.transform.invert();
-        return Area2D.rectBoundingArea(transform, 0, 0, this._width, this._height);
+        return Area2D.rectBoundingArea(transform, 0, 0, this._dimension.w, this._dimension.h);
     }
 
     get root() {
@@ -280,18 +279,17 @@ export class DLayer {
  */
 export class DDraw {
 
-    constructor(width, height) {
+    constructor(dimension) {
         this._root = _platform.createElement("div");
-        this._width = width;
-        this._height = height;
-        _platform.setAttribute(this.root, "style", `width: ${width}px; height:${height}px; border: 1px solid; position: relative`);
+        this._dimension = dimension;
+        _platform.setAttribute(this.root, "style", `width: ${this._dimension.w}px; height:${this._dimension.h}px; border: 1px solid; position: relative`);
         _platform.setAttribute(this.root, "tabindex", "0");
         this._layers = new Map();
         this._transform = Matrix2D.getIdentity();
     }
 
     createLayer(name) {
-        let layer = new DLayer(name, this._width, this._height);
+        let layer = new DLayer(name, this._dimension);
         layer.setDraw(this);
         this._layers.set(name, layer);
         _platform.appendChild(this._root, layer.root);
@@ -319,24 +317,19 @@ export class DDraw {
         return this._root;
     }
 
-    get width() {
-        return this._width;
-    }
-
-    get height() {
-        return this._height;
+    get dimension() {
+        return this._dimension;
     }
 
     get transform() {
         return this._transform;
     }
 
-    setSize(width, height) {
-        this._width = width;
-        this._height = height;
-        _platform.setAttribute(this.root, "style", `width: ${width}px; height:${height}px; border: 1px solid; position: relative`);
+    setSize(dimension) {
+        this._dimension = dimension;
+        _platform.setAttribute(this.root, "style", `width: ${this._dimension.w}px; height:${this._dimension.h}px; border: 1px solid; position: relative`);
         for (let layer of this._layers.values()) {
-            layer._setSize(width, height);
+            layer._setSize(dimension);
         }
     }
 

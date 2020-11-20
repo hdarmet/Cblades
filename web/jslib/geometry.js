@@ -86,6 +86,42 @@ export class Point2D {
 }
 
 /**
+ * Dimension object in a 2D space
+ */
+export class Dimension2D {
+
+    constructor(w, h) {
+        this.w = w;
+        this.h = h;
+        console.assert(this._isValid());
+    }
+
+    _isValid() {
+        return !isNaN(this.w+this.h);
+    }
+
+    equalsTo(dimension) {
+        return this.w===dimension.w && this.h===dimension.h;
+    }
+
+    sameTo(dimension) {
+        return same(dimension.w, this.w) && same(dimension.h, this.h);
+    }
+
+    toString() {
+        return "dimension("+round(this.w)+", "+round(this.h)+")";
+    }
+
+    toArray() {
+        return [this.w, this.h];
+    }
+
+    clone() {
+        return new Dimension2D(this.w, this.h);
+    }
+}
+
+/**
  * Kind of Rect that are defined by a left/top + right/bottom coordinates
  * Used essentially to compute bounding Rects
  */

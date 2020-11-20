@@ -16,13 +16,11 @@ import {
  */
 export class DArtifact {
 
-    constructor(levelName, px, py, pangle=0) {
+    constructor(levelName, position, pangle=0) {
         this._levelName = levelName;
-        this._px = px;
-        this._py = py;
+        this._position = position;
         this._pangle = pangle;
-        this._x = px;
-        this._y = py;
+        this._location = position;
         this._angle = pangle;
     }
 
@@ -33,9 +31,9 @@ export class DArtifact {
     _memento() {
         return {
             level: this._level,
-            px:this._px, py:this._py,
+            position:this._position,
             pangle:this._pangle,
-            x:this._x, y:this._y,
+            location:this._location,
             angle:this._angle
         }
     }
@@ -44,20 +42,16 @@ export class DArtifact {
         this._level && this._level.invalidate();
         this._level = memento.level;
         this._level && this._level.invalidate();
-        this._px = memento.px;
-        this._py = memento.py;
+        this._position = memento.position;
         this._pangle = memento.pangle;
-        this._x = memento.x;
-        this._y = memento.y;
+        this._location = memento.location;
         this._angle = memento.angle;
     }
 
-    setPosition(x, y, angle) {
+    setLocation(location, angle) {
         let elementRotation = angle ? Matrix2D.rotate(angle, new Point2D(0, 0)) : null;
-        let center = elementRotation ? elementRotation.point(new Point2D(this._px, this._py)) :
-            new Point2D(this._px, this._py);
-        this._x = x+center.x;
-        this._y = y+center.y;
+        let center = elementRotation ? elementRotation.point(this._position) : this._position;
+        this._location = new Point2D(location.x+center.x, location.y+center.y);
         this._angle = angle+this._pangle;
         this._level && this._level.refreshArtifact(this);
     }
@@ -75,9 +69,9 @@ export class DArtifact {
         delete this._level;
     }
 
-    position(x, y, angle) {
+    move(location, angle) {
         Memento.register(this);
-        this.setPosition(x, y, angle);
+        this.setLocation(location, angle);
     }
 
     show(board) {
@@ -94,28 +88,34 @@ export class DArtifact {
         delete this._level;
     }
 
+    containsLocalPoint(lpoint) {
+        return this.area.inside(lpoint);
+    }
+
+    containsPoint(point) {
+        let transform = this.transform;
+        let lpoint = transform ? this.transform.invert().point(point) : point;
+        return this.containsLocalPoint(lpoint);
+    }
+
+    get element() {
+        return this._element;
+    }
+
     get board() {
-        return this._element.board;
+        return this.element.board;
     }
 
-    get x() {
-        return this._x;
-    }
-
-    get y() {
-        return this._y;
+    get location() {
+        return this._location;
     }
 
     get angle() {
         return this._angle;
     }
 
-    get px() {
-        return this._px;
-    }
-
-    get py() {
-        return this._py;
+    get position() {
+        return this._position;
     }
 
     get pangle() {
@@ -123,10 +123,11 @@ export class DArtifact {
     }
 
     get transform() {
-        let translation = this.x || this.y ? Matrix2D.translate(new Point2D(this.x, this.y)) : null;
-        let rotation = this.angle ? Matrix2D.rotate(this.angle, new Point2D(this.x, this.y)) : null;
+        let translation = this._location.x || this._location.y ? Matrix2D.translate(this.location) : null;
+        let rotation = this.angle ? Matrix2D.rotate(this.angle, this.location) : null;
         return translation ? rotation ? translation.concat(rotation) : translation : rotation;
     }
+
 }
 
 /**
@@ -134,30 +135,34 @@ export class DArtifact {
  */
 export class DImageArtifact extends DArtifact {
 
-    constructor(levelName, image, px, py, w, h, pangle=0) {
-        super(levelName, px, py, pangle);
+    constructor(levelName, image, position, dimension, pangle=0) {
+        super(levelName, position, pangle);
         this._root = image;
-        this._width = w;
-        this._height = h;
+        this._dimension = dimension;
+        this._area = new Area2D(-dimension.w/2, -dimension.h/2, dimension.w/2, dimension.h/2);
     }
 
     paint() {
         console.assert(this._level);
-        let transform = this.angle ? Matrix2D.rotate(this.angle, new Point2D(this.x, this.y)) : null;
-        this._level.drawImage(transform, this._root, this.x-this.width/2, this.y-this.height/2, this.width, this.height);
+        let transform = this.angle ? Matrix2D.rotate(this.angle, this.location) : null;
+        this._level.drawImage(transform, this._root,
+            new Point2D(this.location.x-this.dimension.w/2, this.location.y-this.dimension.h/2),
+            this.dimension);
     }
 
-    get width() {
-        return this._width;
+    get dimension() {
+        return this._dimension;
     }
 
-    get height() {
-        return this._height;
+    get area() {
+        return this._area;
     }
 
-    get boundingRect() {
+    get boundingArea() {
         console.assert(this._level);
-        return Area2D.rectBoundingArea(this.transform, -this.width/2, -this.height/2, this.width, this.height);
+        return Area2D.rectBoundingArea(this.transform,
+            -this.dimension.w/2, -this.dimension.h/2,
+            this.dimension.w, this.dimension.h);
     }
 
 }
@@ -170,8 +175,7 @@ export class DElement {
     constructor(...artifacts) {
         this._artifacts = [...artifacts];
         this._angle = 0;
-        this._x = 0;
-        this._y = 0;
+        this._location = new Point2D(0, 0);
         for (let artifact of this._artifacts) {
             artifact._setElement(this);
         }
@@ -179,7 +183,7 @@ export class DElement {
 
     _memento() {
         let memento = {
-            x:this._x, y:this._y
+            location:this._location
         }
         if (this._board) {
             memento.board = this._board;
@@ -194,25 +198,23 @@ export class DElement {
         else {
             delete this._board;
         }
-        this._x = memento.x;
-        this._y = memento.y;
+        this._location = memento.location;
     }
 
-    _setPositionArtifacts() {
+    _setArtifactsLocation() {
         for (let artifact of this._artifacts) {
-            artifact.setPosition(this._x, this.y, this._angle);
+            artifact.setLocation(this._location, this._angle);
         }
     }
 
-    setLocation(x, y) {
-        this._x = x;
-        this._y = y;
-        this._setPositionArtifacts();
+    setLocation(point) {
+        this._location = point;
+        this._setArtifactsLocation();
     }
 
     setRotation(angle) {
         this._angle = angle;
-        this._setPositionArtifacts();
+        this._setArtifactsLocation();
     }
 
     setOnBoard(board) {
@@ -229,23 +231,22 @@ export class DElement {
         }
     }
 
-    _positionArtifacts() {
+    _moveArtifacts() {
         for (let artifact of this._artifacts) {
-            artifact.position(this._x, this.y, this._angle);
+            artifact.move(this._location, this._angle);
         }
     }
 
-    move(x, y) {
+    move(point) {
         Memento.register(this);
-        this._x = x;
-        this._y = y;
-        this._positionArtifacts();
+        this._location = point;
+        this._moveArtifacts();
     }
 
     rotate(angle) {
         Memento.register(this);
         this._angle = angle;
-        this._positionArtifacts();
+        this._moveArtifacts();
     }
 
     show(board) {
@@ -264,12 +265,8 @@ export class DElement {
         }
     }
 
-    get x() {
-        return this._x;
-    }
-
-    get y() {
-        return this._y;
+    get location() {
+        return this._location;
     }
 
     get angle() {
@@ -306,7 +303,7 @@ export class DLevel {
     addArtifact(artifact) {
         console.assert(!this._artifacts.has(artifact));
         this._artifacts.add(artifact);
-        if (this._visibleArtifacts && artifact.boundingRect.intersect(this.visibleArea)) {
+        if (this._visibleArtifacts && artifact.boundingArea.intersect(this.visibleArea)) {
             this._visibleArtifacts.add(artifact);
         }
         this._dirty = true;
@@ -334,7 +331,7 @@ export class DLevel {
     refreshArtifact(artifact) {
         console.assert(this._artifacts.has(artifact));
         if (this._visibleArtifacts) {
-            let intersect = artifact.boundingRect.intersect(this.visibleArea);
+            let intersect = artifact.boundingArea.intersect(this.visibleArea);
             let visible = this._visibleArtifacts.has(artifact);
             if (!intersect && visible) {
                 this._visibleArtifacts.delete(artifact);
@@ -360,7 +357,7 @@ export class DLevel {
             let levelArea = this.visibleArea;
             this._visibleArtifacts = new Set();
             for (let artifact of this._artifacts) {
-                if (artifact.boundingRect.intersect(levelArea)) {
+                if (artifact.boundingArea.intersect(levelArea)) {
                     this._visibleArtifacts.add(artifact);
                 }
             }
@@ -378,10 +375,20 @@ export class DLevel {
         delete this._dirty;
     }
 
-    drawImage(transform, image, x, y, w, h) {
+    drawImage(transform, image, point, dimension) {
         this._layer.withTransform(transform, () => {
-            this._layer.drawImage(image, x, y, w, h);
+            this._layer.drawImage(image, point.x, point.y, dimension.w, dimension.h);
         });
+    }
+
+    getArtifactOnPoint(point) {
+        let visibleArtifacts = [...this.visibleArtifacts];
+        for (let i = visibleArtifacts.length-1; i>=0; i--) {
+            let artifact = visibleArtifacts[i];
+            if (artifact.containsPoint(point))
+                return artifact;
+        }
+        return null;
     }
 }
 
@@ -390,18 +397,16 @@ export class DLevel {
  */
 export class DBoard {
 
-    constructor(width, height, viewPortWidth, viewPortHeight, ...levels) {
-        this._draw = new DDraw(viewPortWidth, viewPortHeight);
-        this._width = width;
-        this._height = height;
-        this._x = 0;
-        this._y = 0;
+    constructor(dimension, viewportDimension, ...levels) {
+        this._draw = new DDraw(viewportDimension);
+        this._dimension = dimension;
+        this._location = new Point2D(0, 0);
         this._zoomFactor = this.minZoomFactor;
         this._maxZoomFactor = DBoard.DEFAULT_MAX_ZOOM_FACTOR;
         this._zoomIncrement = DBoard.DEFAULT_ZOOM_INCREMENT;
         this._scrollIncrement = DBoard.DEFAULT_SCROLL_INCREMENT;
         this._borderWidth = DBoard.DEFAULT_BORDER_WIDTH;
-        this._focusPoint = new Point2D(this.viewPortWidth/2, this.viewPortHeight/2);
+        this._focusPoint = new Point2D(this.viewportDimension.w/2, this.viewportDimension.h/2);
         this._createLevels(levels);
         this._initMouseClickActions();
         this._initKeyDownActions();
@@ -410,8 +415,11 @@ export class DBoard {
 
     _createLevels(levels) {
         this._levels = new Map();
+        this._levelsArray = []
         for (let levelName of levels) {
-            this._levels.set(levelName, new DLevel(this._draw.createLayer(levelName)));
+            let level = new DLevel(this._draw.createLayer(levelName))
+            this._levels.set(levelName, level);
+            this._levelsArray.push(level);
         }
     }
 
@@ -458,7 +466,7 @@ export class DBoard {
     }
 
     _requestRepaint() {
-        let boardCenter = this.getViewPortXY(0, 0);
+        let boardCenter = this.getViewPortXY(new Point2D(0, 0));
         let matrix =
             Matrix2D.translate(boardCenter).concat(
                 Matrix2D.scale(new Point2D(this._zoomFactor, this._zoomFactor), boardCenter)
@@ -469,23 +477,24 @@ export class DBoard {
         }
     }
 
-    getBoardXY(vx, vy) {
-        let x = (vx-this.viewPortWidth/2)/this._zoomFactor+this._x;
-        let y = (vy-this.viewPortHeight/2)/this._zoomFactor+this._y;
+    getBoardXY(vpoint) {
+        let x = (vpoint.x-this.viewportDimension.w/2)/this._zoomFactor+this._location.x;
+        let y = (vpoint.y-this.viewportDimension.h/2)/this._zoomFactor+this._location.y;
         return new Point2D(x, y);
     }
 
-    getViewPortXY(x, y) {
-        let vx = (x-this._x)*this._zoomFactor + this.viewPortWidth/2;
-        let vy = (y-this._y)*this._zoomFactor + this.viewPortHeight/2;
+    getViewPortXY(point) {
+        let vx = (point.x-this._location.x)*this._zoomFactor + this.viewportDimension.w/2;
+        let vy = (point.y-this._location.y)*this._zoomFactor + this.viewportDimension.h/2;
         return new Point2D(vx, vy);
     }
 
-    zoom(vx, vy, zoomFactor) {
-        let anchor = this.getBoardXY(vx, vy);
+    zoom(vpoint, zoomFactor) {
+        let anchor = this.getBoardXY(vpoint);
         this._zoomFactor = zoomFactor;
-        this._x = anchor.x-(vx-this.viewPortWidth/2)/zoomFactor;
-        this._y = anchor.y-(vy-this.viewPortHeight/2)/zoomFactor;
+        this._location = new Point2D(
+            anchor.x-(vpoint.x-this.viewportDimension.w/2)/zoomFactor,
+            anchor.y-(vpoint.y-this.viewportDimension.h/2)/zoomFactor);
         this._adjust();
         this._requestRepaint();
     }
@@ -500,31 +509,30 @@ export class DBoard {
     }
 
     get minZoomFactor() {
-        return Math.max(this.viewPortWidth/this.width, this.viewPortHeight/this.height);
+        return Math.max(this.viewportDimension.w/this.dimension.w, this.viewportDimension.h/this.dimension.h);
     }
 
     get maxZoomFactor() {
         return this._maxZoomFactor;
     }
 
-    zoomIn(vx, vy) {
-        this.zoom(vx, vy, this.zoomFactor/this.zoomIncrement);
+    zoomIn(vpoint) {
+        this.zoom(vpoint, this.zoomFactor/this.zoomIncrement);
     }
 
-    zoomOut(vx, vy) {
-        this.zoom(vx,vy, this.zoomFactor*this.zoomIncrement);
+    zoomOut(vpoint) {
+        this.zoom(vpoint, this.zoomFactor*this.zoomIncrement);
     }
 
-    center(x, y) {
-        this._x = x;
-        this._y = y;
+    center(point) {
+        this._location = point;
         this._adjust();
         this._requestRepaint();
     }
 
-    recenter(vx, vy) {
-        let point = this.getBoardXY(vx, vy);
-        this.center(point.x, point.y);
+    recenter(vpoint) {
+        let point = this.getBoardXY(vpoint);
+        this.center(point);
     }
 
     setScrollSettings(scrollIncrement, borderWidth) {
@@ -532,43 +540,44 @@ export class DBoard {
         this._borderWidth = borderWidth;
     }
 
-    isOnLeftBorder(vx, vy) {
-        return vx <= this._borderWidth;
+    isOnLeftBorder(vpoint) {
+        return vpoint.x <= this._borderWidth;
     }
 
-    isOnRightBorder(vx, vy) {
-        return this.viewPortWidth-vx <= this._borderWidth;
+    isOnRightBorder(vpoint) {
+        return this.viewportDimension.w-vpoint.x <= this._borderWidth;
     }
 
-    isOnTopBorder(vx, vy) {
-        return vy <= this._borderWidth;
+    isOnTopBorder(vpoint) {
+        return vpoint.y <= this._borderWidth;
     }
 
-    isOnBottomBorder(vx, vy) {
-        return this.viewPortHeight-vy <= this._borderWidth;
+    isOnBottomBorder(vpoint) {
+        return this.viewportDimension.h-vpoint.y <= this._borderWidth;
     }
 
-    _scroll(dx, dy) {
-        this._x += dx/this.zoomFactor;
-        this._y += dy/this.zoomFactor;
+    _scroll(dpoint) {
+        this._location = new Point2D(
+            this._location.x + dpoint.x/this.zoomFactor,
+            this._location.y + dpoint.y/this.zoomFactor);
         this._adjust();
         this._requestRepaint();
     }
 
     scrollOnLeft() {
-        this._scroll(-this._scrollIncrement, 0);
+        this._scroll(new Point2D(-this._scrollIncrement, 0));
     }
 
     scrollOnRight() {
-        this._scroll(this._scrollIncrement, 0);
+        this._scroll(new Point2D(this._scrollIncrement, 0));
     }
 
     scrollOnTop() {
-        this._scroll(0, -this._scrollIncrement);
+        this._scroll(new Point2D(0, -this._scrollIncrement));
     }
 
     scrollOnBottom() {
-        this._scroll(0, this._scrollIncrement);
+        this._scroll(new Point2D(0, this._scrollIncrement));
     }
 
     _adjust() {
@@ -581,22 +590,22 @@ export class DBoard {
             this._zoomFactor=this.maxZoomFactor;
             repaint = true;
         }
-        let deltaX = this.viewPortWidth/2/this._zoomFactor;
-        if (deltaX>this.width/2+this.x) {
-            this._x = deltaX-this.width/2;
+        let deltaX = this.viewportDimension.w/2/this._zoomFactor;
+        if (deltaX>this._dimension.w/2+this._location.x) {
+            this._location = new Point2D(deltaX-this._dimension.w/2, this._location.y);
             repaint = true;
         }
-        if (deltaX>this.width/2-this.x) {
-            this._x = this.width/2-deltaX;
+        if (deltaX>this._dimension.w/2-this._location.x) {
+            this._location = new Point2D(this._dimension.w/2-deltaX, this._location.y);
             repaint = true;
         }
-        let deltaY = this.viewPortHeight/2/this._zoomFactor;
-        if (deltaY>this.height/2+this.y) {
-            this._y = deltaY-this.height/2;
+        let deltaY = this.viewportDimension.h/2/this._zoomFactor;
+        if (deltaY>this._dimension.h/2+this._location.y) {
+            this._location = new Point2D(this._location.x, deltaY-this._dimension.h/2);
             repaint = true;
         }
-        if (deltaY>this.height/2-this.y) {
-            this._y = this.height/2-deltaY;
+        if (deltaY>this._dimension.h/2-this._location.y) {
+            this._location = new Point2D(this._location.x, this._dimension.h/2-deltaY);
             repaint = true;
         }
         return repaint;
@@ -606,28 +615,16 @@ export class DBoard {
         return this._zoomFactor;
     }
 
-    get x() {
-        return this._x;
+    get location() {
+        return this._location;
     }
 
-    get y() {
-        return this._y;
+    get dimension() {
+        return this._dimension;
     }
 
-    get width() {
-        return this._width;
-    }
-
-    get height() {
-        return this._height;
-    }
-
-    get viewPortWidth() {
-        return this._draw.width;
-    }
-
-    get viewPortHeight() {
-        return this._draw.height;
+    get viewportDimension() {
+        return this._draw.dimension;
     }
 
     get root() {
@@ -644,19 +641,20 @@ export class DBoard {
 
     scrollOnBorders(event) {
         let repaint = false;
-        if (this.isOnLeftBorder(event.offsetX, event.offsetY)) {
+        let offset = new Point2D(event.offsetX, event.offsetY);
+        if (this.isOnLeftBorder(offset)) {
             repaint = true;
             this.scrollOnLeft()
         }
-        if (this.isOnRightBorder(event.offsetX, event.offsetY)) {
+        if (this.isOnRightBorder(offset)) {
             repaint = true;
             this.scrollOnRight()
         }
-        if (this.isOnTopBorder(event.offsetX, event.offsetY)) {
+        if (this.isOnTopBorder(offset)) {
             repaint = true;
             this.scrollOnTop()
         }
-        if (this.isOnBottomBorder(event.offsetX, event.offsetY)) {
+        if (this.isOnBottomBorder(offset)) {
             repaint = true;
             this.scrollOnBottom()
         }
@@ -673,11 +671,12 @@ export class DBoard {
     }
 
     zoomInOut(event) {
+        let offset = new Point2D(event.offsetX, event.offsetY);
         if (event.deltaX+event.deltaY+event.deltaZ>0) {
-            this.zoomIn(event.offsetX, event.offsetY);
+            this.zoomIn(offset);
         }
         else {
-            this.zoomOut(event.offsetX, event.offsetY);
+            this.zoomOut(offset);
         }
         this.paint();
         return true;
@@ -717,10 +716,10 @@ export class DBoard {
 
     zoomOnPageKeys(event) {
         if (event.key === 'PageUp') {
-            this.zoomIn(this._focusPoint.x, this._focusPoint.y);
+            this.zoomIn(this._focusPoint);
         }
         if (event.key === 'PageDown') {
-            this.zoomOut(this._focusPoint.x, this._focusPoint.y);
+            this.zoomOut(this._focusPoint);
         }
     }
 
@@ -748,6 +747,17 @@ export class DBoard {
         });
     }
 
+    getArtifactOnViewportPoint(viewportPoint) {
+        return this.getArtifactOnPoint(this.getBoardXY(viewportPoint));
+    }
+
+    getArtifactOnPoint(point) {
+        for (let i = this._levelsArray.length-1; i>=0; i--) {
+            let artifact = this._levelsArray[i].getArtifactOnPoint(point);
+            if (artifact) return artifact;
+        }
+        return null;
+    }
 }
 DBoard.DEFAULT_MAX_ZOOM_FACTOR = 10;
 DBoard.DEFAULT_ZOOM_INCREMENT = 1.5;
