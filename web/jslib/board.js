@@ -4,7 +4,7 @@ import {
     Matrix2D, Point2D, Area2D
 } from "./geometry.js";
 import {
-    DDraw
+    DDraw, DLayer
 } from "./draw.js";
 import {
     Memento
@@ -130,16 +130,41 @@ export class DArtifact {
 
 }
 
+export function RectArtifact(clazz) {
+    return class extends clazz {
+
+        constructor(dimension, ...args) {
+            super(...args);
+            this._dimension = dimension;
+            this._area = new Area2D(-dimension.w/2, -dimension.h/2, dimension.w/2, dimension.h/2);
+        }
+
+        get dimension() {
+            return this._dimension;
+        }
+
+        get area() {
+            return this._area;
+        }
+
+        get boundingArea() {
+            console.assert(this._level);
+            return Area2D.rectBoundingArea(this.transform,
+                -this.dimension.w/2, -this.dimension.h/2,
+                this.dimension.w, this.dimension.h);
+        }
+
+    }
+}
+
 /**
  * Image wrapper artifact
  */
-export class DImageArtifact extends DArtifact {
+export class DImageArtifact extends RectArtifact(DArtifact) {
 
     constructor(levelName, image, position, dimension, pangle=0) {
-        super(levelName, position, pangle);
+        super(dimension, levelName, position, pangle);
         this._root = image;
-        this._dimension = dimension;
-        this._area = new Area2D(-dimension.w/2, -dimension.h/2, dimension.w/2, dimension.h/2);
     }
 
     paint() {
@@ -148,21 +173,6 @@ export class DImageArtifact extends DArtifact {
         this._level.drawImage(transform, this._root,
             new Point2D(this.location.x-this.dimension.w/2, this.location.y-this.dimension.h/2),
             this.dimension);
-    }
-
-    get dimension() {
-        return this._dimension;
-    }
-
-    get area() {
-        return this._area;
-    }
-
-    get boundingArea() {
-        console.assert(this._level);
-        return Area2D.rectBoundingArea(this.transform,
-            -this.dimension.w/2, -this.dimension.h/2,
-            this.dimension.w, this.dimension.h);
     }
 
 }
@@ -179,6 +189,12 @@ export class DElement {
         for (let artifact of this._artifacts) {
             artifact._setElement(this);
         }
+    }
+
+    addArtifact(artifact) {
+        this._artifacts.push(artifact);
+        artifact._setElement(this);
+        return this;
     }
 
     _memento() {
@@ -210,11 +226,13 @@ export class DElement {
     setLocation(point) {
         this._location = point;
         this._setArtifactsLocation();
+        return this;
     }
 
     setRotation(angle) {
         this._angle = angle;
         this._setArtifactsLocation();
+        return this;
     }
 
     setOnBoard(board) {
@@ -222,6 +240,7 @@ export class DElement {
         for (let artifact of this._artifacts) {
             artifact.setOnBoard(board);
         }
+        return this;
     }
 
     removeFromBoard() {
@@ -229,6 +248,7 @@ export class DElement {
         for (let artifact of this._artifacts) {
             artifact.removeFromBoard();
         }
+        return this;
     }
 
     _moveArtifacts() {
@@ -241,12 +261,14 @@ export class DElement {
         Memento.register(this);
         this._location = point;
         this._moveArtifacts();
+        return this;
     }
 
     rotate(angle) {
         Memento.register(this);
         this._angle = angle;
         this._moveArtifacts();
+        return this;
     }
 
     show(board) {
@@ -255,6 +277,7 @@ export class DElement {
         for (let artifact of this._artifacts) {
             artifact.show(board);
         }
+        return this;
     }
 
     hide() {
@@ -263,6 +286,7 @@ export class DElement {
         for (let artifact of this._artifacts) {
             artifact.hide();
         }
+        return this;
     }
 
     get location() {
@@ -348,6 +372,10 @@ export class DLevel {
         this._dirty = true;
     }
 
+    get name() {
+        return this._layer.name;
+    }
+
     get visibleArea() {
         return this._layer.visibleArea;
     }
@@ -381,7 +409,32 @@ export class DLevel {
         });
     }
 
-    getArtifactOnPoint(point) {
+    setStrokeSettings(color, width) {
+        this._layer.setStrokeSettings(color, width);
+    }
+
+    setFillSettings(color) {
+        this._layer.setFillSettings(color);
+    }
+
+    setShadowSettings(color, width) {
+        this._layer.setShadowSettings(color, width);
+    }
+
+    drawRect(transform, anchor, dimension) {
+        this._layer.withTransform(transform, () => {
+            this._layer.drawRect(anchor, dimension);
+        });
+    }
+
+    fillRect(transform, anchor, dimension) {
+        this._layer.withTransform(transform, () => {
+            this._layer.fillRect(anchor, dimension);
+        });
+    }
+
+    getArtifactOnPoint(viewportPoint) {
+        let point = this._layer.transform.invert().point(viewportPoint);
         let visibleArtifacts = [...this.visibleArtifacts];
         for (let i = visibleArtifacts.length-1; i>=0; i--) {
             let artifact = visibleArtifacts[i];
@@ -416,9 +469,10 @@ export class DBoard {
     _createLevels(levels) {
         this._levels = new Map();
         this._levelsArray = []
-        for (let levelName of levels) {
-            let level = new DLevel(this._draw.createLayer(levelName))
-            this._levels.set(levelName, level);
+        for (let layerItem of levels) {
+            let layer = layerItem instanceof DLayer ? this._draw.addLayer(layerItem) : this._draw.createLayer(layerItem);
+            let level = new DLevel(layer)
+            this._levels.set(level.name, level);
             this._levelsArray.push(level);
         }
     }
@@ -747,13 +801,9 @@ export class DBoard {
         });
     }
 
-    getArtifactOnViewportPoint(viewportPoint) {
-        return this.getArtifactOnPoint(this.getBoardXY(viewportPoint));
-    }
-
-    getArtifactOnPoint(point) {
+    getArtifactOnPoint(viewportPoint) {
         for (let i = this._levelsArray.length-1; i>=0; i--) {
-            let artifact = this._levelsArray[i].getArtifactOnPoint(point);
+            let artifact = this._levelsArray[i].getArtifactOnPoint(viewportPoint);
             if (artifact) return artifact;
         }
         return null;

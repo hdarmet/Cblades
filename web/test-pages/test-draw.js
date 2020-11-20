@@ -4,7 +4,7 @@ import {
     describe, it, before, assert, executeTimeouts
 } from "../jstest/jtest.js";
 import {
-    DDraw, DImage, setDrawPlatform, getDrawPlatform, targetPlatform
+    DDraw, DImage, setDrawPlatform, getDrawPlatform, targetPlatform, DStaticLayer
 } from "../jslib/draw.js";
 import {
     Point2D, Matrix2D, Dimension2D
@@ -47,6 +47,17 @@ describe("Drawing fundamentals", ()=> {
             assert(getDirectives(layer)[0]).equalsTo('setTransform(1, 0, 0, 1, 0, 0)');
     });
 
+    it("Checks Static Layer", () => {
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer1 = draw.createLayer("layer1");
+            var layer2 = draw.addLayer(new DStaticLayer("layer2"));
+            draw.setTransform(new Matrix2D(2, 0, 0, 2, 10, 30));
+        then:
+            assert(layer1.transform.toString()).equalsTo("matrix(2, 0, 0, 2, 10, 30)");
+            assert(layer2.transform.toString()).equalsTo("matrix(1, 0, 0, 1, 0, 0)");
+    });
+
     function buildBasicDrawWithOneLayerNamedLayer1() {
         let draw = new DDraw(new Dimension2D(500, 300));
         draw.createLayer("layer1");
@@ -59,16 +70,22 @@ describe("Drawing fundamentals", ()=> {
             var layer = draw.getLayer("layer1");
         when:
             resetDirectives(layer);
+            layer.setStrokeSettings("#F0F0F0", 2);
             layer.drawRect(new Point2D(10, 15), new Dimension2D(20, 25));
         then:
-            assert(getDirectives(layer)[0]).equalsTo('rect(10, 15, 20, 25)');
-            assert(getDirectives(layer)[1]).equalsTo('stroke()');
+            assert(getDirectives(layer)[0]).equalsTo('strokeStyle = #F0F0F0');
+            assert(getDirectives(layer)[1]).equalsTo('lineWidth = 2');
+            assert(getDirectives(layer)[2]).equalsTo('strokeRect(10, 15, 20, 25)');
         when:
             resetDirectives(layer);
+            layer.setFillSettings("#F0F0F0");
+            layer.setShadowSettings("#0F0F0F", 15);
             layer.fillRect(new Point2D(15, 10), new Dimension2D(25, 20));
         then:
-            assert(getDirectives(layer)[0]).equalsTo('rect(15, 10, 25, 20)');
-            assert(getDirectives(layer)[1]).equalsTo('fill()');
+            assert(getDirectives(layer)[0]).equalsTo('fillStyle = #F0F0F0');
+            assert(getDirectives(layer)[1]).equalsTo('shadowColor = #0F0F0F');
+            assert(getDirectives(layer)[2]).equalsTo('shadowBlur = 15');
+            assert(getDirectives(layer)[3]).equalsTo('fillRect(15, 10, 25, 20)');
     });
 
     it("Checks set transform on DDraw", () => {
@@ -149,10 +166,9 @@ describe("Drawing fundamentals", ()=> {
         when: /* loads the first image: the requested draw directive is done for image1 only **/
             image1._root.onload();
         then:
-            assert(getDirectives(layer).length).equalsTo(3);
+            assert(getDirectives(layer).length).equalsTo(2);
             assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/one.typ, 10, 10)');
-            assert(getDirectives(layer)[1]).equalsTo('rect(10, 15, 20, 25)');
-            assert(getDirectives(layer)[2]).equalsTo('stroke()');
+            assert(getDirectives(layer)[1]).equalsTo('strokeRect(10, 15, 20, 25)');
         when: /* load on image that is not the next to draw : no drawing are done */
             resetDirectives(layer);
             image3._root.onload();
@@ -164,8 +180,7 @@ describe("Drawing fundamentals", ()=> {
             assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/two.typ, 10, 10)');
             assert(getDirectives(layer)[1]).equalsTo('setTransform(1, 0, 0, 1, 10, 15)');
             assert(getDirectives(layer)[2]).equalsTo('drawImage(here/where/three.typ, 10, 10)');
-            assert(getDirectives(layer)[3]).equalsTo('rect(10, 15, 20, 25)');
-            assert(getDirectives(layer)[4]).equalsTo('fill()');
+            assert(getDirectives(layer)[3]).equalsTo('fillRect(10, 15, 20, 25)');
     });
 
     it("Checks image drawing on DDraw", () => {
@@ -287,20 +302,15 @@ describe("Drawing fundamentals", ()=> {
     it("Checks all methods of the target platform", () => {
         given:
             setDrawPlatform(targetPlatform());
-            var rectInvoked = false;
-            CanvasRenderingContext2D.prototype.rect = function(...params) {
+            var strokeRectInvoked = false;
+            CanvasRenderingContext2D.prototype.strokeRect = function(...params) {
                 assert(params).arrayEqualsTo([10, 15, 20, 25]);
-                rectInvoked = true;
+                strokeRectInvoked = true;
             }
-            var strokeInvoked = false;
-            CanvasRenderingContext2D.prototype.stroke = function(...params) {
-                assert(params.length).equalsTo(0);
-                strokeInvoked = true;
-            }
-            var fillInvoked = false;
-            CanvasRenderingContext2D.prototype.fill = function(...params) {
-                assert(params.length).equalsTo(0);
-                fillInvoked = true;
+            var fillRectInvoked = false;
+            CanvasRenderingContext2D.prototype.fillRect = function(...params) {
+                assert(params).arrayEqualsTo([10, 15, 20, 25]);
+                fillRectInvoked = true;
             }
             var clearRectInvoked = false;
             CanvasRenderingContext2D.prototype.clearRect = function(...params) {
@@ -313,6 +323,42 @@ describe("Drawing fundamentals", ()=> {
                 assert(params).arrayEqualsTo([15, 10]);
                 drawImageInvoked = true;
             }
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+        then:
+            assert(draw.root).is(HTMLDivElement);
+        when:
+            var layer = draw.createLayer("layer1");
+        then:
+            assert(layer.root).is(HTMLCanvasElement);
+            assert(layer._context).is(CanvasRenderingContext2D);
+        when:
+            layer.drawRect(new Point2D(10, 15), new Dimension2D(20, 25));
+        then:
+            assert(strokeRectInvoked).isTrue();
+        when:
+            var rectInvoked = false;
+            layer.fillRect(new Point2D(10, 15), new Dimension2D(20, 25));
+        then:
+            assert(fillRectInvoked).isTrue();
+        when:
+            layer.clear();
+        then:
+            assert(clearRectInvoked).isTrue();
+        when:
+            var image = {
+                draw(layer, ...params) {
+                    getDrawPlatform().drawImage(layer._context,{src:'here/where/image.typ'}, ...params);
+                }
+            }
+            layer.drawImage(image, 15, 10);
+        then:
+            assert(drawImageInvoked).isTrue();
+    });
+
+    it("Checks all methods of the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
             var setTimeoutInvoked = false;
             Window.prototype.setTimeout = function(handler, timeout, ...args) {
                 assert(handler()).equalsTo(true);
@@ -335,38 +381,7 @@ describe("Drawing fundamentals", ()=> {
             }
         when:
             var draw = new DDraw(new Dimension2D(500, 300));
-        then:
-            assert(draw.root).is(HTMLDivElement);
-        when:
             var layer = draw.createLayer("layer1");
-        then:
-            assert(layer.root).is(HTMLCanvasElement);
-            assert(layer._context).is(CanvasRenderingContext2D);
-        when:
-            layer.drawRect(new Point2D(10, 15), new Dimension2D(20, 25));
-        then:
-            assert(rectInvoked).isTrue();
-            assert(strokeInvoked).isTrue();
-        when:
-            var rectInvoked = false;
-            layer.fillRect(new Point2D(10, 15), new Dimension2D(20, 25));
-        then:
-            assert(rectInvoked).isTrue();
-            assert(fillInvoked).isTrue();
-        when:
-            layer.clear();
-        then:
-            assert(clearRectInvoked).isTrue();
-        when:
-            var image = {
-                draw(layer, ...params) {
-                    getDrawPlatform().drawImage(layer._context,{src:'here/where/image.typ'}, ...params);
-                }
-            }
-            layer.drawImage(image, 15, 10);
-        then:
-            assert(drawImageInvoked).isTrue();
-        when:
             try {
                 var testSetTimeout = window.setTimeout; // remove test setTimeout
                 delete window.setTimeout;
@@ -394,5 +409,62 @@ describe("Drawing fundamentals", ()=> {
         then:
             assert(addEventListenerInvoked).isTrue();
     });
+
+    it("Checks all methods of the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
+            var strokeStyleInvoked = false;
+            Object.defineProperty(CanvasRenderingContext2D.prototype, "strokeStyle", {
+                set: function(style) {
+                    assert(style).equalsTo("#0F0F0F");
+                    strokeStyleInvoked = true;
+                }
+            });
+            var lineWidthInvoked = false;
+            Object.defineProperty(CanvasRenderingContext2D.prototype, "lineWidth", {
+                set: function(style) {
+                    assert(style).equalsTo(2);
+                    lineWidthInvoked = true;
+                }
+            });
+            var fillStyleInvoked = false;
+            Object.defineProperty(CanvasRenderingContext2D.prototype, "fillStyle", {
+                set: function(style) {
+                    assert(style).equalsTo("#0F0F0F");
+                    fillStyleInvoked = true;
+                }
+            });
+            var shadowColorInvoked = false;
+            Object.defineProperty(CanvasRenderingContext2D.prototype, "shadowColor", {
+                set: function(style) {
+                    assert(style).equalsTo("#0F0F0F");
+                    shadowColorInvoked = true;
+                }
+            });
+            var shadowBlurInvoked = false;
+            Object.defineProperty(CanvasRenderingContext2D.prototype, "shadowBlur", {
+                set: function(style) {
+                    assert(style).equalsTo(15);
+                    shadowBlurInvoked = true;
+                }
+            });
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer1");
+            layer.setStrokeSettings("#0F0F0F", 2);
+        then:
+            assert(strokeStyleInvoked).isTrue();
+            assert(lineWidthInvoked).isTrue();
+        when:
+            layer.setFillSettings("#0F0F0F");
+        then:
+            assert(fillStyleInvoked).isTrue();
+        when:
+            layer.setShadowSettings("#0F0F0F", 15);
+        then:
+            assert(shadowColorInvoked).isTrue();
+            assert(shadowBlurInvoked).isTrue();
+    });
+
 });
 

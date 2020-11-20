@@ -16,7 +16,7 @@ import {
     DBoard, DElement, DImageArtifact
 } from "../jslib/board.js";
 import {
-    mockPlatform, getContextDirectives, resetContextDirectives
+    mockPlatform, getDirectives, resetDirectives
 } from "./mocks.js";
 
 
@@ -27,18 +27,6 @@ describe("Board", ()=> {
         DImage.resetCache();
         Mechanisms.reset();
     });
-
-    function getLayer(level) {
-        return level._layer;
-    }
-
-    function getDirectives(level) {
-        return getContextDirectives(getLayer(level)._context);
-    }
-
-    function resetDirectives(level) {
-        resetContextDirectives(getLayer(level)._context);
-    }
 
     it("Checks board creation", () => {
         when:
@@ -72,6 +60,31 @@ describe("Board", ()=> {
         assert(getDirectives(level)[index + 2]).equalsTo("clearRect(0, 0, 500, 300)");
         assert(getDirectives(level)[index + 3]).equalsTo("restore()");
     }
+
+    it("Checks level drawing primitives", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var level = board.getLevel("units");
+            var image = DImage.getImage("../images/unit.png");
+            image._root.onload();
+        when:
+            resetDirectives(level);
+            level.drawImage(null, image, new Point2D(10, 20), new Dimension2D(50, 60));
+            level.setStrokeSettings("#000000", 2);
+            level.drawRect(null, new Point2D(10, 20), new Dimension2D(50, 60));
+            level.setFillSettings("#FFFFFF");
+            level.setShadowSettings("#0F0F0F", 15);
+            level.fillRect(null, new Point2D(10, 20), new Dimension2D(50, 60));
+        then:
+            assert(getDirectives(level)[0]).equalsTo("drawImage(../images/unit.png, 10, 20, 50, 60)");
+            assert(getDirectives(level)[1]).equalsTo("strokeStyle = #000000");
+            assert(getDirectives(level)[2]).equalsTo("lineWidth = 2");
+            assert(getDirectives(level)[3]).equalsTo("strokeRect(10, 20, 50, 60)");
+            assert(getDirectives(level)[4]).equalsTo("fillStyle = #FFFFFF");
+            assert(getDirectives(level)[5]).equalsTo("shadowColor = #0F0F0F");
+            assert(getDirectives(level)[6]).equalsTo("shadowBlur = 15");
+            assert(getDirectives(level)[7]).equalsTo("fillRect(10, 20, 50, 60)");
+    });
 
     it("Checks element creation/displaying/removing", () => {
         given:
@@ -124,7 +137,8 @@ describe("Board", ()=> {
             var artifact1 = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
             var artifact2 = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50), 60);
             var artifact3 = new DImageArtifact("units", image, new Point2D(10, 15), new Dimension2D(50, 50));
-            var element = new DElement(artifact1, artifact2, artifact3);
+            var element = new DElement(artifact1, artifact2);
+            element.addArtifact(artifact3);
             resetDirectives(level);
             element.setOnBoard(board);
             board.paint();
@@ -806,13 +820,13 @@ describe("Board", ()=> {
             board.paint();              // VisibleArtifacts created here
         then:
             assert(getDirectives(level)).arrayContains("/images/unit.png"); // Assert element is visible
-            let artifact = board.getArtifactOnViewportPoint(new Point2D(250, 150)); // Special case : no transform needed
+            let artifact = board.getArtifactOnPoint(new Point2D(250, 150)); // Special case : no transform needed
             assert(artifact.element).equalsTo(element);
-            artifact = board.getArtifactOnViewportPoint(new Point2D(350, 150));
+            artifact = board.getArtifactOnPoint(new Point2D(350, 150));
             assert(artifact).isNotDefined();
         when:
             element.setLocation(new Point2D(200, 0));
-            artifact = board.getArtifactOnViewportPoint(new Point2D(350, 150));
+            artifact = board.getArtifactOnPoint(new Point2D(350, 150));
             assert(artifact.element).equalsTo(element);
     });
 

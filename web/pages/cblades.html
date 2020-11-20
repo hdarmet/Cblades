@@ -10,7 +10,7 @@
 <script type="module">
 
     import {
-        DImage
+        DImage, DStaticLayer
     } from "../jslib/draw.js";
     import {
         DBoard, DElement, DImageArtifact
@@ -21,8 +21,12 @@
     import {
         Point2D, Dimension2D
     } from "../jslib/geometry.js";
+    import {
+        DWidget
+    } from "../jslib/widget.js";
 
-    let board = new DBoard(new Dimension2D(500, 300), new Dimension2D(500, 300), "map", "units", "markers");
+    let board = new DBoard(new Dimension2D(500, 300), new Dimension2D(500, 300),
+        "map", "units", "markers", new DStaticLayer("panels"));
     console.log(board.root);
     document.body.appendChild(board.root);
     let image = DImage.getImage("../images/civilians1.png");
@@ -35,14 +39,21 @@
     board.paint();
     board.onMouseClick(event=>{
         let offset = new Point2D(event.offsetX, event.offsetY);
-        let artifact = board.getArtifactOnViewportPoint(offset);
+        let artifact = board.getArtifactOnPoint(offset);
         if (artifact) {
+            let widget = new DWidget()
+                .setPanelSettings(new Dimension2D(100, 150))
+                .setLocation(new Point2D(offset.x-50, offset.y))
+                .setOnBoard(board);
+            /*
             let element = artifact.element;
             let point = board.getBoardXY(offset);
             //board.recenter(offset);
             element.move(point);
             element.rotate(element.angle+60);
             return true;
+
+             */
         }
     });
     board.scrollOnBordersOnMouseMove();

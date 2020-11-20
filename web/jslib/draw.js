@@ -38,16 +38,32 @@ let _targetPlatform = {
         return element.getContext(contextName);
     },
 
-    rect(context, x, y, w, h) {
-        context.rect(x, y, w, h);
+    setLineWidth(context, width) {
+        context.lineWidth = width;
     },
 
-    stroke(context) {
-        context.stroke();
+    setStrokeStyle(context, style) {
+        context.strokeStyle = style;
     },
 
-    fill(context) {
-        context.fill();
+    setFillStyle(context, style) {
+        context.fillStyle = style;
+    },
+
+    setShadowColor(context, color) {
+        context.shadowColor = color
+    },
+
+    setShadowBlur(context, width) {
+        context.shadowBlur = width;
+    },
+
+    strokeRect(context, x, y, w, h) {
+        context.strokeRect(x, y, w, h);
+    },
+
+    fillRect(context, x, y, w, h) {
+        context.fillRect(x, y, w, h);
     },
 
     setTransform(context, a, b, c, d, e, f) {
@@ -151,16 +167,16 @@ export class DImage {
  */
 export class DLayer {
 
-    constructor(name, dimension) {
+    constructor(name) {
         this._name = name;
         this._root = _platform.createElement("canvas");
         this._context = _platform.getContext(this._root, "2d");
         _platform.setAttribute(this._root, "style", "position: absolute");
-        this._setSize(dimension);
     }
 
-    setDraw(draw) {
+    setDraw(draw, dimension) {
         this._draw = draw;
+        this._setSize(dimension);
     }
 
     _execute(todo) {
@@ -207,7 +223,7 @@ export class DLayer {
         if (matrix) {
             this._execute(()=>{
                 _platform.save(this._context);
-                _platform.setTransform(this._context, ...matrix.concat(this.draw.transform).toArray());
+                _platform.setTransform(this._context, ...matrix.concat(this.transform).toArray());
             });
         }
         action();
@@ -218,18 +234,39 @@ export class DLayer {
         }
     }
 
+    setStrokeSettings(color, width) {
+        this._execute(()=> {
+            _platform.setStrokeStyle(this._context, color);
+            _platform.setLineWidth(this._context, width);
+        });
+        return this;
+    }
+
+    setFillSettings(color) {
+        this._execute(()=> {
+            _platform.setFillStyle(this._context, color);
+        });
+        return this;
+    }
+
+    setShadowSettings(color, width) {
+        this._execute(()=> {
+            _platform.setShadowColor(this._context, color);
+            _platform.setShadowBlur(this._context, width);
+        });
+        return this;
+    }
+
     drawRect(anchor, dimension) {
         this._execute(()=> {
-            _platform.rect(this._context, anchor.x, anchor.y, dimension.w, dimension.h);
-            _platform.stroke(this._context);
+            _platform.strokeRect(this._context, anchor.x, anchor.y, dimension.w, dimension.h);
         });
         return this;
     }
 
     fillRect(anchor, dimension) {
         this._execute(()=> {
-            _platform.rect(this._context, anchor.x, anchor.y, dimension.w, dimension.h);
-            _platform.fill(this._context);
+            _platform.fillRect(this._context, anchor.x, anchor.y, dimension.w, dimension.h);
         });
         return this;
     }
@@ -239,7 +276,12 @@ export class DLayer {
         return this;
     }
 
+    updateTransform(matrix) {
+        this.setTransform(matrix);
+    }
+
     setTransform(matrix) {
+        this._transform = matrix;
         this._execute(()=> {
             _platform.setTransform(this._context, ...matrix.toArray());
         });
@@ -260,8 +302,16 @@ export class DLayer {
         delete this._todos;
     }
 
+    get name() {
+        return this._name;
+    }
+
+    get transform() {
+        return this._transform;
+    }
+
     get visibleArea() {
-        let transform = this.draw.transform.invert();
+        let transform = this.transform.invert();
         return Area2D.rectBoundingArea(transform, 0, 0, this._dimension.w, this._dimension.h);
     }
 
@@ -274,6 +324,19 @@ export class DLayer {
     }
 }
 
+/**
+ * A DLayer that does not update its transform when Board transform is modified
+ */
+export class DStaticLayer extends DLayer {
+
+    constructor(name) {
+        super(name);
+        this.setTransform(Matrix2D.getIdentity());
+    }
+
+    updateTransform(matrix) {}
+
+}
 /**
  * DDraw is the viewport where the drawing is shown. It is essentially a stack of layers.
  */
@@ -289,11 +352,14 @@ export class DDraw {
     }
 
     createLayer(name) {
-        let layer = new DLayer(name, this._dimension);
-        layer.setDraw(this);
-        this._layers.set(name, layer);
+        return this.addLayer(new DLayer(name));
+    }
+
+    addLayer(layer) {
+        layer.setDraw(this, this._dimension);
+        this._layers.set(layer.name, layer);
         _platform.appendChild(this._root, layer.root);
-        layer.setTransform(this._transform);
+        layer.updateTransform(this._transform);
         return layer;
     }
 
@@ -304,7 +370,7 @@ export class DDraw {
     setTransform(matrix) {
         this._transform = matrix.clone();
         for (let layer of this._layers.values()) {
-            layer.setTransform(this._transform);
+            layer.updateTransform(this._transform);
         }
         return this;
     }

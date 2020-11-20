@@ -22,8 +22,32 @@ export let mockPlatform = {
         return {host:element, directives:[]};
     },
 
-    rect(context, x, y, w, h) {
-        context.directives.push(`rect(${round(x)}, ${round(y)}, ${round(w)}, ${round(h)})`);
+    setLineWidth(context, width) {
+        context.directives.push(`lineWidth = ${width}`);
+    },
+
+    setStrokeStyle(context, style) {
+        context.directives.push(`strokeStyle = ${style}`);
+    },
+
+    setFillStyle(context, style) {
+        context.directives.push(`fillStyle = ${style}`);
+    },
+
+    setShadowColor(context, color) {
+        context.directives.push(`shadowColor = ${color}`);
+    },
+
+    setShadowBlur(context, width) {
+        context.directives.push(`shadowBlur = ${width}`);
+    },
+
+    strokeRect(context, x, y, w, h) {
+        context.directives.push(`strokeRect(${round(x)}, ${round(y)}, ${round(w)}, ${round(h)})`);
+    },
+
+    fillRect(context, x, y, w, h) {
+        context.directives.push(`fillRect(${round(x)}, ${round(y)}, ${round(w)}, ${round(h)})`);
     },
 
     stroke(context) {
@@ -86,9 +110,22 @@ export let mockPlatform = {
 
 }
 
-export function getContextDirectives(context) {
-    return context.directives;
+export function getContextDirectives(context, start=0) {
+    return start ? context.directives.slice(start) : context.directives;
 }
+
 export function resetContextDirectives(context) {
     context.directives = [];
+}
+
+export function getLayer(level) {
+    return level._layer;
+}
+
+export function getDirectives(level, start=0) {
+    return getContextDirectives(getLayer(level)._context, start);
+}
+
+export function resetDirectives(level) {
+    resetContextDirectives(getLayer(level)._context);
 }
