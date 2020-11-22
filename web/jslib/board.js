@@ -7,16 +7,50 @@ import {
     DDraw, DLayer
 } from "./draw.js";
 import {
+    Mechanisms,
     Memento
 } from "./mechanisms.js";
 
+export function PositionAware(clazz) {
+    return class extends clazz {
+
+        constructor(...args) {
+            super(...args);
+        }
+
+        get location() {
+            return this._location;
+        }
+
+        get angle() {
+            return this._angle;
+        }
+
+        get transform() {
+            let translation = this._location.x || this._location.y ? Matrix2D.translate(this.location) : null;
+            let rotation = this.angle ? Matrix2D.rotate(this.angle, this.location) : null;
+            return translation ? rotation ? translation.concat(rotation) : translation : rotation;
+        }
+
+        getLocation(lpoint) {
+            let transform = this.transform;
+            return transform ? this.transform.point(lpoint) : lpoint;
+        }
+
+        getPosition(point) {
+            let transform = this.transform;
+            return transform ? this.transform.invert().point(point) : point;
+        }
+    }
+}
 
 /**
  * Wrap something that can be shown on a given layer
  */
-export class DArtifact {
+export class DArtifact extends PositionAware(Object) {
 
     constructor(levelName, position, pangle=0) {
+        super();
         this._levelName = levelName;
         this._position = position;
         this._pangle = pangle;
@@ -48,12 +82,16 @@ export class DArtifact {
         this._angle = memento.angle;
     }
 
+    refresh() {
+        this._level && this._level.refreshArtifact(this);
+    }
+
     setLocation(location, angle) {
         let elementRotation = angle ? Matrix2D.rotate(angle, new Point2D(0, 0)) : null;
         let center = elementRotation ? elementRotation.point(this._position) : this._position;
         this._location = new Point2D(location.x+center.x, location.y+center.y);
         this._angle = angle+this._pangle;
-        this._level && this._level.refreshArtifact(this);
+        this.refresh();
     }
 
     setOnBoard(board) {
@@ -93,9 +131,11 @@ export class DArtifact {
     }
 
     containsPoint(point) {
-        let transform = this.transform;
-        let lpoint = transform ? this.transform.invert().point(point) : point;
-        return this.containsLocalPoint(lpoint);
+        return this.containsLocalPoint(this.getPosition(point));
+    }
+
+    get level() {
+        return this._level;
     }
 
     get element() {
@@ -106,14 +146,6 @@ export class DArtifact {
         return this.element.board;
     }
 
-    get location() {
-        return this._location;
-    }
-
-    get angle() {
-        return this._angle;
-    }
-
     get position() {
         return this._position;
     }
@@ -122,14 +154,11 @@ export class DArtifact {
         return this._pangle;
     }
 
-    get transform() {
-        let translation = this._location.x || this._location.y ? Matrix2D.translate(this.location) : null;
-        let rotation = this.angle ? Matrix2D.rotate(this.angle, this.location) : null;
-        return translation ? rotation ? translation.concat(rotation) : translation : rotation;
-    }
-
 }
 
+/**
+ * Mixin containing methods for Artifact that have a rect shape
+ */
 export function RectArtifact(clazz) {
     return class extends clazz {
 
@@ -170,7 +199,10 @@ export class DImageArtifact extends RectArtifact(DArtifact) {
     paint() {
         console.assert(this._level);
         let transform = this.angle ? Matrix2D.rotate(this.angle, this.location) : null;
-        this._level.drawImage(transform, this._root,
+        if (transform) {
+            this._level.setTransformSettings(transform);
+        }
+        this._level.drawImage(this._root,
             new Point2D(this.location.x-this.dimension.w/2, this.location.y-this.dimension.h/2),
             this.dimension);
     }
@@ -180,9 +212,10 @@ export class DImageArtifact extends RectArtifact(DArtifact) {
 /**
  * Gather/combine artifacts that represents a given concept
  */
-export class DElement {
+export class DElement extends PositionAware(Object) {
 
     constructor(...artifacts) {
+        super();
         this._artifacts = [...artifacts];
         this._angle = 0;
         this._location = new Point2D(0, 0);
@@ -289,12 +322,10 @@ export class DElement {
         return this;
     }
 
-    get location() {
-        return this._location;
-    }
-
-    get angle() {
-        return this._angle;
+    refresh() {
+        for (let artifact of this._artifacts) {
+            artifact.refresh();
+        }
     }
 
     get board() {
@@ -397,16 +428,20 @@ export class DLevel {
         if (this._dirty) {
             this._layer.clear();
             for (let artifact of this.visibleArtifacts) {
-                artifact.paint();
+                this._layer.withSettings(() => {
+                    artifact.paint();
+                });
             }
         }
         delete this._dirty;
     }
 
-    drawImage(transform, image, point, dimension) {
-        this._layer.withTransform(transform, () => {
-            this._layer.drawImage(image, point.x, point.y, dimension.w, dimension.h);
-        });
+    drawImage(image, point, dimension) {
+        this._layer.drawImage(image, point.x, point.y, dimension.w, dimension.h);
+    }
+
+    setTransformSettings(transform) {
+        this._layer.setTransformSettings(transform);
     }
 
     setStrokeSettings(color, width) {
@@ -421,16 +456,12 @@ export class DLevel {
         this._layer.setShadowSettings(color, width);
     }
 
-    drawRect(transform, anchor, dimension) {
-        this._layer.withTransform(transform, () => {
-            this._layer.drawRect(anchor, dimension);
-        });
+    drawRect(anchor, dimension) {
+        this._layer.drawRect(anchor, dimension);
     }
 
-    fillRect(transform, anchor, dimension) {
-        this._layer.withTransform(transform, () => {
-            this._layer.fillRect(anchor, dimension);
-        });
+    fillRect(anchor, dimension) {
+        this._layer.fillRect(anchor, dimension);
     }
 
     getArtifactOnPoint(viewportPoint) {
@@ -442,6 +473,10 @@ export class DLevel {
                 return artifact;
         }
         return null;
+    }
+
+    get transform() {
+        return this._layer.transform;
     }
 }
 
@@ -551,6 +586,7 @@ export class DBoard {
             anchor.y-(vpoint.y-this.viewportDimension.h/2)/zoomFactor);
         this._adjust();
         this._requestRepaint();
+        Mechanisms.fire(this, DBoard.ZOOM_EVENT);
     }
 
     setZoomSettings(zoomIncrement, maxZoomFactor) {
@@ -616,6 +652,7 @@ export class DBoard {
             this._location.y + dpoint.y/this.zoomFactor);
         this._adjust();
         this._requestRepaint();
+        Mechanisms.fire(this, DBoard.SCROLL_EVENT);
     }
 
     scrollOnLeft() {
@@ -813,3 +850,5 @@ DBoard.DEFAULT_MAX_ZOOM_FACTOR = 10;
 DBoard.DEFAULT_ZOOM_INCREMENT = 1.5;
 DBoard.DEFAULT_BORDER_WIDTH = 10;
 DBoard.DEFAULT_SCROLL_INCREMENT = 10;
+DBoard.SCROLL_EVENT = "board-scroll";
+DBoard.ZOOM_EVENT = "board-zoom";

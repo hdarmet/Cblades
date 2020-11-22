@@ -119,8 +119,11 @@ describe("Drawing fundamentals", ()=> {
         when: /* draws an unloaded image */
             resetDirectives(layer);
             var image = DImage.getImage("here/where/image.typ");
-            layer.withTransform(Matrix2D.rotate(90, new Point2D(10, 15)),
-                () => layer.drawImage(image, 10, 15)
+            layer.withSettings(
+                () => {
+                    layer.setTransformSettings(Matrix2D.rotate(90, new Point2D(10, 15)));
+                    layer.drawImage(image, 10, 15);
+                }
             );
         then: /* Image is not drawn, but transform is set */
             assert(getDirectives(layer).length).equalsTo(2);
@@ -135,8 +138,11 @@ describe("Drawing fundamentals", ()=> {
             assert(getDirectives(layer)[1]).equalsTo('restore()');
         when: /* draw an already loaded image */
             resetDirectives(layer);
-            layer.withTransform(Matrix2D.rotate(90, new Point2D(15, 10)),
-                ()=>layer.drawImage(image, 15, 10)
+            layer.withSettings(
+                ()=>{
+                    layer.setTransformSettings(Matrix2D.rotate(90, new Point2D(15, 10)));
+                    layer.drawImage(image, 15, 10);
+                }
             );
         then:
             assert(getDirectives(layer).length).equalsTo(4);
@@ -202,6 +208,32 @@ describe("Drawing fundamentals", ()=> {
             layer.drawImage(image, 15, 10);
         then:
             assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/image.typ, 15, 10)');
+    });
+
+    it("Checks image drawing with settings on DDraw", () => {
+        given:
+            var draw = buildBasicDrawWithOneLayerNamedLayer1();
+            var layer = draw.getLayer("layer1");
+        when:  /* add image settings */
+            resetDirectives(layer);
+            var image = DImage.getImage("here/where/image.typ");
+            image.setSettings((platform, context)=>{
+                platform.setShadowColor(context, "#FF0000");
+                platform.setShadowBlur(context, 15);
+            });
+            image._root.onload();
+            layer.drawImage(image, 10, 15);
+        then:
+            assert(getDirectives(layer)[0]).equalsTo('shadowColor = #FF0000');
+            assert(getDirectives(layer)[1]).equalsTo('shadowBlur = 15');
+            assert(getDirectives(layer)[2]).equalsTo('drawImage(here/where/image.typ, 10, 15)');
+
+        when: /* remove image settings */
+            resetDirectives(layer);
+            image.setSettings(null);
+            layer.drawImage(image, 10, 15);
+        then:
+            assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/image.typ, 10, 15)');
     });
 
     it("Checks DDraw resize", () => {
@@ -299,7 +331,7 @@ describe("Drawing fundamentals", ()=> {
             assert(keyDown).isTrue();
     });
 
-    it("Checks all methods of the target platform", () => {
+    it("Checks all drawing methods of the target platform", () => {
         given:
             setDrawPlatform(targetPlatform());
             var strokeRectInvoked = false;
@@ -356,61 +388,7 @@ describe("Drawing fundamentals", ()=> {
             assert(drawImageInvoked).isTrue();
     });
 
-    it("Checks all methods of the target platform", () => {
-        given:
-            setDrawPlatform(targetPlatform());
-            var setTimeoutInvoked = false;
-            Window.prototype.setTimeout = function(handler, timeout, ...args) {
-                assert(handler()).equalsTo(true);
-                assert(timeout).equalsTo(100);
-                assert(args).arrayEqualsTo([1, 2]);
-                setTimeoutInvoked = true;
-                return "token";
-            }
-            var clearTimeoutInvoked = false;
-            Window.prototype.clearTimeout = function(token) {
-                assert(token).equalsTo("token");
-                clearTimeoutInvoked = true;
-            }
-            var addEventListenerInvoked = false;
-            EventTarget.prototype.addEventListener = function(eventType, eventListener, ...args) {
-                assert(eventType).equalsTo("click");
-                eventListener({preventDefault(){}});
-                assert(args).arrayEqualsTo([true]);
-                addEventListenerInvoked = true;
-            }
-        when:
-            var draw = new DDraw(new Dimension2D(500, 300));
-            var layer = draw.createLayer("layer1");
-            try {
-                var testSetTimeout = window.setTimeout; // remove test setTimeout
-                delete window.setTimeout;
-                var token = getDrawPlatform().setTimeout(function () {return true;}, 100, 1, 2);
-            }
-            finally {
-                window.setTimeout = testSetTimeout;
-            }
-        then:
-            assert(token).equalsTo("token");
-            assert(setTimeoutInvoked).isTrue();
-        when:
-            try {
-                var testClearTimeout = window.clearTimeout; // remove test setTimeout
-                delete window.clearTimeout;
-                var token = getDrawPlatform().clearTimeout("token");
-            }
-            finally {
-                window.clearTimeout = testClearTimeout;
-            }
-        then:
-            assert(clearTimeoutInvoked).isTrue();
-        when:
-            draw.onMouseClick(function(event) {return true});
-        then:
-            assert(addEventListenerInvoked).isTrue();
-    });
-
-    it("Checks all methods of the target platform", () => {
+    it("Checks settings methods of the target platform", () => {
         given:
             setDrawPlatform(targetPlatform());
             var strokeStyleInvoked = false;
@@ -464,6 +442,60 @@ describe("Drawing fundamentals", ()=> {
         then:
             assert(shadowColorInvoked).isTrue();
             assert(shadowBlurInvoked).isTrue();
+    });
+
+    it("Checks all non canvas methods of the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
+            var setTimeoutInvoked = false;
+            Window.prototype.setTimeout = function(handler, timeout, ...args) {
+                assert(handler()).equalsTo(true);
+                assert(timeout).equalsTo(100);
+                assert(args).arrayEqualsTo([1, 2]);
+                setTimeoutInvoked = true;
+                return "token";
+            }
+            var clearTimeoutInvoked = false;
+            Window.prototype.clearTimeout = function(token) {
+                assert(token).equalsTo("token");
+                clearTimeoutInvoked = true;
+            }
+            var addEventListenerInvoked = false;
+            EventTarget.prototype.addEventListener = function(eventType, eventListener, ...args) {
+                assert(eventType).equalsTo("click");
+                eventListener({preventDefault(){}});
+                assert(args).arrayEqualsTo([true]);
+                addEventListenerInvoked = true;
+            }
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer1");
+            try {
+                var testSetTimeout = window.setTimeout; // remove test setTimeout
+                delete window.setTimeout;
+                var token = getDrawPlatform().setTimeout(function () {return true;}, 100, 1, 2);
+            }
+            finally {
+                window.setTimeout = testSetTimeout;
+            }
+        then:
+            assert(token).equalsTo("token");
+            assert(setTimeoutInvoked).isTrue();
+        when:
+            try {
+                var testClearTimeout = window.clearTimeout; // remove test setTimeout
+                delete window.clearTimeout;
+                var token = getDrawPlatform().clearTimeout("token");
+            }
+            finally {
+                window.clearTimeout = testClearTimeout;
+            }
+        then:
+            assert(clearTimeoutInvoked).isTrue();
+        when:
+            draw.onMouseClick(function(event) {return true});
+        then:
+            assert(addEventListenerInvoked).isTrue();
     });
 
 });

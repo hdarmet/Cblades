@@ -9,6 +9,7 @@
 
 <script type="module">
 
+    /*
     import {
         DImage, DStaticLayer
     } from "../jslib/draw.js";
@@ -18,13 +19,28 @@
     import {
         Memento
     } from "../jslib/mechanisms.js";
+
+    import {
+        DWidget
+    } from "../jslib/widget.js";
+    */
     import {
         Point2D, Dimension2D
     } from "../jslib/geometry.js";
     import {
-        DWidget
-    } from "../jslib/widget.js";
+        CBGame, CBMap, CBUnit, CBHexId
+    } from "../jslib/cblades/game.js";
 
+    let game = new CBGame();
+    document.body.appendChild(game.root);
+    let map = new CBMap("/CBlades/images/maps/map1.png");
+    game.setMap(map);
+    let counter1 = new CBUnit("/CBlades/images/units/misc/civilians1.png");
+    let counter2 = new CBUnit("/CBlades/images/units/misc/civilians1.png");
+    game.addCounter(counter1, new CBHexId(map, 5, 8));
+    game.addCounter(counter2, new CBHexId(map, 6, 8));
+    game.start();
+    /*
     let board = new DBoard(new Dimension2D(500, 300), new Dimension2D(500, 300),
         "map", "units", "markers", new DStaticLayer("panels"));
     console.log(board.root);
@@ -45,7 +61,7 @@
                 .setPanelSettings(new Dimension2D(100, 150))
                 .setLocation(new Point2D(offset.x-50, offset.y))
                 .setOnBoard(board);
-            /*
+
             let element = artifact.element;
             let point = board.getBoardXY(offset);
             //board.recenter(offset);
@@ -53,7 +69,7 @@
             element.rotate(element.angle+60);
             return true;
 
-             */
+
         }
     });
     board.scrollOnBordersOnMouseMove();
@@ -62,6 +78,8 @@
     board.zoomOnKeyDown();
     board.undoRedoOnKeyDown();
     Memento.activate();
+
+     */
 </script>
 </body>
 </html>

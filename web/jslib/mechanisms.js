@@ -81,7 +81,7 @@ export class Memento {
         let current = this.current;
         if (current.size !== 0) {
             this._undoTrx.push(new Map());
-            this._fire(Memento.OPEN, this.current);
+            this._fire(Memento.OPEN_EVENT, this.current);
         }
         return this;
     }
@@ -92,7 +92,7 @@ export class Memento {
             if (!current.has(element)) {
                 this._redoTrx.length = 0;
                 current.set(element, this._memento(element));
-                this._fire(Memento.KEEP, element);
+                this._fire(Memento.KEEP_EVENT, element);
             }
             return this;
         }
@@ -145,12 +145,12 @@ export class Memento {
 
     activate() {
         this._active = true;
-        this._fire(Memento.ACTIVATE);
+        this._fire(Memento.ACTIVATE_EVENT);
     }
 
     deactivate() {
         this._active = false;
-        this._fire(Memento.DESACTIVATE);
+        this._fire(Memento.DESACTIVATE_EVENT);
     }
 
     undo() {
@@ -161,7 +161,7 @@ export class Memento {
         if (current) {
             let redo = this._rollback(current);
             this._redoTrx.push(redo);
-            this._fire(Memento.UNDO);
+            this._fire(Memento.UNDO_EVENT);
         }
         this._undoTrx.push(new Map());
         return this;
@@ -175,7 +175,7 @@ export class Memento {
                 this._undoTrx.pop();
             }
             this._undoTrx.push(undo);
-            this._fire(Memento.REDO);
+            this._fire(Memento.REDO_EVENT);
         }
         return this;
     }
@@ -187,7 +187,7 @@ export class Memento {
         }
         if (current) {
             this._rollback(current);
-            this._fire(Memento.UNDO);
+            this._fire(Memento.UNDO_EVENT);
         }
         this._undoTrx.push(new Map());
         return this;
@@ -197,18 +197,18 @@ export class Memento {
         this._undoTrx.length = 0;
         this._redoTrx.length = 0;
         this._undoTrx.push(new Map());
-        this._fire(Memento.CLEAR);
+        this._fire(Memento.CLEAR_EVENT);
         return this;
     }
 }
 Memento.manager = new Memento();
-Memento.KEEP = "memento-keep";
-Memento.OPEN = "memento-open";
-Memento.UNDO = "memento-undo";
-Memento.REDO = "memento-redo";
-Memento.CLEAR = "memento-clear";
-Memento.ACTIVATE = "memento-activate";
-Memento.DESACTIVATE = "memento-desactivate";
+Memento.KEEP_EVENT = "memento-keep";
+Memento.OPEN_EVENT = "memento-open";
+Memento.UNDO_EVENT = "memento-undo";
+Memento.REDO_EVENT = "memento-redo";
+Memento.CLEAR_EVENT = "memento-clear";
+Memento.ACTIVATE_EVENT = "memento-activate";
+Memento.DESACTIVATE_EVENT = "memento-desactivate";
 Memento.register = function(element) {
     Memento.manager.register(element);
 }

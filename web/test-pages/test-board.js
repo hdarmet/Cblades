@@ -47,6 +47,7 @@ describe("Board", ()=> {
             assert(levelUnits).isDefined();
             assert(levelMarkers).isDefined();
             assert(levelMap._layer).is(DLayer);
+            assert(levelMap.transform.toString()).equalsTo("matrix(1, 0, 0, 1, 250, 150)");
     });
 
     function createBoardWithMapUnitsAndMarkersLevels(width, height, viewPortWidth, viewPortHeight) {
@@ -69,12 +70,12 @@ describe("Board", ()=> {
             image._root.onload();
         when:
             resetDirectives(level);
-            level.drawImage(null, image, new Point2D(10, 20), new Dimension2D(50, 60));
+            level.drawImage(image, new Point2D(10, 20), new Dimension2D(50, 60));
             level.setStrokeSettings("#000000", 2);
-            level.drawRect(null, new Point2D(10, 20), new Dimension2D(50, 60));
+            level.drawRect(new Point2D(10, 20), new Dimension2D(50, 60));
             level.setFillSettings("#FFFFFF");
             level.setShadowSettings("#0F0F0F", 15);
-            level.fillRect(null, new Point2D(10, 20), new Dimension2D(50, 60));
+            level.fillRect(new Point2D(10, 20), new Dimension2D(50, 60));
         then:
             assert(getDirectives(level)[0]).equalsTo("drawImage(../images/unit.png, 10, 20, 50, 60)");
             assert(getDirectives(level)[1]).equalsTo("strokeStyle = #000000");
@@ -105,18 +106,20 @@ describe("Board", ()=> {
         when:
             board.paint();
         then:
-            assert(getDirectives(level).length).equalsTo(5);
+            assert(getDirectives(level).length).equalsTo(7);
             assertLevelIsCleared(0, level)
             /* draws content */
-            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
+            assert(getDirectives(level)[4]).equalsTo("save()");
+            assert(getDirectives(level)[5]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
+            assert(getDirectives(level)[6]).equalsTo("restore()");
         when:
             resetDirectives(level);
             element.setLocation(new Point2D(110, 70));
             board.paint();
         then:
-            assert(getDirectives(level).length).equalsTo(5);
+            assert(getDirectives(level).length).equalsTo(7);
             assertLevelIsCleared(0, level);
-            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 85, 45, 50, 50)");
+            assert(getDirectives(level)[5]).equalsTo("drawImage(../images/unit.png, 85, 45, 50, 50)");
         when:
             resetDirectives(level);
             element.removeFromBoard();
@@ -125,6 +128,34 @@ describe("Board", ()=> {
             assert(getDirectives(level).length).equalsTo(4);
             assertLevelIsCleared(0, level);
             assert(getDirectives(level)[3]).equalsTo("restore()");
+    });
+
+
+    it("Checks element refresh feature", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var level = board.getLevel("units");
+            var image1 = DImage.getImage("../images/unit1.png");
+            image1._root.onload();
+            var image2 = DImage.getImage("../images/unit2.png");
+            image2._root.onload();
+            var artifact1 = new DImageArtifact("units", image1, new Point2D(-10, -15), new Dimension2D(50, 50));
+            var artifact2 = new DImageArtifact("units", image2, new Point2D(10, 15), new Dimension2D(50, 50), 45);
+            var element = new DElement(artifact1, artifact2);
+            element.setOnBoard(board);
+            board.paint();
+            resetDirectives(level);
+        when:
+            board.paint(); // nothing to paint, everything is fine
+        then:
+            assert(getDirectives(level).length).equalsTo(0);
+        when: // force repainting
+            element.refresh();
+            board.paint();
+        then:
+            assert(getDirectives(level).length).equalsTo(11);
+            assert(getDirectives(level)).arrayContains("../images/unit1.png");
+            assert(getDirectives(level)).arrayContains("../images/unit2.png");
     });
 
     it("Checks default element settings", () => {
@@ -181,14 +212,26 @@ describe("Board", ()=> {
             assert(element.angle).equalsTo(90);
             assert(element.location.x).equalsTo(100);
             assert(element.location.y).equalsTo(50);
+            assert(element.getLocation(new Point2D(5, 10)).x).equalsTo(90);
+            assert(element.getLocation(new Point2D(5, 10)).y).equalsTo(55);
+            assert(element.getPosition(new Point2D(90, 55)).x).equalsTo(5);
+            assert(element.getPosition(new Point2D(90, 55)).y).equalsTo(10);
+
+            assert(artifact1.level).equalsTo(level);
             assert(artifact1.pangle).equalsTo(0);
             assert(artifact1.angle).equalsTo(90);
             assert(artifact1.position.x).equalsTo(-10);
             assert(artifact1.position.y).equalsTo(-15);
             assert(artifact1.location.x).equalsTo(115);
             assert(artifact1.location.y).equalsTo(40);
+            assert(artifact1.getLocation(new Point2D(5, 10)).x).equalsTo(105);
+            assert(artifact1.getLocation(new Point2D(5, 10)).y).equalsTo(45);
+            assert(artifact1.getPosition(new Point2D(105, 45)).x).equalsTo(5);
+            assert(artifact1.getPosition(new Point2D(105, 45)).y).equalsTo(10);
             assert(artifact1.transform.toString()).equalsTo("matrix(0, 1, -1, 0, 115, 40)");
             assert(artifact1.boundingArea.toString()).equalsTo("area(90, 15, 140, 65)");
+
+            assert(artifact2.level).equalsTo(level);
             assert(artifact2.pangle).equalsTo(45);
             assert(artifact2.angle).equalsTo(135);
             assert(artifact2.position.x).equalsTo(10);
@@ -197,6 +240,7 @@ describe("Board", ()=> {
             assert(artifact2.location.y).equalsTo(60);
             assert(artifact2.transform.toString()).equalsTo("matrix(-0.7071, 0.7071, -0.7071, -0.7071, 85, 60)");
             assert(artifact2.boundingArea.toString()).equalsTo("area(49.6447, 24.6447, 120.3553, 95.3553)");
+
             assert(getDirectives(level).length).equalsTo(12);
             assertLevelIsCleared(0, level);
             assert(getDirectives(level)[4]).equalsTo("save()");
@@ -277,9 +321,9 @@ describe("Board", ()=> {
             board.paint();
         then:
             assert(element.board).equalsTo(board);
-            assert(getDirectives(level).length).equalsTo(5);
+            assert(getDirectives(level).length).equalsTo(7);
             assertLevelIsCleared(0, level);
-            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
+            assert(getDirectives(level)[5]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
         when:
             resetDirectives(level);
             Memento.undo();
@@ -312,9 +356,9 @@ describe("Board", ()=> {
             board.paint();
         then:
             assert(element.board).equalsTo(board);
-            assert(getDirectives(level).length).equalsTo(5);
+            assert(getDirectives(level).length).equalsTo(7);
             assertLevelIsCleared(0, level);
-            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
+            assert(getDirectives(level)[5]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
     });
 
     it("Checks element moves in transaction", () => {
@@ -330,17 +374,17 @@ describe("Board", ()=> {
             element.move(new Point2D(150, 100));
             board.paint();
         then:
-            assert(getDirectives(level).length).equalsTo(5);
+            assert(getDirectives(level).length).equalsTo(7);
             assertLevelIsCleared(0, level);
-            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 125, 75, 50, 50)");
+            assert(getDirectives(level)[5]).equalsTo("drawImage(../images/unit.png, 125, 75, 50, 50)");
         when:
             resetDirectives(level);
             Memento.undo();
             board.paint();
         then:
-            assert(getDirectives(level).length).equalsTo(5);
+            assert(getDirectives(level).length).equalsTo(7);
             assertLevelIsCleared(0, level);
-            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
+            assert(getDirectives(level)[5]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
     });
 
     it("Checks element rotation in transaction", () => {
@@ -573,7 +617,7 @@ describe("Board", ()=> {
             var mementoOpened = false;
             Mechanisms.addListener({
                 _processGlobalEvent:(source, event, value) => {
-                    if (event === Memento.OPEN) mementoOpened = true;
+                    if (event === Memento.OPEN_EVENT) mementoOpened = true;
                 }
             });
         when:
@@ -598,7 +642,7 @@ describe("Board", ()=> {
             var mementoOpened = false;
             Mechanisms.addListener({
                 _processGlobalEvent:(source, event, value) => {
-                    if (event === Memento.OPEN) mementoOpened = true;
+                    if (event === Memento.OPEN_EVENT) mementoOpened = true;
                 }
             });
         when:
@@ -623,7 +667,7 @@ describe("Board", ()=> {
             var mementoOpened = false;
             Mechanisms.addListener({
                 _processGlobalEvent:(source, event, value) => {
-                    if (event === Memento.OPEN) mementoOpened = true;
+                    if (event === Memento.OPEN_EVENT) mementoOpened = true;
                 }
             });
         when:
@@ -648,7 +692,7 @@ describe("Board", ()=> {
             var mementoOpened = false;
             Mechanisms.addListener({
                 _processGlobalEvent:(source, event, value) => {
-                    if (event === Memento.OPEN) mementoOpened = true;
+                    if (event === Memento.OPEN_EVENT) mementoOpened = true;
                 }
             });
         when:
@@ -789,23 +833,23 @@ describe("Board", ()=> {
             resetDirectives(level); // Move image one time
             var event = createEvent("click", {offsetX: 260, offsetY: 170});
             mockPlatform.dispatchEvent(board.root, "click", event);
-            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, -5, 15, 50, 50)");
+            assert(getDirectives(level)[5]).equalsTo("drawImage(../images/unit.png, -5, 15, 50, 50)");
             resetDirectives(level); // Move image a second time in another transaction
             event = createEvent("click", {offsetX: 240, offsetY: 130});
             mockPlatform.dispatchEvent(board.root, "click", event);
-            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, -45, -65, 50, 50)");
+            assert(getDirectives(level)[5]).equalsTo("drawImage(../images/unit.png, -45, -65, 50, 50)");
         when:
             resetDirectives(level);
             event = createEvent("keydown", {key: 'z', ctrlKey:true});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
-            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, -5, 15, 50, 50)");
+            assert(getDirectives(level)[5]).equalsTo("drawImage(../images/unit.png, -5, 15, 50, 50)");
         when:
             resetDirectives(level);
             event = createEvent("keydown", {key: 'y', ctrlKey:true});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
-            assert(getDirectives(level)[4]).equalsTo("drawImage(../images/unit.png, -45, -65, 50, 50)");
+            assert(getDirectives(level)[5]).equalsTo("drawImage(../images/unit.png, -45, -65, 50, 50)");
 
     });
 

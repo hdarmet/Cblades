@@ -132,8 +132,20 @@ export class DImage {
         }
     }
 
+    setSettings(settings) {
+        if (settings) {
+            this._settings = settings;
+        }
+        else {
+            delete this._settings;
+        }
+    }
+
     draw(layer, ...params) {
         let todo = ()=>{
+            if (this._settings) {
+                this._settings(_platform, layer._context);
+            }
             _platform.drawImage(layer._context, this._root, ...params);
         }
         if (this._todos) {
@@ -159,6 +171,10 @@ export class DImage {
             _images.set(path, image);
         }
         return image;
+    }
+
+    static get images() {
+        return _images;
     }
 }
 
@@ -219,19 +235,22 @@ export class DLayer {
         }
     }
 
-    withTransform(matrix, action) {
-        if (matrix) {
-            this._execute(()=>{
-                _platform.save(this._context);
-                _platform.setTransform(this._context, ...matrix.concat(this.transform).toArray());
-            });
-        }
+    withSettings(action) {
+        this._execute(()=>{
+            _platform.save(this._context);
+        });
         action();
-        if (matrix) {
-            this._execute(()=>{
-                _platform.restore(this._context);
-            });
-        }
+        this._execute(()=>{
+            _platform.restore(this._context);
+        });
+    }
+
+    setTransformSettings(matrix) {
+        this._execute(()=> {
+            let transform = this.transform && matrix ? matrix.concat(this.transform) : this.transform || matrix;
+            transform && _platform.setTransform(this._context, ...transform.toArray());
+        });
+        return this;
     }
 
     setStrokeSettings(color, width) {
@@ -425,7 +444,7 @@ export class DDraw {
                 let toBeContinued = func(event);
                 _platform.clearTimeout(this._mouseMoveToken);
                 if (toBeContinued) {
-                    this._mouseMoveToken = _platform.setTimeout(funcWrapper, 10, event);
+                    this._mouseMoveToken = _platform.setTimeout(funcWrapper, 15, event);
                 }
             }
             funcWrapper(event);

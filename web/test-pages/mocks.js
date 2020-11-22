@@ -1,5 +1,9 @@
 'use strict';
 
+import {
+    DImage
+} from "../jslib/draw.js";
+
 function round(v) {
     return Math.round(v*10000)/10000;
 }
@@ -48,14 +52,6 @@ export let mockPlatform = {
 
     fillRect(context, x, y, w, h) {
         context.directives.push(`fillRect(${round(x)}, ${round(y)}, ${round(w)}, ${round(h)})`);
-    },
-
-    stroke(context) {
-        context.directives.push(`stroke()`);
-    },
-
-    fill(context) {
-        context.directives.push(`fill()`);
     },
 
     setTransform(context, a, b, c, d, e, f) {
@@ -128,4 +124,10 @@ export function getDirectives(level, start=0) {
 
 export function resetDirectives(level) {
     resetContextDirectives(getLayer(level)._context);
+}
+
+export function loadAllImages() {
+    for (let image of DImage.images.values()) {
+        image._root.onload();
+    }
 }

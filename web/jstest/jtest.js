@@ -77,14 +77,14 @@ export class Assertor {
                 if (value.indexOf(model) !== -1) return;
             }
         }
-        throw new AssertionFailed(`${value} does not contain ${model}`);
+        throw new AssertionFailed(`${values} does not contain ${model}`);
     }
 
     _arrayNotContains(model, values) {
         if (values) {
             for (let value of values) {
                 if (value.indexOf(model) !== -1) {
-                    throw new AssertionFailed(`${value} contains ${model}`);
+                    throw new AssertionFailed(`${values} contains ${model}`);
                 }
             }
         }
