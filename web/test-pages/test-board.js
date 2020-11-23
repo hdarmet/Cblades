@@ -16,7 +16,7 @@ import {
     DBoard, DElement, DImageArtifact
 } from "../jslib/board.js";
 import {
-    mockPlatform, getDirectives, resetDirectives
+    mockPlatform, getDirectives, resetDirectives, createEvent
 } from "./mocks.js";
 
 
@@ -591,17 +591,6 @@ describe("Board", ()=> {
             assert(board.isOnLeftBorder(new Point2D(19, 150))).isTrue();
             assert(board.isOnLeftBorder(new Point2D(21, 150))).isFalse();
     });
-
-    function createEvent(eventType, args) {
-        return {
-            type: eventType,
-            ...args,
-            defaultStatus: true,
-            preventDefault() {
-                this.defaultStatus = false;
-            }
-        };
-    }
 
     it("Checks onMouse reflex", () => {
         given:

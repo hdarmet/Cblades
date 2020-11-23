@@ -131,3 +131,14 @@ export function loadAllImages() {
         image._root.onload();
     }
 }
+
+export function createEvent(eventType, args) {
+    return {
+        type: eventType,
+        ...args,
+        defaultStatus: true,
+        preventDefault() {
+            this.defaultStatus = false;
+        }
+    };
+}
