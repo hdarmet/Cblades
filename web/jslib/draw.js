@@ -4,9 +4,10 @@ import {
     Matrix2D, Area2D, Point2D, Dimension2D
 } from "./geometry.js";
 
-/**f
- * plateform is a facade used to abstract the real (DOM) platform. Useful when this platform has to be replaced by a
+/**
+ * _platform is a facade used to abstract the real (DOM) platform. Useful when this platform has to be replaced by a
  * fake one for tests purposes.
+ * _targetPlateform is the facade that connect to the real platform (i.e. the canvas DOM objects on the navigator)
  */
 let _targetPlatform = {
 
@@ -132,20 +133,8 @@ export class DImage {
         }
     }
 
-    setSettings(settings) {
-        if (settings) {
-            this._settings = settings;
-        }
-        else {
-            delete this._settings;
-        }
-    }
-
     draw(layer, ...params) {
         let todo = ()=>{
-            if (this._settings) {
-                this._settings(_platform, layer._context);
-            }
             _platform.drawImage(layer._context, this._root, ...params);
         }
         if (this._todos) {
@@ -439,15 +428,19 @@ export class DDraw {
     }
 
     onMouseMove(func) {
+        let mouseMoveToken;
         _platform.addEventListener(this.root, 'mousemove', event => {
             let funcWrapper = event => {
                 let toBeContinued = func(event);
-                _platform.clearTimeout(this._mouseMoveToken);
+                _platform.clearTimeout(mouseMoveToken);
                 if (toBeContinued) {
-                    this._mouseMoveToken = _platform.setTimeout(funcWrapper, 15, event);
+                    mouseMoveToken = _platform.setTimeout(funcWrapper, 15, event);
                 }
             }
             funcWrapper(event);
+        }, true);
+        _platform.addEventListener(this.root, 'mouseleave', event => {
+            _platform.clearTimeout(mouseMoveToken);
         }, true);
     }
 

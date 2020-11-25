@@ -130,32 +130,66 @@ describe("Board", ()=> {
             assert(getDirectives(level)[3]).equalsTo("restore()");
     });
 
+    it("Checks artifact setSettings feature", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var level = board.getLevel("units");
+            var image = DImage.getImage("../images/unit1.png");
+            image._root.onload();
+            var artifact = new DImageArtifact("units", image, new Point2D(-10, -15), new Dimension2D(50, 50));
+            var element = new DElement(artifact);
+            element.setOnBoard(board);
+        when:
+            artifact.setSettings(level=>{
+                level.setShadowSettings("#000000", 15);
+            });
+            resetDirectives(level);
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000",
+                "shadowBlur = 15",
+                "drawImage(../images/unit1.png, -35, -40, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            artifact.setSettings();
+            resetDirectives(level);
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit1.png, -35, -40, 50, 50)",
+                "restore()"
+            ]);
+    });
 
     it("Checks element refresh feature", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
-            var level = board.getLevel("units");
-            var image1 = DImage.getImage("../images/unit1.png");
-            image1._root.onload();
-            var image2 = DImage.getImage("../images/unit2.png");
-            image2._root.onload();
-            var artifact1 = new DImageArtifact("units", image1, new Point2D(-10, -15), new Dimension2D(50, 50));
-            var artifact2 = new DImageArtifact("units", image2, new Point2D(10, 15), new Dimension2D(50, 50), 45);
-            var element = new DElement(artifact1, artifact2);
-            element.setOnBoard(board);
-            board.paint();
-            resetDirectives(level);
+        var level = board.getLevel("units");
+        var image1 = DImage.getImage("../images/unit1.png");
+        image1._root.onload();
+        var image2 = DImage.getImage("../images/unit2.png");
+        image2._root.onload();
+        var artifact1 = new DImageArtifact("units", image1, new Point2D(-10, -15), new Dimension2D(50, 50));
+        var artifact2 = new DImageArtifact("units", image2, new Point2D(10, 15), new Dimension2D(50, 50), 45);
+        var element = new DElement(artifact1, artifact2);
+        element.setOnBoard(board);
+        board.paint();
+        resetDirectives(level);
         when:
             board.paint(); // nothing to paint, everything is fine
         then:
             assert(getDirectives(level).length).equalsTo(0);
         when: // force repainting
             element.refresh();
-            board.paint();
+        board.paint();
         then:
             assert(getDirectives(level).length).equalsTo(11);
-            assert(getDirectives(level)).arrayContains("../images/unit1.png");
-            assert(getDirectives(level)).arrayContains("../images/unit2.png");
+        assert(getDirectives(level)).arrayContains("../images/unit1.png");
+        assert(getDirectives(level)).arrayContains("../images/unit2.png");
     });
 
     it("Checks default element settings", () => {
@@ -170,7 +204,6 @@ describe("Board", ()=> {
             var artifact3 = new DImageArtifact("units", image, new Point2D(10, 15), new Dimension2D(50, 50));
             var element = new DElement(artifact1, artifact2);
             element.addArtifact(artifact3);
-            resetDirectives(level);
             element.setOnBoard(board);
             board.paint();
         then:
@@ -188,7 +221,55 @@ describe("Board", ()=> {
             assert(artifact2.transform.toString()).equalsTo("matrix(0.5, 0.866, -0.866, 0.5, 0, 0)");
             assert(artifact2.boundingArea.toString()).equalsTo("area(-34.1506, -34.1506, 34.1506, 34.1506)");
             assert(artifact3.transform.toString()).equalsTo("matrix(1, 0, 0, 1, 10, 15)");
-            assert(artifact3.boundingArea.toString()).equalsTo("area(-15, -10, 35, 40)");
+            assert(artifact3.boundingArea.toString()).equalsTo("area(-15, -10, 35, 40)");;
+    });
+
+    it("Checks change artifact position and relative orientation", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var level = board.getLevel("units");
+            var image = DImage.getImage("../images/unit.png");
+            image._root.onload();
+            var artifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+            var element = new DElement(artifact);
+            element.setOnBoard(board);
+            resetDirectives(level);
+            board.paint();
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when: // Change position
+            resetDirectives(level);
+            artifact.position = new Point2D(-10, -15);
+            board.paint();
+        then:
+            assert(artifact.position.toString()).equalsTo("point(-10, -15)");
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit.png, -35, -40, 50, 50)",
+                "restore()"
+            ]);
+        when: // Change orientation
+            resetDirectives(level);
+            artifact.pangle = 60;
+            board.paint();
+        then:
+            assert(artifact.pangle).equalsTo(60);
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(0.5, 0.866, -0.866, 0.5, 232.0096, 151.1603)",
+                "drawImage(../images/unit.png, -35, -40, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            var orphanArtifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+            orphanArtifact.position = new Point2D(10, 10);
+            orphanArtifact.pangle = 60;
+        then:
+            assert(orphanArtifact.position.toString()).equalsTo("point(10, 10)");
+            assert(orphanArtifact.pangle).equalsTo(60);
     });
 
     it("Checks element containing multiple artifacts", () => {
@@ -251,6 +332,43 @@ describe("Board", ()=> {
             assert(getDirectives(level)[9]).equalsTo("setTransform(-0.7071, 0.7071, -0.7071, -0.7071, 437.5305, 192.3223)");
             assert(getDirectives(level)[10]).equalsTo("drawImage(../images/unit2.png, 60, 35, 50, 50)");
             assert(getDirectives(level)[11]).equalsTo("restore()");
+    });
+
+    it("Checks search for artifacts from a viewport point", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var mapLevel = board.getLevel("map");
+            var level = board.getLevel("units");
+        when:
+            var mapImage = DImage.getImage("../images/map.png");
+            mapImage._root.onload();
+            var mapArtifact = new DImageArtifact("map", mapImage, new Point2D(0, 0), new Dimension2D(300, 300));
+            mapArtifact.pangle = 45;
+            var mapElement = new DElement(mapArtifact);
+            mapElement.setOnBoard(board);
+            var image = DImage.getImage("../images/unit.png");
+            image._root.onload();
+            var artifact1 = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+            var artifact2 = new DImageArtifact("units", image, new Point2D(80, 100), new Dimension2D(50, 50));
+            var artifact3 = new DImageArtifact("units", image, new Point2D(90, 110), new Dimension2D(50, 50));
+            var element = new DElement(artifact1, artifact2, artifact3);
+            element.setOnBoard(board);
+            board.paint();
+        then:
+            assert(board.getViewPortPoint(mapArtifact.location).toString()).equalsTo("point(250, 150)");
+            assert(board.getViewPortPoint(artifact1.location).toString()).equalsTo("point(250, 150)");
+            assert(board.getViewPortPoint(artifact2.location).toString()).equalsTo("point(290, 200)");
+            assert(board.getViewPortPoint(artifact3.location).toString()).equalsTo("point(295, 205)");
+            assert(mapLevel.getArtifactOnPoint(new Point2D(250, 80))).equalsTo(mapArtifact);
+            assert(mapLevel.getArtifactOnPoint(new Point2D(180, 80))).isNotDefined();
+            assert(mapLevel.isPointOnArtifact(mapArtifact, new Point2D(250, 80))).isTrue();
+            assert(mapLevel.isPointOnArtifact(mapArtifact, new Point2D(180, 80))).isFalse();
+            assert(level.getAllArtifactsOnPoint(new Point2D(290, 200))).arrayEqualsTo([artifact3, artifact2]);
+            assert(board.getArtifactOnPoint(new Point2D(250, 80))).equalsTo(mapArtifact);
+            assert(board.getArtifactOnPoint(new Point2D(180, 80))).isNotDefined();
+            assert(board.isPointOnArtifact(mapArtifact, new Point2D(250, 80))).isTrue();
+            assert(board.isPointOnArtifact(mapArtifact, new Point2D(180, 80))).isFalse();
+            assert(board.getAllArtifactsOnPoint(new Point2D(290, 200))).arrayEqualsTo([artifact3, artifact2, mapArtifact]);
     });
 
     function createImageElement(path, location) {
@@ -592,14 +710,13 @@ describe("Board", ()=> {
             assert(board.isOnLeftBorder(new Point2D(21, 150))).isFalse();
     });
 
-    it("Checks onMouse reflex", () => {
+    it("Checks onMouseClick reflex", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
             var level = board.getLevel("units");
             var element = createImageElement("../images/unit.png", new Point2D(0, 0));
             board.onMouseClick(event=> {
-                element.move(event);
-                return false; // To open a new transaction
+                element.setLocation(new Point2D(event.offsetX, event.offsetY));
             });
             element.setOnBoard(board);
             Memento.activate();
@@ -611,20 +728,19 @@ describe("Board", ()=> {
             });
         when:
             resetDirectives(level);
-            var event = createEvent("click", {x:10, y:10});
+            var event = createEvent("click", {offsetX:10, offsetY:10});
             mockPlatform.dispatchEvent(board.root, "click", event);
         then:
             assert(mementoOpened).isFalse();
     });
 
-    it("Checks onMouse memento aware reflex ", () => {
+    it("Checks onMouseClick memento aware reflex ", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
             var level = board.getLevel("units");
             var element = createImageElement("../images/unit.png", new Point2D(0, 0));
             board.onMouseClick(event=> {
-                element.move(event);
-                return true; // To open a new transaction
+                element.move(new Point2D(event.offsetX, event.offsetY));
             });
             element.setOnBoard(board);
             Memento.activate();
@@ -636,10 +752,112 @@ describe("Board", ()=> {
             });
         when:
             resetDirectives(level);
-            var event = createEvent("click", {x:10, y:10});
+            var event = createEvent("click", {offsetX:10, offsetY:10});
             mockPlatform.dispatchEvent(board.root, "click", event);
         then:
             assert(mementoOpened).isTrue();
+    });
+
+    it("Checks onMouseClick artifact reflex", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var level = board.getLevel("units");
+            let image = DImage.getImage("../images/unit.png");
+            image._root.onload();
+            let artifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+            var element = new DElement(artifact);
+            var mouseClicked = false;
+            artifact.onMouseClick = event=> {
+                mouseClicked = true;
+            };
+            element.setOnBoard(board);
+        when: // clicks outside the artifact
+            resetDirectives(level);
+            var event = createEvent("click", {offsetX:50, offsetY:50});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            assert(mouseClicked).isFalse();
+        when: // clicks inside the artifact
+            resetDirectives(level);
+            var event = createEvent("click", {offsetX:250, offsetY:150});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            assert(mouseClicked).isTrue();
+    });
+
+    it("Checks onMouseMove artifact reflex", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var level = board.getLevel("units");
+            let image = DImage.getImage("../images/unit.png");
+            image._root.onload();
+            let artifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+            var element = new DElement(artifact);
+            var mouseMoved = false;
+            artifact.onMouseMove = event=> {
+                mouseMoved = true;
+            };
+            element.setOnBoard(board);
+        when: // clicks outside the artifact
+            resetDirectives(level);
+            var event = createEvent("mousemove", {offsetX:50, offsetY:50});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(mouseMoved).isFalse();
+        when: // clicks inside the artifact
+            resetDirectives(level);
+            var event = createEvent("mousemove", {offsetX:250, offsetY:150});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(mouseMoved).isTrue();
+    });
+
+    it("Checks onMouseEnter/onMouseLeave artifact reflexes", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var level = board.getLevel("units");
+            let image = DImage.getImage("../images/unit.png");
+            image._root.onload();
+            let artifact1 = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+            let artifact2 = new DImageArtifact("units", image, new Point2D(20, 20), new Dimension2D(50, 50));
+            var element = new DElement(artifact1, artifact2);
+            var onArtifact1 = false;
+            artifact1.onMouseEnter = event=> onArtifact1 = true;
+            artifact1.onMouseLeave = event=> onArtifact1 = false
+            var onArtifact2 = false;
+            artifact2.onMouseEnter = event=> onArtifact2 = true;
+            artifact2.onMouseLeave = event=> onArtifact2 = false
+            element.setOnBoard(board);
+        when: // move mouse outside the two artifacts
+            var event = createEvent("mousemove", {offsetX:50, offsetY:50});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(onArtifact1).isFalse();
+            assert(onArtifact2).isFalse();
+        when: // move over artifact one only
+            event = createEvent("mousemove", {offsetX:240, offsetY:140});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(onArtifact1).isTrue();
+            assert(onArtifact2).isFalse();
+        when: // move over both artifacts
+            event = createEvent("mousemove", {offsetX:260, offsetY:160});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(onArtifact1).isTrue();
+            assert(onArtifact2).isTrue();
+        when: // exit artifact 1
+            event = createEvent("mousemove", {offsetX:270, offsetY:170});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(onArtifact1).isFalse();
+            assert(onArtifact2).isTrue();
+        when: // exit artifact 2
+            event = createEvent("mousemove", {offsetX:290, offsetY:190});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(onArtifact1).isFalse();
+            assert(onArtifact2).isFalse();
     });
 
     it("Checks keyDown reflex", () => {
@@ -648,8 +866,7 @@ describe("Board", ()=> {
             var level = board.getLevel("units");
             var element = createImageElement("../images/unit.png", new Point2D(0, 0));
             board.onKeyDown(event=> {
-                element.move(event);
-                return false; // To open a new transaction
+                element.setLocation(new Point2D(event.offsetX, event.offsetY));
             });
             element.setOnBoard(board);
             Memento.activate();
@@ -661,7 +878,7 @@ describe("Board", ()=> {
             });
         when:
             resetDirectives(level);
-            var event = createEvent("keydown", {x:10, y:10});
+            var event = createEvent("keydown", {offsetX:10, offsetY:10});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
             assert(mementoOpened).isFalse();
@@ -673,8 +890,7 @@ describe("Board", ()=> {
             var level = board.getLevel("units");
             var element = createImageElement("../images/unit.png", new Point2D(0, 0));
             board.onKeyDown(event=> {
-                element.move(event);
-                return true; // To open a new transaction
+                element.move(new Point2D(event.offsetX, event.offsetY));
             });
             element.setOnBoard(board);
             Memento.activate();
@@ -686,7 +902,7 @@ describe("Board", ()=> {
             });
         when:
             resetDirectives(level);
-            var event = createEvent("keydown", {x:10, y:10});
+            var event = createEvent("keydown", {offsetX:10, offsetY:10});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
             assert(mementoOpened).isTrue();
@@ -745,6 +961,10 @@ describe("Board", ()=> {
             var level = board.getLevel("units");
             board.zoomOut(new Point2D(250, 150)); // Mandatory to have space to move
             board.scrollOnKeyDown();
+            let nothingDone = false;
+            board.onKeyDown(event=>{
+               nothingDone = true;
+            });
         when:
             resetDirectives(level);
             let event = createEvent("keydown", {key: 'ArrowLeft'});
@@ -752,6 +972,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 260, 150)");
             assertLevelIsCleared(1, level);
+            assert(nothingDone).isFalse();
         when:
             resetDirectives(level);
             event = createEvent("keydown", {key: 'ArrowUp'});
@@ -759,6 +980,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 260, 160)");
             assertLevelIsCleared(1, level);
+            assert(nothingDone).isFalse();
         when:
             resetDirectives(level);
             event = createEvent("keydown", {key: 'ArrowRight'});
@@ -766,6 +988,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 160)");
             assertLevelIsCleared(1, level);
+            assert(nothingDone).isFalse();
         when:
             resetDirectives(level);
             event = createEvent("keydown", {key: 'ArrowDown'});
@@ -773,6 +996,13 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
             assertLevelIsCleared(1, level);
+            assert(nothingDone).isFalse();
+        when:
+            resetDirectives(level);
+            event = createEvent("keydown", {key: 'A'});
+            mockPlatform.dispatchEvent(board.root, "keydown", event);
+        then:
+            assert(nothingDone).isTrue();
     });
 
     it("Checks zoom/onKeydown reflex", () => {
@@ -780,6 +1010,10 @@ describe("Board", ()=> {
             var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
             var level = board.getLevel("units");
             board.zoomOnKeyDown();
+            let nothingDone = false;
+            board.onKeyDown(event=>{
+                nothingDone = true;
+            });
         when: // Zoom out
             resetDirectives(level);
             let event = createEvent("keydown", {key: 'PageDown'});
@@ -787,6 +1021,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
             assertLevelIsCleared(1, level);
+            assert(nothingDone).isFalse();
         when: // Change focus point
             resetDirectives(level);
             event = createEvent("click", {offsetX: 260, offsetY: 160});
@@ -796,6 +1031,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(level)[0]).equalsTo("setTransform(1.125, 0, 0, 1.125, 245, 145)");
             assertLevelIsCleared(1, level);
+            assert(nothingDone).isFalse();
         when: // Zoom in
             resetDirectives(level);
             event = createEvent("keydown", {key: 'PageUp'});
@@ -803,6 +1039,13 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(level)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
             assertLevelIsCleared(1, level);
+            assert(nothingDone).isFalse();
+        when:
+            resetDirectives(level);
+            event = createEvent("keydown", {key: 'A'});
+            mockPlatform.dispatchEvent(board.root, "keydown", event);
+        then:
+            assert(nothingDone).isTrue();
     });
 
     it("Checks undoRedo/onKeyDown reflex", () => {
@@ -811,11 +1054,15 @@ describe("Board", ()=> {
             var level = board.getLevel("units");
             var element = createImageElement("../images/unit.png", new Point2D(0, 0));
             board.onMouseClick(event=> {
-                let point = board.getBoardXY(new Point2D(event.offsetX, event.offsetY));
+                let point = board.getBoardPoint(new Point2D(event.offsetX, event.offsetY));
                 element.move(point);
                 return true; // To open a new transaction
             });
             board.undoRedoOnKeyDown();
+            let nothingDone = false;
+            board.onKeyDown(event=>{
+                nothingDone = true;
+            });
             element.setLocation(new Point2D(100, 50));
             element.setOnBoard(board);
             Memento.activate();
@@ -833,34 +1080,54 @@ describe("Board", ()=> {
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
             assert(getDirectives(level)[5]).equalsTo("drawImage(../images/unit.png, -5, 15, 50, 50)");
+            assert(nothingDone).isFalse();
         when:
             resetDirectives(level);
             event = createEvent("keydown", {key: 'y', ctrlKey:true});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
             assert(getDirectives(level)[5]).equalsTo("drawImage(../images/unit.png, -45, -65, 50, 50)");
-
+            assert(nothingDone).isFalse();
+        when:
+            resetDirectives(level);
+            event = createEvent("keydown", {key: 'A'});
+            mockPlatform.dispatchEvent(board.root, "keydown", event);
+        then:
+            assert(nothingDone).isTrue();
     });
 
-    it("Checks that an element can be found by position on the screen", () => {
+    it("Checks onMouseClick artifact reflex", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
             var level = board.getLevel("units");
-            var element = createImageElement("../images/unit.png", new Point2D(0, 0));
-        when:
-            resetDirectives(level);
-            element.setOnBoard(board);  // VisibleArtifacts not defined here
-            board.paint();              // VisibleArtifacts created here
+            let image = DImage.getImage("../images/unit.png");
+            image._root.onload();
+            let artifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+            var element = new DElement(artifact);
+            var isFocus = false;
+            var keyboardReceived = false;
+            artifact.onMouseClick = event=> {
+                isFocus = true;
+            };
+            artifact.onKeyDown = event=> {
+                keyboardReceived = true;
+            };
+            element.setOnBoard(board);
+        when: // No focus : event is lost
+            var event = createEvent("keydown", {});
+            mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
-            assert(getDirectives(level)).arrayContains("/images/unit.png"); // Assert element is visible
-            let artifact = board.getArtifactOnPoint(new Point2D(250, 150)); // Special case : no transform needed
-            assert(artifact.element).equalsTo(element);
-            artifact = board.getArtifactOnPoint(new Point2D(350, 150));
-            assert(artifact).isNotDefined();
-        when:
-            element.setLocation(new Point2D(200, 0));
-            artifact = board.getArtifactOnPoint(new Point2D(350, 150));
-            assert(artifact.element).equalsTo(element);
+            assert(isFocus).isFalse();
+            assert(keyboardReceived).isFalse();
+        when: // make artifact the focus
+            var event = createEvent("click", {offsetX:250, offsetY:150});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            assert(isFocus).isTrue();
+        when: // No focus : event is processed
+            var event = createEvent("keydown", {});
+            mockPlatform.dispatchEvent(board.root, "keydown", event);
+        then:
+            assert(keyboardReceived).isTrue();
     });
-
 });

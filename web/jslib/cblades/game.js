@@ -14,6 +14,7 @@ import {
     DBoard, DElement, DImageArtifact
 } from "../board.js";
 import {
+    DIconMenu, DIconMenuItem,
     DPopup
 } from "../widget.js";
 
@@ -21,7 +22,7 @@ export class CBGame {
 
     constructor() {
         this._board = new DBoard(new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT), new Dimension2D(1000, 500),
-            "map", "units", "markers", new DStaticLayer("widgets"));
+            "map", "units", "markers", new DStaticLayer("widgets"), new DStaticLayer("widget-items"));
         this._board.setZoomSettings(1.5, 1);
         this._board.setScrollSettings(20, 10);
         this._board.scrollOnBordersOnMouseMove();
@@ -29,46 +30,49 @@ export class CBGame {
         this._board.scrollOnKeyDown()
         this._board.zoomOnKeyDown();
         this._board.undoRedoOnKeyDown();
-        this.setMouseClick();
         DPopup.activate();
     }
 
-    setMouseClick() {
-        this._board.onMouseClick(event=>{
-            let offset = new Point2D(event.offsetX, event.offsetY);
-            let artifact = this._board.getArtifactOnPoint(offset);
-            return this._recenter(artifact, offset) ||
-                this._selectUnit(artifact, offset);
-        });
-    }
-
     _openMenu(offset) {
-        let popup = new DPopup();
+        let popup = new DIconMenu(
+            new DIconMenuItem("/CBlades/images/icons/move.png", 0, 0, ()=>{return true;}),
+            new DIconMenuItem("/CBlades/images/icons/move-back.png", 0, 1, ()=>{return true;}),
+            new DIconMenuItem("/CBlades/images/icons/escape.png", 0, 2, ()=>{return true;}),
+            new DIconMenuItem("/CBlades/images/icons/to-face.png", 0, 3, ()=>{return true;}),
+            new DIconMenuItem("/CBlades/images/icons/shock-attack.png", 1, 0, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/fire-attack.png", 1, 1, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/shock-duel.png", 1, 2, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/fire-duel.png", 1, 3, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/do-rest.png", 2, 0, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/do-reload.png", 2, 1, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/do-reorganize.png", 2, 2, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/do-rally.png", 2, 3, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/create-formation.png", 3, 0, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/join-formation.png", 3, 1, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/leave-formation.png", 3, 2, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/dismiss-formation.png", 3, 3, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/take-command.png", 4, 0, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/leave-command.png", 4, 1, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/change-orders.png", 4, 2, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/give-specific-orders.png", 4, 3, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/select-spell.png", 5, 0, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/cast-spell.png", 5, 1, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/do-fusion.png", 5, 2, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/do-many.png", 5, 3, ()=>{})
+        );
         popup.open(this._board, new Point2D(
             offset.x - popup.dimension.w/2 + CBGame.POPUP_MARGIN,
             offset.y - popup.dimension.h/2 + CBGame.POPUP_MARGIN));
     }
 
-    _recenter(artifact, offset) {
-        if (artifact && CBMap.fromArtifact(artifact)) {
-            this._board.recenter(offset);
-            DPopup.close();
-            return true;
-        }
-        return false;
-    }
-
-    _selectUnit(artifact, offset) {
-        if (artifact && CBUnit.fromArtifact(artifact)) {
-            CBUnit.fromArtifact(artifact).select();
-            this._openMenu(offset);
-            return true;
-        }
-        return false;
+    recenter(vpoint) {
+        this._board.recenter(vpoint);
+        DPopup.close();
     }
 
     setMap(map) {
         map.element.setOnBoard(this._board);
+        map.game = this;
         return this;
     }
 
@@ -77,6 +81,7 @@ export class CBGame {
             this._counters = new Set();
         }
         this._counters.add(counter);
+        counter.game = this;
         counter.setLocation(hexLocation.location);
         counter.element.setOnBoard(this._board);
     }
@@ -123,11 +128,23 @@ export class CBHexId {
     }
 }
 
+class MapImageArtifact extends DImageArtifact {
+
+    constructor(map, ...args) {
+        super(...args);
+        this._map = map;
+    }
+
+    onMouseClick(event) {
+        this._map.onMouseClick(event);
+    }
+}
+
 export class CBMap {
 
     constructor(path) {
         let image = DImage.getImage(path);
-        this._imageArtifact = new DImageArtifact("map", image, new Point2D(0, 0), CBMap.DIMENSION);
+        this._imageArtifact = new MapImageArtifact(this, "map", image, new Point2D(0, 0), CBMap.DIMENSION);
         this._element = new DElement(this._imageArtifact);
         this._element._map = this;
     }
@@ -147,6 +164,17 @@ export class CBMap {
         return this._element;
     }
 
+    set game(game) {
+        this._game = game;
+    }
+
+    get game() {
+        return this._game;
+    }
+
+    onMouseClick(event) {
+        this.game.recenter(new Point2D(event.offsetX, event.offsetY));
+    }
 }
 CBMap.fromArtifact = function(artifact) {
     return artifact.element._map;
@@ -157,20 +185,31 @@ CBMap.DIMENSION = new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT);
 CBMap.COL_COUNT = 12;
 CBMap.ROW_COUNT = 16;
 
+class UnitImageArtifact extends DImageArtifact {
+
+    constructor(unit, ...args) {
+        super(...args);
+        this._unit = unit;
+    }
+
+    onMouseClick(event) {
+        this._unit.onMouseClick(event);
+    }
+}
+
 export class CBCounter {
 
     constructor(path, dimension) {
         this._image = DImage.getImage(path);
-        this._image.setSettings(this.settings);
-        this._imageArtifact = new DImageArtifact("units", this._image, new Point2D(0, 0), dimension);
+        this._imageArtifact = new UnitImageArtifact(this,"units", this._image, new Point2D(0, 0), dimension);
+        this._imageArtifact.setSettings(this.settings);
         this._element = new DElement(this._imageArtifact);
         this._element._unit = this;
     }
 
     get settings() {
-        return (platform, context)=>{
-            platform.setShadowColor(context, "#000000");
-            platform.setShadowBlur(context, 15);
+        return level=>{
+            level.setShadowSettings("#000000", 15);
         }
     }
 
@@ -186,6 +225,13 @@ export class CBCounter {
         this._element.refresh();
     }
 
+    set game(game) {
+        this._game = game;
+    }
+
+    get game() {
+        return this._game;
+    }
 }
 
 export class CBUnit extends CBCounter {
@@ -195,16 +241,15 @@ export class CBUnit extends CBCounter {
     }
 
     get selectedSettings() {
-        return (platform, context)=>{
-            platform.setShadowColor(context, "#FF0000");
-            platform.setShadowBlur(context, 15);
+        return level=>{
+            level.setShadowSettings("#FF0000", 15);
         }
     }
 
     unselect() {
         console.assert(CBUnit.selected===this);
         CBUnit.selected = null;
-        this._image.setSettings(this.settings);
+        this._imageArtifact.setSettings(this.settings);
         this.element.refresh();
     }
 
@@ -213,8 +258,13 @@ export class CBUnit extends CBCounter {
             CBUnit.selected.unselect();
         }
         CBUnit.selected = this;
-        this._image.setSettings(this.selectedSettings);
+        this._imageArtifact.setSettings(this.selectedSettings);
         this.refresh();
+    }
+
+    onMouseClick(event) {
+        this.select();
+        this.game._openMenu(new Point2D(event.offsetX, event.offsetY));
     }
 }
 CBUnit.selected = null;

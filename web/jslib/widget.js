@@ -4,8 +4,11 @@ import {
     Mechanisms
 } from "./mechanisms.js";
 import {
+    DImage
+} from "./draw.js";
+import {
     DArtifact, RectArtifact,
-    DElement
+    DElement, DImageArtifact
 } from "./board.js";
 import {
     Area2D,
@@ -91,9 +94,9 @@ export class DPanel extends RectArtifact(DArtifact) {
 
 export class DPopup extends DWidget {
 
-    constructor() {
+    constructor(dimension) {
         super();
-        this.setPanelSettings(new Dimension2D(100, 150));
+        this.setPanelSettings(dimension);
     }
 
     open(board, point) {
@@ -124,3 +127,84 @@ DPopup.activate = function() {
     };
     Mechanisms.addListener(DPopup._cleaner);
 };
+
+export class DIconMenuItem extends DImageArtifact {
+
+    constructor(path, row, col, action) {
+        super("widget-items", DImage.getImage(path),
+            new Point2D(
+                DIconMenuItem.MARGIN+DIconMenuItem.ICON_SIZE/2 + (DIconMenuItem.MARGIN+DIconMenuItem.ICON_SIZE)*col,
+                DIconMenuItem.MARGIN+DIconMenuItem.ICON_SIZE/2 + (DIconMenuItem.MARGIN+DIconMenuItem.ICON_SIZE)*row
+            ),
+            DIconMenuItem.ICON_DIMENSION, 0);
+        this._col = col;
+        this._row = row;
+        this._action = action;
+    }
+
+    get col() {
+        return this._col;
+    }
+
+    get row() {
+        return this._row;
+    }
+
+    get action() {
+        return this._action;
+    }
+
+    onMouseClick(event) {
+        if (this.action()) {
+            this.element.close();
+        }
+    }
+
+    onMouseEnter(event) {
+        this.setSettings(this.mouseOverSettings);
+        this.element.refresh();
+    }
+
+    onMouseLeave(event) {
+        this.setSettings(null);
+        this.element.refresh();
+    }
+
+    get mouseOverSettings() {
+        return level=>{
+            level.setShadowSettings("#FF0000", 10);
+        }
+    }
+
+}
+DIconMenuItem.MARGIN = 10;
+DIconMenuItem.ICON_SIZE = 50;
+DIconMenuItem.ICON_DIMENSION = new Dimension2D(DIconMenuItem.ICON_SIZE, DIconMenuItem.ICON_SIZE)
+
+export class DIconMenu extends DPopup {
+
+    constructor(...items) {
+        function getDimension(items) {
+            let rowMax = 0;
+            let colMax = 0;
+            for (let item of items) {
+                if (colMax<item.col) colMax = item.col;
+                if (rowMax<item.row) rowMax = item.row;
+            }
+            return new Dimension2D(
+                (colMax+1)*(DIconMenuItem.ICON_SIZE+DIconMenuItem.MARGIN)+DIconMenuItem.MARGIN,
+                (rowMax+1)*(DIconMenuItem.ICON_SIZE+DIconMenuItem.MARGIN)+DIconMenuItem.MARGIN
+            );
+        }
+        super(getDimension(items));
+        for (let item of items) {
+            this.addArtifact(item);
+            let position = item.position;
+            item.position = new Point2D(
+                position.x - this.dimension.w/2,
+                position.y - this.dimension.h/2
+            )
+        }
+    }
+
+}

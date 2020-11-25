@@ -11,7 +11,7 @@ import {
     Memento
 } from "./mechanisms.js";
 
-export function PositionAware(clazz) {
+export function LocalisationAware(clazz) {
     return class extends clazz {
 
         constructor(...args) {
@@ -47,7 +47,7 @@ export function PositionAware(clazz) {
 /**
  * Wrap something that can be shown on a given layer
  */
-export class DArtifact extends PositionAware(Object) {
+export class DArtifact extends LocalisationAware(Object) {
 
     constructor(levelName, position, pangle=0) {
         super();
@@ -60,6 +60,7 @@ export class DArtifact extends PositionAware(Object) {
 
     _setElement(element) {
         this._element = element;
+        this.setLocation(this.element.location, this.element.angle);
     }
 
     _memento() {
@@ -98,6 +99,7 @@ export class DArtifact extends PositionAware(Object) {
         console.assert(board);
         console.assert(!this._level);
         this._level = board.getLevel(this._levelName);
+        console.assert(this._level);
         this._level.addArtifact(this);
     }
 
@@ -146,14 +148,31 @@ export class DArtifact extends PositionAware(Object) {
         return this.element.board;
     }
 
+    set position(position) {
+        this._position = position;
+        if (this.element) {
+            this.setLocation(this.element.location, this.element.angle);
+        }
+    }
+
     get position() {
         return this._position;
+    }
+
+    set pangle(angle) {
+        this._pangle = angle;
+        if (this.element) {
+            this.setLocation(this.element.location, this.element.angle);
+        }
     }
 
     get pangle() {
         return this._pangle;
     }
 
+    get viewportLocation() {
+        return this.level.transform.point(this.location);
+    }
 }
 
 /**
@@ -196,11 +215,24 @@ export class DImageArtifact extends RectArtifact(DArtifact) {
         this._root = image;
     }
 
+    setSettings(settings) {
+        if (settings) {
+            this._settings = settings;
+        }
+        else {
+            delete this._settings;
+        }
+        this._level && this.refresh();
+    }
+
     paint() {
         console.assert(this._level);
         let transform = this.angle ? Matrix2D.rotate(this.angle, this.location) : null;
         if (transform) {
             this._level.setTransformSettings(transform);
+        }
+        if (this._settings) {
+            this._settings(this._level);
         }
         this._level.drawImage(this._root,
             new Point2D(this.location.x-this.dimension.w/2, this.location.y-this.dimension.h/2),
@@ -212,7 +244,7 @@ export class DImageArtifact extends RectArtifact(DArtifact) {
 /**
  * Gather/combine artifacts that represents a given concept
  */
-export class DElement extends PositionAware(Object) {
+export class DElement extends LocalisationAware(Object) {
 
     constructor(...artifacts) {
         super();
@@ -464,6 +496,19 @@ export class DLevel {
         this._layer.fillRect(anchor, dimension);
     }
 
+    getAllArtifactsOnPoint(viewportPoint) {
+        let point = this._layer.transform.invert().point(viewportPoint);
+        let artifacts = [];
+        let visibleArtifacts = [...this.visibleArtifacts];
+        for (let i = visibleArtifacts.length-1; i>=0; i--) {
+            let artifact = visibleArtifacts[i];
+            if (artifact.containsPoint(point)) {
+                artifacts.push(artifact);
+            }
+        }
+        return artifacts;
+    }
+
     getArtifactOnPoint(viewportPoint) {
         let point = this._layer.transform.invert().point(viewportPoint);
         let visibleArtifacts = [...this.visibleArtifacts];
@@ -473,6 +518,12 @@ export class DLevel {
                 return artifact;
         }
         return null;
+    }
+
+    isPointOnArtifact(artifact, viewportPoint) {
+        console.assert(artifact.level === this);
+        let point = this._layer.transform.invert().point(viewportPoint);
+        return artifact.containsPoint(point);
     }
 
     get transform() {
@@ -497,6 +548,7 @@ export class DBoard {
         this._focusPoint = new Point2D(this.viewportDimension.w/2, this.viewportDimension.h/2);
         this._createLevels(levels);
         this._initMouseClickActions();
+        this._initMouseMoveActions();
         this._initKeyDownActions();
         this._requestRepaint();
     }
@@ -506,7 +558,7 @@ export class DBoard {
         this._levelsArray = []
         for (let layerItem of levels) {
             let layer = layerItem instanceof DLayer ? this._draw.addLayer(layerItem) : this._draw.createLayer(layerItem);
-            let level = new DLevel(layer)
+            let level = new DLevel(layer);
             this._levels.set(level.name, level);
             this._levelsArray.push(level);
         }
@@ -515,32 +567,84 @@ export class DBoard {
     _initMouseClickActions() {
         this._mouseClickActions = [];
         this._draw.onMouseClick(event => {
-            let newTransaction = false;
+            let processed = false;
             for (let action of this._mouseClickActions) {
                 if (action(event)) {
-                    newTransaction = true;
+                    processed = true;
+                }
+            }
+            if (!processed) {
+                let offset = new Point2D(event.offsetX, event.offsetY);
+                let artifact = this.getArtifactOnPoint(offset);
+                if (artifact && artifact.onMouseClick) {
+                    this._focusArtifact = artifact;
+                    artifact.onMouseClick(event);
                 }
             }
             this.paint();
-            if (newTransaction) {
-                Memento.open();
+            Memento.open();
+            return processed;
+        });
+    }
+
+    _initMouseMoveActions() {
+        this._mouseMoveActions = [];
+        this._draw.onMouseMove(event => {
+            let processed = false;
+            for (let action of this._mouseMoveActions) {
+                if (action(event)) {
+                    processed = true;
+                }
             }
+            if (!processed) {
+                let offset = new Point2D(event.offsetX, event.offsetY);
+                let artifacts = this.getAllArtifactsOnPoint(offset);
+
+                for (let artifact of artifacts) {
+                    if (this._enteredArtifacts && this._enteredArtifacts.has(artifact)) {
+                        this._enteredArtifacts.delete(artifact);
+                    } else {
+                        artifact.onMouseEnter && artifact.onMouseEnter(event);
+                    }
+                    if (artifact.onMouseMove) {
+                        artifact.onMouseMove(event);
+                    }
+                }
+                if (this._enteredArtifacts) {
+                    for (let artifact of this._enteredArtifacts) {
+                        artifact.onMouseLeave && artifact.onMouseLeave(event);
+                    }
+                }
+                if (artifacts.length) {
+                    this._enteredArtifacts = new Set(artifacts);
+                }
+                else {
+                    delete this._enteredArtifacts;
+                }
+            }
+            this.paint();
+            return processed;
         });
     }
 
     _initKeyDownActions() {
         this._keyDownActions = [];
         this._draw.onKeyDown(event => {
-            let newTransaction = false;
+            let processed = false;
             for (let action of this._keyDownActions) {
                 if (action(event)) {
-                    newTransaction = true;
+                    processed = true;
+                    break;
+                }
+            }
+            if (!processed) {
+                if (this._focusArtifact) {
+                    this._focusArtifact.onKeyDown && this._focusArtifact.onKeyDown(event);
                 }
             }
             this.paint();
-            if (newTransaction) {
-                Memento.open();
-            }
+            Memento.open();
+            return processed;
         });
     }
 
@@ -555,7 +659,7 @@ export class DBoard {
     }
 
     _requestRepaint() {
-        let boardCenter = this.getViewPortXY(new Point2D(0, 0));
+        let boardCenter = this.getViewPortPoint(new Point2D(0, 0));
         let matrix =
             Matrix2D.translate(boardCenter).concat(
                 Matrix2D.scale(new Point2D(this._zoomFactor, this._zoomFactor), boardCenter)
@@ -566,20 +670,20 @@ export class DBoard {
         }
     }
 
-    getBoardXY(vpoint) {
+    getBoardPoint(vpoint) {
         let x = (vpoint.x-this.viewportDimension.w/2)/this._zoomFactor+this._location.x;
         let y = (vpoint.y-this.viewportDimension.h/2)/this._zoomFactor+this._location.y;
         return new Point2D(x, y);
     }
 
-    getViewPortXY(point) {
+    getViewPortPoint(point) {
         let vx = (point.x-this._location.x)*this._zoomFactor + this.viewportDimension.w/2;
         let vy = (point.y-this._location.y)*this._zoomFactor + this.viewportDimension.h/2;
         return new Point2D(vx, vy);
     }
 
     zoom(vpoint, zoomFactor) {
-        let anchor = this.getBoardXY(vpoint);
+        let anchor = this.getBoardPoint(vpoint);
         this._zoomFactor = zoomFactor;
         this._location = new Point2D(
             anchor.x-(vpoint.x-this.viewportDimension.w/2)/zoomFactor,
@@ -621,7 +725,7 @@ export class DBoard {
     }
 
     recenter(vpoint) {
-        let point = this.getBoardXY(vpoint);
+        let point = this.getBoardPoint(vpoint);
         this.center(point);
     }
 
@@ -672,34 +776,26 @@ export class DBoard {
     }
 
     _adjust() {
-        let repaint = false;
         if (this._zoomFactor<this.minZoomFactor) {
             this._zoomFactor=this.minZoomFactor;
-            repaint = true;
         }
         if (this._zoomFactor>this.maxZoomFactor) {
             this._zoomFactor=this.maxZoomFactor;
-            repaint = true;
         }
         let deltaX = this.viewportDimension.w/2/this._zoomFactor;
         if (deltaX>this._dimension.w/2+this._location.x) {
             this._location = new Point2D(deltaX-this._dimension.w/2, this._location.y);
-            repaint = true;
         }
         if (deltaX>this._dimension.w/2-this._location.x) {
             this._location = new Point2D(this._dimension.w/2-deltaX, this._location.y);
-            repaint = true;
         }
         let deltaY = this.viewportDimension.h/2/this._zoomFactor;
         if (deltaY>this._dimension.h/2+this._location.y) {
             this._location = new Point2D(this._location.x, deltaY-this._dimension.h/2);
-            repaint = true;
         }
         if (deltaY>this._dimension.h/2-this._location.y) {
             this._location = new Point2D(this._location.x, this._dimension.h/2-deltaY);
-            repaint = true;
         }
-        return repaint;
     }
 
     get zoomFactor() {
@@ -723,40 +819,44 @@ export class DBoard {
     }
 
     onMouseClick(func) {
+        console.assert(typeof(func)==="function");
         this._mouseClickActions.push(func);
     }
 
+    onMouseMove(func) {
+        console.assert(typeof(func)==="function");
+        this._mouseMoveActions.push(func);
+    }
+
     onKeyDown(func) {
+        console.assert(typeof(func)==="function");
         this._keyDownActions.push(func);
     }
 
     scrollOnBorders(event) {
-        let repaint = false;
+        let replay = false;
         let offset = new Point2D(event.offsetX, event.offsetY);
         if (this.isOnLeftBorder(offset)) {
-            repaint = true;
-            this.scrollOnLeft()
+            this.scrollOnLeft();
+            replay=true;
         }
         if (this.isOnRightBorder(offset)) {
-            repaint = true;
-            this.scrollOnRight()
+            this.scrollOnRight();
+            replay=true;
         }
         if (this.isOnTopBorder(offset)) {
-            repaint = true;
-            this.scrollOnTop()
+            this.scrollOnTop();
+            replay=true;
         }
         if (this.isOnBottomBorder(offset)) {
-            repaint = true;
-            this.scrollOnBottom()
+            this.scrollOnBottom();
+            replay=true;
         }
-        if (repaint) {
-            this.paint();
-        }
-        return repaint;
+        return replay;
     }
 
     scrollOnBordersOnMouseMove() {
-        this._draw.onMouseMove(event=> {
+        this.onMouseMove(event=> {
             return this.scrollOnBorders(event);
         });
     }
@@ -770,34 +870,37 @@ export class DBoard {
             this.zoomOut(offset);
         }
         this.paint();
-        return true;
     }
 
     zoomInOutOnMouseWheel() {
         this._draw.onMouseWheel(event=> {
-            return this.zoomInOut(event);
+            this.zoomInOut(event);
         });
     }
 
     scrollOnArrowKeys(event) {
         if (event.key === 'ArrowLeft') {
             this.scrollOnLeft();
+            return true;
         }
         if (event.key === 'ArrowRight') {
             this.scrollOnRight();
+            return true;
         }
         if (event.key === 'ArrowUp') {
             this.scrollOnTop();
+            return true;
         }
         if (event.key === 'ArrowDown') {
             this.scrollOnBottom();
+            return true;
         }
         return false;
     }
 
     scrollOnKeyDown() {
         this.onKeyDown(event => {
-           this.scrollOnArrowKeys(event);
+           return this.scrollOnArrowKeys(event);
         });
     }
 
@@ -808,10 +911,13 @@ export class DBoard {
     zoomOnPageKeys(event) {
         if (event.key === 'PageUp') {
             this.zoomIn(this._focusPoint);
+            return true;
         }
         if (event.key === 'PageDown') {
             this.zoomOut(this._focusPoint);
+            return true;
         }
+        return false;
     }
 
     zoomOnKeyDown() {
@@ -819,23 +925,35 @@ export class DBoard {
             this.setFocusPointOnClick(event);
         });
         this.onKeyDown(event => {
-            this.zoomOnPageKeys(event);
+            return this.zoomOnPageKeys(event);
         });
     }
 
     undoRedoOnCtrlZY(event) {
         if ((event.key === 'z') && event.ctrlKey) {
             Memento.undo();
+            return true;
         }
         if ((event.key === 'y') && event.ctrlKey) {
             Memento.redo();
+            return true;
         }
+        return false;
     }
 
     undoRedoOnKeyDown() {
         this.onKeyDown(event => {
-            this.undoRedoOnCtrlZY(event);
+            return this.undoRedoOnCtrlZY(event);
         });
+    }
+
+    getAllArtifactsOnPoint(viewportPoint) {
+        let artifacts = [];
+        for (let i = this._levelsArray.length-1; i>=0; i--) {
+            let artifact = this._levelsArray[i].getAllArtifactsOnPoint(viewportPoint);
+            artifacts.push(...artifact);
+        }
+        return artifacts;
     }
 
     getArtifactOnPoint(viewportPoint) {
@@ -845,6 +963,12 @@ export class DBoard {
         }
         return null;
     }
+
+    isPointOnArtifact(artifact, viewportPoint) {
+        console.assert(artifact.level);
+        return artifact.level.isPointOnArtifact(artifact, viewportPoint);
+    }
+
 }
 DBoard.DEFAULT_MAX_ZOOM_FACTOR = 10;
 DBoard.DEFAULT_ZOOM_INCREMENT = 1.5;

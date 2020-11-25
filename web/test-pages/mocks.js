@@ -128,7 +128,9 @@ export function resetDirectives(level) {
 
 export function loadAllImages() {
     for (let image of DImage.images.values()) {
-        image._root.onload();
+        if (image._todos) {
+            image._root.onload();
+        }
     }
 }
 

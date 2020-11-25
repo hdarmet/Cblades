@@ -112,6 +112,28 @@ describe("Drawing fundamentals", ()=> {
             assert(getDirectives(layer)[0]).equalsTo('setTransform(1, 0, 0, 1, 10, 15)');
     });
 
+    it("Checks image drawing on DDraw", () => {
+        given:
+            var draw = buildBasicDrawWithOneLayerNamedLayer1();
+            var layer = draw.getLayer("layer1");
+        when: /* draws an unloaded image */
+            resetDirectives(layer);
+            var image = DImage.getImage("here/where/image.typ");
+            layer.drawImage(image, 10, 15);
+        then:
+            assert([...DImage.images.values()]).arrayEqualsTo([image]);
+            assert(getDirectives(layer).length).equalsTo(0);
+        when: /* loads the image: the requested draw directive is done then**/
+            image._root.onload();
+        then:
+            assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/image.typ, 10, 15)');
+        when: /* draw an already loaded image */
+            resetDirectives(layer);
+            layer.drawImage(image, 15, 10);
+        then:
+            assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/image.typ, 15, 10)');
+    });
+
     it("Checks image drawing with transform on DDraw", () => {
         given:
             var draw = buildBasicDrawWithOneLayerNamedLayer1();
@@ -189,53 +211,6 @@ describe("Drawing fundamentals", ()=> {
             assert(getDirectives(layer)[3]).equalsTo('fillRect(10, 15, 20, 25)');
     });
 
-    it("Checks image drawing on DDraw", () => {
-        given:
-            var draw = buildBasicDrawWithOneLayerNamedLayer1();
-            var layer = draw.getLayer("layer1");
-        when: /* draws an unloaded image */
-            resetDirectives(layer);
-            var image = DImage.getImage("here/where/image.typ");
-            layer.drawImage(image, 10, 15);
-        then:
-            assert(getDirectives(layer).length).equalsTo(0);
-        when: /* loads the image: the requested draw directive is done then**/
-            image._root.onload();
-        then:
-            assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/image.typ, 10, 15)');
-        when: /* draw an already loaded image */
-            resetDirectives(layer);
-            layer.drawImage(image, 15, 10);
-        then:
-            assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/image.typ, 15, 10)');
-    });
-
-    it("Checks image drawing with settings on DDraw", () => {
-        given:
-            var draw = buildBasicDrawWithOneLayerNamedLayer1();
-            var layer = draw.getLayer("layer1");
-        when:  /* add image settings */
-            resetDirectives(layer);
-            var image = DImage.getImage("here/where/image.typ");
-            image.setSettings((platform, context)=>{
-                platform.setShadowColor(context, "#FF0000");
-                platform.setShadowBlur(context, 15);
-            });
-            image._root.onload();
-            layer.drawImage(image, 10, 15);
-        then:
-            assert(getDirectives(layer)[0]).equalsTo('shadowColor = #FF0000');
-            assert(getDirectives(layer)[1]).equalsTo('shadowBlur = 15');
-            assert(getDirectives(layer)[2]).equalsTo('drawImage(here/where/image.typ, 10, 15)');
-
-        when: /* remove image settings */
-            resetDirectives(layer);
-            image.setSettings(null);
-            layer.drawImage(image, 10, 15);
-        then:
-            assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/image.typ, 10, 15)');
-    });
-
     it("Checks DDraw resize", () => {
         given:
             var draw = buildBasicDrawWithOneLayerNamedLayer1();
@@ -310,11 +285,33 @@ describe("Drawing fundamentals", ()=> {
         when:
             var mouseEvent = new MouseEvent("mousemove");
             mockPlatform.dispatchEvent(draw.root, "mousemove", mouseEvent);
+        then:
             assert(moved).equalsTo(1);
+        when: // automatic Move event replay
             executeTimeouts();  // executed again
             assert(moved).equalsTo(0);
             executeTimeouts();  // execution string exhausted
             assert(moved).equalsTo(0);
+    });
+
+    it("Checks that DDraw mouseleave stops automatic onMouseMove", () => {
+        given:
+            var draw = buildBasicDrawWithOneLayerNamedLayer1();
+            var moved = 2;
+            draw.onMouseMove(function(event) {
+                moved===2 && assert(event).isDefined();
+                return !!--moved;
+            });
+        when:
+            var mouseEvent = new MouseEvent("mousemove");
+            mockPlatform.dispatchEvent(draw.root, "mousemove", mouseEvent);
+        then:
+            assert(moved).equalsTo(1);
+        when: // Leave DDraw
+            mouseEvent = new MouseEvent("mouseleave");
+            mockPlatform.dispatchEvent(draw.root, "mouseleave", mouseEvent);
+            executeTimeouts();  // executed again
+            assert(moved).equalsTo(1);
     });
 
     it("Checks DDraw onKeyDown", () => {

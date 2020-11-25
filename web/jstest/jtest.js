@@ -351,9 +351,15 @@ export class TestSuite {
             try {
                 _itCount++;
                 this._timeouts = [];
+                this._timeoutsID = 0;
                 setTimeout = (action, delay, ...args)=> {
-                    this._timeouts.push({_delay:delay, _action:action, _args:args});
+                    let token = this._timeoutsID++;
+                    this._timeouts.push({_delay:delay, _action:action, _args:args, _token:token});
+                    return token;
                 };
+                clearTimeout = (token)=> {
+                    this._timeouts = this._timeouts.filter(timeout=> timeout._token != token);
+                }
                 for (let before of this._befores) {
                     before();
                 }
