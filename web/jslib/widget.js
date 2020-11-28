@@ -130,7 +130,7 @@ DPopup.activate = function() {
 
 export class DIconMenuItem extends DImageArtifact {
 
-    constructor(path, row, col, action) {
+    constructor(path, col, row, action) {
         super("widget-items", DImage.getImage(path),
             new Point2D(
                 DIconMenuItem.MARGIN+DIconMenuItem.ICON_SIZE/2 + (DIconMenuItem.MARGIN+DIconMenuItem.ICON_SIZE)*col,
@@ -205,6 +205,15 @@ export class DIconMenu extends DPopup {
                 position.y - this.dimension.h/2
             )
         }
+    }
+
+    getItem(col, row) {
+        for (let artifact of this.artifacts) {
+            if (artifact instanceof DIconMenuItem && artifact.col===col && artifact.row===row) {
+                return artifact;
+            }
+        }
+        return null;
     }
 
 }

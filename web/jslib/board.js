@@ -294,7 +294,7 @@ export class DElement extends LocalisationAware(Object) {
         return this;
     }
 
-    setRotation(angle) {
+    setAngle(angle) {
         this._angle = angle;
         this._setArtifactsLocation();
         return this;
@@ -364,6 +364,9 @@ export class DElement extends LocalisationAware(Object) {
         return this._board;
     }
 
+    get artifacts() {
+        return this._artifacts;
+    }
 }
 
 /**

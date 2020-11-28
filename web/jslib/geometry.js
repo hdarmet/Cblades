@@ -8,6 +8,14 @@ function round(v) {
 }
 
 /**
+ *
+ */
+export function atan2(dx, dy) {
+    let angle = Math.round(Math.atan2(dx, -dy)*180/Math.PI*100)/100;
+    return angle<0 ? angle+360 : angle;
+}
+
+/**
  * Comapre two numbers and return true if there are very similar, even if not strictly equal.
  */
 export function same(v1, v2) {
@@ -83,6 +91,22 @@ export class Point2D {
     clone() {
         return new Point2D(this.x, this.y);
     }
+}
+
+/**
+ * Gives the absolute location of a point situated on the point1-point2 line according to a distance factor between
+ * point1 and point2: factor = 0 => point1, factor = 0.5, center of point1, point2, factor = 1 => point2, etc.
+ */
+Point2D.location = function(point1, point2, factor) {
+    return new Point2D(point2.x*factor+point1.x*(1-factor), point2.y*factor+point1.y*(1-factor));
+}
+/**
+ * Gives the location of a point relatively to point1, situated on the point1-point2 line according to a distance factor
+ * between point1 and point2: factor = 0 => point1 (i.e 0,0), factor = 0.5, center of point1, point2,
+ * factor = 1 => point2, etc.
+ */
+Point2D.position = function(point1, point2, factor) {
+    return new Point2D(point2.x*factor-point1.x*factor, point2.y*factor-point1.y*factor);
 }
 
 /**

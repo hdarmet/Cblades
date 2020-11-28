@@ -8,6 +8,12 @@ function round(v) {
     return Math.round(v*10000)/10000;
 }
 
+function write(context, directive) {
+    if (!context._doNotRegister) {
+        context.directives.push(directive)
+    }
+}
+
 export let mockPlatform = {
 
     createElement(tagName) {
@@ -27,55 +33,55 @@ export let mockPlatform = {
     },
 
     setLineWidth(context, width) {
-        context.directives.push(`lineWidth = ${width}`);
+        write(context, `lineWidth = ${width}`);
     },
 
     setStrokeStyle(context, style) {
-        context.directives.push(`strokeStyle = ${style}`);
+        write(context, `strokeStyle = ${style}`);
     },
 
     setFillStyle(context, style) {
-        context.directives.push(`fillStyle = ${style}`);
+        write(context, `fillStyle = ${style}`);
     },
 
     setShadowColor(context, color) {
-        context.directives.push(`shadowColor = ${color}`);
+        write(context, `shadowColor = ${color}`);
     },
 
     setShadowBlur(context, width) {
-        context.directives.push(`shadowBlur = ${width}`);
+        write(context, `shadowBlur = ${width}`);
     },
 
     strokeRect(context, x, y, w, h) {
-        context.directives.push(`strokeRect(${round(x)}, ${round(y)}, ${round(w)}, ${round(h)})`);
+        write(context, `strokeRect(${round(x)}, ${round(y)}, ${round(w)}, ${round(h)})`);
     },
 
     fillRect(context, x, y, w, h) {
-        context.directives.push(`fillRect(${round(x)}, ${round(y)}, ${round(w)}, ${round(h)})`);
+        write(context, `fillRect(${round(x)}, ${round(y)}, ${round(w)}, ${round(h)})`);
     },
 
     setTransform(context, a, b, c, d, e, f) {
-        context.directives.push(`setTransform(${round(a)}, ${round(b)}, ${round(c)}, ${round(d)}, ${round(e)}, ${round(f)})`);
+        write(context, `setTransform(${round(a)}, ${round(b)}, ${round(c)}, ${round(d)}, ${round(e)}, ${round(f)})`);
     },
 
     drawImage(context, image, ...params) {
-        context.directives.push(`drawImage(${image.src}, ${params.join(', ')})`);
+        write(context, `drawImage(${image.src}, ${params.join(', ')})`);
     },
 
     clearRect(context, x, y, w, h) {
-        context.directives.push(`clearRect(${round(x)}, ${round(y)}, ${round(w)}, ${round(h)})`);
+        write(context, `clearRect(${round(x)}, ${round(y)}, ${round(w)}, ${round(h)})`);
     },
 
     save(context) {
-        context.directives.push(`save()`);
+        write(context, `save()`);
     },
 
     restore(context) {
-        context.directives.push(`restore()`);
+        write(context, `restore()`);
     },
 
     resetTransform(context) {
-        context.directives.push(`resetTransform()`);
+        write(context, `resetTransform()`);
     },
 
     setTimeout(handler, timeout, ...args) {
@@ -124,6 +130,33 @@ export function getDirectives(level, start=0) {
 
 export function resetDirectives(level) {
     resetContextDirectives(getLayer(level)._context);
+}
+
+export function startRegister(level) {
+    delete getLayer(level)._context._doNotRegister;
+}
+
+export function stopRegister(level) {
+    getLayer(level)._context._doNotRegister = true;
+}
+
+export function removeFilterPainting(artifact) {
+    delete artifact.paint;
+    artifact.refresh();
+}
+
+export function filterPainting(artifact) {
+    let paint = artifact.paint;
+    artifact.paint = function() {
+        try {
+            startRegister(artifact.level);
+            paint.call(artifact);
+        }
+        finally {
+            stopRegister(artifact.level);
+        }
+    }
+    artifact.refresh();
 }
 
 export function loadAllImages() {

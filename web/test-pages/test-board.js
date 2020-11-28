@@ -285,11 +285,12 @@ describe("Board", ()=> {
             var artifact2 = new DImageArtifact("units", image2, new Point2D(10, 15), new Dimension2D(50, 50), 45);
             var element = new DElement(artifact1, artifact2);
             element.setLocation(new Point2D(100, 50));
-            element.setRotation(90);
+            element.setAngle(90);
             resetDirectives(level);
             element.setOnBoard(board);
             board.paint();
         then:
+            assert(element.artifacts).arrayEqualsTo([artifact1, artifact2]);
             assert(element.angle).equalsTo(90);
             assert(element.location.x).equalsTo(100);
             assert(element.location.y).equalsTo(50);
@@ -355,6 +356,10 @@ describe("Board", ()=> {
             element.setOnBoard(board);
             board.paint();
         then:
+            assert(mapArtifact.viewportLocation.toString()).equalsTo("point(250, 150)");
+            assert(artifact1.viewportLocation.toString()).equalsTo("point(250, 150)");
+            assert(artifact2.viewportLocation.toString()).equalsTo("point(290, 200)");
+            assert(artifact3.viewportLocation.toString()).equalsTo("point(295, 205)");
             assert(board.getViewPortPoint(mapArtifact.location).toString()).equalsTo("point(250, 150)");
             assert(board.getViewPortPoint(artifact1.location).toString()).equalsTo("point(250, 150)");
             assert(board.getViewPortPoint(artifact2.location).toString()).equalsTo("point(290, 200)");
@@ -510,7 +515,7 @@ describe("Board", ()=> {
             var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
             var level = board.getLevel("units");
             var element = createImageElement("../images/unit.png", new Point2D(0, 0));
-            element.setRotation(90);
+            element.setAngle(90);
             element.setOnBoard(board);
             Memento.activate();
         when:

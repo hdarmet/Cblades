@@ -4,10 +4,21 @@ import {
     describe, it, assert
 } from "../jstest/jtest.js";
 import {
-    Point2D, Dimension2D, Matrix2D, Area2D, same, inside
+    Point2D, Dimension2D, Matrix2D, Area2D, same, inside, atan2
 } from "../jslib/geometry.js";
 
 describe("Geometry", ()=> {
+
+    it("Checks 'angle' method", () => {
+        assert(atan2(0, -15)).equalsTo(0);
+        assert(atan2(15, -15)).equalsTo(45);
+        assert(atan2( 15, 0)).equalsTo(90);
+        assert(atan2(15, 15)).equalsTo(135);
+        assert(atan2(0, 15)).equalsTo(180);
+        assert(atan2(-15, 15)).equalsTo(225);
+        assert(atan2( -15, 0)).equalsTo(270);
+        assert(atan2(-15, -15)).equalsTo(315);
+    });
 
     it("Checks 'same' method", () => {
         assert(same(1, 1)).isTrue();
@@ -45,6 +56,19 @@ describe("Geometry", ()=> {
         then:
             assert(clonePoint.x).equalsTo(30);
             assert(clonePoint.y).equalsTo(40);
+    });
+
+    it("Checks Point position/location methods", () => {
+        when:
+            var point1 = new Point2D(10, 10);
+            var point2 = new Point2D(110, 110);
+        then:
+            assert(Point2D.location(point1, point2, 0).toString()).equalsTo("point(10, 10)");
+            assert(Point2D.location(point1, point2, 0.6).toString()).equalsTo("point(70, 70)");
+            assert(Point2D.location(point1, point2, 1).toString()).equalsTo("point(110, 110)");
+            assert(Point2D.position(point1, point2, 0).toString()).equalsTo("point(0, 0)");
+            assert(Point2D.position(point1, point2, 0.6).toString()).equalsTo("point(60, 60)");
+            assert(Point2D.position(point1, point2, 1).toString()).equalsTo("point(100, 100)");
     });
 
     it("Checks Dimension class", () => {
@@ -104,8 +128,15 @@ describe("Geometry", ()=> {
             var transform = Matrix2D.translate(new Point2D(20, 30))
                 .concat(Matrix2D.rotate(90, new Point2D(20, 30)));
         then:
+            assert(Area2D.boundingArea(
+                new Point2D(0, 0),
+                new Point2D(-10, -20),
+                new Point2D(30, 40)).toString())
+                .equalsTo("area(-10, -20, 30, 40)");
             assert(Area2D.rectBoundingArea(transform, -10, -20, 40, 50).toString())
                 .equalsTo("area(-10, 20, 40, 60)");
+            assert(Area2D.rectBoundingArea(null, -10, -20, 40, 50).toString())
+                .equalsTo("area(-10, -20, 30, 30)");
     });
 
     it("Checks Matrix creation and identity", () => {

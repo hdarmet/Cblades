@@ -137,16 +137,18 @@ describe("Widget", ()=> {
             board.paint();
             resetDirectives(level);
             resetDirectives(itemsLevel);
+            let iconMenuItem = new DIconMenuItem("/CBlades/images/icons/menu3.png", 0, 1, ()=>{return true;});
             let menu = new DIconMenu(
                 new DIconMenuItem("/CBlades/images/icons/menu1.png", 0, 0, ()=>{return true;}),
-                new DIconMenuItem("/CBlades/images/icons/menu2.png", 0, 1, ()=>{return true;}),
-                new DIconMenuItem("/CBlades/images/icons/menu3.png", 1, 0, ()=>{return true;}),
+                new DIconMenuItem("/CBlades/images/icons/menu2.png", 1, 0, ()=>{return true;}),
+                iconMenuItem,
                 new DIconMenuItem("/CBlades/images/icons/menu4.png", 1, 1, ()=>{return true;})
             );
             menu.open(board, new Point2D(5, 5));
             loadAllImages();
             board.paint();
         then:
+            assert(menu.getItem(0, 1)).equalsTo(iconMenuItem)
             assert(getDirectives(level, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",

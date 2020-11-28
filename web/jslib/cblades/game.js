@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    Point2D, Dimension2D
+    atan2, Point2D, Dimension2D
 } from "../geometry.js";
 import {
     DImage,
@@ -18,11 +18,24 @@ import {
     DPopup
 } from "../widget.js";
 
+export class CBPlayer {
+
+    constructor() {}
+
+    startsMoving(game, unit) {
+        let moveActuator = unit.createMoveActuator();
+        game.addActuators(moveActuator);
+        let orientationActuator = unit.createOrientationActuator();
+        game.addActuators(orientationActuator);
+    }
+
+}
+
 export class CBGame {
 
     constructor() {
         this._board = new DBoard(new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT), new Dimension2D(1000, 500),
-            "map", "units", "markers", new DStaticLayer("widgets"), new DStaticLayer("widget-items"));
+            "map", "units", "markers", "actuators", new DStaticLayer("widgets"), new DStaticLayer("widget-items"));
         this._board.setZoomSettings(1.5, 1);
         this._board.setScrollSettings(20, 10);
         this._board.scrollOnBordersOnMouseMove();
@@ -30,39 +43,8 @@ export class CBGame {
         this._board.scrollOnKeyDown()
         this._board.zoomOnKeyDown();
         this._board.undoRedoOnKeyDown();
+        this._actuators = [];
         DPopup.activate();
-    }
-
-    _openMenu(offset) {
-        let popup = new DIconMenu(
-            new DIconMenuItem("/CBlades/images/icons/move.png", 0, 0, ()=>{return true;}),
-            new DIconMenuItem("/CBlades/images/icons/move-back.png", 0, 1, ()=>{return true;}),
-            new DIconMenuItem("/CBlades/images/icons/escape.png", 0, 2, ()=>{return true;}),
-            new DIconMenuItem("/CBlades/images/icons/to-face.png", 0, 3, ()=>{return true;}),
-            new DIconMenuItem("/CBlades/images/icons/shock-attack.png", 1, 0, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/fire-attack.png", 1, 1, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/shock-duel.png", 1, 2, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/fire-duel.png", 1, 3, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/do-rest.png", 2, 0, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/do-reload.png", 2, 1, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/do-reorganize.png", 2, 2, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/do-rally.png", 2, 3, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/create-formation.png", 3, 0, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/join-formation.png", 3, 1, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/leave-formation.png", 3, 2, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/dismiss-formation.png", 3, 3, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/take-command.png", 4, 0, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/leave-command.png", 4, 1, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/change-orders.png", 4, 2, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/give-specific-orders.png", 4, 3, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/select-spell.png", 5, 0, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/cast-spell.png", 5, 1, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/do-fusion.png", 5, 2, ()=>{}),
-            new DIconMenuItem("/CBlades/images/icons/do-many.png", 5, 3, ()=>{})
-        );
-        popup.open(this._board, new Point2D(
-            offset.x - popup.dimension.w/2 + CBGame.POPUP_MARGIN,
-            offset.y - popup.dimension.h/2 + CBGame.POPUP_MARGIN));
     }
 
     recenter(vpoint) {
@@ -82,12 +64,29 @@ export class CBGame {
         }
         this._counters.add(counter);
         counter.game = this;
-        counter.setLocation(hexLocation.location);
+        counter.hexLocation = hexLocation;
         counter.element.setOnBoard(this._board);
+    }
+
+    addActuators(actuator) {
+        actuator.game = this;
+        actuator.element.setOnBoard(this._board);
+        this._actuators.push(actuator);
+    }
+
+    closeActuators() {
+        for (let actuator of this._actuators) {
+            actuator.element.removeFromBoard(this._board);
+        }
+        this._actuators = [];
     }
 
     get root() {
         return this._board.root;
+    }
+
+    get actuators() {
+        return this._actuators;
     }
 
     start() {
@@ -96,6 +95,9 @@ export class CBGame {
         return this;
     }
 
+    openPopup(popup, location) {
+        popup.open(this._board, location);
+    }
 }
 CBGame.POPUP_MARGIN = 10;
 
@@ -119,12 +121,84 @@ export class CBHexId {
         return this._row;
     }
 
-    get position() {
-        return this.map.findPosition(this);
+    get location() {
+        let position = this.map.findPosition(this);
+        return this.map.getLocation(position);
+    }
+
+    similar(hexId) {
+        return this.location.equalsTo(hexId.location);
+    }
+
+    getNearHex(angle) {
+        return this._map.findNearHex(this, angle);
+    }
+}
+
+export class CBHexSideId {
+
+    constructor(hexId1, hexId2) {
+        this._hexId1 = hexId1;
+        this._hexId2 = hexId2;
+    }
+
+    get fromHex() {
+        return this._hexId1;
+    }
+
+    get toHex() {
+        return this._hexId2;
     }
 
     get location() {
-        return this.map.getLocation(this.position);
+        let loc1 = this._hexId1.location;
+        let loc2 = this._hexId2.location;
+        return new Point2D((loc1.x+loc2.x)/2, (loc1.y+loc2.y)/2);
+    }
+
+    get angle() {
+        let loc1 = this._hexId1.location;
+        let loc2 = this._hexId2.location;
+        return atan2(loc2.x-loc1.x, loc2.y-loc1.y);
+    }
+
+    similar(hexSideId) {
+        return this.location.equalsTo(hexSideId.location);
+    }
+}
+
+export class CBHexVertexId {
+
+    constructor(hexId1, hexId2, hexId3) {
+        this._hexId1 = hexId1;
+        this._hexId2 = hexId2;
+        this._hexId3 = hexId3;
+    }
+
+    get fromHex() {
+        return this._hexId1;
+    }
+
+    get toHexSide() {
+        return new CBHexSideId(this._hexId2, this._hexId3);
+    }
+
+    get location() {
+        let loc1 = this._hexId1.location;
+        let loc2 = this._hexId2.location;
+        let loc3 = this._hexId3.location;
+        return new Point2D((loc1.x+loc2.x+loc3.x)/3, (loc1.y+loc2.y+loc3.y)/3);
+    }
+
+    get angle() {
+        let loc1 = this._hexId1.location;
+        let loc2 = this._hexId2.location;
+        let loc3 = this._hexId3.location;
+        return atan2((loc2.x+loc3.x)/2-loc1.x, (loc2.y+loc3.y)/2-loc1.y);
+    }
+
+    similar(hexVertexId) {
+        return this.location.equalsTo(hexVertexId.location);
     }
 }
 
@@ -154,6 +228,35 @@ export class CBMap {
         let y = CBMap.HEIGHT/CBMap.ROW_COUNT * hexId.row-CBMap.HEIGHT/2;
         if (hexId.col%2) y-= CBMap.HEIGHT/CBMap.ROW_COUNT/2;
         return new Point2D(x, y);
+    }
+
+    findNearHex(hexId, angle) {
+        if (angle === 0) {
+            return new CBHexId(this, hexId.col, hexId.row-1);
+        }
+        else if (angle === 60) {
+            return hexId.col%2 ?
+                new CBHexId(this, hexId.col+1, hexId.row-1) :
+                new CBHexId(this, hexId.col+1, hexId.row);
+        }
+        else if (angle === 120) {
+            return hexId.col%2 ?
+                new CBHexId(this, hexId.col+1, hexId.row) :
+                new CBHexId(this, hexId.col+1, hexId.row+1);
+        }
+        else if (angle === 180) {
+            return new CBHexId(this, hexId.col, hexId.row+1);
+        }
+        else if (angle === 240) {
+            return hexId.col%2 ?
+                new CBHexId(this, hexId.col-1, hexId.row) :
+                new CBHexId(this, hexId.col-1, hexId.row+1);
+        }
+        else if (angle === 300) {
+            return hexId.col%2 ?
+                new CBHexId(this, hexId.col-1, hexId.row-1) :
+                new CBHexId(this, hexId.col-1, hexId.row);
+        }
     }
 
     getLocation(point) {
@@ -207,13 +310,25 @@ export class CBCounter {
         this._element._unit = this;
     }
 
+    get angle() {
+        return this._element.angle;
+    }
+
+    set angle(angle) {
+        this._element.setAngle(angle);
+    }
+
     get settings() {
         return level=>{
             level.setShadowSettings("#000000", 15);
         }
     }
 
-    setLocation(location) {
+    get location() {
+        return this._element.location;
+    }
+
+    set location(location) {
         this._element.setLocation(location);
     }
 
@@ -236,8 +351,9 @@ export class CBCounter {
 
 export class CBUnit extends CBCounter {
 
-    constructor(path) {
+    constructor(player, path) {
         super(path, CBUnit.DIMENSION);
+        this._player = player;
     }
 
     get selectedSettings() {
@@ -264,7 +380,83 @@ export class CBUnit extends CBCounter {
 
     onMouseClick(event) {
         this.select();
-        this.game._openMenu(new Point2D(event.offsetX, event.offsetY));
+        this._openMenu(new Point2D(event.offsetX, event.offsetY));
+    }
+
+    get player() {
+        return this._player;
+    }
+
+    get hexLocation() {
+        return this._hexLocation;
+    }
+
+    set hexLocation(hexLocation) {
+        this._hexLocation = hexLocation;
+        this.location = hexLocation.location;
+    }
+
+    _openMenu(offset) {
+        let popup = new DIconMenu(
+            new DIconMenuItem("/CBlades/images/icons/move.png", 0, 0, ()=>{
+                this._player.startsMoving(this.game, this);
+                return true;
+            }),
+            new DIconMenuItem("/CBlades/images/icons/move-back.png", 1, 0, ()=>{return true;}),
+            new DIconMenuItem("/CBlades/images/icons/escape.png", 2, 0, ()=>{return true;}),
+            new DIconMenuItem("/CBlades/images/icons/to-face.png", 3, 0, ()=>{return true;}),
+            new DIconMenuItem("/CBlades/images/icons/shock-attack.png", 0, 1, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/fire-attack.png", 1, 1, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/shock-duel.png", 2, 1, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/fire-duel.png", 3, 1, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/do-rest.png", 0, 2, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/do-reload.png", 1, 2, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/do-reorganize.png", 2, 2, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/do-rally.png", 3, 2, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/create-formation.png", 0, 3, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/join-formation.png", 1, 3, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/leave-formation.png", 2, 3, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/dismiss-formation.png", 3, 3, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/take-command.png", 0, 4, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/leave-command.png", 1, 4, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/change-orders.png", 2, 4, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/give-specific-orders.png", 3, 4, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/select-spell.png", 0, 5, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/cast-spell.png", 1, 5, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/do-fusion.png", 2, 5, ()=>{}),
+            new DIconMenuItem("/CBlades/images/icons/do-many.png", 3, 5, ()=>{})
+        );
+        this.game.closeActuators();
+        this.game.openPopup(popup, new Point2D(
+            offset.x - popup.dimension.w/2 + CBGame.POPUP_MARGIN,
+            offset.y - popup.dimension.h/2 + CBGame.POPUP_MARGIN));
+    }
+
+    createOrientationActuator() {
+        let directions = [];
+        for (let angle = 0; angle < 360; angle += 60) {
+            directions[angle] = this.hexLocation.getNearHex(angle);
+        }
+        for (let angle = 0; angle < 360; angle += 60) {
+            directions[angle + 30] = new CBHexSideId(directions[angle], directions[(angle + 60) % 360]);
+        }
+        delete directions[this.angle];
+        return new CBOrientationActuator(this, directions);
+    }
+
+    createMoveActuator() {
+        let directions = [];
+        let angle = this.angle;
+        if (angle%60) {
+            directions[angle-30] = this.hexLocation.getNearHex(angle-30);
+            directions[angle+30] = this.hexLocation.getNearHex(angle+30);
+        }
+        else {
+            directions[(angle+300)%360] = this.hexLocation.getNearHex((angle+300)%360);
+            directions[angle] = this.hexLocation.getNearHex(angle);
+            directions[(angle+60)%360] = this.hexLocation.getNearHex((angle+60)%360);
+        }
+        return new CBMoveActuator(this, directions);
     }
 }
 CBUnit.selected = null;
@@ -274,3 +466,112 @@ CBUnit.DIMENSION = new Dimension2D(CBUnit.WIDTH, CBUnit.HEIGHT);
 CBUnit.fromArtifact = function(artifact) {
     return artifact.element._unit;
 }
+
+class ActuatorImageArtifact extends DImageArtifact {
+
+    constructor(unit, ...args) {
+        super(...args);
+        this._actuator = unit;
+        this.setSettings(this.settings);
+    }
+
+    get settings() {
+        return level=>{
+            level.setShadowSettings("#00FFFF", 10);
+        }
+    }
+
+    get overSettings() {
+        return level=>{
+            level.setShadowSettings("#FF0000", 10);
+        }
+    }
+
+    onMouseClick(event) {
+        this._actuator.onMouseClick(event);
+    }
+
+    onMouseEnter(event) {
+        this.setSettings(this.overSettings);
+        this.element.refresh();
+    }
+
+    onMouseLeave(event) {
+        this.setSettings(this.settings);
+        this.element.refresh();
+    }
+
+}
+
+export class CBActuator {
+
+    constructor(unit) {
+        this._unit = unit;
+    }
+
+    get unit() {
+        return this._unit;
+    }
+}
+
+export class CBOrientationActuator extends CBActuator {
+
+    constructor(unit, directions) {
+        super(unit);
+        this._image = DImage.getImage("/CBlades/images/actuators/toward.png");
+        this._imageArtifacts = [];
+        for (let angle in directions) {
+            let orientation = new ActuatorImageArtifact(this, "actuators", this._image,
+                new Point2D(0, 0), new Dimension2D(60, 80));
+            orientation.position = Point2D.position(unit.location, directions[angle].location, angle%60?0.87:0.75);
+            orientation.pangle = parseInt(angle);
+            this._imageArtifacts.push(orientation);
+        }
+        this._element = new DElement(...this._imageArtifacts);
+        this._element._actuator = this;
+        this._element.setLocation(this.unit.location);
+    }
+
+    get element() {
+        return this._element;
+    }
+
+    getTrigger(angle) {
+        for (let artifact of this._element.artifacts) {
+            if (artifact.pangle === angle) return artifact;
+        }
+        return null;
+    }
+}
+
+export class CBMoveActuator extends CBActuator {
+
+    constructor(unit, directions) {
+        super(unit);
+        this._image = DImage.getImage("/CBlades/images/actuators/standard-move.png");
+        this._imageArtifacts = [];
+        for (let angle in directions) {
+            let orientation = new ActuatorImageArtifact(this, "actuators", this._image,
+                new Point2D(0, 0), new Dimension2D(80, 130));
+            orientation.position = Point2D.position(unit.location, directions[angle].location, 0.9);
+            orientation.pangle = parseInt(angle);
+            this._imageArtifacts.push(orientation);
+        }
+        this._element = new DElement(...this._imageArtifacts);
+        this._element._actuator = this;
+        this._element.setLocation(this.unit.location);
+    }
+
+    get element() {
+        return this._element;
+    }
+
+    getTrigger(angle) {
+        for (let artifact of this._element.artifacts) {
+            if (artifact.pangle === angle) return artifact;
+        }
+        return null;
+    }
+
+}
+
