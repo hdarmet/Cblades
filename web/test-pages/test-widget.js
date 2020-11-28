@@ -123,7 +123,7 @@ describe("Widget", ()=> {
         then:
             assert(DPopup._instance).equalsTo(popup1);
         when:
-            Mechanisms.fire(null, "some-event");
+            Mechanisms.fire(null, DBoard.SCROLL_EVENT);
         then:
             assert(DPopup._instance).isNotDefined();
     });
@@ -148,7 +148,8 @@ describe("Widget", ()=> {
             loadAllImages();
             board.paint();
         then:
-            assert(menu.getItem(0, 1)).equalsTo(iconMenuItem)
+            assert(menu.getItem(0, 1)).equalsTo(iconMenuItem);
+            assert(menu.getItem(2, 2)).isNotDefined();
             assert(getDirectives(level, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",

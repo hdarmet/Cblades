@@ -1,14 +1,14 @@
 'use strict';
 
 import {
-    Mechanisms
+    Mechanisms, Memento
 } from "./mechanisms.js";
 import {
     DImage
 } from "./draw.js";
 import {
     DArtifact, RectArtifact,
-    DElement, DImageArtifact
+    DElement, DImageArtifact, DBoard
 } from "./board.js";
 import {
     Area2D,
@@ -122,7 +122,10 @@ DPopup._instance = null;
 DPopup.activate = function() {
     DPopup._cleaner = {
         _processGlobalEvent(source, event, value) {
-            DPopup.close();
+            if (event===Memento.UNDO_EVENT || event===Memento.REDO_EVENT ||
+                event===DBoard.ZOOM_EVENT || event===DBoard.SCROLL_EVENT) {
+                DPopup.close();
+            }
         }
     };
     Mechanisms.addListener(DPopup._cleaner);
@@ -155,7 +158,7 @@ export class DIconMenuItem extends DImageArtifact {
     }
 
     onMouseClick(event) {
-        if (this.action()) {
+        if (this.action(event)) {
             this.element.close();
         }
     }

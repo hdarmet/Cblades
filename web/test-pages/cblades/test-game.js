@@ -11,7 +11,7 @@ import {
     getDirectives, loadAllImages, mockPlatform, removeFilterPainting, resetDirectives, stopRegister
 } from "../mocks.js";
 import {
-    Mechanisms
+    Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
     CBGame, CBHexId, CBMap, CBUnit, CBPlayer, CBHexSideId, CBHexVertexId, CBMoveActuator, CBOrientationActuator
@@ -39,6 +39,7 @@ describe("Game", ()=> {
         given:
             var player = new CBPlayer();
             var game = new CBGame();
+            game.addPlayer(player);
             var mapLevel = game._board.getLevel("map");
             var unitsLevel = game._board.getLevel("units");
             var map = new CBMap("/CBlades/images/maps/map.png");
@@ -233,6 +234,7 @@ describe("Game", ()=> {
         given:
             var game = new CBGame();
             var player = new CBPlayer();
+            game.addPlayer(player);
             var unitsLevel = game._board.getLevel("units");
             var widgetsLevel = game._board.getLevel("widgets");
             var widgetItemsLevel = game._board.getLevel("widget-items");
@@ -300,6 +302,7 @@ describe("Game", ()=> {
         given:
             var player = new CBPlayer();
             var game = new CBGame();
+            game.addPlayer(player);
             var unitsLevel = game._board.getLevel("units");
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
@@ -345,6 +348,7 @@ describe("Game", ()=> {
         given:
             var player = new CBPlayer();
             var game = new CBGame();
+            game.addPlayer(player);
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
             let counter1 = new CBUnit(player, "/CBlades/images/units/misc/unit1.png");
@@ -419,6 +423,7 @@ describe("Game", ()=> {
         given:
             var game = new CBGame();
             var player = new CBPlayer();
+            game.addPlayer(player);
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
             let counter = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
@@ -454,6 +459,7 @@ describe("Game", ()=> {
         given:
             var game = new CBGame();
             var player = new CBPlayer();
+            game.addPlayer(player);
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
             let counter = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
@@ -491,6 +497,7 @@ describe("Game", ()=> {
         given:
             var game = new CBGame();
             var player = new CBPlayer();
+            game.addPlayer(player);
             var actuatorsLevel = game._board.getLevel("actuators");
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
@@ -530,6 +537,7 @@ describe("Game", ()=> {
         given:
             var game = new CBGame();
             var player = new CBPlayer();
+            game.addPlayer(player);
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
             let counter1 = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
@@ -560,6 +568,7 @@ describe("Game", ()=> {
         given:
             var game = new CBGame();
             var player = new CBPlayer();
+            game.addPlayer(player);
             var actuatorsLevel = game._board.getLevel("actuators");
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
@@ -604,6 +613,7 @@ describe("Game", ()=> {
         given:
             var game = new CBGame();
             var player = new CBPlayer();
+            game.addPlayer(player);
             var actuatorsLevel = game._board.getLevel("actuators");
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
@@ -645,6 +655,125 @@ describe("Game", ()=> {
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984375, 60, 80)"
             ]);
+    });
+
+    function createTinyGame() {
+        let game = new CBGame();
+        let player = new CBPlayer();
+        game.addPlayer(player);
+        let map = new CBMap("/CBlades/images/maps/map.png");
+        game.setMap(map);
+        let counter = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
+        game.addCounter(counter, new CBHexId(map, 5, 8));
+        game.start();
+        return {game, map, counter};
+    }
+
+    function clickOnTrigger(game, trigger) {
+        let triggerLocation = trigger.viewportLocation;
+        var mouseEvent = createEvent("click", {offsetX:triggerLocation.x, offsetY:triggerLocation.y});
+        mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
+    }
+
+    it("Checks Unit move using actuators (move, rotate, move)", () => {
+        given:
+            var {game, counter} = createTinyGame()
+            clickOnCounter(game, counter);
+            clickOnActionMenu(game, 0, 0);
+            loadAllImages();
+            let moveActuator = getMoveActuator(game);
+        then:
+            assert(counter.location.toString()).equalsTo("point(-170.5, -98.4375)");
+            assert(counter.hexLocation.col).equalsTo(5);
+            assert(counter.hexLocation.row).equalsTo(8);
+            assert(counter.angle).equalsTo(0);
+        when:
+            clickOnTrigger(game, moveActuator.getTrigger(0));
+        then:
+            assert(counter.hexLocation.col).equalsTo(5);
+            assert(counter.hexLocation.row).equalsTo(7);
+        when:
+            var orientationActuator = getOrientationActuator(game);
+            clickOnTrigger(game, orientationActuator.getTrigger(60));
+        then:
+            assert(counter.angle).equalsTo(60);
+        when:
+            moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(60));
+        then:
+            assert(counter.location.toString()).equalsTo("point(0, -393.75)");
+            assert(counter.hexLocation.col).equalsTo(6);
+            assert(counter.hexLocation.row).equalsTo(6);
+        when:
+            moveActuator = getMoveActuator(game);
+            orientationActuator = getOrientationActuator(game);
+            Memento.undo();
+        then:
+            assert(counter.location.toString()).equalsTo("point(-170.5, -98.4375)");
+            assert(counter.hexLocation.col).equalsTo(5);
+            assert(counter.hexLocation.row).equalsTo(8);
+            assert(counter.angle).equalsTo(0);
+            assert(getMoveActuator(game)).isNotDefined();
+            assert(getOrientationActuator(game)).isNotDefined();
+        when:
+            Memento.redo();
+        then:
+            assert(counter.location.toString()).equalsTo("point(0, -393.75)");
+            assert(counter.hexLocation.col).equalsTo(6);
+            assert(counter.hexLocation.row).equalsTo(6);
+            assert(counter.angle).equalsTo(60);
+            assert(getMoveActuator(game)).equalsTo(moveActuator);
+            assert(getOrientationActuator(game)).equalsTo(orientationActuator);
+    });
+
+    it("Checks Unit move using actuators (rotate, move, rotate)", () => {
+        given:
+            var {game, counter} = createTinyGame()
+            clickOnCounter(game, counter);
+            clickOnActionMenu(game, 0, 0);
+            loadAllImages();
+            var orientationActuator = getOrientationActuator(game);
+        then:
+            assert(counter.location.toString()).equalsTo("point(-170.5, -98.4375)");
+            assert(counter.hexLocation.col).equalsTo(5);
+            assert(counter.hexLocation.row).equalsTo(8);
+            assert(counter.angle).equalsTo(0);
+        when:
+            clickOnTrigger(game, orientationActuator.getTrigger(60));
+        then:
+            assert(counter.angle).equalsTo(60);
+        when:
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(60));
+        then:
+            assert(counter.location.toString()).equalsTo("point(0, -196.875)");
+            assert(counter.hexLocation.col).equalsTo(6);
+            assert(counter.hexLocation.row).equalsTo(7);
+        when:
+            orientationActuator = getOrientationActuator(game);
+            clickOnTrigger(game, orientationActuator.getTrigger(90));
+        then:
+            assert(counter.angle).equalsTo(90);
+        when:
+            moveActuator = getMoveActuator(game);
+            orientationActuator = getOrientationActuator(game);
+            Memento.undo();
+        then:
+            assert(counter.location.toString()).equalsTo("point(-170.5, -98.4375)");
+            assert(counter.hexLocation.col).equalsTo(5);
+            assert(counter.hexLocation.row).equalsTo(8);
+            assert(counter.angle).equalsTo(0);
+            assert(getMoveActuator(game)).isNotDefined();
+            assert(getOrientationActuator(game)).isNotDefined();
+        when:
+            Memento.redo();
+        then:
+            assert(counter.location.toString()).equalsTo("point(0, -196.875)");
+            assert(counter.hexLocation.col).equalsTo(6);
+            assert(counter.hexLocation.row).equalsTo(7);
+            assert(counter.angle).equalsTo(90);
+            assert(getMoveActuator(game)).equalsTo(moveActuator);
+            assert(getOrientationActuator(game)).equalsTo(orientationActuator);
     });
 
 });

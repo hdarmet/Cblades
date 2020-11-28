@@ -22,11 +22,51 @@ export class CBPlayer {
 
     constructor() {}
 
-    startsMoving(game, unit) {
-        let moveActuator = unit.createMoveActuator();
-        game.addActuators(moveActuator);
-        let orientationActuator = unit.createOrientationActuator();
-        game.addActuators(orientationActuator);
+    selectUnit(unit, event) {
+        unit.openActionMenu(new Point2D(event.offsetX, event.offsetY));
+    }
+
+    _createMovementActuators(unit, first) {
+        let moveActuator = unit.createMoveActuator(first);
+        this.game.addActuator(moveActuator);
+        let orientationActuator = unit.createOrientationActuator(first);
+        this.game.addActuator(orientationActuator);
+    }
+
+    startMoveUnit(unit, event) {
+        this._createMovementActuators(unit, true);
+    }
+
+    firstUnitRotation(unit, angle, event) {
+        this.game.closeActuators();
+        unit.firstRotation(angle);
+        this._createMovementActuators(unit, false);
+    }
+
+    firstUnitMove(unit, hexId, event) {
+        this.game.closeActuators();
+        unit.firstMove(hexId);
+        this._createMovementActuators(unit, false);
+    }
+
+    subsequentUnitRotation(unit, angle, event) {
+        this.game.closeActuators();
+        unit.subsequentRotation(angle);
+        this._createMovementActuators(unit, false);
+    }
+
+    subsequentUnitMove(unit, hexId, event) {
+        this.game.closeActuators();
+        unit.subsequentMove(hexId);
+        this._createMovementActuators(unit, false);
+    }
+
+    get game() {
+        return this._game;
+    }
+
+    set game(game) {
+        this._game = game;
     }
 
 }
@@ -47,6 +87,19 @@ export class CBGame {
         DPopup.activate();
     }
 
+    _memento() {
+        return {
+            actuators: [...this._actuators]
+        };
+    }
+
+    _revert(memento) {
+        this.closeActuators();
+        for (let actuator of memento.actuators) {
+            this.addActuator(actuator);
+        }
+    }
+
     recenter(vpoint) {
         this._board.recenter(vpoint);
         DPopup.close();
@@ -56,6 +109,10 @@ export class CBGame {
         map.element.setOnBoard(this._board);
         map.game = this;
         return this;
+    }
+
+    addPlayer(player) {
+        player.game = this;
     }
 
     addCounter(counter, hexLocation) {
@@ -68,7 +125,7 @@ export class CBGame {
         counter.element.setOnBoard(this._board);
     }
 
-    addActuators(actuator) {
+    addActuator(actuator) {
         actuator.game = this;
         actuator.element.setOnBoard(this._board);
         this._actuators.push(actuator);
@@ -380,7 +437,7 @@ export class CBUnit extends CBCounter {
 
     onMouseClick(event) {
         this.select();
-        this._openMenu(new Point2D(event.offsetX, event.offsetY));
+        this.player.selectUnit(this, event);
     }
 
     get player() {
@@ -391,15 +448,47 @@ export class CBUnit extends CBCounter {
         return this._hexLocation;
     }
 
-    set hexLocation(hexLocation) {
-        this._hexLocation = hexLocation;
-        this.location = hexLocation.location;
+    set hexLocation(hexId) {
+        this._hexLocation = hexId;
+        this.location = hexId.location;
     }
 
-    _openMenu(offset) {
+    _memento() {
+        return {
+            hexLocation: this._hexLocation
+        };
+    }
+
+    _revert(memento) {
+        this._hexLocation = memento.hexLocation;
+    }
+
+    firstMove(hexId) {
+        Memento.register(this);
+        Memento.register(this.game);
+        this._hexLocation = hexId;
+        this._element.move(hexId.location);
+    }
+
+    firstRotation(angle) {
+        Memento.register(this);
+        Memento.register(this.game);
+        this._element.rotate(angle);
+    }
+
+    subsequentMove(hexId) {
+        this._hexLocation = hexId;
+        this._element.setLocation(hexId.location);
+    }
+
+    subsequentRotation(angle) {
+        this._element.setAngle(angle);
+    }
+
+    openActionMenu(offset) {
         let popup = new DIconMenu(
-            new DIconMenuItem("/CBlades/images/icons/move.png", 0, 0, ()=>{
-                this._player.startsMoving(this.game, this);
+            new DIconMenuItem("/CBlades/images/icons/move.png", 0, 0, event=>{
+                this._player.startMoveUnit(this, event);
                 return true;
             }),
             new DIconMenuItem("/CBlades/images/icons/move-back.png", 1, 0, ()=>{return true;}),
@@ -432,7 +521,7 @@ export class CBUnit extends CBCounter {
             offset.y - popup.dimension.h/2 + CBGame.POPUP_MARGIN));
     }
 
-    createOrientationActuator() {
+    createOrientationActuator(first) {
         let directions = [];
         for (let angle = 0; angle < 360; angle += 60) {
             directions[angle] = this.hexLocation.getNearHex(angle);
@@ -441,22 +530,22 @@ export class CBUnit extends CBCounter {
             directions[angle + 30] = new CBHexSideId(directions[angle], directions[(angle + 60) % 360]);
         }
         delete directions[this.angle];
-        return new CBOrientationActuator(this, directions);
+        return new CBOrientationActuator(this, directions, first);
     }
 
-    createMoveActuator() {
+    createMoveActuator(first) {
         let directions = [];
         let angle = this.angle;
         if (angle%60) {
-            directions[angle-30] = this.hexLocation.getNearHex(angle-30);
-            directions[angle+30] = this.hexLocation.getNearHex(angle+30);
+            directions[(angle-30)%360] = this.hexLocation.getNearHex((angle-30)%360);
+            directions[(angle+30)%360] = this.hexLocation.getNearHex((angle+30)%360);
         }
         else {
             directions[(angle+300)%360] = this.hexLocation.getNearHex((angle+300)%360);
             directions[angle] = this.hexLocation.getNearHex(angle);
             directions[(angle+60)%360] = this.hexLocation.getNearHex((angle+60)%360);
         }
-        return new CBMoveActuator(this, directions);
+        return new CBMoveActuator(this, directions, first);
     }
 }
 CBUnit.selected = null;
@@ -469,9 +558,9 @@ CBUnit.fromArtifact = function(artifact) {
 
 class ActuatorImageArtifact extends DImageArtifact {
 
-    constructor(unit, ...args) {
+    constructor(actuator, ...args) {
         super(...args);
-        this._actuator = unit;
+        this._actuator = actuator;
         this.setSettings(this.settings);
     }
 
@@ -488,7 +577,7 @@ class ActuatorImageArtifact extends DImageArtifact {
     }
 
     onMouseClick(event) {
-        this._actuator.onMouseClick(event);
+        this._actuator.onMouseClick(this, event);
     }
 
     onMouseEnter(event) {
@@ -516,7 +605,7 @@ export class CBActuator {
 
 export class CBOrientationActuator extends CBActuator {
 
-    constructor(unit, directions) {
+    constructor(unit, directions, first) {
         super(unit);
         this._image = DImage.getImage("/CBlades/images/actuators/toward.png");
         this._imageArtifacts = [];
@@ -530,6 +619,7 @@ export class CBOrientationActuator extends CBActuator {
         this._element = new DElement(...this._imageArtifacts);
         this._element._actuator = this;
         this._element.setLocation(this.unit.location);
+        this._first = first;
     }
 
     get element() {
@@ -542,24 +632,39 @@ export class CBOrientationActuator extends CBActuator {
         }
         return null;
     }
+
+    onMouseClick(trigger, event) {
+        for (let artifact of this._element.artifacts) {
+            if (artifact === trigger) {
+                if (this._first) {
+                    this.unit.player.firstUnitRotation(this.unit, artifact.angle, event);
+                }
+                else {
+                    this.unit.player.subsequentUnitRotation(this.unit, artifact.angle, event);
+                }
+            }
+        }
+    }
+
 }
 
 export class CBMoveActuator extends CBActuator {
 
-    constructor(unit, directions) {
+    constructor(unit, directions, first) {
         super(unit);
         this._image = DImage.getImage("/CBlades/images/actuators/standard-move.png");
         this._imageArtifacts = [];
         for (let angle in directions) {
             let orientation = new ActuatorImageArtifact(this, "actuators", this._image,
                 new Point2D(0, 0), new Dimension2D(80, 130));
-            orientation.position = Point2D.position(unit.location, directions[angle].location, 0.9);
             orientation.pangle = parseInt(angle);
+            orientation.position = Point2D.position(unit.location, directions[angle].location, 0.9);
             this._imageArtifacts.push(orientation);
         }
         this._element = new DElement(...this._imageArtifacts);
         this._element._actuator = this;
         this._element.setLocation(this.unit.location);
+        this._first = first;
     }
 
     get element() {
@@ -571,6 +676,19 @@ export class CBMoveActuator extends CBActuator {
             if (artifact.pangle === angle) return artifact;
         }
         return null;
+    }
+
+    onMouseClick(trigger, event) {
+        for (let artifact of this._element.artifacts) {
+            if (artifact === trigger) {
+                if (this._first) {
+                    this.unit.player.firstUnitMove(this.unit, this.unit.hexLocation.getNearHex(artifact.angle), event);
+                }
+                else {
+                    this.unit.player.subsequentUnitMove(this.unit, this.unit.hexLocation.getNearHex(artifact.angle), event);
+                }
+            }
+        }
     }
 
 }

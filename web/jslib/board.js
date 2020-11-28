@@ -264,7 +264,8 @@ export class DElement extends LocalisationAware(Object) {
 
     _memento() {
         let memento = {
-            location:this._location
+            location:this._location,
+            angle:this._angle
         }
         if (this._board) {
             memento.board = this._board;
@@ -280,6 +281,7 @@ export class DElement extends LocalisationAware(Object) {
             delete this._board;
         }
         this._location = memento.location;
+        this._angle = memento.angle;
     }
 
     _setArtifactsLocation() {
@@ -367,6 +369,15 @@ export class DElement extends LocalisationAware(Object) {
     get artifacts() {
         return this._artifacts;
     }
+
+    get location() {
+        return this._location;
+    }
+
+    get angle() {
+        return this._angle;
+    }
+
 }
 
 /**

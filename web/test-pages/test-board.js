@@ -497,6 +497,7 @@ describe("Board", ()=> {
             element.move(new Point2D(150, 100));
             board.paint();
         then:
+            assert(element.location.toString()).equalsTo("point(150, 100)");
             assert(getDirectives(level).length).equalsTo(7);
             assertLevelIsCleared(0, level);
             assert(getDirectives(level)[5]).equalsTo("drawImage(../images/unit.png, 125, 75, 50, 50)");
@@ -505,6 +506,7 @@ describe("Board", ()=> {
             Memento.undo();
             board.paint();
         then:
+            assert(element.location.toString()).equalsTo("point(100, 50)");
             assert(getDirectives(level).length).equalsTo(7);
             assertLevelIsCleared(0, level);
             assert(getDirectives(level)[5]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
@@ -523,6 +525,7 @@ describe("Board", ()=> {
             element.rotate(180);
             board.paint();
         then:
+            assert(element.angle).equalsTo(180);
             assert(getDirectives(level).length).equalsTo(8);
             assertLevelIsCleared(0, level);
             assert(getDirectives(level)[4]).equalsTo("save()");
@@ -534,6 +537,7 @@ describe("Board", ()=> {
             Memento.undo();
             board.paint();
         then:
+            assert(element.angle).equalsTo(90);
             assert(getDirectives(level).length).equalsTo(8);
             assertLevelIsCleared(0, level);
             assert(getDirectives(level)[4]).equalsTo("save()");
