@@ -133,6 +133,10 @@ export class DImage {
         }
     }
 
+    get path() {
+        return this._root.src;
+    }
+
     draw(layer, ...params) {
         let todo = ()=>{
             _platform.drawImage(layer._context, this._root, ...params);

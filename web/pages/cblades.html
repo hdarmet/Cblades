@@ -9,30 +9,14 @@
 
 <script type="module">
 
-    /*
     import {
-        DImage, DStaticLayer
-    } from "../jslib/draw.js";
-    import {
-        DBoard, DElement, DImageArtifact
-    } from "../jslib/board.js";
-    import {
-        Memento
-    } from "../jslib/mechanisms.js";
-
-    import {
-        DWidget
-    } from "../jslib/widget.js";
-    */
-    import {
-        Point2D, Dimension2D
-    } from "../jslib/geometry.js";
-    import {
-        CBGame, CBMap, CBUnit, CBHexId, CBPlayer
+        CBGame, CBMap, CBUnit, CBHexId, CBPlayer, CBArbitrator
     } from "../jslib/cblades/game.js";
 
     let game = new CBGame();
     document.body.appendChild(game.root);
+    let arbitrator = new CBArbitrator();
+    game.setArbitrator(arbitrator);
     let map = new CBMap("/CBlades/images/maps/map1.png");
     game.setMap(map);
     let player = new CBPlayer();
@@ -43,46 +27,7 @@
     game.addCounter(counter1, new CBHexId(map, 3, 8));
     game.addCounter(counter2, new CBHexId(map, 8, 8));
     game.start();
-    /*
-    let board = new DBoard(new Dimension2D(500, 300), new Dimension2D(500, 300),
-        "map", "units", "markers", new DStaticLayer("panels"));
-    console.log(board.root);
-    document.body.appendChild(board.root);
-    let image = DImage.getImage("../images/civilians1.png");
-    let imageMarker = DImage.getImage("../images/tired.png");
-    let artifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
-    let artifactMarker = new DImageArtifact("markers", imageMarker, new Point2D(-25, -25), new Dimension2D(30, 30));
-    let element = new DElement(artifact, artifactMarker);
-    element.setRotation(30);
-    element.show(board);
-    board.paint();
-    board.onMouseClick(event=>{
-        let offset = new Point2D(event.offsetX, event.offsetY);
-        let artifact = board.getArtifactOnPoint(offset);
-        if (artifact) {
-            let widget = new DWidget()
-                .setPanelSettings(new Dimension2D(100, 150))
-                .setLocation(new Point2D(offset.x-50, offset.y))
-                .setOnBoard(board);
 
-            let element = artifact.element;
-            let point = board.getBoardXY(offset);
-            //board.recenter(offset);
-            element.move(point);
-            element.rotate(element.angle+60);
-            return true;
-
-
-        }
-    });
-    board.scrollOnBordersOnMouseMove();
-    board.zoomInOutOnMouseWheel();
-    board.scrollOnKeyDown()
-    board.zoomOnKeyDown();
-    board.undoRedoOnKeyDown();
-    Memento.activate();
-
-     */
 </script>
 </body>
 </html>

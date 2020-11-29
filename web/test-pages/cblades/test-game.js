@@ -14,7 +14,16 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
-    CBGame, CBHexId, CBMap, CBUnit, CBPlayer, CBHexSideId, CBHexVertexId, CBMoveActuator, CBOrientationActuator
+    CBGame,
+    CBHexId,
+    CBMap,
+    CBUnit,
+    CBPlayer,
+    CBHexSideId,
+    CBHexVertexId,
+    CBMoveActuator,
+    CBOrientationActuator,
+    CBArbitrator
 } from "../../jslib/cblades/game.js";
 import {
     Point2D
@@ -37,8 +46,10 @@ describe("Game", ()=> {
 
     it("Checks game building", () => {
         given:
-            var player = new CBPlayer();
             var game = new CBGame();
+            var arbitrator = new CBArbitrator();
+            game.setArbitrator(arbitrator);
+            var player = new CBPlayer();
             game.addPlayer(player);
             var mapLevel = game._board.getLevel("map");
             var unitsLevel = game._board.getLevel("units");
@@ -50,6 +61,8 @@ describe("Game", ()=> {
             game.start();
             loadAllImages();
         then:
+            assert(arbitrator.game).equalsTo(game);
+            assert(player.game).equalsTo(game);
             assert(CBMap.fromArtifact(map._imageArtifact)).equalsTo(map);
             assert(CBUnit.fromArtifact(counter._imageArtifact)).equalsTo(counter);
             assert(counter.player).equalsTo(player);
@@ -233,6 +246,8 @@ describe("Game", ()=> {
     it("Checks that clicking on a unit select the unit ", () => {
         given:
             var game = new CBGame();
+            var arbitrator = new CBArbitrator();
+            game.setArbitrator(arbitrator);
             var player = new CBPlayer();
             game.addPlayer(player);
             var unitsLevel = game._board.getLevel("units");
@@ -281,10 +296,10 @@ describe("Game", ()=> {
                 "save()", "drawImage(/CBlades/images/icons/move-back.png, 246.66666666666669, 15, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/escape.png, 306.6666666666667, 15, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/to-face.png, 366.6666666666667, 15, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/shock-attack.png, 186.66666666666669, 75, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/fire-attack.png, 246.66666666666669, 75, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/shock-duel.png, 306.6666666666667, 75, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/fire-duel.png, 366.6666666666667, 75, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/shock-attack-gray.png, 186.66666666666669, 75, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/fire-attack-gray.png, 246.66666666666669, 75, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/shock-duel-gray.png, 306.6666666666667, 75, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/fire-duel-gray.png, 366.6666666666667, 75, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/do-rest.png, 186.66666666666669, 135, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/do-reload.png, 246.66666666666669, 135, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/do-reorganize.png, 306.6666666666667, 135, 50, 50)", "restore()",
@@ -300,8 +315,10 @@ describe("Game", ()=> {
 
     it("Checks unit selection/deselection appearance", () => {
         given:
-            var player = new CBPlayer();
             var game = new CBGame();
+            var arbitrator = new CBArbitrator();
+            game.setArbitrator(arbitrator);
+            var player = new CBPlayer();
             game.addPlayer(player);
             var unitsLevel = game._board.getLevel("units");
             var map = new CBMap("/CBlades/images/maps/map.png");
@@ -346,8 +363,10 @@ describe("Game", ()=> {
 
     it("Checks unit selection/deselection", () => {
         given:
-            var player = new CBPlayer();
             var game = new CBGame();
+            var arbitrator = new CBArbitrator();
+            game.setArbitrator(arbitrator);
+            var player = new CBPlayer();
             game.addPlayer(player);
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
@@ -422,6 +441,8 @@ describe("Game", ()=> {
     it("Checks move action actuators when unit is oriented toward an hexside", () => {
         given:
             var game = new CBGame();
+            var arbitrator = new CBArbitrator();
+            game.setArbitrator(arbitrator);
             var player = new CBPlayer();
             game.addPlayer(player);
             var map = new CBMap("/CBlades/images/maps/map.png");
@@ -458,6 +479,8 @@ describe("Game", ()=> {
     it("Checks move action actuators when unit is oriented toward a vertex", () => {
         given:
             var game = new CBGame();
+            var arbitrator = new CBArbitrator();
+            game.setArbitrator(arbitrator);
             var player = new CBPlayer();
             game.addPlayer(player);
             var map = new CBMap("/CBlades/images/maps/map.png");
@@ -496,6 +519,8 @@ describe("Game", ()=> {
     it("Checks move action actuators appearance", () => {
         given:
             var game = new CBGame();
+            var arbitrator = new CBArbitrator();
+            game.setArbitrator(arbitrator);
             var player = new CBPlayer();
             game.addPlayer(player);
             var actuatorsLevel = game._board.getLevel("actuators");
@@ -536,6 +561,8 @@ describe("Game", ()=> {
     it("Checks that a unit selection closes the actuators", () => {
         given:
             var game = new CBGame();
+            var arbitrator = new CBArbitrator();
+            game.setArbitrator(arbitrator);
             var player = new CBPlayer();
             game.addPlayer(player);
             var map = new CBMap("/CBlades/images/maps/map.png");
@@ -567,6 +594,8 @@ describe("Game", ()=> {
     it("Checks mouse move over a trigger of a move actuator", () => {
         given:
             var game = new CBGame();
+            var arbitrator = new CBArbitrator();
+            game.setArbitrator(arbitrator);
             var player = new CBPlayer();
             game.addPlayer(player);
             var actuatorsLevel = game._board.getLevel("actuators");
@@ -612,6 +641,8 @@ describe("Game", ()=> {
     it("Checks mouse move over a trigger of an orientation actuator", () => {
         given:
             var game = new CBGame();
+            var arbitrator = new CBArbitrator();
+            game.setArbitrator(arbitrator);
             var player = new CBPlayer();
             game.addPlayer(player);
             var actuatorsLevel = game._board.getLevel("actuators");
@@ -659,6 +690,8 @@ describe("Game", ()=> {
 
     function createTinyGame() {
         let game = new CBGame();
+        let arbitrator = new CBArbitrator();
+        game.setArbitrator(arbitrator);
         let player = new CBPlayer();
         game.addPlayer(player);
         let map = new CBMap("/CBlades/images/maps/map.png");
@@ -669,10 +702,10 @@ describe("Game", ()=> {
         return {game, map, counter};
     }
 
-    function clickOnTrigger(game, trigger) {
+    function clickOnTrigger(trigger) {
         let triggerLocation = trigger.viewportLocation;
         var mouseEvent = createEvent("click", {offsetX:triggerLocation.x, offsetY:triggerLocation.y});
-        mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
+        trigger.onMouseClick(mouseEvent);
     }
 
     it("Checks Unit move using actuators (move, rotate, move)", () => {
@@ -688,18 +721,18 @@ describe("Game", ()=> {
             assert(counter.hexLocation.row).equalsTo(8);
             assert(counter.angle).equalsTo(0);
         when:
-            clickOnTrigger(game, moveActuator.getTrigger(0));
+            clickOnTrigger(moveActuator.getTrigger(0));
         then:
             assert(counter.hexLocation.col).equalsTo(5);
             assert(counter.hexLocation.row).equalsTo(7);
         when:
             var orientationActuator = getOrientationActuator(game);
-            clickOnTrigger(game, orientationActuator.getTrigger(60));
+            clickOnTrigger(orientationActuator.getTrigger(60));
         then:
             assert(counter.angle).equalsTo(60);
         when:
             moveActuator = getMoveActuator(game);
-            clickOnTrigger(game, moveActuator.getTrigger(60));
+            clickOnTrigger(moveActuator.getTrigger(60));
         then:
             assert(counter.location.toString()).equalsTo("point(0, -393.75)");
             assert(counter.hexLocation.col).equalsTo(6);
@@ -739,19 +772,19 @@ describe("Game", ()=> {
             assert(counter.hexLocation.row).equalsTo(8);
             assert(counter.angle).equalsTo(0);
         when:
-            clickOnTrigger(game, orientationActuator.getTrigger(60));
+            clickOnTrigger(orientationActuator.getTrigger(60));
         then:
             assert(counter.angle).equalsTo(60);
         when:
             var moveActuator = getMoveActuator(game);
-            clickOnTrigger(game, moveActuator.getTrigger(60));
+            clickOnTrigger(moveActuator.getTrigger(60));
         then:
             assert(counter.location.toString()).equalsTo("point(0, -196.875)");
             assert(counter.hexLocation.col).equalsTo(6);
             assert(counter.hexLocation.row).equalsTo(7);
         when:
             orientationActuator = getOrientationActuator(game);
-            clickOnTrigger(game, orientationActuator.getTrigger(90));
+            clickOnTrigger(orientationActuator.getTrigger(90));
         then:
             assert(counter.angle).equalsTo(90);
         when:
@@ -774,6 +807,83 @@ describe("Game", ()=> {
             assert(counter.angle).equalsTo(90);
             assert(getMoveActuator(game)).equalsTo(moveActuator);
             assert(getOrientationActuator(game)).equalsTo(orientationActuator);
+    });
+
+    it("Checks Unit movement points management during move", () => {
+        given:
+            var {game, counter} = createTinyGame()
+            clickOnCounter(game, counter);
+            clickOnActionMenu(game, 0, 0);
+            loadAllImages();
+            var moveActuator = getMoveActuator(game);
+        then:
+            assert(counter.movementPoints).equalsTo(2);
+            assert(counter.extendedMovementPoints).equalsTo(3);
+        when:
+            clickOnTrigger(moveActuator.getTrigger(0));
+        then:
+            assert(counter.movementPoints).equalsTo(1);
+            assert(counter.extendedMovementPoints).equalsTo(2);
+        when:
+            var orientationActuator = getOrientationActuator(game);
+            clickOnTrigger(orientationActuator.getTrigger(60));
+        then:
+            assert(counter.movementPoints).equalsTo(0.5);
+            assert(counter.extendedMovementPoints).equalsTo(1.5);
+        when:
+            Memento.undo();
+        then:
+            assert(counter.movementPoints).equalsTo(2);
+            assert(counter.extendedMovementPoints).equalsTo(3);
+        when:
+            Memento.redo();
+        then:
+            assert(counter.movementPoints).equalsTo(0.5);
+            assert(counter.extendedMovementPoints).equalsTo(1.5);
+    });
+
+    it("Checks that extended move is proposed when unit does not have enough movement point", () => {
+        given:
+            var {game, counter} = createTinyGame()
+            counter.movementPoints = 1;
+            counter.extendedMovementPoints = 2;
+            clickOnCounter(game, counter);
+            clickOnActionMenu(game, 0, 0);
+            loadAllImages();
+            var moveActuator = getMoveActuator(game);
+            var orientationActuator = getOrientationActuator(game);
+        then:
+            assert(moveActuator.getTrigger(0).image.path).equalsTo("/CBlades/images/actuators/standard-move.png");
+            assert(orientationActuator.getTrigger(30).image.path).equalsTo("/CBlades/images/actuators/toward.png");
+        when:
+            clickOnTrigger(moveActuator.getTrigger(0));
+            moveActuator = getMoveActuator(game);
+            orientationActuator = getOrientationActuator(game);
+        then:
+            assert(moveActuator.getTrigger(0).image.path).equalsTo("/CBlades/images/actuators/extended-move.png");
+            assert(orientationActuator.getTrigger(30).image.path).equalsTo("/CBlades/images/actuators/extended-toward.png");
+        when:
+            clickOnTrigger(moveActuator.getTrigger(0));
+            moveActuator = getMoveActuator(game);
+            orientationActuator = getOrientationActuator(game);
+        then:
+            assert(moveActuator.getTrigger(0)).isNotDefined();
+            assert(orientationActuator.getTrigger(30)).isNotDefined();
+    });
+
+    it("Checks that minimal move is proposed as first move when there are not enough movement points", () => {
+        given:
+            var {game, counter} = createTinyGame()
+            counter.movementPoints = 0.5;
+            counter.extendedMovementPoints = 0.5;
+            clickOnCounter(game, counter);
+            clickOnActionMenu(game, 0, 0);
+            loadAllImages();
+            var moveActuator = getMoveActuator(game);
+        then:
+            assert(counter.movementPoints).equalsTo(0.5);
+            assert(counter.extendedMovementPoints).equalsTo(0.5);
+            assert(moveActuator.getTrigger(0).image.path).equalsTo("/CBlades/images/actuators/minimal-move.png");
     });
 
 });

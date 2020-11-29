@@ -137,12 +137,17 @@ describe("Widget", ()=> {
             board.paint();
             resetDirectives(level);
             resetDirectives(itemsLevel);
-            let iconMenuItem = new DIconMenuItem("/CBlades/images/icons/menu3.png", 0, 1, ()=>{return true;});
+            let iconMenuItem = new DIconMenuItem(
+                "/CBlades/images/icons/menu3.png", "/CBlades/images/icons/menu3-grayed.png",
+                0, 1, ()=>{return true;});
             let menu = new DIconMenu(
-                new DIconMenuItem("/CBlades/images/icons/menu1.png", 0, 0, ()=>{return true;}),
-                new DIconMenuItem("/CBlades/images/icons/menu2.png", 1, 0, ()=>{return true;}),
+                new DIconMenuItem("/CBlades/images/icons/menu1.png", "/CBlades/images/icons/menu1-grayed.png",
+                    0, 0, ()=>{return true;}),
+                new DIconMenuItem("/CBlades/images/icons/menu2.png", "/CBlades/images/icons/menu2-grayed.png",
+                    1, 0, ()=>{return true;}),
                 iconMenuItem,
-                new DIconMenuItem("/CBlades/images/icons/menu4.png", 1, 1, ()=>{return true;})
+                new DIconMenuItem("/CBlades/images/icons/menu4.png", "/CBlades/images/icons/menu4-grayed.png",
+                    1, 1, ()=>{return true;})
             );
             menu.open(board, new Point2D(5, 5));
             loadAllImages();
@@ -175,7 +180,8 @@ describe("Widget", ()=> {
             board.paint();
             resetDirectives(itemsLevel);
             let clicked = 0;
-            let icon = new DIconMenuItem("/CBlades/images/icons/menu1.png", 0, 0,
+            let icon = new DIconMenuItem("/CBlades/images/icons/menu1.png", "/CBlades/images/icons/menu1-grayed.png",
+                0, 0,
                 ()=>{
                     clicked++;
                     return clicked===2; // click two times to return true;
@@ -186,6 +192,7 @@ describe("Widget", ()=> {
             board.paint();
             let iconVPLocation = icon.viewportLocation;
         then:
+            assert(icon.active).isTrue();
             assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
                 "save()", "drawImage(/CBlades/images/icons/menu1.png, 15, 15, 50, 50)", "restore()"
             ]);
@@ -210,14 +217,14 @@ describe("Widget", ()=> {
                 "drawImage(/CBlades/images/icons/menu1.png, 15, 15, 50, 50)",
                 "restore()"
             ]);
-        when: // mouse outside icon once: icon action returns false => menu is not closed
+        when: // click icon once: icon action returns false => menu is not closed
             resetDirectives(itemsLevel);
             event = createEvent("click", {offsetX:iconVPLocation.x, offsetY:iconVPLocation.y});
             mockPlatform.dispatchEvent(board.root, "click", event);
         then:
             assert(clicked).equalsTo(1);
             assert(getDirectives(itemsLevel, 0)).arrayEqualsTo([]); // no repainting
-        when: // mouse outside icon once: icon action returns true => menu is closed
+        when: // click icon twice: icon action returns true => menu is closed
             resetDirectives(itemsLevel);
             event = createEvent("click", {offsetX:iconVPLocation.x, offsetY:iconVPLocation.y});
             mockPlatform.dispatchEvent(board.root, "click", event);
@@ -230,4 +237,43 @@ describe("Widget", ()=> {
                 "restore()"
             ]);
     });
+
+    it("Checks inactive icon menu item behavior", () => {
+        given:
+            DPopup.activate();
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var itemsLevel = board.getLevel("widget-items");
+            board.paint();
+            resetDirectives(itemsLevel);
+            let clicked = false;
+            let icon = new DIconMenuItem("/CBlades/images/icons/menu1.png", "/CBlades/images/icons/menu1-grayed.png",
+                0, 0,
+                ()=>{
+                clicked=true;
+                return true;
+            }).setActive(false);
+            let menu = new DIconMenu(icon);
+            menu.open(board, new Point2D(5, 5));
+            loadAllImages();
+            board.paint();
+            let iconVPLocation = icon.viewportLocation;
+        then:
+            assert(icon.active).isFalse();
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()", "drawImage(/CBlades/images/icons/menu1-grayed.png, 15, 15, 50, 50)", "restore()"
+            ]);
+        when: // mouseover icon
+            resetDirectives(itemsLevel);
+            var event = createEvent("mousemove", {offsetX:iconVPLocation.x, offsetY:iconVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(itemsLevel)).arrayEqualsTo([]);
+        when: // click on icon : action is not invoked
+            resetDirectives(itemsLevel);
+            event = createEvent("click", {offsetX:iconVPLocation.x, offsetY:iconVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            assert(clicked).isFalse();
+    });
+
 });

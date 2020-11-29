@@ -133,16 +133,32 @@ DPopup.activate = function() {
 
 export class DIconMenuItem extends DImageArtifact {
 
-    constructor(path, col, row, action) {
+    constructor(path, pathInactive, col, row, action) {
         super("widget-items", DImage.getImage(path),
             new Point2D(
                 DIconMenuItem.MARGIN+DIconMenuItem.ICON_SIZE/2 + (DIconMenuItem.MARGIN+DIconMenuItem.ICON_SIZE)*col,
                 DIconMenuItem.MARGIN+DIconMenuItem.ICON_SIZE/2 + (DIconMenuItem.MARGIN+DIconMenuItem.ICON_SIZE)*row
             ),
             DIconMenuItem.ICON_DIMENSION, 0);
+        this._inactive = DImage.getImage(pathInactive);
+        this._active = true;
         this._col = col;
         this._row = row;
         this._action = action;
+    }
+
+    get image() {
+        if (this._active) {
+            return super.image;
+        }
+        else {
+            return this._inactive;
+        }
+    }
+
+    setActive(active) {
+        this._active = active;
+        return this;
     }
 
     get col() {
@@ -157,20 +173,30 @@ export class DIconMenuItem extends DImageArtifact {
         return this._action;
     }
 
+    get active() {
+        return this._active;
+    }
+
     onMouseClick(event) {
-        if (this.action(event)) {
-            this.element.close();
+        if (this._active) {
+            if (this.action(event)) {
+                this.element.close();
+            }
         }
     }
 
     onMouseEnter(event) {
-        this.setSettings(this.mouseOverSettings);
-        this.element.refresh();
+        if (this._active) {
+            this.setSettings(this.mouseOverSettings);
+            this.element.refresh();
+        }
     }
 
     onMouseLeave(event) {
-        this.setSettings(null);
-        this.element.refresh();
+        if (this._active) {
+            this.setSettings(null);
+            this.element.refresh();
+        }
     }
 
     get mouseOverSettings() {

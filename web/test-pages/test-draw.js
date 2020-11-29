@@ -121,6 +121,7 @@ describe("Drawing fundamentals", ()=> {
             var image = DImage.getImage("here/where/image.typ");
             layer.drawImage(image, 10, 15);
         then:
+            assert(image.path, "here/where/image.typ");
             assert([...DImage.images.values()]).arrayEqualsTo([image]);
             assert(getDirectives(layer).length).equalsTo(0);
         when: /* loads the image: the requested draw directive is done then**/

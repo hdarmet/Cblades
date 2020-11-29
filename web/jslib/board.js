@@ -225,6 +225,16 @@ export class DImageArtifact extends RectArtifact(DArtifact) {
         this._level && this.refresh();
     }
 
+    get image() {
+        return this._root;
+    }
+
+    drawImage() {
+        this._level.drawImage(this.image,
+            new Point2D(this.location.x-this.dimension.w/2, this.location.y-this.dimension.h/2),
+            this.dimension);
+    }
+
     paint() {
         console.assert(this._level);
         let transform = this.angle ? Matrix2D.rotate(this.angle, this.location) : null;
@@ -234,9 +244,7 @@ export class DImageArtifact extends RectArtifact(DArtifact) {
         if (this._settings) {
             this._settings(this._level);
         }
-        this._level.drawImage(this._root,
-            new Point2D(this.location.x-this.dimension.w/2, this.location.y-this.dimension.h/2),
-            this.dimension);
+        this.drawImage();
     }
 
 }
