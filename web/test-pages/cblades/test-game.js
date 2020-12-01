@@ -68,10 +68,10 @@ describe("Game", ()=> {
             assert(counter.player).equalsTo(player);
             assert(getDirectives(mapLevel)).arrayEqualsTo([
                 "setTransform(1, 0, 0, 1, 0, 0)",
-                "setTransform(0.4888, 0, 0, 0.4888, 500, 250)",
+                "setTransform(0.4888, 0, 0, 0.4888, 500, 400)",
                 "save()",
                 "resetTransform()",
-                "clearRect(0, 0, 1000, 500)",
+                "clearRect(0, 0, 1000, 800)",
                 "restore()",
                 "save()",
                 "drawImage(/CBlades/images/maps/map.png, -1023, -1575, 2046, 3150)",
@@ -79,10 +79,10 @@ describe("Game", ()=> {
             ]);
             assert(getDirectives(unitsLevel)).arrayEqualsTo([
                 "setTransform(1, 0, 0, 1, 0, 0)",
-                "setTransform(0.4888, 0, 0, 0.4888, 500, 250)",
+                "setTransform(0.4888, 0, 0, 0.4888, 500, 400)",
                 "save()",
                 "resetTransform()",
-                "clearRect(0, 0, 1000, 500)",
+                "clearRect(0, 0, 1000, 800)",
                 "restore()",
                 "save()",
                 "shadowColor = #000000",
@@ -90,6 +90,107 @@ describe("Game", ()=> {
                 "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
                 "restore()"
             ]);
+    });
+
+    it("Checks global push buttons menu", () => {
+        given:
+            var game = new CBGame();
+            var commandsLevel = game._board.getLevel("widget-commands");
+        when:
+            game.setMenu();
+            game.start();
+            loadAllImages();
+        then:
+            assert(getDirectives(commandsLevel, 5)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/turn.png, 915, 715, 50, 50)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/show.png, 855, 715, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(commandsLevel);
+            game._showCommand.action();
+            paint(game);
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/turn.png, 915, 715, 50, 50)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/hide.png, 855, 715, 50, 50)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/undo.png, 795, 715, 50, 50)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/redo.png, 735, 715, 50, 50)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/settings.png, 675, 715, 50, 50)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/save.png, 615, 715, 50, 50)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/load.png, 555, 715, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(commandsLevel);
+            game._hideCommand.action();
+            paint(game);
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            "save()",
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/commands/turn.png, 915, 715, 50, 50)",
+            "restore()",
+            "save()",
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/commands/show.png, 855, 715, 50, 50)",
+            "restore()"
+        ]);
+    });
+
+    it("Checks undo/redo push buttons menu", () => {
+        given:
+            var game = new CBGame();
+            var commandsLevel = game._board.getLevel("widget-commands");
+            game.setMenu();
+            game.start();
+            loadAllImages();
+            game._showCommand.action();
+            paint(game);
+            var something = {
+                value : true,
+                _memento() {
+                    return {value:this.value};
+                },
+                _revert(memento) {
+                    this.value = memento.value;
+                }
+            }
+            Memento.register(something);
+            something.value = false;
+        when:
+            game._undoCommand.action();
+        then:
+            assert(something.value).isTrue();
+        when:
+            game._redoCommand.action();
+        then:
+            assert(something.value).isFalse();
     });
 
     it("Checks hexIds on odd columns", () => {
@@ -234,13 +335,13 @@ describe("Game", ()=> {
             game.start();
             loadAllImages();
         then:
-            assert(getDirectives(mapLevel)[1]).equalsTo("setTransform(0.4888, 0, 0, 0.4888, 500, 250)");
+            assert(getDirectives(mapLevel)[1]).equalsTo("setTransform(0.4888, 0, 0, 0.4888, 500, 400)");
         when:
             resetDirectives(mapLevel);
-            var mouseEvent = createEvent("click", {offsetX:500, offsetY:260});
+            var mouseEvent = createEvent("click", {offsetX:500, offsetY:410});
             mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
         then:
-            assert(getDirectives(mapLevel)[0]).equalsTo("setTransform(0.4888, 0, 0, 0.4888, 500, 240)");
+            assert(getDirectives(mapLevel)[0]).equalsTo("setTransform(0.4888, 0, 0, 0.4888, 500, 390)");
     });
 
     it("Checks that clicking on a unit select the unit ", () => {
@@ -268,7 +369,7 @@ describe("Game", ()=> {
             var mouseEvent = createEvent("click", {offsetX:unitLocation.x, offsetY:unitLocation.y});
             mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
         then:
-            assert(CBUnit.selected).equalsTo(counter);
+            assert(game.selectedUnit).equalsTo(counter);
             loadAllImages();
             assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
                 "save()",
@@ -335,7 +436,7 @@ describe("Game", ()=> {
             assert(getDirectives(unitsLevel)).arrayEqualsTo([
                 "save()",
                 "resetTransform()",
-                "clearRect(0, 0, 1000, 500)",
+                "clearRect(0, 0, 1000, 800)",
                 "restore()",
                 "save()",
                 "shadowColor = #FF0000",
@@ -351,7 +452,7 @@ describe("Game", ()=> {
             assert(getDirectives(unitsLevel)).arrayEqualsTo([
                 "save()",
                 "resetTransform()",
-                "clearRect(0, 0, 1000, 500)",
+                "clearRect(0, 0, 1000, 800)",
                 "restore()",
                 "save()",
                 "shadowColor = #000000",
@@ -379,23 +480,27 @@ describe("Game", ()=> {
         when:
             counter1.select();
         then:
-            assert(CBUnit.selected).equalsTo(counter1);
+            assert(game.selectedUnit).equalsTo(counter1);
         when:
             counter2.select();
         then:
-            assert(CBUnit.selected).equalsTo(counter2);
+            assert(game.selectedUnit).equalsTo(counter2);
         when:
             counter2.unselect();
         then:
-            assert(CBUnit.selected).isNotDefined();
+            assert(game.selectedUnit).isNotDefined();
     });
 
     function clickOnCounter(game, counter) {
-        var unitsLevel = game._board.getLevel("units");
-        var transform = counter.element.transform.concat(unitsLevel.transform);
-        let unitLocation = transform.point(new Point2D(0, 0));
+        let unitLocation = counter.artifact.viewportLocation;
         var mouseEvent = createEvent("click", {offsetX:unitLocation.x, offsetY:unitLocation.y});
         mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
+    }
+
+    function clickOnTrigger(trigger) {
+        let triggerLocation = trigger.viewportLocation;
+        var mouseEvent = createEvent("click", {offsetX:triggerLocation.x, offsetY:triggerLocation.y});
+        trigger.onMouseClick(mouseEvent);
     }
 
     function clickOnActionMenu(game, col, row) {
@@ -406,10 +511,14 @@ describe("Game", ()=> {
     }
 
     function mouseMoveOnCounter(game, counter) {
-        var unitsLevel = game._board.getLevel("units");
-        var transform = counter.element.transform.concat(unitsLevel.transform);
-        let unitLocation = transform.point(new Point2D(0, 0));
+        let unitLocation = counter.artifact.viewportLocation;
         var mouseEvent = createEvent("mousemove", {offsetX:unitLocation.x, offsetY:unitLocation.y});
+        mockPlatform.dispatchEvent(game.root, "mousemove", mouseEvent);
+    }
+
+    function mouseMoveOutOfCounter(game, counter) {
+        let unitArea = counter.artifact.viewportBoundingArea;
+        var mouseEvent = createEvent("mousemove", {offsetX:unitArea.left-5, offsetY:unitArea.top});
         mockPlatform.dispatchEvent(game.root, "mousemove", mouseEvent);
     }
 
@@ -419,8 +528,9 @@ describe("Game", ()=> {
         mockPlatform.dispatchEvent(game.root, "mousemove", mouseEvent);
     }
 
-    function mouseMoveOutOfTrigger(game) {
-        var mouseEvent = createEvent("mousemove", {offsetX:20, offsetY:20});
+    function mouseMoveOutOfTrigger(game, trigger) {
+        let actuatorArea = trigger.viewportBoundingArea;
+        var mouseEvent = createEvent("mousemove", {offsetX:actuatorArea.left-5, offsetY:actuatorArea.top});
         mockPlatform.dispatchEvent(game.root, "mousemove", mouseEvent);
     }
 
@@ -437,6 +547,65 @@ describe("Game", ()=> {
         }
         return null;
     }
+
+    it("Checks unit appearance when mouse is over it", () => {
+        given:
+            var game = new CBGame();
+            var arbitrator = new CBArbitrator();
+            game.setArbitrator(arbitrator);
+            var player = new CBPlayer();
+            game.addPlayer(player);
+            var unitsLevel = game._board.getLevel("units");
+            var map = new CBMap("/CBlades/images/maps/map.png");
+            game.setMap(map);
+            let counter = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
+            game.addCounter(counter, new CBHexId(map, 5, 8));
+            game.start();
+            loadAllImages();
+            paint(game);
+        then:
+            assert(getDirectives(unitsLevel, 6)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000",
+                "shadowBlur = 15",
+                "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLevel);
+            mouseMoveOnCounter(game, counter);
+        then:
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #00FFFF",
+                "shadowBlur = 15",
+                "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLevel);
+            mouseMoveOutOfCounter(game, counter);
+        then:
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000",
+                "shadowBlur = 15",
+                "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            counter.select();
+            paint(game);
+            resetDirectives(unitsLevel);
+            mouseMoveOnCounter(game, counter);
+        then:
+            assert(getDirectives(unitsLevel)).arrayEqualsTo([]);
+        when:
+            resetDirectives(unitsLevel);
+            mouseMoveOutOfCounter(game, counter);
+        then:
+            assert(getDirectives(unitsLevel)).arrayEqualsTo([]);
+    });
 
     it("Checks move action actuators when unit is oriented toward an hexside", () => {
         given:
@@ -456,7 +625,7 @@ describe("Game", ()=> {
             let moveActuator = getMoveActuator(game);
             let orientationActuator = getOrientationActuator(game);
         then:
-            assert(CBUnit.selected).equalsTo(counter);
+            assert(game.selectedUnit).equalsTo(counter);
             assert(moveActuator).isDefined();
             assert(moveActuator.getTrigger(300)).isDefined();
             assert(moveActuator.getTrigger(0)).isDefined();
@@ -495,7 +664,7 @@ describe("Game", ()=> {
             let moveActuator = getMoveActuator(game);
             let orientationActuator = getOrientationActuator(game);
         then:
-            assert(CBUnit.selected).equalsTo(counter);
+            assert(game.selectedUnit).equalsTo(counter);
             assert(moveActuator).isDefined();
             assert(moveActuator.getTrigger(300)).isNotDefined();
             assert(moveActuator.getTrigger(0)).isDefined();
@@ -552,7 +721,7 @@ describe("Game", ()=> {
             paint(game);
         then:
             assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
-                "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 258.6841)",
+                "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 408.6841)",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984375, 60, 80)"
             ]);
@@ -578,7 +747,7 @@ describe("Game", ()=> {
             let moveActuator = getMoveActuator(game);
             let orientationActuator = getOrientationActuator(game);
         then:
-            assert(CBUnit.selected).equalsTo(counter1);
+            assert(game.selectedUnit).equalsTo(counter1);
             assert(moveActuator).isDefined();
             assert(orientationActuator).isDefined();
         when:
@@ -586,7 +755,7 @@ describe("Game", ()=> {
             moveActuator = getMoveActuator(game);
             orientationActuator = getOrientationActuator(game);
         then:
-            assert(CBUnit.selected).equalsTo(counter2);
+            assert(game.selectedUnit).equalsTo(counter2);
             assert(moveActuator).isNotDefined();
             assert(orientationActuator).isNotDefined();
     });
@@ -662,7 +831,7 @@ describe("Game", ()=> {
             paint(game);
         then:
             assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
-                "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 258.6841)",
+                "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 408.6841)",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984375, 60, 80)"
             ]);
@@ -672,7 +841,7 @@ describe("Game", ()=> {
             paint(game);
         then:
             assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
-                "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 258.6841)",
+                "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 408.6841)",
                 "shadowColor = #FF0000", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984375, 60, 80)"
             ]);
@@ -682,7 +851,7 @@ describe("Game", ()=> {
             paint(game);
         then:
             assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
-                "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 258.6841)",
+                "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 408.6841)",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984375, 60, 80)"
             ]);
@@ -700,12 +869,6 @@ describe("Game", ()=> {
         game.addCounter(counter, new CBHexId(map, 5, 8));
         game.start();
         return {game, map, counter};
-    }
-
-    function clickOnTrigger(trigger) {
-        let triggerLocation = trigger.viewportLocation;
-        var mouseEvent = createEvent("click", {offsetX:triggerLocation.x, offsetY:triggerLocation.y});
-        trigger.onMouseClick(mouseEvent);
     }
 
     it("Checks Unit move using actuators (move, rotate, move)", () => {
@@ -884,6 +1047,63 @@ describe("Game", ()=> {
             assert(counter.movementPoints).equalsTo(0.5);
             assert(counter.extendedMovementPoints).equalsTo(0.5);
             assert(moveActuator.getTrigger(0).image.path).equalsTo("/CBlades/images/actuators/minimal-move.png");
+    });
+
+    function create2PlayersTinyGame() {
+        let game = new CBGame();
+        let arbitrator = new CBArbitrator();
+        game.setArbitrator(arbitrator);
+        let player1 = new CBPlayer();
+        game.addPlayer(player1);
+        let player2 = new CBPlayer();
+        game.addPlayer(player2);
+        let map = new CBMap("/CBlades/images/maps/map.png");
+        game.setMap(map);
+        let counter1 = new CBUnit(player1, "/CBlades/images/units/misc/unit1.png");
+        game.addCounter(counter1, new CBHexId(map, 5, 8));
+        let counter2 = new CBUnit(player2, "/CBlades/images/units/misc/unit2.png");
+        game.addCounter(counter2, new CBHexId(map, 5, 8));
+        game.start();
+        loadAllImages();
+        return {game, map, counter1, counter2, player1, player2};
+    }
+
+    it("Checks that when changing turn, current player changes too and counters are reset", () => {
+        given:
+            var {game, counter1, player1, counter2, player2} = create2PlayersTinyGame();
+        then:
+            assert(game.currentPlayer).equalsTo(player1);
+        when:
+            counter1.select();
+            counter2.onMouseClick({offsetX:0, offsetY:0});  // Not executed ! Player2 is not the current player
+        then:
+            assert(game.selectedUnit).equalsTo(counter1);
+        when:
+            counter1.movementPoints = 0.5;
+            counter1.extendedMovementPoints = 0.5;
+            game.nextTurn();
+        then:
+            assert(counter1.movementPoints).equalsTo(2);
+            assert(counter2.extendedMovementPoints).equalsTo(3);
+    });
+
+    it("Checks next turn push buttons menu", () => {
+        given:
+            var game = new CBGame();
+            var commandsLevel = game._board.getLevel("widget-commands");
+            let player1 = new CBPlayer();
+            game.addPlayer(player1);
+            let player2 = new CBPlayer();
+            game.addPlayer(player2);
+            game.setMenu();
+            game.start();
+            loadAllImages();
+        then:
+            assert(game.currentPlayer).equalsTo(player1);
+        when:
+            game._endOfTurnCommand.action();
+        then:
+            assert(game.currentPlayer).equalsTo(player2);
     });
 
 });

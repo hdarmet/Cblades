@@ -194,7 +194,7 @@ describe("Board", ()=> {
 
     it("Checks default element settings", () => {
         given:
-            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
             var level = board.getLevel("units");
         when:
             var image = DImage.getImage("../images/unit.png");
@@ -218,10 +218,13 @@ describe("Board", ()=> {
             assert(artifact1.location.y).equalsTo(0);
             assert(artifact1.transform).isNotDefined();
             assert(artifact1.boundingArea.toString()).equalsTo("area(-25, -25, 25, 25)");
+            assert(artifact1.viewportBoundingArea.toString()).equalsTo("area(237.5, 137.5, 262.5, 162.5)");
             assert(artifact2.transform.toString()).equalsTo("matrix(0.5, 0.866, -0.866, 0.5, 0, 0)");
             assert(artifact2.boundingArea.toString()).equalsTo("area(-34.1506, -34.1506, 34.1506, 34.1506)");
+            assert(artifact2.viewportBoundingArea.toString()).equalsTo("area(-21.9791, 274.431, 12.1715, 308.5817)");
             assert(artifact3.transform.toString()).equalsTo("matrix(1, 0, 0, 1, 10, 15)");
             assert(artifact3.boundingArea.toString()).equalsTo("area(-15, -10, 35, 40)");;
+            assert(artifact3.viewportBoundingArea.toString()).equalsTo("area(247.5, 152.5, 272.5, 177.5)");
     });
 
     it("Checks change artifact position and relative orientation", () => {
@@ -544,6 +547,19 @@ describe("Board", ()=> {
             assert(getDirectives(level)[5]).equalsTo("setTransform(0, 1, -1, 0, 250, 150)");
             assert(getDirectives(level)[6]).equalsTo("drawImage(../images/unit.png, -25, -25, 50, 50)");
             assert(getDirectives(level)[7]).equalsTo("restore()");
+    });
+
+    it("Checks layer viewport/local localization", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var level = board.getLevel("units");
+        then:
+            assert(level.getPoint(new Point2D(0, 0)).toString()).equalsTo("point(-500, -300)");
+            assert(level.getViewportPoint(new Point2D(-500, -300)).toString()).equalsTo("point(0, 0)");
+            assert(level.getPoint(new Point2D(250, 150)).toString()).equalsTo("point(0, 0)");
+            assert(level.getViewportPoint(new Point2D(0, 0)).toString()).equalsTo("point(250, 150)");
+            assert(level.originalPoint.toString()).equalsTo("point(-500, -300)");
+            assert(level.finalPoint.toString()).equalsTo("point(500, 300)");
     });
 
     it("Checks zooming", () => {

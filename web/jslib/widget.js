@@ -246,3 +246,80 @@ export class DIconMenu extends DPopup {
     }
 
 }
+
+export class DPushButtonImageArtifact extends DImageArtifact {
+
+    constructor(image) {
+        super("widget-commands", image, new Point2D(0, 0), DPushButtonImageArtifact.DIMENSION, 0);
+        this.setSettings(this.settings);
+    }
+
+    get settings() {
+        return level=>{
+            level.setShadowSettings("#00FFFF", 10);
+        }
+    }
+
+    get overSettings() {
+        return level=>{
+            level.setShadowSettings("#FF0000", 10);
+        }
+    }
+
+    onMouseClick(event) {
+        this._element.action();
+    }
+
+    onMouseEnter(event) {
+        this.setSettings(this.overSettings);
+        this.element.refresh();
+    }
+
+    onMouseLeave(event) {
+        this.setSettings(this.settings);
+        this.element.refresh();
+    }
+
+}
+DPushButtonImageArtifact.DIMENSION = new Dimension2D(50, 50);
+
+export class DPushButton extends DElement {
+
+    constructor(path, position, action) {
+        super();
+        let image = DImage.getImage(path);
+        this._artifact = new DPushButtonImageArtifact(image);
+        this.addArtifact(this._artifact);
+        this._position = position;
+        this._action = action;
+    }
+
+    setPosition(position) {
+        this._position = position;
+        this._adjustLocation();
+    }
+
+    setOnBoard(board) {
+        super.setOnBoard(board);
+        this._adjustLocation();
+        return this;
+    }
+
+    action() {
+        this._action();
+    }
+
+    get trigger() {
+        return this._artifact;
+    }
+
+    _adjustLocation() {
+        if (this._artifact && this._artifact.level) {
+            let rightBottomPoint = this._artifact.level.finalPoint;
+            let x = this._position.x >= 0 ? this._position.x : rightBottomPoint.x + this._position.x;
+            let y = this._position.y >= 0 ? this._position.y : rightBottomPoint.y + this._position.y;
+            this.setLocation(new Point2D(x, y));
+        }
+    }
+
+}

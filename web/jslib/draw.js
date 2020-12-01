@@ -334,6 +334,10 @@ export class DLayer {
     get draw() {
         return this._draw;
     }
+
+    get dimension() {
+        return this._dimension;
+    }
 }
 
 /**

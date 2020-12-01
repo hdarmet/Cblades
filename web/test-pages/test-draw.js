@@ -98,6 +98,7 @@ describe("Drawing fundamentals", ()=> {
         then:
             assert(draw.transform.toArray()).arrayEqualsTo([2, 0, 0, 2, 20, 20]);
             assert(getDirectives(layer)[0]).equalsTo('setTransform(2, 0, 0, 2, 20, 20)');
+            assert(layer.dimension.toString()).equalsTo("dimension(500, 300)");
             assert(layer.visibleArea.toString()).equalsTo("area(-10, -10, 240, 140)");
     });
 

@@ -19,7 +19,7 @@ import {
     mockPlatform, getDirectives, resetDirectives, loadAllImages, createEvent
 } from "./mocks.js";
 import {
-    DWidget, DPopup, DIconMenu, DIconMenuItem
+    DWidget, DPopup, DIconMenu, DIconMenuItem, DPushButton
 } from "../jslib/widget.js";
 
 
@@ -33,7 +33,10 @@ describe("Widget", ()=> {
 
     function createBoardWithWidgetLevel(width, height, viewPortWidth, viewPortHeight) {
         return new DBoard(new Dimension2D(width, height), new Dimension2D(viewPortWidth, viewPortHeight),
-            "map", "units", "markers", new DStaticLayer("widgets"), new DStaticLayer("widget-items"));
+            "map", "units", "markers",
+            new DStaticLayer("widgets"),
+            new DStaticLayer("widget-items"),
+            new DStaticLayer("widget-commands"));
     }
 
     it("Checks raw widget opening and closing", () => {
@@ -274,6 +277,80 @@ describe("Widget", ()=> {
             mockPlatform.dispatchEvent(board.root, "click", event);
         then:
             assert(clicked).isFalse();
+    });
+
+    it("Checks pushButton widget", () => {
+        given:
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var commandsLevel = board.getLevel("widget-commands");
+            board.paint();
+            resetDirectives(commandsLevel);
+            let pushButton = new DPushButton("/CBlades/images/commands/button1.png", new Point2D(60, 60),
+                    ()=>{return true;});
+            pushButton.setOnBoard(board);
+            loadAllImages();
+            board.paint();
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/commands/button1.png, 35, 35, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(commandsLevel);
+            pushButton.setPosition(new Point2D(-69, -60));
+            board.paint();
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/commands/button1.png, 406, 215, 50, 50)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks pushButton item behavior", () => {
+        given:
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var commandsLevel = board.getLevel("widget-commands");
+            board.paint();
+            resetDirectives(commandsLevel);
+            var clicked = false;
+            let pushButton = new DPushButton("/CBlades/images/commands/button1.png", new Point2D(60, 60),
+                ()=>{clicked = true;});
+            pushButton.setOnBoard(board);
+            loadAllImages();
+            var buttonVPLocation = pushButton.trigger.viewportLocation;
+            board.paint();
+        when: // mouseover icon
+            resetDirectives(commandsLevel);
+            var event = createEvent("mousemove", {offsetX:buttonVPLocation.x, offsetY:buttonVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #FF0000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/commands/button1.png, 35, 35, 50, 50)",
+                "restore()"
+            ]);
+        when: // mouse outside icon
+            resetDirectives(commandsLevel);
+            event = createEvent("mousemove", {offsetX:buttonVPLocation.x+100, offsetY:buttonVPLocation.y+100});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/commands/button1.png, 35, 35, 50, 50)",
+                "restore()"
+            ]);
+        when: // click icon once: icon action returns false => menu is not closed
+            resetDirectives(commandsLevel);
+            event = createEvent("click", {offsetX:buttonVPLocation.x, offsetY:buttonVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            assert(clicked).equalsTo(true);
     });
 
 });

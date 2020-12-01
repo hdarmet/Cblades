@@ -170,6 +170,11 @@ export class DArtifact extends LocalisationAware(Object) {
         return this._pangle;
     }
 
+    get viewportTransform() {
+        let transform = this.transform;
+        return transform ? this.level.transform.concat(transform) : this.level.transform;
+    }
+
     get viewportLocation() {
         return this.level.transform.point(this.location);
     }
@@ -196,11 +201,17 @@ export function RectArtifact(clazz) {
         }
 
         get boundingArea() {
-            console.assert(this._level);
             return Area2D.rectBoundingArea(this.transform,
                 -this.dimension.w/2, -this.dimension.h/2,
                 this.dimension.w, this.dimension.h);
         }
+
+        get viewportBoundingArea() {
+            console.assert(this._level);
+            return Area2D.rectBoundingArea(this.viewportTransform,
+                -this.dimension.w/2, -this.dimension.h/2,
+                this.dimension.w, this.dimension.h);
+       }
 
     }
 }
@@ -518,8 +529,24 @@ export class DLevel {
         this._layer.fillRect(anchor, dimension);
     }
 
+    getPoint(viewportPoint) {
+        return this._layer.transform.invert().point(viewportPoint);
+    }
+
+    getViewportPoint(point) {
+        return this._layer.transform.point(point);
+    }
+
+    get originalPoint() {
+        return this.getPoint(new Point2D(0, 0));
+    }
+
+    get finalPoint() {
+        return this.getPoint(new Point2D(this._layer.dimension.w, this._layer.dimension.h));
+    }
+
     getAllArtifactsOnPoint(viewportPoint) {
-        let point = this._layer.transform.invert().point(viewportPoint);
+        let point = this.getPoint(viewportPoint);
         let artifacts = [];
         let visibleArtifacts = [...this.visibleArtifacts];
         for (let i = visibleArtifacts.length-1; i>=0; i--) {
@@ -532,7 +559,7 @@ export class DLevel {
     }
 
     getArtifactOnPoint(viewportPoint) {
-        let point = this._layer.transform.invert().point(viewportPoint);
+        let point = this.getPoint(viewportPoint);
         let visibleArtifacts = [...this.visibleArtifacts];
         for (let i = visibleArtifacts.length-1; i>=0; i--) {
             let artifact = visibleArtifacts[i];
@@ -544,7 +571,7 @@ export class DLevel {
 
     isPointOnArtifact(artifact, viewportPoint) {
         console.assert(artifact.level === this);
-        let point = this._layer.transform.invert().point(viewportPoint);
+        let point = this.getPoint(viewportPoint);
         return artifact.containsPoint(point);
     }
 

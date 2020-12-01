@@ -4,8 +4,7 @@ import {
     atan2, Point2D, Dimension2D
 } from "../geometry.js";
 import {
-    DImage,
-    DStaticLayer
+    DImage, DStaticLayer
 } from "../draw.js";
 import {
     Memento
@@ -14,8 +13,7 @@ import {
     DBoard, DElement, DImageArtifact
 } from "../board.js";
 import {
-    DIconMenu, DIconMenuItem,
-    DPopup
+    DIconMenu, DIconMenuItem, DPopup, DPushButton
 } from "../widget.js";
 
 export let CBMovement = {
@@ -210,8 +208,11 @@ export class CBPlayer {
 export class CBGame {
 
     constructor() {
-        this._board = new DBoard(new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT), new Dimension2D(1000, 500),
-            "map", "units", "markers", "actuators", new DStaticLayer("widgets"), new DStaticLayer("widget-items"));
+        this._board = new DBoard(new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT), new Dimension2D(1000, 800),
+            "map", "units", "markers", "actuators",
+            new DStaticLayer("widgets"),
+            new DStaticLayer("widget-items"),
+            new DStaticLayer("widget-commands"));
         this._board.setZoomSettings(1.5, 1);
         this._board.setScrollSettings(20, 10);
         this._board.scrollOnBordersOnMouseMove();
@@ -219,6 +220,7 @@ export class CBGame {
         this._board.scrollOnKeyDown()
         this._board.zoomOnKeyDown();
         this._board.undoRedoOnKeyDown();
+        this._players = [];
         this._actuators = [];
         DPopup.activate();
     }
@@ -254,6 +256,10 @@ export class CBGame {
 
     addPlayer(player) {
         player.game = this;
+        this._players.push(player);
+        if (!this._currentPlayer) {
+            this._currentPlayer = player;
+        }
     }
 
     addCounter(counter, hexLocation) {
@@ -279,6 +285,74 @@ export class CBGame {
         this._actuators = [];
     }
 
+    setSelectedUnit(unit) {
+        if (unit) {
+            this._selectedUnit = unit;
+        }
+        else {
+            delete this._selectedUnit;
+        }
+    }
+
+    get selectedUnit() {
+        return this._selectedUnit;
+    }
+
+    setMenu() {
+        this._endOfTurnCommand = new DPushButton("/CBlades/images/commands/turn.png", new Point2D(-60, -60), ()=>{
+            this.nextTurn();
+        });
+        this._endOfTurnCommand.setOnBoard(this._board);
+        this._showCommand = new DPushButton("/CBlades/images/commands/show.png", new Point2D(-120, -60), ()=>{
+            this._showCommand.removeFromBoard();
+            this._hideCommand.setOnBoard(this._board);
+            this._undoCommand.setOnBoard(this._board);
+            this._redoCommand.setOnBoard(this._board);
+            this._settingsCommand.setOnBoard(this._board);
+            this._saveCommand.setOnBoard(this._board);
+            this._loadCommand.setOnBoard(this._board);
+        });
+        this._showCommand.setOnBoard(this._board);
+        this._hideCommand = new DPushButton("/CBlades/images/commands/hide.png", new Point2D(-120, -60), ()=>{
+            this._showCommand.setOnBoard(this._board);
+            this._hideCommand.removeFromBoard();
+            this._undoCommand.removeFromBoard();
+            this._redoCommand.removeFromBoard();
+            this._settingsCommand.removeFromBoard();
+            this._saveCommand.removeFromBoard();
+            this._loadCommand.removeFromBoard();
+        });
+        this._undoCommand = new DPushButton("/CBlades/images/commands/undo.png", new Point2D(-180, -60), ()=>{
+            Memento.undo();
+        });
+        this._redoCommand = new DPushButton("/CBlades/images/commands/redo.png", new Point2D(-240, -60), ()=>{
+            Memento.redo();
+        });
+        this._settingsCommand = new DPushButton("/CBlades/images/commands/settings.png", new Point2D(-300, -60), ()=>{});
+        this._saveCommand = new DPushButton("/CBlades/images/commands/save.png", new Point2D(-360, -60), ()=>{});
+        this._loadCommand = new DPushButton("/CBlades/images/commands/load.png", new Point2D(-420, -60), ()=>{});
+    }
+
+    _resetCounters(player) {
+        DPopup.close();
+        if (this._selectedUnit) {
+            this._selectedUnit.unselect();
+        }
+        if (this._counters) {
+            for (let counter of this._counters) {
+                counter._reset && counter._reset(player);
+            }
+        }
+    }
+
+    nextTurn() {
+        this.closeActuators();
+        this._resetCounters(this._currentPlayer);
+        let indexPlayer = this._players.indexOf(this._currentPlayer);
+        this._currentPlayer = this._players[(indexPlayer+1)%this._players.length];
+        Memento.clear();
+    }
+
     get arbitrator() {
         return this._arbitrator;
     }
@@ -289,6 +363,10 @@ export class CBGame {
 
     get actuators() {
         return this._actuators;
+    }
+
+    get currentPlayer() {
+        return this._currentPlayer;
     }
 
     start() {
@@ -490,26 +568,40 @@ CBMap.DIMENSION = new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT);
 CBMap.COL_COUNT = 12;
 CBMap.ROW_COUNT = 16;
 
-class UnitImageArtifact extends DImageArtifact {
+class CounterImageArtifact extends DImageArtifact {
 
-    constructor(unit, ...args) {
+    constructor(counter, ...args) {
         super(...args);
-        this._unit = unit;
+        this.setSettings(this.settings);
+        this._counter = counter;
     }
 
     onMouseClick(event) {
-        this._unit.onMouseClick(event);
+        this._counter.onMouseClick(event);
+    }
+
+    get settings() {
+        return level=>{
+            level.setShadowSettings("#000000", 15);
+        }
     }
 }
 
 export class CBCounter {
 
-    constructor(path, dimension) {
-        this._image = DImage.getImage(path);
-        this._imageArtifact = new UnitImageArtifact(this,"units", this._image, new Point2D(0, 0), dimension);
-        this._imageArtifact.setSettings(this.settings);
+    constructor(...args) {
+        this._imageArtifact = this.createArtifact(...args);
         this._element = new DElement(this._imageArtifact);
         this._element._unit = this;
+    }
+
+    createArtifact(path, dimension) {
+        this._image = DImage.getImage(path);
+        return new CounterImageArtifact(this,"units", this._image, new Point2D(0, 0), dimension);
+    }
+
+    get artifact() {
+        return this._imageArtifact;
     }
 
     get angle() {
@@ -518,12 +610,6 @@ export class CBCounter {
 
     set angle(angle) {
         this._element.setAngle(angle);
-    }
-
-    get settings() {
-        return level=>{
-            level.setShadowSettings("#000000", 15);
-        }
     }
 
     get location() {
@@ -636,6 +722,52 @@ export class CBActionMenu extends DIconMenu {
 
 }
 
+class UnitImageArtifact extends CounterImageArtifact {
+
+    constructor(unit, ...args) {
+        super(unit, ...args);
+    }
+
+    get unit() {
+        return this._counter;
+    }
+
+    get selectedSettings() {
+        return level=>{
+            level.setShadowSettings("#FF0000", 15);
+        }
+    }
+
+    get overSettings() {
+        return level=>{
+            level.setShadowSettings("#00FFFF", 15);
+        }
+    }
+
+    unselect() {
+        delete this._selected;
+        this.setSettings(this.settings);
+    }
+
+    select() {
+        this._selected = true;
+        this.setSettings(this.selectedSettings);
+    }
+
+    onMouseEnter(event) {
+        if (!this._selected && this.unit.isCurrentPlayer()) {
+            this.setSettings(this.overSettings);
+        }
+    }
+
+    onMouseLeave(event) {
+        if (!this._selected && this.unit.isCurrentPlayer()) {
+            this.setSettings(this.settings);
+        }
+    }
+
+}
+
 export class CBUnit extends CBCounter {
 
     constructor(player, path) {
@@ -643,6 +775,11 @@ export class CBUnit extends CBCounter {
         this._player = player;
         this._movementPoints = 2;
         this._extendedMovementPoints = this._movementPoints*1.5;
+    }
+
+    createArtifact(path, dimension) {
+        this._image = DImage.getImage(path);
+        return new UnitImageArtifact(this,"units", this._image, new Point2D(0, 0), dimension);
     }
 
     _memento() {
@@ -659,31 +796,38 @@ export class CBUnit extends CBCounter {
         this._extendedMovementPoints = memento.extendedMovementPoints;
     }
 
-    get selectedSettings() {
-        return level=>{
-            level.setShadowSettings("#FF0000", 15);
+    _reset(player) {
+        if (player === this._player) {
+            this._movementPoints = 2;
+            this._extendedMovementPoints = this._movementPoints*1.5;
         }
     }
 
     unselect() {
-        console.assert(CBUnit.selected===this);
-        CBUnit.selected = null;
-        this._imageArtifact.setSettings(this.settings);
+        console.assert(this.game.selectedUnit===this);
+        this.game.setSelectedUnit(null);
+        this._imageArtifact.unselect();
         this.element.refresh();
     }
 
     select() {
-        if (CBUnit.selected) {
-            CBUnit.selected.unselect();
+        if (this.game.selectedUnit) {
+            this.game.selectedUnit.unselect();
         }
-        CBUnit.selected = this;
-        this._imageArtifact.setSettings(this.selectedSettings);
+        this.game.setSelectedUnit(this);
+        this._imageArtifact.select();
         this.refresh();
     }
 
     onMouseClick(event) {
-        this.select();
-        this.player.selectUnit(this, event);
+        if (this.isCurrentPlayer()) {
+            this.select();
+            this.player.selectUnit(this, event);
+        }
+    }
+
+    isCurrentPlayer() {
+        return this.player === this.game.currentPlayer;
     }
 
     get player() {
@@ -762,7 +906,6 @@ export class CBUnit extends CBCounter {
         return new CBMoveActuator(this, directions, first);
     }
 }
-CBUnit.selected = null;
 CBUnit.WIDTH = 142;
 CBUnit.HEIGHT = 142;
 CBUnit.DIMENSION = new Dimension2D(CBUnit.WIDTH, CBUnit.HEIGHT);
