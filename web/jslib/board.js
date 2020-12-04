@@ -59,24 +59,43 @@ export class DArtifact extends LocalisationAware(Object) {
     }
 
     _setElement(element) {
-        this._element = element;
-        this.setLocation(this.element.location, this.element.angle);
+        if (element) {
+            this._element = element;
+            this.setLocation(this.element.location, this.element.angle);
+        }
+        else {
+            delete this._element;
+        }
+    }
+
+    _attach(element) {
+        Memento.register(this);
+        if (element) {
+            this._element = element;
+            this.move(this.element.location, this.element.angle);
+        }
+        else {
+            delete this._element;
+        }
     }
 
     _memento() {
-        return {
+        let memento = {
             level: this._level,
+            element: this._element,
             position:this._position,
             pangle:this._pangle,
             location:this._location,
             angle:this._angle
         }
+        return memento;
     }
 
     _revert(memento) {
         this._level && this._level.invalidate();
         this._level = memento.level;
         this._level && this._level.invalidate();
+        this._element = memento.element;
         this._position = memento.position;
         this._pangle = memento.pangle;
         this._location = memento.location;
@@ -226,6 +245,24 @@ export class DImageArtifact extends RectArtifact(DArtifact) {
         this._root = image;
     }
 
+    _memento() {
+        let memento = super._memento();
+        if (this._settings) {
+            memento.settings = this._settings;
+        }
+        return memento;
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        if (memento.settings) {
+            this._settings = memento.settings;
+        }
+        else {
+            delete this._settings;
+        }
+    }
+
     setSettings(settings) {
         if (settings) {
             this._settings = settings;
@@ -234,6 +271,11 @@ export class DImageArtifact extends RectArtifact(DArtifact) {
             delete this._settings;
         }
         this._level && this.refresh();
+    }
+
+    changeSettings(settings) {
+        Memento.register(this);
+        this.setSettings(settings);
     }
 
     get image() {
@@ -278,11 +320,44 @@ export class DElement extends LocalisationAware(Object) {
     addArtifact(artifact) {
         this._artifacts.push(artifact);
         artifact._setElement(this);
+        if (this._board) {
+            artifact.setOnBoard(this._board);
+        }
+        return this;
+    }
+
+    removeArtifact(artifact) {
+        this._artifacts.splice(this._artifacts.indexOf(artifact), 1);
+        artifact._setElement(null);
+        if (this._board) {
+            artifact.removeFromBoard();
+        }
+        return this;
+    }
+
+    appendArtifact(artifact) {
+        Memento.register(this);
+        this._artifacts.push(artifact);
+        artifact._attach(this);
+        if (this._board) {
+            artifact.show(this._board);
+        }
+        return this;
+    }
+
+    deleteArtifact(artifact) {
+        Memento.register(this);
+        this._artifacts.splice(this._artifacts.indexOf(artifact), 1);
+        artifact._attach(null);
+        if (this._board) {
+            artifact.hide();
+        }
         return this;
     }
 
     _memento() {
         let memento = {
+            artifacts: [...this._artifacts],
             location:this._location,
             angle:this._angle
         }
@@ -293,6 +368,7 @@ export class DElement extends LocalisationAware(Object) {
     }
 
     _revert(memento) {
+        this._artifacts = memento.artifacts;
         if (memento.board) {
             this._board = memento.board;
         }
@@ -701,6 +777,13 @@ export class DBoard {
         for (let level of this._levels.values()) {
             level.paint();
         }
+    }
+
+    repaint() {
+        for (let level of this._levels.values()) {
+            level.invalidate();
+        }
+        this.paint();
     }
 
     getLevel(levelName) {

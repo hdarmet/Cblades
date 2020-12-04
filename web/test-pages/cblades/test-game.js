@@ -38,10 +38,15 @@ describe("Game", ()=> {
         setDrawPlatform(mockPlatform);
         DImage.resetCache();
         Mechanisms.reset();
+        Memento.clear();
     });
 
     function paint(game) {
         game._board.paint();
+    }
+
+    function repaint(game) {
+        game._board.repaint();
     }
 
     it("Checks game building", () => {
@@ -497,10 +502,12 @@ describe("Game", ()=> {
         mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
     }
 
-    function clickOnTrigger(trigger) {
+    function clickOnTrigger(game, trigger) {
         let triggerLocation = trigger.viewportLocation;
         var mouseEvent = createEvent("click", {offsetX:triggerLocation.x, offsetY:triggerLocation.y});
         trigger.onMouseClick(mouseEvent);
+        paint(game);
+        Memento.open();
     }
 
     function clickOnActionMenu(game, col, row) {
@@ -868,7 +875,7 @@ describe("Game", ()=> {
         let counter = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
         game.addCounter(counter, new CBHexId(map, 5, 8));
         game.start();
-        return {game, map, counter};
+        return {game, map, player, counter};
     }
 
     it("Checks Unit move using actuators (move, rotate, move)", () => {
@@ -877,40 +884,44 @@ describe("Game", ()=> {
             clickOnCounter(game, counter);
             clickOnActionMenu(game, 0, 0);
             loadAllImages();
-            let moveActuator = getMoveActuator(game);
+            var moveActuator1 = getMoveActuator(game);
+            var orientationActuator1 = getOrientationActuator(game);
         then:
             assert(counter.location.toString()).equalsTo("point(-170.5, -98.4375)");
             assert(counter.hexLocation.col).equalsTo(5);
             assert(counter.hexLocation.row).equalsTo(8);
             assert(counter.angle).equalsTo(0);
         when:
-            clickOnTrigger(moveActuator.getTrigger(0));
+            clickOnTrigger(game, moveActuator1.getTrigger(0));
         then:
             assert(counter.hexLocation.col).equalsTo(5);
             assert(counter.hexLocation.row).equalsTo(7);
         when:
-            var orientationActuator = getOrientationActuator(game);
-            clickOnTrigger(orientationActuator.getTrigger(60));
+            var moveActuator2 = getMoveActuator(game);
+            var orientationActuator2 = getOrientationActuator(game);
+            clickOnTrigger(game, orientationActuator2.getTrigger(60));
         then:
+            assert(counter.location.toString()).equalsTo("point(-170.5, -295.3125)");
             assert(counter.angle).equalsTo(60);
         when:
-            moveActuator = getMoveActuator(game);
-            clickOnTrigger(moveActuator.getTrigger(60));
+            var moveActuator3 = getMoveActuator(game);
+            var orientationActuator3 = getOrientationActuator(game);
+            clickOnTrigger(game, moveActuator3.getTrigger(60));
         then:
             assert(counter.location.toString()).equalsTo("point(0, -393.75)");
             assert(counter.hexLocation.col).equalsTo(6);
             assert(counter.hexLocation.row).equalsTo(6);
         when:
-            moveActuator = getMoveActuator(game);
-            orientationActuator = getOrientationActuator(game);
+            var moveActuator4 = getMoveActuator(game);
+            var orientationActuator4 = getOrientationActuator(game);
             Memento.undo();
         then:
-            assert(counter.location.toString()).equalsTo("point(-170.5, -98.4375)");
+            assert(counter.location.toString()).equalsTo("point(-170.5, -295.3125)");
             assert(counter.hexLocation.col).equalsTo(5);
-            assert(counter.hexLocation.row).equalsTo(8);
-            assert(counter.angle).equalsTo(0);
-            assert(getMoveActuator(game)).isNotDefined();
-            assert(getOrientationActuator(game)).isNotDefined();
+            assert(counter.hexLocation.row).equalsTo(7);
+            assert(counter.angle).equalsTo(60);
+            assert(getMoveActuator(game)).equalsTo(moveActuator3);
+            assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
         when:
             Memento.redo();
         then:
@@ -918,8 +929,8 @@ describe("Game", ()=> {
             assert(counter.hexLocation.col).equalsTo(6);
             assert(counter.hexLocation.row).equalsTo(6);
             assert(counter.angle).equalsTo(60);
-            assert(getMoveActuator(game)).equalsTo(moveActuator);
-            assert(getOrientationActuator(game)).equalsTo(orientationActuator);
+            assert(getMoveActuator(game)).equalsTo(moveActuator4);
+            assert(getOrientationActuator(game)).equalsTo(orientationActuator4);
     });
 
     it("Checks Unit move using actuators (rotate, move, rotate)", () => {
@@ -928,39 +939,42 @@ describe("Game", ()=> {
             clickOnCounter(game, counter);
             clickOnActionMenu(game, 0, 0);
             loadAllImages();
-            var orientationActuator = getOrientationActuator(game);
+            var moveActuator1 = getMoveActuator(game);
+            var orientationActuator1 = getOrientationActuator(game);
         then:
             assert(counter.location.toString()).equalsTo("point(-170.5, -98.4375)");
             assert(counter.hexLocation.col).equalsTo(5);
             assert(counter.hexLocation.row).equalsTo(8);
             assert(counter.angle).equalsTo(0);
         when:
-            clickOnTrigger(orientationActuator.getTrigger(60));
+            clickOnTrigger(game, orientationActuator1.getTrigger(60));
         then:
             assert(counter.angle).equalsTo(60);
         when:
-            var moveActuator = getMoveActuator(game);
-            clickOnTrigger(moveActuator.getTrigger(60));
+            var moveActuator2 = getMoveActuator(game);
+            var orientationActuator2 = getOrientationActuator(game);
+            clickOnTrigger(game, moveActuator2.getTrigger(60));
         then:
             assert(counter.location.toString()).equalsTo("point(0, -196.875)");
             assert(counter.hexLocation.col).equalsTo(6);
             assert(counter.hexLocation.row).equalsTo(7);
         when:
-            orientationActuator = getOrientationActuator(game);
-            clickOnTrigger(orientationActuator.getTrigger(90));
+            var moveActuator3 = getMoveActuator(game);
+            var orientationActuator3 = getOrientationActuator(game);
+            clickOnTrigger(game, orientationActuator3.getTrigger(90));
         then:
             assert(counter.angle).equalsTo(90);
         when:
-            moveActuator = getMoveActuator(game);
-            orientationActuator = getOrientationActuator(game);
+            var moveActuator4 = getMoveActuator(game);
+            var orientationActuator4 = getOrientationActuator(game);
             Memento.undo();
         then:
-            assert(counter.location.toString()).equalsTo("point(-170.5, -98.4375)");
-            assert(counter.hexLocation.col).equalsTo(5);
-            assert(counter.hexLocation.row).equalsTo(8);
-            assert(counter.angle).equalsTo(0);
-            assert(getMoveActuator(game)).isNotDefined();
-            assert(getOrientationActuator(game)).isNotDefined();
+            assert(counter.location.toString()).equalsTo("point(0, -196.875)");
+            assert(counter.hexLocation.col).equalsTo(6);
+            assert(counter.hexLocation.row).equalsTo(7);
+            assert(counter.angle).equalsTo(60);
+            assert(getMoveActuator(game)).equalsTo(moveActuator3);
+            assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
         when:
             Memento.redo();
         then:
@@ -968,8 +982,82 @@ describe("Game", ()=> {
             assert(counter.hexLocation.col).equalsTo(6);
             assert(counter.hexLocation.row).equalsTo(7);
             assert(counter.angle).equalsTo(90);
-            assert(getMoveActuator(game)).equalsTo(moveActuator);
-            assert(getOrientationActuator(game)).equalsTo(orientationActuator);
+            assert(getMoveActuator(game)).equalsTo(moveActuator4);
+            assert(getOrientationActuator(game)).equalsTo(orientationActuator4);
+    });
+
+    function resetAllDirectives(game) {
+        var unitsLevel = game._board.getLevel("units");
+        var markersLevel = game._board.getLevel("markers");
+        var actuatorsLevel = game._board.getLevel("actuators");
+        resetDirectives(unitsLevel);
+        resetDirectives(markersLevel);
+        resetDirectives(actuatorsLevel);
+    }
+
+    function registerAllDirectives(game) {
+        var unitsLevel = game._board.getLevel("units");
+        var markersLevel = game._board.getLevel("markers");
+        var actuatorsLevel = game._board.getLevel("actuators");
+        return {
+            units:[...getDirectives(unitsLevel)],
+            markers:[...getDirectives(markersLevel)],
+            actuators:[...getDirectives(actuatorsLevel)]
+        };
+    }
+
+    function assertAllDirectives(game, picture) {
+        var unitsLevel = game._board.getLevel("units");
+        var markersLevel = game._board.getLevel("markers");
+        var actuatorsLevel = game._board.getLevel("actuators");
+        assert(getDirectives(unitsLevel)).arrayEqualsTo(picture.units);
+        assert(getDirectives(markersLevel)).arrayEqualsTo(picture.markers);
+        assert(getDirectives(actuatorsLevel)).arrayEqualsTo(picture.actuators);
+    }
+
+    it("Checks appearance when undoing (move, rotate, move)", () => {
+        given:
+            var {game, counter} = createTinyGame();
+            loadAllImages();
+            paint(game);
+            resetAllDirectives(game);
+        when:
+            clickOnCounter(game, counter);
+            loadAllImages();
+            resetAllDirectives(game);
+            clickOnActionMenu(game, 0, 0);
+            loadAllImages();
+            resetAllDirectives(game);
+            repaint(game);
+            var picture1 = registerAllDirectives(game);
+            clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
+            resetAllDirectives(game);
+            repaint(game);
+            var picture2 = registerAllDirectives(game);
+            clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
+            resetAllDirectives(game);
+            repaint(game);
+            var picture3 = registerAllDirectives(game);
+            clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
+            Memento.undo();
+        then:
+            resetAllDirectives(game);
+            repaint(game);
+            assertAllDirectives(game, picture3);
+        when:
+            Memento.undo();
+        then:
+            resetAllDirectives(game);
+            repaint(game);
+            assertAllDirectives(game, picture2);
+        when:
+            Memento.undo();
+        then:
+            resetAllDirectives(game);
+            repaint(game);
+            assertAllDirectives(game, picture1);
+        when:
+            Memento.undo();
     });
 
     it("Checks Unit movement points management during move", () => {
@@ -983,21 +1071,21 @@ describe("Game", ()=> {
             assert(counter.movementPoints).equalsTo(2);
             assert(counter.extendedMovementPoints).equalsTo(3);
         when:
-            clickOnTrigger(moveActuator.getTrigger(0));
+            clickOnTrigger(game, moveActuator.getTrigger(0));
         then:
             assert(counter.movementPoints).equalsTo(1);
             assert(counter.extendedMovementPoints).equalsTo(2);
         when:
             var orientationActuator = getOrientationActuator(game);
-            clickOnTrigger(orientationActuator.getTrigger(60));
+            clickOnTrigger(game, orientationActuator.getTrigger(60));
         then:
             assert(counter.movementPoints).equalsTo(0.5);
             assert(counter.extendedMovementPoints).equalsTo(1.5);
         when:
             Memento.undo();
         then:
-            assert(counter.movementPoints).equalsTo(2);
-            assert(counter.extendedMovementPoints).equalsTo(3);
+            assert(counter.movementPoints).equalsTo(1);
+            assert(counter.extendedMovementPoints).equalsTo(2);
         when:
             Memento.redo();
         then:
@@ -1019,14 +1107,14 @@ describe("Game", ()=> {
             assert(moveActuator.getTrigger(0).image.path).equalsTo("/CBlades/images/actuators/standard-move.png");
             assert(orientationActuator.getTrigger(30).image.path).equalsTo("/CBlades/images/actuators/toward.png");
         when:
-            clickOnTrigger(moveActuator.getTrigger(0));
+            clickOnTrigger(game, moveActuator.getTrigger(0));
             moveActuator = getMoveActuator(game);
             orientationActuator = getOrientationActuator(game);
         then:
             assert(moveActuator.getTrigger(0).image.path).equalsTo("/CBlades/images/actuators/extended-move.png");
             assert(orientationActuator.getTrigger(30).image.path).equalsTo("/CBlades/images/actuators/extended-toward.png");
         when:
-            clickOnTrigger(moveActuator.getTrigger(0));
+            clickOnTrigger(game, moveActuator.getTrigger(0));
             moveActuator = getMoveActuator(game);
             orientationActuator = getOrientationActuator(game);
         then:
@@ -1106,4 +1194,108 @@ describe("Game", ()=> {
             assert(game.currentPlayer).equalsTo(player2);
     });
 
+    it("Checks Unit tiredness progression (fresh -> tired -> exhausted)", () => {
+        given:
+            var {game, counter} = createTinyGame();
+            var unitsLevel = game._board.getLevel("units");
+            var markersLevel = game._board.getLevel("markers");
+            clickOnCounter(game, counter);
+            clickOnActionMenu(game, 0, 0);
+            counter.movementPoints = 0.5;
+            loadAllImages();
+            paint(game);
+            var moveActuator1 = getMoveActuator(game);
+        when:
+            resetDirectives(markersLevel);
+            resetDirectives(unitsLevel);
+            clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
+            loadAllImages();
+        then:
+            assert(counter.tiredness).equalsTo(1);
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -366.3125, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/tired.png, -273.5, -320.3125, 64, 64)",
+                "restore()"
+            ]);
+        when:
+            game.nextTurn();
+            counter.movementPoints = 0.5;
+            clickOnCounter(game, counter);
+            clickOnActionMenu(game, 0, 0);
+            paint(game);
+            resetDirectives(markersLevel);
+            clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
+            loadAllImages();
+        then:
+            assert(counter.tiredness).equalsTo(2);
+            assert(counter.hasBeenPlayed()).isTrue();   // Unit is played automatically because no further movement/reorientation is possble
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -517.1875, 64, 64)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/actiondone.png, -131.5, -595.1875, 64, 64)",
+                "restore()"
+            ]);
+    });
+
+    function create1Player2UnitsTinyGame() {
+        let game = new CBGame();
+        let arbitrator = new CBArbitrator();
+        game.setArbitrator(arbitrator);
+        let player = new CBPlayer();
+        game.addPlayer(player);
+        let map = new CBMap("/CBlades/images/maps/map.png");
+        game.setMap(map);
+        let counter1 = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
+        game.addCounter(counter1, new CBHexId(map, 5, 8));
+        let counter2 = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
+        game.addCounter(counter2, new CBHexId(map, 6, 7));
+        game.start();
+        return {game, map, player, counter1, counter2};
+    }
+
+    it("Checks activating/playing a unit", () => {
+        given:
+            var {game, counter1, counter2} = create1Player2UnitsTinyGame();
+            var markersLevel = game._board.getLevel("markers");
+            clickOnCounter(game, counter1);
+            clickOnActionMenu(game, 0, 0);
+        when:
+            clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
+        then:
+            assert(counter1.hasBeenActivated()).isTrue();
+            assert(counter1.hasBeenPlayed()).isFalse();
+        when:
+            clickOnCounter(game, counter2);
+            loadAllImages();
+            resetDirectives(markersLevel);
+            repaint(game);
+        then:
+            assert(counter1.hasBeenActivated()).isTrue();
+            assert(counter1.hasBeenPlayed()).isTrue();
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/actiondone.png, -131.5, -398.3125, 64, 64)",
+                "restore()"
+            ]);
+        when:   // changing turn reset played status
+            game.nextTurn();
+            resetDirectives(markersLevel);
+            repaint(game);
+        then:
+            assert(counter1.hasBeenActivated()).isFalse();
+            assert(counter1.hasBeenPlayed()).isFalse();
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+    });
 });

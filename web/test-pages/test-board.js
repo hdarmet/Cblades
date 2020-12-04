@@ -16,7 +16,7 @@ import {
     DBoard, DElement, DImageArtifact
 } from "../jslib/board.js";
 import {
-    mockPlatform, getDirectives, resetDirectives, createEvent
+    mockPlatform, getDirectives, resetDirectives, createEvent, loadAllImages
 } from "./mocks.js";
 
 
@@ -130,66 +130,43 @@ describe("Board", ()=> {
             assert(getDirectives(level)[3]).equalsTo("restore()");
     });
 
-    it("Checks artifact setSettings feature", () => {
-        given:
-            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
-            var level = board.getLevel("units");
-            var image = DImage.getImage("../images/unit1.png");
-            image._root.onload();
-            var artifact = new DImageArtifact("units", image, new Point2D(-10, -15), new Dimension2D(50, 50));
-            var element = new DElement(artifact);
-            element.setOnBoard(board);
-        when:
-            artifact.setSettings(level=>{
-                level.setShadowSettings("#000000", 15);
-            });
-            resetDirectives(level);
-            board.paint();
-        then:
-            assert(getDirectives(level, 4)).arrayEqualsTo([
-                "save()",
-                "shadowColor = #000000",
-                "shadowBlur = 15",
-                "drawImage(../images/unit1.png, -35, -40, 50, 50)",
-                "restore()"
-            ]);
-        when:
-            artifact.setSettings();
-            resetDirectives(level);
-            board.paint();
-        then:
-            assert(getDirectives(level, 4)).arrayEqualsTo([
-                "save()",
-                "drawImage(../images/unit1.png, -35, -40, 50, 50)",
-                "restore()"
-            ]);
-    });
-
     it("Checks element refresh feature", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
-        var level = board.getLevel("units");
-        var image1 = DImage.getImage("../images/unit1.png");
-        image1._root.onload();
-        var image2 = DImage.getImage("../images/unit2.png");
-        image2._root.onload();
-        var artifact1 = new DImageArtifact("units", image1, new Point2D(-10, -15), new Dimension2D(50, 50));
-        var artifact2 = new DImageArtifact("units", image2, new Point2D(10, 15), new Dimension2D(50, 50), 45);
-        var element = new DElement(artifact1, artifact2);
-        element.setOnBoard(board);
-        board.paint();
-        resetDirectives(level);
+            var level = board.getLevel("units");
+            var image1 = DImage.getImage("../images/unit1.png");
+            image1._root.onload();
+            var image2 = DImage.getImage("../images/unit2.png");
+            image2._root.onload();
+            var artifact1 = new DImageArtifact("units", image1, new Point2D(-10, -15), new Dimension2D(50, 50));
+            var artifact2 = new DImageArtifact("units", image2, new Point2D(10, 15), new Dimension2D(50, 50), 45);
+            var element = new DElement(artifact1, artifact2);
+            element.setOnBoard(board);
+            board.paint();
+            resetDirectives(level);
         when:
             board.paint(); // nothing to paint, everything is fine
         then:
             assert(getDirectives(level).length).equalsTo(0);
         when: // force repainting
             element.refresh();
-        board.paint();
+            board.paint();
         then:
             assert(getDirectives(level).length).equalsTo(11);
-        assert(getDirectives(level)).arrayContains("../images/unit1.png");
-        assert(getDirectives(level)).arrayContains("../images/unit2.png");
+            assert(getDirectives(level)).arrayContains("../images/unit1.png");
+            assert(getDirectives(level)).arrayContains("../images/unit2.png");
+        when:
+            resetDirectives(level);
+            board.paint(); // nothing to paint again, everything is fine
+        then:
+            assert(getDirectives(level).length).equalsTo(0);
+        when:
+            resetDirectives(level);
+            board.repaint(); // force repainting
+        then:
+            assert(getDirectives(level).length).equalsTo(11);
+            assert(getDirectives(level)).arrayContains("../images/unit1.png");
+            assert(getDirectives(level)).arrayContains("../images/unit2.png");
     });
 
     it("Checks default element settings", () => {
@@ -458,6 +435,214 @@ describe("Board", ()=> {
             assert(element.board).isNotDefined();
             assert(getDirectives(level).length).equalsTo(4);
             assertLevelIsCleared(0, level);
+    });
+
+    it("Checks dynamic adding/removing artifacts on element out of transaction", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var level = board.getLevel("units");
+            var element = new DElement();
+            element.setLocation(new Point2D(100, 50));
+            Memento.activate();
+            element.setOnBoard(board);
+            board.paint();
+            Memento.open();
+            resetDirectives(level);
+        when:
+            var image = DImage.getImage("../images/unit.png");
+            var artifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+            loadAllImages();
+            element.addArtifact(artifact);
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit.png, 75, 25, 50, 50)",
+                "restore()"
+            ]);
+        when: // add/remove artifacts methods are not bounded to transaction mechanism
+            resetDirectives(level);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(level)).arrayEqualsTo([
+            ]);
+        when:
+            resetDirectives(level);
+            element.removeArtifact(artifact);
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+            ]);
+        when:
+            resetDirectives(level);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(level)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks dynamic adding/removing artifacts on element in transaction", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var level = board.getLevel("units");
+            var element = new DElement();
+            element.setLocation(new Point2D(100, 50));
+            Memento.activate();
+            element.show(board);
+            board.paint();
+            Memento.open();
+            resetDirectives(level);
+        when:
+            var image = DImage.getImage("../images/unit.png");
+            var artifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+            loadAllImages();
+            element.appendArtifact(artifact);
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit.png, 75, 25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            Memento.open();
+            resetDirectives(level);
+            element.deleteArtifact(artifact);
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+            ]);
+        when:
+            resetDirectives(level);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit.png, 75, 25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks artifact setSettings feature out of transaction", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var level = board.getLevel("units");
+            var image = DImage.getImage("../images/unit1.png");
+            loadAllImages()
+            var artifact = new DImageArtifact("units", image, new Point2D(-10, -15), new Dimension2D(50, 50));
+            var element = new DElement(artifact);
+            element.setOnBoard(board);
+            Memento.activate();
+            Memento.open();
+        when:
+            artifact.setSettings(level=>{
+                level.setShadowSettings("#000000", 15);
+            });
+            resetDirectives(level);
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000",
+                "shadowBlur = 15",
+                "drawImage(../images/unit1.png, -35, -40, 50, 50)",
+                "restore()"
+            ]);
+        when: // setSettings method is not bounded to transaction mechanism
+            resetDirectives(level);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(level)).arrayEqualsTo([
+            ]);
+        when:
+            Memento.open();
+            artifact.setSettings();
+            resetDirectives(level);
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit1.png, -35, -40, 50, 50)",
+                "restore()"
+            ]);
+        when: // setSettings method is not bounded to transaction mechanism
+            resetDirectives(level);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(level)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks artifact changeSettings feature in transaction", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var level = board.getLevel("units");
+            var image = DImage.getImage("../images/unit1.png");
+            loadAllImages()
+            var artifact = new DImageArtifact("units", image, new Point2D(-10, -15), new Dimension2D(50, 50));
+            var element = new DElement(artifact);
+            element.setOnBoard(board);
+            Memento.activate();
+            Memento.open();
+        when:
+            artifact.changeSettings(level=>{
+                level.setShadowSettings("#000000", 15);
+            });
+            resetDirectives(level);
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000",
+                "shadowBlur = 15",
+                "drawImage(../images/unit1.png, -35, -40, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            Memento.open();
+            artifact.changeSettings();
+            resetDirectives(level);
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit1.png, -35, -40, 50, 50)",
+                "restore()"
+            ]);
+        when: // changeSettings method is  bounded to transaction mechanism
+            resetDirectives(level);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000",
+                "shadowBlur = 15",
+                "drawImage(../images/unit1.png, -35, -40, 50, 50)",
+                "restore()"
+            ]);
+        when: // changeSettings method is bounded to transaction mechanism
+            resetDirectives(level);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit1.png, -35, -40, 50, 50)",
+                "restore()"
+            ]);
     });
 
     it("Checks element hiding in transaction", () => {

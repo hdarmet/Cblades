@@ -60,11 +60,12 @@ export class CBArbitrator {
             if (unit.movementPoints>=cost) {
                 directions[angle] = { hex:nearHexId, type:CBMovement.NORMAL};
             }
-            else if (unit.extendedMovementPoints>=cost) {
-                directions[angle] = { hex:nearHexId, type:CBMovement.EXTENDED};
-            }
-            else if (first) {
-                directions[angle] = { hex:nearHexId, type:CBMovement.MINIMAL};
+            else if (unit.tiredness<2) {
+                if (unit.extendedMovementPoints >= cost) {
+                    directions[angle] = {hex: nearHexId, type: CBMovement.EXTENDED};
+                } else if (first) {
+                    directions[angle] = {hex: nearHexId, type: CBMovement.MINIMAL};
+                }
             }
         }
 
@@ -99,7 +100,7 @@ export class CBArbitrator {
             if (unit.movementPoints>=cost) {
                 directions[angle] = { hex:nearHexId, type:CBMovement.NORMAL};
             }
-            else if (unit.extendedMovementPoints>=cost) {
+            else if (unit.tiredness<2 && unit.extendedMovementPoints>=cost) {
                 directions[angle] = { hex:nearHexId, type:CBMovement.EXTENDED};
             }
         }
@@ -143,28 +144,36 @@ export class CBPlayer {
     constructor() {}
 
     selectUnit(unit, event) {
-        unit.openActionMenu(
-            new Point2D(event.offsetX, event.offsetY),
-            this.game.arbitrator.allowedActions(unit)
-        );
+        if (!unit.hasBeenActivated()) {
+            unit.openActionMenu(
+                new Point2D(event.offsetX, event.offsetY),
+                this.game.arbitrator.allowedActions(unit)
+            );
+        }
     }
 
     _createFirstMovementActuators(unit) {
         let moveDirections = this.game.arbitrator.allowedFirstMove(unit);
         let moveActuator = unit.createMoveActuator(moveDirections, true);
-        this.game.addActuator(moveActuator);
+        this.game.openActuator(moveActuator);
         let orientationDirections = this.game.arbitrator.allowedFirstRotate(unit);
         let orientationActuator = unit.createOrientationActuator(orientationDirections, true);
-        this.game.addActuator(orientationActuator);
+        this.game.openActuator(orientationActuator);
     }
 
     _createSubsequentMovementActuators(unit) {
         let moveDirections = this.game.arbitrator.allowedSubsequentMove(unit);
         let moveActuator = unit.createMoveActuator(moveDirections, false);
-        this.game.addActuator(moveActuator);
+        this.game.openActuator(moveActuator);
         let orientationDirections = this.game.arbitrator.allowedSubsequentRotate(unit);
         let orientationActuator = unit.createOrientationActuator(orientationDirections, false);
-        this.game.addActuator(orientationActuator);
+        this.game.openActuator(orientationActuator);
+        if (moveDirections.length===0 && orientationDirections.length===0) {
+            unit.markAsBeingPlayed();
+        }
+        else {
+            unit.markAsBeingActivated();
+        }
     }
 
     startMoveUnit(unit, event) {
@@ -227,15 +236,14 @@ export class CBGame {
 
     _memento() {
         return {
+            selectedUnit: this._selectedUnit,
             actuators: [...this._actuators]
         };
     }
 
     _revert(memento) {
-        this.closeActuators();
-        for (let actuator of memento.actuators) {
-            this.addActuator(actuator);
-        }
+        this._selectedUnit = memento.selectedUnit;
+        this._actuators = memento.actuators;
     }
 
     recenter(vpoint) {
@@ -272,20 +280,30 @@ export class CBGame {
         counter.element.setOnBoard(this._board);
     }
 
-    addActuator(actuator) {
+    openActuator(actuator) {
+        Memento.register(this);
         actuator.game = this;
-        actuator.element.setOnBoard(this._board);
+        actuator.element.show(this._board);
         this._actuators.push(actuator);
     }
 
-    closeActuators() {
+    removeActuators() {
         for (let actuator of this._actuators) {
             actuator.element.removeFromBoard(this._board);
         }
         this._actuators = [];
     }
 
+    closeActuators() {
+        Memento.register(this);
+        for (let actuator of this._actuators) {
+            actuator.element.hide(this._board);
+        }
+        this._actuators = [];
+    }
+
     setSelectedUnit(unit) {
+        Memento.register(this);
         if (unit) {
             this._selectedUnit = unit;
         }
@@ -346,7 +364,7 @@ export class CBGame {
     }
 
     nextTurn() {
-        this.closeActuators();
+        this.removeActuators();
         this._resetCounters(this._currentPlayer);
         let indexPlayer = this._players.indexOf(this._currentPlayer);
         this._currentPlayer = this._players[(indexPlayer+1)%this._players.length];
@@ -595,11 +613,6 @@ export class CBCounter {
         this._element._unit = this;
     }
 
-    createArtifact(path, dimension) {
-        this._image = DImage.getImage(path);
-        return new CounterImageArtifact(this,"units", this._image, new Point2D(0, 0), dimension);
-    }
-
     get artifact() {
         return this._imageArtifact;
     }
@@ -728,6 +741,18 @@ class UnitImageArtifact extends CounterImageArtifact {
         super(unit, ...args);
     }
 
+    _memento() {
+        return {
+            ...super._memento(),
+            selected: this._selected
+        }
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        this._selected = memento.selected;
+    }
+
     get unit() {
         return this._counter;
     }
@@ -745,23 +770,25 @@ class UnitImageArtifact extends CounterImageArtifact {
     }
 
     unselect() {
+        Memento.register(this);
         delete this._selected;
-        this.setSettings(this.settings);
+        this.changeSettings(this.settings);
     }
 
     select() {
+        Memento.register(this);
         this._selected = true;
-        this.setSettings(this.selectedSettings);
+        this.changeSettings(this.selectedSettings);
     }
 
     onMouseEnter(event) {
-        if (!this._selected && this.unit.isCurrentPlayer()) {
+        if (!this._selected && this.unit.isCurrentPlayer() && !this.unit.hasBeenPlayed()) {
             this.setSettings(this.overSettings);
         }
     }
 
     onMouseLeave(event) {
-        if (!this._selected && this.unit.isCurrentPlayer()) {
+        if (!this._selected && this.unit.isCurrentPlayer() && !this.unit.hasBeenPlayed()) {
             this.setSettings(this.settings);
         }
     }
@@ -775,6 +802,7 @@ export class CBUnit extends CBCounter {
         this._player = player;
         this._movementPoints = 2;
         this._extendedMovementPoints = this._movementPoints*1.5;
+        this._tiredness=0;
     }
 
     createArtifact(path, dimension) {
@@ -782,11 +810,24 @@ export class CBUnit extends CBCounter {
         return new UnitImageArtifact(this,"units", this._image, new Point2D(0, 0), dimension);
     }
 
+    createMarkerArtifact(path, slot) {
+        let image = DImage.getImage(path);
+        let marker = new CounterImageArtifact(this,"markers", image,
+            CBUnit.MARKERS_POSITION[slot], CBUnit.MARKER_DIMENSION);
+        this._element.appendArtifact(marker);
+        return marker;
+    }
+
     _memento() {
         return {
             hexLocation: this._hexLocation,
             movementPoints: this._movementPoints,
-            extendedMovementPoints: this._extendedMovementPoints
+            extendedMovementPoints: this._extendedMovementPoints,
+            tiredness: this._tiredness,
+            tirednessArtifact: this._tirednessArtifact,
+            activated: this._activated,
+            played: this._played,
+            playedArtifact: this._playedArtifact
         };
     }
 
@@ -794,13 +835,27 @@ export class CBUnit extends CBCounter {
         this._hexLocation = memento.hexLocation;
         this._movementPoints = memento.movementPoints;
         this._extendedMovementPoints = memento.extendedMovementPoints;
+        this._tiredness = memento.tiredness;
+        this._tirednessArtifact = memento.tirednessArtifact;
+        this._activated = memento.activated;
+        this._played = memento.played;
+        this._playedArtifact = memento.playedArtifact;
     }
 
     _reset(player) {
         if (player === this._player) {
             this._movementPoints = 2;
             this._extendedMovementPoints = this._movementPoints*1.5;
+            this._updatePlayed(false, false);
         }
+    }
+
+    markAsBeingActivated() {
+        this._updatePlayed(true, false);
+    }
+
+    markAsBeingPlayed() {
+        this._updatePlayed(true, true);
     }
 
     unselect() {
@@ -808,6 +863,9 @@ export class CBUnit extends CBCounter {
         this.game.setSelectedUnit(null);
         this._imageArtifact.unselect();
         this.element.refresh();
+        if (this._activated) {
+            this.markAsBeingPlayed();
+        }
     }
 
     select() {
@@ -820,7 +878,7 @@ export class CBUnit extends CBCounter {
     }
 
     onMouseClick(event) {
-        if (this.isCurrentPlayer()) {
+        if (this.isCurrentPlayer() && !this.hasBeenActivated()) {
             this.select();
             this.player.selectUnit(this, event);
         }
@@ -828,6 +886,14 @@ export class CBUnit extends CBCounter {
 
     isCurrentPlayer() {
         return this.player === this.game.currentPlayer;
+    }
+
+    hasBeenPlayed() {
+        return this._played;
+    }
+
+    hasBeenActivated() {
+        return this._activated;
     }
 
     get player() {
@@ -859,14 +925,45 @@ export class CBUnit extends CBCounter {
         this._extendedMovementPoints = extendedMovementPoints;
     }
 
+    get tiredness() {
+        return this._tiredness;
+    }
+
+    _updatePlayed(activated, played) {
+        this._activated = activated;
+        if (!this._played!==!played) {
+            this._played = played;
+            this._playedArtifact && this._element.deleteArtifact(this._playedArtifact);
+            delete this._playedArtifact;
+            if (this._played) {
+                this._playedArtifact = this.createMarkerArtifact("/CBlades/images/markers/actiondone.png", 0);
+            }
+        }
+    }
+
+    _updateTiredness(tiredness) {
+        console.assert(tiredness===0 || tiredness===1 || tiredness===2);
+        this._tiredness = tiredness;
+        this._tirednessArtifact && this._element.deleteArtifact(this._tirednessArtifact);
+        delete this._tirednessArtifact;
+        if (this._tiredness === 1) {
+            this._tirednessArtifact = this.createMarkerArtifact("/CBlades/images/markers/tired.png", 2);
+        }
+        else if (this._tiredness === 2) {
+            this._tirednessArtifact = this.createMarkerArtifact("/CBlades/images/markers/exhausted.png", 2);
+        }
+    }
+
     _updateMovementPoints(cost) {
+        if (this._movementPoints>=0 && cost>this._movementPoints) {
+            this._updateTiredness(this._tiredness+1);
+        }
         this._movementPoints -= cost;
         this._extendedMovementPoints -= cost;
     }
 
     firstMove(hexId, cost) {
         Memento.register(this);
-        Memento.register(this.game);
         this._hexLocation = hexId;
         this._element.move(hexId.location);
         this._updateMovementPoints(cost);
@@ -874,19 +971,20 @@ export class CBUnit extends CBCounter {
 
     firstRotation(angle, cost) {
         Memento.register(this);
-        Memento.register(this.game);
         this._element.rotate(angle);
         this._updateMovementPoints(cost);
     }
 
     subsequentMove(hexId, cost) {
+        Memento.register(this);
         this._hexLocation = hexId;
-        this._element.setLocation(hexId.location);
+        this._element.move(hexId.location);
         this._updateMovementPoints(cost);
     }
 
     subsequentRotation(angle, cost) {
-        this._element.setAngle(angle);
+        Memento.register(this);
+        this._element.rotate(angle);
         this._updateMovementPoints(cost);
     }
 
@@ -906,9 +1004,16 @@ export class CBUnit extends CBCounter {
         return new CBMoveActuator(this, directions, first);
     }
 }
-CBUnit.WIDTH = 142;
-CBUnit.HEIGHT = 142;
-CBUnit.DIMENSION = new Dimension2D(CBUnit.WIDTH, CBUnit.HEIGHT);
+CBUnit.DIMENSION = new Dimension2D(142, 142);
+CBUnit.MARKER_DIMENSION = new Dimension2D(64, 64);
+CBUnit.MARKERS_POSITION = [
+    new Point2D(CBUnit.DIMENSION.w/2, -CBUnit.DIMENSION.h/2),
+    new Point2D(-CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2-CBUnit.MARKER_DIMENSION.h*2),
+    new Point2D(-CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2-CBUnit.MARKER_DIMENSION.h),
+    new Point2D(-CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2),
+    new Point2D(-CBUnit.DIMENSION.w/2+CBUnit.MARKER_DIMENSION.w, CBUnit.DIMENSION.h/2),
+    new Point2D(-CBUnit.DIMENSION.w/2+CBUnit.MARKER_DIMENSION.w*2, CBUnit.DIMENSION.h/2)
+];
 CBUnit.fromArtifact = function(artifact) {
     return artifact.element._unit;
 }

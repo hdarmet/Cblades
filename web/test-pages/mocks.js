@@ -3,6 +3,9 @@
 import {
     DImage
 } from "../jslib/draw.js";
+import {
+    assert
+} from "../jstest/jtest.js";
 
 function round(v) {
     return Math.round(v*10000)/10000;
@@ -113,6 +116,7 @@ export let mockPlatform = {
 }
 
 export function getContextDirectives(context, start=0) {
+    assert(context.directives.length>=start).isTrue();
     return start ? context.directives.slice(start) : context.directives;
 }
 
