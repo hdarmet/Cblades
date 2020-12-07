@@ -13,7 +13,8 @@ import {
     DBoard, DElement, DImageArtifact
 } from "../board.js";
 import {
-    DIconMenu, DIconMenuItem, DPopup, DPushButton
+    DDice,
+    DIconMenu, DIconMenuItem, DIndicator, DInsert, DMask, DPopup, DPushButton, DResult, DScene
 } from "../widget.js";
 
 export let CBMovement = {
@@ -22,112 +23,16 @@ export let CBMovement = {
     MINIMAL : "minimal"
 }
 
-export class CBArbitrator {
+export let CBWeather = {
+    HOT : 1,
+    CLEAR : 2,
+    CLOUDY : 3,
+    OVERCAST : 4,
+    RAIN : 5,
+    STORM : 6
+}
 
-    allowedActions(unit) {
-        return {
-            moveForward:true,
-            moveBack:true,
-            escape:true,
-            confront:true,
-            shockAttack:false,
-            fireAttack:false,
-            shockDuel:false,
-            fireDuel:false,
-            rest:true,
-            reload:true,
-            reorganize:true,
-            rally:true,
-            createFormation:true,
-            joinFormation:true,
-            leaveFormation:true,
-            breakFormation:true,
-            takeCommand:true,
-            leaveCommand:true,
-            changeOrders:true,
-            giveSpecificOrders:true,
-            prepareSpell:true,
-            castSpell:true,
-            mergeUnit:true,
-            miscAction:true
-        }
-    }
-
-    _allowedMove(unit, first) {
-        function processAngle(directions, arbitrator, unit, angle, first) {
-            let nearHexId = unit.hexLocation.getNearHex(angle);
-            let cost = arbitrator.getMovementCost(unit, nearHexId);
-            if (unit.movementPoints>=cost) {
-                directions[angle] = { hex:nearHexId, type:CBMovement.NORMAL};
-            }
-            else if (unit.tiredness<2) {
-                if (unit.extendedMovementPoints >= cost) {
-                    directions[angle] = {hex: nearHexId, type: CBMovement.EXTENDED};
-                } else if (first) {
-                    directions[angle] = {hex: nearHexId, type: CBMovement.MINIMAL};
-                }
-            }
-        }
-
-        let directions = [];
-        let angle = unit.angle;
-        if (angle%60) {
-            processAngle(directions, this, unit, angle - 30, first);
-            processAngle(directions, this, unit, (angle + 30) % 360, first);
-        }
-        else {
-            processAngle(directions, this, unit, (angle + 300) % 360, first);
-            processAngle(directions, this, unit, angle, first);
-            processAngle(directions, this, unit, (angle + 60) % 360, first);
-        }
-        return directions;
-    }
-
-    allowedFirstMove(unit) {
-        return this._allowedMove(unit, true);
-    }
-
-    allowedSubsequentMove(unit) {
-        return this._allowedMove(unit, false);
-    }
-
-    _allowedRotate(unit) {
-        function processAngle(directions, arbitrator, unit, angle) {
-            let nearHexId = angle%60 ?
-                new CBHexSideId(unit.hexLocation.getNearHex(angle-30), unit.hexLocation.getNearHex((angle+30)%360)) :
-                unit.hexLocation.getNearHex(angle);
-            let cost = arbitrator.getRotationCost(unit, angle);
-            if (unit.movementPoints>=cost) {
-                directions[angle] = { hex:nearHexId, type:CBMovement.NORMAL};
-            }
-            else if (unit.tiredness<2 && unit.extendedMovementPoints>=cost) {
-                directions[angle] = { hex:nearHexId, type:CBMovement.EXTENDED};
-            }
-        }
-
-        let directions = [];
-        for (let angle = 0; angle < 360; angle += 30) {
-            processAngle(directions, this, unit, angle);
-        }
-        delete directions[unit.angle];
-        return directions;
-    }
-
-    allowedFirstRotate(unit) {
-        return this._allowedRotate(unit)
-    }
-
-    allowedSubsequentRotate(unit) {
-        return this._allowedRotate(unit)
-    }
-
-    getRotationCost(unit, angle) {
-        return 0.5;
-    }
-
-    getMovementCost(unit, hexId) {
-        return 1;
-    }
+export class CBAbstractArbitrator {
 
     get game() {
         return this._game;
@@ -139,70 +44,7 @@ export class CBArbitrator {
 
 }
 
-export class CBPlayer {
-
-    constructor() {}
-
-    selectUnit(unit, event) {
-        if (!unit.hasBeenActivated()) {
-            unit.openActionMenu(
-                new Point2D(event.offsetX, event.offsetY),
-                this.game.arbitrator.allowedActions(unit)
-            );
-        }
-    }
-
-    _createFirstMovementActuators(unit) {
-        let moveDirections = this.game.arbitrator.allowedFirstMove(unit);
-        let moveActuator = unit.createMoveActuator(moveDirections, true);
-        this.game.openActuator(moveActuator);
-        let orientationDirections = this.game.arbitrator.allowedFirstRotate(unit);
-        let orientationActuator = unit.createOrientationActuator(orientationDirections, true);
-        this.game.openActuator(orientationActuator);
-    }
-
-    _createSubsequentMovementActuators(unit) {
-        let moveDirections = this.game.arbitrator.allowedSubsequentMove(unit);
-        let moveActuator = unit.createMoveActuator(moveDirections, false);
-        this.game.openActuator(moveActuator);
-        let orientationDirections = this.game.arbitrator.allowedSubsequentRotate(unit);
-        let orientationActuator = unit.createOrientationActuator(orientationDirections, false);
-        this.game.openActuator(orientationActuator);
-        if (moveDirections.length===0 && orientationDirections.length===0) {
-            unit.markAsBeingPlayed();
-        }
-        else {
-            unit.markAsBeingActivated();
-        }
-    }
-
-    startMoveUnit(unit, event) {
-        this._createFirstMovementActuators(unit);
-    }
-
-    firstUnitRotation(unit, angle, event) {
-        this.game.closeActuators();
-        unit.firstRotation(angle, this.game.arbitrator.getRotationCost(unit, angle));
-        this._createSubsequentMovementActuators(unit);
-    }
-
-    firstUnitMove(unit, hexId, event) {
-        this.game.closeActuators();
-        unit.firstMove(hexId, this.game.arbitrator.getMovementCost(unit, hexId));
-        this._createSubsequentMovementActuators(unit);
-    }
-
-    subsequentUnitRotation(unit, angle, event) {
-        this.game.closeActuators();
-        unit.subsequentRotation(angle, this.game.arbitrator.getRotationCost(unit, angle));
-        this._createSubsequentMovementActuators(unit);
-    }
-
-    subsequentUnitMove(unit, hexId, event) {
-        this.game.closeActuators();
-        unit.subsequentMove(hexId, this.game.arbitrator.getMovementCost(unit, hexId));
-        this._createSubsequentMovementActuators(unit);
-    }
+export class CBAbstractPlayer {
 
     get game() {
         return this._game;
@@ -319,7 +161,7 @@ export class CBGame {
     setMenu() {
         this._endOfTurnCommand = new DPushButton("/CBlades/images/commands/turn.png", new Point2D(-60, -60), ()=>{
             this.nextTurn();
-        });
+        }).setTurnAnimation(true);
         this._endOfTurnCommand.setOnBoard(this._board);
         this._showCommand = new DPushButton("/CBlades/images/commands/show.png", new Point2D(-120, -60), ()=>{
             this._showCommand.removeFromBoard();
@@ -342,13 +184,16 @@ export class CBGame {
         });
         this._undoCommand = new DPushButton("/CBlades/images/commands/undo.png", new Point2D(-180, -60), ()=>{
             Memento.undo();
-        });
+        }).setTurnAnimation(false);
         this._redoCommand = new DPushButton("/CBlades/images/commands/redo.png", new Point2D(-240, -60), ()=>{
             Memento.redo();
-        });
+        }).setTurnAnimation(true);
         this._settingsCommand = new DPushButton("/CBlades/images/commands/settings.png", new Point2D(-300, -60), ()=>{});
         this._saveCommand = new DPushButton("/CBlades/images/commands/save.png", new Point2D(-360, -60), ()=>{});
         this._loadCommand = new DPushButton("/CBlades/images/commands/load.png", new Point2D(-420, -60), ()=>{});
+        this._settingsCommand.activate = false;
+        this._saveCommand.activate = false;
+        this._loadCommand.activate = false;
     }
 
     _resetCounters(player) {
@@ -373,6 +218,10 @@ export class CBGame {
 
     get arbitrator() {
         return this._arbitrator;
+    }
+
+    get board() {
+        return this._board;
     }
 
     get root() {
@@ -650,91 +499,6 @@ export class CBCounter {
     }
 }
 
-export class CBActionMenu extends DIconMenu {
-
-    constructor(unit, actions) {
-        super(new DIconMenuItem("/CBlades/images/icons/move.png","/CBlades/images/icons/move-gray.png",
-            0, 0, event => {
-                unit.player.startMoveUnit(unit, event);
-                return true;
-            }).setActive(actions.moveForward),
-            new DIconMenuItem("/CBlades/images/icons/move-back.png", "/CBlades/images/icons/move-back-gray.png",
-                1, 0, () => {
-                return true;
-            }).setActive(actions.moveBack),
-            new DIconMenuItem("/CBlades/images/icons/escape.png", "/CBlades/images/icons/escape-gray.png",
-                2, 0, () => {
-                return true;
-            }).setActive(actions.escape),
-            new DIconMenuItem("/CBlades/images/icons/to-face.png", "/CBlades/images/icons/to-face-gray.png",
-                3, 0, () => {
-                return true;
-            }).setActive(actions.confront),
-            new DIconMenuItem("/CBlades/images/icons/shock-attack.png", "/CBlades/images/icons/shock-attack-gray.png",
-                0, 1, () => {
-            }).setActive(actions.shockAttack),
-            new DIconMenuItem("/CBlades/images/icons/fire-attack.png", "/CBlades/images/icons/fire-attack-gray.png",
-                1, 1, () => {
-            }).setActive(actions.fireAttack),
-            new DIconMenuItem("/CBlades/images/icons/shock-duel.png", "/CBlades/images/icons/shock-duel-gray.png",
-                2, 1, () => {
-            }).setActive(actions.shockDuel),
-            new DIconMenuItem("/CBlades/images/icons/fire-duel.png", "/CBlades/images/icons/fire-duel-gray.png",
-                3, 1, () => {
-            }).setActive(actions.fireDuel),
-            new DIconMenuItem("/CBlades/images/icons/do-rest.png", "/CBlades/images/icons/do-rest-gray.png",
-                0, 2, () => {
-            }).setActive(actions.rest),
-            new DIconMenuItem("/CBlades/images/icons/do-reload.png", "/CBlades/images/icons/do-reload-gray.png",
-                1, 2, () => {
-            }).setActive(actions.reload),
-            new DIconMenuItem("/CBlades/images/icons/do-reorganize.png", "/CBlades/images/icons/do-reorganize-gray.png",
-                2, 2, () => {
-            }).setActive(actions.reorganize),
-            new DIconMenuItem("/CBlades/images/icons/do-rally.png", "/CBlades/images/icons/do-rally-gray.png",
-                3, 2, () => {
-            }).setActive(actions.rally),
-            new DIconMenuItem("/CBlades/images/icons/create-formation.png", "/CBlades/images/icons/create-formation-gray.png",
-                0, 3, () => {
-            }).setActive(actions.createFormation),
-            new DIconMenuItem("/CBlades/images/icons/join-formation.png", "/CBlades/images/icons/join-formation-gray.png",
-                1, 3, () => {
-            }).setActive(actions.joinFormation),
-            new DIconMenuItem("/CBlades/images/icons/leave-formation.png", "/CBlades/images/icons/leave-formation-gray.png",
-                2, 3, () => {
-            }).setActive(actions.leaveFormation),
-            new DIconMenuItem("/CBlades/images/icons/dismiss-formation.png", "/CBlades/images/icons/dismiss-formation-gray.png",
-                3, 3, () => {
-            }).setActive(actions.breakFormation),
-            new DIconMenuItem("/CBlades/images/icons/take-command.png", "/CBlades/images/icons/take-command-gray.png",
-                0, 4, () => {
-            }).setActive(actions.takeCommand),
-            new DIconMenuItem("/CBlades/images/icons/leave-command.png", "/CBlades/images/icons/leave-command-gray.png",
-                1, 4, () => {
-            }).setActive(actions.leaveCommand),
-            new DIconMenuItem("/CBlades/images/icons/change-orders.png", "/CBlades/images/icons/change-orders-gray.png",
-                2, 4, () => {
-            }).setActive(actions.changeOrders),
-            new DIconMenuItem("/CBlades/images/icons/give-specific-orders.png", "/CBlades/images/icons/give-specific-orders-gray.png",
-                3, 4, () => {
-            }).setActive(actions.giveSpecificOrders),
-            new DIconMenuItem("/CBlades/images/icons/select-spell.png", "/CBlades/images/icons/select-spell-gray.png",
-                0, 5, () => {
-            }).setActive(actions.prepareSpell),
-            new DIconMenuItem("/CBlades/images/icons/cast-spell.png", "/CBlades/images/icons/cast-spell-gray.png",
-                1, 5, () => {
-            }).setActive(actions.castSpell),
-            new DIconMenuItem("/CBlades/images/icons/do-fusion.png", "/CBlades/images/icons/do-fusion-gray.png",
-                2, 5, () => {
-            }).setActive(actions.mergeUnit),
-            new DIconMenuItem("/CBlades/images/icons/do-many.png", "/CBlades/images/icons/do-many-gray.png",
-                3, 5, () => {
-            }).setActive(actions.miscAction)
-        );
-    }
-
-}
-
 class UnitImageArtifact extends CounterImageArtifact {
 
     constructor(unit, ...args) {
@@ -955,9 +719,6 @@ export class CBUnit extends CBCounter {
     }
 
     _updateMovementPoints(cost) {
-        if (this._movementPoints>=0 && cost>this._movementPoints) {
-            this._updateTiredness(this._tiredness+1);
-        }
         this._movementPoints -= cost;
         this._extendedMovementPoints -= cost;
     }
@@ -988,20 +749,12 @@ export class CBUnit extends CBCounter {
         this._updateMovementPoints(cost);
     }
 
-    openActionMenu(offset, actions) {
-        let popup = new CBActionMenu(this, actions);
-        this.game.closeActuators();
-        this.game.openPopup(popup, new Point2D(
-            offset.x - popup.dimension.w/2 + CBGame.POPUP_MARGIN,
-            offset.y - popup.dimension.h/2 + CBGame.POPUP_MARGIN));
+    addOneTirednessLevel() {
+        this._updateTiredness(this._tiredness+1);
     }
 
-    createOrientationActuator(directions, first) {
-        return new CBOrientationActuator(this, directions, first);
-    }
-
-    createMoveActuator(directions, first) {
-        return new CBMoveActuator(this, directions, first);
+    removeOneTirednessLevel() {
+        this._updateTiredness(this._tiredness-1);
     }
 }
 CBUnit.DIMENSION = new Dimension2D(142, 142);
@@ -1017,147 +770,3 @@ CBUnit.MARKERS_POSITION = [
 CBUnit.fromArtifact = function(artifact) {
     return artifact.element._unit;
 }
-
-class ActuatorImageArtifact extends DImageArtifact {
-
-    constructor(actuator, ...args) {
-        super(...args);
-        this._actuator = actuator;
-        this.setSettings(this.settings);
-    }
-
-    get settings() {
-        return level=>{
-            level.setShadowSettings("#00FFFF", 10);
-        }
-    }
-
-    get overSettings() {
-        return level=>{
-            level.setShadowSettings("#FF0000", 10);
-        }
-    }
-
-    onMouseClick(event) {
-        this._actuator.onMouseClick(this, event);
-    }
-
-    onMouseEnter(event) {
-        this.setSettings(this.overSettings);
-        this.element.refresh();
-    }
-
-    onMouseLeave(event) {
-        this.setSettings(this.settings);
-        this.element.refresh();
-    }
-
-}
-
-export class CBActuator {
-
-    constructor(unit) {
-        this._unit = unit;
-    }
-
-    get unit() {
-        return this._unit;
-    }
-}
-
-export class CBOrientationActuator extends CBActuator {
-
-    constructor(unit, directions, first) {
-        super(unit);
-        let normalImage = DImage.getImage("/CBlades/images/actuators/toward.png");
-        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-toward.png");
-        this._imageArtifacts = [];
-        for (let angle in directions) {
-            let image = directions[angle].type === CBMovement.NORMAL ? normalImage : extendedImage;
-            let orientation = new ActuatorImageArtifact(this, "actuators", image,
-                new Point2D(0, 0), new Dimension2D(60, 80));
-            orientation.position = Point2D.position(unit.location, directions[angle].hex.location, angle%60?0.87:0.75);
-            orientation.pangle = parseInt(angle);
-            this._imageArtifacts.push(orientation);
-        }
-        this._element = new DElement(...this._imageArtifacts);
-        this._element._actuator = this;
-        this._element.setLocation(this.unit.location);
-        this._first = first;
-    }
-
-    get element() {
-        return this._element;
-    }
-
-    getTrigger(angle) {
-        for (let artifact of this._element.artifacts) {
-            if (artifact.pangle === angle) return artifact;
-        }
-        return null;
-    }
-
-    onMouseClick(trigger, event) {
-        for (let artifact of this._element.artifacts) {
-            if (artifact === trigger) {
-                if (this._first) {
-                    this.unit.player.firstUnitRotation(this.unit, artifact.angle, event);
-                }
-                else {
-                    this.unit.player.subsequentUnitRotation(this.unit, artifact.angle, event);
-                }
-            }
-        }
-    }
-
-}
-
-export class CBMoveActuator extends CBActuator {
-
-    constructor(unit, directions, first) {
-        super(unit);
-        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-move.png");
-        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-move.png");
-        let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-move.png");
-        this._imageArtifacts = [];
-        for (let angle in directions) {
-            let image = directions[angle].type === CBMovement.NORMAL ? normalImage :
-                        directions[angle].type === CBMovement.EXTENDED ? extendedImage : minimalImage;
-            let orientation = new ActuatorImageArtifact(this, "actuators", image,
-                new Point2D(0, 0), new Dimension2D(80, 130));
-            orientation.pangle = parseInt(angle);
-            orientation.position = Point2D.position(unit.location, directions[angle].hex.location, 0.9);
-            this._imageArtifacts.push(orientation);
-        }
-        this._element = new DElement(...this._imageArtifacts);
-        this._element._actuator = this;
-        this._element.setLocation(this.unit.location);
-        this._first = first;
-    }
-
-    get element() {
-        return this._element;
-    }
-
-    getTrigger(angle) {
-        for (let artifact of this._element.artifacts) {
-            if (artifact.pangle === angle) return artifact;
-        }
-        return null;
-    }
-
-    onMouseClick(trigger, event) {
-        for (let artifact of this._element.artifacts) {
-            if (artifact === trigger) {
-                if (this._first) {
-                    this.unit.player.firstUnitMove(this.unit, this.unit.hexLocation.getNearHex(artifact.angle), event);
-                }
-                else {
-                    this.unit.player.subsequentUnitMove(this.unit, this.unit.hexLocation.getNearHex(artifact.angle), event);
-                }
-            }
-        }
-    }
-
-}
-

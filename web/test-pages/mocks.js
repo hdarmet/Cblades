@@ -55,6 +55,10 @@ export let mockPlatform = {
         write(context, `shadowBlur = ${width}`);
     },
 
+    setGlobalAlpha(context, alpha) {
+        write(context, `globalAlpha = ${alpha}`);
+    },
+
     strokeRect(context, x, y, w, h) {
         write(context, `strokeRect(${round(x)}, ${round(y)}, ${round(w)}, ${round(h)})`);
     },
@@ -111,6 +115,20 @@ export let mockPlatform = {
                 listener(event);
             }
         }
+    },
+
+    setRandoms(...values) {
+        if (!this._randoms) {
+            this._randoms = values;
+        }
+        else {
+            this._randoms.push(...values);
+        }
+    },
+
+    random() {
+        console.assert(this._randoms);
+        return this._randoms.shift();
     }
 
 }

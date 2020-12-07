@@ -10,17 +10,11 @@
 <script type="module">
 
     import {
-        CBGame, CBMap, CBUnit, CBHexId, CBPlayer, CBArbitrator
+        CBGame, CBMap, CBUnit, CBHexId
     } from "../jslib/cblades/game.js";
     import {
-        DPushButton
-    } from "../jslib/widget.js";
-    import {
-        Point2D
-    } from "../jslib/geometry.js";
-    import {
-        Memento
-    } from "../jslib/mechanisms.js";
+        CBInteractivePlayer, CBArbitrator
+    } from "../jslib/cblades/interactive-player.js";
 
     let game = new CBGame();
     document.body.appendChild(game.root);
@@ -30,14 +24,14 @@
     game.setMap(map);
     game.setMenu();
 
-    let player1 = new CBPlayer();
+    let player1 = new CBInteractivePlayer();
     game.addPlayer(player1);
     let counter11 = new CBUnit(player1, "/CBlades/images/units/mercenaries/unit1L.png");
     let counter12 = new CBUnit(player1, "/CBlades/images/units/mercenaries/unit1L.png");
     game.addCounter(counter11, new CBHexId(map, 3, 10));
     game.addCounter(counter12, new CBHexId(map, 6, 10));
 
-    let player2 = new CBPlayer();
+    let player2 = new CBInteractivePlayer();
     game.addPlayer(player2);
     let counter21 = new CBUnit(player2, "/CBlades/images/units/orcs/unit1L.png");
     counter21.angle = 180;

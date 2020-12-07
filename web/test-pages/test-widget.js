@@ -1,13 +1,14 @@
 'use strict'
 
 import {
-    describe, it, before, assert
+    describe, it, before, assert, executeTimeouts
 } from "../jstest/jtest.js";
 import {
     Point2D, Dimension2D
 } from "../jslib/geometry.js";
 import {
-    DImage, DStaticLayer, setDrawPlatform
+    DAnimator,
+    DImage, DStaticLayer, getDrawPlatform, setDrawPlatform
 } from "../jslib/draw.js";
 import {
     Mechanisms, Memento
@@ -19,7 +20,7 @@ import {
     mockPlatform, getDirectives, resetDirectives, loadAllImages, createEvent
 } from "./mocks.js";
 import {
-    DWidget, DPopup, DIconMenu, DIconMenuItem, DPushButton
+    DWidget, DPopup, DIconMenu, DIconMenuItem, DPushButton, DDice, DIndicator, DInsert, DResult, DMask, DScene
 } from "../jslib/widget.js";
 
 
@@ -29,6 +30,7 @@ describe("Widget", ()=> {
         setDrawPlatform(mockPlatform);
         DImage.resetCache();
         Mechanisms.reset();
+        DAnimator.clear();
     });
 
     function createBoardWithWidgetLevel(width, height, viewPortWidth, viewPortHeight) {
@@ -350,7 +352,463 @@ describe("Widget", ()=> {
             event = createEvent("click", {offsetX:buttonVPLocation.x, offsetY:buttonVPLocation.y});
             mockPlatform.dispatchEvent(board.root, "click", event);
         then:
-            assert(clicked).equalsTo(true);
+            assert(clicked).isTrue();
+    });
+
+    it("Checks inactive pushButton item behavior", () => {
+        given:
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var commandsLevel = board.getLevel("widget-commands");
+            board.paint();
+            resetDirectives(commandsLevel);
+            var clicked = false;
+            let pushButton = new DPushButton("/CBlades/images/commands/button1.png", new Point2D(60, 60),
+                ()=>{clicked = true;});
+            pushButton.setOnBoard(board);
+            loadAllImages();
+            var buttonVPLocation = pushButton.trigger.viewportLocation;
+            board.paint();
+        when: // mouseover icon
+            pushButton.activate = false;
+            resetDirectives(commandsLevel);
+            var event = createEvent("mousemove", {offsetX:buttonVPLocation.x, offsetY:buttonVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/commands/button1.png, 35, 35, 50, 50)",
+                "restore()"
+            ]);
+        when: // mouse outside icon
+            resetDirectives(commandsLevel);
+            event = createEvent("mousemove", {offsetX:buttonVPLocation.x+100, offsetY:buttonVPLocation.y+100});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/commands/button1.png, 35, 35, 50, 50)",
+                "restore()"
+            ]);
+        when: // click icon once: icon action returns false => menu is not closed
+            resetDirectives(commandsLevel);
+            event = createEvent("click", {offsetX:buttonVPLocation.x, offsetY:buttonVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            assert(clicked).isFalse();
+    });
+
+    it("Checks pushButton animation", () => {
+        given:
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var commandsLevel = board.getLevel("widget-commands");
+            var clicked = false;
+            let pushButton = new DPushButton("/CBlades/images/commands/button1.png", new Point2D(60, 60),
+                ()=>{clicked = true;});
+            pushButton.setOnBoard(board);
+            pushButton.setTurnAnimation(false);
+            loadAllImages();
+            var buttonVPLocation = pushButton.trigger.viewportLocation;
+            board.paint();
+        when: // click icon once: icon action returns false => menu is not closed
+            var event = createEvent("click", {offsetX:buttonVPLocation.x, offsetY:buttonVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            assert(clicked).isTrue();
+        when:
+            executeTimeouts();
+            resetDirectives(commandsLevel);
+            executeTimeouts();
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(0.9686, -0.2487, 0.2487, 0.9686, -13.0364, 16.8064)",
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/commands/button1.png, 35, 35, 50, 50)",
+                "restore()"
+            ]);
+    });
+
+    function executeAllAnimations(level) {
+        var directives = [];
+        while(DAnimator.isActive()) {
+            resetDirectives(level);
+            executeTimeouts();
+            let lastDirectives = getDirectives(level);
+            if (lastDirectives.length) directives = lastDirectives;
+        }
+        return directives;
+    }
+
+    it("Checks dice widget", () => {
+        given:
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var itemsLevel = board.getLevel("widget-items");
+            board.paint();
+            let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+            let finished = false;
+            dice.setFinalAction(()=>{finished = true;})
+            loadAllImages();
+        when:
+            resetDirectives(itemsLevel);
+            dice.open(board, new Point2D(10, 20));
+            board.paint();
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -10, -54.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -70, 5.5, 100, 89)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(itemsLevel);
+            for (let index=0; index<40; index++) {
+                getDrawPlatform().setRandoms(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9);
+            }
+            var diceVPLocation = dice.trigger[0].viewportLocation;
+            var event = createEvent("click", {offsetX:diceVPLocation.x, offsetY:diceVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            executeTimeouts();
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(-0.309, 0.9511, -0.9511, -0.309, 23.829, -77.3128)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d3.png, -10, -74.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.3256, -0.9455, 0.9455, -0.3256, -15.3321, -0.9363)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d5.png, -58, -39.5, 100, 89)",
+                "restore()"]);
+        when:
+            var directives = executeAllAnimations(itemsLevel);
+        then:
+            assert(finished).isTrue();
+            assert(directives).arrayEqualsTo([
+                "save()", "resetTransform()", "clearRect(0, 0, 500, 300)", "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -10, -54.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, -70, 5.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(dice.result).arrayEqualsTo([1, 2]);
+        when: // Dice still active : images have red shadow
+            resetDirectives(itemsLevel);
+            event = createEvent("mousemove", {offsetX:diceVPLocation.x, offsetY:diceVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #FF0000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -10, -54.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #FF0000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, -70, 5.5, 100, 89)",
+                "restore()"
+            ]);
+        when: // Inactivation : shadows become black
+            resetDirectives(itemsLevel);
+            dice.activate = false;
+            board.paint();
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -10, -54.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, -70, 5.5, 100, 89)",
+                "restore()"
+            ]);
+        when: // Dice not active : dice are not redrawn
+            resetDirectives(itemsLevel);
+            event = createEvent("mousemove", {offsetX:diceVPLocation.x, offsetY:diceVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(itemsLevel)).arrayEqualsTo([]);
+        when:
+            dice.close();
+            board.paint();
+        then:
+            assert(getDirectives(itemsLevel)).arrayEqualsTo([
+                "save()",
+                    "resetTransform()",
+                    "clearRect(0, 0, 500, 300)",
+                "restore()"]);
+    });
+
+    it("Checks indicator widget", () => {
+        given:
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var widgetsLevel = board.getLevel("widgets");
+            board.paint();
+            let indicator = new DIndicator(["/CBlades/images/indicators/indicator1.png"], new Dimension2D(50, 50));
+            loadAllImages();
+        when:
+            resetDirectives(widgetsLevel);
+            indicator.open(board, new Point2D(10, 20));
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/indicators/indicator1.png, -15, -5, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(widgetsLevel);
+            indicator.close();
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks insert widget", () => {
+        given:
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var widgetsLevel = board.getLevel("widgets");
+            board.paint();
+            let insert = new DInsert("/CBlades/images/inserts/insert.png", new Dimension2D(200, 190));
+            loadAllImages();
+        when:
+            resetDirectives(widgetsLevel);
+            insert.open(board, new Point2D(10, 20));
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/inserts/insert.png, -90, -75, 200, 190)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(widgetsLevel);
+            insert.close();
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks success result widget", () => {
+        given:
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var commandsLevel = board.getLevel("widget-commands");
+            board.paint();
+            let result = new DResult().success();
+            loadAllImages();
+        when:
+            resetDirectives(commandsLevel);
+            result.open(board, new Point2D(10, 20));
+            result.show();
+            var resultVPLocation = result.trigger.viewportLocation;
+            board.paint();
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "globalAlpha = 0",
+                    "drawImage(/CBlades/images/dice/success.png, -65, -55, 150, 150)",
+                "restore()"]);
+        when:
+            var directives = executeAllAnimations(commandsLevel);
+        then:
+            assert(directives).arrayEqualsTo([
+                "save()", "resetTransform()", "clearRect(0, 0, 500, 300)", "restore()",
+                "save()",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/success.png, -65, -55, 150, 150)",
+                "restore()"
+            ]);
+        when: // Acivation shadow
+            resetDirectives(commandsLevel);
+            var event = createEvent("mousemove", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #00FF00", "shadowBlur = 100",
+                "drawImage(/CBlades/images/dice/success.png, -65, -55, 150, 150)",
+                "restore()"
+            ]);
+        when: // Acivation shadow
+            resetDirectives(commandsLevel);
+            var event = createEvent("mousemove", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y+150});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #00A000", "shadowBlur = 100",
+                "drawImage(/CBlades/images/dice/success.png, -65, -55, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(commandsLevel);
+            result.close();
+            board.paint();
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks failure result widget", () => {
+        given:
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var commandsLevel = board.getLevel("widget-commands");
+            board.paint();
+            let result = new DResult().failure();
+            loadAllImages();
+        when:
+            resetDirectives(commandsLevel);
+            result.open(board, new Point2D(10, 20));
+            result.show();
+            var resultVPLocation = result.trigger.viewportLocation;
+            board.paint();
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #A00000", "shadowBlur = 100",
+                "globalAlpha = 0",
+                "drawImage(/CBlades/images/dice/failure.png, -65, -55, 150, 150)",
+                "restore()"]);
+        when:
+            var directives = executeAllAnimations(commandsLevel);
+        then:
+            assert(directives).arrayEqualsTo([
+                "save()", "resetTransform()", "clearRect(0, 0, 500, 300)", "restore()",
+                "save()",
+                "shadowColor = #A00000", "shadowBlur = 100",
+                "drawImage(/CBlades/images/dice/failure.png, -65, -55, 150, 150)",
+                "restore()"
+            ]);
+        when: // Acivation shadow
+            resetDirectives(commandsLevel);
+            var event = createEvent("mousemove", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #FF0000", "shadowBlur = 100",
+                "drawImage(/CBlades/images/dice/failure.png, -65, -55, 150, 150)",
+                "restore()"
+            ]);
+        when: // Acivation shadow
+            resetDirectives(commandsLevel);
+            var event = createEvent("mousemove", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y+150});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #A00000", "shadowBlur = 100",
+                "drawImage(/CBlades/images/dice/failure.png, -65, -55, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(commandsLevel);
+            result.close();
+            board.paint();
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks result widget final action", () => {
+        given:
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var commandsLevel = board.getLevel("widget-commands");
+            board.paint();
+            let clicked = false;
+            let result = new DResult().success().setFinalAction(()=>{
+                clicked = true;
+                result.close();
+            });
+            result.open(board, new Point2D(10, 20));
+            result.show();
+            var resultVPLocation = result.trigger.viewportLocation;
+        when:
+            var event = createEvent("click", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            assert(clicked).isTrue();
+        when: // Test animation when widget is closed
+            var directives = executeAllAnimations(commandsLevel);
+        then:
+            assert(directives).arrayEqualsTo([]);
+    });
+
+    it("Checks mask widget", () => {
+        given:
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var widgetsLevel = board.getLevel("widgets");
+            board.paint();
+            let clicked = false;
+            let mask = new DMask("#0F0F0F", 0.2).setAction(()=>{
+                clicked = true;
+                mask.close();
+            });
+            loadAllImages();
+        when:
+            resetDirectives(widgetsLevel);
+            mask.open(board);
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "globalAlpha = 0.2",
+                    "fillStyle = #0F0F0F",
+                    "fillRect(0, 0, 500, 300)",
+                    "restore()"
+                ]);
+        when:
+            resetDirectives(widgetsLevel);
+            var event = createEvent("click", {offsetX:1, offsetY:1});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            assert(clicked).isTrue();
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks scene facility", () => {
+        given:
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var widgetsLevel = board.getLevel("widgets");
+            board.paint();
+            let indicator1 = new DIndicator(["/CBlades/images/indicators/indicator1.png"], new Dimension2D(50, 50));
+            let indicator2 = new DIndicator(["/CBlades/images/indicators/indicator2.png"], new Dimension2D(70, 80));
+            let scene = new DScene()
+                .addWidget(indicator1, new Point2D(0, -100))
+                .addWidget(indicator2, new Point2D(0, 100));
+            loadAllImages();
+        when:
+            resetDirectives(widgetsLevel);
+            scene.open(board, new Point2D(10, 10)); // near a border to trigger adjustement
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/indicators/indicator1.png, 15, 5, 50, 50)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/indicators/indicator2.png, 5, 190, 70, 80)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(widgetsLevel);
+            scene.close();
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
     });
 
 });

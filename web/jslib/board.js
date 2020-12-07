@@ -4,6 +4,7 @@ import {
     Matrix2D, Point2D, Area2D
 } from "./geometry.js";
 import {
+    DAnimation, DAnimator,
     DDraw, DLayer
 } from "./draw.js";
 import {
@@ -49,11 +50,12 @@ export function LocalisationAware(clazz) {
  */
 export class DArtifact extends LocalisationAware(Object) {
 
-    constructor(levelName, position, pangle=0) {
+    constructor(levelName, position = new Point2D(0, 0), pangle=0) {
         super();
         this._levelName = levelName;
         this._position = position;
         this._pangle = pangle;
+        this._alpha = 1;
         this._location = position;
         this._angle = pangle;
     }
@@ -85,6 +87,7 @@ export class DArtifact extends LocalisationAware(Object) {
             element: this._element,
             position:this._position,
             pangle:this._pangle,
+            alpha:this._alpha,
             location:this._location,
             angle:this._angle
         }
@@ -98,6 +101,7 @@ export class DArtifact extends LocalisationAware(Object) {
         this._element = memento.element;
         this._position = memento.position;
         this._pangle = memento.pangle;
+        this._alpha = memento.alpha;
         this._location = memento.location;
         this._angle = memento.angle;
     }
@@ -126,6 +130,21 @@ export class DArtifact extends LocalisationAware(Object) {
         console.assert(this._level);
         this._level.removeArtifact(this);
         delete this._level;
+    }
+
+    paint() {
+        console.assert(this._level);
+        let transform = this.angle ? Matrix2D.rotate(this.angle, this.location) : null;
+        if (transform) {
+            this._level.setTransformSettings(transform);
+        }
+        if (this._settings) {
+            this._settings(this._level);
+        }
+        if (this._alpha<1) {
+            this._level.setAlphaSettings(this._alpha);
+        }
+        this._paint();
     }
 
     move(location, angle) {
@@ -189,6 +208,30 @@ export class DArtifact extends LocalisationAware(Object) {
         return this._pangle;
     }
 
+    set alpha(alpha) {
+        this._alpha = alpha;
+        this.refresh();
+    }
+
+    get alpha() {
+        return this._alpha;
+    }
+
+    setSettings(settings) {
+        if (settings) {
+            this._settings = settings;
+        }
+        else {
+            delete this._settings;
+        }
+        this._level && this.refresh();
+    }
+
+    changeSettings(settings) {
+        Memento.register(this);
+        this.setSettings(settings);
+    }
+
     get viewportTransform() {
         let transform = this.transform;
         return transform ? this.level.transform.concat(transform) : this.level.transform;
@@ -236,13 +279,12 @@ export function RectArtifact(clazz) {
 }
 
 /**
- * Image wrapper artifact
+ * Base class for all image wrapper artifact
  */
-export class DImageArtifact extends RectArtifact(DArtifact) {
+export class DImageAbstractArtifact extends RectArtifact(DArtifact) {
 
-    constructor(levelName, image, position, dimension, pangle=0) {
+    constructor(dimension, levelName, position, pangle=0) {
         super(dimension, levelName, position, pangle);
-        this._root = image;
     }
 
     _memento() {
@@ -263,21 +305,6 @@ export class DImageArtifact extends RectArtifact(DArtifact) {
         }
     }
 
-    setSettings(settings) {
-        if (settings) {
-            this._settings = settings;
-        }
-        else {
-            delete this._settings;
-        }
-        this._level && this.refresh();
-    }
-
-    changeSettings(settings) {
-        Memento.register(this);
-        this.setSettings(settings);
-    }
-
     get image() {
         return this._root;
     }
@@ -288,16 +315,56 @@ export class DImageArtifact extends RectArtifact(DArtifact) {
             this.dimension);
     }
 
-    paint() {
-        console.assert(this._level);
-        let transform = this.angle ? Matrix2D.rotate(this.angle, this.location) : null;
-        if (transform) {
-            this._level.setTransformSettings(transform);
-        }
-        if (this._settings) {
-            this._settings(this._level);
-        }
+    _paint() {
         this.drawImage();
+    }
+
+}
+
+/**
+ * Image wrapper artifact
+ */
+export class DImageArtifact extends DImageAbstractArtifact {
+
+    constructor(levelName, image, position, dimension, pangle=0) {
+        super(dimension, levelName, position, pangle);
+        this._root = image;
+    }
+
+}
+
+/**
+ * Multiple images wrapper artifact
+ */
+export class DMultiImageArtifact extends DImageAbstractArtifact {
+
+    constructor(levelName, images, position, dimension, pangle=0) {
+        super(dimension, levelName, position, pangle);
+        console.assert(images.length);
+        this._images = images;
+        this._root = images[0];
+    }
+
+    setImage(index) {
+        console.assert(index >= 0 && index < this._images.length);
+        this._root = this._images[index];
+        this.refresh();
+    }
+
+    changeImage(index) {
+        Memento.register(this);
+        this.setImage(index);
+    }
+
+    _memento() {
+        let memento = super._memento();
+        memento.root = this._root;
+        return memento;
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        this._root = memento.root;
     }
 
 }
@@ -457,6 +524,14 @@ export class DElement extends LocalisationAware(Object) {
         }
     }
 
+    get boundingArea() {
+        let area = this._artifacts[0].boundingArea;
+        for (let index=1; index<this._artifacts.length; index++) {
+            area = area.add(this._artifacts[index].boundingArea);
+        }
+        return area;
+    }
+
     get board() {
         return this._board;
     }
@@ -597,6 +672,10 @@ export class DLevel {
         this._layer.setShadowSettings(color, width);
     }
 
+    setAlphaSettings(alpha) {
+        this._layer.setAlphaSettings(alpha);
+    }
+
     drawRect(anchor, dimension) {
         this._layer.drawRect(anchor, dimension);
     }
@@ -654,6 +733,10 @@ export class DLevel {
     get transform() {
         return this._layer.transform;
     }
+
+    get viewportDimension() {
+        return this._layer.dimension;
+    }
 }
 
 /**
@@ -676,6 +759,7 @@ export class DBoard {
         this._initMouseMoveActions();
         this._initKeyDownActions();
         this._requestRepaint();
+        DAnimator.setFinalizer(()=>this.paint());
     }
 
     _createLevels(levels) {
@@ -1108,3 +1192,84 @@ DBoard.DEFAULT_BORDER_WIDTH = 10;
 DBoard.DEFAULT_SCROLL_INCREMENT = 10;
 DBoard.SCROLL_EVENT = "board-scroll";
 DBoard.ZOOM_EVENT = "board-zoom";
+
+export class DArtifactAnimation extends DAnimation {
+
+    constructor(artifact, startTick) {
+        super();
+        this._artifact = artifact;
+        this.play(startTick+1);
+    }
+
+    _draw(count, ticks) {
+        if (count===0) {
+            if (this._artifact._animation) {
+                this._artifact._animation.cancel();
+            }
+            this._artifact._animation = this;
+            this.init && this.init();
+        }
+        return this.draw(count, ticks);
+    }
+
+    _finalize() {
+        this.close && this.close();
+        delete this._artifact._animation;
+    }
+
+}
+
+export class DArtifactRotateAnimation extends DArtifactAnimation {
+
+    constructor(artifact, angle, startTick, duration, clockWise=true) {
+         super(artifact, startTick);
+         this._angle = angle;
+         this._duration = duration;
+         this._clockWise = clockWise;
+    }
+
+    _factor(count) {
+        return this._clockWise ? (count * 20) / this._duration : (this._duration - count * 20)/this._duration;
+    }
+
+    init() {
+        this._pangle = this._artifact.pangle;
+    }
+
+    draw(count, ticks) {
+        this._artifact.pangle = this._pangle + this._factor(count)*this._angle;
+        return count * 20 >= this._duration ? 0 : 1;
+    }
+
+    close() {
+        this._artifact.pangle = this._pangle + this._angle;
+    }
+
+}
+
+export class DArtifactAlphaAnimation extends DArtifactAnimation {
+
+    constructor(artifact, alpha, startTick, duration) {
+        super(artifact, startTick);
+        this._alpha = alpha;
+        this._duration = duration;
+    }
+
+    init() {
+        this._initAlpha = this._artifact.alpha;
+    }
+
+    _factor(count) {
+        return (count * 20) / this._duration;
+    }
+
+    draw(count, ticks) {
+        this._artifact.alpha = this._initAlpha + (this._alpha - this._initAlpha)*this._factor(count);
+        return count * 20 >= this._duration ? 0 : 1;
+    }
+
+    close() {
+        this._artifact.alpha = this._alpha;
+    }
+
+}

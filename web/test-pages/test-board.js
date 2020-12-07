@@ -1,19 +1,22 @@
 'use strict';
 
 import {
-    describe, it, before, assert
+    describe, it, before, assert, executeTimeouts
 } from "../jstest/jtest.js";
 import {
     Point2D, Dimension2D
 } from "../jslib/geometry.js";
 import {
+    DAnimator,
     DImage, DLayer, setDrawPlatform
 } from "../jslib/draw.js";
 import {
     Mechanisms, Memento
 } from "../jslib/mechanisms.js";
 import {
-    DBoard, DElement, DImageArtifact
+    DArtifactAlphaAnimation,
+    DArtifactRotateAnimation,
+    DBoard, DElement, DImageArtifact, DMultiImageArtifact
 } from "../jslib/board.js";
 import {
     mockPlatform, getDirectives, resetDirectives, createEvent, loadAllImages
@@ -26,6 +29,8 @@ describe("Board", ()=> {
         setDrawPlatform(mockPlatform);
         DImage.resetCache();
         Mechanisms.reset();
+        Memento.reset();
+        DAnimator.clear();
     });
 
     it("Checks board creation", () => {
@@ -48,6 +53,7 @@ describe("Board", ()=> {
             assert(levelMarkers).isDefined();
             assert(levelMap._layer).is(DLayer);
             assert(levelMap.transform.toString()).equalsTo("matrix(1, 0, 0, 1, 250, 150)");
+            assert(levelMap.viewportDimension.toString()).equalsTo("dimension(500, 300)");
     });
 
     function createBoardWithMapUnitsAndMarkersLevels(width, height, viewPortWidth, viewPortHeight) {
@@ -75,6 +81,7 @@ describe("Board", ()=> {
             level.drawRect(new Point2D(10, 20), new Dimension2D(50, 60));
             level.setFillSettings("#FFFFFF");
             level.setShadowSettings("#0F0F0F", 15);
+            level.setAlphaSettings(0.3);
             level.fillRect(new Point2D(10, 20), new Dimension2D(50, 60));
         then:
             assert(getDirectives(level)[0]).equalsTo("drawImage(../images/unit.png, 10, 20, 50, 60)");
@@ -84,7 +91,8 @@ describe("Board", ()=> {
             assert(getDirectives(level)[4]).equalsTo("fillStyle = #FFFFFF");
             assert(getDirectives(level)[5]).equalsTo("shadowColor = #0F0F0F");
             assert(getDirectives(level)[6]).equalsTo("shadowBlur = 15");
-            assert(getDirectives(level)[7]).equalsTo("fillRect(10, 20, 50, 60)");
+            assert(getDirectives(level)[7]).equalsTo("globalAlpha = 0.3");
+            assert(getDirectives(level)[8]).equalsTo("fillRect(10, 20, 50, 60)");
     });
 
     it("Checks element creation/displaying/removing", () => {
@@ -204,22 +212,27 @@ describe("Board", ()=> {
             assert(artifact3.viewportBoundingArea.toString()).equalsTo("area(247.5, 152.5, 272.5, 177.5)");
     });
 
+    function createBoardWithOneCounter() {
+        var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+        var level = board.getLevel("units");
+        var image = DImage.getImage("../images/unit.png");
+        image._root.onload();
+        var artifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+        var element = new DElement(artifact);
+        element.setOnBoard(board);
+        resetDirectives(level);
+        board.paint();
+        assert(getDirectives(level, 4)).arrayEqualsTo([
+            "save()",
+            "drawImage(../images/unit.png, -25, -25, 50, 50)",
+            "restore()"
+        ]);
+        return { board, level, element, artifact, image };
+    }
+
     it("Checks change artifact position and relative orientation", () => {
         given:
-            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
-            var level = board.getLevel("units");
-            var image = DImage.getImage("../images/unit.png");
-            image._root.onload();
-            var artifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
-            var element = new DElement(artifact);
-            element.setOnBoard(board);
-            resetDirectives(level);
-            board.paint();
-            assert(getDirectives(level, 4)).arrayEqualsTo([
-                "save()",
-                "drawImage(../images/unit.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            var {board, artifact, level, image} = createBoardWithOneCounter();
         when: // Change position
             resetDirectives(level);
             artifact.position = new Point2D(-10, -15);
@@ -252,6 +265,28 @@ describe("Board", ()=> {
             assert(orphanArtifact.pangle).equalsTo(60);
     });
 
+    it("Checks change artifact alpha", () => {
+        given:
+            var {board, artifact, level, image} = createBoardWithOneCounter();
+        when: // Change position
+            resetDirectives(level);
+            artifact.alpha = 0.3;
+            board.paint();
+        then:
+            assert(artifact.alpha).equalsTo(0.3);
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "globalAlpha = 0.3",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            var orphanArtifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+            orphanArtifact.alpha = 0.3;
+        then:
+            assert(orphanArtifact.alpha).equalsTo(0.3);
+    });
+
     it("Checks element containing multiple artifacts", () => {
         given:
             var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
@@ -278,6 +313,7 @@ describe("Board", ()=> {
             assert(element.getLocation(new Point2D(5, 10)).y).equalsTo(55);
             assert(element.getPosition(new Point2D(90, 55)).x).equalsTo(5);
             assert(element.getPosition(new Point2D(90, 55)).y).equalsTo(10);
+            assert(element.boundingArea.toString()).equalsTo("area(49.6447, 15, 140, 95.3553)");
 
             assert(artifact1.level).equalsTo(level);
             assert(artifact1.pangle).equalsTo(0);
@@ -745,6 +781,61 @@ describe("Board", ()=> {
             assert(level.getViewportPoint(new Point2D(0, 0)).toString()).equalsTo("point(250, 150)");
             assert(level.originalPoint.toString()).equalsTo("point(-500, -300)");
             assert(level.finalPoint.toString()).equalsTo("point(500, 300)");
+    });
+
+    it("Checks multi images artifact", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var level = board.getLevel("units");
+        when:
+            var image1 = DImage.getImage("../images/unit.png");
+            var image2 = DImage.getImage("../images/unit-back.png");
+            var image3 = DImage.getImage("../images/unit-inactive.png");
+            loadAllImages();
+            var artifact = new DMultiImageArtifact("units", [image1, image2, image3],
+                new Point2D(0, 0), new Dimension2D(50, 50));
+            var element = new DElement(artifact);
+            resetDirectives(level);
+            element.setOnBoard(board);
+            Memento.activate();
+            Memento.open();
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            artifact.setImage(1);
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit-back.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            artifact.changeImage(2);
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit-inactive.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit-back.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
     });
 
     it("Checks zooming", () => {
@@ -1340,4 +1431,160 @@ describe("Board", ()=> {
         then:
             assert(keyboardReceived).isTrue();
     });
+
+    it("Checks artifact rotate animation", () => {
+        given:
+            var { level, artifact } = createBoardWithOneCounter();
+        when:
+            resetDirectives(level);
+            new DArtifactRotateAnimation(artifact, 180, 0, 80);
+            executeTimeouts();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            executeTimeouts();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(0.7071, 0.7071, -0.7071, 0.7071, 250, 150)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            executeTimeouts();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(0, 1, -1, 0, 250, 150)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            executeTimeouts();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(-0.7071, 0.7071, -0.7071, -0.7071, 250, 150)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            executeTimeouts();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(-1, 0, 0, -1, 250, 150)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks artifact alpha animation", () => {
+        given:
+            var { level, artifact } = createBoardWithOneCounter();
+        when:
+            resetDirectives(level);
+            new DArtifactAlphaAnimation(artifact, 0, 0, 80);
+            executeTimeouts();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            executeTimeouts();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "globalAlpha = 0.75",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            executeTimeouts();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "globalAlpha = 0.5",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            executeTimeouts();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "globalAlpha = 0.25",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            executeTimeouts();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "globalAlpha = 0",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks artifact animation overriding", () => {
+        given:
+            var { level, artifact } = createBoardWithOneCounter();
+        when:
+            resetDirectives(level);
+            new DArtifactRotateAnimation(artifact, 180, 0, 80);
+            executeTimeouts();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            executeTimeouts();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(0.7071, 0.7071, -0.7071, 0.7071, 250, 150)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            new DArtifactRotateAnimation(artifact, 180, 0, 80); // Overriding !
+            executeTimeouts();
+        then: // first animation skipped
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(-1, 0, 0, -1, 250, 150)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)", "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            executeTimeouts();
+        then: // second animation started
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(-0.7071, -0.7071, 0.7071, -0.7071, 250, 150)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
 });

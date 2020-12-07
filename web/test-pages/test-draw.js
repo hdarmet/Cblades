@@ -4,7 +4,7 @@ import {
     describe, it, before, assert, executeTimeouts
 } from "../jstest/jtest.js";
 import {
-    DDraw, DImage, setDrawPlatform, getDrawPlatform, targetPlatform, DStaticLayer
+    DDraw, DImage, setDrawPlatform, getDrawPlatform, targetPlatform, DStaticLayer, DAnimation, DAnimator
 } from "../jslib/draw.js";
 import {
     Point2D, Matrix2D, Dimension2D
@@ -18,6 +18,7 @@ describe("Drawing fundamentals", ()=> {
     before(() => {
         setDrawPlatform(mockPlatform);
         DImage.resetCache();
+        DAnimator.clear();
     });
 
     function getDirectives(layer) {
@@ -80,12 +81,14 @@ describe("Drawing fundamentals", ()=> {
             resetDirectives(layer);
             layer.setFillSettings("#F0F0F0");
             layer.setShadowSettings("#0F0F0F", 15);
+            layer.setAlphaSettings(0.3);
             layer.fillRect(new Point2D(15, 10), new Dimension2D(25, 20));
         then:
             assert(getDirectives(layer)[0]).equalsTo('fillStyle = #F0F0F0');
             assert(getDirectives(layer)[1]).equalsTo('shadowColor = #0F0F0F');
             assert(getDirectives(layer)[2]).equalsTo('shadowBlur = 15');
-            assert(getDirectives(layer)[3]).equalsTo('fillRect(15, 10, 25, 20)');
+            assert(getDirectives(layer)[3]).equalsTo('globalAlpha = 0.3');
+            assert(getDirectives(layer)[4]).equalsTo('fillRect(15, 10, 25, 20)');
     });
 
     it("Checks set transform on DDraw", () => {
@@ -425,6 +428,13 @@ describe("Drawing fundamentals", ()=> {
                     shadowBlurInvoked = true;
                 }
             });
+            var globalAlphaInvoked = false;
+            Object.defineProperty(CanvasRenderingContext2D.prototype, "globalAlpha", {
+                set: function(style) {
+                    assert(style).equalsTo(0.3);
+                    globalAlphaInvoked = true;
+                }
+            });
         when:
             var draw = new DDraw(new Dimension2D(500, 300));
             var layer = draw.createLayer("layer1");
@@ -441,6 +451,10 @@ describe("Drawing fundamentals", ()=> {
         then:
             assert(shadowColorInvoked).isTrue();
             assert(shadowBlurInvoked).isTrue();
+        when:
+            layer.setAlphaSettings(0.3);
+        then:
+            assert(globalAlphaInvoked).isTrue();
     });
 
     it("Checks all non canvas methods of the target platform", () => {
@@ -495,6 +509,161 @@ describe("Drawing fundamentals", ()=> {
             draw.onMouseClick(function(event) {return true});
         then:
             assert(addEventListenerInvoked).isTrue();
+    });
+
+    it("Checks random of the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
+        when:
+            var value = getDrawPlatform().random()
+        then:
+            assert(value>=0 && value<1).isTrue();
+    });
+
+    class DummyAnimation extends DAnimation {
+
+        constructor(directives) {
+            super();
+            this._directives = directives;
+        }
+
+        _draw(count, tick) {
+            this._directives.push(`draw on count ${count} for tick ${tick}`);
+            return tick<4 ? 2 : 0; // play every 40 ms !!!
+        }
+
+        _finalize() {
+            this._directives.push("finalize");
+        }
+    }
+
+    it("Checks a simple animation", () => {
+        given:
+            var directives = [];
+        when:
+            var animation = new DummyAnimation(directives);
+            animation.play(1);
+            executeTimeouts();
+        then:   // 20 ms : first draw
+            assert(DAnimator.isActive()).isTrue();
+            assert(directives).arrayEqualsTo(["draw on count 0 for tick 0"]);
+        when:
+            executeTimeouts();
+        then:   // 40 ms... nothing more because animation plays every 40 ms
+            assert(directives).arrayEqualsTo(["draw on count 0 for tick 0"]);
+        when:
+            executeTimeouts();
+        then:   // 60 ms : second draw
+            assert(directives).arrayEqualsTo(["draw on count 0 for tick 0", "draw on count 1 for tick 2"]);
+        when:
+            executeTimeouts();
+            executeTimeouts();
+        then:   // 100 ms : third and final draw
+            assert(directives).arrayEqualsTo([
+                "draw on count 0 for tick 0",
+                "draw on count 1 for tick 2",
+                "draw on count 2 for tick 4",
+                "finalize"]);
+        when:
+            executeTimeouts();
+            executeTimeouts();
+        then:   // 120 ms : no more draw because animation is finished
+            assert(directives).arrayEqualsTo([
+                "draw on count 0 for tick 0",
+                "draw on count 1 for tick 2",
+                "draw on count 2 for tick 4",
+                "finalize"]);
+            assert(DAnimator.isActive()).isFalse();
+    });
+
+    it("Checks merge animations", () => {
+        given:
+            var directives = [];
+        when:
+            var animation1 = new DummyAnimation(directives);
+            var animation2 = new DummyAnimation(directives);
+            animation1.play(1);
+            animation2.play(2);
+            executeTimeouts();
+        then:   // 20 ms : first animation
+            assert(directives).arrayEqualsTo(["draw on count 0 for tick 0"]);
+        when:
+            executeTimeouts();
+        then:   // 40 ms... second animation
+            assert(directives).arrayEqualsTo(["draw on count 0 for tick 0", "draw on count 0 for tick 0"]);
+        when:
+            executeTimeouts();
+        then:   // 60 ms : first animation again
+            assert(directives).arrayEqualsTo([
+                "draw on count 0 for tick 0",
+                "draw on count 0 for tick 0",
+                "draw on count 1 for tick 2"
+            ]);
+    });
+
+    it("Checks animation cancellation", () => {
+        given:
+            var directives = [];
+        when:
+            var animation = new DummyAnimation(directives);
+            animation.play(1);
+            executeTimeouts();
+        then:   // 20 ms : first draw
+            assert(directives).arrayEqualsTo(["draw on count 0 for tick 0"]);
+        when:
+            animation.cancel();
+        then:
+            assert(directives).arrayEqualsTo(["draw on count 0 for tick 0", "finalize"]);
+        when:
+            executeTimeouts();
+            executeTimeouts();
+        then:
+            assert(directives).arrayEqualsTo(["draw on count 0 for tick 0", "finalize"]);
+    });
+
+    it("Checks animation with final action", () => {
+        given:
+            var directives = [];
+        when:
+            var animation = new DummyAnimation(directives).setFinalAction(()=>{directives.push("final action")});
+            animation.play(1);
+            executeTimeouts(); // 20 ms
+            executeTimeouts();
+            executeTimeouts(); // 60 ms
+            executeTimeouts();
+            executeTimeouts(); // 80 ms
+        then:
+            assert(directives).arrayEqualsTo([
+                "draw on count 0 for tick 0",
+                "draw on count 1 for tick 2",
+                "draw on count 2 for tick 4",
+                "finalize", "final action"]);
+    });
+
+    it("Checks animator finalizer", () => {
+        given:
+            var directives = [];
+        when:
+            var animation = new DummyAnimation(directives);
+            DAnimator.setFinalizer(()=>{directives.push("refresh")});
+            animation.play(1);
+            executeTimeouts();
+        then:
+            assert(directives).arrayEqualsTo([
+                "draw on count 0 for tick 0", "refresh"
+            ]);
+            executeTimeouts();
+        then:
+            assert(directives).arrayEqualsTo([
+                "draw on count 0 for tick 0", "refresh", "refresh"
+            ]);
+        when:
+            DAnimator.clear();
+            executeTimeouts();
+        then:
+            assert(directives).arrayEqualsTo([
+                "draw on count 0 for tick 0", "refresh", "refresh"
+            ]);
     });
 
 });

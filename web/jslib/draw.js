@@ -59,6 +59,10 @@ let _targetPlatform = {
         context.shadowBlur = width;
     },
 
+    setGlobalAlpha(context, alpha) {
+        context.globalAlpha = alpha;
+    },
+
     strokeRect(context, x, y, w, h) {
         context.strokeRect(x, y, w, h);
     },
@@ -89,6 +93,10 @@ let _targetPlatform = {
 
     resetTransform(context) {
         context.resetTransform();
+    },
+
+    random() {
+        return Math.random();
     }
 }
 
@@ -265,6 +273,13 @@ export class DLayer {
         this._execute(()=> {
             _platform.setShadowColor(this._context, color);
             _platform.setShadowBlur(this._context, width);
+        });
+        return this;
+    }
+
+    setAlphaSettings(alpha) {
+        this._execute(()=> {
+            _platform.setGlobalAlpha(this._context, alpha);
         });
         return this;
     }
@@ -459,4 +474,131 @@ export class DDraw {
         },true);
     }
 
+}
+
+export class DAnimation {
+
+    constructor() {
+    }
+
+    play(startTick) {
+        console.assert(startTick>0);
+        DAnimator.register(this, startTick);
+    }
+
+    execute(ticks) {
+        if (this._canceled) {
+            return false;
+        }
+        else {
+            if (!this._startTick) {
+                this._startTick = ticks;
+                this._count = 0;
+            } else {
+                this._count++;
+            }
+            return this._draw(this._count, ticks - this._startTick);
+        }
+    }
+
+    finalize() {
+        if (!this._canceled) {
+            this._finalize();
+            this._finalAction && this._finalAction();
+        }
+    }
+
+    cancel() {
+        this.finalize();
+        this._canceled = true;
+    }
+
+    setFinalAction(action) {
+        this._finalAction = action;
+        return this;
+    }
+}
+
+export class DAnimator {
+
+    constructor() {
+        this._clear();
+    }
+
+    _clear() {
+        this._animations = [];
+        this._ticks = 0;
+    }
+
+    _stop() {
+        _platform.clearTimeout(this._token);
+        delete this._token;
+        this._clear();
+    }
+
+    clear() {
+        delete this._finalizer;
+        this._stop();
+    }
+
+    isActive() {
+        return this._token!==undefined;
+    }
+
+    setFinalizer(finalizer) {
+        this._finalizer = finalizer;
+    }
+
+    _launch() {
+        this._token = _platform.setTimeout(()=>this.play(), 20);
+    }
+
+    register(animation, startTick) {
+        let animationRow = this._animations[this._ticks+startTick];
+        if (!animationRow) {
+            let mustLaunch = !this._animations.length;
+            animationRow = [];
+            this._animations[this._ticks+startTick]=animationRow;
+            if (mustLaunch) this._launch();
+        }
+        animationRow.push(animation);
+    }
+
+    play() {
+        this._ticks++;
+        let animationRow = this._animations[this._ticks];
+        delete this._animations[this._ticks];
+        if (animationRow) {
+            for (let animation of animationRow) {
+                let next = animation.execute(this._ticks);
+                if (next) {
+                    this.register(animation, next);
+                } else {
+                    animation.finalize();
+                }
+            }
+        }
+        if (!this._animations.length || this._ticks===this._animations.length) {
+            this._stop();
+        }
+        else {
+            this._launch();
+        }
+        if (this._finalizer) {
+            this._finalizer();
+        }
+    }
+}
+DAnimator._instance = new DAnimator();
+DAnimator.setFinalizer = function(finalizer) {
+    DAnimator._instance.setFinalizer(finalizer);
+}
+DAnimator.register = function(animation, startTick) {
+    DAnimator._instance.register(animation, startTick);
+}
+DAnimator.clear = function() {
+    DAnimator._instance.clear();
+}
+DAnimator.isActive = function() {
+    return DAnimator._instance.isActive();
 }

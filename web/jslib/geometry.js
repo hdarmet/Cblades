@@ -163,6 +163,24 @@ export class Area2D {
             && point.y>=this.top && point.y<=this.bottom;
     }
 
+    add(area) {
+        return new Area2D(
+            this.left<area.left ? this.left : area.left,
+            this.top<area.top ? this.top : area.top,
+            this.right>area.right ? this.right : area.right,
+            this.bottom>area.bottom ? this.bottom : area.bottom
+        );
+    }
+
+    translate(point) {
+        return new Area2D(
+            this.left+point.x,
+            this.top+point.y,
+            this.right+point.x,
+            this.bottom+point.y
+        );
+    }
+
     intersect(area) {
         return this.left<=area.right && this.right>=area.left
             && this.top<=area.bottom && this.bottom>=area.top;

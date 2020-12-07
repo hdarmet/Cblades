@@ -117,6 +117,10 @@ describe("Geometry", ()=> {
             assert(area.intersect(new Area2D(15, 65, 35, 75))).isFalse();
             assert(area.intersect(new Area2D(-5, 25, 5, 75))).isFalse();
             assert(area.intersect(new Area2D(15, 65, 35, 75))).isFalse();
+            assert(area.add(new Area2D(15, 25, 35, 55)).toString()).equalsTo("area(10, 20, 40, 60)")
+            assert(area.add(new Area2D(5, 15, 45, 65)).toString()).equalsTo("area(5, 15, 45, 65)")
+            assert(area.add(new Area2D(50, 70, 100, 110)).toString()).equalsTo("area(10, 20, 100, 110)")
+            assert(area.translate(new Point2D(15, 20)).toString()).equalsTo("area(25, 40, 55, 80)")
         when:
             var cloneArea = area.clone();
         then:
