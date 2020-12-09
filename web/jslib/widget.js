@@ -439,7 +439,8 @@ export class DDice extends DElement {
     }
 
     rollDie() {
-        return Math.floor(getDrawPlatform().random()*6)+1;
+        let value = getDrawPlatform().random();
+        return Math.floor(value*6)+1;
     }
 
     action() {

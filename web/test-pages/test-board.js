@@ -411,24 +411,32 @@ describe("Board", ()=> {
             element.setOnBoard(board);  // VisibleArtifacts not defined here
             board.paint();              // Created starting form here
         then:
+            assert([...level.artifacts].length).equalsTo(1);
+            assert([...level.visibleArtifacts].length).equalsTo(1);
             assert(getDirectives(level)).arrayContains("/images/unit.png");
         when:
             resetDirectives(level);
             element.setLocation(new Point2D(-400, 50));
             board.paint();
         then:
+            assert([...level.artifacts].length).equalsTo(1);
+            assert([...level.visibleArtifacts].length).equalsTo(0);
             assert(getDirectives(level)).arrayNotContains("/images/unit.png");
         when:
             resetDirectives(level);
             element.setLocation(new Point2D(100, 50));
             board.paint();
         then:
+            assert([...level.artifacts].length).equalsTo(1);
+            assert([...level.visibleArtifacts].length).equalsTo(1);
             assert(getDirectives(level)).arrayContains("/images/unit.png");
         when:
             resetDirectives(level);
             element.removeFromBoard();
             board.paint();
         then:
+            assert([...level.artifacts].length).equalsTo(0);
+            assert([...level.visibleArtifacts].length).equalsTo(0);
             assert(getDirectives(level)).arrayNotContains("/images/unit.png");
         when:
             resetDirectives(level);
@@ -436,6 +444,8 @@ describe("Board", ()=> {
             element.setOnBoard(board);
             board.paint();
         then:
+            assert([...level.artifacts].length).equalsTo(1);
+            assert([...level.visibleArtifacts].length).equalsTo(0);
             assert(getDirectives(level)).arrayNotContains("/images/unit.png");
         when:
             resetDirectives(level);
@@ -444,6 +454,8 @@ describe("Board", ()=> {
             element.setOnBoard(board);
             board.paint();
         then:
+            assert([...level.artifacts].length).equalsTo(1);
+            assert([...level.visibleArtifacts].length).equalsTo(1);
             assert(getDirectives(level)).arrayContains("/images/unit.png");
     });
 

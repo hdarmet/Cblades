@@ -13,8 +13,7 @@ import {
     DBoard, DElement, DImageArtifact
 } from "../board.js";
 import {
-    DDice,
-    DIconMenu, DIconMenuItem, DIndicator, DInsert, DMask, DPopup, DPushButton, DResult, DScene
+    DPopup, DPushButton
 } from "../widget.js";
 
 export let CBMovement = {
@@ -54,6 +53,21 @@ export class CBAbstractPlayer {
         this._game = game;
     }
 
+}
+
+export class CBActuator {
+
+    constructor(unit) {
+        this._unit = unit;
+    }
+
+    get unit() {
+        return this._unit;
+    }
+
+    get element() {
+        return this._element;
+    }
 }
 
 export class CBGame {
@@ -129,17 +143,17 @@ export class CBGame {
         this._actuators.push(actuator);
     }
 
-    removeActuators() {
-        for (let actuator of this._actuators) {
-            actuator.element.removeFromBoard(this._board);
-        }
-        this._actuators = [];
-    }
-
     closeActuators() {
         Memento.register(this);
         for (let actuator of this._actuators) {
             actuator.element.hide(this._board);
+        }
+        this._actuators = [];
+    }
+
+    removeActuators() {
+        for (let actuator of this._actuators) {
+            actuator.element.removeFromBoard(this._board);
         }
         this._actuators = [];
     }
@@ -438,13 +452,13 @@ CBMap.ROW_COUNT = 16;
 class CounterImageArtifact extends DImageArtifact {
 
     constructor(counter, ...args) {
-        super(...args);
+        super(...args); // levelName, image, position, dimension, pangle=0
         this.setSettings(this.settings);
         this._counter = counter;
     }
 
     onMouseClick(event) {
-        this._counter.onMouseClick(event);
+        this._counter.onMouseClick && this._counter.onMouseClick(event);
     }
 
     get settings() {
@@ -460,6 +474,11 @@ export class CBCounter {
         this._imageArtifact = this.createArtifact(...args);
         this._element = new DElement(this._imageArtifact);
         this._element._unit = this;
+    }
+
+    createArtifact(path, dimension) {
+        this._image = DImage.getImage(path);
+        return new CounterImageArtifact(this, "units", this._image, new Point2D(0, 0), dimension);
     }
 
     get artifact() {
@@ -614,14 +633,6 @@ export class CBUnit extends CBCounter {
         }
     }
 
-    markAsBeingActivated() {
-        this._updatePlayed(true, false);
-    }
-
-    markAsBeingPlayed() {
-        this._updatePlayed(true, true);
-    }
-
     unselect() {
         console.assert(this.game.selectedUnit===this);
         this.game.setSelectedUnit(null);
@@ -642,22 +653,11 @@ export class CBUnit extends CBCounter {
     }
 
     onMouseClick(event) {
-        if (this.isCurrentPlayer() && !this.hasBeenActivated()) {
-            this.select();
-            this.player.selectUnit(this, event);
-        }
+        this.player.selectUnit(this, event);
     }
 
     isCurrentPlayer() {
         return this.player === this.game.currentPlayer;
-    }
-
-    hasBeenPlayed() {
-        return this._played;
-    }
-
-    hasBeenActivated() {
-        return this._activated;
     }
 
     get player() {
@@ -681,16 +681,22 @@ export class CBUnit extends CBCounter {
         this._movementPoints = movementPoints;
     }
 
-    get extendedMovementPoints() {
-        return this._extendedMovementPoints;
+    markAsBeingActivated() {
+        Memento.register(this);
+        this._updatePlayed(true, false);
     }
 
-    set extendedMovementPoints(extendedMovementPoints) {
-        this._extendedMovementPoints = extendedMovementPoints;
+    markAsBeingPlayed() {
+        Memento.register(this);
+        this._updatePlayed(true, true);
     }
 
-    get tiredness() {
-        return this._tiredness;
+    hasBeenPlayed() {
+        return this._played;
+    }
+
+    hasBeenActivated() {
+        return this._activated;
     }
 
     _updatePlayed(activated, played) {
@@ -703,6 +709,32 @@ export class CBUnit extends CBCounter {
                 this._playedArtifact = this.createMarkerArtifact("/CBlades/images/markers/actiondone.png", 0);
             }
         }
+    }
+
+    get extendedMovementPoints() {
+        return this._extendedMovementPoints;
+    }
+
+    set extendedMovementPoints(extendedMovementPoints) {
+        this._extendedMovementPoints = extendedMovementPoints;
+    }
+
+    _updateMovementPoints(cost) {
+        this._movementPoints -= cost;
+        this._extendedMovementPoints -= cost;
+    }
+
+    move(hexId, cost) {
+        Memento.register(this);
+        this._hexLocation = hexId;
+        this._element.move(hexId.location);
+        this._updateMovementPoints(cost);
+    }
+
+    rotate(angle, cost) {
+        Memento.register(this);
+        this._element.rotate(angle);
+        this._updateMovementPoints(cost);
     }
 
     _updateTiredness(tiredness) {
@@ -718,42 +750,17 @@ export class CBUnit extends CBCounter {
         }
     }
 
-    _updateMovementPoints(cost) {
-        this._movementPoints -= cost;
-        this._extendedMovementPoints -= cost;
-    }
-
-    firstMove(hexId, cost) {
-        Memento.register(this);
-        this._hexLocation = hexId;
-        this._element.move(hexId.location);
-        this._updateMovementPoints(cost);
-    }
-
-    firstRotation(angle, cost) {
-        Memento.register(this);
-        this._element.rotate(angle);
-        this._updateMovementPoints(cost);
-    }
-
-    subsequentMove(hexId, cost) {
-        Memento.register(this);
-        this._hexLocation = hexId;
-        this._element.move(hexId.location);
-        this._updateMovementPoints(cost);
-    }
-
-    subsequentRotation(angle, cost) {
-        Memento.register(this);
-        this._element.rotate(angle);
-        this._updateMovementPoints(cost);
+    get tiredness() {
+        return this._tiredness;
     }
 
     addOneTirednessLevel() {
+        Memento.register(this);
         this._updateTiredness(this._tiredness+1);
     }
 
     removeOneTirednessLevel() {
+        Memento.register(this);
         this._updateTiredness(this._tiredness-1);
     }
 }

@@ -4,12 +4,12 @@
  * Assertion Exception when a test failed
  */
 export class AssertionFailed {
-    constructor(message) {
-        this._message = message;
+    constructor(...args) {
+        this._args = args;
     }
 
-    toString() {
-        return this._message;
+    get args() {
+        return this._args;
     }
 }
 
@@ -35,39 +35,39 @@ export class Assertor {
 
     _is(modelClass, value) {
         if (!(value instanceof modelClass)) {
-            throw new AssertionFailed(`${value} is not an instance of ${modelClass}`);
+            throw new AssertionFailed(value, " is not an instance of ", modelClass);
         }
     }
 
     _equals(model, value) {
         if (typeof(model)==="number" && typeof(value)==="number") {
             if (value<model-NUMBER_MARGIN || value>model+NUMBER_MARGIN) {
-                throw new AssertionFailed(`${value} is not equal to ${model}`);
+                throw new AssertionFailed(value, " is not equal to ", model);
             }
         } else if (model!==value) {
-            throw new AssertionFailed(`${value} is not equal to ${model}`);
+            throw new AssertionFailed(value, " is not equal to ", model);
         }
     }
 
     _notEquals(model, value) {
         if (typeof(model)==="number" && typeof(value)==="number") {
             if (value>model-NUMBER_MARGIN && value<model+NUMBER_MARGIN) {
-                throw new AssertionFailed(`${value} is equal to ${model}`);
+                throw new AssertionFailed(value, " is equal to ", model);
             }
         } else if (model===value) {
-            throw new AssertionFailed(`${value} is equal to ${model}`);
+            throw new AssertionFailed(value, " is equal to ", model);
         }
     }
 
     _contains(model, value) {
         if (!value || value.indexOf(model)===-1) {
-            throw new AssertionFailed(`${value} does not contain ${model}`);
+            throw new AssertionFailed(value, " does not contain ", model);
         }
     }
 
     _notContains(model, value) {
         if (value && value.indexOf(model)!==-1) {
-            throw new AssertionFailed(`${value} contains ${model}`);
+            throw new AssertionFailed(value, " contains ", model);
         }
     }
 
@@ -77,14 +77,14 @@ export class Assertor {
                 if (value.indexOf(model) !== -1) return;
             }
         }
-        throw new AssertionFailed(`${values} does not contain ${model}`);
+        throw new AssertionFailed(values, " does not contain ", model);
     }
 
     _arrayNotContains(model, values) {
         if (values) {
             for (let value of values) {
                 if (value.indexOf(model) !== -1) {
-                    throw new AssertionFailed(`${values} contains ${model}`);
+                    throw new AssertionFailed(values, " contains ", model);
                 }
             }
         }
@@ -92,13 +92,13 @@ export class Assertor {
 
     _arrayEquals(model, value) {
         if (!model || !(model instanceof Array)) {
-            throw new AssertionError(`${model} is not an array.`);
+            throw new AssertionError(model, " is not an array.");
         }
         if (!value || !(value instanceof Array)) {
-            throw new AssertionError(`${value} is not an array.`);
+            throw new AssertionError(value, " is not an array.");
         }
         if (value.length!=model.length) {
-            throw new AssertionFailed(`${value} is not equal to ${model}`);
+            throw new AssertionFailed(value, " is not equal to ", model);
         }
         for (let index=0; index<model.length; index++) {
             if (model[index] && (model[index] instanceof Array)) {
@@ -129,24 +129,24 @@ export class Assertor {
             throw new AssertionError(`${value} is not a set.`);
         }
         if (value.size!=model.size) {
-            throw new AssertionFailed(`${value} is not equal to ${model}`);
+            throw new AssertionFailed(value, " is not equal to ", model);
         }
         for (let modelElement of model) {
             if (!value.has(modelElement)) {
-                throw new AssertionFailed(`${model} does not contain ${value}`);
+                throw new AssertionFailed(model, " does not contain ", value);
             }
         }
     }
 
     _arraySame(model, value) {
         if (!model || !(model instanceof Array)) {
-            throw new AssertionError(`${model} is not an array.`);
+            throw new AssertionError(model, " is not an array.");
         }
         if (!value || !(value instanceof Array)) {
-            throw new AssertionError(`${value} is not an array.`);
+            throw new AssertionError(value, " is not an array.");
         }
         if (value.length!=model.length) {
-            throw new AssertionFailed(`${value} is not equal to ${model}`);
+            throw new AssertionFailed(value, " is not equal to ", model);
         }
         for (let index=0; index<model.length; index++) {
             if (model[index] && (model[index] instanceof Array)) {
@@ -161,11 +161,11 @@ export class Assertor {
     _same(model, object) {
         if (model === object) return;
         if (model===null || model===undefined || object===null || object===undefined) {
-            throw new AssertionFailed(`${object} is not equal to ${model}`);
+            throw new AssertionFailed(object, " is not equal to ", model);
         }
         if (typeof(model)==='object' || typeof(object)==='object') {
             if (model.constructor !== object.constructor) {
-                throw new AssertionFailed(`${object} and ${model} are not of same type.`);
+                throw new AssertionFailed(object, " and ", model, " are not of same type.");
             }
             if (model instanceof Array) {
                 this._arraySame(model, object);
@@ -216,28 +216,28 @@ export class Assertor {
 
     isDefined() {
         if (this._value===null || this._value===undefined) {
-            throw new AssertionFailed(`Not defined`);
+            throw new AssertionFailed("Not defined.");
         }
         return this;
     }
 
     isNotDefined() {
         if (this._value!==null && this._value!==undefined) {
-            throw new AssertionFailed(`Defined`);
+            throw new AssertionFailed("Defined.");
         }
         return this;
     }
 
     isTrue() {
         if (!this._value) {
-            throw new AssertionFailed(`Not true.`);
+            throw new AssertionFailed("Not true.");
         }
         return this;
     }
 
     isFalse() {
         if (this._value) {
-            throw new AssertionFailed(`Not false.`);
+            throw new AssertionFailed("Not false.");
         }
         return this;
     }
@@ -288,11 +288,11 @@ export class Assertor {
 
     hasContent(...elements) {
         if (this._value.length!==elements.length) {
-            throw new AssertionFailed(`${this.value} has not same length than ${elements}`);
+            throw new AssertionFailed(this.value, " has not same length than ", elements);
         }
         for (let index=0; index<elements.length; index++) {
             if (this._value[index]!==elements[index]) {
-                throw new AssertionFailed(`${this.value[index]} is not equal to ${elements[index]}`);
+                throw new AssertionFailed(this.value[index], " is not equal to ", elements[index]);
             }
         }
         return this;
@@ -347,7 +347,7 @@ export class TestSuite {
             this._executeIt();
         }
 
-        if (this._index<this._its.length) {
+        while (this._index<this._its.length) {
             try {
                 _itCount++;
                 this._timeouts = [];
@@ -371,21 +371,18 @@ export class TestSuite {
                     }
                     this._processSuccess();
                     this._index++;
-                    this._executeIt();
                 }
                 else {
                     this._its[this._index]._testCase(_done.bind(this));
+                    return;
                 }
             }
             catch (exception) {
                 this._processException(exception);
                 this._index++;
-                this._executeIt();
             }
         }
-        else {
-            executeNextSuite(this);
-        }
+        executeNextSuite(this);
     }
 
     _execute() {
@@ -397,7 +394,7 @@ export class TestSuite {
     _processException(exception) {
         let time = new Date().getTime() - _startTime;
         if (exception && (exception instanceof AssertionFailed)) {
-            console.log(`- ${this._its[this._index]._caseTitle} -> FAILED (${time}): ${exception}`);
+            console.log(`- ${this._its[this._index]._caseTitle} -> FAILED (${time}): `, ...exception.args);
         }
         else {
             console.log(`- ${this._its[this._index]._caseTitle} -> ERROR (${time}): ${exception}`);

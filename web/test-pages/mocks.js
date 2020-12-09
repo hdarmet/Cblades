@@ -126,9 +126,13 @@ export let mockPlatform = {
         }
     },
 
+    resetRandoms(...values) {
+        this._randoms = values;
+    },
+
     random() {
         console.assert(this._randoms);
-        return this._randoms.shift();
+        return this._randoms.length ===1 ? this._randoms[0] : this._randoms.shift();
     }
 
 }

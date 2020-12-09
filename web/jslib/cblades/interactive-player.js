@@ -8,7 +8,7 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBAbstractArbitrator, CBAbstractPlayer,
+    CBAbstractArbitrator, CBAbstractPlayer, CBActuator,
     CBGame,
     CBHexSideId,
     CBMovement,
@@ -82,12 +82,8 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return directions;
     }
 
-    allowedFirstMove(unit) {
-        return this._allowedMove(unit, true);
-    }
-
-    allowedSubsequentMove(unit) {
-        return this._allowedMove(unit, false);
+    allowedMove(unit, first) {
+        return this._allowedMove(unit, first);
     }
 
     _allowedRotate(unit) {
@@ -112,11 +108,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return directions;
     }
 
-    allowedFirstRotate(unit) {
-        return this._allowedRotate(unit)
-    }
-
-    allowedSubsequentRotate(unit) {
+    allowedRotate(unit, first) {
         return this._allowedRotate(unit)
     }
 
@@ -150,14 +142,6 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return 10;
     }
 
-    get game() {
-        return this._game;
-    }
-
-    set game(game) {
-        this._game = game;
-    }
-
 }
 
 export class CBInteractivePlayer extends CBAbstractPlayer {
@@ -167,7 +151,8 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
     }
 
     selectUnit(unit, event) {
-        if (!unit.hasBeenActivated()) {
+        if (unit.isCurrentPlayer() && !unit.hasBeenActivated()) {
+            unit.select();
             this.openActionMenu(unit,
                 new Point2D(event.offsetX, event.offsetY),
                 this.game.arbitrator.allowedActions(unit)
@@ -175,25 +160,27 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         }
     }
 
-    _createFirstMovementActuators(unit) {
+    _createMovementActuators(unit, start) {
+        let moveDirections = this.game.arbitrator.allowedMove(unit, start);
+        let orientationDirections = this.game.arbitrator.allowedRotate(unit, start);
         this.game.closeActuators();
-        let moveDirections = this.game.arbitrator.allowedFirstMove(unit);
-        let moveActuator = this.createMoveActuator(unit, moveDirections, true);
-        this.game.openActuator(moveActuator);
-        let orientationDirections = this.game.arbitrator.allowedFirstRotate(unit);
-        let orientationActuator = this.createOrientationActuator(unit, orientationDirections, true);
-        this.game.openActuator(orientationActuator);
+        if (moveDirections.length) {
+            let moveActuator = this.createMoveActuator(unit, moveDirections, start);
+            this.game.openActuator(moveActuator);
+        }
+        if (orientationDirections.length) {
+            let orientationActuator = this.createOrientationActuator(unit, orientationDirections, start);
+            this.game.openActuator(orientationActuator);
+        }
+        return moveDirections.length === 0 && orientationDirections.length ===0;
     }
 
-    _createSubsequentMovementActuators(unit) {
-        this.game.closeActuators();
-        let moveDirections = this.game.arbitrator.allowedSubsequentMove(unit);
-        let moveActuator = this.createMoveActuator(unit, moveDirections, false);
-        this.game.openActuator(moveActuator);
-        let orientationDirections = this.game.arbitrator.allowedSubsequentRotate(unit);
-        let orientationActuator = this.createOrientationActuator(unit, orientationDirections, false);
-        this.game.openActuator(orientationActuator);
-        if (moveDirections.length===0 && orientationDirections.length===0) {
+    startMoveUnit(unit, event) {
+        this._createMovementActuators(unit, true);
+    }
+
+    _markUnitActivationAfterMovement(unit, played) {
+        if (played) {
             unit.markAsBeingPlayed();
         }
         else {
@@ -201,42 +188,27 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         }
     }
 
-    startMoveUnit(unit, event) {
-        this._createFirstMovementActuators(unit);
+    rotateUnit(unit, angle, event) {
+        let cost = this.game.arbitrator.getRotationCost(unit, angle);
+        this._updateTirednessForMovement(unit, cost);
+        unit.rotate(angle, cost);
+        let played = this._createMovementActuators(unit);
+        this._markUnitActivationAfterMovement(unit, played);
+    }
+
+    moveUnit(unit, hexId, event) {
+        let cost = this.game.arbitrator.getMovementCost(unit, hexId);
+        this._updateTirednessForMovement(unit, cost);
+        unit.move(hexId, cost);
+        this._createMovementActuators(unit);
+        let played = this._createMovementActuators(unit);
+        this._markUnitActivationAfterMovement(unit, played);
     }
 
     _updateTirednessForMovement(unit, cost) {
         if (this.game.arbitrator.doesMovementInflictTiredness(unit, cost)) {
             unit.addOneTirednessLevel();
         }
-    }
-
-    firstUnitRotation(unit, angle, event) {
-        let cost = this.game.arbitrator.getRotationCost(unit, angle);
-        this._updateTirednessForMovement(unit, cost);
-        unit.firstRotation(angle, cost);
-        this._createSubsequentMovementActuators(unit);
-    }
-
-    firstUnitMove(unit, hexId, event) {
-        let cost = this.game.arbitrator.getMovementCost(unit, hexId);
-        this._updateTirednessForMovement(unit, cost);
-        unit.firstMove(hexId, cost);
-        this._createSubsequentMovementActuators(unit);
-    }
-
-    subsequentUnitRotation(unit, angle, event) {
-        let cost = this.game.arbitrator.getRotationCost(unit, angle);
-        this._updateTirednessForMovement(unit, cost);
-        unit.subsequentRotation(angle, cost);
-        this._createSubsequentMovementActuators(unit);
-    }
-
-    subsequentUnitMove(unit, hexId, event) {
-        let cost = this.game.arbitrator.getMovementCost(unit, hexId);
-        this._updateTirednessForMovement(unit, cost);
-        unit.subsequentMove(hexId, cost);
-        this._createSubsequentMovementActuators(unit);
     }
 
     restUnit(unit, event) {
@@ -431,17 +403,6 @@ class ActuatorImageArtifact extends DImageArtifact {
 
 }
 
-export class CBActuator {
-
-    constructor(unit) {
-        this._unit = unit;
-    }
-
-    get unit() {
-        return this._unit;
-    }
-}
-
 export class CBOrientationActuator extends CBActuator {
 
     constructor(unit, directions, first) {
@@ -463,10 +424,6 @@ export class CBOrientationActuator extends CBActuator {
         this._first = first;
     }
 
-    get element() {
-        return this._element;
-    }
-
     getTrigger(angle) {
         for (let artifact of this._element.artifacts) {
             if (artifact.pangle === angle) return artifact;
@@ -477,12 +434,7 @@ export class CBOrientationActuator extends CBActuator {
     onMouseClick(trigger, event) {
         for (let artifact of this._element.artifacts) {
             if (artifact === trigger) {
-                if (this._first) {
-                    this.unit.player.firstUnitRotation(this.unit, artifact.angle, event);
-                }
-                else {
-                    this.unit.player.subsequentUnitRotation(this.unit, artifact.angle, event);
-                }
+                this.unit.player.rotateUnit(this.unit, artifact.angle, event);
             }
         }
     }
@@ -512,10 +464,6 @@ export class CBMoveActuator extends CBActuator {
         this._first = first;
     }
 
-    get element() {
-        return this._element;
-    }
-
     getTrigger(angle) {
         for (let artifact of this._element.artifacts) {
             if (artifact.pangle === angle) return artifact;
@@ -526,12 +474,7 @@ export class CBMoveActuator extends CBActuator {
     onMouseClick(trigger, event) {
         for (let artifact of this._element.artifacts) {
             if (artifact === trigger) {
-                if (this._first) {
-                    this.unit.player.firstUnitMove(this.unit, this.unit.hexLocation.getNearHex(artifact.angle), event);
-                }
-                else {
-                    this.unit.player.subsequentUnitMove(this.unit, this.unit.hexLocation.getNearHex(artifact.angle), event);
-                }
+                this.unit.player.moveUnit(this.unit, this.unit.hexLocation.getNearHex(artifact.angle), event);
             }
         }
     }

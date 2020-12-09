@@ -3,10 +3,11 @@
 'use strict'
 
 import {
-    assert, before, describe, it
+    assert, before, describe, executeTimeouts, it
 } from "../../jstest/jtest.js";
 import {
-    DImage, setDrawPlatform
+    DAnimator,
+    DImage, getDrawPlatform, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
     createEvent,
@@ -21,10 +22,8 @@ import {
     CBGame, CBHexId, CBMap, CBUnit
 } from "../../jslib/cblades/game.js";
 import {
-    Point2D
-} from "../../jslib/geometry.js";
-import {
-    DPopup
+    DDice,
+    DPopup, DResult
 } from "../../jslib/widget.js";
 import {
     CBArbitrator, CBInteractivePlayer, CBMoveActuator, CBOrientationActuator
@@ -36,6 +35,7 @@ describe("Interactive Player", ()=> {
         setDrawPlatform(mockPlatform);
         DImage.resetCache();
         Mechanisms.reset();
+        DAnimator.clear();
         Memento.clear();
     });
 
@@ -47,39 +47,97 @@ describe("Interactive Player", ()=> {
         game._board.repaint();
     }
 
+    function createTinyGame() {
+        var game = new CBGame();
+        var arbitrator = new CBArbitrator();
+        game.setArbitrator(arbitrator);
+        var player = new CBInteractivePlayer();
+        game.addPlayer(player);
+        var map = new CBMap("/CBlades/images/maps/map.png");
+        game.setMap(map);
+        let unit = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
+        game.addCounter(unit, new CBHexId(map, 5, 8));
+        game.start();
+        loadAllImages();
+        return { game, arbitrator, player, map, unit };
+    }
+
+    function create2PlayersTinyGame() {
+        let game = new CBGame();
+        let arbitrator = new CBArbitrator();
+        game.setArbitrator(arbitrator);
+        let player1 = new CBInteractivePlayer();
+        game.addPlayer(player1);
+        let player2 = new CBInteractivePlayer();
+        game.addPlayer(player2);
+        let map = new CBMap("/CBlades/images/maps/map.png");
+        game.setMap(map);
+        let counter1 = new CBUnit(player1, "/CBlades/images/units/misc/unit1.png");
+        game.addCounter(counter1, new CBHexId(map, 5, 8));
+        let counter2 = new CBUnit(player2, "/CBlades/images/units/misc/unit2.png");
+        game.addCounter(counter2, new CBHexId(map, 6, 8));
+        game.start();
+        loadAllImages();
+        return {game, map, counter1, counter2, player1, player2};
+    }
+
+    function create2UnitsTinyGame() {
+        var game = new CBGame();
+        var arbitrator = new CBArbitrator();
+        game.setArbitrator(arbitrator);
+        var player = new CBInteractivePlayer();
+        game.addPlayer(player);
+        var map = new CBMap("/CBlades/images/maps/map.png");
+        game.setMap(map);
+        let unit1 = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
+        let unit2 = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
+        game.addCounter(unit1, new CBHexId(map, 5, 8));
+        game.addCounter(unit2, new CBHexId(map, 8, 7));
+        game.start();
+        loadAllImages();
+        return {game, map, unit1, unit2, player};
+    }
+
+    function clickOnCounter(game, counter) {
+        let unitLocation = counter.artifact.viewportLocation;
+        var mouseEvent = createEvent("click", {offsetX:unitLocation.x, offsetY:unitLocation.y});
+        mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
+    }
+
+    function clickOnMask(game) {
+        var mouseEvent = createEvent("click", {offsetX:1, offsetY:1});
+        mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
+    }
+
+    function clickOnActionMenu(game, col, row) {
+        var icon = DPopup._instance.getItem(col, row);
+        let iconLocation = icon.viewportLocation;
+        var mouseEvent = createEvent("click", {offsetX:iconLocation.x, offsetY:iconLocation.y});
+        mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
+    }
+
+    function clickOnMoveAction(game) {
+        return clickOnActionMenu(game, 0, 0);
+    }
+
+    function clickOnRestAction(game) {
+        return clickOnActionMenu(game, 0, 2);
+    }
+
     it("Checks that clicking on a unit select the unit ", () => {
         given:
-            var game = new CBGame();
-            var arbitrator = new CBArbitrator();
-            game.setArbitrator(arbitrator);
-            var player = new CBInteractivePlayer();
-            game.addPlayer(player);
-            var unitsLevel = game._board.getLevel("units");
-            var widgetsLevel = game._board.getLevel("widgets");
-            var widgetItemsLevel = game._board.getLevel("widget-items");
-            var map = new CBMap("/CBlades/images/maps/map.png");
-            game.setMap(map);
-            let counter = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-            game.addCounter(counter, new CBHexId(map, 5, 8));
-            game.start();
+            var {game, unit} = createTinyGame();
+            var unitsLevel = game.board.getLevel("units");
+            var widgetsLevel = game.board.getLevel("widgets");
+            var widgetItemsLevel = game.board.getLevel("widget-items");
             loadAllImages();
         when:
-            var transform = counter.element.transform.concat(unitsLevel.transform);
-            let unitLocation = transform.point(new Point2D(0, 0));
             resetDirectives(unitsLevel);
             resetDirectives(widgetsLevel);
             resetDirectives(widgetItemsLevel);
-            var mouseEvent = createEvent("click", {offsetX:unitLocation.x, offsetY:unitLocation.y});
-            mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
+            clickOnCounter(game, unit);
         then:
-            assert(game.selectedUnit).equalsTo(counter);
             loadAllImages();
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
-                "save()",
-                "shadowColor = #FF0000",
-                "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)", "restore()"
-            ]);
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15", "strokeStyle = #000000",
@@ -117,25 +175,32 @@ describe("Interactive Player", ()=> {
             ]);
     });
 
+    it("Checks that a unit cannot be selected if it not belongs to the current player", () => {
+        given:
+            var {game, counter1, player1, counter2} = create2PlayersTinyGame();
+            counter1.onMouseClick({offsetX:0, offsetY:0});
+        then:
+            assert(game.currentPlayer).equalsTo(player1);
+        when:
+            counter2.onMouseClick({offsetX:0, offsetY:0});
+        then:
+            assert(game.selectedUnit).equalsTo(counter1);
+        when:
+            counter2.onMouseClick({offsetX:0, offsetY:0});  // Not executed ! Player2 is not the current player
+        then:
+            assert(game.selectedUnit).equalsTo(counter1);
+    });
+
     it("Checks move action actuators when unit is oriented toward an hexside", () => {
         given:
-            var game = new CBGame();
-            var arbitrator = new CBArbitrator();
-            game.setArbitrator(arbitrator);
-            var player = new CBInteractivePlayer();
-            game.addPlayer(player);
-            var map = new CBMap("/CBlades/images/maps/map.png");
-            game.setMap(map);
-            let counter = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-            game.addCounter(counter, new CBHexId(map, 5, 8));
-            game.start();
+            var { game, unit } = createTinyGame();
         when:
-            clickOnCounter(game, counter);
-            clickOnActionMenu(game, 0, 0);
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
             let moveActuator = getMoveActuator(game);
             let orientationActuator = getOrientationActuator(game);
         then:
-            assert(game.selectedUnit).equalsTo(counter);
+            assert(game.selectedUnit).equalsTo(unit);
             assert(moveActuator).isDefined();
             assert(moveActuator.getTrigger(300)).isDefined();
             assert(moveActuator.getTrigger(0)).isDefined();
@@ -157,24 +222,15 @@ describe("Interactive Player", ()=> {
 
     it("Checks move action actuators when unit is oriented toward a vertex", () => {
         given:
-            var game = new CBGame();
-            var arbitrator = new CBArbitrator();
-            game.setArbitrator(arbitrator);
-            var player = new CBInteractivePlayer();
-            game.addPlayer(player);
-            var map = new CBMap("/CBlades/images/maps/map.png");
-            game.setMap(map);
-            let counter = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-            counter.angle = 30;
-            game.addCounter(counter, new CBHexId(map, 5, 8));
-            game.start();
+            var { game, unit } = createTinyGame();
         when:
-            clickOnCounter(game, counter);
-            clickOnActionMenu(game, 0, 0);
+            unit.angle = 30;
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
             let moveActuator = getMoveActuator(game);
             let orientationActuator = getOrientationActuator(game);
         then:
-            assert(game.selectedUnit).equalsTo(counter);
+            assert(game.selectedUnit).equalsTo(unit);
             assert(moveActuator).isDefined();
             assert(moveActuator.getTrigger(300)).isNotDefined();
             assert(moveActuator.getTrigger(0)).isDefined();
@@ -197,19 +253,10 @@ describe("Interactive Player", ()=> {
 
     it("Checks move action actuators appearance", () => {
         given:
-            var game = new CBGame();
-            var arbitrator = new CBArbitrator();
-            game.setArbitrator(arbitrator);
-            var player = new CBInteractivePlayer();
-            game.addPlayer(player);
-            var actuatorsLevel = game._board.getLevel("actuators");
-            var map = new CBMap("/CBlades/images/maps/map.png");
-            game.setMap(map);
-            let counter = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-            game.addCounter(counter, new CBHexId(map, 5, 8));
-            game.start();
-            clickOnCounter(game, counter);
-            clickOnActionMenu(game, 0, 0);
+            var { game, unit } = createTinyGame();
+            var actuatorsLevel = game.board.getLevel("actuators");
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
             loadAllImages();
             let moveActuator = getMoveActuator(game);
             let orientationActuator = getOrientationActuator(game);
@@ -239,52 +286,32 @@ describe("Interactive Player", ()=> {
 
     it("Checks that a unit selection closes the actuators", () => {
         given:
-            var game = new CBGame();
-            var arbitrator = new CBArbitrator();
-            game.setArbitrator(arbitrator);
-            var player = new CBInteractivePlayer();
-            game.addPlayer(player);
-            var map = new CBMap("/CBlades/images/maps/map.png");
-            game.setMap(map);
-            let counter1 = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-            let counter2 = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-            game.addCounter(counter1, new CBHexId(map, 5, 8));
-            game.addCounter(counter2, new CBHexId(map, 8, 7));
-            game.start();
+            var { game, unit1, unit2 } = create2UnitsTinyGame();
         when:
-            clickOnCounter(game, counter1);
-            clickOnActionMenu(game, 0, 0);
+            clickOnCounter(game, unit1);
+            clickOnMoveAction(game);
             let moveActuator = getMoveActuator(game);
             let orientationActuator = getOrientationActuator(game);
         then:
-            assert(game.selectedUnit).equalsTo(counter1);
+            assert(game.selectedUnit).equalsTo(unit1);
             assert(moveActuator).isDefined();
             assert(orientationActuator).isDefined();
         when:
-            clickOnCounter(game, counter2);
+            clickOnCounter(game, unit2);
             moveActuator = getMoveActuator(game);
             orientationActuator = getOrientationActuator(game);
         then:
-            assert(game.selectedUnit).equalsTo(counter2);
+            assert(game.selectedUnit).equalsTo(unit2);
             assert(moveActuator).isNotDefined();
             assert(orientationActuator).isNotDefined();
     });
 
     it("Checks mouse move over a trigger of a move actuator", () => {
         given:
-            var game = new CBGame();
-            var arbitrator = new CBArbitrator();
-            game.setArbitrator(arbitrator);
-            var player = new CBInteractivePlayer();
-            game.addPlayer(player);
+            var { game, unit } = createTinyGame();
             var actuatorsLevel = game._board.getLevel("actuators");
-            var map = new CBMap("/CBlades/images/maps/map.png");
-            game.setMap(map);
-            let counter = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-            game.addCounter(counter, new CBHexId(map, 5, 8));
-            game.start();
-            clickOnCounter(game, counter);
-            clickOnActionMenu(game, 0, 0);
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
             loadAllImages();
             let moveActuator = getMoveActuator(game);
         when:
@@ -319,19 +346,10 @@ describe("Interactive Player", ()=> {
 
     it("Checks mouse move over a trigger of an orientation actuator", () => {
         given:
-            var game = new CBGame();
-            var arbitrator = new CBArbitrator();
-            game.setArbitrator(arbitrator);
-            var player = new CBInteractivePlayer();
-            game.addPlayer(player);
+            var { game, unit } = createTinyGame();
             var actuatorsLevel = game._board.getLevel("actuators");
-            var map = new CBMap("/CBlades/images/maps/map.png");
-            game.setMap(map);
-            let counter = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-            game.addCounter(counter, new CBHexId(map, 5, 8));
-            game.start();
-            clickOnCounter(game, counter);
-            clickOnActionMenu(game, 0, 0);
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
             loadAllImages();
             let orientationActuator = getOrientationActuator(game);
         when:
@@ -367,39 +385,12 @@ describe("Interactive Player", ()=> {
             ]);
     });
 
-    function createTinyGame() {
-        let game = new CBGame();
-        let arbitrator = new CBArbitrator();
-        game.setArbitrator(arbitrator);
-        let player = new CBInteractivePlayer();
-        game.addPlayer(player);
-        let map = new CBMap("/CBlades/images/maps/map.png");
-        game.setMap(map);
-        let counter = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-        game.addCounter(counter, new CBHexId(map, 5, 8));
-        game.start();
-        return {game, map, player, counter};
-    }
-
-    function clickOnCounter(game, counter) {
-        let unitLocation = counter.artifact.viewportLocation;
-        var mouseEvent = createEvent("click", {offsetX:unitLocation.x, offsetY:unitLocation.y});
-        mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
-    }
-
     function clickOnTrigger(game, trigger) {
         let triggerLocation = trigger.viewportLocation;
         var mouseEvent = createEvent("click", {offsetX:triggerLocation.x, offsetY:triggerLocation.y});
         trigger.onMouseClick(mouseEvent);
         paint(game);
         Memento.open();
-    }
-
-    function clickOnActionMenu(game, col, row) {
-        var icon = DPopup._instance.getItem(col, row);
-        let iconLocation = icon.viewportLocation;
-        var mouseEvent = createEvent("click", {offsetX:iconLocation.x, offsetY:iconLocation.y});
-        mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
     }
 
     function mouseMoveOnTrigger(game, trigger) {
@@ -430,108 +421,108 @@ describe("Interactive Player", ()=> {
 
     it("Checks Unit move using actuators (move, rotate, move)", () => {
         given:
-            var {game, counter} = createTinyGame()
-            clickOnCounter(game, counter);
-            clickOnActionMenu(game, 0, 0);
+            var {game, unit} = createTinyGame()
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
             loadAllImages();
             var moveActuator1 = getMoveActuator(game);
             var orientationActuator1 = getOrientationActuator(game);
         then:
-            assert(counter.location.toString()).equalsTo("point(-170.5, -98.4375)");
-            assert(counter.hexLocation.col).equalsTo(5);
-            assert(counter.hexLocation.row).equalsTo(8);
-            assert(counter.angle).equalsTo(0);
+            assert(unit.location.toString()).equalsTo("point(-170.5, -98.4375)");
+            assert(unit.hexLocation.col).equalsTo(5);
+            assert(unit.hexLocation.row).equalsTo(8);
+            assert(unit.angle).equalsTo(0);
         when:
             clickOnTrigger(game, moveActuator1.getTrigger(0));
         then:
-            assert(counter.hexLocation.col).equalsTo(5);
-            assert(counter.hexLocation.row).equalsTo(7);
+            assert(unit.hexLocation.col).equalsTo(5);
+            assert(unit.hexLocation.row).equalsTo(7);
         when:
             var moveActuator2 = getMoveActuator(game);
             var orientationActuator2 = getOrientationActuator(game);
             clickOnTrigger(game, orientationActuator2.getTrigger(60));
         then:
-            assert(counter.location.toString()).equalsTo("point(-170.5, -295.3125)");
-            assert(counter.angle).equalsTo(60);
+            assert(unit.location.toString()).equalsTo("point(-170.5, -295.3125)");
+            assert(unit.angle).equalsTo(60);
         when:
             var moveActuator3 = getMoveActuator(game);
             var orientationActuator3 = getOrientationActuator(game);
             clickOnTrigger(game, moveActuator3.getTrigger(60));
         then:
-            assert(counter.location.toString()).equalsTo("point(0, -393.75)");
-            assert(counter.hexLocation.col).equalsTo(6);
-            assert(counter.hexLocation.row).equalsTo(6);
+            assert(unit.location.toString()).equalsTo("point(0, -393.75)");
+            assert(unit.hexLocation.col).equalsTo(6);
+            assert(unit.hexLocation.row).equalsTo(6);
         when:
             var moveActuator4 = getMoveActuator(game);
             var orientationActuator4 = getOrientationActuator(game);
             Memento.undo();
         then:
-            assert(counter.location.toString()).equalsTo("point(-170.5, -295.3125)");
-            assert(counter.hexLocation.col).equalsTo(5);
-            assert(counter.hexLocation.row).equalsTo(7);
-            assert(counter.angle).equalsTo(60);
+            assert(unit.location.toString()).equalsTo("point(-170.5, -295.3125)");
+            assert(unit.hexLocation.col).equalsTo(5);
+            assert(unit.hexLocation.row).equalsTo(7);
+            assert(unit.angle).equalsTo(60);
             assert(getMoveActuator(game)).equalsTo(moveActuator3);
             assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
         when:
             Memento.redo();
         then:
-            assert(counter.location.toString()).equalsTo("point(0, -393.75)");
-            assert(counter.hexLocation.col).equalsTo(6);
-            assert(counter.hexLocation.row).equalsTo(6);
-            assert(counter.angle).equalsTo(60);
+            assert(unit.location.toString()).equalsTo("point(0, -393.75)");
+            assert(unit.hexLocation.col).equalsTo(6);
+            assert(unit.hexLocation.row).equalsTo(6);
+            assert(unit.angle).equalsTo(60);
             assert(getMoveActuator(game)).equalsTo(moveActuator4);
             assert(getOrientationActuator(game)).equalsTo(orientationActuator4);
     });
 
     it("Checks Unit move using actuators (rotate, move, rotate)", () => {
         given:
-            var {game, counter} = createTinyGame()
-            clickOnCounter(game, counter);
-            clickOnActionMenu(game, 0, 0);
+            var {game, unit} = createTinyGame()
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
             loadAllImages();
             var moveActuator1 = getMoveActuator(game);
             var orientationActuator1 = getOrientationActuator(game);
         then:
-            assert(counter.location.toString()).equalsTo("point(-170.5, -98.4375)");
-            assert(counter.hexLocation.col).equalsTo(5);
-            assert(counter.hexLocation.row).equalsTo(8);
-            assert(counter.angle).equalsTo(0);
+            assert(unit.location.toString()).equalsTo("point(-170.5, -98.4375)");
+            assert(unit.hexLocation.col).equalsTo(5);
+            assert(unit.hexLocation.row).equalsTo(8);
+            assert(unit.angle).equalsTo(0);
         when:
             clickOnTrigger(game, orientationActuator1.getTrigger(60));
         then:
-            assert(counter.angle).equalsTo(60);
+            assert(unit.angle).equalsTo(60);
         when:
             var moveActuator2 = getMoveActuator(game);
             var orientationActuator2 = getOrientationActuator(game);
             clickOnTrigger(game, moveActuator2.getTrigger(60));
         then:
-            assert(counter.location.toString()).equalsTo("point(0, -196.875)");
-            assert(counter.hexLocation.col).equalsTo(6);
-            assert(counter.hexLocation.row).equalsTo(7);
+            assert(unit.location.toString()).equalsTo("point(0, -196.875)");
+            assert(unit.hexLocation.col).equalsTo(6);
+            assert(unit.hexLocation.row).equalsTo(7);
         when:
             var moveActuator3 = getMoveActuator(game);
             var orientationActuator3 = getOrientationActuator(game);
             clickOnTrigger(game, orientationActuator3.getTrigger(90));
         then:
-            assert(counter.angle).equalsTo(90);
+            assert(unit.angle).equalsTo(90);
         when:
             var moveActuator4 = getMoveActuator(game);
             var orientationActuator4 = getOrientationActuator(game);
             Memento.undo();
         then:
-            assert(counter.location.toString()).equalsTo("point(0, -196.875)");
-            assert(counter.hexLocation.col).equalsTo(6);
-            assert(counter.hexLocation.row).equalsTo(7);
-            assert(counter.angle).equalsTo(60);
+            assert(unit.location.toString()).equalsTo("point(0, -196.875)");
+            assert(unit.hexLocation.col).equalsTo(6);
+            assert(unit.hexLocation.row).equalsTo(7);
+            assert(unit.angle).equalsTo(60);
             assert(getMoveActuator(game)).equalsTo(moveActuator3);
             assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
         when:
             Memento.redo();
         then:
-            assert(counter.location.toString()).equalsTo("point(0, -196.875)");
-            assert(counter.hexLocation.col).equalsTo(6);
-            assert(counter.hexLocation.row).equalsTo(7);
-            assert(counter.angle).equalsTo(90);
+            assert(unit.location.toString()).equalsTo("point(0, -196.875)");
+            assert(unit.hexLocation.col).equalsTo(6);
+            assert(unit.hexLocation.row).equalsTo(7);
+            assert(unit.angle).equalsTo(90);
             assert(getMoveActuator(game)).equalsTo(moveActuator4);
             assert(getOrientationActuator(game)).equalsTo(orientationActuator4);
     });
@@ -567,15 +558,15 @@ describe("Interactive Player", ()=> {
 
     it("Checks appearance when undoing (move, rotate, move)", () => {
         given:
-            var {game, counter} = createTinyGame();
+            var {game, unit} = createTinyGame();
             loadAllImages();
             paint(game);
             resetAllDirectives(game);
         when:
-            clickOnCounter(game, counter);
+            clickOnCounter(game, unit);
             loadAllImages();
             resetAllDirectives(game);
-            clickOnActionMenu(game, 0, 0);
+            clickOnMoveAction(game);
             loadAllImages();
             resetAllDirectives(game);
             repaint(game);
@@ -612,44 +603,44 @@ describe("Interactive Player", ()=> {
 
     it("Checks Unit movement points management during move", () => {
         given:
-            var {game, counter} = createTinyGame()
-            clickOnCounter(game, counter);
-            clickOnActionMenu(game, 0, 0);
+            var {game, unit} = createTinyGame()
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
             loadAllImages();
             var moveActuator = getMoveActuator(game);
         then:
-            assert(counter.movementPoints).equalsTo(2);
-            assert(counter.extendedMovementPoints).equalsTo(3);
+            assert(unit.movementPoints).equalsTo(2);
+            assert(unit.extendedMovementPoints).equalsTo(3);
         when:
             clickOnTrigger(game, moveActuator.getTrigger(0));
         then:
-            assert(counter.movementPoints).equalsTo(1);
-            assert(counter.extendedMovementPoints).equalsTo(2);
+            assert(unit.movementPoints).equalsTo(1);
+            assert(unit.extendedMovementPoints).equalsTo(2);
         when:
             var orientationActuator = getOrientationActuator(game);
             clickOnTrigger(game, orientationActuator.getTrigger(60));
         then:
-            assert(counter.movementPoints).equalsTo(0.5);
-            assert(counter.extendedMovementPoints).equalsTo(1.5);
+            assert(unit.movementPoints).equalsTo(0.5);
+            assert(unit.extendedMovementPoints).equalsTo(1.5);
         when:
             Memento.undo();
         then:
-            assert(counter.movementPoints).equalsTo(1);
-            assert(counter.extendedMovementPoints).equalsTo(2);
+            assert(unit.movementPoints).equalsTo(1);
+            assert(unit.extendedMovementPoints).equalsTo(2);
         when:
             Memento.redo();
         then:
-            assert(counter.movementPoints).equalsTo(0.5);
-            assert(counter.extendedMovementPoints).equalsTo(1.5);
+            assert(unit.movementPoints).equalsTo(0.5);
+            assert(unit.extendedMovementPoints).equalsTo(1.5);
     });
 
     it("Checks that extended move is proposed when unit does not have enough movement point", () => {
         given:
-            var {game, counter} = createTinyGame()
-            counter.movementPoints = 1;
-            counter.extendedMovementPoints = 2;
-            clickOnCounter(game, counter);
-            clickOnActionMenu(game, 0, 0);
+            var {game, unit} = createTinyGame()
+            unit.movementPoints = 1;
+            unit.extendedMovementPoints = 2;
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
             loadAllImages();
             var moveActuator = getMoveActuator(game);
             var orientationActuator = getOrientationActuator(game);
@@ -668,33 +659,33 @@ describe("Interactive Player", ()=> {
             moveActuator = getMoveActuator(game);
             orientationActuator = getOrientationActuator(game);
         then:
-            assert(moveActuator.getTrigger(0)).isNotDefined();
-            assert(orientationActuator.getTrigger(30)).isNotDefined();
+            assert(moveActuator).isNotDefined();
+            assert(orientationActuator).isNotDefined();
     });
 
     it("Checks that minimal move is proposed as first move when there are not enough movement points", () => {
         given:
-            var {game, counter} = createTinyGame()
-            counter.movementPoints = 0.5;
-            counter.extendedMovementPoints = 0.5;
-            clickOnCounter(game, counter);
-            clickOnActionMenu(game, 0, 0);
+            var {game, unit} = createTinyGame()
+            unit.movementPoints = 0.5;
+            unit.extendedMovementPoints = 0.5;
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
             loadAllImages();
             var moveActuator = getMoveActuator(game);
         then:
-            assert(counter.movementPoints).equalsTo(0.5);
-            assert(counter.extendedMovementPoints).equalsTo(0.5);
+            assert(unit.movementPoints).equalsTo(0.5);
+            assert(unit.extendedMovementPoints).equalsTo(0.5);
             assert(moveActuator.getTrigger(0).image.path).equalsTo("/CBlades/images/actuators/minimal-move.png");
     });
 
     it("Checks Unit tiredness progression (fresh -> tired -> exhausted)", () => {
         given:
-            var {game, counter} = createTinyGame();
+            var {game, unit} = createTinyGame();
             var unitsLevel = game._board.getLevel("units");
             var markersLevel = game._board.getLevel("markers");
-            clickOnCounter(game, counter);
-            clickOnActionMenu(game, 0, 0);
-            counter.movementPoints = 0.5;
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
+            unit.movementPoints = 0.5;
             loadAllImages();
             paint(game);
             var moveActuator1 = getMoveActuator(game);
@@ -704,7 +695,7 @@ describe("Interactive Player", ()=> {
             clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
             loadAllImages();
         then:
-            assert(counter.tiredness).equalsTo(1);
+            assert(unit.tiredness).equalsTo(1);
             assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #FF0000", "shadowBlur = 15",
@@ -719,16 +710,16 @@ describe("Interactive Player", ()=> {
             ]);
         when:
             game.nextTurn();
-            counter.movementPoints = 0.5;
-            clickOnCounter(game, counter);
-            clickOnActionMenu(game, 0, 0);
+            unit.movementPoints = 0.5;
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
             paint(game);
             resetDirectives(markersLevel);
             clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
             loadAllImages();
         then:
-            assert(counter.tiredness).equalsTo(2);
-            assert(counter.hasBeenPlayed()).isTrue();   // Unit is played automatically because no further movement/reorientation is possble
+            assert(unit.tiredness).equalsTo(2);
+            assert(unit.hasBeenPlayed()).isTrue();   // Unit is played automatically because no further movement/reorientation is possble
             assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
@@ -741,55 +732,192 @@ describe("Interactive Player", ()=> {
             ]);
     });
 
-    function create1Player2UnitsTinyGame() {
-        let game = new CBGame();
-        let arbitrator = new CBArbitrator();
-        game.setArbitrator(arbitrator);
-        let player = new CBInteractivePlayer();
-        game.addPlayer(player);
-        let map = new CBMap("/CBlades/images/maps/map.png");
-        game.setMap(map);
-        let counter1 = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-        game.addCounter(counter1, new CBHexId(map, 5, 8));
-        let counter2 = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-        game.addCounter(counter2, new CBHexId(map, 6, 7));
-        game.start();
-        return {game, map, player, counter1, counter2};
-    }
-
-    it("Checks activating/playing a unit", () => {
+    it("Checks resting action opening and cancelling", () => {
         given:
-            var {game, counter1, counter2} = create1Player2UnitsTinyGame();
-            var markersLevel = game._board.getLevel("markers");
-            clickOnCounter(game, counter1);
-            clickOnActionMenu(game, 0, 0);
+            var {game, unit} = createTinyGame();
+            let widgetsLevel = game.board.getLevel("widgets");
+            let itemsLevel = game.board.getLevel("widget-items");
+            unit.addOneTirednessLevel();
+            clickOnCounter(game, unit);
+            paint(game);
         when:
-            clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
-        then:
-            assert(counter1.hasBeenActivated()).isTrue();
-            assert(counter1.hasBeenPlayed()).isFalse();
-        when:
-            clickOnCounter(game, counter2);
+            resetDirectives(widgetsLevel);
+            resetDirectives(itemsLevel);
+            clickOnRestAction(game);
             loadAllImages();
-            resetDirectives(markersLevel);
-            repaint(game);
         then:
-            assert(counter1.hasBeenActivated()).isTrue();
-            assert(counter1.hasBeenPlayed()).isTrue();
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
-                "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/actiondone.png, -131.5, -398.3125, 64, 64)",
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",   // Mask
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "globalAlpha = 0.3",
+                    "fillStyle = #000000",
+                    "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",   // Insert rest action
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/rest-insert.png, 157, 5, 444, 195)",
+                "restore()",
+                "save()",   // Insert rest check
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/check-rest-insert.png, 137, 190, 444, 451)",
+                "restore()",
+                "save()",   // Wing tiredness Indicator (X)
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/tiredness10.png, 5, 119, 142, 142)",
+                "restore()",
+                "save()",   // Metoe indicator (clear)
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/meteo2.png, 571, 319, 142, 142)",
                 "restore()"
             ]);
-        when:   // changing turn reset played status
-            game.nextTurn();
-            resetDirectives(markersLevel);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 621, 115.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 561, 175.5, 100, 89)",
+                "restore()"
+            ]);
+        when:       // Clicking on the mask cancel the action
+            resetDirectives(widgetsLevel);
+            resetDirectives(itemsLevel);
+            clickOnMask(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(unit.tiredness).equalsTo(1);
+            assert(unit.hasBeenActivated()).isFalse();
+            assert(unit.hasBeenPlayed()).isFalse();
+    });
+
+    function executeAllAnimations() {
+        while(DAnimator.isActive()) {
+            executeTimeouts();
+        }
+    }
+
+    function clickOnDice(game) {
+        let itemsLevel = game.board.getLevel("widget-items");
+        for (let item of itemsLevel.artifacts) {
+            if (item.element instanceof DDice) {
+                let itemLocation = item.viewportLocation;
+                var mouseEvent = createEvent("click", {offsetX:itemLocation.x, offsetY:itemLocation.y});
+                item.onMouseClick(mouseEvent);
+                return;
+            }
+        }
+    }
+
+    function clickOnResult(game) {
+        let itemsLevel = game.board.getLevel("widget-commands");
+        for (let item of itemsLevel.artifacts) {
+            if (item.element instanceof DResult) {
+                let itemLocation = item.viewportLocation;
+                var mouseEvent = createEvent("click", {offsetX:itemLocation.x, offsetY:itemLocation.y});
+                item.onMouseClick(mouseEvent);
+                return;
+            }
+        }
+    }
+
+    function rollFor(d1, d2) {
+        getDrawPlatform().resetRandoms((d1-0.5)/6, (d2-0.5)/6, 0);
+    }
+
+    it("Checks successfully resting action process ", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            let widgetsLevel = game.board.getLevel("widgets");
+            let commandsLevel = game.board.getLevel("widget-commands");
+            let itemsLevel = game.board.getLevel("widget-items");
+            unit.addOneTirednessLevel();
+            clickOnCounter(game, unit);
+            clickOnRestAction(game);
+            loadAllImages();
+        when:
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel);
+            resetDirectives(itemsLevel);
             repaint(game);
         then:
-            assert(counter1.hasBeenActivated()).isFalse();
-            assert(counter1.hasBeenPlayed()).isFalse();
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 621, 115.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, 561, 175.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/success.png, 304, 115, 150, 150)",
+                "restore()"]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel);
+            resetDirectives(commandsLevel);
+            resetDirectives(itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.tiredness).equalsTo(0);
+    });
+
+    it("Checks failed resting action process ", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            let widgetsLevel = game.board.getLevel("widgets");
+            let commandsLevel = game.board.getLevel("widget-commands");
+            let itemsLevel = game.board.getLevel("widget-items");
+            unit.addOneTirednessLevel();
+            clickOnCounter(game, unit);
+            clickOnRestAction(game);
+            loadAllImages();
+        when:
+            rollFor(5, 6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel);
+            resetDirectives(itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d5.png, 621, 115.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d6.png, 561, 175.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            "save()",
+                "shadowColor = #A00000", "shadowBlur = 100",
+                "drawImage(/CBlades/images/dice/failure.png, 304, 115, 150, 150)",
+            "restore()"]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel);
+            resetDirectives(commandsLevel);
+            resetDirectives(itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.tiredness).equalsTo(1);
     });
 
 });

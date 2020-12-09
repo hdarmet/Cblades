@@ -1,7 +1,7 @@
 'use strict';
 
 import {
-    Matrix2D, Point2D, Area2D
+    Matrix2D, Point2D, Area2D, Dimension2D
 } from "./geometry.js";
 import {
     DAnimation, DAnimator,
@@ -250,6 +250,7 @@ export function RectArtifact(clazz) {
 
         constructor(dimension, ...args) {
             super(...args);
+            console.assert(dimension instanceof Dimension2D);
             this._dimension = dimension;
             this._area = new Area2D(-dimension.w/2, -dimension.h/2, dimension.w/2, dimension.h/2);
         }
@@ -625,6 +626,10 @@ export class DLevel {
 
     get visibleArea() {
         return this._layer.visibleArea;
+    }
+
+    get artifacts() {
+        return this._artifacts;
     }
 
     get visibleArtifacts() {
