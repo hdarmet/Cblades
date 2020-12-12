@@ -64,7 +64,7 @@ describe("Game", ()=> {
         var player = new CBAbstractPlayer();
         game.addPlayer(player);
         let unit = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-        game.addCounter(unit, new CBHexId(map, 5, 8));
+        game.addCounter(unit, map.getHex(5, 8));
         game.start();
         loadAllImages();
         return {game, player, unit, map};
@@ -82,7 +82,7 @@ describe("Game", ()=> {
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
             let counter = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-            game.addCounter(counter, new CBHexId(map, 5, 8));
+            game.addCounter(counter, map.getHex(5, 8));
         when:
             game.start();
             loadAllImages();
@@ -283,44 +283,50 @@ describe("Game", ()=> {
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
             game.start();
-            var hexId = new CBHexId(map, 3, 4);
+            var hexId = map.getHex(3, 4);
         then:
             assert(hexId.col).equalsTo(3);
             assert(hexId.row).equalsTo(4);
             assert(hexId.map).equalsTo(map);
-            assert(hexId.similar(new CBHexId(map, 3, 4))).isTrue();
-            assert(hexId.similar(new CBHexId(map, 4, 3))).isFalse();
+            assert(hexId.similar(map.getHex(3, 4))).isTrue();
+            assert(hexId.similar(map.getHex(4, 3))).isFalse();
             assert(hexId.location.toString()).equalsTo("point(-511.5, -885.9375)");
         when:
             var nearHexId = hexId.getNearHex(0);
         then:
             assert(nearHexId.col).equalsTo(3);
             assert(nearHexId.row).equalsTo(3);
+            assert(hexId.isNearHex(nearHexId)).equalsTo(0);
         when:
             nearHexId = hexId.getNearHex(60);
         then:
             assert(nearHexId.col).equalsTo(4);
             assert(nearHexId.row).equalsTo(3);
+            assert(hexId.isNearHex(nearHexId)).equalsTo(60);
         when:
             nearHexId = hexId.getNearHex(120);
         then:
             assert(nearHexId.col).equalsTo(4);
             assert(nearHexId.row).equalsTo(4);
+            assert(hexId.isNearHex(nearHexId)).equalsTo(120);
         when:
             nearHexId = hexId.getNearHex(180);
         then:
             assert(nearHexId.col).equalsTo(3);
             assert(nearHexId.row).equalsTo(5);
+            assert(hexId.isNearHex(nearHexId)).equalsTo(180);
         when:
             nearHexId = hexId.getNearHex(240);
         then:
             assert(nearHexId.col).equalsTo(2);
             assert(nearHexId.row).equalsTo(4);
+            assert(hexId.isNearHex(nearHexId)).equalsTo(240);
         when:
             nearHexId = hexId.getNearHex(300);
         then:
             assert(nearHexId.col).equalsTo(2);
             assert(nearHexId.row).equalsTo(3);
+            assert(hexId.isNearHex(nearHexId)).equalsTo(300);
     });
 
     it("Checks hexIds on even columns", () => {
@@ -329,44 +335,78 @@ describe("Game", ()=> {
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
             game.start();
-            var hexId = new CBHexId(map, 4, 3);
+            var hexId = map.getHex(4, 3);
         then:
             assert(hexId.col).equalsTo(4);
             assert(hexId.row).equalsTo(3);
             assert(hexId.map).equalsTo(map);
-            assert(hexId.similar(new CBHexId(map, 4, 3))).isTrue();
-            assert(hexId.similar(new CBHexId(map, 3, 4))).isFalse();
+            assert(hexId.similar(map.getHex(4, 3))).isTrue();
+            assert(hexId.similar(map.getHex(3, 4))).isFalse();
             assert(hexId.location.toString()).equalsTo("point(-341, -984.375)");
         when:
             var nearHexId = hexId.getNearHex(0);
         then:
             assert(nearHexId.col).equalsTo(4);
             assert(nearHexId.row).equalsTo(2);
+            assert(hexId.isNearHex(nearHexId)).equalsTo(0);
         when:
             nearHexId = hexId.getNearHex(60);
         then:
             assert(nearHexId.col).equalsTo(5);
             assert(nearHexId.row).equalsTo(3);
+            assert(hexId.isNearHex(nearHexId)).equalsTo(60);
         when:
             nearHexId = hexId.getNearHex(120);
         then:
             assert(nearHexId.col).equalsTo(5);
             assert(nearHexId.row).equalsTo(4);
+            assert(hexId.isNearHex(nearHexId)).equalsTo(120);
         when:
             nearHexId = hexId.getNearHex(180);
         then:
             assert(nearHexId.col).equalsTo(4);
             assert(nearHexId.row).equalsTo(4);
+            assert(hexId.isNearHex(nearHexId)).equalsTo(180);
         when:
             nearHexId = hexId.getNearHex(240);
         then:
             assert(nearHexId.col).equalsTo(3);
             assert(nearHexId.row).equalsTo(4);
+            assert(hexId.isNearHex(nearHexId)).equalsTo(240);
         when:
             nearHexId = hexId.getNearHex(300);
         then:
             assert(nearHexId.col).equalsTo(3);
             assert(nearHexId.row).equalsTo(3);
+            assert(hexId.isNearHex(nearHexId)).equalsTo(300);
+    });
+
+    it("Checks when hexes are NOT near", () => {
+        given:
+            var game = new CBGame();
+            var map = new CBMap("/CBlades/images/maps/map.png");
+            game.setMap(map);
+            game.start();
+        when:
+            var hexId = map.getHex(4, 3);
+        then:
+            assert(hexId.isNearHex(map.getHex(6, 3))).isFalse();
+            assert(hexId.isNearHex(map.getHex(4, 1))).isFalse();
+            assert(hexId.isNearHex(map.getHex(4, 5))).isFalse();
+            assert(hexId.isNearHex(map.getHex(3, 2))).isFalse();
+            assert(hexId.isNearHex(map.getHex(3, 5))).isFalse();
+            assert(hexId.isNearHex(map.getHex(5, 2))).isFalse();
+            assert(hexId.isNearHex(map.getHex(5, 5))).isFalse();
+        when:
+            hexId = map.getHex(3, 3);
+        then:
+            assert(hexId.isNearHex(map.getHex(5, 3))).isFalse();
+            assert(hexId.isNearHex(map.getHex(3, 1))).isFalse();
+            assert(hexId.isNearHex(map.getHex(3, 5))).isFalse();
+            assert(hexId.isNearHex(map.getHex(2, 1))).isFalse();
+            assert(hexId.isNearHex(map.getHex(2, 4))).isFalse();
+            assert(hexId.isNearHex(map.getHex(4, 1))).isFalse();
+            assert(hexId.isNearHex(map.getHex(4, 4))).isFalse();
     });
 
     it("Checks hexSideIds", () => {
@@ -375,7 +415,7 @@ describe("Game", ()=> {
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
             game.start();
-            var hexId1 = new CBHexId(map, 4, 3);
+            var hexId1 = map.getHex(4, 3);
             var hexId2 = hexId1.getNearHex(60);
             var hexId3 = hexId1.getNearHex(120);
             var hexSide = new CBHexSideId(hexId1, hexId2);
@@ -395,7 +435,7 @@ describe("Game", ()=> {
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
             game.start();
-            var hexId1 = new CBHexId(map, 4, 3);
+            var hexId1 = map.getHex(4, 3);
             var hexId2 = hexId1.getNearHex(60);
             var hexId3 = hexId1.getNearHex(120);
             var hexId4 = hexId1.getNearHex(300);
@@ -452,9 +492,9 @@ describe("Game", ()=> {
         player.selectUnit = function(unit, event) {unit.select()}
         game.addPlayer(player);
         let unit1 = new CBUnit(player, "/CBlades/images/units/misc/unit1.png");
-        game.addCounter(unit1, new CBHexId(map, 5, 8));
+        game.addCounter(unit1, map.getHex(5, 8));
         let unit2 = new CBUnit(player, "/CBlades/images/units/misc/unit2.png");
-        game.addCounter(unit2, new CBHexId(map, 5, 8));
+        game.addCounter(unit2, map.getHex(5, 8));
         game.start();
         loadAllImages();
         return {game, map, unit1, unit2, player};
@@ -469,9 +509,9 @@ describe("Game", ()=> {
         player2.selectUnit = function(unit, event) {unit.select()}
         game.addPlayer(player2);
         let unit1 = new CBUnit(player1, "/CBlades/images/units/misc/unit1.png");
-        game.addCounter(unit1, new CBHexId(map, 5, 8));
+        game.addCounter(unit1, map.getHex(5, 8));
         let unit2 = new CBUnit(player2, "/CBlades/images/units/misc/unit2.png");
-        game.addCounter(unit2, new CBHexId(map, 5, 8));
+        game.addCounter(unit2, map.getHex(5, 8));
         game.start();
         loadAllImages();
         return {game, map, unit1, unit2, player1, player2};
@@ -481,7 +521,7 @@ describe("Game", ()=> {
         given:
             var { game, map } = prepareTinyGame();
             let counter = new CBCounter("/CBlades/images/units/misc/counter.png", new Dimension2D(50, 50));
-            game.addCounter(counter, new CBHexId(map, 5, 8));
+            game.addCounter(counter, map.getHex(5, 8));
             game.start();
             loadAllImages();
             counter.angle = 45;
@@ -494,6 +534,7 @@ describe("Game", ()=> {
             assert(counter.angle).equalsTo(45);
             assert(counter.element).is(DElement);
             assert(counter.element.artifacts[0]).equalsTo(counter.artifact);
+            assert(counter.viewportLocation.toString()).equalsTo("point(500, 400)");
             assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 500, 400)",
@@ -507,6 +548,7 @@ describe("Game", ()=> {
             paint(game);
         then:
             assert(counter.location.toString()).equalsTo("point(10, 20)");
+            assert(counter.viewportLocation.toString()).equalsTo("point(504.8876, 409.7752)");
             assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 508.3436, 399.407)",
@@ -533,6 +575,30 @@ describe("Game", ()=> {
             ]);
         when:
             mouseClickOnCounter(game, counter); // checks that tests does not crash
+    });
+
+    it("Checks unit registration on map", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+        when:
+            var unit = new CBUnit(player, "/CBlades/images/units/misc/unit1.png");
+            var hexId = map.getHex(5, 8);
+            game.addCounter(unit, hexId);
+        then:
+            assert(hexId.units).arrayEqualsTo([unit]);
+        when:
+            var hexId2 = map.getHex(6, 8);
+            unit.move(hexId2, 1);
+        then:
+            assert(hexId.units).arrayEqualsTo([]);
+            assert(hexId2.units).arrayEqualsTo([unit]);
+        when:
+            Memento.undo();
+        then:
+            assert(hexId.units).arrayEqualsTo([unit]);
+            assert(hexId2.units).arrayEqualsTo([]);
     });
 
     it("Checks unit selection/deselection appearance", () => {
@@ -681,7 +747,7 @@ describe("Game", ()=> {
             assert(game.currentPlayer).equalsTo(player2);
     });
 
-    it("Checks moving a unit", () => {
+    it("Checks that when moving a unit, movement points are adjusted", () => {
         given:
             var {game, unit, map} = createTinyGame();
             var unitLevel = game.board.getLevel("units");
@@ -689,7 +755,7 @@ describe("Game", ()=> {
         when:
             resetDirectives(unitLevel);
             resetDirectives(markersLevel);
-            unit.move(new CBHexId(map, 5, 7), 1);
+            unit.move(map.getHex(5, 7), 1);
             paint(game);
         then:
             assert(getDirectives(unitLevel, 4)).arrayEqualsTo([
@@ -698,7 +764,7 @@ describe("Game", ()=> {
                     "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -366.3125, 142, 142)",
                 "restore()"
             ]);
-            assert(unit.hexLocation.toString()).equalsTo(new CBHexId(map, 5, 7).toString());
+            assert(unit.hexLocation.toString()).equalsTo(map.getHex(5, 7).toString());
             assert(unit.movementPoints).equalsTo(1);
             assert(unit.extendedMovementPoints).equalsTo(2);
         when:
@@ -713,9 +779,54 @@ describe("Game", ()=> {
                     "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
                 "restore()"
             ]);
-            assert(unit.hexLocation.toString()).equalsTo(new CBHexId(map, 5, 8).toString());
+            assert(unit.hexLocation.toString()).equalsTo(map.getHex(5, 8).toString());
             assert(unit.movementPoints).equalsTo(2);
             assert(unit.extendedMovementPoints).equalsTo(3);
+    });
+
+    it("Checks unit move from outside the map or out of the map", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+            var unitLevel = game.board.getLevel("units");
+        when:
+            resetDirectives(unitLevel);
+            unit.move(null, 0);
+            paint(game);
+        then:
+            assert(getDirectives(unitLevel, 4)).arrayEqualsTo([]);
+            assert(unit.hexLocation).isNotDefined();
+        when:
+            Memento.open();
+            resetDirectives(unitLevel);
+            unit.move(map.getHex(5, 7), 0);
+            paint(game);
+        then:
+            assert(getDirectives(unitLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -366.3125, 142, 142)",
+                "restore()"
+            ]);
+            assert(unit.hexLocation.toString()).equalsTo("Hex(5, 7)");
+        when:
+            Memento.undo();
+            resetDirectives(unitLevel);
+            paint(game);
+        then:
+            assert(getDirectives(unitLevel, 4)).arrayEqualsTo([]);
+            assert(unit.hexLocation).isNotDefined();
+        when:
+            Memento.undo();
+            resetDirectives(unitLevel);
+            paint(game);
+        then:
+            assert(getDirectives(unitLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 15",
+                "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
+                "restore()"
+            ]);
+            assert(unit.hexLocation.toString()).equalsTo("Hex(5, 8)");
     });
 
     it("Checks rotating a unit", () => {
@@ -757,6 +868,9 @@ describe("Game", ()=> {
         given:
             var {game, unit, map} = createTinyGame();
             var markersLevel = game.board.getLevel("markers");
+        then:
+            assert(unit.isTired()).isFalse();
+            assert(unit.isExhausted()).isFalse();
         when:
             resetDirectives(markersLevel);
             unit.addOneTirednessLevel();
@@ -766,10 +880,12 @@ describe("Game", ()=> {
             assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/tired.png, -273.5, -123.4375, 64, 64)",
+                    "drawImage(/CBlades/images/markers/tired.png, -273.5, -130.4375, 64, 64)",
                 "restore()"
             ]);
             assert(unit.tiredness).equalsTo(1);
+            assert(unit.isTired()).isTrue();
+            assert(unit.isExhausted()).isFalse();
         when:
             Memento.open();
             resetDirectives(markersLevel);
@@ -780,10 +896,12 @@ describe("Game", ()=> {
             assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -123.4375, 64, 64)",
+                "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -130.4375, 64, 64)",
                 "restore()"
             ]);
             assert(unit.tiredness).equalsTo(2);
+            assert(unit.isTired()).isFalse();
+            assert(unit.isExhausted()).isTrue();
         when:
             resetDirectives(markersLevel);
             Memento.undo();
@@ -792,7 +910,7 @@ describe("Game", ()=> {
             assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/tired.png, -273.5, -123.4375, 64, 64)",
+                "drawImage(/CBlades/images/markers/tired.png, -273.5, -130.4375, 64, 64)",
                 "restore()"
             ]);
             assert(unit.tiredness).equalsTo(1);
@@ -812,7 +930,7 @@ describe("Game", ()=> {
             assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -123.4375, 64, 64)",
+                "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -130.4375, 64, 64)",
                 "restore()"
             ]);
             assert(unit.tiredness).equalsTo(2);
@@ -826,7 +944,7 @@ describe("Game", ()=> {
             assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/tired.png, -273.5, -123.4375, 64, 64)",
+                "drawImage(/CBlades/images/markers/tired.png, -273.5, -130.4375, 64, 64)",
                 "restore()"
             ]);
             assert(unit.tiredness).equalsTo(1);
@@ -838,7 +956,7 @@ describe("Game", ()=> {
             assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -123.4375, 64, 64)",
+                "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -130.4375, 64, 64)",
                 "restore()"
             ]);
             assert(unit.tiredness).equalsTo(2);
@@ -921,4 +1039,208 @@ describe("Game", ()=> {
             assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
     });
 
+    it("Checks adding cohesion levels to a unit", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+            var markersLevel = game.board.getLevel("markers");
+        then:
+            assert(unit.isDisrupted()).isFalse();
+            assert(unit.isRouted()).isFalse();
+        when:
+            resetDirectives(markersLevel);
+            unit.disrupt();
+            paint(game);
+            loadAllImages(); // to load disrupted.png
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 15",
+                "drawImage(/CBlades/images/markers/disrupted.png, -273.5, -59.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.cohesion).equalsTo(1);
+            assert(unit.isDisrupted()).isTrue();
+            assert(unit.isRouted()).isFalse();
+        when:
+            Memento.open();
+            resetDirectives(markersLevel);
+            unit.addOneCohesionLevel();
+            paint(game);
+            loadAllImages(); // to load fleeing.png
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 15",
+                "drawImage(/CBlades/images/markers/fleeing.png, -273.5, -59.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.cohesion).equalsTo(2);
+            assert(unit.isDisrupted()).isFalse();
+            assert(unit.isRouted()).isTrue();
+        when:
+            resetDirectives(markersLevel);
+            Memento.undo();
+            paint(game);
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 15",
+                "drawImage(/CBlades/images/markers/disrupted.png, -273.5, -59.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.cohesion).equalsTo(1);
+    });
+
+    it("Checks removing cohesion levels to a unit", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+            var markersLevel = game.board.getLevel("markers");
+        when:
+            resetDirectives(markersLevel);
+            unit.addOneCohesionLevel();
+            unit.addOneCohesionLevel();
+            paint(game);
+            loadAllImages(); // to load fleeing.png
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 15",
+                "drawImage(/CBlades/images/markers/fleeing.png, -273.5, -59.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.cohesion).equalsTo(2);
+        when:
+            Memento.open();
+            resetDirectives(markersLevel);
+            unit.rally();
+            paint(game);
+            loadAllImages(); // to load disrupted.png
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 15",
+                "drawImage(/CBlades/images/markers/disrupted.png, -273.5, -59.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.cohesion).equalsTo(1);
+        when:
+            Memento.open();
+            resetDirectives(markersLevel);
+            unit.reorganize();
+            paint(game);
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(unit.cohesion).equalsTo(0);
+        when:
+            resetDirectives(markersLevel);
+            Memento.undo();
+            paint(game);
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 15",
+                "drawImage(/CBlades/images/markers/disrupted.png, -273.5, -59.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.cohesion).equalsTo(1);
+    });
+
+    it("Checks mark unit as on contact", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+            var markersLevel = game.board.getLevel("markers");
+        when:
+            resetDirectives(markersLevel);
+            unit.markAsEngaging(true);
+            paint(game);
+            loadAllImages(); // to load fleeing.png
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 15",
+                "drawImage(/CBlades/images/markers/contact.png, -273.5, -201.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.isEngaging()).isTrue();
+            assert(unit.isCharging()).isFalse();
+        when:
+            resetDirectives(markersLevel);
+            Memento.undo();
+            paint(game);
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(unit.isEngaging()).isFalse();
+            assert(unit.isCharging()).isFalse();
+    });
+
+    it("Checks mark unit as charging", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+            var markersLevel = game.board.getLevel("markers");
+        when:
+            resetDirectives(markersLevel);
+            unit.markAsCharging(true);
+            paint(game);
+            loadAllImages(); // to load fleeing.png
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 15",
+                "drawImage(/CBlades/images/markers/charge.png, -273.5, -201.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.isEngaging()).isFalse();
+            assert(unit.isCharging()).isTrue();
+        when:
+            resetDirectives(markersLevel);
+            Memento.undo();
+            paint(game);
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(unit.isEngaging()).isFalse();
+            assert(unit.isCharging()).isFalse();
+    });
+
+    it("Checks that charge supersedes contact", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+            var markersLevel = game.board.getLevel("markers");
+        when:
+            resetDirectives(markersLevel);
+            unit.markAsEngaging(true);
+            unit.markAsCharging(true);
+            paint(game);
+            loadAllImages(); // to load charge.png
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 15",
+                "drawImage(/CBlades/images/markers/charge.png, -273.5, -201.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.isEngaging()).isTrue();
+            assert(unit.isCharging()).isTrue();
+        when:
+            resetDirectives(markersLevel);
+            unit.markAsCharging(false);
+            loadAllImages();  // to load contact.png
+            paint(game);
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 15",
+                "drawImage(/CBlades/images/markers/contact.png, -273.5, -201.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.isEngaging()).isTrue();
+            assert(unit.isCharging()).isFalse();
+        when:
+            resetDirectives(markersLevel);
+            unit.markAsEngaging(false);
+            paint(game);
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(unit.isEngaging()).isFalse();
+            assert(unit.isCharging()).isFalse();
+    });
 });

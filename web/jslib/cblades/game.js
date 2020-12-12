@@ -22,6 +22,18 @@ export let CBMovement = {
     MINIMAL : "minimal"
 }
 
+export let CBTiredness = {
+    NONE: 0,
+    TIRED: 1,
+    EXHAUSTED: 2
+}
+
+export let CBCohesion = {
+    GOOD_ORDER: 0,
+    DISRUPTED: 1,
+    ROUTED: 2
+}
+
 export let CBWeather = {
     HOT : 1,
     CLEAR : 2,
@@ -44,6 +56,11 @@ export class CBAbstractArbitrator {
 }
 
 export class CBAbstractPlayer {
+
+    finishTurn(animation) {
+        this.game.nextTurn();
+        animation()
+    }
 
     get game() {
         return this._game;
@@ -173,11 +190,11 @@ export class CBGame {
     }
 
     setMenu() {
-        this._endOfTurnCommand = new DPushButton("/CBlades/images/commands/turn.png", new Point2D(-60, -60), ()=>{
-            this.nextTurn();
+        this._endOfTurnCommand = new DPushButton("/CBlades/images/commands/turn.png", new Point2D(-60, -60), animation=>{
+            this.currentPlayer.finishTurn(animation);
         }).setTurnAnimation(true);
         this._endOfTurnCommand.setOnBoard(this._board);
-        this._showCommand = new DPushButton("/CBlades/images/commands/show.png", new Point2D(-120, -60), ()=>{
+        this._showCommand = new DPushButton("/CBlades/images/commands/show.png", new Point2D(-120, -60), animation=>{
             this._showCommand.removeFromBoard();
             this._hideCommand.setOnBoard(this._board);
             this._undoCommand.setOnBoard(this._board);
@@ -185,9 +202,10 @@ export class CBGame {
             this._settingsCommand.setOnBoard(this._board);
             this._saveCommand.setOnBoard(this._board);
             this._loadCommand.setOnBoard(this._board);
+            animation();
         });
         this._showCommand.setOnBoard(this._board);
-        this._hideCommand = new DPushButton("/CBlades/images/commands/hide.png", new Point2D(-120, -60), ()=>{
+        this._hideCommand = new DPushButton("/CBlades/images/commands/hide.png", new Point2D(-120, -60), animation=>{
             this._showCommand.setOnBoard(this._board);
             this._hideCommand.removeFromBoard();
             this._undoCommand.removeFromBoard();
@@ -195,16 +213,19 @@ export class CBGame {
             this._settingsCommand.removeFromBoard();
             this._saveCommand.removeFromBoard();
             this._loadCommand.removeFromBoard();
+            animation();
         });
-        this._undoCommand = new DPushButton("/CBlades/images/commands/undo.png", new Point2D(-180, -60), ()=>{
+        this._undoCommand = new DPushButton("/CBlades/images/commands/undo.png", new Point2D(-180, -60), animation=>{
             Memento.undo();
+            animation();
         }).setTurnAnimation(false);
-        this._redoCommand = new DPushButton("/CBlades/images/commands/redo.png", new Point2D(-240, -60), ()=>{
+        this._redoCommand = new DPushButton("/CBlades/images/commands/redo.png", new Point2D(-240, -60), animation=>{
             Memento.redo();
+            animation();
         }).setTurnAnimation(true);
-        this._settingsCommand = new DPushButton("/CBlades/images/commands/settings.png", new Point2D(-300, -60), ()=>{});
-        this._saveCommand = new DPushButton("/CBlades/images/commands/save.png", new Point2D(-360, -60), ()=>{});
-        this._loadCommand = new DPushButton("/CBlades/images/commands/load.png", new Point2D(-420, -60), ()=>{});
+        this._settingsCommand = new DPushButton("/CBlades/images/commands/settings.png", new Point2D(-300, -60), animation=>{});
+        this._saveCommand = new DPushButton("/CBlades/images/commands/save.png", new Point2D(-360, -60), animation=>{});
+        this._loadCommand = new DPushButton("/CBlades/images/commands/load.png", new Point2D(-420, -60), animation=>{});
         this._settingsCommand.activate = false;
         this._saveCommand.activate = false;
         this._loadCommand.activate = false;
@@ -287,12 +308,35 @@ export class CBHexId {
         return this.map.getLocation(position);
     }
 
+    get hex() {
+        return this._map._hex(this._col, this._row);
+    }
+
     similar(hexId) {
         return this.location.equalsTo(hexId.location);
     }
 
+    isNearHex(hexId) {
+        return this._map.isNearHex(this, hexId);
+    }
+
     getNearHex(angle) {
         return this._map.findNearHex(this, angle);
+    }
+
+    getAngle(hexId) {
+        let loc1 = this.location;
+        let loc2 = hexId.location;
+        return atan2(loc2.x-loc1.x, loc2.y-loc1.y);
+    }
+
+    get units() {
+        return this._map.getUnitsOnHex(this);
+    }
+
+    // TODO : add map ref
+    toString() {
+        return "Hex("+this._col+", "+this._row+")";
     }
 }
 
@@ -318,9 +362,7 @@ export class CBHexSideId {
     }
 
     get angle() {
-        let loc1 = this._hexId1.location;
-        let loc2 = this._hexId2.location;
-        return atan2(loc2.x-loc1.x, loc2.y-loc1.y);
+        return this._hexId1.getAngle(this._hexId2);
     }
 
     similar(hexSideId) {
@@ -363,6 +405,46 @@ export class CBHexVertexId {
     }
 }
 
+class CBHex {
+
+    constructor(map, col, row) {
+        this._id = new CBHexId(map, col, row);
+        this._units = [];
+    }
+
+    get id() {
+        return this._id;
+    }
+
+    _memento() {
+        return {
+            units: [...this._units]
+        }
+    }
+
+    _revert(memento) {
+        this._units = memento.units;
+    }
+
+    addUnit(unit) {
+        this._units.push(unit);
+    }
+
+    appendUnit(unit) {
+        Memento.register(this);
+        this._units.push(unit);
+    }
+
+    deleteUnit(unit) {
+        Memento.register(this);
+        this._units.splice(this._units.indexOf(unit), 1);
+    }
+
+    get units() {
+        return this._units;
+    }
+}
+
 class MapImageArtifact extends DImageArtifact {
 
     constructor(map, ...args) {
@@ -382,6 +464,7 @@ export class CBMap {
         this._imageArtifact = new MapImageArtifact(this, "map", image, new Point2D(0, 0), CBMap.DIMENSION);
         this._element = new DElement(this._imageArtifact);
         this._element._map = this;
+        this._hexes = [];
     }
 
     findPosition(hexId) {
@@ -391,33 +474,110 @@ export class CBMap {
         return new Point2D(x, y);
     }
 
+    _hex(col, row) {
+        let column = this._hexes[col];
+        if (!column) {
+            column = [];
+            this._hexes[col] = column;
+        }
+        let hexSpec = column[row];
+        if (!hexSpec) {
+            hexSpec = new CBHex(this, col, row);
+            column[row] = hexSpec;
+        }
+        return hexSpec;
+    }
+
+    getHex(col, row) {
+        return this._hex(col, row).id;
+    }
+
+    isNearHex(hexId1, hexId2) {
+        if (hexId1.col === hexId2.col) {
+            if (hexId1.row === hexId2.row+1) {
+                return 0;
+            }
+            if (hexId1.row === hexId2.row-1) {
+                return 180;
+            }
+            return false;
+        }
+        if (hexId1.col%2) {
+            if (hexId1.col === hexId2.col-1) {
+                if (hexId1.row === hexId2.row+1) {
+                    return 60;
+                }
+                if (hexId1.row === hexId2.row) {
+                    return 120;
+                }
+                return false;
+            }
+            else if (hexId1.col === hexId2.col + 1) {
+                if (hexId1.row === hexId2.row) {
+                    return 240;
+                }
+                if (hexId1.row === hexId2.row+1) {
+                    return 300;
+                }
+                return false;
+            }
+            return false
+        }
+        else {
+            if (hexId1.col === hexId2.col-1) {
+                if (hexId1.row === hexId2.row) {
+                    return 60;
+                }
+                if (hexId1.row === hexId2.row-1) {
+                    return 120;
+                }
+                return false;
+            }
+            else if (hexId1.col === hexId2.col + 1) {
+                if (hexId1.row === hexId2.row-1) {
+                    return 240;
+                }
+                if (hexId1.row === hexId2.row) {
+                    return 300;
+                }
+                return false;
+            }
+            return false
+        }
+    }
+
     findNearHex(hexId, angle) {
         if (angle === 0) {
-            return new CBHexId(this, hexId.col, hexId.row-1);
+            return this._hex(hexId.col, hexId.row-1).id;
         }
         else if (angle === 60) {
             return hexId.col%2 ?
-                new CBHexId(this, hexId.col+1, hexId.row-1) :
-                new CBHexId(this, hexId.col+1, hexId.row);
+                this._hex(hexId.col+1, hexId.row-1).id :
+                this._hex(hexId.col+1, hexId.row).id;
         }
         else if (angle === 120) {
             return hexId.col%2 ?
-                new CBHexId(this, hexId.col+1, hexId.row) :
-                new CBHexId(this, hexId.col+1, hexId.row+1);
+                this._hex(hexId.col+1, hexId.row).id :
+                this._hex(hexId.col+1, hexId.row+1).id;
         }
         else if (angle === 180) {
-            return new CBHexId(this, hexId.col, hexId.row+1);
+            return this._hex(hexId.col, hexId.row+1).id;
         }
         else if (angle === 240) {
             return hexId.col%2 ?
-                new CBHexId(this, hexId.col-1, hexId.row) :
-                new CBHexId(this, hexId.col-1, hexId.row+1);
+                this._hex(hexId.col-1, hexId.row).id :
+                this._hex(hexId.col-1, hexId.row+1).id;
         }
         else if (angle === 300) {
             return hexId.col%2 ?
-                new CBHexId(this, hexId.col-1, hexId.row-1) :
-                new CBHexId(this, hexId.col-1, hexId.row);
+                this._hex(hexId.col-1, hexId.row-1).id :
+                this._hex(hexId.col-1, hexId.row).id;
         }
+    }
+
+    getUnitsOnHex(hexId) {
+        console.assert(hexId.map===this);
+        return this._hex(hexId.col, hexId.row).units;
     }
 
     getLocation(point) {
@@ -495,6 +655,10 @@ export class CBCounter {
 
     get location() {
         return this._element.location;
+    }
+
+    get viewportLocation() {
+        return this.artifact.viewportLocation;
     }
 
     set location(location) {
@@ -583,9 +747,12 @@ export class CBUnit extends CBCounter {
     constructor(player, path) {
         super(path, CBUnit.DIMENSION);
         this._player = player;
-        this._movementPoints = 2;
-        this._extendedMovementPoints = this._movementPoints*1.5;
+        this._movementPoints=2;
+        this._extendedMovementPoints=this._movementPoints*1.5;
         this._tiredness=0;
+        this._cohesion=0;
+        this._engaging=false;
+        this._charging=false;
     }
 
     createArtifact(path, dimension) {
@@ -608,9 +775,14 @@ export class CBUnit extends CBCounter {
             extendedMovementPoints: this._extendedMovementPoints,
             tiredness: this._tiredness,
             tirednessArtifact: this._tirednessArtifact,
+            cohesion: this._cohesion,
+            cohesionArtifact: this._cohesionArtifact,
             activated: this._activated,
             played: this._played,
-            playedArtifact: this._playedArtifact
+            playedArtifact: this._playedArtifact,
+            engaging: this._engaging,
+            charging: this._charging,
+            engagingArtifact: this._engagingArtifact
         };
     }
 
@@ -620,9 +792,14 @@ export class CBUnit extends CBCounter {
         this._extendedMovementPoints = memento.extendedMovementPoints;
         this._tiredness = memento.tiredness;
         this._tirednessArtifact = memento.tirednessArtifact;
+        this._cohesion = memento.cohesion;
+        this._cohesionArtifact = memento.cohesionArtifact;
         this._activated = memento.activated;
         this._played = memento.played;
         this._playedArtifact = memento.playedArtifact;
+        this._engaging = memento.engaging;
+        this._charging = memento.charging;
+        this._engagingArtifact = memento.engagingArtifact;
     }
 
     _reset(player) {
@@ -670,6 +847,7 @@ export class CBUnit extends CBCounter {
 
     set hexLocation(hexId) {
         this._hexLocation = hexId;
+        hexId.hex.addUnit(this);
         this.location = hexId.location;
     }
 
@@ -725,10 +903,27 @@ export class CBUnit extends CBCounter {
     }
 
     move(hexId, cost) {
-        Memento.register(this);
-        this._hexLocation = hexId;
-        this._element.move(hexId.location);
-        this._updateMovementPoints(cost);
+        if (hexId !== this._hexLocation) {
+            Memento.register(this);
+            this._hexLocation && this._hexLocation.hex.deleteUnit(this);
+            hexId && hexId.hex.appendUnit(this);
+            if (!this._hexLocation) {
+                if (hexId) {
+                    this._element.show(hexId.map.game.board);
+                    this._element.move(hexId.location);
+                }
+            }
+            else {
+                if (hexId) {
+                    this._element.move(hexId.location);
+                }
+                else {
+                    this._element.hide(this._hexLocation.map.game.board);
+                }
+            }
+            this._hexLocation = hexId;
+            this._updateMovementPoints(cost);
+        }
     }
 
     rotate(angle, cost) {
@@ -738,20 +933,30 @@ export class CBUnit extends CBCounter {
     }
 
     _updateTiredness(tiredness) {
-        console.assert(tiredness===0 || tiredness===1 || tiredness===2);
+        console.assert(tiredness===CBTiredness.NONE
+            || tiredness===CBTiredness.TIRED
+            || tiredness===CBTiredness.EXHAUSTED);
         this._tiredness = tiredness;
         this._tirednessArtifact && this._element.deleteArtifact(this._tirednessArtifact);
         delete this._tirednessArtifact;
-        if (this._tiredness === 1) {
+        if (this._tiredness === CBTiredness.TIRED) {
             this._tirednessArtifact = this.createMarkerArtifact("/CBlades/images/markers/tired.png", 2);
         }
-        else if (this._tiredness === 2) {
+        else if (this._tiredness === CBTiredness.EXHAUSTED) {
             this._tirednessArtifact = this.createMarkerArtifact("/CBlades/images/markers/exhausted.png", 2);
         }
     }
 
     get tiredness() {
         return this._tiredness;
+    }
+
+    isTired() {
+        return this._tiredness === CBTiredness.TIRED;
+    }
+
+    isExhausted() {
+        return this._tiredness === CBTiredness.EXHAUSTED;
     }
 
     addOneTirednessLevel() {
@@ -763,17 +968,98 @@ export class CBUnit extends CBCounter {
         Memento.register(this);
         this._updateTiredness(this._tiredness-1);
     }
+
+    _updateCohesion(cohesion) {
+        console.assert(cohesion===0 || cohesion===1 || cohesion===2);
+        this._cohesion = cohesion;
+        this._cohesionArtifact && this._element.deleteArtifact(this._cohesionArtifact);
+        delete this._cohesionArtifact;
+        if (this._cohesion === CBCohesion.DISRUPTED) {
+            this._cohesionArtifact = this.createMarkerArtifact("/CBlades/images/markers/disrupted.png", 3);
+        }
+        else if (this._cohesion === CBCohesion.ROUTED) {
+            this._cohesionArtifact = this.createMarkerArtifact("/CBlades/images/markers/fleeing.png", 3);
+        }
+    }
+
+    get cohesion() {
+        return this._cohesion;
+    }
+
+    isDisrupted() {
+        return this._cohesion === CBCohesion.DISRUPTED;
+    }
+
+    isRouted() {
+        return this._cohesion === CBCohesion.ROUTED;
+    }
+
+    addOneCohesionLevel() {
+        Memento.register(this);
+        this._updateCohesion(this._cohesion+1);
+    }
+
+    disrupt() {
+        console.assert(!this.isRouted());
+        Memento.register(this);
+        this._updateCohesion(CBCohesion.DISRUPTED);
+    }
+
+    reorganize() {
+        console.assert(this.isDisrupted());
+        Memento.register(this);
+        this._updateCohesion(CBCohesion.GOOD_ORDER);
+    }
+
+    rally() {
+        console.assert(this.isRouted());
+        Memento.register(this);
+        this._updateCohesion(CBCohesion.DISRUPTED);
+    }
+
+    _updateEngagement(engaged, charging) {
+        if(this._engaging !== engaged || this._charging !== charging) {
+            this._engaging = engaged;
+            this._charging = charging;
+            this._engagingArtifact && this._element.deleteArtifact(this._engagingArtifact);
+            delete this._engagingArtifact;
+            if (this._charging) {
+                this._engagingArtifact = this.createMarkerArtifact("/CBlades/images/markers/charge.png", 1);
+            }
+            else if (this._engaging) {
+                this._engagingArtifact = this.createMarkerArtifact("/CBlades/images/markers/contact.png", 1);
+            }
+        }
+    }
+
+    isEngaging() {
+        return this._engaging;
+    }
+
+    isCharging() {
+        return this._charging;
+    }
+
+    markAsEngaging(engaging) {
+        Memento.register(this);
+        this._updateEngagement(engaging, this._charging);
+    }
+
+    markAsCharging(charging) {
+        Memento.register(this);
+        this._updateEngagement(this._engaging, charging);
+    }
+
 }
 CBUnit.DIMENSION = new Dimension2D(142, 142);
 CBUnit.MARKER_DIMENSION = new Dimension2D(64, 64);
 CBUnit.MARKERS_POSITION = [
     new Point2D(CBUnit.DIMENSION.w/2, -CBUnit.DIMENSION.h/2),
-    new Point2D(-CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2-CBUnit.MARKER_DIMENSION.h*2),
-    new Point2D(-CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2-CBUnit.MARKER_DIMENSION.h),
+    new Point2D(-CBUnit.DIMENSION.w/2, -CBUnit.DIMENSION.h/2),
+    new Point2D(-CBUnit.DIMENSION.w/2, 0),
     new Point2D(-CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2),
-    new Point2D(-CBUnit.DIMENSION.w/2+CBUnit.MARKER_DIMENSION.w, CBUnit.DIMENSION.h/2),
-    new Point2D(-CBUnit.DIMENSION.w/2+CBUnit.MARKER_DIMENSION.w*2, CBUnit.DIMENSION.h/2)
-];
+    new Point2D(0, CBUnit.DIMENSION.h/2),
+    new Point2D(CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2)];
 CBUnit.fromArtifact = function(artifact) {
     return artifact.element._unit;
 }

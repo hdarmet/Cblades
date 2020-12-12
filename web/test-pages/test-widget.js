@@ -117,6 +117,40 @@ describe("Widget", ()=> {
             assert(getDirectives(level)).arrayNotContains("setTransform(1, 0, 0, 1, 445, 220)");
     });
 
+    it("Checks modal opening and closing", () => {
+        given:
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var level = board.getLevel("widgets");
+            let popup = new DPopup(new Dimension2D(100, 150), true);
+            board.paint();
+            resetDirectives(level);
+        when:
+            popup.open(board, new Point2D(5, 5));
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 500, 300)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "setTransform(1, 0, 0, 1, 55, 80)",
+                    "strokeRect(-50, -75, 100, 150)",
+                    "fillStyle = #FFFFFF",
+                    "fillRect(-50, -75, 100, 150)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            popup.close();
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayNotContains([]);
+    });
+
     it("Checks that global events close all popup", () => {
         given:
             DPopup.activate();
@@ -146,6 +180,7 @@ describe("Widget", ()=> {
                 "/CBlades/images/icons/menu3.png", "/CBlades/images/icons/menu3-grayed.png",
                 0, 1, ()=>{return true;});
             let menu = new DIconMenu(
+                false,
                 new DIconMenuItem("/CBlades/images/icons/menu1.png", "/CBlades/images/icons/menu1-grayed.png",
                     0, 0, ()=>{return true;}),
                 new DIconMenuItem("/CBlades/images/icons/menu2.png", "/CBlades/images/icons/menu2-grayed.png",
@@ -191,7 +226,7 @@ describe("Widget", ()=> {
                     clicked++;
                     return clicked===2; // click two times to return true;
                 });
-            let menu = new DIconMenu(icon);
+            let menu = new DIconMenu(false, icon);
             menu.open(board, new Point2D(5, 5));
             loadAllImages();
             board.paint();
@@ -257,7 +292,7 @@ describe("Widget", ()=> {
                 clicked=true;
                 return true;
             }).setActive(false);
-            let menu = new DIconMenu(icon);
+            let menu = new DIconMenu(false, icon);
             menu.open(board, new Point2D(5, 5));
             loadAllImages();
             board.paint();
@@ -280,6 +315,38 @@ describe("Widget", ()=> {
         then:
             assert(clicked).isFalse();
     });
+
+    it("Checks icon menu modal mode", () => {
+        given:
+            DPopup.activate();
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var widgetsLevel = board.getLevel("widgets");
+            board.paint();
+            resetDirectives(widgetsLevel);
+            let icon = new DIconMenuItem("/CBlades/images/icons/menu1.png", "/CBlades/images/icons/menu1-grayed.png",
+                0, 0,
+                ()=>{ return true });
+            let menu = new DIconMenu(true, icon);
+            menu.open(board, new Point2D(5, 5));
+            loadAllImages();
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 500, 300)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "setTransform(1, 0, 0, 1, 40, 40)",
+                    "strokeRect(-35, -35, 70, 70)",
+                    "fillStyle = #FFFFFF",
+                    "fillRect(-35, -35, 70, 70)",
+                "restore()"
+            ]);
+   });
 
     it("Checks pushButton widget", () => {
         given:
@@ -405,7 +472,7 @@ describe("Widget", ()=> {
             var commandsLevel = board.getLevel("widget-commands");
             var clicked = false;
             let pushButton = new DPushButton("/CBlades/images/commands/button1.png", new Point2D(60, 60),
-                ()=>{clicked = true;});
+                animation=>{clicked = true; animation()});
             pushButton.setOnBoard(board);
             pushButton.setTurnAnimation(false);
             loadAllImages();

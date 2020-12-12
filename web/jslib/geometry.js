@@ -8,7 +8,7 @@ function round(v) {
 }
 
 /**
- *
+ * Atan2 method with some rounding to make angle comparison easier
  */
 export function atan2(dx, dy) {
     let angle = Math.round(Math.atan2(dx, -dy)*180/Math.PI*100)/100;
@@ -36,6 +36,14 @@ export function radian(deg) {
  */
 export function degree(rad) {
     return ((rad * 180) / Math.PI) % 360;
+}
+
+/**
+ * Compute the difference between two angles
+ */
+export function diffAngle(angle1, angle2) {
+    let diff = angle2 - angle1;
+    return diff<-180 ? diff+360 : diff>180 ? diff-360 : diff;
 }
 
 /**

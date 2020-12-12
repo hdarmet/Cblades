@@ -105,27 +105,39 @@ export class DPanel extends RectArtifact(DArtifact) {
 
 export class DPopup extends DWidget {
 
-    constructor(dimension) {
+    constructor(dimension, modal=false) {
         super();
+        this._modal = modal;
         this.setPanelSettings(dimension);
     }
 
     open(board, point) {
         if (DPopup._instance!==this) {
             DPopup.close();
+            if (this._modal) {
+                this._mask = new DMask("#000000", 0.3);
+                this._mask.open(board);
+            }
             this.setOnBoard(board);
             this.setLocation(this.adjust(point)); // After set on board because adjust need to know the layer
             DPopup._instance = this;
         }
     }
 
+    isModal() {
+        return this._modal;
+    }
+
     close() {
+        if (this._mask) {
+            this._mask.close();
+        }
         this.removeFromBoard();
         DPopup._instance = null;
     }
 }
 DPopup.close = function() {
-    if (DPopup._instance) {
+    if (DPopup._instance && !DPopup._instance.isModal()) {
         DPopup._instance.close();
     }
 };
@@ -223,7 +235,7 @@ DIconMenuItem.ICON_DIMENSION = new Dimension2D(DIconMenuItem.ICON_SIZE, DIconMen
 
 export class DIconMenu extends DPopup {
 
-    constructor(...items) {
+    constructor(modal, ...items) {
         function getDimension(items) {
             let rowMax = 0;
             let colMax = 0;
@@ -236,7 +248,7 @@ export class DIconMenu extends DPopup {
                 (rowMax+1)*(DIconMenuItem.ICON_SIZE+DIconMenuItem.MARGIN)+DIconMenuItem.MARGIN
             );
         }
-        super(getDimension(items));
+        super(getDimension(items), modal);
         for (let item of items) {
             this.addArtifact(item);
             let position = item.position;
@@ -379,10 +391,11 @@ export class DPushButton extends DElement {
     }
 
     action() {
-        if (this._animation) {
-            this._animation();
-        }
-        this._action();
+        this._action(()=>{
+            if (this._animation) {
+                this._animation();
+            }
+        });
     }
 
     get trigger() {

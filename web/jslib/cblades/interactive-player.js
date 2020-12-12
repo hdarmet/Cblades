@@ -1,4 +1,5 @@
 import {
+    diffAngle,
     Dimension2D, Point2D
 } from "../geometry.js";
 import {
@@ -11,7 +12,7 @@ import {
     CBAbstractArbitrator, CBAbstractPlayer, CBActuator,
     CBGame,
     CBHexSideId,
-    CBMovement,
+    CBMovement, CBTiredness,
     CBWeather
 } from "./game.js";
 import {
@@ -53,33 +54,33 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     _allowedMove(unit, first) {
-        function processAngle(directions, arbitrator, unit, angle, first) {
-            let nearHexId = unit.hexLocation.getNearHex(angle);
-            let cost = arbitrator.getMovementCost(unit, nearHexId);
+        function processAngle(direction, arbitrator, unit, first) {
+            let cost = arbitrator.getMovementCost(unit, direction.hexId);
             if (unit.movementPoints>=cost) {
-                directions[angle] = { hex:nearHexId, type:CBMovement.NORMAL};
+                direction.type = CBMovement.NORMAL;
+                return true;
             }
-            else if (unit.tiredness<2) {
+            else if (unit.tiredness<CBTiredness.EXHAUSTED) {
                 if (unit.extendedMovementPoints >= cost) {
-                    directions[angle] = {hex: nearHexId, type: CBMovement.EXTENDED};
+                    direction.type = CBMovement.EXTENDED;
+                    return true;
                 } else if (first) {
-                    directions[angle] = {hex: nearHexId, type: CBMovement.MINIMAL};
+                    direction.type = CBMovement.MINIMAL;
+                    return true;
                 }
             }
+            return false;
         }
 
-        let directions = [];
-        let angle = unit.angle;
-        if (angle%60) {
-            processAngle(directions, this, unit, angle - 30, first);
-            processAngle(directions, this, unit, (angle + 30) % 360, first);
+        let directions = this._getUnitForwardZone(unit);
+        let result = [];
+        for (let angle in directions) {
+            let direction = directions[angle];
+            if (processAngle(direction, this, unit, first)) {
+                result[angle] = direction;
+            }
         }
-        else {
-            processAngle(directions, this, unit, (angle + 300) % 360, first);
-            processAngle(directions, this, unit, angle, first);
-            processAngle(directions, this, unit, (angle + 60) % 360, first);
-        }
-        return directions;
+        return result;
     }
 
     allowedMove(unit, first) {
@@ -134,12 +135,80 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return { success, minorRestingCapacity };
     }
 
+    processEngagementResult(unit, diceResult) {
+        let success = diceResult[0]+diceResult[1]<=8;
+        return { success };
+    }
+
     getWeather() {
         return CBWeather.CLEAR;
     }
 
     getWingTiredness(unit) {
         return 10;
+    }
+
+    _isHexOnForwardZone(unit, hexId) {
+        let unitAngle = unit.angle;
+        let hexAngle = unit.hexLocation.isNearHex(hexId);
+        let diff = diffAngle(hexAngle, unitAngle);
+        return diff>=-60 && diff<=60;
+    }
+
+    _getUnitForwardZone(unit) {
+        let directions = [];
+        let angle = unit.angle;
+        if (angle%60) {
+            directions[angle-30]={hex:unit.hexLocation.getNearHex(angle -30)};
+            directions[(angle + 30) % 360]={hex:unit.hexLocation.getNearHex((angle + 30) % 360)};
+        }
+        else {
+            directions[(angle + 300) % 360]={hex:unit.hexLocation.getNearHex((angle + 300) % 360)};
+            directions[angle]={hex:unit.hexLocation.getNearHex(angle)};
+            directions[(angle + 60) % 360]={hex:unit.hexLocation.getNearHex((angle + 60) % 360)};
+        }
+        return directions;
+    }
+
+    _arePlayersFoes(player1, player2) {
+        return player1 !== player2;
+    }
+
+    _areUnitsFoes(unit1, unit2) {
+        return this._arePlayersFoes(unit1.player, unit2.player);
+    }
+
+    isUnitOnContact(unit) {
+        let directions = this._getUnitForwardZone(unit);
+        for (let angle in directions) {
+            let direction = directions[angle];
+            let nearUnits = direction.hex.map.getUnitsOnHex(direction.hex);
+            if (nearUnits.length) {
+                if (this._areUnitsFoes(nearUnits[length], unit)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    isAUnitEngageAnotherUnit(unit1, unit2, engagingMarker=false) {
+        if (engagingMarker && !unit1.isEngaging() && !unit1.isCharging()) return false;
+        if (!this._areUnitsFoes(unit1, unit2)) return false;
+        return this._isHexOnForwardZone(unit1, unit2.hexLocation);
+    }
+
+    isUnitEngaged(unit, engagingMarker=false) {
+        for (let angle=0; angle<=300; angle+=60) {
+            let hexId = unit.hexLocation.getNearHex(angle);
+            let nearUnits = hexId.map.getUnitsOnHex(hexId);
+            for (let nearUnit of nearUnits) {
+                if (this.isAUnitEngageAnotherUnit(nearUnit, unit, engagingMarker)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 }
@@ -150,14 +219,138 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         super();
     }
 
-    selectUnit(unit, event) {
-        if (unit.isCurrentPlayer() && !unit.hasBeenActivated()) {
-            unit.select();
+    _markUnitAsBeingActivated(unit) {
+        if (unit.isEngaging()) {
+            unit.markAsEngaging(false);
+        }
+        unit.markAsBeingActivated();
+    }
+
+    _selectUnit(unit, event) {
+        unit.select();
+        if (!unit.hasBeenActivated() && this.game.arbitrator.isUnitEngaged(unit, true)) {
+            this._checkDefenderEngagement(unit, unit.viewportLocation, ()=>{
+                this.openActionMenu(unit,
+                    new Point2D(event.offsetX, event.offsetY),
+                    this.game.arbitrator.allowedActions(unit),
+                    true
+                );
+                this._markUnitAsBeingActivated(unit);
+            });
+        }
+        else {
             this.openActionMenu(unit,
                 new Point2D(event.offsetX, event.offsetY),
-                this.game.arbitrator.allowedActions(unit)
+                this.game.arbitrator.allowedActions(unit),
+                false
             );
         }
+    }
+
+    finishTurn(animation) {
+        this._checkLastSelectedUnitEngagement(()=>{
+            super.finishTurn(animation);
+        });
+    }
+
+    _checkLastSelectedUnitEngagement(action) {
+        let lastUnit = this.game.selectedUnit;
+        if (lastUnit && lastUnit.isCurrentPlayer() &&
+            lastUnit.isEngaging() && this.game.arbitrator.isUnitEngaged(lastUnit, false)) {
+            this._checkAttackerEngagement(lastUnit, lastUnit.viewportLocation, ()=> {
+                action();
+                return true;
+            });
+        }
+        else {
+            action();
+            return true;
+        }
+    }
+
+    selectUnit(unit, event) {
+        if (unit.isCurrentPlayer() && !unit.hasBeenActivated()) {
+            this._checkLastSelectedUnitEngagement(()=>{
+                this._selectUnit(unit, event);
+            });
+        }
+    }
+
+    _checkAttackerEngagement(unit, point, action) {
+        let result = new DResult();
+        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        mask.setAction(()=>{mask.close(); scene.close();});
+        mask.open(this.game.board, point);
+        scene.addWidget(
+            new CBCheckAttackerEngagementInsert(), new Point2D(-CBCheckAttackerEngagementInsert.DIMENSION.w/2, 0)
+        ).addWidget(
+            new CBMoralInsert(), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+        ).addWidget(
+            dice.setFinalAction(()=>{
+                dice.activate = false;
+                let {success} = this._processEngagementResult(unit, dice.result);
+                if (success) {
+                    result.success().show();
+                }
+                else {
+                    result.failure().show();
+                }
+            }),
+            new Point2D(70, 70)
+        ).addWidget(
+            result.setFinalAction(()=>{
+                mask.close();
+                scene.close();
+                action();
+            }),
+            new Point2D(0, 0)
+        ).open(this.game.board, point);
+
+    }
+
+    _checkDefenderEngagement(unit, point, action) {
+        let result = new DResult();
+        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        mask.setAction(()=>{mask.close(); scene.close();});
+        mask.open(this.game.board, point);
+        scene.addWidget(
+            new CBCheckDefenderEngagementInsert(), new Point2D(-CBCheckDefenderEngagementInsert.DIMENSION.w/2, 0)
+        ).addWidget(
+            new CBMoralInsert(), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+        ).addWidget(
+            dice.setFinalAction(()=>{
+                dice.activate = false;
+                let {success} = this._processEngagementResult(unit, dice.result);
+                if (success) {
+                    result.success().show();
+                }
+                else {
+                    result.failure().show();
+                }
+            }),
+            new Point2D(70, 70)
+        ).addWidget(
+            result.setFinalAction(()=>{
+                mask.close();
+                scene.close();
+                action();
+            }),
+            new Point2D(0, 0)
+        ).open(this.game.board, point);
+
+    }
+
+    _processEngagementResult(unit, diceResult) {
+        let result = this.game.arbitrator.processEngagementResult(unit, diceResult);
+        if (!result.success) {
+            unit.addOneCohesionLevel();
+        }
+        Memento.clear();
+        return result;
     }
 
     _createMovementActuators(unit, start) {
@@ -188,11 +381,16 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         }
     }
 
+    _checkContact(unit) {
+        unit.markAsEngaging(this.game.arbitrator.isUnitOnContact(unit));
+    }
+
     rotateUnit(unit, angle, event) {
         let cost = this.game.arbitrator.getRotationCost(unit, angle);
         this._updateTirednessForMovement(unit, cost);
         unit.rotate(angle, cost);
         let played = this._createMovementActuators(unit);
+        this._checkContact(unit);
         this._markUnitActivationAfterMovement(unit, played);
     }
 
@@ -202,6 +400,7 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         unit.move(hexId, cost);
         this._createMovementActuators(unit);
         let played = this._createMovementActuators(unit);
+        this._checkContact(unit);
         this._markUnitActivationAfterMovement(unit, played);
     }
 
@@ -233,7 +432,7 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.activate = false;
-                let {success, minorRestingCapacity} = this.processRestResult(unit, dice.result);
+                let {success, minorRestingCapacity} = this._processRestResult(unit, dice.result);
                 if (success) {
                     result.success().show();
                 }
@@ -251,7 +450,7 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
     }
 
-    processRestResult(unit, diceResult) {
+    _processRestResult(unit, diceResult) {
         let result = this.game.arbitrator.processRestResult(unit, diceResult);
         if (result.success) {
             unit.removeOneTirednessLevel();
@@ -261,8 +460,8 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         return result;
     }
 
-    openActionMenu(unit, offset, actions) {
-        let popup = new CBActionMenu(unit, actions);
+    openActionMenu(unit, offset, actions, modal= false) {
+        let popup = new CBActionMenu(unit, actions, modal);
         this.game.closeActuators();
         this.game.openPopup(popup, new Point2D(
             offset.x - popup.dimension.w/2 + CBGame.POPUP_MARGIN,
@@ -281,8 +480,8 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
 
 export class CBActionMenu extends DIconMenu {
 
-    constructor(unit, actions) {
-        super(new DIconMenuItem("/CBlades/images/icons/move.png","/CBlades/images/icons/move-gray.png",
+    constructor(unit, actions, modal) {
+        super(modal, new DIconMenuItem("/CBlades/images/icons/move.png","/CBlades/images/icons/move-gray.png",
             0, 0, event => {
                 unit.player.startMoveUnit(unit, event);
                 return true;
@@ -538,3 +737,29 @@ export class CBCheckRestInsert extends DInsert {
 }
 CBCheckRestInsert.DIMENSION = new Dimension2D(444, 451);
 
+export class CBCheckAttackerEngagementInsert extends DInsert {
+
+    constructor() {
+        super("/CBlades/images/inserts/check-attacker-engagement-insert.png", CBCheckAttackerEngagementInsert.DIMENSION);
+    }
+
+}
+CBCheckAttackerEngagementInsert.DIMENSION = new Dimension2D(444, 763);
+
+export class CBCheckDefenderEngagementInsert extends DInsert {
+
+    constructor() {
+        super("/CBlades/images/inserts/check-defender-engagement-insert.png", CBCheckDefenderEngagementInsert.DIMENSION);
+    }
+
+}
+CBCheckDefenderEngagementInsert.DIMENSION = new Dimension2D(444, 763);
+
+export class CBMoralInsert extends DInsert {
+
+    constructor() {
+        super("/CBlades/images/inserts/moral-insert.png", CBMoralInsert.DIMENSION);
+    }
+
+}
+CBMoralInsert.DIMENSION = new Dimension2D(444, 389);

@@ -4,12 +4,12 @@ import {
     describe, it, assert
 } from "../jstest/jtest.js";
 import {
-    Point2D, Dimension2D, Matrix2D, Area2D, same, inside, atan2
+    Point2D, Dimension2D, Matrix2D, Area2D, same, inside, atan2, diffAngle
 } from "../jslib/geometry.js";
 
 describe("Geometry", ()=> {
 
-    it("Checks 'angle' method", () => {
+    it("Checks 'atan2' method", () => {
         assert(atan2(0, -15)).equalsTo(0);
         assert(atan2(15, -15)).equalsTo(45);
         assert(atan2( 15, 0)).equalsTo(90);
@@ -18,6 +18,13 @@ describe("Geometry", ()=> {
         assert(atan2(-15, 15)).equalsTo(225);
         assert(atan2( -15, 0)).equalsTo(270);
         assert(atan2(-15, -15)).equalsTo(315);
+    });
+
+    it("Checks 'diffAngle' method", () => {
+        assert(diffAngle(0, 300)).equalsTo(-60);
+        assert(diffAngle(300, 0)).equalsTo(60);
+        assert(diffAngle(30, 90)).equalsTo(60);
+        assert(diffAngle(90, 30)).equalsTo(-60);
     });
 
     it("Checks 'same' method", () => {

@@ -56,7 +56,7 @@ describe("Interactive Player", ()=> {
         var map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
         let unit = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-        game.addCounter(unit, new CBHexId(map, 5, 8));
+        game.addCounter(unit, map.getHex( 5, 8));
         game.start();
         loadAllImages();
         return { game, arbitrator, player, map, unit };
@@ -73,9 +73,9 @@ describe("Interactive Player", ()=> {
         let map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
         let counter1 = new CBUnit(player1, "/CBlades/images/units/misc/unit1.png");
-        game.addCounter(counter1, new CBHexId(map, 5, 8));
+        game.addCounter(counter1, map.getHex(5, 8));
         let counter2 = new CBUnit(player2, "/CBlades/images/units/misc/unit2.png");
-        game.addCounter(counter2, new CBHexId(map, 6, 8));
+        game.addCounter(counter2, map.getHex(6, 8));
         game.start();
         loadAllImages();
         return {game, map, counter1, counter2, player1, player2};
@@ -91,8 +91,8 @@ describe("Interactive Player", ()=> {
         game.setMap(map);
         let unit1 = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
         let unit2 = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-        game.addCounter(unit1, new CBHexId(map, 5, 8));
-        game.addCounter(unit2, new CBHexId(map, 8, 7));
+        game.addCounter(unit1, map.getHex(5, 8));
+        game.addCounter(unit2, map.getHex( 8, 7));
         game.start();
         loadAllImages();
         return {game, map, unit1, unit2, player};
@@ -705,7 +705,7 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/tired.png, -273.5, -320.3125, 64, 64)",
+                "drawImage(/CBlades/images/markers/tired.png, -273.5, -327.3125, 64, 64)",
                 "restore()"
             ]);
         when:
@@ -723,7 +723,7 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -517.1875, 64, 64)",
+                "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -524.1875, 64, 64)",
                 "restore()",
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
