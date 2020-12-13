@@ -8,14 +8,13 @@ import {
 } from "../../jslib/draw.js";
 import {
     createEvent,
-    getDirectives, loadAllImages, mockPlatform, resetDirectives
+    getDirectives, getLevels, loadAllImages, mockPlatform, resetDirectives
 } from "../mocks.js";
 import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
     CBGame,
-    CBHexId,
     CBMap,
     CBUnit,
     CBActuator,
@@ -77,8 +76,7 @@ describe("Game", ()=> {
             game.setArbitrator(arbitrator);
             var player = new CBAbstractPlayer();
             game.addPlayer(player);
-            var mapLevel = game._board.getLevel("map");
-            var unitsLevel = game._board.getLevel("units");
+            var [mapLevel, unitsLevel] = getLevels(game, "map","units");
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
             let counter = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
@@ -156,7 +154,7 @@ describe("Game", ()=> {
     it("Checks popup management", () => {
         given:
             var {game} = createTinyGame();
-            var widgetsLevel= game.board.getLevel("widgets");
+            var [widgetsLevel] = getLevels(game, "widgets");
             resetDirectives(widgetsLevel);
         when:
             var popup = new DPopup(new Dimension2D(100, 200));
@@ -179,7 +177,7 @@ describe("Game", ()=> {
     it("Checks global push buttons menu", () => {
         given:
             var game = new CBGame();
-            var commandsLevel = game.board.getLevel("widget-commands");
+            var [commandsLevel] = getLevels(game, "widget-commands");
         when:
             game.setMenu();
             game.start();
@@ -250,7 +248,6 @@ describe("Game", ()=> {
     it("Checks undo/redo push buttons menu", () => {
         given:
             var game = new CBGame();
-            var commandsLevel = game._board.getLevel("widget-commands");
             game.setMenu();
             game.start();
             loadAllImages();
@@ -453,7 +450,7 @@ describe("Game", ()=> {
     it("Checks that clicking on the map re-centers the viewport ", () => {
         given:
             var game = new CBGame();
-            var mapLevel = game._board.getLevel("map");
+            var [mapLevel] = getLevels(game, "map");
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
             game.start();
@@ -525,7 +522,7 @@ describe("Game", ()=> {
             game.start();
             loadAllImages();
             counter.angle = 45;
-            var unitsLevel = game.board.getLevel("units");
+            var [unitsLevel] = getLevels(game, "units");
         when:
             resetDirectives(unitsLevel);
             repaint(game);
@@ -604,7 +601,7 @@ describe("Game", ()=> {
     it("Checks unit selection/deselection appearance", () => {
         given:
             var { game, unit } = createTinyGame();
-            var unitsLevel = game.board.getLevel("units");
+            var [unitsLevel] = getLevels(game, "units");
         when:
             resetDirectives(unitsLevel);
             unit.select();
@@ -651,7 +648,7 @@ describe("Game", ()=> {
     it("Checks unit appearance when mouse is over it", () => {
         given:
             var { game, unit } = createTinyGame();
-            var unitsLevel = game.board.getLevel("units");
+            var [unitsLevel] = getLevels(game, "units");
             paint(game);
         then:
             assert(getDirectives(unitsLevel, 6)).arrayEqualsTo([
@@ -701,7 +698,7 @@ describe("Game", ()=> {
         given:
             var { game, player, unit } = createTinyGame();
             player.selectUnit = function(unit, event) {unit.select();};
-            var unitsLevel = game.board.getLevel("units");
+            var [unitsLevel] = getLevels(game, "units");
         when:
             resetDirectives(unitsLevel);
             mouseClickOnCounter(game, unit)
@@ -750,15 +747,13 @@ describe("Game", ()=> {
     it("Checks that when moving a unit, movement points are adjusted", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var unitLevel = game.board.getLevel("units");
-            var markersLevel = game.board.getLevel("markers");
+            var [unitsLevel, markersLevel] = getLevels(game, "units", "markers");
         when:
-            resetDirectives(unitLevel);
-            resetDirectives(markersLevel);
+            resetDirectives(unitsLevel, markersLevel);
             unit.move(map.getHex(5, 7), 1);
             paint(game);
         then:
-            assert(getDirectives(unitLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -366.3125, 142, 142)",
@@ -768,12 +763,11 @@ describe("Game", ()=> {
             assert(unit.movementPoints).equalsTo(1);
             assert(unit.extendedMovementPoints).equalsTo(2);
         when:
-            resetDirectives(unitLevel);
-            resetDirectives(markersLevel);
+            resetDirectives(unitsLevel, markersLevel);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(unitLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
@@ -787,21 +781,21 @@ describe("Game", ()=> {
     it("Checks unit move from outside the map or out of the map", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var unitLevel = game.board.getLevel("units");
+            var [unitsLevel] = getLevels(game, "units");
         when:
-            resetDirectives(unitLevel);
+            resetDirectives(unitsLevel);
             unit.move(null, 0);
             paint(game);
         then:
-            assert(getDirectives(unitLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([]);
             assert(unit.hexLocation).isNotDefined();
         when:
             Memento.open();
-            resetDirectives(unitLevel);
+            resetDirectives(unitsLevel);
             unit.move(map.getHex(5, 7), 0);
             paint(game);
         then:
-            assert(getDirectives(unitLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -366.3125, 142, 142)",
@@ -810,17 +804,17 @@ describe("Game", ()=> {
             assert(unit.hexLocation.toString()).equalsTo("Hex(5, 7)");
         when:
             Memento.undo();
-            resetDirectives(unitLevel);
+            resetDirectives(unitsLevel);
             paint(game);
         then:
-            assert(getDirectives(unitLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([]);
             assert(unit.hexLocation).isNotDefined();
         when:
             Memento.undo();
-            resetDirectives(unitLevel);
+            resetDirectives(unitsLevel);
             paint(game);
         then:
-            assert(getDirectives(unitLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
@@ -832,15 +826,13 @@ describe("Game", ()=> {
     it("Checks rotating a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var unitLevel = game.board.getLevel("units");
-            var markersLevel = game.board.getLevel("markers");
+            var [unitsLevel, markersLevel] = getLevels(game, "units", "markers");
         when:
-            resetDirectives(unitLevel);
-            resetDirectives(markersLevel);
+            resetDirectives(unitsLevel, markersLevel);
             unit.rotate(90, 0.5);
             paint(game);
         then:
-            assert(getDirectives(unitLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0, 0.4888, -0.4888, 0, 368.5545, 435.2212)",
                     "shadowColor = #000000", "shadowBlur = 15",
@@ -850,12 +842,11 @@ describe("Game", ()=> {
             assert(unit.movementPoints).equalsTo(1.5);
             assert(unit.extendedMovementPoints).equalsTo(2.5);
         when:
-            resetDirectives(unitLevel);
-            resetDirectives(markersLevel);
+            resetDirectives(unitsLevel, markersLevel);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(unitLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
@@ -867,7 +858,7 @@ describe("Game", ()=> {
     it("Checks adding a tiredness level to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var markersLevel = game.board.getLevel("markers");
+            var [markersLevel] = getLevels(game, "markers");
         then:
             assert(unit.isTired()).isFalse();
             assert(unit.isExhausted()).isFalse();
@@ -919,7 +910,7 @@ describe("Game", ()=> {
     it("Checks removing a tiredness level to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var markersLevel = game.board.getLevel("markers");
+            var [markersLevel] = getLevels(game, "markers");
         when:
             resetDirectives(markersLevel);
             unit.addOneTirednessLevel();
@@ -980,7 +971,7 @@ describe("Game", ()=> {
     it("Checks playing a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var markersLevel = game.board.getLevel("markers");
+            var [markersLevel] = getLevels(game, "markers");
         when:
             resetDirectives(markersLevel);
             unit.markAsBeingPlayed();
@@ -1008,7 +999,7 @@ describe("Game", ()=> {
     it("Checks played status of a unit when selection is changed or turn is changed", () => {
         given:
             var {game, unit1, unit2} = create2UnitsTinyGame();
-            var markersLevel = game.board.getLevel("markers");
+            var [markersLevel] = getLevels(game, "markers");
         when:
             unit1.select();
             unit1.markAsBeingActivated();
@@ -1042,7 +1033,7 @@ describe("Game", ()=> {
     it("Checks adding cohesion levels to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var markersLevel = game.board.getLevel("markers");
+            var [markersLevel] = getLevels(game, "markers");
         then:
             assert(unit.isDisrupted()).isFalse();
             assert(unit.isRouted()).isFalse();
@@ -1094,7 +1085,7 @@ describe("Game", ()=> {
     it("Checks removing cohesion levels to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var markersLevel = game.board.getLevel("markers");
+            var [markersLevel] = getLevels(game, "markers");
         when:
             resetDirectives(markersLevel);
             unit.addOneCohesionLevel();
@@ -1148,7 +1139,7 @@ describe("Game", ()=> {
     it("Checks mark unit as on contact", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var markersLevel = game.board.getLevel("markers");
+            var [markersLevel] = getLevels(game, "markers");
         when:
             resetDirectives(markersLevel);
             unit.markAsEngaging(true);
@@ -1176,7 +1167,7 @@ describe("Game", ()=> {
     it("Checks mark unit as charging", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var markersLevel = game.board.getLevel("markers");
+            var [markersLevel] = getLevels(game, "markers");
         when:
             resetDirectives(markersLevel);
             unit.markAsCharging(true);
@@ -1204,7 +1195,7 @@ describe("Game", ()=> {
     it("Checks that charge supersedes contact", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var markersLevel = game.board.getLevel("markers");
+            var [markersLevel] = getLevels(game, "markers");
         when:
             resetDirectives(markersLevel);
             unit.markAsEngaging(true);

@@ -1,2 +1,13 @@
 # Project exclude paths
 /out/
+/.idea/artifacts/
+/.idea/libraries/
+/.idea/.gitignore
+/.idea/.name
+/.idea/aws.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/uiDesigner.xml
+/.idea/vcs.xml
+/.idea/workspace.xml
+/out/*

@@ -1,7 +1,5 @@
 'use strict'
 
-'use strict'
-
 import {
     assert, before, describe, executeTimeouts, it
 } from "../../jstest/jtest.js";
@@ -11,7 +9,7 @@ import {
 } from "../../jslib/draw.js";
 import {
     createEvent,
-    filterPainting, getDirectives,
+    filterPainting, getDirectives, getLevels,
     loadAllImages,
     mockPlatform, removeFilterPainting, resetDirectives, stopRegister
 } from "../mocks.js";
@@ -26,8 +24,11 @@ import {
     DPopup, DResult
 } from "../../jslib/widget.js";
 import {
-    CBArbitrator, CBInteractivePlayer, CBMoveActuator, CBOrientationActuator
+    CBInteractivePlayer, CBMoveActuator, CBOrientationActuator
 } from "../../jslib/cblades/interactive-player.js";
+import {
+    CBArbitrator
+} from "../../jslib/cblades/arbitrator.js";
 
 describe("Interactive Player", ()=> {
 
@@ -72,13 +73,13 @@ describe("Interactive Player", ()=> {
         game.addPlayer(player2);
         let map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
-        let counter1 = new CBUnit(player1, "/CBlades/images/units/misc/unit1.png");
-        game.addCounter(counter1, map.getHex(5, 8));
-        let counter2 = new CBUnit(player2, "/CBlades/images/units/misc/unit2.png");
-        game.addCounter(counter2, map.getHex(6, 8));
+        let unit1 = new CBUnit(player1, "/CBlades/images/units/misc/unit1.png");
+        game.addCounter(unit1, map.getHex(5, 8));
+        let unit2 = new CBUnit(player2, "/CBlades/images/units/misc/unit2.png");
+        game.addCounter(unit2, map.getHex(6, 8));
         game.start();
         loadAllImages();
-        return {game, map, counter1, counter2, player1, player2};
+        return {game, map, unit1, unit2, player1, player2};
     }
 
     function create2UnitsTinyGame() {
@@ -127,14 +128,10 @@ describe("Interactive Player", ()=> {
     it("Checks that clicking on a unit select the unit ", () => {
         given:
             var {game, unit} = createTinyGame();
-            var unitsLevel = game.board.getLevel("units");
-            var widgetsLevel = game.board.getLevel("widgets");
-            var widgetItemsLevel = game.board.getLevel("widget-items");
+            var [unitsLevel, widgetsLevel, widgetItemsLevel] = getLevels(game, "units", "widgets", "widget-items");
             loadAllImages();
         when:
-            resetDirectives(unitsLevel);
-            resetDirectives(widgetsLevel);
-            resetDirectives(widgetItemsLevel);
+            resetDirectives(unitsLevel, widgetsLevel, widgetItemsLevel);
             clickOnCounter(game, unit);
         then:
             loadAllImages();
@@ -177,18 +174,18 @@ describe("Interactive Player", ()=> {
 
     it("Checks that a unit cannot be selected if it not belongs to the current player", () => {
         given:
-            var {game, counter1, player1, counter2} = create2PlayersTinyGame();
-            counter1.onMouseClick({offsetX:0, offsetY:0});
+            var {game, unit1, player1, unit2} = create2PlayersTinyGame();
+            unit1.onMouseClick({offsetX:0, offsetY:0});
         then:
             assert(game.currentPlayer).equalsTo(player1);
         when:
-            counter2.onMouseClick({offsetX:0, offsetY:0});
+            unit2.onMouseClick({offsetX:0, offsetY:0});
         then:
-            assert(game.selectedUnit).equalsTo(counter1);
+            assert(game.selectedUnit).equalsTo(unit1);
         when:
-            counter2.onMouseClick({offsetX:0, offsetY:0});  // Not executed ! Player2 is not the current player
+            unit2.onMouseClick({offsetX:0, offsetY:0});  // Not executed ! Player2 is not the current player
         then:
-            assert(game.selectedUnit).equalsTo(counter1);
+            assert(game.selectedUnit).equalsTo(unit1);
     });
 
     it("Checks move action actuators when unit is oriented toward an hexside", () => {
@@ -254,7 +251,7 @@ describe("Interactive Player", ()=> {
     it("Checks move action actuators appearance", () => {
         given:
             var { game, unit } = createTinyGame();
-            var actuatorsLevel = game.board.getLevel("actuators");
+            var [actuatorsLevel] = getLevels(game, "actuators");
             clickOnCounter(game, unit);
             clickOnMoveAction(game);
             loadAllImages();
@@ -309,7 +306,7 @@ describe("Interactive Player", ()=> {
     it("Checks mouse move over a trigger of a move actuator", () => {
         given:
             var { game, unit } = createTinyGame();
-            var actuatorsLevel = game._board.getLevel("actuators");
+            var [actuatorsLevel] = getLevels(game, "actuators");
             clickOnCounter(game, unit);
             clickOnMoveAction(game);
             loadAllImages();
@@ -347,7 +344,7 @@ describe("Interactive Player", ()=> {
     it("Checks mouse move over a trigger of an orientation actuator", () => {
         given:
             var { game, unit } = createTinyGame();
-            var actuatorsLevel = game._board.getLevel("actuators");
+            var [actuatorsLevel] = getLevels(game, "actuators");
             clickOnCounter(game, unit);
             clickOnMoveAction(game);
             loadAllImages();
@@ -528,18 +525,12 @@ describe("Interactive Player", ()=> {
     });
 
     function resetAllDirectives(game) {
-        var unitsLevel = game._board.getLevel("units");
-        var markersLevel = game._board.getLevel("markers");
-        var actuatorsLevel = game._board.getLevel("actuators");
-        resetDirectives(unitsLevel);
-        resetDirectives(markersLevel);
-        resetDirectives(actuatorsLevel);
+        var [unitsLevel, markersLevel, actuatorsLevel] = getLevels(game,"units", "markers", "actuators");
+        resetDirectives(unitsLevel, markersLevel, actuatorsLevel);
     }
 
     function registerAllDirectives(game) {
-        var unitsLevel = game._board.getLevel("units");
-        var markersLevel = game._board.getLevel("markers");
-        var actuatorsLevel = game._board.getLevel("actuators");
+        var [unitsLevel, markersLevel, actuatorsLevel] = getLevels(game,"units", "markers", "actuators");
         return {
             units:[...getDirectives(unitsLevel)],
             markers:[...getDirectives(markersLevel)],
@@ -548,9 +539,7 @@ describe("Interactive Player", ()=> {
     }
 
     function assertAllDirectives(game, picture) {
-        var unitsLevel = game._board.getLevel("units");
-        var markersLevel = game._board.getLevel("markers");
-        var actuatorsLevel = game._board.getLevel("actuators");
+        var [unitsLevel, markersLevel, actuatorsLevel] = getLevels(game,"units", "markers", "actuators");
         assert(getDirectives(unitsLevel)).arrayEqualsTo(picture.units);
         assert(getDirectives(markersLevel)).arrayEqualsTo(picture.markers);
         assert(getDirectives(actuatorsLevel)).arrayEqualsTo(picture.actuators);
@@ -681,8 +670,7 @@ describe("Interactive Player", ()=> {
     it("Checks Unit tiredness progression (fresh -> tired -> exhausted)", () => {
         given:
             var {game, unit} = createTinyGame();
-            var unitsLevel = game._board.getLevel("units");
-            var markersLevel = game._board.getLevel("markers");
+            var [unitsLevel, markersLevel] = getLevels(game,"units", "markers");
             clickOnCounter(game, unit);
             clickOnMoveAction(game);
             unit.movementPoints = 0.5;
@@ -690,8 +678,7 @@ describe("Interactive Player", ()=> {
             paint(game);
             var moveActuator1 = getMoveActuator(game);
         when:
-            resetDirectives(markersLevel);
-            resetDirectives(unitsLevel);
+            resetDirectives(markersLevel, unitsLevel);
             clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
             loadAllImages();
         then:
@@ -735,14 +722,12 @@ describe("Interactive Player", ()=> {
     it("Checks resting action opening and cancelling", () => {
         given:
             var {game, unit} = createTinyGame();
-            let widgetsLevel = game.board.getLevel("widgets");
-            let itemsLevel = game.board.getLevel("widget-items");
+            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
             unit.addOneTirednessLevel();
             clickOnCounter(game, unit);
             paint(game);
         when:
-            resetDirectives(widgetsLevel);
-            resetDirectives(itemsLevel);
+            resetDirectives(widgetsLevel, itemsLevel);
             clickOnRestAction(game);
             loadAllImages();
         then:
@@ -781,8 +766,7 @@ describe("Interactive Player", ()=> {
                 "restore()"
             ]);
         when:       // Clicking on the mask cancel the action
-            resetDirectives(widgetsLevel);
-            resetDirectives(itemsLevel);
+            resetDirectives(widgetsLevel, itemsLevel);
             clickOnMask(game);
         then:
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
@@ -799,7 +783,7 @@ describe("Interactive Player", ()=> {
     }
 
     function clickOnDice(game) {
-        let itemsLevel = game.board.getLevel("widget-items");
+        var [itemsLevel] = getLevels(game,"widget-items");
         for (let item of itemsLevel.artifacts) {
             if (item.element instanceof DDice) {
                 let itemLocation = item.viewportLocation;
@@ -811,8 +795,8 @@ describe("Interactive Player", ()=> {
     }
 
     function clickOnResult(game) {
-        let itemsLevel = game.board.getLevel("widget-commands");
-        for (let item of itemsLevel.artifacts) {
+        var [commandsLevel] = getLevels(game,"widget-commands");
+        for (let item of commandsLevel.artifacts) {
             if (item.element instanceof DResult) {
                 let itemLocation = item.viewportLocation;
                 var mouseEvent = createEvent("click", {offsetX:itemLocation.x, offsetY:itemLocation.y});
@@ -826,12 +810,12 @@ describe("Interactive Player", ()=> {
         getDrawPlatform().resetRandoms((d1-0.5)/6, (d2-0.5)/6, 0);
     }
 
+    let dummyEvent = {offsetX:0, offsetY:0};
+
     it("Checks successfully resting action process ", () => {
         given:
             var {game, unit} = createTinyGame();
-            let widgetsLevel = game.board.getLevel("widgets");
-            let commandsLevel = game.board.getLevel("widget-commands");
-            let itemsLevel = game.board.getLevel("widget-items");
+            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
             unit.addOneTirednessLevel();
             clickOnCounter(game, unit);
             clickOnRestAction(game);
@@ -840,8 +824,7 @@ describe("Interactive Player", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel);
-            resetDirectives(itemsLevel);
+            resetDirectives(commandsLevel, itemsLevel);
             repaint(game);
         then:
             assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
@@ -861,9 +844,7 @@ describe("Interactive Player", ()=> {
                 "restore()"]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel);
-            resetDirectives(commandsLevel);
-            resetDirectives(itemsLevel);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
             repaint(game);
         then:
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
@@ -876,9 +857,7 @@ describe("Interactive Player", ()=> {
     it("Checks failed resting action process ", () => {
         given:
             var {game, unit} = createTinyGame();
-            let widgetsLevel = game.board.getLevel("widgets");
-            let commandsLevel = game.board.getLevel("widget-commands");
-            let itemsLevel = game.board.getLevel("widget-items");
+            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
             unit.addOneTirednessLevel();
             clickOnCounter(game, unit);
             clickOnRestAction(game);
@@ -887,8 +866,7 @@ describe("Interactive Player", ()=> {
             rollFor(5, 6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel);
-            resetDirectives(itemsLevel);
+            resetDirectives(commandsLevel, itemsLevel);
             repaint(game);
         then:
             assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
@@ -908,9 +886,7 @@ describe("Interactive Player", ()=> {
             "restore()"]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel);
-            resetDirectives(commandsLevel);
-            resetDirectives(itemsLevel);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
             repaint(game);
         then:
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
@@ -918,6 +894,333 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.tiredness).equalsTo(1);
+    });
+
+    it("Checks attacker engagement process ", () => {
+        given:
+            var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
+        when:
+            unit1.hexLocation = map.getHex(5, 5);
+            unit2.hexLocation = map.getHex(5, 3);
+            player1.moveUnit(unit1, map.getHex(5, 4), dummyEvent);
+        then:
+            assert(unit1.isEngaging()).isTrue();
+        when:
+            player1.moveUnit(unit1, map.getHex(5, 5), dummyEvent);
+        then:
+            assert(unit1.isEngaging()).isFalse();
+    });
+
+    it("Checks that activation remove own contact marker ", () => {
+        given:
+            var {game, map, player1, unit1} = create2PlayersTinyGame();
+            unit1.hexLocation = map.getHex(5, 5);
+            unit1.markAsEngaging(true);
+        when:
+            player1.selectUnit(unit1, dummyEvent);
+        then:
+            assert(unit1.isEngaging()).isFalse();
+    });
+
+    function moveUnit1OnContactToUnit2(map, unit1, unit2) {
+        unit1.move(map.getHex(2, 5), 0);
+        unit2.move(map.getHex(2, 3), 0);
+        unit2.rotate(180);
+        unit1.player.selectUnit(unit1, dummyEvent);
+        DPopup.close();
+        unit1.player.moveUnit(unit1, map.getHex(2, 4));
+        loadAllImages();
+    }
+
+    it("Checks attacker engagement check appearance (and cancelling next action)", () => {
+        given:
+            var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
+            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            moveUnit1OnContactToUnit2(map, unit1, unit2);
+        when:
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            var finished = false;
+            player1.finishTurn(()=>{finished = true;})
+            loadAllImages();
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "globalAlpha = 0.3",
+                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/check-attacker-engagement-insert.png, 5, 5, 444, 763)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/moral-insert.png, 439, 7.5, 444, 389)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 499, 382, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 439, 442, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+        when:
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+            assert(finished).isFalse();
+    });
+
+    it("Checks when a unit successfully pass an attacker engagement check", () => {
+        given:
+            var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
+            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            moveUnit1OnContactToUnit2(map, unit1, unit2);
+            var finished = false;
+            player1.finishTurn(()=>{finished=true;})
+            loadAllImages();
+        when:
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/dice/d1.png, 499, 382, 100, 89)",
+                "restore()",
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/dice/d2.png, 439, 442, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #00A000", "shadowBlur = 100",
+                "drawImage(/CBlades/images/dice/success.png, 374, 311.5, 150, 150)",
+                "restore()"]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(unit1.isDisrupted()).isFalse();
+            assert(finished).isTrue();
+    });
+
+    it("Checks when a unit fail to pass an attacker engagement check", () => {
+        given:
+            var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
+            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            moveUnit1OnContactToUnit2(map, unit1, unit2);
+            var finished = false;
+            player1.finishTurn(()=>{finished=true;})
+            loadAllImages();
+        when:
+            rollFor(5,6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/dice/d5.png, 499, 382, 100, 89)",
+                "restore()",
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/dice/d6.png, 439, 442, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #A00000", "shadowBlur = 100",
+                "drawImage(/CBlades/images/dice/failure.png, 374, 311.5, 150, 150)",
+                "restore()"]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(unit1.isDisrupted()).isTrue();
+            assert(finished).isTrue();
+    });
+
+    function unit1IsEngagedByUnit2(map, unit1, unit2) {
+        unit1.move(map.getHex(2, 4), 0);
+        unit2.move(map.getHex(2, 3), 0);
+        unit2.rotate(180);
+        unit2.markAsEngaging(true);
+        loadAllImages();
+    }
+
+    it("Checks defender engagement check appearance (and cancelling selection)", () => {
+        given:
+            var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
+            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            unit1IsEngagedByUnit2(map, unit1, unit2);
+        when:
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            player1.selectUnit(unit1, dummyEvent)
+            loadAllImages();
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
+                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/check-defender-engagement-insert.png, 5, 5, 444, 763)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/moral-insert.png, 439, 7.5, 444, 389)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 499, 382, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 439, 442, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+        when:
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+    });
+
+    it("Checks when a unit successfully pass a defender engagement check", () => {
+        given:
+            var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
+            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            unit1IsEngagedByUnit2(map, unit1, unit2);
+            player1.selectUnit(unit1, dummyEvent)
+            loadAllImages();
+        when:
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/dice/d1.png, 499, 382, 100, 89)",
+                "restore()",
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/dice/d2.png, 439, 442, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #00A000", "shadowBlur = 100",
+                "drawImage(/CBlades/images/dice/success.png, 374, 311.5, 150, 150)",
+                "restore()"]);
+            when:
+                clickOnResult(game);
+                resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+                repaint(game);
+            then:
+                assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([ // Action menu opened in modal mode
+                    "save()",
+                        "setTransform(1, 0, 0, 1, 0, 0)",
+                        "globalAlpha = 0.3", "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                    "restore()",
+                    "save()",
+                        "shadowColor = #000000", "shadowBlur = 15",
+                        "strokeStyle = #000000", "lineWidth = 1",
+                        "setTransform(1, 0, 0, 1, 130, 190)",
+                        "strokeRect(-125, -185, 250, 370)",
+                        "fillStyle = #FFFFFF",
+                        "fillRect(-125, -185, 250, 370)",
+                    "restore()"
+                ]);
+                assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+                assert(unit1.isDisrupted()).isFalse();
+    });
+
+    it("Checks when a unit failed to pass a defender engagement check", () => {
+        given:
+            var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
+            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            unit1IsEngagedByUnit2(map, unit1, unit2);
+            player1.selectUnit(unit1, dummyEvent)
+            loadAllImages();
+        when:
+            rollFor(5,6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/dice/d5.png, 499, 382, 100, 89)",
+                "restore()",
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/dice/d6.png, 439, 442, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #A00000", "shadowBlur = 100",
+                "drawImage(/CBlades/images/dice/failure.png, 374, 311.5, 150, 150)",
+                "restore()"]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([ // Action menu opened in modal mode
+                "save()",
+                "setTransform(1, 0, 0, 1, 0, 0)",
+                "globalAlpha = 0.3", "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 15",
+                "strokeStyle = #000000", "lineWidth = 1",
+                "setTransform(1, 0, 0, 1, 130, 190)",
+                "strokeRect(-125, -185, 250, 370)",
+                "fillStyle = #FFFFFF",
+                "fillRect(-125, -185, 250, 370)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(unit1.isDisrupted()).isTrue();
     });
 
 });

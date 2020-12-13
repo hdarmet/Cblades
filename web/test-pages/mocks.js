@@ -150,12 +150,22 @@ export function getLayer(level) {
     return level._layer;
 }
 
+export function getLevels(game, ...levelNames) {
+    let result = [];
+    for (let name of levelNames) {
+        result.push(game.board.getLevel(name));
+    }
+    return result;
+}
+
 export function getDirectives(level, start=0) {
     return getContextDirectives(getLayer(level)._context, start);
 }
 
-export function resetDirectives(level) {
-    resetContextDirectives(getLayer(level)._context);
+export function resetDirectives(...levels) {
+    for (let level of levels) {
+        resetContextDirectives(getLayer(level)._context);
+    }
 }
 
 export function startRegister(level) {
