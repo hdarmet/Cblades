@@ -13,7 +13,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             moveBack:true,
             escape:true,
             confront:true,
-            shockAttack:false,
+            shockAttack:this.isAllowedToShockAttack(unit),
             fireAttack:false,
             shockDuel:false,
             fireDuel:false,
@@ -36,6 +36,12 @@ export class CBArbitrator extends CBAbstractArbitrator{
         }
     }
 
+
+    mustPlayUnit(game, unit) {
+        return !unit.hasBeenActivated() && !unit.hasBeenPlayed();
+    }
+
+
     isHexOnForwardZone(unit, hexId) {
         let unitAngle = unit.angle;
         let hexAngle = unit.hexLocation.isNearHex(hexId);
@@ -44,23 +50,70 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     getUnitForwardZone(unit) {
-        let directions = [];
+        let zones = [];
         let angle = unit.angle;
         if (angle%60) {
-            directions[angle-30]={hex:unit.hexLocation.getNearHex(angle -30)};
-            directions[(angle + 30) % 360]={hex:unit.hexLocation.getNearHex((angle + 30) % 360)};
+            zones[angle-30]={hex:unit.hexLocation.getNearHex(angle -30)};
+            zones[(angle + 30) % 360]={hex:unit.hexLocation.getNearHex((angle + 30) % 360)};
         }
         else {
-            directions[(angle + 300) % 360]={hex:unit.hexLocation.getNearHex((angle + 300) % 360)};
-            directions[angle]={hex:unit.hexLocation.getNearHex(angle)};
-            directions[(angle + 60) % 360]={hex:unit.hexLocation.getNearHex((angle + 60) % 360)};
+            zones[(angle + 300) % 360]={hex:unit.hexLocation.getNearHex((angle + 300) % 360)};
+            zones[angle]={hex:unit.hexLocation.getNearHex(angle)};
+            zones[(angle + 60) % 360]={hex:unit.hexLocation.getNearHex((angle + 60) % 360)};
         }
-        return directions;
+        return zones;
+    }
+
+    getUnitBackwardZone(unit) {
+        let zones = [];
+        let angle = unit.angle;
+        if (angle%60) {
+            zones[(angle + 150) % 360]={hex:unit.hexLocation.getNearHex((angle + 150) % 360)};
+            zones[(angle + 210) % 360]={hex:unit.hexLocation.getNearHex((angle + 210) % 360)};
+        }
+        else {
+            zones[(angle + 120) % 360]={hex:unit.hexLocation.getNearHex((angle + 120) % 360)};
+            zones[(angle + 180) % 360]={hex:unit.hexLocation.getNearHex((angle + 180) % 360)};
+            zones[(angle + 240) % 360]={hex:unit.hexLocation.getNearHex((angle + 240) % 360)};
+        }
+        return zones;
+    }
+
+    getRetreatZones(unit) {
+        return this.getUnitBackwardZone(unit);
+    }
+
+    getFoesThatMayBeShockAttacked(unit) {
+        let zones = this.getUnitForwardZone(unit);
+        let foes = [];
+        for (let angle in zones) {
+            let zone = zones[angle];
+            let units = zone.hex.units;
+            if (units.length) {
+                let nearUnit = units[0];
+                if (this.areUnitsFoes(unit, nearUnit)) {
+                    let supported = !unit.isExhausted();
+                    foes.push({unit:nearUnit, supported});
+                }
+            }
+        }
+        return foes;
+    }
+
+    processShockAttackResult(unit, foe, supported, diceResult) {
+        let success = diceResult[0]+diceResult[1]<=8;
+        let lossesForDefender = diceResult[0]+diceResult[1]<=4 ? 2 : diceResult[0]+diceResult[1]<=8 ? 1 : 0;
+        let tirednessForAttacker = supported;
+        return { success, lossesForDefender, tirednessForAttacker };
     }
 
     getAllowedMoves(unit, first) {
         function processAngle(direction, arbitrator, unit, first) {
-            let cost = arbitrator.getMovementCost(unit, direction.hexId);
+            let nearUnits = direction.hex.units;
+            if (nearUnits.length) {
+                if (arbitrator.areUnitsFoes(unit, nearUnits)) return false;
+            }
+            let cost = arbitrator.getMovementCost(unit, direction.hex);
             if (unit.movementPoints>=cost) {
                 direction.type = CBMovement.NORMAL;
                 return true;
@@ -120,6 +173,10 @@ export class CBArbitrator extends CBAbstractArbitrator{
 
     doesMovementInflictTiredness(unit, cost) {
         return unit.movementPoints>=0 && cost>unit.movementPoints;
+    }
+
+    isAllowedToShockAttack(unit) {
+        return this.isUnitOnContact(unit);
     }
 
     isAllowedToRest(unit) {

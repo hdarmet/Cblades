@@ -474,6 +474,7 @@ export class DDice extends DElement {
 
     finalAction() {
         this._finalAction && this._finalAction();
+        Memento.clear();
     }
 
     get result() {

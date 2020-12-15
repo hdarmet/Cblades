@@ -24,7 +24,7 @@ import {
     DPopup, DResult
 } from "../../jslib/widget.js";
 import {
-    CBInteractivePlayer, CBMoveActuator, CBOrientationActuator
+    CBInteractivePlayer, CBMoveActuator, CBOrientationActuator, InteractiveMovementAction
 } from "../../jslib/cblades/interactive-player.js";
 import {
     CBArbitrator
@@ -898,15 +898,15 @@ describe("Interactive Player", ()=> {
 
     it("Checks attacker engagement process ", () => {
         given:
-            var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
+            var {map, player1, unit1, unit2} = create2PlayersTinyGame();
         when:
             unit1.hexLocation = map.getHex(5, 5);
             unit2.hexLocation = map.getHex(5, 3);
-            player1.moveUnit(unit1, map.getHex(5, 4), dummyEvent);
+            moveUnitByAction(unit1, map.getHex(5, 4));
         then:
             assert(unit1.isEngaging()).isTrue();
         when:
-            player1.moveUnit(unit1, map.getHex(5, 5), dummyEvent);
+            unit1.action.moveUnit(map.getHex(5, 5), dummyEvent);
         then:
             assert(unit1.isEngaging()).isFalse();
     });
@@ -922,13 +922,18 @@ describe("Interactive Player", ()=> {
             assert(unit1.isEngaging()).isFalse();
     });
 
+    function moveUnitByAction(unit, hex) {
+        unit.player.startMoveUnit(unit, dummyEvent);
+        unit.action.moveUnit(hex);
+    }
+
     function moveUnit1OnContactToUnit2(map, unit1, unit2) {
         unit1.move(map.getHex(2, 5), 0);
         unit2.move(map.getHex(2, 3), 0);
         unit2.rotate(180);
         unit1.player.selectUnit(unit1, dummyEvent);
         DPopup.close();
-        unit1.player.moveUnit(unit1, map.getHex(2, 4));
+        moveUnitByAction(unit1, map.getHex(2, 4));
         loadAllImages();
     }
 
@@ -1155,10 +1160,6 @@ describe("Interactive Player", ()=> {
             then:
                 assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([ // Action menu opened in modal mode
                     "save()",
-                        "setTransform(1, 0, 0, 1, 0, 0)",
-                        "globalAlpha = 0.3", "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
-                    "restore()",
-                    "save()",
                         "shadowColor = #000000", "shadowBlur = 15",
                         "strokeStyle = #000000", "lineWidth = 1",
                         "setTransform(1, 0, 0, 1, 130, 190)",
@@ -1207,16 +1208,12 @@ describe("Interactive Player", ()=> {
         then:
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([ // Action menu opened in modal mode
                 "save()",
-                "setTransform(1, 0, 0, 1, 0, 0)",
-                "globalAlpha = 0.3", "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "strokeStyle = #000000", "lineWidth = 1",
-                "setTransform(1, 0, 0, 1, 130, 190)",
-                "strokeRect(-125, -185, 250, 370)",
-                "fillStyle = #FFFFFF",
-                "fillRect(-125, -185, 250, 370)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "setTransform(1, 0, 0, 1, 130, 190)",
+                    "strokeRect(-125, -185, 250, 370)",
+                    "fillStyle = #FFFFFF",
+                    "fillRect(-125, -185, 250, 370)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);

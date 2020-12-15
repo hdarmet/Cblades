@@ -21,7 +21,7 @@ import {
     CBAbstractPlayer,
     CBAbstractArbitrator,
     CBHexSideId,
-    CBHexVertexId, CBCounter
+    CBHexVertexId, CBCounter, CBAction
 } from "../../jslib/cblades/game.js";
 import {
     DBoard, DElement
@@ -123,9 +123,10 @@ describe("Game", ()=> {
         given:
             var {game, unit} = createTinyGame();
         when:
-            var actuator1 = new CBActuator(unit);
+            var action = new CBAction(game, unit);
+            var actuator1 = new CBActuator(action);
             actuator1._element = new DElement();
-            var actuator2 = new CBActuator(unit);
+            var actuator2 = new CBActuator(action);
             actuator2._element = new DElement();
             game.openActuator(actuator1);
         then:
@@ -527,7 +528,6 @@ describe("Game", ()=> {
             resetDirectives(unitsLevel);
             repaint(game);
         then:
-            assert(counter.game).equalsTo(game);
             assert(counter.angle).equalsTo(45);
             assert(counter.element).is(DElement);
             assert(counter.element.artifacts[0]).equalsTo(counter.artifact);
@@ -957,7 +957,8 @@ describe("Game", ()=> {
         given:
             var {game, unit, map} = createTinyGame();
         when:
-            unit.markAsBeingActivated();
+            unit.launchAction(new CBAction(game, unit))
+            unit.action.markAsStarted();
         then:
             assert(unit.hasBeenActivated()).isTrue();
             assert(unit.hasBeenPlayed()).isFalse();
@@ -974,6 +975,7 @@ describe("Game", ()=> {
             var [markersLevel] = getLevels(game, "markers");
         when:
             resetDirectives(markersLevel);
+            unit.launchAction(new CBAction(game, unit));
             unit.markAsBeingPlayed();
             paint(game);
             loadAllImages(); // to load actiondone.png
@@ -1002,7 +1004,8 @@ describe("Game", ()=> {
             var [markersLevel] = getLevels(game, "markers");
         when:
             unit1.select();
-            unit1.markAsBeingActivated();
+            unit1.launchAction(new CBAction(game, unit1));
+            unit1.action.markAsStarted();
         then:
             assert(unit1.hasBeenActivated()).isTrue();
             assert(unit1.hasBeenPlayed()).isFalse();

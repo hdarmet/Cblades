@@ -57,9 +57,59 @@ export class CBAbstractArbitrator {
 
 export class CBAbstractPlayer {
 
+    changeSelection(unit, event) {
+        if (this.game.mayChangeSelection(unit)) {
+            let lastUnit = this.game.selectedUnit;
+            if (lastUnit) {
+                lastUnit.player.afterActivation(lastUnit, () => {
+                    lastUnit !== unit && lastUnit.player.unselectUnit(lastUnit, event);
+                    this.selectUnit(unit, event);
+                });
+            }
+            else {
+                this.selectUnit(unit, event);
+            }
+        }
+    }
+
+    selectUnit(unit, event) {
+        this.game.closeActuators();
+        DPopup.close();
+        if (unit.isEngaging()) {
+            unit.markAsEngaging(false);
+        }
+        if (this.game.selectedUnit!==unit) {
+            this.beforeActivation(unit, ()=>{
+                unit.select();
+                this.launchUnitAction(unit, event);
+            });
+        }
+        else {
+            this.launchUnitAction(unit, event);
+        }
+    }
+
+    unselectUnit(unit) {
+        if (unit.action) {
+            unit.action.markAsFinished();
+        }
+        unit.unselect();
+    }
+
+    beforeActivation(unit, action) {
+        action();
+    }
+
+    launchUnitAction(unit, event) {
+        unit.launchAction(new CBAction(this.game, unit));
+    }
+
+    afterActivation(unit, action) {
+        action();
+    }
+
     finishTurn(animation) {
-        this.game.nextTurn();
-        animation()
+        this.game.nextTurn(animation);
     }
 
     get game() {
@@ -72,14 +122,85 @@ export class CBAbstractPlayer {
 
 }
 
-export class CBActuator {
+export class CBAction {
 
-    constructor(unit) {
+    constructor(game, unit) {
         this._unit = unit;
+        this._game = game;
+        this._status = CBAction.INITIATED;
     }
+
+    _memento() {
+        return {
+            status: this._status
+        }
+    }
+
+    _revert(memento) {
+        this._status = memento.status;
+    }
+
+    isStarted() {
+        return this._status === CBAction.STARTED;
+    }
+
+    isFinished() {
+        return this._status === CBAction.FINISHED;
+    }
+
+    isFinishable() {
+        return true;
+    }
+
+    markAsStarted() {
+        console.assert(this._status <= CBAction.STARTED);
+        if (this._status === CBAction.INITIATED) {
+            Memento.register(this);
+            this._status = CBAction.STARTED;
+            if (this.unit.isCurrentPlayer()) {
+                this.unit.updatePlayed();
+            }
+            this.game.setFocusedUnit(null);
+        }
+    }
+
+    markAsFinished() {
+        if (this._status < CBAction.FINISHED) {
+            Memento.register(this);
+            this._status = CBAction.FINISHED;
+            if (this.unit.isCurrentPlayer()) {
+                this.unit.updatePlayed();
+            }
+            this.game.setFocusedUnit(null);
+        }
+    }
+
+    play() {}
 
     get unit() {
         return this._unit;
+    }
+
+    get game() {
+        return this._game;
+    }
+}
+CBAction.INITIATED = 0;
+CBAction.STARTED = 1;
+CBAction.FINISHED = 2;
+
+export class CBActuator {
+
+    constructor(action) {
+        this._action = action;
+    }
+
+    get action() {
+        return this._action;
+    }
+
+    get unit() {
+        return this.action.unit;
     }
 
     get element() {
@@ -110,12 +231,14 @@ export class CBGame {
     _memento() {
         return {
             selectedUnit: this._selectedUnit,
+            focusedUnit: this._focusedUnit,
             actuators: [...this._actuators]
         };
     }
 
     _revert(memento) {
         this._selectedUnit = memento.selectedUnit;
+        this._focusedUnit = memento.focusedUnit;
         this._actuators = memento.actuators;
     }
 
@@ -148,7 +271,6 @@ export class CBGame {
             this._counters = new Set();
         }
         this._counters.add(counter);
-        counter.game = this;
         counter.hexLocation = hexLocation;
         counter.element.setOnBoard(this._board);
     }
@@ -175,6 +297,19 @@ export class CBGame {
         this._actuators = [];
     }
 
+    mayChangeSelection(unit) {
+        if (!this.canSelectUnit(unit)) return false;
+        return !this.selectedUnit || this.selectedUnit===unit || this.canUnselectUnit();
+    }
+
+    canUnselectUnit() {
+        return !this.focusedUnit && (!this.selectedUnit.hasBeenActivated() || this.selectedUnit.action.isFinishable());
+    }
+
+    canSelectUnit(unit) {
+        return (!this.focusedUnit || this.focusedUnit===unit) && unit.isCurrentPlayer() && !unit.hasBeenActivated();
+    }
+
     setSelectedUnit(unit) {
         Memento.register(this);
         if (unit) {
@@ -185,8 +320,22 @@ export class CBGame {
         }
     }
 
+    setFocusedUnit(unit) {
+        Memento.register(this);
+        if (unit) {
+            this._focusedUnit = unit;
+        }
+        else {
+            delete this._focusedUnit;
+        }
+    }
+
     get selectedUnit() {
         return this._selectedUnit;
+    }
+
+    get focusedUnit() {
+        return this._focusedUnit;
     }
 
     setMenu() {
@@ -243,12 +392,15 @@ export class CBGame {
         }
     }
 
-    nextTurn() {
-        this.removeActuators();
-        this._resetCounters(this._currentPlayer);
-        let indexPlayer = this._players.indexOf(this._currentPlayer);
-        this._currentPlayer = this._players[(indexPlayer+1)%this._players.length];
-        Memento.clear();
+    nextTurn(animation) {
+        if (!this.selectedUnit || this.canUnselectUnit()) {
+            this.removeActuators();
+            this._resetCounters(this._currentPlayer);
+            let indexPlayer = this._players.indexOf(this._currentPlayer);
+            this._currentPlayer = this._players[(indexPlayer + 1) % this._players.length];
+            animation && animation();
+            Memento.clear();
+        }
     }
 
     get arbitrator() {
@@ -688,20 +840,12 @@ class UnitImageArtifact extends CounterImageArtifact {
         super(unit, ...args);
     }
 
-    _memento() {
-        return {
-            ...super._memento(),
-            selected: this._selected
-        }
-    }
-
-    _revert(memento) {
-        super._revert(memento);
-        this._selected = memento.selected;
-    }
-
     get unit() {
         return this._counter;
+    }
+
+    get game() {
+        return this.unit.game;
     }
 
     get selectedSettings() {
@@ -718,24 +862,22 @@ class UnitImageArtifact extends CounterImageArtifact {
 
     unselect() {
         Memento.register(this);
-        delete this._selected;
         this.changeSettings(this.settings);
     }
 
     select() {
         Memento.register(this);
-        this._selected = true;
         this.changeSettings(this.selectedSettings);
     }
 
     onMouseEnter(event) {
-        if (!this._selected && this.unit.isCurrentPlayer() && !this.unit.hasBeenPlayed()) {
+        if (this.game.selectedUnit!==this.unit && this.game.canSelectUnit(this.unit)) {
             this.setSettings(this.overSettings);
         }
     }
 
     onMouseLeave(event) {
-        if (!this._selected && this.unit.isCurrentPlayer() && !this.unit.hasBeenPlayed()) {
+        if (this.game.selectedUnit!==this.unit && this.game.canSelectUnit(this.unit)) {
             this.setSettings(this.settings);
         }
     }
@@ -777,12 +919,11 @@ export class CBUnit extends CBCounter {
             tirednessArtifact: this._tirednessArtifact,
             cohesion: this._cohesion,
             cohesionArtifact: this._cohesionArtifact,
-            activated: this._activated,
-            played: this._played,
             playedArtifact: this._playedArtifact,
             engaging: this._engaging,
             charging: this._charging,
-            engagingArtifact: this._engagingArtifact
+            engagingArtifact: this._engagingArtifact,
+            action: this._action
         };
     }
 
@@ -794,47 +935,63 @@ export class CBUnit extends CBCounter {
         this._tirednessArtifact = memento.tirednessArtifact;
         this._cohesion = memento.cohesion;
         this._cohesionArtifact = memento.cohesionArtifact;
-        this._activated = memento.activated;
-        this._played = memento.played;
         this._playedArtifact = memento.playedArtifact;
         this._engaging = memento.engaging;
         this._charging = memento.charging;
         this._engagingArtifact = memento.engagingArtifact;
+        this._action = memento.action;
+    }
+
+    launchAction(action) {
+        Memento.register(this);
+        this._action = action;
+        action.play();
+    }
+
+    removeAction() {
+        Memento.register(this);
+        delete this._action;
     }
 
     _reset(player) {
         if (player === this._player) {
             this._movementPoints = 2;
             this._extendedMovementPoints = this._movementPoints*1.5;
-            this._updatePlayed(false, false);
+            delete this._action;
+            this._updatePlayed();
         }
     }
 
     unselect() {
         console.assert(this.game.selectedUnit===this);
+        if (this.hasBeenActivated()) {
+            this.markAsBeingPlayed();
+        }
         this.game.setSelectedUnit(null);
         this._imageArtifact.unselect();
         this.element.refresh();
-        if (this._activated) {
-            this.markAsBeingPlayed();
-        }
     }
 
     select() {
-        if (this.game.selectedUnit) {
-            this.game.selectedUnit.unselect();
-        }
         this.game.setSelectedUnit(this);
         this._imageArtifact.select();
         this.refresh();
     }
 
     onMouseClick(event) {
-        this.player.selectUnit(this, event);
+        this.player.changeSelection(this, event);
     }
 
     isCurrentPlayer() {
         return this.player === this.game.currentPlayer;
+    }
+
+    get game() {
+        return this._player.game;
+    }
+
+    get action() {
+        return this._action;
     }
 
     get player() {
@@ -859,34 +1016,36 @@ export class CBUnit extends CBCounter {
         this._movementPoints = movementPoints;
     }
 
-    markAsBeingActivated() {
-        Memento.register(this);
-        this._updatePlayed(true, false);
-    }
-
     markAsBeingPlayed() {
-        Memento.register(this);
-        this._updatePlayed(true, true);
+        console.assert(this.action);
+        this.action.markAsFinished();
     }
 
     hasBeenPlayed() {
-        return this._played;
+        return this._action && this._action.isFinished();
     }
 
     hasBeenActivated() {
-        return this._activated;
+        return this._action && (this._action.isStarted() || this._action.isFinished());
     }
 
-    _updatePlayed(activated, played) {
-        this._activated = activated;
-        if (!this._played!==!played) {
-            this._played = played;
+    updatePlayed() {
+        Memento.register(this);
+        this._updatePlayed();
+    }
+
+    _updatePlayed() {
+        if (!this._playedArtifact !== !this.hasBeenPlayed()) {
             this._playedArtifact && this._element.deleteArtifact(this._playedArtifact);
             delete this._playedArtifact;
-            if (this._played) {
+            if (this.hasBeenPlayed()) {
                 this._playedArtifact = this.createMarkerArtifact("/CBlades/images/markers/actiondone.png", 0);
             }
         }
+    }
+
+    get action() {
+        return this._action;
     }
 
     get extendedMovementPoints() {

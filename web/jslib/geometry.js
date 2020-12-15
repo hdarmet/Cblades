@@ -80,6 +80,10 @@ export class Point2D {
         return Math.sqrt((point.x-this.x)*(point.x-this.x)+(point.y-this.y)*(point.y-this.y));
     }
 
+    translate(dx, dy) {
+        return new Point2D(this.x+dx, this.y+dy);
+    }
+
     equalsTo(point) {
         return this.x===point.x && this.y===point.y;
     }
