@@ -17,6 +17,7 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
+    CBAction,
     CBGame, CBHexId, CBMap, CBUnit
 } from "../../jslib/cblades/game.js";
 import {
@@ -24,7 +25,12 @@ import {
     DPopup, DResult
 } from "../../jslib/widget.js";
 import {
-    CBInteractivePlayer, CBMoveActuator, CBOrientationActuator, InteractiveMovementAction
+    CBInteractivePlayer,
+    CBMoveActuator,
+    CBOrientationActuator,
+    CBRetreatActuator,
+    CBShockAttackActuator,
+    InteractiveMovementAction
 } from "../../jslib/cblades/interactive-player.js";
 import {
     CBArbitrator
@@ -57,7 +63,7 @@ describe("Interactive Player", ()=> {
         var map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
         let unit = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-        game.addCounter(unit, map.getHex( 5, 8));
+        game.addUnit(unit, map.getHex( 5, 8));
         game.start();
         loadAllImages();
         return { game, arbitrator, player, map, unit };
@@ -74,9 +80,9 @@ describe("Interactive Player", ()=> {
         let map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
         let unit1 = new CBUnit(player1, "/CBlades/images/units/misc/unit1.png");
-        game.addCounter(unit1, map.getHex(5, 8));
+        game.addUnit(unit1, map.getHex(5, 8));
         let unit2 = new CBUnit(player2, "/CBlades/images/units/misc/unit2.png");
-        game.addCounter(unit2, map.getHex(6, 8));
+        game.addUnit(unit2, map.getHex(6, 8));
         game.start();
         loadAllImages();
         return {game, map, unit1, unit2, player1, player2};
@@ -92,8 +98,8 @@ describe("Interactive Player", ()=> {
         game.setMap(map);
         let unit1 = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
         let unit2 = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-        game.addCounter(unit1, map.getHex(5, 8));
-        game.addCounter(unit2, map.getHex( 8, 7));
+        game.addUnit(unit1, map.getHex(5, 8));
+        game.addUnit(unit2, map.getHex( 8, 7));
         game.start();
         loadAllImages();
         return {game, map, unit1, unit2, player};
@@ -145,30 +151,30 @@ describe("Interactive Player", ()=> {
                 "fillRect(-125, -185, 250, 370)", "restore()"
             ]);
             assert(getDirectives(widgetItemsLevel, 4)).arrayEqualsTo([
-                "save()", "drawImage(/CBlades/images/icons/leave-formation.png, 306.6666666666667, 195, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/dismiss-formation.png, 366.6666666666667, 195, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/change-orders.png, 306.6666666666667, 255, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/give-specific-orders.png, 366.6666666666667, 255, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/do-fusion.png, 306.6666666666667, 315, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/do-many.png, 366.6666666666667, 315, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/move.png, 186.66666666666669, 15, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/move-back.png, 246.66666666666669, 15, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/escape.png, 306.6666666666667, 15, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/to-face.png, 366.6666666666667, 15, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/shock-attack-gray.png, 186.66666666666669, 75, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/fire-attack-gray.png, 246.66666666666669, 75, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/shock-duel-gray.png, 306.6666666666667, 75, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/fire-duel-gray.png, 366.6666666666667, 75, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/do-rest-gray.png, 186.66666666666669, 135, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/do-reload.png, 246.66666666666669, 135, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/do-reorganize.png, 306.6666666666667, 135, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/do-rally.png, 366.6666666666667, 135, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/create-formation.png, 186.66666666666669, 195, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/join-formation.png, 246.66666666666669, 195, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/take-command.png, 186.66666666666669, 255, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/leave-command.png, 246.66666666666669, 255, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/select-spell.png, 186.66666666666669, 315, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/cast-spell.png, 246.66666666666669, 315, 50, 50)", "restore()"
+                "save()", "drawImage(/CBlades/images/icons/leave-formation.png, 306.6667, 195, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/dismiss-formation.png, 366.6667, 195, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/change-orders.png, 306.6667, 255, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/give-specific-orders.png, 366.6667, 255, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/do-fusion.png, 306.6667, 315, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/do-many.png, 366.6667, 315, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/move.png, 186.6667, 15, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/move-back.png, 246.6667, 15, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/escape.png, 306.6667, 15, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/to-face.png, 366.6667, 15, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/shock-attack-gray.png, 186.6667, 75, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/fire-attack-gray.png, 246.6667, 75, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/shock-duel-gray.png, 306.6667, 75, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/fire-duel-gray.png, 366.6667, 75, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/do-rest-gray.png, 186.6667, 135, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/do-reload.png, 246.6667, 135, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/do-reorganize.png, 306.6667, 135, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/do-rally.png, 366.6667, 135, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/create-formation.png, 186.6667, 195, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/join-formation.png, 246.6667, 195, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/take-command.png, 186.6667, 255, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/leave-command.png, 246.6667, 255, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/select-spell.png, 186.6667, 315, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/cast-spell.png, 246.6667, 315, 50, 50)", "restore()"
             ]);
     });
 
@@ -186,6 +192,33 @@ describe("Interactive Player", ()=> {
             unit2.onMouseClick({offsetX:0, offsetY:0});  // Not executed ! Player2 is not the current player
         then:
             assert(game.selectedUnit).equalsTo(unit1);
+    });
+
+    it("Checks that a selected unit's action is finalized when there is a selection/end of turn", () => {
+        given:
+            var {game, unit1, unit2, player} = create2UnitsTinyGame();
+            player.changeSelection(unit1, dummyEvent);
+            var action = new CBAction(game, unit1);
+            unit1.launchAction(action);
+            action.markAsFinished();
+            var finished = false;
+            player.finishTurn(()=>{finished=true;})
+        then:
+            assert(finished).isTrue();
+            assert(action.isFinalized()).isTrue();
+    });
+
+    it("Checks that a finalized unit action does not block selection/end of turn", () => {
+        given:
+            var {game, unit1, unit2, player} = create2UnitsTinyGame();
+            player.changeSelection(unit1, dummyEvent);
+            unit1.launchAction(new CBAction(game, unit1));
+            unit1.action.markAsFinished();
+            unit1.action.finalize();
+            var finished = false;
+            player.finishTurn(()=>{finished=true;})
+        then:
+            assert(finished).isTrue();
     });
 
     it("Checks move action actuators when unit is oriented toward an hexside", () => {
@@ -277,7 +310,7 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
                 "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 408.6841)",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984375, 60, 80)"
+                "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984, 60, 80)"
             ]);
     });
 
@@ -358,7 +391,7 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
                 "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 408.6841)",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984375, 60, 80)"
+                "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984, 60, 80)"
             ]);
         when:
             resetDirectives(actuatorsLevel);
@@ -368,7 +401,7 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
                 "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 408.6841)",
                 "shadowColor = #FF0000", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984375, 60, 80)"
+                "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984, 60, 80)"
             ]);
         when:
             resetDirectives(actuatorsLevel);
@@ -378,7 +411,7 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
                 "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 408.6841)",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984375, 60, 80)"
+                "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984, 60, 80)"
             ]);
     });
 
@@ -1218,6 +1251,298 @@ describe("Interactive Player", ()=> {
             ]);
             assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
             assert(unit1.isDisrupted()).isTrue();
+    });
+
+    function clickOnShockAttackAction(game) {
+        return clickOnActionMenu(game, 0, 1);
+    }
+
+    function getShockAttackActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBShockAttackActuator) return actuator;
+        }
+        return null;
+    }
+
+    it("Checks shock attack action actuator appearance when support is possible", () => {
+        given:
+            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+            var [actuatorsLevel] = getLevels(game, "actuators");
+            unit1.move(map.getHex(5, 8));
+            unit2.move(map.getHex(5, 7));
+            clickOnCounter(game, unit1);
+            clickOnShockAttackAction(game);
+            loadAllImages();
+        when:
+            resetDirectives(actuatorsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 407.3714, 427.6962)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/unsupported-shock.png, -250.5, -380.8125, 100, 111)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 425.963, 416.9623)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/supported-shock.png, -190.5, -320.8125, 100, 111)",
+                "restore()"
+            ]);
+        when:
+            var shockAttackActuator = getShockAttackActuator(game);
+        then:
+            assert(shockAttackActuator.getTrigger(unit2, true)).isDefined();
+            assert(shockAttackActuator.getTrigger(unit1, true)).isNotDefined();
+            assert(shockAttackActuator.getTrigger(unit2, false)).isDefined();
+            assert(shockAttackActuator.getTrigger(unit1, false)).isNotDefined();
+    });
+
+    it("Checks shock attack action actuator appearance when support is not possible", () => {
+        given:
+            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+            var [actuatorsLevel] = getLevels(game, "actuators");
+            unit1.move(map.getHex(5, 8));
+            unit1.addOneTirednessLevel();
+            unit1.addOneTirednessLevel();
+            unit2.move(map.getHex(5, 7));
+            clickOnCounter(game, unit1);
+            clickOnShockAttackAction(game);
+            loadAllImages();
+        when:
+            resetDirectives(actuatorsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 416.6672, 422.3292)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/unsupported-shock.png, -220.5, -350.8125, 100, 111)",
+                "restore()"
+            ]);
+        when:
+            var shockAttackActuator = getShockAttackActuator(game);
+        then:
+            assert(shockAttackActuator.getTrigger(unit2, true)).isNotDefined();
+            assert(shockAttackActuator.getTrigger(unit2, false)).isDefined();
+    });
+
+    it("Checks shock resolution appearance (and cancelling shock attack action)", () => {
+        given:
+            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+            var [actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,
+                "actuators", "widgets", "widget-commands","widget-items"
+            );
+            unit1.move(map.getHex(5, 8));
+            unit2.move(map.getHex(5, 7));
+            clickOnCounter(game, unit1);
+            clickOnShockAttackAction(game);
+            loadAllImages();
+            let shockAttackActuator = getShockAttackActuator(game);
+        when:
+            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
+            loadAllImages();
+        then:
+            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
+                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/combat-result-table-insert.png, 29.3294, 13, 804, 174)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/shock-attack-insert.png, 68.8294, 137, 405, 658)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 481.3294, 162.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 421.3294, 222.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+        when:
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+    });
+
+    function getRetreatActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBRetreatActuator) return actuator;
+        }
+        return null;
+    }
+
+    it("Checks when a unit successfully shock attack", () => {
+            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+            var [actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,
+                "actuators", "widgets", "widget-commands","widget-items"
+            );
+            unit1.move(map.getHex(5, 8));
+            unit2.move(map.getHex(5, 7));
+            unit2.angle = 180;
+            clickOnCounter(game, unit1);
+            clickOnShockAttackAction(game);
+            let shockAttackActuator = getShockAttackActuator(game);
+            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
+            loadAllImages();
+        when:
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 481.3294, 162.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, 421.3294, 222.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/success.png, 356.3294, 102, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            loadAllImages();
+            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(game.focusedUnit).equalsTo(unit2);
+            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/retreat-move.png, -210.5, -537.5, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 333.3345, 313.3981)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/retreat-move.png, -57.05, -448.9062, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 583.3321, 169.0606)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/retreat-move.png, -363.95, -448.9062, 80, 130)",
+                "restore()"
+            ]);
+        when:
+            var retreatActuator = getRetreatActuator(game);
+        then:
+            assert(retreatActuator.getTrigger(0)).isDefined();
+            assert(retreatActuator.getTrigger(120)).isNotDefined();
+    });
+
+    it("Checks when a unit fails to shock attack", () => {
+        var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+        var [actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,
+            "actuators", "widgets", "widget-commands","widget-items"
+        );
+        unit1.move(map.getHex(5, 8));
+        unit2.move(map.getHex(5, 7));
+        unit2.angle = 180;
+        clickOnCounter(game, unit1);
+        clickOnShockAttackAction(game);
+        let shockAttackActuator = getShockAttackActuator(game);
+        resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+        clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
+        loadAllImages();
+        when:
+            rollFor(5,6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/dice/d5.png, 481.3294, 162.5, 100, 89)",
+                "restore()",
+                "save()",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/dice/d6.png, 421.3294, 222.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "shadowColor = #A00000", "shadowBlur = 100",
+                "drawImage(/CBlades/images/dice/failure.png, 356.3294, 102, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            loadAllImages();
+            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+        assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+        assert(unit1.hasBeenPlayed()).isTrue();
+        assert(game.focusedUnit).isNotDefined();
+        assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks unit retreat", () => {
+        given:
+            var { game, map, player1, unit1, unit2 } = create2PlayersTinyGame();
+            var [actuatorsLevel, unitsLevel] = getLevels(game,
+                "actuators", "units"
+            );
+            unit1.move(map.getHex(5, 8));
+            unit2.move(map.getHex(5, 7));
+            unit2.angle = 180;
+            clickOnCounter(game, unit1);
+            clickOnShockAttackAction(game);
+            let shockAttackActuator = getShockAttackActuator(game);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnResult(game);
+        when:
+            var retreatActuator = getRetreatActuator(game);
+            clickOnTrigger(game, retreatActuator.getTrigger(0));
+            loadAllImages();
+            resetDirectives(actuatorsLevel, unitsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit1.png, -241.5, -169.4375, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.4888, 0, 0, -0.4888, 333.3333, -81.1217)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit2.png, -241.5, -563.1875, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([]);
     });
 
 });

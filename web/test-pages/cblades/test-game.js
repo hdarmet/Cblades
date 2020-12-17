@@ -43,6 +43,8 @@ describe("Game", ()=> {
         Memento.clear();
     });
 
+    let dummyEvent = {offsetX:0, offsetY:0};
+
     function paint(game) {
         game._board.paint();
     }
@@ -63,7 +65,7 @@ describe("Game", ()=> {
         var player = new CBAbstractPlayer();
         game.addPlayer(player);
         let unit = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-        game.addCounter(unit, map.getHex(5, 8));
+        game.addUnit(unit, map.getHex(5, 8));
         game.start();
         loadAllImages();
         return {game, player, unit, map};
@@ -79,8 +81,8 @@ describe("Game", ()=> {
             var [mapLevel, unitsLevel] = getLevels(game, "map","units");
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
-            let counter = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-            game.addCounter(counter, map.getHex(5, 8));
+            let unit = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
+            game.addUnit(unit, map.getHex(5, 8));
         when:
             game.start();
             loadAllImages();
@@ -91,8 +93,8 @@ describe("Game", ()=> {
             assert(player.game).equalsTo(game);
             assert(game.currentPlayer).equalsTo(player);
             assert(CBMap.fromArtifact(map._imageArtifact)).equalsTo(map);
-            assert(CBUnit.fromArtifact(counter._imageArtifact)).equalsTo(counter);
-            assert(counter.player).equalsTo(player);
+            assert(CBUnit.fromArtifact(unit._imageArtifact)).equalsTo(unit);
+            assert(unit.player).equalsTo(player);
             assert(getDirectives(mapLevel)).arrayEqualsTo([
                 "setTransform(1, 0, 0, 1, 0, 0)",
                 "setTransform(0.4888, 0, 0, 0.4888, 500, 400)",
@@ -487,12 +489,11 @@ describe("Game", ()=> {
     function create2UnitsTinyGame() {
         var { game, map } = prepareTinyGame();
         let player = new CBAbstractPlayer();
-        player.selectUnit = function(unit, event) {unit.select()}
         game.addPlayer(player);
         let unit1 = new CBUnit(player, "/CBlades/images/units/misc/unit1.png");
-        game.addCounter(unit1, map.getHex(5, 8));
+        game.addUnit(unit1, map.getHex(5, 8));
         let unit2 = new CBUnit(player, "/CBlades/images/units/misc/unit2.png");
-        game.addCounter(unit2, map.getHex(5, 8));
+        game.addUnit(unit2, map.getHex(5, 8));
         game.start();
         loadAllImages();
         return {game, map, unit1, unit2, player};
@@ -501,25 +502,23 @@ describe("Game", ()=> {
     function create2PlayersTinyGame() {
         var { game, map } = prepareTinyGame();
         let player1 = new CBAbstractPlayer();
-        player1.selectUnit = function(unit, event) {unit.select()}
         game.addPlayer(player1);
         let player2 = new CBAbstractPlayer();
-        player2.selectUnit = function(unit, event) {unit.select()}
         game.addPlayer(player2);
         let unit1 = new CBUnit(player1, "/CBlades/images/units/misc/unit1.png");
-        game.addCounter(unit1, map.getHex(5, 8));
+        game.addUnit(unit1, map.getHex(5, 8));
         let unit2 = new CBUnit(player2, "/CBlades/images/units/misc/unit2.png");
-        game.addCounter(unit2, map.getHex(5, 8));
+        game.addUnit(unit2, map.getHex(5, 8));
         game.start();
         loadAllImages();
         return {game, map, unit1, unit2, player1, player2};
     }
 
-    it("Checks counter basic appearnce and features", () => {
+    it("Checks counter basic appearance and features", () => {
         given:
             var { game, map } = prepareTinyGame();
             let counter = new CBCounter("/CBlades/images/units/misc/counter.png", new Dimension2D(50, 50));
-            game.addCounter(counter, map.getHex(5, 8));
+            game.addCounter(counter, new Point2D(100, 200));
             game.start();
             loadAllImages();
             counter.angle = 45;
@@ -528,15 +527,17 @@ describe("Game", ()=> {
             resetDirectives(unitsLevel);
             repaint(game);
         then:
+            assert(counter.game).equalsTo(game);
             assert(counter.angle).equalsTo(45);
             assert(counter.element).is(DElement);
             assert(counter.element.artifacts[0]).equalsTo(counter.artifact);
-            assert(counter.viewportLocation.toString()).equalsTo("point(500, 400)");
+            assert(counter.location.toString()).equalsTo("point(100, 200)");
+            assert(counter.viewportLocation.toString()).equalsTo("point(548.8759, 497.7517)");
             assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 500, 400)",
+                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 583.4363, 394.0704)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter.png, -25, -25, 50, 50)",
+                    "drawImage(/CBlades/images/units/misc/counter.png, 75, 175, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -582,7 +583,7 @@ describe("Game", ()=> {
         when:
             var unit = new CBUnit(player, "/CBlades/images/units/misc/unit1.png");
             var hexId = map.getHex(5, 8);
-            game.addCounter(unit, hexId);
+            game.addUnit(unit, hexId);
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
         when:
@@ -628,13 +629,35 @@ describe("Game", ()=> {
             ]);
     });
 
-    it("Checks unit selection/deselection", () => {
+    it("Checks unit selection/deselection authorizations", () => {
         given:
             var { game, unit1, unit2 } = create2UnitsTinyGame();
+        then:
+            assert(game.canSelectUnit(unit1)).isTrue();
+            assert(game.mayChangeSelection(unit1)).isTrue();
         when:
             unit1.select();
         then:
             assert(game.selectedUnit).equalsTo(unit1);
+            assert(game.focusedUnit).isNotDefined();
+        when: // if an item is "focused", selection of another item is not possible
+            game.setFocusedUnit(unit1);
+        then:
+            assert(game.canUnselectUnit(unit1)).isFalse();
+            assert(game.canSelectUnit(unit2)).isFalse();
+            assert(game.mayChangeSelection(unit2)).isFalse();
+        when: // can select focused unit
+            game.setFocusedUnit(unit2);
+        then:
+            assert(game.canUnselectUnit(unit1)).isFalse();
+            assert(game.canSelectUnit(unit2)).isTrue();
+            assert(game.mayChangeSelection(unit2)).isFalse();
+        when: // No focused unit : selection is possible
+            game.setFocusedUnit();
+        then:
+            assert(game.canUnselectUnit(unit1)).isTrue();
+            assert(game.canSelectUnit(unit2)).isTrue();
+            assert(game.mayChangeSelection(unit2)).isTrue();
         when:
             unit2.select();
         then:
@@ -643,6 +666,91 @@ describe("Game", ()=> {
             unit2.unselect();
         then:
             assert(game.selectedUnit).isNotDefined();
+    });
+
+    it("Checks unit selection/deselection regarding actions", () => {
+        given:
+            var { game, unit1, unit2 } = create2UnitsTinyGame();
+            var action = new CBAction(game, unit1);
+            action.isFinishable = function() { return false;};
+        when:
+            unit1.select();
+            unit1.launchAction(action);
+        then:
+            assert(game.canUnselectUnit(unit1)).isTrue();
+        when:
+            action.markAsStarted();
+        then:
+            assert(game.canUnselectUnit(unit1)).isFalse();
+        when:
+            action.markAsFinished();
+        then:
+            assert(game.canUnselectUnit(unit1)).isTrue();
+    });
+
+    it("Checks basic features of actions", () => {
+        given:
+            var { game, unit } = createTinyGame();
+        when:
+            var action = new CBAction(game, unit);
+            unit.launchAction(action);
+        then:
+            assert(unit.action).equalsTo(action);
+            assert(action.isStarted()).isFalse();
+            assert(unit.hasBeenActivated()).isFalse();
+        when:
+            Memento.open();
+            action.markAsStarted();
+        then:
+            assert(action.isStarted()).isTrue();
+            assert(unit.hasBeenActivated()).isTrue();
+            assert(action.isFinished()).isFalse();
+            assert(unit.hasBeenPlayed()).isFalse();
+        when:
+            Memento.open();
+            action.markAsFinished();
+        then:
+            assert(action.isStarted()).isFalse();
+            assert(unit.hasBeenActivated()).isTrue();
+            assert(action.isFinished()).isTrue();
+            assert(unit.hasBeenPlayed()).isTrue();
+            assert(action.isFinalized()).isFalse();
+        when:
+            Memento.open();
+            var finalized = false;
+            action.finalize(()=>{finalized = true;});
+        then:
+            assert(action.isFinished()).isTrue();
+            assert(unit.hasBeenPlayed()).isTrue();
+            assert(action.isFinalized()).isTrue();
+            assert(finalized).isTrue();
+        when: // finalization is executed ony once
+            finalized = false;
+            action.finalize(()=>{finalized = true;});
+        then:
+            assert(action.isFinalized()).isTrue();
+            assert(finalized).isFalse();
+        when:
+            Memento.undo();
+        then:
+            assert(action.isFinalized()).isFalse();
+        when:
+            Memento.undo();
+        then:
+            assert(action.isStarted()).isTrue();
+            assert(unit.hasBeenActivated()).isTrue();
+            assert(action.isFinished()).isFalse();
+            assert(unit.hasBeenPlayed()).isFalse();
+        when:
+            Memento.undo();
+        then:
+            assert(unit.action).equalsTo(action);
+            assert(action.isStarted()).isFalse();
+            assert(unit.hasBeenActivated()).isFalse();
+        when:
+            unit.removeAction();
+        then:
+            assert(unit.action).isNotDefined();
     });
 
     it("Checks unit appearance when mouse is over it", () => {
@@ -697,13 +805,17 @@ describe("Game", ()=> {
     it("Checks that clicking on a unit select the unit ", () => {
         given:
             var { game, player, unit } = createTinyGame();
-            player.selectUnit = function(unit, event) {unit.select();};
             var [unitsLevel] = getLevels(game, "units");
+            var actionLaunched = false;
+            player.launchUnitAction = function(unit, event) {
+                actionLaunched = true;
+            }
         when:
             resetDirectives(unitsLevel);
             mouseClickOnCounter(game, unit)
         then:
             assert(game.selectedUnit).equalsTo(unit);
+            assert(actionLaunched).isTrue();
             loadAllImages();
             assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
                 "save()",
@@ -711,6 +823,12 @@ describe("Game", ()=> {
                 "shadowBlur = 15",
                 "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)", "restore()"
             ]);
+        when:   // Check that "reselecting" an already selected unit relaunch action
+            actionLaunched = false;
+            mouseClickOnCounter(game, unit);
+        then:
+            assert(game.selectedUnit).equalsTo(unit);
+            assert(actionLaunched).isTrue();
     });
 
     it("Checks that when changing turn, current player changes too and counters are reset", () => {
@@ -720,6 +838,7 @@ describe("Game", ()=> {
             assert(game.currentPlayer).equalsTo(player1);
         when:
             unit1.select();
+            unit1.launchAction(new CBAction(unit1, dummyEvent));
         then:
             assert(game.selectedUnit).equalsTo(unit1);
         when:
@@ -1000,11 +1119,13 @@ describe("Game", ()=> {
 
     it("Checks played status of a unit when selection is changed or turn is changed", () => {
         given:
-            var {game, unit1, unit2} = create2UnitsTinyGame();
+            var {game, player, unit1, unit2} = create2UnitsTinyGame();
             var [markersLevel] = getLevels(game, "markers");
+            player.launchUnitAction = function(unit, event) {
+                unit.launchAction(new CBAction(game, unit));
+            }
         when:
-            unit1.select();
-            unit1.launchAction(new CBAction(game, unit1));
+            player.changeSelection(unit1, dummyEvent);
             unit1.action.markAsStarted();
         then:
             assert(unit1.hasBeenActivated()).isTrue();
@@ -1015,6 +1136,7 @@ describe("Game", ()=> {
             resetDirectives(markersLevel);
             repaint(game);
         then:
+            assert(unit1.action).isDefined();
             assert(unit1.hasBeenActivated()).isTrue();
             assert(unit1.hasBeenPlayed()).isTrue();
             assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
@@ -1028,6 +1150,7 @@ describe("Game", ()=> {
             resetDirectives(markersLevel);
             repaint(game);
         then:
+            assert(unit1.action).isNotDefined();
             assert(unit1.hasBeenActivated()).isFalse();
             assert(unit1.hasBeenPlayed()).isFalse();
             assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);

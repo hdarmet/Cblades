@@ -19,12 +19,9 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
+    CBAction,
     CBGame, CBHexId, CBMap, CBMovement, CBUnit, CBWeather
 } from "../../jslib/cblades/game.js";
-import {
-    DDice,
-    DPopup, DResult
-} from "../../jslib/widget.js";
 import {
     CBInteractivePlayer, CBMoveActuator, CBOrientationActuator
 } from "../../jslib/cblades/interactive-player.js";
@@ -53,17 +50,33 @@ describe("Arbitrator", ()=> {
         let map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
         let unit11 = new CBUnit(player1, "/CBlades/images/units/misc/unit1.png");
-        game.addCounter(unit11, map.getHex(5, 8));
+        game.addUnit(unit11, map.getHex(5, 8));
         let unit12 = new CBUnit(player1, "/CBlades/images/units/misc/unit1.png");
-        game.addCounter(unit12, map.getHex(5, 7));
+        game.addUnit(unit12, map.getHex(5, 7));
         let unit21 = new CBUnit(player2, "/CBlades/images/units/misc/unit2.png");
-        game.addCounter(unit21, map.getHex(7, 8));
+        game.addUnit(unit21, map.getHex(7, 8));
         let unit22 = new CBUnit(player2, "/CBlades/images/units/misc/unit2.png");
-        game.addCounter(unit22, map.getHex(7, 7));
+        game.addUnit(unit22, map.getHex(7, 7));
         game.start();
         loadAllImages();
         return {game, arbitrator, map, player1, unit11, unit12, player2, unit21, unit22};
     }
+
+    it("Checks is a unit have to play this turn", () => {
+        given:
+            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.mustPlayUnit(unit12)).isTrue();
+        when:
+            unit12.launchAction(new CBAction(unit12.game, unit12));
+            unit12.action.markAsStarted();
+        then:
+            assert(arbitrator.mustPlayUnit(unit12)).isFalse();
+        when:
+            unit12.action.markAsFinished();
+        then:
+            assert(arbitrator.mustPlayUnit(unit12)).isFalse();
+    });
 
     it("Checks unit allowed actions", () => {
         given:
@@ -141,6 +154,42 @@ describe("Arbitrator", ()=> {
             assert(arbitrator.isHexOnForwardZone(unit12, unit12.hexLocation.getNearHex(300))).isFalse();
     });
 
+    it("Checks unit backward zone", () => {
+        given:
+            var {arbitrator, unit11} = create2Players4UnitsTinyGame();
+        when:
+            var zones = arbitrator.getUnitBackwardZone(unit11);
+        then:
+            assertInZone(zones, 120, 6, 8);
+            assert(arbitrator.isHexOnBackwardZone(unit11, unit11.hexLocation.getNearHex(120))).isTrue();
+            assertInZone(zones, 180, 5, 9);
+            assert(arbitrator.isHexOnBackwardZone(unit11, unit11.hexLocation.getNearHex(180))).isTrue();
+            assertInZone(zones, 240, 4, 8);
+            assert(arbitrator.isHexOnBackwardZone(unit11, unit11.hexLocation.getNearHex(240))).isTrue();
+            assertNotInZone(zones, 300);
+            assert(arbitrator.isHexOnBackwardZone(unit11, unit11.hexLocation.getNearHex(300))).isFalse();
+            assertNotInZone(zones, 0);
+            assert(arbitrator.isHexOnBackwardZone(unit11, unit11.hexLocation.getNearHex(0))).isFalse();
+            assertNotInZone(zones, 60);
+            assert(arbitrator.isHexOnBackwardZone(unit11, unit11.hexLocation.getNearHex(60))).isFalse();
+        when:
+            unit11.angle = 30;
+            zones = arbitrator.getUnitBackwardZone(unit11);
+        then:
+            assertInZone(zones, 180, 5, 9);
+            assert(arbitrator.isHexOnBackwardZone(unit11, unit11.hexLocation.getNearHex(180))).isTrue();
+            assertInZone(zones, 240, 4, 8);
+            assert(arbitrator.isHexOnBackwardZone(unit11, unit11.hexLocation.getNearHex(240))).isTrue();
+            assertNotInZone(zones, 0);
+            assert(arbitrator.isHexOnBackwardZone(unit11, unit11.hexLocation.getNearHex(0))).isFalse();
+            assertNotInZone(zones, 60);
+            assert(arbitrator.isHexOnBackwardZone(unit11, unit11.hexLocation.getNearHex(60))).isFalse();
+            assertNotInZone(zones, 120);
+            assert(arbitrator.isHexOnBackwardZone(unit11, unit11.hexLocation.getNearHex(120))).isFalse();
+            assertNotInZone(zones, 300);
+            assert(arbitrator.isHexOnBackwardZone(unit11, unit11.hexLocation.getNearHex(300))).isFalse();
+    });
+
     function assertNoMove(moves, angle) {
         assert(moves[angle]).isNotDefined();
     }
@@ -152,12 +201,13 @@ describe("Arbitrator", ()=> {
 
     it("Checks unit allowed moves", () => {
         given:
-            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+            var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
+            unit21.move(map.getHex(5, 6)); // foes on forward zone
         when:
             var allowedMoves = arbitrator.getAllowedMoves(unit12);
         then:
             assertMove(allowedMoves, 300, 4, 6, CBMovement.NORMAL);
-            assertMove(allowedMoves, 0, 5, 6, CBMovement.NORMAL);
+            assertNoMove(allowedMoves, 0); // occupied by a foe
             assertMove(allowedMoves, 60, 6, 6, CBMovement.NORMAL);
             assertNoMove(allowedMoves, 120);
             assertNoMove(allowedMoves, 180);
@@ -167,7 +217,7 @@ describe("Arbitrator", ()=> {
             unit12.angle = 30;
             allowedMoves = arbitrator.getAllowedMoves(unit12);
         then:
-            assertMove(allowedMoves, 0, 5, 6, CBMovement.EXTENDED);
+            assertNoMove(allowedMoves, 0); // occupied by a foe
             assertMove(allowedMoves, 60, 6, 6, CBMovement.EXTENDED);
             assertNoMove(allowedMoves, 120);
             assertNoMove(allowedMoves, 180);
@@ -186,12 +236,38 @@ describe("Arbitrator", ()=> {
         when:
             allowedMoves = arbitrator.getAllowedMoves(unit12, true);
         then:
-            assertMove(allowedMoves, 0, 5, 6, CBMovement.MINIMAL);
+            assertNoMove(allowedMoves, 0); // occupied by a foe
             assertMove(allowedMoves, 60, 6, 6, CBMovement.MINIMAL);
             assertNoMove(allowedMoves, 120);
             assertNoMove(allowedMoves, 180);
             assertNoMove(allowedMoves, 240);
             assertNoMove(allowedMoves, 300);
+    });
+
+    it("Checks unit allowed retreat", () => {
+        given:
+            var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
+            unit12.angle = 180;
+            unit21.move(map.getHex(5, 6)); // foes on backward zone
+        when:
+            var allowedRetreats = arbitrator.getRetreatZones(unit12);
+        then:
+            assertInZone(allowedRetreats, 300, 4, 6);
+            assertNotInZone(allowedRetreats, 0); // occupied by a foe
+            assertInZone(allowedRetreats, 60, 6, 6);
+            assertNotInZone(allowedRetreats, 120);
+            assertNotInZone(allowedRetreats, 180);
+            assertNotInZone(allowedRetreats, 240);
+        when:
+            unit12.angle = 210;
+            allowedRetreats = arbitrator.getRetreatZones(unit12);
+        then:
+            assertNotInZone(allowedRetreats, 0); // occupied by a foe
+            assertInZone(allowedRetreats, 60, 6, 6);
+            assertNotInZone(allowedRetreats, 120);
+            assertNotInZone(allowedRetreats, 180);
+            assertNotInZone(allowedRetreats, 240);
+            assertNotInZone(allowedRetreats, 300);
     });
 
     function assertNoRotation(rotations, angle) {
@@ -365,6 +441,51 @@ describe("Arbitrator", ()=> {
             assert(arbitrator.isUnitOnContact(unit12)).isFalse();
             assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit11)).isFalse();
             assert(arbitrator.isUnitEngaged(unit11)).isFalse();
+    });
+
+    it("Checks units that can be shock attacked", () => {
+        given:
+            var {arbitrator, map, unit12, unit21, unit22} = create2Players4UnitsTinyGame();
+            unit21.move(map.getHex(5, 6));
+        when:
+            var foes = arbitrator.getFoesThatMayBeShockAttacked(unit12);
+        then:
+            assert(foes.length).equalsTo(1);
+            assert(foes[0].unit).equalsTo(unit21);
+            assert(foes[0].supported).isTrue();
+        when:
+            unit12.addOneTirednessLevel();
+            unit12.addOneTirednessLevel();
+            foes = arbitrator.getFoesThatMayBeShockAttacked(unit12);
+        then:
+            assert(foes[0].supported).isFalse();
+        when:
+            unit22.move(map.getHex(6, 6));
+            foes = arbitrator.getFoesThatMayBeShockAttacked(unit12);
+        then:
+            assert(foes.length).equalsTo(2);
+    });
+
+    it("Checks shock attack processing", () => {
+        given:
+            var {arbitrator, map, unit12, unit21, unit22} = create2Players4UnitsTinyGame();
+            unit21.move(map.getHex(5, 6));
+        when:
+            var result = arbitrator.processShockAttackResult(unit12, unit21, true, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+            assert(result.lossesForDefender).equalsTo(2);
+            assert(result.tirednessForAttacker).isTrue();
+        when:
+            result = arbitrator.processShockAttackResult(unit12, unit21, false, [3, 4]);
+        then:
+            assert(result.success).isTrue();
+            assert(result.lossesForDefender).equalsTo(1);
+            assert(result.tirednessForAttacker).isFalse();
+        when:
+            result = arbitrator.processShockAttackResult(unit12, unit21, false, [5, 5]);
+        then:
+            assert(result.success).isFalse();
     });
 
     it("Checks get weather", () => {

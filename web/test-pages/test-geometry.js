@@ -58,6 +58,7 @@ describe("Geometry", ()=> {
             assert(point.sameTo(new Point2D(30.00015, 40.00015))).isFalse();
             assert(point.toString()).equalsTo("point(30, 40)");
             assert(point.toArray()).arrayEqualsTo([30, 40]);
+            assert(point.translate(10, 15).toString()).equalsTo("point(40, 55)");
         when:
             var clonePoint = point.clone();
         then:

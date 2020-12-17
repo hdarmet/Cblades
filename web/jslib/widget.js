@@ -679,12 +679,18 @@ export class DResult extends DElement {
 
     success() {
         this._artifact.success();
+        this._finished = true;
         return this;
     }
 
     failure() {
         this._artifact.failure();
+        this._finished = true;
         return this;
+    }
+
+    get finished() {
+        return this._finished;
     }
 
     open(board, location) {

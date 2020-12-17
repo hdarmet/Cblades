@@ -72,6 +72,11 @@ export let mockPlatform = {
     },
 
     drawImage(context, image, ...params) {
+        for(let index in params) {
+            if (typeof(params[index])==="number") {
+                params[index] = round(params[index]);
+            }
+        }
         write(context, `drawImage(${image.src}, ${params.join(', ')})`);
     },
 

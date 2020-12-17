@@ -75,9 +75,6 @@ export class CBAbstractPlayer {
     selectUnit(unit, event) {
         this.game.closeActuators();
         DPopup.close();
-        if (unit.isEngaging()) {
-            unit.markAsEngaging(false);
-        }
         if (this.game.selectedUnit!==unit) {
             this.beforeActivation(unit, ()=>{
                 unit.select();
@@ -100,9 +97,11 @@ export class CBAbstractPlayer {
         action();
     }
 
+    /*
     launchUnitAction(unit, event) {
-        unit.launchAction(new CBAction(this.game, unit));
+       // launch action process here
     }
+     */
 
     afterActivation(unit, action) {
         action();
@@ -145,7 +144,11 @@ export class CBAction {
     }
 
     isFinished() {
-        return this._status === CBAction.FINISHED;
+        return this._status >= CBAction.FINISHED;
+    }
+
+    isFinalized() {
+        return this._status === CBAction.FINALIZED;
     }
 
     isFinishable() {
@@ -175,6 +178,14 @@ export class CBAction {
         }
     }
 
+    finalize(action) {
+        if (this._status < CBAction.FINALIZED) {
+            Memento.register(this);
+            this._status = CBAction.FINALIZED;
+            action && action();
+        }
+    }
+
     play() {}
 
     get unit() {
@@ -188,6 +199,7 @@ export class CBAction {
 CBAction.INITIATED = 0;
 CBAction.STARTED = 1;
 CBAction.FINISHED = 2;
+CBAction.FINALIZED = 3;
 
 export class CBActuator {
 
@@ -266,13 +278,23 @@ export class CBGame {
         }
     }
 
-    addCounter(counter, hexLocation) {
+    addCounter(counter, location) {
         if (!this._counters) {
             this._counters = new Set();
         }
-        this._counters.add(counter);
-        counter.hexLocation = hexLocation;
+        this._counters.add(counter)
+        counter.location = location;
+        counter.game = this;
         counter.element.setOnBoard(this._board);
+    }
+
+    addUnit(unit, hexLocation) {
+        if (!this._counters) {
+            this._counters = new Set();
+        }
+        this._counters.add(unit);
+        unit.hexLocation = hexLocation;
+        unit.element.setOnBoard(this._board);
     }
 
     openActuator(actuator) {
@@ -303,7 +325,9 @@ export class CBGame {
     }
 
     canUnselectUnit() {
-        return !this.focusedUnit && (!this.selectedUnit.hasBeenActivated() || this.selectedUnit.action.isFinishable());
+        return !this.focusedUnit && (!this.selectedUnit.hasBeenActivated() ||
+            this.selectedUnit.action.isFinished() ||
+            this.selectedUnit.action.isFinishable());
     }
 
     canSelectUnit(unit) {
@@ -579,6 +603,7 @@ class CBHex {
     }
 
     addUnit(unit) {
+        console.assert(unit instanceof CBUnit);
         this._units.push(unit);
     }
 
@@ -990,10 +1015,6 @@ export class CBUnit extends CBCounter {
         return this._player.game;
     }
 
-    get action() {
-        return this._action;
-    }
-
     get player() {
         return this._player;
     }
@@ -1061,7 +1082,7 @@ export class CBUnit extends CBCounter {
         this._extendedMovementPoints -= cost;
     }
 
-    move(hexId, cost) {
+    move(hexId, cost=0) {
         if (hexId !== this._hexLocation) {
             Memento.register(this);
             this._hexLocation && this._hexLocation.hex.deleteUnit(this);

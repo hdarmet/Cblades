@@ -26,6 +26,9 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
     }
 
     beforeActivation(unit, action) {
+        if (unit.isEngaging()) {
+            unit.markAsEngaging(false);
+        }
         if (this.game.arbitrator.isUnitEngaged(unit, true)) {
             this.checkDefenderEngagement(unit, unit.viewportLocation, () => {
                 this.game.setFocusedUnit(unit);
@@ -44,8 +47,8 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
     }
 
     afterActivation(unit, action) {
-        if (unit && unit.isEngaging() && this.game.arbitrator.isUnitEngaged(unit, false)) {
-            unit.action.checkAttackerEngagement(unit.viewportLocation, ()=> {
+        if (unit && unit.action && !unit.action.isFinalized()) {
+            unit.action.finalize(() => {
                 super.afterActivation(unit, action);
             });
         }
@@ -66,7 +69,14 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
-        mask.setAction(()=>{mask.close(); scene.close();});
+        let close = ()=>{
+            mask.close();
+            scene.close();
+            if (result.finished) {
+                action();
+            }
+        }
+        mask.setAction(close);
         mask.open(this.game.board, point);
         scene.addWidget(
             new CBCheckDefenderEngagementInsert(), new Point2D(-CBCheckDefenderEngagementInsert.DIMENSION.w/2, 0)
@@ -85,11 +95,7 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
             }),
             new Point2D(70, 70)
         ).addWidget(
-            result.setFinalAction(()=>{
-                mask.close();
-                scene.close();
-                action();
-            }),
+            result.setFinalAction(close),
             new Point2D(0, 0)
         ).open(this.game.board, point);
 
@@ -176,7 +182,8 @@ export class InteractiveRestingAction extends CBAction {
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
-        mask.setAction(()=>{mask.close(); scene.close();});
+        let close = ()=>{mask.close(); scene.close();};
+        mask.setAction(close);
         mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
         scene.addWidget(
             new CBRestInsert(), new Point2D(0, -CBRestInsert.DIMENSION.h/2+10)
@@ -201,10 +208,7 @@ export class InteractiveRestingAction extends CBAction {
             }),
             new Point2D(CBRestInsert.DIMENSION.w/2+40, 0)
         ).addWidget(
-            result.setFinalAction(()=>{
-                mask.close();
-                scene.close();
-            }),
+            result.setFinalAction(close),
             new Point2D(0, 0)
         ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
     }
@@ -215,7 +219,6 @@ export class InteractiveRestingAction extends CBAction {
             this.unit.removeOneTirednessLevel();
         }
         this.markAsFinished();
-        //Memento.clear();
         return result;
     }
 
@@ -247,7 +250,8 @@ export class InteractiveShockAttackAction extends CBAction {
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
-        mask.setAction(()=>{mask.close(); scene.close();});
+        let close = ()=>{mask.close(); scene.close();};
+        mask.setAction(close);
         mask.open(this.game.board, new Point2D(event.offsetX, event.offsetY));
         scene.addWidget(
             new CBCombatResultTableInsert(), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
@@ -267,10 +271,7 @@ export class InteractiveShockAttackAction extends CBAction {
             }),
             new Point2D(70, 60)
         ).addWidget(
-            result.setFinalAction(()=>{
-                mask.close();
-                scene.close();
-            }),
+            result.setFinalAction(close),
             new Point2D(0, 0)
         ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
     }
@@ -301,12 +302,33 @@ export class InteractiveMovementAction extends CBAction {
         this._createMovementActuators(true);
     }
 
+    finalize(action) {
+        if (!this.isFinalized()) {
+            if (this.unit.isEngaging() && this.game.arbitrator.isUnitEngaged(this.unit, false)) {
+                this.checkAttackerEngagement(this.unit.viewportLocation, () => {
+                    super.finalize(action);
+                    Memento.clear();
+                });
+            }
+            else {
+                super.finalize(action);
+            }
+        }
+    }
+
     checkAttackerEngagement(point, action) {
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
-        mask.setAction(()=>{mask.close(); scene.close();});
+        let close = ()=>{
+            mask.close();
+            scene.close();
+            if (result.finished) {
+                action();
+            }
+        }
+        mask.setAction(close);
         mask.open(this.game.board, point);
         scene.addWidget(
             new CBCheckAttackerEngagementInsert(), new Point2D(-CBCheckAttackerEngagementInsert.DIMENSION.w/2, 0)
@@ -325,11 +347,7 @@ export class InteractiveMovementAction extends CBAction {
             }),
             new Point2D(70, 70)
         ).addWidget(
-            result.setFinalAction(()=>{
-                mask.close();
-                scene.close();
-                action();
-            }),
+            result.setFinalAction(close),
             new Point2D(0, 0)
         ).open(this.game.board, point);
 
@@ -361,6 +379,7 @@ export class InteractiveMovementAction extends CBAction {
     _markUnitActivationAfterMovement(played) {
         if (played) {
             this.markAsFinished();
+            this.finalize();
         }
         else {
             this.markAsStarted();
@@ -562,9 +581,9 @@ export class CBShockAttackActuator extends CBActuator {
         this._element.setLocation(this.unit.location);
     }
 
-    getTrigger(unit) {
+    getTrigger(unit, supported) {
         for (let artifact of this._element.artifacts) {
-            if (artifact._unit === unit) return artifact;
+            if (artifact._unit === unit && artifact._supported === supported) return artifact;
         }
         return null;
     }

@@ -37,10 +37,9 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
 
-    mustPlayUnit(game, unit) {
+    mustPlayUnit(unit) {
         return !unit.hasBeenActivated() && !unit.hasBeenPlayed();
     }
-
 
     isHexOnForwardZone(unit, hexId) {
         let unitAngle = unit.angle;
@@ -64,6 +63,13 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return zones;
     }
 
+    isHexOnBackwardZone(unit, hexId) {
+        let unitAngle = unit.angle;
+        let hexAngle = unit.hexLocation.isNearHex(hexId);
+        let diff = diffAngle(hexAngle, unitAngle);
+        return diff<=-120 || diff>=120;
+    }
+
     getUnitBackwardZone(unit) {
         let zones = [];
         let angle = unit.angle;
@@ -80,7 +86,23 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     getRetreatZones(unit) {
-        return this.getUnitBackwardZone(unit);
+        function processZone(zone, arbitrator, unit) {
+            let nearUnits = zone.hex.units;
+            if (nearUnits.length) {
+                if (arbitrator.areUnitsFoes(unit, nearUnits)) return false;
+            }
+            return true;
+        }
+
+        let zones = this.getUnitBackwardZone(unit);
+        let result = [];
+        for (let angle in zones) {
+            let zone = zones[angle];
+            if (processZone(zone, this, unit)) {
+                result[angle] = zone;
+            }
+        }
+        return result;
     }
 
     getFoesThatMayBeShockAttacked(unit) {

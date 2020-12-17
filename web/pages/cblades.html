@@ -31,8 +31,8 @@
     game.addPlayer(player1);
     let counter11 = new CBUnit(player1, "/CBlades/images/units/mercenaries/unit1L.png");
     let counter12 = new CBUnit(player1, "/CBlades/images/units/mercenaries/unit1L.png");
-    game.addCounter(counter11, new CBHexId(map, 3, 10));
-    game.addCounter(counter12, new CBHexId(map, 6, 10));
+    game.addUnit(counter11, new CBHexId(map, 3, 10));
+    game.addUnit(counter12, new CBHexId(map, 6, 10));
 
     let player2 = new CBInteractivePlayer();
     game.addPlayer(player2);
@@ -40,8 +40,8 @@
     counter21.angle = 180;
     let counter22 = new CBUnit(player2, "/CBlades/images/units/orcs/unit1L.png");
     counter22.angle = 180;
-    game.addCounter(counter21, new CBHexId(map, 7, 7));
-    game.addCounter(counter22, new CBHexId(map, 8, 7));
+    game.addUnit(counter21, new CBHexId(map, 7, 7));
+    game.addUnit(counter22, new CBHexId(map, 8, 7));
 
     game.start();
 

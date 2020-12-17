@@ -681,6 +681,7 @@ describe("Widget", ()=> {
             var resultVPLocation = result.trigger.viewportLocation;
             board.paint();
         then:
+            assert(result.finished).isTrue();
             assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00A000", "shadowBlur = 100",
@@ -697,7 +698,7 @@ describe("Widget", ()=> {
                     "drawImage(/CBlades/images/dice/success.png, -65, -55, 150, 150)",
                 "restore()"
             ]);
-        when: // Acivation shadow
+        when: // Activation shadow
             resetDirectives(commandsLevel);
             var event = createEvent("mousemove", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y});
             mockPlatform.dispatchEvent(board.root, "mousemove", event);
@@ -708,7 +709,7 @@ describe("Widget", ()=> {
                 "drawImage(/CBlades/images/dice/success.png, -65, -55, 150, 150)",
                 "restore()"
             ]);
-        when: // Acivation shadow
+        when: // Activation shadow
             resetDirectives(commandsLevel);
             var event = createEvent("mousemove", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y+150});
             mockPlatform.dispatchEvent(board.root, "mousemove", event);
@@ -741,6 +742,7 @@ describe("Widget", ()=> {
             var resultVPLocation = result.trigger.viewportLocation;
             board.paint();
         then:
+            assert(result.finished).isTrue();
             assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #A00000", "shadowBlur = 100",
