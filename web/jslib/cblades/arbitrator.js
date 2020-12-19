@@ -1,5 +1,5 @@
 import {
-    CBAbstractArbitrator, CBHexSideId, CBMovement, CBTiredness, CBWeather
+    CBAbstractArbitrator, CBCohesion, CBHexSideId, CBMovement, CBTiredness, CBWeather
 } from "./game.js";
 import {
     diffAngle
@@ -14,13 +14,13 @@ export class CBArbitrator extends CBAbstractArbitrator{
             escape:true,
             confront:true,
             shockAttack:this.isAllowedToShockAttack(unit),
-            fireAttack:false,
+            fireAttack:this.isAllowedToFireAttack(unit),
             shockDuel:false,
             fireDuel:false,
             rest:this.isAllowedToRest(unit),
-            reload:true,
-            reorganize:true,
-            rally:true,
+            reload:this.isAllowedToReplenishMunitions(unit),
+            reorganize:this.isAllowedToReorganize(unit),
+            rally:this.isAllowedToRally(unit),
             createFormation:true,
             joinFormation:true,
             leaveFormation:true,
@@ -36,9 +36,8 @@ export class CBArbitrator extends CBAbstractArbitrator{
         }
     }
 
-
     mustPlayUnit(unit) {
-        return !unit.hasBeenActivated() && !unit.hasBeenPlayed();
+        return unit.isOnBoard() && !unit.hasBeenActivated() && !unit.hasBeenPlayed();
     }
 
     isHexOnForwardZone(unit, hexId) {
@@ -48,19 +47,46 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return diff>=-60 && diff<=60;
     }
 
-    getUnitForwardZone(unit) {
+    _getForwardArea(border, angle) {
+        let hexes = new Set();
+        for (let hexId of border) {
+            let zones = this.getForwardZone(hexId, angle);
+            for (let zangle in zones) {
+                let zone = zones[zangle];
+                hexes.add(zone.hex);
+            }
+        }
+        return hexes;
+    }
+
+    getUnitForwardArea(unit, range) {
+        let hexes = new Set();
+        let border = [unit.hexLocation];
+        for (let index=0; index<range; index++) {
+            border = this._getForwardArea(border, unit.angle);
+            for (let hexId of border) {
+                hexes.add(hexId);
+            }
+        }
+        return [...hexes];
+    }
+
+    getForwardZone(hexId, angle) {
         let zones = [];
-        let angle = unit.angle;
         if (angle%60) {
-            zones[angle-30]={hex:unit.hexLocation.getNearHex(angle -30)};
-            zones[(angle + 30) % 360]={hex:unit.hexLocation.getNearHex((angle + 30) % 360)};
+            zones[angle-30]={hex:hexId.getNearHex(angle -30)};
+            zones[(angle + 30) % 360]={hex:hexId.getNearHex((angle + 30) % 360)};
         }
         else {
-            zones[(angle + 300) % 360]={hex:unit.hexLocation.getNearHex((angle + 300) % 360)};
-            zones[angle]={hex:unit.hexLocation.getNearHex(angle)};
-            zones[(angle + 60) % 360]={hex:unit.hexLocation.getNearHex((angle + 60) % 360)};
+            zones[(angle + 300) % 360]={hex:hexId.getNearHex((angle + 300) % 360)};
+            zones[angle]={hex:hexId.getNearHex(angle)};
+            zones[(angle + 60) % 360]={hex:hexId.getNearHex((angle + 60) % 360)};
         }
         return zones;
+    }
+
+    getUnitForwardZone(unit) {
+        return this.getForwardZone(unit.hexLocation, unit.angle)
     }
 
     isHexOnBackwardZone(unit, hexId) {
@@ -105,19 +131,21 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return result;
     }
 
+    _collectFoes(foes, unit, hex, more) {
+        let units = hex.units;
+        if (units.length) {
+            let nearUnit = units[0];
+            if (this.areUnitsFoes(unit, nearUnit)) {
+                foes.push({unit:nearUnit, ...more});
+            }
+        }
+    }
+
     getFoesThatMayBeShockAttacked(unit) {
         let zones = this.getUnitForwardZone(unit);
         let foes = [];
         for (let angle in zones) {
-            let zone = zones[angle];
-            let units = zone.hex.units;
-            if (units.length) {
-                let nearUnit = units[0];
-                if (this.areUnitsFoes(unit, nearUnit)) {
-                    let supported = !unit.isExhausted();
-                    foes.push({unit:nearUnit, supported});
-                }
-            }
+            this._collectFoes(foes, unit, zones[angle].hex, {supported:!unit.isExhausted()});
         }
         return foes;
     }
@@ -127,6 +155,22 @@ export class CBArbitrator extends CBAbstractArbitrator{
         let lossesForDefender = diceResult[0]+diceResult[1]<=4 ? 2 : diceResult[0]+diceResult[1]<=8 ? 1 : 0;
         let tirednessForAttacker = supported;
         return { success, lossesForDefender, tirednessForAttacker };
+    }
+
+    getFoesThatMayBeFireAttacked(unit) {
+        let hexes = this.getUnitForwardArea(unit, 3);
+        let foes = [];
+        for (let hex of hexes) {
+            this._collectFoes(foes, unit, hex, {});
+        }
+        return foes;
+    }
+
+    processFireAttackResult(unit, foe, diceResult) {
+        let success = diceResult[0]+diceResult[1]<=8;
+        let lossesForDefender = diceResult[0]+diceResult[1]<=4 ? 2 : diceResult[0]+diceResult[1]<=8 ? 1 : 0;
+        let lowerFirerMunitions = diceResult[0] === diceResult[1];
+        return { success, lossesForDefender, lowerFirerMunitions };
     }
 
     getAllowedMoves(unit, first) {
@@ -198,17 +242,48 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     isAllowedToShockAttack(unit) {
-        return this.isUnitOnContact(unit);
+        return this.getFoesThatMayBeShockAttacked(unit).length>0;
+    }
+
+    isAllowedToFireAttack(unit) {
+        return this.getFoesThatMayBeFireAttacked(unit).length>0;
     }
 
     isAllowedToRest(unit) {
         return unit.tiredness > 0;
     }
 
+    isAllowedToReplenishMunitions(unit) {
+        return unit.lackOfMunitions > 0;
+    }
+
+    isAllowedToReorganize(unit) {
+        return unit.cohesion === CBCohesion.DISRUPTED;
+    }
+
+    isAllowedToRally(unit) {
+        return unit.cohesion === CBCohesion.ROUTED;
+    }
+
     processRestResult(unit, diceResult) {
         let success = diceResult[0]+diceResult[1]<=10;
         let minorRestingCapacity = diceResult[0]===diceResult[1];
         return { success, minorRestingCapacity };
+    }
+
+    processReplenishMunitionsResult(unit, diceResult) {
+        let success = diceResult[0]+diceResult[1]<=10;
+        return { success };
+    }
+
+    processReorganizeResult(unit, diceResult) {
+        let success = diceResult[0]+diceResult[1]<=8;
+        return { success };
+    }
+
+    processRallyResult(unit, diceResult) {
+        let success = diceResult[0]+diceResult[1]<=8;
+        return { success };
     }
 
     processAttackerEngagementResult(unit, diceResult) {

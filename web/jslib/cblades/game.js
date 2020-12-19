@@ -7,10 +7,11 @@ import {
     DImage, DStaticLayer
 } from "../draw.js";
 import {
+    Mechanisms,
     Memento
 } from "../mechanisms.js";
 import {
-    DBoard, DElement, DImageArtifact
+    DBoard, DElement, DImageArtifact, DMultiImageArtifact
 } from "../board.js";
 import {
     DPopup, DPushButton
@@ -25,6 +26,12 @@ export let CBMovement = {
 export let CBTiredness = {
     NONE: 0,
     TIRED: 1,
+    EXHAUSTED: 2
+}
+
+export let CBLackOfMunitions = {
+    NONE: 0,
+    SCARCE: 1,
     EXHAUSTED: 2
 }
 
@@ -111,6 +118,10 @@ export class CBAbstractPlayer {
         this.game.nextTurn(animation);
     }
 
+    canFinishUnit(unit) {
+        return true;
+    }
+
     get game() {
         return this._game;
     }
@@ -164,6 +175,7 @@ export class CBAction {
                 this.unit.updatePlayed();
             }
             this.game.setFocusedUnit(null);
+            Mechanisms.fire(this, CBAction.PROGRESSION, CBAction.STARTED);
         }
     }
 
@@ -175,6 +187,7 @@ export class CBAction {
                 this.unit.updatePlayed();
             }
             this.game.setFocusedUnit(null);
+            Mechanisms.fire(this, CBAction.PROGRESSION, CBAction.FINISHED);
         }
     }
 
@@ -183,6 +196,7 @@ export class CBAction {
             Memento.register(this);
             this._status = CBAction.FINALIZED;
             action && action();
+            Mechanisms.fire(this, CBAction.PROGRESSION, CBAction.FINALIZED);
         }
     }
 
@@ -200,6 +214,7 @@ CBAction.INITIATED = 0;
 CBAction.STARTED = 1;
 CBAction.FINISHED = 2;
 CBAction.FINALIZED = 3;
+CBAction.PROGRESSION = "progression";
 
 export class CBActuator {
 
@@ -297,6 +312,16 @@ export class CBGame {
         unit.element.setOnBoard(this._board);
     }
 
+    turnIsFinishable() {
+        if (!this.canUnselectUnit()) return false;
+        if (this._counters) {
+            for (let counter of this._counters) {
+                if (counter.isFinishable && !counter.isFinishable()) return false;
+            }
+        }
+        return true;
+    }
+
     openActuator(actuator) {
         Memento.register(this);
         actuator.game = this;
@@ -325,7 +350,9 @@ export class CBGame {
     }
 
     canUnselectUnit() {
-        return !this.focusedUnit && (!this.selectedUnit.hasBeenActivated() ||
+        return !this.focusedUnit && (
+            !this.selectedUnit ||
+            !this.selectedUnit.hasBeenActivated() ||
             this.selectedUnit.action.isFinished() ||
             this.selectedUnit.action.isFinishable());
     }
@@ -362,12 +389,26 @@ export class CBGame {
         return this._focusedUnit;
     }
 
-    setMenu() {
-        this._endOfTurnCommand = new DPushButton("/CBlades/images/commands/turn.png", new Point2D(-60, -60), animation=>{
+    _createEndOfTurnCommand() {
+        this._endOfTurnCommand = new DPushButton(
+            "/CBlades/images/commands/turn.png", "/CBlades/images/commands/turn-inactive.png",
+            new Point2D(-60, -60), animation=>{
             this.currentPlayer.finishTurn(animation);
         }).setTurnAnimation(true);
+        this._endOfTurnCommand._processGlobalEvent = (source, event)=>{
+            if (source instanceof CBAction || source===this) {
+                this._endOfTurnCommand.active = this.turnIsFinishable();
+            }
+        }
+        Mechanisms.addListener(this._endOfTurnCommand);
+    }
+
+    setMenu() {
+        this._createEndOfTurnCommand();
         this._endOfTurnCommand.setOnBoard(this._board);
-        this._showCommand = new DPushButton("/CBlades/images/commands/show.png", new Point2D(-120, -60), animation=>{
+        this._showCommand = new DPushButton(
+            "/CBlades/images/commands/show.png", "/CBlades/images/commands/show-inactive.png",
+            new Point2D(-120, -60), animation=>{
             this._showCommand.removeFromBoard();
             this._hideCommand.setOnBoard(this._board);
             this._undoCommand.setOnBoard(this._board);
@@ -378,7 +419,9 @@ export class CBGame {
             animation();
         });
         this._showCommand.setOnBoard(this._board);
-        this._hideCommand = new DPushButton("/CBlades/images/commands/hide.png", new Point2D(-120, -60), animation=>{
+        this._hideCommand = new DPushButton(
+            "/CBlades/images/commands/hide.png", "/CBlades/images/commands/hide-inactive.png",
+            new Point2D(-120, -60), animation=>{
             this._showCommand.setOnBoard(this._board);
             this._hideCommand.removeFromBoard();
             this._undoCommand.removeFromBoard();
@@ -388,20 +431,30 @@ export class CBGame {
             this._loadCommand.removeFromBoard();
             animation();
         });
-        this._undoCommand = new DPushButton("/CBlades/images/commands/undo.png", new Point2D(-180, -60), animation=>{
+        this._undoCommand = new DPushButton(
+            "/CBlades/images/commands/undo.png", "/CBlades/images/commands/undo-inactive.png",
+            new Point2D(-180, -60), animation=>{
             Memento.undo();
             animation();
         }).setTurnAnimation(false);
-        this._redoCommand = new DPushButton("/CBlades/images/commands/redo.png", new Point2D(-240, -60), animation=>{
+        this._redoCommand = new DPushButton(
+            "/CBlades/images/commands/redo.png", "/CBlades/images/commands/redo-inactive.png",
+            new Point2D(-240, -60), animation=>{
             Memento.redo();
             animation();
         }).setTurnAnimation(true);
-        this._settingsCommand = new DPushButton("/CBlades/images/commands/settings.png", new Point2D(-300, -60), animation=>{});
-        this._saveCommand = new DPushButton("/CBlades/images/commands/save.png", new Point2D(-360, -60), animation=>{});
-        this._loadCommand = new DPushButton("/CBlades/images/commands/load.png", new Point2D(-420, -60), animation=>{});
-        this._settingsCommand.activate = false;
-        this._saveCommand.activate = false;
-        this._loadCommand.activate = false;
+        this._settingsCommand = new DPushButton(
+            "/CBlades/images/commands/settings.png","/CBlades/images/commands/settings-inactive.png",
+            new Point2D(-300, -60), animation=>{});
+        this._saveCommand = new DPushButton(
+            "/CBlades/images/commands/save.png", "/CBlades/images/commands/save-inactive.png",
+            new Point2D(-360, -60), animation=>{});
+        this._loadCommand = new DPushButton(
+            "/CBlades/images/commands/load.png", "/CBlades/images/commands/load-inactive.png",
+            new Point2D(-420, -60), animation=>{});
+        this._settingsCommand.active = false;
+        this._saveCommand.active = false;
+        this._loadCommand.active = false;
     }
 
     _resetCounters(player) {
@@ -424,6 +477,7 @@ export class CBGame {
             this._currentPlayer = this._players[(indexPlayer + 1) % this._players.length];
             animation && animation();
             Memento.clear();
+            Mechanisms.fire(this, CBGame.PROGRESSION);
         }
     }
 
@@ -449,6 +503,7 @@ export class CBGame {
 
     start() {
         Memento.activate();
+        Mechanisms.fire(this, CBGame.STARTED);
         this._board.paint();
         return this;
     }
@@ -458,6 +513,8 @@ export class CBGame {
     }
 }
 CBGame.POPUP_MARGIN = 10;
+CBGame.PROGRESSION = "started";
+CBGame.PROGRESSION = "progression";
 
 export class CBHexId {
 
@@ -786,7 +843,7 @@ CBMap.DIMENSION = new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT);
 CBMap.COL_COUNT = 12;
 CBMap.ROW_COUNT = 16;
 
-class CounterImageArtifact extends DImageArtifact {
+class CounterImageArtifact extends DMultiImageArtifact {
 
     constructor(counter, ...args) {
         super(...args); // levelName, image, position, dimension, pangle=0
@@ -813,9 +870,12 @@ export class CBCounter {
         this._element._unit = this;
     }
 
-    createArtifact(path, dimension) {
-        this._image = DImage.getImage(path);
-        return new CounterImageArtifact(this, "units", this._image, new Point2D(0, 0), dimension);
+    createArtifact(paths, dimension) {
+        this._images = [];
+        for (let path of paths) {
+            this._images.push(DImage.getImage(path));
+        }
+        return new CounterImageArtifact(this, "units", this._images, new Point2D(0, 0), dimension);
     }
 
     get artifact() {
@@ -911,25 +971,31 @@ class UnitImageArtifact extends CounterImageArtifact {
 
 export class CBUnit extends CBCounter {
 
-    constructor(player, path) {
-        super(path, CBUnit.DIMENSION);
+    constructor(player, paths) {
+        super(paths, CBUnit.DIMENSION);
         this._player = player;
         this._movementPoints=2;
         this._extendedMovementPoints=this._movementPoints*1.5;
         this._tiredness=0;
+        this._lackOfMunitions=0;
         this._cohesion=0;
         this._engaging=false;
         this._charging=false;
+        this._maxLosses = paths.length;
+        this._lossSteps = 0;
+        this.artifact.setImage(this._lossSteps);
     }
 
-    createArtifact(path, dimension) {
-        this._image = DImage.getImage(path);
-        return new UnitImageArtifact(this,"units", this._image, new Point2D(0, 0), dimension);
+    createArtifact(paths, dimension) {
+        this._images = [];
+        for (let path of paths) {
+            this._images.push(DImage.getImage(path));
+        }
+        return new UnitImageArtifact(this,"units", this._images, new Point2D(0, 0), dimension);
     }
 
     createMarkerArtifact(path, slot) {
-        let image = DImage.getImage(path);
-        let marker = new CounterImageArtifact(this,"markers", image,
+        let marker = new CounterImageArtifact(this,"markers", [DImage.getImage(path)],
             CBUnit.MARKERS_POSITION[slot], CBUnit.MARKER_DIMENSION);
         this._element.appendArtifact(marker);
         return marker;
@@ -942,13 +1008,16 @@ export class CBUnit extends CBCounter {
             extendedMovementPoints: this._extendedMovementPoints,
             tiredness: this._tiredness,
             tirednessArtifact: this._tirednessArtifact,
+            lackOfMunitions: this._lackOfMunitions,
+            lackOfMunitionsArtifact: this._lackOfMunitionsArtifact,
             cohesion: this._cohesion,
             cohesionArtifact: this._cohesionArtifact,
             playedArtifact: this._playedArtifact,
             engaging: this._engaging,
             charging: this._charging,
             engagingArtifact: this._engagingArtifact,
-            action: this._action
+            action: this._action,
+            lossSteps: this._lossSteps
         };
     }
 
@@ -958,6 +1027,8 @@ export class CBUnit extends CBCounter {
         this._extendedMovementPoints = memento.extendedMovementPoints;
         this._tiredness = memento.tiredness;
         this._tirednessArtifact = memento.tirednessArtifact;
+        this._lackOfMunitions = memento.lackOfMunitions;
+        this._lackOfMunitionsArtifact = memento.lackOfMunitionsArtifact;
         this._cohesion = memento.cohesion;
         this._cohesionArtifact = memento.cohesionArtifact;
         this._playedArtifact = memento.playedArtifact;
@@ -965,6 +1036,7 @@ export class CBUnit extends CBCounter {
         this._charging = memento.charging;
         this._engagingArtifact = memento.engagingArtifact;
         this._action = memento.action;
+        this._lossSteps = memento.lossSteps;
     }
 
     launchAction(action) {
@@ -1011,6 +1083,11 @@ export class CBUnit extends CBCounter {
         return this.player === this.game.currentPlayer;
     }
 
+    isFinishable() {
+        if (!this.isCurrentPlayer()) return true;
+        return this.player.canFinishUnit(this);
+    }
+
     get game() {
         return this._player.game;
     }
@@ -1040,6 +1117,10 @@ export class CBUnit extends CBCounter {
     markAsBeingPlayed() {
         console.assert(this.action);
         this.action.markAsFinished();
+    }
+
+    isOnBoard() {
+        return !!this._hexLocation;
     }
 
     hasBeenPlayed() {
@@ -1082,23 +1163,45 @@ export class CBUnit extends CBCounter {
         this._extendedMovementPoints -= cost;
     }
 
+    addToMap(hexId) {
+        hexId.hex.appendUnit(this);
+        this._element.show(hexId.map.game.board);
+        this._element.move(hexId.location);
+    }
+
+    removeFromMap() {
+        this._hexLocation.hex.deleteUnit(this);
+        this._element.hide(this._hexLocation.map.game.board);
+        delete this._hexLocation;
+    }
+
+    takeALoss() {
+        Memento.register(this);
+        this._lossSteps++;
+        if (this._lossSteps >= this._maxLosses) {
+            this.removeFromMap();
+        }
+        else {
+            this.artifact.changeImage(this._lossSteps);
+        }
+    }
+
     move(hexId, cost=0) {
         if (hexId !== this._hexLocation) {
             Memento.register(this);
-            this._hexLocation && this._hexLocation.hex.deleteUnit(this);
-            hexId && hexId.hex.appendUnit(this);
             if (!this._hexLocation) {
                 if (hexId) {
-                    this._element.show(hexId.map.game.board);
-                    this._element.move(hexId.location);
+                    this.addToMap(hexId);
                 }
             }
             else {
                 if (hexId) {
+                    this._hexLocation.hex.deleteUnit(this);
+                    hexId.hex.appendUnit(this);
                     this._element.move(hexId.location);
                 }
                 else {
-                    this._element.hide(this._hexLocation.map.game.board);
+                    this.removeFromMap();
                 }
             }
             this._hexLocation = hexId;
@@ -1147,6 +1250,43 @@ export class CBUnit extends CBCounter {
     removeOneTirednessLevel() {
         Memento.register(this);
         this._updateTiredness(this._tiredness-1);
+    }
+
+    _updateLackOfMunitions(lackOfMunitions) {
+        console.assert(lackOfMunitions===CBLackOfMunitions.NONE
+            || lackOfMunitions===CBLackOfMunitions.SCARCE
+            || lackOfMunitions===CBLackOfMunitions.EXHAUSTED);
+        this._lackOfMunitions = lackOfMunitions;
+        this._lackOfMunitionsArtifact && this._element.deleteArtifact(this._lackOfMunitionsArtifact);
+        delete this._lackOfMunitionsArtifact;
+        if (this._lackOfMunitions === CBLackOfMunitions.SCARCE) {
+            this._lackOfMunitionsArtifact = this.createMarkerArtifact("/CBlades/images/markers/scarceamno.png", 4);
+        }
+        else if (this._lackOfMunitions === CBLackOfMunitions.EXHAUSTED) {
+            this._lackOfMunitionsArtifact = this.createMarkerArtifact("/CBlades/images/markers/lowamno.png", 4);
+        }
+    }
+
+    get lackOfMunitions() {
+        return this._lackOfMunitions;
+    }
+
+    areMunitionsScarce() {
+        return this._lackOfMunitions === CBLackOfMunitions.SCARCE;
+    }
+
+    areMunitionsExhausted() {
+        return this._lackOfMunitions === CBLackOfMunitions.EXHAUSTED;
+    }
+
+    addOneLackOfMunitionsLevel() {
+        Memento.register(this);
+        this._updateLackOfMunitions(this._lackOfMunitions+1);
+    }
+
+    replenishMunitions() {
+        Memento.register(this);
+        this._updateLackOfMunitions(0);
     }
 
     _updateCohesion(cohesion) {

@@ -271,7 +271,7 @@ export class DIconMenu extends DPopup {
 }
 
 /**
- * Mixin containing methods for Artifact taht can be activated in a standard way
+ * Mixin containing methods for Artifact that can be activated in a standard way
  */
 export function ActivableArtifact(clazz) {
     return class extends clazz {
@@ -280,7 +280,7 @@ export function ActivableArtifact(clazz) {
             super(...args);
             this.setSettings(this.settings);
             this._over = false;
-            this._activate = true;
+            this._active = true;
         }
 
         get settings() {
@@ -302,7 +302,7 @@ export function ActivableArtifact(clazz) {
         }
 
         onMouseClick(event) {
-            if (this._activate) {
+            if (this._active) {
                 this._element.action();
             }
         }
@@ -328,7 +328,7 @@ export function ActivableArtifact(clazz) {
             let over = this._isOver()
             for (let artifact of this.element._artifacts) {
                 if (artifact._over !== undefined) {
-                    if (!this._activate) {
+                    if (!this._active) {
                         artifact.setSettings(artifact.inactiveSettings);
                     }
                     else if (over) {
@@ -342,8 +342,8 @@ export function ActivableArtifact(clazz) {
             this.element.refresh();
         }
 
-        set activate(activate) {
-            this._activate = activate;
+        set active(active) {
+            this._active = active;
             this._dispatch();
         }
 
@@ -351,10 +351,17 @@ export function ActivableArtifact(clazz) {
 }
 
 
-export class DPushButtonImageArtifact extends ActivableArtifact(DImageArtifact) {
+export class DPushButtonImageArtifact extends ActivableArtifact(DMultiImageArtifact) {
 
-    constructor(image) {
-        super("widget-commands", image, new Point2D(0, 0), DPushButtonImageArtifact.DIMENSION, 0);
+    constructor(image, inactiveImage) {
+        super("widget-commands", [image, inactiveImage],
+            new Point2D(0, 0),
+            DPushButtonImageArtifact.DIMENSION, 0);
+    }
+
+    set active(active) {
+        super.active = active;
+        this.setImage(active?0:1);
     }
 
 }
@@ -362,14 +369,15 @@ DPushButtonImageArtifact.DIMENSION = new Dimension2D(50, 50);
 
 export class DPushButton extends DElement {
 
-    constructor(path, position, action) {
+    constructor(path, inactivePath, position, action) {
         super();
         let image = DImage.getImage(path);
-        this._artifact = new DPushButtonImageArtifact(image);
+        let inactiveImage = DImage.getImage(inactivePath);
+        this._artifact = new DPushButtonImageArtifact(image, inactiveImage);
         this.addArtifact(this._artifact);
         this._position = position;
         this._action = action;
-        this._activate = true;
+        this._active = true;
     }
 
     setPosition(position) {
@@ -391,11 +399,13 @@ export class DPushButton extends DElement {
     }
 
     action() {
-        this._action(()=>{
-            if (this._animation) {
-                this._animation();
-            }
-        });
+        if (this.active) {
+            this._action(() => {
+                if (this._animation) {
+                    this._animation();
+                }
+            });
+        }
     }
 
     get trigger() {
@@ -411,9 +421,13 @@ export class DPushButton extends DElement {
         }
     }
 
-    set activate(activate) {
-        this._activate = activate;
-        this._artifact.activate = activate;
+    get active() {
+        return this._active;
+    }
+
+    set active(active) {
+        this._active = active;
+        this._artifact.active = active;
     }
 
 }
@@ -440,6 +454,7 @@ export class DDice extends DElement {
                 DImage.getImage("/CBlades/images/dice/d6.png")
             ], point));
         }
+        this._active = true;
     }
 
     open(board, location) {
@@ -485,10 +500,14 @@ export class DDice extends DElement {
         return this._artifacts;
     }
 
-    set activate(activate) {
-        this._activate = activate;
+    get active() {
+        return this._active;
+    }
+
+    set active(active) {
+        this._active = active;
         for (let artifact of this._artifacts) {
-            artifact.activate = activate;
+            artifact.active = active;
         }
     }
 }

@@ -25,6 +25,7 @@ import {
     DPopup, DResult
 } from "../../jslib/widget.js";
 import {
+    CBFireAttackActuator,
     CBInteractivePlayer,
     CBMoveActuator,
     CBOrientationActuator,
@@ -62,7 +63,8 @@ describe("Interactive Player", ()=> {
         game.addPlayer(player);
         var map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
-        let unit = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
+        let unit = new CBUnit(player,
+            ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
         game.addUnit(unit, map.getHex( 5, 8));
         game.start();
         loadAllImages();
@@ -79,9 +81,11 @@ describe("Interactive Player", ()=> {
         game.addPlayer(player2);
         let map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
-        let unit1 = new CBUnit(player1, "/CBlades/images/units/misc/unit1.png");
+        let unit1 = new CBUnit(player1,
+            ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
         game.addUnit(unit1, map.getHex(5, 8));
-        let unit2 = new CBUnit(player2, "/CBlades/images/units/misc/unit2.png");
+        let unit2 = new CBUnit(player2,
+            ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"]);
         game.addUnit(unit2, map.getHex(6, 8));
         game.start();
         loadAllImages();
@@ -96,8 +100,10 @@ describe("Interactive Player", ()=> {
         game.addPlayer(player);
         var map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
-        let unit1 = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
-        let unit2 = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
+        let unit1 = new CBUnit(player,
+            ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
+        let unit2 = new CBUnit(player,
+            ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
         game.addUnit(unit1, map.getHex(5, 8));
         game.addUnit(unit2, map.getHex( 8, 7));
         game.start();
@@ -127,10 +133,6 @@ describe("Interactive Player", ()=> {
         return clickOnActionMenu(game, 0, 0);
     }
 
-    function clickOnRestAction(game) {
-        return clickOnActionMenu(game, 0, 2);
-    }
-
     it("Checks that clicking on a unit select the unit ", () => {
         given:
             var {game, unit} = createTinyGame();
@@ -143,12 +145,13 @@ describe("Interactive Player", ()=> {
             loadAllImages();
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15", "strokeStyle = #000000",
-                "lineWidth = 1",
-                "setTransform(1, 0, 0, 1, 301.6667, 190)",
-                "strokeRect(-125, -185, 250, 370)",
-                "fillStyle = #FFFFFF",
-                "fillRect(-125, -185, 250, 370)", "restore()"
+                    "shadowColor = #000000", "shadowBlur = 15", "strokeStyle = #000000",
+                    "lineWidth = 1",
+                    "setTransform(1, 0, 0, 1, 301.6667, 190)",
+                    "strokeRect(-125, -185, 250, 370)",
+                    "fillStyle = #FFFFFF",
+                    "fillRect(-125, -185, 250, 370)",
+                "restore()"
             ]);
             assert(getDirectives(widgetItemsLevel, 4)).arrayEqualsTo([
                 "save()", "drawImage(/CBlades/images/icons/leave-formation.png, 306.6667, 195, 50, 50)", "restore()",
@@ -166,9 +169,9 @@ describe("Interactive Player", ()=> {
                 "save()", "drawImage(/CBlades/images/icons/shock-duel-gray.png, 306.6667, 75, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/fire-duel-gray.png, 366.6667, 75, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/do-rest-gray.png, 186.6667, 135, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/do-reload.png, 246.6667, 135, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/do-reorganize.png, 306.6667, 135, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/do-rally.png, 366.6667, 135, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/do-reload-gray.png, 246.6667, 135, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/do-reorganize-gray.png, 306.6667, 135, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/do-rally-gray.png, 366.6667, 135, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/create-formation.png, 186.6667, 195, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/join-formation.png, 246.6667, 195, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/take-command.png, 186.6667, 255, 50, 50)", "restore()",
@@ -196,29 +199,40 @@ describe("Interactive Player", ()=> {
 
     it("Checks that a selected unit's action is finalized when there is a selection/end of turn", () => {
         given:
-            var {game, unit1, unit2, player} = create2UnitsTinyGame();
-            player.changeSelection(unit1, dummyEvent);
-            var action = new CBAction(game, unit1);
-            unit1.launchAction(action);
+            var {game, unit, player} = createTinyGame();
+            player.changeSelection(unit, dummyEvent);
+            var action = new CBAction(game, unit);
+            unit.launchAction(action);
             action.markAsFinished();
-            var finished = false;
-            player.finishTurn(()=>{finished=true;})
         then:
-            assert(finished).isTrue();
+            assert(game.turnIsFinishable()).isTrue();
+        when:
+            var finished = false;
+            player.finishTurn(()=>{})
+        then:
             assert(action.isFinalized()).isTrue();
     });
 
     it("Checks that a finalized unit action does not block selection/end of turn", () => {
         given:
-            var {game, unit1, unit2, player} = create2UnitsTinyGame();
-            player.changeSelection(unit1, dummyEvent);
-            unit1.launchAction(new CBAction(game, unit1));
-            unit1.action.markAsFinished();
-            unit1.action.finalize();
+            var {game, unit, player} = createTinyGame();
+            player.changeSelection(unit, dummyEvent);
+            unit.launchAction(new CBAction(game, unit));
+            unit.action.markAsFinished();
+            unit.action.finalize();
             var finished = false;
             player.finishTurn(()=>{finished=true;})
         then:
             assert(finished).isTrue();
+    });
+
+    it("Checks that a player cannot finish their turn if a unit is not finishable", () => {
+        given:
+            var {game, unit1, player} = create2UnitsTinyGame();
+            var finished = false;
+        then:
+            assert(player.canFinishUnit(unit1)).isFalse();
+            assert(game.turnIsFinishable()).isFalse();
     });
 
     it("Checks move action actuators when unit is oriented toward an hexside", () => {
@@ -752,6 +766,46 @@ describe("Interactive Player", ()=> {
             ]);
     });
 
+    function executeAllAnimations() {
+        while(DAnimator.isActive()) {
+            executeTimeouts();
+        }
+    }
+
+    function clickOnDice(game) {
+        var [itemsLevel] = getLevels(game,"widget-items");
+        for (let item of itemsLevel.artifacts) {
+            if (item.element instanceof DDice) {
+                let itemLocation = item.viewportLocation;
+                var mouseEvent = createEvent("click", {offsetX:itemLocation.x, offsetY:itemLocation.y});
+                item.onMouseClick(mouseEvent);
+                return;
+            }
+        }
+    }
+
+    function clickOnResult(game) {
+        var [commandsLevel] = getLevels(game,"widget-commands");
+        for (let item of commandsLevel.artifacts) {
+            if (item.element instanceof DResult) {
+                let itemLocation = item.viewportLocation;
+                var mouseEvent = createEvent("click", {offsetX:itemLocation.x, offsetY:itemLocation.y});
+                item.onMouseClick(mouseEvent);
+                return;
+            }
+        }
+    }
+
+    function rollFor(d1, d2) {
+        getDrawPlatform().resetRandoms((d1-0.5)/6, (d2-0.5)/6, 0);
+    }
+
+    let dummyEvent = {offsetX:0, offsetY:0};
+
+    function clickOnRestAction(game) {
+        return clickOnActionMenu(game, 0, 2);
+    }
+
     it("Checks resting action opening and cancelling", () => {
         given:
             var {game, unit} = createTinyGame();
@@ -788,16 +842,16 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/inserts/meteo2.png, 571, 319, 142, 142)",
                 "restore()"
             ]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
-                "save()",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, 621, 115.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, 561, 175.5, 100, 89)",
-                "restore()"
-            ]);
+        assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            "save()",
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/dice/d1.png, 621, 115.5, 100, 89)",
+            "restore()",
+            "save()",
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/dice/d1.png, 561, 175.5, 100, 89)",
+            "restore()"
+        ]);
         when:       // Clicking on the mask cancel the action
             resetDirectives(widgetsLevel, itemsLevel);
             clickOnMask(game);
@@ -808,42 +862,6 @@ describe("Interactive Player", ()=> {
             assert(unit.hasBeenActivated()).isFalse();
             assert(unit.hasBeenPlayed()).isFalse();
     });
-
-    function executeAllAnimations() {
-        while(DAnimator.isActive()) {
-            executeTimeouts();
-        }
-    }
-
-    function clickOnDice(game) {
-        var [itemsLevel] = getLevels(game,"widget-items");
-        for (let item of itemsLevel.artifacts) {
-            if (item.element instanceof DDice) {
-                let itemLocation = item.viewportLocation;
-                var mouseEvent = createEvent("click", {offsetX:itemLocation.x, offsetY:itemLocation.y});
-                item.onMouseClick(mouseEvent);
-                return;
-            }
-        }
-    }
-
-    function clickOnResult(game) {
-        var [commandsLevel] = getLevels(game,"widget-commands");
-        for (let item of commandsLevel.artifacts) {
-            if (item.element instanceof DResult) {
-                let itemLocation = item.viewportLocation;
-                var mouseEvent = createEvent("click", {offsetX:itemLocation.x, offsetY:itemLocation.y});
-                item.onMouseClick(mouseEvent);
-                return;
-            }
-        }
-    }
-
-    function rollFor(d1, d2) {
-        getDrawPlatform().resetRandoms((d1-0.5)/6, (d2-0.5)/6, 0);
-    }
-
-    let dummyEvent = {offsetX:0, offsetY:0};
 
     it("Checks successfully resting action process ", () => {
         given:
@@ -927,6 +945,424 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.tiredness).equalsTo(1);
+    });
+
+    function clickOnReplenishMunitionsAction(game) {
+        return clickOnActionMenu(game, 1, 2);
+    }
+
+    it("Checks replenish munitions action opening and cancelling", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
+            unit.addOneLackOfMunitionsLevel();
+            clickOnCounter(game, unit);
+            paint(game);
+        when:
+            resetDirectives(widgetsLevel, itemsLevel);
+            clickOnReplenishMunitionsAction(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
+                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/check-replenish-munitions-insert.png, 49.6667, 5, 444, 383)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 513.6667, 303.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 453.6667, 363.5, 100, 89)",
+                "restore()"
+            ]);
+        when:       // Clicking on the mask cancel the action
+            resetDirectives(widgetsLevel, itemsLevel);
+            clickOnMask(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(unit.lackOfMunitions).equalsTo(1);
+            assert(unit.hasBeenActivated()).isFalse();
+            assert(unit.hasBeenPlayed()).isFalse();
+    });
+
+    it("Checks successfully replenish munitions action process ", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            unit.addOneLackOfMunitionsLevel();
+            clickOnCounter(game, unit);
+            clickOnReplenishMunitionsAction(game);
+            loadAllImages();
+        when:
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 513.6667, 303.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, 453.6667, 363.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/success.png, 196.6667, 303, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.lackOfMunitions).equalsTo(0);
+    });
+
+    it("Checks failed replenish munitions action process ", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            unit.addOneLackOfMunitionsLevel();
+            clickOnCounter(game, unit);
+            clickOnReplenishMunitionsAction(game);
+            loadAllImages();
+        when:
+            rollFor(5, 6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d5.png, 513.6667, 303.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d6.png, 453.6667, 363.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #A00000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/failure.png, 196.6667, 303, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.lackOfMunitions).equalsTo(1);
+    });
+
+    function clickOnReorganizeAction(game) {
+        return clickOnActionMenu(game, 2, 2);
+    }
+
+    it("Checks reorganize action opening and cancelling", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
+            unit.disrupt();
+            clickOnCounter(game, unit);
+            paint(game);
+        when:
+            resetDirectives(widgetsLevel, itemsLevel);
+            clickOnReorganizeAction(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
+                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/reorganize-insert.png, 449, 5, 444, 263)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/check-reorganize-insert.png, 449, 398, 444, 245)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/moral-insert.png, 5, 133.5, 444, 389)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 479, 253.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 419, 313.5, 100, 89)",
+                "restore()"
+            ]);
+        when:       // Clicking on the mask cancel the action
+            resetDirectives(widgetsLevel, itemsLevel);
+            clickOnMask(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(unit.isDisrupted()).isTrue();
+            assert(unit.hasBeenActivated()).isFalse();
+            assert(unit.hasBeenPlayed()).isFalse();
+    });
+
+    it("Checks successfully reorganize action process ", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            unit.disrupt();
+            clickOnCounter(game, unit);
+            clickOnReorganizeAction(game);
+            loadAllImages();
+        when:
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 479, 253.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, 419, 313.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/success.png, 374, 253, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.isDisrupted()).isFalse();
+    });
+
+    it("Checks failed reorganize action process ", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            unit.disrupt();
+            clickOnCounter(game, unit);
+            clickOnReorganizeAction(game);
+            loadAllImages();
+        when:
+            rollFor(5, 6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d5.png, 479, 253.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d6.png, 419, 313.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #A00000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/failure.png, 374, 253, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.isDisrupted()).isTrue();
+    });
+
+    function clickOnRallyAction(game) {
+        return clickOnActionMenu(game, 3, 2);
+    }
+
+    it("Checks rally action opening and cancelling", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
+            unit.disrupt();
+            unit.addOneCohesionLevel();
+            clickOnCounter(game, unit);
+            paint(game);
+        when:
+            resetDirectives(widgetsLevel, itemsLevel);
+            clickOnRallyAction(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
+                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/rally-insert.png, 449, 5, 444, 279)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/check-rally-insert.png, 449, 414, 444, 268)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/moral-insert.png, 5, 149.5, 444, 389)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 479, 269.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 419, 329.5, 100, 89)",
+                "restore()"
+            ]);
+        when:       // Clicking on the mask cancel the action
+            resetDirectives(widgetsLevel, itemsLevel);
+            clickOnMask(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(unit.isRouted()).isTrue();
+            assert(unit.hasBeenActivated()).isFalse();
+            assert(unit.hasBeenPlayed()).isFalse();
+    });
+
+    it("Checks successfully rally action process ", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            unit.disrupt();
+            unit.addOneCohesionLevel();
+            clickOnCounter(game, unit);
+            clickOnRallyAction(game);
+            loadAllImages();
+        when:
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 479, 269.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, 419, 329.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/success.png, 374, 269, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.isDisrupted()).isTrue();
+    });
+
+    it("Checks failed rally action process ", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            unit.disrupt();
+            unit.addOneCohesionLevel();
+            clickOnCounter(game, unit);
+            clickOnRallyAction(game);
+            loadAllImages();
+        when:
+            rollFor(5, 6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d5.png, 479, 269.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d6.png, 419, 329.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #A00000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/failure.png, 374, 269, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.isRouted()).isTrue();
     });
 
     it("Checks attacker engagement process ", () => {
@@ -1264,6 +1700,13 @@ describe("Interactive Player", ()=> {
         return null;
     }
 
+    function getRetreatActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBRetreatActuator) return actuator;
+        }
+        return null;
+    }
+
     it("Checks shock attack action actuator appearance when support is possible", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
@@ -1380,14 +1823,8 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
     });
 
-    function getRetreatActuator(game) {
-        for (let actuator of game.actuators) {
-            if (actuator instanceof CBRetreatActuator) return actuator;
-        }
-        return null;
-    }
-
     it("Checks when a unit successfully shock attack", () => {
+        given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
             var [actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,
                 "actuators", "widgets", "widget-commands","widget-items"
@@ -1437,6 +1874,10 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/blood.png, -222.5, -367.3125, 104, 144)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/actuators/retreat-move.png, -210.5, -537.5, 80, 130)",
                 "restore()",
                 "save()",
@@ -1458,19 +1899,20 @@ describe("Interactive Player", ()=> {
     });
 
     it("Checks when a unit fails to shock attack", () => {
-        var { game, map, unit1, unit2 } = create2PlayersTinyGame();
-        var [actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,
-            "actuators", "widgets", "widget-commands","widget-items"
-        );
-        unit1.move(map.getHex(5, 8));
-        unit2.move(map.getHex(5, 7));
-        unit2.angle = 180;
-        clickOnCounter(game, unit1);
-        clickOnShockAttackAction(game);
-        let shockAttackActuator = getShockAttackActuator(game);
-        resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
-        clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
-        loadAllImages();
+        given:
+            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+            var [actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,
+                "actuators", "widgets", "widget-commands","widget-items"
+            );
+            unit1.move(map.getHex(5, 8));
+            unit2.move(map.getHex(5, 7));
+            unit2.angle = 180;
+            clickOnCounter(game, unit1);
+            clickOnShockAttackAction(game);
+            let shockAttackActuator = getShockAttackActuator(game);
+            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
+            loadAllImages();
         when:
             rollFor(5,6);
             clickOnDice(game);
@@ -1501,13 +1943,13 @@ describe("Interactive Player", ()=> {
             repaint(game);
         then:
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-        assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
-        assert(unit1.hasBeenPlayed()).isTrue();
-        assert(game.focusedUnit).isNotDefined();
-        assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(game.focusedUnit).isNotDefined();
+            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([]);
     });
 
-    it("Checks unit retreat", () => {
+    it("Checks when a unit retreat", () => {
         given:
             var { game, map, player1, unit1, unit2 } = create2PlayersTinyGame();
             var [actuatorsLevel, unitsLevel] = getLevels(game,
@@ -1543,6 +1985,292 @@ describe("Interactive Player", ()=> {
                 "restore()"
             ]);
             assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks when a unit take a loss", () => {
+        given:
+            var { game, map, player1, unit1, unit2 } = create2PlayersTinyGame();
+            var [actuatorsLevel, unitsLevel] = getLevels(game,
+                "actuators", "units"
+            );
+            unit1.move(map.getHex(5, 8));
+            unit2.move(map.getHex(5, 7));
+            unit2.angle = 180;
+            clickOnCounter(game, unit1);
+            clickOnShockAttackAction(game);
+            let shockAttackActuator = getShockAttackActuator(game);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnResult(game);
+        when:
+            var retreatActuator = getRetreatActuator(game);
+            clickOnTrigger(game, retreatActuator.getLossTrigger());
+            loadAllImages();
+            resetDirectives(actuatorsLevel, unitsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit1.png, -241.5, -169.4375, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.4888, 0, 0, -0.4888, 333.3333, 111.327)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit2b.png, -241.5, -366.3125, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([]);
+    });
+
+    function clickOnFireAttackAction(game) {
+        return clickOnActionMenu(game, 1, 1);
+    }
+
+    function getFireAttackActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBFireAttackActuator) return actuator;
+        }
+        return null;
+    }
+
+    it("Checks fire attack action actuator appearance", () => {
+        given:
+            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+            var [actuatorsLevel] = getLevels(game, "actuators");
+            unit1.move(map.getHex(5, 8));
+            unit1.addOneTirednessLevel();
+            unit1.addOneTirednessLevel();
+            unit2.move(map.getHex(5, 6));
+            clickOnCounter(game, unit1);
+            clickOnFireAttackAction(game);
+            loadAllImages();
+        when:
+            resetDirectives(actuatorsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 368.555, 409.4376)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/fire.png, -220.5, -547.6875, 100, 111)",
+                "restore()"
+            ]);
+        when:
+            var fireAttackActuator = getFireAttackActuator(game);
+        then:
+            assert(fireAttackActuator.getTrigger(unit2)).isDefined();
+    });
+
+    it("Checks fire resolution appearance (and cancelling fire attack action)", () => {
+        given:
+            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+            var [actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,
+                "actuators", "widgets", "widget-commands","widget-items"
+            );
+            unit1.move(map.getHex(5, 8));
+            unit2.move(map.getHex(5, 6));
+            clickOnCounter(game, unit1);
+            clickOnFireAttackAction(game);
+            loadAllImages();
+            let fireAttackActuator = getFireAttackActuator(game);
+        when:
+            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            clickOnTrigger(game, fireAttackActuator.getTrigger(unit2));
+            loadAllImages();
+        then:
+            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "globalAlpha = 0.3", "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/combat-result-table-insert.png, 14.6667, 5, 804, 174)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/fire-attack-insert.png, 54.1667, 129, 405, 658)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 466.6667, 154.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 406.6667, 214.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+        when:
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+    });
+
+    it("Checks when a unit successfully fire attack", () => {
+        given:
+            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+            var [actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,
+                "actuators", "widgets", "widget-commands","widget-items"
+            );
+            unit1.move(map.getHex(5, 8));
+            unit2.move(map.getHex(5, 6));
+            unit2.angle = 180;
+            clickOnCounter(game, unit1);
+            clickOnFireAttackAction(game);
+            let fireAttackActuator = getFireAttackActuator(game);
+            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            clickOnTrigger(game, fireAttackActuator.getTrigger(unit2));
+            loadAllImages();
+        when:
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 466.6667, 154.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, 406.6667, 214.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/success.png, 341.6667, 94, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            loadAllImages();
+            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(game.focusedUnit).equalsTo(unit2);
+            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/blood.png, -222.5, -564.1875, 104, 144)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/retreat-move.png, -210.5, -734.375, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 250.0018, 265.286)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/retreat-move.png, -57.05, -645.7812, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 666.6649, 120.9484)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/retreat-move.png, -363.95, -645.7812, 80, 130)",
+                "restore()"
+            ]);
+        when:
+            var retreatActuator = getRetreatActuator(game);
+        then:
+            assert(retreatActuator.getTrigger(0)).isDefined();
+            assert(retreatActuator.getTrigger(120)).isNotDefined();
+    });
+
+    it("Checks when a unit fails to fire attack", () => {
+        given:
+            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+            var [actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,
+                "actuators", "widgets", "widget-commands","widget-items"
+            );
+            unit1.move(map.getHex(5, 8));
+            unit2.move(map.getHex(5, 7));
+            unit2.angle = 180;
+            clickOnCounter(game, unit1);
+            clickOnFireAttackAction(game);
+            let fireAttackActuator = getFireAttackActuator(game);
+            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            clickOnTrigger(game, fireAttackActuator.getTrigger(unit2));
+            loadAllImages();
+        when:
+            rollFor(5,6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d5.png, 466.6667, 162.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d6.png, 406.6667, 222.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #A00000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/failure.png, 341.6667, 102, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            loadAllImages();
+            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(game.focusedUnit).isNotDefined();
+            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks when double on dice lower firer ammunitions", () => {
+        given:
+            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+            var [markersLevel] = getLevels(game,"markers");
+            unit1.move(map.getHex(5, 8));
+            unit2.move(map.getHex(5, 7));
+            clickOnCounter(game, unit1);
+            clickOnFireAttackAction(game);
+            let fireAttackActuator = getFireAttackActuator(game);
+            clickOnTrigger(game, fireAttackActuator.getTrigger(unit2));
+        when:
+            rollFor(5,5);
+            clickOnDice(game);
+            executeAllAnimations();
+            loadAllImages();
+            resetDirectives(markersLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/scarceamno.png, -202.5, -59.4375, 64, 64)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/actiondone.png, -131.5, -201.4375, 64, 64)",
+                "restore()"
+            ]);
     });
 
 });

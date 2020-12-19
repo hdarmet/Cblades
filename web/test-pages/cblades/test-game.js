@@ -64,7 +64,9 @@ describe("Game", ()=> {
         var { game, map } = prepareTinyGame();
         var player = new CBAbstractPlayer();
         game.addPlayer(player);
-        let unit = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
+        let unit = new CBUnit(player, [
+            "/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"
+        ]);
         game.addUnit(unit, map.getHex(5, 8));
         game.start();
         loadAllImages();
@@ -81,7 +83,7 @@ describe("Game", ()=> {
             var [mapLevel, unitsLevel] = getLevels(game, "map","units");
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
-            let unit = new CBUnit(player, "/CBlades/images/units/misc/unit.png");
+            let unit = new CBUnit(player, ["/CBlades/images/units/misc/unit.png"]);
             game.addUnit(unit, map.getHex(5, 8));
         when:
             game.start();
@@ -220,15 +222,15 @@ describe("Game", ()=> {
                 "restore()",
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/settings.png, 675, 715, 50, 50)",
+                    "drawImage(/CBlades/images/commands/settings-inactive.png, 675, 715, 50, 50)",
                 "restore()",
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/save.png, 615, 715, 50, 50)",
+                    "drawImage(/CBlades/images/commands/save-inactive.png, 615, 715, 50, 50)",
                 "restore()",
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/load.png, 555, 715, 50, 50)",
+                    "drawImage(/CBlades/images/commands/load-inactive.png, 555, 715, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -490,9 +492,9 @@ describe("Game", ()=> {
         var { game, map } = prepareTinyGame();
         let player = new CBAbstractPlayer();
         game.addPlayer(player);
-        let unit1 = new CBUnit(player, "/CBlades/images/units/misc/unit1.png");
+        let unit1 = new CBUnit(player, ["/CBlades/images/units/misc/unit1.png"]);
         game.addUnit(unit1, map.getHex(5, 8));
-        let unit2 = new CBUnit(player, "/CBlades/images/units/misc/unit2.png");
+        let unit2 = new CBUnit(player, ["/CBlades/images/units/misc/unit2.png"]);
         game.addUnit(unit2, map.getHex(5, 8));
         game.start();
         loadAllImages();
@@ -505,9 +507,9 @@ describe("Game", ()=> {
         game.addPlayer(player1);
         let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
-        let unit1 = new CBUnit(player1, "/CBlades/images/units/misc/unit1.png");
+        let unit1 = new CBUnit(player1, ["/CBlades/images/units/misc/unit1.png"]);
         game.addUnit(unit1, map.getHex(5, 8));
-        let unit2 = new CBUnit(player2, "/CBlades/images/units/misc/unit2.png");
+        let unit2 = new CBUnit(player2, ["/CBlades/images/units/misc/unit2.png"]);
         game.addUnit(unit2, map.getHex(5, 8));
         game.start();
         loadAllImages();
@@ -517,7 +519,7 @@ describe("Game", ()=> {
     it("Checks counter basic appearance and features", () => {
         given:
             var { game, map } = prepareTinyGame();
-            let counter = new CBCounter("/CBlades/images/units/misc/counter.png", new Dimension2D(50, 50));
+            let counter = new CBCounter(["/CBlades/images/units/misc/counter.png"], new Dimension2D(50, 50));
             game.addCounter(counter, new Point2D(100, 200));
             game.start();
             loadAllImages();
@@ -581,7 +583,7 @@ describe("Game", ()=> {
             var player = new CBAbstractPlayer();
             game.addPlayer(player);
         when:
-            var unit = new CBUnit(player, "/CBlades/images/units/misc/unit1.png");
+            var unit = new CBUnit(player, ["/CBlades/images/units/misc/unit1.png"]);
             var hexId = map.getHex(5, 8);
             game.addUnit(unit, hexId);
         then:
@@ -863,6 +865,29 @@ describe("Game", ()=> {
             assert(game.currentPlayer).equalsTo(player2);
     });
 
+    it("Checks that when a unit cannot be unselected, turn cannot change", () => {
+        given:
+            var {game, unit1} = create2PlayersTinyGame();
+            game.setMenu();
+            game.setSelectedUnit(unit1);
+            let action = new CBAction(game, unit1);
+            action.isFinishable = ()=>false;
+            unit1.launchAction(action);
+            action.markAsStarted();
+        then:
+            assert(game._endOfTurnCommand.active).isFalse();
+    });
+
+    it("Checks that when a unit is not finishable, turn cannot change", () => {
+        given:
+            var {game, unit1} = create2PlayersTinyGame();
+            game.setMenu();
+            unit1.isFinishable = ()=>false;
+            Mechanisms.fire(game, CBGame.PROGRESSION);
+        then:
+            assert(game._endOfTurnCommand.active).isFalse();
+    });
+
     it("Checks that when moving a unit, movement points are adjusted", () => {
         given:
             var {game, unit, map} = createTinyGame();
@@ -908,6 +933,7 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([]);
             assert(unit.hexLocation).isNotDefined();
+            assert(unit.isOnBoard()).isFalse();
         when:
             Memento.open();
             resetDirectives(unitsLevel);
@@ -921,6 +947,7 @@ describe("Game", ()=> {
                 "restore()"
             ]);
             assert(unit.hexLocation.toString()).equalsTo("Hex(5, 7)");
+            assert(unit.isOnBoard()).isTrue();
         when:
             Memento.undo();
             resetDirectives(unitsLevel);
@@ -928,6 +955,7 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([]);
             assert(unit.hexLocation).isNotDefined();
+            assert(unit.isOnBoard()).isFalse();
         when:
             Memento.undo();
             resetDirectives(unitsLevel);
@@ -940,6 +968,7 @@ describe("Game", ()=> {
                 "restore()"
             ]);
             assert(unit.hexLocation.toString()).equalsTo("Hex(5, 8)");
+            assert(unit.isOnBoard()).isTrue();
     });
 
     it("Checks rotating a unit", () => {
@@ -1070,6 +1099,99 @@ describe("Game", ()=> {
                 "restore()"
             ]);
             assert(unit.tiredness).equalsTo(2);
+    });
+
+    it("Checks adding a lack of munitions level to a unit", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+            var [markersLevel] = getLevels(game, "markers");
+        then:
+            assert(unit.areMunitionsScarce()).isFalse();
+            assert(unit.areMunitionsExhausted()).isFalse();
+        when:
+            resetDirectives(markersLevel);
+            unit.addOneLackOfMunitionsLevel();
+            paint(game);
+            loadAllImages(); // to load scraceamno.png
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/scarceamno.png, -202.5, -59.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.lackOfMunitions).equalsTo(1);
+            assert(unit.areMunitionsScarce()).isTrue();
+            assert(unit.areMunitionsExhausted()).isFalse();
+        when:
+            Memento.open();
+            resetDirectives(markersLevel);
+            unit.addOneLackOfMunitionsLevel();
+            paint(game);
+            loadAllImages(); // to load lowamno.png
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/lowamno.png, -202.5, -59.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.lackOfMunitions).equalsTo(2);
+            assert(unit.areMunitionsScarce()).isFalse();
+            assert(unit.areMunitionsExhausted()).isTrue();
+        when:
+            resetDirectives(markersLevel);
+            Memento.undo();
+            paint(game);
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/scarceamno.png, -202.5, -59.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.lackOfMunitions).equalsTo(1);
+    });
+
+    it("Checks removing a lack of munitions level to a unit", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+            var [markersLevel] = getLevels(game, "markers");
+        when:
+            resetDirectives(markersLevel);
+            unit.addOneLackOfMunitionsLevel();
+            unit.addOneLackOfMunitionsLevel();
+            paint(game);
+            loadAllImages(); // to load lowamno.png
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/lowamno.png, -202.5, -59.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.lackOfMunitions).equalsTo(2);
+        when:
+            Memento.open();
+            resetDirectives(markersLevel);
+            unit.replenishMunitions();
+            paint(game);
+            loadAllImages(); // to load scarceamno.png
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(unit.lackOfMunitions).equalsTo(0);
+        when:
+            resetDirectives(markersLevel);
+            Memento.undo();
+            paint(game);
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/lowamno.png, -202.5, -59.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.lackOfMunitions).equalsTo(2);
     });
 
     it("Checks activating a unit", () => {
@@ -1260,6 +1382,53 @@ describe("Game", ()=> {
                 "restore()"
             ]);
             assert(unit.cohesion).equalsTo(1);
+    });
+
+    it("Checks taking losses to a unit", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+            var [unitsLevel] = getLevels(game, "units");
+        when:
+            resetDirectives(unitsLevel);
+            unit.takeALoss();
+            paint(game);
+            loadAllImages(); // to load back side image
+        then:
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unitb.png, -241.5, -169.4375, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            Memento.open();
+            resetDirectives(unitsLevel);
+            unit.takeALoss();
+            paint(game);
+        then:
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([]);
+        when:
+            resetDirectives(unitsLevel);
+            Memento.undo();
+            paint(game);
+        then:
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unitb.png, -241.5, -169.4375, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLevel);
+            Memento.undo();
+            paint(game);
+        then:
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
+                "restore()"
+            ]);
     });
 
     it("Checks mark unit as on contact", () => {

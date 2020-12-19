@@ -372,6 +372,45 @@ describe("Arbitrator", ()=> {
             assert(result.minorRestingCapacity).isTrue();
     });
 
+    it("Checks replenish munitions result processing", () => {
+        given:
+            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processReplenishMunitionsResult(unit12, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processReplenishMunitionsResult(unit12, [5, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks reorganize result processing", () => {
+        given:
+            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processReorganizeResult(unit12, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processReplenishMunitionsResult(unit12, [5, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks rally result processing", () => {
+        given:
+            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processRallyResult(unit12, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processReplenishMunitionsResult(unit12, [5, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
     it("Checks attacker engagement result", () => {
         given:
             var {arbitrator, unit12} = create2Players4UnitsTinyGame();
@@ -486,6 +525,60 @@ describe("Arbitrator", ()=> {
             result = arbitrator.processShockAttackResult(unit12, unit21, false, [5, 5]);
         then:
             assert(result.success).isFalse();
+    });
+
+    it("Checks unit forward area", () => {
+        given:
+            var {arbitrator, map, unit12} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.getUnitForwardArea(unit12, 2);
+        then:
+            assert(result.length).equalsTo(8)
+            let hexes = new Set(result);
+            assert(hexes.has(map.getHex(5, 6)));
+            assert(hexes.has(map.getHex(6, 6)));
+            assert(hexes.has(map.getHex(4, 6)));
+            assert(hexes.has(map.getHex(5, 5)));
+            assert(hexes.has(map.getHex(6, 5)));
+            assert(hexes.has(map.getHex(4, 5)));
+            assert(hexes.has(map.getHex(7, 6)));
+            assert(hexes.has(map.getHex(3, 6)));
+    });
+
+    it("Checks units that may be fired on by a given unit", () => {
+        given:
+            var {arbitrator, map, unit12, unit11, unit21, unit22} = create2Players4UnitsTinyGame();
+        when:
+            unit11.move(map.getHex(6, 5));  // in range but friend
+            unit21.move(map.getHex(5, 5));  // in range, foe
+            unit22.move(map.getHex(8, 8));  // out of range, foe
+            var units = arbitrator.getFoesThatMayBeFireAttacked(unit12);
+        then:
+            assert(units.length).equalsTo(1);
+            assert(units[0].unit).equalsTo(unit21);
+    });
+
+    it("Checks fire attack processing", () => {
+        given:
+            var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
+            unit21.move(map.getHex(5, 5));
+        when:
+            var result = arbitrator.processFireAttackResult(unit12, unit21, [2, 2]);
+        then:
+            assert(result.success).isTrue();
+            assert(result.lossesForDefender).equalsTo(2);
+            assert(result.lowerFirerMunitions).isTrue();
+        when:
+            result = arbitrator.processFireAttackResult(unit12, unit21, [3, 4]);
+        then:
+            assert(result.success).isTrue();
+            assert(result.lossesForDefender).equalsTo(1);
+            assert(result.lowerFirerMunitions).isFalse();
+        when:
+            result = arbitrator.processFireAttackResult(unit12, unit21, [5, 5]);
+        then:
+            assert(result.success).isFalse();
+            assert(result.lowerFirerMunitions).isTrue();
     });
 
     it("Checks get weather", () => {

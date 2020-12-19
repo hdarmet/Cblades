@@ -354,8 +354,10 @@ describe("Widget", ()=> {
             var commandsLevel = board.getLevel("widget-commands");
             board.paint();
             resetDirectives(commandsLevel);
-            let pushButton = new DPushButton("/CBlades/images/commands/button1.png", new Point2D(60, 60),
-                    ()=>{return true;});
+            let pushButton = new DPushButton(
+                "/CBlades/images/commands/button1.png",
+                "/CBlades/images/commands/button1-inactive.png",
+                new Point2D(60, 60), ()=>{return true;});
             pushButton.setOnBoard(board);
             loadAllImages();
             board.paint();
@@ -386,7 +388,10 @@ describe("Widget", ()=> {
             board.paint();
             resetDirectives(commandsLevel);
             var clicked = false;
-            let pushButton = new DPushButton("/CBlades/images/commands/button1.png", new Point2D(60, 60),
+            let pushButton = new DPushButton(
+                "/CBlades/images/commands/button1.png",
+                "/CBlades/images/commands/button1-inactive.png",
+                new Point2D(60, 60),
                 ()=>{clicked = true;});
             pushButton.setOnBoard(board);
             loadAllImages();
@@ -429,22 +434,27 @@ describe("Widget", ()=> {
             board.paint();
             resetDirectives(commandsLevel);
             var clicked = false;
-            let pushButton = new DPushButton("/CBlades/images/commands/button1.png", new Point2D(60, 60),
+            let pushButton = new DPushButton(
+                "/CBlades/images/commands/button1.png", "/CBlades/images/commands/button1-inactive.png",
+                new Point2D(60, 60),
                 ()=>{clicked = true;});
             pushButton.setOnBoard(board);
             loadAllImages();
             var buttonVPLocation = pushButton.trigger.viewportLocation;
             board.paint();
+        then:
+            assert(pushButton.active).isTrue();
         when: // mouseover icon
-            pushButton.activate = false;
+            pushButton.active = false;
             resetDirectives(commandsLevel);
             var event = createEvent("mousemove", {offsetX:buttonVPLocation.x, offsetY:buttonVPLocation.y});
             mockPlatform.dispatchEvent(board.root, "mousemove", event);
         then:
+            assert(pushButton.active).isFalse();
             assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 10",
-                "drawImage(/CBlades/images/commands/button1.png, 35, 35, 50, 50)",
+                "drawImage(/CBlades/images/commands/button1-inactive.png, 35, 35, 50, 50)",
                 "restore()"
             ]);
         when: // mouse outside icon
@@ -455,7 +465,7 @@ describe("Widget", ()=> {
             assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 10",
-                "drawImage(/CBlades/images/commands/button1.png, 35, 35, 50, 50)",
+                "drawImage(/CBlades/images/commands/button1-inactive.png, 35, 35, 50, 50)",
                 "restore()"
             ]);
         when: // click icon once: icon action returns false => menu is not closed
@@ -471,7 +481,9 @@ describe("Widget", ()=> {
             var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
             var commandsLevel = board.getLevel("widget-commands");
             var clicked = false;
-            let pushButton = new DPushButton("/CBlades/images/commands/button1.png", new Point2D(60, 60),
+            let pushButton = new DPushButton(
+                "/CBlades/images/commands/button1.png", "/CBlades/images/commands/button1-inactive.png",
+                new Point2D(60, 60),
                 animation=>{clicked = true; animation()});
             pushButton.setOnBoard(board);
             pushButton.setTurnAnimation(false);
@@ -539,8 +551,9 @@ describe("Widget", ()=> {
             var diceVPLocation = dice.trigger[0].viewportLocation;
             var event = createEvent("click", {offsetX:diceVPLocation.x, offsetY:diceVPLocation.y});
             mockPlatform.dispatchEvent(board.root, "click", event);
-        then:
             executeTimeouts();
+        then:
+            assert(dice.active).isTrue();
             assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(-0.309, 0.9511, -0.9511, -0.309, 23.829, -77.3128)",
@@ -585,9 +598,10 @@ describe("Widget", ()=> {
             ]);
         when: // Inactivation : shadows become black
             resetDirectives(itemsLevel);
-            dice.activate = false;
+            dice.active = false;
             board.paint();
         then:
+            assert(dice.active).isFalse();
             assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
