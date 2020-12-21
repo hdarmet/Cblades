@@ -322,6 +322,51 @@ export class DImageAbstractArtifact extends RectArtifact(DArtifact) {
 
 }
 
+export class DTextArtifact extends RectArtifact(DArtifact) {
+
+    constructor(level, position, dimension,
+                strokeColor, fillColor,
+                shadowColor, shadowWidth,
+                font, align, text) {
+        super(dimension, level, position);
+        this._strokeColor = strokeColor;
+        this._fillColor = fillColor;
+        this._shadowColor = shadowColor;
+        this._shadowWidth = shadowWidth;
+        this._font = font;
+        this._align = align;
+        this._text = text;
+    }
+
+    _memento() {
+        let memento = super._memento();
+        memento.text = this._text;
+        return memento;
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        this._text = memento.text;
+    }
+
+    setText(text) {
+        Memento.register(this);
+        this._text = text;
+        this.refresh();
+    }
+
+    paint() {
+        console.assert(this._level);
+        this._level.setTextSettings(this._font, this._align);
+        this._level.setShadowSettings(this._shadowColor, this._shadowWidth)
+        this._level.setStrokeSettings(this._strokeColor, 3);
+        this._level.drawText(this._text, this._location);
+        this._level.setFillSettings(this._fillColor);
+        this._level.fillText(this._text, this._location);
+    }
+
+}
+
 /**
  * Image wrapper artifact
  */
@@ -388,6 +433,7 @@ export class DElement extends LocalisationAware(Object) {
     addArtifact(artifact) {
         this._artifacts.push(artifact);
         artifact._setElement(this);
+        this._setArtifactLocation(artifact);
         if (this._board) {
             artifact.setOnBoard(this._board);
         }
@@ -407,6 +453,7 @@ export class DElement extends LocalisationAware(Object) {
         Memento.register(this);
         this._artifacts.push(artifact);
         artifact._attach(this);
+        this._setArtifactLocation(artifact);
         if (this._board) {
             artifact.show(this._board);
         }
@@ -445,6 +492,10 @@ export class DElement extends LocalisationAware(Object) {
         }
         this._location = memento.location;
         this._angle = memento.angle;
+    }
+
+    _setArtifactLocation(artifact) {
+        artifact.setLocation(this._location, this._angle);
     }
 
     _setArtifactsLocation() {
@@ -687,6 +738,18 @@ export class DLevel {
 
     fillRect(anchor, dimension) {
         this._layer.fillRect(anchor, dimension);
+    }
+
+    setTextSettings(font, align) {
+        this._layer.setTextSettings(font, align);
+    }
+
+    drawText(anchor, text) {
+        this._layer.drawText(anchor, text);
+    }
+
+    fillText(anchor, text) {
+        this._layer.fillText(anchor, text);
     }
 
     getPoint(viewportPoint) {

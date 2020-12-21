@@ -20,7 +20,7 @@ import {
     mockPlatform, getDirectives, resetDirectives, loadAllImages, createEvent
 } from "./mocks.js";
 import {
-    DWidget, DPopup, DIconMenu, DIconMenuItem, DPushButton, DDice, DIndicator, DInsert, DResult, DMask, DScene
+    DWidget, DPopup, DIconMenu, DIconMenuItem, DPushButton, DDice, DIndicator, DInsert, DResult, DMask, DScene, DMessage
 } from "../jslib/widget.js";
 
 
@@ -821,6 +821,125 @@ describe("Widget", ()=> {
             mockPlatform.dispatchEvent(board.root, "click", event);
         then:
             assert(clicked).isTrue();
+        when: // Test animation when widget is closed
+            var directives = executeAllAnimations(commandsLevel);
+        then:
+            assert(directives).arrayEqualsTo([]);
+    });
+
+
+
+
+    it("Checks message widget", () => {
+        given:
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var commandsLevel = board.getLevel("widget-commands");
+            board.paint();
+            let message = new DMessage();
+            loadAllImages();
+        when:
+            resetDirectives(commandsLevel);
+            message.open(board, new Point2D(10, 20));
+            message.show("12");
+            var messageVPLocation = message.trigger.viewportLocation;
+            board.paint();
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "globalAlpha = 0", "drawImage(/CBlades/images/dice/message.png, -65, -55, 150, 150)",
+                "restore()",
+                "save()",
+                    "font = 90px serif", "textAlign = center",
+                    "shadowColor = #000000", "shadowBlur = 5",
+                    "strokeStyle = #0000FF", "lineWidth = 3",
+                    "strokeText(12, 10, 50)",
+                    "fillStyle = #8080FF", "fillText(12, 10, 50)",
+                "restore()"
+            ]);
+        when:
+            var directives = executeAllAnimations(commandsLevel);
+        then:
+            assert(directives).arrayEqualsTo([
+                "save()",
+                    "resetTransform()", "clearRect(0, 0, 500, 300)",
+                "restore()",
+                "save()",
+                    "drawImage(/CBlades/images/dice/message.png, -65, -55, 150, 150)",
+                "restore()",
+                "save()",
+                    "font = 90px serif", "textAlign = center",
+                    "shadowColor = #000000", "shadowBlur = 5",
+                    "strokeStyle = #0000FF",
+                    "lineWidth = 3", "strokeText(12, 10, 50)",
+                    "fillStyle = #8080FF", "fillText(12, 10, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(commandsLevel);
+            var event = createEvent("mousemove", {offsetX:messageVPLocation.x, offsetY:messageVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/message.png, -65, -55, 150, 150)",
+                "restore()",
+                "save()",
+                    "font = 90px serif", "textAlign = center",
+                    "shadowColor = #000000", "shadowBlur = 5",
+                    "strokeStyle = #0000FF", "lineWidth = 3",
+                    "strokeText(12, 10, 50)",
+                    "fillStyle = #8080FF",
+                    "fillText(12, 10, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(commandsLevel);
+            var event = createEvent("mousemove", {offsetX:messageVPLocation.x, offsetY:messageVPLocation.y+150});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #A0FFFF", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/message.png, -65, -55, 150, 150)",
+                "restore()",
+                "save()",
+                    "font = 90px serif", "textAlign = center",
+                    "shadowColor = #000000", "shadowBlur = 5",
+                    "strokeStyle = #0000FF", "lineWidth = 3",
+                    "strokeText(12, 10, 50)",
+                    "fillStyle = #8080FF",
+                    "fillText(12, 10, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(commandsLevel);
+            message.close();
+            board.paint();
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks message widget final action", () => {
+        given:
+            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var commandsLevel = board.getLevel("widget-commands");
+            board.paint();
+            let min, max;
+            let message = new DMessage().setFinalAction((...values)=>{
+                min = Math.min(...values);
+                max = Math.max(...values);
+                message.close();
+            });
+            message.open(board, new Point2D(10, 20));
+            message.show("12", 1, 2, 3);
+            var messageVPLocation = message.trigger.viewportLocation;
+        when:
+            var event = createEvent("click", {offsetX:messageVPLocation.x, offsetY:messageVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            assert(min).equalsTo(1);
+            assert(max).equalsTo(3);
         when: // Test animation when widget is closed
             var directives = executeAllAnimations(commandsLevel);
         then:

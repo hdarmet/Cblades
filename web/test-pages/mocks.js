@@ -80,6 +80,25 @@ export let mockPlatform = {
         write(context, `drawImage(${image.src}, ${params.join(', ')})`);
     },
 
+
+
+
+    textAlign(context, align) {
+        write(context, `textAlign = ${align}`);
+    },
+
+    font(context, font) {
+        write(context, `font = ${font}`);
+    },
+
+    fillText(context, text, x, y) {
+        write(context, `fillText(${text}, ${x}, ${y})`);
+    },
+
+    strokeText(context, text, x, y) {
+        write(context, `strokeText(${text}, ${x}, ${y})`);
+    },
+
     clearRect(context, x, y, w, h) {
         write(context, `clearRect(${round(x)}, ${round(y)}, ${round(w)}, ${round(h)})`);
     },

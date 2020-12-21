@@ -21,7 +21,7 @@ import {
     CBAbstractPlayer,
     CBAbstractArbitrator,
     CBHexSideId,
-    CBHexVertexId, CBCounter, CBAction
+    CBHexVertexId, CBCounter, CBAction, CBTroop, CBWing, CBCharacter, CBOrderInstruction
 } from "../../jslib/cblades/game.js";
 import {
     DBoard, DElement
@@ -64,13 +64,14 @@ describe("Game", ()=> {
         var { game, map } = prepareTinyGame();
         var player = new CBAbstractPlayer();
         game.addPlayer(player);
-        let unit = new CBUnit(player, [
+        let wing = new CBWing(player);
+        let unit = new CBTroop(wing, [
             "/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"
         ]);
         game.addUnit(unit, map.getHex(5, 8));
         game.start();
         loadAllImages();
-        return {game, player, unit, map};
+        return {game, player, unit, wing, map};
     }
 
     it("Checks game building", () => {
@@ -83,7 +84,8 @@ describe("Game", ()=> {
             var [mapLevel, unitsLevel] = getLevels(game, "map","units");
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
-            let unit = new CBUnit(player, ["/CBlades/images/units/misc/unit.png"]);
+            let wing = new CBWing(player);
+            let unit = new CBTroop(wing, ["/CBlades/images/units/misc/unit.png"]);
             game.addUnit(unit, map.getHex(5, 8));
         when:
             game.start();
@@ -98,14 +100,14 @@ describe("Game", ()=> {
             assert(CBUnit.fromArtifact(unit._imageArtifact)).equalsTo(unit);
             assert(unit.player).equalsTo(player);
             assert(getDirectives(mapLevel)).arrayEqualsTo([
-                "setTransform(1, 0, 0, 1, 0, 0)",
-                "setTransform(0.4888, 0, 0, 0.4888, 500, 400)",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 500, 400)",
                 "save()",
-                "resetTransform()",
-                "clearRect(0, 0, 1000, 800)",
+                    "resetTransform()",
+                    "clearRect(0, 0, 1000, 800)",
                 "restore()",
                 "save()",
-                "drawImage(/CBlades/images/maps/map.png, -1023, -1575, 2046, 3150)",
+                    "drawImage(/CBlades/images/maps/map.png, -1023, -1575, 2046, 3150)",
                 "restore()"
             ]);
             assert(getDirectives(unitsLevel)).arrayEqualsTo([
@@ -492,13 +494,14 @@ describe("Game", ()=> {
         var { game, map } = prepareTinyGame();
         let player = new CBAbstractPlayer();
         game.addPlayer(player);
-        let unit1 = new CBUnit(player, ["/CBlades/images/units/misc/unit1.png"]);
+        let wing = new CBWing(player);
+        let unit1 = new CBTroop(wing, ["/CBlades/images/units/misc/unit1.png"]);
         game.addUnit(unit1, map.getHex(5, 8));
-        let unit2 = new CBUnit(player, ["/CBlades/images/units/misc/unit2.png"]);
+        let unit2 = new CBTroop(wing, ["/CBlades/images/units/misc/unit2.png"]);
         game.addUnit(unit2, map.getHex(5, 8));
         game.start();
         loadAllImages();
-        return {game, map, unit1, unit2, player};
+        return {game, map, unit1, unit2, wing, player};
     }
 
     function create2PlayersTinyGame() {
@@ -507,13 +510,15 @@ describe("Game", ()=> {
         game.addPlayer(player1);
         let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
-        let unit1 = new CBUnit(player1, ["/CBlades/images/units/misc/unit1.png"]);
+        let wing1 = new CBWing(player1);
+        let unit1 = new CBTroop(wing1, ["/CBlades/images/units/misc/unit1.png"]);
         game.addUnit(unit1, map.getHex(5, 8));
-        let unit2 = new CBUnit(player2, ["/CBlades/images/units/misc/unit2.png"]);
+        let wing2 = new CBWing(player2);
+        let unit2 = new CBTroop(wing2, ["/CBlades/images/units/misc/unit2.png"]);
         game.addUnit(unit2, map.getHex(5, 8));
         game.start();
         loadAllImages();
-        return {game, map, unit1, unit2, player1, player2};
+        return {game, map, unit1, unit2, wing1, wing2, player1, player2};
     }
 
     it("Checks counter basic appearance and features", () => {
@@ -577,13 +582,31 @@ describe("Game", ()=> {
             mouseClickOnCounter(game, counter); // checks that tests does not crash
     });
 
+    it("Checks unit/wing/player structure", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+        when:
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            var wing = new CBWing(player);
+            var unit1 = new CBTroop(wing, ["/CBlades/images/units/misc/unit1.png"]);
+            game.addUnit(unit1, map.getHex(5, 8));
+            var unit2 = new CBTroop(wing, ["/CBlades/images/units/misc/unit1.png"]);
+            game.addUnit(unit2, map.getHex(5, 8));
+        then:
+            assert(unit1.wing).equalsTo(wing);
+            assert(unit1.player).equalsTo(player);
+            assert(player.units).unorderedArrayEqualsTo([unit1, unit2]);
+    });
+
     it("Checks unit registration on map", () => {
         given:
             var { game, map } = prepareTinyGame();
             var player = new CBAbstractPlayer();
             game.addPlayer(player);
+            var wing = new CBWing(player);
         when:
-            var unit = new CBUnit(player, ["/CBlades/images/units/misc/unit1.png"]);
+            var unit = new CBTroop(wing, ["/CBlades/images/units/misc/unit1.png"]);
             var hexId = map.getHex(5, 8);
             game.addUnit(unit, hexId);
         then:
@@ -1239,6 +1262,53 @@ describe("Game", ()=> {
             assert(unit.hasBeenPlayed()).isFalse();
     });
 
+    it("Checks giving an order to a unit", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+            var [markersLevel] = getLevels(game, "markers");
+        when:
+            resetDirectives(markersLevel);
+            unit.receiveOrder(true);
+            paint(game);
+            loadAllImages(); // to load ordegiven.png
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/ordergiven.png, -131.5, -201.4375, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.hasReceivedOrder()).isTrue();
+        when:
+            resetDirectives(markersLevel);
+            Memento.undo();
+            paint(game);
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(unit.hasReceivedOrder()).isFalse();
+    });
+
+    it("Checks that playing an order replace (hide) ordergiven marker", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+            var [markersLevel] = getLevels(game, "markers");
+            unit.receiveOrder(true);
+            paint(game);
+        when:
+            resetDirectives(markersLevel);
+            unit.launchAction(new CBAction(game, unit));
+            unit.markAsBeingPlayed();
+            paint(game);
+            loadAllImages(); // to load actiondone.png
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/actiondone.png, -131.5, -201.4375, 64, 64)",
+                "restore()"
+            ]);
+    });
+
     it("Checks played status of a unit when selection is changed or turn is changed", () => {
         given:
             var {game, player, unit1, unit2} = create2UnitsTinyGame();
@@ -1529,4 +1599,103 @@ describe("Game", ()=> {
             assert(unit.isEngaging()).isFalse();
             assert(unit.isCharging()).isFalse();
     });
+
+    function createTinyCommandGame() {
+        var { game, map } = prepareTinyGame();
+        var player = new CBAbstractPlayer();
+        game.addPlayer(player);
+        let wing = new CBWing(player);
+        let unit = new CBTroop(wing, [
+            "/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"
+        ]);
+        game.addUnit(unit, map.getHex(5, 8));
+        let leader = new CBCharacter(wing, [
+            "/CBlades/images/units/misc/leader.png", "/CBlades/images/units/misc/leaderb.png"
+        ]);
+        game.addUnit(leader, map.getHex(5, 9));
+        game.start();
+        loadAllImages();
+        return {game, player, unit, leader, wing, map};
+    }
+
+    it("Checks leader appearance", () => {
+        given:
+            var {game, unit, player, leader} = createTinyCommandGame();
+            var [unitsLevel, markersLevel] = getLevels(game, "units", "markers");
+            unit.move(null, 0);
+        when:
+            loadAllImages(); // to load charge.png
+            resetDirectives(unitsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/leader.png, -230.5, 38.4375, 120, 120)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(markersLevel);
+            leader.takeCommand();
+            loadAllImages();
+            paint(game);
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/defend.png, -139.5, 58.4375, 80, 80)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(markersLevel);
+            player.changeOrderInstruction(leader, CBOrderInstruction.ATTACK);
+            loadAllImages();
+            paint(game);
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/attack.png, -139.5, 58.4375, 80, 80)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(markersLevel);
+            leader.dismissCommand();
+            loadAllImages();
+            paint(game);
+        then:
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks wing management", () => {
+        given:
+            var {game, unit, leader, player, wing} = createTinyCommandGame();
+            Memento.open();
+        when:
+            wing.setLeader(leader);
+        then:
+            assert(wing.player).equalsTo(player);
+            assert(wing.leader).equalsTo(leader);
+        when: // undoing is worthless with setLeader
+            Memento.undo();
+        then:
+            assert(wing.leader).equalsTo(leader);
+        when:
+            wing.dismissLeader();
+        then:
+            assert(wing.leader).isNotDefined();
+        when:
+            Memento.open();
+            wing.appointLeader(leader);
+            wing.changeOrderInstruction(CBOrderInstruction.REGROUP);
+        then:
+            assert(wing.leader).equalsTo(leader);
+            assert(wing.orderInstruction).equalsTo(CBOrderInstruction.REGROUP);
+        when:
+            Memento.undo();
+        then:
+            assert(wing.leader).isNotDefined();
+            assert(wing.orderInstruction).equalsTo(CBOrderInstruction.DEFEND);
+    });
+
 });

@@ -10,7 +10,7 @@
 <script type="module">
 
     import {
-        CBGame, CBMap, CBUnit, CBHexId
+        CBGame, CBMap, CBHexId, CBTroop, CBWing, CBCharacter
     } from "../jslib/cblades/game.js";
     import {
         CBInteractivePlayer
@@ -29,34 +29,47 @@
 
     let player1 = new CBInteractivePlayer();
     game.addPlayer(player1);
-    let counter11 = new CBUnit(player1, [
+    let wing1 = new CBWing(player1);
+    let character11 = new CBCharacter(wing1, [
+        "/CBlades/images/units/mercenaries/character1L.png",
+        "/CBlades/images/units/mercenaries/character1Lb.png"
+    ]);
+    wing1.setLeader(character11);
+    let counter11 = new CBTroop(wing1, [
         "/CBlades/images/units/mercenaries/unit1L.png",
         "/CBlades/images/units/mercenaries/unit1Lb.png"
     ]);
-    let counter12 = new CBUnit(player1, [
+    let counter12 = new CBTroop(wing1, [
         "/CBlades/images/units/mercenaries/unit1L.png",
         "/CBlades/images/units/mercenaries/unit1Lb.png"
     ]);
+    game.addUnit(character11, new CBHexId(map, 4, 11));
     game.addUnit(counter11, new CBHexId(map, 3, 10));
     game.addUnit(counter12, new CBHexId(map, 6, 10));
 
     let player2 = new CBInteractivePlayer();
     game.addPlayer(player2);
-    let counter21 = new CBUnit(player2, [
+    let wing2 = new CBWing(player2);
+    let character21 = new CBCharacter(wing2, [
+        "/CBlades/images/units/orcs/character1L.png",
+        "/CBlades/images/units/orcs/character1Lb.png"
+    ]);
+    wing2.setLeader(character21);
+    character21.angle = 180;
+    let counter21 = new CBTroop(wing2, [
         "/CBlades/images/units/orcs/unit1L.png",
         "/CBlades/images/units/orcs/unit1Lb.png"
     ]);
     counter21.angle = 180;
-    let counter22 = new CBUnit(player2, [
+    let counter22 = new CBTroop(wing2, [
         "/CBlades/images/units/orcs/unit1L.png",
         "/CBlades/images/units/orcs/unit1Lb.png"
     ]);
     counter22.angle = 180;
+    game.addUnit(character21, new CBHexId(map, 8, 6));
     game.addUnit(counter21, new CBHexId(map, 7, 7));
     game.addUnit(counter22, new CBHexId(map, 8, 7));
-
     game.start();
-
 </script>
 </body>
 </html>

@@ -7,20 +7,18 @@ import {
 } from "../../jstest/jtest.js";
 import {
     DAnimator,
-    DImage, getDrawPlatform, setDrawPlatform
+    DImage, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
-    createEvent,
-    filterPainting, getDirectives,
     loadAllImages,
-    mockPlatform, removeFilterPainting, resetDirectives, stopRegister
+    mockPlatform
 } from "../mocks.js";
 import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
     CBAction,
-    CBGame, CBHexId, CBMap, CBMovement, CBUnit, CBWeather
+    CBGame, CBMap, CBMovement, CBTroop, CBWeather, CBWing
 } from "../../jslib/cblades/game.js";
 import {
     CBInteractivePlayer, CBMoveActuator, CBOrientationActuator
@@ -45,17 +43,19 @@ describe("Arbitrator", ()=> {
         game.setArbitrator(arbitrator);
         let player1 = new CBInteractivePlayer();
         game.addPlayer(player1);
+        let wing1 = new CBWing(player1);
         let player2 = new CBInteractivePlayer();
         game.addPlayer(player2);
+        let wing2 = new CBWing(player2);
         let map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
-        let unit11 = new CBUnit(player1, "/CBlades/images/units/misc/unit1.png");
+        let unit11 = new CBTroop(wing1, "/CBlades/images/units/misc/unit1.png");
         game.addUnit(unit11, map.getHex(5, 8));
-        let unit12 = new CBUnit(player1, "/CBlades/images/units/misc/unit1.png");
+        let unit12 = new CBTroop(wing1, "/CBlades/images/units/misc/unit1.png");
         game.addUnit(unit12, map.getHex(5, 7));
-        let unit21 = new CBUnit(player2, "/CBlades/images/units/misc/unit2.png");
+        let unit21 = new CBTroop(wing2, "/CBlades/images/units/misc/unit2.png");
         game.addUnit(unit21, map.getHex(7, 8));
-        let unit22 = new CBUnit(player2, "/CBlades/images/units/misc/unit2.png");
+        let unit22 = new CBTroop(wing2, "/CBlades/images/units/misc/unit2.png");
         game.addUnit(unit22, map.getHex(7, 7));
         game.start();
         loadAllImages();

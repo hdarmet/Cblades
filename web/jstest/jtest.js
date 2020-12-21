@@ -110,6 +110,24 @@ export class Assertor {
         }
     }
 
+    _unorderedArrayEquals(model, value) {
+        if (!model || !(model instanceof Array)) {
+            throw new AssertionError(model, " is not an array.");
+        }
+        if (!value || !(value instanceof Array)) {
+            throw new AssertionError(value, " is not an array.");
+        }
+        if (value.length!=model.length) {
+            throw new AssertionFailed(value, " is not equal to ", model);
+        }
+        let modelSet = new Set(model);
+        for (let item of value) {
+            if (!modelSet.has(item)) {
+                throw new AssertionFailed(model, " does not contain ", item);
+            }
+        }
+    }
+
     _objectEquals(model, value) {
         for (let key in model) {
             if (model[key] && (model[key] instanceof Array)) {
@@ -264,6 +282,11 @@ export class Assertor {
 
     arrayEqualsTo(model) {
         this._arrayEquals(model, this._value);
+        return this;
+    }
+
+    unorderedArrayEqualsTo(model) {
+        this._unorderedArrayEquals(model, this._value);
         return this;
     }
 

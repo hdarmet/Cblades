@@ -50,6 +50,13 @@ export let CBWeather = {
     STORM : 6
 }
 
+export let CBOrderInstruction = {
+    ATTACK: 0,
+    DEFEND: 1,
+    REGROUP: 2,
+    RETREAT: 3
+}
+
 export class CBAbstractArbitrator {
 
     get game() {
@@ -93,6 +100,10 @@ export class CBAbstractPlayer {
         }
     }
 
+    get units() {
+        return this.game.getPlayerUnits(this);
+    }
+
     unselectUnit(unit) {
         if (unit.action) {
             unit.action.markAsFinished();
@@ -112,6 +123,10 @@ export class CBAbstractPlayer {
 
     afterActivation(unit, action) {
         action();
+    }
+
+    changeOrderInstruction(unit, orderInstruction, event) {
+        unit.wing.changeOrderInstruction(orderInstruction);
     }
 
     finishTurn(animation) {
@@ -196,6 +211,9 @@ export class CBAction {
             Memento.register(this);
             this._status = CBAction.FINALIZED;
             action && action();
+            if (this.unit.isCurrentPlayer()) {
+                this.unit.updatePlayed();
+            }
             Mechanisms.fire(this, CBAction.PROGRESSION, CBAction.FINALIZED);
         }
     }
@@ -310,6 +328,18 @@ export class CBGame {
         this._counters.add(unit);
         unit.hexLocation = hexLocation;
         unit.element.setOnBoard(this._board);
+    }
+
+    getPlayerUnits(player) {
+        let units = [];
+        if (this._counters) {
+            for (let counter of this._counters) {
+                if (counter instanceof CBUnit && counter.player === player) {
+                    units.push(counter);
+                }
+            }
+        }
+        return units;
     }
 
     turnIsFinishable() {
@@ -971,9 +1001,9 @@ class UnitImageArtifact extends CounterImageArtifact {
 
 export class CBUnit extends CBCounter {
 
-    constructor(player, paths) {
-        super(paths, CBUnit.DIMENSION);
-        this._player = player;
+    constructor(wing, paths, dimension=CBUnit.DIMENSION) {
+        super(paths, dimension);
+        this._wing = wing;
         this._movementPoints=2;
         this._extendedMovementPoints=this._movementPoints*1.5;
         this._tiredness=0;
@@ -983,6 +1013,7 @@ export class CBUnit extends CBCounter {
         this._charging=false;
         this._maxLosses = paths.length;
         this._lossSteps = 0;
+        this._orderGiven = false;
         this.artifact.setImage(this._lossSteps);
     }
 
@@ -1017,6 +1048,7 @@ export class CBUnit extends CBCounter {
             charging: this._charging,
             engagingArtifact: this._engagingArtifact,
             action: this._action,
+            orderGiven: this._orderGiven,
             lossSteps: this._lossSteps
         };
     }
@@ -1036,6 +1068,7 @@ export class CBUnit extends CBCounter {
         this._charging = memento.charging;
         this._engagingArtifact = memento.engagingArtifact;
         this._action = memento.action;
+        this._orderGiven = memento.orderGiven,
         this._lossSteps = memento.lossSteps;
     }
 
@@ -1051,9 +1084,10 @@ export class CBUnit extends CBCounter {
     }
 
     _reset(player) {
-        if (player === this._player) {
+        if (player === this.player) {
             this._movementPoints = 2;
             this._extendedMovementPoints = this._movementPoints*1.5;
+            this._orderGiven = false;
             delete this._action;
             this._updatePlayed();
         }
@@ -1089,11 +1123,15 @@ export class CBUnit extends CBCounter {
     }
 
     get game() {
-        return this._player.game;
+        return this.player.game;
+    }
+
+    get wing() {
+        return this._wing;
     }
 
     get player() {
-        return this._player;
+        return this._wing.player;
     }
 
     get hexLocation() {
@@ -1123,6 +1161,16 @@ export class CBUnit extends CBCounter {
         return !!this._hexLocation;
     }
 
+    receiveOrder(order) {
+        Memento.register(this);
+        this._orderGiven = order;
+        this._updatePlayed();
+    }
+
+    hasReceivedOrder() {
+        return this._orderGiven;
+    }
+
     hasBeenPlayed() {
         return this._action && this._action.isFinished();
     }
@@ -1137,12 +1185,13 @@ export class CBUnit extends CBCounter {
     }
 
     _updatePlayed() {
-        if (!this._playedArtifact !== !this.hasBeenPlayed()) {
-            this._playedArtifact && this._element.deleteArtifact(this._playedArtifact);
-            delete this._playedArtifact;
-            if (this.hasBeenPlayed()) {
-                this._playedArtifact = this.createMarkerArtifact("/CBlades/images/markers/actiondone.png", 0);
-            }
+        this._playedArtifact && this._element.deleteArtifact(this._playedArtifact);
+        delete this._playedArtifact;
+        if (this.hasBeenPlayed()) {
+            this._playedArtifact = this.createMarkerArtifact("/CBlades/images/markers/actiondone.png", 0);
+        }
+        else if (this._orderGiven) {
+            this._playedArtifact = this.createMarkerArtifact("/CBlades/images/markers/ordergiven.png", 0);
         }
     }
 
@@ -1371,15 +1420,150 @@ export class CBUnit extends CBCounter {
     }
 
 }
-CBUnit.DIMENSION = new Dimension2D(142, 142);
 CBUnit.MARKER_DIMENSION = new Dimension2D(64, 64);
+CBUnit.DIMENSION = new Dimension2D(142, 142);
 CBUnit.MARKERS_POSITION = [
     new Point2D(CBUnit.DIMENSION.w/2, -CBUnit.DIMENSION.h/2),
     new Point2D(-CBUnit.DIMENSION.w/2, -CBUnit.DIMENSION.h/2),
     new Point2D(-CBUnit.DIMENSION.w/2, 0),
     new Point2D(-CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2),
     new Point2D(0, CBUnit.DIMENSION.h/2),
-    new Point2D(CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2)];
+    new Point2D(CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2),
+    new Point2D(CBUnit.DIMENSION.w/2, 0)];
 CBUnit.fromArtifact = function(artifact) {
     return artifact.element._unit;
 }
+
+export class CBWing {
+
+    constructor(player) {
+        this._player = player;
+        this._orderInstruction = CBOrderInstruction.DEFEND;
+    }
+
+    _memento() {
+        let memento = {
+            orderInstruction : this._orderInstruction
+        }
+        this._leader && (memento.leader = this._leader);
+        return memento;
+    }
+
+    _revert(memento) {
+        this._orderInstruction = memento.orderInstruction;
+        memento.leader && (this._leader = memento.leader);
+    }
+
+    get player() {
+        return this._player;
+    }
+
+    get leader() {
+        return this._leader;
+    }
+
+    setLeader(character) {
+        this._leader = character;
+        this._leader.updateOrderInstruction();
+    }
+
+    appointLeader(character) {
+        Memento.register(this);
+        this.setLeader(character);
+    }
+
+    dismissLeader() {
+        Memento.register(this);
+        let leader = this._leader;
+        delete this._leader;
+        leader && leader.updateOrderInstruction();
+    }
+
+    get orderInstruction() {
+        return this._orderInstruction;
+    }
+
+    setOrderInstruction(orderInstruction) {
+        console.assert(orderInstruction>=CBOrderInstruction.ATTACK && orderInstruction<=CBOrderInstruction.RETREAT);
+        this._orderInstruction = orderInstruction;
+        this._leader && this._leader.updateOrderInstruction();
+    }
+
+    changeOrderInstruction(orderInstruction) {
+        Memento.register(this);
+        this.setOrderInstruction(orderInstruction);
+    }
+
+}
+
+export class CBTroop extends CBUnit {
+    constructor(wing, paths) {
+        super(wing, paths);
+    }
+}
+
+export class CBCharacter extends CBUnit {
+    constructor(wing, paths) {
+        super(wing, paths, CBCharacter.DIMENSION);
+        this._commandPoints = 0;
+    }
+
+    _memento() {
+        let memento = super._memento();
+        memento.commandPoints = this._commandPoints;
+        return memento;
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        this._commandPoints =  memento.commandPoints;
+    }
+
+    get commandPoints() {
+        return this._commandPoints;
+    }
+
+    setCommandPoints(commandPoints) {
+        Memento.register(this);
+        this._commandPoints = commandPoints;
+    }
+
+    createOrderInstructionArtifact(orderInstruction) {
+        let marker = new CounterImageArtifact(this,"markers",
+            [DImage.getImage(CBCharacter.ORDER_INSTRUCTION_PATHS[orderInstruction])],
+            CBUnit.MARKERS_POSITION[6], CBCharacter.ORDER_INSTRUCTION_DIMENSION);
+        this._element.appendArtifact(marker);
+        return marker;
+    }
+
+    updateOrderInstruction() {
+        this._orderInstructionArtifact && this._element.deleteArtifact(this._orderInstructionArtifact);
+        delete this._orderInstructionArtifact;
+        if (this._wing.leader === this) {
+            this._orderInstructionArtifact = this.createOrderInstructionArtifact(this._wing.orderInstruction);
+        }
+    }
+
+    takeCommand() {
+        this.wing.appointLeader(this);
+    }
+
+    dismissCommand() {
+        this.wing.dismissLeader();
+    }
+
+    _reset(player) {
+        super._reset(player);
+        if (player === this.player) {
+            this._commandPoints = 0;
+        }
+    }
+}
+CBCharacter.DIMENSION = new Dimension2D(120, 120);
+CBCharacter.ORDER_INSTRUCTION_DIMENSION = new Dimension2D(80, 80);
+CBCharacter.ORDER_INSTRUCTION_PATHS = [
+    "/CBlades/images/markers/attack.png",
+    "/CBlades/images/markers/defend.png",
+    "/CBlades/images/markers/regroup.png",
+    "/CBlades/images/markers/retreat.png"
+];

@@ -71,6 +71,22 @@ let _targetPlatform = {
         context.fillRect(x, y, w, h);
     },
 
+    textAlign(context, align) {
+        context.textAlign = align;
+    },
+
+    font(context, font) {
+        context.font = font;
+    },
+
+    fillText(context, text, x, y) {
+        context.fillText(text, x, y);
+    },
+
+    strokeText(context, text, x, y) {
+        context.strokeText(text, x, y);
+    },
+
     setTransform(context, a, b, c, d, e, f) {
         context.setTransform(a, b, c, d, e, f);
     },
@@ -294,6 +310,28 @@ export class DLayer {
     fillRect(anchor, dimension) {
         this._execute(()=> {
             _platform.fillRect(this._context, anchor.x, anchor.y, dimension.w, dimension.h);
+        });
+        return this;
+    }
+
+    setTextSettings(font, textAlign) {
+        this._execute(()=> {
+            _platform.font(this._context, font);
+            _platform.textAlign(this._context, textAlign);
+        });
+        return this;
+    }
+
+    drawText(text, anchor) {
+        this._execute(()=> {
+            _platform.strokeText(this._context, text, anchor.x, anchor.y);
+        });
+        return this;
+    }
+
+    fillText(text, anchor) {
+        this._execute(()=> {
+            _platform.fillText(this._context, text, anchor.x, anchor.y);
         });
         return this;
     }

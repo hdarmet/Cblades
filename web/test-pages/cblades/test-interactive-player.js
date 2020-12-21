@@ -18,7 +18,7 @@ import {
 } from "../../jslib/mechanisms.js";
 import {
     CBAction,
-    CBGame, CBHexId, CBMap, CBUnit
+    CBGame, CBMap, CBTroop, CBWing
 } from "../../jslib/cblades/game.js";
 import {
     DDice,
@@ -30,8 +30,7 @@ import {
     CBMoveActuator,
     CBOrientationActuator,
     CBRetreatActuator,
-    CBShockAttackActuator,
-    InteractiveMovementAction
+    CBShockAttackActuator
 } from "../../jslib/cblades/interactive-player.js";
 import {
     CBArbitrator
@@ -61,14 +60,15 @@ describe("Interactive Player", ()=> {
         game.setArbitrator(arbitrator);
         var player = new CBInteractivePlayer();
         game.addPlayer(player);
+        var wing = new CBWing(player);
         var map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
-        let unit = new CBUnit(player,
+        let unit = new CBTroop(wing,
             ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
         game.addUnit(unit, map.getHex( 5, 8));
         game.start();
         loadAllImages();
-        return { game, arbitrator, player, map, unit };
+        return { game, arbitrator, player, wing, map, unit };
     }
 
     function create2PlayersTinyGame() {
@@ -81,15 +81,17 @@ describe("Interactive Player", ()=> {
         game.addPlayer(player2);
         let map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
-        let unit1 = new CBUnit(player1,
+        let wing1 = new CBWing(player1);
+        let unit1 = new CBTroop(wing1,
             ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
         game.addUnit(unit1, map.getHex(5, 8));
-        let unit2 = new CBUnit(player2,
+        let wing2 = new CBWing(player2);
+        let unit2 = new CBTroop(wing2,
             ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"]);
         game.addUnit(unit2, map.getHex(6, 8));
         game.start();
         loadAllImages();
-        return {game, map, unit1, unit2, player1, player2};
+        return {game, map, unit1, unit2, wing1, wing2, player1, player2};
     }
 
     function create2UnitsTinyGame() {
@@ -100,9 +102,10 @@ describe("Interactive Player", ()=> {
         game.addPlayer(player);
         var map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
-        let unit1 = new CBUnit(player,
+        let wing = new CBWing(player);
+        let unit1 = new CBTroop(wing,
             ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
-        let unit2 = new CBUnit(player,
+        let unit2 = new CBTroop(wing,
             ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
         game.addUnit(unit1, map.getHex(5, 8));
         game.addUnit(unit2, map.getHex( 8, 7));
@@ -156,8 +159,8 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(widgetItemsLevel, 4)).arrayEqualsTo([
                 "save()", "drawImage(/CBlades/images/icons/leave-formation.png, 306.6667, 195, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/dismiss-formation.png, 366.6667, 195, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/change-orders.png, 306.6667, 255, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/give-specific-orders.png, 366.6667, 255, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/change-orders-gray.png, 306.6667, 255, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/give-specific-orders-gray.png, 366.6667, 255, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/do-fusion.png, 306.6667, 315, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/do-many.png, 366.6667, 315, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/move.png, 186.6667, 15, 50, 50)", "restore()",
@@ -174,8 +177,8 @@ describe("Interactive Player", ()=> {
                 "save()", "drawImage(/CBlades/images/icons/do-rally-gray.png, 366.6667, 135, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/create-formation.png, 186.6667, 195, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/join-formation.png, 246.6667, 195, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/take-command.png, 186.6667, 255, 50, 50)", "restore()",
-                "save()", "drawImage(/CBlades/images/icons/leave-command.png, 246.6667, 255, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/take-command-gray.png, 186.6667, 255, 50, 50)", "restore()",
+                "save()", "drawImage(/CBlades/images/icons/leave-command-gray.png, 246.6667, 255, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/select-spell.png, 186.6667, 315, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/cast-spell.png, 246.6667, 315, 50, 50)", "restore()"
             ]);

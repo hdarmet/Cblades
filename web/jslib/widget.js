@@ -15,7 +15,7 @@ import {
     DArtifactRotateAnimation,
     DMultiImageArtifact,
     DArtifactAnimation,
-    DArtifactAlphaAnimation
+    DArtifactAlphaAnimation, DTextArtifact
 } from "./board.js";
 import {
     Area2D,
@@ -698,12 +698,14 @@ export class DResult extends DElement {
 
     success() {
         this._artifact.success();
+        this._success = true;
         this._finished = true;
         return this;
     }
 
     failure() {
         this._artifact.failure();
+        this._success = false;
         this._finished = true;
         return this;
     }
@@ -732,7 +734,93 @@ export class DResult extends DElement {
     }
 
     onMouseClick() {
-        this._finalAction && this._finalAction();
+        this._finalAction && this._finalAction(this._success);
+    }
+
+}
+
+class MessageImageArtifact extends DImageArtifact {
+
+    constructor(image, dimension) {
+        super("widget-commands",
+            DImage.getImage("/CBlades/images/dice/message.png"),
+            new Point2D(0, 0), MessageImageArtifact.DIMENSION, 0);
+        this.alpha = 0;
+    }
+
+    get settings() {
+        return level => {
+            level.setShadowSettings("#A0FFFF", 100);
+        }
+    }
+
+    get overSettings() {
+        return level => {
+            level.setShadowSettings("#00FFFF", 100);
+        }
+    }
+
+    onMouseClick() {
+        this._element.onMouseClick();
+    }
+
+    onMouseEnter(event) {
+        this.setSettings(this.overSettings);
+    }
+
+    onMouseLeave(event) {
+        this.setSettings(this.settings);
+    }
+}
+MessageImageArtifact.DIMENSION = new Dimension2D(150, 150);
+
+export class DMessage extends DElement {
+
+    constructor() {
+        super();
+        this._artifact = new MessageImageArtifact();
+        this.addArtifact(this._artifact);
+    }
+
+    setFinalAction(action) {
+        this._finalAction = action;
+        return this;
+    }
+
+    get trigger() {
+        return this._artifact;
+    }
+
+    open(board, location) {
+        this.setLocation(location);
+        this._targetBoard = board;
+    }
+
+    show(text, ...values) {
+        this._values = values;
+        this._textArtifact = new DTextArtifact("widget-commands",
+            new Point2D(0, 30),
+            new Dimension2D(0, 0),
+            "#0000FF","#8080FF",
+            "#000000", 5,
+            "90px serif", "center", text);
+        this.addArtifact(this._textArtifact);
+        if (this._targetBoard) {
+            this.setOnBoard(this._targetBoard);
+            new DArtifactAlphaAnimation(this._artifact, 1, 0, 500);
+            new DArtifactAlphaAnimation(this._textArtifact, 1, 0, 500);
+        }
+    }
+
+    close() {
+        delete this._targetBoard;
+        if (this._board) {
+            this.removeFromBoard();
+        }
+    }
+
+    onMouseClick() {
+        this._finalAction && this._finalAction(...this._values);
     }
 
 }

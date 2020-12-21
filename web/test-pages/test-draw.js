@@ -357,6 +357,16 @@ describe("Drawing fundamentals", ()=> {
                 assert(params).arrayEqualsTo([15, 10]);
                 drawImageInvoked = true;
             }
+            var strokeTextInvoked = false;
+            CanvasRenderingContext2D.prototype.strokeText = function(...params) {
+                assert(params).arrayEqualsTo(["text", 10, 15]);
+                strokeTextInvoked = true;
+            }
+            var fillTextInvoked = false;
+            CanvasRenderingContext2D.prototype.fillText = function(...params) {
+                assert(params).arrayEqualsTo(["text", 10, 15]);
+                fillTextInvoked = true;
+            }
         when:
             var draw = new DDraw(new Dimension2D(500, 300));
         then:
@@ -388,6 +398,15 @@ describe("Drawing fundamentals", ()=> {
             layer.drawImage(image, 15, 10);
         then:
             assert(drawImageInvoked).isTrue();
+        when:
+            layer.drawText("text",new Point2D(10, 15));
+        then:
+            assert(strokeTextInvoked).isTrue();
+        when:
+            var textInvoked = false;
+            layer.fillText("text", new Point2D(10, 15));
+        then:
+            assert(fillTextInvoked).isTrue();
     });
 
     it("Checks settings methods of the target platform", () => {
@@ -435,6 +454,20 @@ describe("Drawing fundamentals", ()=> {
                     globalAlphaInvoked = true;
                 }
             });
+            var fontInvoked = false;
+            Object.defineProperty(CanvasRenderingContext2D.prototype, "font", {
+                set: function(style) {
+                    assert(style).equalsTo("18px serif");
+                    fontInvoked = true;
+                }
+            });
+            var textAlignInvoked = false;
+            Object.defineProperty(CanvasRenderingContext2D.prototype, "textAlign", {
+                set: function(style) {
+                    assert(style).equalsTo("center");
+                    textAlignInvoked = true;
+                }
+            });
         when:
             var draw = new DDraw(new Dimension2D(500, 300));
             var layer = draw.createLayer("layer1");
@@ -455,6 +488,11 @@ describe("Drawing fundamentals", ()=> {
             layer.setAlphaSettings(0.3);
         then:
             assert(globalAlphaInvoked).isTrue();
+        when:
+            layer.setTextSettings("18px serif", "center");
+        then:
+            assert(fontInvoked).isTrue();
+            assert(textAlignInvoked).isTrue();
     });
 
     it("Checks all non canvas methods of the target platform", () => {

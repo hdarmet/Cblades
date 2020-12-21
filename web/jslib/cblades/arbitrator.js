@@ -1,5 +1,5 @@
 import {
-    CBAbstractArbitrator, CBCohesion, CBHexSideId, CBMovement, CBTiredness, CBWeather
+    CBAbstractArbitrator, CBCharacter, CBCohesion, CBHexSideId, CBMovement, CBTiredness, CBWeather
 } from "./game.js";
 import {
     diffAngle
@@ -25,10 +25,10 @@ export class CBArbitrator extends CBAbstractArbitrator{
             joinFormation:true,
             leaveFormation:true,
             breakFormation:true,
-            takeCommand:true,
-            leaveCommand:true,
-            changeOrders:true,
-            giveSpecificOrders:true,
+            takeCommand:this.isAllowedToTakeCommand(unit),
+            leaveCommand:this.isAllowedToDismissCommand(unit),
+            changeOrders:this.isAllowedToChangeOrderInstruction(unit),
+            giveSpecificOrders:this.isAllowedToGiveOrders(unit),
             prepareSpell:true,
             castSpell:true,
             mergeUnit:true,
@@ -265,6 +265,22 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return unit.cohesion === CBCohesion.ROUTED;
     }
 
+    isAllowedToChangeOrderInstruction(unit) {
+        return unit instanceof CBCharacter && unit.wing.leader === unit;
+    }
+
+    isAllowedToGiveOrders(unit) {
+        return unit instanceof CBCharacter && unit.wing.leader === unit;
+    }
+
+    isAllowedToTakeCommand(unit) {
+        return unit instanceof CBCharacter && unit.wing.leader !== unit;
+    }
+
+    isAllowedToDismissCommand(unit) {
+        return unit instanceof CBCharacter && unit.wing.leader === unit;
+    }
+
     processRestResult(unit, diceResult) {
         let success = diceResult[0]+diceResult[1]<=10;
         let minorRestingCapacity = diceResult[0]===diceResult[1];
@@ -335,6 +351,49 @@ export class CBArbitrator extends CBAbstractArbitrator{
             }
         }
         return false;
+    }
+
+    processChangeOrderInstructionResult(leader, diceResult) {
+        let success = diceResult[0]+diceResult[1]<=8;
+        return { success };
+    }
+
+    getAllowedOrderInstructions(leader) {
+        return {
+            attack:true,
+            defend:true,
+            regroup:true,
+            retreat:true
+        }
+    }
+
+    getUnitsThatMayReceiveOrders(leader, commandPoints) {
+        let units = [];
+        for (let unit of leader.player.units) {
+            if (unit !== leader && !unit.hasBeenActivated() &&
+                !unit.hasReceivedOrder() && this.getOrderGivenCost(leader, unit)<=commandPoints) {
+                units.push(unit);
+            }
+        }
+        return units;
+    }
+
+    getOrderGivenCost(leader, unit) {
+        return 2;
+    }
+
+    processGiveOrdersResult(unit, diceResult) {
+        return diceResult[0]+5;
+    }
+
+    processTakeCommandResult(leader, diceResult) {
+        let success = diceResult[0]+diceResult[1]<=8;
+        return { success };
+    }
+
+    processDismissCommandResult(leader, diceResult) {
+        let success = diceResult[0]+diceResult[1]<=8;
+        return { success };
     }
 
     getWeather() {

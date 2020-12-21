@@ -16,7 +16,7 @@ import {
 import {
     DArtifactAlphaAnimation,
     DArtifactRotateAnimation,
-    DBoard, DElement, DImageArtifact, DMultiImageArtifact
+    DBoard, DElement, DImageArtifact, DMultiImageArtifact, DTextArtifact
 } from "../jslib/board.js";
 import {
     mockPlatform, getDirectives, resetDirectives, createEvent, loadAllImages
@@ -847,6 +847,63 @@ describe("Board", ()=> {
                 "save()",
                 "drawImage(../images/unit-back.png, -25, -25, 50, 50)",
                 "restore()"
+            ]);
+    });
+
+
+    it("Checks text artifact", () => {
+        given:
+            var board = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var level = board.getLevel("markers");
+        when:
+            var artifact = new DTextArtifact("markers", new Point2D(10, 15), new Dimension2D(50, 50),
+                "#FF0000", "#00FF00", "#0000FF", 5,
+                "18px serif", "start", "text");
+            var element = new DElement(artifact);
+            resetDirectives(level);
+            element.setOnBoard(board);
+            Memento.activate();
+            Memento.open();
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                    "font = 18px serif", "textAlign = start",
+                    "shadowColor = #0000FF", "shadowBlur = 5",
+                    "strokeStyle = #FF0000", "lineWidth = 3",
+                    "strokeText(text, 10, 15)",
+                    "fillStyle = #00FF00",
+                    "fillText(text, 10, 15)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            artifact.setText("TEXT");
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                    "font = 18px serif", "textAlign = start",
+                    "shadowColor = #0000FF", "shadowBlur = 5",
+                    "strokeStyle = #FF0000", "lineWidth = 3",
+                    "strokeText(TEXT, 10, 15)",
+                    "fillStyle = #00FF00",
+                    "fillText(TEXT, 10, 15)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(level);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(level, 4)).arrayEqualsTo([
+                "save()",
+                    "font = 18px serif", "textAlign = start",
+                    "shadowColor = #0000FF", "shadowBlur = 5",
+                    "strokeStyle = #FF0000", "lineWidth = 3",
+                    "strokeText(text, 10, 15)",
+                    "fillStyle = #00FF00",
+                    "fillText(text, 10, 15)", "restore()"
             ]);
     });
 
