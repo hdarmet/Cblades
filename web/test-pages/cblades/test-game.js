@@ -164,8 +164,8 @@ describe("Game", ()=> {
             var [widgetsLevel] = getLevels(game, "widgets");
             resetDirectives(widgetsLevel);
         when:
-            var popup = new DPopup(new Dimension2D(100, 200));
-            game.openPopup(popup, new Point2D(10, 20));
+            var popup1 = new DPopup(new Dimension2D(100, 200));
+            game.openPopup(popup1, new Point2D(10, 20));
             paint(game);
         then:
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
@@ -177,6 +177,40 @@ describe("Game", ()=> {
                     "strokeRect(-50, -100, 100, 200)",
                     "fillStyle = #FFFFFF",
                     "fillRect(-50, -100, 100, 200)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(widgetsLevel);
+            var popup2 = new DPopup(new Dimension2D(150, 250));
+            game.openPopup(popup2, new Point2D(15, 25));
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "setTransform(1, 0, 0, 1, 80, 130)", "strokeRect(-75, -125, 150, 250)",
+                    "fillStyle = #FFFFFF", "fillRect(-75, -125, 150, 250)",
+                "restore()"
+            ]);
+        when:
+            Memento.open();
+            resetDirectives(widgetsLevel);
+            game.closePopup();
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+        when:
+            Memento.undo();
+            resetDirectives(widgetsLevel);
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "setTransform(1, 0, 0, 1, 80, 130)", "strokeRect(-75, -125, 150, 250)",
+                    "fillStyle = #FFFFFF", "fillRect(-75, -125, 150, 250)",
                 "restore()"
             ]);
     });
@@ -1673,6 +1707,7 @@ describe("Game", ()=> {
             Memento.open();
         when:
             wing.setLeader(leader);
+            wing.setOrderInstruction(CBOrderInstruction.ATTACK);
         then:
             assert(wing.player).equalsTo(player);
             assert(wing.leader).equalsTo(leader);
@@ -1680,6 +1715,7 @@ describe("Game", ()=> {
             Memento.undo();
         then:
             assert(wing.leader).equalsTo(leader);
+            assert(wing.orderInstruction).equalsTo(CBOrderInstruction.ATTACK);
         when:
             wing.dismissLeader();
         then:
@@ -1695,7 +1731,35 @@ describe("Game", ()=> {
             Memento.undo();
         then:
             assert(wing.leader).isNotDefined();
-            assert(wing.orderInstruction).equalsTo(CBOrderInstruction.DEFEND);
+            assert(wing.orderInstruction).equalsTo(CBOrderInstruction.ATTACK);
+        when:
+            Memento.undo();
+        then:
+            assert(wing.leader).equalsTo(leader);
+            assert(wing.orderInstruction).equalsTo(CBOrderInstruction.ATTACK);
+    });
+
+    it("Checks leader command points management", () => {
+        given:
+            var {game, unit, leader, player, wing} = createTinyCommandGame();
+            Memento.open();
+        when:
+            leader.receiveCommandPoints(10);
+        then:
+            assert(leader.commandPoints).equalsTo(10);
+        when:
+            Memento.open();
+            leader.receiveCommandPoints(8);
+        then:
+            assert(leader.commandPoints).equalsTo(8);
+        when:
+            Memento.undo();
+        then:
+            assert(leader.commandPoints).equalsTo(10);
+        when:
+            game._resetCounters(player);
+        then:
+            assert(leader.commandPoints).equalsTo(0);
     });
 
 });

@@ -107,52 +107,29 @@ export class DPopup extends DWidget {
 
     constructor(dimension, modal=false) {
         super();
-        this._modal = modal;
+        if (modal) {
+            this._mask = new DMaskArtifact("#000000", 0.3);
+            this.addArtifact(this._mask);
+        }
         this.setPanelSettings(dimension);
     }
 
     open(board, point) {
-        if (DPopup._instance!==this) {
-            DPopup.close();
-            if (this._modal) {
-                this._mask = new DMask("#000000", 0.3);
-                this._mask.open(board);
-            }
-            this.setOnBoard(board);
-            this.setLocation(this.adjust(point)); // After set on board because adjust need to know the layer
-            DPopup._instance = this;
-        }
+        console.assert(!this._board);
+        this.show(board);
+        this.move(this.adjust(point)); // After set on board because adjust need to know the layer
     }
 
     isModal() {
-        return this._modal;
+        return !!this._mask;
     }
 
     close() {
-        if (this._mask) {
-            this._mask.close();
-        }
-        this.removeFromBoard();
-        DPopup._instance = null;
+        console.assert(this._board);
+        this.hide();
     }
+
 }
-DPopup.close = function() {
-    if (DPopup._instance && !DPopup._instance.isModal()) {
-        DPopup._instance.close();
-    }
-};
-DPopup._instance = null;
-DPopup.activate = function() {
-    DPopup._cleaner = {
-        _processGlobalEvent(source, event, value) {
-            if (event===Memento.UNDO_EVENT || event===Memento.REDO_EVENT ||
-                event===DBoard.ZOOM_EVENT || event===DBoard.SCROLL_EVENT) {
-                DPopup.close();
-            }
-        }
-    };
-    Mechanisms.addListener(DPopup._cleaner);
-};
 
 export class DIconMenuItem extends DImageArtifact {
 
@@ -203,7 +180,7 @@ export class DIconMenuItem extends DImageArtifact {
     onMouseClick(event) {
         if (this._active) {
             if (this.action(event)) {
-                this.element.close();
+                this.element.closeMenu();
             }
         }
     }
@@ -268,6 +245,9 @@ export class DIconMenu extends DPopup {
         return null;
     }
 
+    closeMenu() {
+        this.close();
+    }
 }
 
 /**
@@ -854,7 +834,7 @@ class DMaskArtifact extends DArtifact {
     }
 
     onMouseClick(event) {
-        this._element.action();
+        this._element.action && this._element.action();
     }
 
 }

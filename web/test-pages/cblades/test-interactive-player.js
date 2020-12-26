@@ -17,17 +17,16 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
-    CBAction,
-    CBGame, CBMap, CBTroop, CBWing
+    CBAction, CBCharacter,
+    CBGame, CBMap, CBOrderInstruction, CBTroop, CBWing
 } from "../../jslib/cblades/game.js";
 import {
-    DDice,
-    DPopup, DResult
+    DDice, DMessage, DResult
 } from "../../jslib/widget.js";
 import {
     CBFireAttackActuator,
     CBInteractivePlayer,
-    CBMoveActuator,
+    CBMoveActuator, CBOrderGivenActuator,
     CBOrientationActuator,
     CBRetreatActuator,
     CBShockAttackActuator
@@ -103,15 +102,18 @@ describe("Interactive Player", ()=> {
         var map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
         let wing = new CBWing(player);
+        let leader = new CBCharacter(wing,
+            ["/CBlades/images/units/misc/character.png", "/CBlades/images/units/misc/characterb.png"]);
         let unit1 = new CBTroop(wing,
             ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
         let unit2 = new CBTroop(wing,
             ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
+        game.addUnit(leader, map.getHex(6, 9));
         game.addUnit(unit1, map.getHex(5, 8));
         game.addUnit(unit2, map.getHex( 8, 7));
         game.start();
         loadAllImages();
-        return {game, map, unit1, unit2, player};
+        return {game, map, unit1, unit2, wing, leader, player};
     }
 
     function clickOnCounter(game, counter) {
@@ -126,7 +128,7 @@ describe("Interactive Player", ()=> {
     }
 
     function clickOnActionMenu(game, col, row) {
-        var icon = DPopup._instance.getItem(col, row);
+        var icon = game.popup.getItem(col, row);
         let iconLocation = icon.viewportLocation;
         var mouseEvent = createEvent("click", {offsetX:iconLocation.x, offsetY:iconLocation.y});
         mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
@@ -1404,7 +1406,7 @@ describe("Interactive Player", ()=> {
         unit2.move(map.getHex(2, 3), 0);
         unit2.rotate(180);
         unit1.player.selectUnit(unit1, dummyEvent);
-        DPopup.close();
+        map.game.closePopup();
         moveUnitByAction(unit1, map.getHex(2, 4));
         loadAllImages();
     }
@@ -2274,6 +2276,689 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/markers/actiondone.png, -131.5, -201.4375, 64, 64)",
                 "restore()"
             ]);
+    });
+
+    function createTinyGameWithLeader() {
+        var game = new CBGame();
+        var arbitrator = new CBArbitrator();
+        game.setArbitrator(arbitrator);
+        var player = new CBInteractivePlayer();
+        game.addPlayer(player);
+        var wing = new CBWing(player);
+        var map = new CBMap("/CBlades/images/maps/map.png");
+        game.setMap(map);
+        let unit = new CBTroop(wing,
+            ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
+        game.addUnit(unit, map.getHex( 5, 8));
+        let leader = new CBCharacter(wing,
+            ["/CBlades/images/units/misc/leader.png", "/CBlades/images/units/misc/leaderb.png"]);
+        game.addUnit(leader, map.getHex( 5, 9));
+        game.start();
+        loadAllImages();
+        return { game, arbitrator, player, wing, map, unit, leader };
+    }
+
+    function clickOnTakeCommandAction(game) {
+        return clickOnActionMenu(game, 0, 4);
+    }
+
+    it("Checks take command action opening and cancelling", () => {
+        given:
+            var {game, wing, leader} = createTinyGameWithLeader();
+            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
+            clickOnCounter(game, leader);
+            paint(game);
+        when:
+            resetDirectives(widgetsLevel, itemsLevel);
+            clickOnTakeCommandAction(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
+                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/take-command-insert.png, 449, 25.1122, 444, 298)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/command-insert.png, 5, 23.1122, 444, 680)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 499, 348.6122, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 439, 408.6122, 100, 89)",
+                "restore()"
+            ]);
+        when:       // Clicking on the mask cancel the action
+            resetDirectives(widgetsLevel, itemsLevel);
+            clickOnMask(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(wing.leader).isNotDefined();
+    });
+
+    it("Checks successfully take command action process ", () => {
+        given:
+            var {game, wing, leader} = createTinyGameWithLeader();
+            var [widgetsLevel, itemsLevel, commandsLevel] = getLevels(game,"widgets", "widget-items", "widget-commands");
+            clickOnCounter(game, leader);
+            clickOnTakeCommandAction(game);
+            loadAllImages();
+        when:
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 499, 348.6122, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, 439, 408.6122, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/success.png, 374, 288.1122, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(wing.leader).equalsTo(leader);
+            assert(leader.hasBeenPlayed()).isTrue();
+    });
+
+    it("Checks failed take command action process ", () => {
+        given:
+            var {game, wing, leader} = createTinyGameWithLeader();
+            var [widgetsLevel, itemsLevel, commandsLevel] = getLevels(game,"widgets", "widget-items", "widget-commands");
+            clickOnCounter(game, leader);
+            clickOnTakeCommandAction(game);
+            loadAllImages();
+        when:
+            rollFor(5,6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d5.png, 499, 348.6122, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d6.png, 439, 408.6122, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #A00000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/failure.png, 374, 288.1122, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(wing.leader).isNotDefined();
+            assert(leader.hasBeenPlayed()).isTrue();
+    });
+
+    function clickOnDismissCommandAction(game) {
+        return clickOnActionMenu(game, 1, 4);
+    }
+
+    it("Checks dismiss command action opening and cancelling", () => {
+        given:
+            var {game, wing, leader} = createTinyGameWithLeader();
+            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
+            wing.setLeader(leader);
+            clickOnCounter(game, leader);
+            paint(game);
+        when:
+            resetDirectives(widgetsLevel, itemsLevel);
+            clickOnDismissCommandAction(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
+                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/dismiss-command-insert.png, 449, 18.1122, 444, 305)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/command-insert.png, 5, 23.1122, 444, 680)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 499, 348.6122, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 439, 408.6122, 100, 89)",
+                "restore()"
+            ]);
+        when:       // Clicking on the mask cancel the action
+            resetDirectives(widgetsLevel, itemsLevel);
+            clickOnMask(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(wing.leader).equalsTo(leader);
+    });
+
+    it("Checks successfully dismiss command action process ", () => {
+        given:
+            var {game, wing, leader} = createTinyGameWithLeader();
+            var [widgetsLevel, itemsLevel, commandsLevel] = getLevels(game,"widgets", "widget-items", "widget-commands");
+            wing.setLeader(leader);
+            clickOnCounter(game, leader);
+            clickOnDismissCommandAction(game);
+            loadAllImages();
+        when:
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 499, 348.6122, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, 439, 408.6122, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/success.png, 374, 288.1122, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(wing.leader).isNotDefined();
+            assert(leader.hasBeenPlayed()).isTrue();
+    });
+
+    it("Checks failed dismiss command action process ", () => {
+        given:
+            var {game, wing, leader} = createTinyGameWithLeader();
+            var [widgetsLevel, itemsLevel, commandsLevel] = getLevels(game,"widgets", "widget-items", "widget-commands");
+            wing.setLeader(leader);
+            clickOnCounter(game, leader);
+            clickOnDismissCommandAction(game);
+            loadAllImages();
+        when:
+            rollFor(5,6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d5.png, 499, 348.6122, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d6.png, 439, 408.6122, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #A00000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/failure.png, 374, 288.1122, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(wing.leader).equalsTo(leader);
+            assert(leader.hasBeenPlayed()).isTrue();
+    });
+
+    function clickOnChangeOrdersCommandAction(game) {
+        return clickOnActionMenu(game, 2, 4);
+    }
+
+    it("Checks change orders command action opening and cancelling", () => {
+        given:
+            var {game, wing, leader} = createTinyGameWithLeader();
+            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
+            wing.setLeader(leader);
+            clickOnCounter(game, leader);
+            paint(game);
+        when:
+            resetDirectives(widgetsLevel, itemsLevel);
+            clickOnChangeOrdersCommandAction(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
+                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/change-order-instruction-insert.png, 449, 69.1122, 444, 254)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/command-insert.png, 5, 23.1122, 444, 680)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 499, 348.6122, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 439, 408.6122, 100, 89)",
+                "restore()"
+            ]);
+        when:       // Clicking on the mask cancel the action
+            resetDirectives(widgetsLevel, itemsLevel);
+            clickOnMask(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(wing.orderInstruction).equalsTo(CBOrderInstruction.DEFEND);
+    });
+
+    it("Checks failed change order command action process ", () => {
+        given:
+            var {game, wing, leader} = createTinyGameWithLeader();
+            var [widgetsLevel, itemsLevel, commandsLevel] = getLevels(game,"widgets", "widget-items", "widget-commands");
+            wing.setLeader(leader);
+            clickOnCounter(game, leader);
+            clickOnChangeOrdersCommandAction(game);
+            loadAllImages();
+        when:
+            rollFor(5,6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d5.png, 499, 348.6122, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d6.png, 439, 408.6122, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #A00000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/failure.png, 374, 288.1122, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(wing.orderInstruction).equalsTo(CBOrderInstruction.DEFEND);
+            assert(leader.hasBeenPlayed()).isTrue();
+    });
+
+    it("Checks successfully change order command action process ", () => {
+        given:
+            var {game, wing, leader} = createTinyGameWithLeader();
+            var [widgetsLevel, itemsLevel, commandsLevel] = getLevels(game,"widgets", "widget-items", "widget-commands");
+            wing.setLeader(leader);
+            clickOnCounter(game, leader);
+            clickOnChangeOrdersCommandAction(game);
+            loadAllImages();
+        when:
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 499, 348.6122, 100, 89)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, 439, 408.6122, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/success.png, 374, 288.1122, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            loadAllImages();
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
+                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "setTransform(1, 0, 0, 1, 361.6667, 393.1122)",
+                    "strokeRect(-65, -65, 130, 130)",
+                    "fillStyle = #FFFFFF",
+                    "fillRect(-65, -65, 130, 130)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "drawImage(/CBlades/images/markers/attack.png, 306.6667, 338.1122, 50, 50)",
+                "restore()",
+                "save()",
+                    "drawImage(/CBlades/images/markers/defend.png, 366.6667, 338.1122, 50, 50)",
+                "restore()",
+                "save()",
+                    "drawImage(/CBlades/images/markers/regroup.png, 306.6667, 398.1122, 50, 50)",
+                "restore()",
+                "save()",
+                    "drawImage(/CBlades/images/markers/retreat.png, 366.6667, 398.1122, 50, 50)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+        when: // click mask is ignored
+            clickOnMask(game);
+            resetDirectives(widgetsLevel);
+            loadAllImages();
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
+                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "setTransform(1, 0, 0, 1, 361.6667, 393.1122)",
+                    "strokeRect(-65, -65, 130, 130)",
+                    "fillStyle = #FFFFFF",
+                    "fillRect(-65, -65, 130, 130)",
+                "restore()"
+            ]);
+    });
+
+    function clickOnChangeOrderMenu(game, col, row) {
+        var icon = game.popup.getItem(col, row);
+        let iconLocation = icon.viewportLocation;
+        var mouseEvent = createEvent("click", {offsetX:iconLocation.x, offsetY:iconLocation.y});
+        mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
+    }
+
+    it("Checks successfully change order command action process ", () => {
+        given:
+            var {game, wing, leader} = createTinyGameWithLeader();
+            var [widgetsLevel] = getLevels(game,"widgets", "widget-items", "widget-commands");
+            wing.setLeader(leader);
+            clickOnCounter(game, leader);
+            clickOnChangeOrdersCommandAction(game);
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnResult(game);
+            clickOnChangeOrderMenu(game, 0, 0);
+            loadAllImages();
+            resetDirectives(widgetsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(wing.orderInstruction).equalsTo(CBOrderInstruction.ATTACK);
+        when:
+            Memento.undo();
+            clickOnChangeOrderMenu(game, 0, 1);
+            loadAllImages();
+            resetDirectives(widgetsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(wing.orderInstruction).equalsTo(CBOrderInstruction.REGROUP);
+        when:
+            Memento.undo();
+            clickOnChangeOrderMenu(game, 1, 0);
+            loadAllImages();
+            resetDirectives(widgetsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(wing.orderInstruction).equalsTo(CBOrderInstruction.DEFEND);
+        when:
+            Memento.undo();
+            clickOnChangeOrderMenu(game, 1, 1);
+            loadAllImages();
+            resetDirectives(widgetsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(wing.orderInstruction).equalsTo(CBOrderInstruction.RETREAT);
+    });
+
+    function clickOnGiveOrdersCommandAction(game) {
+        return clickOnActionMenu(game, 3, 4);
+    }
+
+    it("Checks give orders command action opening and cancelling", () => {
+        given:
+            var {game, wing, leader} = createTinyGameWithLeader();
+            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
+            wing.setLeader(leader);
+            clickOnCounter(game, leader);
+            paint(game);
+        when:
+            resetDirectives(widgetsLevel, itemsLevel);
+            clickOnGiveOrdersCommandAction(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
+                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/orders-given-insert.png, 124.6667, 13.1122, 356, 700)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, 470.6667, 318.6122, 100, 89)",
+                "restore()"
+            ]);
+        when:       // Clicking on the mask cancel the action
+            resetDirectives(widgetsLevel, itemsLevel);
+            clickOnMask(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(leader.commandPoints).equalsTo(0);
+    });
+
+    function rollFor1Die(d1) {
+        getDrawPlatform().resetRandoms((d1-0.5)/6, 0);
+    }
+
+    function clickOnMessage(game) {
+        var [commandsLevel] = getLevels(game,"widget-commands");
+        for (let item of commandsLevel.artifacts) {
+            if (item.element instanceof DMessage) {
+                let itemLocation = item.viewportLocation;
+                var mouseEvent = createEvent("click", {offsetX:itemLocation.x, offsetY:itemLocation.y});
+                item.onMouseClick(mouseEvent);
+                return;
+            }
+        }
+    }
+
+    function getGiveOrdersActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBOrderGivenActuator) return actuator;
+        }
+        return null;
+    }
+
+    it("Checks give orders command action process", () => {
+        given:
+            var {game, wing, unit1, unit2, leader} = create2UnitsTinyGame();
+            var [markersLevel, actuatorsLevel, widgetsLevel, itemsLevel, commandsLevel] =
+                getLevels(game,"markers", "actuators", "widgets", "widget-items", "widget-commands");
+            wing.setLeader(leader);
+            clickOnCounter(game, leader);
+            clickOnGiveOrdersCommandAction(game);
+            loadAllImages();
+        when:
+            rollFor1Die(4);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLevel, itemsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d4.png, 554, 366.7243, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "drawImage(/CBlades/images/dice/message.png, 489, 336.2243, 150, 150)",
+                "restore()",
+                "save()",
+                    "font = 90px serif", "textAlign = center",
+                    "shadowColor = #000000", "shadowBlur = 5",
+                    "strokeStyle = #0000FF", "lineWidth = 3",
+                    "strokeText(9, 564, 441.2243401759531)", "fillStyle = #8080FF",
+                    "fillText(9, 564, 441.2243401759531)",
+                "restore()"
+            ]);
+        when:
+            clickOnMessage(game);
+            resetDirectives(markersLevel, widgetsLevel, commandsLevel, itemsLevel, actuatorsLevel);
+            loadAllImages();
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/order.png, -207, -202.4375, 73, 68)",
+                "restore()",
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/order.png, 304.5, -300.875, 73, 68)",
+                "restore()"
+            ]);
+            assert(getDirectives(markersLevel, 6)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/defend.png, 31, 156.875, 80, 80)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/actiondone.png, 39, 93.875, 64, 64)",
+                "restore()"
+            ]);
+        when:
+            var giveOrdersActuator = getGiveOrdersActuator(game);
+            var trigger = giveOrdersActuator.getTrigger(unit1);
+            resetDirectives(markersLevel, actuatorsLevel);
+            clickOnTrigger(game, trigger);
+            loadAllImages();
+            paint(game);
+        then:
+            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/order.png, 304.5, -300.875, 73, 68)",
+                "restore()"
+            ]);
+            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/defend.png, 31, 156.875, 80, 80)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/actiondone.png, 39, 93.875, 64, 64)",
+                "restore()",
+                "save()",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/ordergiven.png, -131.5, -201.4375, 64, 64)",
+                "restore()"
+            ]);
+        when:
+            giveOrdersActuator = getGiveOrdersActuator(game);
+        then:
+            assert(giveOrdersActuator.getTrigger(unit1)).isNotDefined();
+            assert(unit1.hasReceivedOrder()).isTrue();
+            assert(unit2.hasReceivedOrder()).isFalse();
     });
 
 });

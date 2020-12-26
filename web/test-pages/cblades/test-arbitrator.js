@@ -17,7 +17,7 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
-    CBAction,
+    CBAction, CBCharacter,
     CBGame, CBMap, CBMovement, CBTroop, CBWeather, CBWing
 } from "../../jslib/cblades/game.js";
 import {
@@ -49,17 +49,21 @@ describe("Arbitrator", ()=> {
         let wing2 = new CBWing(player2);
         let map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
-        let unit11 = new CBTroop(wing1, "/CBlades/images/units/misc/unit1.png");
+        let unit11 = new CBTroop(wing1, ["/CBlades/images/units/misc/unit1.png, \"/CBlades/images/units/misc/unit1b.png"]);
         game.addUnit(unit11, map.getHex(5, 8));
-        let unit12 = new CBTroop(wing1, "/CBlades/images/units/misc/unit1.png");
+        let unit12 = new CBTroop(wing1, ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
         game.addUnit(unit12, map.getHex(5, 7));
-        let unit21 = new CBTroop(wing2, "/CBlades/images/units/misc/unit2.png");
+        let leader11 = new CBCharacter(wing1, ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"]);
+        game.addUnit(leader11, map.getHex(6, 7));
+        let unit21 = new CBTroop(wing2, ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"]);
         game.addUnit(unit21, map.getHex(7, 8));
-        let unit22 = new CBTroop(wing2, "/CBlades/images/units/misc/unit2.png");
+        let unit22 = new CBTroop(wing2, ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"]);
         game.addUnit(unit22, map.getHex(7, 7));
+        let leader21 = new CBCharacter(wing2, ["/CBlades/images/units/misc/leader2.png", "/CBlades/images/units/misc/leader2b.png"]);
+        game.addUnit(leader21, map.getHex(8, 7));
         game.start();
         loadAllImages();
-        return {game, arbitrator, map, player1, unit11, unit12, player2, unit21, unit22};
+        return {game, arbitrator, map, player1, unit11, unit12, leader11, player2, unit21, unit22, leader21};
     }
 
     it("Checks is a unit have to play this turn", () => {
@@ -593,6 +597,90 @@ describe("Arbitrator", ()=> {
             var {arbitrator, unit12} = create2Players4UnitsTinyGame();
         then:
             assert(arbitrator.getWingTiredness(unit12)).equalsTo(10);
+    });
+
+    it("Checks take command result processing", () => {
+        given:
+            var {arbitrator, leader11} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processTakeCommandResult(leader11, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processTakeCommandResult(leader11, [5, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks dismiss command result processing", () => {
+        given:
+            var {arbitrator, leader11} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processDismissCommandResult(leader11, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processDismissCommandResult(leader11, [5, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks change instructions processing", () => {
+        given:
+            var {arbitrator, leader11} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processChangeOrderInstructionResult(leader11, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processChangeOrderInstructionResult(leader11, [5, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks allowed order instructions", () => {
+        given:
+            var {arbitrator, leader11} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.getAllowedOrderInstructions(leader11);
+        then:
+            assert(result.attack).isTrue();
+            assert(result.defend).isTrue();
+            assert(result.regroup).isTrue();
+            assert(result.retreat).isTrue();
+    });
+
+    it("Checks units that may receive orders", () => {
+        given:
+            var {game, arbitrator, leader11, unit11, unit12} = create2Players4UnitsTinyGame();
+        when:
+            var units = arbitrator.getUnitsThatMayReceiveOrders(leader11, 5);
+        then:
+            assert(units).unorderedArrayEqualsTo([unit11, unit12]);
+        when:
+            unit11.receiveOrder(true)
+            units = arbitrator.getUnitsThatMayReceiveOrders(leader11, 5);
+        then:
+            assert(units).unorderedArrayEqualsTo([unit12]);
+        when:
+            unit11.receiveOrder(false)
+            unit12.launchAction(new CBAction(game, unit12));
+            unit12.action.markAsStarted();
+            units = arbitrator.getUnitsThatMayReceiveOrders(leader11, 5);
+        then:
+            assert(units).unorderedArrayEqualsTo([unit11]);
+        when:
+            leader11.receiveCommandPoints(1);
+            units = arbitrator.getUnitsThatMayReceiveOrders(leader11, 1);
+        then:
+            assert(units).arrayEqualsTo([]);
+    });
+
+    it("Checks command points processing", () => {
+        given:
+            var {arbitrator, leader11} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.computeCommandPoints(leader11, [2])).equalsTo(7);
     });
 
 });

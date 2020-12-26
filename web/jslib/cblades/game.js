@@ -88,7 +88,7 @@ export class CBAbstractPlayer {
 
     selectUnit(unit, event) {
         this.game.closeActuators();
-        DPopup.close();
+        this.game.closePopup();
         if (this.game.selectedUnit!==unit) {
             this.beforeActivation(unit, ()=>{
                 unit.select();
@@ -270,14 +270,14 @@ export class CBGame {
         this._board.undoRedoOnKeyDown();
         this._players = [];
         this._actuators = [];
-        DPopup.activate();
     }
 
     _memento() {
         return {
             selectedUnit: this._selectedUnit,
             focusedUnit: this._focusedUnit,
-            actuators: [...this._actuators]
+            actuators: [...this._actuators],
+            popup: this._popup
         };
     }
 
@@ -285,11 +285,17 @@ export class CBGame {
         this._selectedUnit = memento.selectedUnit;
         this._focusedUnit = memento.focusedUnit;
         this._actuators = memento.actuators;
+        if (memento.popup) {
+            this._popup = memento.popup;
+        }
+        else {
+            delete this._popup;
+        }
     }
 
     recenter(vpoint) {
         this._board.recenter(vpoint);
-        DPopup.close();
+        this.closePopup();
     }
 
     setArbitrator(arbitrator) {
@@ -488,7 +494,7 @@ export class CBGame {
     }
 
     _resetCounters(player) {
-        DPopup.close();
+        this.closePopup();
         if (this._selectedUnit) {
             this._selectedUnit.unselect();
         }
@@ -515,6 +521,10 @@ export class CBGame {
         return this._arbitrator;
     }
 
+    get popup() {
+        return this._popup;
+    }
+
     get board() {
         return this._board;
     }
@@ -539,7 +549,20 @@ export class CBGame {
     }
 
     openPopup(popup, location) {
-        popup.open(this._board, location);
+        Memento.register(this);
+        if (this._popup) {
+            this.closePopup();
+        }
+        this._popup = popup;
+        this._popup.open(this._board, location);
+    }
+
+    closePopup() {
+        Memento.register(this);
+        if (this._popup) {
+            this._popup.close();
+            delete this._popup;
+        }
     }
 }
 CBGame.POPUP_MARGIN = 10;
@@ -1451,7 +1474,12 @@ export class CBWing {
 
     _revert(memento) {
         this._orderInstruction = memento.orderInstruction;
-        memento.leader && (this._leader = memento.leader);
+        if (memento.leader) {
+            this._leader = memento.leader
+        }
+        else {
+            delete this._leader;
+        }
     }
 
     get player() {
@@ -1464,7 +1492,7 @@ export class CBWing {
 
     setLeader(character) {
         this._leader = character;
-        this._leader.updateOrderInstruction();
+        this._leader.setOrderInstructionArtifact();
     }
 
     appointLeader(character) {
@@ -1476,7 +1504,7 @@ export class CBWing {
         Memento.register(this);
         let leader = this._leader;
         delete this._leader;
-        leader && leader.updateOrderInstruction();
+        leader && leader.updateOrderInstructionArtifact();
     }
 
     get orderInstruction() {
@@ -1486,12 +1514,14 @@ export class CBWing {
     setOrderInstruction(orderInstruction) {
         console.assert(orderInstruction>=CBOrderInstruction.ATTACK && orderInstruction<=CBOrderInstruction.RETREAT);
         this._orderInstruction = orderInstruction;
-        this._leader && this._leader.updateOrderInstruction();
+        this._leader && this._leader.setOrderInstructionArtifact();
     }
 
     changeOrderInstruction(orderInstruction) {
         Memento.register(this);
-        this.setOrderInstruction(orderInstruction);
+        console.assert(orderInstruction>=CBOrderInstruction.ATTACK && orderInstruction<=CBOrderInstruction.RETREAT);
+        this._orderInstruction = orderInstruction;
+        this._leader && this._leader.updateOrderInstructionArtifact();
     }
 
 }
@@ -1511,19 +1541,21 @@ export class CBCharacter extends CBUnit {
     _memento() {
         let memento = super._memento();
         memento.commandPoints = this._commandPoints;
+        memento.orderInstructionArtifact = this._orderInstructionArtifact;
         return memento;
     }
 
     _revert(memento) {
         super._revert(memento);
         this._commandPoints =  memento.commandPoints;
+        this._orderInstructionArtifact = memento.orderInstructionArtifact;
     }
 
     get commandPoints() {
         return this._commandPoints;
     }
 
-    setCommandPoints(commandPoints) {
+    receiveCommandPoints(commandPoints) {
         Memento.register(this);
         this._commandPoints = commandPoints;
     }
@@ -1532,15 +1564,23 @@ export class CBCharacter extends CBUnit {
         let marker = new CounterImageArtifact(this,"markers",
             [DImage.getImage(CBCharacter.ORDER_INSTRUCTION_PATHS[orderInstruction])],
             CBUnit.MARKERS_POSITION[6], CBCharacter.ORDER_INSTRUCTION_DIMENSION);
-        this._element.appendArtifact(marker);
         return marker;
     }
 
-    updateOrderInstruction() {
+    setOrderInstructionArtifact() {
+        if (this._wing.leader === this) {
+            this._orderInstructionArtifact = this.createOrderInstructionArtifact(this._wing.orderInstruction);
+            this._element.addArtifact(this._orderInstructionArtifact);
+        }
+    }
+
+    updateOrderInstructionArtifact() {
+        Memento.register(this);
         this._orderInstructionArtifact && this._element.deleteArtifact(this._orderInstructionArtifact);
         delete this._orderInstructionArtifact;
         if (this._wing.leader === this) {
             this._orderInstructionArtifact = this.createOrderInstructionArtifact(this._wing.orderInstruction);
+            this._element.appendArtifact(this._orderInstructionArtifact);
         }
     }
 

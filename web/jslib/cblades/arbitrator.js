@@ -382,7 +382,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return 2;
     }
 
-    processGiveOrdersResult(unit, diceResult) {
+    computeCommandPoints(unit, diceResult) {
         return diceResult[0]+5;
     }
 

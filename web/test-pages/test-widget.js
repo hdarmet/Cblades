@@ -90,31 +90,21 @@ describe("Widget", ()=> {
         given:
             var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
             var level = board.getLevel("widgets");
-            let popup1 = new DPopup(new Dimension2D(100, 150));
-            let popup2 = new DPopup(new Dimension2D(100, 150));
+            let popup = new DPopup(new Dimension2D(100, 150));
             board.paint();
             resetDirectives(level);
         when:
-            popup1.open(board, new Point2D(5, 5));
+            popup.open(board, new Point2D(5, 5));
             board.paint();
         then:
-            assert(DPopup._instance).equalsTo(popup1);
+            assert(popup.isModal()).isFalse();
             assert(getDirectives(level)).arrayContains("setTransform(1, 0, 0, 1, 55, 80)");
         when:
             resetDirectives(level);
-            popup2.open(board, new Point2D(495, 295));
+            popup.close();
             board.paint();
         then:
-            assert(DPopup._instance).equalsTo(popup2);
-            assert(getDirectives(level)).arrayContains("setTransform(1, 0, 0, 1, 445, 220)");
             assert(getDirectives(level)).arrayNotContains("setTransform(1, 0, 0, 1, 55, 80)");
-        when:
-            resetDirectives(level);
-            popup2.close();
-            board.paint();
-        then:
-            assert(DPopup._instance).isNotDefined();
-            assert(getDirectives(level)).arrayNotContains("setTransform(1, 0, 0, 1, 445, 220)");
     });
 
     it("Checks modal opening and closing", () => {
@@ -151,25 +141,8 @@ describe("Widget", ()=> {
             assert(getDirectives(level, 4)).arrayNotContains([]);
     });
 
-    it("Checks that global events close all popup", () => {
-        given:
-            DPopup.activate();
-            var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
-            var level = board.getLevel("widgets");
-            let popup1 = new DPopup(new Dimension2D(100, 150));
-            popup1.open(board, new Point2D(5, 5));
-            board.paint();
-        then:
-            assert(DPopup._instance).equalsTo(popup1);
-        when:
-            Mechanisms.fire(null, DBoard.SCROLL_EVENT);
-        then:
-            assert(DPopup._instance).isNotDefined();
-    });
-
     it("Checks icon menu widget", () => {
         given:
-            DPopup.activate();
             var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
             var level = board.getLevel("widgets");
             var itemsLevel = board.getLevel("widget-items");
@@ -214,7 +187,6 @@ describe("Widget", ()=> {
 
     it("Checks icon menu item behavior", () => {
         given:
-            DPopup.activate();
             var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
             var itemsLevel = board.getLevel("widget-items");
             board.paint();
@@ -280,7 +252,6 @@ describe("Widget", ()=> {
 
     it("Checks inactive icon menu item behavior", () => {
         given:
-            DPopup.activate();
             var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
             var itemsLevel = board.getLevel("widget-items");
             board.paint();
@@ -318,7 +289,6 @@ describe("Widget", ()=> {
 
     it("Checks icon menu modal mode", () => {
         given:
-            DPopup.activate();
             var board = createBoardWithWidgetLevel(1000, 600, 500, 300);
             var widgetsLevel = board.getLevel("widgets");
             board.paint();

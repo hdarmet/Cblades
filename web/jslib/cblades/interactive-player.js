@@ -5,6 +5,7 @@ import {
     DDice, DIconMenu, DIconMenuItem, DIndicator, DInsert, DMask, DMessage, DPopup, DResult, DScene
 } from "../widget.js";
 import {
+    Mechanisms,
     Memento
 } from "../mechanisms.js";
 import {
@@ -13,7 +14,7 @@ import {
     CBMovement, CBOrderInstruction
 } from "./game.js";
 import {
-    DElement, DImageArtifact
+    DBoard, DElement, DImageArtifact
 } from "../board.js";
 import {
     DImage
@@ -114,14 +115,14 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
     }
 
     openActionMenu(unit, offset, actions) {
-        let popup = new CBActionMenu(unit, actions);
+        let popup = new CBActionMenu(this.game, unit, actions);
         this.game.openPopup(popup, new Point2D(
             offset.x - popup.dimension.w/2 + CBGame.POPUP_MARGIN,
             offset.y - popup.dimension.h/2 + CBGame.POPUP_MARGIN));
     }
 
     openOrderInstructionMenu(unit, offset, allowedOrderInstructions) {
-        let popup = new CBOrderInstructionMenu(unit, allowedOrderInstructions);
+        let popup = new CBOrderInstructionMenu(this.game, unit, allowedOrderInstructions);
         this.game.openPopup(popup, new Point2D(
             offset.x - popup.dimension.w/2 + CBGame.POPUP_MARGIN,
             offset.y - popup.dimension.h/2 + CBGame.POPUP_MARGIN));
@@ -815,6 +816,7 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
                 this.unit.player.openOrderInstructionMenu(this.unit,
                     this.unit.viewportLocation,
                     this.game.arbitrator.getAllowedOrderInstructions(this.unit));
+                Memento.clear();
             }
         };
         mask.setAction(close);
@@ -844,9 +846,6 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
 
     _processChangeOderInstructionResult(diceResult) {
         let result = this.game.arbitrator.processChangeOrderInstructionResult(this.unit, diceResult);
-        if (result.tirednessForAttacker) {
-            this.unit.addOneTirednessLevel();
-        }
         this.markAsFinished();
         return result;
     }
@@ -882,7 +881,7 @@ export class InteractiveGiveOrdersAction extends CBAction {
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
-                this.unit.setCommandPoints(this._processGiveOrdersResult(dice.result));
+                this.unit.receiveCommandPoints(this._processGiveOrdersResult(dice.result));
                 result.show(""+this.unit.commandPoints);
             }),
             new Point2D(CBGiveOrdersInsert.DIMENSION.w/4+40, 0)
@@ -893,7 +892,7 @@ export class InteractiveGiveOrdersAction extends CBAction {
     }
 
     _processGiveOrdersResult(diceResult) {
-        let commandPoints = this.game.arbitrator.processGiveOrdersResult(this.unit, diceResult);
+        let commandPoints = this.game.arbitrator.computeCommandPoints(this.unit, diceResult);
         this.markAsFinished();
         return commandPoints;
     }
@@ -913,7 +912,7 @@ export class InteractiveGiveOrdersAction extends CBAction {
 
     giveOrder(leader, unit, event) {
         let cost = this.game.arbitrator.getOrderGivenCost(leader, unit);
-        this.unit.setCommandPoints(this.unit.commandPoints-cost);
+        this.unit.receiveCommandPoints(this.unit.commandPoints-cost);
         unit.receiveOrder(true);
         this.game.closeActuators();
         this._selectUnitsToGiveOrders();
@@ -922,7 +921,7 @@ export class InteractiveGiveOrdersAction extends CBAction {
 
 export class CBActionMenu extends DIconMenu {
 
-    constructor(unit, actions) {
+    constructor(game, unit, actions) {
         super(false, new DIconMenuItem("/CBlades/images/icons/move.png","/CBlades/images/icons/move-gray.png",
             0, 0, event => {
                 unit.player.startMoveUnit(unit, event);
@@ -1021,13 +1020,29 @@ export class CBActionMenu extends DIconMenu {
                 3, 5, () => {
                 }).setActive(actions.miscAction)
         );
+        this._game = game;
+        Mechanisms.addListener(this);
     }
 
+    _processGlobalEvent(source, event, value) {
+        if (event===DBoard.ZOOM_EVENT || event===DBoard.SCROLL_EVENT) {
+            this._game.closePopup();
+        }
+    }
+
+    close() {
+        super.close();
+        Mechanisms.removeListener(this);
+    }
+
+    closeMenu() {
+        this._game.closePopup();
+    }
 }
 
 export class CBOrderInstructionMenu extends DIconMenu {
 
-    constructor(unit, allowedOrderInstructions) {
+    constructor(game, unit, allowedOrderInstructions) {
         super(true, new DIconMenuItem("/CBlades/images/markers/attack.png","/CBlades/images/markers/attack-gray.png",
             0, 0, event => {
                 unit.player.changeOrderInstruction(unit, CBOrderInstruction.ATTACK, event);
@@ -1049,6 +1064,11 @@ export class CBOrderInstructionMenu extends DIconMenu {
                     return true;
                 }).setActive(allowedOrderInstructions.retreat)
         );
+        this._game = game;
+    }
+
+    closeMenu() {
+        this._game.closePopup();
     }
 
 }
@@ -1294,7 +1314,7 @@ export class CBOrderGivenActuator extends CBActuator {
             let order = new ActuatorImageArtifact(this, "actuators", orderImage,
                 new Point2D(unit.location.x, unit.location.y-70), new Dimension2D(73, 68));
             this._imageArtifacts.push(order);
-            order.unit = unit;
+            order._unit = unit;
         }
         this._element = new DElement(...this._imageArtifacts);
         this._element._actuator = this;
@@ -1303,13 +1323,13 @@ export class CBOrderGivenActuator extends CBActuator {
 
     getTrigger(unit) {
         for (let artifact of this._element.artifacts) {
-            if (!artifact.loss && artifact._unit === unit) return artifact;
+            if (artifact._unit === unit) return artifact;
         }
         return null;
     }
 
     onMouseClick(trigger, event) {
-        this.action.giveOrder(this.unit, trigger.unit, event);
+        this.action.giveOrder(this.unit, trigger._unit, event);
     }
 
 }
