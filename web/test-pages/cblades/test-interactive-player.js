@@ -34,6 +34,9 @@ import {
 import {
     CBArbitrator
 } from "../../jslib/cblades/arbitrator.js";
+import {
+    DBoard
+} from "../../jslib/board.js";
 
 describe("Interactive Player", ()=> {
 
@@ -184,6 +187,28 @@ describe("Interactive Player", ()=> {
                 "save()", "drawImage(/CBlades/images/icons/select-spell.png, 186.6667, 315, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/cast-spell.png, 246.6667, 315, 50, 50)", "restore()"
             ]);
+    });
+
+    it("Checks that global events close action menu", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLevel] = getLevels(game, "widgets");
+            clickOnCounter(game, unit);
+            loadAllImages();
+        when:
+            resetDirectives(widgetsLevel);
+            Mechanisms.fire(game, DBoard.ZOOM_EVENT);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+        when:
+            clickOnCounter(game, unit);
+            resetDirectives(widgetsLevel);
+            Mechanisms.fire(game, DBoard.SCROLL_EVENT);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+
     });
 
     it("Checks that a unit cannot be selected if it not belongs to the current player", () => {
@@ -2066,6 +2091,7 @@ describe("Interactive Player", ()=> {
         when:
             var fireAttackActuator = getFireAttackActuator(game);
         then:
+            assert(fireAttackActuator.getTrigger(unit1)).isNotDefined();
             assert(fireAttackActuator.getTrigger(unit2)).isDefined();
     });
 
