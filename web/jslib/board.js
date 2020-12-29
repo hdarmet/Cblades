@@ -5,7 +5,7 @@ import {
 } from "./geometry.js";
 import {
     DAnimation, DAnimator,
-    DDraw, DLayer
+    DDraw, DLayer, DStaticLayer
 } from "./draw.js";
 import {
     Mechanisms,
@@ -607,8 +607,7 @@ export class DElement extends LocalisationAware(Object) {
  */
 export class DLevel {
 
-    constructor(layer) {
-        this._layer = layer;
+    constructor() {
         this._artifacts = new Set();
     }
 
@@ -671,14 +670,6 @@ export class DLevel {
         this._dirty = true;
     }
 
-    get name() {
-        return this._layer.name;
-    }
-
-    get visibleArea() {
-        return this._layer.visibleArea;
-    }
-
     get artifacts() {
         return this._artifacts;
     }
@@ -698,9 +689,10 @@ export class DLevel {
 
     paint() {
         if (this._dirty) {
-            this._layer.clear();
+            this.clear();
             for (let artifact of this.visibleArtifacts) {
-                this._layer.withSettings(() => {
+                this.forArtifact(artifact);
+                this.layer.withSettings(() => {
                     artifact.paint();
                 });
             }
@@ -709,55 +701,47 @@ export class DLevel {
     }
 
     drawImage(image, point, dimension) {
-        this._layer.drawImage(image, point.x, point.y, dimension.w, dimension.h);
+        this.layer.drawImage(image, point.x, point.y, dimension.w, dimension.h);
     }
 
     setTransformSettings(transform) {
-        this._layer.setTransformSettings(transform);
+        this.layer.setTransformSettings(transform);
     }
 
     setStrokeSettings(color, width) {
-        this._layer.setStrokeSettings(color, width);
+        this.layer.setStrokeSettings(color, width);
     }
 
     setFillSettings(color) {
-        this._layer.setFillSettings(color);
+        this.layer.setFillSettings(color);
     }
 
     setShadowSettings(color, width) {
-        this._layer.setShadowSettings(color, width);
+        this.layer.setShadowSettings(color, width);
     }
 
     setAlphaSettings(alpha) {
-        this._layer.setAlphaSettings(alpha);
+        this.layer.setAlphaSettings(alpha);
     }
 
     drawRect(anchor, dimension) {
-        this._layer.drawRect(anchor, dimension);
+        this.layer.drawRect(anchor, dimension);
     }
 
     fillRect(anchor, dimension) {
-        this._layer.fillRect(anchor, dimension);
+        this.layer.fillRect(anchor, dimension);
     }
 
     setTextSettings(font, align) {
-        this._layer.setTextSettings(font, align);
+        this.layer.setTextSettings(font, align);
     }
 
     drawText(anchor, text) {
-        this._layer.drawText(anchor, text);
+        this.layer.drawText(anchor, text);
     }
 
     fillText(anchor, text) {
-        this._layer.fillText(anchor, text);
-    }
-
-    getPoint(viewportPoint) {
-        return this._layer.transform.invert().point(viewportPoint);
-    }
-
-    getViewportPoint(point) {
-        return this._layer.transform.point(point);
+        this.layer.fillText(anchor, text);
     }
 
     get originalPoint() {
@@ -765,7 +749,7 @@ export class DLevel {
     }
 
     get finalPoint() {
-        return this.getPoint(new Point2D(this._layer.dimension.w, this._layer.dimension.h));
+        return this.getPoint(new Point2D(this.layer.dimension.w, this.layer.dimension.h));
     }
 
     getAllArtifactsOnPoint(viewportPoint) {
@@ -799,13 +783,128 @@ export class DLevel {
     }
 
     get transform() {
-        return this._layer.transform;
+        return this.layer.transform;
     }
 
     get viewportDimension() {
-        return this._layer.dimension;
+        return this.layer.dimension;
     }
 }
+
+/**
+ * A visualization level that use only one layer
+ */
+export class DBasicLevel extends DLevel {
+
+    constructor(layer) {
+        super();
+        this._layer = layer;
+    }
+
+    get layer() {
+        return this._layer;
+    }
+
+    forArtifact(artifact) {
+    }
+
+    clear() {
+        this._layer.clear();
+    }
+
+    setDraw(draw) {
+        draw.addLayer(this.layer);
+    }
+
+    get name() {
+        return this.layer.name;
+    }
+
+    get visibleArea() {
+        return this.layer.visibleArea;
+    }
+
+    getPoint(viewportPoint) {
+        return this.layer.transform.invert().point(viewportPoint);
+    }
+
+    getViewportPoint(point) {
+        return this.layer.transform.point(point);
+    }
+}
+
+/**
+ * A visualization level that use only one layer
+ */
+export class DLayeredLevel extends DLevel {
+
+    constructor(name, select, ...layers) {
+        super();
+        this._name = name;
+        this._layers = layers;
+        this._select = select;
+    }
+
+    get name() {
+        return this._name;
+    }
+
+    get visibleArea() {
+        return this._layers[0].visibleArea;
+    }
+
+    get layer() {
+        console.assert(this._layer);
+        return this._layer;
+    }
+
+    get layers() {
+        console.assert(this._layers.length);
+        return this._layers;
+    }
+
+    forArtifact(artifact) {
+        this._layer = this._select(artifact, this._layers);
+    }
+
+    setDraw(draw) {
+        for (let layer of this._layers) {
+            draw.addLayer(layer);
+        }
+    }
+
+    clear() {
+        for (let layer of this._layers) {
+            layer.clear();
+        }
+    }
+
+    getPoint(viewportPoint) {
+        return this.layers[0].transform.invert().point(viewportPoint);
+    }
+
+    getViewportPoint(point) {
+        return this.layers[0].transform.point(point);
+    }
+}
+
+
+export class DSimpleLevel extends DBasicLevel {
+
+    constructor(name) {
+        super(new DLayer(name));
+    }
+
+}
+
+export class DStaticLevel extends DBasicLevel {
+
+    constructor(name) {
+        super(new DStaticLayer(name));
+    }
+
+}
+
 
 /**
  * Playing board. Accept elements. Dispatch element's artifacts on its own levels.
@@ -822,7 +921,7 @@ export class DBoard {
         this._scrollIncrement = DBoard.DEFAULT_SCROLL_INCREMENT;
         this._borderWidth = DBoard.DEFAULT_BORDER_WIDTH;
         this._focusPoint = new Point2D(this.viewportDimension.w/2, this.viewportDimension.h/2);
-        this._createLevels(levels);
+        this._registerLevels(levels);
         this._initMouseClickActions();
         this._initMouseMoveActions();
         this._initKeyDownActions();
@@ -830,12 +929,11 @@ export class DBoard {
         DAnimator.setFinalizer(()=>this.paint());
     }
 
-    _createLevels(levels) {
+    _registerLevels(levels) {
         this._levels = new Map();
         this._levelsArray = []
-        for (let layerItem of levels) {
-            let layer = layerItem instanceof DLayer ? this._draw.addLayer(layerItem) : this._draw.createLayer(layerItem);
-            let level = new DLevel(layer);
+        for (let level of levels) {
+            level.setDraw(this._draw);
             this._levels.set(level.name, level);
             this._levelsArray.push(level);
         }

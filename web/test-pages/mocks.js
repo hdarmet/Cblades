@@ -80,9 +80,6 @@ export let mockPlatform = {
         write(context, `drawImage(${image.src}, ${params.join(', ')})`);
     },
 
-
-
-
     textAlign(context, align) {
         write(context, `textAlign = ${align}`);
     },
@@ -170,34 +167,30 @@ export function resetContextDirectives(context) {
     context.directives = [];
 }
 
-export function getLayer(level) {
-    return level._layer;
-}
-
-export function getLevels(game, ...levelNames) {
+export function getLayers(board, ...layerNames) {
     let result = [];
-    for (let name of levelNames) {
-        result.push(game.board.getLevel(name));
+    for (let name of layerNames) {
+        result.push(board._draw.getLayer(name));
     }
     return result;
 }
 
-export function getDirectives(level, start=0) {
-    return getContextDirectives(getLayer(level)._context, start);
+export function getDirectives(layer, start=0) {
+    return getContextDirectives(layer._context, start);
 }
 
-export function resetDirectives(...levels) {
-    for (let level of levels) {
-        resetContextDirectives(getLayer(level)._context);
+export function resetDirectives(...layers) {
+    for (let layer of layers) {
+        resetContextDirectives(layer._context);
     }
 }
 
-export function startRegister(level) {
-    delete getLayer(level)._context._doNotRegister;
+export function startRegister(layer) {
+    delete layer._context._doNotRegister;
 }
 
-export function stopRegister(level) {
-    getLayer(level)._context._doNotRegister = true;
+export function stopRegister(layer) {
+    layer._context._doNotRegister = true;
 }
 
 export function removeFilterPainting(artifact) {
@@ -209,11 +202,11 @@ export function filterPainting(artifact) {
     let paint = artifact.paint;
     artifact.paint = function() {
         try {
-            startRegister(artifact.level);
+            startRegister(artifact.level.layer);
             paint.call(artifact);
         }
         finally {
-            stopRegister(artifact.level);
+            stopRegister(artifact.level.layer);
         }
     }
     artifact.refresh();

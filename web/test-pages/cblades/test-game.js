@@ -8,7 +8,7 @@ import {
 } from "../../jslib/draw.js";
 import {
     createEvent,
-    getDirectives, getLevels, loadAllImages, mockPlatform, resetDirectives
+    getDirectives, getLayers, loadAllImages, mockPlatform, resetDirectives
 } from "../mocks.js";
 import {
     Mechanisms, Memento
@@ -81,7 +81,7 @@ describe("Game", ()=> {
             game.setArbitrator(arbitrator);
             var player = new CBAbstractPlayer();
             game.addPlayer(player);
-            var [mapLevel, unitsLevel] = getLevels(game, "map","units");
+            var [mapLayer, unitsLayer] = getLayers(game.board, "map","units");
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
             let wing = new CBWing(player);
@@ -99,7 +99,7 @@ describe("Game", ()=> {
             assert(CBMap.fromArtifact(map._imageArtifact)).equalsTo(map);
             assert(CBUnit.fromArtifact(unit._imageArtifact)).equalsTo(unit);
             assert(unit.player).equalsTo(player);
-            assert(getDirectives(mapLevel)).arrayEqualsTo([
+            assert(getDirectives(mapLayer)).arrayEqualsTo([
                     "setTransform(1, 0, 0, 1, 0, 0)",
                     "setTransform(0.4888, 0, 0, 0.4888, 500, 400)",
                 "save()",
@@ -110,7 +110,7 @@ describe("Game", ()=> {
                     "drawImage(/CBlades/images/maps/map.png, -1023, -1575, 2046, 3150)",
                 "restore()"
             ]);
-            assert(getDirectives(unitsLevel)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer)).arrayEqualsTo([
                 "setTransform(1, 0, 0, 1, 0, 0)",
                 "setTransform(0.4888, 0, 0, 0.4888, 500, 400)",
                 "save()",
@@ -161,7 +161,7 @@ describe("Game", ()=> {
     it("Checks popup management", () => {
         given:
             var {game} = createTinyGame();
-            var [widgetsLevel] = getLevels(game, "widgets");
+            var [widgetsLevel] = getLayers(game.board, "widgets");
             resetDirectives(widgetsLevel);
         when:
             var popup1 = new DPopup(new Dimension2D(100, 200));
@@ -218,7 +218,7 @@ describe("Game", ()=> {
     it("Checks global push buttons menu", () => {
         given:
             var game = new CBGame();
-            var [commandsLevel] = getLevels(game, "widget-commands");
+            var [commandsLevel] = getLayers(game.board, "widget-commands");
         when:
             game.setMenu();
             game.start();
@@ -491,19 +491,19 @@ describe("Game", ()=> {
     it("Checks that clicking on the map re-centers the viewport ", () => {
         given:
             var game = new CBGame();
-            var [mapLevel] = getLevels(game, "map");
+            var [mapLayer] = getLayers(game.board, "map");
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
             game.start();
             loadAllImages();
         then:
-            assert(getDirectives(mapLevel)[1]).equalsTo("setTransform(0.4888, 0, 0, 0.4888, 500, 400)");
+            assert(getDirectives(mapLayer)[1]).equalsTo("setTransform(0.4888, 0, 0, 0.4888, 500, 400)");
         when:
-            resetDirectives(mapLevel);
+            resetDirectives(mapLayer);
             var mouseEvent = createEvent("click", {offsetX:500, offsetY:410});
             mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
         then:
-            assert(getDirectives(mapLevel)[0]).equalsTo("setTransform(0.4888, 0, 0, 0.4888, 500, 390)");
+            assert(getDirectives(mapLayer)[0]).equalsTo("setTransform(0.4888, 0, 0, 0.4888, 500, 390)");
     });
 
     function mouseMoveOnCounter(game, counter) {
@@ -557,15 +557,15 @@ describe("Game", ()=> {
 
     it("Checks counter basic appearance and features", () => {
         given:
-            var { game, map } = prepareTinyGame();
+            var { game } = prepareTinyGame();
             let counter = new CBCounter(["/CBlades/images/units/misc/counter.png"], new Dimension2D(50, 50));
             game.addCounter(counter, new Point2D(100, 200));
             game.start();
             loadAllImages();
             counter.angle = 45;
-            var [unitsLevel] = getLevels(game, "units");
+            var [markersLayer] = getLayers(game.board, "markers");
         when:
-            resetDirectives(unitsLevel);
+            resetDirectives(markersLayer);
             repaint(game);
         then:
             assert(counter.game).equalsTo(game);
@@ -574,7 +574,7 @@ describe("Game", ()=> {
             assert(counter.element.artifacts[0]).equalsTo(counter.artifact);
             assert(counter.location.toString()).equalsTo("point(100, 200)");
             assert(counter.viewportLocation.toString()).equalsTo("point(548.8759, 497.7517)");
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 583.4363, 394.0704)",
                     "shadowColor = #000000", "shadowBlur = 15",
@@ -582,13 +582,13 @@ describe("Game", ()=> {
                 "restore()"
             ]);
         when:
-            resetDirectives(unitsLevel);
+            resetDirectives(markersLayer);
             counter.location = new Point2D(10, 20);
             paint(game);
         then:
             assert(counter.location.toString()).equalsTo("point(10, 20)");
             assert(counter.viewportLocation.toString()).equalsTo("point(504.8876, 409.7752)");
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 508.3436, 399.407)",
                     "shadowColor = #000000", "shadowBlur = 15",
@@ -596,16 +596,16 @@ describe("Game", ()=> {
                 "restore()"
             ]);
         when:
-            resetDirectives(unitsLevel);
+            resetDirectives(markersLayer);
             paint(game);
         then:
-            assert(getDirectives(unitsLevel)).arrayEqualsTo([]);
+            assert(getDirectives(markersLayer)).arrayEqualsTo([]);
         when:
-            resetDirectives(unitsLevel);
+            resetDirectives(markersLayer);
             counter.refresh();
             paint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 508.3436, 399.407)",
                     "shadowColor = #000000", "shadowBlur = 15",
@@ -661,13 +661,13 @@ describe("Game", ()=> {
     it("Checks unit selection/deselection appearance", () => {
         given:
             var { game, unit } = createTinyGame();
-            var [unitsLevel] = getLevels(game, "units");
+            var [unitsLayer] = getLayers(game.board, "units");
         when:
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             unit.select();
             paint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #FF0000",
                 "shadowBlur = 15",
@@ -675,11 +675,11 @@ describe("Game", ()=> {
                 "restore()"
             ]);
         when:
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             unit.unselect();
             paint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000",
                 "shadowBlur = 15",
@@ -815,10 +815,10 @@ describe("Game", ()=> {
     it("Checks unit appearance when mouse is over it", () => {
         given:
             var { game, unit } = createTinyGame();
-            var [unitsLevel] = getLevels(game, "units");
+            var [unitsLayer] = getLayers(game.board, "units");
             paint(game);
         then:
-            assert(getDirectives(unitsLevel, 6)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 6)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000",
                 "shadowBlur = 15",
@@ -826,10 +826,10 @@ describe("Game", ()=> {
                 "restore()"
             ]);
         when:
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             mouseMoveOnCounter(game, unit);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #00FFFF",
                 "shadowBlur = 15",
@@ -837,10 +837,10 @@ describe("Game", ()=> {
                 "restore()"
             ]);
         when:
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             mouseMoveOutOfCounter(game, unit);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000",
                 "shadowBlur = 15",
@@ -850,33 +850,33 @@ describe("Game", ()=> {
         when:
             unit.select();
             paint(game);
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             mouseMoveOnCounter(game, unit);
         then:
-            assert(getDirectives(unitsLevel)).arrayEqualsTo([]);
+            assert(getDirectives(unitsLayer)).arrayEqualsTo([]);
         when:
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             mouseMoveOutOfCounter(game, unit);
         then:
-            assert(getDirectives(unitsLevel)).arrayEqualsTo([]);
+            assert(getDirectives(unitsLayer)).arrayEqualsTo([]);
     });
 
     it("Checks that clicking on a unit select the unit ", () => {
         given:
             var { game, player, unit } = createTinyGame();
-            var [unitsLevel] = getLevels(game, "units");
+            var [unitsLayer] = getLayers(game.board, "units");
             var actionLaunched = false;
             player.launchUnitAction = function(unit, event) {
                 actionLaunched = true;
             }
         when:
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             mouseClickOnCounter(game, unit)
         then:
             assert(game.selectedUnit).equalsTo(unit);
             assert(actionLaunched).isTrue();
             loadAllImages();
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #FF0000",
                 "shadowBlur = 15",
@@ -948,13 +948,13 @@ describe("Game", ()=> {
     it("Checks that when moving a unit, movement points are adjusted", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [unitsLevel, markersLevel] = getLevels(game, "units", "markers");
+            var [unitsLayer, markersLayer] = getLayers(game.board, "units", "markers");
         when:
-            resetDirectives(unitsLevel, markersLevel);
+            resetDirectives(unitsLayer, markersLayer);
             unit.move(map.getHex(5, 7), 1);
             paint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -366.3125, 142, 142)",
@@ -964,11 +964,11 @@ describe("Game", ()=> {
             assert(unit.movementPoints).equalsTo(1);
             assert(unit.extendedMovementPoints).equalsTo(2);
         when:
-            resetDirectives(unitsLevel, markersLevel);
+            resetDirectives(unitsLayer, markersLayer);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
@@ -982,22 +982,22 @@ describe("Game", ()=> {
     it("Checks unit move from outside the map or out of the map", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [unitsLevel] = getLevels(game, "units");
+            var [unitsLayer] = getLayers(game.board, "units");
         when:
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             unit.move(null, 0);
             paint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
             assert(unit.hexLocation).isNotDefined();
             assert(unit.isOnBoard()).isFalse();
         when:
             Memento.open();
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             unit.move(map.getHex(5, 7), 0);
             paint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -366.3125, 142, 142)",
@@ -1007,18 +1007,18 @@ describe("Game", ()=> {
             assert(unit.isOnBoard()).isTrue();
         when:
             Memento.undo();
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             paint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
             assert(unit.hexLocation).isNotDefined();
             assert(unit.isOnBoard()).isFalse();
         when:
             Memento.undo();
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             paint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
@@ -1031,13 +1031,13 @@ describe("Game", ()=> {
     it("Checks rotating a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [unitsLevel, markersLevel] = getLevels(game, "units", "markers");
+            var [unitsLayer, markersLayer] = getLayers(game.board, "units", "markers");
         when:
-            resetDirectives(unitsLevel, markersLevel);
+            resetDirectives(unitsLayer, markersLayer);
             unit.rotate(90, 0.5);
             paint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0, 0.4888, -0.4888, 0, 368.5545, 435.2212)",
                     "shadowColor = #000000", "shadowBlur = 15",
@@ -1047,11 +1047,11 @@ describe("Game", ()=> {
             assert(unit.movementPoints).equalsTo(1.5);
             assert(unit.extendedMovementPoints).equalsTo(2.5);
         when:
-            resetDirectives(unitsLevel, markersLevel);
+            resetDirectives(unitsLayer, markersLayer);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
@@ -1063,17 +1063,17 @@ describe("Game", ()=> {
     it("Checks adding a tiredness level to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLevel] = getLevels(game, "markers");
+            var [markersLayer] = getLayers(game.board, "markers");
         then:
             assert(unit.isTired()).isFalse();
             assert(unit.isExhausted()).isFalse();
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.addOneTirednessLevel();
             paint(game);
             loadAllImages(); // to load tired.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/tired.png, -273.5, -130.4375, 64, 64)",
@@ -1084,12 +1084,12 @@ describe("Game", ()=> {
             assert(unit.isExhausted()).isFalse();
         when:
             Memento.open();
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.addOneTirednessLevel();
             paint(game);
             loadAllImages(); // to load exhausted.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -130.4375, 64, 64)",
@@ -1099,11 +1099,11 @@ describe("Game", ()=> {
             assert(unit.isTired()).isFalse();
             assert(unit.isExhausted()).isTrue();
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/tired.png, -273.5, -130.4375, 64, 64)",
@@ -1115,15 +1115,15 @@ describe("Game", ()=> {
     it("Checks removing a tiredness level to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLevel] = getLevels(game, "markers");
+            var [markersLayer] = getLayers(game.board, "markers");
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.addOneTirednessLevel();
             unit.addOneTirednessLevel();
             paint(game);
             loadAllImages(); // to load tired.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -130.4375, 64, 64)",
@@ -1132,12 +1132,12 @@ describe("Game", ()=> {
             assert(unit.tiredness).equalsTo(2);
         when:
             Memento.open();
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.removeOneTirednessLevel();
             paint(game);
             loadAllImages(); // to load tired.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/tired.png, -273.5, -130.4375, 64, 64)",
@@ -1145,11 +1145,11 @@ describe("Game", ()=> {
             ]);
             assert(unit.tiredness).equalsTo(1);
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -130.4375, 64, 64)",
@@ -1161,17 +1161,17 @@ describe("Game", ()=> {
     it("Checks adding a lack of munitions level to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLevel] = getLevels(game, "markers");
+            var [markersLayer] = getLayers(game.board, "markers");
         then:
             assert(unit.areMunitionsScarce()).isFalse();
             assert(unit.areMunitionsExhausted()).isFalse();
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.addOneLackOfMunitionsLevel();
             paint(game);
             loadAllImages(); // to load scraceamno.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/scarceamno.png, -202.5, -59.4375, 64, 64)",
@@ -1182,12 +1182,12 @@ describe("Game", ()=> {
             assert(unit.areMunitionsExhausted()).isFalse();
         when:
             Memento.open();
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.addOneLackOfMunitionsLevel();
             paint(game);
             loadAllImages(); // to load lowamno.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/lowamno.png, -202.5, -59.4375, 64, 64)",
@@ -1197,11 +1197,11 @@ describe("Game", ()=> {
             assert(unit.areMunitionsScarce()).isFalse();
             assert(unit.areMunitionsExhausted()).isTrue();
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/scarceamno.png, -202.5, -59.4375, 64, 64)",
@@ -1213,15 +1213,15 @@ describe("Game", ()=> {
     it("Checks removing a lack of munitions level to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLevel] = getLevels(game, "markers");
+            var [markersLayer] = getLayers(game.board, "markers");
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.addOneLackOfMunitionsLevel();
             unit.addOneLackOfMunitionsLevel();
             paint(game);
             loadAllImages(); // to load lowamno.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/lowamno.png, -202.5, -59.4375, 64, 64)",
@@ -1230,19 +1230,19 @@ describe("Game", ()=> {
             assert(unit.lackOfMunitions).equalsTo(2);
         when:
             Memento.open();
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.replenishMunitions();
             paint(game);
             loadAllImages(); // to load scarceamno.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.lackOfMunitions).equalsTo(0);
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/lowamno.png, -202.5, -59.4375, 64, 64)",
@@ -1270,15 +1270,15 @@ describe("Game", ()=> {
     it("Checks playing a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLevel] = getLevels(game, "markers");
+            var [markersLayer] = getLayers(game.board, "markers");
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.launchAction(new CBAction(game, unit));
             unit.markAsBeingPlayed();
             paint(game);
             loadAllImages(); // to load actiondone.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/actiondone.png, -131.5, -201.4375, 64, 64)",
@@ -1287,11 +1287,11 @@ describe("Game", ()=> {
             assert(unit.hasBeenActivated()).isTrue();
             assert(unit.hasBeenPlayed()).isTrue();
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.hasBeenActivated()).isFalse();
             assert(unit.hasBeenPlayed()).isFalse();
     });
@@ -1299,14 +1299,14 @@ describe("Game", ()=> {
     it("Checks giving an order to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLevel] = getLevels(game, "markers");
+            var [markersLayer] = getLayers(game.board, "markers");
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.receiveOrder(true);
             paint(game);
             loadAllImages(); // to load ordegiven.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/ordergiven.png, -131.5, -201.4375, 64, 64)",
@@ -1314,28 +1314,28 @@ describe("Game", ()=> {
             ]);
             assert(unit.hasReceivedOrder()).isTrue();
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.hasReceivedOrder()).isFalse();
     });
 
     it("Checks that playing an order replace (hide) ordergiven marker", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLevel] = getLevels(game, "markers");
+            var [markersLayer] = getLayers(game.board, "markers");
             unit.receiveOrder(true);
             paint(game);
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.launchAction(new CBAction(game, unit));
             unit.markAsBeingPlayed();
             paint(game);
             loadAllImages(); // to load actiondone.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/actiondone.png, -131.5, -201.4375, 64, 64)",
@@ -1346,7 +1346,7 @@ describe("Game", ()=> {
     it("Checks played status of a unit when selection is changed or turn is changed", () => {
         given:
             var {game, player, unit1, unit2} = create2UnitsTinyGame();
-            var [markersLevel] = getLevels(game, "markers");
+            var [markersLayer] = getLayers(game.board, "markers");
             player.launchUnitAction = function(unit, event) {
                 unit.launchAction(new CBAction(game, unit));
             }
@@ -1359,13 +1359,13 @@ describe("Game", ()=> {
         when:
             mouseClickOnCounter(game, unit2);
             loadAllImages(); // to load actiondone.png
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             repaint(game);
         then:
             assert(unit1.action).isDefined();
             assert(unit1.hasBeenActivated()).isTrue();
             assert(unit1.hasBeenPlayed()).isTrue();
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/actiondone.png, -131.5, -201.4375, 64, 64)",
@@ -1373,29 +1373,29 @@ describe("Game", ()=> {
             ]);
         when:   // changing turn reset played status
             game.nextTurn();
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             repaint(game);
         then:
             assert(unit1.action).isNotDefined();
             assert(unit1.hasBeenActivated()).isFalse();
             assert(unit1.hasBeenPlayed()).isFalse();
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
     });
 
     it("Checks adding cohesion levels to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLevel] = getLevels(game, "markers");
+            var [markersLayer] = getLayers(game.board, "markers");
         then:
             assert(unit.isDisrupted()).isFalse();
             assert(unit.isRouted()).isFalse();
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.disrupt();
             paint(game);
             loadAllImages(); // to load disrupted.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/disrupted.png, -273.5, -59.4375, 64, 64)",
@@ -1406,12 +1406,12 @@ describe("Game", ()=> {
             assert(unit.isRouted()).isFalse();
         when:
             Memento.open();
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.addOneCohesionLevel();
             paint(game);
             loadAllImages(); // to load fleeing.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/fleeing.png, -273.5, -59.4375, 64, 64)",
@@ -1421,11 +1421,11 @@ describe("Game", ()=> {
             assert(unit.isDisrupted()).isFalse();
             assert(unit.isRouted()).isTrue();
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/disrupted.png, -273.5, -59.4375, 64, 64)",
@@ -1437,15 +1437,15 @@ describe("Game", ()=> {
     it("Checks removing cohesion levels to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLevel] = getLevels(game, "markers");
+            var [markersLayer] = getLayers(game.board, "markers");
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.addOneCohesionLevel();
             unit.addOneCohesionLevel();
             paint(game);
             loadAllImages(); // to load fleeing.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/fleeing.png, -273.5, -59.4375, 64, 64)",
@@ -1454,12 +1454,12 @@ describe("Game", ()=> {
             assert(unit.cohesion).equalsTo(2);
         when:
             Memento.open();
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.rally();
             paint(game);
             loadAllImages(); // to load disrupted.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/disrupted.png, -273.5, -59.4375, 64, 64)",
@@ -1468,18 +1468,18 @@ describe("Game", ()=> {
             assert(unit.cohesion).equalsTo(1);
         when:
             Memento.open();
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.reorganize();
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.cohesion).equalsTo(0);
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/disrupted.png, -273.5, -59.4375, 64, 64)",
@@ -1491,14 +1491,14 @@ describe("Game", ()=> {
     it("Checks taking losses to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [unitsLevel] = getLevels(game, "units");
+            var [unitsLayer] = getLayers(game.board, "units");
         when:
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             unit.takeALoss();
             paint(game);
             loadAllImages(); // to load back side image
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/unitb.png, -241.5, -169.4375, 142, 142)",
@@ -1506,28 +1506,28 @@ describe("Game", ()=> {
             ]);
         when:
             Memento.open();
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             unit.takeALoss();
             paint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
         when:
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/unitb.png, -241.5, -169.4375, 142, 142)",
                 "restore()"
             ]);
         when:
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
@@ -1538,14 +1538,14 @@ describe("Game", ()=> {
     it("Checks mark unit as on contact", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLevel] = getLevels(game, "markers");
+            var [markersLayer] = getLayers(game.board, "markers");
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.markAsEngaging(true);
             paint(game);
             loadAllImages(); // to load fleeing.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/contact.png, -273.5, -201.4375, 64, 64)",
@@ -1554,11 +1554,11 @@ describe("Game", ()=> {
             assert(unit.isEngaging()).isTrue();
             assert(unit.isCharging()).isFalse();
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.isEngaging()).isFalse();
             assert(unit.isCharging()).isFalse();
     });
@@ -1566,14 +1566,14 @@ describe("Game", ()=> {
     it("Checks mark unit as charging", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLevel] = getLevels(game, "markers");
+            var [markersLayer] = getLayers(game.board, "markers");
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.markAsCharging(true);
             paint(game);
             loadAllImages(); // to load fleeing.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/charge.png, -273.5, -201.4375, 64, 64)",
@@ -1582,11 +1582,11 @@ describe("Game", ()=> {
             assert(unit.isEngaging()).isFalse();
             assert(unit.isCharging()).isTrue();
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             Memento.undo();
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.isEngaging()).isFalse();
             assert(unit.isCharging()).isFalse();
     });
@@ -1594,15 +1594,15 @@ describe("Game", ()=> {
     it("Checks that charge supersedes contact", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLevel] = getLevels(game, "markers");
+            var [markersLayer] = getLayers(game.board, "markers");
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.markAsEngaging(true);
             unit.markAsCharging(true);
             paint(game);
             loadAllImages(); // to load charge.png
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/charge.png, -273.5, -201.4375, 64, 64)",
@@ -1611,12 +1611,12 @@ describe("Game", ()=> {
             assert(unit.isEngaging()).isTrue();
             assert(unit.isCharging()).isTrue();
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.markAsCharging(false);
             loadAllImages();  // to load contact.png
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/contact.png, -273.5, -201.4375, 64, 64)",
@@ -1625,11 +1625,11 @@ describe("Game", ()=> {
             assert(unit.isEngaging()).isTrue();
             assert(unit.isCharging()).isFalse();
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             unit.markAsEngaging(false);
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.isEngaging()).isFalse();
             assert(unit.isCharging()).isFalse();
     });
@@ -1655,50 +1655,50 @@ describe("Game", ()=> {
     it("Checks leader appearance", () => {
         given:
             var {game, unit, player, leader} = createTinyCommandGame();
-            var [unitsLevel, markersLevel] = getLevels(game, "units", "markers");
+            var [unitsLayer, markersLayer] = getLayers(game.board, "units", "markers");
             unit.move(null, 0);
         when:
             loadAllImages(); // to load charge.png
-            resetDirectives(unitsLevel);
+            resetDirectives(unitsLayer);
             repaint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/leader.png, -230.5, 38.4375, 120, 120)",
                 "restore()"
             ]);
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             leader.takeCommand();
             loadAllImages();
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/defend.png, -139.5, 58.4375, 80, 80)",
                 "restore()"
             ]);
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             player.changeOrderInstruction(leader, CBOrderInstruction.ATTACK);
             loadAllImages();
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/attack.png, -139.5, 58.4375, 80, 80)",
                 "restore()"
             ]);
         when:
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             leader.dismissCommand();
             loadAllImages();
             paint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
     });
 
     it("Checks wing management", () => {

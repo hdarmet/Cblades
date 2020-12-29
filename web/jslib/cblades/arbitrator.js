@@ -173,11 +173,11 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return { success, lossesForDefender, lowerFirerMunitions };
     }
 
-    getAllowedMoves(unit, first) {
+    getAllowedMoves(unit, first=false) {
         function processAngle(direction, arbitrator, unit, first) {
             let nearUnits = direction.hex.units;
             if (nearUnits.length) {
-                if (arbitrator.areUnitsFoes(unit, nearUnits)) return false;
+                if (arbitrator.areUnitsFoes(unit, nearUnits[0])) return false;
             }
             let cost = arbitrator.getMovementCost(unit, direction.hex);
             if (unit.movementPoints>=cost) {

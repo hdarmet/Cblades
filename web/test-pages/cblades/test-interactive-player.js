@@ -9,7 +9,7 @@ import {
 } from "../../jslib/draw.js";
 import {
     createEvent,
-    filterPainting, getDirectives, getLevels,
+    filterPainting, getDirectives, getLayers,
     loadAllImages,
     mockPlatform, removeFilterPainting, resetDirectives, stopRegister
 } from "../mocks.js";
@@ -144,14 +144,14 @@ describe("Interactive Player", ()=> {
     it("Checks that clicking on a unit select the unit ", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [unitsLevel, widgetsLevel, widgetItemsLevel] = getLevels(game, "units", "widgets", "widget-items");
+            var [unitsLayer, widgetsLayer, widgetItemsLayer] = getLayers(game.board, "units", "widgets", "widget-items");
             loadAllImages();
         when:
-            resetDirectives(unitsLevel, widgetsLevel, widgetItemsLevel);
+            resetDirectives(unitsLayer, widgetsLayer, widgetItemsLayer);
             clickOnCounter(game, unit);
         then:
             loadAllImages();
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15", "strokeStyle = #000000",
                     "lineWidth = 1",
@@ -161,7 +161,7 @@ describe("Interactive Player", ()=> {
                     "fillRect(-125, -185, 250, 370)",
                 "restore()"
             ]);
-            assert(getDirectives(widgetItemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetItemsLayer, 4)).arrayEqualsTo([
                 "save()", "drawImage(/CBlades/images/icons/leave-formation.png, 306.6667, 195, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/dismiss-formation.png, 366.6667, 195, 50, 50)", "restore()",
                 "save()", "drawImage(/CBlades/images/icons/change-orders-gray.png, 306.6667, 255, 50, 50)", "restore()",
@@ -192,22 +192,22 @@ describe("Interactive Player", ()=> {
     it("Checks that global events close action menu", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [widgetsLevel] = getLevels(game, "widgets");
+            var [widgetsLayer] = getLayers(game.board, "widgets");
             clickOnCounter(game, unit);
             loadAllImages();
         when:
-            resetDirectives(widgetsLevel);
+            resetDirectives(widgetsLayer);
             Mechanisms.fire(game, DBoard.ZOOM_EVENT);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
         when:
             clickOnCounter(game, unit);
-            resetDirectives(widgetsLevel);
+            resetDirectives(widgetsLayer);
             Mechanisms.fire(game, DBoard.SCROLL_EVENT);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
 
     });
 
@@ -328,7 +328,7 @@ describe("Interactive Player", ()=> {
     it("Checks move action actuators appearance", () => {
         given:
             var { game, unit } = createTinyGame();
-            var [actuatorsLevel] = getLevels(game, "actuators");
+            var [actuatorsLayer] = getLayers(game.board, "actuators");
             clickOnCounter(game, unit);
             clickOnMoveAction(game);
             loadAllImages();
@@ -336,22 +336,22 @@ describe("Interactive Player", ()=> {
             let orientationActuator = getOrientationActuator(game);
         when:
             filterPainting(moveActuator.getTrigger(0));
-            resetDirectives(actuatorsLevel);
-            stopRegister(actuatorsLevel);
+            resetDirectives(actuatorsLayer);
+            stopRegister(actuatorsLayer);
             paint(game);
         then:
-            assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/standard-move.png, -210.5, -340.625, 80, 130)"
             ]);
         when:
             removeFilterPainting(moveActuator.getTrigger(0));
             filterPainting(orientationActuator.getTrigger(30));
-            resetDirectives(actuatorsLevel);
-            stopRegister(actuatorsLevel);
+            resetDirectives(actuatorsLayer);
+            stopRegister(actuatorsLayer);
             paint(game);
         then:
-            assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
                 "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 408.6841)",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984, 60, 80)"
@@ -383,36 +383,36 @@ describe("Interactive Player", ()=> {
     it("Checks mouse move over a trigger of a move actuator", () => {
         given:
             var { game, unit } = createTinyGame();
-            var [actuatorsLevel] = getLevels(game, "actuators");
+            var [actuatorsLayer] = getLayers(game.board, "actuators");
             clickOnCounter(game, unit);
             clickOnMoveAction(game);
             loadAllImages();
             let moveActuator = getMoveActuator(game);
         when:
             filterPainting(moveActuator.getTrigger(0));
-            resetDirectives(actuatorsLevel);
-            stopRegister(actuatorsLevel);
+            resetDirectives(actuatorsLayer);
+            stopRegister(actuatorsLayer);
             paint(game);
         then:
-            assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/standard-move.png, -210.5, -340.625, 80, 130)"
             ]);
         when:
-            resetDirectives(actuatorsLevel);
+            resetDirectives(actuatorsLayer);
             mouseMoveOnTrigger(game, moveActuator.getTrigger(0));
             paint(game);
         then:
-            assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
                 "shadowColor = #FF0000", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/standard-move.png, -210.5, -340.625, 80, 130)"
             ]);
         when:
-            resetDirectives(actuatorsLevel);
+            resetDirectives(actuatorsLayer);
             mouseMoveOutOfTrigger(game, moveActuator.getTrigger(0));
             paint(game);
         then:
-            assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/standard-move.png, -210.5, -340.625, 80, 130)"
             ]);
@@ -421,38 +421,38 @@ describe("Interactive Player", ()=> {
     it("Checks mouse move over a trigger of an orientation actuator", () => {
         given:
             var { game, unit } = createTinyGame();
-            var [actuatorsLevel] = getLevels(game, "actuators");
+            var [actuatorsLayer] = getLayers(game.board, "actuators");
             clickOnCounter(game, unit);
             clickOnMoveAction(game);
             loadAllImages();
             let orientationActuator = getOrientationActuator(game);
         when:
             filterPainting(orientationActuator.getTrigger(30));
-            resetDirectives(actuatorsLevel);
-            stopRegister(actuatorsLevel);
+            resetDirectives(actuatorsLayer);
+            stopRegister(actuatorsLayer);
             paint(game);
         then:
-            assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
                 "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 408.6841)",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984, 60, 80)"
             ]);
         when:
-            resetDirectives(actuatorsLevel);
+            resetDirectives(actuatorsLayer);
             mouseMoveOnTrigger(game, orientationActuator.getTrigger(30));
             paint(game);
         then:
-            assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
                 "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 408.6841)",
                 "shadowColor = #FF0000", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984, 60, 80)"
             ]);
         when:
-            resetDirectives(actuatorsLevel);
+            resetDirectives(actuatorsLayer);
             mouseMoveOutOfTrigger(game, orientationActuator.getTrigger(30));
             paint(game);
         then:
-            assert(getDirectives(actuatorsLevel)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
                 "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 438.2428, 408.6841)",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/toward.png, -126.3325, -266.8984, 60, 80)"
@@ -602,24 +602,24 @@ describe("Interactive Player", ()=> {
     });
 
     function resetAllDirectives(game) {
-        var [unitsLevel, markersLevel, actuatorsLevel] = getLevels(game,"units", "markers", "actuators");
-        resetDirectives(unitsLevel, markersLevel, actuatorsLevel);
+        var [unitsLayer, markersLayer, actuatorsLayer] = getLayers(game.board,"units", "markers", "actuators");
+        resetDirectives(unitsLayer, markersLayer, actuatorsLayer);
     }
 
     function registerAllDirectives(game) {
-        var [unitsLevel, markersLevel, actuatorsLevel] = getLevels(game,"units", "markers", "actuators");
+        var [unitsLayer, markersLayer, actuatorsLayer] = getLayers(game.board,"units", "markers", "actuators");
         return {
-            units:[...getDirectives(unitsLevel)],
-            markers:[...getDirectives(markersLevel)],
-            actuators:[...getDirectives(actuatorsLevel)]
+            units:[...getDirectives(unitsLayer)],
+            markers:[...getDirectives(markersLayer)],
+            actuators:[...getDirectives(actuatorsLayer)]
         };
     }
 
     function assertAllDirectives(game, picture) {
-        var [unitsLevel, markersLevel, actuatorsLevel] = getLevels(game,"units", "markers", "actuators");
-        assert(getDirectives(unitsLevel)).arrayEqualsTo(picture.units);
-        assert(getDirectives(markersLevel)).arrayEqualsTo(picture.markers);
-        assert(getDirectives(actuatorsLevel)).arrayEqualsTo(picture.actuators);
+        var [unitsLayer, markersLayer, actuatorsLayer] = getLayers(game.board,"units", "markers", "actuators");
+        assert(getDirectives(unitsLayer)).arrayEqualsTo(picture.units);
+        assert(getDirectives(markersLayer)).arrayEqualsTo(picture.markers);
+        assert(getDirectives(actuatorsLayer)).arrayEqualsTo(picture.actuators);
     }
 
     it("Checks appearance when undoing (move, rotate, move)", () => {
@@ -747,7 +747,7 @@ describe("Interactive Player", ()=> {
     it("Checks Unit tiredness progression (fresh -> tired -> exhausted)", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [unitsLevel, markersLevel] = getLevels(game,"units", "markers");
+            var [unitsLayer, markersLayer] = getLayers(game.board,"units", "markers");
             clickOnCounter(game, unit);
             clickOnMoveAction(game);
             unit.movementPoints = 0.5;
@@ -755,18 +755,18 @@ describe("Interactive Player", ()=> {
             paint(game);
             var moveActuator1 = getMoveActuator(game);
         when:
-            resetDirectives(markersLevel, unitsLevel);
+            resetDirectives(markersLayer, unitsLayer);
             clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
             loadAllImages();
         then:
             assert(unit.tiredness).equalsTo(1);
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #FF0000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -366.3125, 142, 142)",
                 "restore()"
             ]);
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/tired.png, -273.5, -327.3125, 64, 64)",
@@ -778,13 +778,13 @@ describe("Interactive Player", ()=> {
             clickOnCounter(game, unit);
             clickOnMoveAction(game);
             paint(game);
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
             loadAllImages();
         then:
             assert(unit.tiredness).equalsTo(2);
             assert(unit.hasBeenPlayed()).isTrue();   // Unit is played automatically because no further movement/reorientation is possble
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 15",
                 "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -524.1875, 64, 64)",
@@ -803,7 +803,7 @@ describe("Interactive Player", ()=> {
     }
 
     function clickOnDice(game) {
-        var [itemsLevel] = getLevels(game,"widget-items");
+        var itemsLevel = game.board.getLevel("widget-items");
         for (let item of itemsLevel.artifacts) {
             if (item.element instanceof DDice) {
                 let itemLocation = item.viewportLocation;
@@ -815,7 +815,7 @@ describe("Interactive Player", ()=> {
     }
 
     function clickOnResult(game) {
-        var [commandsLevel] = getLevels(game,"widget-commands");
+        var commandsLevel = game.board.getLevel("widget-commands");
         for (let item of commandsLevel.artifacts) {
             if (item.element instanceof DResult) {
                 let itemLocation = item.viewportLocation;
@@ -839,16 +839,16 @@ describe("Interactive Player", ()=> {
     it("Checks resting action opening and cancelling", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             unit.addOneTirednessLevel();
             clickOnCounter(game, unit);
             paint(game);
         when:
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnRestAction(game);
             loadAllImages();
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",   // Mask
                     "setTransform(1, 0, 0, 1, 0, 0)",
                     "globalAlpha = 0.3",
@@ -872,7 +872,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/inserts/meteo2.png, 571, 319, 142, 142)",
                 "restore()"
             ]);
-        assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+        assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
             "save()",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/dice/d1.png, 621, 115.5, 100, 89)",
@@ -883,11 +883,11 @@ describe("Interactive Player", ()=> {
             "restore()"
         ]);
         when:       // Clicking on the mask cancel the action
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
             assert(unit.tiredness).equalsTo(1);
             assert(unit.hasBeenActivated()).isFalse();
             assert(unit.hasBeenPlayed()).isFalse();
@@ -896,7 +896,7 @@ describe("Interactive Player", ()=> {
     it("Checks successfully resting action process ", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.addOneTirednessLevel();
             clickOnCounter(game, unit);
             clickOnRestAction(game);
@@ -905,10 +905,10 @@ describe("Interactive Player", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 621, 115.5, 100, 89)",
@@ -918,19 +918,19 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d2.png, 561, 175.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00A000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/success.png, 304, 115, 150, 150)",
                 "restore()"]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.tiredness).equalsTo(0);
     });
@@ -938,7 +938,7 @@ describe("Interactive Player", ()=> {
     it("Checks failed resting action process ", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.addOneTirednessLevel();
             clickOnCounter(game, unit);
             clickOnRestAction(game);
@@ -947,10 +947,10 @@ describe("Interactive Player", ()=> {
             rollFor(5, 6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d5.png, 621, 115.5, 100, 89)",
@@ -960,19 +960,19 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d6.png, 561, 175.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
             "save()",
                 "shadowColor = #A00000", "shadowBlur = 100",
                 "drawImage(/CBlades/images/dice/failure.png, 304, 115, 150, 150)",
             "restore()"]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.tiredness).equalsTo(1);
     });
@@ -984,16 +984,16 @@ describe("Interactive Player", ()=> {
     it("Checks replenish munitions action opening and cancelling", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             unit.addOneLackOfMunitionsLevel();
             clickOnCounter(game, unit);
             paint(game);
         when:
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnReplenishMunitionsAction(game);
             loadAllImages();
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
                     "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
@@ -1003,7 +1003,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/inserts/check-replenish-munitions-insert.png, 49.6667, 5, 444, 383)",
                 "restore()"
             ]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 513.6667, 303.5, 100, 89)",
@@ -1014,11 +1014,11 @@ describe("Interactive Player", ()=> {
                 "restore()"
             ]);
         when:       // Clicking on the mask cancel the action
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
             assert(unit.lackOfMunitions).equalsTo(1);
             assert(unit.hasBeenActivated()).isFalse();
             assert(unit.hasBeenPlayed()).isFalse();
@@ -1027,7 +1027,7 @@ describe("Interactive Player", ()=> {
     it("Checks successfully replenish munitions action process ", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.addOneLackOfMunitionsLevel();
             clickOnCounter(game, unit);
             clickOnReplenishMunitionsAction(game);
@@ -1036,10 +1036,10 @@ describe("Interactive Player", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 513.6667, 303.5, 100, 89)",
@@ -1049,7 +1049,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d2.png, 453.6667, 363.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00A000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/success.png, 196.6667, 303, 150, 150)",
@@ -1057,12 +1057,12 @@ describe("Interactive Player", ()=> {
             ]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.lackOfMunitions).equalsTo(0);
     });
@@ -1070,7 +1070,7 @@ describe("Interactive Player", ()=> {
     it("Checks failed replenish munitions action process ", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.addOneLackOfMunitionsLevel();
             clickOnCounter(game, unit);
             clickOnReplenishMunitionsAction(game);
@@ -1079,10 +1079,10 @@ describe("Interactive Player", ()=> {
             rollFor(5, 6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d5.png, 513.6667, 303.5, 100, 89)",
@@ -1092,7 +1092,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d6.png, 453.6667, 363.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #A00000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/failure.png, 196.6667, 303, 150, 150)",
@@ -1100,12 +1100,12 @@ describe("Interactive Player", ()=> {
             ]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.lackOfMunitions).equalsTo(1);
     });
@@ -1117,16 +1117,16 @@ describe("Interactive Player", ()=> {
     it("Checks reorganize action opening and cancelling", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             unit.disrupt();
             clickOnCounter(game, unit);
             paint(game);
         when:
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnReorganizeAction(game);
             loadAllImages();
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
                     "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
@@ -1144,7 +1144,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/inserts/moral-insert.png, 5, 133.5, 444, 389)",
                 "restore()"
             ]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 479, 253.5, 100, 89)",
@@ -1155,11 +1155,11 @@ describe("Interactive Player", ()=> {
                 "restore()"
             ]);
         when:       // Clicking on the mask cancel the action
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
             assert(unit.isDisrupted()).isTrue();
             assert(unit.hasBeenActivated()).isFalse();
             assert(unit.hasBeenPlayed()).isFalse();
@@ -1168,7 +1168,7 @@ describe("Interactive Player", ()=> {
     it("Checks successfully reorganize action process ", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.disrupt();
             clickOnCounter(game, unit);
             clickOnReorganizeAction(game);
@@ -1177,10 +1177,10 @@ describe("Interactive Player", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 479, 253.5, 100, 89)",
@@ -1190,7 +1190,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d2.png, 419, 313.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00A000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/success.png, 374, 253, 150, 150)",
@@ -1198,12 +1198,12 @@ describe("Interactive Player", ()=> {
             ]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.isDisrupted()).isFalse();
     });
@@ -1211,7 +1211,7 @@ describe("Interactive Player", ()=> {
     it("Checks failed reorganize action process ", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.disrupt();
             clickOnCounter(game, unit);
             clickOnReorganizeAction(game);
@@ -1220,10 +1220,10 @@ describe("Interactive Player", ()=> {
             rollFor(5, 6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d5.png, 479, 253.5, 100, 89)",
@@ -1233,7 +1233,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d6.png, 419, 313.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #A00000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/failure.png, 374, 253, 150, 150)",
@@ -1241,12 +1241,12 @@ describe("Interactive Player", ()=> {
             ]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.isDisrupted()).isTrue();
     });
@@ -1258,17 +1258,17 @@ describe("Interactive Player", ()=> {
     it("Checks rally action opening and cancelling", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             unit.disrupt();
             unit.addOneCohesionLevel();
             clickOnCounter(game, unit);
             paint(game);
         when:
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnRallyAction(game);
             loadAllImages();
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
                     "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
@@ -1286,7 +1286,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/inserts/moral-insert.png, 5, 149.5, 444, 389)",
                 "restore()"
             ]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 479, 269.5, 100, 89)",
@@ -1297,11 +1297,11 @@ describe("Interactive Player", ()=> {
                 "restore()"
             ]);
         when:       // Clicking on the mask cancel the action
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
             assert(unit.isRouted()).isTrue();
             assert(unit.hasBeenActivated()).isFalse();
             assert(unit.hasBeenPlayed()).isFalse();
@@ -1310,7 +1310,7 @@ describe("Interactive Player", ()=> {
     it("Checks successfully rally action process ", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.disrupt();
             unit.addOneCohesionLevel();
             clickOnCounter(game, unit);
@@ -1320,10 +1320,10 @@ describe("Interactive Player", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 479, 269.5, 100, 89)",
@@ -1333,7 +1333,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d2.png, 419, 329.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00A000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/success.png, 374, 269, 150, 150)",
@@ -1341,12 +1341,12 @@ describe("Interactive Player", ()=> {
             ]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.isDisrupted()).isTrue();
     });
@@ -1354,7 +1354,7 @@ describe("Interactive Player", ()=> {
     it("Checks failed rally action process ", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.disrupt();
             unit.addOneCohesionLevel();
             clickOnCounter(game, unit);
@@ -1364,10 +1364,10 @@ describe("Interactive Player", ()=> {
             rollFor(5, 6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d5.png, 479, 269.5, 100, 89)",
@@ -1377,7 +1377,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d6.png, 419, 329.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #A00000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/failure.png, 374, 269, 150, 150)",
@@ -1385,12 +1385,12 @@ describe("Interactive Player", ()=> {
             ]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.isRouted()).isTrue();
     });
@@ -1439,16 +1439,16 @@ describe("Interactive Player", ()=> {
     it("Checks attacker engagement check appearance (and cancelling next action)", () => {
         given:
             var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
-            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             moveUnit1OnContactToUnit2(map, unit1, unit2);
         when:
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             var finished = false;
             player1.finishTurn(()=>{finished = true;})
             loadAllImages();
             paint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)",
                     "globalAlpha = 0.3",
@@ -1463,7 +1463,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/inserts/moral-insert.png, 439, 7.5, 444, 389)",
                 "restore()"
             ]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 499, 382, 100, 89)",
@@ -1473,22 +1473,22 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d1.png, 439, 442, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
         when:
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             clickOnMask(game);
             paint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
             assert(finished).isFalse();
     });
 
     it("Checks when a unit successfully pass an attacker engagement check", () => {
         given:
             var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
-            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             moveUnit1OnContactToUnit2(map, unit1, unit2);
             var finished = false;
             player1.finishTurn(()=>{finished=true;})
@@ -1497,10 +1497,10 @@ describe("Interactive Player", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 10",
                 "drawImage(/CBlades/images/dice/d1.png, 499, 382, 100, 89)",
@@ -1510,19 +1510,19 @@ describe("Interactive Player", ()=> {
                 "drawImage(/CBlades/images/dice/d2.png, 439, 442, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #00A000", "shadowBlur = 100",
                 "drawImage(/CBlades/images/dice/success.png, 374, 311.5, 150, 150)",
                 "restore()"]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit1.isDisrupted()).isFalse();
             assert(finished).isTrue();
     });
@@ -1530,7 +1530,7 @@ describe("Interactive Player", ()=> {
     it("Checks when a unit fail to pass an attacker engagement check", () => {
         given:
             var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
-            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             moveUnit1OnContactToUnit2(map, unit1, unit2);
             var finished = false;
             player1.finishTurn(()=>{finished=true;})
@@ -1539,10 +1539,10 @@ describe("Interactive Player", ()=> {
             rollFor(5,6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 10",
                 "drawImage(/CBlades/images/dice/d5.png, 499, 382, 100, 89)",
@@ -1552,19 +1552,19 @@ describe("Interactive Player", ()=> {
                 "drawImage(/CBlades/images/dice/d6.png, 439, 442, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #A00000", "shadowBlur = 100",
                 "drawImage(/CBlades/images/dice/failure.png, 374, 311.5, 150, 150)",
                 "restore()"]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit1.isDisrupted()).isTrue();
             assert(finished).isTrue();
     });
@@ -1580,15 +1580,15 @@ describe("Interactive Player", ()=> {
     it("Checks defender engagement check appearance (and cancelling selection)", () => {
         given:
             var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
-            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit1IsEngagedByUnit2(map, unit1, unit2);
         when:
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             player1.selectUnit(unit1, dummyEvent)
             loadAllImages();
             paint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
                     "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
@@ -1602,7 +1602,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/inserts/moral-insert.png, 439, 7.5, 444, 389)",
                 "restore()"
             ]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 499, 382, 100, 89)",
@@ -1612,21 +1612,21 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d1.png, 439, 442, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
         when:
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             clickOnMask(game);
             paint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
     });
 
     it("Checks when a unit successfully pass a defender engagement check", () => {
         given:
             var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
-            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit1IsEngagedByUnit2(map, unit1, unit2);
             player1.selectUnit(unit1, dummyEvent)
             loadAllImages();
@@ -1634,10 +1634,10 @@ describe("Interactive Player", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 10",
                 "drawImage(/CBlades/images/dice/d1.png, 499, 382, 100, 89)",
@@ -1647,17 +1647,17 @@ describe("Interactive Player", ()=> {
                 "drawImage(/CBlades/images/dice/d2.png, 439, 442, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #00A000", "shadowBlur = 100",
                 "drawImage(/CBlades/images/dice/success.png, 374, 311.5, 150, 150)",
                 "restore()"]);
             when:
                 clickOnResult(game);
-                resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+                resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
                 repaint(game);
             then:
-                assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([ // Action menu opened in modal mode
+                assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([ // Action menu opened in modal mode
                     "save()",
                         "shadowColor = #000000", "shadowBlur = 15",
                         "strokeStyle = #000000", "lineWidth = 1",
@@ -1667,14 +1667,14 @@ describe("Interactive Player", ()=> {
                         "fillRect(-125, -185, 250, 370)",
                     "restore()"
                 ]);
-                assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+                assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
                 assert(unit1.isDisrupted()).isFalse();
     });
 
     it("Checks when a unit failed to pass a defender engagement check", () => {
         given:
             var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
-            var [widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,"widgets", "widget-commands","widget-items");
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit1IsEngagedByUnit2(map, unit1, unit2);
             player1.selectUnit(unit1, dummyEvent)
             loadAllImages();
@@ -1682,10 +1682,10 @@ describe("Interactive Player", ()=> {
             rollFor(5,6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 10",
                 "drawImage(/CBlades/images/dice/d5.png, 499, 382, 100, 89)",
@@ -1695,17 +1695,17 @@ describe("Interactive Player", ()=> {
                 "drawImage(/CBlades/images/dice/d6.png, 439, 442, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #A00000", "shadowBlur = 100",
                 "drawImage(/CBlades/images/dice/failure.png, 374, 311.5, 150, 150)",
                 "restore()"]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([ // Action menu opened in modal mode
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([ // Action menu opened in modal mode
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "strokeStyle = #000000", "lineWidth = 1",
@@ -1715,7 +1715,7 @@ describe("Interactive Player", ()=> {
                     "fillRect(-125, -185, 250, 370)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit1.isDisrupted()).isTrue();
     });
 
@@ -1740,17 +1740,17 @@ describe("Interactive Player", ()=> {
     it("Checks shock attack action actuator appearance when support is possible", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
-            var [actuatorsLevel] = getLevels(game, "actuators");
+            var [actuatorsLayer] = getLayers(game.board, "actuators");
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 7));
             clickOnCounter(game, unit1);
             clickOnShockAttackAction(game);
             loadAllImages();
         when:
-            resetDirectives(actuatorsLevel);
+            resetDirectives(actuatorsLayer);
             repaint(game);
         then:
-            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 407.3714, 427.6962)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
@@ -1774,7 +1774,7 @@ describe("Interactive Player", ()=> {
     it("Checks shock attack action actuator appearance when support is not possible", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
-            var [actuatorsLevel] = getLevels(game, "actuators");
+            var [actuatorsLayer] = getLayers(game.board, "actuators");
             unit1.move(map.getHex(5, 8));
             unit1.addOneTirednessLevel();
             unit1.addOneTirednessLevel();
@@ -1783,10 +1783,10 @@ describe("Interactive Player", ()=> {
             clickOnShockAttackAction(game);
             loadAllImages();
         when:
-            resetDirectives(actuatorsLevel);
+            resetDirectives(actuatorsLayer);
             repaint(game);
         then:
-            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 416.6672, 422.3292)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
@@ -1803,7 +1803,7 @@ describe("Interactive Player", ()=> {
     it("Checks shock resolution appearance (and cancelling shock attack action)", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
-            var [actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,
+            var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
                 "actuators", "widgets", "widget-commands","widget-items"
             );
             unit1.move(map.getHex(5, 8));
@@ -1813,12 +1813,12 @@ describe("Interactive Player", ()=> {
             loadAllImages();
             let shockAttackActuator = getShockAttackActuator(game);
         when:
-            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
             clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
             loadAllImages();
         then:
-            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
                     "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
@@ -1832,7 +1832,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/inserts/shock-attack-insert.png, 68.8294, 137, 405, 658)",
                 "restore()"
             ]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 481.3294, 162.5, 100, 89)",
@@ -1842,21 +1842,21 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d1.png, 421.3294, 222.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
         when:
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             clickOnMask(game);
             paint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
     });
 
     it("Checks when a unit successfully shock attack", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
-            var [actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,
+            var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
                 "actuators", "widgets", "widget-commands","widget-items"
             );
             unit1.move(map.getHex(5, 8));
@@ -1865,17 +1865,17 @@ describe("Interactive Player", ()=> {
             clickOnCounter(game, unit1);
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
-            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
             clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
             loadAllImages();
         when:
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 481.3294, 162.5, 100, 89)",
@@ -1885,7 +1885,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d2.png, 421.3294, 222.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00A000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/success.png, 356.3294, 102, 150, 150)",
@@ -1894,14 +1894,14 @@ describe("Interactive Player", ()=> {
         when:
             clickOnResult(game);
             loadAllImages();
-            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit1.hasBeenPlayed()).isTrue();
             assert(game.focusedUnit).equalsTo(unit2);
-            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/actuators/blood.png, -222.5, -367.3125, 104, 144)",
@@ -1931,7 +1931,7 @@ describe("Interactive Player", ()=> {
     it("Checks when a unit fails to shock attack", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
-            var [actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,
+            var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
                 "actuators", "widgets", "widget-commands","widget-items"
             );
             unit1.move(map.getHex(5, 8));
@@ -1940,17 +1940,17 @@ describe("Interactive Player", ()=> {
             clickOnCounter(game, unit1);
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
-            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
             clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
             loadAllImages();
         when:
             rollFor(5,6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #000000", "shadowBlur = 10",
                 "drawImage(/CBlades/images/dice/d5.png, 481.3294, 162.5, 100, 89)",
@@ -1960,7 +1960,7 @@ describe("Interactive Player", ()=> {
                 "drawImage(/CBlades/images/dice/d6.png, 421.3294, 222.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "shadowColor = #A00000", "shadowBlur = 100",
                 "drawImage(/CBlades/images/dice/failure.png, 356.3294, 102, 150, 150)",
@@ -1969,20 +1969,20 @@ describe("Interactive Player", ()=> {
         when:
             clickOnResult(game);
             loadAllImages();
-            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit1.hasBeenPlayed()).isTrue();
             assert(game.focusedUnit).isNotDefined();
-            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
 
     it("Checks when a unit retreat", () => {
         given:
             var { game, map, player1, unit1, unit2 } = create2PlayersTinyGame();
-            var [actuatorsLevel, unitsLevel] = getLevels(game,
+            var [actuatorsLayer, unitsLayer] = getLayers(game.board,
                 "actuators", "units"
             );
             unit1.move(map.getHex(5, 8));
@@ -2000,10 +2000,10 @@ describe("Interactive Player", ()=> {
             var retreatActuator = getRetreatActuator(game);
             clickOnTrigger(game, retreatActuator.getTrigger(0));
             loadAllImages();
-            resetDirectives(actuatorsLevel, unitsLevel);
+            resetDirectives(actuatorsLayer, unitsLayer);
             repaint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #FF0000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/unit1.png, -241.5, -169.4375, 142, 142)",
@@ -2014,13 +2014,13 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/units/misc/unit2.png, -241.5, -563.1875, 142, 142)",
                 "restore()"
             ]);
-            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
 
     it("Checks when a unit take a loss", () => {
         given:
             var { game, map, player1, unit1, unit2 } = create2PlayersTinyGame();
-            var [actuatorsLevel, unitsLevel] = getLevels(game,
+            var [actuatorsLayer, unitsLayer] = getLayers(game.board,
                 "actuators", "units"
             );
             unit1.move(map.getHex(5, 8));
@@ -2038,10 +2038,10 @@ describe("Interactive Player", ()=> {
             var retreatActuator = getRetreatActuator(game);
             clickOnTrigger(game, retreatActuator.getLossTrigger());
             loadAllImages();
-            resetDirectives(actuatorsLevel, unitsLevel);
+            resetDirectives(actuatorsLayer, unitsLayer);
             repaint(game);
         then:
-            assert(getDirectives(unitsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #FF0000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/unit1.png, -241.5, -169.4375, 142, 142)",
@@ -2052,7 +2052,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/units/misc/unit2b.png, -241.5, -366.3125, 142, 142)",
                 "restore()"
             ]);
-            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
 
     function clickOnFireAttackAction(game) {
@@ -2069,7 +2069,7 @@ describe("Interactive Player", ()=> {
     it("Checks fire attack action actuator appearance", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
-            var [actuatorsLevel] = getLevels(game, "actuators");
+            var [actuatorsLayer] = getLayers(game.board, "actuators");
             unit1.move(map.getHex(5, 8));
             unit1.addOneTirednessLevel();
             unit1.addOneTirednessLevel();
@@ -2078,10 +2078,10 @@ describe("Interactive Player", ()=> {
             clickOnFireAttackAction(game);
             loadAllImages();
         when:
-            resetDirectives(actuatorsLevel);
+            resetDirectives(actuatorsLayer);
             repaint(game);
         then:
-            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 368.555, 409.4376)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
@@ -2098,7 +2098,7 @@ describe("Interactive Player", ()=> {
     it("Checks fire resolution appearance (and cancelling fire attack action)", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
-            var [actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,
+            var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
                 "actuators", "widgets", "widget-commands","widget-items"
             );
             unit1.move(map.getHex(5, 8));
@@ -2108,12 +2108,12 @@ describe("Interactive Player", ()=> {
             loadAllImages();
             let fireAttackActuator = getFireAttackActuator(game);
         when:
-            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
             clickOnTrigger(game, fireAttackActuator.getTrigger(unit2));
             loadAllImages();
         then:
-            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)",
                     "globalAlpha = 0.3", "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
@@ -2127,7 +2127,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/inserts/fire-attack-insert.png, 54.1667, 129, 405, 658)",
                 "restore()"
             ]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 466.6667, 154.5, 100, 89)",
@@ -2137,21 +2137,21 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d1.png, 406.6667, 214.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
         when:
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             clickOnMask(game);
             paint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
     });
 
     it("Checks when a unit successfully fire attack", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
-            var [actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,
+            var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
                 "actuators", "widgets", "widget-commands","widget-items"
             );
             unit1.move(map.getHex(5, 8));
@@ -2160,17 +2160,17 @@ describe("Interactive Player", ()=> {
             clickOnCounter(game, unit1);
             clickOnFireAttackAction(game);
             let fireAttackActuator = getFireAttackActuator(game);
-            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
             clickOnTrigger(game, fireAttackActuator.getTrigger(unit2));
             loadAllImages();
         when:
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 466.6667, 154.5, 100, 89)",
@@ -2180,7 +2180,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d2.png, 406.6667, 214.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00A000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/success.png, 341.6667, 94, 150, 150)",
@@ -2189,14 +2189,14 @@ describe("Interactive Player", ()=> {
         when:
             clickOnResult(game);
             loadAllImages();
-            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit1.hasBeenPlayed()).isTrue();
             assert(game.focusedUnit).equalsTo(unit2);
-            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/actuators/blood.png, -222.5, -564.1875, 104, 144)",
@@ -2226,7 +2226,7 @@ describe("Interactive Player", ()=> {
     it("Checks when a unit fails to fire attack", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
-            var [actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel] = getLevels(game,
+            var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
                 "actuators", "widgets", "widget-commands","widget-items"
             );
             unit1.move(map.getHex(5, 8));
@@ -2235,17 +2235,17 @@ describe("Interactive Player", ()=> {
             clickOnCounter(game, unit1);
             clickOnFireAttackAction(game);
             let fireAttackActuator = getFireAttackActuator(game);
-            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
             clickOnTrigger(game, fireAttackActuator.getTrigger(unit2));
             loadAllImages();
         when:
             rollFor(5,6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d5.png, 466.6667, 162.5, 100, 89)",
@@ -2255,7 +2255,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d6.png, 406.6667, 222.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #A00000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/failure.png, 341.6667, 102, 150, 150)",
@@ -2264,20 +2264,20 @@ describe("Interactive Player", ()=> {
         when:
             clickOnResult(game);
             loadAllImages();
-            resetDirectives(actuatorsLevel, widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit1.hasBeenPlayed()).isTrue();
             assert(game.focusedUnit).isNotDefined();
-            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
 
     it("Checks when double on dice lower firer ammunitions", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
-            var [markersLevel] = getLevels(game,"markers");
+            var [markersLayer] = getLayers(game.board,"markers");
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 7));
             clickOnCounter(game, unit1);
@@ -2289,10 +2289,10 @@ describe("Interactive Player", ()=> {
             clickOnDice(game);
             executeAllAnimations();
             loadAllImages();
-            resetDirectives(markersLevel);
+            resetDirectives(markersLayer);
             repaint(game);
         then:
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/scarceamno.png, -202.5, -59.4375, 64, 64)",
@@ -2331,15 +2331,15 @@ describe("Interactive Player", ()=> {
     it("Checks take command action opening and cancelling", () => {
         given:
             var {game, wing, leader} = createTinyGameWithLeader();
-            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             clickOnCounter(game, leader);
             paint(game);
         when:
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnTakeCommandAction(game);
             loadAllImages();
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
                     "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
@@ -2353,7 +2353,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/inserts/command-insert.png, 5, 23.1122, 444, 680)",
                 "restore()"
             ]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 499, 348.6122, 100, 89)",
@@ -2364,18 +2364,18 @@ describe("Interactive Player", ()=> {
                 "restore()"
             ]);
         when:       // Clicking on the mask cancel the action
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
             assert(wing.leader).isNotDefined();
     });
 
     it("Checks successfully take command action process ", () => {
         given:
             var {game, wing, leader} = createTinyGameWithLeader();
-            var [widgetsLevel, itemsLevel, commandsLevel] = getLevels(game,"widgets", "widget-items", "widget-commands");
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             clickOnCounter(game, leader);
             clickOnTakeCommandAction(game);
             loadAllImages();
@@ -2383,10 +2383,10 @@ describe("Interactive Player", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 499, 348.6122, 100, 89)",
@@ -2396,7 +2396,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d2.png, 439, 408.6122, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00A000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/success.png, 374, 288.1122, 150, 150)",
@@ -2404,12 +2404,12 @@ describe("Interactive Player", ()=> {
             ]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(wing.leader).equalsTo(leader);
             assert(leader.hasBeenPlayed()).isTrue();
     });
@@ -2417,7 +2417,7 @@ describe("Interactive Player", ()=> {
     it("Checks failed take command action process ", () => {
         given:
             var {game, wing, leader} = createTinyGameWithLeader();
-            var [widgetsLevel, itemsLevel, commandsLevel] = getLevels(game,"widgets", "widget-items", "widget-commands");
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             clickOnCounter(game, leader);
             clickOnTakeCommandAction(game);
             loadAllImages();
@@ -2425,10 +2425,10 @@ describe("Interactive Player", ()=> {
             rollFor(5,6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d5.png, 499, 348.6122, 100, 89)",
@@ -2438,7 +2438,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d6.png, 439, 408.6122, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #A00000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/failure.png, 374, 288.1122, 150, 150)",
@@ -2446,12 +2446,12 @@ describe("Interactive Player", ()=> {
             ]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(wing.leader).isNotDefined();
             assert(leader.hasBeenPlayed()).isTrue();
     });
@@ -2463,16 +2463,16 @@ describe("Interactive Player", ()=> {
     it("Checks dismiss command action opening and cancelling", () => {
         given:
             var {game, wing, leader} = createTinyGameWithLeader();
-            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             wing.setLeader(leader);
             clickOnCounter(game, leader);
             paint(game);
         when:
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnDismissCommandAction(game);
             loadAllImages();
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
                     "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
@@ -2486,7 +2486,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/inserts/command-insert.png, 5, 23.1122, 444, 680)",
                 "restore()"
             ]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 499, 348.6122, 100, 89)",
@@ -2497,18 +2497,18 @@ describe("Interactive Player", ()=> {
                 "restore()"
             ]);
         when:       // Clicking on the mask cancel the action
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
             assert(wing.leader).equalsTo(leader);
     });
 
     it("Checks successfully dismiss command action process ", () => {
         given:
             var {game, wing, leader} = createTinyGameWithLeader();
-            var [widgetsLevel, itemsLevel, commandsLevel] = getLevels(game,"widgets", "widget-items", "widget-commands");
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             wing.setLeader(leader);
             clickOnCounter(game, leader);
             clickOnDismissCommandAction(game);
@@ -2517,10 +2517,10 @@ describe("Interactive Player", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 499, 348.6122, 100, 89)",
@@ -2530,7 +2530,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d2.png, 439, 408.6122, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00A000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/success.png, 374, 288.1122, 150, 150)",
@@ -2538,12 +2538,12 @@ describe("Interactive Player", ()=> {
             ]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(wing.leader).isNotDefined();
             assert(leader.hasBeenPlayed()).isTrue();
     });
@@ -2551,7 +2551,7 @@ describe("Interactive Player", ()=> {
     it("Checks failed dismiss command action process ", () => {
         given:
             var {game, wing, leader} = createTinyGameWithLeader();
-            var [widgetsLevel, itemsLevel, commandsLevel] = getLevels(game,"widgets", "widget-items", "widget-commands");
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             wing.setLeader(leader);
             clickOnCounter(game, leader);
             clickOnDismissCommandAction(game);
@@ -2560,10 +2560,10 @@ describe("Interactive Player", ()=> {
             rollFor(5,6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d5.png, 499, 348.6122, 100, 89)",
@@ -2573,7 +2573,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d6.png, 439, 408.6122, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #A00000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/failure.png, 374, 288.1122, 150, 150)",
@@ -2581,12 +2581,12 @@ describe("Interactive Player", ()=> {
             ]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(wing.leader).equalsTo(leader);
             assert(leader.hasBeenPlayed()).isTrue();
     });
@@ -2598,16 +2598,16 @@ describe("Interactive Player", ()=> {
     it("Checks change orders command action opening and cancelling", () => {
         given:
             var {game, wing, leader} = createTinyGameWithLeader();
-            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             wing.setLeader(leader);
             clickOnCounter(game, leader);
             paint(game);
         when:
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnChangeOrdersCommandAction(game);
             loadAllImages();
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
                     "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
@@ -2621,7 +2621,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/inserts/command-insert.png, 5, 23.1122, 444, 680)",
                 "restore()"
             ]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 499, 348.6122, 100, 89)",
@@ -2632,18 +2632,18 @@ describe("Interactive Player", ()=> {
                 "restore()"
             ]);
         when:       // Clicking on the mask cancel the action
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
             assert(wing.orderInstruction).equalsTo(CBOrderInstruction.DEFEND);
     });
 
     it("Checks failed change order command action process ", () => {
         given:
             var {game, wing, leader} = createTinyGameWithLeader();
-            var [widgetsLevel, itemsLevel, commandsLevel] = getLevels(game,"widgets", "widget-items", "widget-commands");
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             wing.setLeader(leader);
             clickOnCounter(game, leader);
             clickOnChangeOrdersCommandAction(game);
@@ -2652,10 +2652,10 @@ describe("Interactive Player", ()=> {
             rollFor(5,6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d5.png, 499, 348.6122, 100, 89)",
@@ -2665,7 +2665,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d6.png, 439, 408.6122, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #A00000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/failure.png, 374, 288.1122, 150, 150)",
@@ -2673,12 +2673,12 @@ describe("Interactive Player", ()=> {
             ]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(wing.orderInstruction).equalsTo(CBOrderInstruction.DEFEND);
             assert(leader.hasBeenPlayed()).isTrue();
     });
@@ -2686,7 +2686,7 @@ describe("Interactive Player", ()=> {
     it("Checks successfully change order command action process ", () => {
         given:
             var {game, wing, leader} = createTinyGameWithLeader();
-            var [widgetsLevel, itemsLevel, commandsLevel] = getLevels(game,"widgets", "widget-items", "widget-commands");
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             wing.setLeader(leader);
             clickOnCounter(game, leader);
             clickOnChangeOrdersCommandAction(game);
@@ -2695,10 +2695,10 @@ describe("Interactive Player", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 499, 348.6122, 100, 89)",
@@ -2708,7 +2708,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/dice/d2.png, 439, 408.6122, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00A000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/success.png, 374, 288.1122, 150, 150)",
@@ -2716,11 +2716,11 @@ describe("Interactive Player", ()=> {
             ]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLevel, commandsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             loadAllImages();
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
                     "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
@@ -2734,7 +2734,7 @@ describe("Interactive Player", ()=> {
                     "fillRect(-65, -65, 130, 130)",
                 "restore()"
             ]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "drawImage(/CBlades/images/markers/attack.png, 306.6667, 338.1122, 50, 50)",
                 "restore()",
@@ -2748,14 +2748,14 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/markers/retreat.png, 366.6667, 398.1122, 50, 50)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
         when: // click mask is ignored
             clickOnMask(game);
-            resetDirectives(widgetsLevel);
+            resetDirectives(widgetsLayer);
             loadAllImages();
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
                     "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
@@ -2781,7 +2781,7 @@ describe("Interactive Player", ()=> {
     it("Checks successfully change order command action process ", () => {
         given:
             var {game, wing, leader} = createTinyGameWithLeader();
-            var [widgetsLevel] = getLevels(game,"widgets", "widget-items", "widget-commands");
+            var [widgetsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             wing.setLeader(leader);
             clickOnCounter(game, leader);
             clickOnChangeOrdersCommandAction(game);
@@ -2791,37 +2791,37 @@ describe("Interactive Player", ()=> {
             clickOnResult(game);
             clickOnChangeOrderMenu(game, 0, 0);
             loadAllImages();
-            resetDirectives(widgetsLevel);
+            resetDirectives(widgetsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
             assert(wing.orderInstruction).equalsTo(CBOrderInstruction.ATTACK);
         when:
             Memento.undo();
             clickOnChangeOrderMenu(game, 0, 1);
             loadAllImages();
-            resetDirectives(widgetsLevel);
+            resetDirectives(widgetsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
             assert(wing.orderInstruction).equalsTo(CBOrderInstruction.REGROUP);
         when:
             Memento.undo();
             clickOnChangeOrderMenu(game, 1, 0);
             loadAllImages();
-            resetDirectives(widgetsLevel);
+            resetDirectives(widgetsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
             assert(wing.orderInstruction).equalsTo(CBOrderInstruction.DEFEND);
         when:
             Memento.undo();
             clickOnChangeOrderMenu(game, 1, 1);
             loadAllImages();
-            resetDirectives(widgetsLevel);
+            resetDirectives(widgetsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
             assert(wing.orderInstruction).equalsTo(CBOrderInstruction.RETREAT);
     });
 
@@ -2832,16 +2832,16 @@ describe("Interactive Player", ()=> {
     it("Checks give orders command action opening and cancelling", () => {
         given:
             var {game, wing, leader} = createTinyGameWithLeader();
-            var [widgetsLevel, itemsLevel] = getLevels(game,"widgets", "widget-items");
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             wing.setLeader(leader);
             clickOnCounter(game, leader);
             paint(game);
         when:
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnGiveOrdersCommandAction(game);
             loadAllImages();
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3",
                     "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
@@ -2851,18 +2851,18 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/inserts/orders-given-insert.png, 124.6667, 13.1122, 356, 700)",
                 "restore()"
             ]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, 470.6667, 318.6122, 100, 89)",
                 "restore()"
             ]);
         when:       // Clicking on the mask cancel the action
-            resetDirectives(widgetsLevel, itemsLevel);
+            resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
             assert(leader.commandPoints).equalsTo(0);
     });
 
@@ -2871,7 +2871,7 @@ describe("Interactive Player", ()=> {
     }
 
     function clickOnMessage(game) {
-        var [commandsLevel] = getLevels(game,"widget-commands");
+        var commandsLevel = game.board.getLevel("widget-commands");
         for (let item of commandsLevel.artifacts) {
             if (item.element instanceof DMessage) {
                 let itemLocation = item.viewportLocation;
@@ -2892,8 +2892,8 @@ describe("Interactive Player", ()=> {
     it("Checks give orders command action process", () => {
         given:
             var {game, wing, unit1, unit2, leader} = create2UnitsTinyGame();
-            var [markersLevel, actuatorsLevel, widgetsLevel, itemsLevel, commandsLevel] =
-                getLevels(game,"markers", "actuators", "widgets", "widget-items", "widget-commands");
+            var [markersLayer, actuatorsLayer, widgetsLayer, itemsLayer, commandsLayer] =
+                getLayers(game.board,"markers", "actuators", "widgets", "widget-items", "widget-commands");
             wing.setLeader(leader);
             clickOnCounter(game, leader);
             clickOnGiveOrdersCommandAction(game);
@@ -2902,16 +2902,16 @@ describe("Interactive Player", ()=> {
             rollFor1Die(4);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLevel, itemsLevel);
+            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d4.png, 554, 366.7243, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "drawImage(/CBlades/images/dice/message.png, 489, 336.2243, 150, 150)",
                 "restore()",
@@ -2925,13 +2925,13 @@ describe("Interactive Player", ()=> {
             ]);
         when:
             clickOnMessage(game);
-            resetDirectives(markersLevel, widgetsLevel, commandsLevel, itemsLevel, actuatorsLevel);
+            resetDirectives(markersLayer, widgetsLayer, commandsLayer, itemsLayer, actuatorsLayer);
             loadAllImages();
             repaint(game);
         then:
-            assert(getDirectives(itemsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([]);
-            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/actuators/order.png, -207, -202.4375, 73, 68)",
@@ -2941,7 +2941,7 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/actuators/order.png, 304.5, -300.875, 73, 68)",
                 "restore()"
             ]);
-            assert(getDirectives(markersLevel, 6)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 6)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/defend.png, 31, 156.875, 80, 80)",
@@ -2954,18 +2954,18 @@ describe("Interactive Player", ()=> {
         when:
             var giveOrdersActuator = getGiveOrdersActuator(game);
             var trigger = giveOrdersActuator.getTrigger(unit1);
-            resetDirectives(markersLevel, actuatorsLevel);
+            resetDirectives(markersLayer, actuatorsLayer);
             clickOnTrigger(game, trigger);
             loadAllImages();
             paint(game);
         then:
-            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/actuators/order.png, 304.5, -300.875, 73, 68)",
                 "restore()"
             ]);
-            assert(getDirectives(markersLevel, 4)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/defend.png, 31, 156.875, 80, 80)",

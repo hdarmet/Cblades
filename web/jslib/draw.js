@@ -31,6 +31,10 @@ let _targetPlatform = {
         window.clearTimeout(token);
     },
 
+    insertBefore(parent, childToInsert, beforeChild) {
+        parent.insertBefore(childToInsert, beforeChild);
+    },
+
     appendChild(parent, child) {
         parent.appendChild(child);
     },
@@ -422,6 +426,14 @@ export class DDraw {
 
     createLayer(name) {
         return this.addLayer(new DLayer(name));
+    }
+
+    insertLayer(layer, before) {
+        layer.setDraw(this, this._dimension);
+        this._layers.set(layer.name, layer);
+        _platform.insertBefore(this._root, layer.root, before.root);
+        layer.updateTransform(this._transform);
+        return layer;
     }
 
     addLayer(layer) {

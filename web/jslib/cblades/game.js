@@ -4,17 +4,17 @@ import {
     atan2, Point2D, Dimension2D
 } from "../geometry.js";
 import {
-    DImage, DStaticLayer
+    DImage, DLayer
 } from "../draw.js";
 import {
     Mechanisms,
     Memento
 } from "../mechanisms.js";
 import {
-    DBoard, DElement, DImageArtifact, DMultiImageArtifact
+    DBoard, DElement, DImageArtifact, DSimpleLevel, DLayeredLevel, DStaticLevel, DMultiImageArtifact
 } from "../board.js";
 import {
-    DPopup, DPushButton
+    DPushButton
 } from "../widget.js";
 
 export let CBMovement = {
@@ -257,10 +257,14 @@ export class CBGame {
 
     constructor() {
         this._board = new DBoard(new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT), new Dimension2D(1000, 800),
-            "map", "units", "markers", "actuators",
-            new DStaticLayer("widgets"),
-            new DStaticLayer("widget-items"),
-            new DStaticLayer("widget-commands"));
+            new DSimpleLevel("map"),
+            new DLayeredLevel("units", (artifact, [unitsLayer, markersLayer])=>{
+                return (artifact instanceof UnitImageArtifact) ? unitsLayer : markersLayer
+            }, new DLayer("units"), new DLayer("markers")),
+            new DSimpleLevel("actuators"),
+            new DStaticLevel("widgets"),
+            new DStaticLevel("widget-items"),
+            new DStaticLevel("widget-commands"));
         this._board.setZoomSettings(1.5, 1);
         this._board.setScrollSettings(20, 10);
         this._board.scrollOnBordersOnMouseMove();
@@ -1049,7 +1053,7 @@ export class CBUnit extends CBCounter {
     }
 
     createMarkerArtifact(path, slot) {
-        let marker = new CounterImageArtifact(this,"markers", [DImage.getImage(path)],
+        let marker = new CounterImageArtifact(this,"units", [DImage.getImage(path)],
             CBUnit.MARKERS_POSITION[slot], CBUnit.MARKER_DIMENSION);
         this._element.appendArtifact(marker);
         return marker;
@@ -1561,7 +1565,7 @@ export class CBCharacter extends CBUnit {
     }
 
     createOrderInstructionArtifact(orderInstruction) {
-        let marker = new CounterImageArtifact(this,"markers",
+        let marker = new CounterImageArtifact(this,"units",
             [DImage.getImage(CBCharacter.ORDER_INSTRUCTION_PATHS[orderInstruction])],
             CBUnit.MARKERS_POSITION[6], CBCharacter.ORDER_INSTRUCTION_DIMENSION);
         return marker;
