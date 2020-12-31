@@ -87,11 +87,10 @@ export class DPanel extends RectArtifact(DArtifact) {
         super(dimension,"widgets", new Point2D(0, 0));
     }
 
-    paint() {
+    _paint() {
         console.assert(this._level);
         this._level.setShadowSettings('#000000', 15);
         this._level.setStrokeSettings('#000000', 1);
-        this._level.setTransformSettings(this.transform);
         this._level.drawRect(
             new Point2D(-this.dimension.w/2, -this.dimension.h/2),
             this.dimension);
@@ -394,7 +393,7 @@ export class DPushButton extends DElement {
 
     _adjustLocation() {
         if (this._artifact && this._artifact.level) {
-            let rightBottomPoint = this._artifact.level.finalPoint;
+            let rightBottomPoint = this._artifact.level.getFinalPoint(this._artifact);
             let x = this._position.x >= 0 ? this._position.x : rightBottomPoint.x + this._position.x;
             let y = this._position.y >= 0 ? this._position.y : rightBottomPoint.y + this._position.y;
             this.setLocation(new Point2D(x, y));
@@ -813,9 +812,8 @@ class DMaskArtifact extends DArtifact {
         this._alpha = alpha;
     }
 
-    paint() {
+    _paint() {
         console.assert(this._level);
-        this._level.setTransformSettings(Matrix2D.getIdentity());
         this._level.setAlphaSettings(this._alpha);
         this._level.setFillSettings(this._color);
         this._level.fillRect(new Point2D(0, 0), this._level.viewportDimension);
@@ -830,7 +828,7 @@ class DMaskArtifact extends DArtifact {
     }
 
     get transform() {
-        return Matrix2D.getIdentity();
+        return Matrix2D.IDENTITY;
     }
 
     onMouseClick(event) {

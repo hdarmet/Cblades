@@ -269,7 +269,7 @@ export class DLayer {
     setTransformSettings(matrix) {
         this._execute(()=> {
             let transform = this.transform && matrix ? matrix.concat(this.transform) : this.transform || matrix;
-            transform && _platform.setTransform(this._context, ...transform.toArray());
+            _platform.setTransform(this._context, ...transform.toArray());
         });
         return this;
     }
@@ -350,9 +350,8 @@ export class DLayer {
     }
 
     setTransform(matrix) {
-        this._transform = matrix;
         this._execute(()=> {
-            _platform.setTransform(this._context, ...matrix.toArray());
+            this._transform = matrix;
         });
         return this;
     }
@@ -364,6 +363,7 @@ export class DLayer {
     }
 
     clear() {
+        // DONT include in a execute() method !
         _platform.save(this._context);
         _platform.resetTransform(this._context);
         _platform.clearRect(this._context, 0, 0, this._dimension.w, this._dimension.h);
@@ -397,6 +397,20 @@ export class DLayer {
     }
 }
 
+export class DTranslateLayer extends DLayer {
+
+    constructor(name, translate) {
+        super(name);
+        this._translate = translate;
+        this.setTransform(translate);
+    }
+
+    updateTransform(matrix) {
+        super.updateTransform(this._translate.concat(matrix));
+    }
+
+}
+
 /**
  * A DLayer that does not update its transform when Board transform is modified
  */
@@ -404,7 +418,7 @@ export class DStaticLayer extends DLayer {
 
     constructor(name) {
         super(name);
-        this.setTransform(Matrix2D.getIdentity());
+        this.setTransform(Matrix2D.IDENTITY);
     }
 
     updateTransform(matrix) {}
@@ -421,27 +435,40 @@ export class DDraw {
         _platform.setAttribute(this.root, "style", `width: ${this._dimension.w}px; height:${this._dimension.h}px; border: 1px solid; position: relative`);
         _platform.setAttribute(this.root, "tabindex", "0");
         this._layers = new Map();
-        this._transform = Matrix2D.getIdentity();
+        this._layersArray = [];
+        this._transform = Matrix2D.IDENTITY;
     }
 
     createLayer(name) {
         return this.addLayer(new DLayer(name));
     }
 
-    insertLayer(layer, before) {
+    addLayer(layer) {
         layer.setDraw(this, this._dimension);
+        _platform.appendChild(this._root, layer.root);
         this._layers.set(layer.name, layer);
-        _platform.insertBefore(this._root, layer.root, before.root);
+        this._layersArray.push(layer);
         layer.updateTransform(this._transform);
         return layer;
     }
 
-    addLayer(layer) {
+    setLayer(layer, index) {
         layer.setDraw(this, this._dimension);
+        _platform.insertBefore(this._root, layer.root, this._layersArray[index].root);
         this._layers.set(layer.name, layer);
-        _platform.appendChild(this._root, layer.root);
+        this._layersArray.splice(index, 0, layer);
         layer.updateTransform(this._transform);
         return layer;
+    }
+
+    insertLayerBefore(layer, beforeLayer) {
+        let index = this._layers.indexOf(beforeLayer);
+        return this.setLayer(layer, index);
+    }
+
+    insertLayerAfter(layer, previousLayer) {
+        let index = this._layersArray.indexOf(previousLayer);
+        return index===this._layersArray.length-1 ? this.addLayer(layer) : this.setLayer(layer, index+1);
     }
 
     getLayer(name) {

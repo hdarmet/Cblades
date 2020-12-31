@@ -469,6 +469,4 @@ Matrix2D.scale = function(scale, center) {
 Matrix2D.rotate = function(angle, center) {
     return new Matrix2D()._rotate(angle, center);
 };
-Matrix2D.getIdentity = function() {
-    return new Matrix2D();
-};
+Matrix2D.IDENTITY = new Matrix2D();

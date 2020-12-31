@@ -45,7 +45,7 @@ describe("Drawing fundamentals", ()=> {
             assert(layer.root.width).equalsTo(500);
             assert(layer.root.height).equalsTo(300);
             assert(layer.draw).equalsTo(draw);
-            assert(getDirectives(layer)[0]).equalsTo('setTransform(1, 0, 0, 1, 0, 0)');
+            assert(getDirectives(layer)).arrayEqualsTo([]);
     });
 
     it("Checks Static Layer", () => {
@@ -98,6 +98,7 @@ describe("Drawing fundamentals", ()=> {
         when:
             resetDirectives(layer);
             draw.setTransform(new Matrix2D(2, 0, 0, 2, 20, 20));
+            layer.setTransformSettings(Matrix2D.IDENTITY);
         then:
             assert(draw.transform.toArray()).arrayEqualsTo([2, 0, 0, 2, 20, 20]);
             assert(getDirectives(layer)[0]).equalsTo('setTransform(2, 0, 0, 2, 20, 20)');
@@ -108,10 +109,11 @@ describe("Drawing fundamentals", ()=> {
     it("Checks set translate on DDraw", () => {
         given:
             var draw = buildBasicDrawWithOneLayerNamedLayer1();
-        var layer = draw.getLayer("layer1");
+            var layer = draw.getLayer("layer1");
         when:
             resetDirectives(layer);
             draw.setTranslate(new Point2D(10, 15));
+            layer.setTransformSettings(Matrix2D.IDENTITY);
         then:
             assert(getDirectives(layer)[0]).equalsTo('setTransform(1, 0, 0, 1, 10, 15)');
     });
@@ -190,8 +192,10 @@ describe("Drawing fundamentals", ()=> {
             var image3 = DImage.getImage("here/where/three.typ");
             layer.drawImage(image1, 10, 10);
             layer.drawRect(new Point2D(10, 15), new Dimension2D(20, 25));
+            layer.setTransformSettings(Matrix2D.IDENTITY);
             layer.drawImage(image2, 10, 10);
             draw.setTranslate(new Point2D(10, 15));
+            layer.setTransformSettings(Matrix2D.IDENTITY);
             layer.drawImage(image3, 10, 10);
             layer.fillRect(new Point2D(10, 15), new Dimension2D(20, 25));
         then:
@@ -199,9 +203,11 @@ describe("Drawing fundamentals", ()=> {
         when: /* loads the first image: the requested draw directive is done for image1 only **/
             image1._root.onload();
         then:
-            assert(getDirectives(layer).length).equalsTo(2);
-            assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/one.typ, 10, 10)');
-            assert(getDirectives(layer)[1]).equalsTo('strokeRect(10, 15, 20, 25)');
+            assert(getDirectives(layer)).arrayEqualsTo([
+                "drawImage(here/where/one.typ, 10, 10)",
+                "strokeRect(10, 15, 20, 25)",
+                "setTransform(1, 0, 0, 1, 0, 0)"
+            ]);
         when: /* load on image that is not the next to draw : no drawing are done */
             resetDirectives(layer);
             image3._root.onload();
@@ -210,10 +216,12 @@ describe("Drawing fundamentals", ()=> {
         when: /* load on image that is not the next to draw : no drawing are done */
             image2._root.onload();
         then:
-            assert(getDirectives(layer)[0]).equalsTo('drawImage(here/where/two.typ, 10, 10)');
-            assert(getDirectives(layer)[1]).equalsTo('setTransform(1, 0, 0, 1, 10, 15)');
-            assert(getDirectives(layer)[2]).equalsTo('drawImage(here/where/three.typ, 10, 10)');
-            assert(getDirectives(layer)[3]).equalsTo('fillRect(10, 15, 20, 25)');
+            assert(getDirectives(layer)).arrayEqualsTo([
+                "drawImage(here/where/two.typ, 10, 10)",
+                "setTransform(1, 0, 0, 1, 10, 15)",
+                "drawImage(here/where/three.typ, 10, 10)",
+                "fillRect(10, 15, 20, 25)"
+            ]);
     });
 
     it("Checks DDraw resize", () => {

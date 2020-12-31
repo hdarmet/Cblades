@@ -122,20 +122,26 @@ describe("Board", ()=> {
         when:
             board.paint();
         then:
-            assert(getDirectives(layer).length).equalsTo(7);
             assertLayerIsCleared(0, layer)
             /* draws content */
-            assert(getDirectives(layer)[4]).equalsTo("save()");
-            assert(getDirectives(layer)[5]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
-            assert(getDirectives(layer)[6]).equalsTo("restore()");
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 350, 200)",
+                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
         when:
             resetDirectives(layer);
             element.setLocation(new Point2D(110, 70));
             board.paint();
         then:
-            assert(getDirectives(layer).length).equalsTo(7);
             assertLayerIsCleared(0, layer);
-            assert(getDirectives(layer)[5]).equalsTo("drawImage(../images/unit.png, 85, 45, 50, 50)");
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 360, 220)",
+                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
         when:
             resetDirectives(layer);
             element.removeFromBoard();
@@ -143,7 +149,6 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer).length).equalsTo(4);
             assertLayerIsCleared(0, layer);
-            assert(getDirectives(layer)[3]).equalsTo("restore()");
     });
 
     it("Checks element refresh feature", () => {
@@ -167,7 +172,7 @@ describe("Board", ()=> {
             element.refresh();
             board.paint();
         then:
-            assert(getDirectives(layer).length).equalsTo(11);
+            assert(getDirectives(layer).length).equalsTo(12);
             assert(getDirectives(layer)).arrayContains("../images/unit1.png");
             assert(getDirectives(layer)).arrayContains("../images/unit2.png");
         when:
@@ -179,7 +184,7 @@ describe("Board", ()=> {
             resetDirectives(layer);
             board.repaint(); // force repainting
         then:
-            assert(getDirectives(layer).length).equalsTo(11);
+            assert(getDirectives(layer).length).equalsTo(12);
             assert(getDirectives(layer)).arrayContains("../images/unit1.png");
             assert(getDirectives(layer)).arrayContains("../images/unit2.png");
     });
@@ -229,7 +234,8 @@ describe("Board", ()=> {
         board.paint();
         assert(getDirectives(layer, 4)).arrayEqualsTo([
             "save()",
-            "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "setTransform(1, 0, 0, 1, 250, 150)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
             "restore()"
         ]);
         return { board, level, layer, element, artifact, image };
@@ -246,7 +252,8 @@ describe("Board", ()=> {
             assert(artifact.position.toString()).equalsTo("point(-10, -15)");
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
-                "drawImage(../images/unit.png, -35, -40, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 240, 135)",
+                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when: // Change orientation
@@ -257,8 +264,8 @@ describe("Board", ()=> {
             assert(artifact.pangle).equalsTo(60);
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
-                "setTransform(0.5, 0.866, -0.866, 0.5, 232.0096, 151.1603)",
-                "drawImage(../images/unit.png, -35, -40, 50, 50)",
+                    "setTransform(0.5, 0.866, -0.866, 0.5, 240, 135)",
+                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -281,8 +288,9 @@ describe("Board", ()=> {
             assert(artifact.alpha).equalsTo(0.3);
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
-                "globalAlpha = 0.3",
-                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
+                    "globalAlpha = 0.3",
+                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -343,16 +351,17 @@ describe("Board", ()=> {
             assert(artifact2.transform.toString()).equalsTo("matrix(-0.7071, 0.7071, -0.7071, -0.7071, 85, 60)");
             assert(artifact2.boundingArea.toString()).equalsTo("area(49.6447, 24.6447, 120.3553, 95.3553)");
 
-            assert(getDirectives(layer).length).equalsTo(12);
             assertLayerIsCleared(0, layer);
-            assert(getDirectives(layer)[4]).equalsTo("save()");
-            assert(getDirectives(layer)[5]).equalsTo("setTransform(0, 1, -1, 0, 405, 75)");
-            assert(getDirectives(layer)[6]).equalsTo("drawImage(../images/unit1.png, 90, 15, 50, 50)");
-            assert(getDirectives(layer)[7]).equalsTo("restore()");
-            assert(getDirectives(layer)[8]).equalsTo("save()");
-            assert(getDirectives(layer)[9]).equalsTo("setTransform(-0.7071, 0.7071, -0.7071, -0.7071, 437.5305, 192.3223)");
-            assert(getDirectives(layer)[10]).equalsTo("drawImage(../images/unit2.png, 60, 35, 50, 50)");
-            assert(getDirectives(layer)[11]).equalsTo("restore()");
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, 1, -1, 0, 365, 190)",
+                    "drawImage(../images/unit1.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.7071, 0.7071, -0.7071, -0.7071, 335, 210)",
+                    "drawImage(../images/unit2.png, -25, -25, 50, 50)",
+                "restore()"
+            ])
     });
 
     it("Checks search for artifacts from a viewport point", () => {
@@ -398,7 +407,9 @@ describe("Board", ()=> {
         let image = DImage.getImage(path);
         image._root.onload();
         let artifact = new DImageArtifact("units", image, location, new Dimension2D(50, 50));
-        return new DElement(artifact);
+        let element = new DElement(artifact);
+        element.artifact = artifact;
+        return element;
     }
 
     it("Checks that if element is not in visible area, no drawing order is issued", () => {
@@ -473,9 +484,9 @@ describe("Board", ()=> {
             board.paint();
         then:
             assert(element.board).equalsTo(board);
-            assert(getDirectives(layer).length).equalsTo(7);
+            assert(getDirectives(layer).length).equalsTo(8);
             assertLayerIsCleared(0, layer);
-            assert(getDirectives(layer)[5]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
+            assert(getDirectives(layer)).arrayContains("drawImage(../images/unit.png, -25, -25, 50, 50)");
         when:
             resetDirectives(layer);
             Memento.undo();
@@ -505,7 +516,8 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
-                "drawImage(../images/unit.png, 75, 25, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 350, 200)",
+                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when: // add/remove artifacts methods are not bounded to transaction mechanism
@@ -547,7 +559,8 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
-                    "drawImage(../images/unit.png, 75, 25, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 350, 200)",
+                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -564,7 +577,8 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
-                    "drawImage(../images/unit.png, 75, 25, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 350, 200)",
+                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -594,9 +608,9 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
-                    "shadowColor = #000000",
-                    "shadowBlur = 15",
-                    "drawImage(../images/unit1.png, -35, -40, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 240, 135)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(../images/unit1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when: // setSettings method is not bounded to transaction mechanism
@@ -613,7 +627,8 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
-                    "drawImage(../images/unit1.png, -35, -40, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 240, 135)",
+                    "drawImage(../images/unit1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when: // setSettings method is not bounded to transaction mechanism
@@ -643,9 +658,9 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
-                    "shadowColor = #000000",
-                    "shadowBlur = 15",
-                    "drawImage(../images/unit1.png, -35, -40, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 240, 135)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(../images/unit1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -656,7 +671,8 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
-                    "drawImage(../images/unit1.png, -35, -40, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 240, 135)",
+                    "drawImage(../images/unit1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when: // changeSettings method is  bounded to transaction mechanism
@@ -666,9 +682,9 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
-                    "shadowColor = #000000",
-                    "shadowBlur = 15",
-                    "drawImage(../images/unit1.png, -35, -40, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 240, 135)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(../images/unit1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when: // changeSettings method is bounded to transaction mechanism
@@ -678,7 +694,8 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
-                    "drawImage(../images/unit1.png, -35, -40, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 240, 135)",
+                    "drawImage(../images/unit1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });
@@ -704,9 +721,13 @@ describe("Board", ()=> {
             board.paint();
         then:
             assert(element.board).equalsTo(board);
-            assert(getDirectives(layer).length).equalsTo(7);
             assertLayerIsCleared(0, layer)
-            assert(getDirectives(layer)[5]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 350, 200)",
+                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ] );
     });
 
     it("Checks element moves in transaction", () => {
@@ -722,18 +743,28 @@ describe("Board", ()=> {
             board.paint();
         then:
             assert(element.location.toString()).equalsTo("point(150, 100)");
-            assert(getDirectives(layer).length).equalsTo(7);
+            assert(getDirectives(layer).length).equalsTo(8);
             assertLayerIsCleared(0, layer)
-            assert(getDirectives(layer)[5]).equalsTo("drawImage(../images/unit.png, 125, 75, 50, 50)");
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 400, 250)",
+                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
         when:
             resetDirectives(layer);
             Memento.undo();
             board.paint();
         then:
             assert(element.location.toString()).equalsTo("point(100, 50)");
-            assert(getDirectives(layer).length).equalsTo(7);
+            assert(getDirectives(layer).length).equalsTo(8);
             assertLayerIsCleared(0, layer)
-            assert(getDirectives(layer)[5]).equalsTo("drawImage(../images/unit.png, 75, 25, 50, 50)");
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 350, 200)",
+                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
     });
 
     it("Checks element rotation in transaction", () => {
@@ -771,14 +802,14 @@ describe("Board", ()=> {
 
     it("Checks layer viewport/local localization", () => {
         given:
-            var { unitsLevel:level } = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var { board, unitsLevel:level } = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
         then:
             assert(level.getPoint(new Point2D(0, 0)).toString()).equalsTo("point(-500, -300)");
             assert(level.getViewportPoint(new Point2D(-500, -300)).toString()).equalsTo("point(0, 0)");
             assert(level.getPoint(new Point2D(250, 150)).toString()).equalsTo("point(0, 0)");
             assert(level.getViewportPoint(new Point2D(0, 0)).toString()).equalsTo("point(250, 150)");
-            assert(level.originalPoint.toString()).equalsTo("point(-500, -300)");
-            assert(level.finalPoint.toString()).equalsTo("point(500, 300)");
+            assert(level.getOriginalPoint().toString()).equalsTo("point(-500, -300)");
+            assert(level.getFinalPoint().toString()).equalsTo("point(500, 300)");
     });
 
     it("Checks multi images artifact", () => {
@@ -800,6 +831,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
                     "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
@@ -810,6 +842,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
                     "drawImage(../images/unit-back.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
@@ -820,6 +853,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
                     "drawImage(../images/unit-inactive.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
@@ -830,6 +864,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
                     "drawImage(../images/unit-back.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
@@ -852,12 +887,13 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 260, 165)",
                     "font = 18px serif", "textAlign = start",
                     "shadowColor = #0000FF", "shadowBlur = 5",
                     "strokeStyle = #FF0000", "lineWidth = 3",
-                    "strokeText(text, 10, 15)",
+                    "strokeText(text, 0, 0)",
                     "fillStyle = #00FF00",
-                    "fillText(text, 10, 15)",
+                    "fillText(text, 0, 0)",
                 "restore()"
             ]);
         when:
@@ -867,12 +903,13 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 260, 165)",
                     "font = 18px serif", "textAlign = start",
                     "shadowColor = #0000FF", "shadowBlur = 5",
                     "strokeStyle = #FF0000", "lineWidth = 3",
-                    "strokeText(TEXT, 10, 15)",
+                    "strokeText(TEXT, 0, 0)",
                     "fillStyle = #00FF00",
-                    "fillText(TEXT, 10, 15)",
+                    "fillText(TEXT, 0, 0)",
                 "restore()"
             ]);
         when:
@@ -882,84 +919,92 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 260, 165)",
                     "font = 18px serif", "textAlign = start",
                     "shadowColor = #0000FF", "shadowBlur = 5",
                     "strokeStyle = #FF0000", "lineWidth = 3",
-                    "strokeText(text, 10, 15)",
+                    "strokeText(text, 0, 0)",
                     "fillStyle = #00FF00",
-                    "fillText(text, 10, 15)", "restore()"
+                    "fillText(text, 0, 0)",
+                "restore()"
             ]);
     });
 
     it("Checks zooming", () => {
         given:
             var { board, unitsLevel:level, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var element = createImageElement("../images/unit.png", new Point2D(0, 0));
+            element.setOnBoard(board);
+            board.paint();
         then:
             assert(board.minZoomFactor).equalsTo(0.5);
-            assert(getDirectives(layer)[1]).equalsTo("setTransform(0.5, 0, 0, 0.5, 250, 150)");
+            assert(getDirectives(layer)).arrayContains("setTransform(0.5, 0, 0, 0.5, 250, 150)");
         when:
             resetDirectives(layer);
             board.zoomOut(new Point2D(250, 150));
             board.paint();
         then:
             assert(board.zoomFactor).equalsTo(0.75);
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 250, 150)");
+            assertLayerIsCleared(0, layer)
         when:
             resetDirectives(layer);
             board.zoomOut(new Point2D(260, 160));
             board.paint();
         then:
             assert(board.zoomFactor).equalsTo(1.125);
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(1.125, 0, 0, 1.125, 245, 145)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(1.125, 0, 0, 1.125, 245, 145)");
+            assertLayerIsCleared(0, layer)
         when:
             resetDirectives(layer);
             board.zoomIn(new Point2D(255, 155));
             board.paint();
         then:
             assert(board.zoomFactor).equalsTo(0.75);
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 248.3333, 148.3333)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 248.3333, 148.3333)");
+            assertLayerIsCleared(0, layer)
     });
 
     it("Checks scrolling", () => {
         given:
             var { board, unitsLevel:level, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var element = createImageElement("../images/unit.png", new Point2D(0, 0));
+            element.setOnBoard(board);
+            board.paint();
         when:
             resetDirectives(layer);
             board.zoomOut(new Point2D(250, 150)); // Mandatory to have space to move
             board.paint();
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 250, 150)");
         when:
             resetDirectives(layer);
             board.scrollOnLeft();
             board.paint();
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 260, 150)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 260, 150)");
+            assertLayerIsCleared(0, layer)
         when:
             resetDirectives(layer);
             board.scrollOnRight();
             board.paint();
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 250, 150)");
+            assertLayerIsCleared(0, layer)
         when:
             resetDirectives(layer);
             board.scrollOnTop();
             board.paint();
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 160)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 250, 160)");
+            assertLayerIsCleared(0, layer)
         when:
             resetDirectives(layer);
             board.scrollOnBottom();
             board.paint();
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 250, 150)");
+            assertLayerIsCleared(0, layer)
     });
 
     it("Checks zoom settings", () => {
@@ -985,6 +1030,8 @@ describe("Board", ()=> {
     it("Checks recenter", () => {
         given:
             var { board, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var element = createImageElement("../images/unit.png", new Point2D(0, 0));
+            element.setOnBoard(board);
             board.zoomOut(new Point2D(250, 150)); // Mandatory to have space to move
             board.paint();
         when:
@@ -992,8 +1039,8 @@ describe("Board", ()=> {
             board.recenter(new Point2D(260, 170));
             board.paint();
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 240, 130)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 240, 130)");
+            assertLayerIsCleared(0, layer)
     });
 
     it("Checks adjustement", () => {
@@ -1040,20 +1087,22 @@ describe("Board", ()=> {
     it("Checks scroll settings", () => {
         given:
             var { board, unitsLevel:level, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var element = createImageElement("../images/unit.png", new Point2D(0, 0));
+            element.setOnBoard(board);
         when:
             resetDirectives(layer);
             board.zoomOut(new Point2D(250, 150)); // Mandatory to have space to move
             board.paint();
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 250, 150)");
         when:
             resetDirectives(layer);
             board.setScrollSettings(25, 20);
             board.scrollOnLeft();
             board.paint();
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 275, 150)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 275, 150)");
+            assertLayerIsCleared(0, layer)
             assert(board.isOnLeftBorder(new Point2D(19, 150))).isTrue();
             assert(board.isOnLeftBorder(new Point2D(21, 150))).isFalse();
     });
@@ -1245,6 +1294,8 @@ describe("Board", ()=> {
     it("Checks zoomInOut/onMouseWheel reflex", () => {
         given:
             var { board, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var element = createImageElement("../images/unit.png", new Point2D(0, 0));
+            element.setOnBoard(board);
             board.zoomInOutOnMouseWheel();
         when:
             resetDirectives(layer);
@@ -1253,8 +1304,8 @@ describe("Board", ()=> {
             });
             mockPlatform.dispatchEvent(board.root, "wheel", event);
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 245, 140)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 245, 140)");
+            assertLayerIsCleared(0, layer)
         when:
             resetDirectives(layer);
             event = createEvent("wheel", {
@@ -1262,13 +1313,15 @@ describe("Board", ()=> {
             });
             mockPlatform.dispatchEvent(board.root, "wheel", event);
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.5, 0, 0, 0.5, 250, 150)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.5, 0, 0, 0.5, 250, 150)");
+            assertLayerIsCleared(0, layer)
     });
 
     it("Checks scrollOnBorders/onMouseMove reflex", () => {
         given:
             var { board, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var element = createImageElement("../images/unit.png", new Point2D(0, 0));
+            element.setOnBoard(board);
             board.zoomOut(new Point2D(250, 150)); // Mandatory to have space to move
             board.scrollOnBordersOnMouseMove();
         when:
@@ -1276,20 +1329,22 @@ describe("Board", ()=> {
             let event = createEvent("mousemove", {offsetX: 5, offsetY: 5});
             mockPlatform.dispatchEvent(board.root, "mousemove", event);
         then:
-            assert(getDirectives(layer)[1]).equalsTo("setTransform(0.75, 0, 0, 0.75, 260, 160)");
-            assertLayerIsCleared(2, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 260, 160)");
+            assertLayerIsCleared(0, layer)
         when:
             resetDirectives(layer);
             event = createEvent("mousemove", {offsetX: 495, offsetY: 295});
             mockPlatform.dispatchEvent(board.root, "mousemove", event);
         then:
-            assert(getDirectives(layer)[1]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
-            assertLayerIsCleared(2, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 250, 150)");
+            assertLayerIsCleared(0, layer)
     });
 
     it("Checks scroll/onKeydown reflex", () => {
         given:
             var { board, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var element = createImageElement("../images/unit.png", new Point2D(0, 0));
+            element.setOnBoard(board);
             board.zoomOut(new Point2D(250, 150)); // Mandatory to have space to move
             board.scrollOnKeyDown();
             let nothingDone = false;
@@ -1301,32 +1356,32 @@ describe("Board", ()=> {
             let event = createEvent("keydown", {key: 'ArrowLeft'});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 260, 150)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 260, 150)");
+            assertLayerIsCleared(0, layer)
             assert(nothingDone).isFalse();
         when:
             resetDirectives(layer);
             event = createEvent("keydown", {key: 'ArrowUp'});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 260, 160)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 260, 160)");
+            assertLayerIsCleared(0, layer)
             assert(nothingDone).isFalse();
         when:
             resetDirectives(layer);
             event = createEvent("keydown", {key: 'ArrowRight'});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 160)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 250, 160)");
+            assertLayerIsCleared(0, layer)
             assert(nothingDone).isFalse();
         when:
             resetDirectives(layer);
             event = createEvent("keydown", {key: 'ArrowDown'});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 250, 150)");
+            assertLayerIsCleared(0, layer)
             assert(nothingDone).isFalse();
         when:
             resetDirectives(layer);
@@ -1339,6 +1394,8 @@ describe("Board", ()=> {
     it("Checks zoom/onKeydown reflex", () => {
         given:
             var { board, unitsLevel:level, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
+            var element = createImageElement("../images/unit.png", new Point2D(0, 0));
+            element.setOnBoard(board);
             board.zoomOnKeyDown();
             let nothingDone = false;
             board.onKeyDown(event=>{
@@ -1349,8 +1406,8 @@ describe("Board", ()=> {
             let event = createEvent("keydown", {key: 'PageDown'});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 250, 150)");
+            assertLayerIsCleared(0, layer)
             assert(nothingDone).isFalse();
         when: // Change focus point
             resetDirectives(layer);
@@ -1359,16 +1416,16 @@ describe("Board", ()=> {
             event = createEvent("keydown", {key: 'PageDown'});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(1.125, 0, 0, 1.125, 245, 145)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(1.125, 0, 0, 1.125, 245, 145)");
+            assertLayerIsCleared(0, layer)
             assert(nothingDone).isFalse();
         when: // Zoom in
             resetDirectives(layer);
             event = createEvent("keydown", {key: 'PageUp'});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
-            assert(getDirectives(layer)[0]).equalsTo("setTransform(0.75, 0, 0, 0.75, 250, 150)");
-            assertLayerIsCleared(1, layer)
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 250, 150)");
+            assertLayerIsCleared(0, layer)
             assert(nothingDone).isFalse();
         when:
             resetDirectives(layer);
@@ -1398,24 +1455,24 @@ describe("Board", ()=> {
             resetDirectives(layer); // Move image one time
             var event = createEvent("click", {offsetX: 260, offsetY: 170});
             mockPlatform.dispatchEvent(board.root, "click", event);
-            assert(getDirectives(layer)[5]).equalsTo("drawImage(../images/unit.png, -5, 15, 50, 50)");
+            assert(getDirectives(layer)).arrayContains("setTransform(0.5, 0, 0, 0.5, 260, 170)");
             resetDirectives(layer); // Move image a second time in another transaction
             event = createEvent("click", {offsetX: 240, offsetY: 130});
             mockPlatform.dispatchEvent(board.root, "click", event);
-            assert(getDirectives(layer)[5]).equalsTo("drawImage(../images/unit.png, -45, -65, 50, 50)");
+            assert(getDirectives(layer)).arrayContains("setTransform(0.5, 0, 0, 0.5, 240, 130)");
         when:
             resetDirectives(layer);
             event = createEvent("keydown", {key: 'z', ctrlKey:true});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
-            assert(getDirectives(layer)[5]).equalsTo("drawImage(../images/unit.png, -5, 15, 50, 50)");
+            assert(getDirectives(layer)).arrayContains("setTransform(0.5, 0, 0, 0.5, 260, 170)");
             assert(nothingDone).isFalse();
         when:
             resetDirectives(layer);
             event = createEvent("keydown", {key: 'y', ctrlKey:true});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
-            assert(getDirectives(layer)[5]).equalsTo("drawImage(../images/unit.png, -45, -65, 50, 50)");
+            assert(getDirectives(layer)).arrayContains("setTransform(0.5, 0, 0, 0.5, 240, 130)");
             assert(nothingDone).isFalse();
         when:
             resetDirectives(layer);
@@ -1469,6 +1526,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
                     "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
@@ -1478,8 +1536,8 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
-                "setTransform(0.7071, 0.7071, -0.7071, 0.7071, 250, 150)",
-                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                    "setTransform(0.7071, 0.7071, -0.7071, 0.7071, 250, 150)",
+                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -1524,6 +1582,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
                     "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
@@ -1533,6 +1592,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
                     "globalAlpha = 0.75",
                     "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
@@ -1543,6 +1603,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
                     "globalAlpha = 0.5",
                     "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
@@ -1553,6 +1614,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
                     "globalAlpha = 0.25",
                     "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
@@ -1563,6 +1625,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
                     "globalAlpha = 0",
                     "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
@@ -1579,6 +1642,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
                     "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
             ]);

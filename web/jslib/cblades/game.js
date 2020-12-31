@@ -1,17 +1,17 @@
 'use strict'
 
 import {
-    atan2, Point2D, Dimension2D
+    atan2, Point2D, Dimension2D, Matrix2D
 } from "../geometry.js";
 import {
-    DImage, DLayer
+    DImage, DTranslateLayer
 } from "../draw.js";
 import {
     Mechanisms,
     Memento
 } from "../mechanisms.js";
 import {
-    DBoard, DElement, DImageArtifact, DSimpleLevel, DLayeredLevel, DStaticLevel, DMultiImageArtifact
+    DBoard, DElement, DImageArtifact, DSimpleLevel, DLayeredLevel, DStaticLevel, DMultiImageArtifact, DStackedLevel
 } from "../board.js";
 import {
     DPushButton
@@ -256,11 +256,30 @@ export class CBActuator {
 export class CBGame {
 
     constructor() {
+
+        function createSlot(slotIndex) {
+            let delta = Matrix2D.translate(new Point2D(slotIndex*15, -slotIndex*15));
+            return [
+                new DTranslateLayer("units-"+slotIndex, delta),
+                new DTranslateLayer("markers-"+slotIndex, delta)
+            ]
+        }
+
+        function getUnitArtifactSlot(artifact) {
+            let counter = artifact.counter;
+            if (counter instanceof CBUnit) {
+                return counter.hexLocation.units.indexOf(counter);
+            }
+            else return 0;
+        }
+
+        function getUnitArtifactLayer(artifact, [unitsLayer, markersLayer]) {
+            return (artifact instanceof UnitImageArtifact) ? unitsLayer : markersLayer
+        }
+
         this._board = new DBoard(new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT), new Dimension2D(1000, 800),
             new DSimpleLevel("map"),
-            new DLayeredLevel("units", (artifact, [unitsLayer, markersLayer])=>{
-                return (artifact instanceof UnitImageArtifact) ? unitsLayer : markersLayer
-            }, new DLayer("units"), new DLayer("markers")),
+            new DStackedLevel("units", getUnitArtifactSlot, getUnitArtifactLayer, createSlot),
             new DSimpleLevel("actuators"),
             new DStaticLevel("widgets"),
             new DStaticLevel("widget-items"),
@@ -910,6 +929,10 @@ class CounterImageArtifact extends DMultiImageArtifact {
 
     onMouseClick(event) {
         this._counter.onMouseClick && this._counter.onMouseClick(event);
+    }
+
+    get counter() {
+        return this._counter;
     }
 
     get settings() {

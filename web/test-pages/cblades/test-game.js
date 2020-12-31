@@ -81,7 +81,7 @@ describe("Game", ()=> {
             game.setArbitrator(arbitrator);
             var player = new CBAbstractPlayer();
             game.addPlayer(player);
-            var [mapLayer, unitsLayer] = getLayers(game.board, "map","units");
+            var [mapLayer, unitsLayer] = getLayers(game.board, "map","units-0");
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
             let wing = new CBWing(player);
@@ -99,28 +99,17 @@ describe("Game", ()=> {
             assert(CBMap.fromArtifact(map._imageArtifact)).equalsTo(map);
             assert(CBUnit.fromArtifact(unit._imageArtifact)).equalsTo(unit);
             assert(unit.player).equalsTo(player);
-            assert(getDirectives(mapLayer)).arrayEqualsTo([
-                    "setTransform(1, 0, 0, 1, 0, 0)",
+            assert(getDirectives(mapLayer, 4)).arrayEqualsTo([
+                "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 500, 400)",
-                "save()",
-                    "resetTransform()",
-                    "clearRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
                     "drawImage(/CBlades/images/maps/map.png, -1023, -1575, 2046, 3150)",
                 "restore()"
             ]);
-            assert(getDirectives(unitsLayer)).arrayEqualsTo([
-                "setTransform(1, 0, 0, 1, 0, 0)",
-                "setTransform(0.4888, 0, 0, 0.4888, 500, 400)",
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
-                "resetTransform()",
-                "clearRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                "shadowColor = #000000",
-                "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
     });
@@ -170,10 +159,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
                 "save()",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "strokeStyle = #000000",
-                    "lineWidth = 1",
                     "setTransform(1, 0, 0, 1, 55, 105)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "strokeStyle = #000000", "lineWidth = 1",
                     "strokeRect(-50, -100, 100, 200)",
                     "fillStyle = #FFFFFF",
                     "fillRect(-50, -100, 100, 200)",
@@ -187,10 +175,12 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 80, 130)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "strokeStyle = #000000", "lineWidth = 1",
-                    "setTransform(1, 0, 0, 1, 80, 130)", "strokeRect(-75, -125, 150, 250)",
-                    "fillStyle = #FFFFFF", "fillRect(-75, -125, 150, 250)",
+                    "strokeRect(-75, -125, 150, 250)",
+                    "fillStyle = #FFFFFF",
+                    "fillRect(-75, -125, 150, 250)",
                 "restore()"
             ]);
         when:
@@ -207,10 +197,12 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 80, 130)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "strokeStyle = #000000", "lineWidth = 1",
-                    "setTransform(1, 0, 0, 1, 80, 130)", "strokeRect(-75, -125, 150, 250)",
-                    "fillStyle = #FFFFFF", "fillRect(-75, -125, 150, 250)",
+                    "strokeRect(-75, -125, 150, 250)",
+                    "fillStyle = #FFFFFF",
+                    "fillRect(-75, -125, 150, 250)",
                 "restore()"
             ]);
     });
@@ -224,14 +216,16 @@ describe("Game", ()=> {
             game.start();
             loadAllImages();
         then:
-            assert(getDirectives(commandsLevel, 5)).arrayEqualsTo([
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 940, 740)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/turn.png, 915, 715, 50, 50)",
+                    "drawImage(/CBlades/images/commands/turn.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
+                    "setTransform(1, 0, 0, 1, 880, 740)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/show.png, 855, 715, 50, 50)",
+                    "drawImage(/CBlades/images/commands/show.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -241,32 +235,39 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 940, 740)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/turn.png, 915, 715, 50, 50)",
+                    "drawImage(/CBlades/images/commands/turn.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
+                    "setTransform(1, 0, 0, 1, 880, 740)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/hide.png, 855, 715, 50, 50)",
+                    "drawImage(/CBlades/images/commands/hide.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
+                    "setTransform(1, 0, 0, 1, 820, 740)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/undo.png, 795, 715, 50, 50)",
+                    "drawImage(/CBlades/images/commands/undo.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
+                    "setTransform(1, 0, 0, 1, 760, 740)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/redo.png, 735, 715, 50, 50)",
+                    "drawImage(/CBlades/images/commands/redo.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
+                    "setTransform(1, 0, 0, 1, 700, 740)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/settings-inactive.png, 675, 715, 50, 50)",
+                    "drawImage(/CBlades/images/commands/settings-inactive.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
+                    "setTransform(1, 0, 0, 1, 640, 740)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/save-inactive.png, 615, 715, 50, 50)",
+                    "drawImage(/CBlades/images/commands/save-inactive.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
+                    "setTransform(1, 0, 0, 1, 580, 740)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/load-inactive.png, 555, 715, 50, 50)",
+                    "drawImage(/CBlades/images/commands/load-inactive.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -275,15 +276,17 @@ describe("Game", ()=> {
             paint(game);
         then:
             assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
-            "save()",
-                "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/commands/turn.png, 915, 715, 50, 50)",
-            "restore()",
-            "save()",
-                "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/commands/show.png, 855, 715, 50, 50)",
-            "restore()"
-        ]);
+                "save()",
+                    "setTransform(1, 0, 0, 1, 940, 740)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/turn.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 880, 740)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/show.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
     });
 
     it("Checks undo/redo push buttons menu", () => {
@@ -497,13 +500,13 @@ describe("Game", ()=> {
             game.start();
             loadAllImages();
         then:
-            assert(getDirectives(mapLayer)[1]).equalsTo("setTransform(0.4888, 0, 0, 0.4888, 500, 400)");
+            assert(getDirectives(mapLayer)).arrayContains("setTransform(0.4888, 0, 0, 0.4888, 500, 400)");
         when:
             resetDirectives(mapLayer);
             var mouseEvent = createEvent("click", {offsetX:500, offsetY:410});
             mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
         then:
-            assert(getDirectives(mapLayer)[0]).equalsTo("setTransform(0.4888, 0, 0, 0.4888, 500, 390)");
+            assert(getDirectives(mapLayer)).arrayContains("setTransform(0.4888, 0, 0, 0.4888, 500, 390)");
     });
 
     function mouseMoveOnCounter(game, counter) {
@@ -532,7 +535,7 @@ describe("Game", ()=> {
         let unit1 = new CBTroop(wing, ["/CBlades/images/units/misc/unit1.png"]);
         game.addUnit(unit1, map.getHex(5, 8));
         let unit2 = new CBTroop(wing, ["/CBlades/images/units/misc/unit2.png"]);
-        game.addUnit(unit2, map.getHex(5, 8));
+        game.addUnit(unit2, map.getHex(5, 7));
         game.start();
         loadAllImages();
         return {game, map, unit1, unit2, wing, player};
@@ -549,7 +552,7 @@ describe("Game", ()=> {
         game.addUnit(unit1, map.getHex(5, 8));
         let wing2 = new CBWing(player2);
         let unit2 = new CBTroop(wing2, ["/CBlades/images/units/misc/unit2.png"]);
-        game.addUnit(unit2, map.getHex(5, 8));
+        game.addUnit(unit2, map.getHex(5, 7));
         game.start();
         loadAllImages();
         return {game, map, unit1, unit2, wing1, wing2, player1, player2};
@@ -563,7 +566,7 @@ describe("Game", ()=> {
             game.start();
             loadAllImages();
             counter.angle = 45;
-            var [markersLayer] = getLayers(game.board, "markers");
+            var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
             repaint(game);
@@ -576,9 +579,9 @@ describe("Game", ()=> {
             assert(counter.viewportLocation.toString()).equalsTo("point(548.8759, 497.7517)");
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 583.4363, 394.0704)",
+                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 548.8759, 497.7517)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter.png, 75, 175, 50, 50)",
+                    "drawImage(/CBlades/images/units/misc/counter.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -590,9 +593,9 @@ describe("Game", ()=> {
             assert(counter.viewportLocation.toString()).equalsTo("point(504.8876, 409.7752)");
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 508.3436, 399.407)",
+                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter.png, -15, -5, 50, 50)",
+                    "drawImage(/CBlades/images/units/misc/counter.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -607,9 +610,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 508.3436, 399.407)",
+                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter.png, -15, -5, 50, 50)",
+                    "drawImage(/CBlades/images/units/misc/counter.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -661,7 +664,7 @@ describe("Game", ()=> {
     it("Checks unit selection/deselection appearance", () => {
         given:
             var { game, unit } = createTinyGame();
-            var [unitsLayer] = getLayers(game.board, "units");
+            var [unitsLayer] = getLayers(game.board, "units-0");
         when:
             resetDirectives(unitsLayer);
             unit.select();
@@ -669,9 +672,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #FF0000",
-                "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
         when:
@@ -681,9 +684,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000",
-                "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
     });
@@ -815,14 +818,14 @@ describe("Game", ()=> {
     it("Checks unit appearance when mouse is over it", () => {
         given:
             var { game, unit } = createTinyGame();
-            var [unitsLayer] = getLayers(game.board, "units");
+            var [unitsLayer] = getLayers(game.board, "units-0");
             paint(game);
         then:
-            assert(getDirectives(unitsLayer, 6)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000",
-                "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
         when:
@@ -831,9 +834,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #00FFFF",
-                "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #00FFFF", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
         when:
@@ -842,9 +845,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000",
-                "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
         when:
@@ -864,7 +867,7 @@ describe("Game", ()=> {
     it("Checks that clicking on a unit select the unit ", () => {
         given:
             var { game, player, unit } = createTinyGame();
-            var [unitsLayer] = getLayers(game.board, "units");
+            var [unitsLayer] = getLayers(game.board, "units-0");
             var actionLaunched = false;
             player.launchUnitAction = function(unit, event) {
                 actionLaunched = true;
@@ -878,9 +881,10 @@ describe("Game", ()=> {
             loadAllImages();
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #FF0000",
-                "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)", "restore()"
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
+                "restore()"
             ]);
         when:   // Check that "reselecting" an already selected unit relaunch action
             actionLaunched = false;
@@ -948,7 +952,7 @@ describe("Game", ()=> {
     it("Checks that when moving a unit, movement points are adjusted", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [unitsLayer, markersLayer] = getLayers(game.board, "units", "markers");
+            var [unitsLayer, markersLayer] = getLayers(game.board, "units-0", "markers-0");
         when:
             resetDirectives(unitsLayer, markersLayer);
             unit.move(map.getHex(5, 7), 1);
@@ -956,8 +960,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 255.6635)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -366.3125, 142, 142)",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
             assert(unit.hexLocation.toString()).equalsTo(map.getHex(5, 7).toString());
@@ -970,8 +975,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
             assert(unit.hexLocation.toString()).equalsTo(map.getHex(5, 8).toString());
@@ -982,7 +988,7 @@ describe("Game", ()=> {
     it("Checks unit move from outside the map or out of the map", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [unitsLayer] = getLayers(game.board, "units");
+            var [unitsLayer] = getLayers(game.board, "units-0");
         when:
             resetDirectives(unitsLayer);
             unit.move(null, 0);
@@ -999,8 +1005,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 255.6635)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -366.3125, 142, 142)",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
             assert(unit.hexLocation.toString()).equalsTo("Hex(5, 7)");
@@ -1020,8 +1027,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
             assert(unit.hexLocation.toString()).equalsTo("Hex(5, 8)");
@@ -1031,7 +1039,7 @@ describe("Game", ()=> {
     it("Checks rotating a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [unitsLayer, markersLayer] = getLayers(game.board, "units", "markers");
+            var [unitsLayer, markersLayer] = getLayers(game.board, "units-0", "markers-0");
         when:
             resetDirectives(unitsLayer, markersLayer);
             unit.rotate(90, 0.5);
@@ -1039,9 +1047,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 368.5545, 435.2212)",
+                    "setTransform(0, 0.4888, -0.4888, 0, 416.6667, 351.8878)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
             assert(unit.movementPoints).equalsTo(1.5);
@@ -1053,9 +1061,11 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
-                "restore()"]);
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
             assert(unit.movementPoints).equalsTo(2);
             assert(unit.extendedMovementPoints).equalsTo(3);
     });
@@ -1063,7 +1073,7 @@ describe("Game", ()=> {
     it("Checks adding a tiredness level to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLayer] = getLayers(game.board, "markers");
+            var [markersLayer] = getLayers(game.board, "markers-0");
         then:
             assert(unit.isTired()).isFalse();
             assert(unit.isExhausted()).isFalse();
@@ -1075,8 +1085,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 351.8878)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/tired.png, -273.5, -130.4375, 64, 64)",
+                    "drawImage(/CBlades/images/markers/tired.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.tiredness).equalsTo(1);
@@ -1091,8 +1102,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -130.4375, 64, 64)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/exhausted.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.tiredness).equalsTo(2);
@@ -1105,8 +1117,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/tired.png, -273.5, -130.4375, 64, 64)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/tired.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.tiredness).equalsTo(1);
@@ -1115,7 +1128,7 @@ describe("Game", ()=> {
     it("Checks removing a tiredness level to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLayer] = getLayers(game.board, "markers");
+            var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
             unit.addOneTirednessLevel();
@@ -1125,8 +1138,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -130.4375, 64, 64)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/exhausted.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.tiredness).equalsTo(2);
@@ -1139,8 +1153,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/tired.png, -273.5, -130.4375, 64, 64)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/tired.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.tiredness).equalsTo(1);
@@ -1151,8 +1166,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/exhausted.png, -273.5, -130.4375, 64, 64)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/exhausted.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.tiredness).equalsTo(2);
@@ -1161,7 +1177,7 @@ describe("Game", ()=> {
     it("Checks adding a lack of munitions level to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLayer] = getLayers(game.board, "markers");
+            var [markersLayer] = getLayers(game.board, "markers-0");
         then:
             assert(unit.areMunitionsScarce()).isFalse();
             assert(unit.areMunitionsExhausted()).isFalse();
@@ -1173,8 +1189,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 386.5897)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/scarceamno.png, -202.5, -59.4375, 64, 64)",
+                    "drawImage(/CBlades/images/markers/scarceamno.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.lackOfMunitions).equalsTo(1);
@@ -1189,8 +1206,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 386.5897)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/lowamno.png, -202.5, -59.4375, 64, 64)",
+                    "drawImage(/CBlades/images/markers/lowamno.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.lackOfMunitions).equalsTo(2);
@@ -1203,8 +1221,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 386.5897)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/scarceamno.png, -202.5, -59.4375, 64, 64)",
+                    "drawImage(/CBlades/images/markers/scarceamno.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.lackOfMunitions).equalsTo(1);
@@ -1213,7 +1232,7 @@ describe("Game", ()=> {
     it("Checks removing a lack of munitions level to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLayer] = getLayers(game.board, "markers");
+            var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
             unit.addOneLackOfMunitionsLevel();
@@ -1223,8 +1242,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 386.5897)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/lowamno.png, -202.5, -59.4375, 64, 64)",
+                    "drawImage(/CBlades/images/markers/lowamno.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.lackOfMunitions).equalsTo(2);
@@ -1244,8 +1264,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 386.5897)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/lowamno.png, -202.5, -59.4375, 64, 64)",
+                    "drawImage(/CBlades/images/markers/lowamno.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.lackOfMunitions).equalsTo(2);
@@ -1270,7 +1291,7 @@ describe("Game", ()=> {
     it("Checks playing a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLayer] = getLayers(game.board, "markers");
+            var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
             unit.launchAction(new CBAction(game, unit));
@@ -1280,8 +1301,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 317.186)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/actiondone.png, -131.5, -201.4375, 64, 64)",
+                    "drawImage(/CBlades/images/markers/actiondone.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.hasBeenActivated()).isTrue();
@@ -1299,7 +1321,7 @@ describe("Game", ()=> {
     it("Checks giving an order to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLayer] = getLayers(game.board, "markers");
+            var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
             unit.receiveOrder(true);
@@ -1308,8 +1330,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 317.186)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/ordergiven.png, -131.5, -201.4375, 64, 64)",
+                    "drawImage(/CBlades/images/markers/ordergiven.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.hasReceivedOrder()).isTrue();
@@ -1325,7 +1348,7 @@ describe("Game", ()=> {
     it("Checks that playing an order replace (hide) ordergiven marker", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLayer] = getLayers(game.board, "markers");
+            var [markersLayer] = getLayers(game.board, "markers-0");
             unit.receiveOrder(true);
             paint(game);
         when:
@@ -1337,8 +1360,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 317.186)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/actiondone.png, -131.5, -201.4375, 64, 64)",
+                    "drawImage(/CBlades/images/markers/actiondone.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
     });
@@ -1346,7 +1370,7 @@ describe("Game", ()=> {
     it("Checks played status of a unit when selection is changed or turn is changed", () => {
         given:
             var {game, player, unit1, unit2} = create2UnitsTinyGame();
-            var [markersLayer] = getLayers(game.board, "markers");
+            var [markersLayer] = getLayers(game.board, "markers-0");
             player.launchUnitAction = function(unit, event) {
                 unit.launchAction(new CBAction(game, unit));
             }
@@ -1367,8 +1391,9 @@ describe("Game", ()=> {
             assert(unit1.hasBeenPlayed()).isTrue();
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 317.186)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/actiondone.png, -131.5, -201.4375, 64, 64)",
+                    "drawImage(/CBlades/images/markers/actiondone.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
         when:   // changing turn reset played status
@@ -1385,7 +1410,7 @@ describe("Game", ()=> {
     it("Checks adding cohesion levels to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLayer] = getLayers(game.board, "markers");
+            var [markersLayer] = getLayers(game.board, "markers-0");
         then:
             assert(unit.isDisrupted()).isFalse();
             assert(unit.isRouted()).isFalse();
@@ -1397,8 +1422,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/disrupted.png, -273.5, -59.4375, 64, 64)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 386.5897)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/disrupted.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.cohesion).equalsTo(1);
@@ -1413,8 +1439,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/fleeing.png, -273.5, -59.4375, 64, 64)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 386.5897)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/fleeing.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.cohesion).equalsTo(2);
@@ -1427,8 +1454,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/disrupted.png, -273.5, -59.4375, 64, 64)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 386.5897)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/disrupted.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.cohesion).equalsTo(1);
@@ -1437,7 +1465,7 @@ describe("Game", ()=> {
     it("Checks removing cohesion levels to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLayer] = getLayers(game.board, "markers");
+            var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
             unit.addOneCohesionLevel();
@@ -1447,8 +1475,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/fleeing.png, -273.5, -59.4375, 64, 64)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 386.5897)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/fleeing.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.cohesion).equalsTo(2);
@@ -1461,8 +1490,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/disrupted.png, -273.5, -59.4375, 64, 64)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 386.5897)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/disrupted.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.cohesion).equalsTo(1);
@@ -1481,8 +1511,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/disrupted.png, -273.5, -59.4375, 64, 64)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 386.5897)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/disrupted.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.cohesion).equalsTo(1);
@@ -1491,7 +1522,7 @@ describe("Game", ()=> {
     it("Checks taking losses to a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [unitsLayer] = getLayers(game.board, "units");
+            var [unitsLayer] = getLayers(game.board, "units-0");
         when:
             resetDirectives(unitsLayer);
             unit.takeALoss();
@@ -1500,8 +1531,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unitb.png, -241.5, -169.4375, 142, 142)",
+                    "drawImage(/CBlades/images/units/misc/unitb.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
         when:
@@ -1518,8 +1550,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unitb.png, -241.5, -169.4375, 142, 142)",
+                    "drawImage(/CBlades/images/units/misc/unitb.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
         when:
@@ -1529,8 +1562,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit.png, -241.5, -169.4375, 142, 142)",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
     });
@@ -1538,7 +1572,7 @@ describe("Game", ()=> {
     it("Checks mark unit as on contact", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLayer] = getLayers(game.board, "markers");
+            var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
             unit.markAsEngaging(true);
@@ -1547,8 +1581,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/contact.png, -273.5, -201.4375, 64, 64)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/contact.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.isEngaging()).isTrue();
@@ -1566,7 +1601,7 @@ describe("Game", ()=> {
     it("Checks mark unit as charging", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLayer] = getLayers(game.board, "markers");
+            var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
             unit.markAsCharging(true);
@@ -1575,8 +1610,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/charge.png, -273.5, -201.4375, 64, 64)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/charge.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.isEngaging()).isFalse();
@@ -1594,7 +1630,7 @@ describe("Game", ()=> {
     it("Checks that charge supersedes contact", () => {
         given:
             var {game, unit, map} = createTinyGame();
-            var [markersLayer] = getLayers(game.board, "markers");
+            var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
             unit.markAsEngaging(true);
@@ -1604,8 +1640,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/charge.png, -273.5, -201.4375, 64, 64)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/charge.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.isEngaging()).isTrue();
@@ -1618,8 +1655,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/markers/contact.png, -273.5, -201.4375, 64, 64)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/contact.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
             assert(unit.isEngaging()).isTrue();
@@ -1655,7 +1693,7 @@ describe("Game", ()=> {
     it("Checks leader appearance", () => {
         given:
             var {game, unit, player, leader} = createTinyCommandGame();
-            var [unitsLayer, markersLayer] = getLayers(game.board, "units", "markers");
+            var [unitsLayer, markersLayer] = getLayers(game.board, "units-0", "markers-0");
             unit.move(null, 0);
         when:
             loadAllImages(); // to load charge.png
@@ -1664,8 +1702,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 448.1122)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/leader.png, -230.5, 38.4375, 120, 120)",
+                    "drawImage(/CBlades/images/units/misc/leader.png, -60, -60, 120, 120)",
                 "restore()"
             ]);
         when:
@@ -1676,8 +1715,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 448.1122)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/defend.png, -139.5, 58.4375, 80, 80)",
+                    "drawImage(/CBlades/images/markers/defend.png, -40, -40, 80, 80)",
                 "restore()"
             ]);
         when:
@@ -1688,8 +1728,9 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 448.1122)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/attack.png, -139.5, 58.4375, 80, 80)",
+                    "drawImage(/CBlades/images/markers/attack.png, -40, -40, 80, 80)",
                 "restore()"
             ]);
         when:

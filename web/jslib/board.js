@@ -134,10 +134,7 @@ export class DArtifact extends LocalisationAware(Object) {
 
     paint() {
         console.assert(this._level);
-        let transform = this.angle ? Matrix2D.rotate(this.angle, this.location) : null;
-        if (transform) {
-            this._level.setTransformSettings(transform);
-        }
+        this._level.setTransformSettings(this.transform);
         if (this._settings) {
             this._settings(this._level);
         }
@@ -312,7 +309,7 @@ export class DImageAbstractArtifact extends RectArtifact(DArtifact) {
 
     drawImage() {
         this._level.drawImage(this.image,
-            new Point2D(this.location.x-this.dimension.w/2, this.location.y-this.dimension.h/2),
+            new Point2D(-this.dimension.w/2, -this.dimension.h/2),
             this.dimension);
     }
 
@@ -355,14 +352,14 @@ export class DTextArtifact extends RectArtifact(DArtifact) {
         this.refresh();
     }
 
-    paint() {
+    _paint() {
         console.assert(this._level);
         this._level.setTextSettings(this._font, this._align);
         this._level.setShadowSettings(this._shadowColor, this._shadowWidth)
         this._level.setStrokeSettings(this._strokeColor, 3);
-        this._level.drawText(this._text, this._location);
+        this._level.drawText(this._text, new Point2D(0, 0));
         this._level.setFillSettings(this._fillColor);
-        this._level.fillText(this._text, this._location);
+        this._level.fillText(this._text, new Point2D(0, 0));
     }
 
 }
@@ -744,44 +741,6 @@ export class DLevel {
         this.layer.fillText(anchor, text);
     }
 
-    get originalPoint() {
-        return this.getPoint(new Point2D(0, 0));
-    }
-
-    get finalPoint() {
-        return this.getPoint(new Point2D(this.layer.dimension.w, this.layer.dimension.h));
-    }
-
-    getAllArtifactsOnPoint(viewportPoint) {
-        let point = this.getPoint(viewportPoint);
-        let artifacts = [];
-        let visibleArtifacts = [...this.visibleArtifacts];
-        for (let i = visibleArtifacts.length-1; i>=0; i--) {
-            let artifact = visibleArtifacts[i];
-            if (artifact.containsPoint(point)) {
-                artifacts.push(artifact);
-            }
-        }
-        return artifacts;
-    }
-
-    getArtifactOnPoint(viewportPoint) {
-        let point = this.getPoint(viewportPoint);
-        let visibleArtifacts = [...this.visibleArtifacts];
-        for (let i = visibleArtifacts.length-1; i>=0; i--) {
-            let artifact = visibleArtifacts[i];
-            if (artifact.containsPoint(point))
-                return artifact;
-        }
-        return null;
-    }
-
-    isPointOnArtifact(artifact, viewportPoint) {
-        console.assert(artifact.level === this);
-        let point = this.getPoint(viewportPoint);
-        return artifact.containsPoint(point);
-    }
-
     get transform() {
         return this.layer.transform;
     }
@@ -831,6 +790,44 @@ export class DBasicLevel extends DLevel {
     getViewportPoint(point) {
         return this.layer.transform.point(point);
     }
+
+    getAllArtifactsOnPoint(viewportPoint) {
+        let point = this.getPoint(viewportPoint);
+        let artifacts = [];
+        let visibleArtifacts = [...this.visibleArtifacts];
+        for (let i = visibleArtifacts.length-1; i>=0; i--) {
+            let artifact = visibleArtifacts[i];
+            if (artifact.containsPoint(point)) {
+                artifacts.push(artifact);
+            }
+        }
+        return artifacts;
+    }
+
+    getArtifactOnPoint(viewportPoint) {
+        let point = this.getPoint(viewportPoint);
+        let visibleArtifacts = [...this.visibleArtifacts];
+        for (let i = visibleArtifacts.length-1; i>=0; i--) {
+            let artifact = visibleArtifacts[i];
+            if (artifact.containsPoint(point))
+                return artifact;
+        }
+        return null;
+    }
+
+    isPointOnArtifact(artifact, viewportPoint) {
+        console.assert(artifact.level === this);
+        let point = this.getPoint(viewportPoint);
+        return artifact.containsPoint(point);
+    }
+
+    getOriginalPoint(artifact) {
+        return this.getPoint(new Point2D(0, 0));
+    }
+
+    getFinalPoint(artifact) {
+        return this.getPoint(new Point2D(this.layer.dimension.w, this.layer.dimension.h));
+    }
 }
 
 /**
@@ -863,13 +860,19 @@ export class DLayeredLevel extends DLevel {
         return this._layers;
     }
 
+    addLayer(layer) {
+        this._draw.insertLayerAfter(layer, this._layers[this._layers.length-1]);
+        this._layers.push(layer);
+    }
+
     forArtifact(artifact) {
         this._layer = this._select(artifact, this._layers);
     }
 
     setDraw(draw) {
+        this._draw = draw;
         for (let layer of this._layers) {
-            draw.addLayer(layer);
+            this._draw.addLayer(layer);
         }
     }
 
@@ -879,15 +882,90 @@ export class DLayeredLevel extends DLevel {
         }
     }
 
-    getPoint(viewportPoint) {
-        return this.layers[0].transform.invert().point(viewportPoint);
+    getPoint(viewportPoint, layer) {
+        return layer.transform.invert().point(viewportPoint);
     }
 
     getViewportPoint(point) {
         return this.layers[0].transform.point(point);
     }
+
+    getAllArtifactsOnPoint(viewportPoint) {
+        let artifacts = [];
+        let visibleArtifacts = [...this.visibleArtifacts];
+        for (let i = visibleArtifacts.length-1; i>=0; i--) {
+            let artifact = visibleArtifacts[i];
+            let point = this.getPoint(viewportPoint, this._select(artifact));
+            if (artifact.containsPoint(point)) {
+                artifacts.push(artifact);
+            }
+        }
+        return artifacts;
+    }
+
+    getArtifactOnPoint(viewportPoint) {
+        let visibleArtifacts = [...this.visibleArtifacts];
+        for (let i = visibleArtifacts.length-1; i>=0; i--) {
+            let artifact = visibleArtifacts[i];
+            let point = this.getPoint(viewportPoint, this._select(artifact));
+            if (artifact.containsPoint(point))
+                return artifact;
+        }
+        return null;
+    }
+
+    isPointOnArtifact(artifact, viewportPoint) {
+        console.assert(artifact.level === this);
+        let point = this.getPoint(viewportPoint, this._select(artifact));
+        return artifact.containsPoint(point);
+    }
+
+    getOriginalPoint(artifact) {
+        return this.getPoint(new Point2D(0, 0), this._select(artifact));
+    }
+
+    getFinalPoint(artifact) {
+        return this.getPoint(new Point2D(this.layer.dimension.w, this.layer.dimension.h), this._select(artifact));
+    }
 }
 
+export class DStackedLevel extends DLayeredLevel {
+
+    constructor(name, selectSlot, selectLayer, createSlot) {
+        let select = artifact => {
+            let slotIndex = selectSlot(artifact);
+            let slot = this.getSlot(slotIndex);
+            return selectLayer(artifact, slot);
+        }
+
+        let slot = createSlot(0);
+        super(name, select, ...slot);
+        this._slotSize = slot.length;
+        this._createSlot = createSlot;
+    }
+
+    _addSlot() {
+        let index = this._layers.length/this._slotSize;
+        let layers = this._createSlot(index);
+        for (let layer of layers) {
+            this.addLayer(layer);
+        }
+    }
+
+    getSlot(index) {
+        let first = index*this._slotSize;
+        while (first >= this._layers.length) {
+            this._addSlot();
+        }
+        let result = [];
+        let last = first + this._slotSize;
+        for (let lindex=first; lindex<last; lindex++) {
+            result.push(this._layers[lindex]);
+        }
+        return result;
+    }
+
+}
 
 export class DSimpleLevel extends DBasicLevel {
 

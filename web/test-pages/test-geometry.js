@@ -276,7 +276,7 @@ describe("Geometry", ()=> {
             assert(matrix1.equalsTo(dmatrix)).isFalse();
             assert(matrix1.toString()).equalsTo("matrix(1, 2, 3, 4, 5, 6)");
             assert(matrix1.toArray()).arrayEqualsTo([1, 2, 3, 4, 5, 6]);
-            assert(Matrix2D.getIdentity().isIdentity).isTrue();
+            assert(Matrix2D.IDENTITY.isIdentity).isTrue();
         when:
             var smatrix1 = new Matrix2D(1.00005, 2.00005, 3.00005, 4.00005, 5.00005, 6.00005);
             var smatrix2 = new Matrix2D(1, 2, 3, 4, 5, 6.00015);
