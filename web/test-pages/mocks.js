@@ -31,6 +31,12 @@ export let mockPlatform = {
         parent.children.push(child);
     },
 
+    insertBefore(parent, newChild, nextChild) {
+        let index = parent.children.indexOf(nextChild);
+        assert(index>=0).isTrue();
+        parent.children.splice(index, 0, newChild);
+    },
+
     getContext(element, contextName) {
         return {host:element, directives:[]};
     },

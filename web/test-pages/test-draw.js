@@ -4,7 +4,16 @@ import {
     describe, it, before, assert, executeTimeouts
 } from "../jstest/jtest.js";
 import {
-    DDraw, DImage, setDrawPlatform, getDrawPlatform, targetPlatform, DStaticLayer, DAnimation, DAnimator
+    DDraw,
+    DImage,
+    setDrawPlatform,
+    getDrawPlatform,
+    targetPlatform,
+    DStaticLayer,
+    DAnimation,
+    DAnimator,
+    DLayer,
+    DTranslateLayer
 } from "../jslib/draw.js";
 import {
     Point2D, Matrix2D, Dimension2D
@@ -57,6 +66,17 @@ describe("Drawing fundamentals", ()=> {
         then:
             assert(layer1.transform.toString()).equalsTo("matrix(2, 0, 0, 2, 10, 30)");
             assert(layer2.transform.toString()).equalsTo("matrix(1, 0, 0, 1, 0, 0)");
+    });
+
+    it("Checks Translate Layer", () => {
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer1 = draw.createLayer("layer1");
+            var layer2 = draw.addLayer(new DTranslateLayer("layer2", Matrix2D.translate(new Point2D(10, 15))));
+            draw.setTransform(new Matrix2D(2, 0, 0, 2, 10, 30));
+        then:
+            assert(layer1.transform.toString()).equalsTo("matrix(2, 0, 0, 2, 10, 30)");
+            assert(layer2.transform.toString()).equalsTo("matrix(2, 0, 0, 2, 30, 60)");
     });
 
     function buildBasicDrawWithOneLayerNamedLayer1() {
@@ -380,10 +400,18 @@ describe("Drawing fundamentals", ()=> {
         then:
             assert(draw.root).is(HTMLDivElement);
         when:
-            var layer = draw.createLayer("layer1");
+            var layer = draw.createLayer("layer");
+            var layer1 = new DLayer("layer1");
+            var layer2 = new DLayer("layer2");
+            var layer3 = new DLayer("layer3");
+            draw.insertLayerBefore(layer1, layer);
+            draw.insertLayerAfter(layer2, layer1);
+            draw.insertLayerAfter(layer3, layer);
+            let canvas = [...draw.root.children];
         then:
             assert(layer.root).is(HTMLCanvasElement);
             assert(layer._context).is(CanvasRenderingContext2D);
+            assert(canvas).arrayEqualsTo([layer1.root, layer2.root, layer.root, layer3.root]);
         when:
             layer.drawRect(new Point2D(10, 15), new Dimension2D(20, 25));
         then:
@@ -420,6 +448,11 @@ describe("Drawing fundamentals", ()=> {
     it("Checks settings methods of the target platform", () => {
         given:
             setDrawPlatform(targetPlatform());
+            var setTransformInvoked = false;
+            CanvasRenderingContext2D.prototype.setTransform = function(...params) {
+                assert(params).arrayEqualsTo([2, 0, 0, 2, 10, 15]);
+                setTransformInvoked = true;
+            }
             var strokeStyleInvoked = false;
             Object.defineProperty(CanvasRenderingContext2D.prototype, "strokeStyle", {
                 set: function(style) {
@@ -483,6 +516,10 @@ describe("Drawing fundamentals", ()=> {
         then:
             assert(strokeStyleInvoked).isTrue();
             assert(lineWidthInvoked).isTrue();
+        when:
+            layer.setTransformSettings(new Matrix2D(2, 0, 0, 2, 10, 15));
+        then:
+            assert(setTransformInvoked).isTrue();
         when:
             layer.setFillSettings("#0F0F0F");
         then:

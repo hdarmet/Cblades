@@ -157,6 +157,7 @@ describe("Game", ()=> {
             game.openPopup(popup1, new Point2D(10, 20));
             paint(game);
         then:
+            assert(game.popup).equalsTo(popup1);
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 55, 105)",
@@ -173,6 +174,7 @@ describe("Game", ()=> {
             game.openPopup(popup2, new Point2D(15, 25));
             paint(game);
         then:
+            assert(game.popup).equalsTo(popup2);
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 80, 130)",
@@ -189,6 +191,7 @@ describe("Game", ()=> {
             game.closePopup();
             paint(game);
         then:
+            assert(game.popup).isNotDefined();
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([]);
         when:
             Memento.undo();

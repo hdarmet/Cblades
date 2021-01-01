@@ -4,11 +4,11 @@ import {
     describe, it, before, assert, executeTimeouts
 } from "../jstest/jtest.js";
 import {
-    Point2D, Dimension2D
+    Point2D, Dimension2D, Matrix2D
 } from "../jslib/geometry.js";
 import {
     DAnimator,
-    DImage, DLayer, setDrawPlatform
+    DImage, DLayer, DTranslateLayer, setDrawPlatform
 } from "../jslib/draw.js";
 import {
     Mechanisms, Memento
@@ -16,7 +16,15 @@ import {
 import {
     DArtifactAlphaAnimation,
     DArtifactRotateAnimation,
-    DBoard, DElement, DImageArtifact, DSimpleLevel, DMultiImageArtifact, DTextArtifact
+    DBoard,
+    DElement,
+    DImageArtifact,
+    DSimpleLevel,
+    DMultiImageArtifact,
+    DTextArtifact,
+    DStaticLevel,
+    DLayeredLevel,
+    DStackedLevel
 } from "../jslib/board.js";
 import {
     mockPlatform, getDirectives, resetDirectives, createEvent, loadAllImages, getLayers
@@ -221,6 +229,128 @@ describe("Board", ()=> {
             assert(artifact3.transform.toString()).equalsTo("matrix(1, 0, 0, 1, 10, 15)");
             assert(artifact3.boundingArea.toString()).equalsTo("area(-15, -10, 35, 40)");;
             assert(artifact3.viewportBoundingArea.toString()).equalsTo("area(247.5, 152.5, 272.5, 177.5)");
+    });
+
+    it("Checks static level", () => {
+        given:
+            var widgetsLevel = new DStaticLevel("widgets");
+            let board = new DBoard(new Dimension2D(1000, 500), new Dimension2D(500, 250), widgetsLevel);
+            let [widgetsLayer] = getLayers(board, "widgets");
+        when:
+            var image = DImage.getImage("../images/widget.png");
+            image._root.onload();
+            var artifact = new DImageArtifact("widgets", image, new Point2D(0, 0), new Dimension2D(50, 50));;
+            var element = new DElement(artifact);
+            element.setOnBoard(board);
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "drawImage(../images/widget.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks layered level", () => {
+        given:
+            var unitImage = DImage.getImage("../images/unit.png");
+            var markerImage = DImage.getImage("../images/marker.png");
+            var unitArtifact = new DImageArtifact("units", unitImage, new Point2D(0, 0), new Dimension2D(50, 50));;
+            var markerArtifact = new DImageArtifact("units", markerImage, new Point2D(0, 0), new Dimension2D(50, 50));;
+            var unitElement = new DElement(unitArtifact);
+            var markerElement = new DElement(markerArtifact);
+            let select = function(artifact, [unitLayer, markerLayer]) {
+                return artifact === unitArtifact ? unitLayer : markerLayer;
+            }
+            let unitLayer = new DLayer("unit");
+            let markerLayer = new DTranslateLayer("marker", Matrix2D.translate(new Point2D(40, -40)));
+            var unitsLevel = new DLayeredLevel("units", select, unitLayer, markerLayer);
+            let board = new DBoard(new Dimension2D(1000, 500), new Dimension2D(500, 250), unitsLevel);
+            loadAllImages();
+        when:
+            unitElement.setOnBoard(board);
+            markerElement.setOnBoard(board);
+            board.paint();
+        then:
+            assert(getDirectives(unitLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.5, 0, 0, 0.5, 250, 125)",
+                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+            assert(getDirectives(markerLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.5, 0, 0, 0.5, 270, 105)",
+                    "drawImage(../images/marker.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+            assert(unitsLevel.layers).arrayEqualsTo([unitLayer, markerLayer]);
+            assert(unitsLevel.getViewportPoint(new Point2D(0, 0), unitArtifact).toString()).equalsTo("point(250, 125)");
+            assert(unitsLevel.getViewportPoint(new Point2D(0, 0), markerArtifact).toString()).equalsTo("point(270, 105)");
+            assert(unitsLevel.getOriginalPoint(unitArtifact).toString()).equalsTo("point(-500, -250)");
+            assert(unitsLevel.getFinalPoint(unitArtifact).toString()).equalsTo("point(500, 250)");
+            assert(unitsLevel.getOriginalPoint(markerArtifact).toString()).equalsTo("point(-540, -210)");
+            assert(unitsLevel.getFinalPoint(markerArtifact).toString()).equalsTo("point(460, 290)");
+            assert(unitsLevel.getAllArtifactsOnPoint(new Point2D(250, 125))).arrayEqualsTo([unitArtifact]);
+            assert(unitsLevel.getAllArtifactsOnPoint(new Point2D(260, 115))).arrayEqualsTo([markerArtifact, unitArtifact]);
+            assert(unitsLevel.getArtifactOnPoint(new Point2D(260, 115))).equalsTo(markerArtifact);
+            assert(unitsLevel.getAllArtifactsOnPoint(new Point2D(100, 100))).arrayEqualsTo([]);
+            assert(unitsLevel.getArtifactOnPoint(new Point2D(100, 100))).isNotDefined();
+            assert(unitsLevel.isPointOnArtifact(unitArtifact, new Point2D(250, 125))).isTrue();
+            assert(unitsLevel.isPointOnArtifact(markerArtifact, new Point2D(250, 125))).isFalse();
+        when:
+            var widgetLayer = new DLayer("widget");
+            unitsLevel.addLayer(widgetLayer);
+        then:
+            assert(unitsLevel.layers).arrayEqualsTo([unitLayer, markerLayer, widgetLayer]);
+    });
+
+    it("Checks stacked level", () => {
+        given:
+            var unit1Image = DImage.getImage("../images/unit1.png");
+            var unit1Artifact = new DImageArtifact("units", unit1Image, new Point2D(0, 0), new Dimension2D(50, 50));;
+            var unit1Element = new DElement(unit1Artifact);
+            unit1Artifact.unit = unit1Element;
+            unit1Element.main = unit1Artifact;
+            var unit2Image = DImage.getImage("../images/unit2.png");
+            var unit2Artifact = new DImageArtifact("units", unit2Image, new Point2D(0, 0), new Dimension2D(50, 50));;
+            var unit2Element = new DElement(unit2Artifact);
+            unit2Artifact.unit = unit2Element;
+            unit2Element.main = unit2Artifact;
+            var units = [unit1Element, unit2Element];
+            let createSlot = function(index) {
+                return [
+                    new DLayer("unit-"+index),
+                    new DLayer("marker-"+index)
+                ]
+            }
+            let selectSlot = function(artifact) {
+                return units.indexOf(artifact.unit);
+            }
+            let selectLayer = function(artifact, [unitLayer, markerLayer]) {
+                return artifact.unit.main === artifact ? unitLayer : markerLayer;
+            }
+            var unitsLevel = new DStackedLevel("units", selectSlot, selectLayer, createSlot);
+            let board = new DBoard(new Dimension2D(1000, 500), new Dimension2D(500, 250), unitsLevel);
+            loadAllImages();
+        when:
+            unit1Element.setOnBoard(board);
+            unit2Element.setOnBoard(board);
+            board.paint();
+        then:
+            assert(getDirectives(board._draw.getLayer("unit-0"), 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.5, 0, 0, 0.5, 250, 125)",
+                    "drawImage(../images/unit1.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+            assert(getDirectives(board._draw.getLayer("unit-1"), 0)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.5, 0, 0, 0.5, 250, 125)",
+                    "drawImage(../images/unit2.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
     });
 
     function createBoardWithOneCounter() {
@@ -814,7 +944,7 @@ describe("Board", ()=> {
 
     it("Checks multi images artifact", () => {
         given:
-            var { board, unitsLevel:level, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var {board, unitsLevel: level, unitsLayer: layer} = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
         when:
             var image1 = DImage.getImage("../images/unit.png");
             var image2 = DImage.getImage("../images/unit-back.png");
@@ -869,7 +999,6 @@ describe("Board", ()=> {
                 "restore()"
             ]);
     });
-
 
     it("Checks text artifact", () => {
         given:

@@ -462,7 +462,7 @@ export class DDraw {
     }
 
     insertLayerBefore(layer, beforeLayer) {
-        let index = this._layers.indexOf(beforeLayer);
+        let index = this._layersArray.indexOf(beforeLayer);
         return this.setLayer(layer, index);
     }
 

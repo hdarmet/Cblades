@@ -882,12 +882,14 @@ export class DLayeredLevel extends DLevel {
         }
     }
 
-    getPoint(viewportPoint, layer) {
+    getPoint(viewportPoint, artifact) {
+        let layer = this._select(artifact, this._layers);
         return layer.transform.invert().point(viewportPoint);
     }
 
-    getViewportPoint(point) {
-        return this.layers[0].transform.point(point);
+    getViewportPoint(point, artifact) {
+        let layer = this._select(artifact, this._layers);
+        return layer.transform.point(point);
     }
 
     getAllArtifactsOnPoint(viewportPoint) {
@@ -895,7 +897,7 @@ export class DLayeredLevel extends DLevel {
         let visibleArtifacts = [...this.visibleArtifacts];
         for (let i = visibleArtifacts.length-1; i>=0; i--) {
             let artifact = visibleArtifacts[i];
-            let point = this.getPoint(viewportPoint, this._select(artifact));
+            let point = this.getPoint(viewportPoint, artifact);
             if (artifact.containsPoint(point)) {
                 artifacts.push(artifact);
             }
@@ -907,7 +909,7 @@ export class DLayeredLevel extends DLevel {
         let visibleArtifacts = [...this.visibleArtifacts];
         for (let i = visibleArtifacts.length-1; i>=0; i--) {
             let artifact = visibleArtifacts[i];
-            let point = this.getPoint(viewportPoint, this._select(artifact));
+            let point = this.getPoint(viewportPoint, artifact);
             if (artifact.containsPoint(point))
                 return artifact;
         }
@@ -916,16 +918,16 @@ export class DLayeredLevel extends DLevel {
 
     isPointOnArtifact(artifact, viewportPoint) {
         console.assert(artifact.level === this);
-        let point = this.getPoint(viewportPoint, this._select(artifact));
+        let point = this.getPoint(viewportPoint, artifact);
         return artifact.containsPoint(point);
     }
 
     getOriginalPoint(artifact) {
-        return this.getPoint(new Point2D(0, 0), this._select(artifact));
+        return this.getPoint(new Point2D(0, 0), artifact);
     }
 
     getFinalPoint(artifact) {
-        return this.getPoint(new Point2D(this.layer.dimension.w, this.layer.dimension.h), this._select(artifact));
+        return this.getPoint(new Point2D(this.layer.dimension.w, this.layer.dimension.h), artifact);
     }
 }
 
