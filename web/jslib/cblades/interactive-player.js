@@ -11,7 +11,7 @@ import {
 import {
     CBAbstractPlayer, CBAction, CBActuator,
     CBGame,
-    CBMovement, CBOrderInstruction
+    CBMovement, CBMoveType, CBOrderInstruction
 } from "./game.js";
 import {
     DBoard, DElement, DImageArtifact
@@ -128,8 +128,8 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
             offset.y - popup.dimension.h/2 + CBGame.POPUP_MARGIN));
     }
 
-    applyLossesToUnit(unit, losses) {
-        unit.launchAction(new InteractiveRetreatAction(this.game, unit, losses));
+    applyLossesToUnit(unit, losses, attacker) {
+        unit.launchAction(new InteractiveRetreatAction(this.game, unit, losses, attacker));
     }
 
     restUnit(unit, event) {
@@ -175,13 +175,18 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
     tryToDismissCommand(unit, event) {
         unit.launchAction(new InteractiveDismissCommandAction(this.game, unit, event));
     }
+
+    mergeUnits(unit, event) {
+        unit.launchAction(new InteractiveMergeUnitAction(this.game, unit, event));
+    }
 }
 
 export class InteractiveRetreatAction extends CBAction {
 
-    constructor(game, unit, losses) {
+    constructor(game, unit, losses, attacker) {
         super(game, unit);
         this._losses = losses;
+        this._attacker = attacker;
     }
 
     play() {
@@ -190,7 +195,7 @@ export class InteractiveRetreatAction extends CBAction {
     }
 
     _createRetreatActuator() {
-        let retreatDirections = this.game.arbitrator.getRetreatZones(this.unit);
+        let retreatDirections = this.game.arbitrator.getRetreatZones(this.unit, this._attacker);
         if (retreatDirections.length) {
             let retreatActuator = this.createRetreatActuator(retreatDirections);
             this.game.openActuator(retreatActuator);
@@ -198,9 +203,10 @@ export class InteractiveRetreatAction extends CBAction {
         return retreatDirections.length === 0;
     }
 
-    retreatUnit(hexId, event) {
+    retreatUnit(hexId, event, moveType) {
         this.game.closeActuators();
-        this.unit.move(hexId, 0);
+        this.unit.move(hexId, 0, moveType);
+        this.unit.addOneCohesionLevel();
         this.markAsFinished();
         this.unit.removeAction();
     }
@@ -212,7 +218,7 @@ export class InteractiveRetreatAction extends CBAction {
         this.unit.removeAction();
     }
 
-    createRetreatActuator(directions) {
+    createRetreatActuator(directions, attacker) {
         return new CBRetreatActuator(this, directions);
     }
 
@@ -464,7 +470,7 @@ export class InteractiveShockAttackAction extends CBAction {
                 let {success} = this._processShockAttackResult(foe, supported, dice.result);
                 if (success) {
                     result.success().show();
-                    foe.player.applyLossesToUnit(foe, result.lossesForDefender);
+                    foe.player.applyLossesToUnit(foe, result.lossesForDefender, this.unit);
                 }
                 else {
                     result.failure().show();
@@ -531,7 +537,7 @@ export class InteractiveFireAttackAction extends CBAction {
                 let {success} = this._processFireAttackResult(foe, dice.result);
                 if (success) {
                     result.success().show();
-                    foe.player.applyLossesToUnit(foe, result.lossesForDefender);
+                    foe.player.applyLossesToUnit(foe, result.lossesForDefender, this.unit);
                 }
                 else {
                     result.failure().show();
@@ -670,7 +676,7 @@ export class InteractiveMovementAction extends CBAction {
     moveUnit(hexId) {
         let cost = this.game.arbitrator.getMovementCost(this.unit, hexId);
         this._updateTirednessForMovement(cost);
-        this.unit.move(hexId, cost);
+        this.unit.move(hexId, cost, CBMoveType.FORWARD);
         this._createMovementActuators();
         let played = this._createMovementActuators();
         this._checkContact();
@@ -919,6 +925,27 @@ export class InteractiveGiveOrdersAction extends CBAction {
     }
 }
 
+export class InteractiveMergeUnitAction extends CBAction {
+
+    constructor(game, unit, event) {
+        super(game, unit);
+        this._event = event;
+    }
+
+    play() {
+        this.game.closeActuators();
+        let {replacement, replaced} = this.game.arbitrator.mergedUnit(this.unit);
+        let hexLocation = replaced[0].hexLocation;
+        replacement.move(hexLocation, 0);
+        replacement.markAsBeingPlayed();
+        for (let replacedUnit of replaced) {
+            replacedUnit.move(null, 0);
+        }
+        this.markAsFinished();
+    }
+
+}
+
 export class CBActionMenu extends DIconMenu {
 
     constructor(game, unit, actions) {
@@ -1014,7 +1041,9 @@ export class CBActionMenu extends DIconMenu {
                 1, 5, () => {
                 }).setActive(actions.castSpell),
             new DIconMenuItem("/CBlades/images/icons/do-fusion.png", "/CBlades/images/icons/do-fusion-gray.png",
-                2, 5, () => {
+                2, 5, event => {
+                    unit.player.mergeUnits(unit, event);
+                    return true;
                 }).setActive(actions.mergeUnit),
             new DIconMenuItem("/CBlades/images/icons/do-many.png", "/CBlades/images/icons/do-many-gray.png",
                 3, 5, () => {
@@ -1072,7 +1101,6 @@ export class CBOrderInstructionMenu extends DIconMenu {
     }
 
 }
-
 
 class ActuatorImageArtifact extends DImageArtifact {
 
@@ -1272,6 +1300,7 @@ export class CBRetreatActuator extends CBActuator {
                 new Point2D(0, 0), new Dimension2D(80, 130));
             orientation.pangle = parseInt(angle);
             orientation.position = Point2D.position(this.unit.location, directions[angle].hex.location, 0.9);
+            orientation.moveType = directions[angle].moveType;
             this._imageArtifacts.push(orientation);
         }
         this._element = new DElement(...this._imageArtifacts);
@@ -1298,7 +1327,7 @@ export class CBRetreatActuator extends CBActuator {
             this.action.takeALossFromUnit(event);
         }
         else {
-            this.action.retreatUnit(this.unit.hexLocation.getNearHex(trigger.angle), event);
+            this.action.retreatUnit(this.unit.hexLocation.getNearHex(trigger.angle), event, trigger.moveType);
         }
     }
 

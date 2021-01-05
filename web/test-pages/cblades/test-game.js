@@ -21,7 +21,16 @@ import {
     CBAbstractPlayer,
     CBAbstractArbitrator,
     CBHexSideId,
-    CBHexVertexId, CBCounter, CBAction, CBTroop, CBWing, CBCharacter, CBOrderInstruction
+    CBHexVertexId,
+    CBCounter,
+    CBAction,
+    CBTroop,
+    CBWing,
+    CBCharacter,
+    CBOrderInstruction,
+    CBUnitType,
+    CBMoveType,
+    CBLackOfMunitions, CBTiredness, CBCohesion
 } from "../../jslib/cblades/game.js";
 import {
     DBoard, DElement
@@ -65,9 +74,10 @@ describe("Game", ()=> {
         var player = new CBAbstractPlayer();
         game.addPlayer(player);
         let wing = new CBWing(player);
-        let unit = new CBTroop(wing, [
+        let unitType = new CBUnitType("unit", [
             "/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"
         ]);
+        let unit = new CBTroop(unitType, wing);
         game.addUnit(unit, map.getHex(5, 8));
         game.start();
         loadAllImages();
@@ -85,7 +95,8 @@ describe("Game", ()=> {
             var map = new CBMap("/CBlades/images/maps/map.png");
             game.setMap(map);
             let wing = new CBWing(player);
-            let unit = new CBTroop(wing, ["/CBlades/images/units/misc/unit.png"]);
+            let unitType = new CBUnitType("unit", ["/CBlades/images/units/misc/unit.png"]);
+            let unit = new CBTroop(unitType, wing);
             game.addUnit(unit, map.getHex(5, 8));
         when:
             game.start();
@@ -530,18 +541,37 @@ describe("Game", ()=> {
         mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
     }
 
-    function create2UnitsTinyGame() {
+    function create2UnitsTinyGame(start = true) {
         var { game, map } = prepareTinyGame();
         let player = new CBAbstractPlayer();
         game.addPlayer(player);
         let wing = new CBWing(player);
-        let unit1 = new CBTroop(wing, ["/CBlades/images/units/misc/unit1.png"]);
+        let unitType1 = new CBUnitType("unit1", ["/CBlades/images/units/misc/unit1.png"]);
+        let unit1 = new CBTroop(unitType1, wing);
         game.addUnit(unit1, map.getHex(5, 8));
-        let unit2 = new CBTroop(wing, ["/CBlades/images/units/misc/unit2.png"]);
+        let unitType2 = new CBUnitType("unit2", ["/CBlades/images/units/misc/unit2.png"]);
+        let unit2 = new CBTroop(unitType2, wing);
         game.addUnit(unit2, map.getHex(5, 7));
-        game.start();
-        loadAllImages();
+        if (start) {
+            game.start();
+            loadAllImages();
+        }
         return {game, map, unit1, unit2, wing, player};
+    }
+
+    function create2Troops2LeadersTinyGame(start = true) {
+        var {game, map, unit1, unit2, wing, player} = create2UnitsTinyGame(false);
+        let leaderType1 = new CBUnitType("leader1", ["/CBlades/images/units/misc/leader1.png"]);
+        let leader1 = new CBCharacter(leaderType1, wing);
+        game.addUnit(leader1, map.getHex(6, 8));
+        let leaderType2 = new CBUnitType("leader2", ["/CBlades/images/units/misc/leader2.png"]);
+        let leader2 = new CBCharacter(leaderType2, wing);
+        game.addUnit(leader2, map.getHex(6, 7));
+        if (start) {
+            game.start();
+            loadAllImages();
+        }
+        return {game, map, unit1, unit2, leader1, leader2, wing, player};
     }
 
     function create2PlayersTinyGame() {
@@ -551,10 +581,12 @@ describe("Game", ()=> {
         let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
         let wing1 = new CBWing(player1);
-        let unit1 = new CBTroop(wing1, ["/CBlades/images/units/misc/unit1.png"]);
+        let unitType1 = new CBUnitType("unit1", ["/CBlades/images/units/misc/unit1.png"]);
+        let unit1 = new CBTroop(unitType1, wing1);
         game.addUnit(unit1, map.getHex(5, 8));
         let wing2 = new CBWing(player2);
-        let unit2 = new CBTroop(wing2, ["/CBlades/images/units/misc/unit2.png"]);
+        let unitType2 = new CBUnitType("unit2", ["/CBlades/images/units/misc/unit2.png"]);
+        let unit2 = new CBTroop(unitType2, wing2);
         game.addUnit(unit2, map.getHex(5, 7));
         game.start();
         loadAllImages();
@@ -629,9 +661,10 @@ describe("Game", ()=> {
             var player = new CBAbstractPlayer();
             game.addPlayer(player);
             var wing = new CBWing(player);
-            var unit1 = new CBTroop(wing, ["/CBlades/images/units/misc/unit1.png"]);
+            let unitType1 = new CBUnitType("unit1", ["/CBlades/images/units/misc/unit1.png"]);
+            var unit1 = new CBTroop(unitType1, wing);
             game.addUnit(unit1, map.getHex(5, 8));
-            var unit2 = new CBTroop(wing, ["/CBlades/images/units/misc/unit1.png"]);
+            var unit2 = new CBTroop(unitType1, wing);
             game.addUnit(unit2, map.getHex(5, 8));
         then:
             assert(unit1.wing).equalsTo(wing);
@@ -646,7 +679,8 @@ describe("Game", ()=> {
             game.addPlayer(player);
             var wing = new CBWing(player);
         when:
-            var unit = new CBTroop(wing, ["/CBlades/images/units/misc/unit1.png"]);
+            var unitType1 = new CBUnitType("unit1", ["/CBlades/images/units/misc/unit1.png"]);
+            var unit = new CBTroop(unitType1, wing);
             var hexId = map.getHex(5, 8);
             game.addUnit(unit, hexId);
         then:
@@ -1037,6 +1071,56 @@ describe("Game", ()=> {
             ]);
             assert(unit.hexLocation.toString()).equalsTo("Hex(5, 8)");
             assert(unit.isOnBoard()).isTrue();
+    });
+
+    it("Checks unit backward stacking", () => {
+        given:
+            var {game, unit1, unit2, leader1, leader2, map} = create2Troops2LeadersTinyGame();
+        when:
+            leader1.move(map.getHex(8, 8), 0);
+            var units = map.getHex(8, 8).units;
+        then:
+            assert(units).arrayEqualsTo([leader1]);
+        when:
+            leader2.move(map.getHex(8, 8), 0, CBMoveType.BACKWARD);
+            units = map.getHex(8, 8).units;
+        then:
+            assert(units).arrayEqualsTo([leader1, leader2]);
+        when:
+            unit1.move(map.getHex(8, 8), 0, CBMoveType.BACKWARD);
+            units = map.getHex(8, 8).units;
+        then:
+            assert(units).arrayEqualsTo([unit1, leader1, leader2]);
+        when:
+            unit2.move(map.getHex(8, 8), 0, CBMoveType.BACKWARD);
+            units = map.getHex(8, 8).units;
+        then:
+            assert(units).arrayEqualsTo([unit1, unit2, leader1, leader2]);
+    });
+
+    it("Checks unit forward stacking", () => {
+        given:
+            var {game, unit1, unit2, leader1, leader2, map} = create2Troops2LeadersTinyGame();
+        when:
+            unit1.move(map.getHex(8, 8), 0);
+            var units = map.getHex(8, 8).units;
+        then:
+            assert(units).arrayEqualsTo([unit1]);
+        when:
+            unit2.move(map.getHex(8, 8), 0, CBMoveType.FORWARD);
+            units = map.getHex(8, 8).units;
+        then:
+            assert(units).arrayEqualsTo([unit2, unit1]);
+        when:
+            leader1.move(map.getHex(8, 8), 0, CBMoveType.FORWARD);
+            units = map.getHex(8, 8).units;
+        then:
+            assert(units).arrayEqualsTo([unit2, unit1, leader1]);
+        when:
+            leader2.move(map.getHex(8, 8), 0, CBMoveType.FORWARD);
+            units = map.getHex(8, 8).units;
+        then:
+            assert(units).arrayEqualsTo([unit2, unit1, leader2, leader1]);
     });
 
     it("Checks rotating a unit", () => {
@@ -1680,13 +1764,15 @@ describe("Game", ()=> {
         var player = new CBAbstractPlayer();
         game.addPlayer(player);
         let wing = new CBWing(player);
-        let unit = new CBTroop(wing, [
+        let unitType = new CBUnitType("unit", [
             "/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"
         ]);
+        let unit = new CBTroop(unitType, wing);
         game.addUnit(unit, map.getHex(5, 8));
-        let leader = new CBCharacter(wing, [
+        let leaderType = new CBUnitType("leader", [
             "/CBlades/images/units/misc/leader.png", "/CBlades/images/units/misc/leaderb.png"
         ]);
+        let leader = new CBCharacter(leaderType, wing);
         game.addUnit(leader, map.getHex(5, 9));
         game.start();
         loadAllImages();
@@ -1804,6 +1890,26 @@ describe("Game", ()=> {
             game._resetCounters(player);
         then:
             assert(leader.commandPoints).equalsTo(0);
+    });
+
+    it("Checks unit cloning", () => {
+        given:
+            var {game, unit, leader, player, wing} = createTinyCommandGame();
+        when:
+            unit.movementPoints = 3;
+            unit.cohesion = CBCohesion.ROUTED;
+            unit.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            unit.fixRemainingLossSteps(1);
+            unit.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            var cloneUnit = unit.clone();
+        then:
+            assert(cloneUnit).is(CBTroop);
+            assert(cloneUnit.type).equalsTo(unit.type);
+            assert(cloneUnit.movementPoints).equalsTo(3);
+            assert(cloneUnit.cohesion).equalsTo(CBCohesion.ROUTED);
+            assert(cloneUnit.lackOfMunitions).equalsTo(CBLackOfMunitions.SCARCE);
+            assert(cloneUnit.remainingStepCount).equalsTo(1);
+            assert(cloneUnit.tiredness).equalsTo(CBTiredness.EXHAUSTED);
     });
 
 });

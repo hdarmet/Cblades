@@ -1,5 +1,5 @@
 import {
-    CBAbstractArbitrator, CBCharacter, CBCohesion, CBHexSideId, CBMovement, CBTiredness, CBWeather
+    CBAbstractArbitrator, CBCharacter, CBCohesion, CBHexSideId, CBMovement, CBMoveType, CBTiredness, CBTroop, CBWeather
 } from "./game.js";
 import {
     diffAngle
@@ -31,7 +31,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             giveSpecificOrders:this.isAllowedToGiveOrders(unit),
             prepareSpell:true,
             castSpell:true,
-            mergeUnit:true,
+            mergeUnit:this.isAllowedToMerge(unit),
             miscAction:true
         }
     }
@@ -111,22 +111,43 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return zones;
     }
 
-    getRetreatZones(unit) {
-        function processZone(zone, arbitrator, unit) {
+    getRetreatZones(unit, attacker) {
+        function processZone(zone, arbitrator, unit, moveType) {
             let nearUnits = zone.hex.units;
+            zone.moveType = moveType;
             if (nearUnits.length) {
-                if (arbitrator.areUnitsFoes(unit, nearUnits)) return false;
+                if (arbitrator.areUnitsFoes(unit, nearUnits[0])) return false;
             }
             return true;
         }
 
-        let zones = this.getUnitBackwardZone(unit);
-        let result = [];
-        for (let angle in zones) {
-            let zone = zones[angle];
-            if (processZone(zone, this, unit)) {
-                result[angle] = zone;
+        function processZones(result, zones, moveType, forbiddenZones) {
+            for (let angle in zones) {
+                let zone = zones[angle];
+                if (!forbiddenZones.has(zone.hex)) {
+                    if (processZone(zone, this, unit, moveType)) {
+                        result[angle] = zone;
+                    }
+                }
             }
+        }
+
+        function getForbiddenZone(unit) {
+            let forbidden = new Set();
+            let zones = this.getUnitForwardZone(unit);
+            for (let angle in zones) {
+                forbidden.add(zones[angle].hex);
+            }
+            return forbidden;
+        }
+
+        let result = [];
+        if (!unit.isRouted()) {
+            let forbiddenZones = getForbiddenZone.call(this, attacker);
+            let zones = this.getUnitBackwardZone(unit);
+            processZones.call(this, result, zones, CBMoveType.BACKWARD, forbiddenZones);
+            zones = this.getUnitForwardZone(unit);
+            processZones.call(this, result, zones, CBMoveType.FORWARD, forbiddenZones);
         }
         return result;
     }
@@ -403,4 +424,40 @@ export class CBArbitrator extends CBAbstractArbitrator{
     getWingTiredness(unit) {
         return 10;
     }
+
+    getUnitOfType(units, type) {
+        let troops = [];
+        for (let unit of units) {
+            if (unit.type === type) {
+                troops.push(unit);
+            }
+        }
+        return troops;
+    }
+
+    isAllowedToMerge(unit) {
+        if (!(unit instanceof CBTroop)) return false;
+        let units = this.getUnitOfType(unit.hexLocation.units, unit.type);
+        if (units.length !== 2) return false;
+        let [unit1, unit2] = units;
+        if (unit1.type !== unit2.type) return false;
+        if (!unit1.inGoodOrder() || !unit1.inGoodOrder()) return false;
+        if (unit1.isExhausted() || unit2.isExhausted()) return false;
+        if (unit1.hasBeenPlayed() || unit2.hasBeenPlayed()) return false;
+        if (!unit1.hasReceivedOrder() || !unit2.hasReceivedOrder()) return false;
+        if (unit1.remainingStepCount + unit2.remainingStepCount > unit.maxStepCount) return false;
+        return true;
+    }
+
+    mergedUnit(unit) {
+        let units = this.getUnitOfType(unit.hexLocation.units, unit.type);
+        let [unit1, unit2] = units;
+        let removedUnit = unit1 === unit ? unit2 : unit1;
+        let mergedUnit = unit.clone();
+        mergedUnit.fixRemainingLossSteps(unit1.remainingStepCount + unit2.remainingStepCount);
+        if (!mergedUnit.isTired() && removedUnit.isTired()) mergedUnit.fixTirednessLevel(CBTiredness.TIRED);
+        if (mergedUnit.lackOfMunitions < removedUnit.lackOfMunitions) mergedUnit.fixLackOfMunitionsLevel(removedUnit.lackOfMunitions);
+        return { replacement:mergedUnit, replaced:units };
+    }
+
 }

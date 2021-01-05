@@ -18,7 +18,7 @@ import {
 } from "../../jslib/mechanisms.js";
 import {
     CBAction, CBCharacter,
-    CBGame, CBMap, CBOrderInstruction, CBTroop, CBWing
+    CBGame, CBMap, CBOrderInstruction, CBTroop, CBUnitType, CBWing
 } from "../../jslib/cblades/game.js";
 import {
     DDice, DMessage, DResult
@@ -65,8 +65,8 @@ describe("Interactive Player", ()=> {
         var wing = new CBWing(player);
         var map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
-        let unit = new CBTroop(wing,
-            ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
+        let unitType = new CBUnitType("unit", ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
+        let unit = new CBTroop(unitType, wing);
         game.addUnit(unit, map.getHex( 5, 8));
         game.start();
         loadAllImages();
@@ -84,12 +84,12 @@ describe("Interactive Player", ()=> {
         let map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
         let wing1 = new CBWing(player1);
-        let unit1 = new CBTroop(wing1,
-            ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
+        let unitType1 = new CBUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
+        let unit1 = new CBTroop(unitType1, wing1);
         game.addUnit(unit1, map.getHex(5, 8));
         let wing2 = new CBWing(player2);
-        let unit2 = new CBTroop(wing2,
-            ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"]);
+        let unitType2 = new CBUnitType("unit2", ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"]);
+        let unit2 = new CBTroop(unitType2, wing2);
         game.addUnit(unit2, map.getHex(6, 8));
         game.start();
         loadAllImages();
@@ -105,12 +105,13 @@ describe("Interactive Player", ()=> {
         var map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
         let wing = new CBWing(player);
-        let leader = new CBCharacter(wing,
+        let leaderType = new CBUnitType("leader",
             ["/CBlades/images/units/misc/character.png", "/CBlades/images/units/misc/characterb.png"]);
-        let unit1 = new CBTroop(wing,
+        let leader = new CBCharacter(leaderType, wing);
+        let unitType = new CBUnitType("unit",
             ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
-        let unit2 = new CBTroop(wing,
-            ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
+        let unit1 = new CBTroop(unitType, wing);
+        let unit2 = new CBTroop(unitType, wing);
         game.addUnit(leader, map.getHex(6, 9));
         game.addUnit(unit1, map.getHex(5, 8));
         game.addUnit(unit2, map.getHex( 8, 7));
@@ -180,7 +181,7 @@ describe("Interactive Player", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 331.6667, 340)",
-                    "drawImage(/CBlades/images/icons/do-fusion.png, -25, -25, 50, 50)",
+                    "drawImage(/CBlades/images/icons/do-fusion-gray.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 391.6667, 340)",
@@ -2378,6 +2379,16 @@ describe("Interactive Player", ()=> {
                     "drawImage(/CBlades/images/actuators/retreat-move.png, -40, -65, 80, 130)",
                 "restore()",
                 "save()",
+                    "setTransform(-0.2444, 0.4233, -0.4233, -0.2444, 491.6667, 202.7401)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/retreat-move.png, -40, -65, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 341.6667, 202.7401)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/retreat-move.png, -40, -65, 80, 130)",
+                "restore()",
+                "save()",
                     "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 341.6667, 116.1382)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/actuators/retreat-move.png, -40, -65, 80, 130)",
@@ -2387,7 +2398,7 @@ describe("Interactive Player", ()=> {
             var retreatActuator = getRetreatActuator(game);
         then:
             assert(retreatActuator.getTrigger(0)).isDefined();
-            assert(retreatActuator.getTrigger(120)).isNotDefined();
+            assert(retreatActuator.getTrigger(150)).isNotDefined();
     });
 
     it("Checks when a unit fails to fire attack", () => {
@@ -2485,11 +2496,13 @@ describe("Interactive Player", ()=> {
         var wing = new CBWing(player);
         var map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
-        let unit = new CBTroop(wing,
+        let unitType = new CBUnitType("unit",
             ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
+        let unit = new CBTroop(unitType, wing);
         game.addUnit(unit, map.getHex( 5, 8));
-        let leader = new CBCharacter(wing,
+        let leaderType = new CBUnitType("unit",
             ["/CBlades/images/units/misc/leader.png", "/CBlades/images/units/misc/leaderb.png"]);
+        let leader = new CBCharacter(leaderType, wing);
         game.addUnit(leader, map.getHex( 5, 9));
         game.start();
         loadAllImages();

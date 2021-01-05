@@ -18,7 +18,7 @@ import {
 } from "../../jslib/mechanisms.js";
 import {
     CBAction, CBCharacter,
-    CBGame, CBMap, CBMovement, CBTroop, CBWeather, CBWing
+    CBGame, CBMap, CBMovement, CBTroop, CBUnitType, CBWeather, CBWing
 } from "../../jslib/cblades/game.js";
 import {
     CBInteractivePlayer, CBMoveActuator, CBOrientationActuator
@@ -49,17 +49,21 @@ describe("Arbitrator", ()=> {
         let wing2 = new CBWing(player2);
         let map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
-        let unit11 = new CBTroop(wing1, ["/CBlades/images/units/misc/unit1.png, \"/CBlades/images/units/misc/unit1b.png"]);
+        let unitType1 = new CBUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"])
+        let unit11 = new CBTroop(unitType1, wing1);
         game.addUnit(unit11, map.getHex(5, 8));
-        let unit12 = new CBTroop(wing1, ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
+        let unit12 = new CBTroop(unitType1, wing1);
         game.addUnit(unit12, map.getHex(5, 7));
-        let leader11 = new CBCharacter(wing1, ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"]);
+        let leaderType1 = new CBUnitType("leader1", ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"])
+        let leader11 = new CBCharacter(leaderType1, wing1);
         game.addUnit(leader11, map.getHex(6, 7));
-        let unit21 = new CBTroop(wing2, ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"]);
+        let unitType2 = new CBUnitType("unit2", ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit1b.png"])
+        let unit21 = new CBTroop(unitType2, wing2);
         game.addUnit(unit21, map.getHex(7, 8));
-        let unit22 = new CBTroop(wing2, ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"]);
+        let unit22 = new CBTroop(unitType2, wing2);
         game.addUnit(unit22, map.getHex(7, 7));
-        let leader21 = new CBCharacter(wing2, ["/CBlades/images/units/misc/leader2.png", "/CBlades/images/units/misc/leader2b.png"]);
+        let leaderType2 = new CBUnitType("leader2", ["/CBlades/images/units/misc/leader2.png", "/CBlades/images/units/misc/leader2b.png"])
+        let leader21 = new CBCharacter(leaderType2, wing2);
         game.addUnit(leader21, map.getHex(8, 7));
         game.start();
         loadAllImages();
@@ -254,23 +258,23 @@ describe("Arbitrator", ()=> {
             unit12.angle = 180;
             unit21.move(map.getHex(5, 6)); // foes on backward zone
         when:
-            var allowedRetreats = arbitrator.getRetreatZones(unit12);
+            var allowedRetreats = arbitrator.getRetreatZones(unit12, unit21);
         then:
             assertInZone(allowedRetreats, 300, 4, 6);
             assertNotInZone(allowedRetreats, 0); // occupied by a foe
             assertInZone(allowedRetreats, 60, 6, 6);
-            assertNotInZone(allowedRetreats, 120);
-            assertNotInZone(allowedRetreats, 180);
-            assertNotInZone(allowedRetreats, 240);
+            assertInZone(allowedRetreats, 120, 6, 7);
+            assertInZone(allowedRetreats, 180, 5, 8);
+            assertInZone(allowedRetreats, 240, 4, 7);
         when:
             unit12.angle = 210;
-            allowedRetreats = arbitrator.getRetreatZones(unit12);
+            allowedRetreats = arbitrator.getRetreatZones(unit12, unit21);
         then:
             assertNotInZone(allowedRetreats, 0); // occupied by a foe
             assertInZone(allowedRetreats, 60, 6, 6);
             assertNotInZone(allowedRetreats, 120);
-            assertNotInZone(allowedRetreats, 180);
-            assertNotInZone(allowedRetreats, 240);
+            assertInZone(allowedRetreats, 180, 5, 8);
+            assertInZone(allowedRetreats, 240, 4, 7);
             assertNotInZone(allowedRetreats, 300);
     });
 

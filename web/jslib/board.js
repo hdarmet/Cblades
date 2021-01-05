@@ -839,6 +839,9 @@ export class DLayeredLevel extends DLevel {
         super();
         this._name = name;
         this._layers = layers;
+        for (let index=0; index<this._layers.length; index++) {
+            this._layers[index].index = index;
+        }
         this._select = select;
     }
 
@@ -862,6 +865,7 @@ export class DLayeredLevel extends DLevel {
 
     addLayer(layer) {
         this._draw.insertLayerAfter(layer, this._layers[this._layers.length-1]);
+        layer.index = this._layers.length;
         this._layers.push(layer);
     }
 
@@ -897,23 +901,19 @@ export class DLayeredLevel extends DLevel {
         let visibleArtifacts = [...this.visibleArtifacts];
         for (let i = visibleArtifacts.length-1; i>=0; i--) {
             let artifact = visibleArtifacts[i];
-            let point = this.getPoint(viewportPoint, artifact);
+            let layer = this._select(artifact, this._layers);
+            let point = layer.transform.invert().point(viewportPoint);
             if (artifact.containsPoint(point)) {
+                artifact.__layer = layer;
                 artifacts.push(artifact);
             }
         }
-        return artifacts;
+        return artifacts.sort((artifact1, artifact2)=>artifact2.__layer.index-artifact1.__layer.index);
     }
 
     getArtifactOnPoint(viewportPoint) {
-        let visibleArtifacts = [...this.visibleArtifacts];
-        for (let i = visibleArtifacts.length-1; i>=0; i--) {
-            let artifact = visibleArtifacts[i];
-            let point = this.getPoint(viewportPoint, artifact);
-            if (artifact.containsPoint(point))
-                return artifact;
-        }
-        return null;
+        let artifacts = this.getAllArtifactsOnPoint(viewportPoint);
+        return artifacts.length ? artifacts[0] : null;
     }
 
     isPointOnArtifact(artifact, viewportPoint) {
