@@ -670,6 +670,9 @@ describe("Game", ()=> {
             assert(unit1.wing).equalsTo(wing);
             assert(unit1.player).equalsTo(player);
             assert(player.units).unorderedArrayEqualsTo([unit1, unit2]);
+            assert(unitType1.name).equalsTo("unit1");
+            assert(unitType1.paths).arrayEqualsTo(["/CBlades/images/units/misc/unit1.png"]);
+            assert(unitType1.maxStepCount).equalsTo(2);
     });
 
     it("Checks unit registration on map", () => {
@@ -1377,7 +1380,7 @@ describe("Game", ()=> {
 
     it("Checks playing a unit", () => {
         given:
-            var {game, unit, map} = createTinyGame();
+            var {game, unit} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
@@ -1403,6 +1406,18 @@ describe("Game", ()=> {
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.hasBeenActivated()).isFalse();
             assert(unit.hasBeenPlayed()).isFalse();
+    });
+
+    it("Checks mark a unit as played without effectively playing it (useful for unit created on the fly)", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [markersLayer] = getLayers(game.board, "markers-0");
+        when:
+            resetDirectives(markersLayer);
+            unit.markAsBeingPlayed();
+        then:
+            assert(unit.hasBeenActivated()).isTrue();
+            assert(unit.hasBeenPlayed()).isTrue();
     });
 
     it("Checks giving an order to a unit", () => {
@@ -1499,6 +1514,7 @@ describe("Game", ()=> {
             var {game, unit, map} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         then:
+            assert(unit.inGoodOrder()).isTrue();
             assert(unit.isDisrupted()).isFalse();
             assert(unit.isRouted()).isFalse();
         when:
@@ -1910,6 +1926,21 @@ describe("Game", ()=> {
             assert(cloneUnit.lackOfMunitions).equalsTo(CBLackOfMunitions.SCARCE);
             assert(cloneUnit.remainingStepCount).equalsTo(1);
             assert(cloneUnit.tiredness).equalsTo(CBTiredness.EXHAUSTED);
+        when:
+            leader.movementPoints = 1;
+            leader.cohesion = CBCohesion.DISRUPTED;
+            leader.fixLackOfMunitionsLevel(CBLackOfMunitions.EXHAUSTED);
+            leader.fixRemainingLossSteps(2);
+            leader.fixTirednessLevel(CBTiredness.TIRED);
+            var cloneLeader = leader.clone();
+        then:
+            assert(cloneLeader).is(CBCharacter);
+            assert(cloneLeader.type).equalsTo(leader.type);
+            assert(cloneLeader.movementPoints).equalsTo(1);
+            assert(cloneLeader.cohesion).equalsTo(CBCohesion.DISRUPTED);
+            assert(cloneLeader.lackOfMunitions).equalsTo(CBLackOfMunitions.EXHAUSTED);
+            assert(cloneLeader.remainingStepCount).equalsTo(2);
+            assert(cloneLeader.tiredness).equalsTo(CBTiredness.TIRED);
     });
 
 });

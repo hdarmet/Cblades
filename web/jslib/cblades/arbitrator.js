@@ -440,8 +440,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         let units = this.getUnitOfType(unit.hexLocation.units, unit.type);
         if (units.length !== 2) return false;
         let [unit1, unit2] = units;
-        if (unit1.type !== unit2.type) return false;
-        if (!unit1.inGoodOrder() || !unit1.inGoodOrder()) return false;
+        if (!unit1.inGoodOrder() || !unit2.inGoodOrder()) return false;
         if (unit1.isExhausted() || unit2.isExhausted()) return false;
         if (unit1.hasBeenPlayed() || unit2.hasBeenPlayed()) return false;
         if (!unit1.hasReceivedOrder() || !unit2.hasReceivedOrder()) return false;

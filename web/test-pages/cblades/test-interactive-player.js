@@ -3221,4 +3221,45 @@ describe("Interactive Player", ()=> {
             assert(unit2.hasReceivedOrder()).isFalse();
     });
 
+    function clickOnMergeUnitsAction(game) {
+        return clickOnActionMenu(game, 2, 5);
+    }
+
+    it("Checks merge units action process", () => {
+        given:
+            var {game, map, unit1, unit2} = create2UnitsTinyGame();
+            unit1.fixRemainingLossSteps(1);
+            unit2.fixRemainingLossSteps(1);
+            unit1.move(map.getHex(8, 8), 0);
+            unit2.move(map.getHex(8, 8), 0);
+            unit1.receiveOrder(true);
+            unit2.receiveOrder(true);
+            loadAllImages();
+            paint(game); // units1 layer is created here !
+            var [unitsLayer, units1Layer, markersLayer] = getLayers(game.board,"units-0", "units-1", "markers-0");
+            clickOnCounter(game, unit1);
+            clickOnMergeUnitsAction(game);
+            loadAllImages();
+        when:
+            resetDirectives(unitsLayer, units1Layer, markersLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 500, 496.2243)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/character.png, -60, -60, 120, 120)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 666.6667, 400)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(units1Layer, 4)).arrayEqualsTo([
+            ]);
+            assert(unit1.hexLocation).isNotDefined();
+            assert(unit2.hexLocation).isNotDefined();
+    });
+
 });

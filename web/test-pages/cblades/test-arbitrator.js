@@ -18,7 +18,7 @@ import {
 } from "../../jslib/mechanisms.js";
 import {
     CBAction, CBCharacter,
-    CBGame, CBMap, CBMovement, CBTroop, CBUnitType, CBWeather, CBWing
+    CBGame, CBLackOfMunitions, CBMap, CBMovement, CBTiredness, CBTroop, CBUnitType, CBWeather, CBWing
 } from "../../jslib/cblades/game.js";
 import {
     CBInteractivePlayer, CBMoveActuator, CBOrientationActuator
@@ -685,6 +685,87 @@ describe("Arbitrator", ()=> {
             var {arbitrator, leader11} = create2Players4UnitsTinyGame();
         then:
             assert(arbitrator.computeCommandPoints(leader11, [2])).equalsTo(7);
+    });
+
+    it("Checks when a merge action is allowed for Troops", () => {
+        given:
+            var {arbitrator, unit11, unit12, map} = create2Players4UnitsTinyGame();
+            unit11.move(map.getHex(8, 8));
+            unit12.move(map.getHex(8, 8));
+            unit11.fixRemainingLossSteps(1);
+            unit12.fixRemainingLossSteps(1);
+            unit11.receiveOrder(true);
+            unit12.receiveOrder(true);
+        then:
+            assert(arbitrator.isAllowedToMerge(unit11)).isTrue();
+        when:
+            unit11._type = unit12._type;
+            unit11.move(map.getHex(7, 8));
+        then:
+            assert(arbitrator.isAllowedToMerge(unit11)).isFalse();
+        when:
+            unit11.move(map.getHex(8, 8));
+            unit11.fixRemainingLossSteps(2);
+        then:
+            assert(arbitrator.isAllowedToMerge(unit11)).isFalse();
+        when:
+            unit11.fixRemainingLossSteps(1);
+            unit12.receiveOrder(false);
+        then:
+            assert(arbitrator.isAllowedToMerge(unit11)).isFalse();
+        when:
+            unit12.receiveOrder(true);
+            unit11.disrupt();
+        then:
+            assert(arbitrator.isAllowedToMerge(unit11)).isFalse();
+        when:
+            unit11.reorganize();
+            unit12.addOneTirednessLevel();
+            unit12.addOneTirednessLevel();
+        then:
+            assert(arbitrator.isAllowedToMerge(unit11)).isFalse();
+        when:
+            unit12.removeOneTirednessLevel();
+            unit11.markAsBeingPlayed();
+        then:
+            assert(arbitrator.isAllowedToMerge(unit12)).isFalse();
+    });
+
+    it("Checks that a merge action is not allowed for characters", () => {
+        given:
+            var {game, arbitrator, leader11, map} = create2Players4UnitsTinyGame();
+            let leader12 = new CBCharacter(leader11.type, leader11.wing);
+            game.addUnit(leader12, map.getHex(8, 8));
+            leader11.move(map.getHex(8, 8));
+            leader12.move(map.getHex(8, 8));
+            leader11.fixRemainingLossSteps(1);
+            leader12.fixRemainingLossSteps(1);
+            leader11.receiveOrder(true);
+            leader12.receiveOrder(true);
+        then:
+            assert(arbitrator.isAllowedToMerge(leader11)).isFalse();
+    });
+
+    it("Checks merge unit", () => {
+        given:
+            var {arbitrator, unit11, unit12, map} = create2Players4UnitsTinyGame();
+            unit11.move(map.getHex(8, 8));
+            unit12.move(map.getHex(8, 8));
+            unit11.fixRemainingLossSteps(1);
+            unit12.fixRemainingLossSteps(1);
+            unit11.receiveOrder(true);
+            unit12.receiveOrder(true);
+            unit12.addOneTirednessLevel();
+            unit12.addOneLackOfMunitionsLevel();
+        when:
+            var result = arbitrator.mergedUnit(unit11);
+        then:
+            assert(result.replaced).arrayEqualsTo([unit11, unit12]);
+            let newUnit = result.replacement;
+            assert(newUnit.type).equalsTo(unit11.type);
+            assert(newUnit.remainingStepCount).equalsTo(2);
+            assert(newUnit.lackOfMunitions).equalsTo(CBLackOfMunitions.SCARCE);
+            assert(newUnit.tiredness).equalsTo(CBTiredness.TIRED);
     });
 
 });
