@@ -1,5 +1,7 @@
 import {
-    Dimension2D, Point2D
+    canonizeAngle,
+    diffAngle,
+    Dimension2D, Point2D, sumAngle
 } from "../geometry.js";
 import {
     DDice, DIconMenu, DIconMenuItem, DIndicator, DInsert, DMask, DMessage, DPopup, DResult, DScene
@@ -9,8 +11,8 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBAbstractPlayer, CBAction, CBActuator,
-    CBGame,
+    CBAbstractPlayer, CBAction, CBActuator, CBFormation,
+    CBGame, CBHexSideId,
     CBMovement, CBMoveType, CBOrderInstruction
 } from "./game.js";
 import {
@@ -191,16 +193,20 @@ export class InteractiveRetreatAction extends CBAction {
 
     play() {
         this.game.setFocusedUnit(this.unit);
-        this._createRetreatActuator(this.unit);
+        this._createRetreatActuator();
     }
 
     _createRetreatActuator() {
-        let retreatDirections = this.game.arbitrator.getRetreatZones(this.unit, this._attacker);
-        if (retreatDirections.length) {
+        if (this.unit instanceof CBFormation) {
+            let {retreatDirections, rotateDirections} = this.game.arbitrator.getFormationRetreatZones(this.unit, this._attacker);
+            let retreatActuator = this.createFormationRetreatActuator(retreatDirections, rotateDirections);
+            this.game.openActuator(retreatActuator);
+        }
+        else {
+            let retreatDirections = this.game.arbitrator.getRetreatZones(this.unit, this._attacker);
             let retreatActuator = this.createRetreatActuator(retreatDirections);
             this.game.openActuator(retreatActuator);
         }
-        return retreatDirections.length === 0;
     }
 
     retreatUnit(hexId, event, moveType) {
@@ -211,6 +217,10 @@ export class InteractiveRetreatAction extends CBAction {
         this.unit.removeAction();
     }
 
+    reorientUnit(angle) {
+        this.unit.rotate(canonizeAngle(angle), 0);
+    }
+
     takeALossFromUnit(event) {
         this.game.closeActuators();
         this.unit.takeALoss();
@@ -218,8 +228,12 @@ export class InteractiveRetreatAction extends CBAction {
         this.unit.removeAction();
     }
 
-    createRetreatActuator(directions, attacker) {
+    createRetreatActuator(directions) {
         return new CBRetreatActuator(this, directions);
+    }
+
+    createFormationRetreatActuator(moveDirections, rotateDirection) {
+        return new CBFormationRetreatActuator(this, moveDirections, rotateDirection);
     }
 
 }
@@ -636,13 +650,24 @@ export class InteractiveMovementAction extends CBAction {
     }
 
     _createMovementActuators(start) {
-        let moveDirections = this.game.arbitrator.getAllowedMoves(this.unit, start);
-        let orientationDirections = this.game.arbitrator.getAllowedRotations(this.unit, start);
         this.game.closeActuators();
-        if (moveDirections.length) {
-            let moveActuator = this.createMoveActuator(moveDirections, start);
-            this.game.openActuator(moveActuator);
+        let moveDirections;
+        if (this.unit instanceof CBFormation) {
+            moveDirections = this.game.arbitrator.getFormationAllowedMoves(this.unit, start);
+            let rotateDirections = this.game.arbitrator.getFormationAllowedRotations(this.unit, start);
+            if (moveDirections.length || rotateDirections.length) {
+                let moveFormationActuator = this.createFormationMoveActuator(moveDirections, rotateDirections, start);
+                this.game.openActuator(moveFormationActuator);
+            }
         }
+        else {
+            moveDirections = this.game.arbitrator.getAllowedMoves(this.unit, start);
+            if (moveDirections.length) {
+                let moveActuator = this.createMoveActuator(moveDirections, start);
+                this.game.openActuator(moveActuator);
+            }
+        }
+        let orientationDirections = this.game.arbitrator.getAllowedRotations(this.unit, start);
         if (orientationDirections.length) {
             let orientationActuator = this.createOrientationActuator(orientationDirections, start);
             this.game.openActuator(orientationActuator);
@@ -665,6 +690,7 @@ export class InteractiveMovementAction extends CBAction {
     }
 
     rotateUnit(angle) {
+        angle = canonizeAngle(angle);
         let cost = this.game.arbitrator.getRotationCost(this.unit, angle);
         this._updateTirednessForMovement(cost);
         this.unit.rotate(angle, cost);
@@ -683,6 +709,10 @@ export class InteractiveMovementAction extends CBAction {
         this._markUnitActivationAfterMovement(played);
     }
 
+    reorientUnit(angle) {
+        this.unit.rotate(angle, 0);
+    }
+
     _updateTirednessForMovement(cost) {
         if (this.game.arbitrator.doesMovementInflictTiredness(this.unit, cost)) {
             this.unit.addOneTirednessLevel();
@@ -695,6 +725,10 @@ export class InteractiveMovementAction extends CBAction {
 
     createMoveActuator(directions, first) {
         return new CBMoveActuator(this, directions, first);
+    }
+
+    createFormationMoveActuator(moveDirections, rotateDirections, first) {
+        return new CBFormationMoveActuator(this, moveDirections, rotateDirections, first);
     }
 
 }
@@ -1284,6 +1318,84 @@ export class CBMoveActuator extends CBActuator {
 
 }
 
+export class CBFormationMoveActuator extends CBActuator {
+
+    constructor(action, moveDirections, rotateDirections, first) {
+
+        function createMoveTriggers() {
+            let normalMoveImage = DImage.getImage("/CBlades/images/actuators/standard-move.png");
+            let extendedMoveImage = DImage.getImage("/CBlades/images/actuators/extended-move.png");
+            let minimalMoveImage = DImage.getImage("/CBlades/images/actuators/minimal-move.png");
+            for (let sangle in moveDirections) {
+                let angle = parseInt(sangle);
+                let image = moveDirections[angle].type === CBMovement.NORMAL ? normalMoveImage :
+                    moveDirections[angle].type === CBMovement.EXTENDED ? extendedMoveImage : minimalMoveImage;
+                let orientation = new ActuatorImageArtifact(this, "actuators", image,
+                    new Point2D(0, 0), new Dimension2D(80, 130));
+                orientation.pangle = parseInt(angle);
+                orientation.rotate = false;
+                let unitHex =  moveDirections[angle].hex.getNearHex((angle+180)%360);
+                let startLocation = Point2D.position(this.unit.location, unitHex.location, 1);
+                let targetPosition = Point2D.position(unitHex.location, moveDirections[angle].hex.location, 0.9);
+                orientation.position = startLocation.concat(targetPosition);
+                this._imageArtifacts.push(orientation);
+            }
+        }
+
+        function createRotateTriggers() {
+            let normalRotateImage = DImage.getImage("/CBlades/images/actuators/standard-rotate.png");
+            let extendedRotateImage = DImage.getImage("/CBlades/images/actuators/extended-rotate.png");
+            let minimalRotateImage = DImage.getImage("/CBlades/images/actuators/minimal-rotate.png");
+            for (let sangle in rotateDirections) {
+                let angle = parseInt(sangle);
+                let image = rotateDirections[angle].type === CBMovement.NORMAL ? normalRotateImage :
+                    rotateDirections[angle].type === CBMovement.EXTENDED ? extendedRotateImage : minimalRotateImage;
+                let orientation = new ActuatorImageArtifact(this, "actuators", image,
+                    new Point2D(0, 0), new Dimension2D(80, 96));
+                orientation.pangle = parseInt(angle);
+                orientation.rotate = true;
+                orientation.hex =  rotateDirections[angle].hex.getNearHex((angle+180)%360);
+                let startLocation = Point2D.position(this.unit.location, orientation.hex.location, 1.5);
+                let targetPosition = Point2D.position(orientation.hex.location, rotateDirections[angle].hex.location, 0.9);
+                orientation.position = startLocation.concat(targetPosition);
+                this._imageArtifacts.push(orientation);
+            }
+        }
+
+        super(action);
+        this._imageArtifacts = [];
+        createMoveTriggers.call(this);
+        createRotateTriggers.call(this);
+        this._element = new DElement(...this._imageArtifacts);
+        this._element._actuator = this;
+        this._element.setLocation(this.unit.location);
+        this._first = first;
+    }
+
+    getTrigger(angle, rotate) {
+        for (let artifact of this._element.artifacts) {
+            if (artifact.pangle === angle && artifact._rotate===rotate) return artifact;
+        }
+        return null;
+    }
+
+    onMouseClick(trigger, event) {
+        if (trigger.rotate) {
+            let hex1 = this.unit.hexLocation.getOtherHex(trigger.hex);
+            let hex2 = trigger.hex.getNearHex(trigger.angle);
+            let delta = diffAngle(this.unit.angle, trigger.angle)*2;
+            this.action.reorientUnit(sumAngle(this.unit.angle, delta));
+            this.action.moveUnit(new CBHexSideId(hex1, hex2));
+        }
+        else {
+            let hex1 = this.unit.hexLocation.fromHex.getNearHex(trigger.angle);
+            let hex2 = this.unit.hexLocation.toHex.getNearHex(trigger.angle);
+            this.action.moveUnit(new CBHexSideId(hex1, hex2));
+        }
+    }
+
+}
+
 export class CBRetreatActuator extends CBActuator {
 
     constructor(action, directions) {
@@ -1328,6 +1440,93 @@ export class CBRetreatActuator extends CBActuator {
         }
         else {
             this.action.retreatUnit(this.unit.hexLocation.getNearHex(trigger.angle), event, trigger.moveType);
+        }
+    }
+
+}
+
+
+export class CBFormationRetreatActuator extends CBActuator {
+
+    constructor(action, moveDirections, rotateDirections) {
+
+        function createMoveTriggers() {
+            let moveImage = DImage.getImage("/CBlades/images/actuators/retreat-move.png");
+            for (let sangle in moveDirections) {
+                let angle = parseInt(sangle);
+                let orientation = new ActuatorImageArtifact(this, "actuators", moveImage,
+                    new Point2D(0, 0), new Dimension2D(80, 130));
+                orientation.pangle = parseInt(angle);
+                orientation.rotate = false;
+                let unitHex =  moveDirections[angle].hex.getNearHex((angle+180)%360);
+                let startLocation = Point2D.position(this.unit.location, unitHex.location, 1);
+                let targetPosition = Point2D.position(unitHex.location, moveDirections[angle].hex.location, 0.9);
+                orientation.position = startLocation.concat(targetPosition);
+                orientation.moveType = moveDirections[angle].moveType;
+                this._imageArtifacts.push(orientation);
+            }
+        }
+
+        function createRotateTriggers() {
+            let rotateImage = DImage.getImage("/CBlades/images/actuators/retreat-rotate.png");
+            for (let sangle in rotateDirections) {
+                let angle = parseInt(sangle);
+                let orientation = new ActuatorImageArtifact(this, "actuators", rotateImage,
+                    new Point2D(0, 0), new Dimension2D(80, 96));
+                orientation.pangle = parseInt(angle);
+                orientation.rotate = true;
+                orientation.hex =  rotateDirections[angle].hex.getNearHex((angle+180)%360);
+                let startLocation = Point2D.position(this.unit.location, orientation.hex.location, 1.5);
+                let targetPosition = Point2D.position(orientation.hex.location, rotateDirections[angle].hex.location, 0.9);
+                orientation.position = startLocation.concat(targetPosition);
+                orientation.moveType = rotateDirections[angle].moveType;
+                this._imageArtifacts.push(orientation);
+            }
+        }
+
+        super(action);
+        this._imageArtifacts = [];
+        let bloodImage = DImage.getImage("/CBlades/images/actuators/blood.png");
+        let loss = new ActuatorImageArtifact(this, "actuators", bloodImage,
+            new Point2D(0, 0), new Dimension2D(104, 144));
+        loss.loss = true;
+        this._imageArtifacts.push(loss);
+        createMoveTriggers.call(this);
+        createRotateTriggers.call(this);
+        this._element = new DElement(...this._imageArtifacts);
+        this._element._actuator = this;
+        this._element.setLocation(this.unit.location);
+    }
+
+    getLossTrigger() {
+        for (let artifact of this._element.artifacts) {
+            if (artifact.loss) return artifact;
+        }
+        //return null;   soon...
+    }
+
+    getTrigger(angle, rotate) {
+        for (let artifact of this._element.artifacts) {
+            if (artifact.pangle === angle && artifact._rotate===rotate) return artifact;
+        }
+        return null;
+    }
+
+    onMouseClick(trigger, event) {
+        if (trigger.loss) {
+            this.action.takeALossFromUnit(event);
+        }
+        else if (trigger.rotate) {
+            let hex1 = this.unit.hexLocation.getOtherHex(trigger.hex);
+            let hex2 = trigger.hex.getNearHex(trigger.angle);
+            let delta = diffAngle(this.unit.angle, trigger.angle)*2;
+            this.action.reorientUnit(sumAngle(this.unit.angle, delta));
+            this.action.retreatUnit(new CBHexSideId(hex1, hex2), trigger.moveType);
+        }
+        else {
+            let hex1 = this.unit.hexLocation.fromHex.getNearHex(trigger.angle);
+            let hex2 = this.unit.hexLocation.toHex.getNearHex(trigger.angle);
+            this.action.retreatUnit(new CBHexSideId(hex1, hex2), trigger.moveType);
         }
     }
 

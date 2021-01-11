@@ -260,9 +260,9 @@ describe("Arbitrator", ()=> {
         when:
             var allowedRetreats = arbitrator.getRetreatZones(unit12, unit21);
         then:
-            assertInZone(allowedRetreats, 300, 4, 6);
+            assertNotInZone(allowedRetreats, 300); // adjacent to attacker
             assertNotInZone(allowedRetreats, 0); // occupied by a foe
-            assertInZone(allowedRetreats, 60, 6, 6);
+            assertNotInZone(allowedRetreats, 60); // adjacent to attacker
             assertInZone(allowedRetreats, 120, 6, 7);
             assertInZone(allowedRetreats, 180, 5, 8);
             assertInZone(allowedRetreats, 240, 4, 7);
@@ -271,7 +271,7 @@ describe("Arbitrator", ()=> {
             allowedRetreats = arbitrator.getRetreatZones(unit12, unit21);
         then:
             assertNotInZone(allowedRetreats, 0); // occupied by a foe
-            assertInZone(allowedRetreats, 60, 6, 6);
+            assertNotInZone(allowedRetreats); // adjacent to attacker
             assertNotInZone(allowedRetreats, 120);
             assertInZone(allowedRetreats, 180, 5, 8);
             assertInZone(allowedRetreats, 240, 4, 7);

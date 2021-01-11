@@ -39,11 +39,39 @@ export function degree(rad) {
 }
 
 /**
+ * Compute the reverse of an angle
+ */
+export function reverseAngle(angle) {
+    return (angle + 180)%360;
+}
+
+/**
+ * Compute angle value between 0 and 359
+ */
+export function canonizeAngle(angle) {
+    return (angle + 360)%360;
+}
+
+/**
+ * Compute the addition of two angles
+ */
+export function sumAngle(angle1, angle2) {
+    return (angle2 + angle1)%360;
+}
+
+/**
  * Compute the difference between two angles
  */
 export function diffAngle(angle1, angle2) {
     let diff = angle2 - angle1;
     return diff<-180 ? diff+360 : diff>180 ? diff-360 : diff;
+}
+
+/**
+ * Compute the average of two angles
+ */
+export function moyAngle(angle1, angle2) {
+    return (360 + angle1 + diffAngle(angle1, angle2) / 2)%360
 }
 
 /**
@@ -90,6 +118,10 @@ export class Point2D {
 
     sameTo(point) {
         return same(point.x, this.x) && same(point.y, this.y);
+    }
+
+    concat(point) {
+        return new Point2D(this.x + point.x, this.y + point.y);
     }
 
     toString() {

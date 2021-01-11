@@ -10,7 +10,7 @@
 <script type="module">
 
     import {
-        CBGame, CBMap, CBHexId, CBTroop, CBWing, CBCharacter, CBUnitType
+        CBGame, CBMap, CBHexId, CBHexSideId, CBTroop, CBWing, CBCharacter, CBFormation, CBUnitType
     } from "../jslib/cblades/game.js";
     import {
         CBInteractivePlayer
@@ -44,6 +44,10 @@
         "/CBlades/images/units/mercenaries/unit1L.png",
         "/CBlades/images/units/mercenaries/unit1Lb.png"
     ]);
+    let companyLance = new CBUnitType("Company Lancet", [
+        "/CBlades/images/units/mercenaries/unit2L2.png",
+        "/CBlades/images/units/mercenaries/unit2L2b.png"
+    ]);
 
     let player1 = new CBInteractivePlayer();
     game.addPlayer(player1);
@@ -68,9 +72,12 @@
     counter21.angle = 180;
     let counter22 = new CBTroop(companyKnight, wing2);
     counter22.angle = 180;
+    let counter23 = new CBFormation(companyLance, wing2);
+    counter23.angle = 210;
+    game.addUnit(counter23, new CBHexSideId( map.getHex(9, 7),  map.getHex(10, 7)));
     game.addUnit(character21, new CBHexId(map, 8, 6));
     game.addUnit(counter21, new CBHexId(map, 7, 7));
-    game.addUnit(counter22, new CBHexId(map, 8, 7));
+    game.addUnit(counter22, new CBHexId(map, 10, 7));
     game.start();
 </script>
 </body>

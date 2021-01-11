@@ -1,8 +1,17 @@
 import {
-    CBAbstractArbitrator, CBCharacter, CBCohesion, CBHexSideId, CBMovement, CBMoveType, CBTiredness, CBTroop, CBWeather
+    CBAbstractArbitrator,
+    CBCharacter,
+    CBCohesion,
+    CBFormation,
+    CBHexSideId,
+    CBMovement,
+    CBMoveType,
+    CBTiredness,
+    CBTroop,
+    CBWeather
 } from "./game.js";
 import {
-    diffAngle
+    diffAngle, moyAngle, reverseAngle
 } from "../geometry.js";
 
 export class CBArbitrator extends CBAbstractArbitrator{
@@ -40,53 +49,113 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return unit.isOnBoard() && !unit.hasBeenActivated() && !unit.hasBeenPlayed();
     }
 
-    isHexOnForwardZone(unit, hexId) {
-        let unitAngle = unit.angle;
-        let hexAngle = unit.hexLocation.isNearHex(hexId);
-        let diff = diffAngle(hexAngle, unitAngle);
-        return diff>=-60 && diff<=60;
+    formatMapZone(mapZone) {
+        let zones = {};
+        for (let zone of mapZone) {
+            zones[zone[1]] = {hex:zone[0]};
+        }
+        return zones;
     }
 
-    _getForwardArea(border, angle) {
-        let hexes = new Set();
-        for (let hexId of border) {
-            let zones = this.getForwardZone(hexId, angle);
-            for (let zangle in zones) {
-                let zone = zones[zangle];
-                hexes.add(zone.hex);
+    mergeMapZone(mapZoneDest, mapZoneSrc, forbiddenHexes) {
+        let forbidden = new Set(forbiddenHexes);
+        for (let zone of mapZoneSrc) {
+            let current = mapZoneDest.get(zone[0]);
+            if (current !== undefined) {
+                mapZoneDest.set(zone[0], moyAngle(current, zone[1]));
             }
+            else {
+                mapZoneDest.set(zone[0], zone[1]);
+            }
+        }
+        for (let hex of forbiddenHexes) {
+            mapZoneDest.delete(hex);
+        }
+        return mapZoneDest;
+    }
+
+    getHexesFormZones(zones) {
+        let hexes = new Set();
+        for (let angle in zones) {
+            hexes.add(zones[angle].hex);
         }
         return hexes;
     }
 
-    getUnitForwardArea(unit, range) {
-        let hexes = new Set();
-        let border = [unit.hexLocation];
-        for (let index=0; index<range; index++) {
-            border = this._getForwardArea(border, unit.angle);
-            for (let hexId of border) {
-                hexes.add(hexId);
-            }
+    getAdjacentZone(hexId) {
+        let hexes = new Map();
+        for (let angle=0; angle<=300; angle+=60) {
+            hexes.set(hexId.getNearHex(angle), angle);
         }
-        return [...hexes];
+        return hexes;
+    }
+
+    getUnitAdjacentZone(unit) {
+        if (unit instanceof CBFormation) {
+            let zone1 = this.getAdjacentZone(unit.hexLocation.fromHex);
+            let zone2 = this.getAdjacentZone(unit.hexLocation.toHex);
+            return this.formatMapZone(this.mergeMapZone(zone1, zone2, [unit.hexLocation.fromHex, unit.hexLocation.toHex]));
+        }
+        else {
+            return this.formatMapZone(this.getAdjacentZone(unit.hexLocation));
+        }
     }
 
     getForwardZone(hexId, angle) {
-        let zones = [];
+        let zones = new Map();
         if (angle%60) {
-            zones[angle-30]={hex:hexId.getNearHex(angle -30)};
-            zones[(angle + 30) % 360]={hex:hexId.getNearHex((angle + 30) % 360)};
+            zones.set(hexId.getNearHex(angle -30), angle-30);
+            zones.set(hexId.getNearHex((angle + 30) % 360), (angle + 30) % 360);
         }
         else {
-            zones[(angle + 300) % 360]={hex:hexId.getNearHex((angle + 300) % 360)};
-            zones[angle]={hex:hexId.getNearHex(angle)};
-            zones[(angle + 60) % 360]={hex:hexId.getNearHex((angle + 60) % 360)};
+            zones.set(hexId.getNearHex((angle + 300) % 360), (angle + 300) % 360);
+            zones.set(hexId.getNearHex(angle), angle);
+            zones.set(hexId.getNearHex((angle + 60) % 360), (angle + 60) % 360);
         }
         return zones;
     }
 
     getUnitForwardZone(unit) {
-        return this.getForwardZone(unit.hexLocation, unit.angle)
+        if (unit instanceof CBFormation) {
+            let zone1 = this.getForwardZone(unit.hexLocation.fromHex, unit.angle);
+            let zone2 = this.getForwardZone(unit.hexLocation.toHex, unit.angle);
+            return this.formatMapZone(this.mergeMapZone(zone1, zone2, [unit.hexLocation.fromHex, unit.hexLocation.toHex]));
+        }
+        else {
+            return this.formatMapZone(this.getForwardZone(unit.hexLocation, unit.angle));
+        }
+    }
+
+    isHexOnForwardZone(unit, hexId) {
+        let unitAngle = unit.angle;
+        let hexAngle = unit.hexLocation.isNearHex(hexId);
+        let diff = diffAngle(hexAngle, unitAngle);
+        return diff >= -60 && diff <= 60;
+    }
+
+    getBackwardZone(hexId, angle) {
+        let zones = new Map();
+        if (angle%60) {
+            zones.set(hexId.getNearHex((angle + 150) % 360), (angle + 150) % 360);
+            zones.set(hexId.getNearHex((angle + 210) % 360), (angle + 210) % 360);
+        }
+        else {
+            zones.set(hexId.getNearHex((angle + 120) % 360), (angle + 120) % 360);
+            zones.set(hexId.getNearHex((angle + 180) % 360), (angle + 180) % 360);
+            zones.set(hexId.getNearHex((angle + 240) % 360), (angle + 240) % 360);
+        }
+        return zones;
+    }
+
+    getUnitBackwardZone(unit) {
+        if (unit instanceof CBFormation) {
+            let zone1 = this.getBackwardZone(unit.hexLocation.fromHex, unit.angle);
+            let zone2 = this.getBackwardZone(unit.hexLocation.toHex, unit.angle);
+            return this.formatMapZone(this.mergeMapZone(zone1, zone2, [unit.hexLocation.fromHex, unit.hexLocation.toHex]));
+        }
+        else {
+            return this.formatMapZone(this.getBackwardZone(unit.hexLocation, unit.angle));
+        }
     }
 
     isHexOnBackwardZone(unit, hexId) {
@@ -96,22 +165,40 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return diff<=-120 || diff>=120;
     }
 
-    getUnitBackwardZone(unit) {
-        let zones = [];
-        let angle = unit.angle;
-        if (angle%60) {
-            zones[(angle + 150) % 360]={hex:unit.hexLocation.getNearHex((angle + 150) % 360)};
-            zones[(angle + 210) % 360]={hex:unit.hexLocation.getNearHex((angle + 210) % 360)};
+    getForwardArea(border, angle) {
+        let hexes = new Set();
+        for (let hexId of border) {
+            let zones = this.getForwardZone(hexId, angle);
+            for (let zone of zones) {
+                hexes.add(zone[0]);
+            }
         }
-        else {
-            zones[(angle + 120) % 360]={hex:unit.hexLocation.getNearHex((angle + 120) % 360)};
-            zones[(angle + 180) % 360]={hex:unit.hexLocation.getNearHex((angle + 180) % 360)};
-            zones[(angle + 240) % 360]={hex:unit.hexLocation.getNearHex((angle + 240) % 360)};
+        return hexes;
+    }
+
+    getUnitForwardArea(unit, range) {
+        let hexes = new Set();
+        let border = (unit instanceof CBFormation) ? [unit.hexLocation.fromHex, unit.hexLocation.toHex] : [unit.hexLocation];
+        for (let index=0; index<range; index++) {
+            border = this.getForwardArea(border, unit.angle);
+            for (let hexId of border) {
+                hexes.add(hexId);
+            }
         }
-        return zones;
+        return [...hexes];
+    }
+
+    getRetreatForbiddenZone(attacker) {
+        let forbidden = new Set();
+        let zones = this.getUnitAdjacentZone(attacker);
+        for (let angle in zones) {
+            forbidden.add(zones[angle].hex);
+        }
+        return forbidden;
     }
 
     getRetreatZones(unit, attacker) {
+
         function processZone(zone, arbitrator, unit, moveType) {
             let nearUnits = zone.hex.units;
             zone.moveType = moveType;
@@ -132,24 +219,51 @@ export class CBArbitrator extends CBAbstractArbitrator{
             }
         }
 
-        function getForbiddenZone(unit) {
-            let forbidden = new Set();
-            let zones = this.getUnitForwardZone(unit);
-            for (let angle in zones) {
-                forbidden.add(zones[angle].hex);
-            }
-            return forbidden;
-        }
-
         let result = [];
         if (!unit.isRouted()) {
-            let forbiddenZones = getForbiddenZone.call(this, attacker);
+            let forbiddenZones = this.getRetreatForbiddenZone(attacker);
             let zones = this.getUnitBackwardZone(unit);
             processZones.call(this, result, zones, CBMoveType.BACKWARD, forbiddenZones);
             zones = this.getUnitForwardZone(unit);
             processZones.call(this, result, zones, CBMoveType.FORWARD, forbiddenZones);
         }
         return result;
+    }
+
+    getFormationRetreatZones(unit, attacker) {
+        let hexes = this.getHexesFormZones(this.getRetreatZones(unit, attacker));
+        let forbiddenZones = this.getRetreatForbiddenZone(attacker);
+        let zones = {
+            ...this.getUnitForwardZone(unit),
+            ...this.getUnitBackwardZone(unit)
+        };
+        let retreatDirections = [];
+        let rotateDirections = [];
+        for (let sangle in zones) {
+            let angle = parseInt(sangle);
+            if (angle % 60) {
+                if (hexes.has(zones[angle].hex)) {
+                    let hex = unit.hexLocation.fromHex;
+                    let moveHex = unit.hexLocation.toHex;
+                    if (!forbiddenZones.has(hex)) {
+                        let zangle = moveHex.isNearHex(zones[angle].hex);
+                        rotateDirections[zangle] = { hex:zones[angle].hex };
+                    }
+                    hex = unit.hexLocation.toHex;
+                    moveHex = unit.hexLocation.fromHex;
+                    if (!forbiddenZones.has(hex)) {
+                        let zangle = moveHex.isNearHex(zones[angle].hex);
+                        rotateDirections[zangle] = { hex:zones[angle].hex };
+                    }
+                }
+            }
+            else {
+                if (hexes.has(unit.hexLocation.fromHex.getNearHex(angle)) &&
+                    hexes.has(unit.hexLocation.toHex.getNearHex(angle)))
+                    retreatDirections[angle] = zones[angle];
+            }
+        }
+        return { retreatDirections, rotateDirections }
     }
 
     _collectFoes(foes, unit, hex, more) {
@@ -194,46 +308,85 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return { success, lossesForDefender, lowerFirerMunitions };
     }
 
-    getAllowedMoves(unit, first=false) {
-        function processAngle(direction, arbitrator, unit, first) {
-            let nearUnits = direction.hex.units;
+    _processMovementOpportunity(direction, hexes, unit, cost, first) {
+        for (let hex of hexes) {
+            let nearUnits = hex.units;
             if (nearUnits.length) {
-                if (arbitrator.areUnitsFoes(unit, nearUnits[0])) return false;
+                if (this.areUnitsFoes(unit, nearUnits[0])) return false;
             }
-            let cost = arbitrator.getMovementCost(unit, direction.hex);
-            if (unit.movementPoints>=cost) {
-                direction.type = CBMovement.NORMAL;
+        }
+        if (unit.movementPoints>=cost) {
+            direction.type = CBMovement.NORMAL;
+            return true;
+        }
+        else if (unit.tiredness<CBTiredness.EXHAUSTED) {
+            if (unit.extendedMovementPoints >= cost) {
+                direction.type = CBMovement.EXTENDED;
+                return true;
+            } else if (first) {
+                direction.type = CBMovement.MINIMAL;
                 return true;
             }
-            else if (unit.tiredness<CBTiredness.EXHAUSTED) {
-                if (unit.extendedMovementPoints >= cost) {
-                    direction.type = CBMovement.EXTENDED;
-                    return true;
-                } else if (first) {
-                    direction.type = CBMovement.MINIMAL;
-                    return true;
-                }
-            }
-            return false;
         }
+        return false;
+    }
 
+    getAllowedMoves(unit, first=false) {
         let directions = this.getUnitForwardZone(unit);
         let result = [];
         for (let angle in directions) {
             let direction = directions[angle];
-            if (processAngle(direction, this, unit, first)) {
+            let cost = this.getMovementCost(unit, angle);
+            if (this._processMovementOpportunity(direction, [direction.hex], unit, cost, first)) {
                 result[angle] = direction;
             }
         }
         return result;
     }
 
+    getFormationAllowedMoves(unit, first=false) {
+        let directions = this.getUnitForwardZone(unit);
+        let result = [];
+        for (let sangle in directions) {
+            let angle = parseInt(sangle);
+            if (!(angle % 60)) {
+                let direction = directions[angle];
+                let cost = this.getMovementCost(unit, angle);
+                if (this._processMovementOpportunity(direction, [
+                        unit.hexLocation.fromHex.getNearHex(angle),
+                        unit.hexLocation.toHex.getNearHex(angle)
+                    ],
+                    unit, cost, first)) {
+                    result[angle] = direction;
+                }
+            }
+        }
+        return result;
+    }
+
+    getFormationAllowedRotations(unit, first=false) {
+        let directions = this.getUnitForwardZone(unit);
+        let result = [];
+        for (let angle in directions) {
+            if (!(angle % 60)) {
+                let direction = directions[angle];
+                direction.hex = unit.hexLocation.getFaceHex(unit.angle);
+                let cost = this.getMovementCost(unit, angle);
+                if (this._processMovementOpportunity(direction, [direction.hex], unit, cost, first)) {
+                    result[angle] = direction;
+                }
+            }
+        }
+        return result;
+    }
+
     getAllowedRotations(unit) {
-        function processAngle(directions, arbitrator, unit, angle) {
+
+        function processAngle(directions, hexes, unit, angle) {
             let nearHexId = angle%60 ?
-                new CBHexSideId(unit.hexLocation.getNearHex(angle-30), unit.hexLocation.getNearHex((angle+30)%360)) :
-                unit.hexLocation.getNearHex(angle);
-            let cost = arbitrator.getRotationCost(unit, angle);
+               new CBHexSideId(hexes[angle-30].hex, hexes[(angle+30)%360].hex) :
+               hexes[angle].hex;
+            let cost = this.getRotationCost(unit, angle);
             if (unit.movementPoints>=cost) {
                 directions[angle] = { hex:nearHexId, type:CBMovement.NORMAL};
             }
@@ -242,11 +395,17 @@ export class CBArbitrator extends CBAbstractArbitrator{
             }
         }
 
+        let hexes = this.getUnitAdjacentZone(unit);
         let directions = [];
-        for (let angle = 0; angle < 360; angle += 30) {
-            processAngle(directions, this, unit, angle);
+        if (unit instanceof CBFormation) {
+            processAngle.call(this, directions, hexes, unit, (unit.angle+180)%360);
         }
-        delete directions[unit.angle];
+        else {
+            for (let angle = 0; angle < 360; angle += 30) {
+                processAngle.call(this, directions, hexes, unit, angle);
+            }
+            delete directions[unit.angle];
+        }
         return directions;
     }
 
@@ -254,7 +413,11 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return 0.5;
     }
 
-    getMovementCost(unit, hexId) {
+    getMovementCost(unit, angle) {
+        return 1;
+    }
+
+    getFormationMovementCost(unit, angle) {
         return 1;
     }
 
@@ -362,8 +525,9 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     isUnitEngaged(unit, engagingMarker=false) {
-        for (let angle=0; angle<=300; angle+=60) {
-            let hexId = unit.hexLocation.getNearHex(angle);
+        let hexes = this.getUnitAdjacentZone(unit);
+        for (let angle in hexes) {
+            let hexId = hexes[angle].hex;
             let nearUnits = hexId.map.getUnitsOnHex(hexId);
             for (let nearUnit of nearUnits) {
                 if (this.isAUnitEngageAnotherUnit(nearUnit, unit, engagingMarker)) {

@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    atan2, Point2D, Dimension2D, Matrix2D
+    atan2, Point2D, Dimension2D, Matrix2D, moyAngle
 } from "../geometry.js";
 import {
     DImage, DTranslateLayer
@@ -264,6 +264,7 @@ export class CBGame {
         function createSlot(slotIndex) {
             let delta = Matrix2D.translate(new Point2D(slotIndex*15, -slotIndex*15));
             return [
+                new DTranslateLayer("formations-"+slotIndex, delta),
                 new DTranslateLayer("units-"+slotIndex, delta),
                 new DTranslateLayer("markers-"+slotIndex, delta)
             ]
@@ -272,13 +273,15 @@ export class CBGame {
         function getUnitArtifactSlot(artifact) {
             let counter = artifact.counter;
             if (counter instanceof CBUnit) {
-                return counter.hexLocation.units.indexOf(counter);
+                return counter.slot;
             }
             else return 0;
         }
 
-        function getUnitArtifactLayer(artifact, [unitsLayer, markersLayer]) {
-            return (artifact instanceof UnitImageArtifact) ? unitsLayer : markersLayer
+        function getUnitArtifactLayer(artifact, [formationsLayer, unitsLayer, markersLayer]) {
+            if (!(artifact instanceof UnitImageArtifact)) return markersLayer;
+            let unit = artifact.counter;
+            return unit instanceof CBFormation ? formationsLayer : unitsLayer;
         }
 
         this._board = new DBoard(new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT), new Dimension2D(1000, 800),
@@ -660,6 +663,12 @@ export class CBHexSideId {
         this._hexId2 = hexId2;
     }
 
+    static equals(hexSide1, hexSide2) {
+        if (!hexSide1 && hexSide2 || hexSide1 && !hexSide2) return false;
+        if (!hexSide1) return true;
+        return hexSide1.fromHex === hexSide2.fromHex && hexSide1.toHex === hexSide2.toHex;
+    }
+
     get fromHex() {
         return this._hexId1;
     }
@@ -678,9 +687,32 @@ export class CBHexSideId {
         return this._hexId1.getAngle(this._hexId2);
     }
 
+    get map() {
+        return this._hexId1.map;
+    }
+
+    getFaceHex(angle) {
+        return this.map.findFaceHex(this, angle);
+    }
+
+    getOtherHex(hexId) {
+        console.assert(hexId===this._hexId1 || hexId === this._hexId2);
+        return hexId===this._hexId1 ? this._hexId2 :this._hexId1;
+    }
+
     similar(hexSideId) {
         return this.location.equalsTo(hexSideId.location);
     }
+
+    isNearHex(hexId) {
+        let angle1 = this.map.isNearHex(this.fromHex, hexId);
+        let angle2 = this.map.isNearHex(this.toHex, hexId);
+        if (angle1===false && angle2===false) return false;
+        if (angle1===false) return angle2;
+        if (angle2===false) return angle1;
+        return moyAngle(angle1, angle2);
+    }
+
 }
 
 export class CBHexVertexId {
@@ -742,6 +774,11 @@ class CBHex {
     addUnit(unit) {
         console.assert(unit instanceof CBUnit);
         this._units.push(unit);
+    }
+
+    removeUnit(unit) {
+        console.assert(unit instanceof CBUnit);
+        this._units.splice(this._units.indexOf(unit), 1);
     }
 
     appendUnit(unit, moveType) {
@@ -819,31 +856,31 @@ export class CBMap {
         return this._hex(col, row).id;
     }
 
-    isNearHex(hexId1, hexId2) {
-        if (hexId1.col === hexId2.col) {
-            if (hexId1.row === hexId2.row+1) {
+    _isNear(c1, r1, c2, r2) {
+        if (c1 === c2) {
+            if (r1 === r2+1) {
                 return 0;
             }
-            if (hexId1.row === hexId2.row-1) {
+            if (r1 === r2-1) {
                 return 180;
             }
             return false;
         }
-        if (hexId1.col%2) {
-            if (hexId1.col === hexId2.col-1) {
-                if (hexId1.row === hexId2.row+1) {
+        if (c1%2) {
+            if (c1 === c2-1) {
+                if (r1 === r2+1) {
                     return 60;
                 }
-                if (hexId1.row === hexId2.row) {
+                if (r1 === r2) {
                     return 120;
                 }
                 return false;
             }
-            else if (hexId1.col === hexId2.col + 1) {
-                if (hexId1.row === hexId2.row) {
+            else if (c1 === c2 + 1) {
+                if (r1 === r2) {
                     return 240;
                 }
-                if (hexId1.row === hexId2.row+1) {
+                if (r1 === r2+1) {
                     return 300;
                 }
                 return false;
@@ -851,55 +888,102 @@ export class CBMap {
             return false
         }
         else {
-            if (hexId1.col === hexId2.col-1) {
-                if (hexId1.row === hexId2.row) {
+            if (c1 === c2-1) {
+                if (r1 === r2) {
                     return 60;
                 }
-                if (hexId1.row === hexId2.row-1) {
+                if (r1 === r2-1) {
                     return 120;
                 }
                 return false;
             }
-            else if (hexId1.col === hexId2.col + 1) {
-                if (hexId1.row === hexId2.row-1) {
+            else if (c1 === c2 + 1) {
+                if (r1 === r2-1) {
                     return 240;
                 }
-                if (hexId1.row === hexId2.row) {
+                if (r1 === r2) {
                     return 300;
                 }
                 return false;
             }
             return false
         }
+
+    }
+
+    isNearHex(hexId1, hexId2) {
+        return this._isNear(hexId1.col, hexId1.row, hexId2.col, hexId2.row);
+    }
+
+    _findNearCol(c, r, angle) {
+        if (angle === 0 || angle === 180) {
+            return c;
+        }
+        else if (angle === 60 || angle === 120) {
+            return c+1;
+        }
+        else {
+            return c-1;
+        }
+    }
+
+    _findNearRow(c, r, angle) {
+        if (angle === 0) {
+            return r-1;
+        }
+        else if (angle === 60 || angle === 300) {
+            return c%2 ? r-1 : r;
+        }
+        else if (angle === 120 || angle === 240) {
+            return c%2 ? r : r+1;
+        }
+        else if (angle === 180) {
+            return r+1;
+        }
     }
 
     findNearHex(hexId, angle) {
-        if (angle === 0) {
-            return this._hex(hexId.col, hexId.row-1).id;
+        return this._hex(
+            this._findNearCol(hexId.col, hexId.row, angle),
+            this._findNearRow(hexId.col, hexId.row, angle)
+        ).id;
+    }
+
+    _findFaceCol(c1, r1, c2, r2, angle) {
+        if (angle === 30 || angle === 150) {
+            return c1>c2 ? c1 : c2;
         }
-        else if (angle === 60) {
-            return hexId.col%2 ?
-                this._hex(hexId.col+1, hexId.row-1).id :
-                this._hex(hexId.col+1, hexId.row).id;
+        else if (angle === 90) {
+            return c1+1;
         }
-        else if (angle === 120) {
-            return hexId.col%2 ?
-                this._hex(hexId.col+1, hexId.row).id :
-                this._hex(hexId.col+1, hexId.row+1).id;
+        else if (angle === 210 || angle === 330) {
+            return c1<c2 ? c1 : c2;
         }
-        else if (angle === 180) {
-            return this._hex(hexId.col, hexId.row+1).id;
+        else if (angle === 270) {
+            return c1-1;
         }
-        else if (angle === 240) {
-            return hexId.col%2 ?
-                this._hex(hexId.col-1, hexId.row).id :
-                this._hex(hexId.col-1, hexId.row+1).id;
+    }
+
+    _findFaceRow(c1, r1, c2, r2, angle) {
+        if (angle === 30 || angle === 330) {
+            return r1===r2 ? r1-1 : r1<r2 ? r1 : r2;
         }
-        else if (angle === 300) {
-            return hexId.col%2 ?
-                this._hex(hexId.col-1, hexId.row-1).id :
-                this._hex(hexId.col-1, hexId.row).id;
+        else if (angle === 90 || angle === 270) {
+            return c1%2 ? (r1<r2 ? r1 : r2) : (r1>r2 ? r1 : r2);
         }
+        else if (angle === 150 || angle === 210) {
+            return r1===r2 ? r1+1 : r1>r2 ? r1 : r2;
+        }
+        else if (angle === 270) {
+            return c1-1;
+        }
+    }
+
+    findFaceHex(hexSideId, angle) {
+        return this._hex(
+            this._findFaceCol(hexSideId.fromHex.col, hexSideId.fromHex.row, hexSideId.toHex.col, hexSideId.toHex.row, angle),
+            this._findFaceRow(hexSideId.fromHex.col, hexSideId.fromHex.row, hexSideId.toHex.col, hexSideId.toHex.row, angle)
+        ).id;
     }
 
     getUnitsOnHex(hexId) {
@@ -1155,6 +1239,10 @@ export class CBUnit extends CBCounter {
         this._lossSteps = memento.lossSteps;
     }
 
+    get slot() {
+        return this.hexLocation.units.indexOf(this);
+    }
+
     launchAction(action) {
         Memento.register(this);
         this._action = action;
@@ -1226,9 +1314,14 @@ export class CBUnit extends CBCounter {
     }
 
     set hexLocation(hexId) {
+        if (this._hexLocation) {
+            hexId.hex.removeUnit(this);
+        }
         this._hexLocation = hexId;
-        hexId.hex.addUnit(this);
-        this.location = hexId.location;
+        if (this._hexLocation) {
+            hexId.hex.addUnit(this);
+            this.location = hexId.location;
+        }
     }
 
     get movementPoints() {
@@ -1349,24 +1442,18 @@ export class CBUnit extends CBCounter {
     }
 
     move(hexId, cost=0, moveType = CBMoveType.BACKWARD) {
-        if (hexId !== this._hexLocation) {
+        if (hexId !== this.hexLocation) {
             Memento.register(this);
-            if (!this._hexLocation) {
-                if (hexId) {
-                    this.addToMap(hexId, moveType);
-                }
+            if (this._hexLocation) {
+                this._hexLocation.hex.deleteUnit(this);
+                if (!hexId) this._element.hide();
             }
-            else {
-                if (hexId) {
-                    this._hexLocation.hex.deleteUnit(this);
-                    hexId.hex.appendUnit(this, moveType);
-                    this._element.move(hexId.location);
-                }
-                else {
-                    this.removeFromMap();
-                }
-            }
+            if (hexId && !this._hexLocation) this._element.show(this.game.board);
             this._hexLocation = hexId;
+            if (this._hexLocation) {
+                hexId.hex.appendUnit(this, moveType);
+                this._element.move(hexId.location);
+            }
             this._updateMovementPoints(cost);
         }
     }
@@ -1689,6 +1776,7 @@ export class CBWing {
 }
 
 export class CBTroop extends CBUnit {
+
     constructor(type, wing) {
         super(type, wing);
     }
@@ -1698,9 +1786,85 @@ export class CBTroop extends CBUnit {
         this.copy(copy);
         return copy;
     }
+
 }
 
+export class CBFormation extends CBUnit {
+
+    constructor(type, wing) {
+        super(type, wing, CBFormation.DIMENSION);
+    }
+
+    clone() {
+        let copy = new CBFormation(this.type, this.wing);
+        this.copy(copy);
+        return copy;
+    }
+
+    get slot() {
+        let slot1 = this.hexLocation.fromHex.units.indexOf(this);
+        let slot2 = this.hexLocation.toHex.units.indexOf(this);
+        return slot1>slot2 ? slot1 : slot2;
+    }
+
+    get hexLocation() {
+        return this._hexLocation;
+    }
+
+    move(hexSideId, cost=0, moveType = CBMoveType.BACKWARD) {
+        console.assert(hexSideId === null || hexSideId instanceof CBHexSideId);
+        if (!CBHexSideId.equals(hexSideId, this._hexLocation)) {
+            Memento.register(this);
+            if (this._hexLocation) {
+                this._hexLocation.fromHex.hex.deleteUnit(this);
+                this._hexLocation.toHex.hex.deleteUnit(this);
+                if (!hexSideId) this._element.hide();
+            }
+            if (hexSideId && !this._hexLocation) this._element.show(this.game.board);
+            this._hexLocation = hexSideId;
+            if (this._hexLocation) {
+                hexSideId.fromHex.hex.appendUnit(this, moveType);
+                hexSideId.toHex.hex.appendUnit(this, moveType);
+                this._element.move(hexSideId.location);
+            }
+            this._updateMovementPoints(cost);
+        }
+    }
+
+    set hexLocation(hexSideId) {
+        console.assert(hexSideId === null || hexSideId instanceof CBHexSideId);
+        if (this._hexLocation) {
+            this._hexLocation.fromHex.hex.removeUnit(this);
+            this._hexLocation.toHex.hex.removeUnit(this);
+        }
+        this._hexLocation = hexSideId;
+        if (this._hexLocation) {
+            hexSideId.fromHex.hex.addUnit(this);
+            hexSideId.toHex.hex.addUnit(this);
+            this.location = hexSideId.location;
+        }
+    }
+
+    createMarkerArtifact(path, slot) {
+        let marker = new CounterImageArtifact(this,"units", [DImage.getImage(path)],
+            CBFormation.MARKERS_POSITION[slot], CBFormation.MARKER_DIMENSION);
+        this._element.appendArtifact(marker);
+        return marker;
+    }
+
+}
+CBFormation.DIMENSION = new Dimension2D(CBUnit.DIMENSION.w*2, CBUnit.DIMENSION.h);
+CBFormation.MARKERS_POSITION = [
+    new Point2D(CBFormation.DIMENSION.w/2, -CBFormation.DIMENSION.h/2),
+    new Point2D(-CBFormation.DIMENSION.w/2, -CBFormation.DIMENSION.h/2),
+    new Point2D(-CBFormation.DIMENSION.w/2, 0),
+    new Point2D(-CBFormation.DIMENSION.w/2, CBFormation.DIMENSION.h/2),
+    new Point2D(0, CBFormation.DIMENSION.h/2),
+    new Point2D(CBFormation.DIMENSION.w/2, CBFormation.DIMENSION.h/2),
+    new Point2D(CBFormation.DIMENSION.w/2, 0)];
+
 export class CBCharacter extends CBUnit {
+
     constructor(type, wing) {
         super(type, wing, CBCharacter.DIMENSION);
         this._commandPoints = 0;
