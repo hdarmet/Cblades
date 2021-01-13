@@ -1,17 +1,19 @@
 import {
     CBAbstractArbitrator,
-    CBCharacter,
-    CBCohesion,
-    CBFormation,
     CBHexSideId,
-    CBMovement,
     CBMoveType,
-    CBTiredness,
-    CBTroop,
-    CBWeather
 } from "./game.js";
 import {
-    diffAngle, moyAngle, reverseAngle
+    CBCohesion,
+    CBMovement,
+    CBTiredness,
+    CBWeather,
+    CBCharacter,
+    CBFormation,
+    CBTroop
+} from "./unit.js";
+import {
+    diffAngle, moyAngle
 } from "../geometry.js";
 
 export class CBArbitrator extends CBAbstractArbitrator{

@@ -11,10 +11,12 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBAbstractPlayer, CBAction, CBActuator, CBFormation,
-    CBGame, CBHexSideId,
-    CBMovement, CBMoveType, CBOrderInstruction
+    CBAbstractPlayer, CBAction, CBActuator,
+    CBGame, CBHexSideId, CBMoveType
 } from "./game.js";
+import {
+    CBFormation, CBMovement, CBOrderInstruction
+} from "./unit.js";
 import {
     DBoard, DElement, DImageArtifact
 } from "../board.js";
@@ -128,6 +130,10 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         this.game.openPopup(popup, new Point2D(
             offset.x - popup.dimension.w/2 + CBGame.POPUP_MARGIN,
             offset.y - popup.dimension.h/2 + CBGame.POPUP_MARGIN));
+    }
+
+    changeOrderInstruction(unit, orderInstruction, event) {
+        unit.wing.changeOrderInstruction(orderInstruction);
     }
 
     applyLossesToUnit(unit, losses, attacker) {

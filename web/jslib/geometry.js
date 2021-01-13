@@ -46,9 +46,10 @@ export function reverseAngle(angle) {
 }
 
 /**
- * Compute angle value between 0 and 359
+ * Set the angle value between
  */
 export function canonizeAngle(angle) {
+    while (angle<360) angle+=360;
     return (angle + 360)%360;
 }
 

@@ -4,7 +4,7 @@ import {
     describe, it, assert
 } from "../jstest/jtest.js";
 import {
-    Point2D, Dimension2D, Matrix2D, Area2D, same, inside, atan2, diffAngle
+    Point2D, Dimension2D, Matrix2D, Area2D, same, inside, atan2, diffAngle, sumAngle, moyAngle, reverseAngle, canonizeAngle
 } from "../jslib/geometry.js";
 
 describe("Geometry", ()=> {
@@ -25,6 +25,27 @@ describe("Geometry", ()=> {
         assert(diffAngle(300, 0)).equalsTo(60);
         assert(diffAngle(30, 90)).equalsTo(60);
         assert(diffAngle(90, 30)).equalsTo(-60);
+    });
+
+    it("Checks 'reverseAngle' and 'canonizeAngle' methods", () => {
+        assert(reverseAngle(0)).equalsTo(180);
+        assert(reverseAngle(180)).equalsTo(0);
+        assert(reverseAngle(60)).equalsTo(240);
+        assert(reverseAngle(240)).equalsTo(60);
+
+        assert(canonizeAngle(60)).equalsTo(60);
+        assert(canonizeAngle(-60)).equalsTo(300);
+    });
+
+    it("Checks 'sumAngle' method", () => {
+        assert(sumAngle(30, 100)).equalsTo(130);
+        assert(sumAngle(300, 100)).equalsTo(40);
+    });
+
+    it("Checks 'moyAngle' method", () => {
+        assert(moyAngle(60, 100)).equalsTo(80);
+        assert(moyAngle(300, 100)).equalsTo(20);
+        assert(moyAngle(100, 300)).equalsTo(20);
     });
 
     it("Checks 'same' method", () => {
@@ -59,6 +80,7 @@ describe("Geometry", ()=> {
             assert(point.toString()).equalsTo("point(30, 40)");
             assert(point.toArray()).arrayEqualsTo([30, 40]);
             assert(point.translate(10, 15).toString()).equalsTo("point(40, 55)");
+            assert(point.concat(new Point2D(10, 15)).toString()).equalsTo("point(40, 55)");
         when:
             var clonePoint = point.clone();
         then:

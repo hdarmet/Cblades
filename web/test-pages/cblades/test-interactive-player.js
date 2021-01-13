@@ -17,9 +17,11 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
-    CBAction, CBCharacter,
-    CBGame, CBMap, CBOrderInstruction, CBTroop, CBUnitType, CBWing
+    CBAction, CBGame, CBMap
 } from "../../jslib/cblades/game.js";
+import {
+    CBCharacter, CBOrderInstruction, CBTroop, CBUnitType, CBWing
+} from "../../jslib/cblades/unit.js";
 import {
     DDice, DMessage, DResult
 } from "../../jslib/widget.js";

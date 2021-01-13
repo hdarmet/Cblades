@@ -17,9 +17,11 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
-    CBAction, CBCharacter,
-    CBGame, CBLackOfMunitions, CBMap, CBMovement, CBTiredness, CBTroop, CBUnitType, CBWeather, CBWing
+    CBAction, CBGame, CBMap
 } from "../../jslib/cblades/game.js";
+import {
+    CBCharacter, CBLackOfMunitions, CBMovement, CBTiredness, CBTroop, CBUnitType, CBWeather, CBWing
+} from "../../jslib/cblades/unit.js";
 import {
     CBInteractivePlayer, CBMoveActuator, CBOrientationActuator
 } from "../../jslib/cblades/interactive-player.js";
