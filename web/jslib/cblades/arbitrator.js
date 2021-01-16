@@ -353,7 +353,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             let angle = parseInt(sangle);
             if (!(angle % 60)) {
                 let direction = directions[angle];
-                let cost = this.getMovementCost(unit, angle);
+                let cost = this.getFormationMovementCost(unit, angle);
                 if (this._processMovementOpportunity(direction, [
                         unit.hexLocation.fromHex.getNearHex(angle),
                         unit.hexLocation.toHex.getNearHex(angle)
@@ -373,7 +373,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             if (!(angle % 60)) {
                 let direction = directions[angle];
                 direction.hex = unit.hexLocation.getFaceHex(unit.angle);
-                let cost = this.getMovementCost(unit, angle);
+                let cost = this.getFormationMovementCost(unit, angle);
                 if (this._processMovementOpportunity(direction, [direction.hex], unit, cost, first)) {
                     result[angle] = direction;
                 }
@@ -382,29 +382,36 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return result;
     }
 
-    getAllowedRotations(unit) {
+    getAllowedRotations(unit, first = false) {
 
-        function processAngle(directions, hexes, unit, angle) {
+        function processAngle(directions, hexes, unit, angle, cost) {
             let nearHexId = angle%60 ?
                new CBHexSideId(hexes[angle-30].hex, hexes[(angle+30)%360].hex) :
                hexes[angle].hex;
-            let cost = this.getRotationCost(unit, angle);
             if (unit.movementPoints>=cost) {
                 directions[angle] = { hex:nearHexId, type:CBMovement.NORMAL};
             }
-            else if (unit.tiredness<2 && unit.extendedMovementPoints>=cost) {
-                directions[angle] = { hex:nearHexId, type:CBMovement.EXTENDED};
+            else if (unit.tiredness<CBTiredness.EXHAUSTED) {
+                if (unit.extendedMovementPoints >= cost) {
+                    directions[angle] = { hex:nearHexId, type:CBMovement.EXTENDED};
+                } else if (first) {
+                    directions[angle] = { hex:nearHexId, type:CBMovement.MINIMAL};
+                }
             }
+
         }
 
         let hexes = this.getUnitAdjacentZone(unit);
         let directions = [];
         if (unit instanceof CBFormation) {
-            processAngle.call(this, directions, hexes, unit, (unit.angle+180)%360);
+            let angle = (unit.angle+180)%360;
+            let cost = this.getFormationRotationCost(unit, angle);
+            processAngle.call(this, directions, hexes, unit, angle, cost);
         }
         else {
             for (let angle = 0; angle < 360; angle += 30) {
-                processAngle.call(this, directions, hexes, unit, angle);
+                let cost = this.getRotationCost(unit, angle);
+                processAngle.call(this, directions, hexes, unit, angle, cost);
             }
             delete directions[unit.angle];
         }
@@ -416,6 +423,10 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     getMovementCost(unit, angle) {
+        return 1;
+    }
+
+    getFormationRotationCost(unit, angle) {
         return 1;
     }
 

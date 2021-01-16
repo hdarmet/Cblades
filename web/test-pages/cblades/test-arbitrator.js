@@ -17,13 +17,13 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
-    CBAction, CBGame, CBMap
+    CBAction, CBGame, CBHexSideId, CBMap
 } from "../../jslib/cblades/game.js";
 import {
-    CBCharacter, CBLackOfMunitions, CBMovement, CBTiredness, CBTroop, CBUnitType, CBWeather, CBWing
+    CBCharacter, CBFormation, CBLackOfMunitions, CBMovement, CBTiredness, CBTroop, CBUnitType, CBWeather, CBWing
 } from "../../jslib/cblades/unit.js";
 import {
-    CBInteractivePlayer, CBMoveActuator, CBOrientationActuator
+    CBInteractivePlayer
 } from "../../jslib/cblades/interactive-player.js";
 import {
     CBArbitrator
@@ -128,6 +128,21 @@ describe("Arbitrator", ()=> {
         assert(zones[angle].hex.row).equalsTo(row);
     }
 
+    it("Checks unit adjacent zone", () => {
+        given:
+            var {arbitrator, unit12, map} = create2Players4UnitsTinyGame();
+        when:
+            unit12.move(map.getHex(3, 4));
+            var zones = arbitrator.getUnitAdjacentZone(unit12);
+        then:
+            assertInZone(zones, 0, 3, 3);
+            assertInZone(zones, 60, 4, 3);
+            assertInZone(zones, 120, 4, 4);
+            assertInZone(zones, 180, 3, 5);
+            assertInZone(zones, 240, 2, 4);
+            assertInZone(zones, 300, 2, 3);
+    });
+
     it("Checks unit forward zone", () => {
         given:
             var {arbitrator, unit12} = create2Players4UnitsTinyGame();
@@ -200,10 +215,94 @@ describe("Arbitrator", ()=> {
             assert(arbitrator.isHexOnBackwardZone(unit11, unit11.hexLocation.getNearHex(300))).isFalse();
     });
 
+    function create2Players1Formation2TroopsTinyGame() {
+        let game = new CBGame();
+        let arbitrator = new CBArbitrator();
+        game.setArbitrator(arbitrator);
+        let player1 = new CBInteractivePlayer();
+        game.addPlayer(player1);
+        let wing1 = new CBWing(player1);
+        let player2 = new CBInteractivePlayer();
+        game.addPlayer(player2);
+        let wing2 = new CBWing(player2);
+        let map = new CBMap("/CBlades/images/maps/map.png");
+        game.setMap(map);
+        let unitType1 = new CBUnitType("unit1", ["/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png"])
+        let formation1 = new CBFormation(unitType1, wing1);
+        game.addUnit(formation1, new CBHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
+        formation1.angle = 90;
+        let leaderType1 = new CBUnitType("leader1", ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"])
+        let leader11 = new CBCharacter(leaderType1, wing1);
+        game.addUnit(leader11, map.getHex(6, 7));
+        let unitType2 = new CBUnitType("unit2", ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit1b.png"])
+        let unit21 = new CBTroop(unitType2, wing2);
+        game.addUnit(unit21, map.getHex(7, 8));
+        let unit22 = new CBTroop(unitType2, wing2);
+        game.addUnit(unit22, map.getHex(7, 7));
+        let leaderType2 = new CBUnitType("leader2", ["/CBlades/images/units/misc/leader2.png", "/CBlades/images/units/misc/leader2b.png"])
+        let leader21 = new CBCharacter(leaderType2, wing2);
+        game.addUnit(leader21, map.getHex(8, 7));
+        game.start();
+        loadAllImages();
+        return {game, arbitrator, map, player1, formation1, leader11, player2, unit21, unit22, leader21};
+    }
+
+    it("Checks formation adjacent zone", () => {
+        given:
+            var {arbitrator, formation1, map} = create2Players1Formation2TroopsTinyGame();
+        when:
+            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            var zones = arbitrator.getUnitAdjacentZone(formation1);
+        then:
+            assertInZone(zones, 0, 3, 3);
+            assertInZone(zones, 60, 4, 3);
+            assertInZone(zones, 90, 4, 4);
+            assertInZone(zones, 120, 4, 5);
+            assertInZone(zones, 180, 3, 6);
+            assertInZone(zones, 240, 2, 5);
+            assertInZone(zones, 270, 2, 4);
+            assertInZone(zones, 300, 2, 3);
+    });
+
+    it("Checks formation forward zone", () => {
+        given:
+            var {arbitrator, formation1, map} = create2Players1Formation2TroopsTinyGame();
+        when:
+            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            var zones = arbitrator.getUnitForwardZone(formation1);
+        then:
+            assertNotInZone(zones, 0);
+            assertInZone(zones, 60, 4, 3);
+            assertInZone(zones, 90, 4, 4);
+            assertInZone(zones, 120, 4, 5);
+            assertNotInZone(zones, 180);
+            assertNotInZone(zones, 240);
+            assertNotInZone(zones, 270);
+            assertNotInZone(zones, 300);
+    });
+
+    it("Checks formation backward zone", () => {
+        given:
+            var {arbitrator, formation1, map} = create2Players1Formation2TroopsTinyGame();
+        when:
+            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            var zones = arbitrator.getUnitBackwardZone(formation1);
+        then:
+            assertNotInZone(zones, 0, 3, 3);
+            assertNotInZone(zones, 60, 4, 3);
+            assertNotInZone(zones, 90, 4, 4);
+            assertNotInZone(zones, 120, 4, 5);
+            assertNotInZone(zones, 180, 3, 6);
+            assertInZone(zones, 240, 2, 5);
+            assertInZone(zones, 270, 2, 4);
+            assertInZone(zones, 300, 2, 3);
+    });
+
     function assertNoMove(moves, angle) {
         assert(moves[angle]).isNotDefined();
     }
     function assertMove(moves, angle, col, row, type) {
+        assert(moves[angle]).isDefined();
         assert(moves[angle].hex.col).equalsTo(col);
         assert(moves[angle].hex.row).equalsTo(row);
         assert(moves[angle].type).equalsTo(type);
@@ -237,21 +336,11 @@ describe("Arbitrator", ()=> {
             unit12.extendedMovementPoints = 0.5;
             allowedMoves = arbitrator.getAllowedMoves(unit12);
         then:
-            assertNoMove(allowedMoves, 0);
             assertNoMove(allowedMoves, 60);
-            assertNoMove(allowedMoves, 120);
-            assertNoMove(allowedMoves, 180);
-            assertNoMove(allowedMoves, 240);
-            assertNoMove(allowedMoves, 300);
         when:
             allowedMoves = arbitrator.getAllowedMoves(unit12, true);
         then:
-            assertNoMove(allowedMoves, 0); // occupied by a foe
             assertMove(allowedMoves, 60, 6, 6, CBMovement.MINIMAL);
-            assertNoMove(allowedMoves, 120);
-            assertNoMove(allowedMoves, 180);
-            assertNoMove(allowedMoves, 240);
-            assertNoMove(allowedMoves, 300);
     });
 
     it("Checks unit allowed retreat", () => {
@@ -278,6 +367,128 @@ describe("Arbitrator", ()=> {
             assertInZone(allowedRetreats, 180, 5, 8);
             assertInZone(allowedRetreats, 240, 4, 7);
             assertNotInZone(allowedRetreats, 300);
+    });
+
+    it("Checks formation allowed moves", () => {
+        given:
+            var {arbitrator, map, formation1, unit21} = create2Players1Formation2TroopsTinyGame();
+            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            unit21.move(map.getHex(4, 3)); // foes on forward zone
+        when:
+            var allowedMoves = arbitrator.getFormationAllowedMoves(formation1);
+        then:
+            assertNoMove(allowedMoves, 0); // Not in forward zone
+            assertNoMove(allowedMoves, 60); // occupied by a foe
+            assertNoMove(allowedMoves, 90); // Not used
+            assertMove(allowedMoves, 120, 4, 5, CBMovement.NORMAL);
+            assertNoMove(allowedMoves, 180); // Not in forward zone
+            assertNoMove(allowedMoves, 240); // Not in forward zone
+            assertNoMove(allowedMoves, 270); // Not in forward zone
+            assertNoMove(allowedMoves, 300); // Not in forward zone
+        when:
+            formation1.movementPoints = 0.5;
+            allowedMoves = arbitrator.getFormationAllowedMoves(formation1);
+        then:
+            assertMove(allowedMoves, 120, 4, 5, CBMovement.EXTENDED);
+        when:
+            formation1.extendedMovementPoints = 0.5;
+            allowedMoves = arbitrator.getFormationAllowedMoves(formation1);
+        then:
+            assertNoMove(allowedMoves, 120);
+        when:
+            allowedMoves = arbitrator.getFormationAllowedMoves(formation1, true);
+        then:
+            assertMove(allowedMoves, 120, 4, 5,  CBMovement.MINIMAL);
+    });
+
+    it("Checks formation allowed forward rotate", () => {
+        given:
+            var {arbitrator, map, formation1, unit21} = create2Players1Formation2TroopsTinyGame();
+            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+        when:
+            var allowedMoves = arbitrator.getFormationAllowedRotations(formation1);
+        then:
+            assertNoMove(allowedMoves, 0); // Not in forward zone
+            assertMove(allowedMoves, 60, 4, 4, CBMovement.NORMAL);
+            assertNoMove(allowedMoves, 90); // Not used
+            assertMove(allowedMoves, 120, 4, 4, CBMovement.NORMAL);
+            assertNoMove(allowedMoves, 180); // Not in forward zone
+            assertNoMove(allowedMoves, 240); // Not in forward zone
+            assertNoMove(allowedMoves, 270); // Not in forward zone
+            assertNoMove(allowedMoves, 300); // Not in forward zone
+        when:
+            formation1.movementPoints = 0.5;
+            allowedMoves = arbitrator.getFormationAllowedRotations(formation1);
+        then:
+            assertMove(allowedMoves, 60, 4, 4, CBMovement.EXTENDED);
+            assertMove(allowedMoves, 120, 4, 4, CBMovement.EXTENDED);
+        when:
+            formation1.extendedMovementPoints = 0.5;
+            allowedMoves = arbitrator.getFormationAllowedRotations(formation1);
+        then:
+            assertNoMove(allowedMoves, 60);
+            assertNoMove(allowedMoves, 120);
+        when:
+            allowedMoves = arbitrator.getFormationAllowedRotations(formation1, true);
+        then:
+            assertMove(allowedMoves, 60, 4, 4, CBMovement.MINIMAL);
+            assertMove(allowedMoves, 120, 4, 4, CBMovement.MINIMAL);
+        given:
+            unit21.move(map.getHex(4, 3)); // foes on forward zone
+        when:
+            allowedMoves = arbitrator.getFormationAllowedRotations(formation1);
+        then:
+            assertNoMove(allowedMoves, 60);
+            assertNoMove(allowedMoves, 120);
+    });
+
+    it("Checks formation allowed retreat", () => {
+        given:
+            var {arbitrator, map, formation1, unit21} = create2Players1Formation2TroopsTinyGame();
+            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            unit21.move(map.getHex(4, 3));
+        when:
+            var { retreatDirections, rotateDirections } = arbitrator.getFormationRetreatZones(formation1, unit21);
+        then:
+            assertNotInZone(retreatDirections, 0); // side
+            assertNotInZone(retreatDirections, 60); // occupied by a foe
+            assertNotInZone(retreatDirections, 90); // not used
+            assertNotInZone(retreatDirections, 120); // adjacent to attacker
+            assertNotInZone(retreatDirections, 180); // side
+            assertInZone(retreatDirections, 240, 2, 5);
+            assertNotInZone(retreatDirections, 270); // not used
+            assertInZone(retreatDirections, 300, 2, 3);
+
+            assertNotInZone(rotateDirections, 0); // side
+            assertNotInZone(rotateDirections, 60); // occupied by a foe
+            assertNotInZone(rotateDirections, 90); // not used
+            assertNotInZone(rotateDirections, 120); // adjacent to attacker
+            assertNotInZone(rotateDirections, 180); // side
+            assertInZone(rotateDirections, 240, 2, 4);
+            assertNotInZone(rotateDirections, 270); // not used
+            assertNotInZone(rotateDirections, 300); // adjacent to attacker
+        given:
+            unit21.move(map.getHex(4, 5));
+        when:
+            ({ retreatDirections, rotateDirections } = arbitrator.getFormationRetreatZones(formation1, unit21));
+        then:
+            assertNotInZone(retreatDirections, 0); // side
+            assertNotInZone(retreatDirections, 60); // occupied by a foe
+            assertNotInZone(retreatDirections, 90); // not used
+            assertNotInZone(retreatDirections, 120); // adjacent to attacker
+            assertNotInZone(retreatDirections, 180); // side
+            assertInZone(retreatDirections, 240, 2, 5);
+            assertNotInZone(retreatDirections, 270); // not used
+            assertInZone(retreatDirections, 300, 2, 3);
+
+            assertNotInZone(rotateDirections, 0); // side
+            assertNotInZone(rotateDirections, 60); // occupied by a foe
+            assertNotInZone(rotateDirections, 90); // not used
+            assertNotInZone(rotateDirections, 120); // adjacent to attacker
+            assertNotInZone(rotateDirections, 180); // side
+            assertNotInZone(rotateDirections, 240); // adjacent to attacker
+            assertNotInZone(rotateDirections, 270); // not used
+            assertInZone(rotateDirections, 300, 2, 4);
     });
 
     function assertNoRotation(rotations, angle) {
@@ -331,6 +542,76 @@ describe("Arbitrator", ()=> {
             assertVertexRotation(allowedRotations, 270, 4, 7, 4, 6, CBMovement.EXTENDED);
             assertSideRotation(allowedRotations, 300, 4, 6, CBMovement.EXTENDED);
             assertVertexRotation(allowedRotations, 330, 4, 6, 5, 6, CBMovement.EXTENDED);
+        when:
+            unit12.extendedMovementPoints = 0;
+            allowedRotations = arbitrator.getAllowedRotations(unit12);
+        then:
+            assertNoRotation(allowedRotations, 0);
+            assertNoRotation(allowedRotations, 30);
+            assertNoRotation(allowedRotations, 60);
+            assertNoRotation(allowedRotations, 90);
+            assertNoRotation(allowedRotations, 120);
+            assertNoRotation(allowedRotations, 150);
+            assertNoRotation(allowedRotations, 180);
+            assertNoRotation(allowedRotations, 210);
+            assertNoRotation(allowedRotations, 240);
+            assertNoRotation(allowedRotations, 270);
+            assertNoRotation(allowedRotations, 300);
+            assertNoRotation(allowedRotations, 330);
+        when:
+            allowedRotations = arbitrator.getAllowedRotations(unit12, true);
+        then:
+            assertSideRotation(allowedRotations, 0, 5, 6, CBMovement.MINIMAL);
+            assertNoRotation(allowedRotations, 30);
+            assertSideRotation(allowedRotations, 60, 6, 6, CBMovement.MINIMAL);
+            assertVertexRotation(allowedRotations, 90, 6, 6, 6, 7, CBMovement.MINIMAL);
+            assertSideRotation(allowedRotations, 120, 6, 7, CBMovement.MINIMAL);
+            assertVertexRotation(allowedRotations, 150, 6, 7, 5, 8, CBMovement.MINIMAL);
+            assertSideRotation(allowedRotations, 180, 5, 8, CBMovement.MINIMAL);
+            assertVertexRotation(allowedRotations, 210, 5, 8, 4, 7, CBMovement.MINIMAL);
+            assertSideRotation(allowedRotations, 240, 4, 7, CBMovement.MINIMAL);
+            assertVertexRotation(allowedRotations, 270, 4, 7, 4, 6, CBMovement.MINIMAL);
+            assertSideRotation(allowedRotations, 300, 4, 6, CBMovement.MINIMAL);
+            assertVertexRotation(allowedRotations, 330, 4, 6, 5, 6, CBMovement.MINIMAL);
+    });
+
+    function assertRotate(rotates, angle, hexId1, hexId2, type) {
+        assert(rotates[angle]).isDefined();
+        assert(rotates[angle].hex.fromHex).equalsTo(hexId1);
+        assert(rotates[angle].hex.toHex).equalsTo(hexId2);
+        assert(rotates[angle].type).equalsTo(type);
+    }
+
+    it("Checks formation allowed rotations", () => {
+        given:
+            var {arbitrator, map, formation1, unit21} = create2Players1Formation2TroopsTinyGame();
+            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            unit21.move(map.getHex(4, 3)); // foes on forward zone
+        when:
+            var allowedRotations = arbitrator.getAllowedRotations(formation1);
+        then:
+            assertNoMove(allowedRotations, 0); // angle not allowed
+            assertNoMove(allowedRotations, 60); // angle not allowed
+            assertNoMove(allowedRotations, 90); // angle not allowed
+            assertNoMove(allowedRotations, 120); // angle not allowed
+            assertNoMove(allowedRotations, 180); // angle not allowed
+            assertNoMove(allowedRotations, 240); // angle not allowed
+            assertRotate(allowedRotations, 270, map.getHex(2, 5), map.getHex(2, 3), CBMovement.NORMAL);
+            assertNoMove(allowedRotations, 300); // angle not allowed
+        when:
+            formation1.movementPoints = 0.5;
+            allowedRotations = arbitrator.getAllowedRotations(formation1);
+        then:
+            assertRotate(allowedRotations, 270, map.getHex(2, 5), map.getHex(2, 3), CBMovement.EXTENDED);
+        when:
+            formation1.extendedMovementPoints = 0.5;
+            allowedRotations = arbitrator.getAllowedRotations(formation1);
+        then:
+            assertNoMove(allowedRotations, 270);
+        when:
+            allowedRotations = arbitrator.getAllowedRotations(formation1, true);
+        then:
+            assertRotate(allowedRotations, 270, map.getHex(2, 5), map.getHex(2, 3), CBMovement.MINIMAL);
     });
 
     it("Checks unit move cost", () => {
@@ -345,6 +626,20 @@ describe("Arbitrator", ()=> {
             var {arbitrator, unit12} = create2Players4UnitsTinyGame();
         then:
             assert(arbitrator.getRotationCost(unit12, 60)).equalsTo(0.5);
+    });
+
+    it("Checks formation move cost", () => {
+        given:
+            var {arbitrator, formation1} = create2Players1Formation2TroopsTinyGame();
+        then:
+            assert(arbitrator.getFormationMovementCost(formation1, 60)).equalsTo(1);
+    });
+
+    it("Checks formation rotation cost", () => {
+        given:
+            var {arbitrator, formation1} = create2Players1Formation2TroopsTinyGame();
+        then:
+            assert(arbitrator.getFormationRotationCost(formation1, 60)).equalsTo(1);
     });
 
     it("Checks if movement inflicts tiredness", () => {

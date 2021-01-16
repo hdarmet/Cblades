@@ -194,6 +194,42 @@ CBAction.FINISHED = 2;
 CBAction.FINALIZED = 3;
 CBAction.PROGRESSION = "progression";
 
+export class ActuatorImageArtifact extends DImageArtifact {
+
+    constructor(actuator, ...args) {
+        super(...args);
+        this._actuator = actuator;
+        this.setSettings(this.settings);
+    }
+
+    get settings() {
+        return level=>{
+            level.setShadowSettings("#00FFFF", 10);
+        }
+    }
+
+    get overSettings() {
+        return level=>{
+            level.setShadowSettings("#FF0000", 10);
+        }
+    }
+
+    onMouseClick(event) {
+        this._actuator.onMouseClick(this, event);
+    }
+
+    onMouseEnter(event) {
+        this.setSettings(this.overSettings);
+        this.element.refresh();
+    }
+
+    onMouseLeave(event) {
+        this.setSettings(this.settings);
+        this.element.refresh();
+    }
+
+}
+
 export class CBActuator {
 
     constructor(action) {

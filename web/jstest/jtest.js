@@ -349,6 +349,7 @@ export class TestSuite {
         this._title = title;
         _testSuite = this;
         this._befores = [];
+        this._afters = [];
         this._its = [];
         this._index=0;
         _suites.push(this);
@@ -358,6 +359,10 @@ export class TestSuite {
         this._befores.push(before);
     }
 
+    _after(after) {
+        this._afters.push(after);
+    }
+
     _it(caseTitle, testCase) {
         this._its.push({_caseTitle:caseTitle, _testCase:testCase});
         return this;
@@ -365,6 +370,9 @@ export class TestSuite {
 
     _executeIt() {
         function _done() {
+            for (let after of this._afters) {
+                after();
+            }
             this._processSuccess();
             this._index++;
             this._executeIt();
@@ -373,7 +381,7 @@ export class TestSuite {
         while (this._index<this._its.length) {
             try {
                 _itCount++;
-                this._timeouts = [];
+                this._clearTimeouts();
                 this._timeoutsID = 0;
                 setTimeout = (action, delay, ...args)=> {
                     let token = this._timeoutsID++;
@@ -387,20 +395,22 @@ export class TestSuite {
                     before();
                 }
                 if (this._its[this._index]._testCase.length===0) {
-                    try {
-                        this._its[this._index]._testCase();
-                    } finally {
-                        this._executeTimeouts();
+                    this._its[this._index]._testCase();
+                    this._executeTimeouts();
+                    for (let after of this._afters) {
+                        after();
                     }
                     this._processSuccess();
                     this._index++;
                 }
                 else {
                     this._its[this._index]._testCase(_done.bind(this));
-                    return;
                 }
             }
             catch (exception) {
+                for (let after of this._afters) {
+                    after();
+                }
                 this._processException(exception);
                 this._index++;
             }
@@ -432,12 +442,15 @@ export class TestSuite {
 
     _executeTimeouts() {
         this._timeouts.sort((timeout1, timeout2)=>timeout1.delay-timeout2.delay);
-        let timeouts = [...this._timeouts]
+        let timeouts = [...this._timeouts];
         this._timeouts = [];
         for (let timeout of timeouts) {
             timeout._action(...timeout._args);
         }
+    }
 
+    _clearTimeouts() {
+        this._timeouts = [];
     }
 
 }
@@ -462,6 +475,10 @@ export function describe(title, procedure) {
 
 export function before(before) {
     _testSuite._before(before);
+}
+
+export function after(after) {
+    _testSuite._after(after);
 }
 
 export function it(caseTitle, testCase) {

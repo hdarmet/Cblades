@@ -21,6 +21,35 @@
     import {
         CBArbitrator
     } from "../jslib/cblades/arbitrator.js";
+    import {
+        registerInteractiveMovement
+    } from "../jslib/cblades/interactive-movement.js";
+    import {
+        registerInteractiveCombat
+    } from "../jslib/cblades/interactive-combat.js";
+    import {
+        registerInteractiveRecover
+    } from "../jslib/cblades/interactive-recover.js";
+    import {
+        registerInteractiveCommand
+    } from "../jslib/cblades/interactive-command.js";
+    import {
+        registerInteractiveFormation
+    } from "../jslib/cblades/interactive-formation.js";
+    import {
+        registerInteractiveMiscellaneous
+    } from "../jslib/cblades/interactive-miscellaneous.js";
+    import {
+        registerInteractiveMagic
+    } from "../jslib/cblades/interactive-magic.js";
+
+    registerInteractiveMovement();
+    registerInteractiveCombat();
+    registerInteractiveRecover();
+    registerInteractiveCommand();
+    registerInteractiveFormation();
+    registerInteractiveMagic();
+    registerInteractiveMiscellaneous();
 
     let game = new CBGame();
     document.body.appendChild(game.root);
