@@ -17,9 +17,11 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
-    clickOnCounter,
-    createTinyGame
+    clickOnCounter
 } from "./interactive-tools.js";
+import {
+    createTinyGame
+} from "./game-examples.js";
 import {
     registerInteractiveFormation,
     unregisterInteractiveFormation

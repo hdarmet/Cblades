@@ -1167,7 +1167,7 @@ describe("Unit", ()=> {
 
     it("Checks formation cloning", () => {
         given:
-            var {unit, leader, formation} = prepareTinyGameWithFormation();
+            var {formation} = prepareTinyGameWithFormation();
         when:
             formation.movementPoints = 3;
             var cloneFormation = formation.clone();

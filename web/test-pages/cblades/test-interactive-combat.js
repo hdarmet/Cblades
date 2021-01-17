@@ -17,7 +17,7 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
-    CBFireAttackActuator,
+    CBFireAttackActuator, CBFormationRetreatActuator,
     CBRetreatActuator,
     CBShockAttackActuator,
     registerInteractiveCombat,
@@ -28,16 +28,21 @@ import {
     paint,
     clickOnActionMenu,
     clickOnCounter,
-    createTinyGame,
     clickOnTrigger,
     clickOnDice,
     executeAllAnimations,
     clickOnResult,
-    create2PlayersTinyGame,
     dummyEvent,
     clickOnMask,
     rollFor
 } from "./interactive-tools.js";
+import {
+    createTinyGame,
+    create2PlayersTinyGame, create2PlayersTinyFormationGame
+} from "./game-examples.js";
+import {
+    CBHexSideId
+} from "../../jslib/cblades/game.js";
 
 describe("Interactive Combat", ()=> {
 
@@ -466,7 +471,159 @@ describe("Interactive Combat", ()=> {
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
 
-    it("Checks when a unit take a loss", () => {
+    function getFormationRetreatActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBFormationRetreatActuator) return actuator;
+        }
+        return null;
+    }
+
+    it("Checks when a unit successfully shock attack a formation", () => {
+        given:
+            var { game, map, unit1, formation2 } = create2PlayersTinyFormationGame();
+            var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
+                "actuators", "widgets", "widget-commands","widget-items"
+            );
+            unit1.move(map.getHex(5, 8));
+            formation2.move(new CBHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
+            formation2.angle = 180;
+            clickOnCounter(game, unit1);
+            clickOnShockAttackAction(game);
+            let shockAttackActuator = getShockAttackActuator(game);
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(formation2, true));
+            loadAllImages();
+        when:
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 572.9961, 207)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 512.9961, 267)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 472.9961, 177)",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            loadAllImages();
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(game.focusedUnit).equalsTo(formation2);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 458.3333, 279.7196)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/blood.png, -52, -72, 104, 144)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 169.0616)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/retreat-move.png, -40, -65, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 575, 260.4747)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/retreat-move.png, -40, -65, 80, 130)",
+                "restore()"
+            ]);
+        when:
+            var retreatActuator = getFormationRetreatActuator(game);
+        then:
+            assert(retreatActuator.getTrigger(0)).isDefined();
+            assert(retreatActuator.getTrigger(120)).isNotDefined();
+    });
+
+    it("Checks when a formation retreat", () => {
+        given:
+            var { game, map, unit1, formation2 } = create2PlayersTinyFormationGame();
+            var [actuatorsLayer, formationLayer] = getLayers(game.board,
+                "actuators", "formations-0"
+            );
+            unit1.move(map.getHex(5, 8));
+            formation2.move(new CBHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
+            formation2.angle = 210;
+            clickOnCounter(game, unit1);
+            clickOnShockAttackAction(game);
+            let shockAttackActuator = getShockAttackActuator(game);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(formation2, true));
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnResult(game);
+        when:
+            var retreatActuator = getFormationRetreatActuator(game);
+            clickOnTrigger(game, retreatActuator.getTrigger(0, false));
+            loadAllImages();
+            resetDirectives(actuatorsLayer, formationLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(formationLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(-0.4233, -0.2444, 0.2444, -0.4233, 458.3333, 183.4952)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/)images/units/misc/formation2.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+            assert(formation2.angle).equalsTo(210);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks when a formation rotate in place of retreating", () => {
+        given:
+            var { game, map, unit1, formation2 } = create2PlayersTinyFormationGame();
+            var [actuatorsLayer, formationLayer] = getLayers(game.board,
+                "actuators", "formations-0"
+            );
+            unit1.move(map.getHex(5, 8));
+            formation2.move(new CBHexSideId(map.getHex(6, 7), map.getHex(7, 8)));
+            formation2.angle = 210;
+            clickOnCounter(game, unit1);
+            clickOnShockAttackAction(game);
+            let shockAttackActuator = getShockAttackActuator(game);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(formation2, true));
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnResult(game);
+        when:
+            var retreatActuator = getFormationRetreatActuator(game);
+            clickOnTrigger(game, retreatActuator.getTrigger(60, true));
+            loadAllImages();
+            resetDirectives(actuatorsLayer, formationLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(formationLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, -0.4888, 0.4888, 0, 583.3333, 303.7757)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/)images/units/misc/formation2.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+            assert(formation2.angle).equalsTo(270);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks when a unit takes a loss", () => {
         given:
             var { game, map, player1, unit1, unit2 } = create2PlayersTinyGame();
             var [actuatorsLayer, unitsLayer] = getLayers(game.board,
@@ -500,6 +657,40 @@ describe("Interactive Combat", ()=> {
                     "setTransform(-0.4888, 0, 0, -0.4888, 416.6667, 255.6635)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/unit2b.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks when a formation takes a loss", () => {
+        given:
+            var { game, map, unit1, formation2 } = create2PlayersTinyFormationGame();
+            var [actuatorsLayer, formationLayer] = getLayers(game.board,
+                "actuators", "formations-0"
+            );
+            unit1.move(map.getHex(5, 8));
+            formation2.move(new CBHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
+            formation2.angle = 210;
+            clickOnCounter(game, unit1);
+            clickOnShockAttackAction(game);
+            let shockAttackActuator = getShockAttackActuator(game);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(formation2, true));
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnResult(game);
+        when:
+            var retreatActuator = getFormationRetreatActuator(game);
+            clickOnTrigger(game, retreatActuator.getLossTrigger());
+            loadAllImages();
+            resetDirectives(actuatorsLayer, formationLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(formationLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(-0.4233, -0.2444, 0.2444, -0.4233, 458.3333, 279.7196)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/formation2b.png, -142, -71, 284, 142)",
                 "restore()"
             ]);
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);

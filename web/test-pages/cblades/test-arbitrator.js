@@ -17,14 +17,11 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
-    CBAction, CBGame, CBHexSideId, CBMap
+    CBAction, CBGame, CBHexSideId, CBMap, CBAbstractPlayer, CBMoveType
 } from "../../jslib/cblades/game.js";
 import {
     CBCharacter, CBFormation, CBLackOfMunitions, CBMovement, CBTiredness, CBTroop, CBUnitType, CBWeather, CBWing
 } from "../../jslib/cblades/unit.js";
-import {
-    CBInteractivePlayer
-} from "../../jslib/cblades/interactive-player.js";
 import {
     CBArbitrator
 } from "../../jslib/cblades/arbitrator.js";
@@ -43,10 +40,10 @@ describe("Arbitrator", ()=> {
         let game = new CBGame();
         let arbitrator = new CBArbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBInteractivePlayer();
+        let player1 = new CBAbstractPlayer();
         game.addPlayer(player1);
         let wing1 = new CBWing(player1);
-        let player2 = new CBInteractivePlayer();
+        let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
         let wing2 = new CBWing(player2);
         let map = new CBMap("/CBlades/images/maps/map.png");
@@ -126,6 +123,11 @@ describe("Arbitrator", ()=> {
     function assertInZone(zones, angle, col, row) {
         assert(zones[angle].hex.col).equalsTo(col);
         assert(zones[angle].hex.row).equalsTo(row);
+    }
+    function assertInRetreatZone(zones, angle, col, row, moveType) {
+        assert(zones[angle].hex.col).equalsTo(col);
+        assert(zones[angle].hex.row).equalsTo(row);
+        assert(zones[angle].moveType).equalsTo(moveType);
     }
 
     it("Checks unit adjacent zone", () => {
@@ -219,10 +221,10 @@ describe("Arbitrator", ()=> {
         let game = new CBGame();
         let arbitrator = new CBArbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBInteractivePlayer();
+        let player1 = new CBAbstractPlayer();
         game.addPlayer(player1);
         let wing1 = new CBWing(player1);
-        let player2 = new CBInteractivePlayer();
+        let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
         let wing2 = new CBWing(player2);
         let map = new CBMap("/CBlades/images/maps/map.png");
@@ -354,18 +356,18 @@ describe("Arbitrator", ()=> {
             assertNotInZone(allowedRetreats, 300); // adjacent to attacker
             assertNotInZone(allowedRetreats, 0); // occupied by a foe
             assertNotInZone(allowedRetreats, 60); // adjacent to attacker
-            assertInZone(allowedRetreats, 120, 6, 7);
-            assertInZone(allowedRetreats, 180, 5, 8);
-            assertInZone(allowedRetreats, 240, 4, 7);
+            assertInRetreatZone(allowedRetreats, 120, 6, 7, CBMoveType.FORWARD);
+            assertInRetreatZone(allowedRetreats, 180, 5, 8, CBMoveType.FORWARD);
+            assertInRetreatZone(allowedRetreats, 240, 4, 7, CBMoveType.FORWARD);
         when:
-            unit12.angle = 210;
+            unit12.angle = 30;
             allowedRetreats = arbitrator.getRetreatZones(unit12, unit21);
         then:
             assertNotInZone(allowedRetreats, 0); // occupied by a foe
-            assertNotInZone(allowedRetreats); // adjacent to attacker
+            assertNotInZone(allowedRetreats, 60); // adjacent to attacker
             assertNotInZone(allowedRetreats, 120);
-            assertInZone(allowedRetreats, 180, 5, 8);
-            assertInZone(allowedRetreats, 240, 4, 7);
+            assertInRetreatZone(allowedRetreats, 180, 5, 8, CBMoveType.BACKWARD);
+            assertInRetreatZone(allowedRetreats, 240, 4, 7, CBMoveType.BACKWARD);
             assertNotInZone(allowedRetreats, 300);
     });
 
@@ -455,16 +457,16 @@ describe("Arbitrator", ()=> {
             assertNotInZone(retreatDirections, 90); // not used
             assertNotInZone(retreatDirections, 120); // adjacent to attacker
             assertNotInZone(retreatDirections, 180); // side
-            assertInZone(retreatDirections, 240, 2, 5);
+            assertInRetreatZone(retreatDirections, 240, 2, 5, CBMoveType.BACKWARD);
             assertNotInZone(retreatDirections, 270); // not used
-            assertInZone(retreatDirections, 300, 2, 3);
+            assertInRetreatZone(retreatDirections, 300, 2, 3, CBMoveType.BACKWARD);
 
             assertNotInZone(rotateDirections, 0); // side
             assertNotInZone(rotateDirections, 60); // occupied by a foe
             assertNotInZone(rotateDirections, 90); // not used
             assertNotInZone(rotateDirections, 120); // adjacent to attacker
             assertNotInZone(rotateDirections, 180); // side
-            assertInZone(rotateDirections, 240, 2, 4);
+            assertInRetreatZone(rotateDirections, 240, 2, 4, CBMoveType.BACKWARD);
             assertNotInZone(rotateDirections, 270); // not used
             assertNotInZone(rotateDirections, 300); // adjacent to attacker
         given:
@@ -477,9 +479,9 @@ describe("Arbitrator", ()=> {
             assertNotInZone(retreatDirections, 90); // not used
             assertNotInZone(retreatDirections, 120); // adjacent to attacker
             assertNotInZone(retreatDirections, 180); // side
-            assertInZone(retreatDirections, 240, 2, 5);
+            assertInRetreatZone(retreatDirections, 240, 2, 5, CBMoveType.BACKWARD);
             assertNotInZone(retreatDirections, 270); // not used
-            assertInZone(retreatDirections, 300, 2, 3);
+            assertInRetreatZone(retreatDirections, 300, 2, 3, CBMoveType.BACKWARD);
 
             assertNotInZone(rotateDirections, 0); // side
             assertNotInZone(rotateDirections, 60); // occupied by a foe
@@ -488,7 +490,7 @@ describe("Arbitrator", ()=> {
             assertNotInZone(rotateDirections, 180); // side
             assertNotInZone(rotateDirections, 240); // adjacent to attacker
             assertNotInZone(rotateDirections, 270); // not used
-            assertInZone(rotateDirections, 300, 2, 4);
+            assertInRetreatZone(rotateDirections, 300, 2, 4, CBMoveType.BACKWARD);
     });
 
     function assertNoRotation(rotations, angle) {

@@ -11,7 +11,7 @@ import {
 } from "../mechanisms.js";
 import {
     CBAction, CBActuator, CBGame,
-    ActuatorImageArtifact
+    CBActuatorImageArtifact
 } from "./game.js";
 import {
     DElement
@@ -353,24 +353,19 @@ export class CBOrderGivenActuator extends CBActuator {
 
     constructor(action, units) {
         super(action);
-        this._imageArtifacts = [];
+        let imageArtifacts = [];
         let orderImage = DImage.getImage("/CBlades/images/actuators/order.png");
         for (let unit of units) {
-            let order = new ActuatorImageArtifact(this, "actuators", orderImage,
+            let order = new CBActuatorImageArtifact(this, "actuators", orderImage,
                 new Point2D(unit.location.x, unit.location.y-70), new Dimension2D(73, 68));
-            this._imageArtifacts.push(order);
+            imageArtifacts.push(order);
             order._unit = unit;
         }
-        this._element = new DElement(...this._imageArtifacts);
-        this._element._actuator = this;
-        this._element.setLocation(new Point2D(0, 0));
+        this.initElement(imageArtifacts, new Point2D(0, 0));
     }
 
     getTrigger(unit) {
-        for (let artifact of this._element.artifacts) {
-            if (artifact._unit === unit) return artifact;
-        }
-        return null;
+        return this.findTrigger(artifact=>artifact._unit === unit);
     }
 
     onMouseClick(trigger, event) {

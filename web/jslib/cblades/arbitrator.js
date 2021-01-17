@@ -233,38 +233,42 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     getFormationRetreatZones(unit, attacker) {
-        let hexes = this.getHexesFormZones(this.getRetreatZones(unit, attacker));
-        let forbiddenZones = this.getRetreatForbiddenZone(attacker);
-        let zones = {
-            ...this.getUnitForwardZone(unit),
-            ...this.getUnitBackwardZone(unit)
-        };
-        let retreatDirections = [];
-        let rotateDirections = [];
-        for (let sangle in zones) {
-            let angle = parseInt(sangle);
-            if (angle % 60) {
-                if (hexes.has(zones[angle].hex)) {
-                    let hex = unit.hexLocation.fromHex;
-                    let moveHex = unit.hexLocation.toHex;
-                    if (!forbiddenZones.has(hex)) {
-                        let zangle = moveHex.isNearHex(zones[angle].hex);
-                        rotateDirections[zangle] = { hex:zones[angle].hex };
-                    }
-                    hex = unit.hexLocation.toHex;
-                    moveHex = unit.hexLocation.fromHex;
-                    if (!forbiddenZones.has(hex)) {
-                        let zangle = moveHex.isNearHex(zones[angle].hex);
-                        rotateDirections[zangle] = { hex:zones[angle].hex };
+
+        function processZones(zones, retreatDirections, rotateDirections, forbiddenZones, moveType) {
+            for (let sangle in zones) {
+                let angle = parseInt(sangle);
+                if (angle % 60) {
+                    if (hexes.has(zones[angle].hex)) {
+                        let hex = unit.hexLocation.fromHex;
+                        let moveHex = unit.hexLocation.toHex;
+                        if (!forbiddenZones.has(hex)) {
+                            let zangle = moveHex.isNearHex(zones[angle].hex);
+                            rotateDirections[zangle] = { hex:zones[angle].hex, moveType };
+                        }
+                        hex = unit.hexLocation.toHex;
+                        moveHex = unit.hexLocation.fromHex;
+                        if (!forbiddenZones.has(hex)) {
+                            let zangle = moveHex.isNearHex(zones[angle].hex);
+                            rotateDirections[zangle] = { hex:zones[angle].hex, moveType };
+                        }
                     }
                 }
-            }
-            else {
-                if (hexes.has(unit.hexLocation.fromHex.getNearHex(angle)) &&
-                    hexes.has(unit.hexLocation.toHex.getNearHex(angle)))
-                    retreatDirections[angle] = zones[angle];
+                else {
+                    if (hexes.has(unit.hexLocation.fromHex.getNearHex(angle)) &&
+                        hexes.has(unit.hexLocation.toHex.getNearHex(angle)))
+                        retreatDirections[angle] = { hex:zones[angle].hex, moveType };
+                }
             }
         }
+
+        let hexes = this.getHexesFormZones(this.getRetreatZones(unit, attacker));
+        let forbiddenZones = this.getRetreatForbiddenZone(attacker);
+        let retreatDirections = [];
+        let rotateDirections = [];
+        let zones = this.getUnitForwardZone(unit);
+        processZones.call(this, zones, retreatDirections, rotateDirections, forbiddenZones, CBMoveType.FORWARD);
+        zones = this.getUnitBackwardZone(unit)
+        processZones.call(this, zones, retreatDirections, rotateDirections, forbiddenZones, CBMoveType.BACKWARD);
         return { retreatDirections, rotateDirections }
     }
 

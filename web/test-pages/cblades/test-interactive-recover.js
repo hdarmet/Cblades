@@ -21,10 +21,12 @@ import {
     paint,
     clickOnActionMenu,
     clickOnCounter,
-    createTinyGame,
     clickOnMask, rollFor,
     clickOnDice, executeAllAnimations, clickOnResult
 } from "./interactive-tools.js";
+import {
+    createTinyGame
+} from "./game-examples.js";
 import {
     registerInteractiveRecover,
     unregisterInteractiveRecover

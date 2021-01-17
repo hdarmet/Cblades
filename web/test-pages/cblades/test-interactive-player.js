@@ -1,6 +1,7 @@
 'use strict'
 
 import {
+    after,
     assert, before, describe, it
 } from "../../jstest/jtest.js";
 import {
@@ -26,16 +27,27 @@ import {
     paint,
     clickOnActionMenu,
     clickOnCounter,
-    createTinyGame,
-    create2UnitsTinyGame,
     clickOnDice,
     executeAllAnimations,
     clickOnResult,
-    create2PlayersTinyGame,
     dummyEvent,
     clickOnMask,
     rollFor
 } from "./interactive-tools.js";
+import {
+    createTinyGame,
+    create2UnitsTinyGame,
+    create2PlayersTinyGame
+} from "./game-examples.js";
+import {
+    CBActionMenu, CBWeatherIndicator, CBWingTirednessIndicator
+} from "../../jslib/cblades/interactive-player.js";
+import {
+    DIconMenuItem
+} from "../../jslib/widget.js";
+import {
+    Point2D
+} from "../../jslib/geometry.js";
 
 describe("Interactive Player", ()=> {
 
@@ -45,9 +57,31 @@ describe("Interactive Player", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
+        CBActionMenu.menuBuilders = [
+            function createTestActionMenuItems(unit, actions) {
+                return [
+                    new DIconMenuItem("/CBlades/images/icons/do-this.png", "/CBlades/images/icons/do-this-gray.png",
+                        0, 0, () => {
+                        return true;
+                        }).setActive(true),
+                    new DIconMenuItem("/CBlades/images/icons/do-that.png", "/CBlades/images/icons/do-that-gray.png",
+                        1, 1, () => {
+                        return false;
+                        }).setActive(false)
+                ];
+            }
+        ];
     });
 
-    it("Checks that clicking on a unit select the unit ", () => {
+    after(() => {
+        CBActionMenu.menuBuilders = [];
+    });
+
+    function clickOnDoThisAction(game) {
+        return clickOnActionMenu(game, 0, 0);
+    }
+
+    it("Checks that clicking on a unit select the unit and opens the action menu", () => {
         given:
             var {game, unit} = createTinyGame();
             var [unitsLayer, widgetsLayer, widgetItemsLayer] = getLayers(game.board, "units-0", "widgets", "widget-items");
@@ -59,14 +93,31 @@ describe("Interactive Player", ()=> {
             loadAllImages();
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 391.6667, 326.8878)",
+                    "setTransform(1, 0, 0, 1, 361.6667, 296.8878)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-35, -35, 70, 70)",
+                    "strokeRect(-65, -65, 130, 130)",
                     "fillStyle = #FFFFFF",
-                    "fillRect(-35, -35, 70, 70)",
+                    "fillRect(-65, -65, 130, 130)",
                 "restore()"
             ]);
+            assert(getDirectives(widgetItemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 391.6667, 326.8878)",
+                    "drawImage(/CBlades/images/icons/do-that-gray.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 331.6667, 266.8878)",
+                    "drawImage(/CBlades/images/icons/do-this.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer, widgetsLayer, widgetItemsLayer);
+            clickOnDoThisAction(game);
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetItemsLayer, 4)).arrayEqualsTo([]);
     });
 
     it("Checks that global events close action menu", () => {
@@ -254,12 +305,12 @@ describe("Interactive Player", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([ // Action menu opened in modal mode
                 "save()",
-                    "setTransform(1, 0, 0, 1, 40, 40)",
+                    "setTransform(1, 0, 0, 1, 70, 70)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-35, -35, 70, 70)",
+                    "strokeRect(-65, -65, 130, 130)",
                     "fillStyle = #FFFFFF",
-                    "fillRect(-35, -35, 70, 70)",
+                    "fillRect(-65, -65, 130, 130)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
@@ -306,16 +357,56 @@ describe("Interactive Player", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([ // Action menu opened in modal mode
                 "save()",
-                    "setTransform(1, 0, 0, 1, 40, 40)",
+                    "setTransform(1, 0, 0, 1, 70, 70)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-35, -35, 70, 70)",
+                    "strokeRect(-65, -65, 130, 130)",
                     "fillStyle = #FFFFFF",
-                    "fillRect(-35, -35, 70, 70)",
+                    "fillRect(-65, -65, 130, 130)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit1.isDisrupted()).isTrue();
     });
 
+    it("Checks weather indicator appearance", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer] = getLayers(game.board,"widgets");
+            let weather = game.arbitrator.getWeather();
+            var weatherIndicator = new CBWeatherIndicator(weather);
+            loadAllImages();
+        when:
+            weatherIndicator.open(game.board, new Point2D(0, 0));
+            resetDirectives(widgetsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/meteo2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks tiredness indicator appearance", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer] = getLayers(game.board,"widgets");
+            var tirednessIndicator = new CBWingTirednessIndicator(8);
+            loadAllImages();
+        when:
+            tirednessIndicator.open(game.board, new Point2D(0, 0));
+            resetDirectives(widgetsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/tiredness8.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+    });
 });

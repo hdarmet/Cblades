@@ -23,13 +23,20 @@ import {
     paint,
     clickOnActionMenu,
     clickOnCounter,
-    createTinyGame,
     clickOnDice,
     executeAllAnimations,
     clickOnResult,
     clickOnMask,
-    rollFor, clickOnMessage, rollFor1Die, create2UnitsTinyGame, createTinyGameWithLeader, clickOnTrigger
+    rollFor,
+    clickOnMessage,
+    rollFor1Die,
+    clickOnTrigger
 } from "./interactive-tools.js";
+import {
+    createTinyGame,
+    create2UnitsTinyGame,
+    createTinyGameWithLeader
+} from "./game-examples.js";
 import {
     CBOrderGivenActuator,
     registerInteractiveCommand,

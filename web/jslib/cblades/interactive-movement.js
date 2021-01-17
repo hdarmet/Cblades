@@ -14,7 +14,7 @@ import {
 import {
     CBAction, CBActuator,
     CBHexSideId, CBMoveType,
-    ActuatorImageArtifact
+    CBActuatorImageArtifact
 } from "./game.js";
 import {
     CBFormation, CBMovement
@@ -227,26 +227,21 @@ export class CBOrientationActuator extends CBActuator {
         super(action);
         let normalImage = DImage.getImage("/CBlades/images/actuators/toward.png");
         let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-toward.png");
-        this._imageArtifacts = [];
+        let imageArtifacts = [];
         for (let angle in directions) {
             let image = directions[angle].type === CBMovement.NORMAL ? normalImage : extendedImage;
-            let orientation = new ActuatorImageArtifact(this, "actuators", image,
+            let orientation = new CBActuatorImageArtifact(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(60, 80));
             orientation.position = Point2D.position(this.unit.location, directions[angle].hex.location, angle%60?0.87:0.75);
             orientation.pangle = parseInt(angle);
-            this._imageArtifacts.push(orientation);
+            imageArtifacts.push(orientation);
         }
-        this._element = new DElement(...this._imageArtifacts);
-        this._element._actuator = this;
-        this._element.setLocation(this.unit.location);
+        this.initElement(imageArtifacts);
         this._first = first;
     }
 
     getTrigger(angle) {
-        for (let artifact of this._element.artifacts) {
-            if (artifact.pangle === angle) return artifact;
-        }
-        return null;
+        return this.findTrigger(artifact=>artifact.pangle === angle);
     }
 
     onMouseClick(trigger, event) {
@@ -262,27 +257,22 @@ export class CBMoveActuator extends CBActuator {
         let normalImage = DImage.getImage("/CBlades/images/actuators/standard-move.png");
         let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-move.png");
         let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-move.png");
-        this._imageArtifacts = [];
+        let imageArtifacts = [];
         for (let angle in directions) {
             let image = directions[angle].type === CBMovement.NORMAL ? normalImage :
                 directions[angle].type === CBMovement.EXTENDED ? extendedImage : minimalImage;
-            let orientation = new ActuatorImageArtifact(this, "actuators", image,
+            let orientation = new CBActuatorImageArtifact(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(80, 130));
             orientation.pangle = parseInt(angle);
             orientation.position = Point2D.position(this.unit.location, directions[angle].hex.location, 0.9);
-            this._imageArtifacts.push(orientation);
+            imageArtifacts.push(orientation);
         }
-        this._element = new DElement(...this._imageArtifacts);
-        this._element._actuator = this;
-        this._element.setLocation(this.unit.location);
+        this.initElement(imageArtifacts);
         this._first = first;
     }
 
     getTrigger(angle) {
-        for (let artifact of this._element.artifacts) {
-            if (artifact.pangle === angle) return artifact;
-        }
-        return null;
+        return this.findTrigger(artifact=>artifact.pangle === angle);
     }
 
     onMouseClick(trigger, event) {
@@ -295,7 +285,7 @@ export class CBFormationMoveActuator extends CBActuator {
 
     constructor(action, moveDirections, rotateDirections, first) {
 
-        function createMoveTriggers() {
+        function createMoveTriggers(imageArtifacts) {
             let normalMoveImage = DImage.getImage("/CBlades/images/actuators/standard-move.png");
             let extendedMoveImage = DImage.getImage("/CBlades/images/actuators/extended-move.png");
             let minimalMoveImage = DImage.getImage("/CBlades/images/actuators/minimal-move.png");
@@ -303,7 +293,7 @@ export class CBFormationMoveActuator extends CBActuator {
                 let angle = parseInt(sangle);
                 let image = moveDirections[angle].type === CBMovement.NORMAL ? normalMoveImage :
                     moveDirections[angle].type === CBMovement.EXTENDED ? extendedMoveImage : minimalMoveImage;
-                let orientation = new ActuatorImageArtifact(this, "actuators", image,
+                let orientation = new CBActuatorImageArtifact(this, "actuators", image,
                     new Point2D(0, 0), new Dimension2D(80, 130));
                 orientation.pangle = parseInt(angle);
                 orientation.rotate = false;
@@ -311,11 +301,11 @@ export class CBFormationMoveActuator extends CBActuator {
                 let startLocation = Point2D.position(this.unit.location, unitHex.location, 1);
                 let targetPosition = Point2D.position(unitHex.location, moveDirections[angle].hex.location, 0.9);
                 orientation.position = startLocation.concat(targetPosition);
-                this._imageArtifacts.push(orientation);
+                imageArtifacts.push(orientation);
             }
         }
 
-        function createRotateTriggers() {
+        function createRotateTriggers(imageArtifacts) {
             let normalRotateImage = DImage.getImage("/CBlades/images/actuators/standard-rotate.png");
             let extendedRotateImage = DImage.getImage("/CBlades/images/actuators/extended-rotate.png");
             let minimalRotateImage = DImage.getImage("/CBlades/images/actuators/minimal-rotate.png");
@@ -323,7 +313,7 @@ export class CBFormationMoveActuator extends CBActuator {
                 let angle = parseInt(sangle);
                 let image = rotateDirections[angle].type === CBMovement.NORMAL ? normalRotateImage :
                     rotateDirections[angle].type === CBMovement.EXTENDED ? extendedRotateImage : minimalRotateImage;
-                let orientation = new ActuatorImageArtifact(this, "actuators", image,
+                let orientation = new CBActuatorImageArtifact(this, "actuators", image,
                     new Point2D(0, 0), new Dimension2D(80, 96));
                 orientation.pangle = parseInt(angle);
                 orientation.rotate = true;
@@ -331,25 +321,20 @@ export class CBFormationMoveActuator extends CBActuator {
                 let startLocation = Point2D.position(this.unit.location, orientation.hex.location, 1.5);
                 let targetPosition = Point2D.position(orientation.hex.location, rotateDirections[angle].hex.location, 0.9);
                 orientation.position = startLocation.concat(targetPosition);
-                this._imageArtifacts.push(orientation);
+                imageArtifacts.push(orientation);
             }
         }
 
         super(action);
-        this._imageArtifacts = [];
-        createMoveTriggers.call(this);
-        createRotateTriggers.call(this);
-        this._element = new DElement(...this._imageArtifacts);
-        this._element._actuator = this;
-        this._element.setLocation(this.unit.location);
+        let imageArtifacts = [];
+        createMoveTriggers.call(this, imageArtifacts);
+        createRotateTriggers.call(this, imageArtifacts);
+        this.initElement(imageArtifacts);
         this._first = first;
     }
 
     getTrigger(angle, rotate) {
-        for (let artifact of this._element.artifacts) {
-            if (artifact.pangle === angle && artifact._rotate===rotate) return artifact;
-        }
-        return null;
+        return this.findTrigger(artifact=>artifact.pangle === angle && artifact.rotate===rotate);
     }
 
     onMouseClick(trigger, event) {

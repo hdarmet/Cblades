@@ -21,6 +21,7 @@ import {
     DDice, DResult
 } from "../../jslib/widget.js";
 import {
+    CBFormationMoveActuator,
     CBMoveActuator, CBOrientationActuator,
     registerInteractiveMovement, unregisterInteractiveMovement
 } from "../../jslib/cblades/interactive-movement.js";
@@ -29,11 +30,16 @@ import {
     paint,
     clickOnActionMenu,
     clickOnCounter,
-    createTinyGame,
     clickOnTrigger,
-    create2UnitsTinyGame,
-    mouseMoveOnTrigger, mouseMoveOutOfTrigger, create2PlayersTinyGame, dummyEvent, clickOnMask, rollFor
+    dummyEvent,
+    clickOnMask,
+    rollFor
 } from "./interactive-tools.js";
+import {
+    createTinyGame,
+    create2PlayersTinyGame,
+    createTinyFormationGame
+} from "./game-examples.js";
 
 describe("Interactive Movement", ()=> {
 
@@ -52,6 +58,20 @@ describe("Interactive Movement", ()=> {
 
     function clickOnMoveAction(game) {
         return clickOnActionMenu(game, 0, 0);
+    }
+
+    function getOrientationActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBOrientationActuator) return actuator;
+        }
+        return null;
+    }
+
+    function getMoveActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBMoveActuator) return actuator;
+        }
+        return null;
     }
 
     it("Checks that the unit menu contains menu items for movement", () => {
@@ -94,14 +114,17 @@ describe("Interactive Movement", ()=> {
             ]);
     });
 
-    it("Checks move action actuators when unit is oriented toward an hexside", () => {
+    it("Checks move action actuators when Troop is oriented toward an hexside", () => {
         given:
             var { game, unit } = createTinyGame();
+            var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
             clickOnCounter(game, unit);
+            resetDirectives(actuatorLayer);
             clickOnMoveAction(game);
             let moveActuator = getMoveActuator(game);
             let orientationActuator = getOrientationActuator(game);
+            loadAllImages();
         then:
             assert(game.selectedUnit).equalsTo(unit);
             assert(moveActuator).isDefined();
@@ -121,9 +144,80 @@ describe("Interactive Movement", ()=> {
             assert(orientationActuator.getTrigger(270)).isDefined();
             assert(orientationActuator.getTrigger(300)).isDefined();
             assert(orientationActuator.getTrigger(330)).isDefined();
+            assert(getDirectives(actuatorLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 265.2859)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 491.6667, 308.5869)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 341.6667, 308.5869)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10", "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 452.9167, 289.1014)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 479.1667, 315.8037)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()",
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 489.1667, 351.8878)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.2444, 0.4233, -0.4233, -0.2444, 479.1667, 387.972)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.4233, 0.2444, -0.2444, -0.4233, 452.9167, 414.6742)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.4888, 0, 0, -0.4888, 416.6667, 424.0561)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.4233, -0.2444, 0.2444, -0.4233, 380.4167, 414.6742)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 354.1667, 387.972)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()",
+                "save()",
+                    "setTransform(0, -0.4888, 0.4888, 0, 344.1667, 351.8878)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 354.1667, 315.8037)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4233, -0.2444, 0.2444, 0.4233, 380.4167, 289.1014)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()"
+            ]);
     });
 
-    it("Checks move action actuators when unit is oriented toward a vertex", () => {
+    it("Checks move action actuators when Troop is oriented toward a vertex", () => {
         given:
             var { game, unit } = createTinyGame();
         when:
@@ -188,231 +282,235 @@ describe("Interactive Movement", ()=> {
             ]);
     });
 
-    it("Checks that a unit selection closes the actuators", () => {
-        given:
-            var { game, unit1, unit2 } = create2UnitsTinyGame();
-        when:
-            clickOnCounter(game, unit1);
-            clickOnMoveAction(game);
-            let moveActuator = getMoveActuator(game);
-            let orientationActuator = getOrientationActuator(game);
-        then:
-            assert(game.selectedUnit).equalsTo(unit1);
-            assert(moveActuator).isDefined();
-            assert(orientationActuator).isDefined();
-        when:
-            clickOnCounter(game, unit2);
-            moveActuator = getMoveActuator(game);
-            orientationActuator = getOrientationActuator(game);
-        then:
-            assert(game.selectedUnit).equalsTo(unit2);
-            assert(moveActuator).isNotDefined();
-            assert(orientationActuator).isNotDefined();
-    });
-
-    it("Checks mouse move over a trigger of a move actuator", () => {
-        given:
-            var { game, unit } = createTinyGame();
-            var [actuatorsLayer] = getLayers(game.board, "actuators");
-            clickOnCounter(game, unit);
-            clickOnMoveAction(game);
-            loadAllImages();
-            let moveActuator = getMoveActuator(game);
-        when:
-            filterPainting(moveActuator.getTrigger(0));
-            resetDirectives(actuatorsLayer);
-            stopRegister(actuatorsLayer);
-            paint(game);
-        then:
-            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
-                "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 265.2859)",
-                "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)"
-            ]);
-        when:
-            resetDirectives(actuatorsLayer);
-            mouseMoveOnTrigger(game, moveActuator.getTrigger(0));
-            paint(game);
-        then:
-            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
-                "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 265.2859)",
-                "shadowColor = #FF0000", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)"
-            ]);
-        when:
-            resetDirectives(actuatorsLayer);
-            mouseMoveOutOfTrigger(game, moveActuator.getTrigger(0));
-            paint(game);
-        then:
-            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
-                "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 265.2859)",
-                "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)"
-            ]);
-    });
-
-    it("Checks mouse move over a trigger of an orientation actuator", () => {
-        given:
-            var { game, unit } = createTinyGame();
-            var [actuatorsLayer] = getLayers(game.board, "actuators");
-            clickOnCounter(game, unit);
-            clickOnMoveAction(game);
-            loadAllImages();
-            let orientationActuator = getOrientationActuator(game);
-        when:
-            filterPainting(orientationActuator.getTrigger(30));
-            resetDirectives(actuatorsLayer);
-            stopRegister(actuatorsLayer);
-            paint(game);
-        then:
-            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
-                "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 452.9167, 289.1014)",
-                "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)"
-            ]);
-        when:
-            resetDirectives(actuatorsLayer);
-            mouseMoveOnTrigger(game, orientationActuator.getTrigger(30));
-            paint(game);
-        then:
-            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
-                "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 452.9167, 289.1014)",
-                "shadowColor = #FF0000", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)"
-            ]);
-        when:
-            resetDirectives(actuatorsLayer);
-            mouseMoveOutOfTrigger(game, orientationActuator.getTrigger(30));
-            paint(game);
-        then:
-            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
-                "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 452.9167, 289.1014)",
-                "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)"
-            ]);
-    });
-
-    function getOrientationActuator(game) {
-        for (let actuator of game.actuators) {
-            if (actuator instanceof CBOrientationActuator) return actuator;
-        }
-        return null;
-    }
-
-    function getMoveActuator(game) {
-        for (let actuator of game.actuators) {
-            if (actuator instanceof CBMoveActuator) return actuator;
-        }
-        return null;
-    }
-
     it("Checks Unit move using actuators (move, rotate, move)", () => {
         given:
             var {game, unit} = createTinyGame()
-            clickOnCounter(game, unit);
-            clickOnMoveAction(game);
-            loadAllImages();
-            var moveActuator1 = getMoveActuator(game);
-            var orientationActuator1 = getOrientationActuator(game);
+        clickOnCounter(game, unit);
+        clickOnMoveAction(game);
+        loadAllImages();
+        var moveActuator1 = getMoveActuator(game);
+        var orientationActuator1 = getOrientationActuator(game);
         then:
             assert(unit.location.toString()).equalsTo("point(-170.5, -98.4375)");
-            assert(unit.hexLocation.col).equalsTo(5);
-            assert(unit.hexLocation.row).equalsTo(8);
-            assert(unit.angle).equalsTo(0);
+        assert(unit.hexLocation.col).equalsTo(5);
+        assert(unit.hexLocation.row).equalsTo(8);
+        assert(unit.angle).equalsTo(0);
         when:
             clickOnTrigger(game, moveActuator1.getTrigger(0));
         then:
             assert(unit.hexLocation.col).equalsTo(5);
-            assert(unit.hexLocation.row).equalsTo(7);
+        assert(unit.hexLocation.row).equalsTo(7);
         when:
             var moveActuator2 = getMoveActuator(game);
-            var orientationActuator2 = getOrientationActuator(game);
-            clickOnTrigger(game, orientationActuator2.getTrigger(60));
+        var orientationActuator2 = getOrientationActuator(game);
+        clickOnTrigger(game, orientationActuator2.getTrigger(60));
         then:
             assert(unit.location.toString()).equalsTo("point(-170.5, -295.3125)");
-            assert(unit.angle).equalsTo(60);
+        assert(unit.angle).equalsTo(60);
         when:
             var moveActuator3 = getMoveActuator(game);
-            var orientationActuator3 = getOrientationActuator(game);
-            clickOnTrigger(game, moveActuator3.getTrigger(60));
+        var orientationActuator3 = getOrientationActuator(game);
+        clickOnTrigger(game, moveActuator3.getTrigger(60));
         then:
             assert(unit.location.toString()).equalsTo("point(0, -393.75)");
-            assert(unit.hexLocation.col).equalsTo(6);
-            assert(unit.hexLocation.row).equalsTo(6);
+        assert(unit.hexLocation.col).equalsTo(6);
+        assert(unit.hexLocation.row).equalsTo(6);
         when:
             var moveActuator4 = getMoveActuator(game);
-            var orientationActuator4 = getOrientationActuator(game);
-            Memento.undo();
+        var orientationActuator4 = getOrientationActuator(game);
+        Memento.undo();
         then:
             assert(unit.location.toString()).equalsTo("point(-170.5, -295.3125)");
-            assert(unit.hexLocation.col).equalsTo(5);
-            assert(unit.hexLocation.row).equalsTo(7);
-            assert(unit.angle).equalsTo(60);
-            assert(getMoveActuator(game)).equalsTo(moveActuator3);
-            assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
+        assert(unit.hexLocation.col).equalsTo(5);
+        assert(unit.hexLocation.row).equalsTo(7);
+        assert(unit.angle).equalsTo(60);
+        assert(getMoveActuator(game)).equalsTo(moveActuator3);
+        assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
         when:
             Memento.redo();
         then:
             assert(unit.location.toString()).equalsTo("point(0, -393.75)");
-            assert(unit.hexLocation.col).equalsTo(6);
-            assert(unit.hexLocation.row).equalsTo(6);
-            assert(unit.angle).equalsTo(60);
-            assert(getMoveActuator(game)).equalsTo(moveActuator4);
-            assert(getOrientationActuator(game)).equalsTo(orientationActuator4);
+        assert(unit.hexLocation.col).equalsTo(6);
+        assert(unit.hexLocation.row).equalsTo(6);
+        assert(unit.angle).equalsTo(60);
+        assert(getMoveActuator(game)).equalsTo(moveActuator4);
+        assert(getOrientationActuator(game)).equalsTo(orientationActuator4);
     });
 
     it("Checks Unit move using actuators (rotate, move, rotate)", () => {
         given:
             var {game, unit} = createTinyGame()
-            clickOnCounter(game, unit);
-            clickOnMoveAction(game);
-            loadAllImages();
-            var moveActuator1 = getMoveActuator(game);
-            var orientationActuator1 = getOrientationActuator(game);
+        clickOnCounter(game, unit);
+        clickOnMoveAction(game);
+        loadAllImages();
+        var moveActuator1 = getMoveActuator(game);
+        var orientationActuator1 = getOrientationActuator(game);
         then:
             assert(unit.location.toString()).equalsTo("point(-170.5, -98.4375)");
-            assert(unit.hexLocation.col).equalsTo(5);
-            assert(unit.hexLocation.row).equalsTo(8);
-            assert(unit.angle).equalsTo(0);
+        assert(unit.hexLocation.col).equalsTo(5);
+        assert(unit.hexLocation.row).equalsTo(8);
+        assert(unit.angle).equalsTo(0);
         when:
             clickOnTrigger(game, orientationActuator1.getTrigger(60));
         then:
             assert(unit.angle).equalsTo(60);
         when:
             var moveActuator2 = getMoveActuator(game);
-            var orientationActuator2 = getOrientationActuator(game);
-            clickOnTrigger(game, moveActuator2.getTrigger(60));
+        var orientationActuator2 = getOrientationActuator(game);
+        clickOnTrigger(game, moveActuator2.getTrigger(60));
         then:
             assert(unit.location.toString()).equalsTo("point(0, -196.875)");
-            assert(unit.hexLocation.col).equalsTo(6);
-            assert(unit.hexLocation.row).equalsTo(7);
+        assert(unit.hexLocation.col).equalsTo(6);
+        assert(unit.hexLocation.row).equalsTo(7);
         when:
             var moveActuator3 = getMoveActuator(game);
-            var orientationActuator3 = getOrientationActuator(game);
-            clickOnTrigger(game, orientationActuator3.getTrigger(90));
+        var orientationActuator3 = getOrientationActuator(game);
+        clickOnTrigger(game, orientationActuator3.getTrigger(90));
         then:
             assert(unit.angle).equalsTo(90);
         when:
             var moveActuator4 = getMoveActuator(game);
-            var orientationActuator4 = getOrientationActuator(game);
-            Memento.undo();
+        var orientationActuator4 = getOrientationActuator(game);
+        Memento.undo();
         then:
             assert(unit.location.toString()).equalsTo("point(0, -196.875)");
-            assert(unit.hexLocation.col).equalsTo(6);
-            assert(unit.hexLocation.row).equalsTo(7);
-            assert(unit.angle).equalsTo(60);
-            assert(getMoveActuator(game)).equalsTo(moveActuator3);
-            assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
+        assert(unit.hexLocation.col).equalsTo(6);
+        assert(unit.hexLocation.row).equalsTo(7);
+        assert(unit.angle).equalsTo(60);
+        assert(getMoveActuator(game)).equalsTo(moveActuator3);
+        assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
         when:
             Memento.redo();
         then:
             assert(unit.location.toString()).equalsTo("point(0, -196.875)");
-            assert(unit.hexLocation.col).equalsTo(6);
-            assert(unit.hexLocation.row).equalsTo(7);
-            assert(unit.angle).equalsTo(90);
-            assert(getMoveActuator(game)).equalsTo(moveActuator4);
-            assert(getOrientationActuator(game)).equalsTo(orientationActuator4);
+        assert(unit.hexLocation.col).equalsTo(6);
+        assert(unit.hexLocation.row).equalsTo(7);
+        assert(unit.angle).equalsTo(90);
+        assert(getMoveActuator(game)).equalsTo(moveActuator4);
+        assert(getOrientationActuator(game)).equalsTo(orientationActuator4);
     });
+
+    function getFormationMoveActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBFormationMoveActuator) return actuator;
+        }
+        return null;
+    }
+
+    it("Checks move action actuators when the unit is a formation", () => {
+        given:
+            var { game, formation } = createTinyFormationGame();
+            var [actuatorLayer] = getLayers(game.board,"actuators");
+        when:
+            clickOnCounter(game, formation);
+            resetDirectives(actuatorLayer);
+            clickOnMoveAction(game);
+            let moveActuator = getFormationMoveActuator(game);
+            let orientationActuator = getOrientationActuator(game);
+            loadAllImages();
+        then:
+            assert(game.selectedUnit).equalsTo(formation);
+            assert(moveActuator).isDefined();
+            assert(moveActuator.getTrigger(60, true)).isDefined();
+            assert(moveActuator.getTrigger(120, true)).isDefined();
+            assert(moveActuator.getTrigger(60, false)).isDefined();
+            assert(moveActuator.getTrigger(120, false)).isDefined();
+            assert(orientationActuator).isDefined();
+            assert(orientationActuator.getTrigger(270)).isDefined();
+            assert(orientationActuator.getTrigger(90)).isNotDefined();
+            assert(getDirectives(actuatorLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 491.6667, 212.3625)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.2444, 0.4233, -0.4233, -0.2444, 491.6667, 395.1888)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 491.6667, 332.643)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-rotate.png, -40, -48, 80, 96)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.2444, 0.4233, -0.4233, -0.2444, 491.6667, 274.9084)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-rotate.png, -40, -48, 80, 96)",
+                "restore()",
+                "save()",
+                    "setTransform(0, -0.4888, 0.4888, 0, 344.1667, 303.7757)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()"
+            ]);
+    });
+
+
+    it("Checks Unit move using actuators (advance, rotate, turn around)", () => {
+        given:
+            var {game, formation} = createTinyFormationGame()
+            clickOnCounter(game, formation);
+            clickOnMoveAction(game);
+            loadAllImages();
+            var moveActuator1 = getFormationMoveActuator(game);
+        then:
+            assert(formation.location.toString()).equalsTo("point(-170.5, -196.875)");
+            assert(formation.hexLocation.fromHex.col).equalsTo(5);
+            assert(formation.hexLocation.fromHex.row).equalsTo(8);
+            assert(formation.hexLocation.toHex.col).equalsTo(5);
+            assert(formation.hexLocation.toHex.row).equalsTo(7);
+            assert(formation.angle).equalsTo(90);
+        when:
+            clickOnTrigger(game, moveActuator1.getTrigger(120, false));
+        then:
+            assert(formation.hexLocation.fromHex.col).equalsTo(6);
+            assert(formation.hexLocation.fromHex.row).equalsTo(8);
+            assert(formation.hexLocation.toHex.col).equalsTo(6);
+            assert(formation.hexLocation.toHex.row).equalsTo(7);
+            assert(formation.angle).equalsTo(90);
+        when:
+            var moveActuator2 = getFormationMoveActuator(game);
+            var orientationActuator2 = getOrientationActuator(game);
+            clickOnTrigger(game, moveActuator2.getTrigger(60, true));
+        then:
+            assert(formation.hexLocation.fromHex.col).equalsTo(6);
+            assert(formation.hexLocation.fromHex.row).equalsTo(7);
+            assert(formation.hexLocation.toHex.col).equalsTo(7);
+            assert(formation.hexLocation.toHex.row).equalsTo(8);
+            assert(formation.angle).equalsTo(30);
+        when:
+            var moveActuator3 = getFormationMoveActuator(game);
+            var orientationActuator3 = getOrientationActuator(game);
+            clickOnTrigger(game, orientationActuator3.getTrigger(210));
+        then:
+            assert(formation.hexLocation.fromHex.col).equalsTo(6);
+            assert(formation.hexLocation.fromHex.row).equalsTo(7);
+            assert(formation.hexLocation.toHex.col).equalsTo(7);
+            assert(formation.hexLocation.toHex.row).equalsTo(8);
+            assert(formation.angle).equalsTo(210);
+        when:
+            Memento.undo();
+        then:
+            assert(formation.hexLocation.fromHex.col).equalsTo(6);
+            assert(formation.hexLocation.fromHex.row).equalsTo(7);
+            assert(formation.hexLocation.toHex.col).equalsTo(7);
+            assert(formation.hexLocation.toHex.row).equalsTo(8);
+            assert(formation.angle).equalsTo(30);
+            assert(getFormationMoveActuator(game)).equalsTo(moveActuator3);
+            assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
+        when:
+            Memento.undo();
+        then:
+            assert(formation.hexLocation.fromHex.col).equalsTo(6);
+            assert(formation.hexLocation.fromHex.row).equalsTo(8);
+            assert(formation.hexLocation.toHex.col).equalsTo(6);
+            assert(formation.hexLocation.toHex.row).equalsTo(7);
+            assert(getFormationMoveActuator(game)).equalsTo(moveActuator2);
+            assert(getOrientationActuator(game)).equalsTo(orientationActuator2);
+    });
+
 
     function resetAllDirectives(game) {
         var [unitsLayer, markersLayer, actuatorsLayer] = getLayers(game.board,"units-0", "markers-0", "actuators");

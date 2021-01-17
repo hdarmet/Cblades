@@ -280,39 +280,6 @@ function createRecoverMenuItems(unit, actions) {
     ];
 }
 
-export class CBOrderInstructionMenu extends DIconMenu {
-
-    constructor(game, unit, allowedOrderInstructions) {
-        super(true, new DIconMenuItem("/CBlades/images/markers/attack.png","/CBlades/images/markers/attack-gray.png",
-            0, 0, event => {
-                unit.player.changeOrderInstruction(unit, CBOrderInstruction.ATTACK, event);
-                return true;
-            }).setActive(allowedOrderInstructions.attack),
-            new DIconMenuItem("/CBlades/images/markers/defend.png","/CBlades/images/markers/defend-gray.png",
-                1, 0, event => {
-                    unit.player.changeOrderInstruction(unit, CBOrderInstruction.DEFEND, event);
-                    return true;
-                }).setActive(allowedOrderInstructions.defend),
-            new DIconMenuItem("/CBlades/images/markers/regroup.png","/CBlades/images/markers/regroup-gray.png",
-                0, 1, event => {
-                    unit.player.changeOrderInstruction(unit, CBOrderInstruction.REGROUP, event);
-                    return true;
-                }).setActive(allowedOrderInstructions.regroup),
-            new DIconMenuItem("/CBlades/images/markers/retreat.png","/CBlades/images/markers/retreat-gray.png",
-                1, 1, event => {
-                    unit.player.changeOrderInstruction(unit, CBOrderInstruction.RETREAT, event);
-                    return true;
-                }).setActive(allowedOrderInstructions.retreat)
-        );
-        this._game = game;
-    }
-
-    closeMenu() {
-        this._game.closePopup();
-    }
-
-}
-
 export class CBRestInsert extends DInsert {
 
     constructor() {

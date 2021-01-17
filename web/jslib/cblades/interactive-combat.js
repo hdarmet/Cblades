@@ -10,7 +10,7 @@ import {
 } from "../widget.js";
 import {
     CBAction, CBActuator, CBHexSideId,
-    ActuatorImageArtifact
+    CBActuatorImageArtifact
 } from "./game.js";
 import {
     CBFormation
@@ -266,36 +266,31 @@ export class CBShockAttackActuator extends CBActuator {
         super(action);
         let unsupportedImage = DImage.getImage("/CBlades/images/actuators/unsupported-shock.png");
         let supportedImage = DImage.getImage("/CBlades/images/actuators/supported-shock.png");
-        this._imageArtifacts = [];
+        let imageArtifacts = [];
         for (let foe of foes) {
-            let unsupportedShock = new ActuatorImageArtifact(this, "actuators", unsupportedImage,
+            let unsupportedShock = new CBActuatorImageArtifact(this, "actuators", unsupportedImage,
                 new Point2D(0, 0), new Dimension2D(100, 111));
             unsupportedShock.position = Point2D.position(this.unit.location, foe.unit.location, 1);
             unsupportedShock.pangle = 30;
             unsupportedShock._unit = foe.unit;
             unsupportedShock._supported = false;
-            this._imageArtifacts.push(unsupportedShock);
+            imageArtifacts.push(unsupportedShock);
             if (foe.supported) {
-                let supportedShock = new ActuatorImageArtifact(this, "actuators", supportedImage,
+                let supportedShock = new CBActuatorImageArtifact(this, "actuators", supportedImage,
                     new Point2D(0, 0), new Dimension2D(100, 111));
                 supportedShock.position = unsupportedShock.position.translate(30, 30);
                 unsupportedShock.position = unsupportedShock.position.translate(-30, -30);
                 supportedShock.pangle = 30;
                 supportedShock._unit = foe.unit;
                 supportedShock._supported = true;
-                this._imageArtifacts.push(supportedShock);
+                imageArtifacts.push(supportedShock);
             }
         }
-        this._element = new DElement(...this._imageArtifacts);
-        this._element._actuator = this;
-        this._element.setLocation(this.unit.location);
+        this.initElement(imageArtifacts);
     }
 
     getTrigger(unit, supported) {
-        for (let artifact of this._element.artifacts) {
-            if (artifact._unit === unit && artifact._supported === supported) return artifact;
-        }
-        return null;
+        return this.findTrigger(artifact=>artifact._unit === unit && artifact._supported === supported);
     }
 
     onMouseClick(trigger, event) {
@@ -309,25 +304,20 @@ export class CBFireAttackActuator extends CBActuator {
     constructor(action, foes) {
         super(action);
         let image = DImage.getImage("/CBlades/images/actuators/fire.png");
-        this._imageArtifacts = [];
+        let imageArtifacts = [];
         for (let foe of foes) {
-            let fire = new ActuatorImageArtifact(this, "actuators", image,
+            let fire = new CBActuatorImageArtifact(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(100, 111));
             fire.position = Point2D.position(this.unit.location, foe.unit.location, 1);
             fire.pangle = 30;
             fire._unit = foe.unit;
-            this._imageArtifacts.push(fire);
+            imageArtifacts.push(fire);
         }
-        this._element = new DElement(...this._imageArtifacts);
-        this._element._actuator = this;
-        this._element.setLocation(this.unit.location);
+        this.initElement(imageArtifacts);
     }
 
     getTrigger(unit) {
-        for (let artifact of this._element.artifacts) {
-            if (artifact._unit === unit) return artifact;
-        }
-        return null;
+        return this.findTrigger(artifact=>artifact._unit === unit);
     }
 
     onMouseClick(trigger, event) {
@@ -340,38 +330,30 @@ export class CBRetreatActuator extends CBActuator {
 
     constructor(action, directions) {
         super(action);
-        this._imageArtifacts = [];
+        let imageArtifacts = [];
         let bloodImage = DImage.getImage("/CBlades/images/actuators/blood.png");
-        let loss = new ActuatorImageArtifact(this, "actuators", bloodImage,
+        let loss = new CBActuatorImageArtifact(this, "actuators", bloodImage,
             new Point2D(0, 0), new Dimension2D(104, 144));
         loss.loss = true;
-        this._imageArtifacts.push(loss);
+        imageArtifacts.push(loss);
         let retreatImage = DImage.getImage("/CBlades/images/actuators/retreat-move.png");
         for (let angle in directions) {
-            let orientation = new ActuatorImageArtifact(this, "actuators", retreatImage,
+            let orientation = new CBActuatorImageArtifact(this, "actuators", retreatImage,
                 new Point2D(0, 0), new Dimension2D(80, 130));
             orientation.pangle = parseInt(angle);
             orientation.position = Point2D.position(this.unit.location, directions[angle].hex.location, 0.9);
             orientation.moveType = directions[angle].moveType;
-            this._imageArtifacts.push(orientation);
+            imageArtifacts.push(orientation);
         }
-        this._element = new DElement(...this._imageArtifacts);
-        this._element._actuator = this;
-        this._element.setLocation(this.unit.location);
+        this.initElement(imageArtifacts);
     }
 
     getLossTrigger() {
-        for (let artifact of this._element.artifacts) {
-            if (artifact.loss) return artifact;
-        }
-        //return null;   soon...
+        return this.findTrigger(artifact=>artifact.loss);
     }
 
     getTrigger(angle) {
-        for (let artifact of this._element.artifacts) {
-            if (!artifact.loss && artifact.angle === angle) return artifact;
-        }
-        return null;
+        return this.findTrigger(artifact=>!artifact.loss && artifact.angle === angle);
     }
 
     onMouseClick(trigger, event) {
@@ -389,11 +371,11 @@ export class CBFormationRetreatActuator extends CBActuator {
 
     constructor(action, moveDirections, rotateDirections) {
 
-        function createMoveTriggers() {
+        function createMoveTriggers(imageArtifacts) {
             let moveImage = DImage.getImage("/CBlades/images/actuators/retreat-move.png");
             for (let sangle in moveDirections) {
                 let angle = parseInt(sangle);
-                let orientation = new ActuatorImageArtifact(this, "actuators", moveImage,
+                let orientation = new CBActuatorImageArtifact(this, "actuators", moveImage,
                     new Point2D(0, 0), new Dimension2D(80, 130));
                 orientation.pangle = parseInt(angle);
                 orientation.rotate = false;
@@ -402,15 +384,15 @@ export class CBFormationRetreatActuator extends CBActuator {
                 let targetPosition = Point2D.position(unitHex.location, moveDirections[angle].hex.location, 0.9);
                 orientation.position = startLocation.concat(targetPosition);
                 orientation.moveType = moveDirections[angle].moveType;
-                this._imageArtifacts.push(orientation);
+                imageArtifacts.push(orientation);
             }
         }
 
-        function createRotateTriggers() {
+        function createRotateTriggers(imageArtifacts) {
             let rotateImage = DImage.getImage("/CBlades/images/actuators/retreat-rotate.png");
             for (let sangle in rotateDirections) {
                 let angle = parseInt(sangle);
-                let orientation = new ActuatorImageArtifact(this, "actuators", rotateImage,
+                let orientation = new CBActuatorImageArtifact(this, "actuators", rotateImage,
                     new Point2D(0, 0), new Dimension2D(80, 96));
                 orientation.pangle = parseInt(angle);
                 orientation.rotate = true;
@@ -419,36 +401,28 @@ export class CBFormationRetreatActuator extends CBActuator {
                 let targetPosition = Point2D.position(orientation.hex.location, rotateDirections[angle].hex.location, 0.9);
                 orientation.position = startLocation.concat(targetPosition);
                 orientation.moveType = rotateDirections[angle].moveType;
-                this._imageArtifacts.push(orientation);
+                imageArtifacts.push(orientation);
             }
         }
 
         super(action);
-        this._imageArtifacts = [];
+        let imageArtifacts = [];
         let bloodImage = DImage.getImage("/CBlades/images/actuators/blood.png");
-        let loss = new ActuatorImageArtifact(this, "actuators", bloodImage,
+        let loss = new CBActuatorImageArtifact(this, "actuators", bloodImage,
             new Point2D(0, 0), new Dimension2D(104, 144));
         loss.loss = true;
-        this._imageArtifacts.push(loss);
-        createMoveTriggers.call(this);
-        createRotateTriggers.call(this);
-        this._element = new DElement(...this._imageArtifacts);
-        this._element._actuator = this;
-        this._element.setLocation(this.unit.location);
+        imageArtifacts.push(loss);
+        createMoveTriggers.call(this, imageArtifacts);
+        createRotateTriggers.call(this, imageArtifacts);
+        this.initElement(imageArtifacts);
     }
 
     getLossTrigger() {
-        for (let artifact of this._element.artifacts) {
-            if (artifact.loss) return artifact;
-        }
-        //return null;   soon...
+        return this.findTrigger(artifact=>artifact.loss);
     }
 
     getTrigger(angle, rotate) {
-        for (let artifact of this._element.artifacts) {
-            if (artifact.pangle === angle && artifact._rotate===rotate) return artifact;
-        }
-        return null;
+        return this.findTrigger(artifact=>artifact.pangle === angle && artifact.rotate===rotate);
     }
 
     onMouseClick(trigger, event) {

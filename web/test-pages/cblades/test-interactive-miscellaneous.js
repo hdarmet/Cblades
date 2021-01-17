@@ -20,10 +20,11 @@ import {
     repaint,
     paint,
     clickOnActionMenu,
-    clickOnCounter,
+    clickOnCounter
+} from "./interactive-tools.js";import {
     createTinyGame,
     create2UnitsTinyGame
-} from "./interactive-tools.js";
+} from "./game-examples.js";
 import {
     registerInteractiveMiscellaneous,
     unregisterInteractiveMiscellaneous

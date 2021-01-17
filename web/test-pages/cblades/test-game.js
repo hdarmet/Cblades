@@ -22,7 +22,7 @@ import {
     CBHexSideId,
     CBHexVertexId,
     CBCounter,
-    CBAction, CBAbstractUnit, CBMoveType
+    CBAction, CBAbstractUnit, CBMoveType, CBActuatorImageArtifact
 } from "../../jslib/cblades/game.js";
 import {
     DBoard, DElement
@@ -34,6 +34,81 @@ import {
 import {
     DPopup
 } from "../../jslib/widget.js";
+import {
+    clickOnCounter,
+    mouseMoveOnTrigger,
+    mouseMoveOutOfTrigger,
+    paint,
+    repaint,
+    clickOnTrigger
+} from "./interactive-tools.js";
+
+class CBTestUnit extends CBAbstractUnit {
+    constructor(player, paths) {
+        super(paths, new Dimension2D(142, 142));
+        this.player = player;
+    }
+
+    updatePlayed() {
+        this.status = "played";
+    }
+
+    reset(player) {
+        super.reset(player);
+        if (player === this.player) {
+            delete this.status;
+        }
+    }
+}
+
+class CBTestActuator extends CBActuator {
+
+    constructor(action) {
+        super(action);
+        let image = DImage.getImage("/CBlades/images/actuators/test.png");
+        let imageArtifacts = [];
+        let trigger = new CBActuatorImageArtifact(this, "actuators", image,
+            new Point2D(0, 0), new Dimension2D(50, 50));
+        trigger.position = new Point2D(0, 0);
+        imageArtifacts.push(trigger);
+        this.initElement(imageArtifacts);
+    }
+
+    getTrigger() {
+        return this.findTrigger(artifact=>true);
+    }
+
+    failToGetTrigger() {
+        return this.findTrigger(artifact=>false);
+    }
+
+    onMouseClick(artifact, event) {
+        this.clicked = artifact;
+    }
+
+}
+
+export function prepareTinyGame() {
+    var game = new CBGame();
+    var map = new CBMap("/CBlades/images/maps/map.png");
+    game.setMap(map);
+    return {game, map};
+}
+
+export function createTinyGame() {
+    var game = new CBGame();
+    var arbitrator = new CBAbstractArbitrator();
+    game.setArbitrator(arbitrator);
+    var player = new CBAbstractPlayer();
+    game.addPlayer(player);
+    var map = new CBMap("/CBlades/images/maps/map.png");
+    game.setMap(map);
+    let unit = new CBTestUnit(player, ["/CBlades/images/units/misc/unit.png"]);
+    game.addUnit(unit, map.getHex(5, 8));
+    game.start();
+    loadAllImages();
+    return { game, arbitrator, player, map, unit };
+}
 
 describe("Game", ()=> {
 
@@ -43,52 +118,6 @@ describe("Game", ()=> {
         Mechanisms.reset();
         Memento.clear();
     });
-
-    class CBTestUnit extends CBAbstractUnit {
-        constructor(player, paths) {
-            super(paths, new Dimension2D(142, 142));
-            this.player = player;
-        }
-
-        updatePlayed() {
-            this.status = "played";
-        }
-
-        reset(player) {
-            super.reset(player);
-            if (player === this.player) {
-                delete this.status;
-            }
-        }
-    }
-
-    function paint(game) {
-        game._board.paint();
-    }
-
-    function repaint(game) {
-        game._board.repaint();
-    }
-
-    function prepareTinyGame() {
-        var game = new CBGame();
-        var map = new CBMap("/CBlades/images/maps/map.png");
-        game.setMap(map);
-        return {game, map};
-    }
-
-    function createTinyGame() {
-        var { game, map } = prepareTinyGame();
-        var player = new CBAbstractPlayer();
-        game.addPlayer(player);
-        let unit = new CBTestUnit(player, [
-            "/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"
-        ]);
-        game.addUnit(unit, map.getHex(5, 8));
-        game.start();
-        loadAllImages();
-        return {game, player, unit, map};
-    }
 
     it("Checks game building", () => {
         given:
@@ -132,10 +161,8 @@ describe("Game", ()=> {
             var {game, unit} = createTinyGame();
         when:
             var action = new CBAction(game, unit);
-            var actuator1 = new CBActuator(action);
-            actuator1._element = new DElement();
-            var actuator2 = new CBActuator(action);
-            actuator2._element = new DElement();
+            var actuator1 = new CBTestActuator(action);
+            var actuator2 = new CBTestActuator(action);
             game.openActuator(actuator1);
         then:
             assert(actuator1.unit).equalsTo(unit);
@@ -158,6 +185,90 @@ describe("Game", ()=> {
             game.removeActuators();
         then:
             assert(game.actuators).arrayEqualsTo([]);
+    });
+
+    it("Checks mouse move over a trigger of a move actuator", () => {
+        given:
+            var { game, unit } = createTinyGame();
+            var [actuatorsLayer] = getLayers(game.board, "actuators");
+            var action = new CBAction(game, unit);
+            var actuator = new CBTestActuator(action);
+            game.openActuator(actuator);
+            loadAllImages();
+        when:
+            resetDirectives(actuatorsLayer);
+            repaint(game);
+        then:
+            assert(actuator.getTrigger()).isDefined();
+            assert(actuator.failToGetTrigger()).isNotDefined();
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/test.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(actuatorsLayer);
+            mouseMoveOnTrigger(game, actuator.getTrigger());
+            paint(game);
+        then:
+            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
+                "save()",
+                    "resetTransform()",
+                    "clearRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #FF0000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/test.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(actuatorsLayer);
+            mouseMoveOutOfTrigger(game, actuator.getTrigger());
+            paint(game);
+        then:
+            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
+                "save()",
+                    "resetTransform()",
+                    "clearRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/test.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            clickOnTrigger(game, actuator.getTrigger());
+            assert(actuator.clicked).equalsTo(actuator.getTrigger());
+    });
+
+    function getTestActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBTestActuator) return actuator;
+        }
+        return null;
+    }
+
+    it("Checks that a unit selection closes the actuators", () => {
+        given:
+            var { game, unit1, unit2, player } = create2UnitsTinyGame();
+            player.launchUnitAction = function(unit, event) {};
+            clickOnCounter(game, unit1);
+            var action = new CBAction(game, unit1);
+            var actuator = new CBTestActuator(action);
+            game.openActuator(actuator);
+            loadAllImages();
+        then:
+            assert(game.selectedUnit).equalsTo(unit1);
+            assert(getTestActuator(game)).isDefined();
+        when:
+            clickOnCounter(game, unit2);
+        then:
+            assert(game.selectedUnit).equalsTo(unit2);
+            assert(getTestActuator(game)).isNotDefined();
     });
 
     it("Checks popup management", () => {

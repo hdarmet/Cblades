@@ -194,7 +194,7 @@ CBAction.FINISHED = 2;
 CBAction.FINALIZED = 3;
 CBAction.PROGRESSION = "progression";
 
-export class ActuatorImageArtifact extends DImageArtifact {
+export class CBActuatorImageArtifact extends DImageArtifact {
 
     constructor(actuator, ...args) {
         super(...args);
@@ -242,6 +242,20 @@ export class CBActuator {
 
     get unit() {
         return this.action.unit;
+    }
+
+    initElement(imageArtifacts, position = this.unit.location) {
+        this._imageArtifacts = imageArtifacts;
+        this._element = new DElement(...this._imageArtifacts);
+        this._element._actuator = this;
+        this._element.setLocation(position);
+    }
+
+    findTrigger(predicate) {
+        for (let artifact of this._element.artifacts) {
+            if (predicate(artifact)) return artifact;
+        }
+        return null;
     }
 
     get element() {

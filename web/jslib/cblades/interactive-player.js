@@ -146,13 +146,6 @@ export class CBActionMenu extends DIconMenu {
 }
 CBActionMenu.menuBuilders = [];
 
-/*
-CBActionMenu.menuBuilders.push(
-    createMagicMenuItems,
-    //createMiscellaneousMenuItems
-);
-*/
-
 export class CBWingTirednessIndicator extends DIndicator {
 
     constructor(tiredness) {
