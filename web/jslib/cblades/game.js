@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    atan2, Point2D, Dimension2D, Matrix2D, moyAngle
+    atan2, Point2D, Dimension2D, Matrix2D, moyAngle, sumAngle
 } from "../geometry.js";
 import {
     DImage, DTranslateLayer
@@ -51,16 +51,16 @@ export class CBAbstractPlayer {
     }
 
     selectUnit(unit, event) {
-        this.game.closeActuators();
-        this.game.closePopup();
-        if (this.game.selectedUnit!==unit) {
-            this.beforeActivation(unit, ()=>{
-                unit.select();
+        if (!unit.hasBeenActivated()) {
+            this.game.closeWidgets();
+            if (this.game.selectedUnit !== unit) {
+                this.beforeActivation(unit, () => {
+                    unit.select();
+                    this.launchUnitAction(unit, event);
+                });
+            } else {
                 this.launchUnitAction(unit, event);
-            });
-        }
-        else {
-            this.launchUnitAction(unit, event);
+            }
         }
     }
 
@@ -126,7 +126,7 @@ export class CBAction {
     }
 
     isStarted() {
-        return this._status === CBAction.STARTED;
+        return this._status >= CBAction.STARTED;
     }
 
     isFinished() {
@@ -134,7 +134,7 @@ export class CBAction {
     }
 
     isFinalized() {
-        return this._status === CBAction.FINALIZED;
+        return this._status >= CBAction.FINALIZED;
     }
 
     isFinishable() {
@@ -166,10 +166,22 @@ export class CBAction {
         }
     }
 
+    cancel(action) {
+        console.assert(this._status === CBAction.INITIATED);
+        Memento.register(this);
+        this._status = CBAction.CANCELLED;
+        this._game.closeWidgets();
+        this.unit.removeAction();
+        action && action();
+        Mechanisms.fire(this, CBAction.PROGRESSION, CBAction.CANCELLED);
+    }
+
     finalize(action) {
+        console.assert(this._status >= CBAction.STARTED);
         if (this._status < CBAction.FINALIZED) {
             Memento.register(this);
             this._status = CBAction.FINALIZED;
+            this._game.closeWidgets();
             action && action();
             if (this.unit.isCurrentPlayer()) {
                 this.unit.updatePlayed();
@@ -192,6 +204,7 @@ CBAction.INITIATED = 0;
 CBAction.STARTED = 1;
 CBAction.FINISHED = 2;
 CBAction.FINALIZED = 3;
+CBAction.CANCELLED = -1;
 CBAction.PROGRESSION = "progression";
 
 export class CBActuatorImageArtifact extends DImageArtifact {
@@ -305,6 +318,7 @@ export class CBGame {
         this._board.undoRedoOnKeyDown();
         this._players = [];
         this._actuators = [];
+        this._counters = new Set();
     }
 
     _memento() {
@@ -312,6 +326,7 @@ export class CBGame {
             selectedUnit: this._selectedUnit,
             focusedUnit: this._focusedUnit,
             actuators: [...this._actuators],
+            counters: new Set(this._counters),
             popup: this._popup
         };
     }
@@ -320,6 +335,7 @@ export class CBGame {
         this._selectedUnit = memento.selectedUnit;
         this._focusedUnit = memento.focusedUnit;
         this._actuators = memento.actuators;
+        this._counters = memento.counters;
         if (memento.popup) {
             this._popup = memento.popup;
         }
@@ -353,9 +369,6 @@ export class CBGame {
     }
 
     addCounter(counter, location) {
-        if (!this._counters) {
-            this._counters = new Set();
-        }
         this._counters.add(counter)
         counter.location = location;
         counter.game = this;
@@ -363,12 +376,23 @@ export class CBGame {
     }
 
     addUnit(unit, hexLocation) {
-        if (!this._counters) {
-            this._counters = new Set();
-        }
         this._counters.add(unit);
-        unit.hexLocation = hexLocation;
-        unit.element.setOnBoard(this._board);
+        if (hexLocation) {
+            unit.hexLocation = hexLocation;
+            unit.element.setOnBoard(this._board);
+        }
+    }
+
+    appendUnit(unit) {
+        console.assert(!this._counters.has(unit));
+        Memento.register(this);
+        this._counters.add(unit)
+    }
+
+    deleteUnit(unit) {
+        console.assert(this._counters.has(unit));
+        Memento.register(this);
+        this._counters.delete(unit);
     }
 
     getPlayerUnits(player) {
@@ -413,6 +437,11 @@ export class CBGame {
             actuator.element.removeFromBoard(this._board);
         }
         this._actuators = [];
+    }
+
+    closeWidgets() {
+        this.closeActuators();
+        this.closePopup();
     }
 
     mayChangeSelection(unit) {
@@ -645,6 +674,12 @@ export class CBHexId {
         return this._map.findNearHex(this, angle);
     }
 
+    getNearHexSide(angle) {
+        let hex1 = this._map.findNearHex(this, sumAngle(angle, 30));
+        let hex2 = this._map.findNearHex(this, sumAngle(angle, -30));
+        return new CBHexSideId(hex1, hex2);
+    }
+
     getAngle(hexId) {
         let loc1 = this.location;
         let loc2 = hexId.location;
@@ -658,6 +693,10 @@ export class CBHexId {
     // TODO : add map ref
     toString() {
         return "Hex("+this._col+", "+this._row+")";
+    }
+
+    hasHex(hexId) {
+        return this === hexId;
     }
 }
 
@@ -716,6 +755,10 @@ export class CBHexSideId {
         if (angle1===false) return angle2;
         if (angle2===false) return angle1;
         return moyAngle(angle1, angle2);
+    }
+
+    hasHex(hexId) {
+        return this._hexId1 === hexId || this._hexId2 === hexId;
     }
 
 }
@@ -1285,6 +1328,7 @@ export class CBAbstractUnit extends CBCounter {
     }
 
     hasBeenActivated() {
-        return this._action && (this._action.isStarted() || this._action.isFinished());
+        return this._action && this._action.isStarted();
     }
+
 }

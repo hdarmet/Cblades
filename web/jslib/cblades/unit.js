@@ -55,9 +55,10 @@ export let CBWeather = {
 
 export class CBUnitType {
 
-    constructor(name, pathes) {
+    constructor(name, troopPaths, formationPaths) {
         this._name = name;
-        this._pathes = pathes;
+        this._troopPaths = troopPaths;
+        this._formationPaths = formationPaths;
         this._maxStepCount = 2;
     }
 
@@ -65,12 +66,28 @@ export class CBUnitType {
         return this._name;
     }
 
-    get paths() {
-        return this._pathes;
+    getTroopPaths() {
+        return this._troopPaths;
     }
 
-    get maxStepCount() {
+    getFormationPaths() {
+        return this._formationPaths;
+    }
+
+    getTroopMaxStepCount() {
         return this._maxStepCount;
+    }
+
+    getFormationMinStepCount() {
+        return 3;
+    }
+
+    getFormationMaxStepCount() {
+        return this._maxStepCount*this.getMaxFiguresCount();
+    }
+
+    getMaxFiguresCount() {
+        return 4;
     }
 
 }
@@ -146,8 +163,8 @@ export class CBWing {
 
 export class CBUnit extends CBAbstractUnit {
 
-    constructor(type, wing, dimension=CBUnit.DIMENSION) {
-        super(type.paths, dimension);
+    constructor(type, paths, wing, dimension=CBUnit.DIMENSION) {
+        super(paths, dimension);
         this._type = type;
         this._wing = wing;
         this._movementPoints=2;
@@ -201,7 +218,8 @@ export class CBUnit extends CBAbstractUnit {
             charging: this._charging,
             engagingArtifact: this._engagingArtifact,
             orderGiven: this._orderGiven,
-            lossSteps: this._lossSteps
+            lossSteps: this._lossSteps,
+            attackLocation: this._attackLocation
         };
     }
 
@@ -222,6 +240,7 @@ export class CBUnit extends CBAbstractUnit {
         this._engagingArtifact = memento.engagingArtifact;
         this._orderGiven = memento.orderGiven;
         this._lossSteps = memento.lossSteps;
+        this._attackLocation = memento.attackLocation;
     }
 
     unselect() {
@@ -237,6 +256,7 @@ export class CBUnit extends CBAbstractUnit {
             this._movementPoints = 2;
             this._extendedMovementPoints = this._movementPoints*1.5;
             this._orderGiven = false;
+            delete this._attackLocation;
             this._updatePlayed();
         }
     }
@@ -301,7 +321,7 @@ export class CBUnit extends CBAbstractUnit {
     }
 
     get maxStepCount() {
-        return this._type.maxStepCount;
+        return this._type.getTroopMaxStepCount();
     }
 
     get lossSteps() {
@@ -350,6 +370,19 @@ export class CBUnit extends CBAbstractUnit {
             }
             this._updateMovementPoints(cost);
         }
+    }
+
+    setAttackLocation(hexLocation) {
+        Memento.register(this);
+        this._attackLocation = hexLocation;
+    }
+
+    get attackLocation() {
+        return this._attackLocation;
+    }
+
+    hasAttacked() {
+        return !!this._attackLocation;
     }
 
     rotate(angle, cost) {
@@ -578,7 +611,7 @@ CBUnit.MARKERS_POSITION = [
 export class CBTroop extends CBUnit {
 
     constructor(type, wing) {
-        super(type, wing);
+        super(type, type.getTroopPaths(), wing);
     }
 
     clone() {
@@ -592,13 +625,17 @@ export class CBTroop extends CBUnit {
 export class CBFormation extends CBUnit {
 
     constructor(type, wing) {
-        super(type, wing, CBFormation.DIMENSION);
+        super(type, type.getFormationPaths(), wing, CBFormation.DIMENSION);
     }
 
     clone() {
         let copy = new CBFormation(this.type, this.wing);
         this.copy(copy);
         return copy;
+    }
+
+    get maxStepCount() {
+        return this._type.getFormationMaxStepCount();
     }
 
     get isFormation() {
@@ -656,6 +693,34 @@ export class CBFormation extends CBUnit {
         return marker;
     }
 
+    get minStepCount() {
+        return this.type.getFormationMinStepCount();
+    }
+
+    takeALoss() {
+        if (this.remainingStepCount <= this.minStepCount) {
+            let {fromHex, toHex} = this.game.arbitrator.troopsAfterFormationBreak(this);
+            this.breakFormation(fromHex, toHex)
+        }
+        else {
+            super.takeALoss();
+        }
+    }
+
+    breakFormation(replacementOnFromHex, replacementOnToHex) {
+        let hexLocation = this.hexLocation;
+        this.game.deleteUnit(this);
+        this.move(null, 0);
+        for (let replacement of replacementOnFromHex) {
+            this.game.appendUnit(replacement);
+            replacement.move(hexLocation.fromHex, 0);
+        }
+        for (let replacement of replacementOnToHex) {
+            this.game.appendUnit(replacement);
+            replacement.move(hexLocation.toHex, 0);
+        }
+    }
+
 }
 CBFormation.DIMENSION = new Dimension2D(CBUnit.DIMENSION.w*2, CBUnit.DIMENSION.h);
 CBFormation.MARKERS_POSITION = [
@@ -670,7 +735,7 @@ CBFormation.MARKERS_POSITION = [
 export class CBCharacter extends CBUnit {
 
     constructor(type, wing) {
-        super(type, wing, CBCharacter.DIMENSION);
+        super(type, type.getTroopPaths(), wing, CBCharacter.DIMENSION);
         this._commandPoints = 0;
     }
 

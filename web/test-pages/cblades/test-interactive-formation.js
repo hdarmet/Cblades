@@ -64,19 +64,19 @@ describe("Interactive Formation", ()=> {
             assert(getDirectives(widgetItemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 331.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/leave-formation.png, -25, -25, 50, 50)",
+                    "drawImage(/CBlades/images/icons/leave-formation-gray.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 391.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/dismiss-formation.png, -25, -25, 50, 50)",
+                    "drawImage(/CBlades/images/icons/dismiss-formation-gray.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 211.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/create-formation.png, -25, -25, 50, 50)",
+                    "drawImage(/CBlades/images/icons/create-formation-gray.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 271.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/join-formation.png, -25, -25, 50, 50)",
+                    "drawImage(/CBlades/images/icons/join-formation-gray.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });

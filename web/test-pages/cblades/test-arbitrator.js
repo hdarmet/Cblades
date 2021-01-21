@@ -229,7 +229,9 @@ describe("Arbitrator", ()=> {
         let wing2 = new CBWing(player2);
         let map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
-        let unitType1 = new CBUnitType("unit1", ["/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png"])
+        let unitType1 = new CBUnitType("unit1",
+            ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"],
+            ["/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png"])
         let formation1 = new CBFormation(unitType1, wing1);
         game.addUnit(formation1, new CBHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
         formation1.angle = 90;

@@ -59,27 +59,45 @@
     game.setMap(map);
     game.setMenu();
 
-    let goblinLeader = new CBUnitType("Goblin Leader", [
-        "/CBlades/images/units/orcs/character1L.png",
-        "/CBlades/images/units/orcs/character1Lb.png"
-    ]);
-    let goblinWolfRider = new CBUnitType("Goblin Wolf Rider", [
-        "/CBlades/images/units/orcs/unit1L.png",
-        "/CBlades/images/units/orcs/unit1Lb.png"
-    ]);
+    let goblinLeader = new CBUnitType("Goblin Leader",
+        [
+            "/CBlades/images/units/orcs/character1L.png",
+            "/CBlades/images/units/orcs/character1Lb.png"
+        ]
+    );
+    let goblinWolfRider = new CBUnitType("Goblin Wolf Rider",
+        [
+            "/CBlades/images/units/orcs/unit1L.png",
+            "/CBlades/images/units/orcs/unit1Lb.png"
+        ]
+    );
 
-    let companyLeader = new CBUnitType("Company Leader", [
-        "/CBlades/images/units/mercenaries/character1L.png",
-        "/CBlades/images/units/mercenaries/character1Lb.png"
-    ]);
-    let companyKnight = new CBUnitType("Company Knight", [
-        "/CBlades/images/units/mercenaries/unit1L.png",
-        "/CBlades/images/units/mercenaries/unit1Lb.png"
-    ]);
-    let companyLance = new CBUnitType("Company Lancet", [
-        "/CBlades/images/units/mercenaries/unit2L2.png",
-        "/CBlades/images/units/mercenaries/unit2L2b.png"
-    ]);
+    let companyLeader = new CBUnitType("Company Leader",
+        [
+            "/CBlades/images/units/mercenaries/character1L.png",
+            "/CBlades/images/units/mercenaries/character1Lb.png"
+        ]
+    );
+    let companyKnight = new CBUnitType("Company Knight",
+        [
+            "/CBlades/images/units/mercenaries/unit1L.png",
+            "/CBlades/images/units/mercenaries/unit1Lb.png"
+        ]
+    );
+    let companyLance = new CBUnitType("Company Lancet",
+        [
+            "/CBlades/images/units/mercenaries/unit2L1.png",
+            "/CBlades/images/units/mercenaries/unit2L1b.png"
+        ],
+        [
+            "/CBlades/images/units/mercenaries/unit2L4.png",
+            "/CBlades/images/units/mercenaries/unit2L4b.png",
+            "/CBlades/images/units/mercenaries/unit2L3.png",
+            "/CBlades/images/units/mercenaries/unit2L3b.png",
+            "/CBlades/images/units/mercenaries/unit2L2.png",
+            "/CBlades/images/units/mercenaries/unit2L2b.png"
+        ]
+    );
 
     let player1 = new CBInteractivePlayer();
     game.addPlayer(player1);
@@ -104,9 +122,14 @@
     counter21.angle = 180;
     let counter22 = new CBTroop(companyKnight, wing2);
     counter22.angle = 180;
-    let counter23 = new CBFormation(companyLance, wing2);
+    let counter23 = new CBFormation(companyLance, wing2, 2);
     counter23.angle = 210;
-    game.addUnit(counter23, new CBHexSideId( map.getHex(9, 7),  map.getHex(10, 7)));
+    counter23.lossSteps = 4;
+    let counter24 = new CBFormation(companyLance, wing2, 2);
+    counter24.angle = 210;
+    counter24.lossSteps = 2;
+    game.addUnit(counter23, new CBHexSideId( map.getHex(9, 6),  map.getHex(10, 6)));
+    game.addUnit(counter24, new CBHexSideId( map.getHex(9, 5),  map.getHex(10, 5)));
     game.addUnit(character21, new CBHexId(map, 8, 6));
     game.addUnit(counter21, new CBHexId(map, 7, 7));
     game.addUnit(counter22, new CBHexId(map, 10, 7));

@@ -112,8 +112,8 @@ describe("Unit", ()=> {
             assert(unit1.player).equalsTo(player);
             assert(player.units).unorderedArrayEqualsTo([unit1, unit2]);
             assert(unitType1.name).equalsTo("unit1");
-            assert(unitType1.paths).arrayEqualsTo(["/CBlades/images/units/misc/unit1.png"]);
-            assert(unitType1.maxStepCount).equalsTo(2);
+            assert(unitType1.getTroopPaths()).arrayEqualsTo(["/CBlades/images/units/misc/unit1.png"]);
+            assert(unitType1.getTroopMaxStepCount()).equalsTo(2);
     });
 
     it("Checks unit move on the on map", () => {
@@ -1021,7 +1021,7 @@ describe("Unit", ()=> {
         var player = new CBAbstractPlayer();
         game.addPlayer(player);
         let wing = new CBWing(player);
-        let unitType = new CBUnitType("unit", [
+        let unitType = new CBUnitType("unit", [], [
             "/CBlades/images/units/misc/formation.png", "/CBlades/images/units/misc/formationb.png"
         ]);
         let formation = new CBFormation(unitType, wing);

@@ -57,6 +57,8 @@ export function canonizeAngle(angle) {
  * Compute the addition of two angles
  */
 export function sumAngle(angle1, angle2) {
+    angle1<0&&(angle1+=360);
+    angle2<0&&(angle2+=360);
     return (angle2 + angle1)%360;
 }
 

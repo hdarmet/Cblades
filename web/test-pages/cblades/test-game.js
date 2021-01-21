@@ -941,7 +941,7 @@ describe("Game", ()=> {
             Memento.open();
             action.markAsFinished();
         then:
-            assert(action.isStarted()).isFalse();
+            assert(action.isStarted()).isTrue();
             assert(unit.hasBeenActivated()).isTrue();
             assert(action.isFinished()).isTrue();
             assert(unit.hasBeenPlayed()).isTrue();

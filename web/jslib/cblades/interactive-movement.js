@@ -169,7 +169,6 @@ export class InteractiveMovementAction extends CBAction {
         let cost = this.game.arbitrator.getMovementCost(this.unit, hexId);
         this._updateTirednessForMovement(cost);
         this.unit.move(hexId, cost, CBMoveType.FORWARD);
-        this._createMovementActuators();
         let played = this._createMovementActuators();
         this._checkContact();
         this._markUnitActivationAfterMovement(played);

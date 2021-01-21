@@ -33,8 +33,8 @@ export function registerInteractiveCombat() {
     CBInteractivePlayer.prototype.unitFireAttack = function (unit, event) {
         unit.launchAction(new InteractiveFireAttackAction(this.game, unit, event));
     }
-    CBInteractivePlayer.prototype.applyLossesToUnit = function(unit, losses, attacker) {
-        unit.launchAction(new InteractiveRetreatAction(this.game, unit, losses, attacker));
+    CBInteractivePlayer.prototype.applyLossesToUnit = function(unit, losses, attacker, continuation) {
+        unit.launchAction(new InteractiveRetreatAction(this.game, unit, losses, attacker, continuation));
     }
     CBActionMenu.menuBuilders.push(
         createCombatMenuItems
@@ -52,10 +52,11 @@ export function unregisterInteractiveCombat() {
 
 export class InteractiveRetreatAction extends CBAction {
 
-    constructor(game, unit, losses, attacker) {
+    constructor(game, unit, losses, attacker, continuation) {
         super(game, unit);
         this._losses = losses;
         this._attacker = attacker;
+        this._continuation = continuation;
     }
 
     play() {
@@ -80,8 +81,7 @@ export class InteractiveRetreatAction extends CBAction {
         this.game.closeActuators();
         this.unit.move(hexId, 0, moveType);
         this.unit.addOneCohesionLevel();
-        this.markAsFinished();
-        this.unit.removeAction();
+        this._finalizeAction();
     }
 
     reorientUnit(angle) {
@@ -91,8 +91,13 @@ export class InteractiveRetreatAction extends CBAction {
     takeALossFromUnit(event) {
         this.game.closeActuators();
         this.unit.takeALoss();
+        this._finalizeAction();
+    }
+
+    _finalizeAction() {
         this.markAsFinished();
         this.unit.removeAction();
+        this._continuation();
     }
 
     createRetreatActuator(directions) {
@@ -131,7 +136,10 @@ export class InteractiveShockAttackAction extends CBAction {
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
-        let close = ()=>{mask.close(); scene.close();};
+        let close = ()=>{
+            mask.close();
+            scene.close();
+        };
         mask.setAction(close);
         mask.open(this.game.board, new Point2D(event.offsetX, event.offsetY));
         scene.addWidget(
@@ -141,13 +149,19 @@ export class InteractiveShockAttackAction extends CBAction {
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
-                let {success} = this._processShockAttackResult(foe, supported, dice.result);
-                if (success) {
+                let report = this._processShockAttackResult(foe, supported, dice.result);
+                let continuation = ()=>{
+                    if (!report.played) {
+                        this._createShockAttackActuator(this.unit);
+                    }
+                }
+                if (report.success) {
                     result.success().show();
-                    foe.player.applyLossesToUnit(foe, result.lossesForDefender, this.unit);
+                    foe.player.applyLossesToUnit(foe, result.lossesForDefender, this.unit, continuation);
                 }
                 else {
                     result.failure().show();
+                    continuation();
                 }
             }),
             new Point2D(70, 60)
@@ -159,10 +173,16 @@ export class InteractiveShockAttackAction extends CBAction {
 
     _processShockAttackResult(foe, supported, diceResult) {
         let result = this.game.arbitrator.processShockAttackResult(this.unit, foe, supported, diceResult);
+        this.unit.setAttackLocation(result.attackLocation);
         if (result.tirednessForAttacker) {
             this.unit.addOneTirednessLevel();
         }
-        this.markAsFinished();
+        if (result.played) {
+            this.markAsFinished();
+        }
+        else {
+            this.markAsStarted();
+        }
         return result;
     }
 
@@ -198,7 +218,10 @@ export class InteractiveFireAttackAction extends CBAction {
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
-        let close = ()=>{mask.close(); scene.close();};
+        let close = ()=>{
+            mask.close();
+            scene.close();
+        };
         mask.setAction(close);
         mask.open(this.game.board, new Point2D(event.offsetX, event.offsetY));
         scene.addWidget(
@@ -208,13 +231,19 @@ export class InteractiveFireAttackAction extends CBAction {
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
-                let {success} = this._processFireAttackResult(foe, dice.result);
-                if (success) {
+                let report = this._processFireAttackResult(foe, dice.result);
+                let continuation = ()=>{
+                    if (!report.played) {
+                        this._createFireAttackActuator(this.unit);
+                    }
+                }
+                if (report.success) {
                     result.success().show();
-                    foe.player.applyLossesToUnit(foe, result.lossesForDefender, this.unit);
+                    foe.player.applyLossesToUnit(foe, result.lossesForDefender, this.unit, continuation);
                 }
                 else {
                     result.failure().show();
+                    continuation();
                 }
             }),
             new Point2D(70, 60)
@@ -226,10 +255,16 @@ export class InteractiveFireAttackAction extends CBAction {
 
     _processFireAttackResult(foe, diceResult) {
         let result = this.game.arbitrator.processFireAttackResult(this.unit, foe, diceResult);
+        this.unit.setAttackLocation(result.attackLocation);
         if (result.lowerFirerMunitions) {
             this.unit.addOneLackOfMunitionsLevel();
         }
-        this.markAsFinished();
+        if (result.played) {
+            this.markAsFinished();
+        }
+        else {
+            this.markAsStarted();
+        }
         return result;
     }
 

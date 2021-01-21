@@ -42,10 +42,20 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
     }
 
     afterActivation(unit, action) {
-        if (unit && unit.action && !unit.action.isFinalized()) {
-            unit.action.finalize(() => {
+        if (unit && unit.action) {
+            if (!unit.action.isStarted()) {
+                unit.action.cancel(() => {
+                    super.afterActivation(unit, action);
+                });
+            }
+            else if (!unit.action.isFinalized()) {
+                unit.action.finalize(() => {
+                    super.afterActivation(unit, action);
+                });
+            }
+            else {
                 super.afterActivation(unit, action);
-            });
+            }
         }
         else {
             super.afterActivation(unit, action);

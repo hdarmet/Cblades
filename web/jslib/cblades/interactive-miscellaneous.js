@@ -36,11 +36,14 @@ export class InteractiveMergeUnitAction extends CBAction {
     play() {
         this.game.closeActuators();
         let {replacement, replaced} = this.game.arbitrator.mergedUnit(this.unit);
-        let hexLocation = replaced[0].hexLocation;
+        let hexLocation = this.unit.hexLocation;
         replacement.move(hexLocation, 0);
+        replacement.angle = this.unit.angle;
+        this.game.appendUnit(replacement);
         replacement.markAsBeingPlayed();
         for (let replacedUnit of replaced) {
             replacedUnit.move(null, 0);
+            this.game.deleteUnit(replacedUnit);
         }
         this.markAsFinished();
     }
