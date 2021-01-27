@@ -40,7 +40,8 @@ describe("Geometry", ()=> {
     it("Checks 'sumAngle' method", () => {
         assert(sumAngle(30, 100)).equalsTo(130);
         assert(sumAngle(300, 100)).equalsTo(40);
-    });
+        assert(sumAngle(30, -100)).equalsTo(290);
+        assert(sumAngle(-300, 100)).equalsTo(160);    });
 
     it("Checks 'moyAngle' method", () => {
         assert(moyAngle(60, 100)).equalsTo(80);

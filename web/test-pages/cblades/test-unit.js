@@ -71,6 +71,28 @@ describe("Unit", ()=> {
         return {game, player, unit, wing, map};
     }
 
+    function createTinyFormationGame() {
+        var { game, map } = prepareTinyGame();
+        var player = new CBAbstractPlayer();
+        game.addPlayer(player);
+        let wing = new CBWing(player);
+        let unitType = new CBUnitType("unit", [
+            "/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"
+            ],
+            [
+                "/CBlades/images/units/misc/formation4.png", "/CBlades/images/units/misc/formation4b.png",
+                "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png",
+                "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png"
+            ]);
+        let formation = new CBFormation(unitType, wing);
+        formation.angle = 90;
+        formation.lossSteps = 4;
+        game.addUnit(formation, new CBHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
+        game.start();
+        loadAllImages();
+        return {game, player, formation, wing, map};
+    }
+
     function mouseClickOnCounter(game, counter) {
         let counterLocation = counter.artifact.viewportLocation;
         var mouseEvent = createEvent("click", {offsetX:counterLocation.x, offsetY:counterLocation.y});
@@ -102,18 +124,27 @@ describe("Unit", ()=> {
             var player = new CBAbstractPlayer();
             game.addPlayer(player);
             var wing = new CBWing(player);
-            let unitType1 = new CBUnitType("unit1", ["/CBlades/images/units/misc/unit1.png"]);
-            var unit1 = new CBTroop(unitType1, wing);
-            game.addUnit(unit1, map.getHex(5, 8));
-            var unit2 = new CBTroop(unitType1, wing);
-            game.addUnit(unit2, map.getHex(5, 8));
+            let unitType1 = new CBUnitType("unit1",
+                ["/CBlades/images/units/misc/unit1.png"],
+                ["/CBlades/images/units/misc/formation1.png"]);
+            var unit = new CBTroop(unitType1, wing);
+            game.addUnit(unit, map.getHex(5, 8));
+            var formation = new CBFormation(unitType1, wing);
+            game.addUnit(formation, new CBHexSideId(map.getHex(5, 8), map.getHex(5, 9)));
+            formation.angle = 90;
         then:
-            assert(unit1.wing).equalsTo(wing);
-            assert(unit1.player).equalsTo(player);
-            assert(player.units).unorderedArrayEqualsTo([unit1, unit2]);
+            assert(unit.wing).equalsTo(wing);
+            assert(unit.player).equalsTo(player);
+            assert(unit.maxStepCount).equalsTo(2);
+            assert(formation.maxStepCount).equalsTo(8);
+            assert(formation.minStepCount).equalsTo(3);
+            assert(player.units).unorderedArrayEqualsTo([unit, formation]);
             assert(unitType1.name).equalsTo("unit1");
             assert(unitType1.getTroopPaths()).arrayEqualsTo(["/CBlades/images/units/misc/unit1.png"]);
+            assert(unitType1.getFormationPaths()).arrayEqualsTo(["/CBlades/images/units/misc/formation1.png"]);
             assert(unitType1.getTroopMaxStepCount()).equalsTo(2);
+            assert(unitType1.getFormationMaxStepCount()).equalsTo(8);
+            assert(unitType1.getFormationMinStepCount()).equalsTo(3);
     });
 
     it("Checks unit move on the on map", () => {
@@ -683,9 +714,30 @@ describe("Unit", ()=> {
             assert(unit.cohesion).equalsTo(1);
     });
 
-    it("Checks taking losses to a unit", () => {
+    it("Checks unit attack feature related methods", () => {
         given:
             var {game, unit, map} = createTinyGame();
+        when:
+            var hexId = unit.hexLocation.getNearHex(60);
+            unit.setAttackLocation(hexId);
+        then:
+            assert(unit.attackLocation).equalsTo(hexId);
+            assert(unit.hasAttacked()).isTrue();
+        when:
+            Memento.undo();
+        then:
+            assert(unit.attackLocation).isNotDefined();
+            assert(unit.hasAttacked()).isFalse();
+        when:
+            Memento.redo();
+        then:
+            assert(unit.attackLocation).equalsTo(hexId);
+            assert(unit.hasAttacked()).isTrue();
+    });
+
+    it("Checks a troop taking losses", () => {
+        given:
+            var {game, unit} = createTinyGame();
             var [unitsLayer] = getLayers(game.board, "units-0");
         when:
             resetDirectives(unitsLayer);
@@ -731,6 +783,59 @@ describe("Unit", ()=> {
                     "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
+    });
+
+    it("Checks a formation taking losses", () => {
+        given:
+            var {game, formation} = createTinyFormationGame();
+            game.setArbitrator({
+                getTroopsAfterFormationBreak(formation) {
+                    function _createUnit(stepCounts) {
+                        let unit = new CBTroop(formation.type, formation.wing);
+                        unit.angle = formation.angle;
+                        unit.fixRemainingLossSteps(stepCounts);
+                        return unit;
+                    }
+                    return { fromHex:[_createUnit.call(this, 2)], toHex:[_createUnit.call(this, 1)] };
+                }
+            });
+            var [unitsLayer, formationsLayer] = getLayers(game.board, "units-0", "formations-0");
+        when:
+            resetDirectives(unitsLayer, formationsLayer);
+            formation.takeALoss();
+            repaint(game);
+            loadAllImages(); // to load back side image
+        then:
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 416.6667, 303.7757)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/formation2b.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+            assert(game.counters.has(formation)).isTrue();
+        when: // formation breaks automatically
+            resetDirectives(unitsLayer, formationsLayer);
+            formation.takeALoss();
+            paint(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 416.6667, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 416.6667, 255.6635)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unitb.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([]);
+            assert(game.counters.has(formation)).isFalse();
+            assert(game.counters.size).equalsTo(2);
     });
 
     it("Checks mark unit as on contact", () => {

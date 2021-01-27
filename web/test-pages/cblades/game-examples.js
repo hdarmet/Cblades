@@ -51,7 +51,11 @@ export function createTinyFormationGame() {
     game.setMap(map);
     let unitType = new CBUnitType("unit",
         ["/CBlades/images/units/misc/troop.png", "/CBlades/images/units/misc/troopb.png"],
-        ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
+        [
+            "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png",
+            "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png",
+            "/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png"
+        ]);
     let formation = new CBFormation(unitType, wing);
     formation.angle = 90;
     game.addUnit(formation, new CBHexSideId(map.getHex( 5, 8), map.getHex( 5, 7)));
@@ -122,7 +126,14 @@ export function create2UnitsTinyGame() {
         ["/CBlades/images/units/misc/character.png", "/CBlades/images/units/misc/characterb.png"]);
     let leader = new CBCharacter(leaderType, wing);
     let unitType = new CBUnitType("unit",
-        ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
+        [
+            "/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"
+        ],
+        [
+            "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png",
+            "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png",
+            "/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png"
+        ]);
     let unit1 = new CBTroop(unitType, wing);
     let unit2 = new CBTroop(unitType, wing);
     game.addUnit(leader, map.getHex(6, 9));
@@ -131,6 +142,40 @@ export function create2UnitsTinyGame() {
     game.start();
     loadAllImages();
     return {game, map, unit1, unit2, wing, leader, player};
+}
+
+export function create2UnitsAndAFormationTinyGame() {
+    var game = new CBGame();
+    var arbitrator = new CBArbitrator();
+    game.setArbitrator(arbitrator);
+    var player = new CBInteractivePlayer();
+    game.addPlayer(player);
+    var map = new CBMap("/CBlades/images/maps/map.png");
+    game.setMap(map);
+    let wing = new CBWing(player);
+    let leaderType = new CBUnitType("leader",
+        ["/CBlades/images/units/misc/character.png", "/CBlades/images/units/misc/characterb.png"]);
+    let leader = new CBCharacter(leaderType, wing);
+    let unitType = new CBUnitType("unit",
+        [
+            "/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"
+        ],
+        [
+            "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png",
+            "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png",
+            "/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png"
+        ]);
+    let unit1 = new CBTroop(unitType, wing);
+    let unit2 = new CBTroop(unitType, wing);
+    let formation = new CBFormation(unitType, wing);
+    formation.angle = 90;
+    game.addUnit(leader, map.getHex(6, 9));
+    game.addUnit(unit1, map.getHex(5, 8));
+    game.addUnit(unit2, map.getHex( 8, 7));
+    game.addUnit(formation, new CBHexSideId(map.getHex( 6, 6), map.getHex( 6, 7)));
+    game.start();
+    loadAllImages();
+    return {game, map, unit1, unit2, wing, leader, formation, player};
 }
 
 export function createTinyGameWithLeader() {

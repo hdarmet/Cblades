@@ -90,6 +90,25 @@ export class Assertor {
         }
     }
 
+    _setContains(model, values) {
+        if (values) {
+            for (let value of values) {
+                if (value.has(model)) return;
+            }
+        }
+        throw new AssertionFailed(values, " does not contain ", model);
+    }
+
+    _setNotContains(model, values) {
+        if (values) {
+            for (let value of values) {
+                if (value.has(model)) {
+                    throw new AssertionFailed(values, " contains ", model);
+                }
+            }
+        }
+    }
+
     _arrayEquals(model, value) {
         if (!model || !(model instanceof Array)) {
             throw new AssertionError(model, " is not an array.");
@@ -285,6 +304,21 @@ export class Assertor {
         return this;
     }
 
+    setContains(model) {
+        this._setContains(model, this._value);
+        return this;
+    }
+
+    setNotContains(model) {
+        this._setNotContains(model, this._value);
+        return this;
+    }
+
+    setEqualsTo(model) {
+        this._setEquals(model, this._value);
+        return this;
+    }
+
     unorderedArrayEqualsTo(model) {
         this._unorderedArrayEquals(model, this._value);
         return this;
@@ -292,11 +326,6 @@ export class Assertor {
 
     objectEqualsTo(model) {
         this._objectEquals(model, this._value);
-        return this;
-    }
-
-    setEqualsTo(model) {
-        this._setEquals(model, this._value);
         return this;
     }
 

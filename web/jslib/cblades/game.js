@@ -129,6 +129,10 @@ export class CBAction {
         return this._status >= CBAction.STARTED;
     }
 
+    isCancelled() {
+        return this._status === CBAction.CANCELLED;
+    }
+
     isFinished() {
         return this._status >= CBAction.FINISHED;
     }
@@ -581,6 +585,10 @@ export class CBGame {
         }
     }
 
+    get counters() {
+        return this._counters;
+    }
+
     get arbitrator() {
         return this._arbitrator;
     }
@@ -603,6 +611,10 @@ export class CBGame {
 
     get currentPlayer() {
         return this._currentPlayer;
+    }
+
+    set currentPlayer(currentPlayer) {
+        this._currentPlayer = currentPlayer;
     }
 
     start() {
@@ -697,6 +709,10 @@ export class CBHexId {
 
     hasHex(hexId) {
         return this === hexId;
+    }
+
+    getHexSide(angle) {
+        return new CBHexSideId(this, this.getNearHex(angle));
     }
 }
 

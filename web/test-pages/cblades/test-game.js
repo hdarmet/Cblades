@@ -453,6 +453,8 @@ describe("Game", ()=> {
             game.start();
             var hexId = map.getHex(3, 4);
         then:
+            assert(hexId.hasHex(map.getHex(3, 4))).isTrue();
+            assert(hexId.hasHex(map.getHex(3, 5))).isFalse();
             assert(hexId.col).equalsTo(3);
             assert(hexId.row).equalsTo(4);
             assert(hexId.map).equalsTo(map);
@@ -496,6 +498,11 @@ describe("Game", ()=> {
             assert(nearHexId.col).equalsTo(2);
             assert(nearHexId.row).equalsTo(3);
             assert(hexId.isNearHex(nearHexId)).equalsTo(300);
+        when:
+            var nearSide = hexId.getHexSide(60);
+        then:
+            assert(nearSide.fromHex).equalsTo(hexId);
+            assert(nearSide.toHex).equalsTo(map.getHex(4, 3));
     });
 
     it("Checks hexIds on even columns", () => {
@@ -506,6 +513,8 @@ describe("Game", ()=> {
             game.start();
             var hexId = map.getHex(4, 3);
         then:
+            assert(hexId.hasHex(map.getHex(4, 3))).isTrue();
+            assert(hexId.hasHex(map.getHex(4, 4))).isFalse();
             assert(hexId.col).equalsTo(4);
             assert(hexId.row).equalsTo(3);
             assert(hexId.map).equalsTo(map);
@@ -549,6 +558,11 @@ describe("Game", ()=> {
             assert(nearHexId.col).equalsTo(3);
             assert(nearHexId.row).equalsTo(3);
             assert(hexId.isNearHex(nearHexId)).equalsTo(300);
+        when:
+            var nearSide = hexId.getHexSide(60);
+        then:
+            assert(nearSide.fromHex).equalsTo(hexId);
+            assert(nearSide.toHex).equalsTo(map.getHex(5, 3));
     });
 
     it("Checks when hexes are NOT near", () => {
@@ -592,6 +606,9 @@ describe("Game", ()=> {
         then:
             assert(hexSide.fromHex).equalsTo(hexId1);
             assert(hexSide.toHex).equalsTo(hexId2);
+            assert(hexSide.hasHex(hexId1)).isTrue();
+            assert(hexSide.hasHex(hexId2)).isTrue();
+            assert(hexSide.hasHex(hexId3)).isFalse();
             assert(hexSide.getOtherHex(hexId1)).equalsTo(hexId2);
             assert(hexSide.getOtherHex(hexId2)).equalsTo(hexId1);
             assert(hexSide.angle).equalsTo(60);
@@ -654,6 +671,18 @@ describe("Game", ()=> {
             assert(hexSide2.getFaceHex(210).toString()).equalsTo("Hex(3, 3)");
             assert(hexSide3.getFaceHex(90).toString()).equalsTo("Hex(4, 2)");
             assert(hexSide3.getFaceHex(270).toString()).equalsTo("Hex(2, 2)");
+    });
+
+    it("Checks hexId near hexSides", () => {
+        given:
+            var game = new CBGame();
+            var map = new CBMap("/CBlades/images/maps/map.png");
+            game.setMap(map);
+            game.start();
+            var hexId = map.getHex(3, 3);
+        then:
+            assert(hexId.getNearHexSide(90).fromHex.toString()).equalsTo("Hex(4, 3)");
+            assert(hexId.getNearHexSide(90).toHex.toString()).equalsTo("Hex(4, 2)");
     });
 
     it("Checks hexVertexIds", () => {
@@ -919,9 +948,15 @@ describe("Game", ()=> {
             assert(game.canUnselectUnit(unit1)).isTrue();
     });
 
-    it("Checks basic features of actions", () => {
+    it("Checks basic processing of an action", () => {
         given:
             var { game, unit } = createTinyGame();
+            var call = 0;
+            Mechanisms.addListener({
+                _processGlobalEvent(source, event, value) {
+                    if (source instanceof CBAction) call++;
+                }
+            });
         when:
             var action = new CBAction(game, unit);
             unit.launchAction(action);
@@ -937,6 +972,7 @@ describe("Game", ()=> {
             assert(unit.hasBeenActivated()).isTrue();
             assert(action.isFinished()).isFalse();
             assert(unit.hasBeenPlayed()).isFalse();
+            assert(call).equalsTo(1);
         when:
             Memento.open();
             action.markAsFinished();
@@ -946,6 +982,7 @@ describe("Game", ()=> {
             assert(action.isFinished()).isTrue();
             assert(unit.hasBeenPlayed()).isTrue();
             assert(action.isFinalized()).isFalse();
+            assert(call).equalsTo(2);
         when:
             Memento.open();
             var finalized = false;
@@ -955,12 +992,14 @@ describe("Game", ()=> {
             assert(unit.hasBeenPlayed()).isTrue();
             assert(action.isFinalized()).isTrue();
             assert(finalized).isTrue();
+            assert(call).equalsTo(3);
         when: // finalization is executed ony once
             finalized = false;
             action.finalize(()=>{finalized = true;});
         then:
             assert(action.isFinalized()).isTrue();
             assert(finalized).isFalse();
+            assert(call).equalsTo(3);
         when:
             Memento.undo();
         then:
@@ -978,10 +1017,47 @@ describe("Game", ()=> {
             assert(unit.action).equalsTo(action);
             assert(action.isStarted()).isFalse();
             assert(unit.hasBeenActivated()).isFalse();
+            assert(call).equalsTo(3);
         when:
             unit.removeAction();
         then:
             assert(unit.action).isNotDefined();
+    });
+
+    it("Checks action cancellation", () => {
+        given:
+            var { game, unit } = createTinyGame();
+            var call = 0;
+            Mechanisms.addListener({
+                _processGlobalEvent(source, event, value) {
+                    if (source instanceof CBAction) call++;
+                }
+            });
+        when:
+            var action = new CBAction(game, unit);
+            unit.launchAction(action);
+        then:
+            assert(unit.action).equalsTo(action);
+            assert(action.isStarted()).isFalse();
+            assert(action.isCancelled()).isFalse();
+            assert(unit.hasBeenActivated()).isFalse();
+            assert(call).equalsTo(0);
+        when:
+            Memento.open();
+            action.cancel();
+        then:
+            assert(unit.action).isNotDefined();
+            assert(action.isStarted()).isFalse();
+            assert(action.isCancelled()).isTrue();
+            assert(call).equalsTo(1);
+        when:
+            Memento.undo();
+        then:
+            assert(unit.action).equalsTo(action);
+            assert(action.isStarted()).isFalse();
+            assert(action.isCancelled()).isFalse();
+            assert(unit.hasBeenActivated()).isFalse();
+            assert(call).equalsTo(1);
     });
 
     let dummyEvent = {offsetX:0, offsetY:0};
@@ -1093,6 +1169,41 @@ describe("Game", ()=> {
         loadAllImages();
         return {game, map, unit0, unit1, unit2, player1, player2};
     }
+
+    it("Checks appending/removing a unit", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+        then:
+            assert(game.counters.has(unit)).isTrue();
+        when:
+            game.deleteUnit(unit);
+        then:
+            assert(game.counters.has(unit)).isFalse();
+        when:
+            Memento.open();
+            game.appendUnit(unit);
+        then:
+            assert(game.counters.has(unit)).isTrue();
+        when:
+            Memento.undo();
+        then:
+            assert(game.counters.has(unit)).isFalse();
+        when:
+            Memento.undo();
+        then:
+            assert(game.counters.has(unit)).isTrue();
+    });
+
+    it("Checks turn setting", () => {
+        given:
+            var {game, player1, player2} = create2PlayersTinyGame();
+        then:
+            assert(game.currentPlayer).equalsTo(player1);
+        when:
+            game.currentPlayer = player2;
+        then:
+            assert(game.currentPlayer).equalsTo(player2);
+    });
 
     it("Checks that when changing turn, current player changes too and counters are reset", () => {
         given:

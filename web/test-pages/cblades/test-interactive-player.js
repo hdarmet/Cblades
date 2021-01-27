@@ -157,7 +157,7 @@ describe("Interactive Player", ()=> {
             assert(game.selectedUnit).equalsTo(unit1);
     });
 
-    it("Checks that a selected unit's action is finalized when there is a selection/end of turn", () => {
+    it("Checks that a selected unit's action is finalized when there is an end of turn", () => {
         given:
             var {game, unit, player} = createTinyGame();
             player.changeSelection(unit, dummyEvent);
@@ -171,6 +171,32 @@ describe("Interactive Player", ()=> {
             player.finishTurn(()=>{})
         then:
             assert(action.isFinalized()).isTrue();
+    });
+
+    it("Checks that a selected unit's started/finished action is finalized when a new unit is selected", () => {
+        given:
+            var {game, unit1, unit2, player} = create2UnitsTinyGame();
+            player.changeSelection(unit1, dummyEvent);
+            var action = new CBAction(game, unit1);
+            unit1.launchAction(action);
+            action.markAsFinished();
+        when:
+            player.changeSelection(unit2, dummyEvent);
+        then:
+            assert(action.isFinalized()).isTrue();
+    });
+
+    it("Checks that a selected unit's action that was never started, is cancelled when a new unit is selected", () => {
+        given:
+            var {game, unit1, unit2, player} = create2UnitsTinyGame();
+            player.changeSelection(unit1, dummyEvent);
+            var action = new CBAction(game, unit1);
+            unit1.launchAction(action);
+        when:
+            player.changeSelection(unit2, dummyEvent);
+        then:
+            assert(action.isCancelled()).isTrue();
+            assert(unit1.action).isNotDefined();
     });
 
     it("Checks that a finalized unit action does not block selection/end of turn", () => {

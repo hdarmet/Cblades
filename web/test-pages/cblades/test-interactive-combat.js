@@ -471,6 +471,74 @@ describe("Interactive Combat", ()=> {
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
 
+    it("Checks that a formation may shock attack twice", () => {
+        given:
+            var { game, map, unit1, formation2, player2 } = create2PlayersTinyFormationGame();
+            var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
+                "actuators", "widgets", "widget-commands","widget-items"
+            );
+            game.currentPlayer = player2;
+            formation2.angle = 330;
+            formation2.move(map.getHex(5, 8).getHexSide(60), 0);
+            unit1.move(map.getHex(5, 7));
+            unit1.angle = 180;
+            clickOnCounter(game, formation2);
+            clickOnShockAttackAction(game);
+            let shockAttackActuator = getShockAttackActuator(game);
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(unit1, true));
+            loadAllImages();
+        when:
+            rollFor(5,6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 531.3294, 207)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 471.3294, 267)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 431.3294, 177)",
+                    "shadowColor = #A00000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            loadAllImages();
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assert(formation2.hasBeenActivated()).isTrue();
+            assert(formation2.hasBeenPlayed()).isFalse();
+            assert(game.focusedUnit).isNotDefined();
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 402.0039, 241.0007)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/unsupported-shock.png, -50, -55.5, 100, 111)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 431.3294, 270.3262)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/supported-shock.png, -50, -55.5, 100, 111)",
+                "restore()"
+            ]);
+    });
+
     function getFormationRetreatActuator(game) {
         for (let actuator of game.actuators) {
             if (actuator instanceof CBFormationRetreatActuator) return actuator;
@@ -966,6 +1034,69 @@ describe("Interactive Combat", ()=> {
                     "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 317.186)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/actiondone.png, -32, -32, 64, 64)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks that a formation may fire attack twice", () => {
+        given:
+            var { game, map, unit1, formation2, player2 } = create2PlayersTinyFormationGame();
+            var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
+                "actuators", "widgets", "widget-commands","widget-items"
+            );
+            game.currentPlayer = player2;
+            formation2.angle = 330;
+            formation2.move(map.getHex(5, 8).getHexSide(60), 0);
+            unit1.move(map.getHex(5, 6));
+            unit1.angle = 180;
+            clickOnCounter(game, formation2);
+            clickOnFireAttackAction(game);
+            let fireAttackActuator = getFireAttackActuator(game);
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
+            clickOnTrigger(game, fireAttackActuator.getTrigger(unit1));
+            loadAllImages();
+        when:
+            rollFor(5,6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 516.6667, 199)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 456.6667, 259)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 416.6667, 169)",
+                    "shadowColor = #A00000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            loadAllImages();
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assert(formation2.hasBeenActivated()).isTrue();
+            assert(formation2.hasBeenPlayed()).isFalse();
+            assert(game.focusedUnit).isNotDefined();
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 416.6667, 159.4391)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/fire.png, -50, -55.5, 100, 111)",
                 "restore()"
             ]);
     });

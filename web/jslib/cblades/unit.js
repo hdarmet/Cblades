@@ -699,7 +699,7 @@ export class CBFormation extends CBUnit {
 
     takeALoss() {
         if (this.remainingStepCount <= this.minStepCount) {
-            let {fromHex, toHex} = this.game.arbitrator.troopsAfterFormationBreak(this);
+            let {fromHex, toHex} = this.game.arbitrator.getTroopsAfterFormationBreak(this);
             this.breakFormation(fromHex, toHex)
         }
         else {

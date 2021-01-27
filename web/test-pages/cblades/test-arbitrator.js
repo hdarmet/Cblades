@@ -20,7 +20,16 @@ import {
     CBAction, CBGame, CBHexSideId, CBMap, CBAbstractPlayer, CBMoveType
 } from "../../jslib/cblades/game.js";
 import {
-    CBCharacter, CBFormation, CBLackOfMunitions, CBMovement, CBTiredness, CBTroop, CBUnitType, CBWeather, CBWing
+    CBCharacter,
+    CBCohesion,
+    CBFormation,
+    CBLackOfMunitions,
+    CBMovement,
+    CBTiredness,
+    CBTroop,
+    CBUnitType,
+    CBWeather,
+    CBWing
 } from "../../jslib/cblades/unit.js";
 import {
     CBArbitrator
@@ -67,6 +76,33 @@ describe("Arbitrator", ()=> {
         game.start();
         loadAllImages();
         return {game, arbitrator, map, player1, unit11, unit12, leader11, player2, unit21, unit22, leader21};
+    }
+    function create2PlayersTinyFormationGame() {
+        let game = new CBGame();
+        let arbitrator = new CBArbitrator();
+        game.setArbitrator(arbitrator);
+        let player1 = new CBAbstractPlayer();
+        game.addPlayer(player1);
+        let player2 = new CBAbstractPlayer();
+        game.addPlayer(player2);
+        let map = new CBMap("/CBlades/images/maps/map.png");
+        game.setMap(map);
+        let wing1 = new CBWing(player1);
+        let unitType1 = new CBUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
+        let unit1 = new CBTroop(unitType1, wing1);
+        game.addUnit(unit1, map.getHex(5, 8));
+        let unit2 = new CBTroop(unitType1, wing1);
+        game.addUnit(unit2, map.getHex(5, 6));
+        let wing2 = new CBWing(player2);
+        let unitType2 = new CBUnitType("unit2",
+            ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"],
+            ["/CBlades/)images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png"]);
+        let formation2 = new CBFormation(unitType2, wing2);
+        formation2.angle = 90;
+        game.addUnit(formation2, new CBHexSideId(map.getHex(6, 8), map.getHex(6, 7)));
+        game.start();
+        loadAllImages();
+        return {game, arbitrator, map, unit1, unit2, formation2, wing1, wing2, player1, player2};
     }
 
     it("Checks is a unit have to play this turn", () => {
@@ -231,7 +267,11 @@ describe("Arbitrator", ()=> {
         game.setMap(map);
         let unitType1 = new CBUnitType("unit1",
             ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"],
-            ["/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png"])
+            [
+                "/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png",
+                "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png",
+                "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png"
+            ])
         let formation1 = new CBFormation(unitType1, wing1);
         game.addUnit(formation1, new CBHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
         formation1.angle = 90;
@@ -836,22 +876,70 @@ describe("Arbitrator", ()=> {
             assert(result.success).isFalse();
     });
 
+    it("Checks that formation may attack twice but not troops", () => {
+        given:
+            var {arbitrator, map, unit1, unit2, formation2} = create2PlayersTinyFormationGame();
+            var unit1Location = map.getHex(6, 7).getNearHex(60);
+            var unit2Location = map.getHex(6, 8).getNearHex(120);
+            unit1.angle = 210;
+            unit2.angle = 210;
+            unit1.move(unit1Location, 0);
+            unit2.move(unit2Location, 0);
+        when:
+            var foes = arbitrator.getFoesThatMayBeShockAttacked(unit1);
+        then:
+            assert(foes.length === 1 && foes[0].unit === formation2).isTrue();
+        when: // A troop cannot attack twice
+            unit1.setAttackLocation(map.getHex(6, 6));
+            foes = arbitrator.getFoesThatMayBeShockAttacked(unit1);
+        then:
+            assert(arbitrator.isAllowedToShockAttack(unit1)).isFalse();
+            assert(foes.length).equalsTo(0);
+        when: // A formation can attack twice
+            formation2.setAttackLocation(formation2.hexLocation.getFaceHex(90));
+            foes = arbitrator.getFoesThatMayBeShockAttacked(formation2);
+        then:
+            assert(arbitrator.isAllowedToShockAttack(formation2)).isTrue();
+            assert(foes.length).equalsTo(2);
+        when: // A formation may sometime attack from only one of its hex
+            formation2.setAttackLocation(unit1Location);
+            foes = arbitrator.getFoesThatMayBeShockAttacked(formation2);
+        then:
+            assert(foes.length === 1 && foes[0].unit === unit2).isTrue();
+        when:
+            formation2.setAttackLocation(unit2Location);
+            foes = arbitrator.getFoesThatMayBeShockAttacked(formation2);
+        then:
+            assert(foes.length === 1 && foes[0].unit === unit1).isTrue();
+    });
+
     it("Checks unit forward area", () => {
         given:
-            var {arbitrator, map, unit12} = create2Players4UnitsTinyGame();
+            var {arbitrator, map, unit1, formation2} = create2PlayersTinyFormationGame();
         when:
-            var result = arbitrator.getUnitForwardArea(unit12, 2);
+            var result = arbitrator.getUnitForwardArea(unit1, 2);
         then:
-            assert(result.length).equalsTo(8)
-            let hexes = new Set(result);
-            assert(hexes.has(map.getHex(5, 6)));
-            assert(hexes.has(map.getHex(6, 6)));
-            assert(hexes.has(map.getHex(4, 6)));
-            assert(hexes.has(map.getHex(5, 5)));
-            assert(hexes.has(map.getHex(6, 5)));
-            assert(hexes.has(map.getHex(4, 5)));
-            assert(hexes.has(map.getHex(7, 6)));
-            assert(hexes.has(map.getHex(3, 6)));
+            assert(result.length).equalsTo(8);
+            assert(new Set(result)).setEqualsTo(new Set([
+                map.getHex(3, 7), map.getHex(4, 7), map.getHex(5, 7), map.getHex(6, 7),
+                map.getHex(4, 6), map.getHex(5, 6), map.getHex(6, 6), map.getHex(7, 7)
+            ]));
+        when:
+            result = arbitrator.getUnitForwardArea(formation2, 2);
+        then:
+            assert(result.length).equalsTo(7);
+            assert(new Set(result)).setEqualsTo(new Set([
+                map.getHex(7, 7), map.getHex(7, 8), map.getHex(7, 9),
+                map.getHex(8, 6), map.getHex(8, 7), map.getHex(8, 8), map.getHex(8, 9)
+            ]));
+        when:
+            result = arbitrator.getUnitForwardAreaFromHex(formation2, formation2.hexLocation.fromHex, 2);
+        then:
+            assert(result.length).equalsTo(5);
+            assert(new Set(result)).setEqualsTo(new Set([
+                map.getHex(7, 8), map.getHex(7, 9),
+                map.getHex(8, 7), map.getHex(8, 8), map.getHex(8, 9)
+            ]));
     });
 
     it("Checks units that may be fired on by a given unit", () => {
@@ -888,6 +976,43 @@ describe("Arbitrator", ()=> {
         then:
             assert(result.success).isFalse();
             assert(result.lowerFirerMunitions).isTrue();
+    });
+
+    it("Checks that formation may fire  attack twice but not troops", () => {
+        given:
+            var {arbitrator, map, unit1, unit2, formation2} = create2PlayersTinyFormationGame();
+            var unit1Location = map.getHex(6, 7).getNearHex(60).getNearHex(60);
+            var unit2Location = map.getHex(6, 8).getNearHex(120).getNearHex(120);
+            unit1.angle = 210;
+            unit2.angle = 210;
+            unit1.move(unit1Location, 0);
+            unit2.move(unit2Location, 0);
+        when:
+            var foes = arbitrator.getFoesThatMayBeFireAttacked(unit1);
+        then:
+            assert(foes.length === 1 && foes[0].unit === formation2).isTrue();
+        when: // A troop cannot attack twice
+            unit1.setAttackLocation(map.getHex(6, 6));
+            foes = arbitrator.getFoesThatMayBeFireAttacked(unit1);
+        then:
+            assert(arbitrator.isAllowedToFireAttack(unit1)).isFalse();
+            assert(foes.length).equalsTo(0);
+        when: // A formation can attack twice
+            formation2.setAttackLocation(formation2.hexLocation.getFaceHex(90));
+            foes = arbitrator.getFoesThatMayBeFireAttacked(formation2);
+        then:
+            assert(arbitrator.isAllowedToFireAttack(formation2)).isTrue();
+            assert(foes.length).equalsTo(2);
+        when: // A formation may sometime attack from only one of its hex
+            formation2.setAttackLocation(unit1Location);
+            foes = arbitrator.getFoesThatMayBeFireAttacked(formation2);
+        then:
+            assert(foes.length === 1 && foes[0].unit === unit2).isTrue();
+        when:
+            formation2.setAttackLocation(unit2Location);
+            foes = arbitrator.getFoesThatMayBeFireAttacked(formation2);
+        then:
+            assert(foes.length === 1 && foes[0].unit === unit1).isTrue();
     });
 
     it("Checks get weather", () => {
@@ -1067,6 +1192,366 @@ describe("Arbitrator", ()=> {
             assert(newUnit.remainingStepCount).equalsTo(2);
             assert(newUnit.lackOfMunitions).equalsTo(CBLackOfMunitions.SCARCE);
             assert(newUnit.tiredness).equalsTo(CBTiredness.TIRED);
+    });
+
+    function createTinyFormationAndTroopsForTheSamePlayerGame() {
+        let game = new CBGame();
+        let arbitrator = new CBArbitrator();
+        game.setArbitrator(arbitrator);
+        let player = new CBAbstractPlayer();
+        game.addPlayer(player);
+        let map = new CBMap("/CBlades/images/maps/map.png");
+        game.setMap(map);
+        let wing = new CBWing(player);
+        let unitType1 = new CBUnitType("unit1", [
+                "/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"
+            ],
+            [
+                "/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png",
+                "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png",
+                "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png"
+            ]);
+        let unitType2 = new CBUnitType("unit2", [
+                "/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"
+            ]);
+        let unit1 = new CBTroop(unitType1, wing);
+        game.addUnit(unit1, map.getHex(5, 8));
+        let unit2 = new CBTroop(unitType1, wing);
+        game.addUnit(unit2, map.getHex(5, 6));
+        let unit3 = new CBTroop(unitType2, wing);
+        game.addUnit(unit3, map.getHex(5, 4));
+        let formation = new CBFormation(unitType1, wing);
+        formation.angle = 90;
+        game.addUnit(formation, new CBHexSideId(map.getHex(6, 8), map.getHex(6, 7)));
+        game.start();
+        loadAllImages();
+        return {game, arbitrator, map, unit1, unit2, unit3, formation, wing, player};
+    }
+
+    it("Checks if a formation is allowed to break", () => {
+        given:
+            var {arbitrator, unit1, formation} = createTinyFormationAndTroopsForTheSamePlayerGame();
+            unit1.receiveOrder(true);
+            formation.receiveOrder(true);
+        then:
+            assert(arbitrator.isAllowedToBreakFormation(unit1)).isFalse();
+            assert(arbitrator.isAllowedToBreakFormation(formation)).isTrue();
+        when:
+            formation.receiveOrder(false);
+        then:
+            assert(arbitrator.isAllowedToBreakFormation(formation)).isFalse();
+        when:
+            formation.receiveOrder(true);
+            formation.fixTirednessLevel(CBTiredness.EXHAUSTED);
+        then:
+            assert(arbitrator.isAllowedToBreakFormation(formation)).isFalse();
+        when:
+            formation.fixTirednessLevel(CBTiredness.NONE);
+            formation.disrupt();
+        then:
+            assert(arbitrator.isAllowedToBreakFormation(formation)).isFalse();
+    });
+
+    it("Checks breaking a formation", () => {
+        given:
+            var {arbitrator, formation} = createTinyFormationAndTroopsForTheSamePlayerGame();
+            formation.fixRemainingLossSteps(6);
+        then:
+            var result = arbitrator.getTroopsAfterFormationBreak(formation);
+            assert(result.fromHex.length).equalsTo(2);
+            assert(result.fromHex[0]).is(CBTroop);
+            assert(result.fromHex[0].type).equalsTo(formation.type);
+            assert(result.fromHex[0].remainingStepCount).equalsTo(2);
+            assert(result.fromHex[0].cohesion).equalsTo(CBCohesion.GOOD_ORDER);
+            assert(result.fromHex[0].tiredness).equalsTo(CBTiredness.NONE);
+            assert(result.fromHex[0].lackOfMunitions).equalsTo(CBLackOfMunitions.NONE);
+            assert(result.fromHex[1].remainingStepCount).equalsTo(1);
+            assert(result.toHex.length).equalsTo(2);
+        when:
+            formation.fixRemainingLossSteps(5);
+            formation.disrupt();
+            formation.fixTirednessLevel(CBTiredness.TIRED);
+            formation.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            result = arbitrator.getTroopsAfterFormationBreak(formation);
+            assert(result.fromHex.length).equalsTo(2);
+            assert(result.fromHex[0].remainingStepCount).equalsTo(2);
+            assert(result.fromHex[0].cohesion).equalsTo(CBCohesion.DISRUPTED);
+            assert(result.fromHex[0].tiredness).equalsTo(CBTiredness.TIRED);
+            assert(result.fromHex[0].lackOfMunitions).equalsTo(CBLackOfMunitions.SCARCE);
+            assert(result.fromHex[1].remainingStepCount).equalsTo(1);
+            assert(result.toHex.length).equalsTo(1);
+    });
+
+    it("Checks if a formation is allowed to release troops", () => {
+        given:
+            var {arbitrator, unit1, unit2, formation} = createTinyFormationAndTroopsForTheSamePlayerGame();
+            unit1.receiveOrder(true);
+            formation.receiveOrder(true);
+        then:
+            assert(arbitrator.isAllowedToReleaseTroops(unit1)).isFalse();
+            assert(arbitrator.isAllowedToReleaseTroops(formation)).isTrue();
+        when:
+            formation.receiveOrder(false);
+        then:
+            assert(arbitrator.isAllowedToReleaseTroops(formation)).isFalse();
+        when:
+            formation.receiveOrder(true);
+            formation.fixTirednessLevel(CBTiredness.EXHAUSTED);
+        then:
+            assert(arbitrator.isAllowedToReleaseTroops(formation)).isFalse();
+        when:
+            formation.fixTirednessLevel(CBTiredness.NONE);
+            formation.disrupt();
+        then:
+            assert(arbitrator.isAllowedToReleaseTroops(formation)).isFalse();
+        when:
+            formation.reorganize();
+            formation.fixRemainingLossSteps(3);
+        then:
+            assert(arbitrator.isAllowedToReleaseTroops(formation)).isFalse();
+        when:
+            formation.fixRemainingLossSteps(6);
+        then:
+            assert(arbitrator.isAllowedToReleaseTroops(formation)).isTrue();
+        when:
+            unit1.move(formation.hexLocation.fromHex, 0);
+            unit2.move(formation.hexLocation.toHex, 0);
+        then:
+            assert(arbitrator.isAllowedToReleaseTroops(formation)).isFalse();
+        when:
+            unit1.move(null, 0);
+        then:
+            assert(arbitrator.isAllowedToReleaseTroops(formation)).isTrue();
+        when:
+            unit2.move(formation.hexLocation.fromHex, 0);
+        then:
+            assert(arbitrator.isAllowedToReleaseTroops(formation)).isTrue();
+    });
+
+    it("Checks release troop from a formation", () => {
+        given:
+            var {arbitrator, formation} = createTinyFormationAndTroopsForTheSamePlayerGame();
+            formation.fixRemainingLossSteps(6);
+        then:
+            var result = arbitrator.releaseTroop(formation, formation.fromHex, 2);
+            assert(result.stepCount).equalsTo(4);
+            assert(result.troop).is(CBTroop);
+            assert(result.troop.type).equalsTo(formation.type);
+            assert(result.troop.remainingStepCount).equalsTo(2);
+            assert(result.troop.tiredness).equalsTo(CBTiredness.NONE);
+            assert(result.troop.lackOfMunitions).equalsTo(CBLackOfMunitions.NONE);
+        when:
+            formation.fixRemainingLossSteps(5);
+            formation.disrupt();
+            formation.fixTirednessLevel(CBTiredness.TIRED);
+            formation.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            result = arbitrator.releaseTroop(formation, formation.fromHex, 1);
+            assert(result.stepCount).equalsTo(4);
+            assert(result.troop.remainingStepCount).equalsTo(1);
+            assert(result.troop.tiredness).equalsTo(CBTiredness.TIRED);
+            assert(result.troop.lackOfMunitions).equalsTo(CBLackOfMunitions.SCARCE);
+    });
+
+    it("Checks hexes where a formation may release troops", () => {
+        given:
+            var {arbitrator, formation, unit1, unit2} = createTinyFormationAndTroopsForTheSamePlayerGame();
+        then:
+            var result = arbitrator.getHexesToReleaseFormation(formation);
+            assert(result.stepCount).equalsTo(2);
+            assert(result.hexes).arrayEqualsTo([formation.hexLocation.fromHex, formation.hexLocation.toHex]);
+        when:
+            unit1.move(formation.hexLocation.fromHex, 0);
+            unit2.move(formation.hexLocation.toHex, 0);
+            result = arbitrator.getHexesToReleaseFormation(formation);
+        then:
+            assert(result.hexes).arrayEqualsTo([]);
+        when:
+            unit1.move(null, 0);
+            result = arbitrator.getHexesToReleaseFormation(formation);
+        then:
+            assert(result.hexes).arrayEqualsTo([formation.hexLocation.fromHex]);
+        when:
+            unit2.move(formation.hexLocation.fromHex, 0);
+            result = arbitrator.getHexesToReleaseFormation(formation);
+        then:
+            assert(result.hexes).arrayEqualsTo([formation.hexLocation.toHex]);
+    });
+
+    it("Checks if a formation is allowed to include troops", () => {
+        given:
+            var {arbitrator, unit1, unit2, formation} = createTinyFormationAndTroopsForTheSamePlayerGame();
+            unit1.receiveOrder(true);
+            formation.receiveOrder(true);
+            formation.fixRemainingLossSteps(4);
+            unit1.angle = 90;
+            unit1.move(formation.hexLocation.fromHex, 0);
+            unit2.move(null, 0);
+        then:
+            assert(arbitrator.isAllowedToIncludeTroops(unit1)).isFalse();
+            assert(arbitrator.isAllowedToIncludeTroops(formation)).isTrue();
+        when:
+            formation.receiveOrder(false);
+        then:
+            assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
+        when:
+            formation.receiveOrder(true);
+            formation.fixTirednessLevel(CBTiredness.EXHAUSTED);
+        then:
+            assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
+        when:
+            formation.fixTirednessLevel(CBTiredness.NONE);
+            formation.disrupt();
+        then:
+            assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
+        when:
+            formation.reorganize();
+            unit1.receiveOrder(false);
+        then:
+            assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
+        when:
+            unit1.receiveOrder(true);
+            unit1.fixTirednessLevel(CBTiredness.EXHAUSTED);
+        then:
+            assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
+        when:
+            unit1.fixTirednessLevel(CBTiredness.NONE);
+            unit1.disrupt();
+        then:
+            assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
+        when:
+            unit1.move(null, 0);
+        then:
+            assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
+        when:
+            unit1.move(formation.hexLocation.toHex, 0);
+        then:
+            assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
+        when:
+            unit1.reorganize();
+        then:
+            assert(arbitrator.isAllowedToIncludeTroops(formation)).isTrue();
+    });
+
+    it("Checks a formation including troops", () => {
+        given:
+            var {arbitrator, unit1, unit2, formation} = createTinyFormationAndTroopsForTheSamePlayerGame();
+            unit1.receiveOrder(true);
+            formation.receiveOrder(true);
+            formation.fixRemainingLossSteps(4);
+            unit1.angle = 90;
+            unit1.move(formation.hexLocation.fromHex, 0);
+        when:
+            var result = arbitrator.includeTroops(formation);
+        then:
+            assert(result.stepCount).equalsTo(6);
+            assert(result.lackOfMunitions).equalsTo(CBLackOfMunitions.NONE);
+            assert(result.tired).equalsTo(CBTiredness.NONE);
+            assert(result.removed).arrayEqualsTo([unit1]);
+        when:
+            unit2.angle = 90;
+            unit2.move(formation.hexLocation.toHex, 0);
+            unit2.fixTirednessLevel(CBTiredness.TIRED);
+            unit2.fixLackOfMunitionsLevel(CBLackOfMunitions.EXHAUSTED);
+        when:
+            var result = arbitrator.includeTroops(formation);
+        then:
+            assert(result.stepCount).equalsTo(8);
+            assert(result.lackOfMunitions).equalsTo(CBLackOfMunitions.EXHAUSTED);
+            assert(result.tired).equalsTo(CBTiredness.TIRED);
+            assert(result.removed).arrayEqualsTo([unit1, unit2]);
+    });
+
+    it("Checks if troops may be merged to create a formation", () => {
+        given:
+            var {arbitrator, unit1, unit2, unit3, formation, map} = createTinyFormationAndTroopsForTheSamePlayerGame();
+            unit1.receiveOrder(true);
+            unit1.angle = 90;
+            unit1.move(map.getHex(3, 4), 0);
+            unit2.receiveOrder(true);
+            unit2.angle = 90;
+            unit2.move(map.getHex(3, 5), 0);
+        then:
+            assert(arbitrator.isAllowedToCreateFormation(unit1)).isTrue();
+            assert(arbitrator.isAllowedToCreateFormation(unit2)).isTrue();
+        when:
+            unit1.receiveOrder(false);
+        then:
+            assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
+            assert(arbitrator.isAllowedToCreateFormation(unit2)).isFalse();
+        when:
+            unit1.receiveOrder(true);
+            unit1.fixTirednessLevel(CBTiredness.EXHAUSTED);
+        then:
+            assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
+            assert(arbitrator.isAllowedToCreateFormation(unit2)).isFalse();
+        when:
+            unit1.fixTirednessLevel(CBTiredness.NONE);
+            unit1.disrupt();
+        then:
+            assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
+            assert(arbitrator.isAllowedToCreateFormation(unit2)).isFalse();
+        when:
+            unit1.reorganize();
+        then:
+            assert(arbitrator.isAllowedToCreateFormation(unit1)).isTrue();
+            assert(arbitrator.isAllowedToCreateFormation(unit2)).isTrue();
+        when:
+            unit1.angle = 30;
+        then:
+            assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
+            assert(arbitrator.isAllowedToCreateFormation(unit2)).isFalse();
+        when:
+            unit1.angle = 60;
+            unit1.angle = 60;
+        then:
+            assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
+            assert(arbitrator.isAllowedToCreateFormation(unit2)).isFalse();
+        when:
+            unit1.angle = 90;
+            unit2.angle = 90;
+            unit2.markAsBeingPlayed();
+        then:
+            assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
+        when:
+            unit1.angle = 90;
+            unit2.move(null, 0);
+            unit3.move(map.getHex(3, 5), 0);
+            unit3.receiveOrder(true);
+        then:
+            assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
+        when:
+            unit3.move(null, 0);
+            formation.move(new CBHexSideId(map.getHex(3, 5), map.getHex(3, 6)), 0);
+            formation.receiveOrder(true);
+        then:
+            assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
+    });
+
+    it("Checks formation creation", () => {
+        given:
+            var {arbitrator, unit1, unit2, map} = createTinyFormationAndTroopsForTheSamePlayerGame();
+            unit1.receiveOrder(true);
+            unit1.angle = 90;
+            unit1.move(map.getHex(3, 4), 0);
+            unit2.receiveOrder(true);
+            unit2.angle = 90;
+            unit2.move(map.getHex(3, 5), 0);
+        when:
+            var result = arbitrator.createFormation(unit1, unit2.hexLocation);
+        then:
+            assert(result.replaced).unorderedArrayEqualsTo([unit1, unit2]);
+            assert(result.replacement).is(CBFormation);
+            assert(result.replacement.type).equalsTo(unit1.type);
+            assert(result.replacement.remainingStepCount).equalsTo(4);
+            assert(result.replacement.tiredness).equalsTo(CBTiredness.NONE);
+            assert(result.replacement.lackOfMunitions).equalsTo(CBLackOfMunitions.NONE);
+        when:
+            unit1.fixTirednessLevel(CBTiredness.TIRED);
+            unit2.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            result = arbitrator.createFormation(unit1, unit2.hexLocation);
+        then:
+            assert(result.replacement.tiredness).equalsTo(CBTiredness.TIRED);
+            assert(result.replacement.lackOfMunitions).equalsTo(CBLackOfMunitions.SCARCE);
     });
 
 });

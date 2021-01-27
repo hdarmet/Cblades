@@ -285,11 +285,12 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return { retreatDirections, rotateDirections }
     }
 
-    _collectFoes(foes, unit, hex, more) {
+    _collectFoes(foes, foesSet, unit, hex, more) {
         let units = hex.units;
         if (units.length) {
             let nearUnit = units[0];
-            if (this.areUnitsFoes(unit, nearUnit)) {
+            if (!foesSet.has(nearUnit) && this.areUnitsFoes(unit, nearUnit)) {
+                foesSet.add(nearUnit);
                 foes.push({unit:nearUnit, ...more});
             }
         }
@@ -304,29 +305,32 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     _getForwardZoneThatMayBeSchockAttached(unit) {
-        if (!unit.isFormation || !unit.hasAttacked()) {
+        if (!unit.hasAttacked()) {
             return this.getUnitForwardZone(unit);
         }
         else {
-            let fromHexAttack = this.isHexMayBeShockAttackedFromHex(unit, unit.hexLocation.fromHex, unit.attackLocation);
-            let toHexAttack = this.isHexMayBeShockAttackedFromHex(unit, unit.hexLocation.toHex, unit.attackLocation);
-            if (fromHexAttack === toHexAttack) {
-                return this.getUnitForwardZone(unit);
+            if (unit.isFormation) {
+                let fromHexAttack = this.isHexMayBeShockAttackedFromHex(unit, unit.hexLocation.fromHex, unit.attackLocation);
+                let toHexAttack = this.isHexMayBeShockAttackedFromHex(unit, unit.hexLocation.toHex, unit.attackLocation);
+                if (fromHexAttack === toHexAttack) {
+                    return this.getUnitForwardZone(unit);
+                } else {
+                    if (toHexAttack)
+                        return this.getUnitForwardZoneFromHex(unit, unit.hexLocation.fromHex);
+                    else
+                        return this.getUnitForwardZoneFromHex(unit, unit.hexLocation.toHex);
+                }
             }
-            else {
-                if (toHexAttack)
-                    return this.getUnitForwardZoneFromHex(unit, unit.hexLocation.fromHex);
-                else
-                    return this.getUnitForwardZoneFromHex(unit, unit.hexLocation.toHex);
-            }
+            else return {};
         }
     }
 
     getFoesThatMayBeShockAttacked(unit) {
         let zones = this._getForwardZoneThatMayBeSchockAttached(unit);
         let foes = [];
+        let foesSet = new Set();
         for (let angle in zones) {
-            this._collectFoes(foes, unit, zones[angle].hex, {supported:!unit.isExhausted()});
+            this._collectFoes(foes, foesSet, unit, zones[angle].hex, {supported:!unit.isExhausted()});
         }
         return foes;
     }
@@ -349,29 +353,32 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     _getForwardZoneThatMayBeFireAttached(unit, range) {
-        if (!unit.isFormation || !unit.hasAttacked()) {
+        if (!unit.hasAttacked()) {
             return this.getUnitForwardArea(unit, range);
         }
         else {
-            let fromHexAttack = this.isHexMayBeFireAttackedFromHex(unit, range, unit.hexLocation.fromHex, unit.attackLocation);
-            let toHexAttack = this.isHexMayBeFireAttackedFromHex(unit, range, unit.hexLocation.toHex, unit.attackLocation);
-            if (fromHexAttack === toHexAttack) {
-                return this.getUnitForwardArea(unit, range);
+            if (unit.isFormation) {
+                let fromHexAttack = this.isHexMayBeFireAttackedFromHex(unit, range, unit.hexLocation.fromHex, unit.attackLocation);
+                let toHexAttack = this.isHexMayBeFireAttackedFromHex(unit, range, unit.hexLocation.toHex, unit.attackLocation);
+                if (fromHexAttack === toHexAttack) {
+                    return this.getUnitForwardArea(unit, range);
+                } else {
+                    if (toHexAttack)
+                        return this.getUnitForwardAreaFromHex(unit, unit.hexLocation.fromHex, range);
+                    else
+                        return this.getUnitForwardAreaFromHex(unit, unit.hexLocation.toHex, range);
+                }
             }
-            else {
-                if (toHexAttack)
-                    return this.getUnitForwardAreaFromHex(unit, unit.hexLocation.fromHex, range);
-                else
-                    return this.getUnitForwardAreaFromHex(unit, unit.hexLocation.toHex, range);
-            }
+            else return [];
         }
     }
 
     getFoesThatMayBeFireAttacked(unit) {
         let hexes = this._getForwardZoneThatMayBeFireAttached(unit, 3);
         let foes = [];
+        let foesSet = new Set();
         for (let hex of hexes) {
-            this._collectFoes(foes, unit, hex, {});
+            this._collectFoes(foes, foesSet, unit, hex, {});
         }
         return foes;
     }
@@ -718,26 +725,26 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return { replacement:mergedUnit, replaced:units };
     }
 
-    troopsAfterFormationBreak(unit) {
+    getTroopsAfterFormationBreak(formation) {
 
         function createTroops(steps) {
             let troops = [];
             while (steps) {
-                let troop = new CBTroop(unit.type, unit.wing);
-                troop.angle = unit.angle;
-                let maxSteps = unit.type.getTroopMaxStepCount();
+                let troop = new CBTroop(formation.type, formation.wing);
+                troop.angle = formation.angle;
+                let maxSteps = formation.type.getTroopMaxStepCount();
                 let unitSteps = steps>=maxSteps?maxSteps:steps;
                 troop.fixRemainingLossSteps(unitSteps);
                 steps -= unitSteps;
-                if (unit.isDisrupted()) troop.disrupt();
-                if (unit.isTired()) troop.fixTirednessLevel(CBTiredness.TIRED);
-                if (unit.lackOfMunitions) troop.fixLackOfMunitionsLevel(unit.lackOfMunitions);
+                if (formation.isDisrupted()) troop.disrupt();
+                if (formation.isTired()) troop.fixTirednessLevel(CBTiredness.TIRED);
+                if (formation.lackOfMunitions) troop.fixLackOfMunitionsLevel(formation.lackOfMunitions);
                 troops.push(troop);
             }
             return troops;
         }
 
-        let steps = unit.remainingStepCount;
+        let steps = formation.remainingStepCount;
         let fromHexUnits = createTroops(Math.ceil(steps/2));
         let toHexUnits = createTroops(Math.floor(steps/2));
         return { fromHex:fromHexUnits, toHex:toHexUnits };
@@ -798,8 +805,8 @@ export class CBArbitrator extends CBAbstractArbitrator{
         }
         let replacement = new CBFormation(unit.type, unit.wing, Math.ceil(stepCount/2));
         for (let troop of replaced) {
-            if (troop.isTired()&& replacement.isTired()) replacement.fixTirednessLevel(CBTiredness.TIRED);
-            if (troop.lackOfMunitions < replacement.lackOfMunitions) replacement.fixLackOfMunitionsLevel(troop.lackOfMunitions);
+            if (troop.isTired()&& !replacement.isTired()) replacement.fixTirednessLevel(CBTiredness.TIRED);
+            if (troop.lackOfMunitions > replacement.lackOfMunitions) replacement.fixLackOfMunitionsLevel(troop.lackOfMunitions);
         }
         replacement.fixRemainingLossSteps(stepCount);
         return { replacement, replaced };
@@ -814,6 +821,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
 
     isAllowedToIncludeTroops(formation) {
         if (!formation.isFormation || !this._isUnitJoinable(formation, formation)) return false;
+        if (formation.hexLocation.fromHex.units.length===1 && formation.hexLocation.toHex.units.length===1) return false;
         if (!this._isUnitsOnHexMayJoin(formation, formation.hexLocation.fromHex)) return false;
         if (!this._isUnitsOnHexMayJoin(formation, formation.hexLocation.toHex)) return false;
         return true;
@@ -828,8 +836,8 @@ export class CBArbitrator extends CBAbstractArbitrator{
         var tired = CBTiredness.NONE;
         var lackOfMunitions = CBLackOfMunitions.NONE;
         for (let unit of removed) {
-            if (unit.isTired()&& formation.isTired()) tired = CBTiredness.TIRED;
-            if (unit.lackOfMunitions < formation.lackOfMunitions) lackOfMunitions = unit.lackOfMunitions;
+            if (unit.isTired() && !formation.isTired()) tired = CBTiredness.TIRED;
+            if (unit.lackOfMunitions > formation.lackOfMunitions) lackOfMunitions = unit.lackOfMunitions;
         }
         removed.delete(formation);
         return { stepCount, tired, lackOfMunitions, removed:[...removed] };
@@ -857,7 +865,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         troop.fixRemainingLossSteps(steps);
         let stepCount = formation.remainingStepCount - steps;
         if (formation.isTired()) troop.fixTirednessLevel(CBTiredness.TIRED);
-        if (formation.lackOfMunitions) troop.fixLackOfMunitionsLevel(unit.lackOfMunitions);
+        if (formation.lackOfMunitions) troop.fixLackOfMunitionsLevel(formation.lackOfMunitions);
         return { stepCount, troop };
     }
 

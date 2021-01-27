@@ -53,7 +53,7 @@ export class InteractiveBreakFormationAction extends CBAction {
 
     play() {
         this.game.closeActuators();
-        let {fromHex, toHex} = this.game.arbitrator.troopsAfterFormationBreak(this.unit);
+        let {fromHex, toHex} = this.game.arbitrator.getTroopsAfterFormationBreak(this.unit);
         this.unit.breakFormation(fromHex, toHex);
         for (let replacement of fromHex) {
             replacement.markAsBeingPlayed();
@@ -135,8 +135,7 @@ export class InteractiveReleaseTroopsAction extends CBAction {
         troop.angle = this.unit.angle;
         troop.markAsBeingPlayed();
         this.unit.fixRemainingLossSteps(stepCount);
-        steps -= troop.remainingStepCount;
-        if (stepCount>0) {
+        if (this.game.arbitrator.isAllowedToReleaseTroops(this.unit)) {
             this.markAsStarted();
             this._createReleaseTroopActuator();
         }
