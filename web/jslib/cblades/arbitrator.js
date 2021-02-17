@@ -40,8 +40,8 @@ export class CBArbitrator extends CBAbstractArbitrator{
             leaveCommand:this.isAllowedToDismissCommand(unit),
             changeOrders:this.isAllowedToChangeOrderInstruction(unit),
             giveSpecificOrders:this.isAllowedToGiveOrders(unit),
-            prepareSpell:true,
-            castSpell:true,
+            prepareSpell:this.isAllowedToChoseSpell(unit),
+            castSpell:this.isAllowedToCastSpell(unit),
             mergeUnit:this.isAllowedToMerge(unit),
             miscAction:true
         }
@@ -90,6 +90,26 @@ export class CBArbitrator extends CBAbstractArbitrator{
             hexes.set(hexId.getNearHex(angle), angle);
         }
         return hexes;
+    }
+
+    get360Area(hex, range) {
+        function processHex(areaMap, hex, distance) {
+            if (hex && (!areaMap.has(hex) || areaMap.get(hex)>distance)) {
+                areaMap.set(hex, distance);
+                if (distance < range-1) {
+                    for (let angle=0; angle<360; angle+=60) {
+                        processHex(areaMap, hex.getNearHex(angle), distance + 1);
+                    }
+                }
+            }
+        }
+        let areaMap = new Map();
+        processHex(areaMap, hex, 0);
+        let result = [];
+        for (let entry of areaMap.entries()) {
+            result.push({hex:entry[0], distance:entry[1]});
+        }
+        return result;
     }
 
     getUnitAdjacentZone(unit) {
@@ -214,20 +234,16 @@ export class CBArbitrator extends CBAbstractArbitrator{
 
     getRetreatZones(unit, attacker) {
 
-        function processZone(zone, arbitrator, unit, moveType) {
-            let nearUnits = zone.hex.units;
+        function processZone(zone, unit, moveType) {
             zone.moveType = moveType;
-            if (nearUnits.length) {
-                if (arbitrator.areUnitsFoes(unit, nearUnits[0])) return false;
-            }
-            return true;
+            return !this.doesHexContainFoes(unit, zone.hex);
         }
 
         function processZones(result, zones, moveType, forbiddenZones) {
             for (let angle in zones) {
                 let zone = zones[angle];
                 if (!forbiddenZones.has(zone.hex)) {
-                    if (processZone(zone, this, unit, moveType)) {
+                    if (processZone.call(this, zone, this, unit, moveType)) {
                         result[angle] = zone;
                     }
                 }
@@ -394,9 +410,8 @@ export class CBArbitrator extends CBAbstractArbitrator{
 
     _processMovementOpportunity(direction, hexes, unit, cost, first) {
         for (let hex of hexes) {
-            let nearUnits = hex.units;
-            if (nearUnits.length) {
-                if (this.areUnitsFoes(unit, nearUnits[0])) return false;
+            if (this.doesHexContainFoes(unit, hex)) {
+                return false;
             }
         }
         if (unit.movementPoints>=cost) {
@@ -606,15 +621,32 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return this.arePlayersFoes(unit1.player, unit2.player);
     }
 
+    areUnitsFriends(unit1, unit2) {
+        return unit1.player === unit2.player;
+    }
+
+    doesHexContainFoes(unit, hex) {
+        let units = hex.units;
+        if (units.length) {
+            if (this.areUnitsFoes(unit, units[0])) return true;
+        }
+        return false;
+    }
+
+    doesHexContainFriends(unit, hex) {
+        let units = hex.units;
+        if (units.length) {
+            if (this.areUnitsFriends(unit, units[0])) return true;
+        }
+        return false;
+    }
+
     isUnitOnContact(unit) {
         let directions = this.getUnitForwardZone(unit);
         for (let angle in directions) {
             let direction = directions[angle];
-            let nearUnits = direction.hex.map.getUnitsOnHex(direction.hex);
-            if (nearUnits.length) {
-                if (this.areUnitsFoes(nearUnits[length], unit)) {
-                    return true;
-                }
+            if (this.doesHexContainFoes(unit, direction.hex)) {
+                return true;
             }
         }
         return false;
@@ -869,4 +901,75 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return { stepCount, troop };
     }
 
+    isAllowedToChoseSpell(unit) {
+        return unit.isCharacter;
+    }
+
+    isAllowedToCastSpell(unit) {
+        return unit.isCharacter && unit.hasChosenSpell();
+    }
+
+    getAllowedSpells(unit) {
+        return [
+            "firePentacle1",
+            "firePentacle2",
+            "firePentacle3",
+            "fireCircle1",
+            "fireCircle2",
+            "fireCircle3",
+            "fireball1",
+            "fireball2",
+            "fireball3",
+            "firesword1",
+            "firesword2",
+            "firesword3",
+            "blaze1",
+            "blaze2",
+            "blaze3",
+            "rainfire1",
+            "rainfire2",
+            "rainfire3"
+        ]
+    }
+
+    processCastSpellResult(leader, diceResult) {
+        let success = diceResult[0]+diceResult[1]<=8;
+        return { success };
+    }
+
+    getFoesThatMayBeTargetedBySpell(wizard) {
+        let hexes = [];
+        let area = this.get360Area(wizard.hexLocation, 6);
+        for (let zone of area) {
+            if (this.doesHexContainFoes(wizard, zone.hex)) {
+                hexes.push(zone.hex);
+            }
+        }
+        return hexes;
+    }
+
+    getFriendsThatMayBeTargetedBySpell(wizard) {
+        let hexes = [];
+        let area = this.get360Area(wizard.hexLocation, 6);
+        for (let zone of area) {
+            if (this.doesHexContainFriends(wizard, zone.hex)) {
+                hexes.push(zone.hex);
+            }
+        }
+        return hexes;
+    }
+
+    getHexesThatMayBeTargetedBySpell(wizard) {
+        let hexes = [];
+        let area = this.get360Area(wizard.hexLocation, 6);
+        for (let zone of area) {
+            hexes.push(zone.hex);
+        }
+        return hexes;
+    }
+
+    resolveFireball(spell, diceResult) {
+        let success = diceResult[0]+diceResult[1]<=8;
+        return { success, losses:success?1:0 };
+    }
 }

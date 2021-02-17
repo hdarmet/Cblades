@@ -285,10 +285,13 @@ export class CBGame {
     constructor() {
 
         function createSlot(slotIndex) {
-            let delta = Matrix2D.translate(new Point2D(slotIndex*15, -slotIndex*15));
+            let delta = Matrix2D.translate(new Point2D(slotIndex*20, -slotIndex*20));
+            let formationDelta = Matrix2D.translate(new Point2D(slotIndex*20-10, -slotIndex*20+10));
             return [
-                new DTranslateLayer("formations-"+slotIndex, delta),
+                new DTranslateLayer("spells-"+slotIndex, delta),
+                new DTranslateLayer("formations-"+slotIndex, slotIndex?formationDelta:delta),
                 new DTranslateLayer("units-"+slotIndex, delta),
+                new DTranslateLayer("options-"+slotIndex, delta),
                 new DTranslateLayer("markers-"+slotIndex, delta)
             ]
         }
@@ -298,10 +301,15 @@ export class CBGame {
             if (counter.isUnit) {
                 return counter.slot;
             }
+            else if (counter.isSpell) {
+                return counter.unit.slot;
+            }
             else return 0;
         }
 
-        function getUnitArtifactLayer(artifact, [formationsLayer, unitsLayer, markersLayer]) {
+        function getUnitArtifactLayer(artifact, [spellsLayer, formationsLayer, unitsLayer, optionsLayer, markersLayer]) {
+            if (artifact.option) return optionsLayer;
+            if (artifact.spell) return spellsLayer;
             if (!artifact.unit) return markersLayer;
             return artifact.unit.isFormation ? formationsLayer : unitsLayer;
         }
@@ -700,6 +708,14 @@ export class CBHexId {
 
     get units() {
         return this._map.getUnitsOnHex(this);
+    }
+
+    get counters() {
+        let counters = [];
+        for (let unit of this.units) {
+            counters.push(...unit.counters);
+        }
+        return counters;
     }
 
     // TODO : add map ref
@@ -1102,22 +1118,128 @@ export class CBCounterImageArtifact extends DMultiImageArtifact {
             level.setShadowSettings("#000000", 15);
         }
     }
+
+    onMouseEnter(event) {
+    }
+
+    onMouseLeave(event) {
+    }
+
+    appear() {
+        this.alpha = 1;
+    }
+
+    retract() {
+        this.alpha = 0;
+    }
+}
+
+function SelectableMixin(clazz) {
+
+    return class extends clazz {
+        constructor(...args) {
+            super(...args);
+        }
+
+        get selectedSettings() {
+            return level=>{
+                level.setShadowSettings("#FF0000", 15);
+            }
+        }
+
+        get overSettings() {
+            return level=>{
+                level.setShadowSettings("#00FFFF", 15);
+            }
+        }
+
+        unselect() {
+            Memento.register(this);
+            this.changeSettings(this.settings);
+        }
+
+        select() {
+            Memento.register(this);
+            this.changeSettings(this.selectedSettings);
+        }
+
+        onMouseEnter(event) {
+            super.onMouseEnter(event);
+            if (this.game.selectedUnit!==this.unit && this.game.canSelectUnit(this.unit)) {
+                this.setSettings(this.overSettings);
+            }
+        }
+
+        onMouseLeave(event) {
+            super.onMouseLeave(event);
+            if (this.game.selectedUnit!==this.unit && this.game.canSelectUnit(this.unit)) {
+                this.setSettings(this.settings);
+            }
+        }
+    }
+}
+
+export function RetractableMixin(clazz) {
+
+    return class extends clazz {
+        constructor(...args) {
+            super(...args);
+        }
+
+        onMouseEnter(event) {
+            function retract(hexId) {
+                let counters = hexId.counters;
+                let first = counters.indexOf(this.counter);
+                for (let index=first+1; index<counters.length; index++) {
+                    counters[index].retract();
+                }
+            }
+            super.onMouseEnter(event);
+            if (this.counter.hexLocation instanceof CBHexId) {
+                retract.call(this, this.counter.hexLocation);
+            }
+            else if (this.counter.hexLocation instanceof CBHexSideId) {
+                retract.call(this, this.counter.hexLocation.fromHex);
+                retract.call(this, this.counter.hexLocation.toHex);
+            }
+        }
+
+        onMouseLeave(event) {
+            function appear(hexId) {
+                let counters = hexId.counters;
+                let first = counters.indexOf(this.counter);
+                for (let index=first+1; index<counters.length; index++) {
+                    counters[index].appear();
+                }
+            }
+            super.onMouseLeave(event);
+            if (this.counter.hexLocation instanceof CBHexId) {
+                appear.call(this, this.counter.hexLocation);
+            }
+            else if (this.counter.hexLocation instanceof CBHexSideId) {
+                appear.call(this, this.counter.hexLocation.fromHex);
+                appear.call(this, this.counter.hexLocation.toHex);
+            }
+        }
+
+    }
 }
 
 export class CBCounter {
 
-    constructor(...args) {
-        this._imageArtifact = this.createArtifact(...args);
-        this._element = new DElement(this._imageArtifact);
-        this._element._unit = this;
-    }
-
-    createArtifact(paths, dimension) {
+    constructor(levelName, paths, dimension) {
+        this._levelName = levelName;
         this._images = [];
         for (let path of paths) {
             this._images.push(DImage.getImage(path));
         }
-        return new CBCounterImageArtifact(this, "units", this._images, new Point2D(0, 0), dimension);
+        this._imageArtifact = this.createArtifact(this._levelName, this._images, new Point2D(0, 0), dimension);
+        this._element = new DElement(this._imageArtifact);
+        this._element._unit = this;
+    }
+
+    createArtifact(levelName, images, location, dimension) {
+        return new CBCounterImageArtifact(this, levelName, images, location, dimension);
     }
 
     get artifact() {
@@ -1128,8 +1250,12 @@ export class CBCounter {
         return this._element.angle;
     }
 
-    set angle(angle) {
+    _setAngle(angle) {
         this._element.setAngle(angle);
+    }
+
+    set angle(angle) {
+        this._setAngle(angle);
     }
 
     get location() {
@@ -1140,8 +1266,12 @@ export class CBCounter {
         return this.artifact.viewportLocation;
     }
 
-    set location(location) {
+    _setLocation(location) {
         this._element.setLocation(location);
+    }
+
+    set location(location) {
+        this._setLocation(location);
     }
 
     get element() {
@@ -1159,9 +1289,29 @@ export class CBCounter {
     get game() {
         return this._game;
     }
+
+    isShown() {
+        return !!this._element.board;
+    }
+
+    show(game) {
+        this._element.show(game.board);
+    }
+
+    hide() {
+        this._element.hide();
+    }
+
+    appear() {
+        this._imageArtifact.appear();
+    }
+
+    retract() {
+        this._imageArtifact.retract();
+    }
 }
 
-class UnitImageArtifact extends CBCounterImageArtifact {
+class UnitImageArtifact extends RetractableMixin(SelectableMixin(CBCounterImageArtifact)) {
 
     constructor(unit, ...args) {
         super(unit, ...args);
@@ -1175,60 +1325,22 @@ class UnitImageArtifact extends CBCounterImageArtifact {
         return this.unit.game;
     }
 
-    get selectedSettings() {
-        return level=>{
-            level.setShadowSettings("#FF0000", 15);
-        }
-    }
-
-    get overSettings() {
-        return level=>{
-            level.setShadowSettings("#00FFFF", 15);
-        }
-    }
-
-    unselect() {
-        Memento.register(this);
-        this.changeSettings(this.settings);
-    }
-
-    select() {
-        Memento.register(this);
-        this.changeSettings(this.selectedSettings);
-    }
-
-    onMouseEnter(event) {
-        if (this.game.selectedUnit!==this.unit && this.game.canSelectUnit(this.unit)) {
-            this.setSettings(this.overSettings);
-        }
-    }
-
-    onMouseLeave(event) {
-        if (this.game.selectedUnit!==this.unit && this.game.canSelectUnit(this.unit)) {
-            this.setSettings(this.settings);
-        }
-    }
-
 }
 
 export class CBAbstractUnit extends CBCounter {
 
     constructor(paths, dimension) {
-        super(paths, dimension);
+        super("units", paths, dimension);
     }
 
-    createArtifact(paths, dimension) {
-        this._images = [];
-        for (let path of paths) {
-            this._images.push(DImage.getImage(path));
-        }
-        return new UnitImageArtifact(this,"units", this._images, new Point2D(0, 0), dimension);
+    createArtifact(levelName, images, location, dimension) {
+        return new UnitImageArtifact(this, levelName, images, location, dimension);
     }
 
     _memento() {
         return {
             hexLocation: this._hexLocation,
-            action: this._action,
+            action: this._action
         };
     }
 
@@ -1290,6 +1402,16 @@ export class CBAbstractUnit extends CBCounter {
         }
     }
 
+    _getCounters() {
+        return [
+            this
+        ];
+    }
+
+    get counters() {
+        return this._getCounters();
+    }
+
     onMouseClick(event) {
         this.player.changeSelection(this, event);
     }
@@ -1320,7 +1442,7 @@ export class CBAbstractUnit extends CBCounter {
         Memento.register(this);
         this._hexLocation = hexId;
         hexId.hex.appendUnit(this, moveType);
-        this._element.show(hexId.map.game.board);
+        this.show(hexId.map.game);
         this._element.move(hexId.location);
     }
 
@@ -1328,7 +1450,7 @@ export class CBAbstractUnit extends CBCounter {
         console.assert(this._hexLocation);
         Memento.register(this);
         this._hexLocation.hex.deleteUnit(this);
-        this._element.hide(this._hexLocation.map.game.board);
+        this._element.hide();
         delete this._hexLocation;
     }
 

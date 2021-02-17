@@ -80,10 +80,10 @@ export class InteractiveRestingAction extends CBAction {
                 dice.active = false;
                 let {success, minorRestingCapacity} = this._processRestResult(this.unit, dice.result);
                 if (success) {
-                    result.success().show();
+                    result.success().appear();
                 }
                 else {
-                    result.failure().show();
+                    result.failure().appear();
                 }
             }),
             new Point2D(CBRestInsert.DIMENSION.w/2+40, 0)
@@ -129,10 +129,10 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
                 dice.active = false;
                 let {success} = this._processReplenishMunitionsResult(this.unit, dice.result);
                 if (success) {
-                    result.success().show();
+                    result.success().appear();
                 }
                 else {
-                    result.failure().show();
+                    result.failure().appear();
                 }
             }),
             new Point2D(CBReplenishMunitionsInsert.DIMENSION.w/2+40, 0)
@@ -180,10 +180,10 @@ export class InteractiveReorganizeAction extends CBAction {
                 dice.active = false;
                 let {success} = this._processReorganizeResult(this.unit, dice.result);
                 if (success) {
-                    result.success().show();
+                    result.success().appear();
                 }
                 else {
-                    result.failure().show();
+                    result.failure().appear();
                 }
             }),
             new Point2D(50, 0)
@@ -231,10 +231,10 @@ export class InteractiveRallyAction extends CBAction {
                 dice.active = false;
                 let {success} = this._processRallyResult(this.unit, dice.result);
                 if (success) {
-                    result.success().show();
+                    result.success().appear();
                 }
                 else {
-                    result.failure().show();
+                    result.failure().appear();
                 }
             }),
             new Point2D(50, 0)

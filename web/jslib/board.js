@@ -83,18 +83,21 @@ export class DArtifact extends LocalisationAware(Object) {
 
     _memento() {
         let memento = {
+            levelName: this._levelName,
             level: this._level,
             element: this._element,
             position:this._position,
             pangle:this._pangle,
             alpha:this._alpha,
             location:this._location,
-            angle:this._angle
+            angle:this._angle,
+            settings:this._settings
         }
         return memento;
     }
 
     _revert(memento) {
+        this._levelName = memento.levelName;
         this._level && this._level.invalidate();
         this._level = memento.level;
         this._level && this._level.invalidate();
@@ -104,6 +107,7 @@ export class DArtifact extends LocalisationAware(Object) {
         this._alpha = memento.alpha;
         this._location = memento.location;
         this._angle = memento.angle;
+        this._settings = memento.settings;
     }
 
     refresh() {
@@ -142,6 +146,19 @@ export class DArtifact extends LocalisationAware(Object) {
             this._level.setAlphaSettings(this._alpha);
         }
         this._paint();
+    }
+
+    changeLevel(levelName) {
+        console.assert(this._level);
+        Memento.register(this);
+        this._level.hideArtifact(this);
+        this._levelName = levelName;this._level = this.board.getLevel(this._levelName);
+        this._level.showArtifact(this);
+    }
+
+    shift(position) {
+        Memento.register(this);
+        this.position = position;
     }
 
     move(location, angle) {
@@ -188,6 +205,7 @@ export class DArtifact extends LocalisationAware(Object) {
         if (this.element) {
             this.setLocation(this.element.location, this.element.angle);
         }
+        this.refresh();
     }
 
     get position() {
@@ -199,6 +217,7 @@ export class DArtifact extends LocalisationAware(Object) {
         if (this.element) {
             this.setLocation(this.element.location, this.element.angle);
         }
+        this.refresh();
     }
 
     get pangle() {
@@ -221,7 +240,7 @@ export class DArtifact extends LocalisationAware(Object) {
         else {
             delete this._settings;
         }
-        this._level && this.refresh();
+        this.refresh();
     }
 
     changeSettings(settings) {
@@ -1053,28 +1072,15 @@ export class DBoard {
             }
             if (!processed) {
                 let offset = new Point2D(event.offsetX, event.offsetY);
-                let artifacts = this.getAllArtifactsOnPoint(offset);
-
-                for (let artifact of artifacts) {
-                    if (this._enteredArtifacts && this._enteredArtifacts.has(artifact)) {
-                        this._enteredArtifacts.delete(artifact);
-                    } else {
-                        artifact.onMouseEnter && artifact.onMouseEnter(event);
+                let artifact = this.getArtifactOnPoint(offset);
+                if (artifact !== this._mouseOverArtifact) {
+                    if (this._mouseOverArtifact) {
+                        this._mouseOverArtifact.onMouseLeave && this._mouseOverArtifact.onMouseLeave(event);
                     }
-                    if (artifact.onMouseMove) {
-                        artifact.onMouseMove(event);
+                    this._mouseOverArtifact = artifact;
+                    if (this._mouseOverArtifact) {
+                        this._mouseOverArtifact.onMouseEnter && this._mouseOverArtifact.onMouseEnter(event);
                     }
-                }
-                if (this._enteredArtifacts) {
-                    for (let artifact of this._enteredArtifacts) {
-                        artifact.onMouseLeave && artifact.onMouseLeave(event);
-                    }
-                }
-                if (artifacts.length) {
-                    this._enteredArtifacts = new Set(artifacts);
-                }
-                else {
-                    delete this._enteredArtifacts;
                 }
             }
             this.paint();

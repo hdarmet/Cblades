@@ -93,10 +93,10 @@ export class InteractiveMovementAction extends CBAction {
                 dice.active = false;
                 let {success} = this._processAttackerEngagementResult(dice.result);
                 if (success) {
-                    result.success().show();
+                    result.success().appear();
                 }
                 else {
-                    result.failure().show();
+                    result.failure().appear();
                 }
             }),
             new Point2D(70, 70)

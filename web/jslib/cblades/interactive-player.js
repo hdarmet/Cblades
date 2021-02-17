@@ -96,10 +96,10 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
                 dice.active = false;
                 let {success} = this._processDefenderEngagementResult(unit, dice.result);
                 if (success) {
-                    result.success().show();
+                    result.success().appear();
                 }
                 else {
-                    result.failure().show();
+                    result.failure().appear();
                 }
             }),
             new Point2D(70, 70)
@@ -151,7 +151,9 @@ export class CBActionMenu extends DIconMenu {
     }
 
     closeMenu() {
-        this._game.closePopup();
+        if (this._game.popup === this) {
+            this._game.closePopup();
+        }
     }
 }
 CBActionMenu.menuBuilders = [];

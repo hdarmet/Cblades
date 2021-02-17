@@ -156,11 +156,11 @@ export class InteractiveShockAttackAction extends CBAction {
                     }
                 }
                 if (report.success) {
-                    result.success().show();
+                    result.success().appear();
                     foe.player.applyLossesToUnit(foe, result.lossesForDefender, this.unit, continuation);
                 }
                 else {
-                    result.failure().show();
+                    result.failure().appear();
                     continuation();
                 }
             }),
@@ -238,11 +238,11 @@ export class InteractiveFireAttackAction extends CBAction {
                     }
                 }
                 if (report.success) {
-                    result.success().show();
+                    result.success().appear();
                     foe.player.applyLossesToUnit(foe, result.lossesForDefender, this.unit, continuation);
                 }
                 else {
-                    result.failure().show();
+                    result.failure().appear();
                     continuation();
                 }
             }),

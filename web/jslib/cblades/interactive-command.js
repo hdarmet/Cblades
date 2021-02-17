@@ -96,10 +96,10 @@ export class InteractiveTakeCommandAction extends CBAction {
                 dice.active = false;
                 let {success} = this._processTakeCommandResult(dice.result);
                 if (success) {
-                    result.success().show();
+                    result.success().appear();
                 }
                 else {
-                    result.failure().show();
+                    result.failure().appear();
                 }
             }),
             new Point2D(70, 60)
@@ -148,10 +148,10 @@ export class InteractiveDismissCommandAction extends CBAction {
                 dice.active = false;
                 let {success} = this._processDismissCommandResult(dice.result);
                 if (success) {
-                    result.success().show();
+                    result.success().appear();
                 }
                 else {
-                    result.failure().show();
+                    result.failure().appear();
                 }
             }),
             new Point2D(70, 60)
@@ -203,10 +203,10 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
                 dice.active = false;
                 let {success} = this._processChangeOderInstructionResult(dice.result);
                 if (success) {
-                    result.success().show();
+                    result.success().appear();
                 }
                 else {
-                    result.failure().show();
+                    result.failure().appear();
                 }
             }),
             new Point2D(70, 60)
@@ -254,7 +254,7 @@ export class InteractiveGiveOrdersAction extends CBAction {
             dice.setFinalAction(()=>{
                 dice.active = false;
                 this.unit.receiveCommandPoints(this._processGiveOrdersResult(dice.result));
-                result.show(""+this.unit.commandPoints);
+                result.appear(""+this.unit.commandPoints);
             }),
             new Point2D(CBGiveOrdersInsert.DIMENSION.w/4+40, 0)
         ).addWidget(
@@ -344,7 +344,9 @@ export class CBOrderInstructionMenu extends DIconMenu {
     }
 
     closeMenu() {
-        this._game.closePopup();
+        if (this._game.popup === this) {
+            this._game.closePopup();
+        }
     }
 
 }

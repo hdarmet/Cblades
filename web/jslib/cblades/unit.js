@@ -10,7 +10,7 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBCounterImageArtifact, CBHexSideId, CBAction, CBMoveType,  CBAbstractUnit
+    CBCounterImageArtifact, CBHexSideId, CBAction, CBMoveType, CBAbstractUnit, CBHexId
 } from "./game.js";
 
 export let CBMovement = {
@@ -161,10 +161,63 @@ export class CBWing {
 
 }
 
+export function OptionArtifactMixin(clazz) {
+
+    return class extends clazz {
+        constructor(...args) {
+            super(...args);
+        }
+
+        get option() {
+            return this._option;
+        }
+
+        set option(option) {
+            this._option = option;
+            this.refresh();
+        }
+
+        changeOption(option) {
+            Memento.register(this);
+            this.option = option;
+        }
+
+    }
+
+}
+
+export function OptionMixin(clazz) {
+
+    return class extends clazz {
+        constructor(...args) {
+            super(...args);
+        }
+
+        shift(steps) {
+            this.artifact.shift(new Point2D(-steps*20, -steps*20+10));
+            this.artifact.changeOption(true);
+        }
+
+
+        setPosition(steps) {
+            this.artifact.setPosition(new Point2D(-steps*20, -steps*20));
+            this.artifact.option = true;
+        }
+
+        isOption() {
+            return this.artifact.option;
+        }
+
+    }
+
+}
+
 export class CBUnit extends CBAbstractUnit {
 
     constructor(type, paths, wing, dimension=CBUnit.DIMENSION) {
         super(paths, dimension);
+        this._carried = [];
+        this._options = [];
         this._type = type;
         this._wing = wing;
         this._movementPoints=2;
@@ -202,6 +255,83 @@ export class CBUnit extends CBAbstractUnit {
         return marker;
     }
 
+    addCarried(counter) {
+        console.assert(this._carried.indexOf(counter)===-1);
+        this._carried.push(counter);
+    }
+
+    removeCarried(counter) {
+        let indexCounter = this._carried.indexOf(counter);
+        this._carried.splice(indexCounter, 1);
+    }
+
+    carry(counter) {
+        console.assert(this._carried.indexOf(counter)===-1);
+        Memento.register(this);
+        this._carried.push(counter);
+    }
+
+    drop(counter) {
+        let indexCounter = this._carried.indexOf(counter);
+        console.assert(indexCounter>=0);
+        Memento.register(this);
+        this._carried.splice(indexCounter, 1);
+    }
+
+    addOption(counter) {
+        console.assert(this._options.indexOf(counter)===-1);
+        this.addCarried(counter);
+        this._options.push(counter);
+        counter.setPosition(this._options.length);
+        counter.location = this.location;
+    }
+
+    removeOption(counter) {
+        let indexCounter = this._options.indexOf(counter);
+        this.removeCarried(counter);
+        this._options.splice(indexCounter, 1);
+        for (let index = indexCounter; index<this._options.length; index++) {
+            counter.setPosition(index);
+        }
+    }
+
+    appendOption(counter) {
+        console.assert(this._carried.indexOf(counter)===-1);
+        Memento.register(this);
+        this.addCarried(counter);
+        this._options.push(counter);
+        counter.shift(this._options.length);
+        if (!counter.isShown()) counter.show(this.game.board);
+        counter.move(this.location);
+    }
+
+    deleteOption(counter) {
+        let indexCounter = this._options.indexOf(counter);
+        console.assert(indexCounter>=0);
+        Memento.register(this);
+        this.removeCarried(counter);
+        this._carried.splice(indexCounter, 1);
+        for (let index = indexCounter; index<this._options.length; index++) {
+            counter.shift(index);
+        }
+        counter.hide();
+    }
+
+
+    _setLocation(location) {
+        super._setLocation(location);
+        for (let carried of this._carried) {
+            carried.location = this.location;
+        }
+    }
+
+    _setAngle(angle) {
+        super._setAngle(angle);
+        for (let carried of this._carried) {
+            carried.angle = this.angle;
+        }
+    }
+
     _memento() {
         return {
             ...super._memento(),
@@ -219,13 +349,14 @@ export class CBUnit extends CBAbstractUnit {
             engagingArtifact: this._engagingArtifact,
             orderGiven: this._orderGiven,
             lossSteps: this._lossSteps,
-            attackLocation: this._attackLocation
+            attackLocation: this._attackLocation,
+            carried: [...this._carried],
+            options: [...this._options]
         };
     }
 
     _revert(memento) {
         super._revert(memento);
-        this._hexLocation = memento.hexLocation;
         this._movementPoints = memento.movementPoints;
         this._extendedMovementPoints = memento.extendedMovementPoints;
         this._tiredness = memento.tiredness;
@@ -241,6 +372,8 @@ export class CBUnit extends CBAbstractUnit {
         this._orderGiven = memento.orderGiven;
         this._lossSteps = memento.lossSteps;
         this._attackLocation = memento.attackLocation;
+        this._carried = memento.carried;
+        this._options = memento.options;
     }
 
     unselect() {
@@ -287,6 +420,22 @@ export class CBUnit extends CBAbstractUnit {
 
     set extendedMovementPoints(extendedMovementPoints) {
         this._extendedMovementPoints = extendedMovementPoints;
+    }
+
+    get options() {
+        return this._options;
+    }
+
+    _getCounters() {
+        let counters = [];
+        for (let carried of this._carried) {
+            if (!carried.isOption()) {
+                counters.push(carried);
+            }
+        }
+        counters.push(...super._getCounters());
+        counters.push(...this.options);
+        return counters;
     }
 
     receiveOrder(order) {
@@ -360,13 +509,21 @@ export class CBUnit extends CBAbstractUnit {
             Memento.register(this);
             if (this._hexLocation) {
                 this._hexLocation.hex.deleteUnit(this);
-                if (!hexId) this._element.hide();
+                if (!hexId) {
+                    this._element.hide();
+                    for (let carried of this._carried) {
+                        carried.move(null);
+                    }
+                }
             }
             if (hexId && !this._hexLocation) this._element.show(this.game.board);
             this._hexLocation = hexId;
             if (this._hexLocation) {
                 hexId.hex.appendUnit(this, moveType);
                 this._element.move(hexId.location);
+                for (let carried of this._carried) {
+                    carried.move(this.location);
+                }
             }
             this._updateMovementPoints(cost);
         }
@@ -388,6 +545,9 @@ export class CBUnit extends CBAbstractUnit {
     rotate(angle, cost) {
         Memento.register(this);
         this._element.rotate(angle);
+        for (let carried of this._carried) {
+            carried.rotate(angle);
+        }
         this._updateMovementPoints(cost);
     }
 
@@ -596,6 +756,32 @@ export class CBUnit extends CBAbstractUnit {
         this._updateEngagement(this._engaging, charging);
     }
 
+    _markersAppear() {
+        this._cohesionArtifact && this._cohesionArtifact.appear();
+        this._engagingArtifact && this._engagingArtifact.appear();
+        this._lackOfMunitionsArtifact && this._lackOfMunitionsArtifact.appear();
+        this._tirednessArtifact && this._tirednessArtifact.appear();
+        this._playedArtifact && this._playedArtifact.appear();
+    }
+
+    _markersRetract() {
+        this._cohesionArtifact && this._cohesionArtifact.retract();
+        this._engagingArtifact && this._engagingArtifact.retract();
+        this._lackOfMunitionsArtifact && this._lackOfMunitionsArtifact.retract();
+        this._tirednessArtifact && this._tirednessArtifact.retract();
+        this._playedArtifact && this._playedArtifact.retract();
+    }
+
+    appear() {
+        super.appear();
+        this._markersAppear();
+    }
+
+    retract() {
+        super.retract();
+        this._markersRetract();
+    }
+
 }
 CBUnit.MARKER_DIMENSION = new Dimension2D(64, 64);
 CBUnit.DIMENSION = new Dimension2D(142, 142);
@@ -795,6 +981,23 @@ export class CBCharacter extends CBUnit {
         }
     }
 
+    choseSpell(spellDefinition) {
+        Memento.register(this);
+        this._chosenSpell = spellDefinition.createSpellCounter(this);
+        this._chosenSpell.angle = this.angle;
+        this._chosenSpell.location = this.location;
+        this._chosenSpell.element.show(this.game._board);
+        this.carry(this._chosenSpell);
+    }
+
+    get chosenSpell() {
+        return this._chosenSpell;
+    }
+
+    hasChosenSpell() {
+        return !!this.chosenSpell;
+    }
+
     takeCommand() {
         this.wing.appointLeader(this);
     }
@@ -808,6 +1011,16 @@ export class CBCharacter extends CBUnit {
         if (player === this.player) {
             this._commandPoints = 0;
         }
+    }
+
+    _markersAppear() {
+        super._markersAppear();
+        this._orderInstructionArtifact && this._orderInstructionArtifact.appear();
+    }
+
+    _markersRetract() {
+        super._markersRetract();
+        this._orderInstructionArtifact && this._orderInstructionArtifact.retract();
     }
 }
 CBCharacter.DIMENSION = new Dimension2D(120, 120);

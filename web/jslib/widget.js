@@ -437,12 +437,12 @@ export class DDice extends DElement {
     }
 
     open(board, location) {
-        this.setLocation(location);
-        this.setOnBoard(board);
+        this.show(board);
+        this.move(location);
     }
 
     close() {
-        this.removeFromBoard();
+        this.hide();
     }
 
     rollDie() {
@@ -547,13 +547,13 @@ export class DIndicator extends DElement {
     }
 
     open(board, location) {
-        this.setLocation(location);
-        this.setOnBoard(board);
+        this.show(board);
+        this.move(location);
     }
 
     close() {
         if (this._board) {
-            this.removeFromBoard();
+            this.hide();
         }
     }
 
@@ -582,13 +582,13 @@ export class DInsert extends DElement {
     }
 
     open(board, location) {
-        this.setLocation(location);
-        this.setOnBoard(board);
+        this.show(board);
+        this.move(location);
     }
 
     close() {
         if (this._board) {
-            this.removeFromBoard();
+            this.hide();
         }
     }
 
@@ -694,13 +694,13 @@ export class DResult extends DElement {
     }
 
     open(board, location) {
-        this.setLocation(location);
+        this.move(location);
         this._targetBoard = board;
     }
 
-    show() {
+    appear() {
         if (this._targetBoard) {
-            this.setOnBoard(this._targetBoard);
+            this.show(this._targetBoard);
             new DArtifactAlphaAnimation(this._artifact, 1, 0, 500);
         }
     }
@@ -708,8 +708,9 @@ export class DResult extends DElement {
     close() {
         delete this._targetBoard;
         if (this._board) {
-            this.removeFromBoard();
+            this.hide();
         }
+        Memento.clear();
     }
 
     onMouseClick() {
@@ -771,11 +772,11 @@ export class DMessage extends DElement {
     }
 
     open(board, location) {
-        this.setLocation(location);
+        this.move(location);
         this._targetBoard = board;
     }
 
-    show(text, ...values) {
+    appear(text, ...values) {
         this._values = values;
         this._textArtifact = new DTextArtifact("widget-commands",
             new Point2D(0, 30),
@@ -785,7 +786,7 @@ export class DMessage extends DElement {
             "90px serif", "center", text);
         this.addArtifact(this._textArtifact);
         if (this._targetBoard) {
-            this.setOnBoard(this._targetBoard);
+            this.show(this._targetBoard);
             new DArtifactAlphaAnimation(this._artifact, 1, 0, 500);
             new DArtifactAlphaAnimation(this._textArtifact, 1, 0, 500);
         }
@@ -794,7 +795,7 @@ export class DMessage extends DElement {
     close() {
         delete this._targetBoard;
         if (this._board) {
-            this.removeFromBoard();
+            this.hide();
         }
     }
 
@@ -855,12 +856,12 @@ export class DMask extends DElement {
     }
 
     open(board, location=new Point2D(0, 0)) {
-        this.setLocation(location);
-        this.setOnBoard(board);
+        this.show(board);
+        this.move(location);
     }
 
     close() {
-        this.removeFromBoard();
+        this.hide();
     }
 
 }
