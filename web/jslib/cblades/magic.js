@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    CBCounter, CBCounterImageArtifact, CBMoveType, RetractableMixin
+    CBPlayable, CBCounterImageArtifact, CBMoveType, RetractableMixin
 } from "./game.js";
 import {
     Dimension2D, Point2D
@@ -52,7 +52,7 @@ class SpellImageArtifact extends OptionArtifactMixin(RetractableMixin(CBCounterI
 
 }
 
-export class CBSpell extends CBCounter {
+export class CBSpell extends CBPlayable {
 
     constructor(paths, wizard, spellLevel) {
         super("units", paths, CBSpell.DIMENSION);
@@ -60,15 +60,16 @@ export class CBSpell extends CBCounter {
         this._wizard = wizard;
     }
 
-    _memento() {
-        return {}
-    }
-
-    _revert(memento) {
-    }
-
     createArtifact(levelName, images, location, dimension) {
         return new SpellImageArtifact(this, levelName, images, location, dimension);
+    }
+
+    _getHexLocation() {
+        return this.wizard.hexLocation;
+    }
+
+    _getUnit() {
+        return this.wizard;
     }
 
     get isSpell() {
@@ -76,11 +77,11 @@ export class CBSpell extends CBCounter {
     }
 
     get hexLocation() {
-        return this.unit.hexLocation;
+        return this._getHexLocation();
     }
 
     get unit() {
-        return this._unit ? this._unit : this._wizard;
+        return this._getUnit();
     }
 
     get wizard() {
@@ -91,9 +92,13 @@ export class CBSpell extends CBCounter {
         return this.wizard.game;
     }
 
-    activate() {
+    _activate() {
         Memento.register(this);
         this.artifact.changeImage(this._spellLevel);
+    }
+
+    apply() {
+        this._wizard.forgetSpell();
     }
 
     move(location) {
@@ -140,9 +145,109 @@ export class CBSpellDefinition {
         let builder = this._builder;
         return new builder(unit, this._spellLevel);
     }
+
 }
 
-export class CBFirePentacleSpell extends CBSpell {
+export function HexTargetedMixin(clazz) {
+
+    return class extends clazz {
+
+        constructor(...args) {
+            super(...args);
+        }
+
+        get hex() {
+            return this._hex;
+        }
+
+        _getHexLocation() {
+            if (this.hex) return this.hex;
+            else return super._getHexLocation();
+        }
+
+        _memento() {
+            let memento = super._memento();
+            memento.hex = this._hex;
+            return memento;
+        }
+
+        _revert(memento) {
+            super._revert(memento);
+            if (memento.unit) {
+                this._hex = memento.hex;
+            }
+            else delete this._hex;
+        }
+
+        selectHex(hex) {
+            Memento.register(this);
+            this._hex = hex;
+            delete this._unit;
+        }
+
+        apply() {
+            super.apply();
+            Memento.register(this);
+            this._activate()
+            this.wizard.drop(this);
+            this.hide();
+            this.addToMap(this.hex);
+            this.move(this.hex.location);
+        }
+
+        _activate() {
+            super._activate();
+            this.artifact.changeLevel("terran");
+        }
+
+    }
+}
+
+export function UnitTargetedMixin(clazz) {
+
+    return class extends OptionMixin(clazz) {
+
+        constructor(...args) {
+            super(...args);
+        }
+
+        _getUnit() {
+            if (this._unit) return this._unit;
+            else return super._getUnit();
+        }
+
+        _getHexLocation() {
+            if (this.unit) return this.unit;
+            else return super._getHexLocation();
+        }
+
+        _memento() {
+            let memento = super._memento();
+            memento.unit = this._unit;
+            return memento;
+        }
+
+        _revert(memento) {
+            super._revert(memento);
+            if (memento.unit) {
+                this._unit = memento.unit;
+            }
+            else delete this._unit;
+        }
+
+        selectHex(hex) {
+            Memento.register(this);
+            this._activate();
+            this._unit = hex.units[0];
+            this.wizard.drop(this);
+            this._unit.appendOption(this);
+        }
+
+    }
+
+}
+
+export class CBFirePentacleSpell extends HexTargetedMixin(CBSpell) {
 
     constructor(wizard, level) {
         super([
@@ -158,11 +263,35 @@ export class CBFirePentacleSpell extends CBSpell {
     }
 
     apply() {
+        this.selectHex(this._wizard.hexLocation);
+        super.apply();
     }
 
 }
 
-export class CBFireballSpell extends OptionMixin(CBSpell) {
+export class CBFireCircleSpell extends HexTargetedMixin(CBSpell) {
+
+    constructor(wizard, level) {
+        super([
+            "/CBlades/images/magic/fire/fireb.png",
+            "/CBlades/images/magic/fire/circle1.png",
+            "/CBlades/images/magic/fire/circle2.png",
+            "/CBlades/images/magic/fire/circle3.png"
+        ], wizard, level);
+    }
+
+    getNextCinematic() {
+        return {cinematic: CBSpell.CINEMATIC.NONE};
+    }
+
+    apply() {
+        this.selectHex(this._wizard.hexLocation);
+        super.apply();
+    }
+
+}
+
+export class CBFireballSpell extends UnitTargetedMixin(CBSpell) {
 
     constructor(wizard, level) {
         super([
@@ -171,16 +300,6 @@ export class CBFireballSpell extends OptionMixin(CBSpell) {
             "/CBlades/images/magic/fire/fireball2.png",
             "/CBlades/images/magic/fire/fireball3.png"
         ], wizard, level);
-    }
-
-    _memento() {
-        return {
-            unit: this._unit
-        }
-    }
-
-    _revert(memento) {
-        this._unit = memento.unit
     }
 
     getNextCinematic() {
@@ -201,14 +320,6 @@ export class CBFireballSpell extends OptionMixin(CBSpell) {
         return this._result;
     }
 
-    selectHex(hex) {
-        Memento.register(this);
-        this._unit = hex.units[0];
-        this._wizard.drop(this);
-        this._unit.appendOption(this);
-        this.activate();
-    }
-
     apply() {
         if (this._result.losses) this.unit.takeALoss();
         this.unit.deleteOption(this);
@@ -216,7 +327,7 @@ export class CBFireballSpell extends OptionMixin(CBSpell) {
 
 }
 
-export class CBFireswordSpell extends OptionMixin(CBSpell) {
+export class CBFireswordSpell extends UnitTargetedMixin(CBSpell) {
 
     constructor(wizard, level) {
         super([
@@ -225,16 +336,6 @@ export class CBFireswordSpell extends OptionMixin(CBSpell) {
             "/CBlades/images/magic/fire/firesword2.png",
             "/CBlades/images/magic/fire/firesword3.png"
         ], wizard, level);
-    }
-
-    _memento() {
-        return {
-            unit: this._unit
-        }
-    }
-
-    _revert(memento) {
-        this._unit = memento.unit
     }
 
     getNextCinematic() {
@@ -246,20 +347,9 @@ export class CBFireswordSpell extends OptionMixin(CBSpell) {
         }
     }
 
-    selectHex(hex) {
-        Memento.register(this);
-        this._unit = hex.units[0];
-        this._wizard.drop(this);
-    }
-
-    apply() {
-        this._unit.appendOption(this);
-        this.activate();
-    }
-
 }
 
-export class CBBlazeSpell extends CBSpell {
+export class CBBlazeSpell extends HexTargetedMixin(CBSpell) {
 
     constructor(wizard, level) {
         super([
@@ -268,24 +358,6 @@ export class CBBlazeSpell extends CBSpell {
             "/CBlades/images/magic/fire/blaze2.png",
             "/CBlades/images/magic/fire/blaze3.png"
         ], wizard, level);
-    }
-
-    get hex() {
-        return this._hex;
-    }
-
-    get hexLocation() {
-        return this.hex ? this.hex : this.unit.hexLocation;
-    }
-
-    _memento() {
-        return {
-            hex: this._hex
-        }
-    }
-
-    _revert(memento) {
-        this._hex = memento.hex
     }
 
     getNextCinematic() {
@@ -297,15 +369,26 @@ export class CBBlazeSpell extends CBSpell {
         }
     }
 
-    selectHex(hex) {
-        Memento.register(this);
-        this._hex = hex;
+}
+
+export class CBRainFireSpell extends HexTargetedMixin(CBSpell) {
+
+    constructor(wizard, level) {
+        super([
+            "/CBlades/images/magic/fire/fireb.png",
+            "/CBlades/images/magic/fire/rainfire1.png",
+            "/CBlades/images/magic/fire/rainfire2.png",
+            "/CBlades/images/magic/fire/rainfire3.png"
+        ], wizard, level);
     }
 
-    apply() {
-        this.activate()
-        this.wizard.drop(this);
-        this.move(this.hex.location);
+    getNextCinematic() {
+        if (!this._hex) {
+            return {cinematic: CBSpell.CINEMATIC.SELECT_HEX};
+        }
+        else {
+            return {cinematic: CBSpell.CINEMATIC.NONE};
+        }
     }
 
 }
@@ -321,13 +404,13 @@ CBSpell.laboratory = new Map([
         new CBSpellDefinition("/CBlades/images/magic/fire/pentacle3.png", CBFirePentacleSpell,3)
     ],
     ["fireCircle1",
-        new CBSpellDefinition("/CBlades/images/magic/fire/circle1.png", CBFirePentacleSpell,1)
+        new CBSpellDefinition("/CBlades/images/magic/fire/circle1.png", CBFireCircleSpell,1)
     ],
     ["fireCircle2",
-        new CBSpellDefinition("/CBlades/images/magic/fire/circle2.png", CBFirePentacleSpell,1)
+        new CBSpellDefinition("/CBlades/images/magic/fire/circle2.png", CBFireCircleSpell,2)
     ],
     ["fireCircle3",
-        new CBSpellDefinition("/CBlades/images/magic/fire/circle3.png", CBFirePentacleSpell,1)
+        new CBSpellDefinition("/CBlades/images/magic/fire/circle3.png", CBFireCircleSpell,3)
     ],
     ["fireball1",
         new CBSpellDefinition("/CBlades/images/magic/fire/fireball1.png", CBFireballSpell,1)
@@ -351,19 +434,19 @@ CBSpell.laboratory = new Map([
         new CBSpellDefinition("/CBlades/images/magic/fire/blaze1.png", CBBlazeSpell,1)
     ],
     ["blaze2",
-        new CBSpellDefinition("/CBlades/images/magic/fire/blaze2.png", CBBlazeSpell,1)
+        new CBSpellDefinition("/CBlades/images/magic/fire/blaze2.png", CBBlazeSpell,2)
     ],
     ["blaze3",
-        new CBSpellDefinition("/CBlades/images/magic/fire/blaze3.png", CBBlazeSpell,1)
+        new CBSpellDefinition("/CBlades/images/magic/fire/blaze3.png", CBBlazeSpell,3)
     ],
     ["rainfire1",
-        new CBSpellDefinition("/CBlades/images/magic/fire/rainfire1.png", CBFirePentacleSpell,1)
+        new CBSpellDefinition("/CBlades/images/magic/fire/rainfire1.png", CBRainFireSpell,1)
     ],
     ["rainfire2",
-        new CBSpellDefinition("/CBlades/images/magic/fire/rainfire2.png", CBFirePentacleSpell,1)
+        new CBSpellDefinition("/CBlades/images/magic/fire/rainfire2.png", CBRainFireSpell,2)
     ],
     ["rainfire3",
-        new CBSpellDefinition("/CBlades/images/magic/fire/rainfire3.png", CBFirePentacleSpell,1)
+        new CBSpellDefinition("/CBlades/images/magic/fire/rainfire3.png", CBRainFireSpell,3)
     ]
 ]);
 

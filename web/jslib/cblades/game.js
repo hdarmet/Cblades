@@ -278,13 +278,30 @@ export class CBActuator {
     get element() {
         return this._element;
     }
+
 }
 
 export class CBGame {
 
     constructor() {
 
-        function createSlot(slotIndex) {
+        function createHexArtifactSlot(slotIndex) {
+            let delta = Matrix2D.translate(new Point2D(-slotIndex*20, -slotIndex*20+20));
+            return [
+                new DTranslateLayer("hex-"+slotIndex, delta)
+            ]
+        }
+
+        function getHexArtifactSlot(artifact) {
+            let counter = artifact.counter;
+            return counter.hex.playables.indexOf(counter);
+        }
+
+        function getHexArtifactLayer(artifact, [hexLayer]) {
+            return hexLayer;
+        }
+
+        function createUnitArtifactSlot(slotIndex) {
             let delta = Matrix2D.translate(new Point2D(slotIndex*20, -slotIndex*20));
             let formationDelta = Matrix2D.translate(new Point2D(slotIndex*20-10, -slotIndex*20+10));
             return [
@@ -316,7 +333,8 @@ export class CBGame {
 
         this._board = new DBoard(new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT), new Dimension2D(1000, 800),
             new DSimpleLevel("map"),
-            new DStackedLevel("units", getUnitArtifactSlot, getUnitArtifactLayer, createSlot),
+            new DStackedLevel("terran", getHexArtifactSlot, getHexArtifactLayer, createHexArtifactSlot),
+            new DStackedLevel("units", getUnitArtifactSlot, getUnitArtifactLayer, createUnitArtifactSlot),
             new DSimpleLevel("actuators"),
             new DStaticLevel("widgets"),
             new DStaticLevel("widget-items"),
@@ -648,6 +666,7 @@ export class CBGame {
             delete this._popup;
         }
     }
+
 }
 CBGame.POPUP_MARGIN = 10;
 CBGame.PROGRESSION = "started";
@@ -706,12 +725,48 @@ export class CBHexId {
         return atan2(loc2.x-loc1.x, loc2.y-loc1.y);
     }
 
-    get units() {
-        return this._map.getUnitsOnHex(this);
+    _addUnit(unit) {
+        this.hex.addUnit(unit);
     }
 
-    get counters() {
-        let counters = [];
+    _removeUnit(unit) {
+        this.hex.removeUnit(unit);
+    }
+
+    _appendUnit(unit) {
+        this.hex.appendUnit(unit);
+    }
+
+    _deleteUnit(unit) {
+        this.hex.deleteUnit(unit);
+    }
+
+    get units() {
+        return this.hex.units;
+    }
+
+    _addPlayable(playable) {
+        this.hex.addPlayable(playable);
+    }
+
+    _removePlayable(playable) {
+        this.hex.removePlayable(playable);
+    }
+
+    _appendPlayable(playable) {
+        this.hex.appendPlayable(playable);
+    }
+
+    _deletePlayable(playable) {
+        this.hex.deleteUnit(playable);
+    }
+
+    get playables() {
+        return this.hex.playables;
+    }
+
+    get allCounters() {
+        let counters = [...this.playables];
         for (let unit of this.units) {
             counters.push(...unit.counters);
         }
@@ -730,6 +785,7 @@ export class CBHexId {
     getHexSide(angle) {
         return new CBHexSideId(this, this.getNearHex(angle));
     }
+
 }
 
 export class CBHexSideId {
@@ -793,6 +849,54 @@ export class CBHexSideId {
         return this._hexId1 === hexId || this._hexId2 === hexId;
     }
 
+    _addUnit(unit) {
+        this.toHex.addUnit(unit);
+        this.fromHex.addUnit(unit);
+    }
+
+    _removeUnit(unit) {
+        this.toHex.removeUnit(unit);
+        this.fromHex.removeUnit(unit);
+    }
+
+    _appendUnit(unit) {
+        this.toHex.appendUnit(unit);
+        this.fromHex.appendUnit(unit);
+    }
+
+    _deleteUnit(unit) {
+        this.toHex.deleteUnit(unit);
+        this.fromHoHex.deleteUnit(unit);
+    }
+
+    get units() {
+        return [...this.toHex.units, ...this.fromHex.units];
+    }
+
+    _addPlayable(playable) {
+        this.toHex.addPlayable(playable);
+        this.fromHex.addPlayable(playable);
+    }
+
+    _removePlayable(playable) {
+        this.toHex.removePlayable(playable);
+        this.fromHex.removePlayable(playable);
+    }
+
+    _appendPlayable(playable) {
+        this.toHex.appendPlayable(playable);
+        this.fromHex.appendPlayable(playable);
+    }
+
+    _deletePlayable(playable) {
+        this.toHex.deleteUnit(playable);
+        this.fromHex.deleteUnit(playable);
+    }
+
+    get playables() {
+        return [...this.toHex.playables, ...this.fromHex.playables];
+    }
+
 }
 
 export class CBHexVertexId {
@@ -834,6 +938,7 @@ class CBHex {
 
     constructor(map, col, row) {
         this._id = new CBHexId(map, col, row);
+        this._playables = [];
         this._units = [];
     }
 
@@ -843,25 +948,67 @@ class CBHex {
 
     _memento() {
         return {
-            units: [...this._units]
+            units: [...this._units],
+            playables: [...this._playables]
         }
     }
 
     _revert(memento) {
         this._units = memento.units;
+        this._playables = memento.playables;
+    }
+
+    addPlayable(playable) {
+        console.assert((playable instanceof CBPlayable) && (this._playables.indexOf(playable)<0));
+        this._playables.push(playable);
+    }
+
+    removePlayable(playable) {
+        console.assert((playable instanceof CBPlayable) && (this._playables.indexOf(playable)>=0));
+        this._playables.splice(this._playables.indexOf(playable), 1);
+    }
+
+    appendPlayable(playable) {
+        console.assert((playable instanceof CBPlayable) && (this._playables.indexOf(playable)<0));
+        Memento.register(this);
+        this._playables.push(playable);
+        let index = this._playables.length-1;
+        if (!playable.isSpell) {
+            while(index>0 && this._playables(index-1).isSpell) {
+                this._playables[index] = this._playables[index-1];
+                this._playables[index-1] = playable;
+            }
+        }
+        if (playable.isFeature) {
+            while(index>0 && !this._playables(index-1).isFeature) {
+                this._playables[index] = this._playables[index-1];
+                this._playables[index-1] = playable;
+            }
+        }
+    }
+
+    deletePlayable(playable) {
+        console.assert((playable instanceof CBPlayable) && (this._playables.indexOf(playable)>=0));
+        Memento.register(this);
+        this._playables.splice(this._playables.indexOf(playable), 1);
+    }
+
+    get playables() {
+        return this._playables;
     }
 
     addUnit(unit) {
-        console.assert(unit.isUnit);
+        console.assert((unit.isUnit) && (this._units.indexOf(unit)<0));
         this._units.push(unit);
     }
 
     removeUnit(unit) {
-        console.assert(unit.isUnit);
+        console.assert((unit.isUnit) && (this._units.indexOf(unit)>=0));
         this._units.splice(this._units.indexOf(unit), 1);
     }
 
     appendUnit(unit, moveType) {
+        console.assert((unit.isUnit) && (this._units.indexOf(unit)<0));
         Memento.register(this);
         if (moveType === CBMoveType.BACKWARD) {
             this._units.push(unit);
@@ -880,6 +1027,7 @@ class CBHex {
     }
 
     deleteUnit(unit) {
+        console.assert((unit.isUnit) && (this._units.indexOf(unit)>=0));
         Memento.register(this);
         this._units.splice(this._units.indexOf(unit), 1);
     }
@@ -1068,6 +1216,11 @@ export class CBMap {
         return this._hex(hexId.col, hexId.row).units;
     }
 
+    getCountersOnHex(hexId) {
+        console.assert(hexId.map===this);
+        return this._hex(hexId.col, hexId.row).counters;
+    }
+
     getLocation(point) {
         return this._element.getLocation(point);
     }
@@ -1188,7 +1341,7 @@ export function RetractableMixin(clazz) {
 
         onMouseEnter(event) {
             function retract(hexId) {
-                let counters = hexId.counters;
+                let counters = hexId.allCounters;
                 let first = counters.indexOf(this.counter);
                 for (let index=first+1; index<counters.length; index++) {
                     counters[index].retract();
@@ -1206,7 +1359,7 @@ export function RetractableMixin(clazz) {
 
         onMouseLeave(event) {
             function appear(hexId) {
-                let counters = hexId.counters;
+                let counters = hexId.allCounters;
                 let first = counters.indexOf(this.counter);
                 for (let index=first+1; index<counters.length; index++) {
                     counters[index].appear();
@@ -1240,6 +1393,13 @@ export class CBCounter {
 
     createArtifact(levelName, images, location, dimension) {
         return new CBCounterImageArtifact(this, levelName, images, location, dimension);
+    }
+
+    _memento() {
+        return {}
+    }
+
+    _revert(memento) {
     }
 
     get artifact() {
@@ -1311,6 +1471,44 @@ export class CBCounter {
     }
 }
 
+export class CBPlayable extends CBCounter {
+
+    constructor(levelName, paths, dimension) {
+        super(levelName, paths, dimension);
+    }
+
+    _memento() {
+        let memento = super._memento();
+        memento.hexLocation = this._hexLocation;
+        return memento;
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        if (memento.hexLocation) {
+            this._hexLocation = memento.hexLocation;
+        }
+        else delete this._hexLocation;
+    }
+
+    addToMap(hexLocation) {
+        console.assert(!this._hexLocation);
+        Memento.register(this);
+        this._hexLocation = hexLocation;
+        hexLocation._appendPlayable(this);
+        this.show(hexLocation.map.game);
+        this._element.move(hexLocation.location);
+    }
+
+    removeFromMap() {
+        console.assert(this._hexLocation);
+        Memento.register(this);
+        this._hexLocation._deletePlayable(this);
+        this.hide();
+        delete this._hexLocation;
+    }
+}
+
 class UnitImageArtifact extends RetractableMixin(SelectableMixin(CBCounterImageArtifact)) {
 
     constructor(unit, ...args) {
@@ -1338,15 +1536,22 @@ export class CBAbstractUnit extends CBCounter {
     }
 
     _memento() {
-        return {
-            hexLocation: this._hexLocation,
-            action: this._action
-        };
+        let memento = super._memento();
+        memento.hexLocation = this._hexLocation;
+        memento.action = this._action;
+        return memento;
     }
 
     _revert(memento) {
-        this._hexLocation = memento.hexLocation;
-        this._action = memento.action;
+        super._revert(memento);
+        if (memento.hexLocation) {
+            this._hexLocation = memento.hexLocation;
+        }
+        else delete this._hexLocation;
+        if (memento.action) {
+            this._action = memento.action;
+        }
+        else delete this._action;
     }
 
     get isUnit() {
@@ -1441,7 +1646,7 @@ export class CBAbstractUnit extends CBCounter {
         console.assert(!this._hexLocation);
         Memento.register(this);
         this._hexLocation = hexId;
-        hexId.hex.appendUnit(this, moveType);
+        hexId._appendUnit(this, moveType);
         this.show(hexId.map.game);
         this._element.move(hexId.location);
     }
@@ -1449,8 +1654,8 @@ export class CBAbstractUnit extends CBCounter {
     removeFromMap() {
         console.assert(this._hexLocation);
         Memento.register(this);
-        this._hexLocation.hex.deleteUnit(this);
-        this._element.hide();
+        this._hexLocation._deleteUnit(this);
+        this.hide();
         delete this._hexLocation;
     }
 

@@ -12,7 +12,15 @@ import {
     Memento
 } from "./mechanisms.js";
 
+/**
+ * Mixin for classes whose instances deals with location and orientation on the board. DElements and their contained
+ * DArtifacts are localization aware.
+ * @param clazz
+ * @returns {{new(...[*]): {readonly angle: *, getPosition(*=): *, readonly transform: *|null, getLocation(*=): *, readonly location: *}, prototype: {readonly angle: *, getPosition(*=): *, readonly transform: *|null, getLocation(*=): *, readonly location: *}}}
+ * @constructor
+ */
 export function LocalisationAware(clazz) {
+
     return class extends clazz {
 
         constructor(...args) {
@@ -43,6 +51,7 @@ export function LocalisationAware(clazz) {
             return transform ? this.transform.invert().point(point) : point;
         }
     }
+
 }
 
 /**
@@ -149,10 +158,12 @@ export class DArtifact extends LocalisationAware(Object) {
     }
 
     changeLevel(levelName) {
-        console.assert(this._level);
         Memento.register(this);
-        this._level.hideArtifact(this);
-        this._levelName = levelName;this._level = this.board.getLevel(this._levelName);
+        if (this._level) {
+            this._level.hideArtifact(this);
+        }
+        this._levelName = levelName;
+        this._level = this.board.getLevel(this._levelName);
         this._level.showArtifact(this);
     }
 

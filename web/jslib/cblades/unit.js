@@ -303,6 +303,7 @@ export class CBUnit extends CBAbstractUnit {
         counter.shift(this._options.length);
         if (!counter.isShown()) counter.show(this.game.board);
         counter.move(this.location);
+        counter.rotate(this.angle);
     }
 
     deleteOption(counter) {
@@ -429,7 +430,7 @@ export class CBUnit extends CBAbstractUnit {
     _getCounters() {
         let counters = [];
         for (let carried of this._carried) {
-            if (!carried.isOption()) {
+            if (!carried.isOption || !carried.isOption()) {
                 counters.push(carried);
             }
         }
@@ -939,6 +940,7 @@ export class CBCharacter extends CBUnit {
         let memento = super._memento();
         memento.commandPoints = this._commandPoints;
         memento.orderInstructionArtifact = this._orderInstructionArtifact;
+        memento.chosenSpell = this._chosenSpell;
         return memento;
     }
 
@@ -946,6 +948,7 @@ export class CBCharacter extends CBUnit {
         super._revert(memento);
         this._commandPoints =  memento.commandPoints;
         this._orderInstructionArtifact = memento.orderInstructionArtifact;
+        this._chosenSpell = memento.chosenSpell;
     }
 
     get commandPoints() {
@@ -981,13 +984,27 @@ export class CBCharacter extends CBUnit {
         }
     }
 
+    cancelChosenSpell() {
+        console.assert(this._chosenSpell);
+        Memento.register(this);
+        this._chosenSpell.element.hide(this.game._board);
+        this.drop(this._chosenSpell);
+        this._chosenSpell = null;
+    }
+
     choseSpell(spellDefinition) {
         Memento.register(this);
+        if (this._chosenSpell) this.cancelChosenSpell();
         this._chosenSpell = spellDefinition.createSpellCounter(this);
         this._chosenSpell.angle = this.angle;
         this._chosenSpell.location = this.location;
         this._chosenSpell.element.show(this.game._board);
         this.carry(this._chosenSpell);
+    }
+
+    forgetSpell() {
+        Memento.register(this);
+        this._chosenSpell = null;
     }
 
     get chosenSpell() {
