@@ -299,14 +299,14 @@ describe("Interactive Formation", ()=> {
             ]);
             assert(getDirectives(formations1Layer)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 423.998, 296.4443)",
+                    "setTransform(0, 0.4888, -0.4888, 0, 421.5543, 298.8881)",
                     "shadowColor = #FF0000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
                 "restore()"
             ]);
             assert(getDirectives(markers1Layer)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 458.6999, 365.848)",
+                    "setTransform(0, 0.4888, -0.4888, 0, 461.1437, 363.4042)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/ordergiven.png, -32, -32, 64, 64)",
                 "restore()"

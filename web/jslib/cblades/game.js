@@ -733,8 +733,8 @@ export class CBHexId {
         this.hex.removeUnit(unit);
     }
 
-    _appendUnit(unit) {
-        this.hex.appendUnit(unit);
+    _appendUnit(unit, moveType) {
+        this.hex.appendUnit(unit, moveType);
     }
 
     _deleteUnit(unit) {

@@ -65,11 +65,11 @@ describe("Interactive Magic", ()=> {
             assert(getDirectives(widgetItemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 391.6667, 340)",
-                    "drawImage(/CBlades/images/icons/cast-spell.png, -25, -25, 50, 50)",
+                    "drawImage(/CBlades/images/icons/cast-spell-gray.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 331.6667, 340)",
-                    "drawImage(/CBlades/images/icons/select-spell.png, -25, -25, 50, 50)",
+                    "drawImage(/CBlades/images/icons/select-spell-gray.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });

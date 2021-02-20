@@ -748,7 +748,7 @@ describe("Game", ()=> {
     it("Checks counter basic appearance and features", () => {
         given:
             var { game } = prepareTinyGame();
-            let counter = new CBCounter(["/CBlades/images/units/misc/counter.png"], new Dimension2D(50, 50));
+            let counter = new CBCounter("units", ["/CBlades/images/units/misc/counter.png"], new Dimension2D(50, 50));
             game.addCounter(counter, new Point2D(100, 200));
             game.start();
             loadAllImages();

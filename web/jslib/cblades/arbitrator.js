@@ -243,7 +243,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             for (let angle in zones) {
                 let zone = zones[angle];
                 if (!forbiddenZones.has(zone.hex)) {
-                    if (processZone.call(this, zone, this, unit, moveType)) {
+                    if (processZone.call(this, zone, unit, moveType)) {
                         result[angle] = zone;
                     }
                 }
@@ -902,11 +902,11 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     isAllowedToChoseSpell(unit) {
-        return unit.isCharacter;
+        return !!unit.isCharacter;
     }
 
     isAllowedToCastSpell(unit) {
-        return unit.isCharacter && unit.hasChosenSpell();
+        return !!unit.isCharacter && unit.hasChosenSpell();
     }
 
     getAllowedSpells(unit) {

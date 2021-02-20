@@ -1360,7 +1360,7 @@ describe("Board", ()=> {
             event = createEvent("mousemove", {offsetX:260, offsetY:160});
             mockPlatform.dispatchEvent(board.root, "mousemove", event);
         then:
-            assert(onArtifact1).isTrue();
+            assert(onArtifact1).isFalse();
             assert(onArtifact2).isTrue();
         when: // exit artifact 1
             event = createEvent("mousemove", {offsetX:270, offsetY:170});

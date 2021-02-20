@@ -1093,6 +1093,9 @@ export class DBoard {
                         this._mouseOverArtifact.onMouseEnter && this._mouseOverArtifact.onMouseEnter(event);
                     }
                 }
+                if (this._mouseOverArtifact) {
+                    this._mouseOverArtifact.onMouseMove && this._mouseOverArtifact.onMouseMove(event);
+                }
             }
             this.paint();
             return processed;

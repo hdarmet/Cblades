@@ -682,7 +682,7 @@ describe("Widget", ()=> {
         when:
             resetDirectives(commandsLayer);
             result.open(board, new Point2D(10, 20));
-            result.show();
+            result.appear();
             var resultVPLocation = result.trigger.viewportLocation;
             board.paint();
         then:
@@ -748,7 +748,7 @@ describe("Widget", ()=> {
         when:
             resetDirectives(commandsLayer);
             result.open(board, new Point2D(10, 20));
-            result.show();
+            result.appear();
             var resultVPLocation = result.trigger.viewportLocation;
             board.paint();
         then:
@@ -815,7 +815,7 @@ describe("Widget", ()=> {
                 result.close();
             });
             result.open(board, new Point2D(10, 20));
-            result.show();
+            result.appear();
             var resultVPLocation = result.trigger.viewportLocation;
         when:
             var event = createEvent("click", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y});
@@ -837,7 +837,7 @@ describe("Widget", ()=> {
         when:
             resetDirectives(commandsLayer);
             message.open(board, new Point2D(10, 20));
-            message.show("12");
+            message.appear("12");
             var messageVPLocation = message.trigger.viewportLocation;
             board.paint();
         then:
@@ -938,7 +938,7 @@ describe("Widget", ()=> {
                 message.close();
             });
             message.open(board, new Point2D(10, 20));
-            message.show("12", 1, 2, 3);
+            message.appear("12", 1, 2, 3);
             var messageVPLocation = message.trigger.viewportLocation;
         when:
             var event = createEvent("click", {offsetX:messageVPLocation.x, offsetY:messageVPLocation.y});
