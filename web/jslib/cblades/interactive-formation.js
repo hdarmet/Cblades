@@ -90,9 +90,8 @@ export class InteractiveCreateFormationAction extends CBAction {
         this.game.closeActuators();
         let {replacement, replaced} = this.game.arbitrator.createFormation(this.unit, hexId);
         let hexLocation = this.unit.hexLocation;
-        this.game.appendUnit(replacement);
-        replacement.move(new CBHexSideId(hexLocation, hexId), 0);
-        replacement.angle = replaced[0].angle;
+        this.game.appendUnit(replacement, new CBHexSideId(hexLocation, hexId));
+        replacement.rotate(replaced[0].angle);
         replacement.markAsBeingPlayed();
         for (let troop of replaced) {
             this.game.deleteUnit(troop);
@@ -130,8 +129,7 @@ export class InteractiveReleaseTroopsAction extends CBAction {
     releaseTroop(hexId, steps, moveType) {
         this.game.closeActuators();
         let {stepCount, troop} = this.game.arbitrator.releaseTroop(this.unit, hexId, steps);
-        this.game.appendUnit(troop);
-        troop.move(hexId, 0, moveType);
+        troop.appendToMap(hexId, moveType);
         troop.angle = this.unit.angle;
         troop.markAsBeingPlayed();
         this.unit.fixRemainingLossSteps(stepCount);
@@ -165,7 +163,6 @@ export class InteractiveIncludeTroopsAction extends CBAction {
         this.unit.fixLackOfMunitionsLevel(lackOfMunitions);
         this.unit.markAsBeingPlayed();
         for (let removedUnit of removed) {
-            removedUnit.move(null, 0);
             this.game.deleteUnit(removedUnit);
         }
         this.markAsFinished();

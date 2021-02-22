@@ -294,7 +294,7 @@ export class CBGame {
 
         function getHexArtifactSlot(artifact) {
             let counter = artifact.counter;
-            return counter.hex.playables.indexOf(counter);
+            return counter.hexLocation.playables.indexOf(counter);
         }
 
         function getHexArtifactLayer(artifact, [hexLayer]) {
@@ -406,20 +406,38 @@ export class CBGame {
     }
 
     addUnit(unit, hexLocation) {
-        this._counters.add(unit);
-        if (hexLocation) {
-            unit.hexLocation = hexLocation;
-            unit.element.setOnBoard(this._board);
-        }
+        unit.addToMap(hexLocation, CBMoveType.BACKWARD);
     }
 
-    appendUnit(unit) {
+    removeUnit(unit) {
+        unit.removeFromMap();
+    }
+
+    appendUnit(unit, hexLocation) {
+        unit.appendToMap(hexLocation, CBMoveType.BACKWARD);
+    }
+
+    deleteUnit(unit) {
+        unit.deleteFromMap();
+    }
+
+    _addUnit(unit) {
+        console.assert(!this._counters.has(unit));
+        this._counters.add(unit)
+    }
+
+    _removeUnit(unit) {
+        console.assert(this._counters.has(unit));
+        this._counters.delete(unit);
+    }
+
+    _appendUnit(unit) {
         console.assert(!this._counters.has(unit));
         Memento.register(this);
         this._counters.add(unit)
     }
 
-    deleteUnit(unit) {
+    _deleteUnit(unit) {
         console.assert(this._counters.has(unit));
         Memento.register(this);
         this._counters.delete(unit);
@@ -684,6 +702,10 @@ export class CBHexId {
         return this._map;
     }
 
+    get game() {
+        return this.map.game;
+    }
+
     get col() {
         return this._col;
     }
@@ -791,8 +813,8 @@ export class CBHexId {
 export class CBHexSideId {
 
     constructor(hexId1, hexId2) {
-        this._hexId1 = hexId1;
-        this._hexId2 = hexId2;
+        this._fromHex = hexId1;
+        this._toHex = hexId2;
     }
 
     static equals(hexSide1, hexSide2) {
@@ -802,25 +824,29 @@ export class CBHexSideId {
     }
 
     get fromHex() {
-        return this._hexId1;
+        return this._fromHex;
     }
 
     get toHex() {
-        return this._hexId2;
+        return this._toHex;
     }
 
     get location() {
-        let loc1 = this._hexId1.location;
-        let loc2 = this._hexId2.location;
+        let loc1 = this._fromHex.location;
+        let loc2 = this._toHex.location;
         return new Point2D((loc1.x+loc2.x)/2, (loc1.y+loc2.y)/2);
     }
 
     get angle() {
-        return this._hexId1.getAngle(this._hexId2);
+        return this._fromHex.getAngle(this._toHex);
     }
 
     get map() {
-        return this._hexId1.map;
+        return this._fromHex.map;
+    }
+
+    get game() {
+        return this.map.game;
     }
 
     getFaceHex(angle) {
@@ -828,8 +854,8 @@ export class CBHexSideId {
     }
 
     getOtherHex(hexId) {
-        console.assert(hexId===this._hexId1 || hexId === this._hexId2);
-        return hexId===this._hexId1 ? this._hexId2 :this._hexId1;
+        console.assert(hexId===this._fromHex || hexId === this._toHex);
+        return hexId===this._fromHex ? this._toHex :this._fromHex;
     }
 
     similar(hexSideId) {
@@ -846,27 +872,27 @@ export class CBHexSideId {
     }
 
     hasHex(hexId) {
-        return this._hexId1 === hexId || this._hexId2 === hexId;
+        return this._fromHex === hexId || this._toHex === hexId;
     }
 
     _addUnit(unit) {
-        this.toHex.addUnit(unit);
-        this.fromHex.addUnit(unit);
+        this.toHex._addUnit(unit);
+        this.fromHex._addUnit(unit);
     }
 
     _removeUnit(unit) {
-        this.toHex.removeUnit(unit);
-        this.fromHex.removeUnit(unit);
+        this.toHex._removeUnit(unit);
+        this.fromHex._removeUnit(unit);
     }
 
     _appendUnit(unit) {
-        this.toHex.appendUnit(unit);
-        this.fromHex.appendUnit(unit);
+        this.toHex._appendUnit(unit);
+        this.fromHex._appendUnit(unit);
     }
 
     _deleteUnit(unit) {
-        this.toHex.deleteUnit(unit);
-        this.fromHoHex.deleteUnit(unit);
+        this.toHex._deleteUnit(unit);
+        this.fromHex._deleteUnit(unit);
     }
 
     get units() {
@@ -874,23 +900,23 @@ export class CBHexSideId {
     }
 
     _addPlayable(playable) {
-        this.toHex.addPlayable(playable);
-        this.fromHex.addPlayable(playable);
+        this.toHex._addPlayable(playable);
+        this.fromHex._addPlayable(playable);
     }
 
     _removePlayable(playable) {
-        this.toHex.removePlayable(playable);
-        this.fromHex.removePlayable(playable);
+        this.toHex._removePlayable(playable);
+        this.fromHex._removePlayable(playable);
     }
 
     _appendPlayable(playable) {
-        this.toHex.appendPlayable(playable);
-        this.fromHex.appendPlayable(playable);
+        this.toHex._appendPlayable(playable);
+        this.fromHex._appendPlayable(playable);
     }
 
     _deletePlayable(playable) {
-        this.toHex.deleteUnit(playable);
-        this.fromHex.deleteUnit(playable);
+        this.toHex._deleteUnit(playable);
+        this.fromHex._deleteUnit(playable);
     }
 
     get playables() {
@@ -1454,12 +1480,20 @@ export class CBCounter {
         return !!this._element.board;
     }
 
-    show(game) {
+    _show(game) {
         this._element.show(game.board);
     }
 
-    hide() {
+    _hide() {
         this._element.hide();
+    }
+
+    _setOnGame(game) {
+        this._element.setOnBoard(game.board);
+    }
+
+    _removeFromGame() {
+        this._element.removeFromBoard();
     }
 
     appear() {
@@ -1493,19 +1527,38 @@ export class CBPlayable extends CBCounter {
 
     addToMap(hexLocation) {
         console.assert(!this._hexLocation);
-        Memento.register(this);
         this._hexLocation = hexLocation;
-        hexLocation._appendPlayable(this);
-        this.show(hexLocation.map.game);
-        this._element.move(hexLocation.location);
+        hexLocation._addPlayable(this);
+        this._setOnGame(hexLocation.map.game);
+        this._element.setLocation(hexLocation.location);
     }
 
     removeFromMap() {
         console.assert(this._hexLocation);
+        this._hexLocation._removePlayable(this);
+        this._removeFromGame();
+        delete this._hexLocation;
+    }
+
+    appendToMap(hexLocation) {
+        console.assert(!this._hexLocation);
+        Memento.register(this);
+        this._hexLocation = hexLocation;
+        hexLocation._appendPlayable(this);
+        this._show(hexLocation.map.game);
+        this._element.move(hexLocation.location);
+    }
+
+    deleteFromMap() {
+        console.assert(this._hexLocation);
         Memento.register(this);
         this._hexLocation._deletePlayable(this);
-        this.hide();
+        this._hide();
         delete this._hexLocation;
+    }
+
+    get hexLocation() {
+        return this._hexLocation;
     }
 }
 
@@ -1644,18 +1697,37 @@ export class CBAbstractUnit extends CBCounter {
 
     addToMap(hexId, moveType) {
         console.assert(!this._hexLocation);
-        Memento.register(this);
+        hexId.game._addUnit(this);
         this._hexLocation = hexId;
-        hexId._appendUnit(this, moveType);
-        this.show(hexId.map.game);
-        this._element.move(hexId.location);
+        hexId._addUnit(this, moveType);
+        this._setOnGame(hexId.map.game);
+        this._element.setLocation(hexId.location);
     }
 
     removeFromMap() {
         console.assert(this._hexLocation);
+        this.game._removeUnit(this);
+        this._hexLocation._removeUnit(this);
+        this._removeFromGame();
+        delete this._hexLocation;
+    }
+
+    appendToMap(hexId, moveType) {
+        console.assert(!this._hexLocation);
         Memento.register(this);
+        hexId.game._appendUnit(this);
+        this._hexLocation = hexId;
+        hexId._appendUnit(this, moveType);
+        this._show(hexId.map.game);
+        this._element.move(hexId.location);
+    }
+
+    deleteFromMap() {
+        console.assert(this._hexLocation);
+        Memento.register(this);
+        this.game._deleteUnit(this);
         this._hexLocation._deleteUnit(this);
-        this.hide();
+        this._hide();
         delete this._hexLocation;
     }
 

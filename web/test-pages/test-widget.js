@@ -11,7 +11,7 @@ import {
     DImage, getDrawPlatform, setDrawPlatform
 } from "../jslib/draw.js";
 import {
-    Mechanisms
+    Mechanisms, Memento
 } from "../jslib/mechanisms.js";
 import {
     DBoard, DStaticLevel
@@ -1018,5 +1018,72 @@ describe("Widget", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
     });
+
+
+
+
+    it("Checks that a scene opening/closing is undoable", () => {
+        given:
+            var { board, widgetsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            let indicator = new DIndicator(["/CBlades/images/indicators/indicator1.png"], new Dimension2D(50, 50));
+            let insert = new DInsert("/CBlades/images/inserts/insert.png", new Dimension2D(200, 190));
+            let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+            let scene = new DScene()
+                .addWidget(indicator, new Point2D(-100, -100))
+                .addWidget(insert, new Point2D(-100, 100))
+                .addWidget(dice, new Point2D(100, 0));
+            loadAllImages();
+            Memento.activate();
+        when:
+            resetDirectives(widgetsLayer);
+            scene.open(board, new Point2D(250, 150)); // near a border to trigger adjustement
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 0)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/indicators/indicator1.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/insert.png, -100, -95, 200, 190)",
+                "restore()"
+            ]);
+        when:
+            Memento.open();
+            resetDirectives(widgetsLayer);
+            scene.close();
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+        when:
+            resetDirectives(widgetsLayer);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1, 0, 0, 1, 150, 0)",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/indicators/indicator1.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                "setTransform(1, 0, 0, 1, 150, 200)",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(/CBlades/images/inserts/insert.png, -100, -95, 200, 190)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(widgetsLayer);
+            Memento.redo();
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+    });
+
+
+
 
 });

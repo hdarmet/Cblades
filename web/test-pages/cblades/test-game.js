@@ -22,7 +22,7 @@ import {
     CBHexSideId,
     CBHexVertexId,
     CBCounter,
-    CBAction, CBAbstractUnit, CBMoveType, CBActuatorImageArtifact
+    CBAction, CBAbstractUnit, CBMoveType, CBActuatorImageArtifact, CBPlayable
 } from "../../jslib/cblades/game.js";
 import {
     DBoard, DElement
@@ -730,21 +730,6 @@ describe("Game", ()=> {
         mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
     }
 
-    function create2UnitsTinyGame(start = true) {
-        var { game, map } = prepareTinyGame();
-        let player = new CBAbstractPlayer();
-        game.addPlayer(player);
-        let unit1 = new CBTestUnit(player,["/CBlades/images/units/misc/unit1.png"]);
-        game.addUnit(unit1, map.getHex(5, 6));
-        let unit2 = new CBTestUnit(player,["/CBlades/images/units/misc/unit2.png"]);
-        game.addUnit(unit2, map.getHex(5, 7));
-        if (start) {
-            game.start();
-            loadAllImages();
-        }
-        return {game, map, unit1, unit2, player};
-    }
-
     it("Checks counter basic appearance and features", () => {
         given:
             var { game } = prepareTinyGame();
@@ -806,6 +791,33 @@ describe("Game", ()=> {
             mouseClickOnCounter(game, counter); // checks that tests does not crash
     });
 
+
+    it("Checks playable", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            let playable = new CBPlayable("terran", ["/CBlades/images/units/misc/playable.png"], new Dimension2D(50, 50));
+            game.start();
+            loadAllImages();
+            var [hexLayer] = getLayers(game.board, "hex-0");
+        when:
+            resetDirectives(hexLayer);
+            playable.appendToMap(map.getHex(4, 5));
+            repaint(game);
+        then:
+            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 121.1022)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/playable.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
+
+
+
+
+
     it("Checks unit registration on map", () => {
         given:
             var { game, map } = prepareTinyGame();
@@ -837,13 +849,13 @@ describe("Game", ()=> {
             assert(hexId.units).arrayEqualsTo([unit]);
             assert(unit.isOnBoard()).isTrue();
         when:
-            unit.removeFromMap();
+            unit.deleteFromMap();
         then:
             assert(hexId.units).arrayEqualsTo([]);
             assert(unit.isOnBoard()).isFalse();
         when:
             Memento.open();
-            unit.addToMap(hexId, CBMoveType.FORWARD);
+            unit.appendToMap(hexId, CBMoveType.FORWARD);
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
             assert(unit.isOnBoard()).isTrue();
@@ -888,6 +900,21 @@ describe("Game", ()=> {
                 "restore()"
             ]);
     });
+
+    function create2UnitsTinyGame(start = true) {
+        var { game, map } = prepareTinyGame();
+        let player = new CBAbstractPlayer();
+        game.addPlayer(player);
+        let unit1 = new CBTestUnit(player,["/CBlades/images/units/misc/unit1.png"]);
+        game.addUnit(unit1, map.getHex(5, 6));
+        let unit2 = new CBTestUnit(player,["/CBlades/images/units/misc/unit2.png"]);
+        game.addUnit(unit2, map.getHex(5, 7));
+        if (start) {
+            game.start();
+            loadAllImages();
+        }
+        return {game, map, unit1, unit2, player};
+    }
 
     it("Checks unit selection/deselection authorizations", () => {
         given:
@@ -1181,7 +1208,7 @@ describe("Game", ()=> {
             assert(game.counters.has(unit)).isFalse();
         when:
             Memento.open();
-            game.appendUnit(unit);
+            game.appendUnit(unit, map.getHex(4, 5));
         then:
             assert(game.counters.has(unit)).isTrue();
         when:
@@ -1352,26 +1379,26 @@ describe("Game", ()=> {
         given:
             var {unit1, unit2, leader1, leader2, map} = create2Troops2LeadersTinyGame();
         when:
-            leader1.removeFromMap();
-            leader1.addToMap(map.getHex(8, 8), CBMoveType.BACKWARD);
+            leader1.deleteFromMap();
+            leader1.appendToMap(map.getHex(8, 8), CBMoveType.BACKWARD);
             var units = map.getHex(8, 8).units;
         then:
             assert(units).arrayEqualsTo([leader1]);
         when:
-            leader2.removeFromMap();
-            leader2.addToMap(map.getHex(8, 8),  CBMoveType.BACKWARD);
+            leader2.deleteFromMap();
+            leader2.appendToMap(map.getHex(8, 8),  CBMoveType.BACKWARD);
             units = map.getHex(8, 8).units;
         then:
             assert(units).arrayEqualsTo([leader1, leader2]);
         when:
-            unit1.removeFromMap();
-            unit1.addToMap(map.getHex(8, 8), CBMoveType.BACKWARD);
+            unit1.deleteFromMap();
+            unit1.appendToMap(map.getHex(8, 8), CBMoveType.BACKWARD);
             units = map.getHex(8, 8).units;
         then:
             assert(units).arrayEqualsTo([unit1, leader1, leader2]);
         when:
-            unit2.removeFromMap();
-            unit2.addToMap(map.getHex(8, 8), CBMoveType.BACKWARD);
+            unit2.deleteFromMap();
+            unit2.appendToMap(map.getHex(8, 8), CBMoveType.BACKWARD);
             units = map.getHex(8, 8).units;
         then:
             assert(units).arrayEqualsTo([unit1, unit2, leader1, leader2]);
@@ -1381,26 +1408,26 @@ describe("Game", ()=> {
         given:
             var {unit1, unit2, leader1, leader2, map} = create2Troops2LeadersTinyGame();
         when:
-            unit1.removeFromMap();
-            unit1.addToMap(map.getHex(8, 8), CBMoveType.FORWARD);
+            unit1.deleteFromMap();
+            unit1.appendToMap(map.getHex(8, 8), CBMoveType.FORWARD);
             var units = map.getHex(8, 8).units;
         then:
             assert(units).arrayEqualsTo([unit1]);
         when:
-            unit2.removeFromMap();
-            unit2.addToMap(map.getHex(8, 8), CBMoveType.FORWARD);
+            unit2.deleteFromMap();
+            unit2.appendToMap(map.getHex(8, 8), CBMoveType.FORWARD);
             units = map.getHex(8, 8).units;
         then:
             assert(units).arrayEqualsTo([unit2, unit1]);
         when:
-            leader1.removeFromMap();
-            leader1.addToMap(map.getHex(8, 8), CBMoveType.FORWARD);
+            leader1.deleteFromMap();
+            leader1.appendToMap(map.getHex(8, 8), CBMoveType.FORWARD);
             units = map.getHex(8, 8).units;
         then:
             assert(units).arrayEqualsTo([unit2, unit1, leader1]);
         when:
-            leader2.removeFromMap();
-            leader2.addToMap(map.getHex(8, 8), CBMoveType.FORWARD);
+            leader2.deleteFromMap();
+            leader2.appendToMap(map.getHex(8, 8), CBMoveType.FORWARD);
             units = map.getHex(8, 8).units;
         then:
             assert(units).arrayEqualsTo([unit2, unit1, leader2, leader1]);

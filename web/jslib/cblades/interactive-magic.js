@@ -123,7 +123,7 @@ export class InteractiveCastSpellAction extends CBAction {
         let result = this._spell.getNextCinematic();
         switch (result.cinematic) {
             case CBSpell.CINEMATIC.NONE:
-                this.unit.chosenSpell.apply();
+                this._spell.apply();
                 this.game.closeActuators();
                 break;
             case CBSpell.CINEMATIC.SELECT_FOE:

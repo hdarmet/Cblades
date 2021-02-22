@@ -98,6 +98,7 @@ export class CBSpell extends CBPlayable {
     }
 
     apply() {
+        Memento.register(this);
         this._wizard.forgetSpell();
     }
 
@@ -187,11 +188,8 @@ export function HexTargetedMixin(clazz) {
 
         apply() {
             super.apply();
-            Memento.register(this);
-            this._activate()
-            this.wizard.drop(this);
-            this.hide();
-            this.addToMap(this.hex);
+            this._activate();
+            this.appendToMap(this.hex);
             this.move(this.hex.location);
         }
 
@@ -239,8 +237,11 @@ export function UnitTargetedMixin(clazz) {
             Memento.register(this);
             this._activate();
             this._unit = hex.units[0];
-            this.wizard.drop(this);
+            this.wizard.forgetSpell(this);
             this._unit.appendOption(this);
+        }
+
+        apply() {
         }
 
     }

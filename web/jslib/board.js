@@ -163,13 +163,20 @@ export class DArtifact extends LocalisationAware(Object) {
             this._level.hideArtifact(this);
         }
         this._levelName = levelName;
-        this._level = this.board.getLevel(this._levelName);
-        this._level.showArtifact(this);
+        if (this.board) {
+            this._level = this.board.getLevel(this._levelName);
+            this._level.showArtifact(this);
+        }
     }
 
     shift(position) {
         Memento.register(this);
         this.position = position;
+    }
+
+    turn(angle) {
+        Memento.register(this);
+        this.pangle = angle;
     }
 
     move(location, angle) {

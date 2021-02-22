@@ -544,10 +544,10 @@ describe("Arbitrator", ()=> {
         assert(rotations[angle].type).equalsTo(type);
     }
     function assertVertexRotation(rotations, angle, col1, row1, col2, row2, type) {
-        assert(rotations[angle].hex._hexId1.col).equalsTo(col1);
-        assert(rotations[angle].hex._hexId1.row).equalsTo(row1);
-        assert(rotations[angle].hex._hexId2.col).equalsTo(col2);
-        assert(rotations[angle].hex._hexId2.row).equalsTo(row2);
+        assert(rotations[angle].hex.fromHex.col).equalsTo(col1);
+        assert(rotations[angle].hex.fromHex.row).equalsTo(row1);
+        assert(rotations[angle].hex.toHex.col).equalsTo(col2);
+        assert(rotations[angle].hex.toHex.row).equalsTo(row2);
         assert(rotations[angle].type).equalsTo(type);
     }
 

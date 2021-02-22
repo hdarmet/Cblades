@@ -371,7 +371,7 @@ describe("Board", ()=> {
         return { board, level, layer, element, artifact, image };
     }
 
-    it("Checks change artifact position and relative orientation", () => {
+    it("Checks change artifact position and relative orientation (not undoable)", () => {
         given:
             var {board, artifact, layer, image} = createBoardWithOneCounter();
         when: // Change position
@@ -405,6 +405,112 @@ describe("Board", ()=> {
         then:
             assert(orphanArtifact.position.toString()).equalsTo("point(10, 10)");
             assert(orphanArtifact.pangle).equalsTo(60);
+    });
+
+    it("Checks change artifact position and relative orientation (undoable)", () => {
+        given:
+            var {board, artifact, layer, image} = createBoardWithOneCounter();
+            Memento.activate();
+            Memento.open();
+        when: // Change position
+            resetDirectives(layer);
+            artifact.position = new Point2D(-10, -15);
+            board.paint();
+        then:
+            assert(artifact.position.toString()).equalsTo("point(-10, -15)");
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1, 0, 0, 1, 240, 135)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+        ]);
+        when: // Change orientation
+            resetDirectives(layer);
+            artifact.turn(60);
+            board.paint();
+        then:
+            assert(artifact.pangle).equalsTo(60);
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(0.5, 0.866, -0.866, 0.5, 240, 135)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(layer);
+            artifact.shift(new Point2D(10, 10));
+            board.paint();
+        then:
+            assert(artifact.position.toString()).equalsTo("point(10, 10)");
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(0.5, 0.866, -0.866, 0.5, 260, 160)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(layer);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(artifact.position.toString()).equalsTo("point(-10, -15)");
+            assert(artifact.pangle).equalsTo(0);
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1, 0, 0, 1, 240, 135)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks change artifact level (undoable)", () => {
+        given:
+            var { unitsLevel, unitsLayer, markersLevel, markersLayer, board } = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var image = DImage.getImage("../images/unit.png");
+            image._root.onload();
+            var artifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+            var element = new DElement(artifact);
+            element.setOnBoard(board);
+            Memento.activate();
+        when: // Change position
+            resetDirectives(unitsLayer, markersLayer);
+            board.paint();
+        then:
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1, 0, 0, 1, 250, 150)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+            ]);
+        when:
+            Memento.open();
+            resetDirectives(unitsLayer, markersLayer);
+            artifact.changeLevel("markers");
+            board.paint();
+        then:
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+            ]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1, 0, 0, 1, 250, 150)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer, markersLayer);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1, 0, 0, 1, 250, 150)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+            ]);
     });
 
     it("Checks change artifact alpha", () => {

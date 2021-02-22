@@ -1,7 +1,7 @@
 'use strict';
 
 import {
-    Mechanisms, Memento
+    Memento
 } from "./mechanisms.js";
 import {
     DImage, getDrawPlatform

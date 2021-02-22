@@ -693,7 +693,7 @@ describe("Interactive Combat", ()=> {
 
     it("Checks when a unit takes a loss", () => {
         given:
-            var { game, map, player1, unit1, unit2 } = create2PlayersTinyGame();
+            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
             var [actuatorsLayer, unitsLayer] = getLayers(game.board,
                 "actuators", "units-0"
             );
