@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    CBPlayable, CBCounterImageArtifact, CBMoveType, RetractableMixin
+    CBPlayable, CBCounterImageArtifact, RetractableMixin
 } from "./game.js";
 import {
     Dimension2D, Point2D
@@ -10,6 +10,7 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
+    CarriableMixin,
     OptionArtifactMixin,
     OptionMixin
 } from "./unit.js";
@@ -22,20 +23,8 @@ import {
 
 class SpellImageArtifact extends OptionArtifactMixin(RetractableMixin(CBCounterImageArtifact)) {
 
-    constructor(unit, ...args) {
-        super(unit, ...args);
-        this._option = false;
-    }
-
-    _memento() {
-        let memento = super._memento();
-        memento.option = this._option;
-        return memento;
-    }
-
-    _revert(memento) {
-        super._revert(memento);
-        this._option = memento.option;
+    constructor(spell, ...args) {
+        super(spell, ...args);
     }
 
     get spell() {
@@ -52,7 +41,7 @@ class SpellImageArtifact extends OptionArtifactMixin(RetractableMixin(CBCounterI
 
 }
 
-export class CBSpell extends CBPlayable {
+export class CBSpell extends CarriableMixin(CBPlayable) {
 
     constructor(paths, wizard, spellLevel) {
         super("units", paths, CBSpell.DIMENSION);
@@ -62,6 +51,17 @@ export class CBSpell extends CBPlayable {
 
     createArtifact(levelName, images, location, dimension) {
         return new SpellImageArtifact(this, levelName, images, location, dimension);
+    }
+
+    _memento() {
+        let memento = super._memento();
+        memento.activated = this._activated;
+        return memento;
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        this._activated = memento.activated;
     }
 
     _getHexLocation() {
@@ -76,10 +76,6 @@ export class CBSpell extends CBPlayable {
         return true;
     }
 
-    get hexLocation() {
-        return this._getHexLocation();
-    }
-
     get unit() {
         return this._getUnit();
     }
@@ -92,32 +88,43 @@ export class CBSpell extends CBPlayable {
         return this.wizard.game;
     }
 
+    _addPlayable(hexLocation) {
+        if (this.activated) {
+            super._addPlayable(hexLocation);
+        }
+    }
+
+    _removePlayable(hexLocation) {
+        if (this.activated) {
+            super._removePlayable(hexLocation);
+        }
+    }
+
+    _appendPlayable(hexLocation) {
+        if (this.activated) {
+            super._appendPlayable(hexLocation);
+        }
+    }
+
+    _deletePlayable(hexLocation) {
+        if (this.activated) {
+            super._deletePlayable(hexLocation);
+        }
+    }
+
     _activate() {
         Memento.register(this);
         this.artifact.changeImage(this._spellLevel);
+        this._activated = true;
+    }
+
+    get activated() {
+        return this._activated;
     }
 
     apply() {
         Memento.register(this);
         this._wizard.forgetSpell();
-    }
-
-    move(location) {
-        Memento.register(this);
-        if (this.location) {
-            if (!location) {
-                this._element.hide();
-            }
-        }
-        if (location && !this.location) this._element.show(this.game.board);
-        if (location) {
-            this._element.move(location);
-        }
-    }
-
-    rotate(angle) {
-        Memento.register(this);
-        this._element.rotate(angle);
     }
 
 }
@@ -190,7 +197,7 @@ export function HexTargetedMixin(clazz) {
             super.apply();
             this._activate();
             this.appendToMap(this.hex);
-            this.move(this.hex.location);
+            this._rotate(0);
         }
 
         _activate() {
@@ -225,6 +232,10 @@ export function UnitTargetedMixin(clazz) {
             return memento;
         }
 
+        isOption() {
+            return this.activated;
+        }
+
         _revert(memento) {
             super._revert(memento);
             if (memento.unit) {
@@ -233,11 +244,23 @@ export function UnitTargetedMixin(clazz) {
             else delete this._unit;
         }
 
+        _addPlayable(hexLocation) {
+        }
+
+        _removePlayable(hexLocation) {
+        }
+
+        _appendPlayable(hexLocation) {
+        }
+
+        _deletePlayable(hexLocation) {
+        }
+
         selectHex(hex) {
             Memento.register(this);
-            this._activate();
             this._unit = hex.units[0];
             this.wizard.forgetSpell(this);
+            this._activate();
             this._unit.appendOption(this);
         }
 

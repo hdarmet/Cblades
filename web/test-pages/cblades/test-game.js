@@ -22,7 +22,7 @@ import {
     CBHexSideId,
     CBHexVertexId,
     CBCounter,
-    CBAction, CBAbstractUnit, CBMoveType, CBActuatorImageArtifact, CBPlayable
+    CBAction, CBAbstractUnit, CBMoveType, CBActuatorImageArtifact, CBPlayable, CBCounterImageArtifact
 } from "../../jslib/cblades/game.js";
 import {
     DBoard, DElement
@@ -47,6 +47,28 @@ class CBTestUnit extends CBAbstractUnit {
     constructor(player, paths) {
         super(paths, new Dimension2D(142, 142));
         this.player = player;
+    }
+
+    updatePlayed() {
+        this.status = "played";
+    }
+
+    reset(player) {
+        super.reset(player);
+        if (player === this.player) {
+            delete this.status;
+        }
+    }
+}
+
+class CBTestFormation extends CBAbstractUnit {
+    constructor(player, paths) {
+        super(paths, new Dimension2D(142*2, 142));
+        this.player = player;
+    }
+
+    get isFormation() {
+        return true;
     }
 
     updatePlayed() {
@@ -733,56 +755,57 @@ describe("Game", ()=> {
     it("Checks counter basic appearance and features", () => {
         given:
             var { game } = prepareTinyGame();
-            let counter = new CBCounter("units", ["/CBlades/images/units/misc/counter.png"], new Dimension2D(50, 50));
+            let counter = new CBCounter("terran", ["/CBlades/images/units/misc/counter.png"], new Dimension2D(50, 50));
             game.addCounter(counter, new Point2D(100, 200));
             game.start();
             loadAllImages();
             counter.angle = 45;
-            var [markersLayer] = getLayers(game.board, "markers-0");
+            var [hexLayer] = getLayers(game.board, "hex-0");
         when:
-            resetDirectives(markersLayer);
+            resetDirectives(hexLayer);
             repaint(game);
         then:
+            assert(counter.isShown()).isTrue();
             assert(counter.game).equalsTo(game);
             assert(counter.angle).equalsTo(45);
             assert(counter.element).is(DElement);
             assert(counter.element.artifacts[0]).equalsTo(counter.artifact);
             assert(counter.location.toString()).equalsTo("point(100, 200)");
-            assert(counter.viewportLocation.toString()).equalsTo("point(548.8759, 497.7517)");
-            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+            assert(counter.viewportLocation.toString()).equalsTo("point(548.8759, 507.5269)");
+            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 548.8759, 497.7517)",
+                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 548.8759, 507.5269)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/counter.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
-            resetDirectives(markersLayer);
+            resetDirectives(hexLayer);
             counter.location = new Point2D(10, 20);
             paint(game);
         then:
             assert(counter.location.toString()).equalsTo("point(10, 20)");
-            assert(counter.viewportLocation.toString()).equalsTo("point(504.8876, 409.7752)");
-            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+            assert(counter.viewportLocation.toString()).equalsTo("point(504.8876, 419.5503)");
+            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752)",
+                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 419.5503)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/counter.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
-            resetDirectives(markersLayer);
+            resetDirectives(hexLayer);
             paint(game);
         then:
-            assert(getDirectives(markersLayer)).arrayEqualsTo([]);
+            assert(getDirectives(hexLayer)).arrayEqualsTo([]);
         when:
-            resetDirectives(markersLayer);
+            resetDirectives(hexLayer);
             counter.refresh();
             paint(game);
         then:
-            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752)",
+                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 419.5503)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/counter.png, -25, -25, 50, 50)",
                 "restore()"
@@ -791,19 +814,51 @@ describe("Game", ()=> {
             mouseClickOnCounter(game, counter); // checks that tests does not crash
     });
 
-
-    it("Checks playable", () => {
+    it("Checks playable addition and removing on a Hex (not undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
             let playable = new CBPlayable("terran", ["/CBlades/images/units/misc/playable.png"], new Dimension2D(50, 50));
             game.start();
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "hex-0");
+            var hexId = map.getHex(4, 5);
         when:
             resetDirectives(hexLayer);
-            playable.appendToMap(map.getHex(4, 5));
+            playable.addToMap(hexId);
             repaint(game);
         then:
+            assert(hexId.playables).arrayEqualsTo([playable]);
+            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 121.1022)",
+                "shadowColor = #000000", "shadowBlur = 15",
+                "drawImage(/CBlades/images/units/misc/playable.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(hexLayer);
+            playable.removeFromMap();
+            repaint(game);
+        then:
+            assert(hexId.playables).arrayEqualsTo([]);
+            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks playable addition and removing on a Hex (undoable)", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            let playable = new CBPlayable("terran", ["/CBlades/images/units/misc/playable.png"], new Dimension2D(50, 50));
+            game.start();
+            loadAllImages();
+            var [hexLayer] = getLayers(game.board, "hex-0");
+            var hexId = map.getHex(4, 5);
+        when:
+            resetDirectives(hexLayer);
+            playable.appendToMap(hexId);
+            repaint(game);
+        then:
+            assert(hexId.playables).arrayEqualsTo([playable]);
             assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 121.1022)",
@@ -811,64 +866,475 @@ describe("Game", ()=> {
                     "drawImage(/CBlades/images/units/misc/playable.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
-    });
-
-
-
-
-
-
-    it("Checks unit registration on map", () => {
-        given:
-            var { game, map } = prepareTinyGame();
-            var player = new CBAbstractPlayer();
-            game.addPlayer(player);
         when:
-            var unit = new CBTestUnit(player,["/CBlades/images/units/misc/unit1.png"]);
-            var hexId = map.getHex(5, 8);
-            game.addUnit(unit, hexId);
-        then:
-            assert(hexId.units).arrayEqualsTo([unit]);
-        when:
-            var hexId2 = map.getHex(6, 8);
-            unit.hexLocation = hexId2;
-        then:
-            assert(hexId.units).arrayEqualsTo([]);
-            assert(hexId2.units).arrayEqualsTo([unit]);
-    });
-
-    it("Checks undoable unit registration on map", () => {
-        given:
-            var { game, map } = prepareTinyGame();
-            var player = new CBAbstractPlayer();
-            game.addPlayer(player);
-            var unit = new CBTestUnit(player,["/CBlades/images/units/misc/unit1.png"]);
-            var hexId = map.getHex(5, 8);
-            game.addUnit(unit, hexId);
-        then:
-            assert(hexId.units).arrayEqualsTo([unit]);
-            assert(unit.isOnBoard()).isTrue();
-        when:
-            unit.deleteFromMap();
-        then:
-            assert(hexId.units).arrayEqualsTo([]);
-            assert(unit.isOnBoard()).isFalse();
-        when:
+            resetDirectives(hexLayer);
             Memento.open();
-            unit.appendToMap(hexId, CBMoveType.FORWARD);
+            playable.deleteFromMap();
+            repaint(game);
+        then:
+            assert(hexId.playables).arrayEqualsTo([]);
+            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
+            ]);
+        when:
+            resetDirectives(hexLayer);
+            Memento.undo();
+            repaint(game);
+        then:
+            assert(hexId.playables).arrayEqualsTo([playable]);
+            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 121.1022)",
+                "shadowColor = #000000", "shadowBlur = 15",
+                "drawImage(/CBlades/images/units/misc/playable.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(hexLayer);
+            Memento.undo();
+            repaint(game);
+        then:
+            assert(hexId.playables).arrayEqualsTo([]);
+            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks playable addition and removing on a Hex Side (not undoable)", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            let playable = new CBPlayable("terran", ["/CBlades/images/units/misc/playable.png"], new Dimension2D(50, 50));
+            game.start();
+            loadAllImages();
+            var [hexLayer] = getLayers(game.board, "hex-0");
+            var hexId1 = map.getHex(4, 5);
+            var hexId2 = map.getHex(4, 6);
+            var hexSideId = new CBHexSideId(hexId1, hexId2);
+        when:
+            resetDirectives(hexLayer);
+            playable.addToMap(hexSideId);
+            repaint(game);
+        then:
+            assert(hexId1.playables).arrayEqualsTo([playable]);
+            assert(hexId2.playables).arrayEqualsTo([playable]);
+            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 169.2143)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/playable.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(hexLayer);
+            playable.removeFromMap();
+            repaint(game);
+        then:
+            assert(hexId1.playables).arrayEqualsTo([]);
+            assert(hexId2.playables).arrayEqualsTo([]);
+            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks playable addition and removing on a Hex (undoable)", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            let playable = new CBPlayable("terran", ["/CBlades/images/units/misc/playable.png"], new Dimension2D(50, 50));
+            game.start();
+            loadAllImages();
+            var [hexLayer] = getLayers(game.board, "hex-0");
+            var hexId1 = map.getHex(4, 5);
+            var hexId2 = map.getHex(4, 6);
+            var hexSideId = new CBHexSideId(hexId1, hexId2);
+        when:
+            resetDirectives(hexLayer);
+            playable.appendToMap(hexSideId);
+            repaint(game);
+        then:
+            assert(hexId1.playables).arrayEqualsTo([playable]);
+            assert(hexId2.playables).arrayEqualsTo([playable]);
+            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 169.2143)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/playable.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(hexLayer);
+            Memento.open();
+            playable.deleteFromMap();
+            repaint(game);
+        then:
+            assert(hexId1.playables).arrayEqualsTo([]);
+            assert(hexId2.playables).arrayEqualsTo([]);
+            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
+            ]);
+        when:
+            resetDirectives(hexLayer);
+            Memento.undo();
+            repaint(game);
+        then:
+            assert(hexId1.playables).arrayEqualsTo([playable]);
+            assert(hexId2.playables).arrayEqualsTo([playable]);
+            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 169.2143)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/playable.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(hexLayer);
+            Memento.undo();
+            repaint(game);
+        then:
+            assert(hexId1.playables).arrayEqualsTo([]);
+            assert(hexId2.playables).arrayEqualsTo([]);
+            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks playable sorting on Hex", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var spell = new CBPlayable("terran", ["/CBlades/images/units/misc/spell.png"], new Dimension2D(50, 50));
+            spell.isSpell = true;
+            var blaze = new CBPlayable("terran", ["/CBlades/images/units/misc/blaze.png"], new Dimension2D(50, 50));
+            blaze.isElement = true;
+            game.start();
+            var [hexLayer0] = getLayers(game.board, "hex-0");
+        when:
+            spell.appendToMap(map.getHex(4, 5));
+            blaze.appendToMap(map.getHex(4, 5));
+            loadAllImages();
+            resetDirectives(hexLayer0);
+            repaint(game);
+            var [hexLayer1] = getLayers(game.board, "hex-1");
+        then:
+            assert(getDirectives(hexLayer0, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 121.1022)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/blaze.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+            assert(getDirectives(hexLayer1)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 323.5582, 111.327)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/spell.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            var trap = new CBPlayable("terran", ["/CBlades/images/units/misc/trap.png"], new Dimension2D(50, 50));
+            trap.isFeature = true;
+            trap.appendToMap(map.getHex(4, 5));
+            loadAllImages();
+            resetDirectives(hexLayer0, hexLayer1);
+            repaint(game);
+            var [hexLayer2] = getLayers(game.board, "hex-2");
+        then:
+            assert(getDirectives(hexLayer0, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 121.1022)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/trap.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+            assert(getDirectives(hexLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 323.5582, 111.327)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/blaze.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+            assert(getDirectives(hexLayer2)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 313.783, 101.5518)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/spell.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks unit and option counters registration on layers", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            let unit1 = new CBTestUnit(player, ["/CBlades/images/units/misc/unit1.png"]);
+            let markerImage = DImage.getImage("/CBlades/images/units/misc/markers1.png");
+            let marker = new CBCounterImageArtifact(unit1,"units", [markerImage],
+                new Point2D(0, 0), new Dimension2D(142, 142));
+            unit1._element.addArtifact(marker);
+            let unit2 = new CBTestUnit(player, ["/CBlades/images/units/misc/unit2.png"]);
+            let spell = new CBPlayable("units", ["/CBlades/images/units/misc/spell.png"],
+                new Dimension2D(142, 142));
+            spell.artifact.spell = spell;
+            spell.unit = unit2;
+            let option = new CBPlayable("units",  ["/CBlades/images/units/misc/option.png"],
+                new Dimension2D(142, 142));
+            option.artifact.option = option;
+            option.unit = unit2;
+            loadAllImages();
+            game.start();
+            var hexId = map.getHex(4, 5);
+            unit1.addToMap(hexId, CBMoveType.BACKWARD);
+            unit2.addToMap(hexId, CBMoveType.BACKWARD);
+            spell.addToMap(hexId);
+            option.addToMap(hexId);
+            paint(game);
+        when:
+            var [unitsLayer0, markersLayer0, unitsLayer1, spellsLayer1, optionsLayer1] = getLayers(game.board,
+                "units-0", "markers-0", "units-1", "spells-1", "options-1");
+            resetDirectives(unitsLayer0, markersLayer0, unitsLayer1, spellsLayer1, optionsLayer1);
+            repaint(game);
+        then:
+            assert(getDirectives(unitsLayer0, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(markersLayer0, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/markers1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(spellsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/spell.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(optionsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/option.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks unit addition and removing on a Hex (not undoable)", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            let unit = new CBTestUnit(player, ["/CBlades/images/units/misc/unit.png"]);
+            game.start();
+            loadAllImages();
+            var [unitsLayer] = getLayers(game.board, "units-0");
+            var hexId = map.getHex(4, 5);
+        when:
+            resetDirectives(unitsLayer);
+            unit.addToMap(hexId);
+            repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
-            assert(unit.isOnBoard()).isTrue();
+            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(unit.isOnBoard()).equalsTo(true);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
         when:
-            Memento.undo();
+            resetDirectives(unitsLayer);
+            unit.removeFromMap();
+            repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([]);
-            assert(unit.isOnBoard()).isFalse();
+            assert(game.counters).setEqualsTo(new Set());
+            assert(unit.isOnBoard()).equalsTo(false);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks unit addition and removing on a Hex (undoable)", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            let unit = new CBTestUnit(player, ["/CBlades/images/units/misc/unit.png"]);
+            game.start();
+            loadAllImages();
+            var [unitsLayer] = getLayers(game.board, "units-0");
+            var hexId = map.getHex(4, 5);
         when:
-            Memento.redo();
+            resetDirectives(unitsLayer);
+            unit.appendToMap(hexId);
+            repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
-            assert(unit.isOnBoard()).isTrue();
+            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(unit.isOnBoard()).equalsTo(true);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer);
+            Memento.open();
+            unit.deleteFromMap();
+            repaint(game);
+        then:
+            assert(hexId.units).arrayEqualsTo([]);
+            assert(game.counters).setEqualsTo(new Set());
+            assert(unit.isOnBoard()).equalsTo(false);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+            ]);
+        when:
+            resetDirectives(unitsLayer);
+            Memento.undo();
+            repaint(game);
+        then:
+            assert(hexId.units).arrayEqualsTo([unit]);
+            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(unit.isOnBoard()).equalsTo(true);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer);
+            Memento.undo();
+            repaint(game);
+        then:
+            assert(hexId.units).arrayEqualsTo([]);
+            assert(game.counters).setEqualsTo(new Set());
+            assert(unit.isOnBoard()).equalsTo(false);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks unit addition and removing on a Hex Side (not undoable)", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            let unit = new CBTestFormation(player, ["/CBlades/images/units/misc/unit.png"]);
+            unit.angle = 90;
+            game.start();
+            loadAllImages();
+            var [unitsLayer] = getLayers(game.board, "formations-0");
+            var hexId1 = map.getHex(4, 5);
+            var hexId2 = map.getHex(4, 6);
+            var hexSideId = new CBHexSideId(hexId1, hexId2);
+        when:
+            resetDirectives(unitsLayer);
+            unit.addToMap(hexSideId);
+            repaint(game);
+        then:
+            assert(hexId1.units).arrayEqualsTo([unit]);
+            assert(hexId2.units).arrayEqualsTo([unit]);
+            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(unit.isOnBoard()).equalsTo(true);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 333.3333, 159.4391)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer);
+            unit.removeFromMap();
+            repaint(game);
+        then:
+            assert(hexId1.units).arrayEqualsTo([]);
+            assert(hexId2.units).arrayEqualsTo([]);
+            assert(game.counters).setEqualsTo(new Set());
+            assert(unit.isOnBoard()).equalsTo(false);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks unit addition and removing on a Hex (undoable)", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            let unit = new CBTestFormation(player, ["/CBlades/images/units/misc/unit.png"]);
+            unit.angle = 90;
+            game.start();
+            loadAllImages();
+            var [unitsLayer] = getLayers(game.board, "formations-0");
+            var hexId1 = map.getHex(4, 5);
+            var hexId2 = map.getHex(4, 6);
+            var hexSideId = new CBHexSideId(hexId1, hexId2);
+        when:
+            resetDirectives(unitsLayer);
+            unit.appendToMap(hexSideId);
+            repaint(game);
+        then:
+            assert(hexId1.units).arrayEqualsTo([unit]);
+            assert(hexId2.units).arrayEqualsTo([unit]);
+            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(unit.isOnBoard()).equalsTo(true);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 333.3333, 159.4391)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer);
+            Memento.open();
+            unit.deleteFromMap();
+            repaint(game);
+        then:
+            assert(hexId1.units).arrayEqualsTo([]);
+            assert(hexId2.units).arrayEqualsTo([]);
+            assert(game.counters).setEqualsTo(new Set());
+            assert(unit.isOnBoard()).equalsTo(false);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+            ]);
+        when:
+            resetDirectives(unitsLayer);
+            Memento.undo();
+            repaint(game);
+        then:
+            assert(hexId1.units).arrayEqualsTo([unit]);
+            assert(hexId2.units).arrayEqualsTo([unit]);
+            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(unit.isOnBoard()).equalsTo(true);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 333.3333, 159.4391)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer);
+            Memento.undo();
+            repaint(game);
+        then:
+            assert(hexId1.units).arrayEqualsTo([]);
+            assert(hexId2.units).arrayEqualsTo([]);
+            assert(game.counters).setEqualsTo(new Set());
+            assert(unit.isOnBoard()).equalsTo(false);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+            ]);
     });
 
     it("Checks unit selection/deselection appearance", () => {
@@ -899,6 +1365,109 @@ describe("Game", ()=> {
                     "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
+    });
+
+    it("Checks unit addition and removing on a Hex (not undoable)", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            let unit = new CBTestUnit(player, ["/CBlades/images/units/misc/unit.png"]);
+            game.start();
+            loadAllImages();
+            var [unitsLayer] = getLayers(game.board, "units-0");
+            var hexId = map.getHex(4, 5);
+        when:
+            resetDirectives(unitsLayer);
+            unit.hexLocation = hexId;
+            repaint(game);
+        then:
+            assert(hexId.units).arrayEqualsTo([unit]);
+            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer);
+            var hexId2 = map.getHex(4, 6);
+            unit.hexLocation = hexId2;
+            repaint(game);
+        then:
+            assert(hexId.units).arrayEqualsTo([]);
+            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 207.5513)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer);
+            unit.hexLocation = null;
+            repaint(game);
+        then:
+            assert(game.counters).setEqualsTo(new Set());
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks unit addition and removing from game and map", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            let unit = new CBTestUnit(player, ["/CBlades/images/units/misc/unit.png"]);
+            game.start();
+            loadAllImages();
+            var [unitsLayer] = getLayers(game.board, "units-0");
+            var hexId = map.getHex(4, 5);
+        when:
+            game.addUnit(unit, hexId);
+        then:
+            assert(hexId.units).arrayEqualsTo([unit]);
+            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([unit]);
+            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(unit.hexLocation).equalsTo(hexId);
+        when:
+            game.removeUnit(unit);
+        then:
+            assert(hexId.units).arrayEqualsTo([]);
+            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([]);
+            assert(game.counters).setEqualsTo(new Set([]));
+            assert(unit.hexLocation).isNotDefined();
+        when:
+            game.appendUnit(unit, hexId);
+        then:
+            assert(hexId.units).arrayEqualsTo([unit]);
+            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([unit]);
+            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(unit.hexLocation).equalsTo(hexId);
+        when:
+            Memento.open();
+            game.deleteUnit(unit, hexId);
+        then:
+            assert(hexId.units).arrayEqualsTo([]);
+            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([]);
+            assert(game.counters).setEqualsTo(new Set());
+            assert(unit.hexLocation).isNotDefined();
+        when:
+            Memento.undo();
+        then:
+            assert(hexId.units).arrayEqualsTo([unit]);
+            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([unit]);
+            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(unit.hexLocation).equalsTo(hexId);
+        when:
+            Memento.undo();
+        then:
+            assert(hexId.units).arrayEqualsTo([]);
+            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([]);
+            assert(game.counters).setEqualsTo(new Set());
+            assert(unit.hexLocation).isNotDefined();
     });
 
     function create2UnitsTinyGame(start = true) {
@@ -1089,6 +1658,11 @@ describe("Game", ()=> {
 
     let dummyEvent = {offsetX:0, offsetY:0};
 
+    function mouseMove(game, x, y) {
+        var mouseEvent = createEvent("mousemove", {offsetX:x, offsetY:y});
+        mockPlatform.dispatchEvent(game.root, "mousemove", mouseEvent);
+    }
+
     function mouseMoveOnCounter(game, counter) {
         let unitLocation = counter.artifact.viewportLocation;
         var mouseEvent = createEvent("mousemove", {offsetX:unitLocation.x, offsetY:unitLocation.y});
@@ -1150,6 +1724,188 @@ describe("Game", ()=> {
             assert(getDirectives(unitsLayer)).arrayEqualsTo([]);
     });
 
+    it("Checks that when the mouse is over a (one hex) counter, the ones above are retracted", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            let counter1 = new CBTestUnit(player, ["/CBlades/images/units/misc/counter1.png"]);
+            let counter2 = new CBTestUnit(player, ["/CBlades/images/units/misc/counter2.png"]);
+            let counter3 = new CBTestUnit(player, ["/CBlades/images/units/misc/counter3.png"]);
+            game.addUnit(counter1, map.getHex(4, 5));
+            game.addUnit(counter2, map.getHex(4, 5));
+            game.addUnit(counter3, map.getHex(4, 5));
+            game.start();
+            loadAllImages();
+            var [unitsLayer0] = getLayers(game.board, "units-0");
+            paint(game);
+            var [unitsLayer1, unitsLayer2] = getLayers(game.board, "units-1", "units-2");
+        then:
+            assert(getDirectives(unitsLayer0, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/counter1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(unitsLayer1)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/counter2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(unitsLayer2)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 352.8837, 91.7766)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/counter3.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer0, unitsLayer1, unitsLayer2);
+            mouseMove(game, 343-71/2+5, 101-71/2+5); // On counter2 but not counter3
+            paint(game);
+        then:
+            assert(getDirectives(unitsLayer0, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/counter1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
+                    "shadowColor = #00FFFF", "shadowBlur = 15", // Ready to be selected
+                    "drawImage(/CBlades/images/units/misc/counter2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(unitsLayer2, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 352.8837, 91.7766)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "globalAlpha = 0", // Retracted
+                    "drawImage(/CBlades/images/units/misc/counter3.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer0, unitsLayer1, unitsLayer2);
+            mouseMove(game, 100, 100); // not on any counter
+            paint(game);
+        then:
+            assert(getDirectives(unitsLayer0, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/counter1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/counter2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(unitsLayer2, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 352.8837, 91.7766)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/counter3.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks that when the mouse is over a formation, the above counters are retracted", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            let formation1 = new CBTestFormation(player, ["/CBlades/images/units/misc/formation1.png"]);
+            formation1.angle = 90;
+            let counter2 = new CBTestUnit(player, ["/CBlades/images/units/misc/counter2.png"]);
+            let counter3 = new CBTestUnit(player, ["/CBlades/images/units/misc/counter3.png"]);
+            game.addUnit(formation1, new CBHexSideId(map.getHex(4, 5), map.getHex(4, 6)));
+            game.addUnit(counter2, map.getHex(4, 5));
+            game.addUnit(counter3, map.getHex(4, 6));
+            game.start();
+            loadAllImages();
+            var [formationsLayer0] = getLayers(game.board, "formations-0");
+            paint(game);
+            var [unitsLayer1] = getLayers(game.board, "units-1");
+        then:
+            assert(getDirectives(formationsLayer0, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 333.3333, 159.4391)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/formation1.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(unitsLayer1)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/counter2.png, -71, -71, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 197.7761)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/counter3.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(formationsLayer0, unitsLayer1);
+            mouseMove(game, 333-71/2+5, 159-142/2+5); // On formation1 but not on counter2 or counter3
+            paint(game);
+        then:
+            assert(getDirectives(formationsLayer0, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 333.3333, 159.4391)",
+                    "shadowColor = #00FFFF", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/formation1.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "globalAlpha = 0",
+                    "drawImage(/CBlades/images/units/misc/counter2.png, -71, -71, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 197.7761)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "globalAlpha = 0",
+                    "drawImage(/CBlades/images/units/misc/counter3.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(formationsLayer0, unitsLayer1);
+            mouseMove(game, 100, 100); // not on any counter
+            paint(game);
+        then:
+            assert(getDirectives(formationsLayer0, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 333.3333, 159.4391)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/formation1.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/counter2.png, -71, -71, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 197.7761)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/counter3.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+    });
+
     it("Checks that clicking on a unit select the unit ", () => {
         given:
             var { game, player, unit } = createTinyGame();
@@ -1196,30 +1952,6 @@ describe("Game", ()=> {
         loadAllImages();
         return {game, map, unit0, unit1, unit2, player1, player2};
     }
-
-    it("Checks appending/removing a unit", () => {
-        given:
-            var {game, unit, map} = createTinyGame();
-        then:
-            assert(game.counters.has(unit)).isTrue();
-        when:
-            game.deleteUnit(unit);
-        then:
-            assert(game.counters.has(unit)).isFalse();
-        when:
-            Memento.open();
-            game.appendUnit(unit, map.getHex(4, 5));
-        then:
-            assert(game.counters.has(unit)).isTrue();
-        when:
-            Memento.undo();
-        then:
-            assert(game.counters.has(unit)).isFalse();
-        when:
-            Memento.undo();
-        then:
-            assert(game.counters.has(unit)).isTrue();
-    });
 
     it("Checks turn setting", () => {
         given:

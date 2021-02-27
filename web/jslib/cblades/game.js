@@ -294,7 +294,7 @@ export class CBGame {
 
         function getHexArtifactSlot(artifact) {
             let counter = artifact.counter;
-            return counter.hexLocation.playables.indexOf(counter);
+            return counter.hexLocation ? counter.hexLocation.playables.indexOf(counter) : 0;
         }
 
         function getHexArtifactLayer(artifact, [hexLayer]) {
@@ -318,10 +318,9 @@ export class CBGame {
             if (counter.isUnit) {
                 return counter.slot;
             }
-            else if (counter.isSpell) {
+            else {
                 return counter.unit.slot;
             }
-            else return 0;
         }
 
         function getUnitArtifactLayer(artifact, [spellsLayer, formationsLayer, unitsLayer, optionsLayer, markersLayer]) {
@@ -780,7 +779,7 @@ export class CBHexId {
     }
 
     _deletePlayable(playable) {
-        this.hex.deleteUnit(playable);
+        this.hex.deletePlayable(playable);
     }
 
     get playables() {
@@ -915,8 +914,8 @@ export class CBHexSideId {
     }
 
     _deletePlayable(playable) {
-        this.toHex._deleteUnit(playable);
-        this.fromHex._deleteUnit(playable);
+        this.toHex._deletePlayable(playable);
+        this.fromHex._deletePlayable(playable);
     }
 
     get playables() {
@@ -1000,15 +999,17 @@ class CBHex {
         this._playables.push(playable);
         let index = this._playables.length-1;
         if (!playable.isSpell) {
-            while(index>0 && this._playables(index-1).isSpell) {
+            while(index>0 && this._playables[index-1].isSpell) {
                 this._playables[index] = this._playables[index-1];
                 this._playables[index-1] = playable;
+                index--;
             }
         }
         if (playable.isFeature) {
-            while(index>0 && !this._playables(index-1).isFeature) {
+            while(index>0 && !this._playables[index-1].isFeature) {
                 this._playables[index] = this._playables[index-1];
                 this._playables[index-1] = playable;
+                index--;
             }
         }
     }
@@ -1240,11 +1241,6 @@ export class CBMap {
     getUnitsOnHex(hexId) {
         console.assert(hexId.map===this);
         return this._hex(hexId.col, hexId.row).units;
-    }
-
-    getCountersOnHex(hexId) {
-        console.assert(hexId.map===this);
-        return this._hex(hexId.col, hexId.row).counters;
     }
 
     getLocation(point) {
@@ -1503,6 +1499,7 @@ export class CBCounter {
     retract() {
         this._imageArtifact.retract();
     }
+
 }
 
 export class CBPlayable extends CBCounter {
@@ -1525,17 +1522,33 @@ export class CBPlayable extends CBCounter {
         else delete this._hexLocation;
     }
 
+    _addPlayable(hexLocation) {
+        hexLocation._addPlayable(this);
+    }
+
+    _removePlayable(hexLocation) {
+        hexLocation._removePlayable(this);
+    }
+
+    _appendPlayable(hexLocation) {
+        hexLocation._appendPlayable(this);
+    }
+
+    _deletePlayable(hexLocation) {
+        hexLocation._deletePlayable(this);
+    }
+
     addToMap(hexLocation) {
         console.assert(!this._hexLocation);
         this._hexLocation = hexLocation;
-        hexLocation._addPlayable(this);
+        this._addPlayable(hexLocation);
         this._setOnGame(hexLocation.map.game);
-        this._element.setLocation(hexLocation.location);
+        this._setLocation(hexLocation.location);
     }
 
     removeFromMap() {
         console.assert(this._hexLocation);
-        this._hexLocation._removePlayable(this);
+        this._removePlayable(this._hexLocation);
         this._removeFromGame();
         delete this._hexLocation;
     }
@@ -1544,7 +1557,7 @@ export class CBPlayable extends CBCounter {
         console.assert(!this._hexLocation);
         Memento.register(this);
         this._hexLocation = hexLocation;
-        hexLocation._appendPlayable(this);
+        this._appendPlayable(hexLocation);
         this._show(hexLocation.map.game);
         this._element.move(hexLocation.location);
     }
@@ -1552,7 +1565,7 @@ export class CBPlayable extends CBCounter {
     deleteFromMap() {
         console.assert(this._hexLocation);
         Memento.register(this);
-        this._hexLocation._deletePlayable(this);
+        this._deletePlayable(this._hexLocation);
         this._hide();
         delete this._hexLocation;
     }
@@ -1651,12 +1664,10 @@ export class CBAbstractUnit extends CBCounter {
 
     set hexLocation(hexId) {
         if (this._hexLocation) {
-            this._hexLocation.hex.removeUnit(this);
+            this.removeFromMap();
         }
-        this._hexLocation = hexId;
-        if (this._hexLocation) {
-            hexId.hex.addUnit(this);
-            this.location = hexId.location;
+        if (hexId) {
+            this.addToMap(hexId, CBMoveType.BACKWARD);
         }
     }
 
@@ -1701,7 +1712,7 @@ export class CBAbstractUnit extends CBCounter {
         this._hexLocation = hexId;
         hexId._addUnit(this, moveType);
         this._setOnGame(hexId.map.game);
-        this._element.setLocation(hexId.location);
+        this._setLocation(hexId.location);
     }
 
     removeFromMap() {

@@ -169,17 +169,7 @@ export function OptionArtifactMixin(clazz) {
         }
 
         get option() {
-            return this._option;
-        }
-
-        set option(option) {
-            this._option = option;
-            this.refresh();
-        }
-
-        changeOption(option) {
-            Memento.register(this);
-            this.option = option;
+            return this._counter.isOption();
         }
 
     }
@@ -195,16 +185,35 @@ export function OptionMixin(clazz) {
 
         shift(steps) {
             this.artifact.shift(new Point2D(-steps*20, -steps*20+10));
-            this.artifact.changeOption(true);
         }
 
         setPosition(steps) {
-            this.artifact.setPosition(new Point2D(-steps*20, -steps*20));
-            this.artifact.option = true;
+            this.artifact.position = new Point2D(-steps*20, -steps*20+10);
         }
 
         isOption() {
-            return this.artifact.option;
+            return true;
+        }
+
+    }
+
+}
+
+export function CarriableMixin(clazz) {
+
+    return class extends clazz {
+        constructor(...args) {
+            super(...args);
+        }
+
+        _move(location) {
+            Memento.register(this);
+            this._element.move(location);
+        }
+
+        _rotate(angle) {
+            Memento.register(this);
+            this._element.rotate(angle);
         }
 
     }
@@ -312,17 +321,31 @@ export class CBUnit extends CBAbstractUnit {
         this._options = memento.options;
     }
 
+    addToMap(hexId, moveType) {
+        super.addToMap(hexId, moveType);
+        for (let carried of this._carried) {
+            carried.addToMap(hexId, moveType);
+        }
+    }
+
+    removeFromMap() {
+        super.removeFromMap();
+        for (let carried of this._carried) {
+            carried.removeFromMap();
+        }
+    }
+
     appendToMap(hexId, moveType) {
         super.appendToMap(hexId, moveType);
         for (let carried of this._carried) {
-            carried.show(this.game.board);
+            carried.appendToMap(hexId, moveType);
         }
     }
 
     deleteFromMap() {
         super.deleteFromMap();
         for (let carried of this._carried) {
-            carried.hide();
+            carried.deleteFromMap();
         }
     }
 
@@ -331,22 +354,22 @@ export class CBUnit extends CBAbstractUnit {
         this._carried.push(counter);
         counter.angle = this.angle;
         counter.location = this.location;
-        if (this.isShown()) counter._setOnGame(this.game);
+        if (this.isShown()) counter.addToMap(this.hexLocation);
     }
 
     removeCarried(counter) {
         let indexCounter = this._carried.indexOf(counter);
         this._carried.splice(indexCounter, 1);
-        if (this.isShown()) counter._removeFromGame();
+        if (this.isShown()) counter.removeFromMap();
     }
 
     carry(counter) {
         console.assert(this._carried.indexOf(counter)===-1);
         Memento.register(this);
         this._carried.push(counter);
-        counter.rotate(this.angle);
-        counter.move(this.location);
-        if (this.isShown()) counter._show(this.game);
+        counter._rotate(this.angle);
+        counter._move(this.location);
+        if (this.isShown()) counter.appendToMap(this.hexLocation);
     }
 
     drop(counter) {
@@ -354,7 +377,7 @@ export class CBUnit extends CBAbstractUnit {
         console.assert(indexCounter>=0);
         Memento.register(this);
         this._carried.splice(indexCounter, 1);
-        if (this.isShown()) counter._hide();
+        if (this.isShown()) counter.deleteFromMap();
     }
 
     addOption(counter) {
@@ -362,7 +385,6 @@ export class CBUnit extends CBAbstractUnit {
         this.addCarried(counter);
         this._options.push(counter);
         counter.setPosition(this._options.length);
-        counter.location = this.location;
     }
 
     removeOption(counter) {
@@ -370,7 +392,7 @@ export class CBUnit extends CBAbstractUnit {
         this.removeCarried(counter);
         this._options.splice(indexCounter, 1);
         for (let index = indexCounter; index<this._options.length; index++) {
-            counter.setPosition(index);
+            this._options[index].setPosition(index+1);
         }
     }
 
@@ -380,8 +402,6 @@ export class CBUnit extends CBAbstractUnit {
         this.carry(counter);
         this._options.push(counter);
         counter.shift(this._options.length);
-        counter.move(this.location);
-        counter.rotate(this.angle);
     }
 
     deleteOption(counter) {
@@ -389,9 +409,9 @@ export class CBUnit extends CBAbstractUnit {
         console.assert(indexCounter>=0);
         Memento.register(this);
         this.drop(counter);
-        this._carried.splice(indexCounter, 1);
+        this._options.splice(indexCounter, 1);
         for (let index = indexCounter; index<this._options.length; index++) {
-            counter.shift(index);
+            this._options[index].shift(index+1);
         }
     }
 
@@ -411,6 +431,10 @@ export class CBUnit extends CBAbstractUnit {
             delete this._attackLocation;
             this._updatePlayed();
         }
+    }
+
+    get carried() {
+        return this._carried;
     }
 
     get type() {
@@ -525,27 +549,22 @@ export class CBUnit extends CBAbstractUnit {
 
     move(hexId, cost=0, moveType = CBMoveType.BACKWARD) {
         if (hexId !== this.hexLocation) {
-            Memento.register(this);
-            if (this._hexLocation) {
-                this._hexLocation.hex.deleteUnit(this);
-                if (!hexId) {
-                    this._element.hide();
-                    for (let carried of this._carried) {
-                        carried.move(null);
-                    }
-                }
-            }
-            if (hexId && !this._hexLocation) this._element.show(this.game.board);
-            this._hexLocation = hexId;
-            if (this._hexLocation) {
+            if (this.hexLocation && !hexId) {
+                this.deleteFromMap()
+            } else if (!this.hexLocation && hexId) {
+                this.appendToMap(hexId, moveType);
+            } else {
+                Memento.register(this);
+                this.hexLocation.hex.deleteUnit(this);
+                this._hexLocation = hexId;
                 hexId.hex.appendUnit(this, moveType);
                 this._element.move(hexId.location);
                 for (let carried of this._carried) {
-                    carried.move(this.location);
+                    carried._move(this.location);
                 }
             }
-            this._updateMovementPoints(cost);
         }
+        this._updateMovementPoints(cost);
     }
 
     setAttackLocation(hexLocation) {
@@ -565,7 +584,7 @@ export class CBUnit extends CBAbstractUnit {
         Memento.register(this);
         this._element.rotate(angle);
         for (let carried of this._carried) {
-            carried.rotate(angle);
+            carried._rotate(angle);
         }
         this._updateMovementPoints(cost);
     }

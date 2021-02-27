@@ -17,7 +17,7 @@ import {
     CBGame,
     CBMap,
     CBAbstractPlayer,
-    CBAction, CBHexSideId
+    CBAction, CBHexSideId, CBPlayable, CBMoveType, RetractableMixin, CBCounterImageArtifact
 } from "../../jslib/cblades/game.js";
 import {
     CBTroop,
@@ -27,8 +27,11 @@ import {
     CBLackOfMunitions,
     CBTiredness,
     CBCohesion,
-    CBOrderInstruction, CBFormation
+    CBOrderInstruction, CBFormation, CarriableMixin, OptionArtifactMixin, OptionMixin
 } from "../../jslib/cblades/unit.js";
+import {
+    Dimension2D
+} from "../../jslib/geometry.js";
 
 describe("Unit", ()=> {
 
@@ -116,6 +119,400 @@ describe("Unit", ()=> {
         }
         return {game, map, unit1, unit2, wing, player};
     }
+
+    class CBTestCarriable extends CarriableMixin(CBPlayable) {
+
+        constructor(paths) {
+            super("units", paths, new Dimension2D(142, 142));
+            this.artifact.spell = this;
+        }
+
+    }
+
+    it("Checks that a unit may carry other counters (not undoable)", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            var wing = new CBWing(player);
+            let unitType1 = new CBUnitType("unit1",
+                ["/CBlades/images/units/misc/unit1.png"]);
+            var unit = new CBTroop(unitType1, wing);
+            let hexId = map.getHex(5, 8);
+            let nextHexId = map.getHex(6, 8);
+            game.addUnit(unit, hexId);
+            var [spellsLayer] = getLayers(game.board, "spells-0");
+        when:
+            var playable1 = new CBTestCarriable(["/CBlades/images/units/misc/playable1.png"]);
+            unit.addCarried(playable1);
+            playable1.unit = unit;
+            paint(game);
+            loadAllImages();
+        then:
+            assert(unit.carried).arrayEqualsTo([playable1])
+            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/playable1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(spellsLayer);
+            unit.angle = 60;
+            unit.hexLocation = nextHexId;
+            paint(game);
+        then:
+            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 500, 400)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/playable1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(spellsLayer);
+            unit.removeCarried(playable1);
+            paint(game);
+        then:
+            assert(unit.carried).arrayEqualsTo([])
+            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
+            ]);
+        when:
+            resetDirectives(spellsLayer);
+            unit.addCarried(playable1);
+            unit.removeFromMap();
+            paint(game);
+        then:
+            assert(unit.carried).arrayEqualsTo([playable1])
+            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
+            ]);
+        when:
+            resetDirectives(spellsLayer);
+            unit.addToMap(hexId, CBMoveType.BACKWARD);
+            paint(game);
+        then:
+            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 416.6667, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/playable1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks that a unit may carry other counters (undoable)", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            var wing = new CBWing(player);
+            let unitType1 = new CBUnitType("unit1",
+                ["/CBlades/images/units/misc/unit1.png"]);
+            var unit = new CBTroop(unitType1, wing);
+            let hexId = map.getHex(5, 8);
+            let nextHexId = map.getHex(6, 8);
+            game.appendUnit(unit, hexId);
+            var [spellsLayer] = getLayers(game.board, "spells-0");
+        when:
+            var playable1 = new CBTestCarriable(["/CBlades/images/units/misc/playable1.png"]);
+            unit.carry(playable1);
+            playable1.unit = unit;
+            paint(game);
+            loadAllImages();
+        then:
+            assert(unit.carried).arrayEqualsTo([playable1])
+            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/playable1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(spellsLayer);
+            unit.rotate(60);
+            unit.move(nextHexId, CBMoveType.BACKWARD);
+            paint(game);
+        then:
+            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 500, 400)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/playable1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            Memento.open();
+            resetDirectives(spellsLayer);
+            unit.drop(playable1);
+            paint(game);
+        then:
+            assert(unit.carried).arrayEqualsTo([])
+            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
+            ]);
+        when:
+            Memento.open();
+            resetDirectives(spellsLayer);
+            unit.carry(playable1);
+            unit.deleteFromMap();
+            paint(game);
+        then:
+            assert(unit.carried).arrayEqualsTo([playable1])
+            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
+            ]);
+        when:
+            resetDirectives(spellsLayer);
+            unit.appendToMap(hexId, CBMoveType.BACKWARD);
+            paint(game);
+        then:
+            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 416.6667, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/playable1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(spellsLayer);
+            Memento.undo();
+            paint(game);
+        then:
+            assert(unit.carried).arrayEqualsTo([])
+            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
+            ]);
+        when:
+            resetDirectives(spellsLayer);
+            Memento.undo();
+            paint(game);
+        then:
+            assert(unit.carried).arrayEqualsTo([playable1])
+            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 500, 400)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/playable1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+    });
+
+    class CBTestOptionArtifact extends OptionArtifactMixin(CBCounterImageArtifact) {
+
+        constructor(...args) {
+            super(...args);
+        }
+
+    }
+
+    class CBTestOption extends OptionMixin(CarriableMixin(CBPlayable)) {
+
+        constructor(paths) {
+            super("units", paths, new Dimension2D(142, 142));
+            this.artifact.spell = this;
+        }
+
+        createArtifact(levelName, images, location, dimension) {
+            return new CBTestOptionArtifact(this, levelName, images, location, dimension);
+        }
+
+    }
+
+    it("Checks that a unit may have option counters (not undoable)", () => {
+        function createOption(unit, path) {
+            var option = new CBTestOption([path]);
+            unit.addOption(option);
+            option.unit = unit;
+            return option;
+        }
+
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            var wing = new CBWing(player);
+            let unitType1 = new CBUnitType("unit1",
+                ["/CBlades/images/units/misc/unit1.png"]);
+            var unit = new CBTroop(unitType1, wing);
+            let hexId = map.getHex(5, 8);
+            let nextHexId = map.getHex(6, 8);
+            game.addUnit(unit, hexId);
+            var [optionsLayer] = getLayers(game.board, "options-0");
+        when:
+            var option0 = createOption(unit, "/CBlades/images/units/misc/option0.png");
+            var option1 = createOption(unit, "/CBlades/images/units/misc/option1.png");
+            var option2 = createOption(unit, "/CBlades/images/units/misc/option2.png");
+            paint(game);
+            loadAllImages();
+        then:
+            assert(unit.options).arrayEqualsTo([option0, option1, option2])
+            assert(getDirectives(optionsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 406.8915, 347.0002)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/option0.png, -71, -71, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 397.1163, 337.2251)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/option1.png, -71, -71, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 387.3412, 327.4499)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/option2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(optionsLayer);
+            unit.removeOption(option1);
+            paint(game);
+        then:
+            assert(unit.options).arrayEqualsTo([option0, option2])
+            assert(getDirectives(optionsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 406.8915, 347.0002)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/option0.png, -71, -71, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 397.1163, 337.2251)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/option2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks that a unit may have option counters (not undoable)", () => {
+        function createOption(unit, path) {
+            var option = new CBTestOption([path]);
+            unit.appendOption(option);
+            option.unit = unit;
+            return option;
+        }
+
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            var wing = new CBWing(player);
+            let unitType1 = new CBUnitType("unit1",
+                ["/CBlades/images/units/misc/unit1.png"]);
+            var unit = new CBTroop(unitType1, wing);
+            let hexId = map.getHex(5, 8);
+            let nextHexId = map.getHex(6, 8);
+            game.addUnit(unit, hexId);
+            var [optionsLayer] = getLayers(game.board, "options-0");
+        when:
+            var option0 = createOption(unit, "/CBlades/images/units/misc/option0.png");
+            var option1 = createOption(unit, "/CBlades/images/units/misc/option1.png");
+            var option2 = createOption(unit, "/CBlades/images/units/misc/option2.png");
+            paint(game);
+            loadAllImages();
+        then:
+            assert(unit.options).arrayEqualsTo([option0, option1, option2])
+            assert(getDirectives(optionsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 406.8915, 347.0002)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/option0.png, -71, -71, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 397.1163, 337.2251)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/option1.png, -71, -71, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 387.3412, 327.4499)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/option2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            Memento.open();
+            resetDirectives(optionsLayer);
+            unit.deleteOption(option1);
+            paint(game);
+        then:
+            assert(unit.options).arrayEqualsTo([option0, option2])
+            assert(getDirectives(optionsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 406.8915, 347.0002)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/option0.png, -71, -71, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 397.1163, 337.2251)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/option2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(optionsLayer);
+            Memento.undo();
+            paint(game);
+        then:
+            assert(unit.options).arrayEqualsTo([option0, option1, option2])
+            assert(getDirectives(optionsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 406.8915, 347.0002)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/option0.png, -71, -71, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 397.1163, 337.2251)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/option1.png, -71, -71, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 387.3412, 327.4499)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/option2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(optionsLayer);
+            Memento.undo();
+            paint(game);
+        then:
+            assert(unit.options).arrayEqualsTo([])
+            assert(getDirectives(optionsLayer, 4)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks that when a unit is requested to give its counters, it includes all carried ones", () => {
+
+        function createCarried(unit, path) {
+            var playable = new CBTestCarriable([path]);
+            unit.addCarried(playable);
+            playable.unit = unit;
+            return playable;
+        }
+
+        function createOption(unit, path) {
+            var option = new CBTestOption([path]);
+            unit.addOption(option);
+            option.unit = unit;
+            return option;
+        }
+
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            var wing = new CBWing(player);
+            let unitType1 = new CBUnitType("unit1",
+                ["/CBlades/images/units/misc/unit1.png"]);
+            var unit = new CBTroop(unitType1, wing);
+            let hexId = map.getHex(5, 8);
+            game.addUnit(unit, hexId);
+        when:
+            var carried = createCarried(unit, "/CBlades/images/units/misc/playable1.png");
+            var option = createOption(unit, "/CBlades/images/units/misc/option0.png");
+            paint(game);
+            loadAllImages();
+        then:
+            assert(unit.counters).arrayEqualsTo([carried, unit, option])
+    });
 
     it("Checks unit/wing/player structure", () => {
         given:
@@ -939,6 +1336,118 @@ describe("Unit", ()=> {
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.isEngaging()).isFalse();
             assert(unit.isCharging()).isFalse();
+    });
+
+    it("Checks that when a unit retract, it alse hides markers", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [markersLayer] = getLayers(game.board, "markers-0");
+        when:
+            resetDirectives(markersLayer);
+            unit.markAsBeingPlayed(true);
+            unit.markAsCharging(true);
+            unit.addOneCohesionLevel();
+            unit.addOneTirednessLevel();
+            unit.addOneLackOfMunitionsLevel();
+            paint(game);
+            loadAllImages(); // to load charge.png
+        then:
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 317.186)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/actiondone.png, -32, -32, 64, 64)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/charge.png, -32, -32, 64, 64)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 386.5897)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/disrupted.png, -32, -32, 64, 64)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/tired.png, -32, -32, 64, 64)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 386.5897)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/scarceamno.png, -32, -32, 64, 64)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(markersLayer);
+            unit.retract();
+            paint(game);
+        then:
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 317.186)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "globalAlpha = 0",
+                    "drawImage(/CBlades/images/markers/actiondone.png, -32, -32, 64, 64)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "globalAlpha = 0",
+                    "drawImage(/CBlades/images/markers/charge.png, -32, -32, 64, 64)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 386.5897)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "globalAlpha = 0",
+                    "drawImage(/CBlades/images/markers/disrupted.png, -32, -32, 64, 64)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "globalAlpha = 0",
+                    "drawImage(/CBlades/images/markers/tired.png, -32, -32, 64, 64)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 386.5897)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "globalAlpha = 0",
+                    "drawImage(/CBlades/images/markers/scarceamno.png, -32, -32, 64, 64)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(markersLayer);
+            unit.appear();
+            paint(game);
+        then:
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 317.186)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/actiondone.png, -32, -32, 64, 64)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/charge.png, -32, -32, 64, 64)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 386.5897)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/disrupted.png, -32, -32, 64, 64)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/tired.png, -32, -32, 64, 64)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 386.5897)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/scarceamno.png, -32, -32, 64, 64)",
+                "restore()"
+            ]);
     });
 
     function createTinyCommandGame() {
