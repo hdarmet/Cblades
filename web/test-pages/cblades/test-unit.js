@@ -17,7 +17,7 @@ import {
     CBGame,
     CBMap,
     CBAbstractPlayer,
-    CBAction, CBHexSideId, CBPlayable, CBMoveType, RetractableMixin, CBCounterImageArtifact
+    CBAction, CBHexSideId, CBPlayable, CBMoveType, RetractableMixin, CBCounterImageArtifact, CBCounter
 } from "../../jslib/cblades/game.js";
 import {
     CBTroop,
@@ -1338,7 +1338,7 @@ describe("Unit", ()=> {
             assert(unit.isCharging()).isFalse();
     });
 
-    it("Checks that when a unit retract, it alse hides markers", () => {
+    it("Checks that when a unit retracts, it also hides markers", () => {
         given:
             var {game, unit} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
@@ -1530,6 +1530,51 @@ describe("Unit", ()=> {
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
     });
 
+    it("Checks that when a character retracts, it also hides order instruction marker", () => {
+        given:
+            var {game, wing, leader} = createTinyCommandGame();
+            wing.setLeader(leader);
+            var [markersLayer] = getLayers(game.board, "markers-0");
+        when:
+            resetDirectives(markersLayer);
+            wing.changeOrderInstruction(CBOrderInstruction.ATTACK);
+            paint(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 448.1122)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/attack.png, -40, -40, 80, 80)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(markersLayer);
+            leader.retract();
+            paint(game);
+        then:
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 448.1122)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "globalAlpha = 0",
+                    "drawImage(/CBlades/images/markers/attack.png, -40, -40, 80, 80)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(markersLayer);
+            leader.appear();
+            paint(game);
+        then:
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 448.1122)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/attack.png, -40, -40, 80, 80)",
+                "restore()"
+            ]);
+    });
+
     it("Checks wing management", () => {
         given:
             var {game, unit, leader, player, wing} = createTinyCommandGame();
@@ -1589,6 +1634,55 @@ describe("Unit", ()=> {
             game._resetCounters(player);
         then:
             assert(leader.commandPoints).equalsTo(0);
+    });
+
+    it("Checks wizardry", () => {
+
+        class TestSpell extends CBCounter {
+            constructor(wizard) {
+                super("units", ["/CBlades/images/magic/red/redspell.png"], new Dimension2D(142, 142));
+                this.wizard = wizard;
+            }
+            _rotate(angle) {}
+            appendToMap(hexLocation) {}
+            deleteFromMap() {}
+        }
+
+        class TestSpellDefinition {
+            createSpellCounter(wizard) {
+                return new TestSpell(wizard);
+            }
+        }
+
+        given:
+            var {leader} = createTinyCommandGame();
+            var spellDefinition = new TestSpellDefinition();
+        when:
+            leader.choseSpell(spellDefinition);
+        then:
+            assert(leader.hasChosenSpell()).isTrue();
+            var spell = leader.chosenSpell;
+            assert(spell).isDefined();
+        when:
+            Memento.open();
+            leader.choseSpell(spellDefinition);
+            var spell2 = leader.chosenSpell;
+        then:
+            assert(spell2).notEqualsTo(spell);
+            assert(spell2).isDefined();
+        when:
+            Memento.open();
+            leader.forgetSpell();
+        then:
+            assert(leader.chosenSpell).isNotDefined();
+        when:
+            Memento.undo();
+        then:
+            assert(leader.chosenSpell).equalsTo(spell2);
+        when:
+            Memento.undo();
+        then:
+            assert(leader.chosenSpell).equalsTo(spell);
     });
 
     it("Checks unit cloning", () => {

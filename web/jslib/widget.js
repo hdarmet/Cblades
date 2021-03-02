@@ -815,7 +815,6 @@ class DMaskArtifact extends DArtifact {
 
     _paint() {
         console.assert(this._level);
-        this._level.setAlphaSettings(this._alpha);
         this._level.setFillSettings(this._color);
         this._level.fillRect(new Point2D(0, 0), this._level.viewportDimension);
     }

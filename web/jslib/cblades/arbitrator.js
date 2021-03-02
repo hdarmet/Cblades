@@ -96,7 +96,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         function processHex(areaMap, hex, distance) {
             if (hex && (!areaMap.has(hex) || areaMap.get(hex)>distance)) {
                 areaMap.set(hex, distance);
-                if (distance < range-1) {
+                if (distance < range) {
                     for (let angle=0; angle<360; angle+=60) {
                         processHex(areaMap, hex.getNearHex(angle), distance + 1);
                     }
@@ -920,15 +920,15 @@ export class CBArbitrator extends CBAbstractArbitrator{
             "fireball1",
             "fireball2",
             "fireball3",
-            "firesword1",
-            "firesword2",
-            "firesword3",
+            "fireSword1",
+            "fireSword2",
+            "fireSword3",
             "blaze1",
             "blaze2",
             "blaze3",
-            "rainfire1",
-            "rainfire2",
-            "rainfire3"
+            "rainFire1",
+            "rainFire2",
+            "rainFire3"
         ]
     }
 
@@ -968,7 +968,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return hexes;
     }
 
-    resolveFireball(spell, diceResult) {
+    resolveFireball(spellLevel, diceResult) {
         let success = diceResult[0]+diceResult[1]<=8;
         return { success, losses:success?1:0 };
     }

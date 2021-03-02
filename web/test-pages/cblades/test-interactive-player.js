@@ -254,7 +254,7 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "globalAlpha = 0.3",
+                    "globalAlpha = 0.3",
                     "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
                 "restore()",
                 "save()",

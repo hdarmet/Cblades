@@ -164,9 +164,11 @@ export let mockPlatform = {
 
 }
 
-export function getContextDirectives(context, start=0) {
-    assert(context.directives.length>=start).isTrue();
-    return start ? context.directives.slice(start) : context.directives;
+export function getContextDirectives(context, start=0, end=-1) {
+    if (start<0) start = context.directives.length+start+1;
+    if (end<0) end = context.directives.length+end+1;
+    assert(context.directives.length>=start && context.directives.length>=end).isTrue();
+    return start ? context.directives.slice(start, end) : context.directives;
 }
 
 export function resetContextDirectives(context) {
@@ -181,8 +183,16 @@ export function getLayers(board, ...layerNames) {
     return result;
 }
 
-export function getDirectives(layer, start=0) {
-    return getContextDirectives(layer._context, start);
+export function getDirectives(layer, start=0, end =-1) {
+    return getContextDirectives(layer._context, start, end);
+}
+
+export function findInDirectives(layer, model, start=0, end =-1) {
+    let directives = getContextDirectives(layer._context, start, end);
+    for (let directive of directives) {
+        if (directive.indexOf(model)>=0) return true;
+    }
+    return false;
 }
 
 export function resetDirectives(...layers) {

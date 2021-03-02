@@ -53,6 +53,11 @@ export function clickOnMask(game) {
     mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
 }
 
+export function clickOnMap(game) {
+    var mouseEvent = createEvent("click", {offsetX:1, offsetY:1});
+    mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
+}
+
 export function clickOnActionMenu(game, col, row) {
     var icon = game.popup.getItem(col, row);
     let iconLocation = icon.viewportLocation;

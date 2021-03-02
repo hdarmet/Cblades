@@ -199,3 +199,39 @@ export function createTinyGameWithLeader() {
     loadAllImages();
     return { game, arbitrator, player, wing, map, unit, leader };
 }
+
+export function create2PlayersTinyGameWithLeader() {
+    var game = new CBGame();
+    var arbitrator = new CBArbitrator();
+    game.setArbitrator(arbitrator);
+    var map = new CBMap("/CBlades/images/maps/map.png");
+    game.setMap(map);
+
+    var player1 = new CBInteractivePlayer();
+    game.addPlayer(player1);
+    var wing1 = new CBWing(player1);
+    let unitType1 = new CBUnitType("unit1",
+        ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
+    let unit1 = new CBTroop(unitType1, wing1);
+    game.addUnit(unit1, map.getHex( 5, 8));
+    let leaderType1 = new CBUnitType("leader1",
+        ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"]);
+    let leader1 = new CBCharacter(leaderType1, wing1);
+    game.addUnit(leader1, map.getHex( 5, 9));
+
+    var player2 = new CBInteractivePlayer();
+    game.addPlayer(player2);
+    var wing2 = new CBWing(player2);
+    let unitType2 = new CBUnitType("unit2",
+        ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"]);
+    let unit2 = new CBTroop(unitType2, wing2);
+    game.addUnit(unit2, map.getHex( 7, 8));
+    let leaderType2 = new CBUnitType("leader2",
+        ["/CBlades/images/units/misc/leader2.png", "/CBlades/images/units/misc/leader2b.png"]);
+    let leader2 = new CBCharacter(leaderType2, wing2);
+    game.addUnit(leader2, map.getHex( 7, 9));
+
+    game.start();
+    loadAllImages();
+    return { game, arbitrator, map, player1, wing1, unit1, leader1, player2, wing2, unit2, leader2 };
+}

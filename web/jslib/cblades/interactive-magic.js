@@ -5,7 +5,7 @@ import {
     DIconMenuItem, DInsert, DMask, DResult, DScene
 } from "../widget.js";
 import {
-    CBActionMenu, CBInteractivePlayer, CBWeatherIndicator, CBWingTirednessIndicator
+    CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
     CBAction, CBActuator, CBActuatorImageArtifact, CBGame
@@ -15,11 +15,15 @@ import {
     Point2D
 } from "../geometry.js";
 import {
+    CBFireballSpell,
     CBSpell
 } from "./magic.js";
 import {
     DImage
 } from "../draw.js";
+import {
+    CBCombatResultTableInsert
+} from "./interactive-combat.js";
 
 export function registerInteractiveMagic() {
     CBInteractivePlayer.prototype.choseSpell = function(unit, event) {
@@ -121,10 +125,14 @@ export class InteractiveCastSpellAction extends CBAction {
 
     play() {
         let result = this._spell.getNextCinematic();
+        this.game.closeActuators();
         switch (result.cinematic) {
-            case CBSpell.CINEMATIC.NONE:
+            case CBSpell.CINEMATIC.APPLY:
                 this._spell.apply();
-                this.game.closeActuators();
+                break;
+            case CBSpell.CINEMATIC.CONTINUE:
+                this._spell.apply();
+                this.play();
                 break;
             case CBSpell.CINEMATIC.SELECT_FOE:
                 this._createSelectFoesActuator(this.unit, result);
@@ -204,7 +212,7 @@ export class CBSpellTargetFoesActuator extends CBActuator {
     }
 
     getTrigger(hex) {
-        return this.findTrigger(artifact=>artifact._unit === hex);
+        return this.findTrigger(artifact=>artifact._hex === hex);
     }
 
     onMouseClick(trigger, event) {
@@ -328,3 +336,45 @@ export class CBCastSpellInsert extends DInsert {
 
 }
 CBCastSpellInsert.DIMENSION = new Dimension2D(283, 700);
+
+CBFireballSpell.resolver = function(action) {
+    this.game.closeActuators();
+    let result = new DResult();
+    let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+    let scene = new DScene();
+    let mask = new DMask("#000000", 0.3);
+    let close = ()=>{
+        mask.close();
+        scene.close();
+    };
+    mask.open(this.game.board, this.location);
+    scene.addWidget(
+        new CBCombatResultTableInsert(), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
+    ).addWidget(
+        new CBFireballInsert(), new Point2D(-160, CBFireballInsert.DIMENSION.h/2)
+    ).addWidget(
+        dice.setFinalAction(()=>{
+            dice.active = false;
+            let report = this.resolve(dice.result);
+            if (report.success) {
+                result.success().appear();
+            }
+            else {
+                result.failure().appear();
+            }
+        }),
+        new Point2D(120, 80)
+    ).addWidget(
+        result.setFinalAction(close),
+        new Point2D(0, 0)
+    ).open(this.game.board, this.location);
+}
+
+export class CBFireballInsert extends DInsert {
+
+    constructor() {
+        super("/CBlades/images/inserts/fireball-insert.png", CBFireballInsert.DIMENSION);
+    }
+
+}
+CBFireballInsert.DIMENSION = new Dimension2D(444, 257);

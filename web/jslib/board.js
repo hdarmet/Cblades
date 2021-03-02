@@ -157,6 +157,17 @@ export class DArtifact extends LocalisationAware(Object) {
         this._paint();
     }
 
+    setLevel(levelName) {
+        if (this._level) {
+            this._level.removeArtifact(this);
+        }
+        this._levelName = levelName;
+        if (this.board) {
+            this._level = this.board.getLevel(this._levelName);
+            this._level.addArtifact(this);
+        }
+    }
+
     changeLevel(levelName) {
         Memento.register(this);
         if (this._level) {

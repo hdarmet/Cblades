@@ -206,9 +206,12 @@ export function CarriableMixin(clazz) {
             super(...args);
         }
 
-        _move(location) {
+        _move(hexLocation) {
             Memento.register(this);
-            this._element.move(location);
+            this._deletePlayable(this._hexLocation);
+            this._hexLocation = hexLocation;
+            this._appendPlayable(hexLocation);
+            this._element.move(hexLocation.location);
         }
 
         _rotate(angle) {
@@ -368,8 +371,9 @@ export class CBUnit extends CBAbstractUnit {
         Memento.register(this);
         this._carried.push(counter);
         counter._rotate(this.angle);
-        counter._move(this.location);
-        if (this.isShown()) counter.appendToMap(this.hexLocation);
+        if (this.isShown()) {
+            counter.appendToMap(this.hexLocation);
+        }
     }
 
     drop(counter) {
@@ -377,7 +381,9 @@ export class CBUnit extends CBAbstractUnit {
         console.assert(indexCounter>=0);
         Memento.register(this);
         this._carried.splice(indexCounter, 1);
-        if (this.isShown()) counter.deleteFromMap();
+        if (this.isShown()) {
+            counter.deleteFromMap();
+        }
     }
 
     addOption(counter) {
@@ -547,20 +553,20 @@ export class CBUnit extends CBAbstractUnit {
         this.artifact.changeImage(this._lossSteps);
     }
 
-    move(hexId, cost=0, moveType = CBMoveType.BACKWARD) {
-        if (hexId !== this.hexLocation) {
-            if (this.hexLocation && !hexId) {
+    move(hexLocation, cost=0, moveType = CBMoveType.BACKWARD) {
+        if ((hexLocation || this.hexLocation) && (hexLocation !== this.hexLocation)) {
+            if (this.hexLocation && !hexLocation) {
                 this.deleteFromMap()
-            } else if (!this.hexLocation && hexId) {
-                this.appendToMap(hexId, moveType);
+            } else if (!this.hexLocation && hexLocation) {
+                this.appendToMap(hexLocation, moveType);
             } else {
                 Memento.register(this);
-                this.hexLocation.hex.deleteUnit(this);
-                this._hexLocation = hexId;
-                hexId.hex.appendUnit(this, moveType);
-                this._element.move(hexId.location);
+                this._hexLocation._deleteUnit(this);
+                this._hexLocation = hexLocation;
+                hexLocation._appendUnit(this, moveType);
+                this._element.move(hexLocation.location);
                 for (let carried of this._carried) {
-                    carried._move(this.location);
+                    carried._move(hexLocation);
                 }
             }
         }
@@ -1019,22 +1025,15 @@ export class CBCharacter extends CBUnit {
         }
     }
 
-    cancelChosenSpell() {
-        console.assert(this._chosenSpell);
-        Memento.register(this);
-        this._chosenSpell.element.hide(this.game._board);
-        this.drop(this._chosenSpell);
-        this._chosenSpell = null;
-    }
-
     choseSpell(spellDefinition) {
         Memento.register(this);
-        if (this._chosenSpell) this.cancelChosenSpell();
+        if (this._chosenSpell) this.forgetSpell();
         this._chosenSpell = spellDefinition.createSpellCounter(this);
         this.carry(this._chosenSpell);
     }
 
     forgetSpell() {
+        console.assert(this._chosenSpell);
         Memento.register(this);
         this.drop(this._chosenSpell);
         delete this._chosenSpell;

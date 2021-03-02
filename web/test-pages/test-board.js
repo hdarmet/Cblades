@@ -463,6 +463,42 @@ describe("Board", ()=> {
             ]);
     });
 
+    it("Checks change artifact level (not undoable)", () => {
+        given:
+            var { unitsLayer, markersLevel, markersLayer, board } = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var image = DImage.getImage("../images/unit.png");
+            image._root.onload();
+            var artifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+            var element = new DElement(artifact);
+            element.setOnBoard(board);
+            Memento.activate();
+        when:
+            resetDirectives(unitsLayer, markersLayer);
+            board.paint();
+        then:
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1, 0, 0, 1, 250, 150)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+        ]);
+        when:
+            resetDirectives(unitsLayer, markersLayer);
+            artifact.setLevel("markers");
+            board.paint();
+        then:
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+            ]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1, 0, 0, 1, 250, 150)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
     it("Checks change artifact level (undoable)", () => {
         given:
             var { unitsLevel, unitsLayer, markersLevel, markersLayer, board } = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
@@ -472,7 +508,7 @@ describe("Board", ()=> {
             var element = new DElement(artifact);
             element.setOnBoard(board);
             Memento.activate();
-        when: // Change position
+        when:
             resetDirectives(unitsLayer, markersLayer);
             board.paint();
         then:

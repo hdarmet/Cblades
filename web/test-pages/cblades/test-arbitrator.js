@@ -1,7 +1,5 @@
 'use strict'
 
-'use strict'
-
 import {
     assert, before, describe, executeTimeouts, it
 } from "../../jstest/jtest.js";
@@ -17,7 +15,7 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
-    CBAction, CBGame, CBHexSideId, CBMap, CBAbstractPlayer, CBMoveType
+    CBAction, CBGame, CBHexSideId, CBMap, CBAbstractPlayer, CBMoveType, CBCounter
 } from "../../jslib/cblades/game.js";
 import {
     CBCharacter,
@@ -34,6 +32,9 @@ import {
 import {
     CBArbitrator
 } from "../../jslib/cblades/arbitrator.js";
+import {
+    Dimension2D
+} from "../../jslib/geometry.js";
 
 describe("Arbitrator", ()=> {
 
@@ -43,6 +44,48 @@ describe("Arbitrator", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
+    });
+
+    function createTinyGame() {
+        let game = new CBGame();
+        let arbitrator = new CBArbitrator();
+        game.setArbitrator(arbitrator);
+        let map = new CBMap("/CBlades/images/maps/map.png");
+        game.setMap(map);
+        game.start();
+        loadAllImages();
+        return {game, arbitrator, map};
+    }
+
+    it("Checks the area around an hex", () => {
+        given:
+            var {arbitrator, map} = createTinyGame();
+            let area = arbitrator.get360Area(map.getHex(4, 5), 2);
+            let hexMap = new Map();
+            for (let zone of area) {
+                hexMap.set(zone.hex, zone.distance);
+            }
+        then:
+            assert(hexMap.size).equalsTo(19);
+            assert(hexMap.get(map.getHex(4, 5))).equalsTo(0);
+            assert(hexMap.get(map.getHex(4, 4))).equalsTo(1);
+            assert(hexMap.get(map.getHex(4, 3))).equalsTo(2);
+            assert(hexMap.get(map.getHex(5, 4))).equalsTo(2);
+            assert(hexMap.get(map.getHex(5, 5))).equalsTo(1);
+            assert(hexMap.get(map.getHex(3, 5))).equalsTo(1);
+            assert(hexMap.get(map.getHex(3, 4))).equalsTo(2);
+            assert(hexMap.get(map.getHex(6, 4))).equalsTo(2);
+            assert(hexMap.get(map.getHex(6, 5))).equalsTo(2);
+            assert(hexMap.get(map.getHex(5, 6))).equalsTo(1);
+            assert(hexMap.get(map.getHex(6, 6))).equalsTo(2);
+            assert(hexMap.get(map.getHex(5, 7))).equalsTo(2);
+            assert(hexMap.get(map.getHex(4, 6))).equalsTo(1);
+            assert(hexMap.get(map.getHex(4, 7))).equalsTo(2);
+            assert(hexMap.get(map.getHex(3, 7))).equalsTo(2);
+            assert(hexMap.get(map.getHex(3, 6))).equalsTo(1);
+            assert(hexMap.get(map.getHex(2, 6))).equalsTo(2);
+            assert(hexMap.get(map.getHex(2, 5))).equalsTo(2);
+            assert(hexMap.get(map.getHex(2, 6))).equalsTo(2);
     });
 
     function create2Players4UnitsTinyGame() {
@@ -105,7 +148,7 @@ describe("Arbitrator", ()=> {
         return {game, arbitrator, map, unit1, unit2, formation2, wing1, wing2, player1, player2};
     }
 
-    it("Checks is a unit have to play this turn", () => {
+    it("Checks if a unit have to play this turn", () => {
         given:
             var {arbitrator, unit12} = create2Players4UnitsTinyGame();
         then:
@@ -800,6 +843,32 @@ describe("Arbitrator", ()=> {
         then:
             assert(arbitrator.areUnitsFoes(unit11, unit12)).isFalse();
             assert(arbitrator.areUnitsFoes(unit11, unit21)).isTrue();
+    });
+
+    it("Checks if a hex contains foes", () => {
+        given:
+            var {map, arbitrator, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.doesHexContainFoes(unit11, map.getHex(2, 2))).isFalse();
+            assert(arbitrator.doesHexContainFoes(unit11, unit12.hexLocation)).isFalse();
+            assert(arbitrator.doesHexContainFoes(unit11, unit21.hexLocation)).isTrue();
+    });
+
+    it("Checks if units are friends", () => {
+        given:
+            var {arbitrator, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.areUnitsFriends(unit11, unit12)).isTrue();
+            assert(arbitrator.areUnitsFriends(unit11, unit21)).isFalse();
+    });
+
+    it("Checks if a hex contains friends", () => {
+        given:
+            var {map, arbitrator, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.doesHexContainFriends(unit11, map.getHex(2, 2))).isFalse();
+            assert(arbitrator.doesHexContainFriends(unit11, unit12.hexLocation)).isTrue();
+            assert(arbitrator.doesHexContainFriends(unit11, unit21.hexLocation)).isFalse();
     });
 
     it("Checks if a unit contact a foe", () => {
@@ -1552,6 +1621,117 @@ describe("Arbitrator", ()=> {
         then:
             assert(result.replacement.tiredness).equalsTo(CBTiredness.TIRED);
             assert(result.replacement.lackOfMunitions).equalsTo(CBLackOfMunitions.SCARCE);
+    });
+
+    class TestSpell extends CBCounter {
+        constructor(wizard) {
+            super("units", ["/CBlades/images/magic/red/redspell.png"], new Dimension2D(142, 142));
+            this.wizard = wizard;
+        }
+        _rotate(angle) {}
+        appendToMap(hexLocation) {}
+        deleteFromMap() {}
+    }
+
+    class TestSpellDefinition {
+        createSpellCounter(wizard) {
+            return new TestSpell(wizard);
+        }
+    }
+
+    it("Checks if a unit may chose or cast a spell", () => {
+        given:
+            var {arbitrator, leader11, unit11} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.isAllowedToChoseSpell(unit11)).isFalse();
+            assert(arbitrator.isAllowedToChoseSpell(leader11)).isTrue();
+            assert(arbitrator.isAllowedToCastSpell(unit11)).isFalse();
+            assert(arbitrator.isAllowedToCastSpell(leader11)).isFalse();
+        when:
+            leader11.choseSpell(new TestSpellDefinition());
+        then:
+            assert(arbitrator.isAllowedToCastSpell(leader11)).isTrue();
+    });
+
+    it("Checks the spells a wizard may cast", () => {
+        given:
+            var {arbitrator, leader11, unit11} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.getAllowedSpells(leader11)).arrayEqualsTo([
+                "firePentacle1", "firePentacle2", "firePentacle3",
+                "fireCircle1", "fireCircle2", "fireCircle3",
+                "fireball1", "fireball2", "fireball3",
+                "fireSword1", "fireSword2", "fireSword3",
+                "blaze1", "blaze2", "blaze3",
+                "rainFire1", "rainFire2", "rainFire3"
+                ]
+            );
+    });
+
+    it("Checks cast spell processing", () => {
+        given:
+            var {arbitrator, leader11} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processCastSpellResult(leader11, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processCastSpellResult(leader11, [5, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks foes that may be targeted by a spell", () => {
+        given:
+            var {arbitrator, map, leader11, unit21, unit22, unit11} = create2Players4UnitsTinyGame();
+        when:
+            leader11.move(map.getHex(1, 3));
+            unit21.move(map.getHex(5, 3));
+            unit11.move(map.getHex(7, 3));
+            unit22.move(map.getHex(8, 3));
+            var hexes = arbitrator.getFoesThatMayBeTargetedBySpell(leader11);
+        then:
+            assert(new Set(hexes)).setEqualsTo(new Set([map.getHex(5, 3)]));
+    });
+
+    it("Checks friends that may be targeted by a spell", () => {
+        given:
+            var {arbitrator, map, leader11, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
+        when:
+            leader11.move(map.getHex(1, 3));
+            unit11.move(map.getHex(5, 3));
+            unit21.move(map.getHex(7, 3));
+            unit12.move(map.getHex(8, 3));
+            var hexes = arbitrator.getFriendsThatMayBeTargetedBySpell(leader11);
+        then:
+            assert(new Set(hexes)).setEqualsTo(new Set([map.getHex(1, 3), map.getHex(5, 3)]));
+    });
+
+    it("Checks hexes that may be targeted by a spell", () => {
+        given:
+            var {arbitrator, map, leader11} = create2Players4UnitsTinyGame();
+        when:
+            leader11.move(map.getHex(1, 3));
+            var hexes = arbitrator.getHexesThatMayBeTargetedBySpell(leader11);
+        then:
+            assert(hexes.length).equalsTo(127);
+            let hexesSet = new Set(hexes);
+            assert(hexesSet.has(map.getHex(7, 3))).isTrue();
+            assert(hexesSet.has(map.getHex(8, 3))).isFalse();
+    });
+
+    it("Checks fireball processing", () => {
+        given:
+            var {arbitrator, leader11} = create2Players4UnitsTinyGame();
+            var spellLevel = 1;
+        when:
+            var result = arbitrator.resolveFireball(spellLevel, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.resolveFireball(spellLevel, [5, 6]);
+        then:
+            assert(result.success).isFalse();
     });
 
 });

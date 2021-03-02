@@ -14,12 +14,6 @@ import {
     OptionArtifactMixin,
     OptionMixin
 } from "./unit.js";
-import {
-    DDice, DInsert, DMask, DResult, DScene
-} from "../widget.js";
-import {
-    CBCombatResultTableInsert
-} from "./interactive-combat.js";
 
 class SpellImageArtifact extends OptionArtifactMixin(RetractableMixin(CBCounterImageArtifact)) {
 
@@ -64,12 +58,12 @@ export class CBSpell extends CarriableMixin(CBPlayable) {
         this._activated = memento.activated;
     }
 
-    _getHexLocation() {
-        return this.wizard.hexLocation;
-    }
-
     _getUnit() {
         return this.wizard;
+    }
+
+    get spellLevel() {
+        return this._spellLevel;
     }
 
     get isSpell() {
@@ -86,6 +80,10 @@ export class CBSpell extends CarriableMixin(CBPlayable) {
 
     get game() {
         return this.wizard.game;
+    }
+
+    isOption() {
+        return false;
     }
 
     _addPlayable(hexLocation) {
@@ -125,16 +123,18 @@ export class CBSpell extends CarriableMixin(CBPlayable) {
     apply() {
         Memento.register(this);
         this._wizard.forgetSpell();
+        this._activate();
     }
 
 }
 CBSpell.DIMENSION = new Dimension2D(142, 142);
 CBSpell.CINEMATIC = {
-    NONE: 0,
-    SELECT_FRIEND:1,
-    SELECT_FOE:2,
-    SELECT_HEX:3,
-    RESOLVE:4
+    APPLY: 0,
+    CONTINUE: 1,
+    SELECT_FRIEND:2,
+    SELECT_FOE:3,
+    SELECT_HEX:4,
+    RESOLVE:5
 }
 
 export class CBSpellDefinition {
@@ -168,11 +168,6 @@ export function HexTargetedMixin(clazz) {
             return this._hex;
         }
 
-        _getHexLocation() {
-            if (this.hex) return this.hex;
-            else return super._getHexLocation();
-        }
-
         _memento() {
             let memento = super._memento();
             memento.hex = this._hex;
@@ -181,7 +176,7 @@ export function HexTargetedMixin(clazz) {
 
         _revert(memento) {
             super._revert(memento);
-            if (memento.unit) {
+            if (memento.hex) {
                 this._hex = memento.hex;
             }
             else delete this._hex;
@@ -190,12 +185,11 @@ export function HexTargetedMixin(clazz) {
         selectHex(hex) {
             Memento.register(this);
             this._hex = hex;
-            delete this._unit;
+            //delete this._unit;
         }
 
         apply() {
             super.apply();
-            this._activate();
             this.appendToMap(this.hex);
             this._rotate(0);
         }
@@ -203,6 +197,20 @@ export function HexTargetedMixin(clazz) {
         _activate() {
             super._activate();
             this.artifact.changeLevel("terran");
+        }
+
+        setOn(hex) {
+            this._hex = hex;
+            this._activated = true;
+            this.artifact.setLevel("terran");
+            this.artifact.changeImage(this._spellLevel);
+            this.addToMap(this.hex);
+            this._angle = 0;
+        }
+
+        discard() {
+            this.removeFromMap(this.hex);
+            delete this._hex;
         }
 
     }
@@ -219,11 +227,6 @@ export function UnitTargetedMixin(clazz) {
         _getUnit() {
             if (this._unit) return this._unit;
             else return super._getUnit();
-        }
-
-        _getHexLocation() {
-            if (this.unit) return this.unit;
-            else return super._getHexLocation();
         }
 
         _memento() {
@@ -259,12 +262,23 @@ export function UnitTargetedMixin(clazz) {
         selectHex(hex) {
             Memento.register(this);
             this._unit = hex.units[0];
-            this.wizard.forgetSpell(this);
-            this._activate();
-            this._unit.appendOption(this);
         }
 
         apply() {
+            super.apply();
+            this._unit.appendOption(this);
+        }
+
+        setOn(unit) {
+            this._unit = unit;
+            this._activated = true;
+            this._unit.addOption(this);
+            this.artifact.changeImage(this._spellLevel);
+        }
+
+        discard(unit) {
+            this._unit.removeOption(this);
+            delete this._unit;
         }
 
     }
@@ -283,7 +297,7 @@ export class CBFirePentacleSpell extends HexTargetedMixin(CBSpell) {
     }
 
     getNextCinematic() {
-        return {cinematic: CBSpell.CINEMATIC.NONE};
+        return {cinematic: CBSpell.CINEMATIC.APPLY};
     }
 
     apply() {
@@ -305,7 +319,7 @@ export class CBFireCircleSpell extends HexTargetedMixin(CBSpell) {
     }
 
     getNextCinematic() {
-        return {cinematic: CBSpell.CINEMATIC.NONE};
+        return {cinematic: CBSpell.CINEMATIC.APPLY};
     }
 
     apply() {
@@ -330,23 +344,24 @@ export class CBFireballSpell extends UnitTargetedMixin(CBSpell) {
         if (!this._unit) {
             return {cinematic: CBSpell.CINEMATIC.SELECT_FOE};
         }
-        else if (!this._resolved) {
+        else if (!this._applied) {
+            return {cinematic: CBSpell.CINEMATIC.CONTINUE};
+         }
+        else {
             return {cinematic: CBSpell.CINEMATIC.RESOLVE, resolver:CBFireballSpell.resolver};
         }
-        else {
-            return {cinematic: CBSpell.CINEMATIC.NONE};
-        }
-    }
-
-    resolve(diceResult) {
-        this._resolved = true;
-        this._result = this.game.arbitrator.resolveFireball(this, diceResult);
-        return this._result;
     }
 
     apply() {
+        super.apply();
+        this._applied = true;
+    }
+
+    resolve(diceResult) {
+        this._result = this.game.arbitrator.resolveFireball(this, diceResult);
         if (this._result.losses) this.unit.takeALoss();
         this.unit.deleteOption(this);
+        return this._result;
     }
 
 }
@@ -367,7 +382,7 @@ export class CBFireswordSpell extends UnitTargetedMixin(CBSpell) {
             return {cinematic: CBSpell.CINEMATIC.SELECT_FRIEND};
         }
         else {
-            return {cinematic: CBSpell.CINEMATIC.NONE};
+            return {cinematic: CBSpell.CINEMATIC.APPLY};
         }
     }
 
@@ -389,7 +404,7 @@ export class CBBlazeSpell extends HexTargetedMixin(CBSpell) {
             return {cinematic: CBSpell.CINEMATIC.SELECT_HEX};
         }
         else {
-            return {cinematic: CBSpell.CINEMATIC.NONE};
+            return {cinematic: CBSpell.CINEMATIC.APPLY};
         }
     }
 
@@ -411,7 +426,7 @@ export class CBRainFireSpell extends HexTargetedMixin(CBSpell) {
             return {cinematic: CBSpell.CINEMATIC.SELECT_HEX};
         }
         else {
-            return {cinematic: CBSpell.CINEMATIC.NONE};
+            return {cinematic: CBSpell.CINEMATIC.APPLY};
         }
     }
 
@@ -445,13 +460,13 @@ CBSpell.laboratory = new Map([
     ["fireball3",
         new CBSpellDefinition("/CBlades/images/magic/fire/fireball3.png", CBFireballSpell,3)
     ],
-    ["firesword1",
+    ["fireSword1",
         new CBSpellDefinition("/CBlades/images/magic/fire/firesword1.png", CBFireswordSpell,1)
     ],
-    ["firesword2",
+    ["fireSword2",
         new CBSpellDefinition("/CBlades/images/magic/fire/firesword2.png", CBFireswordSpell,2)
     ],
-    ["firesword3",
+    ["fireSword3",
         new CBSpellDefinition("/CBlades/images/magic/fire/firesword3.png", CBFireswordSpell,3)
     ],
     ["blaze1",
@@ -463,57 +478,13 @@ CBSpell.laboratory = new Map([
     ["blaze3",
         new CBSpellDefinition("/CBlades/images/magic/fire/blaze3.png", CBBlazeSpell,3)
     ],
-    ["rainfire1",
+    ["rainFire1",
         new CBSpellDefinition("/CBlades/images/magic/fire/rainfire1.png", CBRainFireSpell,1)
     ],
-    ["rainfire2",
+    ["rainFire2",
         new CBSpellDefinition("/CBlades/images/magic/fire/rainfire2.png", CBRainFireSpell,2)
     ],
-    ["rainfire3",
+    ["rainFire3",
         new CBSpellDefinition("/CBlades/images/magic/fire/rainfire3.png", CBRainFireSpell,3)
     ]
 ]);
-
-CBFireballSpell.resolver = function(action) {
-    this.game.closeActuators();
-    let result = new DResult();
-    let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
-    let scene = new DScene();
-    let mask = new DMask("#000000", 0.3);
-    let close = ()=>{
-        mask.close();
-        scene.close();
-    };
-    mask.open(this.game.board, this.location);
-    scene.addWidget(
-        new CBCombatResultTableInsert(), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
-    ).addWidget(
-        new CBFireballInsert(), new Point2D(-160, CBFireballInsert.DIMENSION.h/2-40)
-    ).addWidget(
-        dice.setFinalAction(()=>{
-            dice.active = false;
-            let report = this.resolve(dice.result);
-            if (report.success) {
-                result.success().appear();
-                action.play();
-            }
-            else {
-                result.failure().appear();
-                action.play();
-            }
-        }),
-        new Point2D(70, 60)
-    ).addWidget(
-        result.setFinalAction(close),
-        new Point2D(0, 0)
-    ).open(this.game.board, this.location);
-}
-
-export class CBFireballInsert extends DInsert {
-
-    constructor() {
-        super("/CBlades/images/inserts/fireball-insert.png", CBFireballInsert.DIMENSION);
-    }
-
-}
-CBFireballInsert.DIMENSION = new Dimension2D(444, 257);

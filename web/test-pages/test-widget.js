@@ -119,7 +119,7 @@ describe("Widget", ()=> {
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "globalAlpha = 0.3",
+                    "globalAlpha = 0.3",
                     "fillStyle = #000000", "fillRect(0, 0, 500, 300)",
                 "restore()",
                 "save()",
@@ -313,7 +313,7 @@ describe("Widget", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "globalAlpha = 0.3",
+                    "globalAlpha = 0.3",
                     "fillStyle = #000000", "fillRect(0, 0, 500, 300)",
                 "restore()",
                 "save()",
@@ -970,7 +970,7 @@ describe("Widget", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.2", "globalAlpha = 0.2",
+                    "globalAlpha = 0.2",
                     "fillStyle = #0F0F0F",
                     "fillRect(0, 0, 500, 300)",
                 "restore()"
@@ -1018,9 +1018,6 @@ describe("Widget", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
     });
-
-
-
 
     it("Checks that a scene opening/closing is undoable", () => {
         given:
