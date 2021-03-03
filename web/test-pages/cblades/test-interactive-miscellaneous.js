@@ -21,7 +21,8 @@ import {
     paint,
     clickOnActionMenu,
     clickOnCounter
-} from "./interactive-tools.js";import {
+} from "./interactive-tools.js";
+import {
     createTinyGame,
     create2UnitsTinyGame
 } from "./game-examples.js";

@@ -1,8 +1,10 @@
 import {
-    CBAbstractArbitrator, CBHexId,
+    CBAbstractArbitrator
+} from "./game.js";
+import {
     CBHexSideId,
     CBMoveType,
-} from "./game.js";
+} from "./map.js";
 import {
     CBCohesion,
     CBMovement,
@@ -20,9 +22,9 @@ export class CBArbitrator extends CBAbstractArbitrator{
 
     getAllowedActions(unit) {
         return {
-            moveForward:true,
-            moveBack:true,
-            escape:true,
+            moveForward:this.isAllowedToMove(unit),
+            moveBack:this.isAllowedToRetreat(unit),
+            escape:this.isAllowedToRout(unit),
             confront:true,
             shockAttack:this.isAllowedToShockAttack(unit),
             fireAttack:this.isAllowedToFireAttack(unit),
@@ -45,6 +47,18 @@ export class CBArbitrator extends CBAbstractArbitrator{
             mergeUnit:this.isAllowedToMerge(unit),
             miscAction:true
         }
+    }
+
+    isAllowedToMove(unit) {
+        return true;
+    }
+
+    isAllowedToRetreat(unit) {
+        return true;
+    }
+
+    isAllowedToRout(unit) {
+        return true;
     }
 
     mustPlayUnit(unit) {
@@ -902,11 +916,11 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     isAllowedToChoseSpell(unit) {
-        return !!unit.isCharacter;
+        return !!unit.characterNature;
     }
 
     isAllowedToCastSpell(unit) {
-        return !!unit.isCharacter && unit.hasChosenSpell();
+        return !!unit.characterNature && unit.hasChosenSpell();
     }
 
     getAllowedSpells(unit) {

@@ -4,14 +4,11 @@ import {
     Dimension2D, Point2D
 } from "../geometry.js";
 import {
-    DDice, DIconMenu, DIconMenuItem, DInsert, DMask, DResult, DScene
+    DDice, DIconMenuItem, DInsert, DMask, DResult, DScene
 } from "../widget.js";
 import {
     CBAction
-} from "./game.js";
-import {
-    CBOrderInstruction
-} from "./unit.js";
+} from "./game.js";;
 import {
     CBActionMenu,
     CBInteractivePlayer,

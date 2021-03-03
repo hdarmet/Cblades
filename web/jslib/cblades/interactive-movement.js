@@ -12,16 +12,15 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
+    CBHexSideId, CBMoveType
+} from "./map.js";
+import {
     CBAction, CBActuator,
-    CBHexSideId, CBMoveType,
     CBActuatorImageArtifact
 } from "./game.js";
 import {
     CBFormation, CBMovement
 } from "./unit.js";
-import {
-    DElement
-} from "../board.js";
 import {
     DImage
 } from "../draw.js";
@@ -33,19 +32,23 @@ export function registerInteractiveMovement() {
     CBInteractivePlayer.prototype.startMoveUnit = function (unit, event) {
         unit.launchAction(new InteractiveMovementAction(this.game, unit, event));
     }
+    CBInteractivePlayer.prototype.startRoutUnit = function (unit, event) {
+        unit.launchAction(new InteractiveRoutAction(this.game, unit, event));
+    }
     CBActionMenu.menuBuilders.push(
         createMovementMenuItems
     );
 }
 export function unregisterInteractiveMovement() {
     delete CBInteractivePlayer.prototype.startMoveUnit;
+    delete CBInteractivePlayer.prototype.startRoutUnit;
     let builderIndex = CBActionMenu.menuBuilders.indexOf(createMovementMenuItems);
     if (builderIndex>=0) {
         CBActionMenu.menuBuilders.splice(builderIndex, 1);
     }
 }
 
-export class InteractiveMovementAction extends CBAction {
+export class InteractiveAbstractMovementAction extends CBAction {
 
     constructor(game, unit, event) {
         super(game, unit);
@@ -198,6 +201,22 @@ export class InteractiveMovementAction extends CBAction {
 
 }
 
+export class InteractiveMovementAction extends InteractiveAbstractMovementAction {
+
+    constructor(game, unit, event) {
+        super(game, unit, event);
+    }
+
+}
+
+export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
+
+    constructor(game, unit, event) {
+        super(game, unit, event);
+    }
+
+}
+
 function createMovementMenuItems(unit, actions) {
     return [
         new DIconMenuItem("/CBlades/images/icons/move.png","/CBlades/images/icons/move-gray.png",
@@ -210,7 +229,8 @@ function createMovementMenuItems(unit, actions) {
                 return true;
             }).setActive(actions.moveBack),
         new DIconMenuItem("/CBlades/images/icons/escape.png", "/CBlades/images/icons/escape-gray.png",
-            2, 0, () => {
+            2, 0, event => {
+                unit.player.startRoutUnit(unit, event);
                 return true;
             }).setActive(actions.escape),
         new DIconMenuItem("/CBlades/images/icons/to-face.png", "/CBlades/images/icons/to-face-gray.png",

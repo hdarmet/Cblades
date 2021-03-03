@@ -42,7 +42,7 @@ import {
 } from "./game-examples.js";
 import {
     CBHexSideId
-} from "../../jslib/cblades/game.js";
+} from "../../jslib/cblades/map.js";
 
 describe("Interactive Combat", ()=> {
 

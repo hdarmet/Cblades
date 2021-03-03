@@ -7,7 +7,10 @@ import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
-    CBAction, CBActuator, CBActuatorImageArtifact, CBHexSideId, CBMoveType
+    CBHexSideId, CBMoveType
+} from "./map.js";
+import {
+    CBAction, CBActuator, CBActuatorImageArtifact
 } from "./game.js";
 import {
     Dimension2D, Point2D, sumAngle

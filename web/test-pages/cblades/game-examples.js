@@ -4,7 +4,10 @@ import {
     loadAllImages
 } from "../mocks.js";
 import {
-    CBGame, CBHexSideId, CBMap
+    CBHexSideId, CBMap
+} from "../../jslib/cblades/map.js";
+import {
+    CBGame
 } from "../../jslib/cblades/game.js";
 import {
     CBArbitrator

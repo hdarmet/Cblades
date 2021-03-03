@@ -66,7 +66,7 @@ export class CBSpell extends CarriableMixin(CBPlayable) {
         return this._spellLevel;
     }
 
-    get isSpell() {
+    get spellNature() {
         return true;
     }
 

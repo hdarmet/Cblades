@@ -14,10 +14,12 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
-    CBGame,
-    CBMap,
-    CBAbstractPlayer,
-    CBAction, CBHexSideId, CBPlayable, CBMoveType, RetractableMixin, CBCounterImageArtifact, CBCounter
+    CBMap, CBHexSideId, CBMoveType
+} from "../../jslib/cblades/map.js";
+import {
+    CBGame, CBAbstractPlayer,
+    CBAction, CBPlayable,
+    CBCounterImageArtifact, CBCounter
 } from "../../jslib/cblades/game.js";
 import {
     CBTroop,
@@ -1474,8 +1476,8 @@ describe("Unit", ()=> {
         given:
             var {leader} = createTinyCommandGame();
         then:
-            assert(leader.isUnit).isTrue();
-            assert(leader.isCharacter).isTrue();
+            assert(leader.unitNature).isTrue();
+            assert(leader.characterNature).isTrue();
     });
 
     it("Checks leader appearance", () => {
@@ -1746,7 +1748,7 @@ describe("Unit", ()=> {
             var { game, formation } = prepareTinyGameWithFormation();
             var [markersLayer, formationsLayer] = getLayers(game.board, "markers-0", "formations-0");
         then:
-            assert(formation.isUnit).isTrue();
+            assert(formation.unitNature).isTrue();
             assert(formation.isFormation).isTrue();
             assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([
                 "save()",

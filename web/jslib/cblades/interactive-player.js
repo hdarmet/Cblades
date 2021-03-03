@@ -8,7 +8,7 @@ import {
     Mechanisms
 } from "../mechanisms.js";
 import {
-    CBAbstractPlayer, CBAction, CBGame
+    CBAbstractPlayer, CBGame
 } from "./game.js";
 import {
     DBoard

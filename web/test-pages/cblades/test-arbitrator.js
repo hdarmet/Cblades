@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    assert, before, describe, executeTimeouts, it
+    assert, before, describe, it
 } from "../../jstest/jtest.js";
 import {
     DAnimator,
@@ -15,7 +15,10 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
-    CBAction, CBGame, CBHexSideId, CBMap, CBAbstractPlayer, CBMoveType, CBCounter
+    CBHexSideId, CBMap, CBMoveType
+} from "../../jslib/cblades/map.js";
+import {
+    CBAction, CBGame, CBAbstractPlayer, CBCounter
 } from "../../jslib/cblades/game.js";
 import {
     CBCharacter,

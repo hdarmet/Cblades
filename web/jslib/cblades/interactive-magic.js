@@ -300,7 +300,7 @@ export class CBSpellsMenu extends DIconMenu {
                 spellMenuItems.push(
                     new DIconMenuItem(spellDefinition.path, "",
                         col, row, event => {
-                            console.assert(unit.isCharacter);
+                            console.assert(unit.characterNature);
                             unit.choseSpell(spellDefinition);
                             unit.markAsBeingPlayed();
                             return true;

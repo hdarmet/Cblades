@@ -33,7 +33,7 @@ import {
 import {
     CBHexSideId,
     CBMoveType
-} from "../../jslib/cblades/game.js";
+} from "../../jslib/cblades/map.js";
 
 describe("Interactive Formation", ()=> {
 

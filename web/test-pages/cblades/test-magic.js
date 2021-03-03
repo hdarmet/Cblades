@@ -72,7 +72,7 @@ describe("Magic", ()=> {
             var spell = wizard.chosenSpell;
         then:
             assert(spell).is(CBTestSpell);
-            assert(spell.isSpell).isTrue();
+            assert(spell.spellNature).isTrue();
             assert(spell.isOption()).isFalse();
             assert(wizard.carried.indexOf(spell)).notEqualsTo(-1);
             assert(spell.artifact.spell).equalsTo(spell);

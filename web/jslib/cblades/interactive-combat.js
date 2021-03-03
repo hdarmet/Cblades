@@ -9,9 +9,12 @@ import {
     DDice, DIconMenuItem, DInsert, DMask, DResult, DScene
 } from "../widget.js";
 import {
-    CBAction, CBActuator, CBHexSideId,
+    CBAction, CBActuator,
     CBActuatorImageArtifact
 } from "./game.js";
+import {
+    CBHexSideId
+} from "./map.js";
 import {
     CBFormation
 } from "./unit.js";
@@ -19,9 +22,6 @@ import {
     CBActionMenu,
     CBInteractivePlayer
 } from "./interactive-player.js";
-import {
-    DElement
-} from "../board.js";
 import {
     DImage
 } from "../draw.js";

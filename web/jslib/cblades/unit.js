@@ -10,7 +10,10 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBCounterImageArtifact, CBHexSideId, CBAction, CBMoveType, CBAbstractUnit, CBHexId
+    CBHexSideId, CBMoveType
+} from "./map.js";
+import {
+    CBCounterImageArtifact, CBAbstractUnit
 } from "./game.js";
 
 export let CBMovement = {
@@ -97,6 +100,7 @@ export class CBWing {
     constructor(player) {
         this._player = player;
         this._orderInstruction = CBOrderInstruction.DEFEND;
+        this._retreatZone = [];
     }
 
     _memento() {
@@ -123,6 +127,14 @@ export class CBWing {
 
     get leader() {
         return this._leader;
+    }
+
+    get retreatZone() {
+        return this._retreatZone;
+    }
+
+    setRetreatZone(retreatZone) {
+        return this._retreatZone;
     }
 
     setLeader(character) {
@@ -973,7 +985,7 @@ export class CBCharacter extends CBUnit {
         return copy;
     }
 
-    get isCharacter() {
+    get characterNature() {
         return true;
     }
 

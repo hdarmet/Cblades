@@ -14,9 +14,6 @@ import {
     CBActuatorImageArtifact
 } from "./game.js";
 import {
-    DElement
-} from "../board.js";
-import {
     DImage
 } from "../draw.js";
 import {

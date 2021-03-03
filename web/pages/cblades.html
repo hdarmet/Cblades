@@ -10,7 +10,10 @@
 <script type="module">
 
     import {
-        CBGame, CBMap, CBHexId, CBHexSideId
+        CBMap, CBHexId, CBHexSideId
+    } from "../jslib/cblades/map.js";
+    import {
+        CBGame
     } from "../jslib/cblades/game.js";
     import {
         CBTroop, CBWing, CBCharacter, CBFormation, CBUnitType
@@ -102,19 +105,21 @@
     let player1 = new CBInteractivePlayer();
     game.addPlayer(player1);
     let wing1 = new CBWing(player1);
+    wing1.setRetreatZone(map.getSouthZone());
     let character11 = new CBCharacter(goblinLeader, wing1);
     wing1.setLeader(character11);
     let counter11 = new CBTroop(goblinWolfRider, wing1);
     counter11.lossSteps = 1;
     let counter12 = new CBTroop(goblinWolfRider, wing1);
     counter12.lossSteps = 1;
-    game.addUnit(character11, new CBHexId(map, 4, 11));
+    game.addUnit(character11, new CBHexId(map, 4, 11)); // 4, 11
     game.addUnit(counter11, new CBHexId(map, 3, 10));
     game.addUnit(counter12, new CBHexId(map, 6, 10));
 
     let player2 = new CBInteractivePlayer();
     game.addPlayer(player2);
     let wing2 = new CBWing(player2);
+    wing2.setRetreatZone(map.getNorthZone());
     let character21 = new CBCharacter(companyLeader, wing2);
     wing2.setLeader(character21);
     character21.angle = 180;
