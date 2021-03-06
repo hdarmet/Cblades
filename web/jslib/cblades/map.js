@@ -7,6 +7,7 @@ import {
     DImage
 } from "../draw.js";
 import {
+    AVLTree,
     Memento
 } from "../mechanisms.js";
 import {
@@ -594,12 +595,11 @@ export class CBMap {
         return this._game;
     }
 
-    /*
     getNorthZone() {
         let zone = [];
         let col = 0;
         let row = 0;
-        let inc = 1;
+        let inc = -1;
         while (col<=CBMap.COL_COUNT) {
             zone.push(this.getHex(col, row));
             col++; row+=inc;
@@ -612,7 +612,7 @@ export class CBMap {
         let zone = [];
         let col = 0;
         let row = CBMap.ROW_COUNT;
-        let inc = -1;
+        let inc = 1;
         while (col<=CBMap.COL_COUNT) {
             zone.push(this.getHex(col, row));
             col++; row+=inc;
@@ -640,14 +640,144 @@ export class CBMap {
         }
         return zone;
     }
-*/
 
     onMouseClick(event) {
         this.game.recenter(new Point2D(event.offsetX, event.offsetY));
     }
+
 }
 CBMap.WIDTH = 2046;
 CBMap.HEIGHT = 3150;
 CBMap.DIMENSION = new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT);
 CBMap.COL_COUNT = 12;
 CBMap.ROW_COUNT = 16;
+
+export class CBPathFinding {
+
+    constructor(start, startAngle, arrivals, costMove, costRotate) {
+        this._search = new AVLTree((rec1, rec2)=> {
+            let result = rec1.distance + rec1.cost - rec2.distance - rec2.cost;
+            if (result) return result;
+            result = rec1.hex.col - rec2.hex.col;
+            if (result) return result;
+            return rec1.hex.row - rec2.hex.row;
+        });
+        this._start = start;
+        this._startAngle = startAngle;
+        this._map = this._start.map;
+        this._arrivals = arrivals;
+        this._arrivalsSet = new Set(arrivals);
+        this._costForward = function(fromAngle, from, to) {
+            let toAngle = from.getAngle(to);
+            return costRotate(from, fromAngle, toAngle) + costMove(from, to);
+        }
+        this._costBackward = function(from, to, toAngle) {
+            let fromAngle = from.getAngle(to);
+            return costMove(from, to) + (toAngle!==null ? costRotate(to, fromAngle, toAngle) : 0);
+        }
+    }
+
+    _distanceFromHexToHex(start, arrival) {
+        let dcol = arrival.col-start.col;
+        if (dcol<0) dcol=-dcol;
+        let drow = arrival.row-start.row;
+        if (drow<0) drow=-drow;
+        if (arrival.col%2) drow-=0,5;
+        if (start.col%2) drow+=0,5;
+        drow -= dcol/2;
+        if (drow<0) drow=0;
+        return dcol+drow;
+    }
+
+    _distanceFromHexToZone(start, arrivals) {
+        let min = this._distanceFromHexToHex(start, arrivals[0]);
+        for (let index=1; index<arrivals.length; index++) {
+            let distance = this._distanceFromHexToHex(start, arrivals[index]);
+            if (distance<min) min=distance;
+        }
+        return min;
+    }
+
+    _registerForward(hex, angle, cost) {
+        let record = this._records.get(hex);
+        if (record) {
+            if (record.cost>cost) {
+                this._search.delete(record);
+                record.cost = cost;
+                record.angle = angle;
+                this._search.insert(record);
+            }
+        }
+        else {
+            let record = {cost, angle, distance: this._distanceFromHexToZone(hex, this._arrivals) / 2};
+            this._records.set(hex, record);
+            this._search.insert(record);
+        }
+    }
+
+    _computeForward() {
+        this._records = new Map();
+        this._registerForward(this._start, this._startAngle, 0);
+        let maxDistance = Number.MAX_VALUE;
+        while (this._search.size) {
+            let record = this._search.unshift();
+            if (this._arrivalsSet.has(record.hex)) return;
+            for (let angle of [0, 60, 120, 180, 240, 300]) {
+                let hex = record.hex.getNearHex(angle);
+                this._registerForward(hex, record.hex.angle(hex), record.cost + this._costForward(record.angle, record.hex, hex));
+            }
+        }
+    }
+
+    _registerBackward(hex, angle, cost) {
+        let record = this._records.get(hex);
+        if (record) {
+            if (record.cost>cost) {
+                this._search.delete(record);
+                record.cost = cost;
+                record.angle = angle;
+                this._search.insert(record);
+            }
+        }
+        else {
+            let record = {hex, cost, angle, distance: this._distanceFromHexToHex(hex, this._start) / 2};
+            this._records.set(hex, record);
+            this._search.insert(record);
+        }
+    }
+
+    _computeBackward() {
+        this._records = new Map();
+        for (let hex of this._arrivals) {
+            this._registerBackward(hex, null, 0);
+        }
+        let maxDistance = Number.MAX_VALUE;
+        while (this._search.size) {
+            let record = this._search.unshift();
+            if (this._start === record.hex) return;
+            for (let angle of [0, 60, 120, 180, 240, 300]) {
+                let hex = record.hex.getNearHex(angle);
+                this._registerBackward(hex, hex.getAngle(record.hex), record.cost + this._costBackward(hex, record.hex, record.angle));
+            }
+        }
+    }
+
+    getRecord(hex) {
+        return this._records.get(hex);
+    }
+
+    getGoodNextMoves() {
+        this._computeBackward();
+        let goodMoves = [];
+        let cost = this._records.get(this._start).cost;
+        for (let angle of [0, 60, 120, 180, 240, 300]) {
+            let hex = this._start.getNearHex(angle);
+            let record = this._records.get(hex);
+            if (record && record.cost<cost) {
+                goodMoves.push(hex);
+            }
+        }
+        return goodMoves;
+    }
+
+}

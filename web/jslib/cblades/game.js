@@ -325,7 +325,7 @@ export class CBGame {
             if (artifact.option) return optionsLayer;
             if (artifact.spell) return spellsLayer;
             if (!artifact.unit) return markersLayer;
-            return artifact.unit.isFormation ? formationsLayer : unitsLayer;
+            return artifact.unit.formationNature ? formationsLayer : unitsLayer;
         }
 
         this._board = new DBoard(new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT), new Dimension2D(1000, 800),

@@ -112,9 +112,9 @@
     counter11.lossSteps = 1;
     let counter12 = new CBTroop(goblinWolfRider, wing1);
     counter12.lossSteps = 1;
-    game.addUnit(character11, new CBHexId(map, 4, 11)); // 4, 11
-    game.addUnit(counter11, new CBHexId(map, 3, 10));
-    game.addUnit(counter12, new CBHexId(map, 6, 10));
+    game.addUnit(character11, map.getHex(4, 11)); // 4, 11
+    game.addUnit(counter11, map.getHex(3, 10));
+    game.addUnit(counter12, map.getHex(6, 10));
 
     let player2 = new CBInteractivePlayer();
     game.addPlayer(player2);
@@ -135,9 +135,9 @@
     counter24.lossSteps = 2;
     game.addUnit(counter23, new CBHexSideId( map.getHex(9, 6),  map.getHex(10, 6)));
     game.addUnit(counter24, new CBHexSideId( map.getHex(9, 5),  map.getHex(10, 5)));
-    game.addUnit(character21, new CBHexId(map, 8, 6));
-    game.addUnit(counter21, new CBHexId(map, 7, 7));
-    game.addUnit(counter22, new CBHexId(map, 10, 7));
+    game.addUnit(character21, map.getHex(8, 6));
+    game.addUnit(counter21, map.getHex(7, 7));
+    game.addUnit(counter22, map.getHex(10, 7));
     game.start();
 </script>
 </body>

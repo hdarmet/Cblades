@@ -1749,7 +1749,7 @@ describe("Unit", ()=> {
             var [markersLayer, formationsLayer] = getLayers(game.board, "markers-0", "formations-0");
         then:
             assert(formation.unitNature).isTrue();
-            assert(formation.isFormation).isTrue();
+            assert(formation.formationNature).isTrue();
             assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(-0.4233, 0.2444, -0.2444, -0.4233, 458.3333, 327.8317)",

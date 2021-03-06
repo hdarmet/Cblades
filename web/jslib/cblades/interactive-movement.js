@@ -12,7 +12,7 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBHexSideId, CBMoveType
+    CBHexSideId, CBMoveType, CBPathFinding
 } from "./map.js";
 import {
     CBAction, CBActuator,
@@ -130,18 +130,26 @@ export class InteractiveAbstractMovementAction extends CBAction {
             }
         }
         else {
-            moveDirections = this.game.arbitrator.getAllowedMoves(this.unit, start);
+            moveDirections = this.getAllowedMoves(start)
             if (moveDirections.length) {
                 let moveActuator = this.createMoveActuator(moveDirections, start);
                 this.game.openActuator(moveActuator);
             }
         }
-        let orientationDirections = this.game.arbitrator.getAllowedRotations(this.unit, start);
+        let orientationDirections = this.getAllowedRotations(start)
         if (orientationDirections.length) {
             let orientationActuator = this.createOrientationActuator(orientationDirections, start);
             this.game.openActuator(orientationActuator);
         }
         return moveDirections.length === 0 && orientationDirections.length ===0;
+    }
+
+    getAllowedMoves(start) {
+        return this.game.arbitrator.getAllowedMoves(this.unit, start);
+    }
+
+    getAllowedRotations(start) {
+        return this.game.arbitrator.getAllowedRotations(this.unit, start);
     }
 
     _markUnitActivationAfterMovement(played) {
@@ -158,21 +166,21 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this.unit.markAsEngaging(this.game.arbitrator.isUnitOnContact(this.unit));
     }
 
-    rotateUnit(angle) {
+    rotateUnit(angle, start) {
         angle = canonizeAngle(angle);
         let cost = this.game.arbitrator.getRotationCost(this.unit, angle);
-        this._updateTirednessForMovement(cost);
+        cost = this._updateTirednessForRotation(cost, start);
         this.unit.rotate(angle, cost);
-        let played = this._createMovementActuators();
+        let played = this._createMovementActuators(false);
         this._checkContact();
         this._markUnitActivationAfterMovement(played);
     }
 
-    moveUnit(hexId) {
+    moveUnit(hexId, start) {
         let cost = this.game.arbitrator.getMovementCost(this.unit, hexId);
-        this._updateTirednessForMovement(cost);
+        cost = this._updateTirednessForMovement(cost, start);
         this.unit.move(hexId, cost, CBMoveType.FORWARD);
-        let played = this._createMovementActuators();
+        let played = this._createMovementActuators(false);
         this._checkContact();
         this._markUnitActivationAfterMovement(played);
     }
@@ -181,10 +189,18 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this.unit.rotate(angle, 0);
     }
 
-    _updateTirednessForMovement(cost) {
+    _updateTirednessForMovement(cost, first) {
         if (this.game.arbitrator.doesMovementInflictTiredness(this.unit, cost)) {
             this.unit.addOneTirednessLevel();
         }
+        return cost;
+    }
+
+    _updateTirednessForRotation(cost, first) {
+        if (this.game.arbitrator.doesMovementInflictTiredness(this.unit, cost)) {
+            this.unit.addOneTirednessLevel();
+        }
+        return cost;
     }
 
     createOrientationActuator(directions, first) {
@@ -213,6 +229,47 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
 
     constructor(game, unit, event) {
         super(game, unit, event);
+    }
+
+    _createPathFinding() {
+        let pathFinding = new CBPathFinding(this.unit.hexLocation, this.unit.angle, this.unit.wing.retreatZone,
+            (from, to)=>{
+                let angle = from.getAngle(to);
+                return this.game.arbitrator.getMovementCost(this.unit, angle, from, angle);
+            },
+            (hex, fromAngle, toAngle)=>{
+                return this.game.arbitrator.getRotationCost(this.unit, toAngle, fromAngle, hex);
+            }
+        );
+        this._goodMoves = new Set(pathFinding.getGoodNextMoves());
+    }
+
+    _createMovementActuators(start) {
+        this._createPathFinding();
+        super._createMovementActuators(start);
+    }
+
+    _filterZones(zones) {
+        let result = [];
+        for (let cangle in zones) {
+            let angle = parseInt(cangle);
+            if (this._goodMoves.has(zones[angle].hex)) {
+                result[angle] = zones[angle];
+            }
+        }
+        return result;
+    }
+
+    getAllowedMoves(start) {
+        return this._filterZones(super.getAllowedMoves(start));
+    }
+
+    getAllowedRotations(start) {
+        return this._filterZones(super.getAllowedRotations(start));
+    }
+
+    _updateTirednessForRotation(cost, first) {
+        return first ? 0 : super._updateTirednessForRotation(cost, first);
     }
 
 }
@@ -264,7 +321,7 @@ export class CBOrientationActuator extends CBActuator {
     }
 
     onMouseClick(trigger, event) {
-        this.action.rotateUnit(trigger.angle);
+        this.action.rotateUnit(trigger.angle, this._first);
     }
 
 }
@@ -295,7 +352,7 @@ export class CBMoveActuator extends CBActuator {
     }
 
     onMouseClick(trigger, event) {
-        this.action.moveUnit(this.unit.hexLocation.getNearHex(trigger.angle));
+        this.action.moveUnit(this.unit.hexLocation.getNearHex(trigger.angle), this._first);
     }
 
 }

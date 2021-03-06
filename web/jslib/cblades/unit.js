@@ -134,7 +134,7 @@ export class CBWing {
     }
 
     setRetreatZone(retreatZone) {
-        return this._retreatZone;
+        this._retreatZone = retreatZone;
     }
 
     setLeader(character) {
@@ -880,7 +880,7 @@ export class CBFormation extends CBUnit {
         return this._type.getFormationMaxStepCount();
     }
 
-    get isFormation() {
+    get formationNature() {
         return true;
     }
 

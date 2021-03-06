@@ -58,7 +58,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     isAllowedToRout(unit) {
-        return true;
+        return !unit.formationNature;
     }
 
     mustPlayUnit(unit) {
@@ -339,7 +339,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             return this.getUnitForwardZone(unit);
         }
         else {
-            if (unit.isFormation) {
+            if (unit.formationNature) {
                 let fromHexAttack = this.isHexMayBeShockAttackedFromHex(unit, unit.hexLocation.fromHex, unit.attackLocation);
                 let toHexAttack = this.isHexMayBeShockAttackedFromHex(unit, unit.hexLocation.toHex, unit.attackLocation);
                 if (fromHexAttack === toHexAttack) {
@@ -369,7 +369,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         let success = diceResult[0]+diceResult[1]<=8;
         let lossesForDefender = diceResult[0]+diceResult[1]<=4 ? 2 : diceResult[0]+diceResult[1]<=8 ? 1 : 0;
         let tirednessForAttacker = supported;
-        let played = !unit.isFormation || unit.hasAttacked();
+        let played = !unit.formationNature || unit.hasAttacked();
         let attackLocation = foe.hexLocation;
         return { success, lossesForDefender, tirednessForAttacker, played, attackLocation };
     }
@@ -387,7 +387,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             return this.getUnitForwardArea(unit, range);
         }
         else {
-            if (unit.isFormation) {
+            if (unit.formationNature) {
                 let fromHexAttack = this.isHexMayBeFireAttackedFromHex(unit, range, unit.hexLocation.fromHex, unit.attackLocation);
                 let toHexAttack = this.isHexMayBeFireAttackedFromHex(unit, range, unit.hexLocation.toHex, unit.attackLocation);
                 if (fromHexAttack === toHexAttack) {
@@ -417,7 +417,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         let success = diceResult[0]+diceResult[1]<=8;
         let lossesForDefender = diceResult[0]+diceResult[1]<=4 ? 2 : diceResult[0]+diceResult[1]<=8 ? 1 : 0;
         let lowerFirerMunitions = diceResult[0] === diceResult[1];
-        let played = !unit.isFormation || unit.hasAttacked();
+        let played = !unit.formationNature || unit.hasAttacked();
         let attackLocation = foe.hexLocation;
         return { success, lossesForDefender, lowerFirerMunitions, played, attackLocation };
     }
@@ -529,19 +529,19 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return directions;
     }
 
-    getRotationCost(unit, angle) {
+    getRotationCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
         return 0.5;
     }
 
-    getMovementCost(unit, angle) {
+    getMovementCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
         return 1;
     }
 
-    getFormationRotationCost(unit, angle) {
+    getFormationRotationCost(unit, angle, orientation=unit.angle) {
         return 1;
     }
 
-    getFormationMovementCost(unit, angle) {
+    getFormationMovementCost(unit, angle, hexSide=unit.hexLocation) {
         return 1;
     }
 
@@ -866,7 +866,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     isAllowedToIncludeTroops(formation) {
-        if (!formation.isFormation || !this._isUnitJoinable(formation, formation)) return false;
+        if (!formation.formationNature || !this._isUnitJoinable(formation, formation)) return false;
         if (formation.hexLocation.fromHex.units.length===1 && formation.hexLocation.toHex.units.length===1) return false;
         if (!this._isUnitsOnHexMayJoin(formation, formation.hexLocation.fromHex)) return false;
         if (!this._isUnitsOnHexMayJoin(formation, formation.hexLocation.toHex)) return false;
@@ -899,7 +899,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     isAllowedToReleaseTroops(formation) {
-        if (!formation.isFormation || !this._isUnitJoinable(formation, formation)) return false;
+        if (!formation.formationNature || !this._isUnitJoinable(formation, formation)) return false;
         if (formation.remainingStepCount<4) return false;
         if (formation.hexLocation.fromHex.units.length===1) return true;
         if (formation.hexLocation.toHex.units.length===1) return true;

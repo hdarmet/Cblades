@@ -69,7 +69,7 @@ class CBTestFormation extends CBAbstractUnit {
         this.player = player;
     }
 
-    get isFormation() {
+    get formationNature() {
         return true;
     }
 
