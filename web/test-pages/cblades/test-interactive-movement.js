@@ -101,7 +101,7 @@ describe("Interactive Movement", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 391.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/to-face.png, -25, -25, 50, 50)",
+                    "drawImage(/CBlades/images/icons/to-face-gray.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 211.6667, 326.8878)",

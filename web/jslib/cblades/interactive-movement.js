@@ -19,7 +19,7 @@ import {
     CBActuatorImageArtifact
 } from "./game.js";
 import {
-    CBFormation, CBMovement
+    CBMovement
 } from "./unit.js";
 import {
     DImage
@@ -35,6 +35,12 @@ export function registerInteractiveMovement() {
     CBInteractivePlayer.prototype.startRoutUnit = function (unit, event) {
         unit.launchAction(new InteractiveRoutAction(this.game, unit, event));
     }
+    CBInteractivePlayer.prototype.startMoveBackUnit = function (unit, event) {
+        unit.launchAction(new InteractiveMoveBackAction(this.game, unit, event));
+    }
+    CBInteractivePlayer.prototype.startConfrontUnit = function (unit, event) {
+        unit.launchAction(new InteractiveConfrontAction(this.game, unit, event));
+    }
     CBActionMenu.menuBuilders.push(
         createMovementMenuItems
     );
@@ -42,6 +48,8 @@ export function registerInteractiveMovement() {
 export function unregisterInteractiveMovement() {
     delete CBInteractivePlayer.prototype.startMoveUnit;
     delete CBInteractivePlayer.prototype.startRoutUnit;
+    delete CBInteractivePlayer.prototype.startMoveBackUnit;
+    delete CBInteractivePlayer.prototype.startConfrontUnit;
     let builderIndex = CBActionMenu.menuBuilders.indexOf(createMovementMenuItems);
     if (builderIndex>=0) {
         CBActionMenu.menuBuilders.splice(builderIndex, 1);
@@ -57,6 +65,133 @@ export class InteractiveAbstractMovementAction extends CBAction {
 
     play() {
         this._createMovementActuators(true);
+    }
+
+    getAllowedMoves(start) {
+        return this.game.arbitrator.getAllowedMoves(this.unit, start);
+    }
+
+    getAllowedRotations(start) {
+        return this.game.arbitrator.getAllowedRotations(this.unit, start);
+    }
+
+    getFormationAllowedMoves(start) {
+        let moveDirections = this.game.arbitrator.getFormationAllowedMoves(this.unit, start);
+        let rotateDirections = this.game.arbitrator.getFormationAllowedRotations(this.unit, start);
+        return {moveDirections, rotateDirections};
+    }
+
+    _buildMoveActuator(start) {
+        if (this.unit.formationNature) {
+            let  {moveDirections, rotateDirections} = this.getFormationAllowedMoves(start);
+            if (moveDirections.length || rotateDirections.length) {
+                let moveFormationActuator = this.createFormationMoveActuator(moveDirections, rotateDirections, start);
+                this.game.openActuator(moveFormationActuator);
+            }
+            return moveDirections.length + rotateDirections.length;
+        }
+        else {
+            let moveDirections = this.getAllowedMoves(start)
+            if (moveDirections.length) {
+                let moveActuator = this.createMoveActuator(moveDirections, start);
+                this.game.openActuator(moveActuator);
+            }
+            return moveDirections.length;
+        }
+    }
+
+    _buildRotationActuator(start) {
+        let orientationDirections = this.getAllowedRotations(start)
+        if (orientationDirections.length) {
+            let orientationActuator = this.createOrientationActuator(orientationDirections, start);
+            this.game.openActuator(orientationActuator);
+        }
+        return orientationDirections.length;
+    }
+
+    _createMovementActuators(start) {
+        this.game.closeActuators();
+        return (this._buildMoveActuator(start) + this._buildRotationActuator(start)) !== 0;
+    }
+
+    _createMoveActuator(start) {
+        this.game.closeActuators();
+        return this._buildMoveActuator(start) !== 0;
+    }
+
+    _markUnitActivationAfterMovement(played) {
+        if (played) {
+            this.markAsFinished();
+            this.finalize();
+        }
+        else {
+            this.markAsStarted();
+        }
+    }
+
+    _continueAfterRotation() {
+        return false
+    }
+
+    rotateUnit(angle, start) {
+        this.game.closeActuators();
+        angle = canonizeAngle(angle);
+        let cost = this.game.arbitrator.getRotationCost(this.unit, angle);
+        cost = this._updateTirednessForRotation(cost, start);
+        this.unit.rotate(angle, cost);
+        let played = !this._continueAfterRotation();
+        this._markUnitActivationAfterMovement(played);
+    }
+
+    _continueAfterMove() {
+        return false
+    }
+
+    moveUnit(hexId, start) {
+        this.game.closeActuators();
+        let cost = this.game.arbitrator.getMovementCost(this.unit, hexId);
+        cost = this._updateTirednessForMovement(cost, start);
+        this.unit.move(hexId, cost, CBMoveType.FORWARD);
+        let played = !this._continueAfterMove();
+        this._markUnitActivationAfterMovement(played);
+    }
+
+    reorientUnit(angle) {
+        this.unit.rotate(angle, 0);
+    }
+
+    _updateTirednessForMovement(cost, first) {
+        if (this.game.arbitrator.doesMovementInflictTiredness(this.unit, cost)) {
+            this.unit.addOneTirednessLevel();
+        }
+        return cost;
+    }
+
+    _updateTirednessForRotation(cost, first) {
+        if (this.game.arbitrator.doesMovementInflictTiredness(this.unit, cost)) {
+            this.unit.addOneTirednessLevel();
+        }
+        return cost;
+    }
+
+    createOrientationActuator(directions, first) {
+        return new CBOrientationActuator(this, directions, first);
+    }
+
+    createMoveActuator(directions, first) {
+        return new CBMoveActuator(this, directions, first);
+    }
+
+    createFormationMoveActuator(moveDirections, rotateDirections, first) {
+        return new CBFormationMoveActuator(this, moveDirections, rotateDirections, first);
+    }
+
+}
+
+export class InteractiveMovementAction extends InteractiveAbstractMovementAction {
+
+    constructor(game, unit, event) {
+        super(game, unit, event);
     }
 
     finalize(action) {
@@ -118,109 +253,14 @@ export class InteractiveAbstractMovementAction extends CBAction {
         return result;
     }
 
-    _createMovementActuators(start) {
-        this.game.closeActuators();
-        let moveDirections;
-        if (this.unit instanceof CBFormation) {
-            moveDirections = this.game.arbitrator.getFormationAllowedMoves(this.unit, start);
-            let rotateDirections = this.game.arbitrator.getFormationAllowedRotations(this.unit, start);
-            if (moveDirections.length || rotateDirections.length) {
-                let moveFormationActuator = this.createFormationMoveActuator(moveDirections, rotateDirections, start);
-                this.game.openActuator(moveFormationActuator);
-            }
-        }
-        else {
-            moveDirections = this.getAllowedMoves(start)
-            if (moveDirections.length) {
-                let moveActuator = this.createMoveActuator(moveDirections, start);
-                this.game.openActuator(moveActuator);
-            }
-        }
-        let orientationDirections = this.getAllowedRotations(start)
-        if (orientationDirections.length) {
-            let orientationActuator = this.createOrientationActuator(orientationDirections, start);
-            this.game.openActuator(orientationActuator);
-        }
-        return moveDirections.length === 0 && orientationDirections.length ===0;
+    _continueAfterRotation() {
+        this.unit.markAsEngaging(this.game.arbitrator.doesUnitEngage(this.unit));
+        return this._createMoveActuator(false);
     }
 
-    getAllowedMoves(start) {
-        return this.game.arbitrator.getAllowedMoves(this.unit, start);
-    }
-
-    getAllowedRotations(start) {
-        return this.game.arbitrator.getAllowedRotations(this.unit, start);
-    }
-
-    _markUnitActivationAfterMovement(played) {
-        if (played) {
-            this.markAsFinished();
-            this.finalize();
-        }
-        else {
-            this.markAsStarted();
-        }
-    }
-
-    _checkContact() {
-        this.unit.markAsEngaging(this.game.arbitrator.isUnitOnContact(this.unit));
-    }
-
-    rotateUnit(angle, start) {
-        angle = canonizeAngle(angle);
-        let cost = this.game.arbitrator.getRotationCost(this.unit, angle);
-        cost = this._updateTirednessForRotation(cost, start);
-        this.unit.rotate(angle, cost);
-        let played = this._createMovementActuators(false);
-        this._checkContact();
-        this._markUnitActivationAfterMovement(played);
-    }
-
-    moveUnit(hexId, start) {
-        let cost = this.game.arbitrator.getMovementCost(this.unit, hexId);
-        cost = this._updateTirednessForMovement(cost, start);
-        this.unit.move(hexId, cost, CBMoveType.FORWARD);
-        let played = this._createMovementActuators(false);
-        this._checkContact();
-        this._markUnitActivationAfterMovement(played);
-    }
-
-    reorientUnit(angle) {
-        this.unit.rotate(angle, 0);
-    }
-
-    _updateTirednessForMovement(cost, first) {
-        if (this.game.arbitrator.doesMovementInflictTiredness(this.unit, cost)) {
-            this.unit.addOneTirednessLevel();
-        }
-        return cost;
-    }
-
-    _updateTirednessForRotation(cost, first) {
-        if (this.game.arbitrator.doesMovementInflictTiredness(this.unit, cost)) {
-            this.unit.addOneTirednessLevel();
-        }
-        return cost;
-    }
-
-    createOrientationActuator(directions, first) {
-        return new CBOrientationActuator(this, directions, first);
-    }
-
-    createMoveActuator(directions, first) {
-        return new CBMoveActuator(this, directions, first);
-    }
-
-    createFormationMoveActuator(moveDirections, rotateDirections, first) {
-        return new CBFormationMoveActuator(this, moveDirections, rotateDirections, first);
-    }
-
-}
-
-export class InteractiveMovementAction extends InteractiveAbstractMovementAction {
-
-    constructor(game, unit, event) {
-        super(game, unit, event);
+    _continueAfterMove() {
+        this.unit.markAsEngaging(this.game.arbitrator.doesUnitEngage(this.unit));
+        return this._createMovementActuators(false);
     }
 
 }
@@ -229,6 +269,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
 
     constructor(game, unit, event) {
         super(game, unit, event);
+        this._unitMustCheckDisengagement = this.game.arbitrator.isUnitEngaged(this.unit, true);
     }
 
     _createPathFinding() {
@@ -246,7 +287,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
 
     _createMovementActuators(start) {
         this._createPathFinding();
-        super._createMovementActuators(start);
+        return super._createMovementActuators(start);
     }
 
     _filterZones(zones) {
@@ -256,6 +297,65 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
             if (this._goodMoves.has(zones[angle].hex)) {
                 result[angle] = zones[angle];
             }
+        }
+        return result;
+    }
+
+    finalize(action) {
+        if (!this.isFinalized()) {
+            if (this._unitMustCheckDisengagement) {
+                this.checkDisengagement(this.unit.viewportLocation, () => {
+                    super.finalize(action);
+                    Memento.clear();
+                });
+            }
+            else {
+                super.finalize(action);
+            }
+        }
+    }
+
+    checkDisengagement(point, action) {
+        let result = new DResult();
+        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+            if (result.finished) {
+                action();
+            }
+        }
+        mask.setAction(close);
+        mask.open(this.game.board, point);
+        scene.addWidget(
+            new CBCheckDisengagementInsert(), new Point2D(-CBCheckDisengagementInsert.DIMENSION.w/2, 0)
+        ).addWidget(
+            new CBMoralInsert(), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+        ).addWidget(
+            dice.setFinalAction(()=>{
+                dice.active = false;
+                let {success} = this._processDisengagementResult(dice.result);
+                if (success) {
+                    result.success().appear();
+                }
+                else {
+                    result.failure().appear();
+                }
+            }),
+            new Point2D(70, 70)
+        ).addWidget(
+            result.setFinalAction(close),
+            new Point2D(0, 0)
+        ).open(this.game.board, point);
+
+    }
+
+    _processDisengagementResult(diceResult) {
+        let result = this.game.arbitrator.processDisengagementResult(this.unit, diceResult);
+        if (!result.success) {
+            this.unit.addOneCohesionLevel();
         }
         return result;
     }
@@ -272,6 +372,173 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
         return first ? 0 : super._updateTirednessForRotation(cost, first);
     }
 
+    _continueAfterRotation() {
+        return this._createMoveActuator(false);
+    }
+
+    _continueAfterMove() {
+        return this._createMovementActuators(false);
+    }
+}
+
+export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction {
+
+    constructor(game, unit, event) {
+        super(game, unit, event);
+        this._unitMustCheckDisengagement = this.game.arbitrator.isUnitEngaged(this.unit, true);
+    }
+
+    finalize(action) {
+        if (!this.isFinalized()) {
+            if (this._unitMustCheckDisengagement) {
+                this.checkDisengagement(this.unit.viewportLocation, () => {
+                    super.finalize(action);
+                    Memento.clear();
+                });
+            }
+            else {
+                super.finalize(action);
+            }
+        }
+    }
+
+    checkDisengagement(point, action) {
+        let result = new DResult();
+        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+            if (result.finished) {
+                action();
+            }
+        }
+        mask.setAction(close);
+        mask.open(this.game.board, point);
+        scene.addWidget(
+            new CBCheckDisengagementInsert(), new Point2D(-CBCheckDisengagementInsert.DIMENSION.w/2, 0)
+        ).addWidget(
+            new CBMoralInsert(), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+        ).addWidget(
+            dice.setFinalAction(()=>{
+                dice.active = false;
+                let {success} = this._processDisengagementResult(dice.result);
+                if (success) {
+                    result.success().appear();
+                }
+                else {
+                    result.failure().appear();
+                }
+            }),
+            new Point2D(70, 70)
+        ).addWidget(
+            result.setFinalAction(close),
+            new Point2D(0, 0)
+        ).open(this.game.board, point);
+
+    }
+
+    _processDisengagementResult(diceResult) {
+        let result = this.game.arbitrator.processDisengagementResult(this.unit, diceResult);
+        if (!result.success) {
+            this.unit.addOneCohesionLevel();
+        }
+        return result;
+    }
+
+    getAllowedMoves(start) {
+        return this.game.arbitrator.getAllowedMovesBack(this.unit);
+    }
+
+    getAllowedRotations(start) {
+        return [];
+    }
+
+    getFormationAllowedMoves(start) {
+        let moveDirections = this.game.arbitrator.getFormationAllowedMovesBack(this.unit, start);
+        let rotateDirections = this.game.arbitrator.getFormationAllowedMovesBackRotations(this.unit, start);
+        return {moveDirections, rotateDirections};
+    }
+
+}
+
+export class InteractiveConfrontAction extends InteractiveAbstractMovementAction {
+
+    constructor(game, unit, event) {
+        super(game, unit, event);
+    }
+
+    finalize(action) {
+        if (!this.isFinalized()) {
+            this.checkConfrontEngagement(this.unit.viewportLocation, () => {
+                super.finalize(action);
+                Memento.clear();
+            });
+        }
+    }
+
+    checkConfrontEngagement(point, action) {
+        let result = new DResult();
+        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+            if (result.finished) {
+                action();
+            }
+        }
+        mask.setAction(close);
+        mask.open(this.game.board, point);
+        scene.addWidget(
+            new CBCheckConfrontEngagementInsert(), new Point2D(-CBCheckConfrontEngagementInsert.DIMENSION.w/2, 0)
+        ).addWidget(
+            new CBMoralInsert(), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+        ).addWidget(
+            dice.setFinalAction(()=>{
+                dice.active = false;
+                let {success} = this._processConfrontEngagementResult(dice.result);
+                if (success) {
+                    result.success().appear();
+                }
+                else {
+                    result.failure().appear();
+                }
+            }),
+            new Point2D(70, 70)
+        ).addWidget(
+            result.setFinalAction(close),
+            new Point2D(0, 0)
+        ).open(this.game.board, point);
+
+    }
+
+    _processConfrontEngagementResult(diceResult) {
+        let result = this.game.arbitrator.processConfrontEngagementResult(this.unit, diceResult);
+        if (!result.success) {
+            this.unit.addOneCohesionLevel();
+        }
+        return result;
+    }
+
+    _checkContact() {
+    }
+
+    getAllowedMoves(start) {
+        return [];
+    }
+
+    getFormationAllowedMoves(start) {
+        let rotateDirections = this.game.arbitrator.getConfrontFormationAllowedRotations(this.unit);
+        return {moveDirections:[], rotateDirections};
+    }
+
+    getAllowedRotations(start) {
+        return this.game.arbitrator.getConfrontAllowedRotations(this.unit);
+    }
+
 }
 
 function createMovementMenuItems(unit, actions) {
@@ -282,7 +549,8 @@ function createMovementMenuItems(unit, actions) {
                 return true;
             }).setActive(actions.moveForward),
         new DIconMenuItem("/CBlades/images/icons/move-back.png", "/CBlades/images/icons/move-back-gray.png",
-            1, 0, () => {
+            1, 0, event => {
+                unit.player.startMoveBackUnit(unit, event);
                 return true;
             }).setActive(actions.moveBack),
         new DIconMenuItem("/CBlades/images/icons/escape.png", "/CBlades/images/icons/escape-gray.png",
@@ -291,7 +559,8 @@ function createMovementMenuItems(unit, actions) {
                 return true;
             }).setActive(actions.escape),
         new DIconMenuItem("/CBlades/images/icons/to-face.png", "/CBlades/images/icons/to-face-gray.png",
-            3, 0, () => {
+            3, 0, event => {
+                unit.player.startConfrontUnit(unit, event);
                 return true;
             }).setActive(actions.confront)
     ];
@@ -415,11 +684,9 @@ export class CBFormationMoveActuator extends CBActuator {
 
     onMouseClick(trigger, event) {
         if (trigger.rotate) {
-            let hex1 = this.unit.hexLocation.getOtherHex(trigger.hex);
-            let hex2 = trigger.hex.getNearHex(trigger.angle);
             let delta = diffAngle(this.unit.angle, trigger.angle)*2;
             this.action.reorientUnit(sumAngle(this.unit.angle, delta));
-            this.action.moveUnit(new CBHexSideId(hex1, hex2));
+            this.action.moveUnit(this.unit.hexLocation.turnTo(trigger.hex, trigger.angle));
         }
         else {
             let hex1 = this.unit.hexLocation.fromHex.getNearHex(trigger.angle);
@@ -437,4 +704,22 @@ export class CBCheckAttackerEngagementInsert extends DInsert {
     }
 
 }
-CBCheckAttackerEngagementInsert.DIMENSION = new Dimension2D(444, 763)
+CBCheckAttackerEngagementInsert.DIMENSION = new Dimension2D(444, 763);
+
+export class CBCheckConfrontEngagementInsert extends DInsert {
+
+    constructor() {
+        super("/CBlades/images/inserts/check-confront-engagement-insert.png", CBCheckConfrontEngagementInsert.DIMENSION);
+    }
+
+}
+CBCheckConfrontEngagementInsert.DIMENSION = new Dimension2D(444, 763);
+
+export class CBCheckDisengagementInsert extends DInsert {
+
+    constructor() {
+        super("/CBlades/images/inserts/disengagement-insert.png", CBCheckDisengagementInsert.DIMENSION);
+    }
+
+}
+CBCheckDisengagementInsert.DIMENSION = new Dimension2D(444, 797);

@@ -435,7 +435,7 @@ class AVLNode {
             else {
                 let tmp = this.right._minValueNode();
                 this._data = tmp._data;
-                this.right = this.right.delete(this._data);
+                this.right = this.right.delete(this._data, tree);
                 return this._adjustForDeletion();
             }
         }

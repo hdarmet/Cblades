@@ -4,6 +4,7 @@ import {
     assert, describe, it, before
 } from "../jstest/jtest.js";
 import {
+    AVLTree,
     Mechanisms,
     Memento
 } from "../jslib/mechanisms.js";
@@ -284,6 +285,265 @@ describe("Mechansism", ()=> {
         then: /* nothing happen... */
             assert(revertable1.data).equalsTo("at start");
             assert(revertable2.data).equalsTo("modified");
+    });
+
+    it("Creates and fill an AVL in the ascending direction", () => {
+        let tree = new AVLTree((a, b) => a - b);
+        for (let i = 0; i < 10; i++) {
+            tree.insert(i);
+        }
+        let it = tree.inside();
+        for (let i = 0; i < 10; i++) {
+            assert(it._node._height <= 3).equalsTo(true);
+            assert(it.next().value).equalsTo(i);
+        }
+        assert(it.next().done).equalsTo(true);
+    });
+
+    it("Creates and fill an AVL in the descending direction", () => {
+        let tree = new AVLTree((a, b) => a - b);
+        for (let i = 6; i < 10; i++) {
+            tree.insert(i);
+        }
+        for (let i = 0; i < 6; i++) {
+            tree.insert(i);
+        }
+        let it = tree.inside();
+        for (let i = 0; i < 10; i++) {
+            assert(it._node._height <= 3).equalsTo(true);
+            assert(it.next().value).equalsTo(i);
+        }
+        assert(it.next().done).equalsTo(true);
+    });
+
+    it("Creates and fill an AVL so a left/right rotate is done", () => {
+        let tree = new AVLTree((a, b) => a - b);
+        for (let i = 5; i >= 0; i--) {
+            tree.insert(i);
+        }
+        for (let i = 9; i >= 6; i--) {
+            tree.insert(i);
+        }
+        let it = tree.inside();
+        for (let i = 0; i < 10; i++) {
+            assert(it._node._height <= 3).equalsTo(true);
+            assert(it.next().value).equalsTo(i);
+        }
+        assert(it.next().done).equalsTo(true);
+    });
+
+    it("Creates and fill an AVL randomly", () => {
+        let tree = new AVLTree((a, b) => a - b);
+        tree.insert(5);
+        tree.insert(8);
+        tree.insert(2);
+        tree.insert(3);
+        tree.insert(0);
+        tree.insert(7);
+        tree.insert(6);
+        tree.insert(9);
+        tree.insert(1);
+        tree.insert(4);
+        let it = tree.inside();
+        for (let i = 0; i < 10; i++) {
+            assert(it._node._height <= 3).equalsTo(true);
+            assert(it.next().value).equalsTo(i);
+        }
+        assert(it.next().done).equalsTo(true);
+    });
+
+    it("Finds a value in AVL", () => {
+        let tree = new AVLTree((a, b) => a - b);
+        for (let i = 0; i < 10; i++) {
+            tree.insert(i);
+        }
+        for (let i = 0; i < 10; i++) {
+            assert(tree.find(i)).equalsTo(i);
+        }
+    });
+
+    it("Deletes values from an AVL", () => {
+        let tree = new AVLTree((a, b) => a - b);
+        for (let i = 0; i < 10; i++) {
+            tree.insert(i);
+        }
+        tree.delete(5);
+        assert(tree.find(5)).equalsTo(null);
+        assert(tree.find(8)).equalsTo(8);
+        tree.delete(8);
+        assert(tree.find(8)).equalsTo(null);
+        assert(tree.find(2)).equalsTo(2);
+        tree.delete(2);
+        tree.delete(3);
+        tree.delete(0);
+        tree.delete(7);
+        tree.delete(6);
+        tree.delete(9);
+        tree.delete(1);
+        tree.delete(4);
+        assert(tree.inside().next().done).equalsTo(true);
+    });
+
+    it("Deletes values from an AVL so adjustement is necessary", () => {
+        let tree = new AVLTree((a, b) => a - b);
+        for (let i = 0; i <= 25; i++) {
+            tree.insert(i);
+        }
+        // rightRotate
+        for (let i = 25; i >= 21; i--) {
+            tree.delete(i);
+        }
+        assert([...tree]).arrayEqualsTo([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
+        // leftRotate
+        for (let i = 0; i < 4; i++) {
+            tree.delete(i);
+        }
+        assert([...tree]).arrayEqualsTo([4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
+        // rightRightRotate + leftRotate
+        for (let i = 9; i >=4; i--) {
+            tree.delete(i);
+        }
+        assert([...tree]).arrayEqualsTo([10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
+        // leftLeftRotate + rightRotate
+        for (let i = 15; i <=20; i++) {
+            tree.delete(i);
+        }
+        assert([...tree]).arrayEqualsTo([10, 11, 12, 13, 14]);
+        // Try to remove elements that are not present in the AVL
+        tree.delete(9);
+        assert([...tree]).arrayEqualsTo([10, 11, 12, 13, 14]);
+        tree.delete(15);
+        assert([...tree]).arrayEqualsTo([10, 11, 12, 13, 14]);
+    });
+
+    it("Iterates over a portion of an ALV", () => {
+        let tree = new AVLTree((a, b) => a - b);
+        for (let i = 0; i < 10; i++) {
+            tree.insert(i);
+        }
+        let it = tree.inside(null, 4);
+        for (let i of [0, 1, 2, 3, 4]) {
+            assert(it.next().value).equalsTo(i);
+        }
+        assert(it.next().done).equalsTo(true);
+        it = tree.inside(4, null);
+        for (let i of [4, 5, 6, 7, 8, 9]) {
+            assert(it.next().value).equalsTo(i);
+        }
+        assert(it.next().done).equalsTo(true);
+        it = tree.inside(3, 6);
+        for (let i of [3, 4, 5, 6]) {
+            assert(it.next().value).equalsTo(i);
+        }
+        assert(it.next().done).equalsTo(true);
+    });
+
+    it("Iterates over a portion of an ALV when search values are not included in the ALV", () => {
+        let tree = new AVLTree((a, b) => a - b);
+        for (let i = 0; i < 10; i+=2) {
+            tree.insert(i);
+        }
+        // Looks for elements at AVL start
+        let it = tree.inside(null, 5);
+        for (let i of [0, 2, 4]) {
+            assert(it.next().value).equalsTo(i);
+        }
+        assert(it.next().done).equalsTo(true);
+        it = tree.including(null, 5);
+        for (let i of [0, 2, 4, 6]) {
+            assert(it.next().value).equalsTo(i);
+        }
+        // Looks for elements at AVL end
+        assert(it.next().done).equalsTo(true);
+        it = tree.inside(3, null);
+        for (let i of [4, 6, 8]) {
+            assert(it.next().value).equalsTo(i);
+        }
+        assert(it.next().done).equalsTo(true);
+        it = tree.including(3, null);
+        for (let i of [2, 4, 6, 8]) {
+            assert(it.next().value).equalsTo(i);
+        }
+        // Looks for elements in the middle of the tree
+        assert(it.next().done).equalsTo(true);
+        it = tree.inside(3, 7);
+        for (let i of [4, 6]) {
+            assert(it.next().value).equalsTo(i);
+        }
+        assert(it.next().done).equalsTo(true);
+        it = tree.including(3, 7);
+        for (let i of [2, 4, 6, 8]) {
+            assert(it.next().value).equalsTo(i);
+        }
+        assert(it.next().done).equalsTo(true);
+    });
+
+    it("Check inconsistent iteration tries", () => {
+        let tree = new AVLTree((a, b) => a - b);
+        assert([...tree].length).equalsTo(0);
+        // Looks for elements in an empty AVL
+        let it = tree.inside(0, 10);
+        assert(it.next().done).equalsTo(true);
+        it = tree.including(0, 10);
+        assert(it.next().done).equalsTo(true);
+
+        for (let i = 0; i < 10; i+=2) {
+            tree.insert(i);
+        }
+        // Start bound after AVL last element
+        it = tree.inside(11, null);
+        assert(it.next().done).equalsTo(true);
+        // Unconsistent bounds
+        it = tree.including(7, 3);
+        assert(it.next().done).equalsTo(true);
+    });
+
+    it("Checks insertion of an already existing value in an AVL", () => {
+        let tree = new AVLTree((a, b) => a.value - b.value);
+        for (let i = 0; i < 10; i++) {
+            tree.insert({value:i});
+        }
+        tree.insert({value:6, new:true});
+        assert(tree.find({value:6}).new).equalsTo(true);
+    });
+
+    it("Checks uncommon (or false) usages of an ALV", () => {
+        let tree = new AVLTree((a, b) => a - b);
+        for (let i = 0; i < 10; i++) {
+            tree.insert(i);
+        }
+        let it = tree.inside(6, 6);
+        assert(it.next().value).equalsTo(6);
+        assert(it.next().done).equalsTo(true);
+        it = tree.inside(6, 3);
+        assert(it.next().done).equalsTo(true);
+    });
+
+    it("Creates an AVL from an iterable (an array) and check tree as an iterator", () => {
+        let tree = new AVLTree((a, b) => a - b, [0, 8, 1, 9, 6, 4, 2, 5, 3, 7]);
+        let values = [...tree];
+        assert(values).arrayEqualsTo([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    });
+
+    it("Copies an AVL", () => {
+        let tree = new AVLTree((a, b) => a - b, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        let values = [...new AVLTree(tree)];
+        assert(values).arrayEqualsTo([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    });
+
+    it("Prints the content of an AVL", () => {
+        let tree = new AVLTree((a, b) => a - b, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        let log = console.log;
+        let line="";
+        try {
+            console.log = value=>line+=value+"\n";
+            tree.print(elem => "" + elem._data);
+            console.log = log;
+            assert(line).equalsTo("0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n");
+        }
+        finally {
+            console.log = log;
+        }
     });
 
 });

@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    atan2, Point2D, Dimension2D, moyAngle, sumAngle
+    atan2, Point2D, Dimension2D, moyAngle, sumAngle, diffAngle
 } from "../geometry.js";
 import {
     DImage
@@ -247,6 +247,12 @@ export class CBHexSideId {
     _deletePlayable(playable) {
         this.toHex._deletePlayable(playable);
         this.fromHex._deletePlayable(playable);
+    }
+
+    turnTo(hex, angle) {
+        let pivot = this.getOtherHex(hex);
+        let newHex = hex.getNearHex(angle);
+        return new CBHexSideId(pivot, newHex);
     }
 
     get playables() {
