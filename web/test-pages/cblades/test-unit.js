@@ -523,6 +523,7 @@ describe("Unit", ()=> {
             var player = new CBAbstractPlayer();
             game.addPlayer(player);
             var wing = new CBWing(player);
+            wing.setRetreatZone(map.getSouthZone());
             let unitType1 = new CBUnitType("unit1",
                 ["/CBlades/images/units/misc/unit1.png"],
                 ["/CBlades/images/units/misc/formation1.png"]);
@@ -532,6 +533,7 @@ describe("Unit", ()=> {
             game.addUnit(formation, new CBHexSideId(map.getHex(5, 8), map.getHex(5, 9)));
             formation.angle = 90;
         then:
+            assert(wing.retreatZone).unorderedArrayEqualsTo(map.getSouthZone());
             assert(unit.wing).equalsTo(wing);
             assert(unit.player).equalsTo(player);
             assert(unit.maxStepCount).equalsTo(2);

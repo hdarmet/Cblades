@@ -15,7 +15,7 @@ import {
 import {
     CBMap,
     CBHexSideId,
-    CBHexVertexId, CBMoveType
+    CBHexVertexId, CBMoveType, CBPathFinding
 } from "../../jslib/cblades/map.js";
 import {
     DBoard, DSimpleLevel
@@ -89,6 +89,83 @@ describe("Map", ()=> {
             mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
         then:
             assert(game.centeredOn.toString()).equalsTo("point(500, 410)");
+    });
+
+    it("Checks map borders", () => {
+        given:
+            var map = new CBMap("/CBlades/images/maps/map.png");
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+        then:
+            assert(map.getNorthZone()).unorderedArrayEqualsTo([
+                map.getHex(0, 0),
+                map.getHex(1, -1),
+                map.getHex(2, 0),
+                map.getHex(3, -1),
+                map.getHex(4, 0),
+                map.getHex(5, -1),
+                map.getHex(6, 0),
+                map.getHex(7, -1),
+                map.getHex(8, 0),
+                map.getHex(9, -1),
+                map.getHex(10, 0),
+                map.getHex(11, -1),
+                map.getHex(12, 0)
+            ]);
+            assert(map.getSouthZone()).unorderedArrayEqualsTo([
+                map.getHex(0, 16),
+                map.getHex(1, 17),
+                map.getHex(2, 16),
+                map.getHex(3, 17),
+                map.getHex(4, 16),
+                map.getHex(5, 17),
+                map.getHex(6, 16),
+                map.getHex(7, 17),
+                map.getHex(8, 16),
+                map.getHex(9, 17),
+                map.getHex(10, 16),
+                map.getHex(11, 17),
+                map.getHex(12, 16)
+            ]);
+            assert(map.getWestZone()).unorderedArrayEqualsTo([
+                map.getHex(0, 0),
+                map.getHex(0, 1),
+                map.getHex(0, 2),
+                map.getHex(0, 3),
+                map.getHex(0, 4),
+                map.getHex(0, 5),
+                map.getHex(0, 6),
+                map.getHex(0, 7),
+                map.getHex(0, 8),
+                map.getHex(0, 9),
+                map.getHex(0, 10),
+                map.getHex(0, 11),
+                map.getHex(0, 12),
+                map.getHex(0, 13),
+                map.getHex(0, 14),
+                map.getHex(0, 15),
+                map.getHex(0, 16)
+            ]);
+            assert(map.getEastZone()).unorderedArrayEqualsTo([
+                map.getHex(12, 0),
+                map.getHex(12, 1),
+                map.getHex(12, 2),
+                map.getHex(12, 3),
+                map.getHex(12, 4),
+                map.getHex(12, 5),
+                map.getHex(12, 6),
+                map.getHex(12, 7),
+                map.getHex(12, 8),
+                map.getHex(12, 9),
+                map.getHex(12, 10),
+                map.getHex(12, 11),
+                map.getHex(12, 12),
+                map.getHex(12, 13),
+                map.getHex(12, 14),
+                map.getHex(12, 15),
+                map.getHex(12, 16)
+            ]);
     });
 
     it("Checks hexIds on odd columns", () => {
@@ -261,6 +338,7 @@ describe("Map", ()=> {
             assert(hexSide.isNearHex(hexId1.getNearHex(0))).equalsTo(330);
             assert(hexSide.isNearHex(hexId1.getNearHex(240))).equalsTo(240);
             assert(hexSide.isNearHex(hexId2.getNearHex(60))).equalsTo(60);
+            assert(hexSide.turnTo(hexId2, 180).toString()).equalsTo("Hexside(Hex(4, 3), Hex(5, 4))");
     });
 
     it("Checks hexSideIds face hexes on even column", () => {
@@ -595,4 +673,134 @@ describe("Map", ()=> {
             assert(hexSideId.units).unorderedArrayEqualsTo([unit2, unit1]);
             assert(hexSideId.playables).unorderedArrayEqualsTo([playable1, playable2]);
     });
+
+    function checkRecord(pathfinding, map, col, row, cost, angle, distance) {
+        let record = pathfinding.getRecord(map.getHex(col, row));
+        assert(record).isDefined();
+        assert(record.cost).equalsTo(cost);
+        assert(record.angle).equalsTo(angle);
+        assert(record.distance).equalsTo(distance);
+    }
+
+    function printPathFindingResult(pathfinding) {
+        var result="";
+        for (let record of pathfinding._records.values()) {
+            result+=`checkRecord(pathfinding, map, ${record.hex.col}, ${record.hex.row}, ${record.cost}, ${record.angle}, ${record.distance});\n`;
+        }
+        console.log(result);
+    }
+
+    it("Checks forward path finding", () => {
+        given:
+            var map = new CBMap("/CBlades/images/maps/map.png");
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([/*map.getHex(9,0),*/ map.getHex(10,1)/*, map.getHex(11,0)*/]);
+            var pathfinding = new CBPathFinding(map.getHex(10, 2), 120,
+                [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
+                (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+                (fromHex, fromAngle, toAngle)=>0.5
+            );
+            pathfinding._computeForward();
+        then:
+            //printPathFindingResult(pathfinding);
+            checkRecord(pathfinding, map, 10, 2, 0, 120, 1);
+            checkRecord(pathfinding, map, 10, 1, 2, 0, 0.5);
+            checkRecord(pathfinding, map, 11, 2, 1.5, 60, 1.25);
+            checkRecord(pathfinding, map, 11, 3, 1.5, 120, 1.75);
+            checkRecord(pathfinding, map, 10, 3, 1.5, 180, 1.5);
+            checkRecord(pathfinding, map, 9, 3, 1.5, 240, 1.75);
+            checkRecord(pathfinding, map, 9, 2, 1.5, 300, 1.25);
+            checkRecord(pathfinding, map, 10, 0, 3.5, 0, 0);
+            checkRecord(pathfinding, map, 11, 1, 3, 0, 0.75);
+            checkRecord(pathfinding, map, 9, 1, 3, 0, 0.75);
+            checkRecord(pathfinding, map, 8, 2, 3, 240, 1.5);
+            checkRecord(pathfinding, map, 8, 1, 3, 300, 1);
+            checkRecord(pathfinding, map, 12, 1, 3, 60, 1);
+            checkRecord(pathfinding, map, 12, 2, 3, 120, 1.5);
+            checkRecord(pathfinding, map, 11, 4, 3, 120, 2.25);
+            checkRecord(pathfinding, map, 10, 4, 3, 180, 2);
+            checkRecord(pathfinding, map, 9, 4, 3, 240, 2.25);
+            checkRecord(pathfinding, map, 8, 3, 3, 240, 2);
+            checkRecord(pathfinding, map, 12, 3, 3, 120, 2);
+    });
+
+    it("Checks backward path finding", () => {
+        given:
+            var map = new CBMap("/CBlades/images/maps/map.png");
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)]);
+            var pathfinding = new CBPathFinding(map.getHex(10, 2), 120,
+                [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
+                    (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
+                    (fromHex, fromAngle, toAngle)=>0.5
+                );
+            pathfinding._computeBackward();
+        then:
+            //printPathFindingResult(pathfinding);
+            checkRecord(pathfinding, map, 9, -1, 0, null, 1.75);
+            checkRecord(pathfinding, map, 10, 0, 0, null, 1);
+            checkRecord(pathfinding, map, 11, -1, 0, null, 1.75);
+            checkRecord(pathfinding, map, 10, -1, 1, 180, 1.5);
+            checkRecord(pathfinding, map, 11, 0, 1, 240, 1.25);
+            checkRecord(pathfinding, map, 11, 1, 1, 300, 0.75);
+            checkRecord(pathfinding, map, 10, 1, 1, 0, 0.5);
+            checkRecord(pathfinding, map, 9, 1, 1, 60, 0.75);
+            checkRecord(pathfinding, map, 9, 0, 1, 120, 1.25);
+            checkRecord(pathfinding, map, 11, 2, 2.5, 0, 0.5);
+            checkRecord(pathfinding, map, 10, 2, 3.5, 0, 0);
+            checkRecord(pathfinding, map, 9, 2, 2.5, 0, 0.5);
+            checkRecord(pathfinding, map, 9, -2, 1, 180, 2.25);
+            checkRecord(pathfinding, map, 10, -2, 1, 240, 2);
+            checkRecord(pathfinding, map, 8, -1, 1, 60, 2);
+            checkRecord(pathfinding, map, 8, -2, 1, 120, 2.5);
+            checkRecord(pathfinding, map, 8, 1, 2.5, 60, 1);
+            checkRecord(pathfinding, map, 8, 0, 2.5, 120, 1.5);
+            checkRecord(pathfinding, map, 11, -2, 1, 180, 2.25);
+            checkRecord(pathfinding, map, 12, -2, 1, 240, 2.5);
+            checkRecord(pathfinding, map, 12, -1, 1, 300, 2);
+            checkRecord(pathfinding, map, 12, 0, 2.5, 240, 1.5);
+            checkRecord(pathfinding, map, 12, 1, 2.5, 300, 1);
+            checkRecord(pathfinding, map, 7, 0, 2.5, 60, 1.75);
+            checkRecord(pathfinding, map, 7, -1, 2.5, 120, 2.25);
+            checkRecord(pathfinding, map, 9, 3, 4, 0, 0.75);
+            checkRecord(pathfinding, map, 8, 2, 4, 60, 1);
+            checkRecord(pathfinding, map, 10, -3, 2.5, 180, 2.5);
+            checkRecord(pathfinding, map, 12, 2, 4, 300, 1);
+            checkRecord(pathfinding, map, 11, 3, 4, 0, 0.75);
+            checkRecord(pathfinding, map, 13, -1, 2.5, 240, 2.25);
+            checkRecord(pathfinding, map, 13, 0, 2.5, 300, 1.75);
+            checkRecord(pathfinding, map, 9, -3, 2.5, 180, 2.75);
+            checkRecord(pathfinding, map, 8, -3, 2.5, 120, 3);
+            checkRecord(pathfinding, map, 11, -3, 2.5, 180, 2.75);
+            checkRecord(pathfinding, map, 12, -3, 2.5, 240, 3);
+            checkRecord(pathfinding, map, 7, -2, 2.5, 120, 2.75);
+            checkRecord(pathfinding, map, 7, 2, 4, 60, 1.5);
+            checkRecord(pathfinding, map, 7, 1, 4, 120, 1.5);
+    });
+
+    it("Checks best next moves ", () => {
+        given:
+            var map = new CBMap("/CBlades/images/maps/map.png");
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)]);
+            var pathfinding = new CBPathFinding(map.getHex(10, 2), 120,
+                [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
+                (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
+                (fromHex, fromAngle, toAngle)=>0.5
+            );
+            var nextMoves = pathfinding.getGoodNextMoves();
+        then:
+            assert(nextMoves).unorderedArrayEqualsTo([
+                map.getHex(10, 1),
+                map.getHex(11, 2),
+                map.getHex(9, 2)
+            ]);
+    });
+
 });

@@ -523,9 +523,6 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
         return result;
     }
 
-    _checkContact() {
-    }
-
     getAllowedMoves(start) {
         return [];
     }

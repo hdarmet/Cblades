@@ -546,4 +546,11 @@ describe("Mechansism", ()=> {
         }
     });
 
+    it("Consumes the content of an AVL from both sides", () => {
+        let tree = new AVLTree((a, b) => a - b, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        assert(tree.pop()).equalsTo(9);
+        assert(tree.shift()).equalsTo(0);
+        assert(tree.size).equalsTo(8);
+    });
+
 });

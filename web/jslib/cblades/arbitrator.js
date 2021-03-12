@@ -175,6 +175,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         function _checkHex(hexId) {
             let unitAngle = unit.angle;
             let hexAngle = unit.hexLocation.isNearHex(hexId);
+            if (hexAngle === false) return false;
             let diff = diffAngle(hexAngle, unitAngle);
             return diff >= -60 && diff <= 60;
         }
@@ -218,6 +219,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         function _checkHex(hexId) {
             let unitAngle = unit.angle;
             let hexAngle = unit.hexLocation.isNearHex(hexId);
+            if (hexAngle === false) return false;
             let diff = diffAngle(hexAngle, unitAngle);
             return diff<=-120 || diff>=120;
         }
@@ -553,7 +555,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return result;
     }
 
-    getFormationAllowedMovesBackRotations(unit, first=false) {
+    getFormationAllowedMovesBackRotations(unit) {
         let directions = this.getUnitBackwardZone(unit);
         let result = [];
         for (let angle in directions) {
@@ -561,7 +563,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
                 let direction = directions[angle];
                 direction.hex = unit.hexLocation.getFaceHex(reverseAngle(unit.angle));
                 let cost = this.getFormationMovementCost(unit, angle);
-                if (this._processMovementOpportunity(direction, [direction.hex], unit, cost, first)) {
+                if (this._processMovementOpportunity(direction, [direction.hex], unit, cost, true)) {
                     result[angle] = direction;
                 }
             }

@@ -1080,7 +1080,4 @@ describe("Widget", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
     });
 
-
-
-
 });

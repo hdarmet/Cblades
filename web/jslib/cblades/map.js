@@ -255,6 +255,10 @@ export class CBHexSideId {
         return new CBHexSideId(pivot, newHex);
     }
 
+    toString() {
+        return `Hexside(${this.fromHex}, ${this.toHex})`;
+    }
+
     get playables() {
         return [...new Set([...this.toHex.playables, ...this.fromHex.playables])];
     }
@@ -715,7 +719,7 @@ export class CBPathFinding {
             }
         }
         else {
-            let record = {cost, angle, distance: this._distanceFromHexToZone(hex, this._arrivals) / 2};
+            let record = {hex, cost, angle, distance: this._distanceFromHexToZone(hex, this._arrivals) / 2};
             this._records.set(hex, record);
             this._search.insert(record);
         }
@@ -726,11 +730,11 @@ export class CBPathFinding {
         this._registerForward(this._start, this._startAngle, 0);
         let maxDistance = Number.MAX_VALUE;
         while (this._search.size) {
-            let record = this._search.unshift();
+            let record = this._search.shift();
             if (this._arrivalsSet.has(record.hex)) return;
             for (let angle of [0, 60, 120, 180, 240, 300]) {
                 let hex = record.hex.getNearHex(angle);
-                this._registerForward(hex, record.hex.angle(hex), record.cost + this._costForward(record.angle, record.hex, hex));
+                this._registerForward(hex, record.hex.getAngle(hex), record.cost + this._costForward(record.angle, record.hex, hex));
             }
         }
     }
@@ -759,7 +763,7 @@ export class CBPathFinding {
         }
         let maxDistance = Number.MAX_VALUE;
         while (this._search.size) {
-            let record = this._search.unshift();
+            let record = this._search.shift();
             if (this._start === record.hex) return;
             for (let angle of [0, 60, 120, 180, 240, 300]) {
                 let hex = record.hex.getNearHex(angle);

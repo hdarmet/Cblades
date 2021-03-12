@@ -649,7 +649,7 @@ describe("Interactive Combat", ()=> {
                 "save()",
                     "setTransform(-0.4233, -0.2444, 0.2444, -0.4233, 458.3333, 183.4952)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/)images/units/misc/formation2.png, -142, -71, 284, 142)",
+                    "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
                 "restore()"
             ]);
             assert(formation2.angle).equalsTo(210);
@@ -684,7 +684,7 @@ describe("Interactive Combat", ()=> {
                 "save()",
                     "setTransform(0, -0.4888, 0.4888, 0, 583.3333, 303.7757)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/)images/units/misc/formation2.png, -142, -71, 284, 142)",
+                    "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
                 "restore()"
             ]);
             assert(formation2.angle).equalsTo(270);

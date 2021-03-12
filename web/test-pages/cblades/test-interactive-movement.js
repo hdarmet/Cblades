@@ -38,7 +38,7 @@ import {
 import {
     createTinyGame,
     create2PlayersTinyGame,
-    createTinyFormationGame
+    createTinyFormationGame, create2PlayersTinyFormationGame
 } from "./game-examples.js";
 
 describe("Interactive Movement", ()=> {
@@ -447,8 +447,7 @@ describe("Interactive Movement", ()=> {
             ]);
     });
 
-
-    it("Checks Unit move using actuators (advance, rotate, turn around)", () => {
+    it("Checks Formation move using actuators (advance, rotate, turn around)", () => {
         given:
             var {game, formation} = createTinyFormationGame()
             clickOnCounter(game, formation);
@@ -510,7 +509,6 @@ describe("Interactive Movement", ()=> {
             assert(getFormationMoveActuator(game)).equalsTo(moveActuator2);
             assert(getOrientationActuator(game)).equalsTo(orientationActuator2);
     });
-
 
     function resetAllDirectives(game) {
         var [unitsLayer, markersLayer, actuatorsLayer] = getLayers(game.board,"units-0", "markers-0", "actuators");
@@ -914,6 +912,903 @@ describe("Interactive Movement", ()=> {
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit1.isDisrupted()).isTrue();
             assert(finished).isTrue();
+    });
+
+    function clickOnMoveBackAction(game) {
+        return clickOnActionMenu(game, 1, 0);
+    }
+
+    it("Checks move back action actuators appearance for a troop", () => {
+        given:
+            var { game, unit1 } = create2PlayersTinyGame();
+            var [unitsLayer, actuatorsLayer] = getLayers(game.board, "units-0", "actuators");
+            clickOnCounter(game, unit1);
+            clickOnMoveBackAction(game);
+            loadAllImages();
+            let moveActuator = getMoveActuator(game);
+        when:
+            resetDirectives(unitsLayer, actuatorsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(unitsLayer, 4, 10)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(-0.4888, 0, 0, -0.4888, 416.6667, 438.4897)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 341.6667, 395.1888)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer, actuatorsLayer);
+            clickOnTrigger(game, moveActuator.getTrigger(180));
+        then:
+            assert(getDirectives(unitsLayer, 4, 10)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 448.1122)",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks move back action actuators appearance for a formation", () => {
+        given:
+            var { game, unit1, formation2 } = create2PlayersTinyFormationGame();
+            var [formationsLayer, actuatorsLayer] = getLayers(game.board, "formations-0", "actuators");
+            unit1.move(null);
+            game.nextTurn();
+            clickOnCounter(game, formation2);
+            clickOnMoveBackAction(game);
+            loadAllImages();
+            let moveActuator = getFormationMoveActuator(game);
+        when:
+            resetDirectives(formationsLayer, actuatorsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(formationsLayer, 4, 10)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 500, 351.8878)",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 425, 443.301)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 425, 260.4747)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 425, 323.0205)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-rotate.png, -40, -48, 80, 96)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 425, 380.7551)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-rotate.png, -40, -48, 80, 96)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(formationsLayer, actuatorsLayer);
+            clickOnTrigger(game, moveActuator.getTrigger(240, false));
+        then:
+            assert(getDirectives(formationsLayer, 4, 10)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 416.6667, 400)",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks disengagement appearance after move back action (and cancelling disengagement)", () => {
+        given:
+            var { game, unit1, unit2 } = create2PlayersTinyGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
+            unit2.move(unit1.hexLocation.getNearHex(0));
+            unit2.rotate(180, 0);
+            clickOnCounter(game, unit1);
+            unit2.markAsEngaging(true); // AFTER clickOnCounter to avoid engagement test
+            clickOnMoveBackAction(game);
+            paint(game);
+            loadAllImages();
+            let moveActuator = getMoveActuator(game);
+        when:
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnTrigger(game, moveActuator.getTrigger(180));
+            paint(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 227, 396.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/disengagement-insert.png, -222, -398.5, 444, 797)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 661, 212)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/moral-insert.png, -222, -194.5, 444, 389)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 549, 436.5)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 489, 496.5)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks when a unit successfully pass disengagement after move back action", () => {
+        given:
+            var { game, unit1, unit2 } = create2PlayersTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            unit2.move(unit1.hexLocation.getNearHex(0));
+            unit2.rotate(180, 0);
+            clickOnCounter(game, unit1);
+            unit2.markAsEngaging(true); // AFTER clickOnCounter to avoid engagement test
+            clickOnMoveBackAction(game);
+            let moveActuator = getMoveActuator(game);
+        when:
+            clickOnTrigger(game, moveActuator.getTrigger(180));
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            loadAllImages();
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 227, 396.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/disengagement-insert.png, -222, -398.5, 444, 797)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 661, 212)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/moral-insert.png, -222, -194.5, 444, 389)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 449, 396.5)",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 549, 436.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 489, 496.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assert(unit1.isDisrupted()).isFalse();
+    });
+
+    it("Checks when a unit fails to pass disengagement after move back action", () => {
+        given:
+            var { game, unit1, unit2 } = create2PlayersTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            unit2.move(unit1.hexLocation.getNearHex(0));
+            unit2.rotate(180, 0);
+            clickOnCounter(game, unit1);
+            unit2.markAsEngaging(true); // AFTER clickOnCounter to avoid engagement test
+            clickOnMoveBackAction(game);
+            let moveActuator = getMoveActuator(game);
+        when:
+            clickOnTrigger(game, moveActuator.getTrigger(180));
+            rollFor(5,6);
+            clickOnDice(game);
+            executeAllAnimations();
+            loadAllImages();
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 227, 396.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/disengagement-insert.png, -222, -398.5, 444, 797)",
+                "restore()",
+                "save()",
+                "setTransform(1, 0, 0, 1, 661, 212)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/moral-insert.png, -222, -194.5, 444, 389)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 449, 396.5)",
+                    "shadowColor = #A00000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1, 0, 0, 1, 549, 436.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                "setTransform(1, 0, 0, 1, 489, 496.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assert(unit1.isDisrupted()).isTrue();
+    });
+
+    function clickOnRoutAction(game) {
+        return clickOnActionMenu(game, 2, 0);
+    }
+
+    it("Checks rout action actuators appearance for a troop", () => {
+        given:
+            var { game, unit1 } = create2PlayersTinyGame();
+            var [unitsLayer, actuatorsLayer] = getLayers(game.board, "units-0", "actuators");
+            clickOnCounter(game, unit1);
+            clickOnRoutAction(game);
+            loadAllImages();
+            let orientationActuator = getOrientationActuator(game);
+        when:
+            resetDirectives(unitsLayer, actuatorsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(unitsLayer, 4, 10)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 341.6667, 308.5869)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 354.1667, 387.972)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 354.1667, 315.8037)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer, actuatorsLayer);
+            clickOnTrigger(game, orientationActuator.getTrigger(240));
+        then:
+            assert(getDirectives(unitsLayer, 4, 10)).arrayEqualsTo([
+                "save()",
+                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 416.6667, 351.8878)",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 341.6667, 395.1888)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 341.6667, 308.5869)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer, actuatorsLayer);
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+        then:
+            assert(getDirectives(unitsLayer, 4, 10)).arrayEqualsTo([
+                "save()",
+                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 333.3333, 400)",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 258.3333, 443.301)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 258.3333, 356.699)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+                "restore()",
+                "save()",
+                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 270.8333, 363.9159)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()"
+            ]);
+        when:
+            moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+            resetDirectives(unitsLayer, actuatorsLayer);
+            moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+        then:
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks disengagement appearance after rout action (and cancelling disengagement)", () => {
+        given:
+            var { game, unit1, unit2 } = create2PlayersTinyGame();
+            var [actuatorsLayer, widgetsLayer, itemsLayer] = getLayers(game.board,"actuators", "widgets", "widget-items");
+            unit2.move(unit1.hexLocation.getNearHex(0));
+            unit2.rotate(180, 0);
+            clickOnCounter(game, unit1);
+            unit2.markAsEngaging(true); // AFTER clickOnCounter to avoid engagement test
+            clickOnRoutAction(game);
+            paint(game);
+            loadAllImages();
+            let orientationActuator = getOrientationActuator(game);
+        when:
+            clickOnTrigger(game, orientationActuator.getTrigger(240));
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+            loadAllImages();
+            moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+            resetDirectives(actuatorsLayer, widgetsLayer, itemsLayer);
+            moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+            loadAllImages();
+        then:
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+            ]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 227, 396.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/disengagement-insert.png, -222, -398.5, 444, 797)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 661, 212)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/moral-insert.png, -222, -194.5, 444, 389)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 549, 436.5)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 489, 496.5)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks when a unit successfully pass disengagement after rout action", () => {
+        given:
+            var { game, unit1, unit2 } = create2PlayersTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            unit2.move(unit1.hexLocation.getNearHex(0));
+            unit2.rotate(180, 0);
+            clickOnCounter(game, unit1);
+            unit2.markAsEngaging(true); // AFTER clickOnCounter to avoid engagement test
+            clickOnRoutAction(game);
+            let orientationActuator = getOrientationActuator(game);
+        when:
+            clickOnTrigger(game, orientationActuator.getTrigger(240));
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+            moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+            resetDirectives(widgetsLayer, itemsLayer);
+            moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            loadAllImages();
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 227, 396.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/disengagement-insert.png, -222, -398.5, 444, 797)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 661, 212)", "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/moral-insert.png, -222, -194.5, 444, 389)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 449, 396.5)",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 549, 436.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 489, 496.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assert(unit1.isDisrupted()).isFalse();
+    });
+
+    it("Checks when a unit fails to pass disengagement after rout action", () => {
+        given:
+            var { game, unit1, unit2 } = create2PlayersTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            unit2.move(unit1.hexLocation.getNearHex(0));
+            unit2.rotate(180, 0);
+            clickOnCounter(game, unit1);
+            unit2.markAsEngaging(true); // AFTER clickOnCounter to avoid engagement test
+            clickOnRoutAction(game);
+            let orientationActuator = getOrientationActuator(game);
+        when:
+            clickOnTrigger(game, orientationActuator.getTrigger(240));
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+            moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+            resetDirectives(widgetsLayer, itemsLayer);
+            moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+            rollFor(5,6);
+            clickOnDice(game);
+            executeAllAnimations();
+            loadAllImages();
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 227, 396.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/disengagement-insert.png, -222, -398.5, 444, 797)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 661, 212)", "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/moral-insert.png, -222, -194.5, 444, 389)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 449, 396.5)",
+                    "shadowColor = #A00000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 549, 436.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 489, 496.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assert(unit1.isDisrupted()).isTrue();
+    });
+
+
+
+    function clickOnConfrontAction(game) {
+        return clickOnActionMenu(game, 3, 0);
+    }
+
+    it("Checks confront action actuators appearance for a troop", () => {
+        given:
+            var { game, unit1, unit2 } = create2PlayersTinyGame();
+            var [unitsLayer, actuatorsLayer] = getLayers(game.board, "units-0", "actuators");
+            unit2.move(unit1.hexLocation.getNearHex(120));
+            clickOnCounter(game, unit1);
+            clickOnConfrontAction(game);
+            loadAllImages();
+            let orientationActuator = getOrientationActuator(game);
+        when:
+            resetDirectives(unitsLayer, actuatorsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(unitsLayer, 4, 10)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 479.1667, 315.8037)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()",
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 489.1667, 351.8878)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.2444, 0.4233, -0.4233, -0.2444, 479.1667, 387.972)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.4233, 0.2444, -0.2444, -0.4233, 452.9167, 414.6742)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.4888, 0, 0, -0.4888, 416.6667, 424.0561)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer, actuatorsLayer);
+            clickOnTrigger(game, orientationActuator.getTrigger(120));
+        then:
+            assert(getDirectives(unitsLayer, 4, 10)).arrayEqualsTo([
+                "save()",
+                    "setTransform(-0.2444, 0.4233, -0.4233, -0.2444, 416.6667, 351.8878)",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks confront action actuators appearance for a formation", () => {
+        given:
+            var { game, unit1, formation2 } = create2PlayersTinyFormationGame();
+            var [formationsLayer, actuatorsLayer] = getLayers(game.board, "formations-0", "actuators");
+            unit1.move(formation2.hexLocation.fromHex.getNearHex(180));
+            game.nextTurn();
+            clickOnCounter(game, formation2);
+            clickOnConfrontAction(game);
+            loadAllImages();
+            let moveActuator = getFormationMoveActuator(game);
+        when:
+            resetDirectives(formationsLayer, actuatorsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(formationsLayer, 4, 10)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 500, 351.8878)",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(-0.2444, 0.4233, -0.4233, -0.2444, 575, 323.0205)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/standard-rotate.png, -40, -48, 80, 96)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(formationsLayer, actuatorsLayer);
+            clickOnTrigger(game, moveActuator.getTrigger(120, true));
+        then:
+            assert(getDirectives(formationsLayer, 4, 10)).arrayEqualsTo([
+                "save()",
+                    "setTransform(-0.4233, 0.2444, -0.2444, -0.4233, 541.6667, 375.9439)",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks engagement appearance after confront action (and cancelling disengagement)", () => {
+        given:
+            var { game, unit1, unit2 } = create2PlayersTinyGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
+            unit2.move(unit1.hexLocation.getNearHex(180));
+            unit2.rotate(0, 0);
+            clickOnCounter(game, unit1);
+            clickOnConfrontAction(game);
+            paint(game);
+            loadAllImages();
+            let orientationActuator = getOrientationActuator(game);
+        when:
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnTrigger(game, orientationActuator.getTrigger(180));
+            paint(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)", "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 227, 386.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/check-confront-engagement-insert.png, -222, -381.5, 444, 763)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 661, 202)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/moral-insert.png, -222, -194.5, 444, 389)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 549, 426.5)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 489, 486.5)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks when a unit successfully pass engagement after confront action", () => {
+        given:
+            var { game, unit1, unit2 } = create2PlayersTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            unit2.move(unit1.hexLocation.getNearHex(180));
+            unit2.rotate(0, 0);
+            clickOnCounter(game, unit1);
+            clickOnConfrontAction(game);
+            var orientationActuator = getOrientationActuator(game);
+        when:
+            clickOnTrigger(game, orientationActuator.getTrigger(180));
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            loadAllImages();
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "globalAlpha = 0.3", "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 227, 386.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/check-confront-engagement-insert.png, -222, -381.5, 444, 763)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 661, 202)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/moral-insert.png, -222, -194.5, 444, 389)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 449, 386.5)",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 549, 426.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 489, 486.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assert(unit1.isDisrupted()).isFalse();
+    });
+
+    it("Checks when a unit fails to pass engagement after confront action", () => {
+        given:
+            var { game, unit1, unit2 } = create2PlayersTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            unit2.move(unit1.hexLocation.getNearHex(180));
+            unit2.rotate(0, 0);
+            clickOnCounter(game, unit1);
+            clickOnConfrontAction(game);
+            var orientationActuator = getOrientationActuator(game);
+        when:
+            clickOnTrigger(game, orientationActuator.getTrigger(180));
+            rollFor(5, 6);
+            clickOnDice(game);
+            executeAllAnimations();
+            loadAllImages();
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "globalAlpha = 0.3", "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 227, 386.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/check-confront-engagement-insert.png, -222, -381.5, 444, 763)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 661, 202)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/moral-insert.png, -222, -194.5, 444, 389)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 449, 386.5)",
+                    "shadowColor = #A00000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 549, 426.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 489, 486.5)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assert(unit1.isDisrupted()).isTrue();
     });
 
 });

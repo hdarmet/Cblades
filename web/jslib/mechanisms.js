@@ -577,12 +577,12 @@ export class AVLTree {
     }
 
     pop() {
-        let data = this._root._maxValueNode();
+        let data = this._root._maxValueNode()._data;
         this.delete(data);
         return data;
     }
 
-    unshift() {
+    shift() {
         let data = this._root._minValueNode()._data;
         this.delete(data);
         return data;

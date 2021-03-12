@@ -78,10 +78,12 @@ export function create2PlayersTinyGame() {
     let map = new CBMap("/CBlades/images/maps/map.png");
     game.setMap(map);
     let wing1 = new CBWing(player1);
+    wing1.setRetreatZone(map.getWestZone());
     let unitType1 = new CBUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
     let unit1 = new CBTroop(unitType1, wing1);
     game.addUnit(unit1, map.getHex(5, 8));
     let wing2 = new CBWing(player2);
+    wing2.setRetreatZone(map.getEastZone());
     let unitType2 = new CBUnitType("unit2", ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"]);
     let unit2 = new CBTroop(unitType2, wing2);
     game.addUnit(unit2, map.getHex(6, 8));
@@ -101,13 +103,15 @@ export function create2PlayersTinyFormationGame() {
     let map = new CBMap("/CBlades/images/maps/map.png");
     game.setMap(map);
     let wing1 = new CBWing(player1);
+    wing1.setRetreatZone(map.getWestZone());
     let unitType1 = new CBUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
     let unit1 = new CBTroop(unitType1, wing1);
     game.addUnit(unit1, map.getHex(5, 8));
     let wing2 = new CBWing(player2);
+    wing2.setRetreatZone(map.getEastZone());
     let unitType2 = new CBUnitType("unit2",
         ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"],
-        ["/CBlades/)images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png"]);
+        ["/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png"]);
     let formation2 = new CBFormation(unitType2, wing2);
     formation2.angle = 90;
     game.addUnit(formation2, new CBHexSideId(map.getHex(6, 8), map.getHex(6, 7)));
