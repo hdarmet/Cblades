@@ -77,6 +77,16 @@ export let mockPlatform = {
         write(context, `setTransform(${round(a)}, ${round(b)}, ${round(c)}, ${round(d)}, ${round(e)}, ${round(f)})`);
     },
 
+    _pixel : [255, 255, 255, 255],
+
+    getPixel(x, y) {
+        return this._pixel;
+    },
+
+    setPixel(pixel) {
+        this._pixel = pixel;
+    },
+
     drawImage(context, image, ...params) {
         for(let index in params) {
             if (typeof(params[index])==="number") {

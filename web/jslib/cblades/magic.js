@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    CBPlayable, CBCounterImageArtifact, RetractableMixin
+    CBPlayable, CBCounterImageArtifact, RetractableArtifactMixin, RetractableCounterMixin, CBGame
 } from "./game.js";
 import {
     Dimension2D, Point2D
@@ -15,7 +15,7 @@ import {
     OptionMixin
 } from "./unit.js";
 
-class SpellImageArtifact extends OptionArtifactMixin(RetractableMixin(CBCounterImageArtifact)) {
+class SpellImageArtifact extends OptionArtifactMixin(RetractableArtifactMixin(CBCounterImageArtifact)) {
 
     constructor(spell, ...args) {
         super(spell, ...args);
@@ -33,9 +33,17 @@ class SpellImageArtifact extends OptionArtifactMixin(RetractableMixin(CBCounterI
         return this.spell.unit;
     }
 
+    get slot() {
+        return this.unit.slot;
+    }
+
+    get layer() {
+        return this.option ? CBGame.ULAYERS.OPTIONS : CBGame.ULAYERS.SPELLS;
+    }
+
 }
 
-export class CBSpell extends CarriableMixin(CBPlayable) {
+export class CBSpell extends RetractableCounterMixin(CarriableMixin(CBPlayable)) {
 
     constructor(paths, wizard, spellLevel) {
         super("units", paths, CBSpell.DIMENSION);
@@ -185,7 +193,6 @@ export function HexTargetedMixin(clazz) {
         selectHex(hex) {
             Memento.register(this);
             this._hex = hex;
-            //delete this._unit;
         }
 
         apply() {
@@ -259,9 +266,9 @@ export function UnitTargetedMixin(clazz) {
         _deletePlayable(hexLocation) {
         }
 
-        selectHex(hex) {
+        selectUnit(unit) {
             Memento.register(this);
-            this._unit = hex.units[0];
+            this._unit = unit;
         }
 
         apply() {

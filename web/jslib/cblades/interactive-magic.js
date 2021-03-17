@@ -8,7 +8,7 @@ import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
-    CBAction, CBActuator, CBActuatorImageArtifact, CBGame
+    CBAction, CBActuator, CBActuatorArtifact, CBGame, CBUnitActuatorArtifact, RetractableActuatorMixin
 } from "./game.js";
 import {
     Dimension2D,
@@ -193,56 +193,59 @@ export class InteractiveCastSpellAction extends CBAction {
         this.play();
     }
 
+    unitTargeted(unit) {
+        this.unit.chosenSpell.selectUnit(unit);
+        this.play();
+    }
+
 }
 
-export class CBSpellTargetFoesActuator extends CBActuator {
+export class CBSpellTargetFoesActuator extends RetractableActuatorMixin(CBActuator) {
 
-    constructor(action, foeHexes) {
+    constructor(action, foes) {
         super(action);
         let image = DImage.getImage("/CBlades/images/actuators/spell-target-foe.png");
         let imageArtifacts = [];
-        for (let foeHex of foeHexes) {
-            let target = new CBActuatorImageArtifact(this, "actuators", image,
+        for (let foe of foes) {
+            let target = new CBUnitActuatorArtifact(this, foe,"units", image,
                 new Point2D(0, 0), new Dimension2D(100, 111));
-            target.position = Point2D.position(this.unit.location, foeHex.location, 1);
-            target._hex = foeHex;
+            target.position = Point2D.position(this.unit.location, foe.location, 1);
             imageArtifacts.push(target);
         }
         this.initElement(imageArtifacts);
     }
 
-    getTrigger(hex) {
-        return this.findTrigger(artifact=>artifact._hex === hex);
+    getTrigger(unit) {
+        return this.findTrigger(artifact=>artifact.unit === unit);
     }
 
     onMouseClick(trigger, event) {
-        this.action.hexTargeted(trigger._hex, event);
+        this.action.unitTargeted(trigger._unit, event);
     }
 
 }
 
-export class CBSpellTargetFriendsActuator extends CBActuator {
+export class CBSpellTargetFriendsActuator extends RetractableActuatorMixin(CBActuator) {
 
-    constructor(action, friendsHexes) {
+    constructor(action, friends) {
         super(action);
         let image = DImage.getImage("/CBlades/images/actuators/spell-target-friend.png");
         let imageArtifacts = [];
-        for (let friendHex of friendsHexes) {
-            let target = new CBActuatorImageArtifact(this, "actuators", image,
+        for (let friend of friends) {
+            let target = new CBUnitActuatorArtifact(this, friend, "units", image,
                 new Point2D(0, 0), new Dimension2D(100, 111));
-            target.position = Point2D.position(this.unit.location, friendHex.location, 1);
-            target._hex = friendHex;
+            target.position = Point2D.position(this.unit.location, friend.location, 1);
             imageArtifacts.push(target);
         }
         this.initElement(imageArtifacts);
     }
 
-    getTrigger(hex) {
-        return this.findTrigger(artifact=>artifact._hex === hex);
+    getTrigger(friend) {
+        return this.findTrigger(artifact=>artifact.unit === friend);
     }
 
     onMouseClick(trigger, event) {
-        this.action.hexTargeted(trigger._hex, event);
+        this.action.unitTargeted(trigger.unit, event);
     }
 
 }
@@ -254,7 +257,7 @@ export class CBSpellTargetHexesActuator extends CBActuator {
         let image = DImage.getImage("/CBlades/images/actuators/spell-target-hex.png");
         let imageArtifacts = [];
         for (let hex of hexes) {
-            let target = new CBActuatorImageArtifact(this, "actuators", image,
+            let target = new CBActuatorArtifact(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(100, 111));
             target.position = Point2D.position(this.unit.location, hex.location, 1);
             target._hex = hex;

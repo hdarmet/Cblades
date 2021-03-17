@@ -53,6 +53,10 @@ export class CBHexId {
         return this._map._hex(this._col, this._row);
     }
 
+    get hexes() {
+        return [this];
+    }
+
     similar(hexId) {
         return this.location.equalsTo(hexId.location);
     }
@@ -179,6 +183,10 @@ export class CBHexSideId {
         return this.map.game;
     }
 
+    get hexes() {
+        return [this._fromHex, this._toHex];
+    }
+
     getFaceHex(angle) {
         return this.map.findFaceHex(this, angle);
     }
@@ -295,9 +303,14 @@ export class CBHexVertexId {
         return atan2((loc2.x+loc3.x)/2-loc1.x, (loc2.y+loc3.y)/2-loc1.y);
     }
 
+    get hexes() {
+        return [this._hexId1, this._hexId2, this._hexId3];
+    }
+
     similar(hexVertexId) {
         return this.location.equalsTo(hexVertexId.location);
     }
+
 }
 
 class CBHex {

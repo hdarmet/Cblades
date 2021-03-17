@@ -15,7 +15,7 @@ import {
     DArtifactRotateAnimation,
     DMultiImageArtifact,
     DArtifactAnimation,
-    DArtifactAlphaAnimation, DTextArtifact
+    DArtifactAlphaAnimation, DTextArtifact, DRectArtifact
 } from "./board.js";
 import {
     Area2D,
@@ -253,6 +253,7 @@ export class DIconMenu extends DPopup {
  * Mixin containing methods for Artifact that can be activated in a standard way
  */
 export function ActivableArtifact(clazz) {
+
     return class extends clazz {
 
         constructor(...args) {
@@ -297,28 +298,30 @@ export function ActivableArtifact(clazz) {
         }
 
         _isOver() {
-            for (let artifact of this.element._artifacts) {
-                if (artifact._over) return true;
+            if (this.element) {
+                for (let artifact of this.element._artifacts) {
+                    if (artifact._over) return true;
+                }
             }
             return false;
         }
 
         _dispatch() {
-            let over = this._isOver()
-            for (let artifact of this.element._artifacts) {
-                if (artifact._over !== undefined) {
-                    if (!this._active) {
-                        artifact.setSettings(artifact.inactiveSettings);
-                    }
-                    else if (over) {
-                        artifact.setSettings(artifact.overSettings);
-                    }
-                    else {
-                        artifact.setSettings(artifact.settings);
+            if (this.element) {
+                let over = this._isOver()
+                for (let artifact of this.element._artifacts) {
+                    if (artifact._over !== undefined) {
+                        if (!this._active) {
+                            artifact.setSettings(artifact.inactiveSettings);
+                        } else if (over) {
+                            artifact.setSettings(artifact.overSettings);
+                        } else {
+                            artifact.setSettings(artifact.settings);
+                        }
                     }
                 }
+                this.element.refresh();
             }
-            this.element.refresh();
         }
 
         set active(active) {
@@ -562,7 +565,7 @@ export class DIndicator extends DElement {
 class InsertImageArtifact extends DImageArtifact {
 
     constructor(image, dimension) {
-        super("widgets", image, new Point2D(0, 0), dimension, 0);
+        super("widgets", image, new Point2D(0, 0), dimension, new Point2D(0, 0), dimension);
         this.setSettings(this.settings);
     }
 
@@ -571,14 +574,110 @@ class InsertImageArtifact extends DImageArtifact {
             level.setShadowSettings("#000000", 10);
         }
     }
+
+    drawImage() {
+        super.drawImage();
+    }
 }
+
+export class DInsertCommand extends ActivableArtifact(DImageArtifact) {
+
+    constructor(insert, image, position, action) {
+        super("widget-commands", image, position, DInsertCommand.DIMENSION);
+        this._insert = insert;
+        this._action = action;
+    }
+
+    onMouseClick(event) {
+        this._action.call(this._insert);
+    }
+
+    get overSettings() {
+        return level => {
+            level.setShadowSettings("#FF0000", 10);
+        }
+    }
+
+    onMouseEnter(event) {
+        this.setSettings(this.overSettings);
+        this.element && this.element.refresh();
+    }
+
+    onMouseLeave(event) {
+        this.setSettings(this.settings);
+        this.element && this.element.refresh();
+    }
+
+}
+DInsertCommand.DIMENSION = new Dimension2D(50, 50);
 
 export class DInsert extends DElement {
 
-    constructor(path, dimension) {
+    constructor(path, dimension, pageDimension=dimension) {
         super();
-        this._artifact = new InsertImageArtifact(DImage.getImage(path), dimension);
+        this._pageDimension = pageDimension;
+        this._artifact = new InsertImageArtifact(DImage.getImage(path), dimension, pageDimension);
         this.addArtifact(this._artifact);
+        this.addArtifact(new DRectArtifact("widgets", new Point2D(0, 0),  dimension,1, "#000000"));
+        this._manageNavigation();
+        this._markers = new Map();
+        this._deltaDimension = new Dimension2D((pageDimension.w-dimension.w)/2, (pageDimension.h-dimension.h)/2);
+    }
+
+    _getMarkerPosition(markerLocation) {
+        return new Point2D(
+            markerLocation.x-this._artifact.sourcePosition.x+this._deltaDimension.w,
+            markerLocation.y-this._artifact.sourcePosition.y+this._deltaDimension.h
+        );
+    }
+
+    declareMark(name, location) {
+        let okImage = DImage.getImage("/CBlades/images/inserts/ok.png");
+        this._markers.set(name, {
+            location,
+            artifact:new DImageArtifact(
+                "widget-items", okImage,
+                this._getMarkerPosition(location), DInsert.OK_DIMENSION),
+            shown:false
+        });
+    }
+
+    _manageVisibility(marker) {
+        function isVisible(marker) {
+            let visibleBounds = new Area2D(
+                this._artifact.sourcePosition.x-this._artifact.dimension.w/2,
+                this._artifact.sourcePosition.y-this._artifact.dimension.h/2,
+                this._artifact.sourcePosition.x+this._artifact.dimension.w/2,
+                this._artifact.sourcePosition.y+this._artifact.dimension.h/2
+            );
+            let markerBounds = new Area2D(
+                marker.location.x+this._deltaDimension.w - DInsert.OK_DIMENSION.w/2,
+                marker.location.y+this._deltaDimension.h - DInsert.OK_DIMENSION.h/2,
+                marker.location.x+this._deltaDimension.w + DInsert.OK_DIMENSION.w/2,
+                marker.location.y+this._deltaDimension.h + DInsert.OK_DIMENSION.h/2
+            );
+            return visibleBounds.contains(markerBounds);
+        }
+
+        if (this.hasArtifact(marker.artifact) && (!marker.shown || !isVisible.call(this, marker))) {
+            this.removeArtifact(marker.artifact);
+        }
+        else if (!this.hasArtifact(marker.artifact) && (marker.shown && isVisible.call(this, marker))) {
+            this.addArtifact(marker.artifact);
+        }
+    }
+
+    _moveMarkers() {
+        for (let marker of this._markers.values()) {
+            marker.artifact.position = this._getMarkerPosition(marker.location);
+            this._manageVisibility(marker);
+        }
+    }
+
+    setMark(name) {
+        let marker = this._markers.get(name);
+        marker.shown = true;
+        this._manageVisibility(marker);
     }
 
     open(board, location) {
@@ -592,7 +691,121 @@ export class DInsert extends DElement {
         }
     }
 
+    _manageNavigation() {
+        if (this._artifact.sourcePosition.x>0) {
+            if (!this._leftButton) {
+                let leftImage = DImage.getImage("/CBlades/images/commands/left.png");
+                let position = new Point2D(-this._artifact.dimension.w/2+DInsertCommand.DIMENSION.w/2+10, 0);
+                this._leftButton = new DInsertCommand(this, leftImage, position, this.leftPage);
+            }
+            if (!this.hasArtifact(this._leftButton)) {
+                this.addArtifact(this._leftButton);
+            }
+        }
+        else {
+            if (this.hasArtifact(this._leftButton)) {
+                this.removeArtifact(this._leftButton);
+                delete this._leftButton;
+            }
+        }
+        if (this._artifact.sourcePosition.x+this._artifact.dimension.w<this._pageDimension.w) {
+            if (!this._rightButton) {
+                let downImage = DImage.getImage("/CBlades/images/commands/right.png");
+                let position = new Point2D(this._artifact.dimension.w/2-DInsertCommand.DIMENSION.w/2-10, 0);
+                this._rightButton = new DInsertCommand(this, downImage, position, this.rightPage);
+            }
+            if (!this.hasArtifact(this._rightButton)) {
+                this.addArtifact(this._rightButton);
+            }
+        }
+        else {
+            if (this.hasArtifact(this._rightButton)) {
+                this.removeArtifact(this._rightButton);
+                delete this._rightButton;
+            }
+        }
+        if (this._artifact.sourcePosition.y>0) {
+            if (!this._upButton) {
+                let upImage = DImage.getImage("/CBlades/images/commands/up.png");
+                let position = new Point2D(0, -this._artifact.dimension.h/2+DInsertCommand.DIMENSION.h/2+10);
+                this._upButton = new DInsertCommand(this, upImage, position, this.previousPage);
+            }
+            if (!this.hasArtifact(this._upButton)) {
+                this.addArtifact(this._upButton);
+            }
+        }
+        else {
+            if (this.hasArtifact(this._upButton)) {
+                this.removeArtifact(this._upButton);
+                delete this._upButton;
+            }
+        }
+        if (this._artifact.sourcePosition.y+this._artifact.dimension.h<this._pageDimension.h) {
+            if (!this._downButton) {
+                let downImage = DImage.getImage("/CBlades/images/commands/down.png");
+                let position = new Point2D(0, this._artifact.dimension.h/2-DInsertCommand.DIMENSION.h/2-10);
+                this._downButton = new DInsertCommand(this, downImage, position, this.nextPage);
+            }
+            if (!this.hasArtifact(this._downButton)) {
+                this.addArtifact(this._downButton);
+            }
+        }
+        else {
+            if (this.hasArtifact(this._downButton)) {
+                this.removeArtifact(this._downButton);
+                delete this._downButton;
+            }
+        }
+    }
+
+    rightPage() {
+        let position = this._artifact.sourcePosition.x;
+        position += DInsert.PAGE_WIDTH;
+        if (position+this._artifact.dimension.w>this._pageDimension.w) {
+            position = this._pageDimension.w - this._artifact.dimension.w;
+        }
+        this._artifact.sourcePosition = new Point2D(position, this._artifact.sourcePosition.y);
+        this._moveMarkers();
+        this._manageNavigation();
+    }
+
+    leftPage() {
+        let position = this._artifact.sourcePosition.x;
+        position -= DInsert.PAGE_WIDTH;
+        if (position<0) {
+            position = 0;
+        }
+        this._artifact.sourcePosition = new Point2D(position, this._artifact.sourcePosition.y);
+        this._moveMarkers();
+        this._manageNavigation();
+    }
+
+    nextPage() {
+        let position = this._artifact.sourcePosition.y;
+        position += DInsert.PAGE_HEIGHT;
+        if (position+this._artifact.dimension.h>this._pageDimension.h) {
+            position = this._pageDimension.h - this._artifact.dimension.h;
+        }
+        this._artifact.sourcePosition = new Point2D(this._artifact.sourcePosition.x, position);
+        this._moveMarkers();
+        this._manageNavigation();
+    }
+
+    previousPage() {
+        let position = this._artifact.sourcePosition.y;
+        position -= DInsert.PAGE_HEIGHT;
+        if (position<0) {
+            position = 0;
+        }
+        this._artifact.sourcePosition = new Point2D(this._artifact.sourcePosition.x, position);
+        this._moveMarkers();
+        this._manageNavigation();
+    }
+
 }
+DInsert.PAGE_WIDTH = 200;
+DInsert.PAGE_HEIGHT = 100;
+DInsert.OK_DIMENSION = new Dimension2D(25, 25);
 
 class ResultImageArtifact extends DMultiImageArtifact {
 

@@ -11,7 +11,7 @@ import {
 } from "../mechanisms.js";
 import {
     CBAction, CBActuator, CBGame,
-    CBActuatorImageArtifact
+    CBActuatorArtifact, CBUnitActuatorArtifact, RetractableActuatorMixin
 } from "./game.js";
 import {
     DImage
@@ -348,17 +348,16 @@ export class CBOrderInstructionMenu extends DIconMenu {
 
 }
 
-export class CBOrderGivenActuator extends CBActuator {
+export class CBOrderGivenActuator extends RetractableActuatorMixin(CBActuator) {
 
     constructor(action, units) {
         super(action);
         let imageArtifacts = [];
         let orderImage = DImage.getImage("/CBlades/images/actuators/order.png");
         for (let unit of units) {
-            let order = new CBActuatorImageArtifact(this, "actuators", orderImage,
-                new Point2D(unit.location.x, unit.location.y-70), new Dimension2D(73, 68));
+            let order = new CBUnitActuatorArtifact(this, unit, "units", orderImage,
+                new Point2D(unit.location.x, unit.location.y-80), new Dimension2D(105, 97));
             imageArtifacts.push(order);
-            order._unit = unit;
         }
         this.initElement(imageArtifacts, new Point2D(0, 0));
     }

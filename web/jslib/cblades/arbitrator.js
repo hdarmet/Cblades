@@ -29,8 +29,8 @@ export class CBArbitrator extends CBAbstractArbitrator{
             confront:this.isAllowedToConfront(unit),
             shockAttack:this.isAllowedToShockAttack(unit),
             fireAttack:this.isAllowedToFireAttack(unit),
-            shockDuel:false,
-            fireDuel:false,
+            shockDuel:this.isAllowedToShockDuel(unit),
+            fireDuel:this.isAllowedToFireDuel(unit),
             rest:this.isAllowedToRest(unit),
             reload:this.isAllowedToReplenishMunitions(unit),
             reorganize:this.isAllowedToReorganize(unit),
@@ -355,6 +355,18 @@ export class CBArbitrator extends CBAbstractArbitrator{
         }
     }
 
+    _collectFoesForDuel(foes, foesSet, unit, hex, more) {
+        let units = hex.units;
+        if (units.length) {
+            for ( let nearUnit of units) {
+                if (nearUnit.characterNature && !foesSet.has(nearUnit) && this.areUnitsFoes(unit, nearUnit)) {
+                    foesSet.add(nearUnit);
+                    foes.push({unit: nearUnit, ...more});
+                }
+            }
+        }
+    }
+
     isHexMayBeShockAttackedFromHex(unit, attackHex, attackedLocation) {
         let zones = this.getPotentialForwardZone(attackHex, unit.angle);
         for (let angle in zones) {
@@ -390,6 +402,16 @@ export class CBArbitrator extends CBAbstractArbitrator{
         let foesSet = new Set();
         for (let angle in zones) {
             this._collectFoes(foes, foesSet, unit, zones[angle].hex, {supported:!unit.isExhausted()});
+        }
+        return foes;
+    }
+
+    getFoesThatMayBeDuelAttacked(unit) {
+        let zones = this._getForwardZoneThatMayBeSchockAttacked(unit);
+        let foes = [];
+        let foesSet = new Set();
+        for (let angle in zones) {
+            this._collectFoesForDuel(foes, foesSet, unit, zones[angle].hex, {supported:!unit.isExhausted()});
         }
         return foes;
     }
@@ -438,6 +460,16 @@ export class CBArbitrator extends CBAbstractArbitrator{
         let foesSet = new Set();
         for (let hex of hexes) {
             this._collectFoes(foes, foesSet, unit, hex, {});
+        }
+        return foes;
+    }
+
+    getFoesThatMayBeDuelFired(unit) {
+        let hexes = this._getForwardZoneThatMayBeFireAttached(unit, 3);
+        let foes = [];
+        let foesSet = new Set();
+        for (let hex of hexes) {
+            this._collectFoesForDuel(foes, foesSet, unit, hex, {});
         }
         return foes;
     }
@@ -675,6 +707,17 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return this.getFoesThatMayBeFireAttacked(unit).length>0;
     }
 
+    isAllowedToShockDuel(unit) {
+        if (!unit.characterNature) return false;
+        if (!this.containsAtLeastOneTroop(unit.hexLocation)) return false;
+        return this.getFoesThatMayBeDuelAttacked(unit).length>0;
+    }
+
+    isAllowedToFireDuel(unit) {
+        if (!unit.characterNature) return false;
+        return this.getFoesThatMayBeDuelFired(unit).length>0;
+    }
+
     isAllowedToRest(unit) {
         return unit.tiredness > 0;
     }
@@ -712,6 +755,13 @@ export class CBArbitrator extends CBAbstractArbitrator{
             unit.hasReceivedOrder() &&
             !unit.isExhausted() &&
             unit.inGoodOrder();
+    }
+
+    containsAtLeastOneTroop(hexLocation) {
+        for (let unit of hexLocation.units) {
+            if (!unit.characterNature) return true;
+        }
+        return false;
     }
 
     processRestResult(unit, diceResult) {
@@ -1088,25 +1138,39 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     getFoesThatMayBeTargetedBySpell(wizard) {
-        let hexes = [];
+        let foes = [];
+        let foesSet = new Set();
         let area = this.get360Area(wizard.hexLocation, 6);
         for (let zone of area) {
-            if (this.doesHexContainFoes(wizard, zone.hex)) {
-                hexes.push(zone.hex);
+            let units = zone.hex.units;
+            if (units.length) {
+                for (let unit of units) {
+                    if (!foesSet.has(unit) && this.areUnitsFoes(wizard, unit)) {
+                        foesSet.add(unit);
+                        foes.push(unit);
+                    }
+                }
             }
         }
-        return hexes;
+        return foes;
     }
 
     getFriendsThatMayBeTargetedBySpell(wizard) {
-        let hexes = [];
+        let friends = [];
+        let friendsSet = new Set();
         let area = this.get360Area(wizard.hexLocation, 6);
         for (let zone of area) {
-            if (this.doesHexContainFriends(wizard, zone.hex)) {
-                hexes.push(zone.hex);
+            let units = zone.hex.units;
+            if (units.length) {
+                for (let unit of units) {
+                    if (!friendsSet.has(unit) && this.areUnitsFriends(wizard, unit)) {
+                        friendsSet.add(unit);
+                        friends.push(unit);
+                    }
+                }
             }
         }
-        return hexes;
+        return friends;
     }
 
     getHexesThatMayBeTargetedBySpell(wizard) {

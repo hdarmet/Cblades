@@ -209,12 +209,16 @@ CBAction.FINALIZED = 3;
 CBAction.CANCELLED = -1;
 CBAction.PROGRESSION = "progression";
 
-export class CBActuatorImageArtifact extends DImageArtifact {
+export class CBActuatorArtifact extends DImageArtifact {
 
     constructor(actuator, ...args) {
         super(...args);
         this._actuator = actuator;
         this.setSettings(this.settings);
+    }
+
+    get actuator() {
+        return this._actuator;
     }
 
     get settings() {
@@ -245,6 +249,37 @@ export class CBActuatorImageArtifact extends DImageArtifact {
 
 }
 
+export class CBUnitActuatorArtifact extends CBActuatorArtifact {
+
+    constructor(actuator, unit, ...args) {
+        super(actuator, ...args);
+        this._unit = unit;
+    }
+
+    get unit() {
+        return this._unit;
+    }
+
+    get slot() {
+        return this.unit.slot;
+    }
+
+    get layer() {
+        return CBGame.ULAYERS.ACTUATORS;
+    }
+
+    onMouseEnter(event) {
+        super.onMouseEnter(event);
+        this.unit.retractAbove();
+    }
+
+    onMouseLeave(event) {
+        super.onMouseLeave(event);
+        this.unit.appearAbove();
+    }
+
+}
+
 export class CBActuator {
 
     constructor(action) {
@@ -259,9 +294,13 @@ export class CBActuator {
         return this.action.unit;
     }
 
-    initElement(imageArtifacts, position = this.unit.location) {
-        this._imageArtifacts = imageArtifacts;
-        this._element = new DElement(...this._imageArtifacts);
+    get artifacts() {
+        return this._artifacts;
+    }
+
+    initElement(artifacts, position = this.unit.location) {
+        this._artifacts = artifacts;
+        this._element = new DElement(...this._artifacts);
         this._element._actuator = this;
         this._element.setLocation(position);
     }
@@ -305,27 +344,30 @@ export class CBGame {
             return [
                 new DTranslateLayer("spells-"+slotIndex, delta),
                 new DTranslateLayer("formations-"+slotIndex, slotIndex?formationDelta:delta),
+                new DTranslateLayer("fmarkers-"+slotIndex, delta),
+                new DTranslateLayer("foptions-"+slotIndex, delta),
                 new DTranslateLayer("units-"+slotIndex, delta),
+                new DTranslateLayer("markers-"+slotIndex, delta),
                 new DTranslateLayer("options-"+slotIndex, delta),
-                new DTranslateLayer("markers-"+slotIndex, delta)
+                new DTranslateLayer("actuators-"+slotIndex, delta)
             ]
         }
 
         function getUnitArtifactSlot(artifact) {
-            let counter = artifact.counter;
-            if (counter.unitNature) {
-                return counter.slot;
-            }
-            else {
-                return counter.unit.slot;
-            }
+            return artifact.slot;
         }
 
-        function getUnitArtifactLayer(artifact, [spellsLayer, formationsLayer, unitsLayer, optionsLayer, markersLayer]) {
-            if (artifact.option) return optionsLayer;
-            if (artifact.spell) return spellsLayer;
-            if (!artifact.unit) return markersLayer;
-            return artifact.unit.formationNature ? formationsLayer : unitsLayer;
+        function getUnitArtifactLayer(artifact, [spellsLayer, formationsLayer, fmarkersLayer, foptionsLayer, unitsLayer, markersLayer, optionsLayer, actuatorsLayer]) {
+            switch (artifact.layer) {
+                case CBGame.ULAYERS.SPELLS: return spellsLayer;
+                case CBGame.ULAYERS.FORMATIONS: return formationsLayer;
+                case CBGame.ULAYERS.FMARKERS: return fmarkersLayer;
+                case CBGame.ULAYERS.FOPTIONS: return foptionsLayer;
+                case CBGame.ULAYERS.UNITS: return unitsLayer;
+                case CBGame.ULAYERS.MARKERS: return markersLayer;
+                case CBGame.ULAYERS.OPTIONS: return optionsLayer;
+                case CBGame.ULAYERS.ACTUATORS: return actuatorsLayer;
+            }
         }
 
         this._board = new DBoard(new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT), new Dimension2D(1000, 800),
@@ -682,10 +724,36 @@ export class CBGame {
         }
     }
 
+    retract(artifacts) {
+        this.appear();
+        this._retracted = artifacts;
+        for (let artifact of this._retracted) {
+            artifact.alpha = 0;
+        }
+    }
+
+    appear() {
+        if (this._retracted) {
+            for (let artifact of this._retracted) {
+                artifact.alpha = 1;
+            }
+            delete this._retracted;
+        }
+    }
+
 }
 CBGame.POPUP_MARGIN = 10;
-CBGame.PROGRESSION = "started";
 CBGame.PROGRESSION = "progression";
+CBGame.ULAYERS = {
+    SPELLS: 0,
+    FORMATIONS: 1,
+    FMARKERS: 2,
+    FOPTIONS: 3,
+    UNITS: 4,
+    MARKERS: 5,
+    OPTIONS: 6,
+    ACTUATORS: 7
+}
 
 export class CBCounterImageArtifact extends DMultiImageArtifact {
 
@@ -769,7 +837,7 @@ function SelectableMixin(clazz) {
     }
 }
 
-export function RetractableMixin(clazz) {
+export function RetractableArtifactMixin(clazz) {
 
     return class extends clazz {
         constructor(...args) {
@@ -777,38 +845,59 @@ export function RetractableMixin(clazz) {
         }
 
         onMouseEnter(event) {
-            function retract(hexId) {
-                let counters = hexId.allCounters;
-                let first = counters.indexOf(this.counter);
-                for (let index=first+1; index<counters.length; index++) {
-                    counters[index].retract();
-                }
-            }
             super.onMouseEnter(event);
-            if (this.counter.hexLocation instanceof CBHexId) {
-                retract.call(this, this.counter.hexLocation);
-            }
-            else if (this.counter.hexLocation instanceof CBHexSideId) {
-                retract.call(this, this.counter.hexLocation.fromHex);
-                retract.call(this, this.counter.hexLocation.toHex);
-            }
+            this.counter.retractAbove();
         }
 
         onMouseLeave(event) {
-            function appear(hexId) {
+            super.onMouseLeave(event);
+            this.counter.appearAbove();
+        }
+
+    }
+}
+
+export function RetractableCounterMixin(clazz) {
+
+    return class extends clazz {
+        constructor(...args) {
+            super(...args);
+        }
+
+        retractAbove(event) {
+            function retract(hexId, artifacts) {
                 let counters = hexId.allCounters;
-                let first = counters.indexOf(this.counter);
+                let first = counters.indexOf(this);
                 for (let index=first+1; index<counters.length; index++) {
-                    counters[index].appear();
+                    counters[index].collectArtifactsToRetract(artifacts);
                 }
             }
-            super.onMouseLeave(event);
-            if (this.counter.hexLocation instanceof CBHexId) {
-                appear.call(this, this.counter.hexLocation);
+            let artifacts = [];
+            for (let hexId of this.hexLocation.hexes) {
+                retract.call(this, hexId, artifacts);
             }
-            else if (this.counter.hexLocation instanceof CBHexSideId) {
-                appear.call(this, this.counter.hexLocation.fromHex);
-                appear.call(this, this.counter.hexLocation.toHex);
+            this.game.retract(artifacts);
+        }
+
+        appearAbove(event) {
+            this.game.appear();
+        }
+
+    }
+}
+
+export function RetractableActuatorMixin(clazz) {
+
+    return class extends clazz {
+        constructor(...args) {
+            super(...args);
+        }
+
+        collectArtifactsToRetract(unit, artifacts) {
+            for (let artifact of this.artifacts) {
+                if (artifact.unit === unit) {
+                    artifacts.push(artifact);
+                }
             }
         }
 
@@ -907,12 +996,8 @@ export class CBCounter {
         this._element.removeFromBoard();
     }
 
-    appear() {
-        this._imageArtifact.appear();
-    }
-
-    retract() {
-        this._imageArtifact.retract();
+    collectArtifactsToRetract(artifacts) {
+        artifacts.push(this._imageArtifact);
     }
 
 }
@@ -994,7 +1079,7 @@ export class CBPlayable extends CBCounter {
     }
 }
 
-class UnitImageArtifact extends RetractableMixin(SelectableMixin(CBCounterImageArtifact)) {
+export class UnitImageArtifact extends RetractableArtifactMixin(SelectableMixin(CBCounterImageArtifact)) {
 
     constructor(unit, ...args) {
         super(unit, ...args);
@@ -1008,9 +1093,16 @@ class UnitImageArtifact extends RetractableMixin(SelectableMixin(CBCounterImageA
         return this.unit.game;
     }
 
+    get slot() {
+        return this.unit.slot;
+    }
+
+    get layer() {
+        return CBGame.ULAYERS.UNITS;
+    }
 }
 
-export class CBAbstractUnit extends CBCounter {
+export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
 
     constructor(paths, dimension) {
         super("units", paths, dimension);
@@ -1176,4 +1268,10 @@ export class CBAbstractUnit extends CBCounter {
         return this._action && this._action.isStarted();
     }
 
+    collectArtifactsToRetract(artifacts) {
+        super.collectArtifactsToRetract(artifacts);
+        for (let actuator of this.game.actuators) {
+            if (actuator.collectArtifactsToRetract) actuator.collectArtifactsToRetract(this, artifacts);
+        }
+    }
 }

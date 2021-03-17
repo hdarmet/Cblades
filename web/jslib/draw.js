@@ -43,6 +43,10 @@ let _targetPlatform = {
         return element.getContext(contextName);
     },
 
+    getPixel(context, x, y) {
+        return context.getImageData(x, y, 1, 1).data;
+    },
+
     setLineWidth(context, width) {
         context.lineWidth = width;
     },
@@ -264,6 +268,10 @@ export class DLayer {
         this._execute(()=>{
             _platform.restore(this._context);
         });
+    }
+
+    getPixel(point) {
+        return _platform.getPixel(this._context, point.x, point.y);
     }
 
     setTransformSettings(matrix) {

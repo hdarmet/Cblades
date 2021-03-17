@@ -13,7 +13,7 @@ import {
     CBHexSideId, CBMoveType
 } from "./map.js";
 import {
-    CBCounterImageArtifact, CBAbstractUnit
+    CBCounterImageArtifact, CBAbstractUnit, CBGame, RetractableArtifactMixin, UnitImageArtifact
 } from "./game.js";
 
 export let CBMovement = {
@@ -184,6 +184,14 @@ export function OptionArtifactMixin(clazz) {
             return this._counter.isOption();
         }
 
+        get slot() {
+            return this.unit.slot;
+        }
+
+        get layer() {
+            return this.unit.formationNature ? CBGame.ULAYERS.FOPTIONS : CBGame.ULAYERS.OPTIONS;
+        }
+
     }
 
 }
@@ -235,6 +243,26 @@ export function CarriableMixin(clazz) {
 
 }
 
+export class CBMarkerArtifact extends RetractableArtifactMixin(CBCounterImageArtifact) {
+
+    constructor(unit, path, position, dimension= CBMarkerArtifact.MARKER_DIMENSION) {
+        super(unit, "units", [DImage.getImage(path)], position, dimension);
+    }
+
+    get unit() {
+        return this.counter;
+    }
+
+    get slot() {
+        return this.unit.slot;
+    }
+
+    get layer() {
+        return this.unit.formationNature ? CBGame.ULAYERS.FMARKERS : CBGame.ULAYERS.MARKERS;
+    }
+}
+CBMarkerArtifact.MARKER_DIMENSION = new Dimension2D(64, 64);
+
 export class CBUnit extends CBAbstractUnit {
 
     constructor(type, paths, wing, dimension=CBUnit.DIMENSION) {
@@ -264,16 +292,14 @@ export class CBUnit extends CBAbstractUnit {
         unit.tiredness = this.tiredness;
     }
 
-    setMarkerArtifact(path, slot) {
-        let marker = new CBCounterImageArtifact(this,"units", [DImage.getImage(path)],
-            CBUnit.MARKERS_POSITION[slot], CBUnit.MARKER_DIMENSION);
+    setMarkerArtifact(path, positionSlot) {
+        let marker = new CBMarkerArtifact(this, path, CBUnit.MARKERS_POSITION[positionSlot]);
         this._element.addArtifact(marker);
         return marker;
     }
 
-    createMarkerArtifact(path, slot) {
-        let marker = new CBCounterImageArtifact(this,"units", [DImage.getImage(path)],
-            CBUnit.MARKERS_POSITION[slot], CBUnit.MARKER_DIMENSION);
+    createMarkerArtifact(path, positionSlot) {
+        let marker = new CBMarkerArtifact(this, path, CBUnit.MARKERS_POSITION[positionSlot]);
         this._element.appendArtifact(marker);
         return marker;
     }
@@ -812,34 +838,16 @@ export class CBUnit extends CBAbstractUnit {
         this._updateEngagement(this._engaging, charging);
     }
 
-    _markersAppear() {
-        this._cohesionArtifact && this._cohesionArtifact.appear();
-        this._engagingArtifact && this._engagingArtifact.appear();
-        this._lackOfMunitionsArtifact && this._lackOfMunitionsArtifact.appear();
-        this._tirednessArtifact && this._tirednessArtifact.appear();
-        this._playedArtifact && this._playedArtifact.appear();
-    }
-
-    _markersRetract() {
-        this._cohesionArtifact && this._cohesionArtifact.retract();
-        this._engagingArtifact && this._engagingArtifact.retract();
-        this._lackOfMunitionsArtifact && this._lackOfMunitionsArtifact.retract();
-        this._tirednessArtifact && this._tirednessArtifact.retract();
-        this._playedArtifact && this._playedArtifact.retract();
-    }
-
-    appear() {
-        super.appear();
-        this._markersAppear();
-    }
-
-    retract() {
-        super.retract();
-        this._markersRetract();
+    collectArtifactsToRetract(artifacts) {
+        super.collectArtifactsToRetract(artifacts);
+        this._cohesionArtifact && artifacts.push(this._cohesionArtifact);
+        this._engagingArtifact && artifacts.push(this._engagingArtifact);
+        this._lackOfMunitionsArtifact && artifacts.push(this._lackOfMunitionsArtifact);
+        this._tirednessArtifact && artifacts.push(this._tirednessArtifact);
+        this._playedArtifact && artifacts.push(this._playedArtifact);
     }
 
 }
-CBUnit.MARKER_DIMENSION = new Dimension2D(64, 64);
 CBUnit.DIMENSION = new Dimension2D(142, 142);
 CBUnit.MARKERS_POSITION = [
     new Point2D(CBUnit.DIMENSION.w/2, -CBUnit.DIMENSION.h/2),
@@ -864,10 +872,26 @@ export class CBTroop extends CBUnit {
 
 }
 
+export class FormationImageArtifact extends UnitImageArtifact {
+
+    constructor(unit, ...args) {
+        super(unit, ...args);
+    }
+
+    get layer() {
+        return CBGame.ULAYERS.FORMATIONS;
+    }
+
+}
+
 export class CBFormation extends CBUnit {
 
     constructor(type, wing) {
         super(type, type.getFormationPaths(), wing, CBFormation.DIMENSION);
+    }
+
+    createArtifact(levelName, images, location, dimension) {
+        return new FormationImageArtifact(this, levelName, images, location, dimension);
     }
 
     clone() {
@@ -928,9 +952,14 @@ export class CBFormation extends CBUnit {
         }
     }
 
-    createMarkerArtifact(path, slot) {
-        let marker = new CBCounterImageArtifact(this,"units", [DImage.getImage(path)],
-            CBFormation.MARKERS_POSITION[slot], CBFormation.MARKER_DIMENSION);
+    setMarkerArtifact(path, positionSlot) {
+        let marker = new CBMarkerArtifact(this, path, CBFormation.MARKERS_POSITION[positionSlot]);
+        this._element.addArtifact(marker);
+        return marker;
+    }
+
+    createMarkerArtifact(path, positionSlot) {
+        let marker = new CBMarkerArtifact(this, path, CBFormation.MARKERS_POSITION[positionSlot]);
         this._element.appendArtifact(marker);
         return marker;
     }
@@ -1014,8 +1043,7 @@ export class CBCharacter extends CBUnit {
     }
 
     createOrderInstructionArtifact(orderInstruction) {
-        let marker = new CBCounterImageArtifact(this,"units",
-            [DImage.getImage(CBCharacter.ORDER_INSTRUCTION_PATHS[orderInstruction])],
+        let marker = new CBMarkerArtifact(this, CBCharacter.ORDER_INSTRUCTION_PATHS[orderInstruction],
             CBUnit.MARKERS_POSITION[6], CBCharacter.ORDER_INSTRUCTION_DIMENSION);
         return marker;
     }
@@ -1074,14 +1102,9 @@ export class CBCharacter extends CBUnit {
         }
     }
 
-    _markersAppear() {
-        super._markersAppear();
-        this._orderInstructionArtifact && this._orderInstructionArtifact.appear();
-    }
-
-    _markersRetract() {
-        super._markersRetract();
-        this._orderInstructionArtifact && this._orderInstructionArtifact.retract();
+    collectArtifactsToRetract(artifacts) {
+        super.collectArtifactsToRetract(artifacts);
+        this._orderInstructionArtifact && artifacts.push(this._orderInstructionArtifact);
     }
 }
 CBCharacter.DIMENSION = new Dimension2D(120, 120);

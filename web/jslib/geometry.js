@@ -233,6 +233,11 @@ export class Area2D {
             && this.top<=area.bottom && this.bottom>=area.top;
     }
 
+    contains(area) {
+        return this.left<=area.left && this.right>=area.right
+            && this.top<=area.top && this.bottom>=area.bottom;
+    }
+
     equalsTo(area) {
         return this.left===area.left && this.top===area.top
             && this.right===area.right && this.bottom===area.bottom;

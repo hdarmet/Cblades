@@ -661,7 +661,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 20)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/insert.png, -100, -95, 200, 190)",
+                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 190, -100, -95, 200, 190)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 10, 20)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -95, 200, 190)",
                 "restore()"
             ]);
         when:
@@ -1045,7 +1050,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/insert.png, -100, -95, 200, 190)",
+                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 190, -100, -95, 200, 190)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -95, 200, 190)",
                 "restore()"
             ]);
         when:
@@ -1062,14 +1072,19 @@ describe("Widget", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
-                "setTransform(1, 0, 0, 1, 150, 0)",
-                "shadowColor = #000000", "shadowBlur = 10",
-                "drawImage(/CBlades/images/indicators/indicator1.png, -25, -25, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 150, 0)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/indicators/indicator1.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
-                "setTransform(1, 0, 0, 1, 150, 200)",
-                "shadowColor = #000000", "shadowBlur = 10",
-                "drawImage(/CBlades/images/inserts/insert.png, -100, -95, 200, 190)",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 190, -100, -95, 200, 190)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -95, 200, 190)",
                 "restore()"
             ]);
         when:

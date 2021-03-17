@@ -24,7 +24,7 @@ import {
     CBAbstractPlayer,
     CBAbstractArbitrator,
     CBCounter,
-    CBAction, CBAbstractUnit, CBActuatorImageArtifact, CBPlayable, CBCounterImageArtifact
+    CBAction, CBAbstractUnit, CBActuatorArtifact, CBPlayable, CBCounterImageArtifact
 } from "../../jslib/cblades/game.js";
 import {
     DBoard, DElement
@@ -64,9 +64,15 @@ class CBTestUnit extends CBAbstractUnit {
 }
 
 class CBTestFormation extends CBAbstractUnit {
+
     constructor(player, paths) {
         super(paths, new Dimension2D(142*2, 142));
         this.player = player;
+        Object.defineProperty(this.artifact, "layer", {
+            get: function () {
+                return CBGame.ULAYERS.FORMATIONS;
+            }
+        });
     }
 
     get formationNature() {
@@ -91,7 +97,7 @@ class CBTestActuator extends CBActuator {
         super(action);
         let image = DImage.getImage("/CBlades/images/actuators/test.png");
         let imageArtifacts = [];
-        let trigger = new CBActuatorImageArtifact(this, "actuators", image,
+        let trigger = new CBActuatorArtifact(this, "actuators", image,
             new Point2D(0, 0), new Dimension2D(50, 50));
         trigger.position = new Point2D(0, 0);
         imageArtifacts.push(trigger);
@@ -554,6 +560,35 @@ describe("Game", ()=> {
             mouseClickOnCounter(game, counter); // checks that tests does not crash
     });
 
+    class CBTestPlayable extends CBPlayable {
+        constructor(unit, layer, ...args) {
+            super(...args);
+            Object.defineProperty(this.artifact, "slot", {
+                get: function () {
+                    return unit.slot;
+                }
+            });
+            Object.defineProperty(this.artifact, "layer", {
+                get: function () {
+                    return layer;
+                }
+            });
+        }
+
+    }
+
+    class CBTestMarker extends CBCounterImageArtifact {
+        constructor(...args) {
+            super(...args);
+        }
+        get layer() {
+            return CBGame.ULAYERS.MARKERS;
+        }
+        get slot() {
+            return this.counter.slot;
+        }
+    }
+
     it("Checks unit and option counters registration on layers", () => {
         given:
             var { game, map } = prepareTinyGame();
@@ -561,15 +596,13 @@ describe("Game", ()=> {
             game.addPlayer(player);
             let unit1 = new CBTestUnit(player, ["/CBlades/images/units/misc/unit1.png"]);
             let markerImage = DImage.getImage("/CBlades/images/units/misc/markers1.png");
-            let marker = new CBCounterImageArtifact(unit1,"units", [markerImage],
+            let marker = new CBTestMarker(unit1,"units", [markerImage],
                 new Point2D(0, 0), new Dimension2D(142, 142));
             unit1._element.addArtifact(marker);
             let unit2 = new CBTestUnit(player, ["/CBlades/images/units/misc/unit2.png"]);
-            let spell = new CBPlayable("units", ["/CBlades/images/units/misc/spell.png"],
+            let spell = new CBTestPlayable(unit2, CBGame.ULAYERS.SPELLS, "units", ["/CBlades/images/units/misc/spell.png"],
                 new Dimension2D(142, 142));
-            spell.artifact.spell = spell;
-            spell.unit = unit2;
-            let option = new CBPlayable("units",  ["/CBlades/images/units/misc/option.png"],
+            let option = new CBTestPlayable(unit2, CBGame.ULAYERS.OPTIONS,"units",  ["/CBlades/images/units/misc/option.png"],
                 new Dimension2D(142, 142));
             option.artifact.option = option;
             option.unit = unit2;
@@ -996,12 +1029,12 @@ describe("Game", ()=> {
             unit.angle = 90;
             game.start();
             loadAllImages();
-            var [unitsLayer] = getLayers(game.board, "formations-0");
+            var [formationsLayer] = getLayers(game.board, "formations-0");
             var hexId1 = map.getHex(4, 5);
             var hexId2 = map.getHex(4, 6);
             var hexSideId = new CBHexSideId(hexId1, hexId2);
         when:
-            resetDirectives(unitsLayer);
+            resetDirectives(formationsLayer);
             unit.addToMap(hexSideId);
             repaint(game);
         then:
@@ -1009,7 +1042,7 @@ describe("Game", ()=> {
             assert(hexId2.units).arrayEqualsTo([unit]);
             assert(game.counters).setEqualsTo(new Set([unit]));
             assert(unit.isOnBoard()).equalsTo(true);
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+            assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([
                 "save()",
                 "setTransform(0, 0.4888, -0.4888, 0, 333.3333, 159.4391)",
                 "shadowColor = #000000", "shadowBlur = 15",
@@ -1017,7 +1050,7 @@ describe("Game", ()=> {
                 "restore()"
             ]);
         when:
-            resetDirectives(unitsLayer);
+            resetDirectives(formationsLayer);
             unit.removeFromMap();
             repaint(game);
         then:
@@ -1025,7 +1058,7 @@ describe("Game", ()=> {
             assert(hexId2.units).arrayEqualsTo([]);
             assert(game.counters).setEqualsTo(new Set());
             assert(unit.isOnBoard()).equalsTo(false);
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+            assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([
             ]);
     });
 

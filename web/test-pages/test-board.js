@@ -167,7 +167,7 @@ describe("Board", ()=> {
             var image2 = DImage.getImage("../images/unit2.png");
             image2._root.onload();
             var artifact1 = new DImageArtifact("units", image1, new Point2D(-10, -15), new Dimension2D(50, 50));
-            var artifact2 = new DImageArtifact("units", image2, new Point2D(10, 15), new Dimension2D(50, 50), 45);
+            var artifact2 = new DImageArtifact("units", image2, new Point2D(10, 15), new Dimension2D(50, 50));
             var element = new DElement(artifact1, artifact2);
             element.setOnBoard(board);
             board.paint();
@@ -204,7 +204,8 @@ describe("Board", ()=> {
             var image = DImage.getImage("../images/unit.png");
             image._root.onload();
             var artifact1 = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
-            var artifact2 = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50), 60);
+            var artifact2 = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+            artifact2.pangle = 60;
             var artifact3 = new DImageArtifact("units", image, new Point2D(10, 15), new Dimension2D(50, 50));
             var element = new DElement(artifact1, artifact2);
             element.addArtifact(artifact3);
@@ -581,7 +582,8 @@ describe("Board", ()=> {
             var image2 = DImage.getImage("../images/unit2.png");
             image2._root.onload();
             var artifact1 = new DImageArtifact("units", image1, new Point2D(-10, -15), new Dimension2D(50, 50));
-            var artifact2 = new DImageArtifact("units", image2, new Point2D(10, 15), new Dimension2D(50, 50), 45);
+            var artifact2 = new DImageArtifact("units", image2, new Point2D(10, 15), new Dimension2D(50, 50));
+            artifact2.pangle = 45;
             var element = new DElement(artifact1, artifact2);
             element.setLocation(new Point2D(100, 50));
             element.setAngle(90);
