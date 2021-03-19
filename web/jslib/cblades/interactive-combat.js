@@ -423,13 +423,13 @@ export class CBRetreatActuator extends RetractableActuatorMixin(CBActuator) {
         super(action);
         let imageArtifacts = [];
         let bloodImage = DImage.getImage("/CBlades/images/actuators/blood.png");
-        let loss = new CBUnitActuatorArtifact(this, this.unit,"units", bloodImage,
+        let loss = new CBActuatorArtifact(this, "actuators", bloodImage,
             new Point2D(0, 0), new Dimension2D(104, 144));
         loss.loss = true;
         imageArtifacts.push(loss);
         let retreatImage = DImage.getImage("/CBlades/images/actuators/retreat-move.png");
         for (let angle in directions) {
-            let orientation = new CBUnitActuatorArtifact(this, this.unit, "units", retreatImage,
+            let orientation = new CBActuatorArtifact(this, "actuators", retreatImage,
                 new Point2D(0, 0), new Dimension2D(80, 130));
             orientation.pangle = parseInt(angle);
             orientation.position = Point2D.position(this.unit.location, directions[angle].hex.location, 0.9);

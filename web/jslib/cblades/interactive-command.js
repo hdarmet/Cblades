@@ -393,11 +393,12 @@ CBChangeOrderInstructionInsert.DIMENSION = new Dimension2D(444, 254);
 export class CBGiveOrdersInsert extends DInsert {
 
     constructor() {
-        super("/CBlades/images/inserts/orders-given-insert.png", CBGiveOrdersInsert.DIMENSION);
+        super("/CBlades/images/inserts/orders-given-insert.png", CBGiveOrdersInsert.DIMENSION, CBGiveOrdersInsert.PAGE_DIMENSION);
     }
 
 }
-CBGiveOrdersInsert.DIMENSION = new Dimension2D(356, 700);
+CBGiveOrdersInsert.PAGE_DIMENSION = new Dimension2D(444, 872);
+CBGiveOrdersInsert.DIMENSION = new Dimension2D(444, 600);
 
 export class CBTakeCommandInsert extends DInsert {
 

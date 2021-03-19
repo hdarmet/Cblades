@@ -124,9 +124,18 @@ describe("Unit", ()=> {
 
     class CBTestCarriable extends CarriableMixin(CBPlayable) {
 
-        constructor(paths) {
+        constructor(unit, paths) {
             super("units", paths, new Dimension2D(142, 142));
-            this.artifact.spell = this;
+            Object.defineProperty(this.artifact, "slot", {
+                get: function () {
+                    return unit.slot;
+                }
+            });
+            Object.defineProperty(this.artifact, "layer", {
+                get: function () {
+                    return CBGame.ULAYERS.SPELLS;
+                }
+            });
         }
 
     }
@@ -145,9 +154,8 @@ describe("Unit", ()=> {
             game.addUnit(unit, hexId);
             var [spellsLayer] = getLayers(game.board, "spells-0");
         when:
-            var playable1 = new CBTestCarriable(["/CBlades/images/units/misc/playable1.png"]);
+            var playable1 = new CBTestCarriable(unit,["/CBlades/images/units/misc/playable1.png"]);
             unit.addCarried(playable1);
-            playable1.unit = unit;
             paint(game);
             loadAllImages();
         then:
@@ -217,9 +225,8 @@ describe("Unit", ()=> {
             game.appendUnit(unit, hexId);
             var [spellsLayer] = getLayers(game.board, "spells-0");
         when:
-            var playable1 = new CBTestCarriable(["/CBlades/images/units/misc/playable1.png"]);
+            var playable1 = new CBTestCarriable(unit,["/CBlades/images/units/misc/playable1.png"]);
             unit.carry(playable1);
-            playable1.unit = unit;
             paint(game);
             loadAllImages();
         then:
@@ -298,32 +305,28 @@ describe("Unit", ()=> {
             ]);
     });
 
-    class CBTestOptionArtifact extends OptionArtifactMixin(CBCounterImageArtifact) {
-
-        constructor(...args) {
-            super(...args);
-        }
-
-    }
-
     class CBTestOption extends OptionMixin(CarriableMixin(CBPlayable)) {
 
-        constructor(paths) {
+        constructor(unit, paths) {
             super("units", paths, new Dimension2D(142, 142));
-            this.artifact.spell = this;
-        }
-
-        createArtifact(levelName, images, location, dimension) {
-            return new CBTestOptionArtifact(this, levelName, images, location, dimension);
+            Object.defineProperty(this.artifact, "slot", {
+                get: function () {
+                    return unit.slot;
+                }
+            });
+            Object.defineProperty(this.artifact, "layer", {
+                get: function () {
+                    return CBGame.ULAYERS.OPTIONS;
+                }
+            });
         }
 
     }
 
     it("Checks that a unit may have option counters (not undoable)", () => {
         function createOption(unit, path) {
-            var option = new CBTestOption([path]);
+            var option = new CBTestOption(unit,[path]);
             unit.addOption(option);
-            option.unit = unit;
             return option;
         }
 
@@ -384,11 +387,10 @@ describe("Unit", ()=> {
             ]);
     });
 
-    it("Checks that a unit may have option counters (not undoable)", () => {
+    it("Checks that a unit may have option counters (undoable)", () => {
         function createOption(unit, path) {
-            var option = new CBTestOption([path]);
+            var option = new CBTestOption(unit,[path]);
             unit.appendOption(option);
-            option.unit = unit;
             return option;
         }
 
@@ -484,16 +486,14 @@ describe("Unit", ()=> {
     it("Checks that when a unit is requested to give its counters, it includes all carried ones", () => {
 
         function createCarried(unit, path) {
-            var playable = new CBTestCarriable([path]);
+            var playable = new CBTestCarriable(unit,[path]);
             unit.addCarried(playable);
-            playable.unit = unit;
             return playable;
         }
 
         function createOption(unit, path) {
-            var option = new CBTestOption([path]);
+            var option = new CBTestOption(unit,[path]);
             unit.addOption(option);
-            option.unit = unit;
             return option;
         }
 
@@ -1344,111 +1344,81 @@ describe("Unit", ()=> {
 
     it("Checks that when a unit retracts, it also hides markers", () => {
         given:
-            var {game, unit} = createTinyGame();
-            var [markersLayer] = getLayers(game.board, "markers-0");
+            var {game, unit1, unit2} = create2UnitsTinyGame();
+            unit2.move(unit1.hexLocation);
+            paint(game);
+            var [markersLayer] = getLayers(game.board, "markers-1");
         when:
             resetDirectives(markersLayer);
-            unit.markAsBeingPlayed(true);
-            unit.markAsCharging(true);
-            unit.addOneCohesionLevel();
-            unit.addOneTirednessLevel();
-            unit.addOneLackOfMunitionsLevel();
+            unit2.markAsBeingPlayed(true);
+            unit2.markAsCharging(true);
+            unit2.addOneCohesionLevel();
+            unit2.addOneTirednessLevel();
+            unit2.addOneLackOfMunitionsLevel();
             paint(game);
             loadAllImages(); // to load charge.png
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 317.186)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 461.1437, 307.4108)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/actiondone.png, -32, -32, 64, 64)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 391.74, 307.4108)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/charge.png, -32, -32, 64, 64)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 386.5897)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 391.74, 376.8145)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/disrupted.png, -32, -32, 64, 64)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 351.8878)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 391.74, 342.1127)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/tired.png, -32, -32, 64, 64)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 386.5897)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 376.8145)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/scarceamno.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
         when:
             resetDirectives(markersLayer);
-            unit.retract();
+            unit1.retractAbove();
             paint(game);
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 317.186)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 461.1437, 307.4108)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "globalAlpha = 0",
                     "drawImage(/CBlades/images/markers/actiondone.png, -32, -32, 64, 64)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 391.74, 307.4108)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "globalAlpha = 0",
                     "drawImage(/CBlades/images/markers/charge.png, -32, -32, 64, 64)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 386.5897)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 391.74, 376.8145)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "globalAlpha = 0",
                     "drawImage(/CBlades/images/markers/disrupted.png, -32, -32, 64, 64)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 351.8878)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 391.74, 342.1127)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "globalAlpha = 0",
                     "drawImage(/CBlades/images/markers/tired.png, -32, -32, 64, 64)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 386.5897)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 376.8145)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "globalAlpha = 0",
-                    "drawImage(/CBlades/images/markers/scarceamno.png, -32, -32, 64, 64)",
-                "restore()"
-            ]);
-        when:
-            resetDirectives(markersLayer);
-            unit.appear();
-            paint(game);
-        then:
-            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 317.186)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/actiondone.png, -32, -32, 64, 64)",
-                "restore()",
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/charge.png, -32, -32, 64, 64)",
-                "restore()",
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 386.5897)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/disrupted.png, -32, -32, 64, 64)",
-                "restore()",
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 351.8878)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/tired.png, -32, -32, 64, 64)",
-                "restore()",
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 386.5897)",
-                    "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/scarceamno.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
@@ -1536,9 +1506,11 @@ describe("Unit", ()=> {
 
     it("Checks that when a character retracts, it also hides order instruction marker", () => {
         given:
-            var {game, wing, leader} = createTinyCommandGame();
+            var {game, wing, unit, leader} = createTinyCommandGame();
             wing.setLeader(leader);
-            var [markersLayer] = getLayers(game.board, "markers-0");
+            leader.move(unit.hexLocation);
+            paint(game);
+            var [markersLayer] = getLayers(game.board, "markers-1");
         when:
             resetDirectives(markersLayer);
             wing.changeOrderInstruction(CBOrderInstruction.ATTACK);
@@ -1547,33 +1519,21 @@ describe("Unit", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 448.1122)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 461.1437, 342.1127)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/attack.png, -40, -40, 80, 80)",
                 "restore()"
             ]);
         when:
             resetDirectives(markersLayer);
-            leader.retract();
+            unit.retractAbove();
             paint(game);
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 448.1122)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 461.1437, 342.1127)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "globalAlpha = 0",
-                    "drawImage(/CBlades/images/markers/attack.png, -40, -40, 80, 80)",
-                "restore()"
-            ]);
-        when:
-            resetDirectives(markersLayer);
-            leader.appear();
-            paint(game);
-        then:
-            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 448.1122)",
-                    "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/markers/attack.png, -40, -40, 80, 80)",
                 "restore()"
             ]);
@@ -1748,7 +1708,7 @@ describe("Unit", ()=> {
     it("Checks formation appearance", () => {
         given:
             var { game, formation } = prepareTinyGameWithFormation();
-            var [markersLayer, formationsLayer] = getLayers(game.board, "markers-0", "formations-0");
+            var [fmarkersLayer, formationsLayer] = getLayers(game.board, "fmarkers-0", "formations-0");
         then:
             assert(formation.unitNature).isTrue();
             assert(formation.formationNature).isTrue();
@@ -1760,7 +1720,7 @@ describe("Unit", ()=> {
                 "restore()"
             ]);
         when:
-            resetDirectives(markersLayer, formationsLayer);
+            resetDirectives(fmarkersLayer, formationsLayer);
             formation.disrupt();
             formation.addOneLackOfMunitionsLevel();
             formation.addOneTirednessLevel();
@@ -1769,7 +1729,7 @@ describe("Unit", ()=> {
             loadAllImages();
             paint(game);
         then:
-            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+            assert(getDirectives(fmarkersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(-0.4233, 0.2444, -0.2444, -0.4233, 440.9824, 297.7791)",
                     "shadowColor = #000000", "shadowBlur = 15",

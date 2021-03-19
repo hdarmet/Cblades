@@ -180,7 +180,7 @@ describe("Interactive Combat", ()=> {
     it("Checks shock attack action actuator appearance when support is possible", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
-            var [actuatorsLayer] = getLayers(game.board, "actuators");
+            var [actuatorsLayer] = getLayers(game.board, "actuators-0");
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 7));
             clickOnCounter(game, unit1);
@@ -192,14 +192,14 @@ describe("Interactive Combat", ()=> {
         then:
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 402.0039, 241.0007)",
+                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 397.1163, 236.1131)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/actuators/unsupported-shock.png, -50, -55.5, 100, 111)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 431.3294, 270.3262)",
+                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 436.217, 275.2138)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/supported-shock.png, -50, -55.5, 100, 111)",
+                    "drawImage(/CBlades/images/actuators/supported-shock.png, -60, -66.5, 120, 133)",
                 "restore()"
             ]);
         when:
@@ -214,7 +214,7 @@ describe("Interactive Combat", ()=> {
     it("Checks shock attack action actuator appearance when support is not possible", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
-            var [actuatorsLayer] = getLayers(game.board, "actuators");
+            var [actuatorsLayer] = getLayers(game.board, "actuators-0");
             unit1.move(map.getHex(5, 8));
             unit1.addOneTirednessLevel();
             unit1.addOneTirednessLevel();
@@ -244,7 +244,7 @@ describe("Interactive Combat", ()=> {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
             var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
-                "actuators", "widgets", "widget-commands","widget-items"
+                "actuators-0", "widgets", "widget-commands","widget-items"
             );
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 7));
@@ -261,33 +261,49 @@ describe("Interactive Combat", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3",
-                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                    "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 1000, 800)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 431.3294, 100)",
+                    "setTransform(1, 0, 0, 1, 517, 100)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/combat-result-table-insert.png, -402, -87, 804, 174)",
+                    "drawImage(/CBlades/images/inserts/combat-result-table-insert.png, 0, 0, 804, 174, -402, -87, 804, 174)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 271.3294, 466)",
+                    "setTransform(1, 0, 0, 1, 517, 100)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-402, -87, 804, 174)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 267, 466)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/shock-attack-insert.png, -202.5, -329, 405, 658)",
+                    "drawImage(/CBlades/images/inserts/shock-attack-insert.png, 0, 0, 524, 658, -262, -329, 524, 658)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 267, 466)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-262, -329, 524, 658)",
                 "restore()"
             ]);
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 531.3294, 207)",
+                    "setTransform(1, 0, 0, 1, 617, 207)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 471.3294, 267)",
+                    "setTransform(1, 0, 0, 1, 557, 267)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 267, 760)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
         when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             clickOnMask(game);
@@ -295,7 +311,7 @@ describe("Interactive Combat", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
     });
 
     it("Checks when a unit successfully shock attack", () => {
@@ -322,19 +338,24 @@ describe("Interactive Combat", ()=> {
         then:
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 531.3294, 207)",
+                    "setTransform(1, 0, 0, 1, 617, 207)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 471.3294, 267)",
+                    "setTransform(1, 0, 0, 1, 557, 267)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 431.3294, 177)",
+                    "setTransform(1, 0, 0, 1, 267, 760)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 517, 177)",
                     "shadowColor = #00A000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
                 "restore()"
@@ -402,19 +423,24 @@ describe("Interactive Combat", ()=> {
         then:
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 531.3294, 207)",
+                    "setTransform(1, 0, 0, 1, 617, 207)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 471.3294, 267)",
+                    "setTransform(1, 0, 0, 1, 557, 267)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 431.3294, 177)",
+                    "setTransform(1, 0, 0, 1, 267, 760)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 517, 177)",
                     "shadowColor = #A00000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
                 "restore()"
@@ -475,7 +501,7 @@ describe("Interactive Combat", ()=> {
         given:
             var { game, map, unit1, formation2, player2 } = create2PlayersTinyFormationGame();
             var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
-                "actuators", "widgets", "widget-commands","widget-items"
+                "actuators-0", "widgets", "widget-commands","widget-items"
             );
             game.currentPlayer = player2;
             formation2.angle = 330;
@@ -497,19 +523,24 @@ describe("Interactive Combat", ()=> {
         then:
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 531.3294, 207)",
+                    "setTransform(1, 0, 0, 1, 617, 207)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 471.3294, 267)",
+                    "setTransform(1, 0, 0, 1, 557, 267)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 431.3294, 177)",
+                    "setTransform(1, 0, 0, 1, 267, 760)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 517, 177)",
                     "shadowColor = #A00000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
                 "restore()"
@@ -527,14 +558,14 @@ describe("Interactive Combat", ()=> {
             assert(game.focusedUnit).isNotDefined();
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 402.0039, 241.0007)",
+                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 397.1163, 236.1131)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/actuators/unsupported-shock.png, -50, -55.5, 100, 111)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 431.3294, 270.3262)",
+                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 436.217, 275.2138)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/supported-shock.png, -50, -55.5, 100, 111)",
+                    "drawImage(/CBlades/images/actuators/supported-shock.png, -60, -66.5, 120, 133)",
                 "restore()"
             ]);
     });
@@ -570,19 +601,24 @@ describe("Interactive Combat", ()=> {
         then:
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 572.9961, 207)",
+                    "setTransform(1, 0, 0, 1, 617, 207)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 512.9961, 267)",
+                    "setTransform(1, 0, 0, 1, 557, 267)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 472.9961, 177)",
+                    "setTransform(1, 0, 0, 1, 267, 760)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 517, 177)",
                     "shadowColor = #00A000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
                 "restore()"
@@ -601,7 +637,7 @@ describe("Interactive Combat", ()=> {
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 458.3333, 279.7196)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/blood.png, -52, -72, 104, 144)",
+                    "drawImage(/CBlades/images/actuators/blood.png, -62.5, -86.5, 125, 173)",
                 "restore()",
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 169.0616)",
@@ -727,7 +763,9 @@ describe("Interactive Combat", ()=> {
                     "drawImage(/CBlades/images/units/misc/unit2b.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+
+            ]);
     });
 
     it("Checks when a formation takes a loss", () => {
@@ -778,7 +816,7 @@ describe("Interactive Combat", ()=> {
     it("Checks fire attack action actuator appearance", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
-            var [actuatorsLayer] = getLayers(game.board, "actuators");
+            var [actuatorsLayer] = getLayers(game.board, "actuators-0");
             unit1.move(map.getHex(5, 8));
             unit1.addOneTirednessLevel();
             unit1.addOneTirednessLevel();
@@ -794,7 +832,7 @@ describe("Interactive Combat", ()=> {
                 "save()",
                     "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 416.6667, 159.4391)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/fire.png, -50, -55.5, 100, 111)",
+                    "drawImage(/CBlades/images/actuators/fire.png, -70, -77.5, 140, 155)",
                 "restore()"
             ]);
         when:
@@ -808,7 +846,7 @@ describe("Interactive Combat", ()=> {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
             var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
-                "actuators", "widgets", "widget-commands","widget-items"
+                "actuators-0", "widgets", "widget-commands","widget-items"
             );
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 6));
@@ -825,33 +863,57 @@ describe("Interactive Combat", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3",
-                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                    "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 1000, 800)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 416.6667, 92)",
+                    "setTransform(1, 0, 0, 1, 517, 92)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/combat-result-table-insert.png, -402, -87, 804, 174)",
+                    "drawImage(/CBlades/images/inserts/combat-result-table-insert.png, 0, 0, 804, 174, -402, -87, 804, 174)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 256.6667, 458)",
+                    "setTransform(1, 0, 0, 1, 517, 92)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-402, -87, 804, 174)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 267, 458)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/fire-attack-insert.png, -202.5, -329, 405, 658)",
+                    "drawImage(/CBlades/images/inserts/fire-attack-insert.png, 0, 0, 524, 658, -262, -329, 524, 658)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 267, 458)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-262, -329, 524, 658)",
                 "restore()"
             ]);
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 516.6667, 199)",
+                    "setTransform(1, 0, 0, 1, 167, 654)",
+                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 167, 174)",
+                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 617, 199)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 456.6667, 259)",
+                    "setTransform(1, 0, 0, 1, 557, 259)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
-            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 267, 752)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
         when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             clickOnMask(game);
@@ -859,7 +921,7 @@ describe("Interactive Combat", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
     });
 
     it("Checks when a unit successfully fire attack", () => {
@@ -886,19 +948,32 @@ describe("Interactive Combat", ()=> {
         then:
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 516.6667, 199)",
+                    "setTransform(1, 0, 0, 1, 167, 654)",
+                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 167, 174)",
+                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 617, 199)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 456.6667, 259)",
+                    "setTransform(1, 0, 0, 1, 557, 259)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 416.6667, 169)",
+                    "setTransform(1, 0, 0, 1, 267, 752)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 517, 169)",
                     "shadowColor = #00A000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
                 "restore()"
@@ -976,19 +1051,32 @@ describe("Interactive Combat", ()=> {
         then:
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 516.6667, 207)",
+                    "setTransform(1, 0, 0, 1, 167, 662)",
+                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 167, 182)",
+                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 617, 207)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 456.6667, 267)",
+                    "setTransform(1, 0, 0, 1, 557, 267)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 416.6667, 177)",
+                    "setTransform(1, 0, 0, 1, 267, 760)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 517, 177)",
                     "shadowColor = #A00000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
                 "restore()"
@@ -1042,7 +1130,7 @@ describe("Interactive Combat", ()=> {
         given:
             var { game, map, unit1, formation2, player2 } = create2PlayersTinyFormationGame();
             var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
-                "actuators", "widgets", "widget-commands","widget-items"
+                "actuators-0", "widgets", "widget-commands","widget-items"
             );
             game.currentPlayer = player2;
             formation2.angle = 330;
@@ -1064,19 +1152,32 @@ describe("Interactive Combat", ()=> {
         then:
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 516.6667, 199)",
+                    "setTransform(1, 0, 0, 1, 167, 654)",
+                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 167, 174)",
+                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 617, 199)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 456.6667, 259)",
+                    "setTransform(1, 0, 0, 1, 557, 259)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 416.6667, 169)",
+                    "setTransform(1, 0, 0, 1, 267, 752)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 517, 169)",
                     "shadowColor = #A00000", "shadowBlur = 100",
                     "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
                 "restore()"
@@ -1096,7 +1197,7 @@ describe("Interactive Combat", ()=> {
                 "save()",
                     "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 416.6667, 159.4391)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/fire.png, -50, -55.5, 100, 111)",
+                    "drawImage(/CBlades/images/actuators/fire.png, -70, -77.5, 140, 155)",
                 "restore()"
             ]);
     });

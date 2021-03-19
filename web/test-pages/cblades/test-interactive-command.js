@@ -119,18 +119,28 @@ describe("Interactive Command", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3",
-                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                    "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 1000, 800)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 671, 234.1122)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/take-command-insert.png, -222, -149, 444, 298)",
+                    "drawImage(/CBlades/images/inserts/take-command-insert.png, 0, 0, 444, 298, -222, -149, 444, 298)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 671, 234.1122)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-222, -149, 444, 298)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 227, 423.1122)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/command-insert.png, -222, -340, 444, 680)",
+                    "drawImage(/CBlades/images/inserts/command-insert.png, 0, 0, 444, 680, -222, -340, 444, 680)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 227, 423.1122)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-222, -340, 444, 680)",
                 "restore()"
             ]);
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
@@ -263,18 +273,28 @@ describe("Interactive Command", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3",
-                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                    "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 1000, 800)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 671, 230.6122)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/dismiss-command-insert.png, -222, -152.5, 444, 305)",
+                    "drawImage(/CBlades/images/inserts/dismiss-command-insert.png, 0, 0, 444, 305, -222, -152.5, 444, 305)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 671, 230.6122)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-222, -152.5, 444, 305)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 227, 423.1122)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/command-insert.png, -222, -340, 444, 680)",
+                    "drawImage(/CBlades/images/inserts/command-insert.png, 0, 0, 444, 680, -222, -340, 444, 680)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 227, 423.1122)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-222, -340, 444, 680)",
                 "restore()"
             ]);
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
@@ -415,12 +435,22 @@ describe("Interactive Command", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 671, 256.1122)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/change-order-instruction-insert.png, -222, -127, 444, 254)",
+                    "drawImage(/CBlades/images/inserts/change-order-instruction-insert.png, 0, 0, 444, 254, -222, -127, 444, 254)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 671, 256.1122)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-222, -127, 444, 254)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 227, 423.1122)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/command-insert.png, -222, -340, 444, 680)",
+                    "drawImage(/CBlades/images/inserts/command-insert.png, 0, 0, 444, 680, -222, -340, 444, 680)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 227, 423.1122)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-222, -340, 444, 680)",
                 "restore()"
             ]);
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
@@ -660,18 +690,23 @@ describe("Interactive Command", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3",
-                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                    "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 1000, 800)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 302.6667, 423.1122)",
+                    "setTransform(1, 0, 0, 1, 280.6667, 423.1122)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/orders-given-insert.png, -178, -350, 356, 700)",
+                    "drawImage(/CBlades/images/inserts/orders-given-insert.png, 0, 0, 444, 600, -222, -300, 444, 600)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 280.6667, 423.1122)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-222, -300, 444, 600)",
                 "restore()"
             ]);
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 520.6667, 423.1122)",
+                    "setTransform(1, 0, 0, 1, 542.6667, 423.1122)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()"
@@ -696,7 +731,7 @@ describe("Interactive Command", ()=> {
         given:
             var {game, wing, unit1, unit2, leader} = create2UnitsTinyGame();
             var [markersLayer, actuatorsLayer, widgetsLayer, itemsLayer, commandsLayer] =
-                getLayers(game.board,"markers-0", "actuators", "widgets", "widget-items", "widget-commands");
+                getLayers(game.board,"markers-0", "actuators-0", "widgets", "widget-items", "widget-commands");
             wing.setLeader(leader);
             clickOnCounter(game, leader);
             clickOnGiveOrdersCommandAction(game);
@@ -710,18 +745,23 @@ describe("Interactive Command", ()=> {
         then:
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 604, 445)",
+                    "setTransform(1, 0, 0, 1, 626, 471.2243)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d4.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 564, 445)",
+                    "setTransform(1, 0, 0, 1, 364, 736.2243)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 586, 471.2243)",
                     "drawImage(/CBlades/images/dice/message.png, -75, -75, 150, 150)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 564, 475)",
+                    "setTransform(1, 0, 0, 1, 586, 501.2243)",
                     "font = 90px serif", "textAlign = center",
                     "shadowColor = #000000", "shadowBlur = 5",
                     "strokeStyle = #0000FF", "lineWidth = 3",
@@ -740,14 +780,14 @@ describe("Interactive Command", ()=> {
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 317.6747)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 312.7871)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/order.png, -36.5, -34, 73, 68)",
+                    "drawImage(/CBlades/images/actuators/order.png, -52.5, -48.5, 105, 97)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 666.6667, 269.5626)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 666.6667, 264.675)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/order.png, -36.5, -34, 73, 68)",
+                    "drawImage(/CBlades/images/actuators/order.png, -52.5, -48.5, 105, 97)",
                 "restore()"
             ]);
             assert(getDirectives(markersLayer, 6)).arrayEqualsTo([
@@ -772,9 +812,9 @@ describe("Interactive Command", ()=> {
         then:
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 666.6667, 269.5626)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 666.6667, 264.675)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/order.png, -36.5, -34, 73, 68)",
+                    "drawImage(/CBlades/images/actuators/order.png, -52.5, -48.5, 105, 97)",
                 "restore()"
             ]);
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([

@@ -186,7 +186,7 @@ describe("Magic", ()=> {
             var spell = wizard.chosenSpell;
         when:
             Memento.open();
-            spell.selectHex(unit.hexLocation);
+            spell.selectUnit(unit);
         then:
             assert(spell.unit).equalsTo(unit);
             assert(spell.activated).isFalse();
@@ -323,7 +323,7 @@ describe("Magic", ()=> {
             assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/fireb.png");
             assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.SELECT_FOE);
         when:
-            spell.selectHex(foe.hexLocation);
+            spell.selectUnit(foe);
             cinematic = spell.getNextCinematic();
         then:
             assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.CONTINUE);
@@ -351,7 +351,7 @@ describe("Magic", ()=> {
             var {unit2:foe, leader1:wizard} = create2PlayersTinyGameWithLeader();
             wizard.choseSpell(CBSpell.laboratory.get("fireball1"));
             var spell = wizard.chosenSpell;
-            spell.selectHex(foe.hexLocation);
+            spell.selectUnit(foe);
             spell.apply();
             spell.resolve([5, 6]);
         then:
@@ -372,7 +372,7 @@ describe("Magic", ()=> {
             assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/fireb.png");
             assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.SELECT_FRIEND);
         when:
-            spell.selectHex(unit.hexLocation);
+            spell.selectUnit(unit);
             cinematic = spell.getNextCinematic();
         then:
             assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.APPLY);

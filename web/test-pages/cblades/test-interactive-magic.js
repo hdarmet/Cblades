@@ -251,24 +251,28 @@ describe("Interactive Magic", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3",
-                    "fillStyle = #000000",
+                    "globalAlpha = 0.3", "fillStyle = #000000",
                     "fillRect(0, 0, 1000, 800)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 391.6667, 423.1122)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/cast-spell-insert.png, -141.5, -350, 283, 700)",
+                    "drawImage(/CBlades/images/inserts/cast-spell-insert.png, 0, 0, 444, 600, -222, -300, 444, 600)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 391.6667, 423.1122)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-222, -300, 444, 600)",
                 "restore()"
             ]);
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 603.1667, 393.1122)",
+                    "setTransform(1, 0, 0, 1, 683.6667, 393.1122)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 543.1667, 453.1122)",
+                    "setTransform(1, 0, 0, 1, 623.6667, 453.1122)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()"
@@ -299,17 +303,22 @@ describe("Interactive Magic", ()=> {
         then:
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 603.1667, 393.1122)",
+                    "setTransform(1, 0, 0, 1, 683.6667, 393.1122)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 543.1667, 453.1122)",
+                    "setTransform(1, 0, 0, 1, 623.6667, 453.1122)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 391.6667, 688.1122)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 391.6667, 423.1122)",
                     "shadowColor = #A00000", "shadowBlur = 100",
@@ -329,7 +338,7 @@ describe("Interactive Magic", ()=> {
             ]);
     });
 
-    it("Checks successful cast simple (fire pentacle) spell action process ", () => {
+    it("Checks successful simple (fire pentacle) spell cast action process ", () => {
         given:
             var {game, wing, leader:wizard} = createTinyGameWithLeader();
             wizard.choseSpell(CBSpell.laboratory.get("firePentacle1"));
@@ -346,17 +355,22 @@ describe("Interactive Magic", ()=> {
         then:
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 603.1667, 393.1122)",
+                    "setTransform(1, 0, 0, 1, 683.6667, 393.1122)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 543.1667, 453.1122)",
+                    "setTransform(1, 0, 0, 1, 623.6667, 453.1122)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 391.6667, 688.1122)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 391.6667, 423.1122)",
                     "shadowColor = #00A000", "shadowBlur = 100",
@@ -447,7 +461,7 @@ describe("Interactive Magic", ()=> {
         given:
             var {game, unit, leader:wizard} = createTinyGameWithLeader();
             wizard.choseSpell(CBSpell.laboratory.get("fireSword1"));
-            var [actuatorsLayer, optionsLayer] = getLayers(game.board,"actuators", "options-0");
+            var [actuatorsLayer, optionsLayer] = getLayers(game.board,"actuators-0", "options-0");
             clickOnCounter(game, wizard);
             clickOnTryToCastSpellAction(game);
             rollFor(1, 2);
@@ -472,7 +486,7 @@ describe("Interactive Magic", ()=> {
             ]);
         when:
             var actuator = getTargetFriendActuator(game);
-            var trigger = actuator.getTrigger(unit.hexLocation);
+            var trigger = actuator.getTrigger(unit);
             clickOnTrigger(game, trigger);
             loadAllImages();
             resetDirectives(actuatorsLayer, optionsLayer);
@@ -500,7 +514,7 @@ describe("Interactive Magic", ()=> {
         given:
             var {game, unit2:foe, leader1:wizard} = create2PlayersTinyGameWithLeader();
             wizard.choseSpell(CBSpell.laboratory.get("fireball1"));
-            var [actuatorsLayer, optionsLayer] = getLayers(game.board,"actuators", "options-0");
+            var [actuatorsLayer, optionsLayer] = getLayers(game.board,"actuators-0", "options-0");
             clickOnCounter(game, wizard);
             clickOnTryToCastSpellAction(game);
             rollFor(1, 2);
@@ -525,7 +539,7 @@ describe("Interactive Magic", ()=> {
             ]);
         when:
             var actuator = getTargetFoeActuator(game);
-            var trigger = actuator.getTrigger(foe.hexLocation);
+            var trigger = actuator.getTrigger(foe);
             clickOnTrigger(game, trigger);
             loadAllImages();
             resetDirectives(actuatorsLayer, optionsLayer);
@@ -555,7 +569,7 @@ describe("Interactive Magic", ()=> {
             executeAllAnimations();
             clickOnResult(game); // click on success trigger
             var actuator = getTargetFoeActuator(game); // a foe selection actuator appears
-            var trigger = actuator.getTrigger(foe.hexLocation);
+            var trigger = actuator.getTrigger(foe);
             clickOnTrigger(game, trigger); // select a target
             loadAllImages();
             resetDirectives(widgetsLayer, itemsLayer, commandsLayer, optionsLayer);
@@ -564,19 +578,28 @@ describe("Interactive Magic", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3",
-                    "fillStyle = #000000",
+                    "globalAlpha = 0.3", "fillStyle = #000000",
                     "fillRect(0, 0, 1000, 800)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 407, 92)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/combat-result-table-insert.png, -402, -87, 804, 174)",
+                    "drawImage(/CBlades/images/inserts/combat-result-table-insert.png, 0, 0, 804, 174, -402, -87, 804, 174)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 407, 92)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-402, -87, 804, 174)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 247, 297.5)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/fireball-insert.png, -222, -128.5, 444, 257)",
+                    "drawImage(/CBlades/images/inserts/fireball-insert.png, 0, 0, 444, 257, -222, -128.5, 444, 257)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 247, 297.5)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-222, -128.5, 444, 257)",
                 "restore()"
             ]);
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
@@ -632,7 +655,7 @@ describe("Interactive Magic", ()=> {
             executeAllAnimations();
             clickOnResult(game); // click on success trigger
             var actuator = getTargetFoeActuator(game); // a foe selection actuator appears
-            var trigger = actuator.getTrigger(foe.hexLocation);
+            var trigger = actuator.getTrigger(foe);
             clickOnTrigger(game, trigger); // select a target
             rollFor(5, 6);
             clickOnDice(game); // roll dices for fireball resolution

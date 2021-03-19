@@ -885,7 +885,6 @@ describe("Arbitrator", ()=> {
         when:
             var allowedMoves = arbitrator.getConfrontFormationAllowedRotations(formation1);
         then:
-            console.log(allowedMoves);
             assertNoMove(allowedMoves, 0);
             assertNoMove(allowedMoves, 60);
             assertNoMove(allowedMoves, 90);
@@ -1910,9 +1909,9 @@ describe("Arbitrator", ()=> {
             unit21.move(map.getHex(5, 3));
             unit11.move(map.getHex(7, 3));
             unit22.move(map.getHex(8, 3));
-            var hexes = arbitrator.getFoesThatMayBeTargetedBySpell(leader11);
+            var units = arbitrator.getFoesThatMayBeTargetedBySpell(leader11);
         then:
-            assert(new Set(hexes)).setEqualsTo(new Set([map.getHex(5, 3)]));
+            assert(new Set(units)).setEqualsTo(new Set([unit21]));
     });
 
     it("Checks friends that may be targeted by a spell", () => {
@@ -1923,9 +1922,9 @@ describe("Arbitrator", ()=> {
             unit11.move(map.getHex(5, 3));
             unit21.move(map.getHex(7, 3));
             unit12.move(map.getHex(8, 3));
-            var hexes = arbitrator.getFriendsThatMayBeTargetedBySpell(leader11);
+            var units = arbitrator.getFriendsThatMayBeTargetedBySpell(leader11);
         then:
-            assert(new Set(hexes)).setEqualsTo(new Set([map.getHex(1, 3), map.getHex(5, 3)]));
+            assert(new Set(units)).setEqualsTo(new Set([leader11, unit11]));
     });
 
     it("Checks hexes that may be targeted by a spell", () => {

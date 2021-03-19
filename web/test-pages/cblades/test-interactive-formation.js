@@ -204,13 +204,13 @@ describe("Interactive Formation", ()=> {
         given:
             var {game, formation} = createTinyFormationGame();
             formation.receiveOrder(true);
-            var [unitsLayer, formationsLayer, markersLayer, actuatorsLayer] =
-                getLayers(game.board,"units-0", "formations-0", "markers-0", "actuators");
+            var [unitsLayer, formationsLayer, fmarkersLayer, actuatorsLayer] =
+                getLayers(game.board,"units-0", "formations-0", "fmarkers-0", "actuators");
             clickOnCounter(game, formation);
             clickOnReleaseTroopsAction(game);
             loadAllImages();
         when:
-            resetDirectives(formationsLayer, actuatorsLayer, markersLayer);
+            resetDirectives(formationsLayer, actuatorsLayer, fmarkersLayer);
             repaint(game);
         then:
             assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([
@@ -220,7 +220,7 @@ describe("Interactive Formation", ()=> {
                 "drawImage(/CBlades/images/units/misc/formation3.png, -142, -71, 284, 142)",
                 "restore()"
             ]);
-            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+            assert(getDirectives(fmarkersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0, 0.4888, -0.4888, 0, 451.3685, 373.1794)",
                     "shadowColor = #000000", "shadowBlur = 15",
@@ -275,11 +275,11 @@ describe("Interactive Formation", ()=> {
         then:
             assert(trigger).isDefined();
         when:
-            resetDirectives(unitsLayer, formationsLayer, markersLayer, actuatorsLayer);
+            resetDirectives(unitsLayer, formationsLayer, fmarkersLayer, actuatorsLayer);
             clickOnTrigger(game, trigger);
             loadAllImages();
             paint(game);
-            var [units1Layer, formations1Layer, markers1Layer] = getLayers(game.board,"units-1", "formations-1", "markers-1");
+            var [units1Layer, formations1Layer, fmarkers1Layer] = getLayers(game.board,"units-1", "formations-1", "fmarkers-1");
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
@@ -290,13 +290,7 @@ describe("Interactive Formation", ()=> {
             ]);
             assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([
             ]);
-            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 451.3685, 386.5897)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/actiondone.png, -32, -32, 64, 64)",
-                "restore()"
-            ]);
+            assert(getDirectives(fmarkersLayer, 4)).arrayEqualsTo([]);
             assert(getDirectives(formations1Layer)).arrayEqualsTo([
                 "save()",
                     "setTransform(0, 0.4888, -0.4888, 0, 421.5543, 298.8881)",
@@ -304,7 +298,7 @@ describe("Interactive Formation", ()=> {
                     "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
                 "restore()"
             ]);
-            assert(getDirectives(markers1Layer)).arrayEqualsTo([
+            assert(getDirectives(fmarkers1Layer)).arrayEqualsTo([
                 "save()",
                     "setTransform(0, 0.4888, -0.4888, 0, 461.1437, 363.4042)",
                     "shadowColor = #000000", "shadowBlur = 15",
@@ -339,10 +333,35 @@ describe("Interactive Formation", ()=> {
         then:
             assert(trigger).isDefined();
         when:
-            resetDirectives(unitsLayer, formationsLayer, markersLayer, units1Layer, formations1Layer, markers1Layer, actuatorsLayer);
+            resetDirectives(unitsLayer, formationsLayer, fmarkersLayer, units1Layer, formations1Layer, fmarkers1Layer, actuatorsLayer);
             clickOnTrigger(game, trigger);
             loadAllImages();
             paint(game);
+        then:
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 416.6667, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/troop.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(fmarkersLayer, 4)).arrayEqualsTo([ ]);
+            assert(getDirectives(formations1Layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 421.5543, 298.8881)",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/formation2b.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(fmarkers1Layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0, 0.4888, -0.4888, 0, 461.1437, 363.4042)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/actiondone.png, -32, -32, 64, 64)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
 
     function clickOnIncludeTroopsAction(game) {

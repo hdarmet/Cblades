@@ -334,11 +334,12 @@ export class CBSpellsMenu extends DIconMenu {
 export class CBCastSpellInsert extends DInsert {
 
     constructor() {
-        super("/CBlades/images/inserts/cast-spell-insert.png", CBCastSpellInsert.DIMENSION);
+        super("/CBlades/images/inserts/cast-spell-insert.png", CBCastSpellInsert.DIMENSION, CBCastSpellInsert.PAGE_DIMENSION);
     }
 
 }
-CBCastSpellInsert.DIMENSION = new Dimension2D(283, 700);
+CBCastSpellInsert.DIMENSION = new Dimension2D(444, 600);
+CBCastSpellInsert.PAGE_DIMENSION = new Dimension2D(444, 1100);
 
 CBFireballSpell.resolver = function(action) {
     this.game.closeActuators();
