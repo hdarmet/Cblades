@@ -141,6 +141,7 @@ export function getDrawPlatform() {
 }
 export function setDrawPlatform(platform) {
     _platform = platform;
+    _platform.init && _platform.init();
 }
 
 /**

@@ -22,6 +22,9 @@ import {
 import {
     DWidget, DPopup, DIconMenu, DIconMenuItem, DPushButton, DDice, DIndicator, DInsert, DResult, DMask, DScene, DMessage
 } from "../jslib/widget.js";
+import {
+    clickOnArtifact
+} from "./cblades/interactive-tools.js";
 
 
 describe("Widget", ()=> {
@@ -646,7 +649,7 @@ describe("Widget", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
     });
 
-    it("Checks insert widget", () => {
+    it("Checks simple insert widget", () => {
         given:
             var { board, widgetsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
@@ -675,6 +678,162 @@ describe("Widget", ()=> {
             board.paint();
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks scrollable insert widget", () => {
+        given:
+            var { board, widgetsLayer, commandsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            let insert = new DInsert("/CBlades/images/inserts/insert.png",
+                new Dimension2D(200, 300),
+                new Dimension2D(350, 390)
+            );
+            loadAllImages();
+        when:
+            resetDirectives(widgetsLayer, commandsLayer);
+            insert.open(board, new Point2D(150, 200));
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 300, -100, -150, 200, 300)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -150, 200, 300)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 215, 200)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/right.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 315)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer);
+            clickOnArtifact(board, insert.downButton);
+            loadAllImages();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/insert.png, 0, 90, 200, 300, -100, -150, 200, 300)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -150, 200, 300)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 215, 200)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/right.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 85)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/up.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer);
+            clickOnArtifact(board, insert.rightButton);
+            loadAllImages();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/insert.png, 150, 90, 200, 300, -100, -150, 200, 300)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -150, 200, 300)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 85)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/up.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 85, 200)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/left.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer);
+            clickOnArtifact(board, insert.upButton);
+            loadAllImages();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/insert.png, 150, 0, 200, 300, -100, -150, 200, 300)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -150, 200, 300)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 85, 200)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/left.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 315)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer);
+            clickOnArtifact(board, insert.leftButton);
+            loadAllImages();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 300, -100, -150, 200, 300)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -150, 200, 300)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 315)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 215, 200)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/right.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
     });
 
     it("Checks success result widget", () => {

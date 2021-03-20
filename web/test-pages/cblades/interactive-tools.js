@@ -41,11 +41,14 @@ export function executeAllAnimations() {
     }
 }
 
+export function clickOnArtifact(boardOrGame, artifact) {
+    let unitLocation = artifact.viewportLocation;
+    var mouseEvent = createEvent("click", {offsetX:unitLocation.x, offsetY:unitLocation.y});
+    mockPlatform.dispatchEvent(boardOrGame.root, "click", mouseEvent);
+}
 
 export function clickOnCounter(game, counter) {
-    let unitLocation = counter.artifact.viewportLocation;
-    var mouseEvent = createEvent("click", {offsetX:unitLocation.x, offsetY:unitLocation.y});
-    mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
+    clickOnArtifact(game, counter.artifact);
 }
 
 export function clickOnMask(game) {

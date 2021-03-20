@@ -220,7 +220,7 @@ export class DArtifact extends LocalisationAware(Object) {
         return this.area.inside(lpoint);
     }
 
-    containsPoint(point, viewportPoint) {
+    containsPoint(point) {
         return this.containsLocalPoint(this.getPosition(point));
     }
 
@@ -387,12 +387,6 @@ export class DImageAbstractArtifact extends RectArtifact(DArtifact) {
         this.drawImage();
     }
 
-    containsPoint(point, viewportPoint) {
-        if (this.containsLocalPoint(this.getPosition(point))) {
-            if (this._level.getPixel(this, viewportPoint)[3]>127) return true;
-        }
-        return false;
-    }
 }
 
 /**
@@ -928,12 +922,11 @@ export class DBasicLevel extends DLevel {
     }
 
     getAllArtifactsOnPoint(viewportPoint) {
-        let point = this.getPoint(viewportPoint);
         let artifacts = [];
         let visibleArtifacts = [...this.visibleArtifacts];
         for (let i = visibleArtifacts.length-1; i>=0; i--) {
             let artifact = visibleArtifacts[i];
-            if (artifact.containsPoint(point, viewportPoint)) {
+            if (this.isPointOnArtifact(artifact, viewportPoint)) {
                 artifacts.push(artifact);
             }
         }
@@ -941,12 +934,12 @@ export class DBasicLevel extends DLevel {
     }
 
     getArtifactOnPoint(viewportPoint) {
-        let point = this.getPoint(viewportPoint);
         let visibleArtifacts = [...this.visibleArtifacts];
         for (let i = visibleArtifacts.length-1; i>=0; i--) {
             let artifact = visibleArtifacts[i];
-            if (artifact.containsPoint(point, viewportPoint))
+            if (this.isPointOnArtifact(artifact, viewportPoint)) {
                 return artifact;
+            }
         }
         return null;
     }
@@ -954,7 +947,8 @@ export class DBasicLevel extends DLevel {
     isPointOnArtifact(artifact, viewportPoint) {
         console.assert(artifact.level === this);
         let point = this.getPoint(viewportPoint);
-        return artifact.containsPoint(point, viewportPoint);
+        return artifact.containsPoint(point, viewportPoint)
+            && artifact.level.getPixel(artifact, viewportPoint)[3]>127;
     }
 
     getOriginalPoint(artifact) {
@@ -1007,6 +1001,7 @@ export class DLayeredLevel extends DLevel {
 
     forArtifact(artifact) {
         this._layer = this._select(artifact, this._layers);
+        artifact.__layer = this._layer;
     }
 
     setDraw(draw) {
@@ -1037,10 +1032,7 @@ export class DLayeredLevel extends DLevel {
         let visibleArtifacts = [...this.visibleArtifacts];
         for (let i = visibleArtifacts.length-1; i>=0; i--) {
             let artifact = visibleArtifacts[i];
-            let layer = this._select(artifact, this._layers);
-            let point = layer.transform.invert().point(viewportPoint);
-            if (artifact.containsPoint(point, viewportPoint)) {
-                artifact.__layer = layer;
+            if (this.isPointOnArtifact(artifact, viewportPoint)) {
                 artifacts.push(artifact);
             }
         }
@@ -1055,7 +1047,8 @@ export class DLayeredLevel extends DLevel {
     isPointOnArtifact(artifact, viewportPoint) {
         console.assert(artifact.level === this);
         let point = this.getPoint(viewportPoint, artifact);
-        return artifact.containsPoint(point, viewportPoint);
+        return artifact.containsPoint(point)
+            && artifact.level.getPixel(artifact, viewportPoint)[3]>127;
     }
 
     getOriginalPoint(artifact) {

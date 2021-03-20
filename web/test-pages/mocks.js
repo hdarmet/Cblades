@@ -19,6 +19,10 @@ function write(context, directive) {
 
 export let mockPlatform = {
 
+    init() {
+        this._pixel = [255, 255, 255, 255];
+    },
+
     createElement(tagName) {
         return {tagName, children:[]};
     },

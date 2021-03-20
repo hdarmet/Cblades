@@ -24,7 +24,7 @@ import {
     DTextArtifact,
     DStaticLevel,
     DLayeredLevel,
-    DStackedLevel
+    DStackedLevel, DRectArtifact
 } from "../jslib/board.js";
 import {
     mockPlatform, getDirectives, resetDirectives, createEvent, loadAllImages, getLayers
@@ -121,11 +121,15 @@ describe("Board", ()=> {
             var artifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
             var element = new DElement(artifact);
             element.setLocation(new Point2D(100, 50));
+        then:
+            assert(artifact.visible).isFalse();
+        when:
             resetDirectives(layer);
             element.setOnBoard(board);
         then: /* No paint here... */
             assert(artifact.board).equalsTo(board);
             assert(element.board).equalsTo(board);
+            assert(artifact.visible).isTrue();
             assert(getDirectives(layer).length).equalsTo(0);
         when:
             board.paint();
@@ -208,6 +212,10 @@ describe("Board", ()=> {
             artifact2.pangle = 60;
             var artifact3 = new DImageArtifact("units", image, new Point2D(10, 15), new Dimension2D(50, 50));
             var element = new DElement(artifact1, artifact2);
+        then:
+            assert(element.hasArtifact(artifact1)).isTrue();
+            assert(element.hasArtifact(artifact3)).isFalse();
+        when:
             element.addArtifact(artifact3);
             element.setOnBoard(board);
             board.paint();
@@ -215,6 +223,7 @@ describe("Board", ()=> {
             assert(element.angle).equalsTo(0);
             assert(element.location.x).equalsTo(0);
             assert(element.location.y).equalsTo(0);
+            assert(element.hasArtifact(artifact3)).isTrue();
             assert(artifact1.pangle).equalsTo(0);
             assert(artifact1.angle).equalsTo(0);
             assert(artifact1.position.x).equalsTo(0);
@@ -1086,6 +1095,52 @@ describe("Board", ()=> {
             assert(level.getFinalPoint().toString()).equalsTo("point(500, 300)");
     });
 
+    it("Checks images artifact", () => {
+        given:
+            var {board, unitsLevel: level, unitsLayer: layer} = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+        when:
+            var image1 = DImage.getImage("../images/unit.png");
+            loadAllImages();
+            var artifact1 = new DImageArtifact("units", image1,
+                new Point2D(25, 25), new Dimension2D(60, 60)
+            );
+            var artifact2 = new DImageArtifact("units", image1,
+                new Point2D(0, 0), new Dimension2D(50, 60),
+                new Point2D(0, 0), new Dimension2D(100, 120),
+            );
+            var element = new DElement(artifact1, artifact2);
+            resetDirectives(layer);
+            element.setOnBoard(board);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 275, 175)",
+                    "drawImage(../images/unit.png, -30, -30, 60, 60)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
+                    "drawImage(../images/unit.png, 0, 0, 100, 120, -25, -30, 50, 60)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(layer);
+            artifact2.sourcePosition = new Point2D(40, 50);
+            artifact2.sourceDimension = new Dimension2D(80, 90);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 275, 175)",
+                    "drawImage(../images/unit.png, -30, -30, 60, 60)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
+                    "drawImage(../images/unit.png, 40, 50, 80, 90, -25, -30, 50, 60)",
+                "restore()"
+            ]);
+    });
+
     it("Checks multi images artifact", () => {
         given:
             var {board, unitsLevel: level, unitsLayer: layer} = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
@@ -1140,6 +1195,29 @@ describe("Board", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 250, 150)",
                     "drawImage(../images/unit-back.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks rectangle artifact", () => {
+        given:
+            var { board, markersLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+        when:
+            var artifact = new DRectArtifact("markers",
+                new Point2D(10, 15), new Dimension2D(50, 50),
+                "#FF0000", "#00FF00", "#0000FF", 5);
+            var element = new DElement(artifact);
+            resetDirectives(layer);
+            element.setOnBoard(board);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.9962, 0.0872, -0.0872, 0.9962, 260, 165)",
+                    "fillStyle = #0000FF",
+                    "fillRect(-25, -25, 50, 50)",
+                    "strokeStyle = #00FF00", "lineWidth = #FF0000",
+                    "strokeRect(-25, -25, 50, 50)",
                 "restore()"
             ]);
     });

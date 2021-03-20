@@ -148,6 +148,8 @@ describe("Geometry", ()=> {
             assert(area.intersect(new Area2D(15, 65, 35, 75))).isFalse();
             assert(area.intersect(new Area2D(-5, 25, 5, 75))).isFalse();
             assert(area.intersect(new Area2D(15, 65, 35, 75))).isFalse();
+            assert(area.contains(new Area2D(15, 25, 35, 55))).isTrue();
+            assert(area.contains(new Area2D(0, 0, 35, 55))).isFalse();
             assert(area.add(new Area2D(15, 25, 35, 55)).toString()).equalsTo("area(10, 20, 40, 60)")
             assert(area.add(new Area2D(5, 15, 45, 65)).toString()).equalsTo("area(5, 15, 45, 65)")
             assert(area.add(new Area2D(50, 70, 100, 110)).toString()).equalsTo("area(10, 20, 100, 110)")

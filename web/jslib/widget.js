@@ -582,14 +582,13 @@ class InsertImageArtifact extends DImageArtifact {
 
 export class DInsertCommand extends ActivableArtifact(DImageArtifact) {
 
-    constructor(insert, image, position, action) {
+    constructor(image, position, action) {
         super("widget-commands", image, position, DInsertCommand.DIMENSION);
-        this._insert = insert;
         this._action = action;
     }
 
     onMouseClick(event) {
-        this._action.call(this._insert);
+        this._action.call(this.element);
     }
 
     get overSettings() {
@@ -691,12 +690,28 @@ export class DInsert extends DElement {
         }
     }
 
+    get leftButton() {
+        return this._leftButton;
+    }
+
+    get rightButton() {
+        return this._rightButton;
+    }
+
+    get upButton() {
+        return this._upButton;
+    }
+
+    get downButton() {
+        return this._downButton;
+    }
+
     _manageNavigation() {
         if (this._artifact.sourcePosition.x>0) {
             if (!this._leftButton) {
                 let leftImage = DImage.getImage("/CBlades/images/commands/left.png");
                 let position = new Point2D(-this._artifact.dimension.w/2+DInsertCommand.DIMENSION.w/2+10, 0);
-                this._leftButton = new DInsertCommand(this, leftImage, position, this.leftPage);
+                this._leftButton = new DInsertCommand(leftImage, position, this.leftPage);
             }
             if (!this.hasArtifact(this._leftButton)) {
                 this.addArtifact(this._leftButton);
@@ -712,7 +727,7 @@ export class DInsert extends DElement {
             if (!this._rightButton) {
                 let downImage = DImage.getImage("/CBlades/images/commands/right.png");
                 let position = new Point2D(this._artifact.dimension.w/2-DInsertCommand.DIMENSION.w/2-10, 0);
-                this._rightButton = new DInsertCommand(this, downImage, position, this.rightPage);
+                this._rightButton = new DInsertCommand(downImage, position, this.rightPage);
             }
             if (!this.hasArtifact(this._rightButton)) {
                 this.addArtifact(this._rightButton);
@@ -728,7 +743,7 @@ export class DInsert extends DElement {
             if (!this._upButton) {
                 let upImage = DImage.getImage("/CBlades/images/commands/up.png");
                 let position = new Point2D(0, -this._artifact.dimension.h/2+DInsertCommand.DIMENSION.h/2+10);
-                this._upButton = new DInsertCommand(this, upImage, position, this.previousPage);
+                this._upButton = new DInsertCommand(upImage, position, this.previousPage);
             }
             if (!this.hasArtifact(this._upButton)) {
                 this.addArtifact(this._upButton);
@@ -744,7 +759,7 @@ export class DInsert extends DElement {
             if (!this._downButton) {
                 let downImage = DImage.getImage("/CBlades/images/commands/down.png");
                 let position = new Point2D(0, this._artifact.dimension.h/2-DInsertCommand.DIMENSION.h/2-10);
-                this._downButton = new DInsertCommand(this, downImage, position, this.nextPage);
+                this._downButton = new DInsertCommand(downImage, position, this.nextPage);
             }
             if (!this.hasArtifact(this._downButton)) {
                 this.addArtifact(this._downButton);

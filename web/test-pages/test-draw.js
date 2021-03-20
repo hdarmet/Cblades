@@ -395,6 +395,12 @@ describe("Drawing fundamentals", ()=> {
                 assert(params).arrayEqualsTo(["text", 10, 15]);
                 fillTextInvoked = true;
             }
+            var getImageData = false;
+            CanvasRenderingContext2D.prototype.getImageData = function(...params) {
+                assert(params).arrayEqualsTo([100, 150, 1, 1]);
+                getImageData = true;
+                return {data:[100, 150, 180, 200]};
+            }
         when:
             var draw = new DDraw(new Dimension2D(500, 300));
         then:
@@ -443,6 +449,11 @@ describe("Drawing fundamentals", ()=> {
             layer.fillText("text", new Point2D(10, 15));
         then:
             assert(fillTextInvoked).isTrue();
+        when:
+            var pixel = layer.getPixel(new Point2D(100, 150));
+        then:
+            assert(getImageData).isTrue();
+            assert(pixel).arrayEqualsTo([100, 150, 180, 200]);
     });
 
     it("Checks settings methods of the target platform", () => {
