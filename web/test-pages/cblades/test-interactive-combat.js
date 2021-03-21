@@ -38,7 +38,7 @@ import {
 } from "./interactive-tools.js";
 import {
     createTinyGame,
-    create2PlayersTinyGame, create2PlayersTinyFormationGame
+    create2PlayersTinyGame, create2PlayersTinyFormationGame, create2Players2Units2LeadersTinyGame
 } from "./game-examples.js";
 import {
     CBHexSideId
@@ -1201,5 +1201,174 @@ describe("Interactive Combat", ()=> {
                 "restore()"
             ]);
     });
+
+    function clickOnShockDuelAction(game) {
+        return clickOnActionMenu(game, 2, 1);
+    }
+
+    it("Checks shock duel appearance (and cancelling shock attack action)", () => {
+        given:
+            var { game, map, unit1, unit2, leader1, leader2 } = create2Players2Units2LeadersTinyGame();
+            var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
+                "actuators-0", "widgets", "widget-commands","widget-items"
+            );
+            unit1.move(map.getHex(5, 8));
+            unit2.move(map.getHex(5, 7));
+            leader1.move(unit1.hexLocation);
+            leader2.move(unit2.hexLocation);
+            clickOnCounter(game, leader1);
+            clickOnShockDuelAction(game);
+            loadAllImages();
+            let shockAttackActuator = getShockAttackActuator(game);
+        when:
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(leader2, true));
+            loadAllImages();
+        then:
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "globalAlpha = 0.3",
+                    "fillStyle = #000000", "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 517, 100)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/combat-result-table-insert.png, 0, 0, 804, 174, -402, -87, 804, 174)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 517, 100)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-402, -87, 804, 174)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 267, 466)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/shock-attack-insert.png, 0, 0, 524, 658, -262, -329, 524, 658)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 267, 466)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-262, -329, 524, 658)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 617, 207)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 557, 267)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 267, 760)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    function clickOnFireDuelAction(game) {
+        return clickOnActionMenu(game, 3, 1);
+    }
+
+    it("Checks fire duel resolution appearance (and cancelling fire attack action)", () => {
+        given:
+            var { game, map, unit1, unit2, leader1, leader2 } = create2Players2Units2LeadersTinyGame();
+            var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
+                "actuators-0", "widgets", "widget-commands","widget-items"
+            );
+            unit1.move(map.getHex(5, 8));
+            unit2.move(map.getHex(5, 6));
+            leader1.move(unit1.hexLocation);
+            leader2.move(unit2.hexLocation);
+            clickOnCounter(game, leader1);
+            clickOnFireDuelAction(game);
+            loadAllImages();
+            let fireAttackActuator = getFireAttackActuator(game);
+        when:
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
+            clickOnTrigger(game, fireAttackActuator.getTrigger(leader2));
+            loadAllImages();
+        then:
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 1000, 800)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 517, 92)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/combat-result-table-insert.png, 0, 0, 804, 174, -402, -87, 804, 174)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 517, 92)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-402, -87, 804, 174)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 267, 458)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/inserts/fire-attack-insert.png, 0, 0, 524, 658, -262, -329, 524, 658)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 267, 458)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-262, -329, 524, 658)",
+                "restore()"
+            ]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 167, 654)",
+                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 167, 174)",
+                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 617, 199)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 557, 259)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 267, 752)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+    });
+
 
 });

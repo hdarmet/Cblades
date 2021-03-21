@@ -11,7 +11,7 @@ import {
 } from "../mechanisms.js";
 import {
     CBAction, CBActuator, CBGame,
-    CBActuatorArtifact, CBUnitActuatorArtifact, RetractableActuatorMixin
+    CBActuatorTrigger, CBUnitActuatorTrigger, RetractableActuatorMixin
 } from "./game.js";
 import {
     DImage
@@ -355,7 +355,7 @@ export class CBOrderGivenActuator extends RetractableActuatorMixin(CBActuator) {
         let imageArtifacts = [];
         let orderImage = DImage.getImage("/CBlades/images/actuators/order.png");
         for (let unit of units) {
-            let order = new CBUnitActuatorArtifact(this, unit, "units", orderImage,
+            let order = new CBUnitActuatorTrigger(this, unit, "units", orderImage,
                 new Point2D(unit.location.x, unit.location.y-80), new Dimension2D(105, 97));
             imageArtifacts.push(order);
         }

@@ -209,7 +209,7 @@ CBAction.FINALIZED = 3;
 CBAction.CANCELLED = -1;
 CBAction.PROGRESSION = "progression";
 
-export class CBActuatorArtifact extends DImageArtifact {
+export class CBActuatorTrigger extends DImageArtifact {
 
     constructor(actuator, ...args) {
         super(...args);
@@ -249,7 +249,7 @@ export class CBActuatorArtifact extends DImageArtifact {
 
 }
 
-export class CBUnitActuatorArtifact extends CBActuatorArtifact {
+export class CBUnitActuatorTrigger extends CBActuatorTrigger {
 
     constructor(actuator, unit, ...args) {
         super(actuator, ...args);
@@ -294,19 +294,19 @@ export class CBActuator {
         return this.action.unit;
     }
 
-    get artifacts() {
-        return this._artifacts;
+    get triggers() {
+        return this._triggers;
     }
 
-    initElement(artifacts, position = this.unit.location) {
-        this._artifacts = artifacts;
-        this._element = new DElement(...this._artifacts);
+    initElement(triggers, position = this.unit.location) {
+        this._triggers = triggers;
+        this._element = new DElement(...this._triggers);
         this._element._actuator = this;
         this._element.setLocation(position);
     }
 
     findTrigger(predicate) {
-        for (let artifact of this._element.artifacts) {
+        for (let artifact of this.triggers) {
             if (predicate(artifact)) return artifact;
         }
         return null;
@@ -783,13 +783,6 @@ export class CBCounterImageArtifact extends DMultiImageArtifact {
     onMouseLeave(event) {
     }
 
-    appear() {
-        this.alpha = 1;
-    }
-
-    retract() {
-        this.alpha = 0;
-    }
 }
 
 function SelectableMixin(clazz) {
@@ -894,9 +887,9 @@ export function RetractableActuatorMixin(clazz) {
         }
 
         collectArtifactsToRetract(unit, artifacts) {
-            for (let artifact of this.artifacts) {
-                if (artifact.unit === unit) {
-                    artifacts.push(artifact);
+            for (let trigger of this.triggers) {
+                if (trigger.unit === unit) {
+                    artifacts.push(trigger);
                 }
             }
         }

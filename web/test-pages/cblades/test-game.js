@@ -16,7 +16,7 @@ import {
 import {
     CBMap,
     CBHexSideId,
-    CBMoveType
+    CBMoveType, CBHexId
 } from "../../jslib/cblades/map.js";
 import {
     CBGame,
@@ -24,7 +24,13 @@ import {
     CBAbstractPlayer,
     CBAbstractArbitrator,
     CBCounter,
-    CBAction, CBAbstractUnit, CBActuatorArtifact, CBPlayable, CBCounterImageArtifact
+    CBAction,
+    CBAbstractUnit,
+    CBActuatorTrigger,
+    CBPlayable,
+    CBCounterImageArtifact,
+    CBUnitActuatorTrigger,
+    RetractableActuatorMixin
 } from "../../jslib/cblades/game.js";
 import {
     DBoard, DElement
@@ -97,10 +103,10 @@ class CBTestActuator extends CBActuator {
         super(action);
         let image = DImage.getImage("/CBlades/images/actuators/test.png");
         let imageArtifacts = [];
-        let trigger = new CBActuatorArtifact(this, "actuators", image,
+        this.trigger = new CBActuatorTrigger(this, "actuators", image,
             new Point2D(0, 0), new Dimension2D(50, 50));
-        trigger.position = new Point2D(0, 0);
-        imageArtifacts.push(trigger);
+        this.trigger.position = new Point2D(0, 0);
+        imageArtifacts.push(this.trigger);
         this.initElement(imageArtifacts);
     }
 
@@ -114,6 +120,24 @@ class CBTestActuator extends CBActuator {
 
     onMouseClick(artifact, event) {
         this.clicked = artifact;
+    }
+}
+
+class CBTestUnitActuator extends RetractableActuatorMixin(CBActuator) {
+
+    constructor(action, unit) {
+        super(action);
+        let image = DImage.getImage("/CBlades/images/actuators/test.png");
+        let imageArtifacts = [];
+        this.trigger = new CBUnitActuatorTrigger(this, unit, "units", image,
+            new Point2D(0, 0), new Dimension2D(142, 142));
+        this.trigger.position = Point2D.position(action.unit.location, unit.location, 1);
+        imageArtifacts.push(this.trigger);
+        this.initElement(imageArtifacts);
+    }
+
+    onMouseClick(trigger, event) {
+        this.unitProcessed = trigger.unit;
     }
 
 }
@@ -194,6 +218,8 @@ describe("Game", ()=> {
             var actuator2 = new CBTestActuator(action);
             game.openActuator(actuator1);
         then:
+            assert(actuator1.triggers).arrayEqualsTo([actuator1.trigger]);
+            assert(actuator1.trigger.actuator).equalsTo(actuator1);
             assert(actuator1.unit).equalsTo(unit);
             assert(game.actuators).arrayEqualsTo([actuator1]);
         when:
@@ -272,6 +298,31 @@ describe("Game", ()=> {
         when:
             clickOnTrigger(game, actuator.getTrigger());
             assert(actuator.clicked).equalsTo(actuator.getTrigger());
+    });
+
+    it("Checks actuators trigger on unit", () => {
+        given:
+            var {game, unit1, unit2} = create2UnitsTinyGame();
+            var [actuatorsLayer] = getLayers(game.board, "actuators-0");
+        when:
+            var action = new CBAction(game, unit1);
+            var actuator = new CBTestUnitActuator(action, unit2);
+            resetDirectives(actuatorsLayer);
+            game.openActuator(actuator);
+            paint(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 255.6635)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/test.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            clickOnTrigger(game, actuator.trigger);
+        then:
+            assert(actuator.unitProcessed).equalsTo(unit2);
     });
 
     it("Checks that clicking on the map re-centers the viewport ", () => {
@@ -577,12 +628,29 @@ describe("Game", ()=> {
 
     }
 
+    class CBTestOption extends CBPlayable {
+        constructor(unit, ...args) {
+            super(...args);
+            Object.defineProperty(this.artifact, "slot", {
+                get: function () {
+                    return unit.slot;
+                }
+            });
+            Object.defineProperty(this.artifact, "layer", {
+                get: function () {
+                    return unit.formationNature ? CBGame.ULAYERS.FOPTIONS : CBGame.ULAYERS.OPTIONS;
+                }
+            });
+        }
+
+    }
+
     class CBTestMarker extends CBCounterImageArtifact {
         constructor(...args) {
             super(...args);
         }
         get layer() {
-            return CBGame.ULAYERS.MARKERS;
+            return this.counter.formationNature ? CBGame.ULAYERS.FMARKERS : CBGame.ULAYERS.MARKERS;
         }
         get slot() {
             return this.counter.slot;
@@ -602,7 +670,7 @@ describe("Game", ()=> {
             let unit2 = new CBTestUnit(player, ["/CBlades/images/units/misc/unit2.png"]);
             let spell = new CBTestPlayable(unit2, CBGame.ULAYERS.SPELLS, "units", ["/CBlades/images/units/misc/spell.png"],
                 new Dimension2D(142, 142));
-            let option = new CBTestPlayable(unit2, CBGame.ULAYERS.OPTIONS,"units",  ["/CBlades/images/units/misc/option.png"],
+            let option = new CBTestOption(unit2, "units",  ["/CBlades/images/units/misc/option.png"],
                 new Dimension2D(142, 142));
             option.artifact.option = option;
             option.unit = unit2;
@@ -649,6 +717,67 @@ describe("Game", ()=> {
                 "restore()"
             ]);
             assert(getDirectives(optionsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/option.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks formations and formation's marker and options registration on layers", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            let formation1 = new CBTestFormation(player, ["/CBlades/images/units/misc/formation1.png"]);
+            formation1.angle = 60;
+            let markerImage = DImage.getImage("/CBlades/images/units/misc/markers1.png");
+            let marker = new CBTestMarker(formation1, "units", [markerImage],
+                new Point2D(0, 0), new Dimension2D(142, 142));
+            formation1._element.addArtifact(marker);
+            let formation2 = new CBTestFormation(player, ["/CBlades/images/units/misc/formation2.png"]);
+            formation2.angle = 60;
+            let option = new CBTestOption(formation2, "units",  ["/CBlades/images/units/misc/option.png"],
+                new Dimension2D(142, 142));
+            option.artifact.option = option;
+            option.unit = formation2;
+            loadAllImages();
+            game.start();
+            var hexId = map.getHex(4, 5);
+            var hexSideId = new CBHexSideId(hexId, hexId.getNearHex(120))
+            formation1.addToMap(hexSideId, CBMoveType.BACKWARD);
+            formation2.addToMap(hexSideId, CBMoveType.BACKWARD);
+            option.addToMap(hexId);
+            paint(game);
+        when:
+            var [formationsLayer0, fmarkersLayer0, formationsLayer1, foptionsLayer1] = getLayers(game.board,
+                "formations-0", "fmarkers-0", "formations-1", "foptions-1");
+            resetDirectives(formationsLayer0, fmarkersLayer0, formationsLayer1, foptionsLayer1);
+            repaint(game);
+        then:
+            assert(getDirectives(formationsLayer0, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 375, 135.3831)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/formation1.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(fmarkersLayer0, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 375, 135.3831)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/markers1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(formationsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 379.8876, 130.4955)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(foptionsLayer1, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
                     "shadowColor = #000000", "shadowBlur = 15",
@@ -1578,6 +1707,143 @@ describe("Game", ()=> {
                     "setTransform(0.4888, 0, 0, 0.4888, 352.8837, 91.7766)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/counter3.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks that when the mouse is over a actuator's (unit) trigger, the units above are retracted", () => {
+        given:
+            var { game, unit1, unit2 } = create2UnitsTinyGame();
+            unit2.hexLocation = unit1.hexLocation;
+            var action = new CBAction(game, unit1);
+            var actuator = new CBTestUnitActuator(action, unit1);
+            game.openActuator(actuator);
+            game.start();
+            loadAllImages();
+            var [unitsLayer0, actuatorsLayer0, unitsLayer1] = getLayers(game.board, "units-0", "actuators-0", "units-1");
+            resetDirectives(unitsLayer0, actuatorsLayer0, unitsLayer1);
+            repaint(game);
+        then:
+            assert(getDirectives(actuatorsLayer0, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 159.4391)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/test.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(unitsLayer0, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 159.4391)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer1);
+            mouseMove(game, 417-71/2+5, 159-71/2+5); // On counter2's actuator but not counter3
+            paint(game);
+        then:
+            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "globalAlpha = 0",
+                    "drawImage(/CBlades/images/units/misc/unit2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer1);
+            mouseMove(game, 100, 100); // not on any counter
+            paint(game);
+        then:
+            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks that when the mouse is a unit is retracted, its actuator is retracted too", () => {
+        given:
+            var { game, unit1, unit2 } = create2UnitsTinyGame();
+            unit2.hexLocation = unit1.hexLocation;
+            var action = new CBAction(game, unit1);
+            var actuator = new CBTestUnitActuator(action, unit2);
+            game.openActuator(actuator);
+            game.start();
+            loadAllImages();
+            var [unitsLayer0, actuatorsLayer1, unitsLayer1] = getLayers(game.board, "units-0", "actuators-1", "units-1");
+            resetDirectives(unitsLayer0, actuatorsLayer1, unitsLayer1);
+            repaint(game);
+        then:
+            assert(getDirectives(actuatorsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/test.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(unitsLayer0, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 159.4391)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer1, actuatorsLayer1);
+            mouseMove(game, 417-71/2+5, 159-71/2+5); // On counter1 but not counter2
+            paint(game);
+        then:
+            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "globalAlpha = 0",
+                    "drawImage(/CBlades/images/units/misc/unit2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "globalAlpha = 0",
+                    "drawImage(/CBlades/images/actuators/test.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(unitsLayer1, actuatorsLayer1);
+            mouseMove(game, 100, 100); // not on any counter
+            paint(game);
+        then:
+            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit2.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(actuatorsLayer1, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/test.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
     });

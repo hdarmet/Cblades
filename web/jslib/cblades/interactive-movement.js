@@ -15,8 +15,7 @@ import {
     CBHexSideId, CBMoveType, CBPathFinding
 } from "./map.js";
 import {
-    CBAction, CBActuator,
-    CBActuatorArtifact
+    CBAction, CBActuator, CBActuatorTrigger
 } from "./game.js";
 import {
     CBMovement
@@ -572,7 +571,7 @@ export class CBOrientationActuator extends CBActuator {
         let imageArtifacts = [];
         for (let angle in directions) {
             let image = directions[angle].type === CBMovement.NORMAL ? normalImage : extendedImage;
-            let orientation = new CBActuatorArtifact(this, "actuators", image,
+            let orientation = new CBActuatorTrigger(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(60, 80));
             orientation.position = Point2D.position(this.unit.location, directions[angle].hex.location, angle%60?0.87:0.75);
             orientation.pangle = parseInt(angle);
@@ -603,7 +602,7 @@ export class CBMoveActuator extends CBActuator {
         for (let angle in directions) {
             let image = directions[angle].type === CBMovement.NORMAL ? normalImage :
                 directions[angle].type === CBMovement.EXTENDED ? extendedImage : minimalImage;
-            let orientation = new CBActuatorArtifact(this, "actuators", image,
+            let orientation = new CBActuatorTrigger(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(80, 130));
             orientation.pangle = parseInt(angle);
             orientation.position = Point2D.position(this.unit.location, directions[angle].hex.location, 0.9);
@@ -635,7 +634,7 @@ export class CBFormationMoveActuator extends CBActuator {
                 let angle = parseInt(sangle);
                 let image = moveDirections[angle].type === CBMovement.NORMAL ? normalMoveImage :
                     moveDirections[angle].type === CBMovement.EXTENDED ? extendedMoveImage : minimalMoveImage;
-                let orientation = new CBActuatorArtifact(this, "actuators", image,
+                let orientation = new CBActuatorTrigger(this, "actuators", image,
                     new Point2D(0, 0), new Dimension2D(80, 130));
                 orientation.pangle = parseInt(angle);
                 orientation.rotate = false;
@@ -655,7 +654,7 @@ export class CBFormationMoveActuator extends CBActuator {
                 let angle = parseInt(sangle);
                 let image = rotateDirections[angle].type === CBMovement.NORMAL ? normalRotateImage :
                     rotateDirections[angle].type === CBMovement.EXTENDED ? extendedRotateImage : minimalRotateImage;
-                let orientation = new CBActuatorArtifact(this, "actuators", image,
+                let orientation = new CBActuatorTrigger(this, "actuators", image,
                     new Point2D(0, 0), new Dimension2D(80, 96));
                 orientation.pangle = parseInt(angle);
                 orientation.rotate = true;

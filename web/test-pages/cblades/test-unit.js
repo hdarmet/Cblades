@@ -305,22 +305,30 @@ describe("Unit", ()=> {
             ]);
     });
 
+    class CBTestOptionArtifact extends OptionArtifactMixin(CBCounterImageArtifact) {
+         constructor(...args) {
+             super(...args);
+         }
+
+         get unit() {
+             return this.counter.unit;
+         }
+    }
+
     class CBTestOption extends OptionMixin(CarriableMixin(CBPlayable)) {
 
         constructor(unit, paths) {
             super("units", paths, new Dimension2D(142, 142));
-            Object.defineProperty(this.artifact, "slot", {
-                get: function () {
-                    return unit.slot;
-                }
-            });
-            Object.defineProperty(this.artifact, "layer", {
-                get: function () {
-                    return CBGame.ULAYERS.OPTIONS;
-                }
-            });
+            this._unit = unit;
         }
 
+        createArtifact(levelName, images, location, dimension) {
+            return new CBTestOptionArtifact(this, levelName, images, location, dimension);
+        }
+
+        get unit() {
+            return this._unit;
+        }
     }
 
     it("Checks that a unit may have option counters (not undoable)", () => {
@@ -339,7 +347,6 @@ describe("Unit", ()=> {
                 ["/CBlades/images/units/misc/unit1.png"]);
             var unit = new CBTroop(unitType1, wing);
             let hexId = map.getHex(5, 8);
-            let nextHexId = map.getHex(6, 8);
             game.addUnit(unit, hexId);
             var [optionsLayer] = getLayers(game.board, "options-0");
         when:
@@ -403,7 +410,6 @@ describe("Unit", ()=> {
                 ["/CBlades/images/units/misc/unit1.png"]);
             var unit = new CBTroop(unitType1, wing);
             let hexId = map.getHex(5, 8);
-            let nextHexId = map.getHex(6, 8);
             game.addUnit(unit, hexId);
             var [optionsLayer] = getLayers(game.board, "options-0");
         when:
@@ -1842,10 +1848,12 @@ describe("Unit", ()=> {
             var {formation} = prepareTinyGameWithFormation();
         when:
             formation.movementPoints = 3;
+            formation.fixTirednessLevel(CBTiredness.TIRED);
             var cloneFormation = formation.clone();
         then:
             assert(cloneFormation).is(CBFormation);
             assert(cloneFormation.movementPoints).equalsTo(3);
+            assert(cloneFormation.tiredness).equalsTo(CBTiredness.TIRED);
     });
 
 });

@@ -42,13 +42,33 @@ export function executeAllAnimations() {
 }
 
 export function clickOnArtifact(boardOrGame, artifact) {
-    let unitLocation = artifact.viewportLocation;
-    var mouseEvent = createEvent("click", {offsetX:unitLocation.x, offsetY:unitLocation.y});
+    let arifactLocation = artifact.viewportLocation;
+    var mouseEvent = createEvent("click", {offsetX:arifactLocation.x, offsetY:arifactLocation.y});
     mockPlatform.dispatchEvent(boardOrGame.root, "click", mouseEvent);
+}
+
+export function mouseMoveOnArtifact(gameOrBoard, artifact) {
+    let artifactLocation = artifact.viewportLocation;
+    var mouseEvent = createEvent("mousemove", {offsetX:artifactLocation.x, offsetY:artifactLocation.y});
+    mockPlatform.dispatchEvent(gameOrBoard.root, "mousemove", mouseEvent);
+}
+
+export function mouseMoveOutOfArtifact(gameOrBoard, trigger) {
+    let artifactLocation = trigger.viewportBoundingArea;
+    var mouseEvent = createEvent("mousemove", {offsetX:artifactLocation.left-5, offsetY:artifactLocation.top});
+    mockPlatform.dispatchEvent(gameOrBoard.root, "mousemove", mouseEvent);
 }
 
 export function clickOnCounter(game, counter) {
     clickOnArtifact(game, counter.artifact);
+}
+
+export function mouseMoveOnTrigger(game, trigger) {
+    mouseMoveOnArtifact(game, trigger);
+}
+
+export function mouseMoveOutOfTrigger(game, trigger) {
+    mouseMoveOutOfArtifact(game, trigger);
 }
 
 export function clickOnMask(game) {
@@ -61,65 +81,56 @@ export function clickOnMap(game) {
     mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
 }
 
+export function getActionMenu(game, col, row) {
+    return game.popup.getItem(col, row);
+}
+
 export function clickOnActionMenu(game, col, row) {
-    var icon = game.popup.getItem(col, row);
-    let iconLocation = icon.viewportLocation;
-    var mouseEvent = createEvent("click", {offsetX:iconLocation.x, offsetY:iconLocation.y});
-    mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
+    clickOnArtifact(game, getActionMenu(game, col, row));
 }
 
 export function clickOnTrigger(game, trigger) {
-    let triggerLocation = trigger.viewportLocation;
-    var mouseEvent = createEvent("click", {offsetX:triggerLocation.x, offsetY:triggerLocation.y});
-    trigger.onMouseClick(mouseEvent);
-    paint(game);
-    Memento.open();
+    clickOnArtifact(game, trigger);
 }
 
-export function clickOnMessage(game) {
+export function getMessage(game) {
     var commandsLevel = game.board.getLevel("widget-commands");
     for (let item of commandsLevel.artifacts) {
         if (item.element instanceof DMessage) {
-            let itemLocation = item.viewportLocation;
-            var mouseEvent = createEvent("click", {offsetX:itemLocation.x, offsetY:itemLocation.y});
-            item.onMouseClick(mouseEvent);
-            return;
+            return item;
         }
     }
+    return null;
 }
 
-export function clickOnDice(game) {
+export function clickOnMessage(game) {
+    clickOnArtifact(game, getMessage(game));
+}
+
+export function getDice(game) {
     var itemsLevel = game.board.getLevel("widget-items");
     for (let item of itemsLevel.artifacts) {
         if (item.element instanceof DDice) {
-            let itemLocation = item.viewportLocation;
-            var mouseEvent = createEvent("click", {offsetX:itemLocation.x, offsetY:itemLocation.y});
-            item.onMouseClick(mouseEvent);
-            return;
+            return item;
         }
     }
+    return null;
 }
 
-export function clickOnResult(game) {
+export function clickOnDice(game) {
+    clickOnArtifact(game, getDice(game));
+}
+
+export function getResult(game) {
     var commandsLevel = game.board.getLevel("widget-commands");
     for (let item of commandsLevel.artifacts) {
         if (item.element instanceof DResult) {
-            let itemLocation = item.viewportLocation;
-            var mouseEvent = createEvent("click", {offsetX:itemLocation.x, offsetY:itemLocation.y});
-            item.onMouseClick(mouseEvent);
-            return;
+            return item;
         }
     }
+    return null;
 }
 
-export function mouseMoveOnTrigger(game, trigger) {
-    let actuatorLocation = trigger.viewportLocation;
-    var mouseEvent = createEvent("mousemove", {offsetX:actuatorLocation.x, offsetY:actuatorLocation.y});
-    mockPlatform.dispatchEvent(game.root, "mousemove", mouseEvent);
-}
-
-export function mouseMoveOutOfTrigger(game, trigger) {
-    let actuatorArea = trigger.viewportBoundingArea;
-    var mouseEvent = createEvent("mousemove", {offsetX:actuatorArea.left-5, offsetY:actuatorArea.top});
-    mockPlatform.dispatchEvent(game.root, "mousemove", mouseEvent);
+export function clickOnResult(game) {
+    clickOnArtifact(game, getResult(game));
 }

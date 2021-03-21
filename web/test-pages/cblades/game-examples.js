@@ -92,6 +92,19 @@ export function create2PlayersTinyGame() {
     return {game, map, unit1, unit2, wing1, wing2, player1, player2};
 }
 
+export function create2Players2Units2LeadersTinyGame() {
+    let {game, map, unit1, unit2, wing1, wing2, player1, player2} = create2PlayersTinyGame();
+    let leader1Type = new CBUnitType("leader1",
+        ["/CBlades/images/units/misc/character1.png", "/CBlades/images/units/misc/character1b.png"]);
+    let leader1 = new CBCharacter(leader1Type, wing1);
+    game.addUnit(leader1, unit1.hexLocation);
+    let leader2Type = new CBUnitType("leader2",
+        ["/CBlades/images/units/misc/character2.png", "/CBlades/images/units/misc/character2b.png"]);
+    let leader2 = new CBCharacter(leader2Type, wing2);
+    game.addUnit(leader2, unit2.hexLocation);
+    return {game, map, unit1, unit2, wing1, wing2, leader1, leader2, player1, player2};
+}
+
 export function create2PlayersTinyFormationGame() {
     let game = new CBGame();
     let arbitrator = new CBArbitrator();

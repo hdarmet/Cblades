@@ -180,10 +180,6 @@ export function OptionArtifactMixin(clazz) {
             super(...args);
         }
 
-        get option() {
-            return this._counter.isOption();
-        }
-
         get slot() {
             return this.unit.slot;
         }

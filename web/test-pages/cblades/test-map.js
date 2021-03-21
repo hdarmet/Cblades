@@ -173,6 +173,7 @@ describe("Map", ()=> {
             var map = new CBMap("/CBlades/images/maps/map.png");
             var hexId = map.getHex(3, 4);
         then:
+            assert(hexId.hexes).arrayEqualsTo([hexId]);
             assert(hexId.hasHex(map.getHex(3, 4))).isTrue();
             assert(hexId.hasHex(map.getHex(3, 5))).isFalse();
             assert(hexId.col).equalsTo(3);
@@ -315,6 +316,7 @@ describe("Map", ()=> {
             var hexId3 = hexId1.getNearHex(120);
             var hexSide = new CBHexSideId(hexId1, hexId2);
         then:
+            assert(hexSide.hexes).arrayEqualsTo([hexId1, hexId2]);
             assert(hexSide.fromHex).equalsTo(hexId1);
             assert(hexSide.toHex).equalsTo(hexId2);
             assert(hexSide.hasHex(hexId1)).isTrue();
@@ -397,6 +399,7 @@ describe("Map", ()=> {
             var hexId4 = hexId1.getNearHex(300);
             var hexVertex = new CBHexVertexId(hexId1, hexId2, hexId3);
         then:
+            assert(hexVertex.hexes).arrayEqualsTo([hexId1, hexId2, hexId3]);
             assert(hexVertex.fromHex).equalsTo(hexId1);
             assert(hexVertex.toHexSide.similar(new CBHexSideId(hexId2, hexId3))).isTrue();
             assert(hexVertex.angle).equalsTo(90);

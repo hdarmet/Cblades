@@ -23,7 +23,7 @@ import {
     DWidget, DPopup, DIconMenu, DIconMenuItem, DPushButton, DDice, DIndicator, DInsert, DResult, DMask, DScene, DMessage
 } from "../jslib/widget.js";
 import {
-    clickOnArtifact
+    clickOnArtifact, mouseMoveOnArtifact, mouseMoveOutOfArtifact
 } from "./cblades/interactive-tools.js";
 
 
@@ -832,6 +832,93 @@ describe("Widget", ()=> {
                     "setTransform(1, 0, 0, 1, 215, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/commands/right.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks insert buttons appearance when mouse is moved over/out of it", () => {
+        given:
+            var { board, commandsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            let insert = new DInsert("/CBlades/images/inserts/insert.png",
+                new Dimension2D(200, 300),
+                new Dimension2D(200, 390)
+            );
+            loadAllImages();
+        when:
+            resetDirectives(commandsLayer);
+            insert.open(board, new Point2D(150, 200));
+            mouseMoveOnArtifact(board, insert.downButton);
+            board.paint();
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 315)",
+                    "shadowColor = #FF0000", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(commandsLayer);
+            mouseMoveOutOfArtifact(board, insert.downButton);
+            board.paint();
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 315)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks ok markers on an insert", () => {
+        given:
+            var { board, itemsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            let insert = new DInsert("/CBlades/images/inserts/insert.png",
+                new Dimension2D(200, 300),
+                new Dimension2D(200, 390)
+            );
+        when: // Declare 2 markers but set only 1
+            resetDirectives(itemsLayer);
+            insert.open(board, new Point2D(150, 200));
+            insert.declareMark("modifier-here", new Point2D(-80, -140));
+            insert.declareMark("modifier-there", new Point2D(-80, 0));
+            insert.setMark("modifier-here");
+            loadAllImages();
+            board.paint();
+        then:
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 70, 105)",
+                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                "restore()"
+            ]);
+        when: // set second marker
+            resetDirectives(itemsLayer);
+            insert.setMark("modifier-there");
+            board.paint();
+        then:
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 70, 105)",
+                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 70, 245)",
+                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                "restore()"
+            ]);
+        when: // scroll insert making 1st marker non visible
+            resetDirectives(itemsLayer);
+            clickOnArtifact(board, insert.downButton);
+            board.paint();
+        then:
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 70, 155)",
+                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
                 "restore()"
             ]);
     });

@@ -8,7 +8,7 @@ import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
-    CBAction, CBActuator, CBActuatorArtifact, CBGame, CBUnitActuatorArtifact, RetractableActuatorMixin
+    CBAction, CBActuator, CBActuatorTrigger, CBGame, CBUnitActuatorTrigger, RetractableActuatorMixin
 } from "./game.js";
 import {
     Dimension2D,
@@ -207,7 +207,7 @@ export class CBSpellTargetFoesActuator extends RetractableActuatorMixin(CBActuat
         let image = DImage.getImage("/CBlades/images/actuators/spell-target-foe.png");
         let imageArtifacts = [];
         for (let foe of foes) {
-            let target = new CBUnitActuatorArtifact(this, foe,"units", image,
+            let target = new CBUnitActuatorTrigger(this, foe,"units", image,
                 new Point2D(0, 0), new Dimension2D(100, 111));
             target.position = Point2D.position(this.unit.location, foe.location, 1);
             imageArtifacts.push(target);
@@ -232,7 +232,7 @@ export class CBSpellTargetFriendsActuator extends RetractableActuatorMixin(CBAct
         let image = DImage.getImage("/CBlades/images/actuators/spell-target-friend.png");
         let imageArtifacts = [];
         for (let friend of friends) {
-            let target = new CBUnitActuatorArtifact(this, friend, "units", image,
+            let target = new CBUnitActuatorTrigger(this, friend, "units", image,
                 new Point2D(0, 0), new Dimension2D(100, 111));
             target.position = Point2D.position(this.unit.location, friend.location, 1);
             imageArtifacts.push(target);
@@ -257,7 +257,7 @@ export class CBSpellTargetHexesActuator extends CBActuator {
         let image = DImage.getImage("/CBlades/images/actuators/spell-target-hex.png");
         let imageArtifacts = [];
         for (let hex of hexes) {
-            let target = new CBActuatorArtifact(this, "actuators", image,
+            let target = new CBActuatorTrigger(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(100, 111));
             target.position = Point2D.position(this.unit.location, hex.location, 1);
             target._hex = hex;

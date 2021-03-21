@@ -1120,6 +1120,27 @@ describe("Arbitrator", ()=> {
             assert(arbitrator.isUnitEngaged(unit11)).isFalse();
     });
 
+    it("Checks if a character is allowed to attack by duel", () => {
+        given:
+            var {arbitrator, unit11, leader11, unit21, leader21} = create2Players4UnitsTinyGame();
+        when:
+            unit21.move(unit11.hexLocation.getNearHex(0));
+            leader11.move(unit11.hexLocation);
+            leader21.move(unit21.hexLocation);
+        then:
+            assert(arbitrator.isAllowedToShockDuel(unit11)).isFalse();
+            assert(arbitrator.isAllowedToShockDuel(leader11)).isTrue();
+        when:
+            leader21.move(null);
+        then:
+            assert(arbitrator.isAllowedToShockDuel(leader11)).isFalse();
+        when:
+            unit11.move(null);
+            leader21.move(unit21.hexLocation);
+        then:
+            assert(arbitrator.isAllowedToShockDuel(leader11)).isFalse();
+    });
+
     it("Checks units that can be shock attacked", () => {
         given:
             var {arbitrator, map, unit12, unit21, unit22} = create2Players4UnitsTinyGame();
@@ -1141,6 +1162,26 @@ describe("Arbitrator", ()=> {
             foes = arbitrator.getFoesThatMayBeShockAttacked(unit12);
         then:
             assert(foes.length).equalsTo(2);
+    });
+
+    it("Checks characters that can be duel attacked", () => {
+        given:
+            var {arbitrator, map, unit11, leader11, unit21, leader21} = create2Players4UnitsTinyGame();
+            unit21.move(unit11.hexLocation.getNearHex(0));
+            leader11.move(unit11.hexLocation);
+            leader21.move(unit21.hexLocation);
+        when:
+            var foes = arbitrator.getFoesThatMayBeDuelAttacked(leader11);
+        then:
+            assert(foes.length).equalsTo(1);
+            assert(foes[0].unit).equalsTo(leader21);
+            assert(foes[0].supported).isTrue();
+        when:
+            leader11.addOneTirednessLevel();
+            leader11.addOneTirednessLevel();
+            foes = arbitrator.getFoesThatMayBeDuelAttacked(leader11);
+        then:
+            assert(foes[0].supported).isFalse();
     });
 
     it("Checks shock attack processing", () => {
@@ -1231,6 +1272,22 @@ describe("Arbitrator", ()=> {
             ]));
     });
 
+    it("Checks if a character is allowed to fire by duel", () => {
+        given:
+            var {arbitrator, unit11, leader11, unit21, leader21} = create2Players4UnitsTinyGame();
+        when:
+            unit21.move(unit11.hexLocation.getNearHex(0).getNearHex(0));
+            leader11.move(unit11.hexLocation);
+            leader21.move(unit21.hexLocation);
+        then:
+            assert(arbitrator.isAllowedToFireDuel(unit11)).isFalse();
+            assert(arbitrator.isAllowedToFireDuel(leader11)).isTrue();
+        when:
+            leader21.move(null);
+        then:
+            assert(arbitrator.isAllowedToFireDuel(leader11)).isFalse();
+    });
+
     it("Checks units that may be fired on by a given unit", () => {
         given:
             var {arbitrator, map, unit12, unit11, unit21, unit22} = create2Players4UnitsTinyGame();
@@ -1242,6 +1299,19 @@ describe("Arbitrator", ()=> {
         then:
             assert(units.length).equalsTo(1);
             assert(units[0].unit).equalsTo(unit21);
+    });
+
+    it("Checks leaders that may be fired by duel", () => {
+        given:
+            var {arbitrator, map, unit11, leader11, unit21, leader21} = create2Players4UnitsTinyGame();
+            unit21.move(unit11.hexLocation.getNearHex(0).getNearHex(0));
+            leader11.move(unit11.hexLocation);
+            leader21.move(unit21.hexLocation);
+        when:
+            var foes = arbitrator.getFoesThatMayBeDuelFired(leader11);
+        then:
+            assert(foes.length).equalsTo(1);
+            assert(foes[0].unit).equalsTo(leader21);
     });
 
     it("Checks fire attack processing", () => {

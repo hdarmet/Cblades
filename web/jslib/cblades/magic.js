@@ -38,7 +38,7 @@ class SpellImageArtifact extends OptionArtifactMixin(RetractableArtifactMixin(CB
     }
 
     get layer() {
-        return this.option ? CBGame.ULAYERS.OPTIONS : CBGame.ULAYERS.SPELLS;
+        return this.counter.isOption() ? CBGame.ULAYERS.OPTIONS : CBGame.ULAYERS.SPELLS;
     }
 
 }

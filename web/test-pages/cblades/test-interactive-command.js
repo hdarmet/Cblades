@@ -547,17 +547,17 @@ describe("Interactive Command", ()=> {
                     "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
-        assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-            "save()",
-                "setTransform(1, 0, 0, 1, 449, 423.1122)",
-                "shadowColor = #00A000", "shadowBlur = 100",
-                "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
-            "restore()"
-        ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 449, 423.1122)",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             loadAllImages();
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
@@ -740,6 +740,7 @@ describe("Interactive Command", ()=> {
             rollFor1Die(4);
             clickOnDice(game);
             executeAllAnimations();
+            loadAllImages();
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
@@ -772,8 +773,8 @@ describe("Interactive Command", ()=> {
             ]);
         when:
             clickOnMessage(game);
-            resetDirectives(markersLayer, widgetsLayer, commandsLayer, itemsLayer, actuatorsLayer);
             loadAllImages();
+            resetDirectives(markersLayer, widgetsLayer, commandsLayer, itemsLayer, actuatorsLayer);
             repaint(game);
         then:
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
@@ -790,7 +791,7 @@ describe("Interactive Command", ()=> {
                     "drawImage(/CBlades/images/actuators/order.png, -52.5, -48.5, 105, 97)",
                 "restore()"
             ]);
-            assert(getDirectives(markersLayer, 6)).arrayEqualsTo([
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 534.7019, 496.2243)",
                     "shadowColor = #000000", "shadowBlur = 15",
