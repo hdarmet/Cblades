@@ -56,6 +56,39 @@ export let CBWeather = {
     STORM : 6
 }
 
+export class CBMoveProfile {
+
+    get movementPoints() {
+        return 2;
+    }
+
+    get extendedMovementPoints() {
+        return 3;
+    }
+
+    getMovementCostOnHex(hex) {
+        return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+    }
+
+    getMovementCostOnHexSide(hexSide) {
+        return {type:CBMoveProfile.COST_TYPE.ADD, value:0};
+    }
+
+    getRotationCost(angle) {
+        return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
+    }
+
+    getFormationRotationCost(angle) {
+        return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+    }
+}
+CBMoveProfile.COST_TYPE = {
+    ADD: 0,
+    SET: 1,
+    MINIMAL_MOVE : 2,
+    IMPASSABLE : 3
+};
+
 export class CBUnitType {
 
     constructor(name, troopPaths, formationPaths) {
@@ -63,6 +96,16 @@ export class CBUnitType {
         this._troopPaths = troopPaths;
         this._formationPaths = formationPaths;
         this._maxStepCount = 2;
+        this._moveProfiles = [];
+    }
+
+    getMoveProfile(steps) {
+        return this._moveProfiles[steps];
+    }
+
+    setMoveProfile(steps, moveProfile) {
+        this._moveProfiles[steps] = moveProfile;
+        return this;
     }
 
     get name() {
@@ -93,6 +136,13 @@ export class CBUnitType {
         return 4;
     }
 
+    getMovementPoints(steps) {
+        return this.getMoveProfile(steps).movementPoints;
+    }
+
+    getExtendedMovementPoints(steps) {
+        return this.getMoveProfile(steps).extendedMovementPoints;
+    }
 }
 
 export class CBWing {
@@ -267,8 +317,8 @@ export class CBUnit extends CBAbstractUnit {
         this._options = [];
         this._type = type;
         this._wing = wing;
-        this._movementPoints=2;
-        this._extendedMovementPoints=this._movementPoints*1.5;
+        this._movementPoints=type.getMovementPoints(2);
+        this._extendedMovementPoints=type.getExtendedMovementPoints(2);
         this._tiredness=0;
         this._lackOfMunitions=0;
         this._cohesion=0;
@@ -462,11 +512,17 @@ export class CBUnit extends CBAbstractUnit {
         }
     }
 
+    init(player) {
+        super.init(player);
+        if (player === this.player) {
+            this._movementPoints=this._type.getMovementPoints(this.remainingStepCount);
+            this._extendedMovementPoints=this._type.getExtendedMovementPoints(this.remainingStepCount);
+        }
+    }
+
     reset(player) {
         super.reset(player);
         if (player === this.player) {
-            this._movementPoints = 2;
-            this._extendedMovementPoints = this._movementPoints*1.5;
             this._orderGiven = false;
             delete this._attackLocation;
             this._updatePlayed();
@@ -548,8 +604,14 @@ export class CBUnit extends CBAbstractUnit {
     }
 
     _updateMovementPoints(cost) {
-        this._movementPoints -= cost;
-        this._extendedMovementPoints -= cost;
+        if (cost.type === CBMoveProfile.COST_TYPE.MINIMAL_MOVE) {
+            this._movementPoints = 0;
+            this._extendedMovementPoints = 0;
+        }
+        else {
+            this._movementPoints -= cost.value;
+            this._extendedMovementPoints -= cost.value;
+        }
     }
 
     get maxStepCount() {
@@ -620,12 +682,16 @@ export class CBUnit extends CBAbstractUnit {
         return !!this._attackLocation;
     }
 
-    rotate(angle, cost) {
+    reorient(angle) {
         Memento.register(this);
         this._element.rotate(angle);
         for (let carried of this._carried) {
             carried._rotate(angle);
         }
+    }
+
+    rotate(angle, cost) {
+        this.reorient(angle);
         this._updateMovementPoints(cost);
     }
 
@@ -841,6 +907,10 @@ export class CBUnit extends CBAbstractUnit {
         this._lackOfMunitionsArtifact && artifacts.push(this._lackOfMunitionsArtifact);
         this._tirednessArtifact && artifacts.push(this._tirednessArtifact);
         this._playedArtifact && artifacts.push(this._playedArtifact);
+    }
+
+    get moveProfile() {
+        return this._type.getMoveProfile(this.remainingStepCount);
     }
 
 }

@@ -9,8 +9,8 @@ import {
     DDice, DIconMenuItem, DInsert, DMask, DResult, DScene
 } from "../widget.js";
 import {
-    CBAction, CBActuator,
-    CBActuatorTrigger, CBUnitActuatorTrigger, RetractableActuatorMixin
+    CBAction, CBActionActuator,
+    CBActuatorImageTrigger, CBUnitActuatorTrigger, RetractableActuatorMixin
 } from "./game.js";
 import {
     CBHexSideId
@@ -354,7 +354,7 @@ function createCombatMenuItems(unit, actions) {
     ];
 }
 
-export class CBShockAttackActuator extends RetractableActuatorMixin(CBActuator) {
+export class CBShockAttackActuator extends RetractableActuatorMixin(CBActionActuator) {
 
     constructor(action, foes) {
         super(action);
@@ -391,7 +391,7 @@ export class CBShockAttackActuator extends RetractableActuatorMixin(CBActuator) 
 
 }
 
-export class CBFireAttackActuator extends RetractableActuatorMixin(CBActuator) {
+export class CBFireAttackActuator extends RetractableActuatorMixin(CBActionActuator) {
 
     constructor(action, foes) {
         super(action);
@@ -417,19 +417,19 @@ export class CBFireAttackActuator extends RetractableActuatorMixin(CBActuator) {
 
 }
 
-export class CBRetreatActuator extends RetractableActuatorMixin(CBActuator) {
+export class CBRetreatActuator extends RetractableActuatorMixin(CBActionActuator) {
 
     constructor(action, directions) {
         super(action);
         let imageArtifacts = [];
         let bloodImage = DImage.getImage("/CBlades/images/actuators/blood.png");
-        let loss = new CBActuatorTrigger(this, "actuators", bloodImage,
+        let loss = new CBActuatorImageTrigger(this, "actuators", bloodImage,
             new Point2D(0, 0), new Dimension2D(104, 144));
         loss.loss = true;
         imageArtifacts.push(loss);
         let retreatImage = DImage.getImage("/CBlades/images/actuators/retreat-move.png");
         for (let angle in directions) {
-            let orientation = new CBActuatorTrigger(this, "actuators", retreatImage,
+            let orientation = new CBActuatorImageTrigger(this, "actuators", retreatImage,
                 new Point2D(0, 0), new Dimension2D(80, 130));
             orientation.pangle = parseInt(angle);
             orientation.position = Point2D.position(this.unit.location, directions[angle].hex.location, 0.9);
@@ -458,7 +458,7 @@ export class CBRetreatActuator extends RetractableActuatorMixin(CBActuator) {
 
 }
 
-export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActuator) {
+export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActionActuator) {
 
     constructor(action, moveDirections, rotateDirections) {
 
@@ -466,7 +466,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActua
             let moveImage = DImage.getImage("/CBlades/images/actuators/retreat-move.png");
             for (let sangle in moveDirections) {
                 let angle = parseInt(sangle);
-                let orientation = new CBActuatorTrigger(this, "actuators", moveImage,
+                let orientation = new CBActuatorImageTrigger(this, "actuators", moveImage,
                     new Point2D(0, 0), new Dimension2D(80, 130));
                 orientation.pangle = parseInt(angle);
                 orientation.rotate = false;
@@ -483,7 +483,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActua
             let rotateImage = DImage.getImage("/CBlades/images/actuators/retreat-rotate.png");
             for (let sangle in rotateDirections) {
                 let angle = parseInt(sangle);
-                let orientation = new CBActuatorTrigger(this, "actuators", rotateImage,
+                let orientation = new CBActuatorImageTrigger(this, "actuators", rotateImage,
                     new Point2D(0, 0), new Dimension2D(80, 96));
                 orientation.pangle = parseInt(angle);
                 orientation.rotate = true;

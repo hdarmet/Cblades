@@ -220,7 +220,7 @@ describe("Map", ()=> {
             assert(nearHexId.row).equalsTo(3);
             assert(hexId.isNearHex(nearHexId)).equalsTo(300);
         when:
-            var nearSide = hexId.getHexSide(60);
+            var nearSide = hexId.toward(60);
         then:
             assert(nearSide.fromHex).equalsTo(hexId);
             assert(nearSide.toHex).equalsTo(map.getHex(4, 3));
@@ -277,7 +277,7 @@ describe("Map", ()=> {
             assert(nearHexId.row).equalsTo(3);
             assert(hexId.isNearHex(nearHexId)).equalsTo(300);
         when:
-            var nearSide = hexId.getHexSide(60);
+            var nearSide = hexId.toward(60);
         then:
             assert(nearSide.fromHex).equalsTo(hexId);
             assert(nearSide.toHex).equalsTo(map.getHex(5, 3));
@@ -340,7 +340,7 @@ describe("Map", ()=> {
             assert(hexSide.isNearHex(hexId1.getNearHex(0))).equalsTo(330);
             assert(hexSide.isNearHex(hexId1.getNearHex(240))).equalsTo(240);
             assert(hexSide.isNearHex(hexId2.getNearHex(60))).equalsTo(60);
-            assert(hexSide.turnTo(hexId2, 180).toString()).equalsTo("Hexside(Hex(4, 3), Hex(5, 4))");
+            assert(hexSide.turnTo(180).toString()).equalsTo("Hexside(Hex(4, 3), Hex(5, 4))");
     });
 
     it("Checks hexSideIds face hexes on even column", () => {

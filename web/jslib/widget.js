@@ -949,7 +949,7 @@ export class DResult extends DElement {
 
 class MessageImageArtifact extends DImageArtifact {
 
-    constructor(image, dimension) {
+    constructor() {
         super("widget-commands",
             DImage.getImage("/CBlades/images/dice/message.png"),
             new Point2D(0, 0), MessageImageArtifact.DIMENSION, 0);
@@ -1045,6 +1045,10 @@ class DMaskArtifact extends DArtifact {
         console.assert(this._level);
         this._level.setFillSettings(this._color);
         this._level.fillRect(new Point2D(0, 0), this._level.viewportDimension);
+    }
+
+    get capture() {
+        return true;
     }
 
     get area() {

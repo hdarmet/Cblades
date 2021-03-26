@@ -505,7 +505,7 @@ describe("Interactive Combat", ()=> {
             );
             game.currentPlayer = player2;
             formation2.angle = 330;
-            formation2.move(map.getHex(5, 8).getHexSide(60), 0);
+            formation2.move(map.getHex(5, 8).toward(60), 0);
             unit1.move(map.getHex(5, 7));
             unit1.angle = 180;
             clickOnCounter(game, formation2);
@@ -1134,7 +1134,7 @@ describe("Interactive Combat", ()=> {
             );
             game.currentPlayer = player2;
             formation2.angle = 330;
-            formation2.move(map.getHex(5, 8).getHexSide(60), 0);
+            formation2.move(map.getHex(5, 8).toward(60), 0);
             unit1.move(map.getHex(5, 6));
             unit1.angle = 180;
             clickOnCounter(game, formation2);

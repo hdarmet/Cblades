@@ -57,6 +57,18 @@ export class CBHexId {
         return [this];
     }
 
+    get type() {
+        return this.hex.type;
+    }
+
+    set type(type) {
+        this.hex.type = type;
+    }
+
+    changeType(type) {
+        this.hex.changeType(type);
+    }
+
     similar(hexId) {
         return this.location.equalsTo(hexId.location);
     }
@@ -138,8 +150,12 @@ export class CBHexId {
         return this === hexId;
     }
 
-    getHexSide(angle) {
+    toward(angle) {
         return new CBHexSideId(this, this.getNearHex(angle));
+    }
+
+    to(hex) {
+        return new CBHexSideId(this, hex);
     }
 
 }
@@ -185,6 +201,18 @@ export class CBHexSideId {
 
     get hexes() {
         return [this._fromHex, this._toHex];
+    }
+
+    get type() {
+        return this.fromHex.hex.getSideType(this.angle);
+    }
+
+    set type(type) {
+        this.fromHex.hex.setSideType(this.angle, type);
+    }
+
+    changeType(type) {
+        this.fromHex.hex.changeSideType(this.angle, type);
     }
 
     getFaceHex(angle) {
@@ -257,10 +285,23 @@ export class CBHexSideId {
         this.fromHex._deletePlayable(playable);
     }
 
-    turnTo(hex, angle) {
-        let pivot = this.getOtherHex(hex);
+    turnTo(angle) {
+        let hsAngle = this.angle;
+        let fhAngle1 = (hsAngle+60)%360;
+        let fhAngle2 = (hsAngle+300)%360;
+        let pivot = (angle===fhAngle1 || angle===fhAngle2) ? this._toHex : this._fromHex;
+        let hex = (angle===fhAngle1 || angle===fhAngle2) ? this._fromHex : this._toHex;
         let newHex = hex.getNearHex(angle);
         return new CBHexSideId(pivot, newHex);
+    }
+
+    turnMove(angle) {
+        let hsAngle = this.angle;
+        let fhAngle1 = (hsAngle+60)%360;
+        let fhAngle2 = (hsAngle+300)%360;
+        let hex = (angle===fhAngle1 || angle===fhAngle2) ? this._fromHex : this._toHex;
+        let newHex = hex.getNearHex(angle);
+        return new CBHexSideId(hex, newHex);
     }
 
     toString() {
@@ -313,12 +354,20 @@ export class CBHexVertexId {
 
 }
 
-class CBHex {
+export class CBHex {
 
     constructor(map, col, row) {
+        console.assert(col+row !== NaN);
         this._id = new CBHexId(map, col, row);
         this._playables = [];
         this._units = [];
+        this._hexType = {
+            type: CBHex.HEX_TYPES.OUTDOOR_CLEAR,
+            side120 : CBHex.HEXSIDE_TYPES.NORMAL,
+            side180 : CBHex.HEXSIDE_TYPES.NORMAL,
+            side240 : CBHex.HEXSIDE_TYPES.NORMAL
+        };
+
     }
 
     get id() {
@@ -328,13 +377,67 @@ class CBHex {
     _memento() {
         return {
             units: [...this._units],
-            playables: [...this._playables]
+            playables: [...this._playables],
+            type: this._hexType.type,
+            side120 : this._hexType.side120,
+            side180 : this._hexType.side180,
+            side240 : this._hexType.side240
         }
     }
 
     _revert(memento) {
         this._units = memento.units;
         this._playables = memento.playables;
+        this._hexType.side120 = memento.side120;
+        this._hexType.side180 = memento.side180;
+        this._hexType.side240 = memento.side240;
+    }
+
+    get type() {
+        return this._hexType.type;
+    }
+
+    set type(type) {
+        this._hexType.type = type;
+    }
+
+    changeType(type) {
+        Memento.register(this);
+        this._hexType.type = type;
+    }
+
+    getSideType(angle) {
+        switch (angle) {
+            case 0: return this._id.map._nearHex(this._id, 0).getSideType(180);
+            case 60: return this._id.map._nearHex(this._id, 60).getSideType(240);
+            case 120: return this._hexType.side120;
+            case 180: return this._hexType.side180;
+            case 240: return this._hexType.side240;
+            case 300: return this._id.map._nearHex(this._id, 300).getSideType(120);
+        }
+    }
+
+    setSideType(angle, type) {
+        switch (angle) {
+            case 0: this._id.map._nearHex(this._id, 0).setSideType(180, type); return;
+            case 60: this._id.map._nearHex(this._id, 60).setSideType(240, type); return;
+            case 120: this._hexType.side120 = type; return;
+            case 180: this._hexType.side180 = type; return;
+            case 240: this._hexType.side240 = type; return;
+            case 300: this._id.map._nearHex(this._id, 300).setSideType(120, type); return;
+        }
+    }
+
+    changeSideType(angle, type) {
+        Memento.register(this);
+        switch (angle) {
+            case 0: this._id.map._nearHex(this._id, 0).changeSideType(180, type); return;
+            case 60: this._id.map._nearHex(this._id, 60).changeSideType(240, type); return;
+            case 120: Memento.register(this); this._hexType.side120 = type; return;
+            case 180: Memento.register(this); this._hexType.side180 = type; return;
+            case 240: Memento.register(this); this._hexType.side240 = type; return;
+            case 300: this._id.map._nearHex(this._id, 300).changeSideType(120, type); return;
+        }
     }
 
     addPlayable(playable) {
@@ -417,6 +520,30 @@ class CBHex {
         return this._units;
     }
 }
+CBHex.HEX_TYPES = {
+    OUTDOOR_CLEAR : 0,
+    OUTDOOR_ROUGH : 1,
+    OUTDOOR_DIFFICULT : 2,
+    OUTDOOR_CLEAR_FLAMMABLE : 3,
+    OUTDOOR_ROUGH_FLAMMABLE : 4,
+    OUTDOOR_DIFFICULT_FLAMMABLE : 5,
+    WATER : 6,
+    LAVA : 7,
+    IMPASSABLE : 8,
+    CAVE_CLEAR : 9,
+    CAVE_ROUGH : 10,
+    CAVE_DIFFICULT : 11,
+    CAVE_CLEAR_FLAMMABLE : 12,
+    CAVE_ROUGH_FLAMMABLE : 13,
+    CAVE_DIFFICULT_FLAMMABLE : 14,
+};
+CBHex.HEXSIDE_TYPES = {
+    NORMAL : 0,
+    EASY : 1,
+    DIFFICULT : 2,
+    CLIMB : 3,
+    WALL : 4
+};
 
 class MapImageArtifact extends DImageArtifact {
 
@@ -445,6 +572,45 @@ export class CBMap {
         let y = CBMap.HEIGHT/CBMap.ROW_COUNT * hexId.row-CBMap.HEIGHT/2;
         if (hexId.col%2) y-= CBMap.HEIGHT/CBMap.ROW_COUNT/2;
         return new Point2D(x, y);
+    }
+
+    inMap(hex) {
+        let location = hex.location;
+        return location.x<=CBMap.WIDTH && location.y<=CBMap.HEIGHT;
+    }
+
+    get hexes() {
+        let hexes = [];
+        for (let col=0; col<=CBMap.COL_COUNT; col++) {
+            for (let row=0; row<=CBMap.ROW_COUNT; row++) {
+                let hex = this.getHex(col, row);
+                if (this.inMap(hex)) {
+                    hexes.push(hex);
+                }
+            }
+        }
+        return hexes;
+    }
+
+    get hexSides() {
+        let hexSides = [];
+        let hexes = this.hexes;
+        let hexSet = new Set(hexes);
+        for (let hex of hexes) {
+            let nextHex = hex.getNearHex(120);
+            if (this.inMap(nextHex)) {
+                hexSides.push(new CBHexSideId(hex, nextHex));
+            }
+            nextHex = hex.getNearHex(180);
+            if (this.inMap(nextHex)) {
+                hexSides.push(new CBHexSideId(hex, nextHex));
+            }
+            nextHex = hex.getNearHex(240);
+            if (this.inMap(nextHex)) {
+                hexSides.push(new CBHexSideId(hex, nextHex));
+            }
+        }
+        return hexSides;
     }
 
     _hex(col, row) {
@@ -551,11 +717,15 @@ export class CBMap {
         }
     }
 
-    findNearHex(hexId, angle) {
+    _nearHex(hexId, angle) {
         return this._hex(
             this._findNearCol(hexId.col, hexId.row, angle),
             this._findNearRow(hexId.col, hexId.row, angle)
-        ).id;
+        );
+    }
+
+    findNearHex(hexId, angle) {
+        return this._nearHex(hexId, angle).id;
     }
 
     _findFaceCol(c1, r1, c2, r2, angle) {

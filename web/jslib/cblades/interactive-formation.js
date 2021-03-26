@@ -10,7 +10,7 @@ import {
     CBHexSideId, CBMoveType
 } from "./map.js";
 import {
-    CBAction, CBActuator, CBActuatorTrigger
+    CBAction, CBActionActuator, CBActuatorImageTrigger
 } from "./game.js";
 import {
     Dimension2D, Point2D, sumAngle
@@ -173,14 +173,14 @@ export class InteractiveIncludeTroopsAction extends CBAction {
 
 }
 
-export class CBCreateFormationActuator extends CBActuator {
+export class CBCreateFormationActuator extends CBActionActuator {
 
     constructor(action, joinableHexes) {
         super(action);
         let image = DImage.getImage("/CBlades/images/actuators/formation.png");
         let imageArtifacts = [];
         for (let hex of joinableHexes) {
-            let creation = new CBActuatorTrigger(this, "actuators", image,
+            let creation = new CBActuatorImageTrigger(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(80, 170));
             creation.position = Point2D.position(this.unit.location, new CBHexSideId(action.unit.hexLocation, hex).location, 1);
             creation.hex = hex;
@@ -200,12 +200,12 @@ export class CBCreateFormationActuator extends CBActuator {
 
 }
 
-export class CBReleaseTroopActuator extends CBActuator {
+export class CBReleaseTroopActuator extends CBActionActuator {
 
     constructor(action, hexes, stepCount) {
 
         function _createTrigger(image, hex, angle, factor, stepCount, moveType) {
-            let trigger = new CBActuatorTrigger(this, "actuators", image,
+            let trigger = new CBActuatorImageTrigger(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(64, 60));
             let startLocation = Point2D.position(this.unit.location, hex.location, factor);
             let targetPosition = Point2D.position(hex.location, hex.getNearHexSide(angle).location, 0.5);

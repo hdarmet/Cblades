@@ -10,8 +10,8 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBAction, CBActuator, CBGame,
-    CBActuatorTrigger, CBUnitActuatorTrigger, RetractableActuatorMixin
+    CBAction, CBActionActuator, CBGame,
+    CBActuatorImageTrigger, CBUnitActuatorTrigger, RetractableActuatorMixin
 } from "./game.js";
 import {
     DImage
@@ -348,7 +348,7 @@ export class CBOrderInstructionMenu extends DIconMenu {
 
 }
 
-export class CBOrderGivenActuator extends RetractableActuatorMixin(CBActuator) {
+export class CBOrderGivenActuator extends RetractableActuatorMixin(CBActionActuator) {
 
     constructor(action, units) {
         super(action);

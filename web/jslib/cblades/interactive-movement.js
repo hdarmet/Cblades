@@ -15,10 +15,10 @@ import {
     CBHexSideId, CBMoveType, CBPathFinding
 } from "./map.js";
 import {
-    CBAction, CBActuator, CBActuatorTrigger
+    CBAction, CBActionActuator, CBActuatorImageTrigger, CBActuatorTriggerMixin
 } from "./game.js";
 import {
-    CBMovement
+    CBMovement, CBMoveProfile
 } from "./unit.js";
 import {
     DImage
@@ -26,6 +26,9 @@ import {
 import {
     CBActionMenu, CBInteractivePlayer, CBMoralInsert
 } from "./interactive-player.js";
+import {
+    DImageArtifact
+} from "../board.js";
 
 export function registerInteractiveMovement() {
     CBInteractivePlayer.prototype.startMoveUnit = function (unit, event) {
@@ -76,18 +79,18 @@ export class InteractiveAbstractMovementAction extends CBAction {
 
     getFormationAllowedMoves(start) {
         let moveDirections = this.game.arbitrator.getFormationAllowedMoves(this.unit, start);
-        let rotateDirections = this.game.arbitrator.getFormationAllowedRotations(this.unit, start);
-        return {moveDirections, rotateDirections};
+        let turnDirections = this.game.arbitrator.getFormationAllowedTurns(this.unit, start);
+        return {moveDirections, turnDirections};
     }
 
     _buildMoveActuator(start) {
         if (this.unit.formationNature) {
-            let  {moveDirections, rotateDirections} = this.getFormationAllowedMoves(start);
-            if (moveDirections.length || rotateDirections.length) {
-                let moveFormationActuator = this.createFormationMoveActuator(moveDirections, rotateDirections, start);
+            let  {moveDirections, turnDirections} = this.getFormationAllowedMoves(start);
+            if (moveDirections.length || turnDirections.length) {
+                let moveFormationActuator = this.createFormationMoveActuator(moveDirections, turnDirections, start);
                 this.game.openActuator(moveFormationActuator);
             }
-            return moveDirections.length + rotateDirections.length;
+            return moveDirections.length + turnDirections.length;
         }
         else {
             let moveDirections = this.getAllowedMoves(start)
@@ -99,10 +102,15 @@ export class InteractiveAbstractMovementAction extends CBAction {
         }
     }
 
+    _buildHelpActuator() {
+        let helpActuator = this.createHelpActuator();
+        this.game.openActuator(helpActuator);
+    }
+
     _buildRotationActuator(start) {
         let orientationDirections = this.getAllowedRotations(start)
         if (orientationDirections.length) {
-            let orientationActuator = this.createOrientationActuator(orientationDirections, start);
+            let orientationActuator = this.createRotationActuator(orientationDirections, start);
             this.game.openActuator(orientationActuator);
         }
         return orientationDirections.length;
@@ -110,7 +118,13 @@ export class InteractiveAbstractMovementAction extends CBAction {
 
     _createMovementActuators(start) {
         this.game.closeActuators();
-        return (this._buildMoveActuator(start) + this._buildRotationActuator(start)) !== 0;
+        if ((this._buildMoveActuator(start) + this._buildRotationActuator(start)) !== 0) {
+            this._buildHelpActuator()
+           return true;
+        }
+        else {
+            return false;
+        }
     }
 
     _createMoveActuator(start) {
@@ -146,20 +160,31 @@ export class InteractiveAbstractMovementAction extends CBAction {
         return false
     }
 
-    moveUnit(hexId, start) {
+    _displaceUnit(hexLocation, start, cost) {
         this.game.closeActuators();
-        let cost = this.game.arbitrator.getMovementCost(this.unit, hexId);
         cost = this._updateTirednessForMovement(cost, start);
-        this.unit.move(hexId, cost, CBMoveType.FORWARD);
+        this.unit.move(hexLocation, cost, CBMoveType.FORWARD);
         let played = !this._continueAfterMove();
         this._markUnitActivationAfterMovement(played);
     }
 
-    reorientUnit(angle) {
-        this.unit.rotate(angle, 0);
+    moveUnit(hexId, angle, start) {
+        this._displaceUnit(hexId, start, this.game.arbitrator.getMovementCost(this.unit, angle));
     }
 
-    _updateTirednessForMovement(cost, first) {
+    moveFormation(hexSideId, angle, start) {
+        this._displaceUnit(hexSideId, start, this.game.arbitrator.getFormationMovementCost(this.unit, angle));
+    }
+
+    turnFormation(hexSideId, angle, start) {
+        this._displaceUnit(hexSideId, start, this.game.arbitrator.getFormationTurnCost(this.unit, angle));
+    }
+
+    reorientUnit(angle) {
+        this.unit.reorient(angle);
+    }
+
+    _updateTirednessForMovement(cost) {
         if (this.game.arbitrator.doesMovementInflictTiredness(this.unit, cost)) {
             this.unit.addOneTirednessLevel();
         }
@@ -173,16 +198,20 @@ export class InteractiveAbstractMovementAction extends CBAction {
         return cost;
     }
 
-    createOrientationActuator(directions, first) {
-        return new CBOrientationActuator(this, directions, first);
+    createHelpActuator(directions, first) {
+        return new CBHelpActuator(this, directions, first);
+    }
+
+    createRotationActuator(directions, first) {
+        return new CBRotationActuator(this, directions, first);
     }
 
     createMoveActuator(directions, first) {
         return new CBMoveActuator(this, directions, first);
     }
 
-    createFormationMoveActuator(moveDirections, rotateDirections, first) {
-        return new CBFormationMoveActuator(this, moveDirections, rotateDirections, first);
+    createFormationMoveActuator(moveDirections, turnDirections, first) {
+        return new CBFormationMoveActuator(this, moveDirections, turnDirections, first);
     }
 
 }
@@ -244,6 +273,22 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
 
     }
 
+    showRules(point) {
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+        }
+        mask.setAction(close);
+        mask.open(this.game.board, point);
+        scene.addWidget(
+            new CBMovementTableInsert(), new Point2D(0, -CBMovementTableInsert.DIMENSION.h/2)
+        ).addWidget(
+            new CBMovementInsert(), new Point2D(-CBMovementInsert.DIMENSION.w/2, CBMovementInsert.DIMENSION.h/2)
+        ).open(this.game.board, point);
+    }
+
     _processAttackerEngagementResult(diceResult) {
         let result = this.game.arbitrator.processAttackerEngagementResult(this.unit, diceResult);
         if (!result.success) {
@@ -254,7 +299,13 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
 
     _continueAfterRotation() {
         this.unit.markAsEngaging(this.game.arbitrator.doesUnitEngage(this.unit));
-        return this._createMoveActuator(false);
+        if (this._createMoveActuator(false)) {
+            this._buildHelpActuator();
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     _continueAfterMove() {
@@ -275,13 +326,39 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
         let pathFinding = new CBPathFinding(this.unit.hexLocation, this.unit.angle, this.unit.wing.retreatZone,
             (from, to)=>{
                 let angle = from.getAngle(to);
-                return this.game.arbitrator.getMovementCost(this.unit, angle, from, angle);
+                let cost = this.game.arbitrator.getMovementCost(this.unit, angle, from, angle);
+                switch(cost.type) {
+                    case CBMoveProfile.COST_TYPE.IMPASSABLE: return 10000;
+                    case CBMoveProfile.COST_TYPE.MINIMAL_MOVE: return this.unit.type.getExtendedMovementPoints(this.unit.remainingStepCount);
+                    default: return cost.value;
+                }
             },
             (hex, fromAngle, toAngle)=>{
-                return this.game.arbitrator.getRotationCost(this.unit, toAngle, fromAngle, hex);
+                let cost = this.game.arbitrator.getRotationCost(this.unit, toAngle, fromAngle, hex);
+                switch(cost.type) {
+                    case CBMoveProfile.COST_TYPE.IMPASSABLE: return 10000;
+                    case CBMoveProfile.COST_TYPE.MINIMAL_MOVE: return this.unit.type.getExtendedMovementPoints(this.unit.remainingStepCount);
+                    default: return cost.value;
+                }
             }
         );
         this._goodMoves = new Set(pathFinding.getGoodNextMoves());
+    }
+
+    showRules(point) {
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+        }
+        mask.setAction(close);
+        mask.open(this.game.board, point);
+        scene.addWidget(
+            new CBMovementTableInsert(), new Point2D(0, -CBMovementTableInsert.DIMENSION.h/2)
+        ).addWidget(
+            new CBRoutInsert(), new Point2D(-CBRoutInsert.DIMENSION.w/2, CBRoutInsert.DIMENSION.h/2)
+        ).open(this.game.board, point);
     }
 
     _createMovementActuators(start) {
@@ -368,11 +445,17 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     }
 
     _updateTirednessForRotation(cost, first) {
-        return first ? 0 : super._updateTirednessForRotation(cost, first);
+        return first ? {type:CBMoveProfile.COST_TYPE.SET, value:0} : super._updateTirednessForRotation(cost, first);
     }
 
     _continueAfterRotation() {
-        return this._createMoveActuator(false);
+        if (this._createMoveActuator(false)) {
+            this._buildHelpActuator();
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     _continueAfterMove() {
@@ -438,6 +521,22 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
 
     }
 
+    showRules(point) {
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+        }
+        mask.setAction(close);
+        mask.open(this.game.board, point);
+        scene.addWidget(
+            new CBMovementTableInsert(), new Point2D(0, -CBMovementTableInsert.DIMENSION.h/2)
+        ).addWidget(
+            new CBMoveBackInsert(), new Point2D(-CBMoveBackInsert.DIMENSION.w/2, CBMoveBackInsert.DIMENSION.h/2)
+        ).open(this.game.board, point);
+    }
+
     _processDisengagementResult(diceResult) {
         let result = this.game.arbitrator.processDisengagementResult(this.unit, diceResult);
         if (!result.success) {
@@ -456,8 +555,8 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
 
     getFormationAllowedMoves(start) {
         let moveDirections = this.game.arbitrator.getFormationAllowedMovesBack(this.unit, start);
-        let rotateDirections = this.game.arbitrator.getFormationAllowedMovesBackRotations(this.unit, start);
-        return {moveDirections, rotateDirections};
+        let turnDirections = this.game.arbitrator.getFormationAllowedMovesBackTurns(this.unit, start);
+        return {moveDirections, turnDirections};
     }
 
 }
@@ -514,6 +613,20 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
 
     }
 
+    showRules(point) {
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+        }
+        mask.setAction(close);
+        mask.open(this.game.board, point);
+        scene.addWidget(
+            new CBToFaceInsert(), new Point2D(-CBToFaceInsert.DIMENSION.w/2, 0)
+        ).open(this.game.board, point);
+    }
+
     _processConfrontEngagementResult(diceResult) {
         let result = this.game.arbitrator.processConfrontEngagementResult(this.unit, diceResult);
         if (!result.success) {
@@ -527,8 +640,8 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
     }
 
     getFormationAllowedMoves(start) {
-        let rotateDirections = this.game.arbitrator.getConfrontFormationAllowedRotations(this.unit);
-        return {moveDirections:[], rotateDirections};
+        let turnDirections = this.game.arbitrator.getConfrontFormationAllowedRotations(this.unit);
+        return {moveDirections:[],turnDirections};
     }
 
     getAllowedRotations(start) {
@@ -562,20 +675,102 @@ function createMovementMenuItems(unit, actions) {
     ];
 }
 
-export class CBOrientationActuator extends CBActuator {
+class HelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+
+    constructor(actuator) {
+        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-movement-points.png");
+        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-movement-points.png");
+        let image = actuator.unit.movementPoints>0 ? normalImage : extendedImage;
+        super(actuator,"actuators", image, new Point2D(0, 0), HelpTrigger.DIMENSION, 0);
+        this.pangle = actuator.unit.angle;
+        this.position = actuator.unit.element.getLocation(new Point2D(30, 30))
+            .translate(-actuator.unit.element.location.x, -actuator.unit.element.location.y);
+    }
+
+    _paint() {
+        super._paint();
+        let normal = this.actuator.unit.movementPoints>0;
+        this._level.setTextSettings("bold 30px serif", "center");
+        this._level.setFillSettings(normal?"#2F528F":"#bF9000");
+        this._level.fillText(
+            "" + (normal?this.actuator.unit.movementPoints:this.actuator.unit.extendedMovementPoints),
+            new Point2D(0, 10)
+        );
+    }
+}
+HelpTrigger.DIMENSION = new Dimension2D(55, 55);
+
+export class CBHelpActuator extends CBActionActuator {
+
+    constructor(action) {
+        super(action);
+        this._trigger = new HelpTrigger(this, this.unit);
+        this.initElement([this._trigger]);
+    }
+
+    getTrigger() {
+        return this._trigger;
+    }
+
+    onMouseClick(trigger, event) {
+        this.action.showRules(new Point2D(event.offsetX, event.offsetY));
+    }
+
+}
+
+class RotateTrigger extends CBActuatorImageTrigger {
+
+    constructor(actuator, type, angle, location) {
+        let normalImage = DImage.getImage("/CBlades/images/actuators/toward.png");
+        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-toward.png");
+        let image = type === CBMovement.NORMAL ? normalImage : extendedImage;
+        super(actuator, "actuators", image, new Point2D(0, 0), RotateTrigger.DIMENSION);
+        this.pangle = angle;
+        this.position = Point2D.position(actuator.unit.location, location, angle%60?0.87:0.75);
+    }
+
+}
+RotateTrigger.DIMENSION = new Dimension2D(60, 80);
+
+class RotateCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+
+    constructor(actuator, cost, type, angle, location) {
+        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-move-cost.png");
+        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-move-cost.png");
+        let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-move-cost.png");
+        let image = type === CBMovement.NORMAL ? normalImage : type === CBMovement.EXTENDED ? extendedImage : minimalImage;
+        super(actuator,"actuators", image, new Point2D(0, 0), RotateCostTrigger.DIMENSION, 0);
+        this._cost = cost;
+        this._type = type;
+        this.pangle = angle;
+        this.position = Point2D.position(actuator.unit.location, location, angle%60?0.65:0.55);
+    }
+
+    _paint() {
+        super._paint();
+        if (this._cost.value !== undefined) {
+            this._level.setTextSettings("bold 30px serif", "center");
+            this._level.setFillSettings(this._type===CBMovement.NORMAL?"#2F528F":"#bF9000");
+            this._level.fillText("" + this._cost.value, new Point2D(0, 10));
+        }
+    }
+}
+RotateCostTrigger.DIMENSION = new Dimension2D(55, 55);
+
+export class CBRotationActuator extends CBActionActuator {
 
     constructor(action, directions, first) {
         super(action);
-        let normalImage = DImage.getImage("/CBlades/images/actuators/toward.png");
-        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-toward.png");
         let imageArtifacts = [];
-        for (let angle in directions) {
-            let image = directions[angle].type === CBMovement.NORMAL ? normalImage : extendedImage;
-            let orientation = new CBActuatorTrigger(this, "actuators", image,
-                new Point2D(0, 0), new Dimension2D(60, 80));
-            orientation.position = Point2D.position(this.unit.location, directions[angle].hex.location, angle%60?0.87:0.75);
-            orientation.pangle = parseInt(angle);
-            imageArtifacts.push(orientation);
+        for (let sangle in directions) {
+            let angle = parseInt(sangle);
+            let rotateTrigger = new RotateTrigger(this, directions[angle].type, angle, directions[angle].hex.location);
+            imageArtifacts.push(rotateTrigger);
+            let cost = directions[angle].cost;
+            if (cost.value) {
+                let rotateCostTrigger = new RotateCostTrigger(this, cost, directions[angle].type, angle, directions[angle].hex.location);
+                imageArtifacts.push(rotateCostTrigger);
+            }
         }
         this.initElement(imageArtifacts);
         this._first = first;
@@ -591,22 +786,59 @@ export class CBOrientationActuator extends CBActuator {
 
 }
 
-export class CBMoveActuator extends CBActuator {
+class MoveTrigger extends CBActuatorImageTrigger {
 
-    constructor(action, directions, first) {
-        super(action);
+    constructor(actuator, type, angle, location) {
         let normalImage = DImage.getImage("/CBlades/images/actuators/standard-move.png");
         let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-move.png");
         let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-move.png");
+        let image = type === CBMovement.NORMAL ? normalImage : type === CBMovement.EXTENDED ? extendedImage : minimalImage;
+        super(actuator, "actuators", image, new Point2D(0, 0), MoveTrigger.DIMENSION);
+        this.pangle = angle;
+        this.position = Point2D.position(actuator.unit.location, location, 0.9);
+    }
+
+}
+MoveTrigger.DIMENSION = new Dimension2D(80, 130);
+
+class MoveCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+
+    constructor(actuator, cost, type, angle, location) {
+        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-move-cost.png");
+        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-move-cost.png");
+        let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-move-cost.png");
+        let image = type === CBMovement.NORMAL ? normalImage : type === CBMovement.EXTENDED ? extendedImage : minimalImage;
+        super(actuator,"actuators", image, new Point2D(0, 0), MoveCostTrigger.DIMENSION, 0);
+        this._cost = cost;
+        this._type = type;
+        this.pangle = angle;
+        this.position = Point2D.position(actuator.unit.location, location, 1.3);
+    }
+
+    _paint() {
+        super._paint();
+        if (this._cost.value !== undefined) {
+            this._level.setTextSettings("bold 35px serif", "center");
+            this._level.setFillSettings(this._type===CBMovement.NORMAL?"#2F528F":"#bF9000");
+            this._level.fillText("" + this._cost.value, new Point2D(0, 10));
+        }
+    }
+}
+MoveCostTrigger.DIMENSION = new Dimension2D(70, 70);
+
+export class CBMoveActuator extends CBActionActuator {
+
+    constructor(action, directions, first) {
+        super(action);
         let imageArtifacts = [];
-        for (let angle in directions) {
-            let image = directions[angle].type === CBMovement.NORMAL ? normalImage :
-                directions[angle].type === CBMovement.EXTENDED ? extendedImage : minimalImage;
-            let orientation = new CBActuatorTrigger(this, "actuators", image,
-                new Point2D(0, 0), new Dimension2D(80, 130));
-            orientation.pangle = parseInt(angle);
-            orientation.position = Point2D.position(this.unit.location, directions[angle].hex.location, 0.9);
-            imageArtifacts.push(orientation);
+        for (let sangle in directions) {
+            let angle = parseInt(sangle);
+            let costTrigger = new MoveCostTrigger(this,directions[angle].cost,
+                directions[angle].type, angle, directions[angle].hex.location);
+            imageArtifacts.push(costTrigger);
+            let moveTrigger = new MoveTrigger(this,
+                directions[angle].type, angle, directions[angle].hex.location);
+            imageArtifacts.push(moveTrigger);
         }
         this.initElement(imageArtifacts);
         this._first = first;
@@ -617,52 +849,128 @@ export class CBMoveActuator extends CBActuator {
     }
 
     onMouseClick(trigger, event) {
-        this.action.moveUnit(this.unit.hexLocation.getNearHex(trigger.angle), this._first);
+        this.action.moveUnit(this.unit.hexLocation.getNearHex(trigger.angle), trigger.angle, this._first);
     }
 
 }
 
-export class CBFormationMoveActuator extends CBActuator {
+class MoveFormationTrigger extends CBActuatorImageTrigger {
 
-    constructor(action, moveDirections, rotateDirections, first) {
+    constructor(actuator, type, hex, angle) {
+        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-move.png");
+        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-move.png");
+        let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-move.png");
+        let image = type === CBMovement.NORMAL ? normalImage : type === CBMovement.EXTENDED ? extendedImage : minimalImage;
+        super(actuator, "actuators", image, new Point2D(0, 0), MoveFormationTrigger.DIMENSION);
+        this.pangle = angle;
+        this.rotate = false;
+        let unitHex =  hex.getNearHex((angle+180)%360);
+        let startLocation = Point2D.position(actuator.unit.location, unitHex.location, 1);
+        let targetPosition = Point2D.position(unitHex.location, hex.location, 0.9);
+        this.position = startLocation.concat(targetPosition);
+    }
+
+}
+MoveFormationTrigger.DIMENSION = new Dimension2D(80, 130);
+
+class MoveFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+
+    constructor(actuator, cost, type, hex, angle) {
+        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-move-cost.png");
+        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-move-cost.png");
+        let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-move-cost.png");
+        let image = type === CBMovement.NORMAL ? normalImage : type === CBMovement.EXTENDED ? extendedImage : minimalImage;
+        super(actuator,"actuators", image, new Point2D(0, 0), MoveFormationCostTrigger.DIMENSION, 0);
+        this._cost = cost;
+        this._type = type;
+        this.pangle = angle;
+        this.rotate = false;
+        let unitHex =  hex.getNearHex((angle+180)%360);
+        let startLocation = Point2D.position(actuator.unit.location, unitHex.location, 1);
+        let targetPosition = Point2D.position(unitHex.location, hex.location, 1.3);
+        this.position = startLocation.concat(targetPosition);
+    }
+
+    _paint() {
+        super._paint();
+        if (this._cost.value !== undefined) {
+            this._level.setTextSettings("bold 35px serif", "center");
+            this._level.setFillSettings(this._type===CBMovement.NORMAL?"#2F528F":"#bF9000");
+            this._level.fillText("" + this._cost.value, new Point2D(0, 10));
+        }
+    }
+}
+MoveFormationCostTrigger.DIMENSION = new Dimension2D(70, 70);
+
+class TurnFormationTrigger extends CBActuatorImageTrigger {
+
+    constructor(actuator, type, hex, angle) {
+        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-turn.png");
+        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-turn.png");
+        let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-turn.png");
+        let image = type === CBMovement.NORMAL ? normalImage : type === CBMovement.EXTENDED ? extendedImage : minimalImage;
+        super(actuator, "actuators", image, new Point2D(0, 0), TurnFormationTrigger.DIMENSION);
+        this.pangle = angle;
+        this.rotate = true;
+        this.hex =  hex.getNearHex((angle+180)%360);
+        let startLocation = Point2D.position(actuator.unit.location, this.hex.location, 1.5);
+        let targetPosition = Point2D.position(this.hex.location, hex.location, 0.8);
+        this.position = startLocation.concat(targetPosition);
+    }
+
+}
+TurnFormationTrigger.DIMENSION = new Dimension2D(80, 96);
+
+class TurnFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+
+    constructor(actuator, cost, type, hex, angle) {
+        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-turn-cost.png");
+        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-turn-cost.png");
+        let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-turn-cost.png");
+        let image = type === CBMovement.NORMAL ? normalImage : type === CBMovement.EXTENDED ? extendedImage : minimalImage;
+        super(actuator,"actuators", image, new Point2D(0, 0), MoveFormationCostTrigger.DIMENSION, 0);
+        this._cost = cost;
+        this._type = type;
+        this.pangle = angle;
+        this.rotate = true;
+        this.hex =  hex.getNearHex((angle+180)%360);
+        let startLocation = Point2D.position(actuator.unit.location, this.hex.location, 1.5);
+        let targetPosition = Point2D.position(this.hex.location, hex.location, 1.1);
+        this.position = startLocation.concat(targetPosition);
+    }
+
+    _paint() {
+        super._paint();
+        if (this._cost.value !== undefined) {
+            this._level.setTextSettings("bold 35px serif", "center");
+            this._level.setFillSettings(this._type===CBMovement.NORMAL?"#2F528F":"#bF9000");
+            this._level.fillText("" + this._cost.value, new Point2D(0, 10));
+        }
+    }
+}
+TurnFormationCostTrigger.DIMENSION = new Dimension2D(70, 70);
+
+export class CBFormationMoveActuator extends CBActionActuator {
+
+    constructor(action, moveDirections, turnDirections, first) {
 
         function createMoveTriggers(imageArtifacts) {
-            let normalMoveImage = DImage.getImage("/CBlades/images/actuators/standard-move.png");
-            let extendedMoveImage = DImage.getImage("/CBlades/images/actuators/extended-move.png");
-            let minimalMoveImage = DImage.getImage("/CBlades/images/actuators/minimal-move.png");
             for (let sangle in moveDirections) {
                 let angle = parseInt(sangle);
-                let image = moveDirections[angle].type === CBMovement.NORMAL ? normalMoveImage :
-                    moveDirections[angle].type === CBMovement.EXTENDED ? extendedMoveImage : minimalMoveImage;
-                let orientation = new CBActuatorTrigger(this, "actuators", image,
-                    new Point2D(0, 0), new Dimension2D(80, 130));
-                orientation.pangle = parseInt(angle);
-                orientation.rotate = false;
-                let unitHex =  moveDirections[angle].hex.getNearHex((angle+180)%360);
-                let startLocation = Point2D.position(this.unit.location, unitHex.location, 1);
-                let targetPosition = Point2D.position(unitHex.location, moveDirections[angle].hex.location, 0.9);
-                orientation.position = startLocation.concat(targetPosition);
-                imageArtifacts.push(orientation);
+                let moveCostTrigger = new MoveFormationCostTrigger(this, moveDirections[angle].cost, moveDirections[angle].type, moveDirections[angle].hex, angle);
+                imageArtifacts.push(moveCostTrigger);
+                let moveTrigger = new MoveFormationTrigger(this, moveDirections[angle].type, moveDirections[angle].hex, angle);
+                imageArtifacts.push(moveTrigger);
             }
         }
 
         function createRotateTriggers(imageArtifacts) {
-            let normalRotateImage = DImage.getImage("/CBlades/images/actuators/standard-rotate.png");
-            let extendedRotateImage = DImage.getImage("/CBlades/images/actuators/extended-rotate.png");
-            let minimalRotateImage = DImage.getImage("/CBlades/images/actuators/minimal-rotate.png");
-            for (let sangle in rotateDirections) {
+            for (let sangle in turnDirections) {
                 let angle = parseInt(sangle);
-                let image = rotateDirections[angle].type === CBMovement.NORMAL ? normalRotateImage :
-                    rotateDirections[angle].type === CBMovement.EXTENDED ? extendedRotateImage : minimalRotateImage;
-                let orientation = new CBActuatorTrigger(this, "actuators", image,
-                    new Point2D(0, 0), new Dimension2D(80, 96));
-                orientation.pangle = parseInt(angle);
-                orientation.rotate = true;
-                orientation.hex =  rotateDirections[angle].hex.getNearHex((angle+180)%360);
-                let startLocation = Point2D.position(this.unit.location, orientation.hex.location, 1.5);
-                let targetPosition = Point2D.position(orientation.hex.location, rotateDirections[angle].hex.location, 0.9);
-                orientation.position = startLocation.concat(targetPosition);
-                imageArtifacts.push(orientation);
+                let turnCostTrigger = new TurnFormationCostTrigger(this, turnDirections[angle].cost, turnDirections[angle].type, turnDirections[angle].hex, angle);
+                imageArtifacts.push(turnCostTrigger);
+                let turnTrigger = new TurnFormationTrigger(this, turnDirections[angle].type, turnDirections[angle].hex, angle);
+                imageArtifacts.push(turnTrigger);
             }
         }
 
@@ -682,12 +990,12 @@ export class CBFormationMoveActuator extends CBActuator {
         if (trigger.rotate) {
             let delta = diffAngle(this.unit.angle, trigger.angle)*2;
             this.action.reorientUnit(sumAngle(this.unit.angle, delta));
-            this.action.moveUnit(this.unit.hexLocation.turnTo(trigger.hex, trigger.angle));
+            this.action.turnFormation(this.unit.hexLocation.turnTo(trigger.angle), trigger.angle);
         }
         else {
             let hex1 = this.unit.hexLocation.fromHex.getNearHex(trigger.angle);
             let hex2 = this.unit.hexLocation.toHex.getNearHex(trigger.angle);
-            this.action.moveUnit(new CBHexSideId(hex1, hex2));
+            this.action.moveFormation(new CBHexSideId(hex1, hex2), trigger.angle);
         }
     }
 
@@ -719,3 +1027,52 @@ export class CBCheckDisengagementInsert extends DInsert {
 
 }
 CBCheckDisengagementInsert.DIMENSION = new Dimension2D(444, 797);
+
+export class CBMovementTableInsert extends DInsert {
+
+    constructor() {
+        super("/CBlades/images/inserts/movement-table-insert.png", CBMovementTableInsert.DIMENSION, CBMovementTableInsert.PAGE_DIMENSION);
+    }
+
+}
+CBMovementTableInsert.DIMENSION = new Dimension2D(900, 366);
+CBMovementTableInsert.PAGE_DIMENSION = new Dimension2D(1041, 366);
+
+export class CBMovementInsert extends DInsert {
+
+    constructor() {
+        super("/CBlades/images/inserts/movement-insert.png", CBMovementInsert.DIMENSION, CBMovementInsert.PAGE_DIMENSION);
+    }
+
+}
+CBMovementInsert.DIMENSION = new Dimension2D(444, 400);
+CBMovementInsert.PAGE_DIMENSION = new Dimension2D(444, 2470);
+
+export class CBRoutInsert extends DInsert {
+
+    constructor() {
+        super("/CBlades/images/inserts/rout-insert.png", CBRoutInsert.DIMENSION, CBRoutInsert.PAGE_DIMENSION);
+    }
+
+}
+CBRoutInsert.DIMENSION = new Dimension2D(444, 400);
+CBRoutInsert.PAGE_DIMENSION = new Dimension2D(444, 1433);
+
+export class CBMoveBackInsert extends DInsert {
+
+    constructor() {
+        super("/CBlades/images/inserts/move-back-insert.png", CBMoveBackInsert.DIMENSION, CBMoveBackInsert.PAGE_DIMENSION);
+    }
+
+}
+CBMoveBackInsert.DIMENSION = new Dimension2D(444, 400);
+CBMoveBackInsert.PAGE_DIMENSION = new Dimension2D(444, 678);
+
+export class CBToFaceInsert extends DInsert {
+
+    constructor() {
+        super("/CBlades/images/inserts/to-face-insert.png", CBToFaceInsert.DIMENSION);
+    }
+
+}
+CBToFaceInsert.DIMENSION = new Dimension2D(444, 298);

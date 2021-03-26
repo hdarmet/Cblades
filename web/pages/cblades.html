@@ -45,6 +45,18 @@
     import {
         registerInteractiveMagic
     } from "../jslib/cblades/interactive-magic.js";
+    import {
+        registerEditor
+    } from "../jslib/cblades/editor.js";
+    import {
+        GoblinLeader,
+        GoblinWolfRider
+    } from "../jslib/cblades/armies/orcs.js";
+    import {
+        RoughneckLeader,
+        RoughneckKnight,
+        RoughneckLance
+    } from "../jslib/cblades/armies/roughneck.js";
 
     registerInteractiveMovement();
     registerInteractiveCombat();
@@ -53,6 +65,7 @@
     registerInteractiveFormation();
     registerInteractiveMagic();
     registerInteractiveMiscellaneous();
+    registerEditor();
 
     let game = new CBGame();
     document.body.appendChild(game.root);
@@ -62,55 +75,15 @@
     game.setMap(map);
     game.setMenu();
 
-    let goblinLeader = new CBUnitType("Goblin Leader",
-        [
-            "/CBlades/images/units/orcs/character1L.png",
-            "/CBlades/images/units/orcs/character1Lb.png"
-        ]
-    );
-    let goblinWolfRider = new CBUnitType("Goblin Wolf Rider",
-        [
-            "/CBlades/images/units/orcs/unit1L.png",
-            "/CBlades/images/units/orcs/unit1Lb.png"
-        ]
-    );
-
-    let companyLeader = new CBUnitType("Company Leader",
-        [
-            "/CBlades/images/units/mercenaries/character1L.png",
-            "/CBlades/images/units/mercenaries/character1Lb.png"
-        ]
-    );
-    let companyKnight = new CBUnitType("Company Knight",
-        [
-            "/CBlades/images/units/mercenaries/unit1L.png",
-            "/CBlades/images/units/mercenaries/unit1Lb.png"
-        ]
-    );
-    let companyLance = new CBUnitType("Company Lancet",
-        [
-            "/CBlades/images/units/mercenaries/unit2L1.png",
-            "/CBlades/images/units/mercenaries/unit2L1b.png"
-        ],
-        [
-            "/CBlades/images/units/mercenaries/unit2L4.png",
-            "/CBlades/images/units/mercenaries/unit2L4b.png",
-            "/CBlades/images/units/mercenaries/unit2L3.png",
-            "/CBlades/images/units/mercenaries/unit2L3b.png",
-            "/CBlades/images/units/mercenaries/unit2L2.png",
-            "/CBlades/images/units/mercenaries/unit2L2b.png"
-        ]
-    );
-
     let player1 = new CBInteractivePlayer();
     game.addPlayer(player1);
     let wing1 = new CBWing(player1);
     wing1.setRetreatZone(map.getSouthZone());
-    let character11 = new CBCharacter(goblinLeader, wing1);
+    let character11 = new CBCharacter(GoblinLeader, wing1);
     wing1.setLeader(character11);
-    let counter11 = new CBTroop(goblinWolfRider, wing1);
+    let counter11 = new CBTroop(GoblinWolfRider, wing1);
     counter11.lossSteps = 1;
-    let counter12 = new CBTroop(goblinWolfRider, wing1);
+    let counter12 = new CBTroop(GoblinWolfRider, wing1);
     counter12.lossSteps = 1;
     game.addUnit(character11, map.getHex(4, 11)); // 4, 11
     game.addUnit(counter11, map.getHex(3, 10));
@@ -120,17 +93,17 @@
     game.addPlayer(player2);
     let wing2 = new CBWing(player2);
     wing2.setRetreatZone(map.getNorthZone());
-    let character21 = new CBCharacter(companyLeader, wing2);
+    let character21 = new CBCharacter(RoughneckLeader, wing2);
     wing2.setLeader(character21);
     character21.angle = 180;
-    let counter21 = new CBTroop(companyKnight, wing2);
+    let counter21 = new CBTroop(RoughneckKnight, wing2);
     counter21.angle = 180;
-    let counter22 = new CBTroop(companyKnight, wing2);
+    let counter22 = new CBTroop(RoughneckKnight, wing2);
     counter22.angle = 180;
-    let counter23 = new CBFormation(companyLance, wing2, 2);
+    let counter23 = new CBFormation(RoughneckLance, wing2, 2);
     counter23.angle = 210;
     counter23.lossSteps = 4;
-    let counter24 = new CBFormation(companyLance, wing2, 2);
+    let counter24 = new CBFormation(RoughneckLance, wing2, 2);
     counter24.angle = 210;
     counter24.lossSteps = 2;
     game.addUnit(counter23, new CBHexSideId( map.getHex(9, 6),  map.getHex(10, 6)));

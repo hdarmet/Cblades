@@ -20,13 +20,13 @@ import {
 } from "../../jslib/cblades/map.js";
 import {
     CBGame,
-    CBActuator,
+    CBActionActuator,
     CBAbstractPlayer,
     CBAbstractArbitrator,
     CBCounter,
     CBAction,
     CBAbstractUnit,
-    CBActuatorTrigger,
+    CBActuatorImageTrigger,
     CBPlayable,
     CBCounterImageArtifact,
     CBUnitActuatorTrigger,
@@ -97,13 +97,13 @@ class CBTestFormation extends CBAbstractUnit {
     }
 }
 
-class CBTestActuator extends CBActuator {
+class CBTestActuator extends CBActionActuator {
 
     constructor(action) {
         super(action);
         let image = DImage.getImage("/CBlades/images/actuators/test.png");
         let imageArtifacts = [];
-        this.trigger = new CBActuatorTrigger(this, "actuators", image,
+        this.trigger = new CBActuatorImageTrigger(this, "actuators", image,
             new Point2D(0, 0), new Dimension2D(50, 50));
         this.trigger.position = new Point2D(0, 0);
         imageArtifacts.push(this.trigger);
@@ -123,7 +123,7 @@ class CBTestActuator extends CBActuator {
     }
 }
 
-class CBTestUnitActuator extends RetractableActuatorMixin(CBActuator) {
+class CBTestUnitActuator extends RetractableActuatorMixin(CBActionActuator) {
 
     constructor(action, unit) {
         super(action);
@@ -493,6 +493,11 @@ describe("Game", ()=> {
                     "setTransform(1, 0, 0, 1, 580, 740)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(/CBlades/images/commands/load-inactive.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 520, 740)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/editor.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:

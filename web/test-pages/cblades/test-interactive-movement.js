@@ -22,7 +22,7 @@ import {
 } from "../../jslib/widget.js";
 import {
     CBFormationMoveActuator,
-    CBMoveActuator, CBOrientationActuator,
+    CBMoveActuator, CBRotationActuator,
     registerInteractiveMovement, unregisterInteractiveMovement
 } from "../../jslib/cblades/interactive-movement.js";
 import {
@@ -62,7 +62,7 @@ describe("Interactive Movement", ()=> {
 
     function getOrientationActuator(game) {
         for (let actuator of game.actuators) {
-            if (actuator instanceof CBOrientationActuator) return actuator;
+            if (actuator instanceof CBRotationActuator) return actuator;
         }
         return null;
     }
@@ -432,12 +432,12 @@ describe("Interactive Movement", ()=> {
                 "save()",
                     "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 491.6667, 332.643)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-rotate.png, -40, -48, 80, 96)",
+                    "drawImage(/CBlades/images/actuators/standard-turn.png, -40, -48, 80, 96)",
                 "restore()",
                 "save()",
                     "setTransform(-0.2444, 0.4233, -0.4233, -0.2444, 491.6667, 274.9084)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-rotate.png, -40, -48, 80, 96)",
+                    "drawImage(/CBlades/images/actuators/standard-turn.png, -40, -48, 80, 96)",
                 "restore()",
                 "save()",
                     "setTransform(0, -0.4888, 0.4888, 0, 344.1667, 303.7757)",
@@ -1009,12 +1009,12 @@ describe("Interactive Movement", ()=> {
                 "save()",
                     "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 425, 323.0205)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-rotate.png, -40, -48, 80, 96)",
+                    "drawImage(/CBlades/images/actuators/standard-turn.png, -40, -48, 80, 96)",
                 "restore()",
                 "save()",
                     "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 425, 380.7551)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-rotate.png, -40, -48, 80, 96)",
+                    "drawImage(/CBlades/images/actuators/standard-turn.png, -40, -48, 80, 96)",
                 "restore()"
             ]);
         when:

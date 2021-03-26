@@ -16,7 +16,7 @@ import {
     DPushButton
 } from "../widget.js";
 import {
-    CBMap, CBHexId, CBHexSideId, CBMoveType
+    CBMap, CBMoveType
 } from "./map.js";
 
 export class CBAbstractArbitrator {
@@ -209,47 +209,62 @@ CBAction.FINALIZED = 3;
 CBAction.CANCELLED = -1;
 CBAction.PROGRESSION = "progression";
 
-export class CBActuatorTrigger extends DImageArtifact {
+export function CBActuatorTriggerMixin(clazz) {
 
-    constructor(actuator, ...args) {
-        super(...args);
-        this._actuator = actuator;
-        this.setSettings(this.settings);
-    }
+    return class extends clazz {
 
-    get actuator() {
-        return this._actuator;
-    }
-
-    get settings() {
-        return level=>{
-            level.setShadowSettings("#00FFFF", 10);
+        constructor(actuator, ...args) {
+            super(...args);
+            this._actuator = actuator;
+            this.setSettings(this.settings);
         }
-    }
 
-    get overSettings() {
-        return level=>{
-            level.setShadowSettings("#FF0000", 10);
+        get actuator() {
+            return this._actuator;
         }
-    }
 
-    onMouseClick(event) {
-        this._actuator.onMouseClick(this, event);
-    }
+        get settings() {
+            return level => {
+                level.setShadowSettings("#00FFFF", 10);
+            }
+        }
 
-    onMouseEnter(event) {
-        this.setSettings(this.overSettings);
-        this.element.refresh();
-    }
+        get overSettings() {
+            return level => {
+                level.setShadowSettings("#FF0000", 10);
+            }
+        }
 
-    onMouseLeave(event) {
-        this.setSettings(this.settings);
-        this.element.refresh();
-    }
+        onMouseClick(event) {
+            this._actuator.onMouseClick(this, event);
+        }
 
+        onMouseEnter(event) {
+            this.setSettings(this.overSettings);
+            this.element.refresh();
+        }
+
+        onMouseLeave(event) {
+            this.setSettings(this.settings);
+            this.element.refresh();
+        }
+
+    }
 }
 
-export class CBUnitActuatorTrigger extends CBActuatorTrigger {
+export class CBActuatorImageTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+    constructor(...args) {
+        super(...args);
+    }
+}
+
+export class CBActuatorMultiImageTrigger extends CBActuatorTriggerMixin(DMultiImageArtifact) {
+    constructor(...args) {
+        super(...args);
+    }
+}
+
+export class CBUnitActuatorTrigger extends CBActuatorImageTrigger {
 
     constructor(actuator, unit, ...args) {
         super(actuator, ...args);
@@ -282,23 +297,14 @@ export class CBUnitActuatorTrigger extends CBActuatorTrigger {
 
 export class CBActuator {
 
-    constructor(action) {
-        this._action = action;
-    }
-
-    get action() {
-        return this._action;
-    }
-
-    get unit() {
-        return this.action.unit;
+    constructor() {
     }
 
     get triggers() {
         return this._triggers;
     }
 
-    initElement(triggers, position = this.unit.location) {
+    initElement(triggers, position = new Point2D(0, 0)) {
         this._triggers = triggers;
         this._element = new DElement(...this._triggers);
         this._element._actuator = this;
@@ -314,6 +320,31 @@ export class CBActuator {
 
     get element() {
         return this._element;
+    }
+
+    getPosition(location) {
+        return this._element.getPosition(location);
+    }
+}
+
+
+export class CBActionActuator extends CBActuator {
+
+    constructor(action) {
+        super();
+        this._action = action;
+    }
+
+    get action() {
+        return this._action;
+    }
+
+    get unit() {
+        return this.action.unit;
+    }
+
+    initElement(triggers, position = this.unit.location) {
+        super.initElement(triggers, position);
     }
 
 }
@@ -423,7 +454,12 @@ export class CBGame {
         this._arbitrator.game = this;
     }
 
+    get map() {
+        return this._map;
+    }
+
     setMap(map) {
+        this._map = map;
         map.element.setOnBoard(this._board);
         map.game = this;
         return this;
@@ -603,6 +639,7 @@ export class CBGame {
             this._settingsCommand.setOnBoard(this._board);
             this._saveCommand.setOnBoard(this._board);
             this._loadCommand.setOnBoard(this._board);
+            this._editorCommand.setOnBoard(this._board);
             animation();
         });
         this._showCommand.setOnBoard(this._board);
@@ -616,6 +653,7 @@ export class CBGame {
             this._settingsCommand.removeFromBoard();
             this._saveCommand.removeFromBoard();
             this._loadCommand.removeFromBoard();
+            this._editorCommand.removeFromBoard();
             animation();
         });
         this._undoCommand = new DPushButton(
@@ -639,6 +677,12 @@ export class CBGame {
         this._loadCommand = new DPushButton(
             "/CBlades/images/commands/load.png", "/CBlades/images/commands/load-inactive.png",
             new Point2D(-420, -60), animation=>{});
+        this._editorCommand = new DPushButton(
+            "/CBlades/images/commands/editor.png", "/CBlades/images/commands/editor-inactive.png",
+            new Point2D(-480, -60), animation=>{
+            CBGame.edit(this);
+            animation();
+        }).setTurnAnimation(true);
         this._settingsCommand.active = false;
         this._saveCommand.active = false;
         this._loadCommand.active = false;
@@ -656,12 +700,21 @@ export class CBGame {
         }
     }
 
+    _initCounters(player) {
+        if (this._counters) {
+            for (let counter of this._counters) {
+                counter.init && counter.init(player);
+            }
+        }
+    }
+
     nextTurn(animation) {
         if (!this.selectedUnit || this.canUnselectUnit()) {
             this.removeActuators();
             this._resetCounters(this._currentPlayer);
             let indexPlayer = this._players.indexOf(this._currentPlayer);
             this._currentPlayer = this._players[(indexPlayer + 1) % this._players.length];
+            this._initCounters(this._currentPlayer);
             animation && animation();
             Memento.clear();
             Mechanisms.fire(this, CBGame.PROGRESSION);
@@ -754,6 +807,7 @@ CBGame.ULAYERS = {
     OPTIONS: 6,
     ACTUATORS: 7
 }
+CBGame.edit = function(game) {};
 
 export class CBCounterImageArtifact extends DMultiImageArtifact {
 
@@ -1130,6 +1184,11 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
 
     get slot() {
         return this.hexLocation.units.indexOf(this);
+    }
+
+    init(player) {
+        if (player === this.player) {
+        }
     }
 
     reset(player) {

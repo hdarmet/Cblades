@@ -948,7 +948,7 @@ export class DBasicLevel extends DLevel {
         console.assert(artifact.level === this);
         let point = this.getPoint(viewportPoint);
         return artifact.containsPoint(point, viewportPoint)
-            && artifact.level.getPixel(artifact, viewportPoint)[3]>127;
+            && (artifact.capture || artifact.level.getPixel(artifact, viewportPoint)[3]>127);
     }
 
     getOriginalPoint(artifact) {
@@ -1048,7 +1048,7 @@ export class DLayeredLevel extends DLevel {
         console.assert(artifact.level === this);
         let point = this.getPoint(viewportPoint, artifact);
         return artifact.containsPoint(point)
-            && artifact.level.getPixel(artifact, viewportPoint)[3]>127;
+            && (artifact.capture || artifact.level.getPixel(artifact, viewportPoint)[3]>127);
     }
 
     getOriginalPoint(artifact) {

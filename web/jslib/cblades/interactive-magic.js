@@ -8,7 +8,7 @@ import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
-    CBAction, CBActuator, CBActuatorTrigger, CBGame, CBUnitActuatorTrigger, RetractableActuatorMixin
+    CBAction, CBActionActuator, CBActuatorImageTrigger, CBGame, CBUnitActuatorTrigger, RetractableActuatorMixin
 } from "./game.js";
 import {
     Dimension2D,
@@ -200,7 +200,7 @@ export class InteractiveCastSpellAction extends CBAction {
 
 }
 
-export class CBSpellTargetFoesActuator extends RetractableActuatorMixin(CBActuator) {
+export class CBSpellTargetFoesActuator extends RetractableActuatorMixin(CBActionActuator) {
 
     constructor(action, foes) {
         super(action);
@@ -225,7 +225,7 @@ export class CBSpellTargetFoesActuator extends RetractableActuatorMixin(CBActuat
 
 }
 
-export class CBSpellTargetFriendsActuator extends RetractableActuatorMixin(CBActuator) {
+export class CBSpellTargetFriendsActuator extends RetractableActuatorMixin(CBActionActuator) {
 
     constructor(action, friends) {
         super(action);
@@ -250,14 +250,14 @@ export class CBSpellTargetFriendsActuator extends RetractableActuatorMixin(CBAct
 
 }
 
-export class CBSpellTargetHexesActuator extends CBActuator {
+export class CBSpellTargetHexesActuator extends CBActionActuator {
 
     constructor(action, hexes) {
         super(action);
         let image = DImage.getImage("/CBlades/images/actuators/spell-target-hex.png");
         let imageArtifacts = [];
         for (let hex of hexes) {
-            let target = new CBActuatorTrigger(this, "actuators", image,
+            let target = new CBActuatorImageTrigger(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(100, 111));
             target.position = Point2D.position(this.unit.location, hex.location, 1);
             target._hex = hex;
