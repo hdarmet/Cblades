@@ -133,7 +133,7 @@ export class CBUnitType {
     }
 
     getMaxFiguresCount() {
-        return 4;
+        return (this._formationPaths.length/this._maxStepCount)+1;
     }
 
     getMovementPoints(steps) {
@@ -649,7 +649,7 @@ export class CBUnit extends CBAbstractUnit {
         this.artifact.changeImage(this._lossSteps);
     }
 
-    move(hexLocation, cost=0, moveType = CBMoveType.BACKWARD) {
+    move(hexLocation, cost=null, moveType = CBMoveType.BACKWARD) {
         if ((hexLocation || this.hexLocation) && (hexLocation !== this.hexLocation)) {
             if (this.hexLocation && !hexLocation) {
                 this.deleteFromMap()
@@ -666,7 +666,9 @@ export class CBUnit extends CBAbstractUnit {
                 }
             }
         }
-        this._updateMovementPoints(cost);
+        if (cost!=null) {
+            this._updateMovementPoints(cost);
+        }
     }
 
     setAttackLocation(hexLocation) {
@@ -690,9 +692,11 @@ export class CBUnit extends CBAbstractUnit {
         }
     }
 
-    rotate(angle, cost) {
+    rotate(angle, cost=null) {
         this.reorient(angle);
-        this._updateMovementPoints(cost);
+        if (cost!=null) {
+            this._updateMovementPoints(cost);
+        }
     }
 
     _updateTiredness(tiredness) {
@@ -984,7 +988,7 @@ export class CBFormation extends CBUnit {
         return this._hexLocation;
     }
 
-    move(hexSideId, cost=0, moveType = CBMoveType.BACKWARD) {
+    move(hexSideId, cost=null, moveType = CBMoveType.BACKWARD) {
         console.assert(hexSideId === null || hexSideId instanceof CBHexSideId);
         if (!CBHexSideId.equals(hexSideId, this._hexLocation)) {
             Memento.register(this);
@@ -1000,7 +1004,9 @@ export class CBFormation extends CBUnit {
                 hexSideId.toHex.hex.appendUnit(this, moveType);
                 this._element.move(hexSideId.location);
             }
-            this._updateMovementPoints(cost);
+            if (cost!=null) {
+                this._updateMovementPoints(cost);
+            }
         }
     }
 

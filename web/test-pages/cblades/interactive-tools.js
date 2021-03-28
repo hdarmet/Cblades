@@ -24,7 +24,6 @@ export function repaint(game) {
     game._board.repaint();
 }
 
-
 export let dummyEvent = {offsetX:0, offsetY:0};
 
 export function rollFor(d1, d2) {

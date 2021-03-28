@@ -25,7 +25,7 @@ import {
     CBCohesion,
     CBFormation,
     CBLackOfMunitions,
-    CBMovement,
+    CBMovement, CBMoveProfile,
     CBTiredness,
     CBTroop,
     CBUnitType,
@@ -91,6 +91,15 @@ describe("Arbitrator", ()=> {
             assert(hexMap.get(map.getHex(2, 6))).equalsTo(2);
     });
 
+    class CBTestUnitType extends CBUnitType {
+        constructor(name, troopPaths, formationPaths=[]) {
+            super(name, troopPaths, formationPaths);
+            for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
+                this.setMoveProfile(index, new CBMoveProfile());
+            }
+        }
+    }
+
     function create2Players4UnitsTinyGame() {
         let game = new CBGame();
         let arbitrator = new CBArbitrator();
@@ -103,20 +112,20 @@ describe("Arbitrator", ()=> {
         let wing2 = new CBWing(player2);
         let map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
-        let unitType1 = new CBUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"])
+        let unitType1 = new CBTestUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"])
         let unit11 = new CBTroop(unitType1, wing1);
         game.addUnit(unit11, map.getHex(5, 8));
         let unit12 = new CBTroop(unitType1, wing1);
         game.addUnit(unit12, map.getHex(5, 7));
-        let leaderType1 = new CBUnitType("leader1", ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"])
+        let leaderType1 = new CBTestUnitType("leader1", ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"])
         let leader11 = new CBCharacter(leaderType1, wing1);
         game.addUnit(leader11, map.getHex(6, 7));
-        let unitType2 = new CBUnitType("unit2", ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit1b.png"])
+        let unitType2 = new CBTestUnitType("unit2", ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit1b.png"])
         let unit21 = new CBTroop(unitType2, wing2);
         game.addUnit(unit21, map.getHex(7, 8));
         let unit22 = new CBTroop(unitType2, wing2);
         game.addUnit(unit22, map.getHex(7, 7));
-        let leaderType2 = new CBUnitType("leader2", ["/CBlades/images/units/misc/leader2.png", "/CBlades/images/units/misc/leader2b.png"])
+        let leaderType2 = new CBTestUnitType("leader2", ["/CBlades/images/units/misc/leader2.png", "/CBlades/images/units/misc/leader2b.png"])
         let leader21 = new CBCharacter(leaderType2, wing2);
         game.addUnit(leader21, map.getHex(8, 7));
         game.start();
@@ -134,13 +143,13 @@ describe("Arbitrator", ()=> {
         let map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
         let wing1 = new CBWing(player1);
-        let unitType1 = new CBUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
+        let unitType1 = new CBTestUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
         let unit1 = new CBTroop(unitType1, wing1);
         game.addUnit(unit1, map.getHex(5, 8));
         let unit2 = new CBTroop(unitType1, wing1);
         game.addUnit(unit2, map.getHex(5, 6));
         let wing2 = new CBWing(player2);
-        let unitType2 = new CBUnitType("unit2",
+        let unitType2 = new CBTestUnitType("unit2",
             ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"],
             ["/CBlades/)images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png"]);
         let formation2 = new CBFormation(unitType2, wing2);
@@ -311,7 +320,7 @@ describe("Arbitrator", ()=> {
         let wing2 = new CBWing(player2);
         let map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
-        let unitType1 = new CBUnitType("unit1",
+        let unitType1 = new CBTestUnitType("unit1",
             ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"],
             [
                 "/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png",
@@ -321,15 +330,15 @@ describe("Arbitrator", ()=> {
         let formation1 = new CBFormation(unitType1, wing1);
         game.addUnit(formation1, new CBHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
         formation1.angle = 90;
-        let leaderType1 = new CBUnitType("leader1", ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"])
+        let leaderType1 = new CBTestUnitType("leader1", ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"])
         let leader11 = new CBCharacter(leaderType1, wing1);
         game.addUnit(leader11, map.getHex(6, 7));
-        let unitType2 = new CBUnitType("unit2", ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit1b.png"])
+        let unitType2 = new CBTestUnitType("unit2", ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit1b.png"])
         let unit21 = new CBTroop(unitType2, wing2);
         game.addUnit(unit21, map.getHex(7, 8));
         let unit22 = new CBTroop(unitType2, wing2);
         game.addUnit(unit22, map.getHex(7, 7));
-        let leaderType2 = new CBUnitType("leader2", ["/CBlades/images/units/misc/leader2.png", "/CBlades/images/units/misc/leader2b.png"])
+        let leaderType2 = new CBTestUnitType("leader2", ["/CBlades/images/units/misc/leader2.png", "/CBlades/images/units/misc/leader2b.png"])
         let leader21 = new CBCharacter(leaderType2, wing2);
         game.addUnit(leader21, map.getHex(8, 7));
         game.start();
@@ -580,7 +589,7 @@ describe("Arbitrator", ()=> {
             var {arbitrator, map, formation1, unit21} = create2Players1Formation2TroopsTinyGame();
             formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
         when:
-            var allowedMoves = arbitrator.getFormationAllowedRotations(formation1);
+            var allowedMoves = arbitrator.getFormationAllowedTurns(formation1);
         then:
             assertNoMove(allowedMoves, 0); // Not in forward zone
             assertMove(allowedMoves, 60, 4, 4, CBMovement.NORMAL);
@@ -592,25 +601,25 @@ describe("Arbitrator", ()=> {
             assertNoMove(allowedMoves, 300); // Not in forward zone
         when:
             formation1.movementPoints = 0.5;
-            allowedMoves = arbitrator.getFormationAllowedRotations(formation1);
+            allowedMoves = arbitrator.getFormationAllowedTurns(formation1);
         then:
             assertMove(allowedMoves, 60, 4, 4, CBMovement.EXTENDED);
             assertMove(allowedMoves, 120, 4, 4, CBMovement.EXTENDED);
         when:
             formation1.extendedMovementPoints = 0.5;
-            allowedMoves = arbitrator.getFormationAllowedRotations(formation1);
+            allowedMoves = arbitrator.getFormationAllowedTurns(formation1);
         then:
             assertNoMove(allowedMoves, 60);
             assertNoMove(allowedMoves, 120);
         when:
-            allowedMoves = arbitrator.getFormationAllowedRotations(formation1, true);
+            allowedMoves = arbitrator.getFormationAllowedTurns(formation1, true);
         then:
             assertMove(allowedMoves, 60, 4, 4, CBMovement.MINIMAL);
             assertMove(allowedMoves, 120, 4, 4, CBMovement.MINIMAL);
         given:
             unit21.move(map.getHex(4, 4)); // foes on forward zone
         when:
-            allowedMoves = arbitrator.getFormationAllowedRotations(formation1);
+            allowedMoves = arbitrator.getFormationAllowedTurns(formation1);
         then:
             assertNoMove(allowedMoves, 60);
             assertNoMove(allowedMoves, 120);
@@ -651,7 +660,7 @@ describe("Arbitrator", ()=> {
             formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             formation1.angle = 270;
         when:
-            var allowedMoves = arbitrator.getFormationAllowedMovesBackRotations(formation1);
+            var allowedMoves = arbitrator.getFormationAllowedMovesBackTurns(formation1);
         then:
             assertNoMove(allowedMoves, 0); // Not in forward zone
             assertMove(allowedMoves, 60, 4, 4, CBMovement.NORMAL);
@@ -663,20 +672,20 @@ describe("Arbitrator", ()=> {
             assertNoMove(allowedMoves, 300); // Not in forward zone
         when:
             formation1.movementPoints = 0.5;
-            allowedMoves = arbitrator.getFormationAllowedMovesBackRotations(formation1);
+            allowedMoves = arbitrator.getFormationAllowedMovesBackTurns(formation1);
         then:
             assertMove(allowedMoves, 60, 4, 4, CBMovement.EXTENDED);
             assertMove(allowedMoves, 120, 4, 4, CBMovement.EXTENDED);
         when:
             formation1.extendedMovementPoints = 0.5;
-            allowedMoves = arbitrator.getFormationAllowedMovesBackRotations(formation1);
+            allowedMoves = arbitrator.getFormationAllowedMovesBackTurns(formation1);
         then:
             assertMove(allowedMoves, 60, 4, 4, CBMovement.MINIMAL);
             assertMove(allowedMoves, 120, 4, 4, CBMovement.MINIMAL);
         given:
             unit21.move(map.getHex(4, 4)); // foes on backward zone
         when:
-            allowedMoves = arbitrator.getFormationAllowedMovesBackRotations(formation1);
+            allowedMoves = arbitrator.getFormationAllowedMovesBackTurns(formation1);
         then:
             assertNoMove(allowedMoves, 60);
             assertNoMove(allowedMoves, 120);
@@ -899,28 +908,28 @@ describe("Arbitrator", ()=> {
         given:
             var {arbitrator, unit12} = create2Players4UnitsTinyGame();
         then:
-            assert(arbitrator.getMovementCost(unit12, 60)).equalsTo(1);
+            assert(arbitrator.getMovementCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
     });
 
     it("Checks unit rotation cost", () => {
         given:
             var {arbitrator, unit12} = create2Players4UnitsTinyGame();
         then:
-            assert(arbitrator.getRotationCost(unit12, 60)).equalsTo(0.5);
+            assert(arbitrator.getRotationCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:0.5});
     });
 
     it("Checks formation move cost", () => {
         given:
             var {arbitrator, formation1} = create2Players1Formation2TroopsTinyGame();
         then:
-            assert(arbitrator.getFormationMovementCost(formation1, 60)).equalsTo(1);
+            assert(arbitrator.getFormationMovementCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
     });
 
     it("Checks formation rotation cost", () => {
         given:
             var {arbitrator, formation1} = create2Players1Formation2TroopsTinyGame();
         then:
-            assert(arbitrator.getFormationRotationCost(formation1, 60)).equalsTo(1);
+            assert(arbitrator.getFormationRotationCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
     });
 
     it("Checks if movement inflicts tiredness", () => {
@@ -928,8 +937,8 @@ describe("Arbitrator", ()=> {
             var {arbitrator, unit12} = create2Players4UnitsTinyGame();
         then:
             unit12.movementPoints = 1;
-            assert(arbitrator.doesMovementInflictTiredness(unit12, 1)).isFalse();
-            assert(arbitrator.doesMovementInflictTiredness(unit12, 2)).isTrue();
+            assert(arbitrator.doesMovementInflictTiredness(unit12, {type:CBMoveProfile.COST_TYPE.ADD, value:1})).isFalse();
+            assert(arbitrator.doesMovementInflictTiredness(unit12, {type:CBMoveProfile.COST_TYPE.ADD, value:2})).isTrue();
     });
 
     it("Checks if a rest action is allowed", () => {
@@ -1562,7 +1571,7 @@ describe("Arbitrator", ()=> {
         let map = new CBMap("/CBlades/images/maps/map.png");
         game.setMap(map);
         let wing = new CBWing(player);
-        let unitType1 = new CBUnitType("unit1", [
+        let unitType1 = new CBTestUnitType("unit1", [
                 "/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"
             ],
             [
@@ -1570,7 +1579,7 @@ describe("Arbitrator", ()=> {
                 "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png",
                 "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png"
             ]);
-        let unitType2 = new CBUnitType("unit2", [
+        let unitType2 = new CBTestUnitType("unit2", [
                 "/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"
             ]);
         let unit1 = new CBTroop(unitType1, wing);

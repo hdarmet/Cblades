@@ -845,7 +845,11 @@ export class CBMoveActuator extends CBActionActuator {
     }
 
     getTrigger(angle) {
-        return this.findTrigger(artifact=>artifact.pangle === angle);
+        return this.findTrigger(artifact=>(artifact instanceof MoveTrigger) && (artifact.pangle === angle));
+    }
+
+    getCostTrigger(angle) {
+        return this.findTrigger(artifact=>(artifact instanceof MoveCostTrigger) && (artifact.pangle === angle));
     }
 
     onMouseClick(trigger, event) {
@@ -982,8 +986,20 @@ export class CBFormationMoveActuator extends CBActionActuator {
         this._first = first;
     }
 
-    getTrigger(angle, rotate) {
-        return this.findTrigger(artifact=>artifact.pangle === angle && artifact.rotate===rotate);
+    getTrigger(angle) {
+        return this.findTrigger(artifact=>(artifact instanceof MoveFormationTrigger) && (artifact.pangle === angle));
+    }
+
+    getCostTrigger(angle) {
+        return this.findTrigger(artifact=>(artifact instanceof MoveFormationCostTrigger) && (artifact.pangle === angle));
+    }
+
+    getTurnTrigger(angle) {
+        return this.findTrigger(artifact=>(artifact instanceof TurnFormationTrigger) && (artifact.pangle === angle));
+    }
+
+    getTurnCostTrigger(angle) {
+        return this.findTrigger(artifact=>(artifact instanceof TurnFormationCostTrigger) && (artifact.pangle === angle));
     }
 
     onMouseClick(trigger, event) {

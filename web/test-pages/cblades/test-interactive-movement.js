@@ -9,10 +9,11 @@ import {
     DImage, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
+    assertDirectives,
     createEvent,
     filterPainting, getDirectives, getLayers,
     loadAllImages,
-    mockPlatform, removeFilterPainting, resetDirectives, stopRegister
+    mockPlatform, removeFilterPainting, resetDirectives, skipDirectives, stopRegister
 } from "../mocks.js";
 import {
     Mechanisms, Memento
@@ -55,6 +56,132 @@ describe("Interactive Movement", ()=> {
     after(() => {
         unregisterInteractiveMovement();
     });
+
+    function showMoveTrigger([a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+            "restore()",
+        ];
+    }
+
+    function showMoveCostTrigger(cost, [a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/standard-move-cost.png, -35, -35, 70, 70)",
+                "font = bold 35px serif", "textAlign = center", "fillStyle = #2F528F",
+                `fillText(${cost}, 0, 10)`,
+            "restore()",
+        ];
+    }
+
+    function showTowardTrigger([a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+            "restore()",
+        ];
+    }
+
+    function showTowardCostTrigger(cost, [a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/standard-move-cost.png, -27.5, -27.5, 55, 55)",
+                "font = bold 30px serif", "textAlign = center", "fillStyle = #2F528F",
+                `fillText(${cost}, 0, 10)`,
+            "restore()",
+        ];
+    }
+
+    function showMovementHelp(move, [a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/standard-movement-points.png, -27.5, -27.5, 55, 55)",
+                "font = bold 30px serif", "textAlign = center", "fillStyle = #2F528F",
+                `fillText(${move}, 0, 10)`,
+            "restore()"
+        ];
+    }
+
+    function showTurnTrigger([a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/standard-turn.png, -40, -48, 80, 96)",
+            "restore()"
+        ];
+    }
+
+    function showTurnCostTrigger(cost, [a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/standard-turn-cost.png, -35, -35, 70, 70)",
+                "font = bold 35px serif", "textAlign = center", "fillStyle = #2F528F",
+                `fillText(${cost}, 0, 10)`,
+            "restore()"
+        ];
+    }
+
+    function zoomAndRotate0(e, f) {
+        return [0.4888, 0, 0, 0.4888, e, f];
+    }
+
+    function zoomAndRotate30(e, f) {
+        return [0.4233, 0.2444, -0.2444, 0.4233, e, f];
+    }
+
+    function zoomAndRotate60(e, f) {
+        return [0.2444, 0.4233, -0.4233, 0.2444, e, f];
+    }
+
+    function zoomAndRotate90(e, f) {
+        return [0, 0.4888, -0.4888, 0, e, f];
+    }
+
+    function zoomAndRotate120(e, f) {
+        return [-0.2444, 0.4233, -0.4233, -0.2444, e, f];
+    }
+
+    function zoomAndRotate150(e, f) {
+        return [-0.4233, 0.2444, -0.2444, -0.4233, e, f];
+    }
+
+    function zoomAndRotate180(e, f) {
+        return [-0.4888, 0, 0, -0.4888, e, f];
+    }
+
+    function zoomAndRotate210(e, f) {
+        return [-0.4233, -0.2444, 0.2444, -0.4233, e, f];
+    }
+
+    function zoomAndRotate240(e, f) {
+        return [-0.2444, -0.4233, 0.4233, -0.2444, e, f];
+    }
+
+    function zoomAndRotate270(e, f) {
+        return [0, -0.4888, 0.4888, 0, e, f];
+    }
+
+    function zoomAndRotate300(e, f) {
+        return [0.2444, -0.4233, 0.4233, 0.2444, e, f];
+    }
+
+    function zoomAndRotate330(e, f) {
+        return [0.4233, -0.2444, 0.2444, 0.4233, e, f];
+    }
 
     function clickOnMoveAction(game) {
         return clickOnActionMenu(game, 0, 0);
@@ -144,77 +271,42 @@ describe("Interactive Movement", ()=> {
             assert(orientationActuator.getTrigger(270)).isDefined();
             assert(orientationActuator.getTrigger(300)).isDefined();
             assert(orientationActuator.getTrigger(330)).isDefined();
-            assert(getDirectives(actuatorLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 265.2859)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
-                "restore()",
-                "save()",
-                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 491.6667, 308.5869)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
-                "restore()",
-                "save()",
-                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 341.6667, 308.5869)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10", "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
-                "restore()",
-                "save()",
-                    "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 452.9167, 289.1014)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()",
-                "save()",
-                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 479.1667, 315.8037)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()",
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 489.1667, 351.8878)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()",
-                "save()",
-                    "setTransform(-0.2444, 0.4233, -0.4233, -0.2444, 479.1667, 387.972)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()",
-                "save()",
-                    "setTransform(-0.4233, 0.2444, -0.2444, -0.4233, 452.9167, 414.6742)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()",
-                "save()",
-                    "setTransform(-0.4888, 0, 0, -0.4888, 416.6667, 424.0561)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()",
-                "save()",
-                    "setTransform(-0.4233, -0.2444, 0.2444, -0.4233, 380.4167, 414.6742)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()",
-                "save()",
-                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 354.1667, 387.972)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()",
-                "save()",
-                    "setTransform(0, -0.4888, 0.4888, 0, 344.1667, 351.8878)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()",
-                "save()",
-                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 354.1667, 315.8037)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()",
-                "save()",
-                    "setTransform(0.4233, -0.2444, 0.2444, 0.4233, 380.4167, 289.1014)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()"
-            ]);
+            skipDirectives(actuatorLayer, 4);
+
+            assertDirectives(actuatorLayer, showMoveCostTrigger("1", zoomAndRotate0(416.6667, 226.7962)));
+            assertDirectives(actuatorLayer, showMoveTrigger(zoomAndRotate0(416.6667, 265.2859)));
+            assertDirectives(actuatorLayer, showMoveCostTrigger("1", zoomAndRotate60(525, 289.342)));
+            assertDirectives(actuatorLayer, showMoveTrigger(zoomAndRotate60(491.6667, 308.5869)));
+            assertDirectives(actuatorLayer, showMoveCostTrigger("1", zoomAndRotate300(308.3333, 289.342)));
+            assertDirectives(actuatorLayer, showMoveTrigger(zoomAndRotate300(341.6667, 308.5869)));
+
+            assertDirectives(actuatorLayer, showTowardTrigger(zoomAndRotate30(452.9167, 289.1014)));
+            assertDirectives(actuatorLayer, showTowardCostTrigger("0.5", zoomAndRotate30(443.75, 304.9785)));
+            assertDirectives(actuatorLayer, showTowardTrigger(zoomAndRotate60(479.1667, 315.8037)));
+            assertDirectives(actuatorLayer, showTowardCostTrigger("0.5", zoomAndRotate60(462.5, 325.4261)));
+            assertDirectives(actuatorLayer, showTowardTrigger(zoomAndRotate90(489.1667, 351.8878)));
+            assertDirectives(actuatorLayer, showTowardCostTrigger("0.5", zoomAndRotate90(470.8333, 351.8878)));
+
+            assertDirectives(actuatorLayer, showTowardTrigger(zoomAndRotate120(479.1667, 387.972)));
+            assertDirectives(actuatorLayer, showTowardCostTrigger("0.5", zoomAndRotate120(462.5, 378.3495)));
+            assertDirectives(actuatorLayer, showTowardTrigger(zoomAndRotate150(452.9167, 414.6742)));
+            assertDirectives(actuatorLayer, showTowardCostTrigger("0.5", zoomAndRotate150(443.75, 398.7972)));
+            assertDirectives(actuatorLayer, showTowardTrigger(zoomAndRotate180(416.6667, 424.0561)));
+            assertDirectives(actuatorLayer, showTowardCostTrigger("0.5", zoomAndRotate180(416.6667, 404.8112)));
+
+            assertDirectives(actuatorLayer, showTowardTrigger(zoomAndRotate210(380.4167, 414.6742)));
+            assertDirectives(actuatorLayer, showTowardCostTrigger("0.5", zoomAndRotate210(389.5833, 398.7972)));
+            assertDirectives(actuatorLayer, showTowardTrigger(zoomAndRotate240(354.1667, 387.972)));
+            assertDirectives(actuatorLayer, showTowardCostTrigger("0.5", zoomAndRotate240(370.8333, 378.3495)));
+            assertDirectives(actuatorLayer, showTowardTrigger(zoomAndRotate270(344.1667, 351.8878)));
+            assertDirectives(actuatorLayer, showTowardCostTrigger("0.5", zoomAndRotate270(362.5, 351.8878)));
+
+            assertDirectives(actuatorLayer, showTowardTrigger(zoomAndRotate300(354.1667, 315.8037)));
+            assertDirectives(actuatorLayer, showTowardCostTrigger("0.5", zoomAndRotate300(370.8333, 325.4261)));
+            assertDirectives(actuatorLayer, showTowardTrigger(zoomAndRotate330(380.4167, 289.1014)));
+            assertDirectives(actuatorLayer, showTowardCostTrigger("0.5", zoomAndRotate330(389.5833, 304.9785)));
+
+            assertDirectives(actuatorLayer, showMovementHelp("2", zoomAndRotate0(431.3294, 366.5506)));
     });
 
     it("Checks move action actuators when Troop is oriented toward a vertex", () => {
@@ -285,109 +377,106 @@ describe("Interactive Movement", ()=> {
     it("Checks Unit move using actuators (move, rotate, move)", () => {
         given:
             var {game, unit} = createTinyGame()
-        clickOnCounter(game, unit);
-        clickOnMoveAction(game);
-        loadAllImages();
-        var moveActuator1 = getMoveActuator(game);
-        var orientationActuator1 = getOrientationActuator(game);
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
+            loadAllImages();
+            var moveActuator1 = getMoveActuator(game);
         then:
             assert(unit.location.toString()).equalsTo("point(-170.5, -98.4375)");
-        assert(unit.hexLocation.col).equalsTo(5);
-        assert(unit.hexLocation.row).equalsTo(8);
-        assert(unit.angle).equalsTo(0);
+            assert(unit.hexLocation.col).equalsTo(5);
+            assert(unit.hexLocation.row).equalsTo(8);
+            assert(unit.angle).equalsTo(0);
         when:
             clickOnTrigger(game, moveActuator1.getTrigger(0));
         then:
             assert(unit.hexLocation.col).equalsTo(5);
-        assert(unit.hexLocation.row).equalsTo(7);
+            assert(unit.hexLocation.row).equalsTo(7);
         when:
-            var moveActuator2 = getMoveActuator(game);
-        var orientationActuator2 = getOrientationActuator(game);
-        clickOnTrigger(game, orientationActuator2.getTrigger(60));
+            var orientationActuator2 = getOrientationActuator(game);
+            clickOnTrigger(game, orientationActuator2.getTrigger(60));
         then:
             assert(unit.location.toString()).equalsTo("point(-170.5, -295.3125)");
-        assert(unit.angle).equalsTo(60);
+            assert(unit.angle).equalsTo(60);
         when:
             var moveActuator3 = getMoveActuator(game);
-        var orientationActuator3 = getOrientationActuator(game);
-        clickOnTrigger(game, moveActuator3.getTrigger(60));
+            var orientationActuator3 = getOrientationActuator(game);
+            clickOnTrigger(game, moveActuator3.getTrigger(60));
         then:
             assert(unit.location.toString()).equalsTo("point(0, -393.75)");
-        assert(unit.hexLocation.col).equalsTo(6);
-        assert(unit.hexLocation.row).equalsTo(6);
+            assert(unit.hexLocation.col).equalsTo(6);
+            assert(unit.hexLocation.row).equalsTo(6);
         when:
             var moveActuator4 = getMoveActuator(game);
-        var orientationActuator4 = getOrientationActuator(game);
-        Memento.undo();
+            var orientationActuator4 = getOrientationActuator(game);
+            Memento.undo();
         then:
             assert(unit.location.toString()).equalsTo("point(-170.5, -295.3125)");
-        assert(unit.hexLocation.col).equalsTo(5);
-        assert(unit.hexLocation.row).equalsTo(7);
-        assert(unit.angle).equalsTo(60);
-        assert(getMoveActuator(game)).equalsTo(moveActuator3);
-        assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
+            assert(unit.hexLocation.col).equalsTo(5);
+            assert(unit.hexLocation.row).equalsTo(7);
+            assert(unit.angle).equalsTo(60);
+            assert(getMoveActuator(game)).equalsTo(moveActuator3);
+            assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
         when:
             Memento.redo();
         then:
             assert(unit.location.toString()).equalsTo("point(0, -393.75)");
-        assert(unit.hexLocation.col).equalsTo(6);
-        assert(unit.hexLocation.row).equalsTo(6);
-        assert(unit.angle).equalsTo(60);
-        assert(getMoveActuator(game)).equalsTo(moveActuator4);
-        assert(getOrientationActuator(game)).equalsTo(orientationActuator4);
+            assert(unit.hexLocation.col).equalsTo(6);
+            assert(unit.hexLocation.row).equalsTo(6);
+            assert(unit.angle).equalsTo(60);
+            assert(getMoveActuator(game)).equalsTo(moveActuator4);
+            assert(getOrientationActuator(game)).equalsTo(orientationActuator4);
     });
 
     it("Checks Unit move using actuators (rotate, move, rotate)", () => {
         given:
             var {game, unit} = createTinyGame()
-        clickOnCounter(game, unit);
-        clickOnMoveAction(game);
-        loadAllImages();
-        var moveActuator1 = getMoveActuator(game);
-        var orientationActuator1 = getOrientationActuator(game);
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
+            loadAllImages();
+            var moveActuator1 = getMoveActuator(game);
+            var orientationActuator1 = getOrientationActuator(game);
         then:
             assert(unit.location.toString()).equalsTo("point(-170.5, -98.4375)");
-        assert(unit.hexLocation.col).equalsTo(5);
-        assert(unit.hexLocation.row).equalsTo(8);
-        assert(unit.angle).equalsTo(0);
+            assert(unit.hexLocation.col).equalsTo(5);
+            assert(unit.hexLocation.row).equalsTo(8);
+            assert(unit.angle).equalsTo(0);
         when:
             clickOnTrigger(game, orientationActuator1.getTrigger(60));
         then:
             assert(unit.angle).equalsTo(60);
         when:
             var moveActuator2 = getMoveActuator(game);
-        var orientationActuator2 = getOrientationActuator(game);
-        clickOnTrigger(game, moveActuator2.getTrigger(60));
+            clickOnTrigger(game, moveActuator2.getTrigger(60));
         then:
             assert(unit.location.toString()).equalsTo("point(0, -196.875)");
-        assert(unit.hexLocation.col).equalsTo(6);
-        assert(unit.hexLocation.row).equalsTo(7);
+            assert(unit.hexLocation.col).equalsTo(6);
+            assert(unit.hexLocation.row).equalsTo(7);
         when:
             var moveActuator3 = getMoveActuator(game);
-        var orientationActuator3 = getOrientationActuator(game);
-        clickOnTrigger(game, orientationActuator3.getTrigger(90));
+            var orientationActuator3 = getOrientationActuator(game);
+            clickOnTrigger(game, orientationActuator3.getTrigger(90));
         then:
             assert(unit.angle).equalsTo(90);
         when:
             var moveActuator4 = getMoveActuator(game);
-        var orientationActuator4 = getOrientationActuator(game);
-        Memento.undo();
+            var orientationActuator4 = getOrientationActuator(game);
+            Memento.undo();
         then:
             assert(unit.location.toString()).equalsTo("point(0, -196.875)");
-        assert(unit.hexLocation.col).equalsTo(6);
-        assert(unit.hexLocation.row).equalsTo(7);
-        assert(unit.angle).equalsTo(60);
-        assert(getMoveActuator(game)).equalsTo(moveActuator3);
-        assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
+            assert(unit.hexLocation.col).equalsTo(6);
+            assert(unit.hexLocation.row).equalsTo(7);
+            assert(unit.angle).equalsTo(60);
+            assert(getMoveActuator(game)).equalsTo(moveActuator3);
+            assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
         when:
             Memento.redo();
         then:
             assert(unit.location.toString()).equalsTo("point(0, -196.875)");
-        assert(unit.hexLocation.col).equalsTo(6);
-        assert(unit.hexLocation.row).equalsTo(7);
-        assert(unit.angle).equalsTo(90);
-        assert(getMoveActuator(game)).equalsTo(moveActuator4);
-        assert(getOrientationActuator(game)).equalsTo(orientationActuator4);
+            assert(unit.hexLocation.col).equalsTo(6);
+            assert(unit.hexLocation.row).equalsTo(7);
+            assert(unit.angle).equalsTo(90);
+            assert(getMoveActuator(game)).equalsTo(moveActuator4);
+            assert(getOrientationActuator(game)).equalsTo(orientationActuator4);
     });
 
     function getFormationMoveActuator(game) {
@@ -411,40 +500,29 @@ describe("Interactive Movement", ()=> {
         then:
             assert(game.selectedUnit).equalsTo(formation);
             assert(moveActuator).isDefined();
-            assert(moveActuator.getTrigger(60, true)).isDefined();
-            assert(moveActuator.getTrigger(120, true)).isDefined();
-            assert(moveActuator.getTrigger(60, false)).isDefined();
-            assert(moveActuator.getTrigger(120, false)).isDefined();
+            assert(moveActuator.getTurnTrigger(60)).isDefined();
+            assert(moveActuator.getTurnTrigger(120)).isDefined();
+            assert(moveActuator.getTrigger(60)).isDefined();
+            assert(moveActuator.getTrigger(120)).isDefined();
             assert(orientationActuator).isDefined();
             assert(orientationActuator.getTrigger(270)).isDefined();
             assert(orientationActuator.getTrigger(90)).isNotDefined();
-            assert(getDirectives(actuatorLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 491.6667, 212.3625)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
-                "restore()",
-                "save()",
-                    "setTransform(-0.2444, 0.4233, -0.4233, -0.2444, 491.6667, 395.1888)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
-                "restore()",
-                "save()",
-                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 491.6667, 332.643)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-turn.png, -40, -48, 80, 96)",
-                "restore()",
-                "save()",
-                    "setTransform(-0.2444, 0.4233, -0.4233, -0.2444, 491.6667, 274.9084)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-turn.png, -40, -48, 80, 96)",
-                "restore()",
-                "save()",
-                    "setTransform(0, -0.4888, 0.4888, 0, 344.1667, 303.7757)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()"
-            ]);
+            skipDirectives(actuatorLayer, 4);
+
+            assertDirectives(actuatorLayer, showMoveCostTrigger("1", zoomAndRotate60(525, 193.1177)));
+            assertDirectives(actuatorLayer, showMoveTrigger(zoomAndRotate60(491.6667, 212.3625)));
+            assertDirectives(actuatorLayer, showMoveCostTrigger("1", zoomAndRotate120(525, 414.4337)));
+            assertDirectives(actuatorLayer, showMoveTrigger(zoomAndRotate120(491.6667, 395.1888)));
+
+            assertDirectives(actuatorLayer, showTurnCostTrigger("1", zoomAndRotate60(508.3333, 323.0205)));
+            assertDirectives(actuatorLayer, showTurnTrigger(zoomAndRotate60(483.3333, 337.4542)));
+            assertDirectives(actuatorLayer, showTurnCostTrigger("1", zoomAndRotate120(508.3333, 284.5308)));
+            assertDirectives(actuatorLayer, showTurnTrigger(zoomAndRotate120(483.3333, 270.0971)));
+
+            assertDirectives(actuatorLayer, showTowardTrigger(zoomAndRotate270(344.1667, 303.7757)));
+            assertDirectives(actuatorLayer, showTowardCostTrigger("1", zoomAndRotate270(362.5, 303.7757)));
+
+            assertDirectives(actuatorLayer, showMovementHelp("2", zoomAndRotate90(402.0039, 318.4384)));
     });
 
     it("Checks Formation move using actuators (advance, rotate, turn around)", () => {
@@ -462,7 +540,7 @@ describe("Interactive Movement", ()=> {
             assert(formation.hexLocation.toHex.row).equalsTo(7);
             assert(formation.angle).equalsTo(90);
         when:
-            clickOnTrigger(game, moveActuator1.getTrigger(120, false));
+            clickOnTrigger(game, moveActuator1.getTrigger(120));
         then:
             assert(formation.hexLocation.fromHex.col).equalsTo(6);
             assert(formation.hexLocation.fromHex.row).equalsTo(8);
@@ -472,7 +550,7 @@ describe("Interactive Movement", ()=> {
         when:
             var moveActuator2 = getFormationMoveActuator(game);
             var orientationActuator2 = getOrientationActuator(game);
-            clickOnTrigger(game, moveActuator2.getTrigger(60, true));
+            clickOnTrigger(game, moveActuator2.getTurnTrigger(60));
         then:
             assert(formation.hexLocation.fromHex.col).equalsTo(6);
             assert(formation.hexLocation.fromHex.row).equalsTo(7);
@@ -760,8 +838,8 @@ describe("Interactive Movement", ()=> {
     }
 
     function moveUnit1OnContactToUnit2(map, unit1, unit2) {
-        unit1.move(map.getHex(2, 5), 0);
-        unit2.move(map.getHex(2, 3), 0);
+        unit1.move(map.getHex(2, 5));
+        unit2.move(map.getHex(2, 3));
         unit2.rotate(180);
         unit1.player.selectUnit(unit1, dummyEvent);
         map.game.closePopup();
@@ -947,18 +1025,12 @@ describe("Interactive Movement", ()=> {
                     "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(-0.4888, 0, 0, -0.4888, 416.6667, 438.4897)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
-                "restore()",
-                "save()",
-                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 341.6667, 395.1888)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
-                "restore()"
-            ]);
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate180(416.6667, 476.9795)));
+            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate180(416.6667, 438.4897)));
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate240(308.3333, 414.4337)));
+            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate240(341.6667, 395.1888)));
+            assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate0(431.3294, 366.5506)));
         when:
             resetDirectives(unitsLayer, actuatorsLayer);
             clickOnTrigger(game, moveActuator.getTrigger(180));
@@ -995,31 +1067,21 @@ describe("Interactive Movement", ()=> {
                     "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
                 "restore()"
             ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 425, 443.301)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
-                "restore()",
-                "save()",
-                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 425, 260.4747)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
-                "restore()",
-                "save()",
-                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 425, 323.0205)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-turn.png, -40, -48, 80, 96)",
-                "restore()",
-                "save()",
-                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 425, 380.7551)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-turn.png, -40, -48, 80, 96)",
-                "restore()"
-            ]);
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate240(391.6667, 462.5458)));
+            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate240(425, 443.301)));
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300(391.6667, 241.2298)));
+            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(425, 260.4747)));
+
+            assertDirectives(actuatorsLayer, showTurnCostTrigger("1", zoomAndRotate240(408.3333, 332.643)));
+            assertDirectives(actuatorsLayer, showTurnTrigger(zoomAndRotate240(433.3333, 318.2093)));
+            assertDirectives(actuatorsLayer, showTurnCostTrigger("1", zoomAndRotate300(408.3333, 371.1327)));
+            assertDirectives(actuatorsLayer, showTurnTrigger(zoomAndRotate300(433.3333, 385.5663)));
+
+            assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate90(485.3372, 366.5506)));
         when:
             resetDirectives(formationsLayer, actuatorsLayer);
-            clickOnTrigger(game, moveActuator.getTrigger(240, false));
+            clickOnTrigger(game, moveActuator.getTrigger(240));
         then:
             assert(getDirectives(formationsLayer, 4, 10)).arrayEqualsTo([
                 "save()",
@@ -1273,23 +1335,14 @@ describe("Interactive Movement", ()=> {
                     "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 341.6667, 308.5869)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
-                "restore()",
-                "save()",
-                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 354.1667, 387.972)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()",
-                "save()",
-                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 354.1667, 315.8037)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()"
-            ]);
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300( 308.3333, 289.342)));
+            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(341.6667, 308.5869)));
+            assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate240(354.1667, 387.972)));
+            assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate240( 370.8333, 378.3495)));
+            assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate300(354.1667, 315.8037)));
+            assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5", zoomAndRotate300(370.8333, 325.4261)));
+            assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate0(431.3294, 366.5506)));
         when:
             resetDirectives(unitsLayer, actuatorsLayer);
             clickOnTrigger(game, orientationActuator.getTrigger(240));
@@ -1301,18 +1354,12 @@ describe("Interactive Movement", ()=> {
                     "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 341.6667, 395.1888)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
-                "restore()",
-                "save()",
-                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 341.6667, 308.5869)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
-                "restore()"
-            ]);
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate240( 308.3333, 414.4337)));
+            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate240(341.6667, 395.1888)));
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300( 308.3333, 289.342)));
+            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(341.6667, 308.5869)));
+            assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate240(422.0336, 331.8581)));
         when:
             resetDirectives(unitsLayer, actuatorsLayer);
             var moveActuator = getMoveActuator(game);
@@ -1325,23 +1372,14 @@ describe("Interactive Movement", ()=> {
                     "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 258.3333, 443.301)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
-                "restore()",
-                "save()",
-                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 258.3333, 356.699)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
-                "restore()",
-                "save()",
-                    "setTransform(0.2444, -0.4233, 0.4233, 0.2444, 270.8333, 363.9159)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()"
-            ]);
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate240( 225, 462.5458)));
+            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate240(258.3333, 443.301)));
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300( 225, 337.4542)));
+            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(258.3333, 356.699)));
+            assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate300(270.8333, 363.9159)));
+            assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate300( 287.5, 373.5383)));
+            assertDirectives(actuatorsLayer, showMovementHelp("1", zoomAndRotate240(338.7003, 379.9703)));
         when:
             moveActuator = getMoveActuator(game);
             clickOnTrigger(game, moveActuator.getTrigger(240));
@@ -1619,33 +1657,19 @@ describe("Interactive Movement", ()=> {
                     "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 479.1667, 315.8037)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()",
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 489.1667, 351.8878)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()",
-                "save()",
-                    "setTransform(-0.2444, 0.4233, -0.4233, -0.2444, 479.1667, 387.972)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()",
-                "save()",
-                    "setTransform(-0.4233, 0.2444, -0.2444, -0.4233, 452.9167, 414.6742)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()",
-                "save()",
-                    "setTransform(-0.4888, 0, 0, -0.4888, 416.6667, 424.0561)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
-                "restore()"
-            ]);
+
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate60(479.1667, 315.8037)));
+            assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate60( 462.5, 325.4261)));
+            assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate90(489.1667, 351.8878)));
+            assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate90( 470.8333, 351.8878)));
+            assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate120(479.1667, 387.972)));
+            assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate120( 462.5, 378.3495)));
+            assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate150(452.9167, 414.6742)));
+            assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate150( 443.75, 398.7972)));
+            assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate180(416.6667, 424.0561)));
+            assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate180( 416.6667, 404.8112)));
+            assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate0(431.3294, 366.5506)));
         when:
             resetDirectives(unitsLayer, actuatorsLayer);
             clickOnTrigger(game, orientationActuator.getTrigger(120));
@@ -1682,16 +1706,13 @@ describe("Interactive Movement", ()=> {
                     "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
                 "restore()"
             ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(-0.2444, 0.4233, -0.4233, -0.2444, 575, 323.0205)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/standard-rotate.png, -40, -48, 80, 96)",
-                "restore()"
-            ]);
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showTurnCostTrigger("1",zoomAndRotate120( 591.6667, 332.643)));
+            assertDirectives(actuatorsLayer, showTurnTrigger(zoomAndRotate120(566.6667, 318.2093)));
+            assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate90(485.3372, 366.5506)));
         when:
             resetDirectives(formationsLayer, actuatorsLayer);
-            clickOnTrigger(game, moveActuator.getTrigger(120, true));
+            clickOnTrigger(game, moveActuator.getTurnTrigger(120));
         then:
             assert(getDirectives(formationsLayer, 4, 10)).arrayEqualsTo([
                 "save()",

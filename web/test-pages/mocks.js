@@ -201,6 +201,15 @@ export function getDirectives(layer, start=0, end =-1) {
     return getContextDirectives(layer._context, start, end);
 }
 
+export function skipDirectives(layer, count) {
+    layer._context.directives.splice(0, count);
+}
+
+export function assertDirectives(layer, model) {
+    assert(layer._context.directives.slice(0, model.length)).arrayEqualsTo(model);
+    skipDirectives(layer, model.length);
+}
+
 export function findInDirectives(layer, model, start=0, end =-1) {
     let directives = getContextDirectives(layer._context, start, end);
     for (let directive of directives) {
@@ -260,3 +269,4 @@ export function createEvent(eventType, args) {
         }
     };
 }
+
