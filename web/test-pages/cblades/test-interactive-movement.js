@@ -9,7 +9,7 @@ import {
     DImage, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
-    assertDirectives,
+    assertDirectives, assertHex, assertHexSide, assertNoMoreDirectives,
     createEvent,
     filterPainting, getDirectives, getLayers,
     loadAllImages,
@@ -22,19 +22,17 @@ import {
     DDice, DResult
 } from "../../jslib/widget.js";
 import {
-    CBFormationMoveActuator,
+    CBFormationMoveActuator, CBMovementHelpActuator,
     CBMoveActuator, CBRotationActuator,
     registerInteractiveMovement, unregisterInteractiveMovement
 } from "../../jslib/cblades/interactive-movement.js";
 import {
-    repaint,
-    paint,
-    clickOnActionMenu,
-    clickOnCounter,
-    clickOnTrigger,
-    dummyEvent,
-    clickOnMask,
-    rollFor
+    repaint, paint, clickOnActionMenu, clickOnCounter, clickOnTrigger,
+    dummyEvent, clickOnMask, rollFor,
+    zoomAndRotate0, zoomAndRotate30, zoomAndRotate60, zoomAndRotate90, zoomAndRotate120, zoomAndRotate150,
+    zoomAndRotate180, zoomAndRotate210, zoomAndRotate240, zoomAndRotate270, zoomAndRotate300, zoomAndRotate330,
+    showFailureResult, showSuccessResult, showInsert, showMask, showDice, showPlayedDice, showMarker, showSelectedTroop,
+    showSelectedFormation, showMenuPanel, showMenuItem
 } from "./interactive-tools.js";
 import {
     createTinyGame,
@@ -135,54 +133,6 @@ describe("Interactive Movement", ()=> {
         ];
     }
 
-    function zoomAndRotate0(e, f) {
-        return [0.4888, 0, 0, 0.4888, e, f];
-    }
-
-    function zoomAndRotate30(e, f) {
-        return [0.4233, 0.2444, -0.2444, 0.4233, e, f];
-    }
-
-    function zoomAndRotate60(e, f) {
-        return [0.2444, 0.4233, -0.4233, 0.2444, e, f];
-    }
-
-    function zoomAndRotate90(e, f) {
-        return [0, 0.4888, -0.4888, 0, e, f];
-    }
-
-    function zoomAndRotate120(e, f) {
-        return [-0.2444, 0.4233, -0.4233, -0.2444, e, f];
-    }
-
-    function zoomAndRotate150(e, f) {
-        return [-0.4233, 0.2444, -0.2444, -0.4233, e, f];
-    }
-
-    function zoomAndRotate180(e, f) {
-        return [-0.4888, 0, 0, -0.4888, e, f];
-    }
-
-    function zoomAndRotate210(e, f) {
-        return [-0.4233, -0.2444, 0.2444, -0.4233, e, f];
-    }
-
-    function zoomAndRotate240(e, f) {
-        return [-0.2444, -0.4233, 0.4233, -0.2444, e, f];
-    }
-
-    function zoomAndRotate270(e, f) {
-        return [0, -0.4888, 0.4888, 0, e, f];
-    }
-
-    function zoomAndRotate300(e, f) {
-        return [0.2444, -0.4233, 0.4233, 0.2444, e, f];
-    }
-
-    function zoomAndRotate330(e, f) {
-        return [0.4233, -0.2444, 0.2444, 0.4233, e, f];
-    }
-
     function clickOnMoveAction(game) {
         return clickOnActionMenu(game, 0, 0);
     }
@@ -204,41 +154,20 @@ describe("Interactive Movement", ()=> {
     it("Checks that the unit menu contains menu items for movement", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [unitsLayer, widgetsLayer, widgetItemsLayer] = getLayers(game.board, "units-0", "widgets", "widget-items");
+            var [unitsLayer, widgetsLayer, itemsLayer] = getLayers(game.board, "units-0", "widgets", "widget-items");
             loadAllImages();
         when:
-            resetDirectives(unitsLayer, widgetsLayer, widgetItemsLayer);
+            resetDirectives(unitsLayer, widgetsLayer, itemsLayer);
             clickOnCounter(game, unit);
         then:
             loadAllImages();
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 301.6667, 326.8878)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-125, -35, 250, 70)",
-                    "fillStyle = #FFFFFF",
-                    "fillRect(-125, -35, 250, 70)",
-                "restore()"
-            ]);
-            assert(getDirectives(widgetItemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 331.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/escape.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 391.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/to-face-gray.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 211.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/move.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 271.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/move-back.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMenuPanel(4, 1, 301.6667, 326.8878));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showMenuItem(2, 0, "icons/escape", 4, 1, 301.6667, 326.8878));
+            assertDirectives(itemsLayer, showMenuItem(3, 0, "icons/to-face-gray", 4, 1, 301.6667, 326.8878));
+            assertDirectives(itemsLayer, showMenuItem(0, 0, "icons/move", 4, 1, 301.6667, 326.8878));
+            assertDirectives(itemsLayer, showMenuItem(1, 0, "icons/move-back", 4, 1, 301.6667, 326.8878));
     });
 
     it("Checks move action actuators when Troop is oriented toward an hexside", () => {
@@ -374,6 +303,39 @@ describe("Interactive Movement", ()=> {
             ]);
     });
 
+    function getMovementHelpActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBMovementHelpActuator) return actuator;
+        }
+        return null;
+    }
+
+    it("Checks movement rules showing", () => {
+        given:
+            var { game, unit } = createTinyGame();
+            var [widgetsLayer] = getLayers(game.board, "widgets");
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
+            loadAllImages();
+            let helpActuator = getMovementHelpActuator(game);
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, helpActuator.getTrigger());
+            paint(game);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("movement-table", 455, 188, 900, 366));
+            assertDirectives(widgetsLayer, showInsert("movement", 233, 571, 444, 400));
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+    });
+
     it("Checks Unit move using actuators (move, rotate, move)", () => {
         given:
             var {game, unit} = createTinyGame()
@@ -383,14 +345,12 @@ describe("Interactive Movement", ()=> {
             var moveActuator1 = getMoveActuator(game);
         then:
             assert(unit.location.toString()).equalsTo("point(-170.5, -98.4375)");
-            assert(unit.hexLocation.col).equalsTo(5);
-            assert(unit.hexLocation.row).equalsTo(8);
+            assertHex(unit.hexLocation, [5, 8]);
             assert(unit.angle).equalsTo(0);
         when:
             clickOnTrigger(game, moveActuator1.getTrigger(0));
         then:
-            assert(unit.hexLocation.col).equalsTo(5);
-            assert(unit.hexLocation.row).equalsTo(7);
+            assertHex(unit.hexLocation, [5, 7]);
         when:
             var orientationActuator2 = getOrientationActuator(game);
             clickOnTrigger(game, orientationActuator2.getTrigger(60));
@@ -403,16 +363,14 @@ describe("Interactive Movement", ()=> {
             clickOnTrigger(game, moveActuator3.getTrigger(60));
         then:
             assert(unit.location.toString()).equalsTo("point(0, -393.75)");
-            assert(unit.hexLocation.col).equalsTo(6);
-            assert(unit.hexLocation.row).equalsTo(6);
+            assertHex(unit.hexLocation, [6, 6]);
         when:
             var moveActuator4 = getMoveActuator(game);
             var orientationActuator4 = getOrientationActuator(game);
             Memento.undo();
         then:
             assert(unit.location.toString()).equalsTo("point(-170.5, -295.3125)");
-            assert(unit.hexLocation.col).equalsTo(5);
-            assert(unit.hexLocation.row).equalsTo(7);
+            assertHex(unit.hexLocation, [5, 7]);
             assert(unit.angle).equalsTo(60);
             assert(getMoveActuator(game)).equalsTo(moveActuator3);
             assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
@@ -420,8 +378,7 @@ describe("Interactive Movement", ()=> {
             Memento.redo();
         then:
             assert(unit.location.toString()).equalsTo("point(0, -393.75)");
-            assert(unit.hexLocation.col).equalsTo(6);
-            assert(unit.hexLocation.row).equalsTo(6);
+            assertHex(unit.hexLocation, [6, 6]);
             assert(unit.angle).equalsTo(60);
             assert(getMoveActuator(game)).equalsTo(moveActuator4);
             assert(getOrientationActuator(game)).equalsTo(orientationActuator4);
@@ -437,8 +394,7 @@ describe("Interactive Movement", ()=> {
             var orientationActuator1 = getOrientationActuator(game);
         then:
             assert(unit.location.toString()).equalsTo("point(-170.5, -98.4375)");
-            assert(unit.hexLocation.col).equalsTo(5);
-            assert(unit.hexLocation.row).equalsTo(8);
+            assertHex(unit.hexLocation, [5, 8]);
             assert(unit.angle).equalsTo(0);
         when:
             clickOnTrigger(game, orientationActuator1.getTrigger(60));
@@ -449,8 +405,7 @@ describe("Interactive Movement", ()=> {
             clickOnTrigger(game, moveActuator2.getTrigger(60));
         then:
             assert(unit.location.toString()).equalsTo("point(0, -196.875)");
-            assert(unit.hexLocation.col).equalsTo(6);
-            assert(unit.hexLocation.row).equalsTo(7);
+            assertHex(unit.hexLocation, [6, 7]);
         when:
             var moveActuator3 = getMoveActuator(game);
             var orientationActuator3 = getOrientationActuator(game);
@@ -463,8 +418,7 @@ describe("Interactive Movement", ()=> {
             Memento.undo();
         then:
             assert(unit.location.toString()).equalsTo("point(0, -196.875)");
-            assert(unit.hexLocation.col).equalsTo(6);
-            assert(unit.hexLocation.row).equalsTo(7);
+            assertHex(unit.hexLocation, [6, 7]);
             assert(unit.angle).equalsTo(60);
             assert(getMoveActuator(game)).equalsTo(moveActuator3);
             assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
@@ -472,8 +426,7 @@ describe("Interactive Movement", ()=> {
             Memento.redo();
         then:
             assert(unit.location.toString()).equalsTo("point(0, -196.875)");
-            assert(unit.hexLocation.col).equalsTo(6);
-            assert(unit.hexLocation.row).equalsTo(7);
+            assertHex(unit.hexLocation, [6, 7]);
             assert(unit.angle).equalsTo(90);
             assert(getMoveActuator(game)).equalsTo(moveActuator4);
             assert(getOrientationActuator(game)).equalsTo(orientationActuator4);
@@ -525,7 +478,7 @@ describe("Interactive Movement", ()=> {
             assertDirectives(actuatorLayer, showMovementHelp("2", zoomAndRotate90(402.0039, 318.4384)));
     });
 
-    it("Checks Formation move using actuators (advance, rotate, turn around)", () => {
+    it("Checks Formation move using actuators (advance, rotate, turn around) using move triggers", () => {
         given:
             var {game, formation} = createTinyFormationGame()
             clickOnCounter(game, formation);
@@ -534,58 +487,68 @@ describe("Interactive Movement", ()=> {
             var moveActuator1 = getFormationMoveActuator(game);
         then:
             assert(formation.location.toString()).equalsTo("point(-170.5, -196.875)");
-            assert(formation.hexLocation.fromHex.col).equalsTo(5);
-            assert(formation.hexLocation.fromHex.row).equalsTo(8);
-            assert(formation.hexLocation.toHex.col).equalsTo(5);
-            assert(formation.hexLocation.toHex.row).equalsTo(7);
+            assertHexSide(formation.hexLocation, [5, 8], [5, 7]);
             assert(formation.angle).equalsTo(90);
         when:
             clickOnTrigger(game, moveActuator1.getTrigger(120));
         then:
-            assert(formation.hexLocation.fromHex.col).equalsTo(6);
-            assert(formation.hexLocation.fromHex.row).equalsTo(8);
-            assert(formation.hexLocation.toHex.col).equalsTo(6);
-            assert(formation.hexLocation.toHex.row).equalsTo(7);
+            assertHexSide(formation.hexLocation, [6, 8], [6, 7]);
             assert(formation.angle).equalsTo(90);
         when:
             var moveActuator2 = getFormationMoveActuator(game);
             var orientationActuator2 = getOrientationActuator(game);
             clickOnTrigger(game, moveActuator2.getTurnTrigger(60));
         then:
-            assert(formation.hexLocation.fromHex.col).equalsTo(6);
-            assert(formation.hexLocation.fromHex.row).equalsTo(7);
-            assert(formation.hexLocation.toHex.col).equalsTo(7);
-            assert(formation.hexLocation.toHex.row).equalsTo(8);
+            assertHexSide(formation.hexLocation, [6, 7], [7, 8]);
             assert(formation.angle).equalsTo(30);
         when:
             var moveActuator3 = getFormationMoveActuator(game);
             var orientationActuator3 = getOrientationActuator(game);
             clickOnTrigger(game, orientationActuator3.getTrigger(210));
         then:
-            assert(formation.hexLocation.fromHex.col).equalsTo(6);
-            assert(formation.hexLocation.fromHex.row).equalsTo(7);
-            assert(formation.hexLocation.toHex.col).equalsTo(7);
-            assert(formation.hexLocation.toHex.row).equalsTo(8);
+            assertHexSide(formation.hexLocation, [6, 7], [7, 8]);
             assert(formation.angle).equalsTo(210);
         when:
             Memento.undo();
         then:
-            assert(formation.hexLocation.fromHex.col).equalsTo(6);
-            assert(formation.hexLocation.fromHex.row).equalsTo(7);
-            assert(formation.hexLocation.toHex.col).equalsTo(7);
-            assert(formation.hexLocation.toHex.row).equalsTo(8);
+            assertHexSide(formation.hexLocation, [6, 7], [7, 8]);
             assert(formation.angle).equalsTo(30);
             assert(getFormationMoveActuator(game)).equalsTo(moveActuator3);
             assert(getOrientationActuator(game)).equalsTo(orientationActuator3);
         when:
             Memento.undo();
         then:
-            assert(formation.hexLocation.fromHex.col).equalsTo(6);
-            assert(formation.hexLocation.fromHex.row).equalsTo(8);
-            assert(formation.hexLocation.toHex.col).equalsTo(6);
-            assert(formation.hexLocation.toHex.row).equalsTo(7);
+            assertHexSide(formation.hexLocation, [6, 8], [6, 7]);
             assert(getFormationMoveActuator(game)).equalsTo(moveActuator2);
             assert(getOrientationActuator(game)).equalsTo(orientationActuator2);
+    });
+
+    it("Checks Formation move using actuators (advance, rotate, turn around) using cost triggers", () => {
+        given:
+            var {game, formation} = createTinyFormationGame()
+            clickOnCounter(game, formation);
+            clickOnMoveAction(game);
+            loadAllImages();
+            var moveActuator1 = getFormationMoveActuator(game);
+        when:
+            clickOnTrigger(game, moveActuator1.getCostTrigger(120));
+        then:
+            assertHexSide(formation.hexLocation, [6, 8], [6, 7]);
+            assert(formation.angle).equalsTo(90);
+        when:
+            var moveActuator2 = getFormationMoveActuator(game);
+            var orientationActuator2 = getOrientationActuator(game);
+            clickOnTrigger(game, moveActuator2.getTurnCostTrigger(60));
+        then:
+            assertHexSide(formation.hexLocation, [6, 7], [7, 8]);
+            assert(formation.angle).equalsTo(30);
+        when:
+            var moveActuator3 = getFormationMoveActuator(game);
+            var orientationActuator3 = getOrientationActuator(game);
+            clickOnTrigger(game, orientationActuator3.getCostTrigger(210));
+        then:
+            assertHexSide(formation.hexLocation, [6, 7], [7, 8]);
+            assert(formation.angle).equalsTo(210);
     });
 
     function resetAllDirectives(game) {
@@ -654,7 +617,7 @@ describe("Interactive Movement", ()=> {
             Memento.undo();
     });
 
-    it("Checks Unit movement points management during move", () => {
+    it("Checks Unit movement points management during move (using normal triggers)", () => {
         given:
             var {game, unit} = createTinyGame()
             clickOnCounter(game, unit);
@@ -687,7 +650,7 @@ describe("Interactive Movement", ()=> {
             assert(unit.extendedMovementPoints).equalsTo(1.5);
     });
 
-    it("Checks that extended move is proposed when unit does not have enough movement point", () => {
+    it("Checks that extended move is proposed when unit does not have enough movement point (using cost triggers)", () => {
         given:
             var {game, unit} = createTinyGame()
             unit.movementPoints = 1;
@@ -699,16 +662,20 @@ describe("Interactive Movement", ()=> {
             var orientationActuator = getOrientationActuator(game);
         then:
             assert(moveActuator.getTrigger(0).image.path).equalsTo("/CBlades/images/actuators/standard-move.png");
+            assert(moveActuator.getCostTrigger(0).image.path).equalsTo("/CBlades/images/actuators/standard-move-cost.png");
             assert(orientationActuator.getTrigger(30).image.path).equalsTo("/CBlades/images/actuators/toward.png");
+            assert(orientationActuator.getCostTrigger(90).image.path).equalsTo("/CBlades/images/actuators/standard-move-cost.png");
         when:
-            clickOnTrigger(game, moveActuator.getTrigger(0));
+            clickOnTrigger(game, moveActuator.getCostTrigger(0));
             moveActuator = getMoveActuator(game);
             orientationActuator = getOrientationActuator(game);
         then:
             assert(moveActuator.getTrigger(0).image.path).equalsTo("/CBlades/images/actuators/extended-move.png");
+            assert(moveActuator.getCostTrigger(0).image.path).equalsTo("/CBlades/images/actuators/extended-move-cost.png");
             assert(orientationActuator.getTrigger(30).image.path).equalsTo("/CBlades/images/actuators/extended-toward.png");
+            assert(orientationActuator.getCostTrigger(90).image.path).equalsTo("/CBlades/images/actuators/extended-move-cost.png");
         when:
-            clickOnTrigger(game, moveActuator.getTrigger(0));
+            clickOnTrigger(game, moveActuator.getCostTrigger(0));
             moveActuator = getMoveActuator(game);
             orientationActuator = getOrientationActuator(game);
         then:
@@ -747,20 +714,10 @@ describe("Interactive Movement", ()=> {
             loadAllImages();
         then:
             assert(unit.tiredness).equalsTo(1);
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 255.6635)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 255.6635)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/tired.png, -32, -32, 64, 64)",
-                "restore()"
-            ]);
+            skipDirectives(unitsLayer, 4);
+            assertDirectives(unitsLayer, showSelectedTroop("misc/unit", zoomAndRotate0(416.6667, 255.6635)));
+            skipDirectives(markersLayer, 4);
+            assertDirectives(markersLayer, showMarker("tired", zoomAndRotate0(381.9648, 255.6635)));
         when:
             game.nextTurn();
             unit.movementPoints = 0.5;
@@ -773,18 +730,9 @@ describe("Interactive Movement", ()=> {
         then:
             assert(unit.tiredness).equalsTo(2);
             assert(unit.hasBeenPlayed()).isTrue();   // Unit is played automatically because no further movement/reorientation is possble
-            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 159.4391)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/exhausted.png, -32, -32, 64, 64)",
-                "restore()",
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 451.3685, 124.7373)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/actiondone.png, -32, -32, 64, 64)",
-                "restore()"
-            ]);
+            skipDirectives(markersLayer, 4);
+            assertDirectives(markersLayer, showMarker("exhausted", zoomAndRotate0(381.9648, 159.4391)));
+            assertDirectives(markersLayer, showMarker("actiondone", zoomAndRotate0(451.3685, 124.7373)));
     });
 
     function executeAllAnimations() {
@@ -859,54 +807,21 @@ describe("Interactive Movement", ()=> {
             loadAllImages();
             paint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 386.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/check-attacker-engagement-insert.png, 0, 0, 444, 763, -222, -381.5, 444, 763)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 386.5)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -381.5, 444, 763)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 202)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/moral-insert.png, 0, 0, 444, 389, -222, -194.5, 444, 389)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 202)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -194.5, 444, 389)",
-                "restore()"
-            ]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 549, 426.5)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 489, 486.5)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("check-attacker-engagement", 227, 386.5, 444, 763));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 202, 444, 389));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 426.5));
+            assertNoMoreDirectives(commandsLayer);
         when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             clickOnMask(game);
             paint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer);
             assert(finished).isFalse();
     });
 
@@ -925,33 +840,18 @@ describe("Interactive Movement", ()=> {
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 549, 426.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 489, 486.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 449, 386.5)",
-                    "shadowColor = #00A000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 2, 549, 426.5));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(449, 386.5));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.isDisrupted()).isFalse();
             assert(finished).isTrue();
     });
@@ -971,33 +871,18 @@ describe("Interactive Movement", ()=> {
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 549, 426.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 489, 486.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 449, 386.5)",
-                    "shadowColor = #A00000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 426.5));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(449, 386.5));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.isDisrupted()).isTrue();
             assert(finished).isTrue();
     });
@@ -1018,13 +903,8 @@ describe("Interactive Movement", ()=> {
             resetDirectives(unitsLayer, actuatorsLayer);
             repaint(game);
         then:
-            assert(getDirectives(unitsLayer, 4, 10)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            skipDirectives(unitsLayer, 4);
+            assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate0(416.6667, 351.8878)));
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate180(416.6667, 476.9795)));
             assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate180(416.6667, 438.4897)));
@@ -1035,15 +915,35 @@ describe("Interactive Movement", ()=> {
             resetDirectives(unitsLayer, actuatorsLayer);
             clickOnTrigger(game, moveActuator.getTrigger(180));
         then:
-            assert(getDirectives(unitsLayer, 4, 10)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 448.1122)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-            ]);
+            skipDirectives(unitsLayer, 4);
+            assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate0(416.6667, 448.1122)));
+            assertNoMoreDirectives(actuatorsLayer, 4);
+    });
+
+    it("Checks move back rules showing", () => {
+        given:
+            var { game, unit1 } = create2PlayersTinyGame();
+            var [widgetsLayer] = getLayers(game.board, "widgets");
+            clickOnCounter(game, unit1);
+            clickOnMoveBackAction(game);
+            loadAllImages();
+            let helpActuator = getMovementHelpActuator(game);
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, helpActuator.getTrigger());
+            paint(game);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("movement-table", 455, 188, 900, 366));
+            assertDirectives(widgetsLayer, showInsert("move-back", 233, 571, 444, 400));
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
     });
 
     it("Checks move back action actuators appearance for a formation", () => {
@@ -1060,38 +960,25 @@ describe("Interactive Movement", ()=> {
             resetDirectives(formationsLayer, actuatorsLayer);
             repaint(game);
         then:
-            assert(getDirectives(formationsLayer, 4, 10)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 500, 351.8878)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
+            skipDirectives(formationsLayer, 4);
+            assertDirectives(formationsLayer, showSelectedFormation("misc/formation2", zoomAndRotate90(500, 351.8878)));
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate240(391.6667, 462.5458)));
             assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate240(425, 443.301)));
             assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300(391.6667, 241.2298)));
             assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(425, 260.4747)));
-
             assertDirectives(actuatorsLayer, showTurnCostTrigger("1", zoomAndRotate240(408.3333, 332.643)));
             assertDirectives(actuatorsLayer, showTurnTrigger(zoomAndRotate240(433.3333, 318.2093)));
             assertDirectives(actuatorsLayer, showTurnCostTrigger("1", zoomAndRotate300(408.3333, 371.1327)));
             assertDirectives(actuatorsLayer, showTurnTrigger(zoomAndRotate300(433.3333, 385.5663)));
-
             assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate90(485.3372, 366.5506)));
         when:
             resetDirectives(formationsLayer, actuatorsLayer);
             clickOnTrigger(game, moveActuator.getTrigger(240));
         then:
-            assert(getDirectives(formationsLayer, 4, 10)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 416.6667, 400)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-            ]);
+            skipDirectives(formationsLayer, 4);
+            assertDirectives(formationsLayer, showSelectedFormation("misc/formation2", zoomAndRotate90(416.6667, 400)));
+            assertNoMoreDirectives(actuatorsLayer, 4);
     });
 
     it("Checks disengagement appearance after move back action (and cancelling disengagement)", () => {
@@ -1112,45 +999,12 @@ describe("Interactive Movement", ()=> {
             paint(game);
             loadAllImages();
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 396.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/disengagement-insert.png, 0, 0, 444, 797, -222, -398.5, 444, 797)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 396.5)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -398.5, 444, 797)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 212)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/moral-insert.png, 0, 0, 444, 389, -222, -194.5, 444, 389)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 212)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -194.5, 444, 389)",
-                "restore()"
-            ]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 549, 436.5)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 489, 496.5)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("disengagement", 227, 396.5, 444, 797));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 212, 444, 389));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 436.5));
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
@@ -1179,60 +1033,22 @@ describe("Interactive Movement", ()=> {
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 396.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/disengagement-insert.png, 0, 0, 444, 797, -222, -398.5, 444, 797)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 396.5)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -398.5, 444, 797)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 212)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/moral-insert.png, 0, 0, 444, 389, -222, -194.5, 444, 389)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 212)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -194.5, 444, 389)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 449, 396.5)",
-                    "shadowColor = #00A000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 549, 436.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 489, 496.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("disengagement", 227, 396.5, 444, 797));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 212, 444, 389));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(449, 396.5));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 2, 549, 436.5));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.isDisrupted()).isFalse();
     });
 
@@ -1255,60 +1071,22 @@ describe("Interactive Movement", ()=> {
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 396.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/disengagement-insert.png, 0, 0, 444, 797, -222, -398.5, 444, 797)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 396.5)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -398.5, 444, 797)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 212)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/moral-insert.png, 0, 0, 444, 389, -222, -194.5, 444, 389)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 212)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -194.5, 444, 389)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 449, 396.5)",
-                    "shadowColor = #A00000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(1, 0, 0, 1, 549, 436.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                "setTransform(1, 0, 0, 1, 489, 496.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("disengagement", 227, 396.5, 444, 797));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 212, 444, 389));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(449, 396.5));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 436.5));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.isDisrupted()).isTrue();
     });
 
@@ -1319,76 +1097,86 @@ describe("Interactive Movement", ()=> {
     it("Checks rout action actuators appearance for a troop", () => {
         given:
             var { game, unit1 } = create2PlayersTinyGame();
-            var [unitsLayer, actuatorsLayer] = getLayers(game.board, "units-0", "actuators");
+        var [unitsLayer, actuatorsLayer] = getLayers(game.board, "units-0", "actuators");
+        clickOnCounter(game, unit1);
+        clickOnRoutAction(game);
+        loadAllImages();
+        let orientationActuator = getOrientationActuator(game);
+        when:
+            resetDirectives(unitsLayer, actuatorsLayer);
+        repaint(game);
+        then:
+            skipDirectives(unitsLayer, 4);
+        assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate0(416.6667, 351.8878)));
+        skipDirectives(actuatorsLayer, 4);
+        assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300( 308.3333, 289.342)));
+        assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(341.6667, 308.5869)));
+        assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate240(354.1667, 387.972)));
+        assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate240( 370.8333, 378.3495)));
+        assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate300(354.1667, 315.8037)));
+        assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5", zoomAndRotate300(370.8333, 325.4261)));
+        assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate0(431.3294, 366.5506)));
+        when:
+            resetDirectives(unitsLayer, actuatorsLayer);
+        clickOnTrigger(game, orientationActuator.getTrigger(240));
+        then:
+            skipDirectives(unitsLayer, 4);
+        assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate240(416.6667, 351.8878)));
+        skipDirectives(actuatorsLayer, 4);
+        assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate240( 308.3333, 414.4337)));
+        assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate240(341.6667, 395.1888)));
+        assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300( 308.3333, 289.342)));
+        assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(341.6667, 308.5869)));
+        assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate240(422.0336, 331.8581)));
+        when:
+            resetDirectives(unitsLayer, actuatorsLayer);
+        var moveActuator = getMoveActuator(game);
+        clickOnTrigger(game, moveActuator.getTrigger(240));
+        then:
+            skipDirectives(unitsLayer, 4);
+        assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate240( 333.3333, 400)));
+        skipDirectives(actuatorsLayer, 4);
+        assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate240( 225, 462.5458)));
+        assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate240(258.3333, 443.301)));
+        assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300( 225, 337.4542)));
+        assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(258.3333, 356.699)));
+        assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate300(270.8333, 363.9159)));
+        assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate300( 287.5, 373.5383)));
+        assertDirectives(actuatorsLayer, showMovementHelp("1", zoomAndRotate240(338.7003, 379.9703)));
+        when:
+            moveActuator = getMoveActuator(game);
+        clickOnTrigger(game, moveActuator.getTrigger(240));
+        resetDirectives(unitsLayer, actuatorsLayer);
+        moveActuator = getMoveActuator(game);
+        clickOnTrigger(game, moveActuator.getTrigger(240));
+        then:
+            assertNoMoreDirectives(actuatorsLayer, 4);
+    });
+
+    it("Checks route rules showing", () => {
+        given:
+            var { game, unit1 } = create2PlayersTinyGame();
+            var [widgetsLayer] = getLayers(game.board, "widgets");
             clickOnCounter(game, unit1);
             clickOnRoutAction(game);
             loadAllImages();
-            let orientationActuator = getOrientationActuator(game);
+        let helpActuator = getMovementHelpActuator(game);
         when:
-            resetDirectives(unitsLayer, actuatorsLayer);
-            repaint(game);
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, helpActuator.getTrigger());
+            paint(game);
+            loadAllImages();
         then:
-            assert(getDirectives(unitsLayer, 4, 10)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            skipDirectives(actuatorsLayer, 4);
-            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300( 308.3333, 289.342)));
-            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(341.6667, 308.5869)));
-            assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate240(354.1667, 387.972)));
-            assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate240( 370.8333, 378.3495)));
-            assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate300(354.1667, 315.8037)));
-            assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5", zoomAndRotate300(370.8333, 325.4261)));
-            assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate0(431.3294, 366.5506)));
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("movement-table", 455, 188, 900, 366));
+            assertDirectives(widgetsLayer, showInsert("rout", 233, 571, 444, 400));
         when:
-            resetDirectives(unitsLayer, actuatorsLayer);
-            clickOnTrigger(game, orientationActuator.getTrigger(240));
+            resetDirectives(widgetsLayer);
+            clickOnMask(game);
+            paint(game);
         then:
-            assert(getDirectives(unitsLayer, 4, 10)).arrayEqualsTo([
-                "save()",
-                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 416.6667, 351.8878)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            skipDirectives(actuatorsLayer, 4);
-            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate240( 308.3333, 414.4337)));
-            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate240(341.6667, 395.1888)));
-            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300( 308.3333, 289.342)));
-            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(341.6667, 308.5869)));
-            assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate240(422.0336, 331.8581)));
-        when:
-            resetDirectives(unitsLayer, actuatorsLayer);
-            var moveActuator = getMoveActuator(game);
-            clickOnTrigger(game, moveActuator.getTrigger(240));
-        then:
-            assert(getDirectives(unitsLayer, 4, 10)).arrayEqualsTo([
-                "save()",
-                    "setTransform(-0.2444, -0.4233, 0.4233, -0.2444, 333.3333, 400)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            skipDirectives(actuatorsLayer, 4);
-            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate240( 225, 462.5458)));
-            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate240(258.3333, 443.301)));
-            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300( 225, 337.4542)));
-            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(258.3333, 356.699)));
-            assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate300(270.8333, 363.9159)));
-            assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate300( 287.5, 373.5383)));
-            assertDirectives(actuatorsLayer, showMovementHelp("1", zoomAndRotate240(338.7003, 379.9703)));
-        when:
-            moveActuator = getMoveActuator(game);
-            clickOnTrigger(game, moveActuator.getTrigger(240));
-            resetDirectives(unitsLayer, actuatorsLayer);
-            moveActuator = getMoveActuator(game);
-            clickOnTrigger(game, moveActuator.getTrigger(240));
-        then:
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-            ]);
+            assertNoMoreDirectives(widgetsLayer, 4);
     });
 
     it("Checks disengagement appearance after rout action (and cancelling disengagement)", () => {
@@ -1415,54 +1203,20 @@ describe("Interactive Movement", ()=> {
             clickOnTrigger(game, moveActuator.getTrigger(240));
             loadAllImages();
         then:
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-            ]);
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 396.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/disengagement-insert.png, 0, 0, 444, 797, -222, -398.5, 444, 797)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 396.5)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -398.5, 444, 797)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 212)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/moral-insert.png, 0, 0, 444, 389, -222, -194.5, 444, 389)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 212)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -194.5, 444, 389)",
-                "restore()"
-            ]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 549, 436.5)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 489, 496.5)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
+            assertNoMoreDirectives(actuatorsLayer, 4);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("disengagement", 227, 396.5, 444, 797));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 212, 444, 389));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 436.5));
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
             paint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
     });
 
     it("Checks when a unit successfully pass disengagement after rout action", () => {
@@ -1491,60 +1245,22 @@ describe("Interactive Movement", ()=> {
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 396.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/disengagement-insert.png, 0, 0, 444, 797, -222, -398.5, 444, 797)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 396.5)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -398.5, 444, 797)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 212)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/moral-insert.png, 0, 0, 444, 389, -222, -194.5, 444, 389)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 212)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -194.5, 444, 389)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 449, 396.5)",
-                    "shadowColor = #00A000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 549, 436.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 489, 496.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("disengagement", 227, 396.5, 444, 797));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 212, 444, 389));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(449, 396.5));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 2, 549, 436.5));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.isDisrupted()).isFalse();
     });
 
@@ -1574,64 +1290,24 @@ describe("Interactive Movement", ()=> {
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 396.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/disengagement-insert.png, 0, 0, 444, 797, -222, -398.5, 444, 797)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 396.5)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -398.5, 444, 797)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 212)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/moral-insert.png, 0, 0, 444, 389, -222, -194.5, 444, 389)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 212)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -194.5, 444, 389)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 449, 396.5)",
-                    "shadowColor = #A00000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 549, 436.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 489, 496.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("disengagement", 227, 396.5, 444, 797));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 212, 444, 389));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(449, 396.5));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 436.5));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.isDisrupted()).isTrue();
     });
-
-
 
     function clickOnConfrontAction(game) {
         return clickOnActionMenu(game, 3, 0);
@@ -1650,14 +1326,8 @@ describe("Interactive Movement", ()=> {
             resetDirectives(unitsLayer, actuatorsLayer);
             repaint(game);
         then:
-            assert(getDirectives(unitsLayer, 4, 10)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-
+            skipDirectives(unitsLayer, 4);
+            assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate0( 416.6667, 351.8878)));
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate60(479.1667, 315.8037)));
             assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate60( 462.5, 325.4261)));
@@ -1674,15 +1344,34 @@ describe("Interactive Movement", ()=> {
             resetDirectives(unitsLayer, actuatorsLayer);
             clickOnTrigger(game, orientationActuator.getTrigger(120));
         then:
-            assert(getDirectives(unitsLayer, 4, 10)).arrayEqualsTo([
-                "save()",
-                    "setTransform(-0.2444, 0.4233, -0.4233, -0.2444, 416.6667, 351.8878)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-            ]);
+            skipDirectives(unitsLayer, 4);
+            assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate120( 416.6667, 351.8878)));
+            assertNoMoreDirectives(actuatorsLayer, 4);
+    });
+
+    it("Checks confront rules showing", () => {
+        given:
+            var { game, unit1 } = create2PlayersTinyGame();
+            var [widgetsLayer] = getLayers(game.board, "widgets");
+            clickOnCounter(game, unit1);
+            clickOnConfrontAction(game);
+            loadAllImages();
+            let helpActuator = getMovementHelpActuator(game);
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, helpActuator.getTrigger());
+            paint(game);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("to-face", 227, 366.5506, 444, 298));
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
     });
 
     it("Checks confront action actuators appearance for a formation", () => {
@@ -1699,13 +1388,8 @@ describe("Interactive Movement", ()=> {
             resetDirectives(formationsLayer, actuatorsLayer);
             repaint(game);
         then:
-            assert(getDirectives(formationsLayer, 4, 10)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 500, 351.8878)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
+            skipDirectives(formationsLayer, 4);
+            assertDirectives(formationsLayer, showSelectedFormation("misc/formation2", zoomAndRotate90(500, 351.8878)));
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showTurnCostTrigger("1",zoomAndRotate120( 591.6667, 332.643)));
             assertDirectives(actuatorsLayer, showTurnTrigger(zoomAndRotate120(566.6667, 318.2093)));
@@ -1714,15 +1398,9 @@ describe("Interactive Movement", ()=> {
             resetDirectives(formationsLayer, actuatorsLayer);
             clickOnTrigger(game, moveActuator.getTurnTrigger(120));
         then:
-            assert(getDirectives(formationsLayer, 4, 10)).arrayEqualsTo([
-                "save()",
-                    "setTransform(-0.4233, 0.2444, -0.2444, -0.4233, 541.6667, 375.9439)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-            ]);
+            skipDirectives(formationsLayer, 4);
+            assertDirectives(formationsLayer, showSelectedFormation("misc/formation2", zoomAndRotate150(541.6667, 375.9439)));
+            assertNoMoreDirectives(actuatorsLayer, 4);
     });
 
     it("Checks engagement appearance after confront action (and cancelling disengagement)", () => {
@@ -1742,52 +1420,19 @@ describe("Interactive Movement", ()=> {
             paint(game);
             loadAllImages();
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 386.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/check-confront-engagement-insert.png, 0, 0, 444, 763, -222, -381.5, 444, 763)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 386.5)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -381.5, 444, 763)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 202)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/moral-insert.png, 0, 0, 444, 389, -222, -194.5, 444, 389)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 202)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -194.5, 444, 389)",
-                "restore()"
-            ]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 549, 426.5)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 489, 486.5)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("check-confront-engagement", 227, 386.5, 444, 763));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 202, 444, 389));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 426.5));
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
             paint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
     });
 
     it("Checks when a unit successfully pass engagement after confront action", () => {
@@ -1808,60 +1453,22 @@ describe("Interactive Movement", ()=> {
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 386.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/check-confront-engagement-insert.png, 0, 0, 444, 763, -222, -381.5, 444, 763)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 386.5)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -381.5, 444, 763)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 202)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/moral-insert.png, 0, 0, 444, 389, -222, -194.5, 444, 389)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 202)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -194.5, 444, 389)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 449, 386.5)",
-                    "shadowColor = #00A000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 549, 426.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 489, 486.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("check-confront-engagement", 227, 386.5, 444, 763));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 202, 444, 389));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(449, 386.5));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 2, 549, 426.5));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.isDisrupted()).isFalse();
     });
 
@@ -1883,60 +1490,22 @@ describe("Interactive Movement", ()=> {
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 386.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/check-confront-engagement-insert.png, 0, 0, 444, 763, -222, -381.5, 444, 763)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 386.5)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -381.5, 444, 763)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 202)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/moral-insert.png, 0, 0, 444, 389, -222, -194.5, 444, 389)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 202)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -194.5, 444, 389)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 449, 386.5)",
-                    "shadowColor = #A00000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 549, 426.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 489, 486.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("check-confront-engagement", 227, 386.5, 444, 763));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 202, 444, 389));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(449, 386.5));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 426.5));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.isDisrupted()).isTrue();
     });
 

@@ -424,7 +424,7 @@ export class CBRetreatActuator extends RetractableActuatorMixin(CBActionActuator
         let imageArtifacts = [];
         let bloodImage = DImage.getImage("/CBlades/images/actuators/blood.png");
         let loss = new CBActuatorImageTrigger(this, "actuators", bloodImage,
-            new Point2D(0, 0), new Dimension2D(104, 144));
+            new Point2D(0, 0), new Dimension2D(125, 173));
         loss.loss = true;
         imageArtifacts.push(loss);
         let retreatImage = DImage.getImage("/CBlades/images/actuators/retreat-move.png");

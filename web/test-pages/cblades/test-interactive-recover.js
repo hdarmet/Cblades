@@ -9,9 +9,10 @@ import {
     DImage, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
+    assertDirectives, assertNoMoreDirectives,
     getDirectives, getLayers,
     loadAllImages,
-    mockPlatform, resetDirectives
+    mockPlatform, resetDirectives, skipDirectives
 } from "../mocks.js";
 import {
     Mechanisms, Memento
@@ -22,7 +23,8 @@ import {
     clickOnActionMenu,
     clickOnCounter,
     clickOnMask, rollFor,
-    clickOnDice, executeAllAnimations, clickOnResult
+    clickOnDice, executeAllAnimations, clickOnResult, showMask, showInsert, showSuccessResult, showPlayedDice,
+    showDice, showIndicator, showInsertCommand, showFailureResult
 } from "./interactive-tools.js";
 import {
     createTinyGame
@@ -103,61 +105,20 @@ describe("Interactive Recover", ()=> {
             clickOnRestAction(game);
             loadAllImages();
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 379, 239.3878)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/rest-insert.png, 0, 0, 444, 195, -222, -97.5, 444, 195)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 379, 239.3878)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -97.5, 444, 195)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 359, 552.3878)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/check-rest-insert.png, 0, 0, 444, 451, -222, -225.5, 444, 451)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 359, 552.3878)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -225.5, 444, 451)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 76, 326.8878)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/tiredness10.png, -71, -71, 142, 142)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 642, 526.8878)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/meteo2.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 671, 296.8878)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 611, 356.8878)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("rest", 379, 239.3878, 444, 195));
+            assertDirectives(widgetsLayer, showInsert("check-rest", 359, 552.3878, 444, 451));
+            assertDirectives(widgetsLayer, showIndicator("tiredness10", 76, 326.8878));
+            assertDirectives(widgetsLayer, showIndicator("meteo2", 642, 526.8878));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 671, 296.8878));
         when:       // Clicking on the mask cancel the action
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
             assert(unit.tiredness).equalsTo(1);
             assert(unit.hasBeenActivated()).isFalse();
             assert(unit.hasBeenPlayed()).isFalse();
@@ -178,33 +139,18 @@ describe("Interactive Recover", ()=> {
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 671, 296.8878)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 611, 356.8878)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 379, 326.8878)",
-                    "shadowColor = #00A000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(379, 326.8878));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 2, 671, 296.8878));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.tiredness).equalsTo(0);
     });
@@ -224,33 +170,18 @@ describe("Interactive Recover", ()=> {
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 671, 296.8878)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 611, 356.8878)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 379, 326.8878)",
-                    "shadowColor = #A00000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(379, 326.8878));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 671, 296.8878));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.tiredness).equalsTo(1);
     });
@@ -271,41 +202,17 @@ describe("Interactive Recover", ()=> {
             clickOnReplenishMunitionsAction(game);
             loadAllImages();
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 271.6667, 196.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/check-replenish-munitions-insert.png, 0, 0, 444, 383, -222, -191.5, 444, 383)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 271.6667, 196.5)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -191.5, 444, 383)",
-                "restore()"
-            ]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 563.6667, 348)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 503.6667, 408)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("check-replenish-munitions", 271.6667, 196.5, 444, 383));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 563.6667, 348));
         when:       // Clicking on the mask cancel the action
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
             assert(unit.lackOfMunitions).equalsTo(1);
             assert(unit.hasBeenActivated()).isFalse();
             assert(unit.hasBeenPlayed()).isFalse();
@@ -326,33 +233,18 @@ describe("Interactive Recover", ()=> {
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 563.6667, 348)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 503.6667, 408)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 271.6667, 378)",
-                    "shadowColor = #00A000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(271.6667, 378));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 2, 563.6667, 348));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.lackOfMunitions).equalsTo(0);
     });
@@ -372,33 +264,18 @@ describe("Interactive Recover", ()=> {
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 563.6667, 348)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 503.6667, 408)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 271.6667, 378)",
-                    "shadowColor = #A00000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(271.6667, 378));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 563.6667, 348));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.lackOfMunitions).equalsTo(1);
     });
@@ -419,61 +296,19 @@ describe("Interactive Recover", ()=> {
             clickOnReorganizeAction(game);
             loadAllImages();
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 671, 136.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/reorganize-insert.png, 0, 0, 444, 263, -222, -131.5, 444, 263)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 671, 136.5)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -131.5, 444, 263)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 671, 520.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/check-reorganize-insert.png, 0, 0, 444, 245, -222, -122.5, 444, 245)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 671, 520.5)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -122.5, 444, 245)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 328)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/moral-insert.png, 0, 0, 444, 389, -222, -194.5, 444, 389)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 328)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -194.5, 444, 389)",
-                "restore()"
-            ]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 529, 298)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 469, 358)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("reorganize", 671, 136.5, 444, 263));
+            assertDirectives(widgetsLayer, showInsert("check-reorganize", 671, 520.5, 444, 245));
+            assertDirectives(widgetsLayer, showInsert("moral", 227, 328, 444, 389));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 529, 298));
         when:       // Clicking on the mask cancel the action
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
             assert(unit.isDisrupted()).isTrue();
             assert(unit.hasBeenActivated()).isFalse();
             assert(unit.hasBeenPlayed()).isFalse();
@@ -494,33 +329,18 @@ describe("Interactive Recover", ()=> {
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 529, 298)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 469, 358)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 449, 328)",
-                    "shadowColor = #00A000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(449, 328));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 2, 529, 298));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.isDisrupted()).isFalse();
     });
@@ -540,33 +360,18 @@ describe("Interactive Recover", ()=> {
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 529, 298)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 469, 358)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 449, 328)",
-                    "shadowColor = #A00000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(449, 328));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 529, 298));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.isDisrupted()).isTrue();
     });
@@ -588,61 +393,19 @@ describe("Interactive Recover", ()=> {
             clickOnRallyAction(game);
             loadAllImages();
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 671, 144.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/rally-insert.png, 0, 0, 444, 279, -222, -139.5, 444, 279)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 671, 144.5)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -139.5, 444, 279)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 671, 548)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/check-rally-insert.png, 0, 0, 444, 268, -222, -134, 444, 268)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 671, 548)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -134, 444, 268)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 344)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/moral-insert.png, 0, 0, 444, 389, -222, -194.5, 444, 389)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 344)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -194.5, 444, 389)",
-                "restore()"
-            ]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 529, 314)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 469, 374)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("rally", 671, 144.5, 444, 279));
+            assertDirectives(widgetsLayer, showInsert("check-rally", 671, 548, 444, 268));
+            assertDirectives(widgetsLayer, showInsert("moral", 227, 344, 444, 389));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 529, 314));
         when:       // Clicking on the mask cancel the action
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
             assert(unit.isRouted()).isTrue();
             assert(unit.hasBeenActivated()).isFalse();
             assert(unit.hasBeenPlayed()).isFalse();
@@ -664,33 +427,18 @@ describe("Interactive Recover", ()=> {
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 529, 314)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 469, 374)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 449, 344)",
-                    "shadowColor = #00A000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(449, 344));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 2, 529, 314));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.isDisrupted()).isTrue();
     });
@@ -711,33 +459,18 @@ describe("Interactive Recover", ()=> {
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 529, 314)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 469, 374)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 449, 344)",
-                    "shadowColor = #A00000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(449, 344));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 529, 314));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
             assert(unit.hasBeenPlayed()).isTrue();
             assert(unit.isRouted()).isTrue();
     });

@@ -102,8 +102,8 @@ export class InteractiveAbstractMovementAction extends CBAction {
         }
     }
 
-    _buildHelpActuator() {
-        let helpActuator = this.createHelpActuator();
+    _buildMovementHelpActuator() {
+        let helpActuator = this.createMovementHelpActuator();
         this.game.openActuator(helpActuator);
     }
 
@@ -119,7 +119,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
     _createMovementActuators(start) {
         this.game.closeActuators();
         if ((this._buildMoveActuator(start) + this._buildRotationActuator(start)) !== 0) {
-            this._buildHelpActuator()
+            this._buildMovementHelpActuator()
            return true;
         }
         else {
@@ -143,7 +143,13 @@ export class InteractiveAbstractMovementAction extends CBAction {
     }
 
     _continueAfterRotation() {
-        return false
+        if (this._createMoveActuator(false)) {
+            this._buildMovementHelpActuator();
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     rotateUnit(angle, start) {
@@ -198,8 +204,8 @@ export class InteractiveAbstractMovementAction extends CBAction {
         return cost;
     }
 
-    createHelpActuator(directions, first) {
-        return new CBHelpActuator(this, directions, first);
+    createMovementHelpActuator(directions, first) {
+        return new CBMovementHelpActuator(this, directions, first);
     }
 
     createRotationActuator(directions, first) {
@@ -299,13 +305,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
 
     _continueAfterRotation() {
         this.unit.markAsEngaging(this.game.arbitrator.doesUnitEngage(this.unit));
-        if (this._createMoveActuator(false)) {
-            this._buildHelpActuator();
-            return true;
-        }
-        else {
-            return false;
-        }
+        return super._continueAfterRotation();
     }
 
     _continueAfterMove() {
@@ -320,29 +320,6 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     constructor(game, unit, event) {
         super(game, unit, event);
         this._unitMustCheckDisengagement = this.game.arbitrator.isUnitEngaged(this.unit, true);
-    }
-
-    _createPathFinding() {
-        let pathFinding = new CBPathFinding(this.unit.hexLocation, this.unit.angle, this.unit.wing.retreatZone,
-            (from, to)=>{
-                let angle = from.getAngle(to);
-                let cost = this.game.arbitrator.getMovementCost(this.unit, angle, from, angle);
-                switch(cost.type) {
-                    case CBMoveProfile.COST_TYPE.IMPASSABLE: return 10000;
-                    case CBMoveProfile.COST_TYPE.MINIMAL_MOVE: return this.unit.type.getExtendedMovementPoints(this.unit.remainingStepCount);
-                    default: return cost.value;
-                }
-            },
-            (hex, fromAngle, toAngle)=>{
-                let cost = this.game.arbitrator.getRotationCost(this.unit, toAngle, fromAngle, hex);
-                switch(cost.type) {
-                    case CBMoveProfile.COST_TYPE.IMPASSABLE: return 10000;
-                    case CBMoveProfile.COST_TYPE.MINIMAL_MOVE: return this.unit.type.getExtendedMovementPoints(this.unit.remainingStepCount);
-                    default: return cost.value;
-                }
-            }
-        );
-        this._goodMoves = new Set(pathFinding.getGoodNextMoves());
     }
 
     showRules(point) {
@@ -362,7 +339,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     }
 
     _createMovementActuators(start) {
-        this._createPathFinding();
+        this._goodMoves = this.game.arbitrator.createRootPathFinding(this.unit);
         return super._createMovementActuators(start);
     }
 
@@ -446,16 +423,6 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
 
     _updateTirednessForRotation(cost, first) {
         return first ? {type:CBMoveProfile.COST_TYPE.SET, value:0} : super._updateTirednessForRotation(cost, first);
-    }
-
-    _continueAfterRotation() {
-        if (this._createMoveActuator(false)) {
-            this._buildHelpActuator();
-            return true;
-        }
-        else {
-            return false;
-        }
     }
 
     _continueAfterMove() {
@@ -574,6 +541,10 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
                 Memento.clear();
             });
         }
+    }
+
+    _continueAfterRotation() {
+        return false
     }
 
     checkConfrontEngagement(point, action) {
@@ -700,7 +671,7 @@ class HelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 }
 HelpTrigger.DIMENSION = new Dimension2D(55, 55);
 
-export class CBHelpActuator extends CBActionActuator {
+export class CBMovementHelpActuator extends CBActionActuator {
 
     constructor(action) {
         super(action);
@@ -777,7 +748,11 @@ export class CBRotationActuator extends CBActionActuator {
     }
 
     getTrigger(angle) {
-        return this.findTrigger(artifact=>artifact.pangle === angle);
+        return this.findTrigger(artifact=>(artifact instanceof RotateTrigger) && (artifact.pangle === angle));
+    }
+
+    getCostTrigger(angle) {
+        return this.findTrigger(artifact=>(artifact instanceof RotateCostTrigger) && (artifact.pangle === angle));
     }
 
     onMouseClick(trigger, event) {

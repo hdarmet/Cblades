@@ -58,12 +58,20 @@ export let CBWeather = {
 
 export class CBMoveProfile {
 
+    constructor(capacity = 0) {
+        this._capacity = capacity;
+    }
+
+    get capacity() {
+        return this._capacity;
+    }
+
     get movementPoints() {
-        return 2;
+        return 2+this.capacity;
     }
 
     get extendedMovementPoints() {
-        return 3;
+        return this.movementPoints*1.5;
     }
 
     getMovementCostOnHex(hex) {

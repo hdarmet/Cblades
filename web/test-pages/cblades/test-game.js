@@ -7,6 +7,7 @@ import {
     DImage, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
+    assertDirectives,
     createEvent,
     getDirectives, getLayers, loadAllImages, mockPlatform, resetDirectives
 } from "../mocks.js";
@@ -30,7 +31,7 @@ import {
     CBPlayable,
     CBCounterImageArtifact,
     CBUnitActuatorTrigger,
-    RetractableActuatorMixin
+    RetractableActuatorMixin, CBActuatorMultiImagesTrigger
 } from "../../jslib/cblades/game.js";
 import {
     DBoard, DElement
@@ -123,6 +124,35 @@ class CBTestActuator extends CBActionActuator {
     }
 }
 
+class CBTestMultiImagesActuator extends CBActionActuator {
+
+    constructor(action) {
+        super(action);
+        let images = [
+            DImage.getImage("/CBlades/images/actuators/test1.png"),
+            DImage.getImage("/CBlades/images/actuators/test2.png")
+        ];
+        let imageArtifacts = [];
+        this.trigger = new CBActuatorMultiImagesTrigger(this, "actuators", images,
+            new Point2D(0, 0), new Dimension2D(50, 50));
+        this.trigger.position = new Point2D(0, 0);
+        imageArtifacts.push(this.trigger);
+        this.initElement(imageArtifacts);
+    }
+
+    getTrigger() {
+        return this.findTrigger(artifact=>true);
+    }
+
+    failToGetTrigger() {
+        return this.findTrigger(artifact=>false);
+    }
+
+    onMouseClick(artifact, event) {
+        this.clicked = artifact;
+    }
+}
+
 class CBTestUnitActuator extends RetractableActuatorMixin(CBActionActuator) {
 
     constructor(action, unit) {
@@ -192,6 +222,7 @@ describe("Game", ()=> {
             assert(game.board).is(DBoard);
             assert(arbitrator.game).equalsTo(game);
             assert(game.arbitrator).equalsTo(arbitrator);
+            assert(game.map).equalsTo(map);
             assert(player.game).equalsTo(game);
             assert(game.currentPlayer).equalsTo(player);
             assert(getDirectives(mapLayer, 4)).arrayEqualsTo([
@@ -222,6 +253,7 @@ describe("Game", ()=> {
             assert(actuator1.trigger.actuator).equalsTo(actuator1);
             assert(actuator1.unit).equalsTo(unit);
             assert(game.actuators).arrayEqualsTo([actuator1]);
+            assert(actuator1.getPosition(actuator1.trigger.location).toString()).equalsTo("point(0, 0)");
         when:
             Memento.open();
             game.closeActuators();
@@ -242,7 +274,7 @@ describe("Game", ()=> {
             assert(game.actuators).arrayEqualsTo([]);
     });
 
-    it("Checks mouse move over a trigger of a move actuator", () => {
+    it("Checks mouse move over a trigger of an actuator", () => {
         given:
             var { game, unit } = createTinyGame();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
@@ -323,6 +355,40 @@ describe("Game", ()=> {
             clickOnTrigger(game, actuator.trigger);
         then:
             assert(actuator.unitProcessed).equalsTo(unit2);
+    });
+
+    it("Checks multi images trigger of an actuators", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [actuatorsLayer] = getLayers(game.board, "actuators");
+        when:
+            var action = new CBAction(game, unit);
+            var actuator = new CBTestMultiImagesActuator(action);
+            resetDirectives(actuatorsLayer);
+            game.openActuator(actuator);
+            paint(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/test1.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(actuatorsLayer);
+            actuator.trigger.changeImage(1);
+            paint(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/test2.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
     });
 
     it("Checks that clicking on the map re-centers the viewport ", () => {
@@ -546,6 +612,29 @@ describe("Game", ()=> {
             game._redoCommand.action();
         then:
             assert(something.value).isFalse();
+    });
+
+    it("Checks edit push buttons menu", () => {
+        try {
+            var cbgameEdit = CBGame.edit;
+            var editMode = false;
+            CBGame.edit = function() {
+                editMode = true;
+            }
+            given:
+                var game = new CBGame();
+            game.setMenu();
+            game.start();
+            loadAllImages();
+            game._showCommand.action();
+            paint(game);
+            when:
+                game._editorCommand.action();
+            then:
+                assert(editMode).isTrue();
+        } finally {
+            CBGame.edit = cbgameEdit;
+        }
     });
 
     function mouseClickOnCounter(game, counter) {

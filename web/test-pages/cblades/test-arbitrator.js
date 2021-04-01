@@ -15,6 +15,7 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
+    CBHex,
     CBHexSideId, CBMap, CBMoveType
 } from "../../jslib/cblades/map.js";
 import {
@@ -48,6 +49,31 @@ describe("Arbitrator", ()=> {
         DAnimator.clear();
         Memento.clear();
     });
+
+    class MoveProfile extends CBMoveProfile {
+        constructor() {
+            super(0);
+        }
+        getMovementCostOnHex(hex) {
+            switch (hex.type) {
+                case CBHex.HEX_TYPES.OUTDOOR_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+                case CBHex.HEX_TYPES.OUTDOOR_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:2.5};
+                case CBHex.HEX_TYPES.OUTDOOR_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
+                case CBHex.HEX_TYPES.IMPASSABLE : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+                default: throw "Unknown";
+            }
+        }
+        getMovementCostOnHexSide(hexSide) {
+            switch (hexSide.type) {
+                case CBHex.HEXSIDE_TYPES.NORMAL : return {type:CBMoveProfile.COST_TYPE.ADD, value:0};
+                case CBHex.HEXSIDE_TYPES.EASY : return {type:CBMoveProfile.COST_TYPE.SET, value:0.5};
+                case CBHex.HEXSIDE_TYPES.DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
+                case CBHex.HEXSIDE_TYPES.CLIMB : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
+                case CBHex.HEXSIDE_TYPES.WALL : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+                default: throw "Unknown";
+            }
+        }
+    }
 
     function createTinyGame() {
         let game = new CBGame();
@@ -130,8 +156,9 @@ describe("Arbitrator", ()=> {
         game.addUnit(leader21, map.getHex(8, 7));
         game.start();
         loadAllImages();
-        return {game, arbitrator, map, player1, unit11, unit12, leader11, player2, unit21, unit22, leader21};
+        return {game, arbitrator, map, player1, wing1, wing2, unit11, unit12, leader11, player2, unit21, unit22, leader21};
     }
+
     function create2PlayersTinyFormationGame() {
         let game = new CBGame();
         let arbitrator = new CBArbitrator();
@@ -416,6 +443,92 @@ describe("Arbitrator", ()=> {
             assert(arbitrator.isHexLocationInBackwardZone(unit11, new CBHexSideId(hex2, hex3))).isFalse();
     });
 
+    it("Checks defender engagement result", () => {
+        given:
+            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processDefenderEngagementResult(unit12, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processDefenderEngagementResult(unit12, [6, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks if players are foes", () => {
+        given:
+            var {arbitrator, player1, player2} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.arePlayersFoes(player1, player1)).isFalse();
+        assert(arbitrator.arePlayersFoes(player1, player2)).isTrue();
+    });
+
+    it("Checks if units are foes", () => {
+        given:
+            var {arbitrator, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.areUnitsFoes(unit11, unit12)).isFalse();
+        assert(arbitrator.areUnitsFoes(unit11, unit21)).isTrue();
+    });
+
+    it("Checks if a hex contains foes", () => {
+        given:
+            var {map, arbitrator, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.doesHexContainFoes(unit11, map.getHex(2, 2))).isFalse();
+        assert(arbitrator.doesHexContainFoes(unit11, unit12.hexLocation)).isFalse();
+        assert(arbitrator.doesHexContainFoes(unit11, unit21.hexLocation)).isTrue();
+    });
+
+    it("Checks if units are friends", () => {
+        given:
+            var {arbitrator, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.areUnitsFriends(unit11, unit12)).isTrue();
+        assert(arbitrator.areUnitsFriends(unit11, unit21)).isFalse();
+    });
+
+    it("Checks if a hex contains friends", () => {
+        given:
+            var {map, arbitrator, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.doesHexContainFriends(unit11, map.getHex(2, 2))).isFalse();
+        assert(arbitrator.doesHexContainFriends(unit11, unit12.hexLocation)).isTrue();
+        assert(arbitrator.doesHexContainFriends(unit11, unit21.hexLocation)).isFalse();
+    });
+
+    it("Checks if a unit contact a foe", () => {
+        given:
+            var {arbitrator, map, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
+        when:
+            unit12.move(map.getHex(2, 3));
+        unit21.move(map.getHex(2, 2));
+        then:
+            assert(arbitrator.doesUnitEngage(unit12)).isTrue();
+        assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit21)).isTrue();
+        assert(arbitrator.isAUnitEngageAnotherUnit(unit21, unit12)).isFalse();
+        assert(arbitrator.isUnitEngaged(unit12)).isFalse();
+        assert(arbitrator.isUnitEngaged(unit21)).isTrue();
+        but:
+            assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit21, true)).isFalse();
+        assert(arbitrator.isUnitEngaged(unit21, true)).isFalse();
+        when:
+            unit12.markAsEngaging(true);
+        then:
+            assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit21, true)).isTrue();
+        assert(arbitrator.isUnitEngaged(unit21, true)).isTrue();
+        when:
+            unit21.move(map.getHex(7, 2));
+        unit11.move(map.getHex(2, 2));
+        then:
+            assert(arbitrator.doesUnitEngage(unit12)).isFalse();
+        assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit11)).isFalse();
+        assert(arbitrator.isUnitEngaged(unit11)).isFalse();
+    });
+
+    // Movement
+
     function assertNoMove(moves, angle) {
         assert(moves[angle]).isNotDefined();
     }
@@ -459,6 +572,47 @@ describe("Arbitrator", ()=> {
             assert(arbitrator.isAllowedToConfront(unit11)).isTrue();
     });
 
+    it("Checks movement costs according to terran", () => {
+        given:
+            var {arbitrator, unit11} = create2Players4UnitsTinyGame();
+            // unit11 on Hex(5, 8)
+            unit11.type.setMoveProfile(2, new MoveProfile())
+        when:
+            var cost = arbitrator.getMovementCost(unit11, 0);
+        then:
+            assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1})
+        when:
+            unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.IMPASSABLE;
+            unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.NORMAL;
+            cost = arbitrator.getMovementCost(unit11, 0);
+        then:
+            assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE})
+        when:
+            unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.IMPASSABLE;
+            unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.EASY;
+            cost = arbitrator.getMovementCost(unit11, 0);
+        then:
+            assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.SET, value:0.5})
+        when:
+            unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
+            unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.CLIMB;
+            cost = arbitrator.getMovementCost(unit11, 0);
+        then:
+            assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE})
+        when:
+            unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
+            unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.WALL;
+            cost = arbitrator.getMovementCost(unit11, 0);
+        then:
+            assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE})
+        when:
+            unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            cost = arbitrator.getMovementCost(unit11, 0);
+        then:
+            assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:3})
+    });
+
     it("Checks unit allowed moves", () => {
         given:
             var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
@@ -492,6 +646,28 @@ describe("Arbitrator", ()=> {
             allowedMoves = arbitrator.getAllowedMoves(unit12, true);
         then:
             assertMove(allowedMoves, 60, 6, 6, CBMovement.MINIMAL);
+    });
+
+    it("Checks unit allowed moves according to terran", () => {
+        given:
+            var {arbitrator, unit11} = create2Players4UnitsTinyGame();
+            // unit11 on Hex(5, 8)
+            unit11.type.setMoveProfile(2, new MoveProfile());
+            unit11.hexLocation.getNearHex(300).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.IMPASSABLE;
+            unit11.hexLocation.getNearHex(60).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+        when:
+            var allowedMoves = arbitrator.getAllowedMoves(unit11, true);
+        then:
+            assertMove(allowedMoves, 300, 4, 7, CBMovement.EXTENDED);
+            assertNoMove(allowedMoves, 0); // Terran impassable
+            assertMove(allowedMoves, 60, 6, 7, CBMovement.MINIMAL);
+        when:
+            allowedMoves = arbitrator.getAllowedMoves(unit11, false);
+        then:
+            assertMove(allowedMoves, 300, 4, 7, CBMovement.EXTENDED);
+            assertNoMove(allowedMoves, 0); // Terran impassable
+            assertNoMove(allowedMoves, 60); // Not a first move
     });
 
     it("Checks unit allowed moves back", () => {
@@ -941,6 +1117,73 @@ describe("Arbitrator", ()=> {
             assert(arbitrator.doesMovementInflictTiredness(unit12, {type:CBMoveProfile.COST_TYPE.ADD, value:2})).isTrue();
     });
 
+    it("Checks attacker engagement result", () => {
+        given:
+            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processAttackerEngagementResult(unit12, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processAttackerEngagementResult(unit12, [6, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks confront engagement result", () => {
+        given:
+            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processConfrontEngagementResult(unit12, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processConfrontEngagementResult(unit12, [6, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks disengagement result", () => {
+        given:
+            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processDisengagementResult(unit12, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processDisengagementResult(unit12, [6, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks rout path finding result", () => {
+        given:
+            var {arbitrator, map, wing1, unit11} = create2Players4UnitsTinyGame();
+            let moveProfile = new MoveProfile();
+            moveProfile.getRotationCost = function(angle) {
+                if (angle<60) {
+                    return {type: CBMoveProfile.COST_TYPE.ADD, value: 0.5};
+                }
+                else if (angle<120) {
+                    return {type: CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
+                }
+                else {
+                    return {type: CBMoveProfile.COST_TYPE.IMPASSABLE};
+                }
+            }
+            unit11.type.setMoveProfile(2, moveProfile);
+            wing1.setRetreatZone(map.getSouthZone());
+            map.getHex(4, 11).type = CBHex.HEX_TYPES.IMPASSABLE;
+            map.getHex(3, 11).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+        when:
+            unit11.move(map.getHex(4, 9));
+            var hexes = arbitrator.createRootPathFinding(unit11);
+        then:
+            assert(hexes).setEqualsTo(new Set([map.getHex(3, 10)]));
+    });
+
+    // Recover
+
     it("Checks if a rest action is allowed", () => {
         given:
             var {arbitrator, unit12} = create2Players4UnitsTinyGame();
@@ -1006,128 +1249,21 @@ describe("Arbitrator", ()=> {
             assert(result.success).isFalse();
     });
 
-    it("Checks attacker engagement result", () => {
+    it("Checks get weather", () => {
+        given:
+            var {arbitrator} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.getWeather()).equalsTo(CBWeather.CLEAR);
+    });
+
+    it("Check get wingTiredness", () => {
         given:
             var {arbitrator, unit12} = create2Players4UnitsTinyGame();
-        when:
-            var result = arbitrator.processAttackerEngagementResult(unit12, [1, 2]);
         then:
-            assert(result.success).isTrue();
-        when:
-            result = arbitrator.processAttackerEngagementResult(unit12, [6, 6]);
-        then:
-            assert(result.success).isFalse();
+            assert(arbitrator.getWingTiredness(unit12)).equalsTo(10);
     });
 
-    it("Checks defender engagement result", () => {
-        given:
-            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
-        when:
-            var result = arbitrator.processDefenderEngagementResult(unit12, [1, 2]);
-        then:
-            assert(result.success).isTrue();
-        when:
-            result = arbitrator.processDefenderEngagementResult(unit12, [6, 6]);
-        then:
-            assert(result.success).isFalse();
-    });
-
-    it("Checks confront engagement result", () => {
-        given:
-            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
-        when:
-            var result = arbitrator.processConfrontEngagementResult(unit12, [1, 2]);
-        then:
-            assert(result.success).isTrue();
-        when:
-            result = arbitrator.processConfrontEngagementResult(unit12, [6, 6]);
-        then:
-            assert(result.success).isFalse();
-    });
-
-    it("Checks disengagement result", () => {
-        given:
-            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
-        when:
-            var result = arbitrator.processDisengagementResult(unit12, [1, 2]);
-        then:
-            assert(result.success).isTrue();
-        when:
-            result = arbitrator.processDisengagementResult(unit12, [6, 6]);
-        then:
-            assert(result.success).isFalse();
-    });
-
-    it("Checks if players are foes", () => {
-        given:
-            var {arbitrator, player1, player2} = create2Players4UnitsTinyGame();
-        then:
-            assert(arbitrator.arePlayersFoes(player1, player1)).isFalse();
-            assert(arbitrator.arePlayersFoes(player1, player2)).isTrue();
-    });
-
-    it("Checks if units are foes", () => {
-        given:
-            var {arbitrator, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
-        then:
-            assert(arbitrator.areUnitsFoes(unit11, unit12)).isFalse();
-            assert(arbitrator.areUnitsFoes(unit11, unit21)).isTrue();
-    });
-
-    it("Checks if a hex contains foes", () => {
-        given:
-            var {map, arbitrator, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
-        then:
-            assert(arbitrator.doesHexContainFoes(unit11, map.getHex(2, 2))).isFalse();
-            assert(arbitrator.doesHexContainFoes(unit11, unit12.hexLocation)).isFalse();
-            assert(arbitrator.doesHexContainFoes(unit11, unit21.hexLocation)).isTrue();
-    });
-
-    it("Checks if units are friends", () => {
-        given:
-            var {arbitrator, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
-        then:
-            assert(arbitrator.areUnitsFriends(unit11, unit12)).isTrue();
-            assert(arbitrator.areUnitsFriends(unit11, unit21)).isFalse();
-    });
-
-    it("Checks if a hex contains friends", () => {
-        given:
-            var {map, arbitrator, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
-        then:
-            assert(arbitrator.doesHexContainFriends(unit11, map.getHex(2, 2))).isFalse();
-            assert(arbitrator.doesHexContainFriends(unit11, unit12.hexLocation)).isTrue();
-            assert(arbitrator.doesHexContainFriends(unit11, unit21.hexLocation)).isFalse();
-    });
-
-    it("Checks if a unit contact a foe", () => {
-        given:
-            var {arbitrator, map, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
-        when:
-            unit12.move(map.getHex(2, 3));
-            unit21.move(map.getHex(2, 2));
-        then:
-            assert(arbitrator.doesUnitEngage(unit12)).isTrue();
-            assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit21)).isTrue();
-            assert(arbitrator.isAUnitEngageAnotherUnit(unit21, unit12)).isFalse();
-            assert(arbitrator.isUnitEngaged(unit12)).isFalse();
-            assert(arbitrator.isUnitEngaged(unit21)).isTrue();
-        but:
-            assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit21, true)).isFalse();
-            assert(arbitrator.isUnitEngaged(unit21, true)).isFalse();
-        when:
-            unit12.markAsEngaging(true);
-        then:
-            assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit21, true)).isTrue();
-            assert(arbitrator.isUnitEngaged(unit21, true)).isTrue();
-        when:
-            unit21.move(map.getHex(7, 2));
-            unit11.move(map.getHex(2, 2));
-        then:
-            assert(arbitrator.doesUnitEngage(unit12)).isFalse();
-            assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit11)).isFalse();
-            assert(arbitrator.isUnitEngaged(unit11)).isFalse();
-    });
+    // Combat
 
     it("Checks if a character is allowed to attack by duel", () => {
         given:
@@ -1383,19 +1519,7 @@ describe("Arbitrator", ()=> {
             assert(foes.length === 1 && foes[0].unit === unit1).isTrue();
     });
 
-    it("Checks get weather", () => {
-        given:
-            var {arbitrator} = create2Players4UnitsTinyGame();
-        then:
-            assert(arbitrator.getWeather()).equalsTo(CBWeather.CLEAR);
-    });
-
-    it("Check get wingTiredness", () => {
-        given:
-            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
-        then:
-            assert(arbitrator.getWingTiredness(unit12)).equalsTo(10);
-    });
+    // Commands
 
     it("Checks take command result processing", () => {
         given:
@@ -1480,6 +1604,8 @@ describe("Arbitrator", ()=> {
         then:
             assert(arbitrator.computeCommandPoints(leader11, [2])).equalsTo(7);
     });
+
+    // Formations et merge
 
     it("Checks when a merge action is allowed for Troops", () => {
         given:
@@ -1921,6 +2047,8 @@ describe("Arbitrator", ()=> {
             assert(result.replacement.tiredness).equalsTo(CBTiredness.TIRED);
             assert(result.replacement.lackOfMunitions).equalsTo(CBLackOfMunitions.SCARCE);
     });
+
+    // Spells
 
     class TestSpell extends CBCounter {
         constructor(wizard) {

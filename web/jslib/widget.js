@@ -13,7 +13,7 @@ import {
     DImageArtifact,
     DBoard,
     DArtifactRotateAnimation,
-    DMultiImageArtifact,
+    DMultiImagesArtifact,
     DArtifactAnimation,
     DArtifactAlphaAnimation, DTextArtifact, DRectArtifact
 } from "./board.js";
@@ -333,7 +333,7 @@ export function ActivableArtifact(clazz) {
 }
 
 
-export class DPushButtonImageArtifact extends ActivableArtifact(DMultiImageArtifact) {
+export class DPushButtonImageArtifact extends ActivableArtifact(DMultiImagesArtifact) {
 
     constructor(image, inactiveImage) {
         super("widget-commands", [image, inactiveImage],
@@ -414,7 +414,7 @@ export class DPushButton extends DElement {
 
 }
 
-class DiceArtifact extends ActivableArtifact(DMultiImageArtifact) {
+class DiceArtifact extends ActivableArtifact(DMultiImagesArtifact) {
 
     constructor(images, point) {
         super("widget-items", images, point, new Dimension2D(100, 89), 0);
@@ -523,7 +523,7 @@ export class DDiceAnimation extends DArtifactAnimation {
     }
 }
 
-class IndicatorImageArtifact extends DMultiImageArtifact {
+class IndicatorImageArtifact extends DMultiImagesArtifact {
 
     constructor(images, dimension) {
         super("widgets", images, new Point2D(0, 0), dimension, 0);
@@ -822,7 +822,7 @@ DInsert.PAGE_WIDTH = 200;
 DInsert.PAGE_HEIGHT = 100;
 DInsert.OK_DIMENSION = new Dimension2D(25, 25);
 
-class ResultImageArtifact extends DMultiImageArtifact {
+class ResultImageArtifact extends DMultiImagesArtifact {
 
     constructor(image, dimension) {
         super("widget-commands", [

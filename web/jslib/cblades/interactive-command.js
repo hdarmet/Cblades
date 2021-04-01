@@ -24,17 +24,17 @@ import {
 } from "./unit.js";
 
 export function registerInteractiveCommand() {
-    CBInteractivePlayer.prototype.tryToChangeOrderInstructions = function(unit, event) {
-        unit.launchAction(new InteractiveChangeOrderInstructionAction(this.game, unit, event));
-    }
-    CBInteractivePlayer.prototype.startToGiveOrders = function(unit, event) {
-        unit.launchAction(new InteractiveGiveOrdersAction(this.game, unit, event));
-    }
     CBInteractivePlayer.prototype.tryToTakeCommand = function(unit, event) {
         unit.launchAction(new InteractiveTakeCommandAction(this.game, unit, event));
     }
     CBInteractivePlayer.prototype.tryToDismissCommand = function(unit, event) {
         unit.launchAction(new InteractiveDismissCommandAction(this.game, unit, event));
+    }
+    CBInteractivePlayer.prototype.tryToChangeOrderInstructions = function(unit, event) {
+        unit.launchAction(new InteractiveChangeOrderInstructionAction(this.game, unit, event));
+    }
+    CBInteractivePlayer.prototype.startToGiveOrders = function(unit, event) {
+        unit.launchAction(new InteractiveGiveOrdersAction(this.game, unit, event));
     }
     CBInteractivePlayer.prototype.openOrderInstructionMenu = function(unit, offset, allowedOrderInstructions) {
         let popup = new CBOrderInstructionMenu(this.game, unit, allowedOrderInstructions);
@@ -50,10 +50,10 @@ export function registerInteractiveCommand() {
     );
 }
 export function unregisterInteractiveCommand() {
-    delete CBInteractivePlayer.prototype.tryToChangeOrderInstructions;
-    delete CBInteractivePlayer.prototype.startToGiveOrders;
     delete CBInteractivePlayer.prototype.tryToTakeCommand;
     delete CBInteractivePlayer.prototype.tryToDismissCommand;
+    delete CBInteractivePlayer.prototype.tryToChangeOrderInstructions;
+    delete CBInteractivePlayer.prototype.startToGiveOrders;
     delete CBInteractivePlayer.prototype.openOrderInstructionMenu;
     delete CBInteractivePlayer.prototype.changeOrderInstruction;
     let builderIndex = CBActionMenu.menuBuilders.indexOf(createCommandMenuItems);

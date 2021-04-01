@@ -20,7 +20,7 @@ import {
     DElement,
     DImageArtifact,
     DSimpleLevel,
-    DMultiImageArtifact,
+    DMultiImagesArtifact,
     DTextArtifact,
     DStaticLevel,
     DLayeredLevel,
@@ -1149,7 +1149,7 @@ describe("Board", ()=> {
             var image2 = DImage.getImage("../images/unit-back.png");
             var image3 = DImage.getImage("../images/unit-inactive.png");
             loadAllImages();
-            var artifact = new DMultiImageArtifact("units", [image1, image2, image3],
+            var artifact = new DMultiImagesArtifact("units", [image1, image2, image3],
                 new Point2D(0, 0), new Dimension2D(50, 50));
             var element = new DElement(artifact);
             resetDirectives(layer);

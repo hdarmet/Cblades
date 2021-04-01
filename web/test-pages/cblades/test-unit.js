@@ -561,6 +561,24 @@ describe("Unit", ()=> {
             assert(unitType1.getFormationMinStepCount()).equalsTo(3);
     });
 
+    it("Checks unit move profile", () => {
+        given:
+            var { unit } = createTinyGame();
+        then:
+            assert(unit.moveProfile.getMovementCostOnHex(unit.hexLocation)).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.ADD, value:1
+            });
+            assert(unit.moveProfile.getMovementCostOnHexSide(unit.hexLocation.toward(60))).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.ADD, value:0
+            });
+            assert(unit.moveProfile.getRotationCost(120)).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.ADD, value:0.5
+            });
+            assert(unit.moveProfile.getFormationRotationCost(180)).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.ADD, value:1
+            });
+    });
+
     it("Checks unit move on the on map", () => {
         given:
             var { game, map } = prepareTinyGame();
@@ -576,8 +594,12 @@ describe("Unit", ()=> {
             assert(hexId.units).arrayEqualsTo([unit]);
         when:
             var hexId2 = map.getHex(6, 8);
-            unit.move(hexId2, 1);
+            unit.move(hexId2, {
+                type:CBMoveProfile.COST_TYPE.ADD, value:1
+            });
         then:
+            assert(unit.movementPoints).equalsTo(1);
+            assert(unit.extendedMovementPoints).equalsTo(2);
             assert(hexId.units).arrayEqualsTo([]);
             assert(hexId2.units).arrayEqualsTo([unit]);
         when:
@@ -585,6 +607,13 @@ describe("Unit", ()=> {
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
             assert(hexId2.units).arrayEqualsTo([]);
+        when: // Minimal move...
+            unit.move(hexId2, {
+                type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE
+            });
+        then:
+            assert(unit.movementPoints).equalsTo(0);
+            assert(unit.extendedMovementPoints).equalsTo(0);
     });
 
     it("Checks that when moving a unit, movement points are adjusted", () => {

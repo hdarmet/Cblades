@@ -388,6 +388,7 @@ export class CBHex {
     _revert(memento) {
         this._units = memento.units;
         this._playables = memento.playables;
+        this._hexType.type = memento.type;
         this._hexType.side120 = memento.side120;
         this._hexType.side180 = memento.side180;
         this._hexType.side240 = memento.side240;
@@ -939,6 +940,14 @@ export class CBPathFinding {
         }
     }
 
+    /*
+    _printRecords() {
+        for (let record of this._records.values()) {
+            console.log(record.hex+" => "+record.cost);
+        }
+    }
+     */
+
     _computeBackward() {
         this._records = new Map();
         for (let hex of this._arrivals) {
@@ -947,10 +956,11 @@ export class CBPathFinding {
         let maxDistance = Number.MAX_VALUE;
         while (this._search.size) {
             let record = this._search.shift();
-            if (this._start === record.hex) return;
+            if (this._start === record.hex) break;
             for (let angle of [0, 60, 120, 180, 240, 300]) {
                 let hex = record.hex.getNearHex(angle);
-                this._registerBackward(hex, hex.getAngle(record.hex), record.cost + this._costBackward(hex, record.hex, record.angle));
+                this._registerBackward(hex, hex.getAngle(record.hex),
+                    record.cost + this._costBackward(hex, record.hex, record.angle));
             }
         }
     }
@@ -963,10 +973,11 @@ export class CBPathFinding {
         this._computeBackward();
         let goodMoves = [];
         let cost = this._records.get(this._start).cost;
-        for (let angle of [0, 60, 120, 180, 240, 300]) {
+        for (let sangle of [0, 60, 120, 180, 240, 300]) {
+            let angle = parseInt(sangle);
             let hex = this._start.getNearHex(angle);
             let record = this._records.get(hex);
-            if (record && record.cost<cost) {
+            if (record && record.cost+this._costBackward(this._start, hex, angle)<=cost) {
                 goodMoves.push(hex);
             }
         }

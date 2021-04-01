@@ -10,7 +10,7 @@ import {
     Mechanisms, Memento
 } from "../mechanisms.js";
 import {
-    DBoard, DElement, DImageArtifact, DSimpleLevel, DStaticLevel, DMultiImageArtifact, DStackedLevel
+    DBoard, DElement, DImageArtifact, DSimpleLevel, DStaticLevel, DMultiImagesArtifact, DStackedLevel
 } from "../board.js";
 import {
     DPushButton
@@ -258,7 +258,7 @@ export class CBActuatorImageTrigger extends CBActuatorTriggerMixin(DImageArtifac
     }
 }
 
-export class CBActuatorMultiImageTrigger extends CBActuatorTriggerMixin(DMultiImageArtifact) {
+export class CBActuatorMultiImagesTrigger extends CBActuatorTriggerMixin(DMultiImagesArtifact) {
     constructor(...args) {
         super(...args);
     }
@@ -809,7 +809,7 @@ CBGame.ULAYERS = {
 }
 CBGame.edit = function(game) {};
 
-export class CBCounterImageArtifact extends DMultiImageArtifact {
+export class CBCounterImageArtifact extends DMultiImagesArtifact {
 
     constructor(counter, ...args) {
         super(...args); // levelName, image, position, dimension, pangle=0

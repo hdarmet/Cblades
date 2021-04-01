@@ -7,7 +7,7 @@ import {
     assert
 } from "../jstest/jtest.js";
 
-function round(v) {
+export function round(v) {
     return Math.round(v*10000)/10000;
 }
 
@@ -210,6 +210,11 @@ export function assertDirectives(layer, model) {
     skipDirectives(layer, model.length);
 }
 
+export function assertNoMoreDirectives(layer, count=0) {
+    if (count) skipDirectives(layer, count);
+    assert(layer._context.directives.length).equalsTo(0);
+}
+
 export function findInDirectives(layer, model, start=0, end =-1) {
     let directives = getContextDirectives(layer._context, start, end);
     for (let directive of directives) {
@@ -270,3 +275,14 @@ export function createEvent(eventType, args) {
     };
 }
 
+export function assertHex(hex, coords) {
+    assert(hex.col).equalsTo(coords[0]);
+    assert(hex.row).equalsTo(coords[1]);
+}
+
+export function assertHexSide(hexSide, fromCoords, toCoords) {
+    assert(hexSide.fromHex.col).equalsTo(fromCoords[0]);
+    assert(hexSide.fromHex.row).equalsTo(fromCoords[1]);
+    assert(hexSide.toHex.col).equalsTo(toCoords[0]);
+    assert(hexSide.toHex.row).equalsTo(toCoords[1]);
+}

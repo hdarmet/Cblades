@@ -15,12 +15,13 @@ import {
 import {
     CBMap,
     CBHexSideId,
-    CBHexVertexId, CBMoveType, CBPathFinding
+    CBHexVertexId, CBMoveType, CBPathFinding, CBHex
 } from "../../jslib/cblades/map.js";
 import {
     DBoard, DSimpleLevel
 } from "../../jslib/board.js";
 import {
+    diffAngle,
     Dimension2D
 } from "../../jslib/geometry.js";
 
@@ -224,6 +225,11 @@ describe("Map", ()=> {
         then:
             assert(nearSide.fromHex).equalsTo(hexId);
             assert(nearSide.toHex).equalsTo(map.getHex(4, 3));
+        when:
+            nearSide = hexId.to(map.getHex(4, 3));
+        then:
+            assert(nearSide.fromHex).equalsTo(hexId);
+            assert(nearSide.toHex).equalsTo(map.getHex(4, 3));
     });
 
     it("Checks hexIds on even columns", () => {
@@ -341,6 +347,7 @@ describe("Map", ()=> {
             assert(hexSide.isNearHex(hexId1.getNearHex(240))).equalsTo(240);
             assert(hexSide.isNearHex(hexId2.getNearHex(60))).equalsTo(60);
             assert(hexSide.turnTo(180).toString()).equalsTo("Hexside(Hex(4, 3), Hex(5, 4))");
+            assert(hexSide.turnMove(180).toString()).equalsTo("Hexside(Hex(5, 3), Hex(5, 4))");
     });
 
     it("Checks hexSideIds face hexes on even column", () => {
@@ -407,6 +414,131 @@ describe("Map", ()=> {
             assert(hexVertex.similar(new CBHexVertexId(hexId3, hexId2, hexId1))).isTrue();
             assert(hexVertex.similar(new CBHexVertexId(hexId4, hexId1, hexId2))).isFalse();
             assert(hexVertex.location.toString()).equalsTo("point(-227.3333, -984.375)");
+    });
+
+
+    it("Checks hexId collection", () => {
+        given:
+            var map = new CBMap("/CBlades/images/maps/map.png");
+            var hexes = map.hexes;
+        then:
+            assert(hexes.length).equalsTo(221);
+        when:
+            var minCol = Number.MAX_VALUE;
+            var minRow = Number.MAX_VALUE;
+            var maxCol = Number.MIN_VALUE;
+            var maxRow = Number.MIN_VALUE;
+            for (var hex of hexes) {
+                if (hex.col<minCol) minCol = hex.col;
+                if (hex.row<minRow) minRow = hex.row;
+                if (hex.col>maxCol) maxCol = hex.col;
+                if (hex.row>maxRow) maxRow = hex.row;
+            }
+        then:
+            assert(minCol).equalsTo(0);
+            assert(maxCol).equalsTo(12);
+            assert(minRow).equalsTo(0);
+            assert(maxRow).equalsTo(16);
+    });
+
+    it("Checks hexsideId collection", () => {
+        given:
+            var map = new CBMap("/CBlades/images/maps/map.png");
+            var hexSides = map.hexSides;
+        then:
+            assert(hexSides.length).equalsTo(663);
+        when:
+            var minCol = Number.MAX_VALUE;
+            var minRow = Number.MAX_VALUE;
+            var maxCol = Number.MIN_VALUE;
+            var maxRow = Number.MIN_VALUE;
+            for (var hexSide of hexSides) {
+                if (hexSide.fromHex.col<minCol) minCol = hexSide.fromHex.col;
+                if (hexSide.fromHex.row<minRow) minRow = hexSide.fromHex.row;
+                if (hexSide.fromHex.col>maxCol) maxCol = hexSide.fromHex.col;
+                if (hexSide.fromHex.row>maxRow) maxRow = hexSide.fromHex.row;
+                if (hexSide.toHex.col<minCol) minCol = hexSide.toHex.col;
+                if (hexSide.toHex.row<minRow) minRow = hexSide.toHex.row;
+                if (hexSide.toHex.col>maxCol) maxCol = hexSide.toHex.col;
+                if (hexSide.toHex.row>maxRow) maxRow = hexSide.toHex.row;
+            }
+        then:
+            assert(minCol).equalsTo(-1);
+            assert(maxCol).equalsTo(13);
+            assert(minRow).equalsTo(0);
+            assert(maxRow).equalsTo(17);
+    });
+
+    it("Checks hex type management", () => {
+        given:
+            var map = new CBMap("/CBlades/images/maps/map.png");
+            var hexId = map.getHex(4, 3);
+            Memento.activate();
+        then:
+            assert(hexId.type).equalsTo(CBHex.HEX_TYPES.OUTDOOR_CLEAR);
+        when:
+            hexId.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+        then:
+            assert(hexId.type).equalsTo(CBHex.HEX_TYPES.OUTDOOR_DIFFICULT);
+        when:
+            hexId.changeType(CBHex.HEX_TYPES.OUTDOOR_ROUGH);
+        then:
+            assert(hexId.type).equalsTo(CBHex.HEX_TYPES.OUTDOOR_ROUGH);
+        when:
+            Memento.undo();
+        then:
+            assert(hexId.type).equalsTo(CBHex.HEX_TYPES.OUTDOOR_DIFFICULT);
+    });
+
+    it("Checks hexside type management", () => {
+        given:
+            var map = new CBMap("/CBlades/images/maps/map.png");
+            var hexId = map.getHex(4, 3);
+            Memento.activate();
+        then:
+            assert(hexId.toward(0).type).equalsTo(CBHex.HEXSIDE_TYPES.NORMAL);
+            assert(hexId.toward(60).type).equalsTo(CBHex.HEXSIDE_TYPES.NORMAL);
+            assert(hexId.toward(120).type).equalsTo(CBHex.HEXSIDE_TYPES.NORMAL);
+            assert(hexId.toward(180).type).equalsTo(CBHex.HEXSIDE_TYPES.NORMAL);
+            assert(hexId.toward(240).type).equalsTo(CBHex.HEXSIDE_TYPES.NORMAL);
+            assert(hexId.toward(300).type).equalsTo(CBHex.HEXSIDE_TYPES.NORMAL);
+        when:
+            hexId.toward(0).type = CBHex.HEXSIDE_TYPES.CLIMB;
+            hexId.toward(60).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            hexId.toward(120).type = CBHex.HEXSIDE_TYPES.EASY;
+            hexId.toward(180).type = CBHex.HEXSIDE_TYPES.WALL;
+            hexId.toward(240).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            hexId.toward(300).type = CBHex.HEXSIDE_TYPES.EASY;
+        then:
+            assert(hexId.toward(0).type).equalsTo(CBHex.HEXSIDE_TYPES.CLIMB);
+            assert(hexId.toward(60).type).equalsTo(CBHex.HEXSIDE_TYPES.DIFFICULT);
+            assert(hexId.toward(120).type).equalsTo(CBHex.HEXSIDE_TYPES.EASY);
+            assert(hexId.toward(180).type).equalsTo(CBHex.HEXSIDE_TYPES.WALL);
+            assert(hexId.toward(240).type).equalsTo(CBHex.HEXSIDE_TYPES.DIFFICULT);
+            assert(hexId.toward(300).type).equalsTo(CBHex.HEXSIDE_TYPES.EASY);
+        when:
+            hexId.toward(0).changeType(CBHex.HEXSIDE_TYPES.DIFFICULT);
+            hexId.toward(60).changeType(CBHex.HEXSIDE_TYPES.EASY);
+            hexId.toward(120).changeType(CBHex.HEXSIDE_TYPES.WALL);
+            hexId.toward(180).changeType(CBHex.HEXSIDE_TYPES.DIFFICULT);
+            hexId.toward(240).changeType(CBHex.HEXSIDE_TYPES.EASY);
+            hexId.toward(300).changeType(CBHex.HEXSIDE_TYPES.WALL);
+        then:
+            assert(hexId.toward(0).type).equalsTo(CBHex.HEXSIDE_TYPES.DIFFICULT);
+            assert(hexId.toward(60).type).equalsTo(CBHex.HEXSIDE_TYPES.EASY);
+            assert(hexId.toward(120).type).equalsTo(CBHex.HEXSIDE_TYPES.WALL);
+            assert(hexId.toward(180).type).equalsTo(CBHex.HEXSIDE_TYPES.DIFFICULT);
+            assert(hexId.toward(240).type).equalsTo(CBHex.HEXSIDE_TYPES.EASY);
+            assert(hexId.toward(300).type).equalsTo(CBHex.HEXSIDE_TYPES.WALL);
+        when:
+            Memento.undo();
+        then:
+            assert(hexId.toward(0).type).equalsTo(CBHex.HEXSIDE_TYPES.CLIMB);
+            assert(hexId.toward(60).type).equalsTo(CBHex.HEXSIDE_TYPES.DIFFICULT);
+            assert(hexId.toward(120).type).equalsTo(CBHex.HEXSIDE_TYPES.EASY);
+            assert(hexId.toward(180).type).equalsTo(CBHex.HEXSIDE_TYPES.WALL);
+            assert(hexId.toward(240).type).equalsTo(CBHex.HEXSIDE_TYPES.DIFFICULT);
+            assert(hexId.toward(300).type).equalsTo(CBHex.HEXSIDE_TYPES.EASY);
     });
 
     it("Checks playable addition and removing on a Hex", () => {
@@ -795,7 +927,7 @@ describe("Map", ()=> {
             var pathfinding = new CBPathFinding(map.getHex(10, 2), 120,
                 [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
                 (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
-                (fromHex, fromAngle, toAngle)=>0.5
+                (fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5
             );
             var nextMoves = pathfinding.getGoodNextMoves();
         then:

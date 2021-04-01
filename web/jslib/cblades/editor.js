@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    CBActuator, CBActuatorMultiImageTrigger,
+    CBActuator, CBActuatorMultiImagesTrigger,
     CBGame
 } from "./game.js";
 import {
@@ -14,7 +14,7 @@ import {
     Memento
 } from "../mechanisms.js";
 
-export class MapEditorHexTrigger extends CBActuatorMultiImageTrigger {
+export class MapEditorHexTrigger extends CBActuatorMultiImagesTrigger {
 
     constructor(actuator, hex) {
         let images = [
@@ -61,7 +61,7 @@ export class MapEditorHexTrigger extends CBActuatorMultiImageTrigger {
 
 }
 
-export class MapEditorHexSideTrigger extends CBActuatorMultiImageTrigger {
+export class MapEditorHexSideTrigger extends CBActuatorMultiImagesTrigger {
 
     constructor(actuator, hexSide) {
         let images = [

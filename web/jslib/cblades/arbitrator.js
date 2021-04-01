@@ -4,7 +4,7 @@ import {
 import {
     CBHexId,
     CBHexSideId,
-    CBMoveType,
+    CBMoveType, CBPathFinding,
 } from "./map.js";
 import {
     CBCohesion,
@@ -1240,5 +1240,28 @@ export class CBArbitrator extends CBAbstractArbitrator{
     resolveFireball(spellLevel, diceResult) {
         let success = diceResult[0]+diceResult[1]<=8;
         return { success, losses:success?1:0 };
+    }
+
+    createRootPathFinding(unit) {
+        let pathFinding = new CBPathFinding(unit.hexLocation, unit.angle, unit.wing.retreatZone,
+            (from, to)=>{
+                let angle = from.getAngle(to);
+                let cost = this.game.arbitrator.getMovementCost(unit, angle, from, angle);
+                switch(cost.type) {
+                    case CBMoveProfile.COST_TYPE.IMPASSABLE: return 10000;
+                    case CBMoveProfile.COST_TYPE.MINIMAL_MOVE: return unit.type.getExtendedMovementPoints(unit.remainingStepCount);
+                    default: return cost.value;
+                }
+            },
+            (hex, fromAngle, toAngle)=>{
+                let cost = this.game.arbitrator.getRotationCost(unit, toAngle, hex, fromAngle);
+                switch(cost.type) {
+                    case CBMoveProfile.COST_TYPE.IMPASSABLE: return 10000;
+                    case CBMoveProfile.COST_TYPE.MINIMAL_MOVE: return unit.type.getExtendedMovementPoints(unit.remainingStepCount);
+                    default: return cost.value;
+                }
+            }
+        );
+        return new Set(pathFinding.getGoodNextMoves());
     }
 }

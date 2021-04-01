@@ -9,9 +9,10 @@ import {
     DImage, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
+    assertDirectives,
     getDirectives, getLayers,
     loadAllImages,
-    mockPlatform, resetDirectives
+    mockPlatform, resetDirectives, skipDirectives
 } from "../mocks.js";
 import {
     Mechanisms, Memento
@@ -20,7 +21,7 @@ import {
     repaint,
     paint,
     clickOnActionMenu,
-    clickOnCounter
+    clickOnCounter, showTroop, zoomAndRotate0, showCharacter
 } from "./interactive-tools.js";
 import {
     createTinyGame,
@@ -101,18 +102,9 @@ describe("Interactive Miscellaneous", ()=> {
             resetDirectives(unitsLayer, units1Layer, markersLayer);
             repaint(game);
         then:
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 500, 496.2243)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/character.png, -60, -60, 120, 120)",
-                "restore()",
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 666.6667, 400)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            skipDirectives(unitsLayer, 4);
+            assertDirectives(unitsLayer, showCharacter("misc/character", zoomAndRotate0(500, 496.2243)));
+            assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(666.6667, 400)));
             assert(getDirectives(units1Layer, 4)).arrayEqualsTo([
             ]);
             assert(unit1.hexLocation).isNotDefined();

@@ -15,18 +15,10 @@ export let ProfileCapacity = {
     INFERIOR: -2
 }
 
-export class PedestrianMoveProfile {
+export class PedestrianMoveProfile extends CBMoveProfile {
 
     constructor(capacity) {
-        this._capacity = capacity;
-    }
-
-    get movementPoints() {
-        return 2+this._capacity;
-    }
-
-    get extendedMovementPoints() {
-        return 3+this._capacity*1.5;
+        super(capacity);
     }
 
     getMovementCostOnHex(hex) {
@@ -69,18 +61,14 @@ export class PedestrianMoveProfile {
     }
 }
 
-export class AnimalMoveProfile {
+export class AnimalMoveProfile extends CBMoveProfile {
 
     constructor(capacity) {
-        this._capacity = capacity;
+        super(capacity);
     }
 
     get movementPoints() {
-        return 3+this._capacity;
-    }
-
-    get extendedMovementPoints() {
-        return 4.5+this._capacity*1.5;
+        return 3+this.capacity;
     }
 
     getMovementCostOnHex(hex) {
@@ -123,18 +111,14 @@ export class AnimalMoveProfile {
     }
 }
 
-export class CavalryMoveProfile {
+export class CavalryMoveProfile extends CBMoveProfile {
 
     constructor(capacity) {
-        this._capacity = capacity;
+        super(capacity);
     }
 
     get movementPoints() {
-        return 3+this._capacity;
-    }
-
-    get extendedMovementPoints() {
-        return 4.5+this._capacity*1.5;
+        return 3+this.capacity;
     }
 
     getMovementCostOnHex(hex) {

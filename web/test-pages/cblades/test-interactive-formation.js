@@ -9,16 +9,25 @@ import {
     DImage, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
+    assertDirectives, assertNoMoreDirectives,
     getDirectives, getLayers,
     loadAllImages,
-    mockPlatform, resetDirectives
+    mockPlatform, resetDirectives, skipDirectives
 } from "../mocks.js";
 import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
     clickOnActionMenu,
-    clickOnCounter, clickOnTrigger, paint, repaint
+    clickOnCounter,
+    clickOnTrigger,
+    paint,
+    repaint,
+    showFormation,
+    showMarker, showMenuItem, showMenuPanel,
+    showSelectedFormation, showSelectedTroop, showTroop, zoomAndRotate180,
+    zoomAndRotate270,
+    zoomAndRotate90
 } from "./interactive-tools.js";
 import {
     create2UnitsTinyGame,
@@ -50,43 +59,53 @@ describe("Interactive Formation", ()=> {
         unregisterInteractiveFormation();
     });
 
+    function showQuitFullTrigger([a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/quit-full.png, -32, -30, 64, 60)",
+            "restore()"
+        ];
+    }
+
+    function showQuitHalfTrigger([a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/quit-half.png, -32, -30, 64, 60)",
+            "restore()",
+        ]
+    }
+
+    function showFormationTrigger([a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/formation.png, -40, -85, 80, 170)",
+            "restore()"
+        ];
+    }
+
     it("Checks that the unit menu contains menu items for formation management", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [unitsLayer, widgetsLayer, widgetItemsLayer] = getLayers(game.board, "units-0", "widgets", "widget-items");
+            var [unitsLayer, widgetsLayer, itemsLayer] = getLayers(game.board, "units-0", "widgets", "widget-items");
             loadAllImages();
         when:
-            resetDirectives(unitsLayer, widgetsLayer, widgetItemsLayer);
+            resetDirectives(unitsLayer, widgetsLayer, itemsLayer);
             clickOnCounter(game, unit);
         then:
             loadAllImages();
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 301.6667, 236.8878)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-125, -125, 250, 250)", "fillStyle = #FFFFFF",
-                    "fillRect(-125, -125, 250, 250)",
-                "restore()"
-            ]);
-            assert(getDirectives(widgetItemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 331.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/leave-formation-gray.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 391.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/dismiss-formation-gray.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 211.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/create-formation-gray.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 271.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/join-formation-gray.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMenuPanel(4, 4, 301.6667, 236.8878));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showMenuItem(2, 3, "icons/leave-formation-gray", 4, 4, 301.6667, 236.8878));
+            assertDirectives(itemsLayer, showMenuItem(3, 3, "icons/dismiss-formation-gray", 4, 4, 301.6667, 236.8878));
+            assertDirectives(itemsLayer, showMenuItem(0, 3, "icons/create-formation-gray", 4, 4, 301.6667, 236.8878));
+            assertDirectives(itemsLayer, showMenuItem(1, 3, "icons/join-formation-gray", 4, 4, 301.6667, 236.8878));
     });
 
     function clickOnCreateFormationAction(game) {
@@ -121,25 +140,11 @@ describe("Interactive Formation", ()=> {
             resetDirectives(unitsLayer, actuatorsLayer);
             repaint(game);
         then:
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 666.6667, 400)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unitb.png, -71, -71, 142, 142)",
-                "restore()",
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 666.6667, 303.7757)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(-0.4888, 0, 0, -0.4888, 666.6667, 351.8878)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/formation.png, -40, -85, 80, 170)",
-                "restore()"
-            ]);
+            skipDirectives(unitsLayer, 4);
+            assertDirectives(unitsLayer, showSelectedTroop("misc/unitb", zoomAndRotate90(666.6667, 400)));
+            assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate90(666.6667, 303.7757)));
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showFormationTrigger(zoomAndRotate180(666.6667, 351.8878)));
             assert(createFormationActuator.getTrigger(unit2.hexLocation)).isDefined();
         when:
             resetDirectives(unitsLayer, formationsLayer, actuatorsLayer);
@@ -147,15 +152,10 @@ describe("Interactive Formation", ()=> {
             loadAllImages();
             paint(game);
         then:
-            assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 666.6667, 351.8878)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/formation1b.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
+            skipDirectives(formationsLayer, 4);
+            assertDirectives(formationsLayer, showFormation("misc/formation1b", zoomAndRotate90(666.6667, 351.8878)));
+            assertNoMoreDirectives(actuatorsLayer, 4);
+            assertNoMoreDirectives(unitsLayer, 4);
     });
 
     function clickOnBreakFormationAction(game) {
@@ -176,17 +176,9 @@ describe("Interactive Formation", ()=> {
             resetDirectives(unitsLayer, formationsLayer);
             repaint(game);
         then:
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 416.6667, 351.8878)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/troop.png, -71, -71, 142, 142)",
-                "restore()",
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 416.6667, 255.6635)",
-                    "shadowColor = #000000", "shadowBlur = 15", "drawImage(/CBlades/images/units/misc/troop.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            skipDirectives(unitsLayer, 4);
+            assertDirectives(unitsLayer, showTroop("misc/troop", zoomAndRotate90(416.6667, 351.8878)));
+            assertDirectives(unitsLayer, showTroop("misc/troop", zoomAndRotate90(416.6667, 255.6635)));
     });
 
     function clickOnReleaseTroopsAction(game) {
@@ -213,63 +205,20 @@ describe("Interactive Formation", ()=> {
             resetDirectives(formationsLayer, actuatorsLayer, fmarkersLayer);
             repaint(game);
         then:
-            assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0, 0.4888, -0.4888, 0, 416.6667, 303.7757)",
-                "shadowColor = #FF0000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/formation3.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(fmarkersLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 451.3685, 373.1794)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/ordergiven.png, -32, -32, 64, 64)",
-                "restore()"
-            ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 458.3333, 332.643)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/quit-half.png, -32, -30, 64, 60)",
-                "restore()",
-                "save()",
-                    "setTransform(0, -0.4888, 0.4888, 0, 375, 332.643)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/quit-half.png, -32, -30, 64, 60)",
-                "restore()",
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 458.3333, 361.5103)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/quit-full.png, -32, -30, 64, 60)",
-                "restore()",
-                "save()",
-                    "setTransform(0, -0.4888, 0.4888, 0, 375, 361.5103)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/quit-full.png, -32, -30, 64, 60)",
-                "restore()",
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 458.3333, 274.9084)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/quit-half.png, -32, -30, 64, 60)",
-                "restore()",
-                "save()",
-                    "setTransform(0, -0.4888, 0.4888, 0, 375, 274.9084)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/quit-half.png, -32, -30, 64, 60)",
-                "restore()",
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 458.3333, 246.0411)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/quit-full.png, -32, -30, 64, 60)",
-                "restore()",
-                "save()",
-                    "setTransform(0, -0.4888, 0.4888, 0, 375, 246.0411)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/quit-full.png, -32, -30, 64, 60)",
-                "restore()"
-            ]);
-        when:
+            skipDirectives(formationsLayer, 4);
+            assertDirectives(formationsLayer, showSelectedFormation("misc/formation3", zoomAndRotate90(416.6667, 303.7757)));
+            skipDirectives(fmarkersLayer, 4);
+            assertDirectives(fmarkersLayer, showMarker("ordergiven", zoomAndRotate90(451.3685, 373.1794)));
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showQuitHalfTrigger(zoomAndRotate90(458.3333, 332.643)));
+            assertDirectives(actuatorsLayer, showQuitHalfTrigger(zoomAndRotate270(375, 332.643)));
+            assertDirectives(actuatorsLayer, showQuitFullTrigger(zoomAndRotate90(458.3333, 361.5103)));
+            assertDirectives(actuatorsLayer, showQuitFullTrigger(zoomAndRotate270(375, 361.5103)));
+            assertDirectives(actuatorsLayer, showQuitHalfTrigger(zoomAndRotate90(458.3333, 274.9084)));
+            assertDirectives(actuatorsLayer, showQuitHalfTrigger(zoomAndRotate270(375, 274.9084)));
+            assertDirectives(actuatorsLayer, showQuitFullTrigger(zoomAndRotate90(458.3333, 246.0411)));
+            assertDirectives(actuatorsLayer, showQuitFullTrigger(zoomAndRotate270(375, 246.0411)));
+         when:
             var releaseTroopActuator = getReleaseTroopsActuator(game);
             var trigger = releaseTroopActuator.getTrigger(formation.hexLocation.fromHex, 2, CBMoveType.FORWARD);
         then:
@@ -281,52 +230,17 @@ describe("Interactive Formation", ()=> {
             paint(game);
             var [units1Layer, formations1Layer, fmarkers1Layer] = getLayers(game.board,"units-1", "formations-1", "fmarkers-1");
         then:
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 416.6667, 351.8878)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/troop.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([
-            ]);
-            assert(getDirectives(fmarkersLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(formations1Layer)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 421.5543, 298.8881)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(fmarkers1Layer)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 461.1437, 363.4042)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/ordergiven.png, -32, -32, 64, 64)",
-                "restore()"
-            ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 458.3333, 274.9084)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/quit-half.png, -32, -30, 64, 60)",
-                "restore()",
-                "save()",
-                    "setTransform(0, -0.4888, 0.4888, 0, 375, 274.9084)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/quit-half.png, -32, -30, 64, 60)",
-                "restore()",
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 458.3333, 246.0411)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/quit-full.png, -32, -30, 64, 60)",
-                "restore()",
-                "save()",
-                    "setTransform(0, -0.4888, 0.4888, 0, 375, 246.0411)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/quit-full.png, -32, -30, 64, 60)",
-                "restore()"
-            ]);
+            skipDirectives(unitsLayer, 4);
+            assertDirectives(unitsLayer, showTroop("misc/troop", zoomAndRotate90(416.6667, 351.8878)));
+            assertNoMoreDirectives(formationsLayer, 4);
+            assertNoMoreDirectives(fmarkersLayer, 4);
+            assertDirectives(formations1Layer, showSelectedFormation("misc/formation2", zoomAndRotate90(421.5543, 298.8881)));
+            assertDirectives(fmarkers1Layer, showMarker("ordergiven", zoomAndRotate90(461.1437, 363.4042)));
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showQuitHalfTrigger(zoomAndRotate90(458.3333, 274.9084)));
+            assertDirectives(actuatorsLayer, showQuitHalfTrigger(zoomAndRotate270(375, 274.9084)));
+            assertDirectives(actuatorsLayer, showQuitFullTrigger(zoomAndRotate90(458.3333, 246.0411)));
+            assertDirectives(actuatorsLayer, showQuitFullTrigger(zoomAndRotate270(375, 246.0411)));
         when:
             releaseTroopActuator = getReleaseTroopsActuator(game);
             trigger = releaseTroopActuator.getTrigger(formation.hexLocation.toHex, 1, CBMoveType.BACKWARD);
@@ -338,30 +252,15 @@ describe("Interactive Formation", ()=> {
             loadAllImages();
             paint(game);
         then:
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 416.6667, 351.8878)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/troop.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(fmarkersLayer, 4)).arrayEqualsTo([ ]);
-            assert(getDirectives(formations1Layer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 421.5543, 298.8881)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/formation2b.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(fmarkers1Layer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 461.1437, 363.4042)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/actiondone.png, -32, -32, 64, 64)",
-                "restore()"
-            ]);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
+            skipDirectives(unitsLayer, 4);
+            assertDirectives(unitsLayer, showTroop("misc/troop", zoomAndRotate90(416.6667, 351.8878)));
+            assertNoMoreDirectives(formationsLayer, 4);
+            assertNoMoreDirectives(fmarkersLayer, 4);
+            skipDirectives(formations1Layer, 4);
+            assertDirectives(formations1Layer, showSelectedFormation("misc/formation2b", zoomAndRotate90(421.5543, 298.8881)));
+            skipDirectives(fmarkers1Layer, 4);
+            assertDirectives(fmarkers1Layer, showMarker("actiondone", zoomAndRotate90(461.1437, 363.4042)));
+            assertNoMoreDirectives(actuatorsLayer, 4);
     });
 
     function clickOnIncludeTroopsAction(game) {
@@ -391,13 +290,8 @@ describe("Interactive Formation", ()=> {
             clickOnIncludeTroopsAction(game);
             paint(game);
         then:
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
-            assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 666.6667, 351.8878)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/formation3b.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
+            assertNoMoreDirectives(unitsLayer, 4);
+            skipDirectives(formationsLayer, 4);
+            assertDirectives(formationsLayer, showSelectedFormation("misc/formation3b", zoomAndRotate90(666.6667, 351.8878)));
     });
 });

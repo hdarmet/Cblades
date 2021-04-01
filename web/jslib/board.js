@@ -494,7 +494,7 @@ export class DImageArtifact extends DImageAbstractArtifact {
 /**
  * Multiple images wrapper artifact
  */
-export class DMultiImageArtifact extends DImageAbstractArtifact {
+export class DMultiImagesArtifact extends DImageAbstractArtifact {
 
     constructor(levelName, images, position, dimension, imageDimension=null, imagePosition=null) {
         super(dimension, levelName, position, imageDimension, imagePosition);
