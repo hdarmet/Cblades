@@ -69,8 +69,8 @@ export class CBHexId {
         this.hex.changeType(type);
     }
 
-    similar(hexId) {
-        return this.location.equalsTo(hexId.location);
+    similar(hexLocation) {
+        return this.location.equalsTo(hexLocation.location);
     }
 
     isNearHex(hexId) {
@@ -224,8 +224,8 @@ export class CBHexSideId {
         return hexId===this._fromHex ? this._toHex :this._fromHex;
     }
 
-    similar(hexSideId) {
-        return this.location.equalsTo(hexSideId.location);
+    similar(hexLocation) {
+        return this.location.equalsTo(hexLocation.location);
     }
 
     isNearHex(hexId) {
@@ -348,8 +348,8 @@ export class CBHexVertexId {
         return [this._hexId1, this._hexId2, this._hexId3];
     }
 
-    similar(hexVertexId) {
-        return this.location.equalsTo(hexVertexId.location);
+    similar(hexLocation) {
+        return this.location.equalsTo(hexLocation.location);
     }
 
 }

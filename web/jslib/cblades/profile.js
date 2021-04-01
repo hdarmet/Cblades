@@ -7,7 +7,7 @@ import {
     CBMoveProfile
 } from "./unit.js";
 
-export let ProfileCapacity = {
+export let CBProfileCapacity = {
     SUPERIOR: 2,
     ADVANTAGED: 1,
     NORMAL: 0,
@@ -145,7 +145,7 @@ export class CavalryMoveProfile extends CBMoveProfile {
         switch (hexSide.type) {
             case CBHex.HEXSIDE_TYPES.NORMAL : return {type:CBMoveProfile.COST_TYPE.ADD, value:0};
             case CBHex.HEXSIDE_TYPES.EASY : return {type:CBMoveProfile.COST_TYPE.SET, value:0.5};
-            case CBHex.HEXSIDE_TYPES.DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+            case CBHex.HEXSIDE_TYPES.DIFFICULT : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
             case CBHex.HEXSIDE_TYPES.CLIMB : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
             case CBHex.HEXSIDE_TYPES.WALL : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
         }

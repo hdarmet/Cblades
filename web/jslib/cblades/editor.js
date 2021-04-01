@@ -14,7 +14,7 @@ import {
     Memento
 } from "../mechanisms.js";
 
-export class MapEditorHexTrigger extends CBActuatorMultiImagesTrigger {
+export class CBMapEditorHexTrigger extends CBActuatorMultiImagesTrigger {
 
     constructor(actuator, hex) {
         let images = [
@@ -52,6 +52,10 @@ export class MapEditorHexTrigger extends CBActuatorMultiImagesTrigger {
         this._type = memento.type;
     }
 
+    get hexLocation() {
+        return this._hex;
+    }
+
     onMouseClick(trigger, event) {
         Memento.register(this);
         this._type = (this._type+1)%15;
@@ -61,7 +65,7 @@ export class MapEditorHexTrigger extends CBActuatorMultiImagesTrigger {
 
 }
 
-export class MapEditorHexSideTrigger extends CBActuatorMultiImagesTrigger {
+export class CBMapEditorHexSideTrigger extends CBActuatorMultiImagesTrigger {
 
     constructor(actuator, hexSide) {
         let images = [
@@ -90,6 +94,10 @@ export class MapEditorHexSideTrigger extends CBActuatorMultiImagesTrigger {
         this._type = memento.type;
     }
 
+    get hexLocation() {
+        return this._hexSide;
+    }
+
     onMouseClick(trigger, event) {
         Memento.register(this);
         this._type = (this._type+1)%5;
@@ -99,25 +107,25 @@ export class MapEditorHexSideTrigger extends CBActuatorMultiImagesTrigger {
 
 }
 
-export class MapEditor extends CBActuator {
+export class CBMapEditActuator extends CBActuator {
 
     constructor(map) {
         super();
 
         let imageArtifacts = [];
         for (let hex of map.hexes) {
-            let trigger = new MapEditorHexTrigger(this, hex);
+            let trigger = new CBMapEditorHexTrigger(this, hex);
             imageArtifacts.push(trigger);
         }
         for (let hexSide of map.hexSides) {
-            let trigger = new MapEditorHexSideTrigger(this, hexSide);
+            let trigger = new CBMapEditorHexSideTrigger(this, hexSide);
             imageArtifacts.push(trigger);
         }
         this.initElement(imageArtifacts);
     }
 
-    getTrigger(hex) {
-        return this.findTrigger(trigger=>trigger.hex === hex);
+    getTrigger(hexLocation) {
+        return this.findTrigger(trigger=>trigger.hexLocation.similar(hexLocation));
     }
 
 }
@@ -125,6 +133,10 @@ export class MapEditor extends CBActuator {
 export function registerEditor() {
     CBGame.edit = function (game) {
         game.closeActuators();
-        game.openActuator(new MapEditor(game.map));
+        game.openActuator(new CBMapEditActuator(game.map));
     }
+}
+
+export function unregisterEditor() {
+    delete CBGame.edit;
 }

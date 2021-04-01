@@ -182,7 +182,7 @@ export function getContextDirectives(context, start=0, end=-1) {
     if (start<0) start = context.directives.length+start+1;
     if (end<0) end = context.directives.length+end+1;
     assert(context.directives.length>=start && context.directives.length>=end).isTrue();
-    return start ? context.directives.slice(start, end) : context.directives;
+    return start!==0 || end!==context.directives.length ? context.directives.slice(start, end) : context.directives;
 }
 
 export function resetContextDirectives(context) {
