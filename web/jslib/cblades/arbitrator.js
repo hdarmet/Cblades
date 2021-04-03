@@ -422,9 +422,29 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return foes;
     }
 
+    getCombatTableResult(diceResult, advantage) {
+        let column = 0;
+        let dices = diceResult[0]+diceResult[1];
+        while (column<CBArbitrator.combatAdvantage.length) {
+            if (advantage < CBArbitrator.combatAdvantage[column]) {
+                return column>0 ? CBArbitrator.combatTable[column-1][dices] : 0;
+            }
+            else column++;
+        }
+        return CBArbitrator.combatTable[CBArbitrator.combatAdvantage.length-1][dices];
+    }
+
+    getShockAttackAdvantage(unit, foe, supported) {
+        return supported ? 0 : -4;
+    }
+
+    getShockAttackResult(unit, foe, supported, diceResult) {
+        return this.getCombatTableResult(diceResult, this.getShockAttackAdvantage(unit, foe, supported));
+    }
+
     processShockAttackResult(unit, foe, supported, diceResult) {
-        let success = diceResult[0]+diceResult[1]<=8;
-        let lossesForDefender = diceResult[0]+diceResult[1]<=4 ? 2 : diceResult[0]+diceResult[1]<=8 ? 1 : 0;
+        let lossesForDefender = this.getShockAttackResult(unit, foe, supported, diceResult);
+        let success = lossesForDefender>0;
         let tirednessForAttacker = supported;
         let played = !unit.formationNature || unit.hasAttacked();
         let attackLocation = foe.hexLocation;
@@ -1265,3 +1285,16 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return new Set(pathFinding.getGoodNextMoves());
     }
 }
+CBArbitrator.combatTable = [];
+CBArbitrator.combatAdvantage = [-16,-11, -7, -4, -2, -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 11, 13, 15, 17, 19, 21];
+CBArbitrator.combatTable[ 2] = [  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  4];
+CBArbitrator.combatTable[ 3] = [  0,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,  3,  3,  3,  3];
+CBArbitrator.combatTable[ 4] = [  0,  0,  1,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,  3];
+CBArbitrator.combatTable[ 5] = [  0,  0,  0,  1,  1,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3];
+CBArbitrator.combatTable[ 6] = [  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  2];
+CBArbitrator.combatTable[ 7] = [  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2,  2];
+CBArbitrator.combatTable[ 8] = [  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,  2];
+CBArbitrator.combatTable[ 9] = [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1];
+CBArbitrator.combatTable[10] = [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1];
+CBArbitrator.combatTable[11] = [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1];
+CBArbitrator.combatTable[12] = [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0];

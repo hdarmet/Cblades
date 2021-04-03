@@ -97,6 +97,18 @@ CBMoveProfile.COST_TYPE = {
     IMPASSABLE : 3
 };
 
+export class CBWeaponProfile {
+
+    constructor(capacity = 0) {
+        this._capacity = capacity;
+    }
+
+    get capacity() {
+        return this._capacity;
+    }
+
+}
+
 export class CBUnitType {
 
     constructor(name, troopPaths, formationPaths) {
@@ -105,6 +117,7 @@ export class CBUnitType {
         this._formationPaths = formationPaths;
         this._maxStepCount = 2;
         this._moveProfiles = [];
+        this._weaponProfiles = [];
     }
 
     getMoveProfile(steps) {
@@ -113,6 +126,15 @@ export class CBUnitType {
 
     setMoveProfile(steps, moveProfile) {
         this._moveProfiles[steps] = moveProfile;
+        return this;
+    }
+
+    getWeaponProfile(steps) {
+        return this._weaponProfiles[steps];
+    }
+
+    setWeaponProfile(steps, weaponProfile) {
+        this._weaponProfiles[steps] = weaponProfile;
         return this;
     }
 

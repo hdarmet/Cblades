@@ -4,7 +4,7 @@ import {
     CBHex
 } from "./map.js";
 import {
-    CBMoveProfile
+    CBMoveProfile, CBWeaponProfile
 } from "./unit.js";
 
 export let CBProfileCapacity = {
@@ -159,4 +159,28 @@ export class CavalryMoveProfile extends CBMoveProfile {
     getFormationRotationCost(angle) {
         return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
     }
+}
+
+export class MediumCavalryWeaponProfile extends CBWeaponProfile {
+
+    constructor(capacity) {
+        super(capacity);
+    }
+
+}
+
+export class HeavyCavalryWeaponProfile extends CBWeaponProfile {
+
+    constructor(capacity) {
+        super(capacity);
+    }
+
+}
+
+export class LanceWeaponProfile extends CBWeaponProfile {
+
+    constructor(capacity) {
+        super(capacity);
+    }
+
 }

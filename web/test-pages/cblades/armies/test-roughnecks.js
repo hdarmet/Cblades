@@ -15,14 +15,10 @@ import {
     mockPlatform
 } from "../../mocks.js";
 import {
-    GoblinLeader, GoblinWolfRider
-} from "../../../jslib/cblades/armies/orcs.js";
-import {
-    AnimalMoveProfile, CavalryMoveProfile, CBProfileCapacity, PedestrianMoveProfile
+    CavalryMoveProfile, CBProfileCapacity, PedestrianMoveProfile
 } from "../../../jslib/cblades/profile.js";
 import {
-    RoughneckKnight, RoughneckLance,
-    RoughneckLeader
+    RoughneckKnight, RoughneckLance, RoughneckLeader
 } from "../../../jslib/cblades/armies/roughnecks.js";
 
 describe("Roughnecks Army", ()=> {
@@ -133,4 +129,5 @@ describe("Roughnecks Army", ()=> {
             assert(profile).is(PedestrianMoveProfile);
             assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
     });
+
 });

@@ -15,7 +15,7 @@ import {
     DArtifactRotateAnimation,
     DMultiImagesArtifact,
     DArtifactAnimation,
-    DArtifactAlphaAnimation, DTextArtifact, DRectArtifact
+    DArtifactAlphaAnimation, DTextArtifact, DRectArtifact, DComposedImageArtifact
 } from "./board.js";
 import {
     Area2D,
@@ -562,22 +562,18 @@ export class DIndicator extends DElement {
 
 }
 
-class InsertImageArtifact extends DImageArtifact {
+class InsertImageArtifact extends DComposedImageArtifact {
 
     constructor(image, dimension) {
-        super("widgets", image, new Point2D(0, 0), dimension, new Point2D(0, 0), dimension);
+        super("widgets", new Point2D(0, 0), dimension);
         this.setSettings(this.settings);
+        this._image = image;
     }
 
-    get settings() {
-        return level => {
-            level.setShadowSettings("#000000", 10);
-        }
+    addFrame(area) {
+        this.addComposition(this._image, area, area);
     }
 
-    drawImage() {
-        super.drawImage();
-    }
 }
 
 export class DInsertCommand extends ActivableArtifact(DImageArtifact) {
@@ -610,24 +606,254 @@ export class DInsertCommand extends ActivableArtifact(DImageArtifact) {
 }
 DInsertCommand.DIMENSION = new Dimension2D(50, 50);
 
-export class DInsert extends DElement {
+export class DInsertFrame {
+
+    constructor(insert, index, area, pageArea) {
+        this._insert = insert;
+        this._index = index;
+        this._area = area;
+        this._pageArea = pageArea;
+        this._deltaDimension = pageArea.dimension.minusDim(area.dimension).half;
+    }
+
+    get area() {
+        return this._area;
+    }
+
+    get pageArea() {
+        return this._pageArea;
+    }
+
+    setNavigation(left, right, next, previous) {
+        this._leftButtonManaged = left;
+        this._rightButtonManaged = right;
+        this._nextButtonManaged = next;
+        this._previousButtonManaged = previous;
+        return this;
+    }
+
+    _manageNavigation() {
+
+        function _manageLeftButton(composition) {
+            if (composition.sourceArea.left>this._pageArea.left) {
+                if (!this._leftButton) {
+                    let leftImage = DImage.getImage("/CBlades/images/commands/left.png");
+                    let position = new Point2D(
+                        this._area.left+DInsertCommand.DIMENSION.w/2+10-this._insert.dimension.w/2,
+                        this._area.y-this._insert.dimension.h/2);
+                    this._leftButton = new DInsertCommand(leftImage, position, this._insert.leftPage);
+                }
+                if (!this._insert.hasArtifact(this._leftButton)) {
+                    this._insert.addArtifact(this._leftButton);
+                }
+            }
+            else {
+                if (this._insert.hasArtifact(this._leftButton)) {
+                    this._insert.removeArtifact(this._leftButton);
+                    delete this._leftButton;
+                }
+            }
+        }
+
+        function _manageRightButton(composition) {
+            if (composition.sourceArea.right<this._pageArea.right) {
+                if (!this._rightButton) {
+                    let downImage = DImage.getImage("/CBlades/images/commands/right.png");
+                    let position = new Point2D(
+                        this._area.right-this._insert.dimension.w/2-DInsertCommand.DIMENSION.w/2-10,
+                        this._area.y-this._insert.dimension.h/2);
+                    this._rightButton = new DInsertCommand(downImage, position, this._insert.rightPage);
+                }
+                if (!this._insert.hasArtifact(this._rightButton)) {
+                    this._insert.addArtifact(this._rightButton);
+                }
+            }
+            else {
+                if (this._insert.hasArtifact(this._rightButton)) {
+                    this._insert.removeArtifact(this._rightButton);
+                    delete this._rightButton;
+                }
+            }
+        }
+
+        function _manageNextButton() {
+            if (composition.sourceArea.top>this._pageArea.top) {
+                if (!this._upButton) {
+                    let upImage = DImage.getImage("/CBlades/images/commands/up.png");
+                    let position = new Point2D(
+                        this._area.x-this._insert.dimension.w/2,
+                        this._area.top+DInsertCommand.DIMENSION.w/2+10-this._insert.dimension.h/2);
+                    this._upButton = new DInsertCommand(upImage, position, this._insert.previousPage);
+                }
+                if (!this._insert.hasArtifact(this._upButton)) {
+                    this._insert.addArtifact(this._upButton);
+                }
+            }
+            else {
+                if (this._insert.hasArtifact(this._upButton)) {
+                    this._insert.removeArtifact(this._upButton);
+                    delete this._upButton;
+                }
+            }
+        }
+
+        function _managePreviousButton() {
+            if (composition.sourceArea.bottom<this._pageArea.bottom) {
+                if (!this._downButton) {
+                    let downImage = DImage.getImage("/CBlades/images/commands/down.png");
+                    let position = new Point2D(
+                        this._area.x-this._insert.dimension.w/2,
+                        this._area.bottom-DInsertCommand.DIMENSION.w/2-10-this._insert.dimension.h/2
+                    );
+                    this._downButton = new DInsertCommand(downImage, position, this._insert.nextPage);
+                }
+                if (!this._insert.hasArtifact(this._downButton)) {
+                    this._insert.addArtifact(this._downButton);
+                }
+            }
+            else {
+                if (this._insert.hasArtifact(this._downButton)) {
+                    this._insert.removeArtifact(this._downButton);
+                    delete this._downButton;
+                }
+            }
+        }
+
+        let composition = this._insert.artifact.getComposition(this._index);
+        if (this._leftButtonManaged) {
+            _manageLeftButton.call(this, composition);
+        }
+        if (this._rightButtonManaged) {
+            _manageRightButton.call(this, composition);
+        }
+        if (this._nextButtonManaged) {
+            _manageNextButton.call(this, composition);
+        }
+        if (this._previousButtonManaged) {
+            _managePreviousButton.call(this, composition);
+        }
+    }
+
+    _rightPage() {
+        let composition = this._insert.artifact.getComposition(this._index);
+        let position = composition.sourceArea.left + DAbstractInsert.PAGE_WIDTH;
+        if (position+composition.destArea.w>this._pageArea.right) {
+            position = this._pageArea.right - composition.destArea.w;
+        }
+        this._insert.artifact.setComposition(this._index, composition.image,
+            composition.destArea,
+            Area2D.create(new Point2D(position, composition.sourceArea.top), composition.sourceArea.dimension)
+        );
+        this._moveMarkers();
+        this._manageNavigation();
+    }
+
+    _leftPage() {
+        let composition = this._insert.artifact.getComposition(this._index);
+        let position = composition.sourceArea.left - DAbstractInsert.PAGE_WIDTH;
+        if (position<this._pageArea.left) {
+            position = this._pageArea.left;
+        }
+        this._insert.artifact.setComposition(this._index, composition.image,
+            composition.destArea,
+            Area2D.create(new Point2D(position, composition.sourceArea.top), composition.sourceArea.dimension)
+        );
+        this._moveMarkers();
+        this._manageNavigation();
+    }
+
+    _nextPage() {
+        let composition = this._insert.artifact.getComposition(this._index);
+        let position = composition.sourceArea.top + DAbstractInsert.PAGE_HEIGHT;
+        if (position+composition.destArea.h>this._pageArea.bottom) {
+            position = this._pageArea.bottom - composition.destArea.h;
+        }
+        this._insert.artifact.setComposition(this._index, composition.image,
+            composition.destArea,
+            Area2D.create(new Point2D(composition.sourceArea.left, position), composition.sourceArea.dimension)
+        );
+        this._moveMarkers();
+        this._manageNavigation();
+    }
+
+    _previousPage() {
+        let composition = this._insert.artifact.getComposition(this._index);
+        let position = composition.sourceArea.top - DAbstractInsert.PAGE_HEIGHT;
+        if (position<this._pageArea.top) {
+            position = this._pageArea.top;
+        }
+        this._insert.artifact.setComposition(this._index, composition.image,
+            composition.destArea,
+            Area2D.create(new Point2D(composition.sourceArea.left, position), composition.sourceArea.dimension)
+        );
+        this._moveMarkers();
+        this._manageNavigation();
+    }
+
+
+    _moveMarkers() {
+        for (let marker of this._insert._markers.values()) {
+            marker.artifact.position = this._getMarkerPosition(marker.location);
+            this._manageVisibility(marker);
+        }
+    }
+
+    _getMarkerPosition(markerLocation) {
+        let composition = this._insert.artifact.getComposition(this._index);
+        return markerLocation.minusPoint(composition.sourceArea.origin).plusDim(this._deltaDimension);
+    }
+
+    _manageVisibility(marker) {
+
+        function isVisible(marker) {
+            let composition = this._insert.artifact.getComposition(this._index);
+            let visibleBounds = composition.sourceArea.minusDim(this._insert.dimension.half);
+            let markerBounds = new Area2D.create(
+                marker.location.plusDim(this._deltaDimension).minusDim(DAbstractInsert.OK_DIMENSION.half),
+                DInsert.OK_DIMENSION
+            );
+            return visibleBounds.contains(markerBounds);
+        }
+
+        if (this._pageArea.inside(marker.location.plusDim(this._pageArea.dimension.half))) {
+            if (this._insert.hasArtifact(marker.artifact) && (!marker.shown || !isVisible.call(this, marker))) {
+                this._insert.removeArtifact(marker.artifact);
+            }
+            else if (!this._insert.hasArtifact(marker.artifact) && (marker.shown && isVisible.call(this, marker))) {
+                this._insert.addArtifact(marker.artifact);
+            }
+        }
+
+    }
+
+}
+
+class InsertBorder extends DRectArtifact {
+
+    constructor(dimension) {
+        super("widgets", new Point2D(0, 0),  dimension,1, "#000000");
+        this.setSettings(level => level.setShadowSettings("#000000", 10))
+    }
+
+}
+
+export class DAbstractInsert extends DElement {
 
     constructor(path, dimension, pageDimension=dimension) {
         super();
         this._pageDimension = pageDimension;
-        this._artifact = new InsertImageArtifact(DImage.getImage(path), dimension, pageDimension);
+        this._artifact = new InsertImageArtifact(DImage.getImage(path), dimension);
+        this.addArtifact(new InsertBorder(dimension));
         this.addArtifact(this._artifact);
-        this.addArtifact(new DRectArtifact("widgets", new Point2D(0, 0),  dimension,1, "#000000"));
-        this._manageNavigation();
+
         this._markers = new Map();
-        this._deltaDimension = new Dimension2D((pageDimension.w-dimension.w)/2, (pageDimension.h-dimension.h)/2);
+        this._frames = [];
     }
 
-    _getMarkerPosition(markerLocation) {
-        return new Point2D(
-            markerLocation.x-this._artifact.sourcePosition.x+this._deltaDimension.w,
-            markerLocation.y-this._artifact.sourcePosition.y+this._deltaDimension.h
-        );
+    addFrame(frame) {
+        this._frames.push(frame);
+        this._artifact.addFrame(frame.area);
+        frame._manageNavigation();
     }
 
     declareMark(name, location) {
@@ -636,52 +862,54 @@ export class DInsert extends DElement {
             location,
             artifact:new DImageArtifact(
                 "widget-items", okImage,
-                this._getMarkerPosition(location), DInsert.OK_DIMENSION),
+                new Point2D(0, 0), DAbstractInsert.OK_DIMENSION),
             shown:false
         });
     }
 
-    _manageVisibility(marker) {
-        function isVisible(marker) {
-            let visibleBounds = new Area2D(
-                this._artifact.sourcePosition.x-this._artifact.dimension.w/2,
-                this._artifact.sourcePosition.y-this._artifact.dimension.h/2,
-                this._artifact.sourcePosition.x+this._artifact.dimension.w/2,
-                this._artifact.sourcePosition.y+this._artifact.dimension.h/2
-            );
-            let markerBounds = new Area2D(
-                marker.location.x+this._deltaDimension.w - DInsert.OK_DIMENSION.w/2,
-                marker.location.y+this._deltaDimension.h - DInsert.OK_DIMENSION.h/2,
-                marker.location.x+this._deltaDimension.w + DInsert.OK_DIMENSION.w/2,
-                marker.location.y+this._deltaDimension.h + DInsert.OK_DIMENSION.h/2
-            );
-            return visibleBounds.contains(markerBounds);
-        }
-
-        if (this.hasArtifact(marker.artifact) && (!marker.shown || !isVisible.call(this, marker))) {
-            this.removeArtifact(marker.artifact);
-        }
-        else if (!this.hasArtifact(marker.artifact) && (marker.shown && isVisible.call(this, marker))) {
-            this.addArtifact(marker.artifact);
-        }
+    get dimension() {
+        return this.artifact.dimension;
     }
 
-    _moveMarkers() {
-        for (let marker of this._markers.values()) {
-            marker.artifact.position = this._getMarkerPosition(marker.location);
-            this._manageVisibility(marker);
-        }
+    get artifact() {
+        return this._artifact;
     }
 
     setMark(name) {
         let marker = this._markers.get(name);
         marker.shown = true;
-        this._manageVisibility(marker);
+        for (let frame of this._frames) {
+            frame._manageVisibility(marker);
+        }
     }
 
     open(board, location) {
         this.show(board);
         this.move(location);
+    }
+
+    leftPage() {
+        for (let frame of this._frames) {
+            frame._leftPage();
+        }
+    }
+
+    rightPage() {
+        for (let frame of this._frames) {
+            frame._rightPage();
+        }
+    }
+
+    nextPage() {
+        for (let frame of this._frames) {
+            frame._nextPage();
+        }
+    }
+
+    previousPage() {
+        for (let frame of this._frames) {
+            frame._previousPage();
+        }
     }
 
     close() {
@@ -706,121 +934,23 @@ export class DInsert extends DElement {
         return this._downButton;
     }
 
-    _manageNavigation() {
-        if (this._artifact.sourcePosition.x>0) {
-            if (!this._leftButton) {
-                let leftImage = DImage.getImage("/CBlades/images/commands/left.png");
-                let position = new Point2D(-this._artifact.dimension.w/2+DInsertCommand.DIMENSION.w/2+10, 0);
-                this._leftButton = new DInsertCommand(leftImage, position, this.leftPage);
-            }
-            if (!this.hasArtifact(this._leftButton)) {
-                this.addArtifact(this._leftButton);
-            }
-        }
-        else {
-            if (this.hasArtifact(this._leftButton)) {
-                this.removeArtifact(this._leftButton);
-                delete this._leftButton;
-            }
-        }
-        if (this._artifact.sourcePosition.x+this._artifact.dimension.w<this._pageDimension.w) {
-            if (!this._rightButton) {
-                let downImage = DImage.getImage("/CBlades/images/commands/right.png");
-                let position = new Point2D(this._artifact.dimension.w/2-DInsertCommand.DIMENSION.w/2-10, 0);
-                this._rightButton = new DInsertCommand(downImage, position, this.rightPage);
-            }
-            if (!this.hasArtifact(this._rightButton)) {
-                this.addArtifact(this._rightButton);
-            }
-        }
-        else {
-            if (this.hasArtifact(this._rightButton)) {
-                this.removeArtifact(this._rightButton);
-                delete this._rightButton;
-            }
-        }
-        if (this._artifact.sourcePosition.y>0) {
-            if (!this._upButton) {
-                let upImage = DImage.getImage("/CBlades/images/commands/up.png");
-                let position = new Point2D(0, -this._artifact.dimension.h/2+DInsertCommand.DIMENSION.h/2+10);
-                this._upButton = new DInsertCommand(upImage, position, this.previousPage);
-            }
-            if (!this.hasArtifact(this._upButton)) {
-                this.addArtifact(this._upButton);
-            }
-        }
-        else {
-            if (this.hasArtifact(this._upButton)) {
-                this.removeArtifact(this._upButton);
-                delete this._upButton;
-            }
-        }
-        if (this._artifact.sourcePosition.y+this._artifact.dimension.h<this._pageDimension.h) {
-            if (!this._downButton) {
-                let downImage = DImage.getImage("/CBlades/images/commands/down.png");
-                let position = new Point2D(0, this._artifact.dimension.h/2-DInsertCommand.DIMENSION.h/2-10);
-                this._downButton = new DInsertCommand(downImage, position, this.nextPage);
-            }
-            if (!this.hasArtifact(this._downButton)) {
-                this.addArtifact(this._downButton);
-            }
-        }
-        else {
-            if (this.hasArtifact(this._downButton)) {
-                this.removeArtifact(this._downButton);
-                delete this._downButton;
-            }
-        }
-    }
+}
+DAbstractInsert.OK_DIMENSION = new Dimension2D(25, 25);
+DAbstractInsert.PAGE_WIDTH = 100;
+DAbstractInsert.PAGE_HEIGHT = 100;
 
-    rightPage() {
-        let position = this._artifact.sourcePosition.x;
-        position += DInsert.PAGE_WIDTH;
-        if (position+this._artifact.dimension.w>this._pageDimension.w) {
-            position = this._pageDimension.w - this._artifact.dimension.w;
-        }
-        this._artifact.sourcePosition = new Point2D(position, this._artifact.sourcePosition.y);
-        this._moveMarkers();
-        this._manageNavigation();
-    }
+export class DInsert extends DAbstractInsert {
 
-    leftPage() {
-        let position = this._artifact.sourcePosition.x;
-        position -= DInsert.PAGE_WIDTH;
-        if (position<0) {
-            position = 0;
-        }
-        this._artifact.sourcePosition = new Point2D(position, this._artifact.sourcePosition.y);
-        this._moveMarkers();
-        this._manageNavigation();
-    }
-
-    nextPage() {
-        let position = this._artifact.sourcePosition.y;
-        position += DInsert.PAGE_HEIGHT;
-        if (position+this._artifact.dimension.h>this._pageDimension.h) {
-            position = this._pageDimension.h - this._artifact.dimension.h;
-        }
-        this._artifact.sourcePosition = new Point2D(this._artifact.sourcePosition.x, position);
-        this._moveMarkers();
-        this._manageNavigation();
-    }
-
-    previousPage() {
-        let position = this._artifact.sourcePosition.y;
-        position -= DInsert.PAGE_HEIGHT;
-        if (position<0) {
-            position = 0;
-        }
-        this._artifact.sourcePosition = new Point2D(this._artifact.sourcePosition.x, position);
-        this._moveMarkers();
-        this._manageNavigation();
+    constructor(path, dimension, pageDimension = dimension) {
+        super(path, dimension, pageDimension);
+        this.addFrame(new DInsertFrame(this, 0,
+                Area2D.create(new Point2D(0, 0), dimension),
+                Area2D.create(new Point2D(0, 0), pageDimension)
+            ).setNavigation(true, true, true, true)
+        );
     }
 
 }
-DInsert.PAGE_WIDTH = 200;
-DInsert.PAGE_HEIGHT = 100;
-DInsert.OK_DIMENSION = new Dimension2D(25, 25);
 
 class ResultImageArtifact extends DMultiImagesArtifact {
 

@@ -138,6 +138,23 @@ export class Point2D {
     clone() {
         return new Point2D(this.x, this.y);
     }
+
+    plusPoint(point) {
+        return new Point2D(this.x + point.x, this.y + point.y);
+    }
+
+    minusPoint(point) {
+        return new Point2D(this.x - point.x, this.y - point.y);
+    }
+
+    plusDim(dim) {
+        return new Point2D(this.x + dim.w, this.y + dim.h);
+    }
+
+    minusDim(dim) {
+        return new Point2D(this.x - dim.w, this.y - dim.h);
+    }
+
 }
 
 /**
@@ -190,6 +207,26 @@ export class Dimension2D {
     clone() {
         return new Dimension2D(this.w, this.h);
     }
+
+    plusDim(dim) {
+        return new Dimension2D(this.w + dim.w, this.h + dim.h);
+    }
+
+    minusDim(dim) {
+        return new Dimension2D(this.w - dim.w, this.h - dim.h);
+    }
+
+    get half() {
+        return new Dimension2D(this.w/2, this.h/2);
+    }
+
+    get point() {
+        return new Point2D(this.w, this.h);
+    }
+
+    get minus() {
+        return new Dimension2D(-this.w, -this.h);
+    }
 }
 
 /**
@@ -203,6 +240,34 @@ export class Area2D {
         this.right = right;
         this.top = top;
         this.bottom = bottom;
+    }
+
+    get x() {
+        return (this.left+this.right)/2;
+    }
+
+    get y() {
+        return (this.top+this.bottom)/2;
+    }
+
+    get w() {
+        return this.right-this.left;
+    }
+
+    get h() {
+        return this.bottom-this.top;
+    }
+
+    get origin() {
+        return new Point2D(this.left, this.top);
+    }
+
+    get center() {
+        return new Point2D(this.x, this.y);
+    }
+
+    get dimension() {
+        return new Dimension2D(this.w, this.h);
     }
 
     inside(point) {
@@ -259,6 +324,27 @@ export class Area2D {
     clone() {
         return new Area2D(this.left, this.top, this.right, this.bottom);
     }
+
+    plusPoint(point) {
+        return new Area2D(this.left + point.x, this.top + point.y, this.right + point.x, this.bottom + point.y);
+    }
+
+    minusPoint(point) {
+        return new Area2D(this.left - point.x, this.top - point.y, this.right - point.x, this.bottom - point.y);
+    }
+
+    plusDim(dim) {
+        return new Area2D(this.left + dim.w, this.top + dim.h, this.right + dim.w, this.bottom + dim.h);
+    }
+
+    minusDim(dim) {
+        return new Area2D(this.left - dim.w, this.top - dim.h, this.right - dim.w, this.bottom - dim.h);
+    }
+
+
+}
+Area2D.create = function(position, dimension) {
+    return new Area2D(position.x, position.y, position.x+dimension.w, position.y+dimension.h);
 }
 Area2D.boundingArea = function(...polygon) {
     let minx = polygon[0].x;

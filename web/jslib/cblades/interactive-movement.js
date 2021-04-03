@@ -1,12 +1,14 @@
 'use strict'
 
 import {
+    Area2D,
     canonizeAngle,
     diffAngle,
     Dimension2D, Point2D, sumAngle
 } from "../geometry.js";
 import {
-    DDice, DIconMenuItem, DInsert, DMask, DResult, DScene
+    DAbstractInsert,
+    DDice, DIconMenuItem, DInsert, DInsertFrame, DMask, DResult, DScene
 } from "../widget.js";
 import {
     Memento
@@ -1019,10 +1021,25 @@ export class CBCheckDisengagementInsert extends DInsert {
 }
 CBCheckDisengagementInsert.DIMENSION = new Dimension2D(444, 797);
 
-export class CBMovementTableInsert extends DInsert {
+export class CBMovementTableInsert extends DAbstractInsert {
 
     constructor() {
         super("/CBlades/images/inserts/movement-table-insert.png", CBMovementTableInsert.DIMENSION, CBMovementTableInsert.PAGE_DIMENSION);
+        this.addFrame(new DInsertFrame(this, 0,
+                Area2D.create(new Point2D(0, 0), new Dimension2D(67, 256)),
+                Area2D.create(new Point2D(0, 0), new Dimension2D(67, 256))
+            )
+        );
+        this.addFrame(new DInsertFrame(this, 1,
+                Area2D.create(new Point2D(67, 0), new Dimension2D(900-67, 256)),
+                Area2D.create(new Point2D(67, 0), new Dimension2D(1041-67, 256))
+            ).setNavigation(true, true, true, true)
+        );
+        this.addFrame(new DInsertFrame(this, 2,
+                Area2D.create(new Point2D(0, 256), new Dimension2D(900, 366-256)),
+                Area2D.create(new Point2D(0, 256), new Dimension2D(1041, 366-256))
+            )
+        );
     }
 
 }

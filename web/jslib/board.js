@@ -336,60 +336,6 @@ export function RectArtifact(clazz) {
 }
 
 /**
- * Base class for all image wrapper artifact
- */
-export class DImageAbstractArtifact extends RectArtifact(DArtifact) {
-
-    constructor(dimension, levelName, position, sPosition = null, sDimension=null) {
-        super(dimension, levelName, position, 0);
-        this._sourcePosition = sPosition;
-        this._sourceDimension = sDimension;
-    }
-
-    get image() {
-        return this._root;
-    }
-
-    get sourcePosition() {
-        return this._sourcePosition;
-    }
-
-    set sourcePosition(position) {
-        this._sourcePosition = position;
-        this.refresh();
-    }
-
-    get sourceDimension() {
-        return this._sourceDimension;
-    }
-
-    set sourceDimension(dimension) {
-        this._sourceDimension = dimension;
-        this.refresh();
-    }
-
-    drawImage() {
-        console.assert(!this._sourcePosition === !this._sourceDimension);
-        if (this._sourceDimension) {
-            this._level.drawImage(this.image,
-                this.sourcePosition, this.sourceDimension,
-                new Point2D(-this.dimension.w / 2, -this.dimension.h / 2),
-                this.dimension);
-        }
-        else {
-            this._level.drawImage(this.image,
-                new Point2D(-this.dimension.w / 2, -this.dimension.h / 2),
-                this.dimension);
-        }
-    }
-
-    _paint() {
-        this.drawImage();
-    }
-
-}
-
-/**
  * Base class for all simple rectangular artifact
  */
 export class DRectArtifact extends RectArtifact(DArtifact) {
@@ -480,6 +426,60 @@ export class DTextArtifact extends RectArtifact(DArtifact) {
 }
 
 /**
+ * Base class for all image wrapper artifact
+ */
+export class DImageAbstractArtifact extends RectArtifact(DArtifact) {
+
+    constructor(dimension, levelName, position, sPosition = null, sDimension=null) {
+        super(dimension, levelName, position, 0);
+        this._sourcePosition = sPosition;
+        this._sourceDimension = sDimension;
+    }
+
+    get image() {
+        return this._root;
+    }
+
+    get sourcePosition() {
+        return this._sourcePosition;
+    }
+
+    set sourcePosition(position) {
+        this._sourcePosition = position;
+        this.refresh();
+    }
+
+    get sourceDimension() {
+        return this._sourceDimension;
+    }
+
+    set sourceDimension(dimension) {
+        this._sourceDimension = dimension;
+        this.refresh();
+    }
+
+    drawImage() {
+        console.assert(!this._sourcePosition === !this._sourceDimension);
+        if (this._sourceDimension) {
+            this._level.drawImage(this.image,
+                this.sourcePosition, this.sourceDimension,
+                new Point2D(-this.dimension.w / 2, -this.dimension.h / 2),
+                this.dimension);
+        }
+        else {
+            this._level.drawImage(this.image,
+                new Point2D(-this.dimension.w / 2, -this.dimension.h / 2),
+                this.dimension);
+        }
+    }
+
+    _paint() {
+        this.drawImage();
+    }
+
+}
+
+/**
  * Image wrapper artifact
  */
 export class DImageArtifact extends DImageAbstractArtifact {
@@ -523,6 +523,100 @@ export class DMultiImagesArtifact extends DImageAbstractArtifact {
     _revert(memento) {
         super._revert(memento);
         this._root = memento.root;
+    }
+
+}
+
+/**
+ * Class of artifacts that are composed of several images (or parts of)
+ */
+export class DComposedImageArtifact extends RectArtifact(DArtifact) {
+
+    constructor(levelName, position, dimension) {
+        super(dimension, levelName, position, 0);
+        this._compositions = [];
+    }
+
+    addComposition(image, destArea, sourceArea) {
+        console.assert(destArea instanceof Area2D && sourceArea instanceof Area2D);
+        this._compositions.push({image, destArea, sourceArea});
+        this.refresh();
+        return this;
+    }
+
+    appendComposition(image, destArea, sourceArea) {
+        Memento.register(this);
+        return this.addComposition(image, destArea, sourceArea);
+    }
+
+    setComposition(index, image, destArea, sourceArea) {
+        console.assert(index<this._compositions.length);
+        console.assert(destArea instanceof Area2D && sourceArea instanceof Area2D);
+        this._compositions[index] = {image, destArea, sourceArea};
+        this.refresh();
+        return this;
+    }
+
+    changeComposition(index, image, destArea, sourceArea) {
+        Memento.register(this);
+        return this.setComposition(index, image, destArea, sourceArea);
+    }
+
+    removeComposition(index) {
+        console.assert(index<this._compositions.length);
+        this._compositions.splice(index, 1);
+        this.refresh();
+        return this;
+    }
+
+    getComposition(index) {
+        console.assert(index<this._compositions.length);
+        return {...this._compositions[index]};
+    }
+
+    deleteComposition(index) {
+        Memento.register(this);
+        return this.removeComposition(index);
+    }
+
+    _memento() {
+        let memento = super._memento();
+        memento.compositions = [];
+        for (let index=0; index<this._compositions.length; index++) {
+            memento.compositions.push({...this._compositions[index]});
+        }
+        return memento;
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        this._compositions = memento.compositions;
+    }
+
+    getImage(index) {
+        return this._compositions[index].image;
+    }
+
+    getSourceArea(index) {
+        return this._compositions[index].sourceArea;
+    }
+
+    getDestArea(index) {
+        return this._compositions[index].destArea;
+    }
+
+    drawImage(index) {
+        let srcArea = this.getSourceArea(index);
+        let destArea = this.getDestArea(index);
+        this._level.drawImage(this._compositions[index].image,
+            srcArea.origin, srcArea.dimension,
+            destArea.origin.minusDim(this.dimension.half), destArea.dimension);
+    }
+
+    _paint() {
+        for (let index=0; index<this._compositions.length; index++) {
+            this.drawImage(index);
+        }
     }
 
 }
