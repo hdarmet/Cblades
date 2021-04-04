@@ -167,6 +167,14 @@ export class MediumCavalryWeaponProfile extends CBWeaponProfile {
         super(capacity);
     }
 
+    getShockAttackCode() {
+        return "MCv";
+    }
+
+    getShockDefendCode() {
+        return "MCv";
+    }
+
 }
 
 export class HeavyCavalryWeaponProfile extends CBWeaponProfile {
@@ -175,12 +183,28 @@ export class HeavyCavalryWeaponProfile extends CBWeaponProfile {
         super(capacity);
     }
 
+    getShockAttackCode() {
+        return "HCv";
+    }
+
+    getShockDefendCode() {
+        return "HCv";
+    }
+
 }
 
 export class LanceWeaponProfile extends CBWeaponProfile {
 
     constructor(capacity) {
         super(capacity);
+    }
+
+    getShockAttackCode() {
+        return "Lan";
+    }
+
+    getShockDefendCode() {
+        return "Lan";
     }
 
 }

@@ -107,6 +107,14 @@ export class CBWeaponProfile {
         return this._capacity;
     }
 
+    getShockAttackCode() {
+        return "Bow";
+    }
+
+    getShockDefendCode() {
+        return "Bow";
+    }
+
 }
 
 export class CBUnitType {
@@ -173,6 +181,7 @@ export class CBUnitType {
     getExtendedMovementPoints(steps) {
         return this.getMoveProfile(steps).extendedMovementPoints;
     }
+
 }
 
 export class CBWing {
@@ -945,6 +954,10 @@ export class CBUnit extends CBAbstractUnit {
 
     get moveProfile() {
         return this._type.getMoveProfile(this.remainingStepCount);
+    }
+
+    get weaponProfile() {
+        return this._type.getWeaponProfile(this.remainingStepCount);
     }
 
 }

@@ -734,62 +734,56 @@ export class DInsertFrame {
         }
     }
 
-    _rightPage() {
+    moveTo(origin) {
         let composition = this._insert.artifact.getComposition(this._index);
-        let position = composition.sourceArea.left + DAbstractInsert.PAGE_WIDTH;
-        if (position+composition.destArea.w>this._pageArea.right) {
-            position = this._pageArea.right - composition.destArea.w;
+        let {x, y} = origin;
+        if (x+composition.destArea.w>this._pageArea.right) {
+            x = this._pageArea.right - composition.destArea.w;
+        }
+        else if (x<this._pageArea.left) {
+            x = this._pageArea.left;
+        }
+        if (y+composition.destArea.h>this._pageArea.bottom) {
+            y = this._pageArea.bottom - composition.destArea.h;
+        }
+        else if (y<this._pageArea.top) {
+            y = this._pageArea.top;
         }
         this._insert.artifact.setComposition(this._index, composition.image,
             composition.destArea,
-            Area2D.create(new Point2D(position, composition.sourceArea.top), composition.sourceArea.dimension)
+            Area2D.create(new Point2D(x, y), composition.sourceArea.dimension)
         );
         this._moveMarkers();
         this._manageNavigation();
+    }
+
+    focusOn(focus) {
+        this.moveTo(focus.minusDim(this._area.dimension.half));
+    }
+
+    _rightPage() {
+        let composition = this._insert.artifact.getComposition(this._index);
+        let position = composition.sourceArea.left + DAbstractInsert.PAGE_WIDTH;
+        this.moveTo(new Point2D(position, composition.sourceArea.top));
     }
 
     _leftPage() {
         let composition = this._insert.artifact.getComposition(this._index);
         let position = composition.sourceArea.left - DAbstractInsert.PAGE_WIDTH;
-        if (position<this._pageArea.left) {
-            position = this._pageArea.left;
-        }
-        this._insert.artifact.setComposition(this._index, composition.image,
-            composition.destArea,
-            Area2D.create(new Point2D(position, composition.sourceArea.top), composition.sourceArea.dimension)
-        );
-        this._moveMarkers();
-        this._manageNavigation();
+        this.moveTo(new Point2D(position, composition.sourceArea.top));
     }
 
     _nextPage() {
         let composition = this._insert.artifact.getComposition(this._index);
         let position = composition.sourceArea.top + DAbstractInsert.PAGE_HEIGHT;
-        if (position+composition.destArea.h>this._pageArea.bottom) {
-            position = this._pageArea.bottom - composition.destArea.h;
-        }
-        this._insert.artifact.setComposition(this._index, composition.image,
-            composition.destArea,
-            Area2D.create(new Point2D(composition.sourceArea.left, position), composition.sourceArea.dimension)
-        );
-        this._moveMarkers();
-        this._manageNavigation();
+        this.moveTo(new Point2D(composition.sourceArea.left, position));
     }
 
     _previousPage() {
         let composition = this._insert.artifact.getComposition(this._index);
         let position = composition.sourceArea.top - DAbstractInsert.PAGE_HEIGHT;
-        if (position<this._pageArea.top) {
-            position = this._pageArea.top;
-        }
-        this._insert.artifact.setComposition(this._index, composition.image,
-            composition.destArea,
-            Area2D.create(new Point2D(composition.sourceArea.left, position), composition.sourceArea.dimension)
-        );
-        this._moveMarkers();
-        this._manageNavigation();
+        this.moveTo(new Point2D(composition.sourceArea.left, position));
     }
-
 
     _moveMarkers() {
         for (let marker of this._insert._markers.values()) {
@@ -800,7 +794,7 @@ export class DInsertFrame {
 
     _getMarkerPosition(markerLocation) {
         let composition = this._insert.artifact.getComposition(this._index);
-        return markerLocation.minusPoint(composition.sourceArea.origin).plusDim(this._deltaDimension);
+        return markerLocation.minusPoint(composition.sourceArea.origin).plusPoint(this.area.origin).minusDim(this.area.dimension.half);
     }
 
     _manageVisibility(marker) {
@@ -815,7 +809,7 @@ export class DInsertFrame {
             return visibleBounds.contains(markerBounds);
         }
 
-        if (this._pageArea.inside(marker.location.plusDim(this._pageArea.dimension.half))) {
+        if (this._pageArea.inside(marker.location/*.plusDim(this._pageArea.dimension.half)*/)) {
             if (this._insert.hasArtifact(marker.artifact) && (!marker.shown || !isVisible.call(this, marker))) {
                 this._insert.removeArtifact(marker.artifact);
             }

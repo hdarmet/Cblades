@@ -1,16 +1,18 @@
 'use strict'
 
 import {
+    Area2D,
     canonizeAngle,
     diffAngle,
     Dimension2D, Point2D, sumAngle
 } from "../geometry.js";
 import {
-    DDice, DIconMenuItem, DInsert, DMask, DResult, DScene
+    DAbstractInsert,
+    DDice, DIconMenuItem, DInsert, DInsertFrame, DMask, DResult, DScene
 } from "../widget.js";
 import {
     CBAction, CBActionActuator,
-    CBActuatorImageTrigger, CBUnitActuatorTrigger, RetractableActuatorMixin
+    CBActuatorImageTrigger, CBActuatorTriggerMixin, CBUnitActuatorTrigger, RetractableActuatorMixin
 } from "./game.js";
 import {
     CBHexSideId
@@ -25,6 +27,12 @@ import {
 import {
     DImage
 } from "../draw.js";
+import {
+    DImageArtifact
+} from "../board.js";
+import {
+    CBArbitrator
+} from "./arbitrator.js";
 
 export function registerInteractiveCombat() {
     CBInteractivePlayer.prototype.unitShockAttack = function (unit, event) {
@@ -128,12 +136,30 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         this._createShockAttackActuator(this.unit);
     }
 
+    _createCombatRecords(foes) {
+        let combats = [];
+        for (let foe of foes) {
+            let combat = {
+                foe:foe.unit,
+                advantage:this.game.arbitrator.getShockAttackAdvantage(this.unit, foe.unit, false)
+            }
+            combats.push(combat);
+            if (foe.supported) {
+                combat.supported=true;
+                combat.supportedAdvantage=this.game.arbitrator.getShockAttackAdvantage(this.unit, foe.unit, true);
+            }
+        }
+        return combats;
+    }
+
     _createShockAttackActuator() {
         let foesThatMayBeShockAttacked = this._getFoes(this.unit);
         this.game.closeActuators();
         if (foesThatMayBeShockAttacked.length) {
             let shockAttackActuator = this.createShockAttackActuator(foesThatMayBeShockAttacked);
             this.game.openActuator(shockAttackActuator);
+            let shockHelpActuator = this.createShockHelpActuator(this._createCombatRecords(foesThatMayBeShockAttacked));
+            this.game.openActuator(shockHelpActuator);
         }
     }
 
@@ -178,6 +204,23 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
     }
 
+    showRules(foe, supported, event) {
+        this.game.closeActuators();
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+        };
+        mask.setAction(close);
+        mask.open(this.game.board, new Point2D(event.offsetX, event.offsetY));
+        scene.addWidget(
+            new CBShockAttackInsert(), new Point2D(-250, CBShockAttackInsert.DIMENSION.h/2-40)
+        ).addWidget(
+            new CBWeaponTableInsert().focus(8, 9), new Point2D(CBWeaponTableInsert.DIMENSION.w/2-20, CBWeaponTableInsert.DIMENSION.h/2)
+        ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
+    }
+
     _processShockAttackResult(foe, supported, diceResult) {
         let result = this.game.arbitrator.processShockAttackResult(this.unit, foe, supported, diceResult);
         this.unit.setAttackLocation(result.attackLocation);
@@ -195,6 +238,10 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
 
     createShockAttackActuator(foes) {
         return new CBShockAttackActuator(this, foes);
+    }
+
+    createShockHelpActuator(combats) {
+        return new CBShockHelpActuator(this, combats);
     }
 
 }
@@ -417,6 +464,61 @@ export class CBFireAttackActuator extends RetractableActuatorMixin(CBActionActua
 
 }
 
+class ShockHelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+
+    constructor(actuator, supported, foe, advantage) {
+        let image = supported ?
+            DImage.getImage("/CBlades/images/actuators/supported-shock-advantage.png"):
+            DImage.getImage("/CBlades/images/actuators/unsupported-shock-advantage.png");
+        super(actuator,"actuators", image, new Point2D(0, 0), ShockHelpTrigger.DIMENSION, 0);
+        this.pangle = 0;
+        this.position = Point2D.position(actuator.unit.location, foe.location, 1);
+        this._foe = foe;
+        this._supported = supported;
+        this._advantage = advantage;
+    }
+
+    _paint() {
+        super._paint();
+        this._level.setShadowSettings("#000000", 0);
+        this._level.setTextSettings("bold 30px serif", "center");
+        this._level.setFillSettings( this._supported ? "#9D2F12" : "#AD5A2D");
+        this._level.fillText("" + this._advantage, new Point2D(0, 10));
+    }
+}
+ShockHelpTrigger.DIMENSION = new Dimension2D(55, 55);
+
+export class CBShockHelpActuator extends CBActionActuator {
+
+    constructor(action, combats) {
+        super(action);
+        this._triggers = [];
+        for (let combat of combats) {
+            let unsupportedHelp = new ShockHelpTrigger(this, false, combat.foe, combat.advantage);
+            this._triggers.push(unsupportedHelp);
+            if (combat.supported) {
+                let supportedHelp = new ShockHelpTrigger(this, true, combat.foe, combat.supportedAdvantage);
+                this._triggers.push(supportedHelp);
+                supportedHelp.position = unsupportedHelp.position.translate(75, 75);
+                unsupportedHelp.position = unsupportedHelp.position.translate(-75, -75);
+            }
+            else {
+                unsupportedHelp.position = unsupportedHelp.position.translate(40, 40);
+            }
+        }
+        this.initElement(this._triggers);
+    }
+
+    getTrigger(foe) {
+        return this.findTrigger(artifact=>artifact._combat.foe === foe);
+    }
+
+    onMouseClick(trigger, event) {
+        this.action.showRules(trigger._foe, trigger._supported, event);
+    }
+
+}
+
 export class CBRetreatActuator extends RetractableActuatorMixin(CBActionActuator) {
 
     constructor(action, directions) {
@@ -568,3 +670,40 @@ export class CBCombatResultTableInsert extends DInsert {
 
 }
 CBCombatResultTableInsert.DIMENSION = new Dimension2D(804, 174);
+
+export class CBWeaponTableInsert extends DAbstractInsert {
+
+    constructor() {
+        super("/CBlades/images/inserts/weapon-table-insert.png", CBWeaponTableInsert.DIMENSION, CBWeaponTableInsert.PAGE_DIMENSION);
+        this._margin = new DInsertFrame(this, 0,
+            Area2D.create(new Point2D(0, 0), CBWeaponTableInsert.MARGIN_DIMENSION),
+            Area2D.create(new Point2D(0, 0), CBWeaponTableInsert.MARGIN_PAGE_DIMENSION)
+        )
+        this._content = new DInsertFrame(this, 1,
+            Area2D.create(new Point2D(86, 0), CBWeaponTableInsert.CONTENT_DIMENSION),
+            Area2D.create(new Point2D(86, 0), CBWeaponTableInsert.CONTENT_PAGE_DIMENSION)
+        ).setNavigation(true, true, true, true);
+        this.addFrame(this._margin);
+        this.addFrame(this._content);
+    }
+
+    focus(col, row) {
+        let colSize = CBWeaponTableInsert.CONTENT_PAGE_DIMENSION.w / CBArbitrator.weaponTable.COLCOUNT;
+        let rowSize = CBWeaponTableInsert.CONTENT_PAGE_DIMENSION.h / CBArbitrator.weaponTable.ROWCOUNT;
+        let focusPoint = new Point2D(colSize*col+colSize/2+CBWeaponTableInsert.MARGIN, rowSize*row+rowSize/2);
+        this.declareMark("focus", focusPoint);
+        this.setMark("focus");
+        this._margin.focusOn(new Point2D(CBWeaponTableInsert.MARGIN/2, rowSize*row+rowSize/2));
+        this._content.focusOn(focusPoint);
+        return this;
+    }
+
+}
+CBWeaponTableInsert.MARGIN = 86;
+CBWeaponTableInsert.DIMENSION = new Dimension2D(500, 500);
+CBWeaponTableInsert.PAGE_DIMENSION = new Dimension2D(978, 1146);
+CBWeaponTableInsert.MARGIN_DIMENSION = new Dimension2D(CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.DIMENSION.h);
+CBWeaponTableInsert.MARGIN_PAGE_DIMENSION = new Dimension2D(CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.PAGE_DIMENSION.h);
+CBWeaponTableInsert.CONTENT_DIMENSION = new Dimension2D(CBWeaponTableInsert.DIMENSION.w-CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.DIMENSION.h);
+CBWeaponTableInsert.CONTENT_PAGE_DIMENSION = new Dimension2D(CBWeaponTableInsert.PAGE_DIMENSION.w-CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.PAGE_DIMENSION.h);
+

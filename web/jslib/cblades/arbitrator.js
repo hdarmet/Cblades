@@ -427,15 +427,28 @@ export class CBArbitrator extends CBAbstractArbitrator{
         let dices = diceResult[0]+diceResult[1];
         while (column<CBArbitrator.combatAdvantage.length) {
             if (advantage < CBArbitrator.combatAdvantage[column]) {
-                return column>0 ? CBArbitrator.combatTable[column-1][dices] : 0;
+                return column>0 ? CBArbitrator.combatTable[dices][column-1] : 0;
             }
             else column++;
         }
         return CBArbitrator.combatTable[CBArbitrator.combatAdvantage.length-1][dices];
     }
 
-    getShockAttackAdvantage(unit, foe, supported) {
-        return supported ? 0 : -4;
+    getShockWeaponAdvantage(attacker, defender) {
+        return CBArbitrator.weaponTable[attacker.weaponProfile.getShockAttackCode()][defender.weaponProfile.getShockDefendCode()];
+    }
+
+    getShockWeaponCell(attacker, defender) {
+        return {
+            col:CBArbitrator.weaponTable[defender.weaponProfile.getShockDefendCode()].col,
+            row:CBArbitrator.weaponTable[attacker.weaponProfile.getShockAttackCode()].row
+        };
+    }
+
+    getShockAttackAdvantage(attacker, defender, supported) {
+        let advantage = supported ? 0 : -4;
+        advantage += this.getShockWeaponAdvantage(attacker, defender)*2;
+        return advantage;
     }
 
     getShockAttackResult(unit, foe, supported, diceResult) {
@@ -1298,3 +1311,28 @@ CBArbitrator.combatTable[ 9] = [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 CBArbitrator.combatTable[10] = [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1];
 CBArbitrator.combatTable[11] = [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1];
 CBArbitrator.combatTable[12] = [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0];
+
+CBArbitrator.weaponTable = {
+    "Hrd": {"Row": 0, "Col": 0, "Hrd": 0, "LIf":-1, "MIf":-2, "HIf":-2, "Lan":-2, "UPk":-1, "OPk":-2, "Bow":-1, "Arb":-1, "LCv":-1, "MCv":-2, "HCv":-2, "Bst":-2, "Ani": 0, "Art": 1, "Mst":-2, "Drg":-2},
+    "LIf": {"Row": 1, "Col": 1, "Hrd": 1, "LIf": 0, "MIf":-1, "HIf":-2, "Lan":-2, "UPk": 0, "OPk": 0, "Bow": 0, "Arb": 0, "LCv": 0, "MCv":-2, "HCv":-2, "Bst":-2, "Ani": 0, "Art": 1, "Mst":-2, "Drg":-2},
+    "MIf": {"Row": 2, "Col": 2, "Hrd": 2, "LIf": 1, "MIf": 0, "HIf":-1, "Lan":-1, "UPk": 2, "OPk":-2, "Bow": 2, "Arb": 2, "LCv": 1, "MCv":-1, "HCv":-2, "Bst":-2, "Ani": 1, "Art": 2, "Mst":-2, "Drg":-2},
+    "HIf": {"Row": 3, "Col": 3, "Hrd": 2, "LIf": 2, "MIf": 1, "HIf": 0, "Lan": 1, "UPk": 2, "OPk":-1, "Bow": 2, "Arb": 2, "LCv": 1, "MCv": 0, "HCv":-1, "Bst":-1, "Ani": 2, "Art": 2, "Mst":-1, "Drg":-2},
+    "Lan": {"Row": 4, "Col": 4, "Hrd": 2, "LIf": 2, "MIf": 1, "HIf":-1, "Lan": 0, "UPk": 2, "OPk":-1, "Bow": 2, "Arb": 2, "LCv": 2, "MCv": 1, "HCv": 0, "Bst":-1, "Ani": 2, "Art": 2, "Mst": 0, "Drg":-1},
+    "UPk": {"Row": 5, "Col": 5, "Hrd": 1, "LIf":-1, "MIf":-2, "HIf":-2, "Lan":-2, "UPk": 0, "OPk":-2, "Bow":-1, "Arb":-1, "LCv":-1, "MCv":-2, "HCv":-2, "Bst":-2, "Ani":-2, "Art": 1, "Mst": 0, "Drg":-1},
+    "OPk": {"Row": 6, "Col": 6, "Hrd": 2, "LIf": 0, "MIf": 2, "HIf": 1, "Lan": 1, "UPk": 2, "OPk": 0, "Bow": 2, "Arb": 2, "LCv": 2, "MCv": 2, "HCv": 1, "Bst": 1, "Ani": 1, "Art": 2, "Mst": 1, "Drg": 0},
+    "Bow": {"Row": 7, "Col": 7, "Hrd": 1, "LIf": 0, "MIf":-1, "HIf":-2, "Lan":-2, "UPk": 0, "OPk":-2, "Bow": 0, "Arb": 0, "LCv": 0, "MCv":-2, "HCv":-2, "Bst":-2, "Ani": 0, "Art": 1, "Mst":-2, "Drg":-2},
+    "FBw": {"Row": 8, "Col":-1, "Hrd": 2, "LIf": 1, "MIf": 0, "HIf":-1, "Lan":-1, "UPk": 1, "OPk":-1, "Bow": 2, "Arb": 2, "LCv": 1, "MCv": 0, "HCv":-1, "Bst":-2, "Ani": 1, "Art": 1, "Mst":-2, "Drg":-2},
+    "Arb": {"Row": 9, "Col": 8, "Hrd": 1, "LIf": 0, "MIf":-1, "HIf":-2, "Lan":-2, "UPk": 0, "OPk":-2, "Bow": 0, "Arb": 0, "LCv": 0, "MCv":-2, "HCv":-2, "Bst":-2, "Ani": 0, "Art": 1, "Mst":-2, "Drg":-2},
+    "FAb": {"Row":10, "Col":-1, "Hrd": 2, "LIf": 1, "MIf": 1, "HIf": 1, "Lan": 1, "UPk": 0, "OPk": 0, "Bow": 1, "Arb": 1, "LCv": 1, "MCv": 1, "HCv": 0, "Bst": 0, "Ani":-1, "Art": 1, "Mst": 0, "Drg":-1},
+    "LCv": {"Row":11, "Col": 9, "Hrd": 1, "LIf": 0, "MIf":-1, "HIf":-2, "Lan":-2, "UPk": 1, "OPk":-2, "Bow": 0, "Arb": 0, "LCv": 0, "MCv":-1, "HCv":-2, "Bst":-2, "Ani": 0, "Art": 2, "Mst":-2, "Drg":-2},
+    "MCv": {"Row":12, "Col":10, "Hrd": 2, "LIf": 2, "MIf": 1, "HIf":-1, "Lan":-2, "UPk": 2, "OPk":-2, "Bow": 2, "Arb": 2, "LCv": 1, "MCv": 0, "HCv":-1, "Bst":-2, "Ani": 1, "Art": 2, "Mst":-1, "Drg":-2},
+    "HCv": {"Row":13, "Col":11, "Hrd": 2, "LIf": 2, "MIf": 2, "HIf": 0, "Lan":-1, "UPk": 2, "OPk":-1, "Bow": 2, "Arb": 2, "LCv": 2, "MCv": 1, "HCv": 0, "Bst":-1, "Ani": 1, "Art": 2, "Mst":-0, "Drg":-1},
+    "Bst": {"Row":14, "Col":12, "Hrd": 2, "LIf": 2, "MIf": 2, "HIf": 1, "Lan": 1, "UPk": 2, "OPk":-1, "Bow": 2, "Arb": 2, "LCv": 2, "MCv": 2, "HCv": 1, "Bst": 0, "Ani": 2, "Art": 2, "Mst":-0, "Drg":-1},
+    "Ani": {"Row":15, "Col":13, "Hrd": 0, "LIf": 0, "MIf":-1, "HIf":-2, "Lan":-2, "UPk": 0, "OPk":-1, "Bow": 0, "Arb": 0, "LCv": 0, "MCv":-1, "HCv":-1, "Bst":-2, "Ani": 0, "Art": 2, "Mst":-2, "Drg":-2},
+    "Art": {"Row":16, "Col":14, "Hrd":-1, "LIf":-1, "MIf":-2, "HIf":-2, "Lan":-2, "UPk":-1, "OPk":-2, "Bow":-2, "Arb":-2, "LCv":-2, "MCv":-2, "HCv":-2, "Bst":-2, "Ani":-2, "Art": 0, "Mst":-2, "Drg":-2},
+    "FAt": {"Row":17, "Col":-1, "Hrd": 0, "LIf":-2, "MIf":-1, "HIf": 0, "Lan": 0, "UPk": 0, "OPk": 1, "Bow":-1, "Arb":-1, "LCv":-2, "MCv":-2, "HCv":-1, "Bst": 0, "Ani":-2, "Art": 0, "Mst": 0, "Drg":-0},
+    "Mst": {"Row":18, "Col":15, "Hrd": 2, "LIf": 2, "MIf": 2, "HIf": 1, "Lan": 0, "UPk": 0, "OPk":-1, "Bow": 2, "Arb": 2, "LCv": 2, "MCv": 1, "HCv": 0, "Bst": 0, "Ani": 2, "Art": 2, "Mst": 0, "Drg":-1},
+    "Drg": {"Row":19, "Col":16, "Hrd": 2, "LIf": 2, "MIf": 2, "HIf": 2, "Lan": 1, "UPk": 1, "OPk": 0, "Bow": 2, "Arb": 2, "LCv": 2, "MCv": 2, "HCv":-1, "Bst": 1, "Ani": 2, "Art": 2, "Mst":-1, "Drg":-0},
+};
+CBArbitrator.weaponTable.COLCOUNT = 17;
+CBArbitrator.weaponTable.ROWCOUNT = 20;

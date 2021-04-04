@@ -1026,23 +1026,24 @@ export class CBMovementTableInsert extends DAbstractInsert {
     constructor() {
         super("/CBlades/images/inserts/movement-table-insert.png", CBMovementTableInsert.DIMENSION, CBMovementTableInsert.PAGE_DIMENSION);
         this.addFrame(new DInsertFrame(this, 0,
-                Area2D.create(new Point2D(0, 0), new Dimension2D(67, 256)),
-                Area2D.create(new Point2D(0, 0), new Dimension2D(67, 256))
+                Area2D.create(new Point2D(0, 0), CBMovementTableInsert.MARGIN),
+                Area2D.create(new Point2D(0, 0), CBMovementTableInsert.MARGIN)
             )
         );
         this.addFrame(new DInsertFrame(this, 1,
-                Area2D.create(new Point2D(67, 0), new Dimension2D(900-67, 256)),
-                Area2D.create(new Point2D(67, 0), new Dimension2D(1041-67, 256))
+                Area2D.create(new Point2D(CBMovementTableInsert.MARGIN.w, 0), new Dimension2D(CBMovementTableInsert.DIMENSION.w-CBMovementTableInsert.MARGIN.w, CBMovementTableInsert.MARGIN.h)),
+                Area2D.create(new Point2D(CBMovementTableInsert.MARGIN.w, 0), new Dimension2D(CBMovementTableInsert.PAGE_DIMENSION.w-CBMovementTableInsert.MARGIN.w, CBMovementTableInsert.MARGIN.h))
             ).setNavigation(true, true, true, true)
         );
         this.addFrame(new DInsertFrame(this, 2,
-                Area2D.create(new Point2D(0, 256), new Dimension2D(900, 366-256)),
-                Area2D.create(new Point2D(0, 256), new Dimension2D(1041, 366-256))
+                Area2D.create(new Point2D(0, CBMovementTableInsert.MARGIN.h), new Dimension2D(CBMovementTableInsert.DIMENSION.w, CBMovementTableInsert.DIMENSION.h-CBMovementTableInsert.MARGIN.h)),
+                Area2D.create(new Point2D(0, CBMovementTableInsert.MARGIN.h), new Dimension2D(CBMovementTableInsert.PAGE_DIMENSION.w, CBMovementTableInsert.PAGE_DIMENSION.h-CBMovementTableInsert.MARGIN.h))
             )
         );
     }
 
 }
+CBMovementTableInsert.MARGIN = new Dimension2D(67, 256);
 CBMovementTableInsert.DIMENSION = new Dimension2D(900, 366);
 CBMovementTableInsert.PAGE_DIMENSION = new Dimension2D(1041, 366);
 
