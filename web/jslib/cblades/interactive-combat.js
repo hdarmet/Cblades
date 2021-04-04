@@ -204,23 +204,6 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
     }
 
-    showRules(foe, supported, event) {
-        this.game.closeActuators();
-        let scene = new DScene();
-        let mask = new DMask("#000000", 0.3);
-        let close = ()=>{
-            mask.close();
-            scene.close();
-        };
-        mask.setAction(close);
-        mask.open(this.game.board, new Point2D(event.offsetX, event.offsetY));
-        scene.addWidget(
-            new CBShockAttackInsert(), new Point2D(-250, CBShockAttackInsert.DIMENSION.h/2-40)
-        ).addWidget(
-            new CBWeaponTableInsert().focus(8, 9), new Point2D(CBWeaponTableInsert.DIMENSION.w/2-20, CBWeaponTableInsert.DIMENSION.h/2)
-        ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
-    }
-
     _processShockAttackResult(foe, supported, diceResult) {
         let result = this.game.arbitrator.processShockAttackResult(this.unit, foe, supported, diceResult);
         this.unit.setAttackLocation(result.attackLocation);
@@ -234,6 +217,31 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
             this.markAsStarted();
         }
         return result;
+    }
+
+    _getAdvantageCell(foe) {
+        return this.game.arbitrator.getShockWeaponCell(this.unit, foe);
+    }
+
+    showRules(foe, supported, event) {
+        this.game.closeActuators();
+        let advantageCell = this._getAdvantageCell(foe);
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+        };
+        mask.setAction(close);
+        mask.open(this.game.board, new Point2D(event.offsetX, event.offsetY));
+        scene.addWidget(
+            new CBShockAttackInsert(), new Point2D(-250, CBShockAttackInsert.DIMENSION.h/2-40)
+        ).addWidget(
+            new CBWeaponTableInsert().focus(
+                advantageCell.col, advantageCell.row),
+            new Point2D(CBWeaponTableInsert.DIMENSION.w/2-20, CBWeaponTableInsert.DIMENSION.h/2
+            )
+        ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
     }
 
     createShockAttackActuator(foes) {
@@ -281,12 +289,26 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         this._createFireAttackActuator(this.unit);
     }
 
+    _createFireRecords(foes) {
+        let fires = [];
+        for (let foe of foes) {
+            let fire = {
+                foe:foe.unit,
+                advantage:this.game.arbitrator.getFireAttackAdvantage(this.unit, foe.unit)
+            }
+            fires.push(fire);
+        }
+        return fires;
+    }
+
     _createFireAttackActuator() {
         let foesThatMayBeFireAttacked = this._getFoes(this.unit);
         this.game.closeActuators();
         if (foesThatMayBeFireAttacked.length) {
             let fireAttackActuator = this.createFireAttackActuator(foesThatMayBeFireAttacked);
             this.game.openActuator(fireAttackActuator);
+            let fireHelpActuator = this.createFireHelpActuator(this._createFireRecords(foesThatMayBeFireAttacked));
+            this.game.openActuator(fireHelpActuator);
         }
     }
 
@@ -346,8 +368,37 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         return result;
     }
 
+    _getAdvantageCell(foe) {
+        return this.game.arbitrator.getFireWeaponCell(this.unit, foe);
+    }
+
+    showRules(foe, event) {
+        this.game.closeActuators();
+        let advantageCell = this._getAdvantageCell(foe);
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+        };
+        mask.setAction(close);
+        mask.open(this.game.board, new Point2D(event.offsetX, event.offsetY));
+        scene.addWidget(
+            new CBFireAttackInsert(), new Point2D(-250, CBFireAttackInsert.DIMENSION.h/2-40)
+        ).addWidget(
+            new CBWeaponTableInsert().focus(
+                advantageCell.col, advantageCell.row),
+                new Point2D(CBWeaponTableInsert.DIMENSION.w/2-20, CBWeaponTableInsert.DIMENSION.h/2
+            )
+        ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
+    }
+
     createFireAttackActuator(foes) {
         return new CBFireAttackActuator(this, foes);
+    }
+
+    createFireHelpActuator(fires) {
+        return new CBFireHelpActuator(this, fires);
     }
 
 }
@@ -510,11 +561,55 @@ export class CBShockHelpActuator extends CBActionActuator {
     }
 
     getTrigger(foe) {
-        return this.findTrigger(artifact=>artifact._combat.foe === foe);
+        return this.findTrigger(artifact=>artifact.foe === foe);
     }
 
     onMouseClick(trigger, event) {
         this.action.showRules(trigger._foe, trigger._supported, event);
+    }
+
+}
+
+class FireHelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+
+    constructor(actuator, foe, advantage) {
+        let image = DImage.getImage("/CBlades/images/actuators/fire-advantage.png");
+        super(actuator,"actuators", image, new Point2D(0, 0), FireHelpTrigger.DIMENSION, 0);
+        this.pangle = 0;
+        this.position = Point2D.position(actuator.unit.location, foe.location, 1);
+        this._foe = foe;
+        this._advantage = advantage;
+    }
+
+    _paint() {
+        super._paint();
+        this._level.setShadowSettings("#000000", 0);
+        this._level.setTextSettings("bold 30px serif", "center");
+        this._level.setFillSettings("#A1124F");
+        this._level.fillText("" + this._advantage, new Point2D(0, 10));
+    }
+}
+FireHelpTrigger.DIMENSION = new Dimension2D(55, 55);
+
+export class CBFireHelpActuator extends CBActionActuator {
+
+    constructor(action, fires) {
+        super(action);
+        this._triggers = [];
+        for (let fire of fires) {
+            let help = new FireHelpTrigger(this, fire.foe, fire.advantage);
+            this._triggers.push(help);
+            help.position = help.position.translate(40, 40);
+        }
+        this.initElement(this._triggers);
+    }
+
+    getTrigger(foe) {
+        return this.findTrigger(artifact=>artifact._foe === foe);
+    }
+
+    onMouseClick(trigger, event) {
+        this.action.showRules(trigger._foe, event);
     }
 
 }
@@ -691,7 +786,7 @@ export class CBWeaponTableInsert extends DAbstractInsert {
         let colSize = CBWeaponTableInsert.CONTENT_PAGE_DIMENSION.w / CBArbitrator.weaponTable.COLCOUNT;
         let rowSize = CBWeaponTableInsert.CONTENT_PAGE_DIMENSION.h / CBArbitrator.weaponTable.ROWCOUNT;
         let focusPoint = new Point2D(colSize*col+colSize/2+CBWeaponTableInsert.MARGIN, rowSize*row+rowSize/2);
-        this.declareMark("focus", focusPoint);
+        this.declareMark("focus", focusPoint.plusPoint(new Point2D(-10, 10)));
         this.setMark("focus");
         this._margin.focusOn(new Point2D(CBWeaponTableInsert.MARGIN/2, rowSize*row+rowSize/2));
         this._content.focusOn(focusPoint);

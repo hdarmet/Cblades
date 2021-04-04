@@ -440,8 +440,8 @@ export class CBArbitrator extends CBAbstractArbitrator{
 
     getShockWeaponCell(attacker, defender) {
         return {
-            col:CBArbitrator.weaponTable[defender.weaponProfile.getShockDefendCode()].col,
-            row:CBArbitrator.weaponTable[attacker.weaponProfile.getShockAttackCode()].row
+            col:CBArbitrator.weaponTable[defender.weaponProfile.getShockDefendCode()].Col,
+            row:CBArbitrator.weaponTable[attacker.weaponProfile.getShockAttackCode()].Row
         };
     }
 
@@ -504,7 +504,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     getFoesThatMayBeDuelFired(unit) {
-        let hexes = this._getForwardZoneThatMayBeFireAttached(unit, 3);
+        let hexes = this._getForwardZoneThatMayBeFireAttached(unit, unit.weaponProfile.getFireRange());
         let foes = [];
         let foesSet = new Set();
         for (let hex of hexes) {
@@ -513,9 +513,29 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return foes;
     }
 
+    getFireWeaponAdvantage(attacker, defender) {
+        return CBArbitrator.weaponTable[attacker.weaponProfile.getFireAttackCode()][defender.weaponProfile.getFireDefendCode()];
+    }
+
+    getFireWeaponCell(attacker, defender) {
+        return {
+            col:CBArbitrator.weaponTable[defender.weaponProfile.getFireDefendCode()].Col,
+            row:CBArbitrator.weaponTable[attacker.weaponProfile.getFireAttackCode()].Row
+        };
+    }
+
+    getFireAttackAdvantage(attacker, defender) {
+        let advantage = this.getFireWeaponAdvantage(attacker, defender)*2;
+        return advantage;
+    }
+
+    getFireAttackResult(unit, foe, diceResult) {
+        return this.getCombatTableResult(diceResult, this.getFireAttackAdvantage(unit, foe));
+    }
+
     processFireAttackResult(unit, foe, diceResult) {
-        let success = diceResult[0]+diceResult[1]<=8;
-        let lossesForDefender = diceResult[0]+diceResult[1]<=4 ? 2 : diceResult[0]+diceResult[1]<=8 ? 1 : 0;
+        let lossesForDefender = this.getFireAttackResult(unit, foe, diceResult);
+        let success = lossesForDefender>0;
         let lowerFirerMunitions = diceResult[0] === diceResult[1];
         let played = !unit.formationNature || unit.hasAttacked();
         let attackLocation = foe.hexLocation;
@@ -790,7 +810,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     isAllowedToFireAttack(unit) {
-        return this.getFoesThatMayBeFireAttacked(unit).length>0;
+        return unit.weaponProfile.getFireAttackCode() && this.getFoesThatMayBeFireAttacked(unit).length>0;
     }
 
     isAllowedToShockDuel(unit) {

@@ -112,9 +112,20 @@ export class CBWeaponProfile {
     }
 
     getShockDefendCode() {
-        return "Bow";
+        return this.getShockAttackCode();
     }
 
+    getFireAttackCode() {
+        return null;
+    }
+
+    getFireRange() {
+        return 3;
+    }
+
+    getFireDefendCode() {
+        return this.getShockAttackCode();
+    }
 }
 
 export class CBUnitType {

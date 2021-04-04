@@ -794,22 +794,19 @@ export class DInsertFrame {
 
     _getMarkerPosition(markerLocation) {
         let composition = this._insert.artifact.getComposition(this._index);
-        return markerLocation.minusPoint(composition.sourceArea.origin).plusPoint(this.area.origin).minusDim(this.area.dimension.half);
+        return markerLocation.minusPoint(composition.sourceArea.origin).plusPoint(this.area.origin).minusDim(this._insert.dimension.half);
     }
 
     _manageVisibility(marker) {
 
         function isVisible(marker) {
             let composition = this._insert.artifact.getComposition(this._index);
-            let visibleBounds = composition.sourceArea.minusDim(this._insert.dimension.half);
-            let markerBounds = new Area2D.create(
-                marker.location.plusDim(this._deltaDimension).minusDim(DAbstractInsert.OK_DIMENSION.half),
-                DInsert.OK_DIMENSION
+            return composition.sourceArea.contains(
+                Area2D.create(marker.location.minusDim(DAbstractInsert.OK_DIMENSION.half), DAbstractInsert.OK_DIMENSION)
             );
-            return visibleBounds.contains(markerBounds);
         }
 
-        if (this._pageArea.inside(marker.location/*.plusDim(this._pageArea.dimension.half)*/)) {
+        if (this._pageArea.inside(marker.location)) {
             if (this._insert.hasArtifact(marker.artifact) && (!marker.shown || !isVisible.call(this, marker))) {
                 this._insert.removeArtifact(marker.artifact);
             }

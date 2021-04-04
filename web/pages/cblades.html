@@ -50,7 +50,8 @@
     } from "../jslib/cblades/editor.js";
     import {
         GoblinLeader,
-        GoblinWolfRider
+        GoblinWolfRider,
+        GoblinSkirmisher
     } from "../jslib/cblades/armies/orcs.js";
     import {
         RoughneckLeader,
@@ -85,9 +86,11 @@
     counter11.lossSteps = 1;
     let counter12 = new CBTroop(GoblinWolfRider, wing1);
     counter12.lossSteps = 1;
+    let counter13 = new CBTroop(GoblinSkirmisher, wing1);
     game.addUnit(character11, map.getHex(4, 11)); // 4, 11
     game.addUnit(counter11, map.getHex(3, 10));
     game.addUnit(counter12, map.getHex(6, 10));
+    game.addUnit(counter13, map.getHex(8, 10));
 
     let player2 = new CBInteractivePlayer();
     game.addPlayer(player2);
