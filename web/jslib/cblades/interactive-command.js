@@ -11,7 +11,7 @@ import {
 } from "../mechanisms.js";
 import {
     CBAction, CBActionActuator, CBGame,
-    CBActuatorImageTrigger, CBUnitActuatorTrigger, RetractableActuatorMixin
+    CBActuatorImageTrigger, CBUnitActuatorTrigger, RetractableActuatorMixin, InsertMixin
 } from "./game.js";
 import {
     DImage
@@ -84,10 +84,10 @@ export class InteractiveTakeCommandAction extends CBAction {
         mask.setAction(close);
         mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
         scene.addWidget(
-            new CBTakeCommandInsert(),
+            new CBTakeCommandInsert(this.game),
             new Point2D(CBTakeCommandInsert.DIMENSION.w/2, -CBTakeCommandInsert.DIMENSION.h/2-40)
         ).addWidget(
-            new CBCommandInsert(), new Point2D(-CBCommandInsert.DIMENSION.w/2, 0)
+            new CBCommandInsert(this.game), new Point2D(-CBCommandInsert.DIMENSION.w/2, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -136,10 +136,10 @@ export class InteractiveDismissCommandAction extends CBAction {
         mask.setAction(close);
         mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
         scene.addWidget(
-            new CBDismissCommandInsert(),
+            new CBDismissCommandInsert(this.game),
             new Point2D(CBDismissCommandInsert.DIMENSION.w/2, -CBDismissCommandInsert.DIMENSION.h/2-40)
         ).addWidget(
-            new CBCommandInsert(), new Point2D(-CBCommandInsert.DIMENSION.w/2, 0)
+            new CBCommandInsert(this.game), new Point2D(-CBCommandInsert.DIMENSION.w/2, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -191,10 +191,10 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
         mask.setAction(close);
         mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
         scene.addWidget(
-            new CBChangeOrderInstructionInsert(),
+            new CBChangeOrderInstructionInsert(this.game),
             new Point2D(CBChangeOrderInstructionInsert.DIMENSION.w/2, -CBChangeOrderInstructionInsert.DIMENSION.h/2-40)
         ).addWidget(
-            new CBCommandInsert(), new Point2D(-CBCommandInsert.DIMENSION.w/2, 0)
+            new CBCommandInsert(this.game), new Point2D(-CBCommandInsert.DIMENSION.w/2, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -245,7 +245,7 @@ export class InteractiveGiveOrdersAction extends CBAction {
         mask.setAction(close);
         mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
         scene.addWidget(
-            new CBGiveOrdersInsert(),
+            new CBGiveOrdersInsert(this.game),
             new Point2D(-CBGiveOrdersInsert.DIMENSION.w/4, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
@@ -372,47 +372,47 @@ export class CBOrderGivenActuator extends RetractableActuatorMixin(CBActionActua
 
 }
 
-export class CBCommandInsert extends DInsert {
+export class CBCommandInsert extends InsertMixin(DInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/command-insert.png", CBCommandInsert.DIMENSION);
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/command-insert.png", CBCommandInsert.DIMENSION);
     }
 
 }
 CBCommandInsert.DIMENSION = new Dimension2D(444, 680);
 
-export class CBChangeOrderInstructionInsert extends DInsert {
+export class CBChangeOrderInstructionInsert extends InsertMixin(DInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/change-order-instruction-insert.png", CBChangeOrderInstructionInsert.DIMENSION);
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/change-order-instruction-insert.png", CBChangeOrderInstructionInsert.DIMENSION);
     }
 
 }
 CBChangeOrderInstructionInsert.DIMENSION = new Dimension2D(444, 254);
 
-export class CBGiveOrdersInsert extends DInsert {
+export class CBGiveOrdersInsert extends InsertMixin(DInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/orders-given-insert.png", CBGiveOrdersInsert.DIMENSION, CBGiveOrdersInsert.PAGE_DIMENSION);
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/orders-given-insert.png", CBGiveOrdersInsert.DIMENSION, CBGiveOrdersInsert.PAGE_DIMENSION);
     }
 
 }
 CBGiveOrdersInsert.PAGE_DIMENSION = new Dimension2D(444, 872);
 CBGiveOrdersInsert.DIMENSION = new Dimension2D(444, 600);
 
-export class CBTakeCommandInsert extends DInsert {
+export class CBTakeCommandInsert extends InsertMixin(DInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/take-command-insert.png", CBTakeCommandInsert.DIMENSION);
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/take-command-insert.png", CBTakeCommandInsert.DIMENSION);
     }
 
 }
 CBTakeCommandInsert.DIMENSION = new Dimension2D(444, 298);
 
-export class CBDismissCommandInsert extends DInsert {
+export class CBDismissCommandInsert extends InsertMixin(DInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/dismiss-command-insert.png", CBDismissCommandInsert.DIMENSION);
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/dismiss-command-insert.png", CBDismissCommandInsert.DIMENSION);
     }
 
 }

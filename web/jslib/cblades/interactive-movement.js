@@ -17,7 +17,7 @@ import {
     CBHexSideId, CBMoveType, CBPathFinding
 } from "./map.js";
 import {
-    CBAction, CBActionActuator, CBActuatorImageTrigger, CBActuatorTriggerMixin
+    CBAction, CBActionActuator, CBActuator, CBActuatorImageTrigger, CBActuatorTriggerMixin, CBMask, InsertMixin
 } from "./game.js";
 import {
     CBMovement, CBMoveProfile
@@ -259,9 +259,9 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         mask.setAction(close);
         mask.open(this.game.board, point);
         scene.addWidget(
-            new CBCheckAttackerEngagementInsert(), new Point2D(-CBCheckAttackerEngagementInsert.DIMENSION.w/2, 0)
+            new CBCheckAttackerEngagementInsert(this.game), new Point2D(-CBCheckAttackerEngagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBMoralInsert(), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+            new CBMoralInsert(this.game), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -278,12 +278,11 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
             result.setFinalAction(close),
             new Point2D(0, 0)
         ).open(this.game.board, point);
-
     }
 
     showRules(point) {
         let scene = new DScene();
-        let mask = new DMask("#000000", 0.3);
+        let mask = new CBMask(this.game, "#000000", 0.3);
         let close = ()=>{
             mask.close();
             scene.close();
@@ -291,9 +290,9 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         mask.setAction(close);
         mask.open(this.game.board, point);
         scene.addWidget(
-            new CBMovementTableInsert(), new Point2D(0, -CBMovementTableInsert.DIMENSION.h/2)
+            new CBMovementTableInsert(this.game), new Point2D(0, -CBMovementTableInsert.DIMENSION.h/2)
         ).addWidget(
-            new CBMovementInsert(), new Point2D(-CBMovementInsert.DIMENSION.w/2, CBMovementInsert.DIMENSION.h/2)
+            new CBMovementInsert(this.game), new Point2D(-CBMovementInsert.DIMENSION.w/2, CBMovementInsert.DIMENSION.h/2)
         ).open(this.game.board, point);
     }
 
@@ -326,7 +325,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
 
     showRules(point) {
         let scene = new DScene();
-        let mask = new DMask("#000000", 0.3);
+        let mask = new CBMask(this.game, "#000000", 0.3);
         let close = ()=>{
             mask.close();
             scene.close();
@@ -334,9 +333,9 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
         mask.setAction(close);
         mask.open(this.game.board, point);
         scene.addWidget(
-            new CBMovementTableInsert(), new Point2D(0, -CBMovementTableInsert.DIMENSION.h/2)
+            new CBMovementTableInsert(this.game), new Point2D(0, -CBMovementTableInsert.DIMENSION.h/2)
         ).addWidget(
-            new CBRoutInsert(), new Point2D(-CBRoutInsert.DIMENSION.w/2, CBRoutInsert.DIMENSION.h/2)
+            new CBRoutInsert(this.game), new Point2D(-CBRoutInsert.DIMENSION.w/2, CBRoutInsert.DIMENSION.h/2)
         ).open(this.game.board, point);
     }
 
@@ -385,9 +384,9 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
         mask.setAction(close);
         mask.open(this.game.board, point);
         scene.addWidget(
-            new CBCheckDisengagementInsert(), new Point2D(-CBCheckDisengagementInsert.DIMENSION.w/2, 0)
+            new CBCheckDisengagementInsert(this.game), new Point2D(-CBCheckDisengagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBMoralInsert(), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+            new CBMoralInsert(this.game), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -468,9 +467,9 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
         mask.setAction(close);
         mask.open(this.game.board, point);
         scene.addWidget(
-            new CBCheckDisengagementInsert(), new Point2D(-CBCheckDisengagementInsert.DIMENSION.w/2, 0)
+            new CBCheckDisengagementInsert(this.game), new Point2D(-CBCheckDisengagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBMoralInsert(), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+            new CBMoralInsert(this.game), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -500,9 +499,9 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
         mask.setAction(close);
         mask.open(this.game.board, point);
         scene.addWidget(
-            new CBMovementTableInsert(), new Point2D(0, -CBMovementTableInsert.DIMENSION.h/2)
+            new CBMovementTableInsert(this.game), new Point2D(0, -CBMovementTableInsert.DIMENSION.h/2)
         ).addWidget(
-            new CBMoveBackInsert(), new Point2D(-CBMoveBackInsert.DIMENSION.w/2, CBMoveBackInsert.DIMENSION.h/2)
+            new CBMoveBackInsert(this.game), new Point2D(-CBMoveBackInsert.DIMENSION.w/2, CBMoveBackInsert.DIMENSION.h/2)
         ).open(this.game.board, point);
     }
 
@@ -564,9 +563,9 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
         mask.setAction(close);
         mask.open(this.game.board, point);
         scene.addWidget(
-            new CBCheckConfrontEngagementInsert(), new Point2D(-CBCheckConfrontEngagementInsert.DIMENSION.w/2, 0)
+            new CBCheckConfrontEngagementInsert(this.game), new Point2D(-CBCheckConfrontEngagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBMoralInsert(), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+            new CBMoralInsert(this.game), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -596,7 +595,7 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
         mask.setAction(close);
         mask.open(this.game.board, point);
         scene.addWidget(
-            new CBToFaceInsert(), new Point2D(-CBToFaceInsert.DIMENSION.w/2, 0)
+            new CBToFaceInsert(this.game), new Point2D(-CBToFaceInsert.DIMENSION.w/2, 0)
         ).open(this.game.board, point);
     }
 
@@ -662,13 +661,17 @@ class HelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 
     _paint() {
         super._paint();
-        let normal = this.actuator.unit.movementPoints>0;
+        let normal = this.actuator.unit.movementPoints > 0;
         this._level.setTextSettings("bold 30px serif", "center");
-        this._level.setFillSettings(normal?"#2F528F":"#bF9000");
+        this._level.setFillSettings(normal ? "#2F528F" : "#bF9000");
         this._level.fillText(
-            "" + (normal?this.actuator.unit.movementPoints:this.actuator.unit.extendedMovementPoints),
+            "" + (normal ? this.actuator.unit.movementPoints : this.actuator.unit.extendedMovementPoints),
             new Point2D(0, 10)
         );
+    }
+
+    setVisibility(visibility) {
+        this.alpha = visibility;
     }
 }
 HelpTrigger.DIMENSION = new Dimension2D(55, 55);
@@ -689,6 +692,10 @@ export class CBMovementHelpActuator extends CBActionActuator {
         this.action.showRules(new Point2D(event.offsetX, event.offsetY));
     }
 
+    setVisibility(level) {
+        super.setVisibility(level);
+        this._trigger.setVisibility && this._trigger.setVisibility(level===CBActuator.FULL_VISIBILITY ? 1:0);
+    }
 }
 
 class RotateTrigger extends CBActuatorImageTrigger {
@@ -723,9 +730,13 @@ class RotateCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         super._paint();
         if (this._cost.value !== undefined) {
             this._level.setTextSettings("bold 30px serif", "center");
-            this._level.setFillSettings(this._type===CBMovement.NORMAL?"#2F528F":"#bF9000");
+            this._level.setFillSettings(this._type === CBMovement.NORMAL ? "#2F528F" : "#bF9000");
             this._level.fillText("" + this._cost.value, new Point2D(0, 10));
         }
+    }
+
+    setVisibility(visibility) {
+        this.alpha = visibility;
     }
 }
 RotateCostTrigger.DIMENSION = new Dimension2D(55, 55);
@@ -759,6 +770,13 @@ export class CBRotationActuator extends CBActionActuator {
 
     onMouseClick(trigger, event) {
         this.action.rotateUnit(trigger.angle, this._first);
+    }
+
+    setVisibility(level) {
+        super.setVisibility(level);
+        for (let artifact of this.triggers) {
+            artifact.setVisibility && artifact.setVisibility(level===CBActuator.FULL_VISIBILITY ? 1:0);
+        }
     }
 
 }
@@ -796,9 +814,13 @@ class MoveCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         super._paint();
         if (this._cost.value !== undefined) {
             this._level.setTextSettings("bold 35px serif", "center");
-            this._level.setFillSettings(this._type===CBMovement.NORMAL?"#2F528F":"#bF9000");
+            this._level.setFillSettings(this._type === CBMovement.NORMAL ? "#2F528F" : "#bF9000");
             this._level.fillText("" + this._cost.value, new Point2D(0, 10));
         }
+    }
+
+    setVisibility(visibility) {
+        this.alpha = visibility;
     }
 }
 MoveCostTrigger.DIMENSION = new Dimension2D(70, 70);
@@ -833,6 +855,12 @@ export class CBMoveActuator extends CBActionActuator {
         this.action.moveUnit(this.unit.hexLocation.getNearHex(trigger.angle), trigger.angle, this._first);
     }
 
+    setVisibility(level) {
+        super.setVisibility(level);
+        for (let artifact of this.triggers) {
+            artifact.setVisibility && artifact.setVisibility(level===CBActuator.FULL_VISIBILITY ? 1:0);
+        }
+    }
 }
 
 class MoveFormationTrigger extends CBActuatorImageTrigger {
@@ -876,9 +904,13 @@ class MoveFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         super._paint();
         if (this._cost.value !== undefined) {
             this._level.setTextSettings("bold 35px serif", "center");
-            this._level.setFillSettings(this._type===CBMovement.NORMAL?"#2F528F":"#bF9000");
+            this._level.setFillSettings(this._type === CBMovement.NORMAL ? "#2F528F" : "#bF9000");
             this._level.fillText("" + this._cost.value, new Point2D(0, 10));
         }
+    }
+
+    setVisibility(visibility) {
+        this.alpha = visibility;
     }
 }
 MoveFormationCostTrigger.DIMENSION = new Dimension2D(70, 70);
@@ -924,9 +956,13 @@ class TurnFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         super._paint();
         if (this._cost.value !== undefined) {
             this._level.setTextSettings("bold 35px serif", "center");
-            this._level.setFillSettings(this._type===CBMovement.NORMAL?"#2F528F":"#bF9000");
+            this._level.setFillSettings(this._type === CBMovement.NORMAL ? "#2F528F" : "#bF9000");
             this._level.fillText("" + this._cost.value, new Point2D(0, 10));
         }
+    }
+
+    setVisibility(visibility) {
+        this.alpha = visibility;
     }
 }
 TurnFormationCostTrigger.DIMENSION = new Dimension2D(70, 70);
@@ -979,6 +1015,13 @@ export class CBFormationMoveActuator extends CBActionActuator {
         return this.findTrigger(artifact=>(artifact instanceof TurnFormationCostTrigger) && (artifact.pangle === angle));
     }
 
+    setVisibility(level) {
+        super.setVisibility(level);
+        for (let artifact of this.triggers) {
+            artifact.setVisibility && artifact.setVisibility(level===CBActuator.FULL_VISIBILITY ? 1:0);
+        }
+    }
+
     onMouseClick(trigger, event) {
         if (trigger.rotate) {
             let delta = diffAngle(this.unit.angle, trigger.angle)*2;
@@ -994,37 +1037,37 @@ export class CBFormationMoveActuator extends CBActionActuator {
 
 }
 
-export class CBCheckAttackerEngagementInsert extends DInsert {
+export class CBCheckAttackerEngagementInsert extends InsertMixin(DInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/check-attacker-engagement-insert.png", CBCheckAttackerEngagementInsert.DIMENSION);
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/check-attacker-engagement-insert.png", CBCheckAttackerEngagementInsert.DIMENSION);
     }
 
 }
 CBCheckAttackerEngagementInsert.DIMENSION = new Dimension2D(444, 763);
 
-export class CBCheckConfrontEngagementInsert extends DInsert {
+export class CBCheckConfrontEngagementInsert extends InsertMixin(DInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/check-confront-engagement-insert.png", CBCheckConfrontEngagementInsert.DIMENSION);
+    constructor(game) {
+        super(game,"/CBlades/images/inserts/check-confront-engagement-insert.png", CBCheckConfrontEngagementInsert.DIMENSION);
     }
 
 }
 CBCheckConfrontEngagementInsert.DIMENSION = new Dimension2D(444, 763);
 
-export class CBCheckDisengagementInsert extends DInsert {
+export class CBCheckDisengagementInsert extends InsertMixin(DInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/disengagement-insert.png", CBCheckDisengagementInsert.DIMENSION);
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/disengagement-insert.png", CBCheckDisengagementInsert.DIMENSION);
     }
 
 }
 CBCheckDisengagementInsert.DIMENSION = new Dimension2D(444, 797);
 
-export class CBMovementTableInsert extends DAbstractInsert {
+export class CBMovementTableInsert extends InsertMixin(DAbstractInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/movement-table-insert.png", CBMovementTableInsert.DIMENSION, CBMovementTableInsert.PAGE_DIMENSION);
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/movement-table-insert.png", CBMovementTableInsert.DIMENSION, CBMovementTableInsert.PAGE_DIMENSION);
         this.addFrame(new DInsertFrame(this, 0,
                 Area2D.create(new Point2D(0, 0), CBMovementTableInsert.MARGIN),
                 Area2D.create(new Point2D(0, 0), CBMovementTableInsert.MARGIN)
@@ -1047,40 +1090,40 @@ CBMovementTableInsert.MARGIN = new Dimension2D(67, 256);
 CBMovementTableInsert.DIMENSION = new Dimension2D(900, 366);
 CBMovementTableInsert.PAGE_DIMENSION = new Dimension2D(1041, 366);
 
-export class CBMovementInsert extends DInsert {
+export class CBMovementInsert extends InsertMixin(DInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/movement-insert.png", CBMovementInsert.DIMENSION, CBMovementInsert.PAGE_DIMENSION);
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/movement-insert.png", CBMovementInsert.DIMENSION, CBMovementInsert.PAGE_DIMENSION);
     }
 
 }
 CBMovementInsert.DIMENSION = new Dimension2D(444, 400);
 CBMovementInsert.PAGE_DIMENSION = new Dimension2D(444, 2470);
 
-export class CBRoutInsert extends DInsert {
+export class CBRoutInsert extends InsertMixin(DInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/rout-insert.png", CBRoutInsert.DIMENSION, CBRoutInsert.PAGE_DIMENSION);
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/rout-insert.png", CBRoutInsert.DIMENSION, CBRoutInsert.PAGE_DIMENSION);
     }
 
 }
 CBRoutInsert.DIMENSION = new Dimension2D(444, 400);
 CBRoutInsert.PAGE_DIMENSION = new Dimension2D(444, 1433);
 
-export class CBMoveBackInsert extends DInsert {
+export class CBMoveBackInsert extends InsertMixin(DInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/move-back-insert.png", CBMoveBackInsert.DIMENSION, CBMoveBackInsert.PAGE_DIMENSION);
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/move-back-insert.png", CBMoveBackInsert.DIMENSION, CBMoveBackInsert.PAGE_DIMENSION);
     }
 
 }
 CBMoveBackInsert.DIMENSION = new Dimension2D(444, 400);
 CBMoveBackInsert.PAGE_DIMENSION = new Dimension2D(444, 678);
 
-export class CBToFaceInsert extends DInsert {
+export class CBToFaceInsert extends InsertMixin(DInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/to-face-insert.png", CBToFaceInsert.DIMENSION);
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/to-face-insert.png", CBToFaceInsert.DIMENSION);
     }
 
 }

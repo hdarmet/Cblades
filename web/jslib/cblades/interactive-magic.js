@@ -8,7 +8,13 @@ import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
-    CBAction, CBActionActuator, CBActuatorImageTrigger, CBGame, CBUnitActuatorTrigger, RetractableActuatorMixin
+    CBAction,
+    CBActionActuator,
+    CBActuatorImageTrigger,
+    CBGame,
+    CBUnitActuatorTrigger,
+    InsertMixin,
+    RetractableActuatorMixin
 } from "./game.js";
 import {
     Dimension2D,
@@ -84,7 +90,7 @@ export class InteractiveTryToCastSpellAction extends CBAction {
         mask.setAction(close);
         mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
         scene.addWidget(
-            new CBCastSpellInsert(), new Point2D(0, 0)
+            new CBCastSpellInsert(this.game), new Point2D(0, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -353,9 +359,9 @@ CBFireballSpell.resolver = function(action) {
     };
     mask.open(this.game.board, this.location);
     scene.addWidget(
-        new CBCombatResultTableInsert(), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
+        new CBCombatResultTableInsert(this.game), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
     ).addWidget(
-        new CBFireballInsert(), new Point2D(-160, CBFireballInsert.DIMENSION.h/2)
+        new CBFireballInsert(this.game), new Point2D(-160, CBFireballInsert.DIMENSION.h/2)
     ).addWidget(
         dice.setFinalAction(()=>{
             dice.active = false;
@@ -374,10 +380,10 @@ CBFireballSpell.resolver = function(action) {
     ).open(this.game.board, this.location);
 }
 
-export class CBFireballInsert extends DInsert {
+export class CBFireballInsert extends InsertMixin(DInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/fireball-insert.png", CBFireballInsert.DIMENSION);
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/fireball-insert.png", CBFireballInsert.DIMENSION);
     }
 
 }

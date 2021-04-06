@@ -8,7 +8,7 @@ import {
     Mechanisms
 } from "../mechanisms.js";
 import {
-    CBAbstractPlayer, CBGame
+    CBAbstractPlayer, CBGame, InsertMixin
 } from "./game.js";
 import {
     DBoard
@@ -88,9 +88,9 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         mask.setAction(close);
         mask.open(this.game.board, point);
         scene.addWidget(
-            new CBCheckDefenderEngagementInsert(), new Point2D(-CBCheckDefenderEngagementInsert.DIMENSION.w/2, 0)
+            new CBCheckDefenderEngagementInsert(this.game), new Point2D(-CBCheckDefenderEngagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBMoralInsert(), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+            new CBMoralInsert(this.game), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -197,19 +197,19 @@ export class CBWeatherIndicator extends DIndicator {
 }
 CBWeatherIndicator.DIMENSION = new Dimension2D(142, 142);
 
-export class CBCheckDefenderEngagementInsert extends DInsert {
+export class CBCheckDefenderEngagementInsert extends InsertMixin(DInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/check-defender-engagement-insert.png", CBCheckDefenderEngagementInsert.DIMENSION);
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/check-defender-engagement-insert.png", CBCheckDefenderEngagementInsert.DIMENSION);
     }
 
 }
 CBCheckDefenderEngagementInsert.DIMENSION = new Dimension2D(444, 763);
 
-export class CBMoralInsert extends DInsert {
+export class CBMoralInsert extends InsertMixin(DInsert) {
 
-    constructor() {
-        super("/CBlades/images/inserts/moral-insert.png", CBMoralInsert.DIMENSION);
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/moral-insert.png", CBMoralInsert.DIMENSION);
     }
 
 }

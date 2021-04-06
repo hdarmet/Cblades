@@ -13,7 +13,9 @@ import {
     DBoard, DElement, DImageArtifact, DSimpleLevel, DStaticLevel, DMultiImagesArtifact, DStackedLevel
 } from "../board.js";
 import {
-    DPushButton
+    DAbstractInsert, DInsert, DMask,
+    DMultiStatePushButton,
+    DPushButton, DScene
 } from "../widget.js";
 import {
     CBMap, CBMoveType
@@ -298,6 +300,7 @@ export class CBUnitActuatorTrigger extends CBActuatorImageTrigger {
 export class CBActuator {
 
     constructor() {
+        this._shown = false;
     }
 
     get triggers() {
@@ -325,8 +328,50 @@ export class CBActuator {
     getPosition(location) {
         return this._element.getPosition(location);
     }
-}
 
+    _processGlobalEvent(source, event, value) {
+        if (event===CBActuator.VISIBILITY) {
+            this.setVisibility(value);
+        }
+    }
+
+    _memento() {
+        return {
+            shown: this._shown
+        }
+    }
+
+    _revert(memento) {
+        if (this._shown !== memento.shown) {
+            this._shown = memento.shown;
+            if (this._shown) {
+                Mechanisms.addListener(this);
+            } else {
+                Mechanisms.removeListener(this);
+            }
+        }
+    }
+
+    show(game) {
+        Memento.register(this);
+        this._shown = true;
+        Mechanisms.addListener(this);
+        this.setVisibility(game.visibility);
+        this.element.show(game.board);
+    }
+
+    hide(game) {
+        Memento.register(this);
+        this._shown = false;
+        Mechanisms.removeListener(this);
+        this.element.hide(game.board);
+    }
+
+    setVisibility(level) {}
+
+}
+CBActuator.FULL_VISIBILITY = 2;
+CBActuator.VISIBILITY = {};
 
 export class CBActionActuator extends CBActuator {
 
@@ -345,6 +390,71 @@ export class CBActionActuator extends CBActuator {
 
     initElement(triggers, position = this.unit.location) {
         super.initElement(triggers, position);
+    }
+
+}
+
+export function InsertMixin(clazz) {
+
+    return class extends clazz {
+
+        constructor(game, ...args) {
+            super(...args);
+            this._game = game;
+        }
+
+        _processGlobalEvent(source, event, value) {
+            if (event === InsertMixin.VISIBILITY) {
+                this.setVisibility(value);
+            }
+        }
+
+        _memento() {
+            return {
+                shown: this._shown
+            }
+        }
+
+        _revert(memento) {
+            if (this._shown !== memento.shown) {
+                this._shown = memento.shown;
+                if (this._shown) {
+                    Mechanisms.addListener(this);
+                } else {
+                    Mechanisms.removeListener(this);
+                }
+            }
+        }
+
+        open(board, location) {
+            Memento.register(this);
+            this._shown = true;
+            Mechanisms.addListener(this);
+            this.setVisibility(this._game.visibility);
+            super.open(board, location);
+        }
+
+        close() {
+            Memento.register(this);
+            this._shown = false;
+            Mechanisms.removeListener(this);
+            super.close();
+        }
+
+        setVisibility(level) {
+            this.alpha = level >= 1;
+        }
+
+    }
+
+}
+InsertMixin.VISIBILITY = {};
+InsertMixin.VISIBILITY_LEVEL = 2;
+
+export class CBMask extends InsertMixin(DMask) {
+
+    constructor(...args) {
+        super(...args);
     }
 
 }
@@ -419,6 +529,7 @@ export class CBGame {
         this._players = [];
         this._actuators = [];
         this._counters = new Set();
+        this._visibility = 2;
     }
 
     _memento() {
@@ -543,21 +654,22 @@ export class CBGame {
     openActuator(actuator) {
         Memento.register(this);
         actuator.game = this;
-        actuator.element.show(this._board);
+        actuator.visibility = this._visibility;
+        actuator.show(this);
         this._actuators.push(actuator);
     }
 
     closeActuators() {
         Memento.register(this);
         for (let actuator of this._actuators) {
-            actuator.element.hide(this._board);
+            actuator.hide(this);
         }
         this._actuators = [];
     }
 
     removeActuators() {
         for (let actuator of this._actuators) {
-            actuator.element.removeFromBoard(this._board);
+            actuator.remove(this);
         }
         this._actuators = [];
     }
@@ -612,6 +724,10 @@ export class CBGame {
         return this._focusedUnit;
     }
 
+    get visibility() {
+        return this._visibility;
+    }
+
     _createEndOfTurnCommand() {
         this._endOfTurnCommand = new DPushButton(
             "/CBlades/images/commands/turn.png", "/CBlades/images/commands/turn-inactive.png",
@@ -640,6 +756,7 @@ export class CBGame {
             this._saveCommand.setOnBoard(this._board);
             this._loadCommand.setOnBoard(this._board);
             this._editorCommand.setOnBoard(this._board);
+            this._insertLevelCommand.setOnBoard(this._board);
             animation();
         });
         this._showCommand.setOnBoard(this._board);
@@ -654,6 +771,7 @@ export class CBGame {
             this._saveCommand.removeFromBoard();
             this._loadCommand.removeFromBoard();
             this._editorCommand.removeFromBoard();
+            this._insertLevelCommand.removeFromBoard();
             animation();
         });
         this._undoCommand = new DPushButton(
@@ -677,12 +795,22 @@ export class CBGame {
         this._loadCommand = new DPushButton(
             "/CBlades/images/commands/load.png", "/CBlades/images/commands/load-inactive.png",
             new Point2D(-420, -60), animation=>{});
-        this._editorCommand = new DPushButton(
-            "/CBlades/images/commands/editor.png", "/CBlades/images/commands/editor-inactive.png",
-            new Point2D(-480, -60), animation=>{
-            CBGame.edit(this);
-            animation();
-        }).setTurnAnimation(true);
+        this._editorCommand = new DMultiStatePushButton(
+            ["/CBlades/images/commands/editor.png", "/CBlades/images/commands/field.png"],
+            new Point2D(-480, -60), (state, animation)=>{
+                if (!state) CBGame.edit(this); else this.closeActuators();
+                animation();
+        }).setTurnAnimation(true, ()=>this._editorCommand.setState(this._editorCommand.state?0:1));
+        this._insertLevelCommand = new DMultiStatePushButton(
+            ["/CBlades/images/commands/insert0.png", "/CBlades/images/commands/insert1.png", "/CBlades/images/commands/insert2.png"],
+            new Point2D(-540, -60), (state, animation)=>{
+                this._visibility = (state+1)%3;
+                Mechanisms.fire(this, CBActuator.VISIBILITY, this._visibility);
+                Mechanisms.fire(this, InsertMixin.VISIBILITY, this._visibility>=1);
+                animation();
+            })
+            .setState(this._visibility)
+            .setTurnAnimation(true, ()=>this._insertLevelCommand.setState(this._visibility));
         this._settingsCommand.active = false;
         this._saveCommand.active = false;
         this._loadCommand.active = false;

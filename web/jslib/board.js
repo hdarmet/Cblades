@@ -158,10 +158,12 @@ export class DArtifact extends LocalisationAware(Object) {
         if (this._settings) {
             this._settings(this._level);
         }
-        if (this._alpha<1) {
+        if (this.alpha<1) {
             this._level.setAlphaSettings(this._alpha);
         }
-        this._paint();
+        if (this.alpha>0) {
+            this._paint();
+        }
     }
 
     setLevel(levelName) {
@@ -224,9 +226,18 @@ export class DArtifact extends LocalisationAware(Object) {
         return this.containsLocalPoint(this.getPosition(point));
     }
 
+    mayCaptureEvent() {
+        return this.alpha>0;
+    }
+
+    isShown() {
+        return !!this._level;
+    }
+    /*
     get visible() {
         return !!this._level;
     }
+     */
 
     get level() {
         return this._level;
@@ -270,7 +281,7 @@ export class DArtifact extends LocalisationAware(Object) {
     }
 
     get alpha() {
-        return this._alpha;
+        return this.element.alpha*this._alpha;
     }
 
     setSettings(settings) {
@@ -503,6 +514,10 @@ export class DMultiImagesArtifact extends DImageAbstractArtifact {
         this._root = images[0];
     }
 
+    get images() {
+        return this._images;
+    }
+
     setImage(index) {
         console.assert(index >= 0 && index < this._images.length);
         this._root = this._images[index];
@@ -630,6 +645,7 @@ export class DElement extends LocalisationAware(Object) {
         super();
         this._artifacts = [...artifacts];
         this._angle = 0;
+        this._alpha = 1;
         this._location = new Point2D(0, 0);
         for (let artifact of this._artifacts) {
             artifact._setElement(this);
@@ -810,6 +826,14 @@ export class DElement extends LocalisationAware(Object) {
         return this._angle;
     }
 
+    get alpha() {
+        return this._alpha;
+    }
+
+    set alpha(alpha) {
+        this._alpha = alpha;
+        this.refresh();
+    }
 }
 
 /**
@@ -1041,7 +1065,7 @@ export class DBasicLevel extends DLevel {
     isPointOnArtifact(artifact, viewportPoint) {
         console.assert(artifact.level === this);
         let point = this.getPoint(viewportPoint);
-        return artifact.containsPoint(point, viewportPoint)
+        return artifact.mayCaptureEvent() && artifact.containsPoint(point, viewportPoint)
             && (artifact.capture || artifact.level.getPixel(artifact, viewportPoint)[3]>127);
     }
 

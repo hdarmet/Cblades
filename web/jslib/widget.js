@@ -1,6 +1,7 @@
 'use strict';
 
 import {
+    Mechanisms,
     Memento
 } from "./mechanisms.js";
 import {
@@ -335,31 +336,23 @@ export function ActivableArtifact(clazz) {
 
 export class DPushButtonImageArtifact extends ActivableArtifact(DMultiImagesArtifact) {
 
-    constructor(image, inactiveImage) {
-        super("widget-commands", [image, inactiveImage],
+    constructor(images) {
+        super("widget-commands", images,
             new Point2D(0, 0),
             DPushButtonImageArtifact.DIMENSION, 0);
     }
 
-    set active(active) {
-        super.active = active;
-        this.setImage(active?0:1);
-    }
-
 }
+
 DPushButtonImageArtifact.DIMENSION = new Dimension2D(50, 50);
 
-export class DPushButton extends DElement {
+export class DAbstractPushButton extends DElement {
 
-    constructor(path, inactivePath, position, action) {
+    constructor(images, position) {
         super();
-        let image = DImage.getImage(path);
-        let inactiveImage = DImage.getImage(inactivePath);
-        this._artifact = new DPushButtonImageArtifact(image, inactiveImage);
+        this._artifact = new DPushButtonImageArtifact(images);
         this.addArtifact(this._artifact);
         this._position = position;
-        this._action = action;
-        this._active = true;
     }
 
     setPosition(position) {
@@ -373,21 +366,16 @@ export class DPushButton extends DElement {
         return this;
     }
 
-    setTurnAnimation(clockWise) {
-        this._animation = ()=>{
-            new DArtifactRotateAnimation(this._artifact, 360, 0, 500, clockWise);
-        };
-        return this;
+    get animation() {
+        return this._animation;
     }
 
-    action() {
-        if (this.active) {
-            this._action(() => {
-                if (this._animation) {
-                    this._animation();
-                }
-            });
-        }
+    setTurnAnimation(clockWise, finalAction) {
+        this._animation = ()=>{
+            let animation = new DArtifactRotateAnimation(this._artifact, 360, 0, 500, clockWise);
+            animation.setFinalAction(()=>finalAction && finalAction())
+        };
+        return this;
     }
 
     get trigger() {
@@ -403,13 +391,69 @@ export class DPushButton extends DElement {
         }
     }
 
+}
+
+export class DPushButton extends DAbstractPushButton {
+
+    constructor(path, inactivePath, position, action) {
+        super([DImage.getImage(path), DImage.getImage(inactivePath)], position);
+        this._action = action;
+        this._active = true;
+    }
+
+    action() {
+        if (this.active) {
+            this._action(() => {
+                if (this.animation) {
+                    this.animation();
+                }
+            });
+        }
+    }
+
     get active() {
         return this._active;
     }
 
     set active(active) {
         this._active = active;
-        this._artifact.active = active;
+        this.trigger.changeImage(active?0:1);
+    }
+
+}
+
+export class DMultiStatePushButton extends DAbstractPushButton {
+
+    constructor(paths, position, action) {
+        function getImages(paths) {
+            let images=[];
+            for (let path of paths) {
+                images.push(DImage.getImage(path));
+            }
+            return images;
+        }
+        super(getImages(paths), position);
+        this._action = action;
+        this._state = 0;
+    }
+
+    action() {
+        this._action(this._state, () => {
+            if (this.animation) {
+                this.animation();
+            }
+        });
+    }
+
+    get state() {
+        return this._state;
+    }
+
+    setState(state) {
+        console.assert(state<this.trigger.images.length);
+        this._state = state;
+        this.trigger.changeImage(state);
+        return this;
     }
 
 }
@@ -879,6 +923,12 @@ export class DAbstractInsert extends DElement {
         this.move(location);
     }
 
+    close() {
+        if (this._board) {
+            this.hide();
+        }
+    }
+
     leftPage() {
         for (let frame of this._frames) {
             frame._leftPage();
@@ -900,12 +950,6 @@ export class DAbstractInsert extends DElement {
     previousPage() {
         for (let frame of this._frames) {
             frame._previousPage();
-        }
-    }
-
-    close() {
-        if (this._board) {
-            this.hide();
         }
     }
 
@@ -1182,6 +1226,10 @@ class DMaskArtifact extends DArtifact {
 
     get transform() {
         return Matrix2D.IDENTITY;
+    }
+
+    mayCaptureEvent() {
+        return true;
     }
 
     onMouseClick(event) {
