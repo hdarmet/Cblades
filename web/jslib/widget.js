@@ -312,7 +312,7 @@ export function ActivableArtifact(clazz) {
                 let over = this._isOver()
                 for (let artifact of this.element._artifacts) {
                     if (artifact._over !== undefined) {
-                        if (!this._active) {
+                        if (!this.active) {
                             artifact.setSettings(artifact.inactiveSettings);
                         } else if (over) {
                             artifact.setSettings(artifact.overSettings);
@@ -323,6 +323,10 @@ export function ActivableArtifact(clazz) {
                 }
                 this.element.refresh();
             }
+        }
+
+        get active() {
+            return this._active;
         }
 
         set active(active) {
@@ -417,6 +421,7 @@ export class DPushButton extends DAbstractPushButton {
 
     set active(active) {
         this._active = active;
+        this.trigger.active = active;
         this.trigger.changeImage(active?0:1);
     }
 
@@ -680,85 +685,85 @@ export class DInsertFrame {
 
         function _manageLeftButton(composition) {
             if (composition.sourceArea.left>this._pageArea.left) {
-                if (!this._leftButton) {
+                if (!this._insert._leftButton) {
                     let leftImage = DImage.getImage("/CBlades/images/commands/left.png");
                     let position = new Point2D(
                         this._area.left+DInsertCommand.DIMENSION.w/2+10-this._insert.dimension.w/2,
                         this._area.y-this._insert.dimension.h/2);
-                    this._leftButton = new DInsertCommand(leftImage, position, this._insert.leftPage);
+                    this._insert._leftButton = new DInsertCommand(leftImage, position, this._insert.leftPage);
                 }
-                if (!this._insert.hasArtifact(this._leftButton)) {
-                    this._insert.addArtifact(this._leftButton);
+                if (!this._insert.hasArtifact(this._insert._leftButton)) {
+                    this._insert.addArtifact(this._insert._leftButton);
                 }
             }
             else {
-                if (this._insert.hasArtifact(this._leftButton)) {
-                    this._insert.removeArtifact(this._leftButton);
-                    delete this._leftButton;
+                if (this._insert.hasArtifact(this._insert._leftButton)) {
+                    this._insert.removeArtifact(this._insert._leftButton);
+                    delete this._insert._leftButton;
                 }
             }
         }
 
         function _manageRightButton(composition) {
             if (composition.sourceArea.right<this._pageArea.right) {
-                if (!this._rightButton) {
+                if (!this._insert._rightButton) {
                     let downImage = DImage.getImage("/CBlades/images/commands/right.png");
                     let position = new Point2D(
                         this._area.right-this._insert.dimension.w/2-DInsertCommand.DIMENSION.w/2-10,
                         this._area.y-this._insert.dimension.h/2);
-                    this._rightButton = new DInsertCommand(downImage, position, this._insert.rightPage);
+                    this._insert._rightButton = new DInsertCommand(downImage, position, this._insert.rightPage);
                 }
-                if (!this._insert.hasArtifact(this._rightButton)) {
-                    this._insert.addArtifact(this._rightButton);
+                if (!this._insert.hasArtifact(this._insert._rightButton)) {
+                    this._insert.addArtifact(this._insert._rightButton);
                 }
             }
             else {
-                if (this._insert.hasArtifact(this._rightButton)) {
-                    this._insert.removeArtifact(this._rightButton);
-                    delete this._rightButton;
+                if (this._insert.hasArtifact(this._insert._rightButton)) {
+                    this._insert.removeArtifact(this._insert._rightButton);
+                    delete this._insert._rightButton;
                 }
             }
         }
 
         function _manageNextButton() {
             if (composition.sourceArea.top>this._pageArea.top) {
-                if (!this._upButton) {
+                if (!this._insert._upButton) {
                     let upImage = DImage.getImage("/CBlades/images/commands/up.png");
                     let position = new Point2D(
                         this._area.x-this._insert.dimension.w/2,
                         this._area.top+DInsertCommand.DIMENSION.w/2+10-this._insert.dimension.h/2);
-                    this._upButton = new DInsertCommand(upImage, position, this._insert.previousPage);
+                    this._insert._upButton = new DInsertCommand(upImage, position, this._insert.previousPage);
                 }
-                if (!this._insert.hasArtifact(this._upButton)) {
-                    this._insert.addArtifact(this._upButton);
+                if (!this._insert.hasArtifact(this._insert._upButton)) {
+                    this._insert.addArtifact(this._insert._upButton);
                 }
             }
             else {
-                if (this._insert.hasArtifact(this._upButton)) {
-                    this._insert.removeArtifact(this._upButton);
-                    delete this._upButton;
+                if (this._insert.hasArtifact(this._insert._upButton)) {
+                    this._insert.removeArtifact(this._insert._upButton);
+                    delete this._insert._upButton;
                 }
             }
         }
 
         function _managePreviousButton() {
             if (composition.sourceArea.bottom<this._pageArea.bottom) {
-                if (!this._downButton) {
+                if (!this._insert._downButton) {
                     let downImage = DImage.getImage("/CBlades/images/commands/down.png");
                     let position = new Point2D(
                         this._area.x-this._insert.dimension.w/2,
                         this._area.bottom-DInsertCommand.DIMENSION.w/2-10-this._insert.dimension.h/2
                     );
-                    this._downButton = new DInsertCommand(downImage, position, this._insert.nextPage);
+                    this._insert._downButton = new DInsertCommand(downImage, position, this._insert.nextPage);
                 }
-                if (!this._insert.hasArtifact(this._downButton)) {
-                    this._insert.addArtifact(this._downButton);
+                if (!this._insert.hasArtifact(this._insert._downButton)) {
+                    this._insert.addArtifact(this._insert._downButton);
                 }
             }
             else {
-                if (this._insert.hasArtifact(this._downButton)) {
-                    this._insert.removeArtifact(this._downButton);
-                    delete this._downButton;
+                if (this._insert.hasArtifact(this._insert._downButton)) {
+                    this._insert.removeArtifact(this._insert._downButton);
+                    delete this._insert._downButton;
                 }
             }
         }
@@ -831,7 +836,6 @@ export class DInsertFrame {
 
     _moveMarkers() {
         for (let marker of this._insert._markers.values()) {
-            marker.artifact.position = this._getMarkerPosition(marker.location);
             this._manageVisibility(marker);
         }
     }
@@ -850,6 +854,7 @@ export class DInsertFrame {
             );
         }
 
+        marker.artifact.position = this._getMarkerPosition(marker.location);
         if (this._pageArea.inside(marker.location)) {
             if (this._insert.hasArtifact(marker.artifact) && (!marker.shown || !isVisible.call(this, marker))) {
                 this._insert.removeArtifact(marker.artifact);

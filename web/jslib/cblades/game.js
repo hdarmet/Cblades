@@ -394,7 +394,7 @@ export class CBActionActuator extends CBActuator {
 
 }
 
-export function InsertMixin(clazz) {
+export function WidgetLevelMixin(clazz) {
 
     return class extends clazz {
 
@@ -404,7 +404,7 @@ export function InsertMixin(clazz) {
         }
 
         _processGlobalEvent(source, event, value) {
-            if (event === InsertMixin.VISIBILITY) {
+            if (event === WidgetLevelMixin.VISIBILITY) {
                 this.setVisibility(value);
             }
         }
@@ -448,10 +448,10 @@ export function InsertMixin(clazz) {
     }
 
 }
-InsertMixin.VISIBILITY = {};
-InsertMixin.VISIBILITY_LEVEL = 2;
+WidgetLevelMixin.VISIBILITY = {};
+WidgetLevelMixin.VISIBILITY_LEVEL = 2;
 
-export class CBMask extends InsertMixin(DMask) {
+export class CBMask extends WidgetLevelMixin(DMask) {
 
     constructor(...args) {
         super(...args);
@@ -669,7 +669,7 @@ export class CBGame {
 
     removeActuators() {
         for (let actuator of this._actuators) {
-            actuator.remove(this);
+            actuator.hide(this);
         }
         this._actuators = [];
     }
@@ -806,7 +806,7 @@ export class CBGame {
             new Point2D(-540, -60), (state, animation)=>{
                 this._visibility = (state+1)%3;
                 Mechanisms.fire(this, CBActuator.VISIBILITY, this._visibility);
-                Mechanisms.fire(this, InsertMixin.VISIBILITY, this._visibility>=1);
+                Mechanisms.fire(this, WidgetLevelMixin.VISIBILITY, this._visibility>=1);
                 animation();
             })
             .setState(this._visibility)

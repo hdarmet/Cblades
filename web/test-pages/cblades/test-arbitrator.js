@@ -29,7 +29,7 @@ import {
     CBMovement, CBMoveProfile,
     CBTiredness,
     CBTroop,
-    CBUnitType,
+    CBUnitType, CBWeaponProfile,
     CBWeather,
     CBWing
 } from "../../jslib/cblades/unit.js";
@@ -72,6 +72,15 @@ describe("Arbitrator", ()=> {
                 case CBHex.HEXSIDE_TYPES.WALL : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
                 default: throw "Unknown";
             }
+        }
+    }
+
+    class FireWeaponProfile extends CBWeaponProfile {
+        constructor() {
+            super(0);
+        }
+        getFireAttackCode() {
+            return "FBw";
         }
     }
 
@@ -122,6 +131,7 @@ describe("Arbitrator", ()=> {
             super(name, troopPaths, formationPaths);
             for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
                 this.setMoveProfile(index, new CBMoveProfile());
+                this.setWeaponProfile(index, new FireWeaponProfile());
             }
         }
     }
@@ -1340,7 +1350,7 @@ describe("Arbitrator", ()=> {
             assert(result.lossesForDefender).equalsTo(2);
             assert(result.tirednessForAttacker).isTrue();
         when:
-            result = arbitrator.processShockAttackResult(unit12, unit21, false, [3, 4]);
+            result = arbitrator.processShockAttackResult(unit12, unit21, false, [2, 3]);
         then:
             assert(result.success).isTrue();
             assert(result.lossesForDefender).equalsTo(1);
@@ -1464,13 +1474,13 @@ describe("Arbitrator", ()=> {
             var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
             unit21.move(map.getHex(5, 5));
         when:
-            var result = arbitrator.processFireAttackResult(unit12, unit21, [2, 2]);
+            var result = arbitrator.processFireAttackResult(unit12, unit21, [1, 1]);
         then:
             assert(result.success).isTrue();
             assert(result.lossesForDefender).equalsTo(2);
             assert(result.lowerFirerMunitions).isTrue();
         when:
-            result = arbitrator.processFireAttackResult(unit12, unit21, [3, 4]);
+            result = arbitrator.processFireAttackResult(unit12, unit21, [4, 3]);
         then:
             assert(result.success).isTrue();
             assert(result.lossesForDefender).equalsTo(1);

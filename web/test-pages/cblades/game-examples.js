@@ -16,14 +16,24 @@ import {
     CBInteractivePlayer
 } from "../../jslib/cblades/interactive-player.js";
 import {
-    CBCharacter, CBFormation, CBMoveProfile, CBTroop, CBUnitType, CBWing
+    CBCharacter, CBFormation, CBMoveProfile, CBTroop, CBUnitType, CBWeaponProfile, CBWing
 } from "../../jslib/cblades/unit.js";
+
+export class FireWeaponProfile extends CBWeaponProfile {
+    constructor() {
+        super(0);
+    }
+    getFireAttackCode() {
+        return "FBw";
+    }
+}
 
 export class CBTestUnitType extends CBUnitType {
     constructor(name, troopPaths, formationPaths=[]) {
         super(name, troopPaths, formationPaths);
         for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
             this.setMoveProfile(index, new CBMoveProfile());
+            this.setWeaponProfile(index, new FireWeaponProfile());
         }
     }
 }

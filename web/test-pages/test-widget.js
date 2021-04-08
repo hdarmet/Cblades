@@ -664,12 +664,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 20)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 190, -100, -95, 200, 190)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -95, 200, 190)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 20)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-100, -95, 200, 190)",
+                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 190, -100, -95, 200, 190)",
                 "restore()"
             ]);
         when:
@@ -698,12 +698,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 300, -100, -150, 200, 300)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -150, 200, 300)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-100, -150, 200, 300)",
+                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 300, -100, -150, 200, 300)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
@@ -727,12 +727,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/insert.png, 0, 90, 200, 300, -100, -150, 200, 300)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -150, 200, 300)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-100, -150, 200, 300)",
+                    "drawImage(/CBlades/images/inserts/insert.png, 0, 90, 200, 300, -100, -150, 200, 300)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
@@ -756,15 +756,20 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/insert.png, 150, 90, 200, 300, -100, -150, 200, 300)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -150, 200, 300)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-100, -150, 200, 300)",
+                    "drawImage(/CBlades/images/inserts/insert.png, 100, 90, 200, 300, -100, -150, 200, 300)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 215, 200)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/right.png, -25, -25, 50, 50)",
+                "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 85)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
@@ -785,15 +790,20 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/insert.png, 150, 0, 200, 300, -100, -150, 200, 300)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -150, 200, 300)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-100, -150, 200, 300)",
+                    "drawImage(/CBlades/images/inserts/insert.png, 100, 0, 200, 300, -100, -150, 200, 300)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 215, 200)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/right.png, -25, -25, 50, 50)",
+                "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 85, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
@@ -814,24 +824,24 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 300, -100, -150, 200, 300)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -150, 200, 300)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-100, -150, 200, 300)",
+                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 300, -100, -150, 200, 300)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 150, 315)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
                     "setTransform(1, 0, 0, 1, 215, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/commands/right.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 315)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });
@@ -883,15 +893,15 @@ describe("Widget", ()=> {
         when: // Declare 2 markers but set only 1
             resetDirectives(itemsLayer);
             insert.open(board, new Point2D(150, 200));
-            insert.declareMark("modifier-here", new Point2D(-80, -140));
-            insert.declareMark("modifier-there", new Point2D(-80, 0));
+            insert.declareMark("modifier-here", new Point2D(20, 50));
+            insert.declareMark("modifier-there", new Point2D(20, 190));
             insert.setMark("modifier-here");
             loadAllImages();
             board.paint();
         then:
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 70, 105)",
+                    "setTransform(1, 0, 0, 1, 70, 100)",
                     "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
                 "restore()"
             ]);
@@ -902,11 +912,11 @@ describe("Widget", ()=> {
         then:
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 70, 105)",
+                    "setTransform(1, 0, 0, 1, 70, 100)",
                     "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 70, 245)",
+                    "setTransform(1, 0, 0, 1, 70, 240)",
                     "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
                 "restore()"
             ]);
@@ -917,7 +927,7 @@ describe("Widget", ()=> {
         then:
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 70, 155)",
+                    "setTransform(1, 0, 0, 1, 70, 150)",
                     "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
                 "restore()"
             ]);
@@ -940,9 +950,6 @@ describe("Widget", ()=> {
             assert(result.finished).isTrue();
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 10, 20)",
-                    "shadowColor = #00A000", "shadowBlur = 100", "globalAlpha = 0",
-                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
                 "restore()"
             ]);
         when:
@@ -1006,9 +1013,6 @@ describe("Widget", ()=> {
             assert(result.finished).isTrue();
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 10, 20)",
-                    "shadowColor = #A00000", "shadowBlur = 100", "globalAlpha = 0",
-                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
                 "restore()"
             ]);
         when:
@@ -1067,6 +1071,7 @@ describe("Widget", ()=> {
             });
             result.open(board, new Point2D(10, 20));
             result.appear();
+            executeAllAnimations(commandsLayer);
             var resultVPLocation = result.trigger.viewportLocation;
         when:
             var event = createEvent("click", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y});
@@ -1094,9 +1099,6 @@ describe("Widget", ()=> {
         then:
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 10, 20)",
-                    "globalAlpha = 0",
-                    "drawImage(/CBlades/images/dice/message.png, -75, -75, 150, 150)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 50)",
@@ -1190,6 +1192,7 @@ describe("Widget", ()=> {
             });
             message.open(board, new Point2D(10, 20));
             message.appear("12", 1, 2, 3);
+            executeAllAnimations(commandsLayer);
             var messageVPLocation = message.trigger.viewportLocation;
         when:
             var event = createEvent("click", {offsetX:messageVPLocation.x, offsetY:messageVPLocation.y});
@@ -1296,12 +1299,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 190, -100, -95, 200, 190)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -95, 200, 190)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-100, -95, 200, 190)",
+                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 190, -100, -95, 200, 190)",
                 "restore()"
             ]);
         when:
@@ -1325,12 +1328,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 190, -100, -95, 200, 190)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -95, 200, 190)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-100, -95, 200, 190)",
+                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 190, -100, -95, 200, 190)",
                 "restore()"
             ]);
         when:

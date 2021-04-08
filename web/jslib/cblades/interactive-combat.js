@@ -12,7 +12,7 @@ import {
 } from "../widget.js";
 import {
     CBAction, CBActionActuator, CBActuator,
-    CBActuatorImageTrigger, CBActuatorTriggerMixin, CBMask, CBUnitActuatorTrigger, InsertMixin, RetractableActuatorMixin
+    CBActuatorImageTrigger, CBActuatorTriggerMixin, CBMask, CBUnitActuatorTrigger, WidgetLevelMixin, RetractableActuatorMixin
 } from "./game.js";
 import {
     CBHexSideId
@@ -753,7 +753,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
 
 }
 
-export class CBShockAttackInsert extends InsertMixin(DInsert) {
+export class CBShockAttackInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/shock-attack-insert.png", CBShockAttackInsert.DIMENSION,  CBShockAttackInsert.PAGE_DIMENSION);
@@ -763,7 +763,7 @@ export class CBShockAttackInsert extends InsertMixin(DInsert) {
 CBShockAttackInsert.DIMENSION = new Dimension2D(524, 658);
 CBShockAttackInsert.PAGE_DIMENSION = new Dimension2D(524, 850);
 
-export class CBFireAttackInsert extends InsertMixin(DInsert) {
+export class CBFireAttackInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/fire-attack-insert.png", CBFireAttackInsert.DIMENSION,  CBFireAttackInsert.PAGE_DIMENSION);
@@ -777,7 +777,7 @@ export class CBFireAttackInsert extends InsertMixin(DInsert) {
 CBFireAttackInsert.DIMENSION = new Dimension2D(524, 658);
 CBFireAttackInsert.PAGE_DIMENSION = new Dimension2D(524, 850);
 
-export class CBCombatResultTableInsert extends InsertMixin(DInsert) {
+export class CBCombatResultTableInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/combat-result-table-insert.png", CBCombatResultTableInsert.DIMENSION);
@@ -786,7 +786,7 @@ export class CBCombatResultTableInsert extends InsertMixin(DInsert) {
 }
 CBCombatResultTableInsert.DIMENSION = new Dimension2D(804, 174);
 
-export class CBWeaponTableInsert extends InsertMixin(DAbstractInsert) {
+export class CBWeaponTableInsert extends WidgetLevelMixin(DAbstractInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/weapon-table-insert.png", CBWeaponTableInsert.DIMENSION, CBWeaponTableInsert.PAGE_DIMENSION);

@@ -154,14 +154,14 @@ export class DArtifact extends LocalisationAware(Object) {
 
     paint() {
         console.assert(this._level);
-        this._level.setTransformSettings(this.transform);
-        if (this._settings) {
-            this._settings(this._level);
-        }
-        if (this.alpha<1) {
-            this._level.setAlphaSettings(this._alpha);
-        }
         if (this.alpha>0) {
+            this._level.setTransformSettings(this.transform);
+            if (this._settings) {
+                this._settings(this._level);
+            }
+            if (this.alpha<1) {
+                this._level.setAlphaSettings(this._alpha);
+            }
             this._paint();
         }
     }
@@ -281,7 +281,7 @@ export class DArtifact extends LocalisationAware(Object) {
     }
 
     get alpha() {
-        return this.element.alpha*this._alpha;
+        return (this.element?this.element.alpha:1)*this._alpha;
     }
 
     setSettings(settings) {

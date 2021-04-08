@@ -11,7 +11,7 @@ import {
 } from "../mechanisms.js";
 import {
     CBAction, CBActionActuator, CBGame,
-    CBActuatorImageTrigger, CBUnitActuatorTrigger, RetractableActuatorMixin, InsertMixin
+    CBActuatorImageTrigger, CBUnitActuatorTrigger, RetractableActuatorMixin, WidgetLevelMixin
 } from "./game.js";
 import {
     DImage
@@ -372,7 +372,7 @@ export class CBOrderGivenActuator extends RetractableActuatorMixin(CBActionActua
 
 }
 
-export class CBCommandInsert extends InsertMixin(DInsert) {
+export class CBCommandInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/command-insert.png", CBCommandInsert.DIMENSION);
@@ -381,7 +381,7 @@ export class CBCommandInsert extends InsertMixin(DInsert) {
 }
 CBCommandInsert.DIMENSION = new Dimension2D(444, 680);
 
-export class CBChangeOrderInstructionInsert extends InsertMixin(DInsert) {
+export class CBChangeOrderInstructionInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/change-order-instruction-insert.png", CBChangeOrderInstructionInsert.DIMENSION);
@@ -390,7 +390,7 @@ export class CBChangeOrderInstructionInsert extends InsertMixin(DInsert) {
 }
 CBChangeOrderInstructionInsert.DIMENSION = new Dimension2D(444, 254);
 
-export class CBGiveOrdersInsert extends InsertMixin(DInsert) {
+export class CBGiveOrdersInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/orders-given-insert.png", CBGiveOrdersInsert.DIMENSION, CBGiveOrdersInsert.PAGE_DIMENSION);
@@ -400,7 +400,7 @@ export class CBGiveOrdersInsert extends InsertMixin(DInsert) {
 CBGiveOrdersInsert.PAGE_DIMENSION = new Dimension2D(444, 872);
 CBGiveOrdersInsert.DIMENSION = new Dimension2D(444, 600);
 
-export class CBTakeCommandInsert extends InsertMixin(DInsert) {
+export class CBTakeCommandInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/take-command-insert.png", CBTakeCommandInsert.DIMENSION);
@@ -409,7 +409,7 @@ export class CBTakeCommandInsert extends InsertMixin(DInsert) {
 }
 CBTakeCommandInsert.DIMENSION = new Dimension2D(444, 298);
 
-export class CBDismissCommandInsert extends InsertMixin(DInsert) {
+export class CBDismissCommandInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/dismiss-command-insert.png", CBDismissCommandInsert.DIMENSION);

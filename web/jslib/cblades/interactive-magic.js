@@ -13,7 +13,7 @@ import {
     CBActuatorImageTrigger,
     CBGame,
     CBUnitActuatorTrigger,
-    InsertMixin,
+    WidgetLevelMixin,
     RetractableActuatorMixin
 } from "./game.js";
 import {
@@ -380,7 +380,7 @@ CBFireballSpell.resolver = function(action) {
     ).open(this.game.board, this.location);
 }
 
-export class CBFireballInsert extends InsertMixin(DInsert) {
+export class CBFireballInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/fireball-insert.png", CBFireballInsert.DIMENSION);

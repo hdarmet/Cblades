@@ -9,9 +9,10 @@ import {
     DImage, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
+    assertDirectives,
     getDirectives, getLayers,
     loadAllImages,
-    mockPlatform, resetDirectives
+    mockPlatform, resetDirectives, skipDirectives
 } from "../mocks.js";
 import {
     Mechanisms, Memento
@@ -32,7 +33,7 @@ import {
     clickOnResult,
     dummyEvent,
     clickOnMask,
-    rollFor
+    rollFor, showMask, showInsert, showDice, showPlayedDice, showSuccessResult
 } from "./interactive-tools.js";
 import {
     createTinyGame,
@@ -251,45 +252,12 @@ describe("Interactive Player", ()=> {
             loadAllImages();
             paint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 386.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/check-defender-engagement-insert.png, 0, 0, 444, 763, -222, -381.5, 444, 763)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 227, 386.5)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -381.5, 444, 763)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 202)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/moral-insert.png, 0, 0, 444, 389, -222, -194.5, 444, 389)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 661, 202)",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-222, -194.5, 444, 389)",
-                "restore()"
-            ]);
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 549, 426.5)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 489, 486.5)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("check-defender-engagement", 227, 386.5, 444, 763));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 202, 444, 389));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 426.5));
             assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
         when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
@@ -315,31 +283,16 @@ describe("Interactive Player", ()=> {
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 549, 426.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 489, 486.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 449, 386.5)",
-                    "shadowColor = #00A000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 2, 549, 426.5));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(449, 386.5));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([ // Action menu opened in modal mode
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 70, 70)",
                     "shadowColor = #000000", "shadowBlur = 15",

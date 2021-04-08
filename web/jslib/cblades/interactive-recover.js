@@ -7,7 +7,7 @@ import {
     DDice, DIconMenuItem, DInsert, DMask, DResult, DScene
 } from "../widget.js";
 import {
-    CBAction, InsertMixin
+    CBAction, WidgetLevelMixin
 } from "./game.js";
 import {
     CBActionMenu,
@@ -170,7 +170,7 @@ export class InteractiveReorganizeAction extends CBAction {
         ).addWidget(
             new CBCheckReorganizeInsert(this.game), new Point2D(CBCheckReorganizeInsert.DIMENSION.w/2, CBCheckReorganizeInsert.DIMENSION.h/2+70)
         ).addWidget(
-            new CBMoralInsert(),
+            new CBMoralInsert(this.game),
             new Point2D(-CBMoralInsert.DIMENSION.w/2, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
@@ -221,7 +221,7 @@ export class InteractiveRallyAction extends CBAction {
         ).addWidget(
             new CBCheckRallyInsert(this.game), new Point2D(CBCheckRallyInsert.DIMENSION.w/2, CBCheckRallyInsert.DIMENSION.h/2+70)
         ).addWidget(
-            new CBMoralInsert(),
+            new CBMoralInsert(this.game),
             new Point2D(-CBMoralInsert.DIMENSION.w/2, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
@@ -277,7 +277,7 @@ function createRecoverMenuItems(unit, actions) {
     ];
 }
 
-export class CBRestInsert extends InsertMixin(DInsert) {
+export class CBRestInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/rest-insert.png", CBRestInsert.DIMENSION);
@@ -286,7 +286,7 @@ export class CBRestInsert extends InsertMixin(DInsert) {
 }
 CBRestInsert.DIMENSION = new Dimension2D(444, 195);
 
-export class CBCheckRestInsert extends InsertMixin(DInsert) {
+export class CBCheckRestInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/check-rest-insert.png", CBCheckRestInsert.DIMENSION);
@@ -295,7 +295,7 @@ export class CBCheckRestInsert extends InsertMixin(DInsert) {
 }
 CBCheckRestInsert.DIMENSION = new Dimension2D(444, 451);
 
-export class CBReplenishMunitionsInsert extends InsertMixin(DInsert) {
+export class CBReplenishMunitionsInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/check-replenish-munitions-insert.png", CBReplenishMunitionsInsert.DIMENSION);
@@ -304,7 +304,7 @@ export class CBReplenishMunitionsInsert extends InsertMixin(DInsert) {
 }
 CBReplenishMunitionsInsert.DIMENSION = new Dimension2D(444, 383);
 
-export class CBReorganizeInsert extends InsertMixin(DInsert) {
+export class CBReorganizeInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/reorganize-insert.png", CBReorganizeInsert.DIMENSION);
@@ -313,7 +313,7 @@ export class CBReorganizeInsert extends InsertMixin(DInsert) {
 }
 CBReorganizeInsert.DIMENSION = new Dimension2D(444, 263);
 
-export class CBCheckReorganizeInsert extends InsertMixin(DInsert) {
+export class CBCheckReorganizeInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/check-reorganize-insert.png", CBCheckReorganizeInsert.DIMENSION);
@@ -322,7 +322,7 @@ export class CBCheckReorganizeInsert extends InsertMixin(DInsert) {
 }
 CBCheckReorganizeInsert.DIMENSION = new Dimension2D(444, 245);
 
-export class CBRallyInsert extends InsertMixin(DInsert) {
+export class CBRallyInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/rally-insert.png", CBRallyInsert.DIMENSION);
@@ -331,7 +331,7 @@ export class CBRallyInsert extends InsertMixin(DInsert) {
 }
 CBRallyInsert.DIMENSION = new Dimension2D(444, 279);
 
-export class CBCheckRallyInsert extends InsertMixin(DInsert) {
+export class CBCheckRallyInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/check-rally-insert.png", CBCheckRallyInsert.DIMENSION);

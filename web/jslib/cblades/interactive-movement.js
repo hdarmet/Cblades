@@ -17,7 +17,7 @@ import {
     CBHexSideId, CBMoveType, CBPathFinding
 } from "./map.js";
 import {
-    CBAction, CBActionActuator, CBActuator, CBActuatorImageTrigger, CBActuatorTriggerMixin, CBMask, InsertMixin
+    CBAction, CBActionActuator, CBActuator, CBActuatorImageTrigger, CBActuatorTriggerMixin, CBMask, WidgetLevelMixin
 } from "./game.js";
 import {
     CBMovement, CBMoveProfile
@@ -1037,7 +1037,7 @@ export class CBFormationMoveActuator extends CBActionActuator {
 
 }
 
-export class CBCheckAttackerEngagementInsert extends InsertMixin(DInsert) {
+export class CBCheckAttackerEngagementInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/check-attacker-engagement-insert.png", CBCheckAttackerEngagementInsert.DIMENSION);
@@ -1046,7 +1046,7 @@ export class CBCheckAttackerEngagementInsert extends InsertMixin(DInsert) {
 }
 CBCheckAttackerEngagementInsert.DIMENSION = new Dimension2D(444, 763);
 
-export class CBCheckConfrontEngagementInsert extends InsertMixin(DInsert) {
+export class CBCheckConfrontEngagementInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game,"/CBlades/images/inserts/check-confront-engagement-insert.png", CBCheckConfrontEngagementInsert.DIMENSION);
@@ -1055,7 +1055,7 @@ export class CBCheckConfrontEngagementInsert extends InsertMixin(DInsert) {
 }
 CBCheckConfrontEngagementInsert.DIMENSION = new Dimension2D(444, 763);
 
-export class CBCheckDisengagementInsert extends InsertMixin(DInsert) {
+export class CBCheckDisengagementInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/disengagement-insert.png", CBCheckDisengagementInsert.DIMENSION);
@@ -1064,7 +1064,7 @@ export class CBCheckDisengagementInsert extends InsertMixin(DInsert) {
 }
 CBCheckDisengagementInsert.DIMENSION = new Dimension2D(444, 797);
 
-export class CBMovementTableInsert extends InsertMixin(DAbstractInsert) {
+export class CBMovementTableInsert extends WidgetLevelMixin(DAbstractInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/movement-table-insert.png", CBMovementTableInsert.DIMENSION, CBMovementTableInsert.PAGE_DIMENSION);
@@ -1090,7 +1090,7 @@ CBMovementTableInsert.MARGIN = new Dimension2D(67, 256);
 CBMovementTableInsert.DIMENSION = new Dimension2D(900, 366);
 CBMovementTableInsert.PAGE_DIMENSION = new Dimension2D(1041, 366);
 
-export class CBMovementInsert extends InsertMixin(DInsert) {
+export class CBMovementInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/movement-insert.png", CBMovementInsert.DIMENSION, CBMovementInsert.PAGE_DIMENSION);
@@ -1100,7 +1100,7 @@ export class CBMovementInsert extends InsertMixin(DInsert) {
 CBMovementInsert.DIMENSION = new Dimension2D(444, 400);
 CBMovementInsert.PAGE_DIMENSION = new Dimension2D(444, 2470);
 
-export class CBRoutInsert extends InsertMixin(DInsert) {
+export class CBRoutInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/rout-insert.png", CBRoutInsert.DIMENSION, CBRoutInsert.PAGE_DIMENSION);
@@ -1110,7 +1110,7 @@ export class CBRoutInsert extends InsertMixin(DInsert) {
 CBRoutInsert.DIMENSION = new Dimension2D(444, 400);
 CBRoutInsert.PAGE_DIMENSION = new Dimension2D(444, 1433);
 
-export class CBMoveBackInsert extends InsertMixin(DInsert) {
+export class CBMoveBackInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/move-back-insert.png", CBMoveBackInsert.DIMENSION, CBMoveBackInsert.PAGE_DIMENSION);
@@ -1120,7 +1120,7 @@ export class CBMoveBackInsert extends InsertMixin(DInsert) {
 CBMoveBackInsert.DIMENSION = new Dimension2D(444, 400);
 CBMoveBackInsert.PAGE_DIMENSION = new Dimension2D(444, 678);
 
-export class CBToFaceInsert extends InsertMixin(DInsert) {
+export class CBToFaceInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/to-face-insert.png", CBToFaceInsert.DIMENSION);

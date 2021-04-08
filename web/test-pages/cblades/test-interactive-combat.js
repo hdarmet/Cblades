@@ -684,8 +684,6 @@ describe("Interactive Combat", ()=> {
             skipDirectives(commandsLayer, 4);
             assertDirectives(commandsLayer, showInsertCommand("down", 267, 752));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showInsertMark(167, 654));
-            assertDirectives(itemsLayer, showInsertMark(167, 174));
             assertDirectives(itemsLayer, showDice(1, 1, 617, 199));
         when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
@@ -720,8 +718,6 @@ describe("Interactive Combat", ()=> {
             repaint(game);
         then:
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showInsertMark(167, 654));
-            assertDirectives(itemsLayer, showInsertMark(167, 174));
             assertDirectives(itemsLayer, showPlayedDice(1, 2, 617, 199));
             skipDirectives(commandsLayer, 4);
             assertDirectives(commandsLayer, showInsertCommand("down", 267, 752));
@@ -773,8 +769,6 @@ describe("Interactive Combat", ()=> {
             repaint(game);
         then:
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showInsertMark(167, 662));
-            assertDirectives(itemsLayer, showInsertMark(167, 182));
             assertDirectives(itemsLayer, showPlayedDice(5, 6, 617, 207));
             skipDirectives(commandsLayer, 4);
             assertDirectives(commandsLayer, showInsertCommand("down", 267, 760));
@@ -840,8 +834,6 @@ describe("Interactive Combat", ()=> {
             repaint(game);
         then:
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showInsertMark(167, 654));
-            assertDirectives(itemsLayer, showInsertMark(167, 174));
             assertDirectives(itemsLayer, showPlayedDice(5, 6, 617, 199));
             skipDirectives(commandsLayer, 4);
             assertDirectives(commandsLayer, showInsertCommand("down", 267, 752));
@@ -934,8 +926,6 @@ describe("Interactive Combat", ()=> {
             skipDirectives(commandsLayer, 4);
             assertDirectives(commandsLayer, showInsertCommand("down", 267, 752));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showInsertMark(167, 654));
-            assertDirectives(itemsLayer, showInsertMark(167, 174));
             assertDirectives(itemsLayer, showDice(1, 1, 617, 199));
          when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);

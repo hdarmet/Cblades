@@ -514,7 +514,8 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     getFireWeaponAdvantage(attacker, defender) {
-        return CBArbitrator.weaponTable[attacker.weaponProfile.getFireAttackCode()][defender.weaponProfile.getFireDefendCode()];
+        let fireRow = CBArbitrator.weaponTable[attacker.weaponProfile.getFireAttackCode()];
+        return fireRow ? fireRow[defender.weaponProfile.getFireDefendCode()] : null;
     }
 
     getFireWeaponCell(attacker, defender) {

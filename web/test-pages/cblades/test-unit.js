@@ -1434,34 +1434,14 @@ describe("Unit", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 461.1437, 307.4108)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "globalAlpha = 0",
-                    "drawImage(/CBlades/images/markers/actiondone.png, -32, -32, 64, 64)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 391.74, 307.4108)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "globalAlpha = 0",
-                    "drawImage(/CBlades/images/markers/charge.png, -32, -32, 64, 64)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 391.74, 376.8145)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "globalAlpha = 0",
-                    "drawImage(/CBlades/images/markers/disrupted.png, -32, -32, 64, 64)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 391.74, 342.1127)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "globalAlpha = 0",
-                    "drawImage(/CBlades/images/markers/tired.png, -32, -32, 64, 64)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 376.8145)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "globalAlpha = 0",
-                    "drawImage(/CBlades/images/markers/scarceamno.png, -32, -32, 64, 64)",
                 "restore()"
             ]);
     });
@@ -1573,10 +1553,6 @@ describe("Unit", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 461.1437, 342.1127)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "globalAlpha = 0",
-                    "drawImage(/CBlades/images/markers/attack.png, -40, -40, 80, 80)",
                 "restore()"
             ]);
     });

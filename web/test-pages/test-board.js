@@ -1976,9 +1976,6 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 250, 150)",
-                    "globalAlpha = 0",
-                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });

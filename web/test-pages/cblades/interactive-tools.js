@@ -216,14 +216,32 @@ export function showInsert(insert, x, y, w, h) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #000000", "shadowBlur = 10",
-            `drawImage(/CBlades/images/inserts/${insert}-insert.png, 0, 0, ${w}, ${h}, -${w/2}, -${h/2}, ${w}, ${h})`,
+            "strokeStyle = #000000", "lineWidth = 1",
+            `strokeRect(-${w/2}, -${h/2}, ${w}, ${h})`,
         "restore()",
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
-            "strokeStyle = #000000", "lineWidth = 1",
-            `strokeRect(-${w/2}, -${h/2}, ${w}, ${h})`,
+            `drawImage(/CBlades/images/inserts/${insert}-insert.png, 0, 0, ${w}, ${h}, -${w/2}, -${h/2}, ${w}, ${h})`,
         "restore()"
     ];
+}
+
+export function showMultiInsert(insert, x, y, w, h, frames) {
+    let model = [
+        "save()",
+        `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+        "shadowColor = #000000", "shadowBlur = 10",
+        "strokeStyle = #000000", "lineWidth = 1",
+        `strokeRect(-${w/2}, -${h/2}, ${w}, ${h})`,
+        "restore()",
+        "save()",
+        `setTransform(1, 0, 0, 1, ${x}, ${y})`
+    ];
+    for (let frame of frames) {
+        model.push(`drawImage(/CBlades/images/inserts/${insert}-insert.png, ${frame.xs}, ${frame.ys}, ${frame.w}, ${frame.h}, ${frame.xd}, ${frame.yd}, ${frame.w}, ${frame.h})`);
+    }
+    model.push("restore()");
+    return model;
 }
 
 export function showInsertCommand(command, x, y) {

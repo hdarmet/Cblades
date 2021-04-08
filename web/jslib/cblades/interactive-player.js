@@ -8,7 +8,7 @@ import {
     Mechanisms
 } from "../mechanisms.js";
 import {
-    CBAbstractPlayer, CBGame, InsertMixin
+    CBAbstractPlayer, CBGame, WidgetLevelMixin
 } from "./game.js";
 import {
     DBoard
@@ -197,7 +197,7 @@ export class CBWeatherIndicator extends DIndicator {
 }
 CBWeatherIndicator.DIMENSION = new Dimension2D(142, 142);
 
-export class CBCheckDefenderEngagementInsert extends InsertMixin(DInsert) {
+export class CBCheckDefenderEngagementInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/check-defender-engagement-insert.png", CBCheckDefenderEngagementInsert.DIMENSION);
@@ -206,7 +206,7 @@ export class CBCheckDefenderEngagementInsert extends InsertMixin(DInsert) {
 }
 CBCheckDefenderEngagementInsert.DIMENSION = new Dimension2D(444, 763);
 
-export class CBMoralInsert extends InsertMixin(DInsert) {
+export class CBMoralInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/moral-insert.png", CBMoralInsert.DIMENSION);

@@ -268,10 +268,6 @@ describe("Game", ()=> {
             game.openActuator(actuator2);
         then:
             assert(game.actuators).arrayEqualsTo([actuator1, actuator2]);
-        when:
-            game.removeActuators();
-        then:
-            assert(game.actuators).arrayEqualsTo([]);
     });
 
     it("Checks mouse move over a trigger of an actuator", () => {
@@ -564,6 +560,11 @@ describe("Game", ()=> {
                     "setTransform(1, 0, 0, 1, 520, 740)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/commands/editor.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 460, 740)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/insert2.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -1771,10 +1772,6 @@ describe("Game", ()=> {
             ]);
             assert(getDirectives(unitsLayer2, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 352.8837, 91.7766)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "globalAlpha = 0", // Retracted
-                    "drawImage(/CBlades/images/units/misc/counter3.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
         when:
@@ -1846,10 +1843,6 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "globalAlpha = 0",
-                    "drawImage(/CBlades/images/units/misc/unit2.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
         when:
@@ -1907,18 +1900,10 @@ describe("Game", ()=> {
         then:
             assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "globalAlpha = 0",
-                    "drawImage(/CBlades/images/units/misc/unit2.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
             assert(getDirectives(actuatorsLayer1, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "globalAlpha = 0",
-                    "drawImage(/CBlades/images/actuators/test.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
         when:
@@ -1993,16 +1978,8 @@ describe("Game", ()=> {
             ]);
             assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "globalAlpha = 0",
-                    "drawImage(/CBlades/images/units/misc/counter2.png, -71, -71, 142, 142)",
                 "restore()",
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 197.7761)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "globalAlpha = 0",
-                    "drawImage(/CBlades/images/units/misc/counter3.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
         when:
@@ -2048,9 +2025,9 @@ describe("Game", ()=> {
             loadAllImages();
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
                 "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                "shadowColor = #FF0000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #FF0000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
         when:   // Check that "reselecting" an already selected unit relaunch action
