@@ -209,7 +209,7 @@ export class CBReleaseTroopActuator extends CBActionActuator {
                 new Point2D(0, 0), new Dimension2D(64, 60));
             let startLocation = Point2D.position(this.unit.location, hex.location, factor);
             let targetPosition = Point2D.position(hex.location, hex.getNearHexSide(angle).location, 0.5);
-            trigger.position = startLocation.concat(targetPosition);
+            trigger.position = startLocation.plusPoint(targetPosition);
             trigger.hex = hex;
             trigger.stepCount = stepCount;
             trigger.moveType = moveType;

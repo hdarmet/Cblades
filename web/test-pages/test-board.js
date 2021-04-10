@@ -4,32 +4,22 @@ import {
     describe, it, before, assert, executeTimeouts
 } from "../jstest/jtest.js";
 import {
-    Point2D, Dimension2D, Matrix2D
+    Point2D, Dimension2D, Matrix2D, Area2D
 } from "../jslib/geometry.js";
 import {
-    DAnimator,
-    DImage, DLayer, DTranslateLayer, setDrawPlatform
+    DAnimator, DImage, DLayer, DTranslateLayer, setDrawPlatform
 } from "../jslib/draw.js";
 import {
     Mechanisms, Memento
 } from "../jslib/mechanisms.js";
 import {
-    DArtifactAlphaAnimation,
-    DArtifactRotateAnimation,
-    DBoard,
-    DElement,
-    DImageArtifact,
-    DSimpleLevel,
-    DMultiImagesArtifact,
-    DTextArtifact,
-    DStaticLevel,
-    DLayeredLevel,
-    DStackedLevel, DRectArtifact
+    DArtifactAlphaAnimation, DArtifactRotateAnimation,
+    DBoard, DElement, DImageArtifact, DSimpleLevel, DMultiImagesArtifact,
+    DTextArtifact, DStaticLevel, DLayeredLevel, DStackedLevel, DRectArtifact, DComposedImageArtifact
 } from "../jslib/board.js";
 import {
     mockPlatform, getDirectives, resetDirectives, createEvent, loadAllImages, getLayers
 } from "./mocks.js";
-
 
 describe("Board", ()=> {
 
@@ -162,6 +152,48 @@ describe("Board", ()=> {
             assert(getDirectives(layer).length).equalsTo(4);
             assertLayerIsCleared(0, layer);
     });
+
+    it("Checks element alpha management", () => {
+        given:
+            var { board, unitsLevel:level, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+        when:
+            var image = DImage.getImage("../images/unit.png");
+            loadAllImages();
+            var artifact = new DImageArtifact("units", image, new Point2D(0, 0), new Dimension2D(50, 50));
+            var element = new DElement(artifact);
+            element.setLocation(new Point2D(100, 50));
+            resetDirectives(layer);
+            element.setOnBoard(board);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 350, 200)",
+                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(layer);
+            element.alpha = 0.5;
+            board.paint();
+        then:
+            assert(element.alpha).equalsTo(0.5);
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 350, 200)",
+                    "globalAlpha = 0.5",
+                    "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
+
+
+
+
+
+
+
 
     it("Checks element refresh feature", () => {
         given:
@@ -1158,6 +1190,7 @@ describe("Board", ()=> {
             Memento.open();
             board.paint();
         then:
+            assert(artifact.images).arrayEqualsTo([image1, image2, image3]);
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 250, 150)",
@@ -1195,6 +1228,139 @@ describe("Board", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 250, 150)",
                     "drawImage(../images/unit-back.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks composed image artifact (using not undoable APIs)", () => {
+        given:
+            var {board, unitsLevel: level, unitsLayer: layer} = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+        when:
+            var image1 = DImage.getImage("../images/insert1.png");
+            var image2 = DImage.getImage("../images/insert2.png");
+            loadAllImages();
+            var artifact = new DComposedImageArtifact("units", new Point2D(0, 0), new Dimension2D(50, 60));
+            artifact.addComposition(image1, new Area2D(0, 0, 20, 60), new Area2D(0, 0, 20, 40));
+            artifact.addComposition(image2, new Area2D(20, 0, 50, 60), new Area2D(10, 20, 30, 80));
+            var element = new DElement(artifact);
+            resetDirectives(layer);
+            element.setOnBoard(board);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
+                    "drawImage(../images/insert1.png, 0, 0, 20, 40, -25, -30, 20, 60)",
+                    "drawImage(../images/insert2.png, 10, 20, 20, 60, -5, -30, 30, 60)",
+                "restore()"
+            ]);
+            assert(artifact.getImage(0)).equalsTo(image1);
+            assert(artifact.getComposition(1)).objectEqualsTo({
+                image: image2,
+                sourceArea: {left: 10, right: 30, top: 20, bottom: 80},
+                destArea: {left: 20, right: 50, top: 0, bottom: 60}
+            });
+        when:
+            resetDirectives(layer);
+            artifact.setComposition(1, image1, new Area2D(20, 0, 40, 60), new Area2D(20, 30, 40, 90));
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
+                    "drawImage(../images/insert1.png, 0, 0, 20, 40, -25, -30, 20, 60)",
+                    "drawImage(../images/insert1.png, 20, 30, 20, 60, -5, -30, 20, 60)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(layer);
+            artifact.removeComposition(1);
+            board.paint();
+        then:
+            assert(artifact.getComposition(1)).isNotDefined();
+    });
+
+    it("Checks composed image artifact (using undoable APIs)", () => {
+        given:
+            var {board, unitsLevel: level, unitsLayer: layer} = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            var image1 = DImage.getImage("../images/insert1.png");
+            var image2 = DImage.getImage("../images/insert2.png");
+            loadAllImages();
+            var artifact = new DComposedImageArtifact("units", new Point2D(0, 0), new Dimension2D(50, 60));
+            var element = new DElement(artifact);
+            element.setOnBoard(board);
+        when:
+            Memento.activate();
+            Memento.open();
+            artifact.appendComposition(image1, new Area2D(0, 0, 20, 60), new Area2D(0, 0, 20, 40));
+            artifact.appendComposition(image2, new Area2D(20, 0, 50, 60), new Area2D(10, 20, 30, 80));
+            resetDirectives(layer);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
+                    "drawImage(../images/insert1.png, 0, 0, 20, 40, -25, -30, 20, 60)",
+                    "drawImage(../images/insert2.png, 10, 20, 20, 60, -5, -30, 30, 60)",
+                "restore()"
+            ]);
+        when:
+            Memento.open();
+            resetDirectives(layer);
+            artifact.changeComposition(1, image1, new Area2D(20, 0, 40, 60), new Area2D(20, 30, 40, 90));
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
+                    "drawImage(../images/insert1.png, 0, 0, 20, 40, -25, -30, 20, 60)",
+                    "drawImage(../images/insert1.png, 20, 30, 20, 60, -5, -30, 20, 60)",
+                "restore()"
+            ]);
+        when:
+            Memento.open();
+            resetDirectives(layer);
+            artifact.deleteComposition(1);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
+                    "drawImage(../images/insert1.png, 0, 0, 20, 40, -25, -30, 20, 60)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(layer);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
+                    "drawImage(../images/insert1.png, 0, 0, 20, 40, -25, -30, 20, 60)",
+                    "drawImage(../images/insert1.png, 20, 30, 20, 60, -5, -30, 20, 60)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(layer);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
+                    "drawImage(../images/insert1.png, 0, 0, 20, 40, -25, -30, 20, 60)",
+                    "drawImage(../images/insert2.png, 10, 20, 20, 60, -5, -30, 30, 60)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(layer);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
                 "restore()"
             ]);
     });

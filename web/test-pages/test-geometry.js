@@ -81,7 +81,10 @@ describe("Geometry", ()=> {
             assert(point.toString()).equalsTo("point(30, 40)");
             assert(point.toArray()).arrayEqualsTo([30, 40]);
             assert(point.translate(10, 15).toString()).equalsTo("point(40, 55)");
-            assert(point.concat(new Point2D(10, 15)).toString()).equalsTo("point(40, 55)");
+            assert(point.plusPoint(new Point2D(10, 15)).toString()).equalsTo("point(40, 55)");
+            assert(point.minusPoint(new Point2D(10, 15)).toString()).equalsTo("point(20, 25)");
+            assert(point.plusDim(new Dimension2D(10, 15)).toString()).equalsTo("point(40, 55)");
+            assert(point.minusDim(new Dimension2D(10, 15)).toString()).equalsTo("point(20, 25)");
         when:
             var clonePoint = point.clone();
         then:
@@ -114,6 +117,11 @@ describe("Geometry", ()=> {
             assert(dimension.sameTo(new Dimension2D(30.00015, 40.00015))).isFalse();
             assert(dimension.toString()).equalsTo("dimension(30, 40)");
             assert(dimension.toArray()).arrayEqualsTo([30, 40]);
+            assert(dimension.plusDim(new Dimension2D(10, 15)).toString()).equalsTo("dimension(40, 55)");
+            assert(dimension.minusDim(new Dimension2D(10, 15)).toString()).equalsTo("dimension(20, 25)");
+            assert(dimension.point.toString()).equalsTo("point(30, 40)");
+            assert(dimension.half.toString()).equalsTo("dimension(15, 20)");
+            assert(dimension.minus.toString()).equalsTo("dimension(-30, -40)");
         when:
             var clonedDimension = dimension.clone();
         then:
@@ -150,10 +158,21 @@ describe("Geometry", ()=> {
             assert(area.intersect(new Area2D(15, 65, 35, 75))).isFalse();
             assert(area.contains(new Area2D(15, 25, 35, 55))).isTrue();
             assert(area.contains(new Area2D(0, 0, 35, 55))).isFalse();
-            assert(area.add(new Area2D(15, 25, 35, 55)).toString()).equalsTo("area(10, 20, 40, 60)")
-            assert(area.add(new Area2D(5, 15, 45, 65)).toString()).equalsTo("area(5, 15, 45, 65)")
-            assert(area.add(new Area2D(50, 70, 100, 110)).toString()).equalsTo("area(10, 20, 100, 110)")
-            assert(area.translate(new Point2D(15, 20)).toString()).equalsTo("area(25, 40, 55, 80)")
+            assert(area.add(new Area2D(15, 25, 35, 55)).toString()).equalsTo("area(10, 20, 40, 60)");
+            assert(area.add(new Area2D(5, 15, 45, 65)).toString()).equalsTo("area(5, 15, 45, 65)");
+            assert(area.add(new Area2D(50, 70, 100, 110)).toString()).equalsTo("area(10, 20, 100, 110)");
+            assert(area.translate(new Point2D(15, 20)).toString()).equalsTo("area(25, 40, 55, 80)");
+            assert(area.x).equalsTo(25);
+            assert(area.y).equalsTo(40);
+            assert(area.w).equalsTo(30);
+            assert(area.h).equalsTo(40);
+            assert(area.origin.toString()).equalsTo("point(10, 20)");
+            assert(area.center.toString()).equalsTo("point(25, 40)");
+            assert(area.dimension.toString()).equalsTo("dimension(30, 40)");
+            assert(area.plusPoint(new Point2D(15, 20)).toString()).equalsTo("area(25, 40, 55, 80)");
+            assert(area.minusPoint(new Point2D(15, 20)).toString()).equalsTo("area(-5, 0, 25, 40)");
+            assert(area.plusDim(new Dimension2D(15, 20)).toString()).equalsTo("area(25, 40, 55, 80)");
+            assert(area.minusDim(new Dimension2D(15, 20)).toString()).equalsTo("area(-5, 0, 25, 40)");
         when:
             var cloneArea = area.clone();
         then:
@@ -165,6 +184,8 @@ describe("Geometry", ()=> {
             var transform = Matrix2D.translate(new Point2D(20, 30))
                 .concat(Matrix2D.rotate(90, new Point2D(20, 30)));
         then:
+            assert(Area2D.create(new Point2D(15, 20), new Dimension2D(30, 40)).toString())
+                .equalsTo("area(15, 20, 45, 60)");
             assert(Area2D.boundingArea(
                 new Point2D(0, 0),
                 new Point2D(-10, -20),

@@ -123,10 +123,6 @@ export class Point2D {
         return same(point.x, this.x) && same(point.y, this.y);
     }
 
-    concat(point) {
-        return new Point2D(this.x + point.x, this.y + point.y);
-    }
-
     toString() {
         return "point("+round(this.x)+", "+round(this.y)+")";
     }

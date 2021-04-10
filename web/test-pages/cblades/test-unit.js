@@ -29,7 +29,7 @@ import {
     CBLackOfMunitions,
     CBTiredness,
     CBCohesion,
-    CBOrderInstruction, CBFormation, CarriableMixin, OptionArtifactMixin, OptionMixin, CBMoveProfile
+    CBOrderInstruction, CBFormation, CarriableMixin, OptionArtifactMixin, OptionMixin, CBMoveProfile, CBWeaponProfile
 } from "../../jslib/cblades/unit.js";
 import {
     Dimension2D
@@ -64,8 +64,10 @@ describe("Unit", ()=> {
     class CBTestUnitType extends CBUnitType {
         constructor(...args) {
             super(...args);
-            this.setMoveProfile(1, new CBMoveProfile());
-            this.setMoveProfile(2, new CBMoveProfile());
+            this.setMoveProfile(1, new CBMoveProfile(0));
+            this.setMoveProfile(2, new CBMoveProfile(0));
+            this.setWeaponProfile(1, new CBWeaponProfile(0));
+            this.setWeaponProfile(2, new CBWeaponProfile(0));
         }
     }
 
@@ -577,6 +579,18 @@ describe("Unit", ()=> {
             assert(unit.moveProfile.getFormationRotationCost(180)).objectEqualsTo({
                 type:CBMoveProfile.COST_TYPE.ADD, value:1
             });
+    });
+
+    it("Checks unit weapon profile", () => {
+        given:
+            var { unit } = createTinyGame();
+        then:
+            assert(unit.weaponProfile.capacity).equalsTo(0);
+            assert(unit.weaponProfile.getShockAttackCode()).equalsTo("Bow");
+            assert(unit.weaponProfile.getShockDefendCode()).equalsTo("Bow");
+            assert(unit.weaponProfile.getFireAttackCode()).isNotDefined();
+            assert(unit.weaponProfile.getFireRange()).equalsTo(3);
+            assert(unit.weaponProfile.getFireDefendCode()).equalsTo("Bow");
     });
 
     it("Checks unit move on the on map", () => {

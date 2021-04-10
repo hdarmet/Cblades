@@ -13,9 +13,7 @@ import {
     DBoard, DElement, DImageArtifact, DSimpleLevel, DStaticLevel, DMultiImagesArtifact, DStackedLevel
 } from "../board.js";
 import {
-    DAbstractInsert, DInsert, DMask,
-    DMultiStatePushButton,
-    DPushButton, DScene
+    DMask, DMultiStatePushButton, DPushButton
 } from "../widget.js";
 import {
     CBMap, CBMoveType
@@ -667,13 +665,6 @@ export class CBGame {
         this._actuators = [];
     }
 
-    removeActuators() {
-        for (let actuator of this._actuators) {
-            actuator.hide(this);
-        }
-        this._actuators = [];
-    }
-
     closeWidgets() {
         this.closeActuators();
         this.closePopup();
@@ -838,7 +829,7 @@ export class CBGame {
 
     nextTurn(animation) {
         if (!this.selectedUnit || this.canUnselectUnit()) {
-            this.removeActuators();
+            this.closeActuators();
             this._resetCounters(this._currentPlayer);
             let indexPlayer = this._players.indexOf(this._currentPlayer);
             this._currentPlayer = this._players[(indexPlayer + 1) % this._players.length];

@@ -31,7 +31,7 @@ import {
     CBPlayable,
     CBCounterImageArtifact,
     CBUnitActuatorTrigger,
-    RetractableActuatorMixin, CBActuatorMultiImagesTrigger
+    RetractableActuatorMixin, CBActuatorMultiImagesTrigger, WidgetLevelMixin, CBMask, CBActuator
 } from "../../jslib/cblades/game.js";
 import {
     DBoard, DElement
@@ -41,6 +41,7 @@ import {
     Point2D
 } from "../../jslib/geometry.js";
 import {
+    DInsert,
     DPopup
 } from "../../jslib/widget.js";
 import {
@@ -49,7 +50,7 @@ import {
     mouseMoveOutOfTrigger,
     paint,
     repaint,
-    clickOnTrigger
+    clickOnTrigger, showInsertMark
 } from "./interactive-tools.js";
 
 class CBTestUnit extends CBAbstractUnit {
@@ -121,6 +122,11 @@ class CBTestActuator extends CBActionActuator {
 
     onMouseClick(artifact, event) {
         this.clicked = artifact;
+    }
+
+    setVisibility(level) {
+        super.setVisibility(level);
+        this.trigger.alpha = (level===CBActuator.FULL_VISIBILITY ? 1:0);
     }
 }
 
@@ -268,7 +274,57 @@ describe("Game", ()=> {
             game.openActuator(actuator2);
         then:
             assert(game.actuators).arrayEqualsTo([actuator1, actuator2]);
+        when:
+            Memento.open();
+            game.closeActuators();
+        then:
+            assert(game.actuators).arrayEqualsTo([]);
+        when:
+            Memento.undo();
+        then:
+            assert(game.actuators).arrayEqualsTo([actuator1, actuator2]);
     });
+
+
+
+
+
+    it("Checks actuators management", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [actuatorsLevel] = getLayers(game.board, "actuators");
+            game.setMenu();
+            game._showCommand.action();
+        when:
+            var action = new CBAction(game, unit);
+            var actuator = new CBTestActuator(action);
+            resetDirectives(actuatorsLevel);
+            game.openActuator(actuator);
+            paint(game);
+            loadAllImages();
+        then:
+            assert([...Mechanisms.manager._listeners]).contains(actuator);
+            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/actuators/test.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            game._insertLevelCommand.action();
+            resetDirectives(actuatorsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+                "save()",
+                "restore()"
+            ]);
+    });
+
+
+
+
 
     it("Checks mouse move over a trigger of an actuator", () => {
         given:
@@ -636,6 +692,109 @@ describe("Game", ()=> {
         } finally {
             CBGame.edit = cbgameEdit;
         }
+    });
+
+    class TestInsert extends WidgetLevelMixin(DInsert) {
+        constructor(game) {
+            super(game, "/CBlades/images/inserts/test-insert.png", new Dimension2D(200, 300));
+        }
+    }
+
+    it("Checks visibility level management (on insert as exemple)", () => {
+        given:
+            var game = new CBGame();
+            var [widgetsLevel] = getLayers(game.board, "widgets");
+            game.setMenu();
+            game.start();
+            game._showCommand.action();
+        when:
+            var insert = new TestInsert(game);
+        then:
+            assert([...Mechanisms.manager._listeners]).notContains(insert);
+        when:
+            insert.open(game.board, new Point2D(150, 200));
+            resetDirectives(widgetsLevel);
+            repaint(game);
+            loadAllImages();
+        then:
+            assert([...Mechanisms.manager._listeners]).contains(insert);
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -150, 200, 300)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "drawImage(/CBlades/images/inserts/test-insert.png, 0, 0, 200, 300, -100, -150, 200, 300)",
+                "restore()"
+            ]);
+        when:
+            game._insertLevelCommand.action();
+            resetDirectives(widgetsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()", "restore()", "save()", "restore()"
+            ]);
+        when:
+            Memento.open();
+            insert.close();
+        then:
+            assert([...Mechanisms.manager._listeners]).notContains(insert);
+        when:
+            Memento.undo();
+        then:
+            assert([...Mechanisms.manager._listeners]).contains(insert);
+        when:
+            Memento.undo();
+        then:
+            assert([...Mechanisms.manager._listeners]).notContains(insert);
+    });
+
+    it("Checks mask thats depends on the visibility level", () => {
+        given:
+            var game = new CBGame();
+            var [widgetsLevel] = getLayers(game.board, "widgets");
+            game.start();
+            game.setMenu();
+            game._showCommand.action();
+        when:
+            var mask = new CBMask(game);
+            resetDirectives(widgetsLevel);
+            mask.open(game.board);
+            paint(game);
+        then:
+            assert([...Mechanisms.manager._listeners]).contains(mask);
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "globalAlpha = 0.3", "fillStyle = #000000",
+                    "fillRect(0, 0, 1000, 800)",
+                "restore()"
+            ]);
+        when:
+            game._insertLevelCommand.action();
+            resetDirectives(widgetsLevel);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+                "save()", "restore()"
+            ]);
+        when:
+            Memento.open();
+            mask.close();
+        then:
+            assert([...Mechanisms.manager._listeners]).notContains(mask);
+        when:
+            Memento.undo();
+        then:
+            assert([...Mechanisms.manager._listeners]).contains(mask);
+        when:
+            Memento.undo();
+        then:
+            assert([...Mechanisms.manager._listeners]).notContains(mask);
     });
 
     function mouseClickOnCounter(game, counter) {

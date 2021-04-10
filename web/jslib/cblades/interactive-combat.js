@@ -578,6 +578,7 @@ export class CBShockHelpActuator extends CBActionActuator {
             artifact.setVisibility && artifact.setVisibility(level===CBActuator.FULL_VISIBILITY ? 1:0);
         }
     }
+
 }
 
 class FireHelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
@@ -690,7 +691,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
                 let unitHex =  moveDirections[angle].hex.getNearHex((angle+180)%360);
                 let startLocation = Point2D.position(this.unit.location, unitHex.location, 1);
                 let targetPosition = Point2D.position(unitHex.location, moveDirections[angle].hex.location, 0.9);
-                orientation.position = startLocation.concat(targetPosition);
+                orientation.position = startLocation.plusPoint(targetPosition);
                 orientation.moveType = moveDirections[angle].moveType;
                 imageArtifacts.push(orientation);
             }
@@ -707,7 +708,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
                 orientation.hex =  rotateDirections[angle].hex.getNearHex((angle+180)%360);
                 let startLocation = Point2D.position(this.unit.location, orientation.hex.location, 1.5);
                 let targetPosition = Point2D.position(orientation.hex.location, rotateDirections[angle].hex.location, 0.9);
-                orientation.position = startLocation.concat(targetPosition);
+                orientation.position = startLocation.plusPoint(targetPosition);
                 orientation.moveType = rotateDirections[angle].moveType;
                 imageArtifacts.push(orientation);
             }

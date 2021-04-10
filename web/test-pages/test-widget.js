@@ -20,12 +20,23 @@ import {
     mockPlatform, getDirectives, resetDirectives, loadAllImages, createEvent, getLayers
 } from "./mocks.js";
 import {
-    DWidget, DPopup, DIconMenu, DIconMenuItem, DPushButton, DDice, DIndicator, DInsert, DResult, DMask, DScene, DMessage
+    DWidget,
+    DPopup,
+    DIconMenu,
+    DIconMenuItem,
+    DPushButton,
+    DDice,
+    DIndicator,
+    DInsert,
+    DResult,
+    DMask,
+    DScene,
+    DMessage,
+    DMultiStatePushButton
 } from "../jslib/widget.js";
 import {
     clickOnArtifact, mouseMoveOnArtifact, mouseMoveOutOfArtifact
 } from "./cblades/interactive-tools.js";
-
 
 describe("Widget", ()=> {
 
@@ -364,7 +375,7 @@ describe("Widget", ()=> {
             ]);
     });
 
-    it("Checks pushButton item behavior", () => {
+    it("Checks PushButton item behavior", () => {
         given:
             var { board, commandsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
@@ -492,6 +503,41 @@ describe("Widget", ()=> {
             ]);
     });
 
+    it("Checks Multi state PushButton widget", () => {
+        given:
+            var { board, commandsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            resetDirectives(commandsLayer);
+            let pushButton = new DMultiStatePushButton(
+                ["/CBlades/images/commands/button1.png", "/CBlades/images/commands/button2.png"],
+                new Point2D(60, 60), (state)=>{return true;}
+            );
+            pushButton.setOnBoard(board);
+            loadAllImages();
+            board.paint();
+        then:
+            assert(pushButton.state).equalsTo(0);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1, 0, 0, 1, 60, 60)",
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/commands/button1.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(commandsLayer);
+            pushButton.setState(1);
+            board.paint();
+        then:
+            assert(pushButton.state).equalsTo(1);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1, 0, 0, 1, 60, 60)",
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/commands/button2.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
     function executeAllAnimations(layer) {
         var directives = [];
         while(DAnimator.isActive()) {
@@ -502,6 +548,43 @@ describe("Widget", ()=> {
         }
         return directives;
     }
+
+    it("Checks Multi State PushButton animation", () => {
+        given:
+            var { board, commandsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var buttonState = -1;
+            let pushButton = new DMultiStatePushButton(
+                ["/CBlades/images/commands/button1.png", "/CBlades/images/commands/button2.png"],
+                new Point2D(60, 60), (state, animation)=>{
+                    buttonState = state;
+                    animation();
+                }
+            );
+            pushButton.setOnBoard(board);
+            pushButton.setTurnAnimation(false, ()=>{
+                pushButton.setState(1);
+            });
+            loadAllImages();
+            var buttonVPLocation = pushButton.trigger.viewportLocation;
+            board.paint();
+        when:
+            var event = createEvent("click", {offsetX:buttonVPLocation.x, offsetY:buttonVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            assert(buttonState).equalsTo(0);
+        when:
+            executeAllAnimations(commandsLayer);
+            resetDirectives(commandsLayer);
+        then:
+            board.repaint();
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 60, 60)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/button2.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
 
     it("Checks dice widget", () => {
         given:
@@ -686,7 +769,7 @@ describe("Widget", ()=> {
             board.paint();
             let insert = new DInsert("/CBlades/images/inserts/insert.png",
                 new Dimension2D(200, 300),
-                new Dimension2D(350, 390)
+                new Dimension2D(290, 390)
             );
             loadAllImages();
         when:
@@ -761,15 +844,10 @@ describe("Widget", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "drawImage(/CBlades/images/inserts/insert.png, 100, 90, 200, 300, -100, -150, 200, 300)",
+                    "drawImage(/CBlades/images/inserts/insert.png, 90, 90, 200, 300, -100, -150, 200, 300)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 215, 200)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/right.png, -25, -25, 50, 50)",
-                "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 85)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
@@ -795,15 +873,10 @@ describe("Widget", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "drawImage(/CBlades/images/inserts/insert.png, 100, 0, 200, 300, -100, -150, 200, 300)",
+                    "drawImage(/CBlades/images/inserts/insert.png, 90, 0, 200, 300, -100, -150, 200, 300)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 215, 200)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/right.png, -25, -25, 50, 50)",
-                "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 85, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
@@ -834,14 +907,53 @@ describe("Widget", ()=> {
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
+                    "setTransform(1, 0, 0, 1, 150, 315)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 215, 200)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/right.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer);
+            insert.focusOn(new Point2D(290/2, 390/2));
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-100, -150, 200, 300)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 200)",
+                    "drawImage(/CBlades/images/inserts/insert.png, 45, 45, 200, 300, -100, -150, 200, 300)",
+                "restore()"
+            ]);
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 315)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
                     "setTransform(1, 0, 0, 1, 215, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
                     "drawImage(/CBlades/images/commands/right.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 150, 315)",
+                    "setTransform(1, 0, 0, 1, 85, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                    "drawImage(/CBlades/images/commands/left.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 85)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/up.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });

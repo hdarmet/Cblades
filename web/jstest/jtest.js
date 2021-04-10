@@ -152,6 +152,9 @@ export class Assertor {
             if (model[key] && (model[key] instanceof Array)) {
                 this._arrayEquals(model[index], value[index]);
             }
+            else if (model[key] && (model[key].constructor === Object)) {
+                this._objectEquals(model[key], value[key]);
+            }
             else {
                 this._equals(model[key], value[key]);
             }

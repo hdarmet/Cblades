@@ -160,7 +160,7 @@ export class DArtifact extends LocalisationAware(Object) {
                 this._settings(this._level);
             }
             if (this.alpha<1) {
-                this._level.setAlphaSettings(this._alpha);
+                this._level.setAlphaSettings(this.alpha);
             }
             this._paint();
         }
@@ -577,16 +577,18 @@ export class DComposedImageArtifact extends RectArtifact(DArtifact) {
         return this.setComposition(index, image, destArea, sourceArea);
     }
 
+    getComposition(index) {
+        if (index<this._compositions.length) {
+            return {...this._compositions[index]};
+        }
+        else return null;
+    }
+
     removeComposition(index) {
         console.assert(index<this._compositions.length);
         this._compositions.splice(index, 1);
         this.refresh();
         return this;
-    }
-
-    getComposition(index) {
-        console.assert(index<this._compositions.length);
-        return {...this._compositions[index]};
     }
 
     deleteComposition(index) {

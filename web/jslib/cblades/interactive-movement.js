@@ -876,7 +876,7 @@ class MoveFormationTrigger extends CBActuatorImageTrigger {
         let unitHex =  hex.getNearHex((angle+180)%360);
         let startLocation = Point2D.position(actuator.unit.location, unitHex.location, 1);
         let targetPosition = Point2D.position(unitHex.location, hex.location, 0.9);
-        this.position = startLocation.concat(targetPosition);
+        this.position = startLocation.plusPoint(targetPosition);
     }
 
 }
@@ -897,7 +897,7 @@ class MoveFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         let unitHex =  hex.getNearHex((angle+180)%360);
         let startLocation = Point2D.position(actuator.unit.location, unitHex.location, 1);
         let targetPosition = Point2D.position(unitHex.location, hex.location, 1.3);
-        this.position = startLocation.concat(targetPosition);
+        this.position = startLocation.plusPoint(targetPosition);
     }
 
     _paint() {
@@ -928,7 +928,7 @@ class TurnFormationTrigger extends CBActuatorImageTrigger {
         this.hex =  hex.getNearHex((angle+180)%360);
         let startLocation = Point2D.position(actuator.unit.location, this.hex.location, 1.5);
         let targetPosition = Point2D.position(this.hex.location, hex.location, 0.8);
-        this.position = startLocation.concat(targetPosition);
+        this.position = startLocation.plusPoint(targetPosition);
     }
 
 }
@@ -949,7 +949,7 @@ class TurnFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         this.hex =  hex.getNearHex((angle+180)%360);
         let startLocation = Point2D.position(actuator.unit.location, this.hex.location, 1.5);
         let targetPosition = Point2D.position(this.hex.location, hex.location, 1.1);
-        this.position = startLocation.concat(targetPosition);
+        this.position = startLocation.plusPoint(targetPosition);
     }
 
     _paint() {
