@@ -15,10 +15,10 @@ import {
     mockPlatform
 } from "../../mocks.js";
 import {
-    GoblinLeader, GoblinWolfRider
+    GoblinLeader, GoblinSkirmisher, GoblinWolfRider
 } from "../../../jslib/cblades/armies/orcs.js";
 import {
-    AnimalMoveProfile, CBProfileCapacity
+    AnimalMoveProfile, CBProfileCapacity, LightInfantryWeaponProfile, MediumCavalryWeaponProfile, PedestrianMoveProfile
 } from "../../../jslib/cblades/profile.js";
 
 describe("Orcs Army", ()=> {
@@ -49,6 +49,16 @@ describe("Orcs Army", ()=> {
         then:
             assert(profile).is(AnimalMoveProfile);
             assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
+        when:
+            profile = unit.getWeaponProfile(1);
+        then:
+            assert(profile).is(MediumCavalryWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.INFERIOR);
+        when:
+            profile = unit.getWeaponProfile(2);
+        then:
+            assert(profile).is(MediumCavalryWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
     });
 
     it("Checks Goblin Wolfrider", () => {
@@ -70,6 +80,46 @@ describe("Orcs Army", ()=> {
         then:
             assert(profile).is(AnimalMoveProfile);
             assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
+        when:
+            profile = unit.getWeaponProfile(1);
+        then:
+            assert(profile).is(MediumCavalryWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.INFERIOR);
+        when:
+            profile = unit.getWeaponProfile(2);
+        then:
+            assert(profile).is(MediumCavalryWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
     });
 
+    it("Checks Goblin Skirmisher", () => {
+        given:
+            var unit = GoblinSkirmisher;
+        then:
+            assert(unit.getTroopPaths()).arrayEqualsTo([
+                "/CBlades/images/units/orcs/unit2L.png",
+                "/CBlades/images/units/orcs/unit2Lb.png"
+            ]);
+            assert(unit.getFormationPaths()).isNotDefined();
+        when:
+            var profile = unit.getMoveProfile(1);
+        then:
+            assert(profile).is(PedestrianMoveProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.NORMAL);
+        when:
+            profile = unit.getMoveProfile(2);
+        then:
+            assert(profile).is(PedestrianMoveProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.NORMAL);
+        when:
+            profile = unit.getWeaponProfile(1);
+        then:
+            assert(profile).is(LightInfantryWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.INFERIOR);
+        when:
+            profile = unit.getWeaponProfile(2);
+        then:
+            assert(profile).is(LightInfantryWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.INFERIOR);
+    });
 });

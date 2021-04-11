@@ -1339,9 +1339,26 @@ describe("Arbitrator", ()=> {
             assert(foes[0].supported).isFalse();
     });
 
+    it("Checks combat table result", () => {
+        given:
+            var arbitrator = new CBArbitrator();
+        then:
+            assert(arbitrator.getCombatTableResult([1, 1], -17)).equalsTo(0);
+            assert(arbitrator.getCombatTableResult([3, 4], 4)).equalsTo(1);
+            assert(arbitrator.getCombatTableResult([1, 1], 24)).equalsTo(4);
+    });
+
+    it("Checks cell in shock weapon table", () => {
+        given:
+            var {arbitrator, unit12, unit21} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.getShockWeaponCell(unit12, unit21)).objectEqualsTo({col:7, row:7});
+            assert(arbitrator.getFireWeaponCell(unit12, unit21)).objectEqualsTo({col:7, row:8});
+    });
+
     it("Checks shock attack processing", () => {
         given:
-            var {arbitrator, map, unit12, unit21, unit22} = create2Players4UnitsTinyGame();
+            var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
             unit21.move(map.getHex(5, 6));
         when:
             var result = arbitrator.processShockAttackResult(unit12, unit21, true, [1, 2]);

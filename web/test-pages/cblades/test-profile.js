@@ -24,7 +24,11 @@ import {
     CBMoveProfile
 } from "../../jslib/cblades/unit.js";
 import {
-    AnimalMoveProfile, CavalryMoveProfile,
+    AnimalMoveProfile,
+    CavalryMoveProfile,
+    HeavyCavalryWeaponProfile, LanceWeaponProfile,
+    LightInfantryWeaponProfile,
+    MediumCavalryWeaponProfile,
     PedestrianMoveProfile
 } from "../../jslib/cblades/profile.js";
 
@@ -321,5 +325,47 @@ describe("Profile", ()=> {
                 type:CBMoveProfile.COST_TYPE.ADD, value:1.5
             });
     });
+
+    it("Checks Heavy Cavalry Weapon Profile", () => {
+        given:
+            var profile = new HeavyCavalryWeaponProfile(2);
+        then:
+            assert(profile.getShockAttackCode()).equalsTo("HCv");
+            assert(profile.getShockDefendCode()).equalsTo("HCv");
+            assert(profile.getFireAttackCode()).isNotDefined();
+            assert(profile.getFireDefendCode()).equalsTo("HCv");
+    });
+
+    it("Checks Medium Cavalry Weapon Profile", () => {
+        given:
+            var profile = new MediumCavalryWeaponProfile(2);
+        then:
+            assert(profile.getShockAttackCode()).equalsTo("MCv");
+            assert(profile.getShockDefendCode()).equalsTo("MCv");
+            assert(profile.getFireAttackCode()).isNotDefined();
+            assert(profile.getFireDefendCode()).equalsTo("MCv");
+    });
+
+    it("Checks Lance Weapon Profile", () => {
+        given:
+            var profile = new LanceWeaponProfile(2);
+        then:
+            assert(profile.getShockAttackCode()).equalsTo("Lan");
+            assert(profile.getShockDefendCode()).equalsTo("Lan");
+            assert(profile.getFireAttackCode()).isNotDefined();
+            assert(profile.getFireDefendCode()).equalsTo("Lan");
+    });
+
+    it("Checks Light Infantry Weapon Profile", () => {
+        given:
+            var profile = new LightInfantryWeaponProfile(2);
+        then:
+            assert(profile.getShockAttackCode()).equalsTo("LIf");
+            assert(profile.getShockDefendCode()).equalsTo("LIf");
+            assert(profile.getFireAttackCode()).equalsTo("LIf");
+            assert(profile.getFireDefendCode()).equalsTo("LIf");
+            assert(profile.getFireRange()).equalsTo(2);
+    });
+
 
 });

@@ -431,7 +431,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             }
             else column++;
         }
-        return CBArbitrator.combatTable[CBArbitrator.combatAdvantage.length-1][dices];
+        return CBArbitrator.combatTable[dices][CBArbitrator.combatAdvantage.length-1];
     }
 
     getShockWeaponAdvantage(attacker, defender) {

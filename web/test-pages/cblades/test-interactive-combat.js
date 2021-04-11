@@ -18,42 +18,19 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
-    CBFireAttackActuator, CBFormationRetreatActuator,
+    CBFireAttackActuator, CBFireHelpActuator, CBFormationRetreatActuator,
     CBRetreatActuator,
-    CBShockAttackActuator,
+    CBShockAttackActuator, CBShockHelpActuator,
     registerInteractiveCombat,
     unregisterInteractiveCombat
 } from "../../jslib/cblades/interactive-combat.js";
 import {
-    repaint,
-    paint,
-    clickOnActionMenu,
-    clickOnCounter,
-    clickOnTrigger,
-    clickOnDice,
-    executeAllAnimations,
-    clickOnResult,
-    dummyEvent,
-    clickOnMask,
-    rollFor,
-    showMask,
-    showInsert,
-    showSuccessResult,
-    showPlayedDice,
-    showFailureResult,
-    zoomAndRotate300,
-    zoomAndRotate30,
-    showDice,
-    showInsertCommand,
-    showInsertMark,
-    showMarker,
-    zoomAndRotate0,
-    zoomAndRotate60,
-    zoomAndRotate120,
-    zoomAndRotate240,
-    showTroop,
-    zoomAndRotate180,
-    showSelectedTroop, zoomAndRotate210, showFormation, zoomAndRotate90, zoomAndRotate270, showMenuPanel, showMenuItem
+    repaint, paint, clickOnActionMenu, clickOnCounter, clickOnTrigger, clickOnDice,
+    executeAllAnimations, clickOnResult, dummyEvent, clickOnMask,
+    rollFor, showMask, showInsert, showSuccessResult, showPlayedDice, showFailureResult, zoomAndRotate300,
+    zoomAndRotate30, showDice, showInsertCommand, showMarker,
+    zoomAndRotate0, zoomAndRotate60, zoomAndRotate120, zoomAndRotate240, showTroop, zoomAndRotate180,
+    showSelectedTroop, zoomAndRotate210, showFormation, zoomAndRotate270, showMenuPanel, showMenuItem, showMultiInsert
 } from "./interactive-tools.js";
 import {
     createTinyGame, create2PlayersTinyGame, create2PlayersTinyFormationGame, create2Players2Units2LeadersTinyGame
@@ -97,12 +74,51 @@ describe("Interactive Combat", ()=> {
         ];
     }
 
+    function showUnsupportedShockAdvantage(advantage, [a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/unsupported-shock-advantage.png, -27.5, -27.5, 55, 55)",
+                "shadowColor = #000000", "shadowBlur = 0",
+                "font = bold 30px serif", "textAlign = center", "fillStyle = #AD5A2D",
+                `fillText(${advantage}, 0, 10)`,
+            "restore()"
+        ];
+    }
+
+    function showSupportedShockAdvantage(advantage, [a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/supported-shock-advantage.png, -27.5, -27.5, 55, 55)",
+                "shadowColor = #000000", "shadowBlur = 0",
+                "font = bold 30px serif", "textAlign = center", "fillStyle = #9D2F12",
+            `fillText(${advantage}, 0, 10)`,
+            "restore()"
+        ];
+    }
+
     function showFire([a, b, c, d, e, f]) {
         return [
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/fire.png, -70, -77.5, 140, 155)",
+            "restore()"
+        ];
+    }
+
+    function showFireAdvantage(advantage, [a, b, c, d, e, f]) {
+        return [
+            "save()",
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #00FFFF", "shadowBlur = 10",
+            "drawImage(/CBlades/images/actuators/fire-advantage.png, -27.5, -27.5, 55, 55)",
+            "shadowColor = #000000", "shadowBlur = 0",
+            "font = bold 30px serif", "textAlign = center", "fillStyle = #A1124F",
+            `fillText(${advantage}, 0, 10)`,
             "restore()"
         ];
     }
@@ -217,6 +233,9 @@ describe("Interactive Combat", ()=> {
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showUnsupportedShock(zoomAndRotate30(397.1163, 236.1131)));
             assertDirectives(actuatorsLayer, showSupportedShock(zoomAndRotate30(436.217, 275.2138)));
+            assertDirectives(actuatorsLayer, showUnsupportedShockAdvantage(-4, zoomAndRotate0(380.0098, 219.0066)));
+            assertDirectives(actuatorsLayer, showSupportedShockAdvantage(0, zoomAndRotate0(453.3236, 292.3204)));
+            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([]);
         when:
             var shockAttackActuator = getShockAttackActuator(game);
         then:
@@ -224,6 +243,13 @@ describe("Interactive Combat", ()=> {
             assert(shockAttackActuator.getTrigger(unit1, true)).isNotDefined();
             assert(shockAttackActuator.getTrigger(unit2, false)).isDefined();
             assert(shockAttackActuator.getTrigger(unit1, false)).isNotDefined();
+        when:
+            var shockHelpActuator = getShockHelpActuator(game);
+        then:
+            assert(shockHelpActuator.getTrigger(unit2, true)).isDefined();
+            assert(shockHelpActuator.getTrigger(unit1, true)).isNotDefined();
+            assert(shockHelpActuator.getTrigger(unit2, false)).isDefined();
+            assert(shockHelpActuator.getTrigger(unit1, false)).isNotDefined();
     });
 
     it("Checks shock attack action actuator appearance when support is not possible", () => {
@@ -403,6 +429,54 @@ describe("Interactive Combat", ()=> {
             assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate0(416.6667, 351.8878)));
             assertDirectives(unitsLayer, showTroop("misc/unit2", zoomAndRotate180(416.6667, 159.4391)));
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    function getShockHelpActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBShockHelpActuator) return actuator;
+        }
+        return null;
+    }
+
+    it("Checks combat rules showing", () => {
+        given:
+            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+            var [widgetsLayer, actuatorsLayer] = getLayers(game.board, "widgets", "actuators-0");
+            unit1.move(map.getHex(5, 8));
+            unit2.move(map.getHex(5, 7));
+            clickOnCounter(game, unit1);
+            clickOnShockAttackAction(game);
+            loadAllImages();
+        when:
+            resetDirectives(actuatorsLayer);
+            repaint(game);
+        then:
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showUnsupportedShock(zoomAndRotate30(397.1163, 236.1131)));
+            assertDirectives(actuatorsLayer, showSupportedShock(zoomAndRotate30(436.217, 275.2138)));
+            assertDirectives(actuatorsLayer, showUnsupportedShockAdvantage(-4, zoomAndRotate0(380.0098, 219.0066)));
+            assertDirectives(actuatorsLayer, showSupportedShockAdvantage(0, zoomAndRotate0(453.3236, 292.3204)));
+        when:
+            var shockHelpActuator = getShockHelpActuator(game);
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, shockHelpActuator.getTrigger(unit2, true));
+            paint(game);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("shock-attack", 267, 466, 524, 658));
+            assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 747, 427, 500, 500, [
+                {xs:0, ys:179.75, xd:-250, yd:-250, w:86, h:500},
+                {xs:272.5294, ys:179.75, xd:-164, yd:-250, w:414, h:500}
+            ]));
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
     });
 
     it("Checks that a formation may shock attack twice", () => {
@@ -640,8 +714,6 @@ describe("Interactive Combat", ()=> {
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
             var [actuatorsLayer] = getLayers(game.board, "actuators-0");
             unit1.move(map.getHex(5, 8));
-            unit1.addOneTirednessLevel();
-            unit1.addOneTirednessLevel();
             unit2.move(map.getHex(5, 6));
             clickOnCounter(game, unit1);
             clickOnFireAttackAction(game);
@@ -652,6 +724,7 @@ describe("Interactive Combat", ()=> {
         then:
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showFire(zoomAndRotate30(416.6667, 159.4391)));
+            assertDirectives(actuatorsLayer, showFireAdvantage(4, zoomAndRotate0(436.217, 178.9895)));
         when:
             var fireAttackActuator = getFireAttackActuator(game);
         then:
@@ -807,6 +880,52 @@ describe("Interactive Combat", ()=> {
             skipDirectives(markersLayer, 4);
             assertDirectives(markersLayer, showMarker("scarceamno", zoomAndRotate0(416.6667, 386.5897)));
             assertDirectives(markersLayer, showMarker("actiondone", zoomAndRotate0(451.3685, 317.186)));
+    });
+
+    function getFireHelpActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBFireHelpActuator) return actuator;
+        }
+        return null;
+    }
+
+    it("Checks combat rules showing", () => {
+        given:
+            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+            var [widgetsLayer, actuatorsLayer] = getLayers(game.board, "widgets", "actuators-0");
+            unit1.move(map.getHex(5, 8));
+            unit2.move(map.getHex(5, 6));
+            clickOnCounter(game, unit1);
+            clickOnFireAttackAction(game);
+            loadAllImages();
+        when:
+            resetDirectives(actuatorsLayer);
+            repaint(game);
+        then:
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showFire(zoomAndRotate30(416.6667, 159.4391)));
+            assertDirectives(actuatorsLayer, showFireAdvantage(4, zoomAndRotate0(436.217, 178.9895)));
+        when:
+            var fireHelpActuator = getFireHelpActuator(game);
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, fireHelpActuator.getTrigger(unit2));
+            paint(game);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("fire-attack", 267, 466, 524, 658));
+            assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 747, 427, 500, 500, [
+                {xs:0, ys:237.05, xd:-250, yd:-250, w:86, h:500},
+                {xs:272.5294, ys:237.05, xd:-164, yd:-250, w:414, h:500}
+            ]));
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
     });
 
     it("Checks that a formation may fire attack twice", () => {

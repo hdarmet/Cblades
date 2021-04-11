@@ -15,7 +15,7 @@ import {
     mockPlatform
 } from "../../mocks.js";
 import {
-    CavalryMoveProfile, CBProfileCapacity, PedestrianMoveProfile
+    CavalryMoveProfile, CBProfileCapacity, HeavyCavalryWeaponProfile, LanceWeaponProfile, PedestrianMoveProfile
 } from "../../../jslib/cblades/profile.js";
 import {
     RoughneckKnight, RoughneckLance, RoughneckLeader
@@ -49,6 +49,16 @@ describe("Roughnecks Army", ()=> {
         then:
             assert(profile).is(CavalryMoveProfile);
             assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
+        when:
+            profile = unit.getWeaponProfile(1);
+        then:
+            assert(profile).is(HeavyCavalryWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getWeaponProfile(2);
+        then:
+            assert(profile).is(HeavyCavalryWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.SUPERIOR);
     });
 
     it("Checks Roughneck knights", () => {
@@ -70,6 +80,16 @@ describe("Roughnecks Army", ()=> {
         then:
             assert(profile).is(CavalryMoveProfile);
             assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
+        when:
+            profile = unit.getWeaponProfile(1);
+        then:
+            assert(profile).is(HeavyCavalryWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.NORMAL);
+        when:
+            profile = unit.getWeaponProfile(2);
+        then:
+            assert(profile).is(HeavyCavalryWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
     });
 
     it("Checks Roughneck Lances", () => {
@@ -127,6 +147,46 @@ describe("Roughnecks Army", ()=> {
             profile = unit.getMoveProfile(8);
         then:
             assert(profile).is(PedestrianMoveProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getWeaponProfile(1);
+        then:
+            assert(profile).is(LanceWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.NORMAL);
+        when:
+            profile = unit.getWeaponProfile(2);
+        then:
+            assert(profile).is(LanceWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getWeaponProfile(3);
+        then:
+            assert(profile).is(LanceWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getWeaponProfile(4);
+        then:
+            assert(profile).is(LanceWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getWeaponProfile(5);
+        then:
+            assert(profile).is(LanceWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getWeaponProfile(6);
+        then:
+            assert(profile).is(LanceWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getWeaponProfile(7);
+        then:
+            assert(profile).is(LanceWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getWeaponProfile(8);
+        then:
+            assert(profile).is(LanceWeaponProfile);
             assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
     });
 

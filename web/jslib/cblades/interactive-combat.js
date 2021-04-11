@@ -514,13 +514,13 @@ export class CBFireAttackActuator extends RetractableActuatorMixin(CBActionActua
 
 }
 
-class ShockHelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+class ShockHelpTrigger extends CBUnitActuatorTrigger {
 
     constructor(actuator, supported, foe, advantage) {
         let image = supported ?
             DImage.getImage("/CBlades/images/actuators/supported-shock-advantage.png"):
             DImage.getImage("/CBlades/images/actuators/unsupported-shock-advantage.png");
-        super(actuator,"actuators", image, new Point2D(0, 0), ShockHelpTrigger.DIMENSION, 0);
+        super(actuator, foe, "units", image, new Point2D(0, 0), ShockHelpTrigger.DIMENSION);
         this.pangle = 0;
         this.position = Point2D.position(actuator.unit.location, foe.location, 1);
         this._foe = foe;
@@ -536,6 +536,14 @@ class ShockHelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         this._level.fillText("" + this._advantage, new Point2D(0, 10));
     }
 
+    get foe() {
+        return this._foe;
+    }
+
+    get supported() {
+        return this._supported;
+    }
+
     setVisibility(visibility) {
         this.alpha = visibility;
     }
@@ -543,7 +551,7 @@ class ShockHelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 }
 ShockHelpTrigger.DIMENSION = new Dimension2D(55, 55);
 
-export class CBShockHelpActuator extends CBActionActuator {
+export class CBShockHelpActuator extends RetractableActuatorMixin(CBActionActuator) {
 
     constructor(action, combats) {
         super(action);
@@ -564,12 +572,12 @@ export class CBShockHelpActuator extends CBActionActuator {
         this.initElement(this._triggers);
     }
 
-    getTrigger(foe) {
-        return this.findTrigger(artifact=>artifact.foe === foe);
+    getTrigger(foe, supported) {
+        return this.findTrigger(artifact=>artifact.foe === foe && artifact.supported === supported);
     }
 
     onMouseClick(trigger, event) {
-        this.action.showRules(trigger._foe, trigger._supported, event);
+        this.action.showRules(trigger.foe, trigger._supported, event);
     }
 
     setVisibility(level) {
@@ -581,11 +589,11 @@ export class CBShockHelpActuator extends CBActionActuator {
 
 }
 
-class FireHelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+class FireHelpTrigger extends CBUnitActuatorTrigger {
 
     constructor(actuator, foe, advantage) {
         let image = DImage.getImage("/CBlades/images/actuators/fire-advantage.png");
-        super(actuator,"actuators", image, new Point2D(0, 0), FireHelpTrigger.DIMENSION, 0);
+        super(actuator, foe, "units", image, new Point2D(0, 0), ShockHelpTrigger.DIMENSION);
         this.pangle = 0;
         this.position = Point2D.position(actuator.unit.location, foe.location, 1);
         this._foe = foe;
@@ -606,7 +614,7 @@ class FireHelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 }
 FireHelpTrigger.DIMENSION = new Dimension2D(55, 55);
 
-export class CBFireHelpActuator extends CBActionActuator {
+export class CBFireHelpActuator extends RetractableActuatorMixin(CBActionActuator) {
 
     constructor(action, fires) {
         super(action);

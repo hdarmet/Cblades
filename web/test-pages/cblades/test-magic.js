@@ -22,6 +22,9 @@ import {
     create2PlayersTinyGameWithLeader,
     createTinyGameWithLeader
 } from "./game-examples.js";
+import {
+    CBGame
+} from "../../jslib/cblades/game.js";
 
 describe("Magic", ()=> {
 
@@ -78,6 +81,8 @@ describe("Magic", ()=> {
             assert(spell.artifact.spell).equalsTo(spell);
             assert(spell.artifact.game).equalsTo(game);
             assert(spell.artifact.unit).equalsTo(wizard);
+            assert(spell.artifact.slot).equalsTo(0);
+            assert(spell.artifact.layer).equalsTo(CBGame.ULAYERS.SPELLS);
             assert(spell.getNextCinematic().cinematic).equalsTo(CBSpell.CINEMATIC.APPLY);
             assert(spell.hexLocation).equalsTo(wizard.hexLocation);
             assert(spell.hexLocation.playables.indexOf(spell)).equalsTo(-1);
@@ -97,7 +102,7 @@ describe("Magic", ()=> {
         then:
             assert(hexId.playables.indexOf(spell)).notEqualsTo(-1);
         when:
-            assert(spell.deleteFromMap(hexId));
+            spell.deleteFromMap(hexId);
         then:
             assert(hexId.playables.indexOf(spell)).equalsTo(-1);
         when:
@@ -233,6 +238,7 @@ describe("Magic", ()=> {
             assert(spell.isOption()).isTrue();
         when:
             spell.discard(unit);
+            assert(spell.artifact.layer).equalsTo(CBGame.ULAYERS.OPTIONS);
         then:
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(unit.hexLocation.playables.indexOf(spell)).equalsTo(-1);
