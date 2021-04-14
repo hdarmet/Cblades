@@ -10,8 +10,8 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBAction, CBActionActuator, CBGame,
-    CBActuatorImageTrigger, CBUnitActuatorTrigger, RetractableActuatorMixin, WidgetLevelMixin
+    CBAction, CBActionActuator, CBActuator, CBGame,
+    CBUnitActuatorTrigger, RetractableActuatorMixin, WidgetLevelMixin
 } from "./game.js";
 import {
     DImage
@@ -20,6 +20,7 @@ import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
+    CBCharge,
     CBOrderInstruction
 } from "./unit.js";
 
@@ -70,6 +71,7 @@ export class InteractiveTakeCommandAction extends CBAction {
     }
 
     play() {
+        this.unit.markAsCharging(CBCharge.NONE);
         this.game.closeActuators();
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
@@ -122,6 +124,7 @@ export class InteractiveDismissCommandAction extends CBAction {
     }
 
     play() {
+        this.unit.markAsCharging(CBCharge.NONE);
         this.game.closeActuators();
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
@@ -174,6 +177,7 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
     }
 
     play() {
+        this.unit.markAsCharging(CBCharge.NONE);
         this.game.closeActuators();
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
@@ -229,6 +233,7 @@ export class InteractiveGiveOrdersAction extends CBAction {
     }
 
     play() {
+        this.unit.markAsCharging(CBCharge.NONE);
         this.game.closeActuators();
         let result = new DMessage();
         let dice = new DDice([new Point2D(0, 0)]);
@@ -243,9 +248,9 @@ export class InteractiveGiveOrdersAction extends CBAction {
             Memento.clear();
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        mask.open(this.game.board, new Point2D.getEventPoint(this._event));
         scene.addWidget(
-            new CBGiveOrdersInsert(this.game),
+            new CBGiveOrdersInsert(this.game, {}),
             new Point2D(-CBGiveOrdersInsert.DIMENSION.w/4, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
@@ -257,7 +262,22 @@ export class InteractiveGiveOrdersAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close, this.unit.commandPoints),
             new Point2D(CBGiveOrdersInsert.DIMENSION.w/4, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        ).open(this.game.board, new Point2D.getEventPoint(this._event));
+    }
+
+    showRules(order, event) {
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+        };
+        mask.setAction(close);
+        mask.open(this.game.board, new Point2D.getEventPoint(event));
+        scene.addWidget(
+            new CBGiveOrdersInsert(this.game, order.detail),
+            new Point2D(-CBGiveOrdersInsert.DIMENSION.w/4, 0)
+        ).open(this.game.board, new Point2D.getEventPoint(event));
     }
 
     _processGiveOrdersResult(diceResult) {
@@ -266,21 +286,27 @@ export class InteractiveGiveOrdersAction extends CBAction {
         return commandPoints;
     }
 
-    createGiveOrdersActuator(units) {
-        return new CBOrderGivenActuator(this, units);
+    createGiveOrdersActuator(orders) {
+        return new CBOrderGivenActuator(this, orders);
+    }
+
+    createGiveOrdersHelpActuator(orders) {
+        return new CBOrderGivenHelpActuator(this, orders);
     }
 
     _selectUnitsToGiveOrders() {
-        let targetUnits = this.game.arbitrator.getUnitsThatMayReceiveOrders(this.unit, this.unit.commandPoints);
-        if (targetUnits.length) {
-            let ordersActuator = this.createGiveOrdersActuator(targetUnits);
+        let orders = this.game.arbitrator.getUnitsThatMayReceiveOrders(this.unit, this.unit.commandPoints);
+        if (orders.length) {
+            let ordersActuator = this.createGiveOrdersActuator(orders);
             this.game.openActuator(ordersActuator);
+            let helpActuator = this.createGiveOrdersHelpActuator(orders);
+            this.game.openActuator(helpActuator);
         }
-        return targetUnits.length === 0;
+        return orders.length === 0;
     }
 
     giveOrder(leader, unit, event) {
-        let cost = this.game.arbitrator.getOrderGivenCost(leader, unit);
+        let cost = this.game.arbitrator.getOrderGivenCost(leader, unit).cost;
         this.unit.receiveCommandPoints(this.unit.commandPoints-cost);
         unit.receiveOrder(true);
         this.game.closeActuators();
@@ -348,16 +374,78 @@ export class CBOrderInstructionMenu extends DIconMenu {
 
 }
 
+class OrderGivenHelpTrigger extends CBUnitActuatorTrigger {
+
+    constructor(actuator, order) {
+        let image = DImage.getImage("/CBlades/images/actuators/order-given-cost.png");
+        super(actuator, order.unit, "units", image, new Point2D(order.unit.location.x, order.unit.location.y-125), OrderGivenHelpTrigger.DIMENSION);
+        this.pangle = 0;
+        this._order = order;
+    }
+
+    _paint() {
+        super._paint();
+        this._level.setShadowSettings("#000000", 0);
+        this._level.setTextSettings("bold 30px serif", "center");
+        this._level.setFillSettings("#006600");
+        this._level.fillText("" + this._order.cost, new Point2D(0, 10));
+    }
+
+    get order() {
+        return this._order;
+    }
+
+    get unit() {
+        return this._order.unit;
+    }
+
+    setVisibility(visibility) {
+        this.alpha = visibility;
+    }
+
+}
+
+OrderGivenHelpTrigger.DIMENSION = new Dimension2D(55, 55);
+
+export class CBOrderGivenHelpActuator extends RetractableActuatorMixin(CBActionActuator) {
+
+    constructor(action, orders) {
+        super(action);
+        this._triggers = [];
+        for (let order of orders) {
+            let orderGivenHelp = new OrderGivenHelpTrigger(this, order);
+            this._triggers.push(orderGivenHelp);
+        }
+        this.initElement(this._triggers, new Point2D(0, 0));
+    }
+
+    getTrigger(unit) {
+        return this.findTrigger(artifact=>artifact.unit === unit);
+    }
+
+    onMouseClick(trigger, event) {
+        this.action.showRules(trigger.order, event);
+    }
+
+    setVisibility(level) {
+        super.setVisibility(level);
+        for (let artifact of this.triggers) {
+            artifact.setVisibility && artifact.setVisibility(level===CBActuator.FULL_VISIBILITY ? 1:0);
+        }
+    }
+
+}
+
 export class CBOrderGivenActuator extends RetractableActuatorMixin(CBActionActuator) {
 
-    constructor(action, units) {
+    constructor(action, orders) {
         super(action);
         let imageArtifacts = [];
         let orderImage = DImage.getImage("/CBlades/images/actuators/order.png");
-        for (let unit of units) {
-            let order = new CBUnitActuatorTrigger(this, unit, "units", orderImage,
-                new Point2D(unit.location.x, unit.location.y-80), new Dimension2D(105, 97));
-            imageArtifacts.push(order);
+        for (let order of orders) {
+            let trigger = new CBUnitActuatorTrigger(this, order.unit, "units", orderImage,
+                new Point2D(order.unit.location.x, order.unit.location.y-80), new Dimension2D(105, 97));
+            imageArtifacts.push(trigger);
         }
         this.initElement(imageArtifacts, new Point2D(0, 0));
     }
@@ -392,8 +480,13 @@ CBChangeOrderInstructionInsert.DIMENSION = new Dimension2D(444, 254);
 
 export class CBGiveOrdersInsert extends WidgetLevelMixin(DInsert) {
 
-    constructor(game) {
+    constructor(game, detail) {
         super(game, "/CBlades/images/inserts/orders-given-insert.png", CBGiveOrdersInsert.DIMENSION, CBGiveOrdersInsert.PAGE_DIMENSION);
+        if (detail.base) this.setMark(new Point2D(20, 427));
+        if (detail.routed) this.setMark(new Point2D(25, 545));
+        if (detail.disrupted) this.setMark(new Point2D(25, 510));
+        if (detail.exhausted) this.setMark(new Point2D(25, 530));
+        if (detail.distance) this.setMark(new Point2D(25, 565));
     }
 
 }

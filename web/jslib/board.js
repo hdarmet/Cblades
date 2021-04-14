@@ -299,6 +299,14 @@ export class DArtifact extends LocalisationAware(Object) {
         this.setSettings(settings);
     }
 
+    getPoint(viewportPoint) {
+        return this.viewportTransform.invert().point(viewportPoint);
+    }
+
+    getViewportPoint(point) {
+        return this.viewportTransform.point(point);
+    }
+
     get viewportTransform() {
         let transform = this.transform;
         return transform ? this.level.transform.concat(transform) : this.level.transform;
@@ -512,14 +520,20 @@ export class DMultiImagesArtifact extends DImageAbstractArtifact {
         console.assert(images.length);
         this._images = images;
         this._root = images[0];
+        this._index = 0;
     }
 
     get images() {
         return this._images;
     }
 
+    get imageIndex() {
+        return this._index;
+    }
+
     setImage(index) {
         console.assert(index >= 0 && index < this._images.length);
+        this._index = index;
         this._root = this._images[index];
         this.refresh();
     }
@@ -531,12 +545,14 @@ export class DMultiImagesArtifact extends DImageAbstractArtifact {
 
     _memento() {
         let memento = super._memento();
+        memento.index = this._index;
         memento.root = this._root;
         return memento;
     }
 
     _revert(memento) {
         super._revert(memento);
+        this._index = memento.index;
         this._root = memento.root;
     }
 
@@ -810,6 +826,10 @@ export class DElement extends LocalisationAware(Object) {
             area = area.add(this._artifacts[index].boundingArea);
         }
         return area;
+    }
+
+    get shown() {
+        return !!this.board;
     }
 
     get board() {
@@ -1277,12 +1297,19 @@ export class DBoard {
                     processed = true;
                 }
             }
-            if (!processed) {
+            let ignored = new Set();
+            while (!processed) {
                 let offset = new Point2D(event.offsetX, event.offsetY);
-                let artifact = this.getArtifactOnPoint(offset);
-                if (artifact && artifact.onMouseClick) {
-                    this._focusArtifact = artifact;
-                    artifact.onMouseClick(event);
+                let artifact = this.getArtifactOnPoint(offset, ignored);
+                if (!artifact) {
+                    processed = true;
+                } else {
+                    ignored.add(artifact);
+                    if (artifact.onMouseClick) {
+                        this._focusArtifact = artifact;
+                        processed = artifact.onMouseClick(event);
+                        console.assert(processed !== undefined);
+                    }
                 }
             }
             this.paint();
@@ -1300,9 +1327,11 @@ export class DBoard {
                     processed = true;
                 }
             }
-            if (!processed) {
+            let ignored = new Set();
+            while (!processed) {
                 let offset = new Point2D(event.offsetX, event.offsetY);
-                let artifact = this.getArtifactOnPoint(offset);
+                let artifact = this.getArtifactOnPoint(offset, ignored);
+                if (artifact) ignored.add(artifact);
                 if (artifact !== this._mouseOverArtifact) {
                     if (this._mouseOverArtifact) {
                         this._mouseOverArtifact.onMouseLeave && this._mouseOverArtifact.onMouseLeave(event);
@@ -1312,9 +1341,12 @@ export class DBoard {
                         this._mouseOverArtifact.onMouseEnter && this._mouseOverArtifact.onMouseEnter(event);
                     }
                 }
-                if (this._mouseOverArtifact) {
-                    this._mouseOverArtifact.onMouseMove && this._mouseOverArtifact.onMouseMove(event);
+                if (this._mouseOverArtifact && this._mouseOverArtifact.onMouseMove) {
+                    processed = this._mouseOverArtifact.onMouseMove(event);
+                    console.assert(processed !== undefined);
                 }
+                else processed = true;
+                if (!artifact) processed = true;
             }
             this.paint();
             return processed;
@@ -1657,10 +1689,10 @@ export class DBoard {
         return artifacts;
     }
 
-    getArtifactOnPoint(viewportPoint) {
+    getArtifactOnPoint(viewportPoint, ignored) {
         for (let i = this._levelsArray.length-1; i>=0; i--) {
             let artifact = this._levelsArray[i].getArtifactOnPoint(viewportPoint);
-            if (artifact) return artifact;
+            if (artifact && (!ignored || !ignored.has(artifact))) return artifact;
         }
         return null;
     }

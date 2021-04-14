@@ -18,6 +18,9 @@ import {
 import {
     DImage
 } from "../draw.js";
+import {
+    CBCharge
+} from "./unit.js";
 
 export function registerInteractiveFormation() {
     CBInteractivePlayer.prototype.createFormation = function (unit, event) {
@@ -55,6 +58,7 @@ export class InteractiveBreakFormationAction extends CBAction {
     }
 
     play() {
+        this.unit.markAsCharging(CBCharge.NONE);
         this.game.closeActuators();
         let {fromHex, toHex} = this.game.arbitrator.getTroopsAfterFormationBreak(this.unit);
         this.unit.breakFormation(fromHex, toHex);
@@ -77,6 +81,7 @@ export class InteractiveCreateFormationAction extends CBAction {
     }
 
     play() {
+        this.unit.markAsCharging(CBCharge.NONE);
         this._createCreateFormationActuator();
     }
 
@@ -117,6 +122,7 @@ export class InteractiveReleaseTroopsAction extends CBAction {
     }
 
     play() {
+        this.unit.markAsCharging(CBCharge.NONE);
         this._createReleaseTroopActuator();
     }
 
@@ -159,6 +165,7 @@ export class InteractiveIncludeTroopsAction extends CBAction {
     }
 
     play() {
+        this.unit.markAsCharging(CBCharge.NONE);
         this.game.closeActuators();
         let {removed, stepCount, tired, lackOfMunitions} = this.game.arbitrator.includeTroops(this.unit);
         this.unit.fixRemainingLossSteps(stepCount);

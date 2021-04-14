@@ -4,7 +4,7 @@ import {
 import {
     CBHexId,
     CBHexSideId,
-    CBMoveType, CBPathFinding,
+    CBMoveType, CBPathFinding, distanceFromHexToHex,
 } from "./map.js";
 import {
     CBCohesion,
@@ -20,6 +20,8 @@ import {
 } from "../geometry.js";
 
 export class CBArbitrator extends CBAbstractArbitrator{
+
+    // Action management
 
     getAllowedActions(unit) {
         return {
@@ -66,9 +68,72 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return this.isUnitEngaged(unit) && !this.doesUnitEngage(unit);
     }
 
+    isAllowedToShockAttack(unit) {
+        return this.getFoesThatMayBeShockAttacked(unit).length>0;
+    }
+
+    isAllowedToFireAttack(unit) {
+        return unit.weaponProfile.getFireAttackCode() && this.getFoesThatMayBeFireAttacked(unit).length>0;
+    }
+
+    isAllowedToShockDuel(unit) {
+        if (!unit.characterNature) return false;
+        if (!this.containsAtLeastOneTroop(unit.hexLocation)) return false;
+        return this.getFoesThatMayBeDuelAttacked(unit).length>0;
+    }
+
+    isAllowedToFireDuel(unit) {
+        if (!unit.characterNature) return false;
+        return this.getFoesThatMayBeDuelFired(unit).length>0;
+    }
+
+    isAllowedToRest(unit) {
+        return unit.tiredness > 0;
+    }
+
+    isAllowedToReplenishMunitions(unit) {
+        return unit.lackOfMunitions > 0;
+    }
+
+    isAllowedToReorganize(unit) {
+        return unit.cohesion === CBCohesion.DISRUPTED;
+    }
+
+    isAllowedToRally(unit) {
+        return unit.cohesion === CBCohesion.ROUTED;
+    }
+
+    isAllowedToChangeOrderInstruction(unit) {
+        return unit instanceof CBCharacter && unit.wing.leader === unit;
+    }
+
+    isAllowedToGiveOrders(unit) {
+        return unit instanceof CBCharacter && unit.wing.leader === unit;
+    }
+
+    isAllowedToTakeCommand(unit) {
+        return unit instanceof CBCharacter && unit.wing.leader !== unit;
+    }
+
+    isAllowedToDismissCommand(unit) {
+        return unit instanceof CBCharacter && unit.wing.leader === unit;
+    }
+
+    isAllowedToBreakFormation(unit) {
+        return (!!unit.formationNature) &&
+            unit.hasReceivedOrder() &&
+            !unit.isExhausted() &&
+            unit.inGoodOrder();
+    }
+
     mustPlayUnit(unit) {
         return unit.isOnBoard() && !unit.hasBeenActivated() && !unit.hasBeenPlayed();
     }
+
+    canGetTired(unit) {
+        return !unit.isExhausted() && (!unit.isCharging() || !unit.isTired())
+    }
+    // Zone methods
 
     formatMapZone(mapZone) {
         let zones = {};
@@ -297,12 +362,27 @@ export class CBArbitrator extends CBAbstractArbitrator{
         }
 
         let result = [];
-        if (!unit.isRouted()) {
+        if (!unit.isRouted() && !unit.isCharging()) {
             let forbiddenZones = this.getRetreatForbiddenZone(attacker);
             let zones = this.getUnitBackwardZone(unit);
             processZones.call(this, result, zones, CBMoveType.BACKWARD, forbiddenZones);
             zones = this.getUnitForwardZone(unit);
             processZones.call(this, result, zones, CBMoveType.FORWARD, forbiddenZones);
+        }
+        return result;
+    }
+
+    getAdvanceZones(unit, hexes) {
+        let allowesZones = new Set(hexes);
+        let result = [];
+        let zones = this.getUnitForwardZone(unit);
+        for (let sangle in zones) {
+            let angle = parseInt(sangle);
+            let zone = zones[angle];
+            if (allowesZones.has(zone.hex)) {
+                result[angle] = zone;
+                zone.moveType = CBMoveType.FORWARD;
+            }
         }
         return result;
     }
@@ -347,6 +427,8 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return { retreatDirections, rotateDirections }
     }
 
+    // Combat methods
+
     _collectFoes(foes, foesSet, unit, hex, more) {
         let units = hex.units;
         if (units.length) {
@@ -379,7 +461,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return false;
     }
 
-    _getForwardZoneThatMayBeSchockAttacked(unit) {
+    _getForwardZoneThatMayBeShockAttacked(unit) {
         if (!unit.hasAttacked()) {
             return this.getUnitForwardZone(unit);
         }
@@ -401,23 +483,29 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     getFoesThatMayBeShockAttacked(unit) {
-        let zones = this._getForwardZoneThatMayBeSchockAttacked(unit);
+        let zones = this._getForwardZoneThatMayBeShockAttacked(unit);
         let foes = [];
         let foesSet = new Set();
         for (let sangle in zones) {
             let angle = parseInt(sangle);
-            this._collectFoes(foes, foesSet, unit, zones[angle].hex, {supported:!unit.isExhausted()});
+            this._collectFoes(foes, foesSet, unit, zones[angle].hex, {
+                supported:!unit.isExhausted(),
+                unsupported:!unit.isCharging()
+            });
         }
         return foes;
     }
 
     getFoesThatMayBeDuelAttacked(unit) {
-        let zones = this._getForwardZoneThatMayBeSchockAttacked(unit);
+        let zones = this._getForwardZoneThatMayBeShockAttacked(unit);
         let foes = [];
         let foesSet = new Set();
         for (let sangle in zones) {
             let angle = parseInt(sangle);
-            this._collectFoesForDuel(foes, foesSet, unit, zones[angle].hex, {supported:!unit.isExhausted()});
+            this._collectFoesForDuel(foes, foesSet, unit, zones[angle].hex, {
+                supported:!unit.isExhausted(),
+                unsupported:!unit.isCharging()
+            });
         }
         return foes;
     }
@@ -452,13 +540,14 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     getShockAttackResult(unit, foe, supported, diceResult) {
-        return this.getCombatTableResult(diceResult, this.getShockAttackAdvantage(unit, foe, supported));
+        return 1;
+        //return this.getCombatTableResult(diceResult, this.getShockAttackAdvantage(unit, foe, supported));
     }
 
     processShockAttackResult(unit, foe, supported, diceResult) {
         let lossesForDefender = this.getShockAttackResult(unit, foe, supported, diceResult);
         let success = lossesForDefender>0;
-        let tirednessForAttacker = supported;
+        let tirednessForAttacker = supported && !unit.isCharging();
         let played = !unit.formationNature || unit.hasAttacked();
         let attackLocation = foe.hexLocation;
         return { success, lossesForDefender, tirednessForAttacker, played, attackLocation };
@@ -543,7 +632,10 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return { success, lossesForDefender, lowerFirerMunitions, played, attackLocation };
     }
 
+    // Movement
+
     _processMovementOpportunity(direction, hexes, unit, cost, first) {
+        let canGetTired = this.canGetTired(unit);
         direction.cost = cost;
         if (cost.type === CBMoveProfile.COST_TYPE.IMPASSABLE) return false;
         for (let hex of hexes) {
@@ -552,7 +644,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             }
         }
         if (cost.type === CBMoveProfile.COST_TYPE.MINIMAL_MOVE) {
-            if (first) {
+            if (first && canGetTired) {
                 direction.type = CBMovement.MINIMAL;
                 return true;
             }
@@ -562,7 +654,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             direction.type = CBMovement.NORMAL;
             return true;
         }
-        else if (unit.tiredness<CBTiredness.EXHAUSTED) {
+        else if (canGetTired) {
             if (unit.extendedMovementPoints >= cost.value) {
                 direction.type = CBMovement.EXTENDED;
                 return true;
@@ -680,13 +772,14 @@ export class CBArbitrator extends CBAbstractArbitrator{
 
         function processAngle(directions, hexes, unit, angle, cost) {
             console.assert(cost.type===CBMoveProfile.COST_TYPE.ADD);
+            let canGetTired = this.canGetTired(unit);
             let nearHexId = angle%60 ?
                new CBHexSideId(hexes[angle-30].hex, hexes[(angle+30)%360].hex) :
                hexes[angle].hex;
             if (unit.movementPoints>=cost.value) {
                 directions[angle] = { hex:nearHexId, type:CBMovement.NORMAL, cost};
             }
-            else if (unit.tiredness<CBTiredness.EXHAUSTED) {
+            else if (canGetTired) {
                 if (unit.extendedMovementPoints >= cost.value) {
                     directions[angle] = { hex:nearHexId, type:CBMovement.EXTENDED, cost};
                 } else if (first) {
@@ -806,70 +899,37 @@ export class CBArbitrator extends CBAbstractArbitrator{
         );
     }
 
-    isAllowedToShockAttack(unit) {
-        return this.getFoesThatMayBeShockAttacked(unit).length>0;
-    }
-
-    isAllowedToFireAttack(unit) {
-        return unit.weaponProfile.getFireAttackCode() && this.getFoesThatMayBeFireAttacked(unit).length>0;
-    }
-
-    isAllowedToShockDuel(unit) {
-        if (!unit.characterNature) return false;
-        if (!this.containsAtLeastOneTroop(unit.hexLocation)) return false;
-        return this.getFoesThatMayBeDuelAttacked(unit).length>0;
-    }
-
-    isAllowedToFireDuel(unit) {
-        if (!unit.characterNature) return false;
-        return this.getFoesThatMayBeDuelFired(unit).length>0;
-    }
-
-    isAllowedToRest(unit) {
-        return unit.tiredness > 0;
-    }
-
-    isAllowedToReplenishMunitions(unit) {
-        return unit.lackOfMunitions > 0;
-    }
-
-    isAllowedToReorganize(unit) {
-        return unit.cohesion === CBCohesion.DISRUPTED;
-    }
-
-    isAllowedToRally(unit) {
-        return unit.cohesion === CBCohesion.ROUTED;
-    }
-
-    isAllowedToChangeOrderInstruction(unit) {
-        return unit instanceof CBCharacter && unit.wing.leader === unit;
-    }
-
-    isAllowedToGiveOrders(unit) {
-        return unit instanceof CBCharacter && unit.wing.leader === unit;
-    }
-
-    isAllowedToTakeCommand(unit) {
-        return unit instanceof CBCharacter && unit.wing.leader !== unit;
-    }
-
-    isAllowedToDismissCommand(unit) {
-        return unit instanceof CBCharacter && unit.wing.leader === unit;
-    }
-
-    isAllowedToBreakFormation(unit) {
-        return (!!unit.formationNature) &&
-            unit.hasReceivedOrder() &&
-            !unit.isExhausted() &&
-            unit.inGoodOrder();
-    }
-
     containsAtLeastOneTroop(hexLocation) {
         for (let unit of hexLocation.units) {
             if (!unit.characterNature) return true;
         }
         return false;
     }
+
+    createRootPathFinding(unit) {
+        let pathFinding = new CBPathFinding(unit.hexLocation, unit.angle, unit.wing.retreatZone,
+            (from, to)=>{
+                let angle = from.getAngle(to);
+                let cost = this.game.arbitrator.getMovementCost(unit, angle, from, angle);
+                switch(cost.type) {
+                    case CBMoveProfile.COST_TYPE.IMPASSABLE: return 10000;
+                    case CBMoveProfile.COST_TYPE.MINIMAL_MOVE: return unit.type.getExtendedMovementPoints(unit.remainingStepCount);
+                    default: return cost.value;
+                }
+            },
+            (hex, fromAngle, toAngle)=>{
+                let cost = this.game.arbitrator.getRotationCost(unit, toAngle, hex, fromAngle);
+                switch(cost.type) {
+                    case CBMoveProfile.COST_TYPE.IMPASSABLE: return 10000;
+                    case CBMoveProfile.COST_TYPE.MINIMAL_MOVE: return unit.type.getExtendedMovementPoints(unit.remainingStepCount);
+                    default: return cost.value;
+                }
+            }
+        );
+        return new Set(pathFinding.getGoodNextMoves());
+    }
+
+    // Recover
 
     processRestResult(unit, diceResult) {
         let success = diceResult[0]+diceResult[1]<=10;
@@ -883,32 +943,35 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     processReorganizeResult(unit, diceResult) {
-        let success = diceResult[0]+diceResult[1]<=8;
+        let success = diceResult[0]+diceResult[1]<=unit.moral;
         return { success };
     }
 
     processRallyResult(unit, diceResult) {
-        let success = diceResult[0]+diceResult[1]<=8;
+        let success = diceResult[0]+diceResult[1]<=unit.moral;
         return { success };
     }
 
+    // Engagement
+
     processAttackerEngagementResult(unit, diceResult) {
-        let success = diceResult[0]+diceResult[1]<=8;
+        let success = diceResult[0]+diceResult[1]<=unit.moral;
         return { success };
     }
 
     processDefenderEngagementResult(unit, diceResult) {
-        let success = diceResult[0]+diceResult[1]<=8;
+        return { success: true }
+        let success = diceResult[0]+diceResult[1]<=unit.moral;
         return { success };
     }
 
     processConfrontEngagementResult(unit, diceResult) {
-        let success = diceResult[0]+diceResult[1]<=8;
+        let success = diceResult[0]+diceResult[1]<=unit.moral;
         return { success };
     }
 
     processDisengagementResult(unit, diceResult) {
-        let success = diceResult[0]+diceResult[1]<=8;
+        let success = diceResult[0]+diceResult[1]<=unit.moral;
         return { success };
     }
 
@@ -951,6 +1014,12 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return false;
     }
 
+    mayUnitCharge(unit) {
+        let mayCharge = !unit.formationNature;
+        if (unit.isExhausted()) mayCharge = false;
+        return mayCharge;
+    }
+
     doesUnitEngage(unit) {
         return this.wouldUnitEngage(unit, unit.hexLocation, unit.angle);
     }
@@ -982,7 +1051,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     processChangeOrderInstructionResult(leader, diceResult) {
-        let success = diceResult[0]+diceResult[1]<=8;
+        let success = diceResult[0]+diceResult[1]<=leader.commandLevel;
         return { success };
     }
 
@@ -998,16 +1067,27 @@ export class CBArbitrator extends CBAbstractArbitrator{
     getUnitsThatMayReceiveOrders(leader, commandPoints) {
         let units = [];
         for (let unit of leader.player.units) {
-            if (unit !== leader && !unit.hasBeenActivated() &&
-                !unit.hasReceivedOrder() && this.getOrderGivenCost(leader, unit)<=commandPoints) {
-                units.push(unit);
+            let order = this.getOrderGivenCost(leader, unit);
+            if (unit !== leader &&
+                !unit.hasBeenActivated() &&
+                !unit.hasReceivedOrder() &&
+                order.cost<=commandPoints)
+            {
+                units.push(order);
             }
         }
         return units;
     }
 
     getOrderGivenCost(leader, unit) {
-        return 2;
+        let cost = 1;
+        let detail = {base:1};
+        let distance = Math.floor(distanceFromHexToHex(leader.hexLocation, unit.hexLocation)/4);
+        if (distance) { detail.distance = distance; cost += distance; }
+        if (unit.isRouted()) { detail.routed = 2; cost += 2; }
+        if (unit.isDisrupted()) { detail.disrupted = 1; cost += 1; }
+        if (unit.isExhausted()) { detail.exhausted = 1; cost += 1; }
+        return { unit, cost, detail };
     }
 
     computeCommandPoints(unit, diceResult) {
@@ -1015,12 +1095,12 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     processTakeCommandResult(leader, diceResult) {
-        let success = diceResult[0]+diceResult[1]<=8;
+        let success = diceResult[0]+diceResult[1]<=leader.commandLevel;
         return { success };
     }
 
     processDismissCommandResult(leader, diceResult) {
-        let success = diceResult[0]+diceResult[1]<=8;
+        let success = diceResult[0]+diceResult[1]<=leader.commandLevel;
         return { success };
     }
 
@@ -1210,6 +1290,8 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return { stepCount, troop };
     }
 
+    // Magic
+
     isAllowedToChoseSpell(unit) {
         return !!unit.characterNature;
     }
@@ -1294,29 +1376,6 @@ export class CBArbitrator extends CBAbstractArbitrator{
     resolveFireball(spellLevel, diceResult) {
         let success = diceResult[0]+diceResult[1]<=8;
         return { success, losses:success?1:0 };
-    }
-
-    createRootPathFinding(unit) {
-        let pathFinding = new CBPathFinding(unit.hexLocation, unit.angle, unit.wing.retreatZone,
-            (from, to)=>{
-                let angle = from.getAngle(to);
-                let cost = this.game.arbitrator.getMovementCost(unit, angle, from, angle);
-                switch(cost.type) {
-                    case CBMoveProfile.COST_TYPE.IMPASSABLE: return 10000;
-                    case CBMoveProfile.COST_TYPE.MINIMAL_MOVE: return unit.type.getExtendedMovementPoints(unit.remainingStepCount);
-                    default: return cost.value;
-                }
-            },
-            (hex, fromAngle, toAngle)=>{
-                let cost = this.game.arbitrator.getRotationCost(unit, toAngle, hex, fromAngle);
-                switch(cost.type) {
-                    case CBMoveProfile.COST_TYPE.IMPASSABLE: return 10000;
-                    case CBMoveProfile.COST_TYPE.MINIMAL_MOVE: return unit.type.getExtendedMovementPoints(unit.remainingStepCount);
-                    default: return cost.value;
-                }
-            }
-        );
-        return new Set(pathFinding.getGoodNextMoves());
     }
 }
 CBArbitrator.combatTable = [];

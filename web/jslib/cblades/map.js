@@ -20,6 +20,18 @@ export let CBMoveType = {
     BACKWARD: 1
 }
 
+export function distanceFromHexToHex(start, arrival) {
+    let dcol = arrival.col-start.col;
+    if (dcol<0) dcol=-dcol;
+    let drow = arrival.row-start.row;
+    if (drow<0) drow=-drow;
+    if (arrival.col%2) drow-=0.5;
+    if (start.col%2) drow+=0.5;
+    drow -= dcol/2;
+    if (drow<0) drow=0;
+    return dcol+drow;
+}
+
 export class CBHexId {
 
     constructor(map, col, row) {
@@ -111,6 +123,10 @@ export class CBHexId {
 
     get units() {
         return this.hex.units;
+    }
+
+    get empty() {
+        return this.hex.empty;
     }
 
     _addPlayable(playable) {
@@ -520,6 +536,11 @@ export class CBHex {
     get units() {
         return this._units;
     }
+
+    get empty() {
+        return this.units.length === 0;
+    }
+
 }
 CBHex.HEX_TYPES = {
     OUTDOOR_CLEAR : 0,
@@ -555,6 +576,7 @@ class MapImageArtifact extends DImageArtifact {
 
     onMouseClick(event) {
         this._map.onMouseClick(event);
+        return true;
     }
 }
 
@@ -871,22 +893,10 @@ export class CBPathFinding {
         }
     }
 
-    _distanceFromHexToHex(start, arrival) {
-        let dcol = arrival.col-start.col;
-        if (dcol<0) dcol=-dcol;
-        let drow = arrival.row-start.row;
-        if (drow<0) drow=-drow;
-        if (arrival.col%2) drow-=0,5;
-        if (start.col%2) drow+=0,5;
-        drow -= dcol/2;
-        if (drow<0) drow=0;
-        return dcol+drow;
-    }
-
     _distanceFromHexToZone(start, arrivals) {
-        let min = this._distanceFromHexToHex(start, arrivals[0]);
+        let min = distanceFromHexToHex(start, arrivals[0]);
         for (let index=1; index<arrivals.length; index++) {
-            let distance = this._distanceFromHexToHex(start, arrivals[index]);
+            let distance = distanceFromHexToHex(start, arrivals[index]);
             if (distance<min) min=distance;
         }
         return min;
@@ -934,7 +944,7 @@ export class CBPathFinding {
             }
         }
         else {
-            let record = {hex, cost, angle, distance: this._distanceFromHexToHex(hex, this._start) / 2};
+            let record = {hex, cost, angle, distance: distanceFromHexToHex(hex, this._start) / 2};
             this._records.set(hex, record);
             this._search.insert(record);
         }

@@ -9,6 +9,9 @@ import {
 import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
+import {
+    CBCharge
+} from "./unit.js";
 
 export function registerInteractiveMiscellaneous() {
     CBInteractivePlayer.prototype.mergeUnits = function(unit, event) {
@@ -35,6 +38,7 @@ export class InteractiveMergeUnitAction extends CBAction {
 
     play() {
         this.game.closeActuators();
+        this.unit.markAsCharging(CBCharge.NONE);
         let {replacement, replaced} = this.game.arbitrator.mergedUnit(this.unit);
         let hexLocation = this.unit.hexLocation;
         this.game.appendUnit(replacement, hexLocation);

@@ -4,6 +4,7 @@ import {
     CBHex
 } from "./map.js";
 import {
+    CBCommandProfile, CBMoralProfile,
     CBMoveProfile, CBWeaponProfile
 } from "./unit.js";
 
@@ -212,6 +213,54 @@ export class LanceWeaponProfile extends CBWeaponProfile {
 
     getShockAttackCode() {
         return "Lan";
+    }
+
+}
+
+export class RegularCommandProfile extends CBCommandProfile {
+
+    constructor(capacity) {
+        super(capacity);
+    }
+
+}
+
+export class IrregularCommandProfile extends CBCommandProfile {
+
+    constructor(capacity) {
+        super(capacity);
+    }
+
+}
+
+export class ChaoticCommandProfile extends CBCommandProfile {
+
+    constructor(capacity) {
+        super(capacity);
+    }
+
+}
+
+export class StandardMoralProfile extends CBMoralProfile {
+
+    constructor(capacity) {
+        super(capacity);
+    }
+
+}
+
+export class EliteMoralProfile extends CBMoralProfile {
+
+    constructor(capacity) {
+        super(capacity);
+    }
+
+}
+
+export class ExaltedMoralProfile extends CBMoralProfile {
+
+    constructor(capacity) {
+        super(capacity);
     }
 
 }

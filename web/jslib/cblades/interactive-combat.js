@@ -12,12 +12,13 @@ import {
 } from "../widget.js";
 import {
     CBAction, CBActionActuator, CBActuator,
-    CBActuatorImageTrigger, CBActuatorTriggerMixin, CBMask, CBUnitActuatorTrigger, WidgetLevelMixin, RetractableActuatorMixin
+    CBActuatorImageTrigger, CBMask, CBUnitActuatorTrigger, WidgetLevelMixin, RetractableActuatorMixin
 } from "./game.js";
 import {
     CBHexSideId
 } from "./map.js";
 import {
+    CBCharge,
     CBFormation
 } from "./unit.js";
 import {
@@ -27,9 +28,6 @@ import {
 import {
     DImage
 } from "../draw.js";
-import {
-    DImageArtifact
-} from "../board.js";
 import {
     CBArbitrator
 } from "./arbitrator.js";
@@ -47,8 +45,11 @@ export function registerInteractiveCombat() {
     CBInteractivePlayer.prototype.unitDuelFire = function (unit, event) {
         unit.launchAction(new InteractiveDuelFireAction(this.game, unit, event));
     }
-    CBInteractivePlayer.prototype.applyLossesToUnit = function(unit, losses, attacker, continuation) {
-        unit.launchAction(new InteractiveRetreatAction(this.game, unit, losses, attacker, continuation));
+    CBInteractivePlayer.prototype.applyLossesToUnit = function(unit, losses, attacker, advance, continuation) {
+        unit.launchAction(new InteractiveRetreatAction(this.game, unit, losses, attacker, advance, continuation));
+    }
+    CBInteractivePlayer.prototype.advanceAttacker = function(unit, hexes, continuation) {
+        unit.launchAction(new InteractiveAdvanceAction(this.game, unit, hexes, continuation));
     }
     CBActionMenu.menuBuilders.push(
         createCombatMenuItems
@@ -59,28 +60,70 @@ export function unregisterInteractiveCombat() {
     delete CBInteractivePlayer.prototype.unitFireAttack;
     delete CBInteractivePlayer.prototype.unitDuelAttack;
     delete CBInteractivePlayer.prototype.applyLossesToUnit;
+    delete CBInteractivePlayer.prototype.advanceAttacker;
     let builderIndex = CBActionMenu.menuBuilders.indexOf(createCombatMenuItems);
     if (builderIndex>=0) {
         CBActionMenu.menuBuilders.splice(builderIndex, 1);
     }
 }
 
-export class InteractiveRetreatAction extends CBAction {
+export class InteractiveAdvanceAction extends CBAction {
 
-    constructor(game, unit, losses, attacker, continuation) {
+    constructor(game, unit, hexes, continuation) {
         super(game, unit);
-        this._losses = losses;
-        this._attacker = attacker;
+        this._hexes = hexes;
         this._continuation = continuation;
     }
 
     play() {
         this.game.setFocusedUnit(this.unit);
+        this._createAdvanceActuator();
+    }
+
+    _createAdvanceActuator() {
+        console.assert(!this.unit.formationNature);
+        let advanceDirections = this.game.arbitrator.getAdvanceZones(this.unit, this._hexes);
+        let advanceActuator = this.createAdvanceActuator(advanceDirections);
+        this.game.openActuator(advanceActuator);
+    }
+
+    advanceUnit(hexLocation) {
+        let actualHex = this.unit.hexLocation;
+        this.game.closeActuators();
+        this.unit.advance(hexLocation);
+        this._finalizeAction();
+    }
+
+    _finalizeAction() {
+        this.markAsFinished();
+        this.unit.removeAction();
+        this._continuation();
+    }
+
+    createAdvanceActuator(directions) {
+        return new CBAdvanceActuator(this, directions);
+    }
+
+}
+
+export class InteractiveRetreatAction extends CBAction {
+
+    constructor(game, unit, losses, attacker, advance, continuation) {
+        super(game, unit);
+        this._losses = losses;
+        this._attacker = attacker;
+        this._advance = advance;
+        this._continuation = continuation;
+    }
+
+    play() {
+        this.unit.markAsCharging(CBCharge.NONE);
+        this.game.setFocusedUnit(this.unit);
         this._createRetreatActuator();
     }
 
     _createRetreatActuator() {
-        if (this.unit instanceof CBFormation) {
+        if (this.unit.formationNature) {
             let {retreatDirections, rotateDirections} = this.game.arbitrator.getFormationRetreatZones(this.unit, this._attacker);
             let retreatActuator = this.createFormationRetreatActuator(retreatDirections, rotateDirections);
             this.game.openActuator(retreatActuator);
@@ -92,11 +135,35 @@ export class InteractiveRetreatAction extends CBAction {
         }
     }
 
-    retreatUnit(hexId, event, moveType) {
+    advanceAttacker(hexLocation, continuation) {
+        let advanceHexes = [];
+        for (let hexId of hexLocation.hexes) {
+            if (hexId.empty) {
+                advanceHexes.push(hexId);
+            }
+        }
+        if (this._advance && this._attacker.isCharging() && advanceHexes.length>0) {
+            if (advanceHexes.length === 1) {
+                this._attacker.advance(advanceHexes[0]);
+                continuation();
+            }
+            else {
+                this._attacker.player.advanceAttacker(this._attacker, advanceHexes, continuation);
+            }
+        }
+        else {
+            this._attacker.markAsCharging(CBCharge.NONE);
+            continuation();
+        }
+    }
+
+    retreatUnit(hexLocation, moveType) {
+        let actualHex = this.unit.hexLocation;
         this.game.closeActuators();
-        this.unit.move(hexId, 0, moveType);
-        this.unit.addOneCohesionLevel();
-        this._finalizeAction();
+        this.unit.retreat(hexLocation, moveType);
+        this.advanceAttacker(actualHex, ()=>{
+            this._finalizeAction();
+        });
     }
 
     reorientUnit(angle) {
@@ -104,9 +171,12 @@ export class InteractiveRetreatAction extends CBAction {
     }
 
     takeALossFromUnit(event) {
+        let actualHex = this.unit.hexLocation;
         this.game.closeActuators();
         this.unit.takeALoss();
-        this._finalizeAction();
+        this.advanceAttacker(actualHex, ()=>{
+            this._finalizeAction();
+        });
     }
 
     _finalizeAction() {
@@ -139,11 +209,12 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
     _createCombatRecords(foes) {
         let combats = [];
         for (let foe of foes) {
-            let combat = {
-                foe:foe.unit,
-                advantage:this.game.arbitrator.getShockAttackAdvantage(this.unit, foe.unit, false)
-            }
+            let combat = {foe:foe.unit};
             combats.push(combat);
+            if (foe.unsupported) {
+                combat.unsupported=true;
+                combat.unsupportedAdvantage=this.game.arbitrator.getShockAttackAdvantage(this.unit, foe.unit, false);
+            }
             if (foe.supported) {
                 combat.supported=true;
                 combat.supportedAdvantage=this.game.arbitrator.getShockAttackAdvantage(this.unit, foe.unit, true);
@@ -160,7 +231,9 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
             this.game.openActuator(shockAttackActuator);
             let shockHelpActuator = this.createShockHelpActuator(this._createCombatRecords(foesThatMayBeShockAttacked));
             this.game.openActuator(shockHelpActuator);
+            return true;
         }
+        return false;
     }
 
     shockAttackUnit(foe, supported, event) {
@@ -184,16 +257,18 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
                 dice.active = false;
                 let report = this._processShockAttackResult(foe, supported, dice.result);
                 let continuation = ()=>{
-                    if (!report.played) {
-                        this._createShockAttackActuator(this.unit);
+                    this.unit.changeAction(this);   // In case, attack action is replaced by advance action...
+                    if (report.played || !this._createShockAttackActuator(this.unit)) {
+                        this.markAsFinished();
                     }
                 }
                 if (report.success) {
                     result.success().appear();
-                    foe.player.applyLossesToUnit(foe, result.lossesForDefender, this.unit, continuation);
+                    foe.player.applyLossesToUnit(foe, result.lossesForDefender, this.unit, true, continuation);
                 }
                 else {
                     result.failure().appear();
+                    this.unit.markAsCharging(CBCharge.NONE);
                     continuation();
                 }
             }),
@@ -210,9 +285,6 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         if (result.tirednessForAttacker) {
             this.unit.addOneTirednessLevel();
         }
-        if (result.played) {
-            this.markAsFinished();
-        }
         else {
             this.markAsStarted();
         }
@@ -224,7 +296,6 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
     }
 
     showRules(foe, supported, event) {
-        this.game.closeActuators();
         let advantageCell = this._getAdvantageCell(foe);
         let scene = new DScene();
         let mask = new CBMask(this.game, "#000000", 0.3);
@@ -285,6 +356,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
     }
 
     play() {
+        this.unit.markAsCharging(CBCharge.NONE);
         this._createFireAttackActuator(this.unit);
     }
 
@@ -338,7 +410,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
                 }
                 if (report.success) {
                     result.success().appear();
-                    foe.player.applyLossesToUnit(foe, result.lossesForDefender, this.unit, continuation);
+                    foe.player.applyLossesToUnit(foe, result.lossesForDefender, false, this.unit, continuation);
                 }
                 else {
                     result.failure().appear();
@@ -372,7 +444,6 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
     }
 
     showRules(foe, event) {
-        this.game.closeActuators();
         let advantageCell = this._getAdvantageCell(foe);
         let scene = new DScene();
         let mask = new CBMask(this.game, "#000000", 0.3);
@@ -459,17 +530,24 @@ export class CBShockAttackActuator extends RetractableActuatorMixin(CBActionActu
         let supportedImage = DImage.getImage("/CBlades/images/actuators/supported-shock.png");
         let imageArtifacts = [];
         for (let foe of foes) {
-            let unsupportedShock = new CBUnitActuatorTrigger(this, foe.unit, "units", unsupportedImage,
-                new Point2D(0, 0), new Dimension2D(100, 111));
-            unsupportedShock.position = Point2D.position(this.unit.location, foe.unit.location, 1);
-            unsupportedShock.pangle = 30;
-            unsupportedShock.supported = false;
-            imageArtifacts.push(unsupportedShock);
+            if (foe.unsupported) {
+                var unsupportedShock = new CBUnitActuatorTrigger(this, foe.unit, "units", unsupportedImage,
+                    new Point2D(0, 0), new Dimension2D(100, 111));
+                unsupportedShock.position = Point2D.position(this.unit.location, foe.unit.location, 1);
+                if (foe.supported) {
+                    unsupportedShock.position = unsupportedShock.position.translate(-40, -40);
+                }
+                unsupportedShock.pangle = 30;
+                unsupportedShock.supported = false;
+                imageArtifacts.push(unsupportedShock);
+            }
             if (foe.supported) {
-                let supportedShock = new CBUnitActuatorTrigger(this, foe.unit, "units", supportedImage,
+                var supportedShock = new CBUnitActuatorTrigger(this, foe.unit, "units", supportedImage,
                     new Point2D(0, 0), new Dimension2D(120, 133));
-                supportedShock.position = unsupportedShock.position.translate(40, 40);
-                unsupportedShock.position = unsupportedShock.position.translate(-40, -40);
+                supportedShock.position = Point2D.position(this.unit.location, foe.unit.location, 1);
+                if (foe.unsupported) {
+                    supportedShock.position = supportedShock.position.translate(40, 40);
+                }
                 supportedShock.pangle = 30;
                 supportedShock.supported = true;
                 imageArtifacts.push(supportedShock);
@@ -557,16 +635,25 @@ export class CBShockHelpActuator extends RetractableActuatorMixin(CBActionActuat
         super(action);
         this._triggers = [];
         for (let combat of combats) {
-            let unsupportedHelp = new ShockHelpTrigger(this, false, combat.foe, combat.advantage);
-            this._triggers.push(unsupportedHelp);
+            if (combat.unsupported) {
+                let unsupportedHelp = new ShockHelpTrigger(this, false, combat.foe, combat.unsupportedAdvantage);
+                this._triggers.push(unsupportedHelp);
+                if (combat.supported) {
+                    unsupportedHelp.position = unsupportedHelp.position.translate(-75, -75);
+                }
+                else {
+                    unsupportedHelp.position = unsupportedHelp.position.translate(40, 40);
+                }
+            }
             if (combat.supported) {
                 let supportedHelp = new ShockHelpTrigger(this, true, combat.foe, combat.supportedAdvantage);
                 this._triggers.push(supportedHelp);
-                supportedHelp.position = unsupportedHelp.position.translate(75, 75);
-                unsupportedHelp.position = unsupportedHelp.position.translate(-75, -75);
-            }
-            else {
-                unsupportedHelp.position = unsupportedHelp.position.translate(40, 40);
+                if (combat.unsupported) {
+                    supportedHelp.position = supportedHelp.position.translate(75, 75);
+                }
+                else {
+                    supportedHelp.position = supportedHelp.position.translate(40, 40);
+                }
             }
         }
         this.initElement(this._triggers);
@@ -643,7 +730,34 @@ export class CBFireHelpActuator extends RetractableActuatorMixin(CBActionActuato
     }
 }
 
-export class CBRetreatActuator extends RetractableActuatorMixin(CBActionActuator) {
+export class CBAdvanceActuator extends CBActionActuator {
+
+    constructor(action, directions) {
+        super(action);
+        let imageArtifacts = [];
+        let advanceImage = DImage.getImage("/CBlades/images/actuators/advance-move.png");
+        for (let sangle in directions) {
+            let angle = parseInt(sangle);
+            let orientation = new CBActuatorImageTrigger(this, "actuators", advanceImage,
+                new Point2D(0, 0), new Dimension2D(80, 130));
+            orientation.pangle = parseInt(angle);
+            orientation.position = Point2D.position(this.unit.location, directions[angle].hex.location, 0.9);
+            imageArtifacts.push(orientation);
+        }
+        this.initElement(imageArtifacts);
+    }
+
+    getTrigger(angle) {
+        return this.findTrigger(artifact=> artifact.angle === angle);
+    }
+
+    onMouseClick(trigger, event) {
+        this.action.advanceUnit(this.unit.hexLocation.getNearHex(trigger.angle));
+    }
+
+}
+
+export class CBRetreatActuator extends CBActionActuator {
 
     constructor(action, directions) {
         super(action);
@@ -654,7 +768,8 @@ export class CBRetreatActuator extends RetractableActuatorMixin(CBActionActuator
         loss.loss = true;
         imageArtifacts.push(loss);
         let retreatImage = DImage.getImage("/CBlades/images/actuators/retreat-move.png");
-        for (let angle in directions) {
+        for (let sangle in directions) {
+            let angle = parseInt(sangle);
             let orientation = new CBActuatorImageTrigger(this, "actuators", retreatImage,
                 new Point2D(0, 0), new Dimension2D(80, 130));
             orientation.pangle = parseInt(angle);
@@ -678,7 +793,7 @@ export class CBRetreatActuator extends RetractableActuatorMixin(CBActionActuator
             this.action.takeALossFromUnit(event);
         }
         else {
-            this.action.retreatUnit(this.unit.hexLocation.getNearHex(trigger.angle), event, trigger.moveType);
+            this.action.retreatUnit(this.unit.hexLocation.getNearHex(trigger.angle), trigger.moveType);
         }
     }
 
@@ -776,10 +891,6 @@ export class CBFireAttackInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
         super(game, "/CBlades/images/inserts/fire-attack-insert.png", CBFireAttackInsert.DIMENSION,  CBFireAttackInsert.PAGE_DIMENSION);
-        this.declareMark("weapons-table", new Point2D(-100, 100));
-        this.setMark("weapons-table");
-        this.declareMark("exhausted", new Point2D(-100, -380));
-        this.setMark("exhausted");
     }
 
 }
@@ -815,8 +926,7 @@ export class CBWeaponTableInsert extends WidgetLevelMixin(DAbstractInsert) {
         let colSize = CBWeaponTableInsert.CONTENT_PAGE_DIMENSION.w / CBArbitrator.weaponTable.COLCOUNT;
         let rowSize = CBWeaponTableInsert.CONTENT_PAGE_DIMENSION.h / CBArbitrator.weaponTable.ROWCOUNT;
         let focusPoint = new Point2D(colSize*col+colSize/2+CBWeaponTableInsert.MARGIN, rowSize*row+rowSize/2);
-        this.declareMark("focus", focusPoint.plusPoint(new Point2D(-10, 10)));
-        this.setMark("focus");
+        this.setMark(focusPoint.plusPoint(new Point2D(-10, 10)));
         this._margin.focusOn(new Point2D(CBWeaponTableInsert.MARGIN/2, rowSize*row+rowSize/2));
         this._content.focusOn(focusPoint);
         return this;

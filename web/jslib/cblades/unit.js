@@ -10,16 +10,23 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBHexSideId, CBMoveType
+    CBMoveType
 } from "./map.js";
 import {
-    CBCounterImageArtifact, CBAbstractUnit, CBGame, RetractableArtifactMixin, UnitImageArtifact
+    CBCounterImageArtifact, CBAbstractUnit, CBGame, RetractableArtifactMixin, UnitImageArtifact, CBActivableMixin
 } from "./game.js";
 
 export let CBMovement = {
     NORMAL : "normal",
     EXTENDED : "extended",
     MINIMAL : "minimal"
+}
+
+export let CBCharge = {
+    NONE: 0,
+    BEGIN_CHARGE: 1,
+    CAN_CHARGE: 2,
+    CHARGING: 3
 }
 
 export let CBTiredness = {
@@ -37,7 +44,8 @@ export let CBLackOfMunitions = {
 export let CBCohesion = {
     GOOD_ORDER: 0,
     DISRUPTED: 1,
-    ROUTED: 2
+    ROUTED: 2,
+    DESTROYED: 3
 }
 
 export let CBOrderInstruction = {
@@ -56,7 +64,7 @@ export let CBWeather = {
     STORM : 6
 }
 
-export class CBMoveProfile {
+export class CBProfile {
 
     constructor(capacity = 0) {
         this._capacity = capacity;
@@ -64,6 +72,13 @@ export class CBMoveProfile {
 
     get capacity() {
         return this._capacity;
+    }
+}
+
+export class CBMoveProfile extends CBProfile {
+
+    constructor(capacity = 0) {
+        super(capacity);
     }
 
     get movementPoints() {
@@ -97,14 +112,10 @@ CBMoveProfile.COST_TYPE = {
     IMPASSABLE : 3
 };
 
-export class CBWeaponProfile {
+export class CBWeaponProfile extends CBProfile {
 
     constructor(capacity = 0) {
-        this._capacity = capacity;
-    }
-
-    get capacity() {
-        return this._capacity;
+        super(capacity);
     }
 
     getShockAttackCode() {
@@ -128,6 +139,30 @@ export class CBWeaponProfile {
     }
 }
 
+export class CBCommandProfile extends CBProfile {
+
+    constructor(capacity = 0) {
+        super(capacity);
+    }
+
+    get commandLevel() {
+        return 8 + this._capacity;
+    }
+
+}
+
+export class CBMoralProfile extends CBProfile {
+
+    constructor(capacity = 0) {
+        super(capacity);
+    }
+
+    get moral() {
+        return 8 + this._capacity;
+    }
+
+}
+
 export class CBUnitType {
 
     constructor(name, troopPaths, formationPaths) {
@@ -137,6 +172,8 @@ export class CBUnitType {
         this._maxStepCount = 2;
         this._moveProfiles = [];
         this._weaponProfiles = [];
+        this._commandProfiles = [];
+        this._moralProfiles = [];
     }
 
     getMoveProfile(steps) {
@@ -154,6 +191,24 @@ export class CBUnitType {
 
     setWeaponProfile(steps, weaponProfile) {
         this._weaponProfiles[steps] = weaponProfile;
+        return this;
+    }
+
+    getCommandProfile(steps) {
+        return this._commandProfiles[steps];
+    }
+
+    setCommandProfile(steps, commandProfile) {
+        this._commandProfiles[steps] = commandProfile;
+        return this;
+    }
+
+    getMoralProfile(steps) {
+        return this._moralProfiles[steps];
+    }
+
+    setMoralProfile(steps, moralProfile) {
+        this._moralProfiles[steps] = moralProfile;
         return this;
     }
 
@@ -193,6 +248,13 @@ export class CBUnitType {
         return this.getMoveProfile(steps).extendedMovementPoints;
     }
 
+    getCommandLevel(steps) {
+        return this.getCommandProfile(steps).commandLevel;
+    }
+
+    getMoral(steps) {
+        return this.getMoralProfile(steps).moral;
+    }
 }
 
 export class CBWing {
@@ -341,8 +403,8 @@ export function CarriableMixin(clazz) {
 
 export class CBMarkerArtifact extends RetractableArtifactMixin(CBCounterImageArtifact) {
 
-    constructor(unit, path, position, dimension= CBMarkerArtifact.MARKER_DIMENSION) {
-        super(unit, "units", [DImage.getImage(path)], position, dimension);
+    constructor(unit, images, position, dimension= CBMarkerArtifact.MARKER_DIMENSION) {
+        super(unit, "units", images, position, dimension);
     }
 
     get unit() {
@@ -359,6 +421,32 @@ export class CBMarkerArtifact extends RetractableArtifactMixin(CBCounterImageArt
 }
 CBMarkerArtifact.MARKER_DIMENSION = new Dimension2D(64, 64);
 
+export class CBSimpleMarkerArtifact extends CBMarkerArtifact {
+
+    constructor(unit, path, position, dimension = CBMarkerArtifact.MARKER_DIMENSION) {
+        super(unit, [DImage.getImage(path)], position, dimension);
+    }
+
+}
+
+export class CBActivableMarkerArtifact extends CBActivableMixin(CBMarkerArtifact) {
+
+    constructor(unit, paths, position, action, dimension= CBMarkerArtifact.MARKER_DIMENSION) {
+        let images = [];
+        for (let path of paths) {
+            images.push(DImage.getImage(path));
+        }
+        super(unit, images, position, dimension);
+        this._action = action;
+    }
+
+    onMouseClick(event) {
+        this._action(this);
+        return true;
+    }
+
+}
+
 export class CBUnit extends CBAbstractUnit {
 
     constructor(type, paths, wing, dimension=CBUnit.DIMENSION) {
@@ -373,7 +461,7 @@ export class CBUnit extends CBAbstractUnit {
         this._lackOfMunitions=0;
         this._cohesion=0;
         this._engaging=false;
-        this._charging=false;
+        this._charging=CBCharge.NONE;
         this._lossSteps = 0;
         this._orderGiven = false;
         this.artifact.setImage(this._lossSteps);
@@ -389,13 +477,19 @@ export class CBUnit extends CBAbstractUnit {
     }
 
     setMarkerArtifact(path, positionSlot) {
-        let marker = new CBMarkerArtifact(this, path, CBUnit.MARKERS_POSITION[positionSlot]);
+        let marker = new CBSimpleMarkerArtifact(this, path, CBUnit.MARKERS_POSITION[positionSlot]);
         this._element.addArtifact(marker);
         return marker;
     }
 
     createMarkerArtifact(path, positionSlot) {
-        let marker = new CBMarkerArtifact(this, path, CBUnit.MARKERS_POSITION[positionSlot]);
+        let marker = new CBSimpleMarkerArtifact(this, path, CBUnit.MARKERS_POSITION[positionSlot]);
+        this._element.appendArtifact(marker);
+        return marker;
+    }
+
+    createActivableMarkerArtifact(paths, action, positionSlot) {
+        let marker = new CBActivableMarkerArtifact(this, paths, CBUnit.MARKERS_POSITION[positionSlot], action);
         this._element.appendArtifact(marker);
         return marker;
     }
@@ -681,11 +775,17 @@ export class CBUnit extends CBAbstractUnit {
         this.artifact.setImage(this._lossSteps);
     }
 
+    destroy() {
+        Memento.register(this);
+        this.deleteFromMap();
+        this._cohesion = CBCohesion.DESTROYED;
+    }
+
     takeALoss() {
         Memento.register(this);
         this._lossSteps++;
         if (this._lossSteps >= this.maxStepCount) {
-            this.deleteFromMap();
+            this.destroy();
         }
         else {
             this.artifact.changeImage(this._lossSteps);
@@ -699,6 +799,17 @@ export class CBUnit extends CBAbstractUnit {
         this.artifact.changeImage(this._lossSteps);
     }
 
+    _changeLocation(hexLocation, moveType) {
+        Memento.register(this);
+        this._hexLocation._deleteUnit(this);
+        this._hexLocation = hexLocation;
+        hexLocation._appendUnit(this, moveType);
+        this._element.move(hexLocation.location);
+        for (let carried of this._carried) {
+            carried._move(hexLocation);
+        }
+    }
+
     move(hexLocation, cost=null, moveType = CBMoveType.BACKWARD) {
         if ((hexLocation || this.hexLocation) && (hexLocation !== this.hexLocation)) {
             if (this.hexLocation && !hexLocation) {
@@ -706,19 +817,22 @@ export class CBUnit extends CBAbstractUnit {
             } else if (!this.hexLocation && hexLocation) {
                 this.appendToMap(hexLocation, moveType);
             } else {
-                Memento.register(this);
-                this._hexLocation._deleteUnit(this);
-                this._hexLocation = hexLocation;
-                hexLocation._appendUnit(this, moveType);
-                this._element.move(hexLocation.location);
-                for (let carried of this._carried) {
-                    carried._move(hexLocation);
-                }
+                this._changeLocation(hexLocation, moveType);
             }
         }
         if (cost!=null) {
             this._updateMovementPoints(cost);
         }
+    }
+
+    retreat(hexLocation, moveType) {
+        this._changeLocation(hexLocation, moveType);
+        this.addOneCohesionLevel();
+        this.markAsEngaging(false);
+    }
+
+    advance(hexLocation) {
+        this._changeLocation(hexLocation, CBMoveType.FORWARD);
     }
 
     setAttackLocation(hexLocation) {
@@ -857,6 +971,14 @@ export class CBUnit extends CBAbstractUnit {
         this._updateLackOfMunitions(lackOfMunitionsLevel);
     }
 
+    get commandLevel() {
+        return this.commandProfile.commandLevel;
+    }
+
+    get moral() {
+        return this.moralProfile.moral - (this._cohesion === CBCohesion.GOOD_ORDER?0:1);
+    }
+
     _updateCohesion(cohesion) {
         console.assert(cohesion===0 || cohesion===1 || cohesion===2);
         this._cohesion = cohesion;
@@ -898,9 +1020,19 @@ export class CBUnit extends CBAbstractUnit {
         return this._cohesion === CBCohesion.ROUTED;
     }
 
+    isDestroyed() {
+        return this._cohesion === CBCohesion.DESTROYED;
+    }
+
     addOneCohesionLevel() {
         Memento.register(this);
-        this._updateCohesion(this._cohesion+1);
+        if (this._cohesion == CBCohesion.ROUTED) {
+            this.destroy();
+        }
+        else {
+            this._updateCohesion(this._cohesion + 1);
+            this.markAsCharging(CBCharge.NONE);
+        }
     }
 
     disrupt() {
@@ -924,11 +1056,21 @@ export class CBUnit extends CBAbstractUnit {
     _updateEngagement(engaged, charging) {
         if(this._engaging !== engaged || this._charging !== charging) {
             this._engaging = engaged;
+            if (this._charging === CBCharge.CHARGING && charging === CBCharge.NONE) {
+                this.addOneTirednessLevel();
+            }
             this._charging = charging;
             this._engagingArtifact && this._element.deleteArtifact(this._engagingArtifact);
             delete this._engagingArtifact;
-            if (this._charging) {
+            if (this._charging === CBCharge.CHARGING) {
                 this._engagingArtifact = this.createMarkerArtifact("/CBlades/images/markers/charge.png", 1);
+            }
+            else if (this._charging === CBCharge.CAN_CHARGE) {
+                this._engagingArtifact = this.createActivableMarkerArtifact([
+                    "/CBlades/images/markers/possible-charge.png", "/CBlades/images/markers/charge.png"
+                ], marker=>{
+                    marker.setImage((marker.imageIndex+1)%2);
+                }, 1);
             }
             else if (this._engaging) {
                 this._engagingArtifact = this.createMarkerArtifact("/CBlades/images/markers/contact.png", 1);
@@ -941,7 +1083,18 @@ export class CBUnit extends CBAbstractUnit {
     }
 
     isCharging() {
-        return this._charging;
+        return this._charging === CBCharge.CHARGING;
+    }
+
+    checkEngagement(engaging, mayCharge) {
+        Memento.register(this);
+        let charging = this._charging;
+        if (mayCharge) {
+            if (charging === CBCharge.NONE) charging = CBCharge.BEGIN_CHARGE;
+            else if (charging === CBCharge.BEGIN_CHARGE) charging = CBCharge.CAN_CHARGE;
+        }
+        else charging = CBCharge.NONE;
+        this._updateEngagement(engaging, charging);
     }
 
     markAsEngaging(engaging) {
@@ -952,6 +1105,17 @@ export class CBUnit extends CBAbstractUnit {
     markAsCharging(charging) {
         Memento.register(this);
         this._updateEngagement(this._engaging, charging);
+    }
+
+    acknowledgeCharge(moveEnd = false) {
+        if (this._charging === CBCharge.CAN_CHARGE) {
+            if (this._engagingArtifact.imageIndex === 1) {
+                this.markAsCharging(CBCharge.CHARGING);
+            }
+            else if (moveEnd) {
+                this.markAsCharging(CBCharge.NONE);
+            }
+        }
     }
 
     collectArtifactsToRetract(artifacts) {
@@ -969,6 +1133,14 @@ export class CBUnit extends CBAbstractUnit {
 
     get weaponProfile() {
         return this._type.getWeaponProfile(this.remainingStepCount);
+    }
+
+    get commandProfile() {
+        return this._type.getCommandProfile(this.remainingStepCount);
+    }
+
+    get moralProfile() {
+        return this._type.getMoralProfile(this.remainingStepCount);
     }
 
 }
@@ -1042,50 +1214,14 @@ export class CBFormation extends CBUnit {
         return this._hexLocation;
     }
 
-    move(hexSideId, cost=null, moveType = CBMoveType.BACKWARD) {
-        console.assert(hexSideId === null || hexSideId instanceof CBHexSideId);
-        if (!CBHexSideId.equals(hexSideId, this._hexLocation)) {
-            Memento.register(this);
-            if (this._hexLocation) {
-                this._hexLocation.fromHex.hex.deleteUnit(this);
-                this._hexLocation.toHex.hex.deleteUnit(this);
-                if (!hexSideId) this._element.hide();
-            }
-            if (hexSideId && !this._hexLocation) this._element.show(this.game.board);
-            this._hexLocation = hexSideId;
-            if (this._hexLocation) {
-                hexSideId.fromHex.hex.appendUnit(this, moveType);
-                hexSideId.toHex.hex.appendUnit(this, moveType);
-                this._element.move(hexSideId.location);
-            }
-            if (cost!=null) {
-                this._updateMovementPoints(cost);
-            }
-        }
-    }
-
-    set hexLocation(hexSideId) {
-        console.assert(hexSideId === null || hexSideId instanceof CBHexSideId);
-        if (this._hexLocation) {
-            this._hexLocation.fromHex.hex.removeUnit(this);
-            this._hexLocation.toHex.hex.removeUnit(this);
-        }
-        this._hexLocation = hexSideId;
-        if (this._hexLocation) {
-            hexSideId.fromHex.hex.addUnit(this);
-            hexSideId.toHex.hex.addUnit(this);
-            this.location = hexSideId.location;
-        }
-    }
-
     setMarkerArtifact(path, positionSlot) {
-        let marker = new CBMarkerArtifact(this, path, CBFormation.MARKERS_POSITION[positionSlot]);
+        let marker = new CBSimpleMarkerArtifact(this, path, CBFormation.MARKERS_POSITION[positionSlot]);
         this._element.addArtifact(marker);
         return marker;
     }
 
     createMarkerArtifact(path, positionSlot) {
-        let marker = new CBMarkerArtifact(this, path, CBFormation.MARKERS_POSITION[positionSlot]);
+        let marker = new CBSimpleMarkerArtifact(this, path, CBFormation.MARKERS_POSITION[positionSlot]);
         this._element.appendArtifact(marker);
         return marker;
     }
@@ -1169,7 +1305,7 @@ export class CBCharacter extends CBUnit {
     }
 
     createOrderInstructionArtifact(orderInstruction) {
-        let marker = new CBMarkerArtifact(this, CBCharacter.ORDER_INSTRUCTION_PATHS[orderInstruction],
+        let marker = new CBSimpleMarkerArtifact(this, CBCharacter.ORDER_INSTRUCTION_PATHS[orderInstruction],
             CBUnit.MARKERS_POSITION[6], CBCharacter.ORDER_INSTRUCTION_DIMENSION);
         return marker;
     }

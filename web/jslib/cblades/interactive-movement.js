@@ -20,6 +20,7 @@ import {
     CBAction, CBActionActuator, CBActuator, CBActuatorImageTrigger, CBActuatorTriggerMixin, CBMask, WidgetLevelMixin
 } from "./game.js";
 import {
+    CBCharge,
     CBMovement, CBMoveProfile
 } from "./unit.js";
 import {
@@ -105,7 +106,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
     }
 
     _buildMovementHelpActuator() {
-        let helpActuator = this.createMovementHelpActuator();
+        let helpActuator = this.createMovementHelpActuator(this.game.arbitrator.canGetTired(this.unit));
         this.game.openActuator(helpActuator);
     }
 
@@ -206,8 +207,8 @@ export class InteractiveAbstractMovementAction extends CBAction {
         return cost;
     }
 
-    createMovementHelpActuator(directions, first) {
-        return new CBMovementHelpActuator(this, directions, first);
+    createMovementHelpActuator(canGetTired) {
+        return new CBMovementHelpActuator(this, canGetTired);
     }
 
     createRotationActuator(directions, first) {
@@ -228,11 +229,30 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
 
     constructor(game, unit, event) {
         super(game, unit, event);
+        this._moves = 0;
+    }
+
+    _memento() {
+        let memento = super._memento();
+        memento.moves = this._moves;
+        return memento;
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        this._moves = memento.moves;
     }
 
     finalize(action) {
         if (!this.isFinalized()) {
-            if (this.unit.isEngaging() && this.game.arbitrator.isUnitEngaged(this.unit, false)) {
+            let engaging = this.unit.isEngaging();
+            if (this._moves>=2 || (this._moves===1 && engaging)) {
+                this.unit.acknowledgeCharge(true);
+            }
+            else {
+                this.unit.markAsCharging(CBCharge.NONE);
+            }
+            if (engaging && this.game.arbitrator.isUnitEngaged(this.unit, false)) {
                 this.checkAttackerEngagement(this.unit.viewportLocation, () => {
                     super.finalize(action);
                     Memento.clear();
@@ -261,7 +281,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         scene.addWidget(
             new CBCheckAttackerEngagementInsert(this.game), new Point2D(-CBCheckAttackerEngagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBMoralInsert(this.game), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+            new CBMoralInsert(this.game, this.unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -304,13 +324,21 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         return result;
     }
 
+    moveUnit(hexId, angle, start) {
+        this.unit.acknowledgeCharge();
+        super.moveUnit(hexId, angle, start);
+    }
+
     _continueAfterRotation() {
-        this.unit.markAsEngaging(this.game.arbitrator.doesUnitEngage(this.unit));
+        this.unit.checkEngagement(this.game.arbitrator.doesUnitEngage(this.unit), false);
         return super._continueAfterRotation();
     }
 
     _continueAfterMove() {
-        this.unit.markAsEngaging(this.game.arbitrator.doesUnitEngage(this.unit));
+        Memento.register(this);
+        this._moves++;
+        let mayCharge = this.game.arbitrator.mayUnitCharge(this.unit);
+        this.unit.checkEngagement(this.game.arbitrator.doesUnitEngage(this.unit), mayCharge);
         return this._createMovementActuators(false);
     }
 
@@ -321,6 +349,11 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     constructor(game, unit, event) {
         super(game, unit, event);
         this._unitMustCheckDisengagement = this.game.arbitrator.isUnitEngaged(this.unit, true);
+    }
+
+    play() {
+        this.unit.markAsCharging(CBCharge.NONE);
+        super.play();
     }
 
     showRules(point) {
@@ -386,7 +419,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
         scene.addWidget(
             new CBCheckDisengagementInsert(this.game), new Point2D(-CBCheckDisengagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBMoralInsert(this.game), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+            new CBMoralInsert(this.game, this.unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -438,6 +471,11 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
         this._unitMustCheckDisengagement = this.game.arbitrator.isUnitEngaged(this.unit, true);
     }
 
+    play() {
+        this.unit.markAsCharging(CBCharge.NONE);
+        super.play();
+    }
+
     finalize(action) {
         if (!this.isFinalized()) {
             if (this._unitMustCheckDisengagement) {
@@ -469,7 +507,7 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
         scene.addWidget(
             new CBCheckDisengagementInsert(this.game), new Point2D(-CBCheckDisengagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBMoralInsert(this.game), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+            new CBMoralInsert(this.game, this.unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -535,6 +573,11 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
         super(game, unit, event);
     }
 
+    play() {
+        this.unit.markAsCharging(CBCharge.NONE);
+        super.play();
+    }
+
     finalize(action) {
         if (!this.isFinalized()) {
             this.checkConfrontEngagement(this.unit.viewportLocation, () => {
@@ -565,7 +608,7 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
         scene.addWidget(
             new CBCheckConfrontEngagementInsert(this.game), new Point2D(-CBCheckConfrontEngagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBMoralInsert(this.game), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+            new CBMoralInsert(this.game, this.unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -649,11 +692,13 @@ function createMovementMenuItems(unit, actions) {
 
 class HelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 
-    constructor(actuator) {
+    constructor(actuator, canGetTired) {
         let normalImage = DImage.getImage("/CBlades/images/actuators/standard-movement-points.png");
         let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-movement-points.png");
-        let image = actuator.unit.movementPoints>0 ? normalImage : extendedImage;
+        let extended = actuator.unit.movementPoints<=0 && canGetTired;
+        let image = extended ? extendedImage : normalImage;
         super(actuator,"actuators", image, new Point2D(0, 0), HelpTrigger.DIMENSION, 0);
+        this._extended = extended
         this.pangle = actuator.unit.angle;
         this.position = actuator.unit.element.getLocation(new Point2D(30, 30))
             .translate(-actuator.unit.element.location.x, -actuator.unit.element.location.y);
@@ -661,11 +706,10 @@ class HelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 
     _paint() {
         super._paint();
-        let normal = this.actuator.unit.movementPoints > 0;
         this._level.setTextSettings("bold 30px serif", "center");
-        this._level.setFillSettings(normal ? "#2F528F" : "#bF9000");
+        this._level.setFillSettings(this._extended ? "#bF9000" : "#2F528F");
         this._level.fillText(
-            "" + (normal ? this.actuator.unit.movementPoints : this.actuator.unit.extendedMovementPoints),
+            "" + (this._extended ? this.actuator.unit.extendedMovementPoints :  this.actuator.unit.movementPoints),
             new Point2D(0, 10)
         );
     }
@@ -678,9 +722,9 @@ HelpTrigger.DIMENSION = new Dimension2D(55, 55);
 
 export class CBMovementHelpActuator extends CBActionActuator {
 
-    constructor(action) {
+    constructor(action, canGetTired) {
         super(action);
-        this._trigger = new HelpTrigger(this, this.unit);
+        this._trigger = new HelpTrigger(this, canGetTired);
         this.initElement([this._trigger]);
     }
 
@@ -694,7 +738,7 @@ export class CBMovementHelpActuator extends CBActionActuator {
 
     setVisibility(level) {
         super.setVisibility(level);
-        this._trigger.setVisibility && this._trigger.setVisibility(level===CBActuator.FULL_VISIBILITY ? 1:0);
+        this._trigger.setVisibility && this._trigger.setVisibility(level === CBActuator.FULL_VISIBILITY ? 1 : 0);
     }
 }
 
@@ -758,6 +802,11 @@ export class CBRotationActuator extends CBActionActuator {
         }
         this.initElement(imageArtifacts);
         this._first = first;
+    }
+
+    play() {
+        this.unit.markAsCharging(CBCharge.NONE);
+        super.play();
     }
 
     getTrigger(angle) {

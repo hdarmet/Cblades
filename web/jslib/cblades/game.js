@@ -209,18 +209,13 @@ CBAction.FINALIZED = 3;
 CBAction.CANCELLED = -1;
 CBAction.PROGRESSION = "progression";
 
-export function CBActuatorTriggerMixin(clazz) {
+export function CBActivableMixin(clazz) {
 
     return class extends clazz {
 
-        constructor(actuator, ...args) {
+        constructor(...args) {
             super(...args);
-            this._actuator = actuator;
             this.setSettings(this.settings);
-        }
-
-        get actuator() {
-            return this._actuator;
         }
 
         get settings() {
@@ -235,18 +230,37 @@ export function CBActuatorTriggerMixin(clazz) {
             }
         }
 
-        onMouseClick(event) {
-            this._actuator.onMouseClick(this, event);
-        }
-
         onMouseEnter(event) {
             this.setSettings(this.overSettings);
             this.element.refresh();
+            return true;
         }
 
         onMouseLeave(event) {
             this.setSettings(this.settings);
             this.element.refresh();
+            return true;
+        }
+
+    }
+}
+
+export function CBActuatorTriggerMixin(clazz) {
+
+    return class extends CBActivableMixin(clazz) {
+
+        constructor(actuator, ...args) {
+            super(...args);
+            this._actuator = actuator;
+        }
+
+        get actuator() {
+            return this._actuator;
+        }
+
+        onMouseClick(event) {
+            this._actuator.onMouseClick(this, event);
+            return true;
         }
 
     }
@@ -286,11 +300,13 @@ export class CBUnitActuatorTrigger extends CBActuatorImageTrigger {
     onMouseEnter(event) {
         super.onMouseEnter(event);
         this.unit.retractAbove();
+        return true;
     }
 
     onMouseLeave(event) {
         super.onMouseLeave(event);
         this.unit.appearAbove();
+        return true;
     }
 
 }
@@ -938,6 +954,7 @@ export class CBCounterImageArtifact extends DMultiImagesArtifact {
 
     onMouseClick(event) {
         this._counter.onMouseClick && this._counter.onMouseClick(event);
+        return true;
     }
 
     get counter() {
@@ -951,9 +968,11 @@ export class CBCounterImageArtifact extends DMultiImagesArtifact {
     }
 
     onMouseEnter(event) {
+        return true;
     }
 
     onMouseLeave(event) {
+        return true;
     }
 
 }
@@ -992,6 +1011,7 @@ function SelectableMixin(clazz) {
             if (this.game.selectedUnit!==this.unit && this.game.canSelectUnit(this.unit)) {
                 this.setSettings(this.overSettings);
             }
+            return true;
         }
 
         onMouseLeave(event) {
@@ -999,6 +1019,7 @@ function SelectableMixin(clazz) {
             if (this.game.selectedUnit!==this.unit && this.game.canSelectUnit(this.unit)) {
                 this.setSettings(this.settings);
             }
+            return true;
         }
     }
 }
@@ -1013,11 +1034,13 @@ export function RetractableArtifactMixin(clazz) {
         onMouseEnter(event) {
             super.onMouseEnter(event);
             this.counter.retractAbove();
+            return true;
         }
 
         onMouseLeave(event) {
             super.onMouseLeave(event);
             this.counter.appearAbove();
+            return true;
         }
 
     }
@@ -1316,9 +1339,13 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
         }
     }
 
-    launchAction(action) {
+    changeAction(action) {
         Memento.register(this);
         this._action = action;
+    }
+
+    launchAction(action) {
+        this.changeAction(action);
         action.play();
     }
 
@@ -1405,14 +1432,14 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
         delete this._hexLocation;
     }
 
-    appendToMap(hexId, moveType) {
+    appendToMap(hexLocation, moveType) {
         console.assert(!this._hexLocation);
         Memento.register(this);
-        hexId.game._appendUnit(this);
-        this._hexLocation = hexId;
-        hexId._appendUnit(this, moveType);
-        this._show(hexId.map.game);
-        this._element.move(hexId.location);
+        hexLocation.game._appendUnit(this);
+        this._hexLocation = hexLocation;
+        hexLocation._appendUnit(this, moveType);
+        this._show(hexLocation.map.game);
+        this._element.move(hexLocation.location);
     }
 
     deleteFromMap() {

@@ -168,6 +168,9 @@ Point2D.location = function(point1, point2, factor) {
 Point2D.position = function(point1, point2, factor) {
     return new Point2D(point2.x*factor-point1.x*factor, point2.y*factor-point1.y*factor);
 }
+Point2D.getEventPoint = function(event) {
+    return new Point2D(event.offsetX, event.offsetY);
+}
 
 /**
  * Dimension object in a 2D space

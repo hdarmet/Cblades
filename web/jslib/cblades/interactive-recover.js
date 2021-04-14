@@ -16,6 +16,9 @@ import {
     CBWingTirednessIndicator,
     CBMoralInsert
 } from "./interactive-player.js";
+import {
+    CBCharge
+} from "./unit.js";
 
 export function registerInteractiveRecover() {
     CBInteractivePlayer.prototype.restUnit = function(unit, event) {
@@ -53,6 +56,8 @@ export class InteractiveRestingAction extends CBAction {
     }
 
     play() {
+        this.game.closeActuators();
+        this.unit.markAsCharging(CBCharge.NONE);
         let wingTiredness = this.game.arbitrator.getWingTiredness(this.unit);
         let weather = this.game.arbitrator.getWeather();
         let result = new DResult();
@@ -109,6 +114,8 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
     }
 
     play() {
+        this.game.closeActuators();
+        this.unit.markAsCharging(CBCharge.NONE);
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
@@ -158,6 +165,8 @@ export class InteractiveReorganizeAction extends CBAction {
     }
 
     play() {
+        this.game.closeActuators();
+        this.unit.markAsCharging(CBCharge.NONE);
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
@@ -170,7 +179,7 @@ export class InteractiveReorganizeAction extends CBAction {
         ).addWidget(
             new CBCheckReorganizeInsert(this.game), new Point2D(CBCheckReorganizeInsert.DIMENSION.w/2, CBCheckReorganizeInsert.DIMENSION.h/2+70)
         ).addWidget(
-            new CBMoralInsert(this.game),
+            new CBMoralInsert(this.game, this.unit),
             new Point2D(-CBMoralInsert.DIMENSION.w/2, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
@@ -209,6 +218,8 @@ export class InteractiveRallyAction extends CBAction {
     }
 
     play() {
+        this.game.closeActuators();
+        this.unit.markAsCharging(CBCharge.NONE);
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
@@ -221,7 +232,7 @@ export class InteractiveRallyAction extends CBAction {
         ).addWidget(
             new CBCheckRallyInsert(this.game), new Point2D(CBCheckRallyInsert.DIMENSION.w/2, CBCheckRallyInsert.DIMENSION.h/2+70)
         ).addWidget(
-            new CBMoralInsert(this.game),
+            new CBMoralInsert(this.game, this.unit),
             new Point2D(-CBMoralInsert.DIMENSION.w/2, 0)
         ).addWidget(
             dice.setFinalAction(()=>{

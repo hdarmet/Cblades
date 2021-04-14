@@ -5,7 +5,8 @@ import {
     PedestrianMoveProfile,
     CBProfileCapacity,
     HeavyCavalryWeaponProfile,
-    LanceWeaponProfile
+    LanceWeaponProfile,
+    EliteMoralProfile, RegularCommandProfile
 } from "../profile.js";
 
 import {
@@ -19,8 +20,15 @@ export let RoughneckLeader = new CBUnitType("Company Leader",
     ]
 ).setMoveProfile(1, new CavalryMoveProfile(CBProfileCapacity.INFERIOR)
 ).setMoveProfile(2, new CavalryMoveProfile(CBProfileCapacity.DISADVANTAGED)
+
 ).setWeaponProfile(1, new HeavyCavalryWeaponProfile(CBProfileCapacity.ADVANTAGED)
-).setWeaponProfile(2, new HeavyCavalryWeaponProfile(CBProfileCapacity.SUPERIOR));
+).setWeaponProfile(2, new HeavyCavalryWeaponProfile(CBProfileCapacity.SUPERIOR)
+
+).setCommandProfile(1, new RegularCommandProfile(CBProfileCapacity.DISADVANTAGED)
+).setCommandProfile(2, new RegularCommandProfile(CBProfileCapacity.NORMAL)
+
+).setMoralProfile(1, new EliteMoralProfile(CBProfileCapacity.NORMAL)
+).setMoralProfile(2, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED));
 
 export let RoughneckKnight = new CBUnitType("Company Knight",
     [
@@ -29,8 +37,15 @@ export let RoughneckKnight = new CBUnitType("Company Knight",
     ]
 ).setMoveProfile(1, new CavalryMoveProfile(CBProfileCapacity.DISADVANTAGED)
 ).setMoveProfile(2, new CavalryMoveProfile(CBProfileCapacity.DISADVANTAGED)
+
 ).setWeaponProfile(1, new HeavyCavalryWeaponProfile(CBProfileCapacity.NORMAL)
-).setWeaponProfile(2, new HeavyCavalryWeaponProfile(CBProfileCapacity.ADVANTAGED));
+).setWeaponProfile(2, new HeavyCavalryWeaponProfile(CBProfileCapacity.ADVANTAGED)
+
+).setCommandProfile(1, new RegularCommandProfile(CBProfileCapacity.DISADVANTAGED)
+).setCommandProfile(2, new RegularCommandProfile(CBProfileCapacity.INFERIOR)
+
+).setMoralProfile(1, new EliteMoralProfile(CBProfileCapacity.NORMAL)
+).setMoralProfile(2, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED));
 
 export let RoughneckLance = new CBUnitType("Company Lancet",
     [
@@ -53,6 +68,7 @@ export let RoughneckLance = new CBUnitType("Company Lancet",
 ).setMoveProfile(6, new PedestrianMoveProfile(CBProfileCapacity.ADVANTAGED)
 ).setMoveProfile(7, new PedestrianMoveProfile(CBProfileCapacity.ADVANTAGED)
 ).setMoveProfile(8, new PedestrianMoveProfile(CBProfileCapacity.ADVANTAGED)
+
 ).setWeaponProfile(1, new LanceWeaponProfile(CBProfileCapacity.NORMAL)
 ).setWeaponProfile(2, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED)
 ).setWeaponProfile(3, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED)
@@ -60,4 +76,22 @@ export let RoughneckLance = new CBUnitType("Company Lancet",
 ).setWeaponProfile(5, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED)
 ).setWeaponProfile(6, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED)
 ).setWeaponProfile(7, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED)
-).setWeaponProfile(8, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED));
+).setWeaponProfile(8, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED)
+
+).setCommandProfile(1, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)
+).setCommandProfile(2, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)
+).setCommandProfile(3, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)
+).setCommandProfile(4, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)
+).setCommandProfile(5, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)
+).setCommandProfile(6, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)
+).setCommandProfile(7, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)
+).setCommandProfile(8, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)
+
+).setMoralProfile(1, new EliteMoralProfile(CBProfileCapacity.NORMAL)
+).setMoralProfile(2, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED)
+).setMoralProfile(3, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED)
+).setMoralProfile(4, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED)
+).setMoralProfile(5, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED)
+).setMoralProfile(6, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED)
+).setMoralProfile(7, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED)
+).setMoralProfile(8, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED));

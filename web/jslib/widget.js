@@ -183,6 +183,7 @@ export class DIconMenuItem extends DImageArtifact {
                 this.element.closeMenu();
             }
         }
+        return true;
     }
 
     onMouseEnter(event) {
@@ -190,6 +191,7 @@ export class DIconMenuItem extends DImageArtifact {
             this.setSettings(this.mouseOverSettings);
             this.element.refresh();
         }
+        return true;
     }
 
     onMouseLeave(event) {
@@ -197,6 +199,7 @@ export class DIconMenuItem extends DImageArtifact {
             this.setSettings(null);
             this.element.refresh();
         }
+        return true;
     }
 
     get mouseOverSettings() {
@@ -286,16 +289,19 @@ export function ActivableArtifact(clazz) {
             if (this._active) {
                 this._element.action();
             }
+            return true;
         }
 
         onMouseEnter(event) {
             this._over = true;
             this._dispatch();
+            return true;
         }
 
         onMouseLeave(event) {
             this._over = false;
             this._dispatch();
+            return true;
         }
 
         _isOver() {
@@ -623,6 +629,10 @@ class InsertImageArtifact extends DComposedImageArtifact {
         this.addComposition(this._image, area, area);
     }
 
+    onMouseClick(event) {
+        console.log(this.getPoint(Point2D.getEventPoint(event)).plusDim(this.dimension.half));
+        return true;
+    }
 }
 
 export class DInsertCommand extends ActivableArtifact(DImageArtifact) {
@@ -634,6 +644,7 @@ export class DInsertCommand extends ActivableArtifact(DImageArtifact) {
 
     onMouseClick(event) {
         this._action.call(this.element);
+        return true;
     }
 
     get overSettings() {
@@ -645,11 +656,13 @@ export class DInsertCommand extends ActivableArtifact(DImageArtifact) {
     onMouseEnter(event) {
         this.setSettings(this.overSettings);
         this.element && this.element.refresh();
+        return true;
     }
 
     onMouseLeave(event) {
         this.setSettings(this.settings);
         this.element && this.element.refresh();
+        return true;
     }
 
 }
@@ -782,7 +795,7 @@ export class DInsertFrame {
             composition.destArea,
             Area2D.create(new Point2D(x, y), composition.sourceArea.dimension)
         );
-        this._moveMarkers();
+        this._moveMarks();
         this._manageNavigation();
     }
 
@@ -814,33 +827,33 @@ export class DInsertFrame {
         this.moveTo(new Point2D(composition.sourceArea.left, position));
     }
 
-    _moveMarkers() {
-        for (let marker of this._insert._markers.values()) {
-            this._manageVisibility(marker);
+    _moveMarks() {
+        for (let mark of this._insert._marks) {
+            this._manageVisibility(mark);
         }
     }
 
-    _getMarkerPosition(markerLocation) {
+    _getMarkPosition(markLocation) {
         let composition = this._insert.artifact.getComposition(this._index);
-        return markerLocation.minusPoint(composition.sourceArea.origin).plusPoint(this.area.origin).minusDim(this._insert.dimension.half);
+        return markLocation.minusPoint(composition.sourceArea.origin).plusPoint(this.area.origin).minusDim(this._insert.dimension.half);
     }
 
-    _manageVisibility(marker) {
+    _manageVisibility(mark) {
 
-        function isVisible(marker) {
+        function isVisible(mark) {
             let composition = this._insert.artifact.getComposition(this._index);
             return composition.sourceArea.contains(
-                Area2D.create(marker.location.minusDim(DAbstractInsert.OK_DIMENSION.half), DAbstractInsert.OK_DIMENSION)
+                Area2D.create(mark.location.minusDim(DAbstractInsert.OK_DIMENSION.half), DAbstractInsert.OK_DIMENSION)
             );
         }
 
-        marker.artifact.position = this._getMarkerPosition(marker.location);
-        if (this._pageArea.inside(marker.location)) {
-            if (this._insert.hasArtifact(marker.artifact) && (!marker.shown || !isVisible.call(this, marker))) {
-                this._insert.removeArtifact(marker.artifact);
+        mark.artifact.position = this._getMarkPosition(mark.location);
+        if (this._pageArea.inside(mark.location)) {
+            if (this._insert.hasArtifact(mark.artifact) && (!isVisible.call(this, mark))) {
+                this._insert.removeArtifact(mark.artifact);
             }
-            else if (!this._insert.hasArtifact(marker.artifact) && (marker.shown && isVisible.call(this, marker))) {
-                this._insert.addArtifact(marker.artifact);
+            else if (!this._insert.hasArtifact(mark.artifact) && (isVisible.call(this, mark))) {
+                this._insert.addArtifact(mark.artifact);
             }
         }
 
@@ -866,7 +879,7 @@ export class DAbstractInsert extends DElement {
         this.addArtifact(new InsertBorder(dimension));
         this.addArtifact(this._artifact);
 
-        this._markers = new Map();
+        this._marks = [];
         this._frames = [];
     }
 
@@ -876,15 +889,18 @@ export class DAbstractInsert extends DElement {
         frame._manageNavigation();
     }
 
-    declareMark(name, location) {
+    setMark(location) {
         let okImage = DImage.getImage("/CBlades/images/inserts/ok.png");
-        this._markers.set(name, {
+        let mark = {
             location,
             artifact:new DImageArtifact(
                 "widget-items", okImage,
                 new Point2D(0, 0), DAbstractInsert.OK_DIMENSION),
-            shown:false
-        });
+        };
+        this._marks.push(mark);
+        for (let frame of this._frames) {
+            frame._manageVisibility(mark);
+        }
     }
 
     get dimension() {
@@ -893,14 +909,6 @@ export class DAbstractInsert extends DElement {
 
     get artifact() {
         return this._artifact;
-    }
-
-    setMark(name) {
-        let marker = this._markers.get(name);
-        marker.shown = true;
-        for (let frame of this._frames) {
-            frame._manageVisibility(marker);
-        }
     }
 
     open(board, location) {
@@ -1026,16 +1034,19 @@ class ResultImageArtifact extends DMultiImagesArtifact {
         }
     }
 
-    onMouseClick() {
+    onMouseClick(event) {
         this._element.onMouseClick();
+        return true;
     }
 
     onMouseEnter(event) {
         this.setSettings(this._insideSettings);
+        return true;
     }
 
     onMouseLeave(event) {
         this.setSettings(this._outsideSettings);
+        return true;
     }
 }
 ResultImageArtifact.DIMENSION = new Dimension2D(150, 150);
@@ -1097,6 +1108,7 @@ export class DResult extends DElement {
 
     onMouseClick() {
         this._finalAction && this._finalAction(this._success);
+        return true;
     }
 
 }
@@ -1124,14 +1136,17 @@ class MessageImageArtifact extends DImageArtifact {
 
     onMouseClick() {
         this._element.onMouseClick();
+        return true;
     }
 
     onMouseEnter(event) {
         this.setSettings(this.overSettings);
+        return true;
     }
 
     onMouseLeave(event) {
         this.setSettings(this.settings);
+        return true;
     }
 }
 MessageImageArtifact.DIMENSION = new Dimension2D(150, 150);
@@ -1183,6 +1198,7 @@ export class DMessage extends DElement {
 
     onMouseClick() {
         this._finalAction && this._finalAction(...this._values);
+        return true;
     }
 
 }
@@ -1222,9 +1238,14 @@ class DMaskArtifact extends DArtifact {
     }
 
     onMouseClick(event) {
+        let alpha = !!this._element.alpha;
         this._element.action && this._element.action();
+        return alpha;
     }
 
+    onMouseMove(event) {
+        return !!this._element.alpha;
+    }
 }
 
 export class DMask extends DElement {

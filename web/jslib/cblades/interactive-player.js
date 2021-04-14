@@ -36,9 +36,11 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
     }
 
     launchUnitAction(unit, event) {
-        this.openActionMenu(unit,
-            new Point2D(event.offsetX, event.offsetY),
-            this.game.arbitrator.getAllowedActions(unit));
+        if (!unit.isDestroyed()) {
+            this.openActionMenu(unit,
+                new Point2D(event.offsetX, event.offsetY),
+                this.game.arbitrator.getAllowedActions(unit));
+        }
     }
 
     afterActivation(unit, action) {
@@ -90,7 +92,7 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         scene.addWidget(
             new CBCheckDefenderEngagementInsert(this.game), new Point2D(-CBCheckDefenderEngagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBMoralInsert(this.game), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+            new CBMoralInsert(this.game, unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -208,8 +210,13 @@ CBCheckDefenderEngagementInsert.DIMENSION = new Dimension2D(444, 763);
 
 export class CBMoralInsert extends WidgetLevelMixin(DInsert) {
 
-    constructor(game) {
+    constructor(game, unit) {
         super(game, "/CBlades/images/inserts/moral-insert.png", CBMoralInsert.DIMENSION);
+        let delta = (177-57)/4;
+        this.setMark(new Point2D(20, 177-(unit.moralProfile.capacity+2)*delta));
+        if (unit.isDisrupted() || unit.isRouted()) {
+            this.setMark(new Point2D(20, 225));
+        }
     }
 
 }

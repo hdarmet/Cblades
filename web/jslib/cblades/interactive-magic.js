@@ -30,6 +30,9 @@ import {
 import {
     CBCombatResultTableInsert
 } from "./interactive-combat.js";
+import {
+    CBCharge
+} from "./unit.js";
 
 export function registerInteractiveMagic() {
     CBInteractivePlayer.prototype.choseSpell = function(unit, event) {
@@ -67,6 +70,7 @@ export class InteractiveChoseSpellAction extends CBAction {
     }
 
     play() {
+        this.unit.markAsCharging(CBCharge.NONE);
         this.unit.player.openMagicMenu(this.unit,
             this.unit.viewportLocation,
             this.game.arbitrator.getAllowedSpells(this.unit));
@@ -82,6 +86,7 @@ export class InteractiveTryToCastSpellAction extends CBAction {
     }
 
     play() {
+        this.unit.markAsCharging(CBCharge.NONE);
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
@@ -130,8 +135,9 @@ export class InteractiveCastSpellAction extends CBAction {
     }
 
     play() {
-        let result = this._spell.getNextCinematic();
+        this.unit.markAsCharging(CBCharge.NONE);
         this.game.closeActuators();
+        let result = this._spell.getNextCinematic();
         switch (result.cinematic) {
             case CBSpell.CINEMATIC.APPLY:
                 this._spell.apply();
