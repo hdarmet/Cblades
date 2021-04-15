@@ -520,7 +520,6 @@ describe("Interactive Command", ()=> {
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showPlayedDie(4, 626, 471.2243));
             skipDirectives(commandsLayer, 4);
-            assertDirectives(commandsLayer, showInsertCommand("down", 364, 736.2243));
             assertDirectives(commandsLayer, showMessage("9", 586, 471.2243));
         when:
             clickOnMessage(game);

@@ -1371,12 +1371,12 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
         return this._hexLocation;
     }
 
-    set hexLocation(hexId) {
+    set hexLocation(hexLocation) {
         if (this._hexLocation) {
             this.removeFromMap();
         }
-        if (hexId) {
-            this.addToMap(hexId, CBMoveType.BACKWARD);
+        if (hexLocation) {
+            this.addToMap(hexLocation, CBMoveType.BACKWARD);
         }
     }
 

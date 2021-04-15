@@ -56,11 +56,12 @@ export class CBMapEditorHexTrigger extends CBActuatorMultiImagesTrigger {
         return this._hex;
     }
 
-    onMouseClick(trigger, event) {
+    onMouseClick(event) {
         Memento.register(this);
         this._type = (this._type+1)%15;
         this._hex.changeType(this._type);
         this.changeImage(this._type);
+        return true;
     }
 
 }
@@ -98,11 +99,12 @@ export class CBMapEditorHexSideTrigger extends CBActuatorMultiImagesTrigger {
         return this._hexSide;
     }
 
-    onMouseClick(trigger, event) {
+    onMouseClick(event) {
         Memento.register(this);
         this._type = (this._type+1)%5;
         this._hexSide.changeType(this._type);
         this.changeImage(this._type);
+        return true;
     }
 
 }

@@ -285,9 +285,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         if (result.tirednessForAttacker) {
             this.unit.addOneTirednessLevel();
         }
-        else {
-            this.markAsStarted();
-        }
+        this.markAsStarted();
         return result;
     }
 
@@ -410,7 +408,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
                 }
                 if (report.success) {
                     result.success().appear();
-                    foe.player.applyLossesToUnit(foe, result.lossesForDefender, false, this.unit, continuation);
+                    foe.player.applyLossesToUnit(foe, report.lossesForDefender, this.unit, false, continuation);
                 }
                 else {
                     result.failure().appear();

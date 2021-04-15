@@ -39,22 +39,25 @@ export class Assertor {
         }
     }
 
-    _equals(model, value) {
+    _isEqual(model, value) {
         if (typeof(model)==="number" && typeof(value)==="number") {
             if (value<model-NUMBER_MARGIN || value>model+NUMBER_MARGIN) {
-                throw new AssertionFailed(value, " is not equal to ", model);
+                return false;
             }
         } else if (model!==value) {
+            return false;
+        }
+        return true;
+    }
+
+    _equals(model, value) {
+        if (!this._isEqual(model, value)) {
             throw new AssertionFailed(value, " is not equal to ", model);
         }
     }
 
     _notEquals(model, value) {
-        if (typeof(model)==="number" && typeof(value)==="number") {
-            if (value>model-NUMBER_MARGIN && value<model+NUMBER_MARGIN) {
-                throw new AssertionFailed(value, " is equal to ", model);
-            }
-        } else if (model===value) {
+        if (this._isEqual(model, value)) {
             throw new AssertionFailed(value, " is equal to ", model);
         }
     }
@@ -109,6 +112,27 @@ export class Assertor {
         }
     }
 
+    _arrayIsEqual(model, value) {
+        if (!model || !(model instanceof Array)) {
+            throw new AssertionError(model, " is not an array.");
+        }
+        if (!value || !(value instanceof Array)) {
+            throw new AssertionError(value, " is not an array.");
+        }
+        if (value.length!=model.length) {
+            return false;
+        }
+        for (let index=0; index<model.length; index++) {
+            if (model[index] && (model[index] instanceof Array)) {
+                if (!this._arrayIsEqual(model[index], value[index])) return false;
+            }
+            else {
+                if (!this._isEqual(model[index], value[index])) return false;
+            }
+        }
+        return true;
+    }
+
     _arrayEquals(model, value) {
         if (!model || !(model instanceof Array)) {
             throw new AssertionError(model, " is not an array.");
@@ -139,12 +163,35 @@ export class Assertor {
         if (value.length!=model.length) {
             throw new AssertionFailed(value, " is not equal to ", model);
         }
-        let modelSet = new Set(model);
         for (let item of value) {
-            if (!modelSet.has(item)) {
+            let found = false;
+            for (let modelItem of model) {
+                if (this._isAnyEqual(modelItem, item)) found = true;
+            }
+            if (!found) {
                 throw new AssertionFailed(model, " does not contain ", item);
             }
         }
+    }
+
+    _isAnyEqual(model, value) {
+        if (model && (model instanceof Array)) {
+            if (!this._arrayIsEqual(model, value)) return false;
+        }
+        else if (model && (model.constructor === Object)) {
+            if (!this._objectIsEqual(model, value)) return false;
+        }
+        else {
+            if (!this._isEqual(model, value)) return false;
+        }
+        return true;
+    }
+
+    _objectIsEqual(model, value) {
+        for (let key in model) {
+            if (!this._isAnyEqual(model[key], value[key])) return false;
+        }
+        return true;
     }
 
     _objectEquals(model, value) {

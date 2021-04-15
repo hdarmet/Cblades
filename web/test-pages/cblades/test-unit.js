@@ -29,7 +29,14 @@ import {
     CBLackOfMunitions,
     CBTiredness,
     CBCohesion,
-    CBOrderInstruction, CBFormation, CarriableMixin, OptionArtifactMixin, OptionMixin, CBMoveProfile, CBWeaponProfile
+    CBOrderInstruction,
+    CBFormation,
+    CarriableMixin,
+    OptionArtifactMixin,
+    OptionMixin,
+    CBMoveProfile,
+    CBWeaponProfile,
+    CBCharge
 } from "../../jslib/cblades/unit.js";
 import {
     Dimension2D
@@ -1330,7 +1337,7 @@ describe("Unit", ()=> {
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
-            unit.markAsCharging(true);
+            unit.markAsCharging(CBCharge.CHARGING);
             paint(game);
             loadAllImages(); // to load fleeing.png
         then:
@@ -1360,7 +1367,7 @@ describe("Unit", ()=> {
         when:
             resetDirectives(markersLayer);
             unit.markAsEngaging(true);
-            unit.markAsCharging(true);
+            unit.markAsCharging(CBCharge.CHARGING);
             paint(game);
             loadAllImages(); // to load charge.png
         then:
@@ -1407,7 +1414,7 @@ describe("Unit", ()=> {
         when:
             resetDirectives(markersLayer);
             unit2.markAsBeingPlayed(true);
-            unit2.markAsCharging(true);
+            unit2.markAsEngaging(true);
             unit2.addOneCohesionLevel();
             unit2.addOneTirednessLevel();
             unit2.addOneLackOfMunitionsLevel();
@@ -1423,7 +1430,7 @@ describe("Unit", ()=> {
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 391.74, 307.4108)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/markers/charge.png, -32, -32, 64, 64)",
+                    "drawImage(/CBlades/images/markers/contact.png, -32, -32, 64, 64)",
                 "restore()",
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 391.74, 376.8145)",

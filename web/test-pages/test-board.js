@@ -187,14 +187,6 @@ describe("Board", ()=> {
             ]);
     });
 
-
-
-
-
-
-
-
-
     it("Checks element refresh feature", () => {
         given:
             var { board, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
@@ -1679,6 +1671,7 @@ describe("Board", ()=> {
             var mouseClicked = false;
             artifact.onMouseClick = event=> {
                 mouseClicked = true;
+                return true;
             };
             element.setOnBoard(board);
         when: // clicks outside the artifact
@@ -1703,6 +1696,7 @@ describe("Board", ()=> {
             var mouseMoved = false;
             artifact.onMouseMove = event=> {
                 mouseMoved = true;
+                return true;
             };
             element.setOnBoard(board);
         when: // clicks outside the artifact
@@ -2010,9 +2004,11 @@ describe("Board", ()=> {
             var keyboardReceived = false;
             artifact.onMouseClick = event=> {
                 isFocus = true;
+                return true;
             };
             artifact.onKeyDown = event=> {
                 keyboardReceived = true;
+                return true;
             };
             element.setOnBoard(board);
         when: // No focus : event is lost

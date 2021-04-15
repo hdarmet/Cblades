@@ -23,9 +23,9 @@ import {
 } from "../../jslib/cblades/game.js";
 import {
     CBCharacter,
-    CBCohesion,
+    CBCohesion, CBCommandProfile,
     CBFormation,
-    CBLackOfMunitions,
+    CBLackOfMunitions, CBMoralProfile,
     CBMovement, CBMoveProfile,
     CBTiredness,
     CBTroop,
@@ -132,6 +132,8 @@ describe("Arbitrator", ()=> {
             for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
                 this.setMoveProfile(index, new CBMoveProfile());
                 this.setWeaponProfile(index, new FireWeaponProfile());
+                this.setCommandProfile(index, new CBCommandProfile());
+                this.setMoralProfile(index, new CBMoralProfile());
             }
         }
     }
@@ -1602,22 +1604,26 @@ describe("Arbitrator", ()=> {
     it("Checks units that may receive orders", () => {
         given:
             var {game, arbitrator, leader11, unit11, unit12} = create2Players4UnitsTinyGame();
+            unit11.disrupt();
+            unit12.disrupt();
         when:
             var units = arbitrator.getUnitsThatMayReceiveOrders(leader11, 5);
         then:
-            assert(units).unorderedArrayEqualsTo([unit11, unit12]);
+            assert(units).unorderedArrayEqualsTo([
+                {unit:unit11, cost:2, detail:{base:1}}, {unit:unit12, cost:2, detail:{base:1, disrupted:1}}
+            ]);
         when:
             unit11.receiveOrder(true)
             units = arbitrator.getUnitsThatMayReceiveOrders(leader11, 5);
         then:
-            assert(units).unorderedArrayEqualsTo([unit12]);
+            assert(units).unorderedArrayEqualsTo([{unit:unit12, cost:2, detail:{base:1, disrupted:1}}]);
         when:
             unit11.receiveOrder(false)
             unit12.launchAction(new CBAction(game, unit12));
             unit12.action.markAsStarted();
             units = arbitrator.getUnitsThatMayReceiveOrders(leader11, 5);
         then:
-            assert(units).unorderedArrayEqualsTo([unit11]);
+            assert(units).unorderedArrayEqualsTo([{unit:unit11, cost:2, detail:{base:1, disrupted:1}}]);
         when:
             leader11.receiveCommandPoints(1);
             units = arbitrator.getUnitsThatMayReceiveOrders(leader11, 1);

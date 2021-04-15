@@ -16,7 +16,15 @@ import {
     CBInteractivePlayer
 } from "../../jslib/cblades/interactive-player.js";
 import {
-    CBCharacter, CBFormation, CBMoveProfile, CBTroop, CBUnitType, CBWeaponProfile, CBWing
+    CBCharacter,
+    CBCommandProfile,
+    CBFormation,
+    CBMoralProfile,
+    CBMoveProfile,
+    CBTroop,
+    CBUnitType,
+    CBWeaponProfile,
+    CBWing
 } from "../../jslib/cblades/unit.js";
 
 export class FireWeaponProfile extends CBWeaponProfile {
@@ -34,6 +42,8 @@ export class CBTestUnitType extends CBUnitType {
         for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
             this.setMoveProfile(index, new CBMoveProfile());
             this.setWeaponProfile(index, new FireWeaponProfile());
+            this.setCommandProfile(index, new CBCommandProfile());
+            this.setMoralProfile(index, new CBMoralProfile());
         }
     }
 }

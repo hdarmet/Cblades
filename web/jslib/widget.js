@@ -638,7 +638,7 @@ class InsertImageArtifact extends DComposedImageArtifact {
 export class DInsertCommand extends ActivableArtifact(DImageArtifact) {
 
     constructor(image, position, action) {
-        super("widget-commands", image, position, DInsertCommand.DIMENSION);
+        super("widgets", image, position, DInsertCommand.DIMENSION);
         this._action = action;
     }
 
@@ -894,7 +894,7 @@ export class DAbstractInsert extends DElement {
         let mark = {
             location,
             artifact:new DImageArtifact(
-                "widget-items", okImage,
+                "widgets", okImage,
                 new Point2D(0, 0), DAbstractInsert.OK_DIMENSION),
         };
         this._marks.push(mark);

@@ -787,9 +787,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
                     "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 300, -100, -150, 200, 300)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 215, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
@@ -816,9 +814,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
                     "drawImage(/CBlades/images/inserts/insert.png, 0, 90, 200, 300, -100, -150, 200, 300)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 215, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
@@ -845,9 +841,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
                     "drawImage(/CBlades/images/inserts/insert.png, 90, 90, 200, 300, -100, -150, 200, 300)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 85)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
@@ -874,9 +868,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
                     "drawImage(/CBlades/images/inserts/insert.png, 90, 0, 200, 300, -100, -150, 200, 300)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 85, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
@@ -903,9 +895,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
                     "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 300, -100, -150, 200, 300)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 315)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
@@ -932,9 +922,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
                     "drawImage(/CBlades/images/inserts/insert.png, 45, 45, 200, 300, -100, -150, 200, 300)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 315)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
@@ -960,7 +948,7 @@ describe("Widget", ()=> {
 
     it("Checks insert buttons appearance when mouse is moved over/out of it", () => {
         given:
-            var { board, commandsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var { board, widgetsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
             let insert = new DInsert("/CBlades/images/inserts/insert.png",
                 new Dimension2D(200, 300),
@@ -968,12 +956,12 @@ describe("Widget", ()=> {
             );
             loadAllImages();
         when:
-            resetDirectives(commandsLayer);
+            resetDirectives(widgetsLayer);
             insert.open(board, new Point2D(150, 200));
             mouseMoveOnArtifact(board, insert.downButton);
             board.paint();
         then:
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 16)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 315)",
                     "shadowColor = #FF0000", "shadowBlur = 10",
@@ -981,11 +969,11 @@ describe("Widget", ()=> {
                 "restore()"
             ]);
         when:
-            resetDirectives(commandsLayer);
+            resetDirectives(widgetsLayer);
             mouseMoveOutOfArtifact(board, insert.downButton);
             board.paint();
         then:
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 16)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 315)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
@@ -996,33 +984,41 @@ describe("Widget", ()=> {
 
     it("Checks ok markers on an insert", () => {
         given:
-            var { board, itemsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var { board, widgetsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
             let insert = new DInsert("/CBlades/images/inserts/insert.png",
                 new Dimension2D(200, 300),
                 new Dimension2D(200, 390)
             );
         when: // Declare 2 markers but set only 1
-            resetDirectives(itemsLayer);
+            resetDirectives(widgetsLayer);
             insert.open(board, new Point2D(150, 200));
-            insert.declareMark("modifier-here", new Point2D(20, 50));
-            insert.declareMark("modifier-there", new Point2D(20, 190));
-            insert.setMark("modifier-here");
+            insert.setMark(new Point2D(20, 50));
             loadAllImages();
             board.paint();
         then:
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 16)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 315)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 70, 100)",
                     "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
                 "restore()"
             ]);
         when: // set second marker
-            resetDirectives(itemsLayer);
-            insert.setMark("modifier-there");
+            resetDirectives(widgetsLayer);
+            insert.setMark(new Point2D(20, 190));
             board.paint();
         then:
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 16)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 315)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 70, 100)",
                     "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
@@ -1033,14 +1029,20 @@ describe("Widget", ()=> {
                 "restore()"
             ]);
         when: // scroll insert making 1st marker non visible
-            resetDirectives(itemsLayer);
+            resetDirectives(widgetsLayer);
             clickOnArtifact(board, insert.downButton);
             board.paint();
+            loadAllImages();
         then:
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+            assert(getDirectives(widgetsLayer, 16)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 70, 150)",
                     "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 150, 85)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/commands/up.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });

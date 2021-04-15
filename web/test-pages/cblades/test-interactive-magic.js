@@ -241,7 +241,6 @@ describe("Interactive Magic", ()=> {
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showPlayedDice(5, 6, 683.6667, 393.1122));
             skipDirectives(commandsLayer, 4);
-            assertDirectives(commandsLayer, showInsertCommand("down", 391.6667, 688.1122));
             assertDirectives(commandsLayer, showFailureResult(391.6667, 423.1122));
         when:
             clickOnResult(game);
@@ -273,7 +272,6 @@ describe("Interactive Magic", ()=> {
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showPlayedDice(1, 2, 683.6667, 393.1122));
             skipDirectives(commandsLayer, 4);
-            assertDirectives(commandsLayer, showInsertCommand("down", 391.6667, 688.1122));
             assertDirectives(commandsLayer, showSuccessResult(391.6667, 423.1122));
         when:
             clickOnResult(game);

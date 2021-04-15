@@ -1210,10 +1210,6 @@ export class CBFormation extends CBUnit {
         return slot1>slot2 ? slot1 : slot2;
     }
 
-    get hexLocation() {
-        return this._hexLocation;
-    }
-
     setMarkerArtifact(path, positionSlot) {
         let marker = new CBSimpleMarkerArtifact(this, path, CBFormation.MARKERS_POSITION[positionSlot]);
         this._element.addArtifact(marker);

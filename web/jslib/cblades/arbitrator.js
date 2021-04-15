@@ -540,8 +540,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     getShockAttackResult(unit, foe, supported, diceResult) {
-        return 1;
-        //return this.getCombatTableResult(diceResult, this.getShockAttackAdvantage(unit, foe, supported));
+        return this.getCombatTableResult(diceResult, this.getShockAttackAdvantage(unit, foe, supported));
     }
 
     processShockAttackResult(unit, foe, supported, diceResult) {
@@ -960,7 +959,6 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     processDefenderEngagementResult(unit, diceResult) {
-        return { success: true }
         let success = diceResult[0]+diceResult[1]<=unit.moral;
         return { success };
     }
