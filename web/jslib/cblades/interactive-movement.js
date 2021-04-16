@@ -804,11 +804,6 @@ export class CBRotationActuator extends CBActionActuator {
         this._first = first;
     }
 
-    play() {
-        this.unit.markAsCharging(CBCharge.NONE);
-        super.play();
-    }
-
     getTrigger(angle) {
         return this.findTrigger(artifact=>(artifact instanceof RotateTrigger) && (artifact.pangle === angle));
     }

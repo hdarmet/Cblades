@@ -416,7 +416,6 @@ describe("Map", ()=> {
             assert(hexVertex.location.toString()).equalsTo("point(-227.3333, -984.375)");
     });
 
-
     it("Checks hexId collection", () => {
         given:
             var map = new CBMap("/CBlades/images/maps/map.png");
@@ -708,6 +707,28 @@ describe("Map", ()=> {
             hexId._appendPlayable(trap);
         then:
             assert(hexId.playables).arrayEqualsTo([trap, blaze, spell]);
+    });
+
+
+    it("Checks unit stacking basic features", () => {
+        given:
+            var map = new CBMap("/CBlades/images/maps/map.png");
+            var hexId = map.getHex(8, 8);
+        then:
+            assert(hexId.empty).isTrue();
+        when:
+            var unit1 = new CBTestUnit();
+            var unit2 = new CBTestUnit();
+            hexId._addUnit(unit1);
+            var units = hexId.units;
+        then:
+            assert(units).arrayEqualsTo([unit1]);
+            assert(hexId.empty).isFalse();
+        when:
+            hexId._appendUnit(unit2, CBMoveType.FORWARD);
+            units = hexId.units;
+        then:
+            assert(units).arrayEqualsTo([unit2, unit1]);
     });
 
     it("Checks unit backward stacking", () => {

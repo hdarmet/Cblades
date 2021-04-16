@@ -123,7 +123,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         return (!!unit.formationNature) &&
             unit.hasReceivedOrder() &&
             !unit.isExhausted() &&
-            unit.inGoodOrder();
+            unit.isInGoodOrder();
     }
 
     mustPlayUnit(unit) {
@@ -379,7 +379,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         for (let sangle in zones) {
             let angle = parseInt(sangle);
             let zone = zones[angle];
-            if (allowesZones.has(zone.hex)) {
+            if (allowesZones.has(zone.hex) && zone.hex.empty) {
                 result[angle] = zone;
                 zone.moveType = CBMoveType.FORWARD;
             }
@@ -540,6 +540,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     getShockAttackResult(unit, foe, supported, diceResult) {
+        //return 1;
         return this.getCombatTableResult(diceResult, this.getShockAttackAdvantage(unit, foe, supported));
     }
 
@@ -954,11 +955,13 @@ export class CBArbitrator extends CBAbstractArbitrator{
     // Engagement
 
     processAttackerEngagementResult(unit, diceResult) {
+        //return { success: true }
         let success = diceResult[0]+diceResult[1]<=unit.moral;
         return { success };
     }
 
     processDefenderEngagementResult(unit, diceResult) {
+        //return { success: true }
         let success = diceResult[0]+diceResult[1]<=unit.moral;
         return { success };
     }
@@ -1013,9 +1016,10 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     mayUnitCharge(unit) {
-        let mayCharge = !unit.formationNature;
-        if (unit.isExhausted()) mayCharge = false;
-        return mayCharge;
+        if (unit.formationNature) return false;
+        if (unit.isExhausted()) return false;
+        if (!unit.isInGoodOrder()) return false;
+        return true;
     }
 
     doesUnitEngage(unit) {
@@ -1125,7 +1129,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         let units = this.getUnitOfType(unit.hexLocation.units, unit.type);
         if (units.length !== 2) return false;
         let [unit1, unit2] = units;
-        if (!unit1.inGoodOrder() || !unit2.inGoodOrder()) return false;
+        if (!unit1.isInGoodOrder() || !unit2.isInGoodOrder()) return false;
         if (unit1.isExhausted() || unit2.isExhausted()) return false;
         if (unit1.hasBeenPlayed() || unit2.hasBeenPlayed()) return false;
         if (!unit1.hasReceivedOrder() || !unit2.hasReceivedOrder()) return false;
@@ -1172,7 +1176,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
     _isUnitJoinable(toJoin, unit) {
         if (unit.type !== toJoin.type) return false;
         if (unit.angle !== toJoin.angle) return false;
-        if (!unit.inGoodOrder()) return false;
+        if (!unit.isInGoodOrder()) return false;
         if (unit.isExhausted()) return false;
         if (!unit.hasReceivedOrder()) return false;
         if (unit.hasBeenActivated()) return false;

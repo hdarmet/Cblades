@@ -18,7 +18,12 @@ import {
     GoblinLeader, GoblinSkirmisher, GoblinWolfRider
 } from "../../../jslib/cblades/armies/orcs.js";
 import {
-    AnimalMoveProfile, CBProfileCapacity, LightInfantryWeaponProfile, MediumCavalryWeaponProfile, PedestrianMoveProfile
+    AnimalMoveProfile,
+    CBProfileCapacity, ExaltedMoralProfile,
+    IrregularCommandProfile,
+    LightInfantryWeaponProfile,
+    MediumCavalryWeaponProfile,
+    PedestrianMoveProfile
 } from "../../../jslib/cblades/profile.js";
 
 describe("Orcs Army", ()=> {
@@ -59,6 +64,26 @@ describe("Orcs Army", ()=> {
         then:
             assert(profile).is(MediumCavalryWeaponProfile);
             assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
+        when:
+            profile = unit.getCommandProfile(1);
+        then:
+            assert(profile).is(IrregularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.NORMAL);
+        when:
+            profile = unit.getCommandProfile(2);
+        then:
+            assert(profile).is(IrregularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getMoralProfile(1);
+        then:
+            assert(profile).is(ExaltedMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
+        when:
+            profile = unit.getMoralProfile(2);
+        then:
+            assert(profile).is(ExaltedMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.NORMAL);
     });
 
     it("Checks Goblin Wolfrider", () => {
@@ -90,6 +115,26 @@ describe("Orcs Army", ()=> {
         then:
             assert(profile).is(MediumCavalryWeaponProfile);
             assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
+        when:
+            profile = unit.getCommandProfile(1);
+        then:
+            assert(profile).is(IrregularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
+        when:
+            profile = unit.getCommandProfile(2);
+        then:
+            assert(profile).is(IrregularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.INFERIOR);
+        when:
+            profile = unit.getMoralProfile(1);
+        then:
+            assert(profile).is(ExaltedMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
+        when:
+            profile = unit.getMoralProfile(2);
+        then:
+            assert(profile).is(ExaltedMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.NORMAL);
     });
 
     it("Checks Goblin Skirmisher", () => {
@@ -121,5 +166,25 @@ describe("Orcs Army", ()=> {
         then:
             assert(profile).is(LightInfantryWeaponProfile);
             assert(profile.capacity).equalsTo(CBProfileCapacity.INFERIOR);
+        when:
+            profile = unit.getCommandProfile(1);
+        then:
+            assert(profile).is(IrregularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
+        when:
+            profile = unit.getCommandProfile(2);
+        then:
+            assert(profile).is(IrregularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.INFERIOR);
+        when:
+            profile = unit.getMoralProfile(1);
+        then:
+            assert(profile).is(ExaltedMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
+        when:
+            profile = unit.getMoralProfile(2);
+        then:
+            assert(profile).is(ExaltedMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.NORMAL);
     });
 });

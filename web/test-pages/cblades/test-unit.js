@@ -7,6 +7,7 @@ import {
     DImage, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
+    assertNoMoreDirectives,
     createEvent,
     getDirectives, getLayers, loadAllImages, mockPlatform, resetDirectives
 } from "../mocks.js";
@@ -36,7 +37,7 @@ import {
     OptionMixin,
     CBMoveProfile,
     CBWeaponProfile,
-    CBCharge
+    CBCharge, CBCommandProfile, CBMoralProfile
 } from "../../jslib/cblades/unit.js";
 import {
     Dimension2D
@@ -71,10 +72,14 @@ describe("Unit", ()=> {
     class CBTestUnitType extends CBUnitType {
         constructor(...args) {
             super(...args);
-            this.setMoveProfile(1, new CBMoveProfile(0));
+            this.setMoveProfile(1, new CBMoveProfile(-1));
             this.setMoveProfile(2, new CBMoveProfile(0));
-            this.setWeaponProfile(1, new CBWeaponProfile(0));
+            this.setWeaponProfile(1, new CBWeaponProfile(-1));
             this.setWeaponProfile(2, new CBWeaponProfile(0));
+            this.setCommandProfile(1, new CBCommandProfile(-1));
+            this.setCommandProfile(2, new CBCommandProfile(0));
+            this.setMoralProfile(1, new CBMoralProfile(-1));
+            this.setMoralProfile(2, new CBMoralProfile(0));
         }
     }
 
@@ -600,17 +605,30 @@ describe("Unit", ()=> {
             assert(unit.weaponProfile.getFireDefendCode()).equalsTo("Bow");
     });
 
+    it("Checks unit command profile", () => {
+        given:
+            var { unit } = createTinyGame();
+        then:
+            assert(unit.commandProfile.capacity).equalsTo(0);
+            assert(unit.commandProfile.commandLevel).equalsTo(8);
+            assert(unit.type.getCommandLevel(1)).equalsTo(7);
+            assert(unit.commandLevel).equalsTo(8);
+    });
+
+    it("Checks unit moral profile", () => {
+        given:
+            var { unit } = createTinyGame();
+        then:
+            assert(unit.moralProfile.capacity).equalsTo(0);
+            assert(unit.moralProfile.moral).equalsTo(8);
+            assert(unit.type.getMoral(1)).equalsTo(7);
+            assert(unit.moral).equalsTo(8);
+    });
+
     it("Checks unit move on the on map", () => {
         given:
-            var { game, map } = prepareTinyGame();
-            var player = new CBAbstractPlayer();
-            game.addPlayer(player);
-            var wing = new CBWing(player);
-        when:
-            var unitType1 = new CBTestUnitType("unit1", ["/CBlades/images/units/misc/unit1.png"]);
-            var unit = new CBTroop(unitType1, wing);
+            var { game, map, unit } = createTinyGame();
             var hexId = map.getHex(5, 8);
-            game.addUnit(unit, hexId);
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
         when:
@@ -635,6 +653,44 @@ describe("Unit", ()=> {
         then:
             assert(unit.movementPoints).equalsTo(0);
             assert(unit.extendedMovementPoints).equalsTo(0);
+    });
+
+    it("Checks unit advance", () => {
+        given:
+            var { game, map, unit } = createTinyGame();
+            var hexId = map.getHex(5, 8);
+            unit.markAsEngaging(true);
+        then:
+            assert(hexId.units).arrayEqualsTo([unit]);
+        when:
+            var hexId2 = map.getHex(6, 8);
+            unit.advance(hexId2);
+        then:
+            assert(unit.movementPoints).equalsTo(2);
+            assert(unit.extendedMovementPoints).equalsTo(3);
+            assert(unit.isEngaging()).isTrue();
+            assert(unit.isInGoodOrder()).isTrue();
+            assert(hexId.units).arrayEqualsTo([]);
+            assert(hexId2.units).arrayEqualsTo([unit]);
+    });
+
+    it("Checks unit retreat", () => {
+        given:
+            var { game, map, unit } = createTinyGame();
+            var hexId = map.getHex(5, 8);
+            unit.markAsEngaging(true);
+        then:
+            assert(hexId.units).arrayEqualsTo([unit]);
+        when:
+            var hexId2 = map.getHex(6, 8);
+            unit.retreat(hexId2, CBMoveType.FORWARD);
+        then:
+            assert(unit.movementPoints).equalsTo(2);
+            assert(unit.extendedMovementPoints).equalsTo(3);
+            assert(unit.isEngaging()).isFalse();
+            assert(unit.isDisrupted()).isTrue();
+            assert(hexId.units).arrayEqualsTo([]);
+            assert(hexId2.units).arrayEqualsTo([unit]);
     });
 
     it("Checks that when moving a unit, movement points are adjusted", () => {
@@ -1067,10 +1123,10 @@ describe("Unit", ()=> {
 
     it("Checks adding cohesion levels to a unit", () => {
         given:
-            var {game, unit, map} = createTinyGame();
+            var {game, unit} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         then:
-            assert(unit.inGoodOrder()).isTrue();
+            assert(unit.isInGoodOrder()).isTrue();
             assert(unit.isDisrupted()).isFalse();
             assert(unit.isRouted()).isFalse();
         when:
@@ -1092,7 +1148,7 @@ describe("Unit", ()=> {
         when:
             Memento.open();
             resetDirectives(markersLayer);
-            unit.addOneCohesionLevel();
+            unit.rout();
             paint(game);
             loadAllImages(); // to load fleeing.png
         then:
@@ -1176,6 +1232,47 @@ describe("Unit", ()=> {
                 "restore()"
             ]);
             assert(unit.cohesion).equalsTo(1);
+    });
+
+    it("Checks unit destruction", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [unitsLayer, markersLayer] = getLayers(game.board, "units-0", "markers-0");
+            unit.addOneCohesionLevel(); // Disrupt the unit
+        then:
+            assert(unit.isDestroyed()).isFalse();
+        when:
+            Memento.open();
+            resetDirectives(unitsLayer, markersLayer);
+            unit.addOneCohesionLevel(); // Rout the unit
+            unit.addOneCohesionLevel(); // Destroy the unit
+            paint(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
+            assert(unit.isDestroyed()).isTrue();
+        when:
+            resetDirectives(unitsLayer, markersLayer);
+            Memento.undo();
+            paint(game);
+        then:
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 386.5897)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/disrupted.png, -32, -32, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit.cohesion).equalsTo(CBCohesion.DISRUPTED);
+            assert(unit.isDestroyed()).isFalse();
     });
 
     it("Checks unit attack feature related methods", () => {
@@ -1360,6 +1457,21 @@ describe("Unit", ()=> {
             assert(unit.isCharging()).isFalse();
     });
 
+    it("Checks when a unit stop charging, it adds a tiredness level", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+        when:
+            unit.markAsCharging(CBCharge.CHARGING);
+        then:
+            assert(unit.tiredness).equalsTo(CBTiredness.NONE);
+            assert(unit.isCharging()).isTrue();
+        when:
+            unit.markAsCharging(CBCharge.NONE);
+        then:
+            assert(unit.tiredness).equalsTo(CBTiredness.TIRED);
+            assert(unit.isCharging()).isFalse();
+    });
+
     it("Checks that charge supersedes contact", () => {
         given:
             var {game, unit, map} = createTinyGame();
@@ -1403,6 +1515,127 @@ describe("Unit", ()=> {
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.isEngaging()).isFalse();
             assert(unit.isCharging()).isFalse();
+    });
+
+    it("Checks progessive charging process", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+            var [markersLayer] = getLayers(game.board, "markers-0");
+        when:
+            resetDirectives(markersLayer);
+            paint(game);
+            loadAllImages();
+        then:
+            assertNoMoreDirectives(markersLayer);
+            assert(unit._charging).equalsTo(CBCharge.NONE);
+        when:
+            unit.checkEngagement(false, true);
+            paint(game);
+            loadAllImages();
+        then:
+            assertNoMoreDirectives(markersLayer);
+            assert(unit._charging).equalsTo(CBCharge.BEGIN_CHARGE);
+        when:
+            unit.checkEngagement(false, true);
+            paint(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/markers/possible-charge.png, -32, -32, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit._charging).equalsTo(CBCharge.CAN_CHARGE);
+        when:
+            resetDirectives(markersLayer);
+            unit.checkEngagement(false, true);
+            repaint(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)",
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/markers/possible-charge.png, -32, -32, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit._charging).equalsTo(CBCharge.CAN_CHARGE);
+        when:
+            resetDirectives(markersLayer);
+            unit.checkEngagement(false, false);
+            repaint(game);
+            loadAllImages();
+        then:
+            assertNoMoreDirectives(markersLayer, 4);
+            assert(unit._charging).equalsTo(CBCharge.NONE);
+    });
+
+    it("Checks acknowledgment of requested charge", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+            var [markersLayer] = getLayers(game.board, "markers-0");
+            unit.checkEngagement(false, true);
+            unit.checkEngagement(false, true); // Here, unit can charge
+        when:
+            resetDirectives(markersLayer);
+            paint(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/markers/possible-charge.png, -32, -32, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit._charging).equalsTo(CBCharge.CAN_CHARGE);
+        when: // Charge is not requested
+            resetDirectives(markersLayer);
+            unit.acknowledgeCharge(false);
+            repaint(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(/CBlades/images/markers/possible-charge.png, -32, -32, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit._charging).equalsTo(CBCharge.CAN_CHARGE);
+        when: // Charge is requested
+            resetDirectives(markersLayer);
+            unit._engagingArtifact.onMouseClick();
+            unit.acknowledgeCharge(false);
+            repaint(game);
+            loadAllImages();
+        then:
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)",
+                    "shadowColor = #000000", "shadowBlur = 15",
+                    "drawImage(/CBlades/images/markers/charge.png, -32, -32, 64, 64)",
+                "restore()"
+            ]);
+            assert(unit._charging).equalsTo(CBCharge.CHARGING);
+    });
+
+    it("Checks acknowledgment when charge is not requested at the end of movement", () => {
+        given:
+            var {game, unit, map} = createTinyGame();
+            var [markersLayer] = getLayers(game.board, "markers-0");
+            unit.checkEngagement(false, true);
+            unit.checkEngagement(false, true); // Here, unit can charge
+        when: // Charge is not requested
+            resetDirectives(markersLayer);
+            unit.acknowledgeCharge(true);
+            repaint(game);
+            loadAllImages();
+        then:
+            assertNoMoreDirectives(markersLayer, 4);
+            assert(unit._charging).equalsTo(CBCharge.NONE);
     });
 
     it("Checks that when a unit retracts, it also hides markers", () => {

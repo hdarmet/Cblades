@@ -405,6 +405,14 @@ describe("Board", ()=> {
         return { board, level, layer, element, artifact, image };
     }
 
+    it("Checks artifact general features", () => {
+        given:
+            var {artifact} = createBoardWithOneCounter();
+        then:
+            assert(artifact.getViewportPoint(new Point2D(10, 5)).toString()).equalsTo("point(260, 155)");
+            assert(artifact.getPoint(new Point2D(260, 155)).toString()).equalsTo("point(10, 5)");
+    });
+
     it("Checks change artifact position and relative orientation (not undoable)", () => {
         given:
             var {board, artifact, layer, image} = createBoardWithOneCounter();
@@ -1189,6 +1197,7 @@ describe("Board", ()=> {
                     "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
+            assert(artifact.imageIndex).equalsTo(0);
         when:
             resetDirectives(layer);
             artifact.setImage(1);
@@ -1200,6 +1209,7 @@ describe("Board", ()=> {
                     "drawImage(../images/unit-back.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
+            assert(artifact.imageIndex).equalsTo(1);
         when:
             resetDirectives(layer);
             artifact.changeImage(2);

@@ -25,11 +25,11 @@ import {
 } from "../../jslib/cblades/unit.js";
 import {
     AnimalMoveProfile,
-    CavalryMoveProfile,
-    HeavyCavalryWeaponProfile, LanceWeaponProfile,
+    CavalryMoveProfile, ChaoticCommandProfile, EliteMoralProfile, ExaltedMoralProfile,
+    HeavyCavalryWeaponProfile, IrregularCommandProfile, LanceWeaponProfile,
     LightInfantryWeaponProfile,
     MediumCavalryWeaponProfile,
-    PedestrianMoveProfile
+    PedestrianMoveProfile, RegularCommandProfile, StandardMoralProfile
 } from "../../jslib/cblades/profile.js";
 
 describe("Profile", ()=> {
@@ -144,7 +144,7 @@ describe("Profile", ()=> {
             assert(profile.getRotationCost(60)).objectEqualsTo({
                 type:CBMoveProfile.COST_TYPE.ADD, value:0
             });
-            assert(profile.getRotationCost(90)).objectEqualsTo({
+            assert(profile.getRotationCost(-90)).objectEqualsTo({
                 type:CBMoveProfile.COST_TYPE.ADD, value:0.5
             });
             assert(profile.getFormationRotationCost(180)).objectEqualsTo({
@@ -228,7 +228,7 @@ describe("Profile", ()=> {
                 {type:CBMoveProfile.COST_TYPE.IMPASSABLE}
             );
 
-            assert(profile.getRotationCost(60)).objectEqualsTo({
+            assert(profile.getRotationCost(-60)).objectEqualsTo({
                 type:CBMoveProfile.COST_TYPE.ADD, value:0
             });
             assert(profile.getRotationCost(90)).objectEqualsTo({
@@ -318,7 +318,7 @@ describe("Profile", ()=> {
             assert(profile.getRotationCost(60)).objectEqualsTo({
                 type:CBMoveProfile.COST_TYPE.ADD, value:0.5
             });
-            assert(profile.getRotationCost(90)).objectEqualsTo({
+            assert(profile.getRotationCost(-90)).objectEqualsTo({
                 type:CBMoveProfile.COST_TYPE.ADD, value:1
             });
             assert(profile.getFormationRotationCost(180)).objectEqualsTo({
@@ -367,5 +367,46 @@ describe("Profile", ()=> {
             assert(profile.getFireRange()).equalsTo(2);
     });
 
+    it("Checks Regular Command Profile", () => {
+        given:
+            var profile = new RegularCommandProfile(2);
+        then:
+            assert(profile.commandLevel).equalsTo(10);
+    });
+
+    it("Checks Irregular Command Profile", () => {
+        given:
+            var profile = new IrregularCommandProfile(2);
+        then:
+            assert(profile.commandLevel).equalsTo(10);
+    });
+
+    it("Checks Regular Command Profile", () => {
+        given:
+            var profile = new ChaoticCommandProfile(2);
+        then:
+            assert(profile.commandLevel).equalsTo(10);
+    });
+
+    it("Checks Standard Moral Profile", () => {
+        given:
+            var profile = new StandardMoralProfile(1);
+        then:
+            assert(profile.moral).equalsTo(9);
+    });
+
+    it("Checks Elite Moral Profile", () => {
+        given:
+            var profile = new EliteMoralProfile(1);
+        then:
+            assert(profile.moral).equalsTo(9);
+    });
+
+    it("Checks Exalted Moral Profile", () => {
+        given:
+            var profile = new ExaltedMoralProfile(1);
+        then:
+            assert(profile.moral).equalsTo(9);
+    });
 
 });

@@ -1350,6 +1350,16 @@ describe("Widget", ()=> {
         then:
             assert(clicked).isTrue();
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+        when:
+            mask.alpha = 0;
+        then:
+            assert(mask._artifact.alpha).equalsTo(0);
+            assert(mask._artifact.onMouseMove()).isFalse();
+        when:
+            mask.alpha = 1;
+        then:
+            assert(mask._artifact.alpha).equalsTo(0.2);
+            assert(mask._artifact.onMouseMove()).isTrue();
     });
 
     it("Checks scene facility", () => {

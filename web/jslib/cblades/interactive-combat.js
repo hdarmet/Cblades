@@ -48,8 +48,8 @@ export function registerInteractiveCombat() {
     CBInteractivePlayer.prototype.applyLossesToUnit = function(unit, losses, attacker, advance, continuation) {
         unit.launchAction(new InteractiveRetreatAction(this.game, unit, losses, attacker, advance, continuation));
     }
-    CBInteractivePlayer.prototype.advanceAttacker = function(unit, hexes, continuation) {
-        unit.launchAction(new InteractiveAdvanceAction(this.game, unit, hexes, continuation));
+    CBInteractivePlayer.prototype.advanceAttacker = function(unit, directions, continuation) {
+        unit.launchAction(new InteractiveAdvanceAction(this.game, unit, directions, continuation));
     }
     CBActionMenu.menuBuilders.push(
         createCombatMenuItems
@@ -69,9 +69,9 @@ export function unregisterInteractiveCombat() {
 
 export class InteractiveAdvanceAction extends CBAction {
 
-    constructor(game, unit, hexes, continuation) {
+    constructor(game, unit, directions, continuation) {
         super(game, unit);
-        this._hexes = hexes;
+        this._directions = directions;
         this._continuation = continuation;
     }
 
@@ -82,8 +82,7 @@ export class InteractiveAdvanceAction extends CBAction {
 
     _createAdvanceActuator() {
         console.assert(!this.unit.formationNature);
-        let advanceDirections = this.game.arbitrator.getAdvanceZones(this.unit, this._hexes);
-        let advanceActuator = this.createAdvanceActuator(advanceDirections);
+        let advanceActuator = this.createAdvanceActuator(this._directions);
         this.game.openActuator(advanceActuator);
     }
 
@@ -136,19 +135,18 @@ export class InteractiveRetreatAction extends CBAction {
     }
 
     advanceAttacker(hexLocation, continuation) {
-        let advanceHexes = [];
-        for (let hexId of hexLocation.hexes) {
-            if (hexId.empty) {
-                advanceHexes.push(hexId);
+        let directions = this.game.arbitrator.getAdvanceZones(this._attacker, hexLocation.hexes);
+        if (this._advance && this._attacker.isCharging() && directions.length>0) {
+            let hexes = [];
+            for (let sangle in directions) {
+                hexes.push(directions[sangle].hex);
             }
-        }
-        if (this._advance && this._attacker.isCharging() && advanceHexes.length>0) {
-            if (advanceHexes.length === 1) {
-                this._attacker.advance(advanceHexes[0]);
+            if (hexes.length === 1) {
+                this._attacker.advance(hexes[0]);
                 continuation();
             }
             else {
-                this._attacker.player.advanceAttacker(this._attacker, advanceHexes, continuation);
+                this._attacker.player.advanceAttacker(this._attacker, directions, continuation);
             }
         }
         else {
@@ -378,7 +376,9 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
             this.game.openActuator(fireAttackActuator);
             let fireHelpActuator = this.createFireHelpActuator(this._createFireRecords(foesThatMayBeFireAttacked));
             this.game.openActuator(fireHelpActuator);
+            return true;
         }
+        return false;
     }
 
     fireAttackUnit(foe, event) {
@@ -402,8 +402,8 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
                 dice.active = false;
                 let report = this._processFireAttackResult(foe, dice.result);
                 let continuation = ()=>{
-                    if (!report.played) {
-                        this._createFireAttackActuator(this.unit);
+                    if (report.played || !this._createFireAttackActuator(this.unit)) {
+                        this.markAsFinished();
                     }
                 }
                 if (report.success) {

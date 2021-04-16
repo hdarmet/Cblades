@@ -714,6 +714,12 @@ describe("Arbitrator", ()=> {
             assertMove(allowedMoves, 60, 6, 6, CBMovement.MINIMAL);
     });
 
+    function assertInAdvanceZone(zones, angle, col, row, moveType) {
+        assert(zones[angle].hex.col).equalsTo(col);
+        assert(zones[angle].hex.row).equalsTo(row);
+        assert(zones[angle].moveType).equalsTo(moveType);
+    }
+
     it("Checks unit allowed retreat", () => {
         given:
             var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
@@ -738,6 +744,45 @@ describe("Arbitrator", ()=> {
             assertInRetreatZone(allowedRetreats, 180, 5, 8, CBMoveType.BACKWARD);
             assertInRetreatZone(allowedRetreats, 240, 4, 7, CBMoveType.BACKWARD);
             assertNotInZone(allowedRetreats, 300);
+    });
+
+    it("Checks unit allowed advance", () => {
+        given:
+            var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
+            unit21.move(unit12.hexLocation.getNearHex(60));
+        when:
+            var allowedAdvances = arbitrator.getAdvanceZones(unit12, [
+                unit12.hexLocation.getNearHex(0),
+                unit12.hexLocation.getNearHex(60),
+                unit12.hexLocation.getNearHex(120)
+            ]);
+        then:
+            assertNotInZone(allowedAdvances, 300); // Not in allowed advance zones
+            assertInAdvanceZone(allowedAdvances, 0, 5, 6, CBMoveType.FORWARD);
+            assertNotInZone(allowedAdvances, 60); // occupied by foe
+            assertNotInZone(allowedAdvances, 120); // not in forward zone
+            assertNotInZone(allowedAdvances, 180); // not in forward zone and not in allowed advance zones
+            assertNotInZone(allowedAdvances, 240); // not in forward zone and not in allowed advance zones
+    });
+
+    it("Checks if a unit is allowed to charge", () => {
+        given:
+            var {arbitrator, unit1, unit2, formation2} = create2PlayersTinyFormationGame();
+        then:
+            assert(arbitrator.mayUnitCharge(unit1)).isTrue();
+            assert(arbitrator.mayUnitCharge(formation2)).isFalse();
+        when:
+            unit1.addOneTirednessLevel();
+        then:
+            assert(arbitrator.mayUnitCharge(unit1)).isTrue();
+        when:
+            unit1.addOneTirednessLevel();
+        then:
+            assert(arbitrator.mayUnitCharge(unit1)).isFalse();
+        when:
+            unit2.disrupt();
+        then:
+            assert(arbitrator.mayUnitCharge(unit2)).isFalse();
     });
 
     it("Checks formation allowed moves", () => {

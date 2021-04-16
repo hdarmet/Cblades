@@ -103,6 +103,7 @@ describe("Geometry", ()=> {
             assert(Point2D.position(point1, point2, 0).toString()).equalsTo("point(0, 0)");
             assert(Point2D.position(point1, point2, 0.6).toString()).equalsTo("point(60, 60)");
             assert(Point2D.position(point1, point2, 1).toString()).equalsTo("point(100, 100)");
+            assert(Point2D.getEventPoint({offsetX:80, offsetY:90}).toString()).equalsTo("point(80, 90)");
     });
 
     it("Checks Dimension class", () => {

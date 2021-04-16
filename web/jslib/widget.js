@@ -629,10 +629,12 @@ class InsertImageArtifact extends DComposedImageArtifact {
         this.addComposition(this._image, area, area);
     }
 
+    /*
     onMouseClick(event) {
         console.log(this.getPoint(Point2D.getEventPoint(event)).plusDim(this.dimension.half));
         return true;
     }
+     */
 }
 
 export class DInsertCommand extends ActivableArtifact(DImageArtifact) {

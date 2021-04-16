@@ -15,7 +15,12 @@ import {
     mockPlatform
 } from "../../mocks.js";
 import {
-    CavalryMoveProfile, CBProfileCapacity, HeavyCavalryWeaponProfile, LanceWeaponProfile, PedestrianMoveProfile
+    CavalryMoveProfile,
+    CBProfileCapacity, EliteMoralProfile, ExaltedMoralProfile,
+    HeavyCavalryWeaponProfile,
+    IrregularCommandProfile,
+    LanceWeaponProfile,
+    PedestrianMoveProfile, RegularCommandProfile
 } from "../../../jslib/cblades/profile.js";
 import {
     RoughneckKnight, RoughneckLance, RoughneckLeader
@@ -59,6 +64,26 @@ describe("Roughnecks Army", ()=> {
         then:
             assert(profile).is(HeavyCavalryWeaponProfile);
             assert(profile.capacity).equalsTo(CBProfileCapacity.SUPERIOR);
+        when:
+            profile = unit.getCommandProfile(1);
+        then:
+            assert(profile).is(RegularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
+        when:
+            profile = unit.getCommandProfile(2);
+        then:
+            assert(profile).is(RegularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.NORMAL);
+        when:
+            profile = unit.getMoralProfile(1);
+        then:
+            assert(profile).is(EliteMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.NORMAL);
+        when:
+            profile = unit.getMoralProfile(2);
+        then:
+            assert(profile).is(EliteMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
     });
 
     it("Checks Roughneck knights", () => {
@@ -89,6 +114,27 @@ describe("Roughnecks Army", ()=> {
             profile = unit.getWeaponProfile(2);
         then:
             assert(profile).is(HeavyCavalryWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+
+        when:
+            profile = unit.getCommandProfile(1);
+        then:
+            assert(profile).is(RegularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
+        when:
+            profile = unit.getCommandProfile(2);
+        then:
+            assert(profile).is(RegularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.INFERIOR);
+        when:
+            profile = unit.getMoralProfile(1);
+        then:
+            assert(profile).is(EliteMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.NORMAL);
+        when:
+            profile = unit.getMoralProfile(2);
+        then:
+            assert(profile).is(EliteMoralProfile);
             assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
     });
 
@@ -187,6 +233,86 @@ describe("Roughnecks Army", ()=> {
             profile = unit.getWeaponProfile(8);
         then:
             assert(profile).is(LanceWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getCommandProfile(1);
+        then:
+            assert(profile).is(RegularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getCommandProfile(2);
+        then:
+            assert(profile).is(RegularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getCommandProfile(3);
+        then:
+            assert(profile).is(RegularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getCommandProfile(4);
+        then:
+            assert(profile).is(RegularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getCommandProfile(5);
+        then:
+            assert(profile).is(RegularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getCommandProfile(6);
+        then:
+            assert(profile).is(RegularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getCommandProfile(7);
+        then:
+            assert(profile).is(RegularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getCommandProfile(8);
+        then:
+            assert(profile).is(RegularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getMoralProfile(1);
+        then:
+            assert(profile).is(EliteMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.NORMAL);
+        when:
+            profile = unit.getMoralProfile(2);
+        then:
+            assert(profile).is(EliteMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getMoralProfile(3);
+        then:
+            assert(profile).is(EliteMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getMoralProfile(4);
+        then:
+            assert(profile).is(EliteMoralProfile);
+        assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getMoralProfile(5);
+        then:
+            assert(profile).is(EliteMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getMoralProfile(6);
+        then:
+            assert(profile).is(EliteMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getMoralProfile(7);
+        then:
+            assert(profile).is(EliteMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getMoralProfile(8);
+        then:
+            assert(profile).is(EliteMoralProfile);
             assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
     });
 

@@ -18,6 +18,7 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
+    CBAdvanceActuator,
     CBFireAttackActuator, CBFireHelpActuator, CBFormationRetreatActuator,
     CBRetreatActuator,
     CBShockAttackActuator, CBShockHelpActuator,
@@ -38,6 +39,9 @@ import {
 import {
     CBHexSideId
 } from "../../jslib/cblades/map.js";
+import {
+    CBCharge
+} from "../../jslib/cblades/unit.js";
 
 describe("Interactive Combat", ()=> {
 
@@ -139,6 +143,16 @@ describe("Interactive Combat", ()=> {
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/retreat-move.png, -40, -65, 80, 130)",
+            "restore()",
+        ];
+    }
+
+    function showAdvanceTrigger([a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/advance-move.png, -40, -65, 80, 130)",
             "restore()",
         ];
     }
@@ -407,7 +421,7 @@ describe("Interactive Combat", ()=> {
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
 
-    it("Checks when a unit retreat", () => {
+    it("Checks when a unit retreat (and the attacker does not advance)", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersTinyGame();
             var [actuatorsLayer, unitsLayer] = getLayers(game.board,
@@ -433,6 +447,38 @@ describe("Interactive Combat", ()=> {
         then:
             skipDirectives(unitsLayer, 4);
             assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate0(416.6667, 351.8878)));
+            assertDirectives(unitsLayer, showTroop("misc/unit2", zoomAndRotate180(416.6667, 159.4391)));
+            assertNoMoreDirectives(actuatorsLayer, 4);
+            assert(unit1.hasBeenPlayed()).isTrue();
+    });
+
+    it("Checks a charging unit automatic advance", () => {
+        given:
+            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+            var [actuatorsLayer, unitsLayer] = getLayers(game.board,
+                "actuators", "units-0"
+            );
+            unit1.move(map.getHex(5, 8));
+            unit1.markAsCharging(CBCharge.CHARGING);
+            unit2.move(map.getHex(5, 7));
+            unit2.angle = 180;
+            clickOnCounter(game, unit1);
+            clickOnShockAttackAction(game);
+            let shockAttackActuator = getShockAttackActuator(game);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnResult(game);
+        when:
+            var retreatActuator = getRetreatActuator(game);
+            clickOnTrigger(game, retreatActuator.getTrigger(0));
+            loadAllImages();
+            resetDirectives(actuatorsLayer, unitsLayer);
+            repaint(game);
+        then:
+            skipDirectives(unitsLayer, 4);
+            assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate0(416.6667, 255.6635)));
             assertDirectives(unitsLayer, showTroop("misc/unit2", zoomAndRotate180(416.6667, 159.4391)));
             assertNoMoreDirectives(actuatorsLayer, 4);
             assert(unit1.hasBeenPlayed()).isTrue();
@@ -531,6 +577,38 @@ describe("Interactive Combat", ()=> {
             assertDirectives(actuatorsLayer, showSupportedShock(zoomAndRotate30(436.217, 275.2138)));
     });
 
+    it("Checks that a formation finishes attack action if there is no more unit to shock attack", () => {
+        given:
+            var { game, map, unit1, formation2, player2 } = create2PlayersTinyFormationGame();
+            var [actuatorsLayer] = getLayers(game.board,
+                "actuators-0", "widgets", "widget-commands","widget-items"
+            );
+            game.currentPlayer = player2;
+            formation2.angle = 330;
+            formation2.move(map.getHex(5, 8).toward(60), 0);
+            unit1.move(map.getHex(5, 7));
+            unit1.angle = 180;
+            clickOnCounter(game, formation2);
+            clickOnShockAttackAction(game);
+            let shockAttackActuator = getShockAttackActuator(game);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(unit1, true));
+            loadAllImages();
+        when:
+            rollFor(1, 1);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnResult(game);
+            let retreatActuator = getRetreatActuator(game);
+            resetDirectives(actuatorsLayer)
+            clickOnTrigger(game, retreatActuator.getTrigger(0)); // troop retreats !
+            loadAllImages();
+        then:
+            assertNoMoreDirectives(actuatorsLayer, 4);
+            assert(formation2.hasBeenActivated()).isTrue();
+            assert(formation2.hasBeenPlayed()).isTrue();
+            assert(game.focusedUnit).isNotDefined();
+    });
+
     function getFormationRetreatActuator(game) {
         for (let actuator of game.actuators) {
             if (actuator instanceof CBFormationRetreatActuator) return actuator;
@@ -611,7 +689,7 @@ describe("Interactive Combat", ()=> {
             skipDirectives(formationLayer, 4);
             assertDirectives(formationLayer, showFormation("misc/formation2", zoomAndRotate210(458.3333, 183.4952)));
             assert(formation2.angle).equalsTo(210);
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
+            assertNoMoreDirectives(actuatorsLayer, 4);
     });
 
     it("Checks when a formation rotate in place of retreating", () => {
@@ -642,6 +720,53 @@ describe("Interactive Combat", ()=> {
             assertDirectives(formationLayer, showFormation("misc/formation2", zoomAndRotate270(583.3333, 303.7757)));
             assert(formation2.angle).equalsTo(270);
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    function getAdvanceActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBAdvanceActuator) return actuator;
+        }
+        return null;
+    }
+
+    it("Checks when a charging unit wins against a formation that retreat may advance using the advance actuator", () => {
+        given:
+            var { game, map, unit1, formation2 } = create2PlayersTinyFormationGame();
+            var [actuatorsLayer, unitsLayer] = getLayers(game.board,
+                "actuators", "units-0"
+            );
+            unit1.move(map.getHex(5, 8));
+            unit1.markAsCharging(CBCharge.CHARGING);
+            formation2.move(new CBHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
+            formation2.angle = 210;
+            clickOnCounter(game, unit1);
+            clickOnShockAttackAction(game);
+            let shockAttackActuator = getShockAttackActuator(game);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(formation2, true));
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnResult(game);
+        when:
+            var retreatActuator = getFormationRetreatActuator(game);
+            clickOnTrigger(game, retreatActuator.getTrigger(0, false));
+            loadAllImages();
+            resetDirectives(actuatorsLayer);
+            repaint(game);
+        then:
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showAdvanceTrigger(zoomAndRotate0(416.6667, 265.2859)));
+            assertDirectives(actuatorsLayer, showAdvanceTrigger(zoomAndRotate60(491.6667, 308.5869)));
+            assertNoMoreDirectives(actuatorsLayer);
+        when:
+            resetDirectives(actuatorsLayer, unitsLayer);
+            var advanceActuator = getAdvanceActuator(game);
+            clickOnTrigger(game, advanceActuator.getTrigger(0));
+        then:
+            skipDirectives(unitsLayer, 4);
+            assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate0(416.6667, 255.6635)));
+            assertNoMoreDirectives(unitsLayer);
+            assertNoMoreDirectives(actuatorsLayer, 4);
     });
 
     it("Checks when a unit takes a loss", () => {
@@ -971,6 +1096,37 @@ describe("Interactive Combat", ()=> {
             assert(game.focusedUnit).isNotDefined();
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showFire(zoomAndRotate30(416.6667, 159.4391)));
+    });
+
+    it("Checks that a formation finishes attack action if there is no more unit to shock attack", () => {
+            var { game, map, unit1, formation2, player2 } = create2PlayersTinyFormationGame();
+            var [actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,
+                "actuators-0", "widgets", "widget-commands","widget-items"
+            );
+            game.currentPlayer = player2;
+            formation2.angle = 330;
+            formation2.move(map.getHex(5, 8).toward(60), 0);
+            unit1.move(map.getHex(5, 6));
+            unit1.takeALoss();
+            unit1.angle = 180;
+            clickOnCounter(game, formation2);
+            clickOnFireAttackAction(game);
+            let fireAttackActuator = getFireAttackActuator(game);
+            clickOnTrigger(game, fireAttackActuator.getTrigger(unit1));
+            loadAllImages();
+            rollFor(1, 2);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnResult(game);
+            let retreatActuator = getRetreatActuator(game);
+            resetDirectives(actuatorsLayer)
+            clickOnTrigger(game, retreatActuator.getLossTrigger()); // troop destryed !
+            loadAllImages();
+        then:
+            assertNoMoreDirectives(actuatorsLayer, 4);
+            assert(formation2.hasBeenActivated()).isTrue();
+            assert(formation2.hasBeenPlayed()).isTrue();
+            assert(game.focusedUnit).isNotDefined();
     });
 
     function clickOnShockDuelAction(game) {

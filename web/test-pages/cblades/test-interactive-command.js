@@ -44,7 +44,7 @@ import {
     showPlayedDie,
     showInsertCommand,
     showMessage,
-    zoomAndRotate0, showMarker
+    zoomAndRotate0, showMarker, showInsertMark
 } from "./interactive-tools.js";
 import {
     createTinyGame,
@@ -52,12 +52,13 @@ import {
     createTinyGameWithLeader
 } from "./game-examples.js";
 import {
-    CBOrderGivenActuator,
+    CBOrderGivenActuator, CBOrderGivenHelpActuator,
     registerInteractiveCommand,
     unregisterInteractiveCommand
 } from "../../jslib/cblades/interactive-command.js";
 import {
-    CBOrderInstruction
+    CBCohesion,
+    CBOrderInstruction, CBTiredness
 } from "../../jslib/cblades/unit.js";
 
 describe("Interactive Command", ()=> {
@@ -83,6 +84,19 @@ describe("Interactive Command", ()=> {
                 "drawImage(/CBlades/images/actuators/order.png, -52.5, -48.5, 105, 97)",
             "restore()",
         ];
+    }
+
+    function showOrderCostTrigger(cost, [a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/order-given-cost.png, -27.5, -27.5, 55, 55)",
+                "shadowColor = #000000", "shadowBlur = 0",
+                "font = bold 30px serif", "textAlign = center", "fillStyle = #006600",
+                `fillText(${cost}, 0, 10)`,
+            "restore()"
+        ]
     }
 
     function showCommandMarker(marker, [a, b, c, d, e, f]) {
@@ -482,6 +496,7 @@ describe("Interactive Command", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("orders-given", 280.6667, 423.1122, 444, 600));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 280.6667, 688.1122));
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showDie(1, 542.6667, 423.1122));
         when:       // Clicking on the mask cancel the action
@@ -532,6 +547,9 @@ describe("Interactive Command", ()=> {
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showOrderTrigger(zoomAndRotate0(416.6667, 312.7871)));
             assertDirectives(actuatorsLayer, showOrderTrigger(zoomAndRotate0(666.6667, 264.675)));
+            assertDirectives(actuatorsLayer, showOrderCostTrigger(1, zoomAndRotate0(416.6667, 290.793)));
+            assertDirectives(actuatorsLayer, showOrderCostTrigger(1, zoomAndRotate0(666.6667, 242.6808)));
+            assertNoMoreDirectives(actuatorsLayer);
             skipDirectives(markersLayer, 4);
             assertDirectives(markersLayer, showCommandMarker("defend", zoomAndRotate0(534.7019, 496.2243)));
             assertDirectives(markersLayer, showMarker("actiondone", zoomAndRotate0(534.7019, 461.5225)));
@@ -557,4 +575,109 @@ describe("Interactive Command", ()=> {
             assert(unit2.hasReceivedOrder()).isFalse();
     });
 
+    function getGiveOrdersHelpActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBOrderGivenHelpActuator) return actuator;
+        }
+        return null;
+    }
+
+    it("Checks orders cost activation and showering rules", () => {
+        given:
+            var {game, wing, unit1, leader} = create2UnitsTinyGame();
+            var [widgetsLayer] = getLayers(game.board,"widgets");
+            wing.setLeader(leader);
+            clickOnCounter(game, leader);
+            clickOnGiveOrdersCommandAction(game);
+            rollFor1Die(4);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnMessage(game);
+            loadAllImages();
+        when:
+            var giveOrdersHelpActuator = getGiveOrdersHelpActuator(game);
+            var trigger = giveOrdersHelpActuator.getTrigger(unit1);
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, trigger);
+            loadAllImages();
+            paint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("orders-given",305.6667, 305,444, 600));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 305.6667, 570));
+            assertDirectives(widgetsLayer, showInsertMark(103.6667, 432));
+            assertNoMoreDirectives(widgetsLayer);
+        when:       // Clicking on the mask cancel the action
+            resetDirectives(widgetsLayer);
+            clickOnMask(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+    });
+
+    it("Checks marks on order given insert when showering rules (base + disrupted + exhausted + distance) ", () => {
+        given:
+            var {game, map, wing, unit1, leader} = create2UnitsTinyGame();
+            var [widgetsLayer] = getLayers(game.board,"widgets");
+            unit1.disrupt();
+            unit1.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit1.move(map.getHex(10, 10));
+            wing.setLeader(leader);
+            clickOnCounter(game, leader);
+            clickOnGiveOrdersCommandAction(game);
+            rollFor1Die(4);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnMessage(game);
+            loadAllImages();
+        when:
+            var giveOrdersHelpActuator = getGiveOrdersHelpActuator(game);
+            var trigger = giveOrdersHelpActuator.getTrigger(unit1);
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, trigger);
+            loadAllImages();
+            paint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("orders-given",722.3333, 495,444, 600));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 722.3333, 760));
+            assertDirectives(widgetsLayer, showInsertMark(520.3333, 622)); // Mark for base
+            assertDirectives(widgetsLayer, showInsertMark(525.3333, 705)); // Mark for disrupted
+            assertDirectives(widgetsLayer, showInsertMark(525.3333, 725)); // Mark for exhausted
+            assertDirectives(widgetsLayer, showInsertMark(525.3333, 760)); // Mark for distance
+            assertNoMoreDirectives(widgetsLayer);
+    });
+
+    it("Checks marks on order given insert when showering rules (base + rooted + distance) ", () => {
+        given:
+            var {game, map, wing, unit1, leader} = create2UnitsTinyGame();
+            var [widgetsLayer] = getLayers(game.board,"widgets");
+            unit1.rout();
+            unit1.move(map.getHex(10, 10));
+            wing.setLeader(leader);
+            clickOnCounter(game, leader);
+            clickOnGiveOrdersCommandAction(game);
+            rollFor1Die(4);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnMessage(game);
+            loadAllImages();
+        when:
+            var giveOrdersHelpActuator = getGiveOrdersHelpActuator(game);
+            var trigger = giveOrdersHelpActuator.getTrigger(unit1);
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, trigger);
+            loadAllImages();
+            paint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("orders-given",722.3333, 495,444, 600));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 722.3333, 760));
+            assertDirectives(widgetsLayer, showInsertMark(520.3333, 622)); // Mark for base
+            assertDirectives(widgetsLayer, showInsertMark(525.3333, 740)); // Mark for routed
+            assertDirectives(widgetsLayer, showInsertMark(525.3333, 760)); // Mark for distance
+            assertNoMoreDirectives(widgetsLayer);
+    });
 });

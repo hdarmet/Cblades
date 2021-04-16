@@ -1008,7 +1008,7 @@ export class CBUnit extends CBAbstractUnit {
         return this._cohesion;
     }
 
-    inGoodOrder() {
+    isInGoodOrder() {
         return this._cohesion === CBCohesion.GOOD_ORDER;
     }
 
@@ -1039,6 +1039,12 @@ export class CBUnit extends CBAbstractUnit {
         console.assert(!this.isRouted());
         Memento.register(this);
         this._updateCohesion(CBCohesion.DISRUPTED);
+    }
+
+    rout() {
+        console.assert(!this.isRouted());
+        Memento.register(this);
+        this._updateCohesion(CBCohesion.ROUTED);
     }
 
     reorganize() {

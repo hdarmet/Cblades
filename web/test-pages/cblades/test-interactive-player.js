@@ -33,7 +33,7 @@ import {
     clickOnResult,
     dummyEvent,
     clickOnMask,
-    rollFor, showMask, showInsert, showDice, showPlayedDice, showSuccessResult
+    rollFor, showMask, showInsert, showDice, showPlayedDice, showSuccessResult, showMarker, showInsertMark
 } from "./interactive-tools.js";
 import {
     createTinyGame,
@@ -266,6 +266,29 @@ describe("Interactive Player", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
+    });
+
+    it("Checks marks on defender engagement insert", () => {
+        given:
+            var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            unit1.disrupt();
+            unit1IsEngagedByUnit2(map, unit1, unit2);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            player1.selectUnit(unit1, dummyEvent)
+            loadAllImages();
+            paint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("check-defender-engagement", 227, 386.5, 444, 763));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 202, 444, 389));
+            assertDirectives(widgetsLayer, showInsertMark( 459, 124.5)); // Mark for base moral level
+            assertDirectives(widgetsLayer, showInsertMark(459, 232.5)); // Mark for disruption
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 426.5));
             assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
     });
 
