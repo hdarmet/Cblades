@@ -29,8 +29,8 @@ import {
     DImage
 } from "../draw.js";
 import {
-    CBArbitrator
-} from "./arbitrator.js";
+    CBCombatTeacher
+} from "./teachers/combat-teacher.js";
 
 export function registerInteractiveCombat() {
     CBInteractivePlayer.prototype.unitShockAttack = function (unit, event) {
@@ -921,8 +921,8 @@ export class CBWeaponTableInsert extends WidgetLevelMixin(DAbstractInsert) {
     }
 
     focus(col, row) {
-        let colSize = CBWeaponTableInsert.CONTENT_PAGE_DIMENSION.w / CBArbitrator.weaponTable.COLCOUNT;
-        let rowSize = CBWeaponTableInsert.CONTENT_PAGE_DIMENSION.h / CBArbitrator.weaponTable.ROWCOUNT;
+        let colSize = CBWeaponTableInsert.CONTENT_PAGE_DIMENSION.w / CBCombatTeacher.weaponTable.COLCOUNT;
+        let rowSize = CBWeaponTableInsert.CONTENT_PAGE_DIMENSION.h / CBCombatTeacher.weaponTable.ROWCOUNT;
         let focusPoint = new Point2D(colSize*col+colSize/2+CBWeaponTableInsert.MARGIN, rowSize*row+rowSize/2);
         this.setMark(focusPoint.plusPoint(new Point2D(-10, 10)));
         this._margin.focusOn(new Point2D(CBWeaponTableInsert.MARGIN/2, rowSize*row+rowSize/2));

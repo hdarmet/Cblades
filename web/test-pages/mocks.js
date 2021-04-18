@@ -286,3 +286,15 @@ export function assertHexSide(hexSide, fromCoords, toCoords) {
     assert(hexSide.toHex.col).equalsTo(toCoords[0]);
     assert(hexSide.toHex.row).equalsTo(toCoords[1]);
 }
+
+export function mergeClasses(...classes) {
+    let merged = class {};
+    for (let clazz of classes) {
+        Object.getOwnPropertyNames( clazz.prototype ).forEach(methodName => {
+            if (methodName !== "constructor") {
+                merged.prototype[methodName] = clazz.prototype[methodName];
+            }
+        })
+    }
+    return merged;
+}

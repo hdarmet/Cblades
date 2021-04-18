@@ -65,7 +65,7 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
     }
 
     canFinishUnit(unit) {
-        return !this.game.arbitrator.mustPlayUnit(unit);
+        return !this.game.arbitrator.canPlayUnit(unit);
     }
 
     finishTurn(animation) {
