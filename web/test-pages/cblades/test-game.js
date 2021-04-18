@@ -180,7 +180,7 @@ class CBTestUnitActuator extends RetractableActuatorMixin(CBActionActuator) {
 
 export function prepareTinyGame() {
     var game = new CBGame();
-    var map = new CBMap("/CBlades/images/maps/map.png");
+    var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
     game.setMap(map);
     return {game, map};
 }
@@ -191,7 +191,7 @@ export function createTinyGame() {
     game.setArbitrator(arbitrator);
     var player = new CBAbstractPlayer();
     game.addPlayer(player);
-    var map = new CBMap("/CBlades/images/maps/map.png");
+    var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
     game.setMap(map);
     let unit = new CBTestUnit(player, ["/CBlades/images/units/misc/unit.png"]);
     game.addUnit(unit, map.getHex(5, 8));
@@ -216,9 +216,9 @@ describe("Game", ()=> {
             game.setArbitrator(arbitrator);
             var player = new CBAbstractPlayer();
             game.addPlayer(player);
-            var [mapLayer, unitsLayer] = getLayers(game.board, "map","units-0");
-            var map = new CBMap("/CBlades/images/maps/map.png");
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
+            var [mapLayer, unitsLayer] = getLayers(game.board, "map","units-0");
             let unit = new CBTestUnit(player, ["/CBlades/images/units/misc/unit.png"]);
             game.addUnit(unit, map.getHex(5, 8));
         when:
@@ -446,10 +446,10 @@ describe("Game", ()=> {
     it("Checks that clicking on the map re-centers the viewport ", () => {
         given:
             var game = new CBGame();
-            var [mapLayer] = getLayers(game.board, "map");
-            var map = new CBMap("/CBlades/images/maps/map.png");
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
+            var [mapLayer] = getLayers(game.board, "map");
             loadAllImages();
         then:
             assert(getDirectives(mapLayer)).arrayContains("setTransform(0.4888, 0, 0, 0.4888, 500, 400)");
@@ -553,6 +553,8 @@ describe("Game", ()=> {
     it("Checks global push buttons menu", () => {
         given:
             var game = new CBGame();
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            game.setMap(map);
             var [commandsLevel] = getLayers(game.board, "widget-commands");
         when:
             game.setMenu();
@@ -645,6 +647,8 @@ describe("Game", ()=> {
     it("Checks undo/redo push buttons menu", () => {
         given:
             var game = new CBGame();
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            game.setMap(map);
             game.setMenu();
             game.start();
             loadAllImages();
@@ -673,18 +677,20 @@ describe("Game", ()=> {
 
     it("Checks edit push buttons menu", () => {
         try {
-            var cbgameEdit = CBGame.edit;
-            var editMode = false;
-            CBGame.edit = function() {
-                editMode = true;
-            }
             given:
+                var cbgameEdit = CBGame.edit;
+                var editMode = false;
+                CBGame.edit = function() {
+                    editMode = true;
+                }
                 var game = new CBGame();
-            game.setMenu();
-            game.start();
-            loadAllImages();
-            game._showCommand.action();
-            paint(game);
+                var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+                game.setMap(map);
+                game.setMenu();
+                game.start();
+                loadAllImages();
+                game._showCommand.action();
+                paint(game);
             when:
                 game._editorCommand.action();
             then:
@@ -703,6 +709,8 @@ describe("Game", ()=> {
     it("Checks visibility level management (on insert as exemple)", () => {
         given:
             var game = new CBGame();
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            game.setMap(map);
             var [widgetsLevel] = getLayers(game.board, "widgets");
             game.setMenu();
             game.start();
@@ -756,6 +764,8 @@ describe("Game", ()=> {
     it("Checks mask thats depends on the visibility level", () => {
         given:
             var game = new CBGame();
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            game.setMap(map);
             var [widgetsLevel] = getLayers(game.board, "widgets");
             game.start();
             game.setMenu();

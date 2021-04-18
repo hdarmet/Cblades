@@ -80,7 +80,7 @@ describe("Editor", ()=> {
     it("Checks switch to map editor mode", () => {
         given:
             var game = new CBGame();
-            var map = new CBMap("/CBlades/images/maps/map.png");
+        let map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
             loadAllImages();
@@ -104,7 +104,7 @@ describe("Editor", ()=> {
     it("Checks edit a hex type", () => {
         given:
             var game = new CBGame();
-            var map = new CBMap("/CBlades/images/maps/map.png");
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
@@ -233,7 +233,7 @@ describe("Editor", ()=> {
     it("Checks edit a hex side type", () => {
         given:
             var game = new CBGame();
-            var map = new CBMap("/CBlades/images/maps/map.png");
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
             var [actuatorsLayer] = getLayers(game.board, "actuators");

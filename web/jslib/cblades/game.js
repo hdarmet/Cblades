@@ -4,7 +4,7 @@ import {
     Point2D, Dimension2D, Matrix2D
 } from "../geometry.js";
 import {
-    DImage, DTranslateLayer
+    DImage, DTranslateLayer, getDrawPlatform
 } from "../draw.js";
 import {
     Mechanisms, Memento
@@ -476,7 +476,15 @@ export class CBMask extends WidgetLevelMixin(DMask) {
 export class CBGame {
 
     constructor() {
+        this._players = [];
+        this._actuators = [];
+        this._counters = new Set();
+        this._visibility = 2;
+        this._commands = new Set();
+        Mechanisms.addListener(this);
+    }
 
+    _buildBoard(map) {
         function createHexArtifactSlot(slotIndex) {
             let delta = Matrix2D.translate(new Point2D(-slotIndex*20, -slotIndex*20+20));
             return [
@@ -525,7 +533,7 @@ export class CBGame {
             }
         }
 
-        this._board = new DBoard(new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT), new Dimension2D(1000, 800),
+        this._board = new DBoard(map.dimension, new Dimension2D(1000, 800),
             new DSimpleLevel("map"),
             new DStackedLevel("terran", getHexArtifactSlot, getHexArtifactLayer, createHexArtifactSlot),
             new DStackedLevel("units", getUnitArtifactSlot, getUnitArtifactLayer, createUnitArtifactSlot),
@@ -540,10 +548,6 @@ export class CBGame {
         this._board.scrollOnKeyDown()
         this._board.zoomOnKeyDown();
         this._board.undoRedoOnKeyDown();
-        this._players = [];
-        this._actuators = [];
-        this._counters = new Set();
-        this._visibility = 2;
     }
 
     _memento() {
@@ -569,6 +573,12 @@ export class CBGame {
         }
     }
 
+    _processGlobalEvent(source, event, value) {
+        if (event===DBoard.RESIZE_EVENT) {
+            this._refresfCommands();
+        }
+    }
+
     recenter(vpoint) {
         this._board.recenter(vpoint);
         this.closePopup();
@@ -585,6 +595,7 @@ export class CBGame {
 
     setMap(map) {
         this._map = map;
+        this._buildBoard(map);
         map.element.setOnBoard(this._board);
         map.game = this;
         return this;
@@ -749,36 +760,55 @@ export class CBGame {
         Mechanisms.addListener(this._endOfTurnCommand);
     }
 
+    showCommand(command) {
+        this._commands.add(command);
+        command.setOnBoard(this._board);
+    }
+
+    hideCommand(command) {
+        this._commands.delete(command);
+        command.removeFromBoard();
+    }
+
+    _refresfCommands() {
+        for (let command of this._commands) {
+            command.removeFromBoard();
+            command.setOnBoard(this._board);
+        }
+    }
+
     setMenu() {
         this._createEndOfTurnCommand();
-        this._endOfTurnCommand.setOnBoard(this._board);
+        this.showCommand(this._endOfTurnCommand);
         this._showCommand = new DPushButton(
             "/CBlades/images/commands/show.png", "/CBlades/images/commands/show-inactive.png",
             new Point2D(-120, -60), animation=>{
-            this._showCommand.removeFromBoard();
-            this._hideCommand.setOnBoard(this._board);
-            this._undoCommand.setOnBoard(this._board);
-            this._redoCommand.setOnBoard(this._board);
-            this._settingsCommand.setOnBoard(this._board);
-            this._saveCommand.setOnBoard(this._board);
-            this._loadCommand.setOnBoard(this._board);
-            this._editorCommand.setOnBoard(this._board);
-            this._insertLevelCommand.setOnBoard(this._board);
+            this.hideCommand(this._showCommand);
+            this.showCommand(this._hideCommand);
+            this.showCommand(this._undoCommand);
+            this.showCommand(this._redoCommand);
+            this.showCommand(this._settingsCommand);
+            this.showCommand(this._saveCommand);
+            this.showCommand(this._loadCommand);
+            this.showCommand(this._editorCommand);
+            this.showCommand(this._insertLevelCommand);
+            this.showCommand(this._fullScreenCommand);
             animation();
         });
-        this._showCommand.setOnBoard(this._board);
+        this.showCommand(this._showCommand);
         this._hideCommand = new DPushButton(
             "/CBlades/images/commands/hide.png", "/CBlades/images/commands/hide-inactive.png",
             new Point2D(-120, -60), animation=>{
-            this._showCommand.setOnBoard(this._board);
-            this._hideCommand.removeFromBoard();
-            this._undoCommand.removeFromBoard();
-            this._redoCommand.removeFromBoard();
-            this._settingsCommand.removeFromBoard();
-            this._saveCommand.removeFromBoard();
-            this._loadCommand.removeFromBoard();
-            this._editorCommand.removeFromBoard();
-            this._insertLevelCommand.removeFromBoard();
+            this.showCommand(this._showCommand);
+            this.hideCommand(this._hideCommand);
+            this.hideCommand(this._undoCommand);
+            this.hideCommand(this._redoCommand);
+            this.hideCommand(this._settingsCommand);
+            this.hideCommand(this._saveCommand);
+            this.hideCommand(this._loadCommand);
+            this.hideCommand(this._editorCommand);
+            this.hideCommand(this._insertLevelCommand);
+            this.hideCommand(this._fullScreenCommand);
             animation();
         });
         this._undoCommand = new DPushButton(
@@ -818,6 +848,12 @@ export class CBGame {
             })
             .setState(this._visibility)
             .setTurnAnimation(true, ()=>this._insertLevelCommand.setState(this._visibility));
+        this._fullScreenCommand = new DMultiStatePushButton(
+            ["/CBlades/images/commands/full-screen-on.png", "/CBlades/images/commands/full-screen-off.png"],
+            new Point2D(-600, -60), (state, animation)=>{
+                if (!state) getDrawPlatform().requestFullscreen(); else getDrawPlatform().exitFullscreen();
+                animation();
+            }).setTurnAnimation(true, ()=>this._fullScreenCommand.setState(this._fullScreenCommand.state?0:1));
         this._settingsCommand.active = false;
         this._saveCommand.active = false;
         this._loadCommand.active = false;

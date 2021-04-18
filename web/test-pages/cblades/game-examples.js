@@ -49,20 +49,20 @@ export class CBTestUnitType extends CBUnitType {
 }
 
 export function prepareTinyGame() {
-    var game = new CBGame();
-    var map = new CBMap("/CBlades/images/maps/map.png");
+    let game = new CBGame();
+    let map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
     game.setMap(map);
     return {game, map};
 }
 
 export function createTinyGame() {
-    var game = new CBGame();
-    var arbitrator = new CBArbitrator();
+    let game = new CBGame();
+    let arbitrator = new CBArbitrator();
     game.setArbitrator(arbitrator);
-    var player = new CBInteractivePlayer();
+    let player = new CBInteractivePlayer();
     game.addPlayer(player);
-    var wing = new CBWing(player);
-    var map = new CBMap("/CBlades/images/maps/map.png");
+    let wing = new CBWing(player);
+    let map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
     game.setMap(map);
     let unitType = new CBTestUnitType("unit", ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
     let unit = new CBTroop(unitType, wing);
@@ -73,13 +73,13 @@ export function createTinyGame() {
 }
 
 export function createTinyFormationGame() {
-    var game = new CBGame();
-    var arbitrator = new CBArbitrator();
+    let game = new CBGame();
+    let arbitrator = new CBArbitrator();
     game.setArbitrator(arbitrator);
-    var player = new CBInteractivePlayer();
+    let player = new CBInteractivePlayer();
     game.addPlayer(player);
-    var wing = new CBWing(player);
-    var map = new CBMap("/CBlades/images/maps/map.png");
+    let wing = new CBWing(player);
+    let map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
     game.setMap(map);
     let unitType = new CBTestUnitType("unit",
         ["/CBlades/images/units/misc/troop.png", "/CBlades/images/units/misc/troopb.png"],
@@ -104,7 +104,7 @@ export function create2PlayersTinyGame() {
     game.addPlayer(player1);
     let player2 = new CBInteractivePlayer();
     game.addPlayer(player2);
-    let map = new CBMap("/CBlades/images/maps/map.png");
+    var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
     game.setMap(map);
     let wing1 = new CBWing(player1);
     wing1.setRetreatZone(map.getWestZone());
@@ -142,7 +142,7 @@ export function create2PlayersTinyFormationGame() {
     game.addPlayer(player1);
     let player2 = new CBInteractivePlayer();
     game.addPlayer(player2);
-    let map = new CBMap("/CBlades/images/maps/map.png");
+    var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
     game.setMap(map);
     let wing1 = new CBWing(player1);
     wing1.setRetreatZone(map.getWestZone());
@@ -169,12 +169,12 @@ export function create2PlayersTinyFormationGame() {
 }
 
 export function create2UnitsTinyGame() {
-    var game = new CBGame();
-    var arbitrator = new CBArbitrator();
+    let game = new CBGame();
+    let arbitrator = new CBArbitrator();
     game.setArbitrator(arbitrator);
-    var player = new CBInteractivePlayer();
+    let player = new CBInteractivePlayer();
     game.addPlayer(player);
-    var map = new CBMap("/CBlades/images/maps/map.png");
+    let map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
     game.setMap(map);
     let wing = new CBWing(player);
     let leaderType = new CBTestUnitType("leader",
@@ -200,12 +200,12 @@ export function create2UnitsTinyGame() {
 }
 
 export function create2UnitsAndAFormationTinyGame() {
-    var game = new CBGame();
-    var arbitrator = new CBArbitrator();
+    let game = new CBGame();
+    let arbitrator = new CBArbitrator();
     game.setArbitrator(arbitrator);
-    var player = new CBInteractivePlayer();
+    let player = new CBInteractivePlayer();
     game.addPlayer(player);
-    var map = new CBMap("/CBlades/images/maps/map.png");
+    let map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
     game.setMap(map);
     let wing = new CBWing(player);
     let leaderType = new CBTestUnitType("leader",
@@ -234,13 +234,13 @@ export function create2UnitsAndAFormationTinyGame() {
 }
 
 export function createTinyGameWithLeader() {
-    var game = new CBGame();
-    var arbitrator = new CBArbitrator();
+    let game = new CBGame();
+    let arbitrator = new CBArbitrator();
     game.setArbitrator(arbitrator);
-    var player = new CBInteractivePlayer();
+    let player = new CBInteractivePlayer();
     game.addPlayer(player);
-    var wing = new CBWing(player);
-    var map = new CBMap("/CBlades/images/maps/map.png");
+    let wing = new CBWing(player);
+    let map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
     game.setMap(map);
     let unitType = new CBTestUnitType("unit",
         ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
@@ -256,10 +256,10 @@ export function createTinyGameWithLeader() {
 }
 
 export function create2PlayersTinyGameWithLeader() {
-    var game = new CBGame();
-    var arbitrator = new CBArbitrator();
+    let game = new CBGame();
+    let arbitrator = new CBArbitrator();
     game.setArbitrator(arbitrator);
-    var map = new CBMap("/CBlades/images/maps/map.png");
+    let map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
     game.setMap(map);
 
     var player1 = new CBInteractivePlayer();

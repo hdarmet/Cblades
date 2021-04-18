@@ -97,7 +97,7 @@ describe("Movement teacher", ()=> {
         let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
         let wing2 = new CBWing(player2);
-        let map = new CBMap("/CBlades/images/maps/map.png");
+        let map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"])
         let unit11 = new CBTroop(unitType1, wing1);
@@ -130,7 +130,7 @@ describe("Movement teacher", ()=> {
         let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
         let wing2 = new CBWing(player2);
-        let map = new CBMap("/CBlades/images/maps/map.png");
+        let map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1",
             ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"],

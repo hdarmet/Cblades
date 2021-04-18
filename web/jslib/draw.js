@@ -3,6 +3,9 @@
 import {
     Matrix2D, Area2D, Point2D, Dimension2D
 } from "./geometry.js";
+import {
+    Mechanisms
+} from "./mechanisms.js";
 
 /**
  * _platform is a facade used to abstract the real (DOM) platform. Useful when this platform has to be replaced by a
@@ -11,12 +14,32 @@ import {
  */
 let _targetPlatform = {
 
+    requestFullscreen() {
+        window.document.documentElement.requestFullscreen();
+    },
+
+    exitFullscreen() {
+        window.document.exitFullscreen();
+    },
+
     createElement(tagName) {
         return document.createElement(tagName);
     },
 
     setAttribute(element, attrName, attrValue) {
         element.setAttribute(attrName, attrValue);
+    },
+
+    setWindowStyleAttribute(attrName, attrValue) {
+        window.document.body.style[attrName] = attrValue;
+    },
+
+    getWindowDimension() {
+        return new Dimension2D(window.innerWidth-2, window.innerHeight-2);
+    },
+
+    addWindowEventListener(event, func, option=true) {
+        window.addEventListener(event, func, option);
     },
 
     addEventListener(element, event, func, option=true) {
@@ -122,6 +145,7 @@ let _targetPlatform = {
     random() {
         return Math.random();
     }
+
 }
 
 let _platform = _targetPlatform;
@@ -216,9 +240,9 @@ export class DLayer {
         _platform.setAttribute(this._root, "style", "position: absolute");
     }
 
-    setDraw(draw, dimension) {
+    setDraw(draw) {
         this._draw = draw;
-        this._setSize(dimension);
+        this._updateSize();
     }
 
     _execute(todo) {
@@ -365,17 +389,16 @@ export class DLayer {
         return this;
     }
 
-    _setSize(dimension) {
-        this._dimension = dimension;
-        _platform.setAttribute(this._root, "width", this._dimension.w);
-        _platform.setAttribute(this._root, "height", this._dimension.h);
+    _updateSize() {
+        _platform.setAttribute(this._root, "width", this._draw.dimension.w);
+        _platform.setAttribute(this._root, "height", this._draw.dimension.h);
     }
 
     clear() {
         // DONT include in a execute() method !
         _platform.save(this._context);
         _platform.resetTransform(this._context);
-        _platform.clearRect(this._context, 0, 0, this._dimension.w, this._dimension.h);
+        _platform.clearRect(this._context, 0, 0, this._draw.dimension.w, this._draw.dimension.h);
         _platform.restore(this._context);
         delete this._todos;
     }
@@ -390,7 +413,7 @@ export class DLayer {
 
     get visibleArea() {
         let transform = this.transform.invert();
-        return Area2D.rectBoundingArea(transform, 0, 0, this._dimension.w, this._dimension.h);
+        return Area2D.rectBoundingArea(transform, 0, 0, this._draw.dimension.w, this._draw.dimension.h);
     }
 
     get root() {
@@ -402,7 +425,7 @@ export class DLayer {
     }
 
     get dimension() {
-        return this._dimension;
+        return this.draw._dimension;
     }
 }
 
@@ -441,11 +464,32 @@ export class DDraw {
     constructor(dimension) {
         this._root = _platform.createElement("div");
         this._dimension = dimension;
-        _platform.setAttribute(this.root, "style", `width: ${this._dimension.w}px; height:${this._dimension.h}px; border: 1px solid; position: relative`);
+        _platform.setAttribute(this.root, "style", `width: ${this._dimension.w}px; height:${this._dimension.h}px; border: 1px solid; position: relative, overflow:hidden`);
         _platform.setAttribute(this.root, "tabindex", "0");
         this._layers = new Map();
         this._layersArray = [];
         this._transform = Matrix2D.IDENTITY;
+        this.fitWindow();
+    }
+
+    fitWindow() {
+        let resize= ()=>{
+            _platform.setWindowStyleAttribute("margin", "0px");
+            _platform.setWindowStyleAttribute("padding", "0px");
+            this._dimension = _platform.getWindowDimension();
+            _platform.setAttribute(this.root, "style", `width: ${this._dimension.w}px; height:${this._dimension.h}px; border: 1px solid; position: relative, overflow:hidden`);
+            _platform.setAttribute(this.root, "tabindex", "0");
+            this._root.width = this._dimension.w;
+            this._root.height = this._dimension.h;
+            for(let layer of this._layers.values()) {
+                layer._root.width = this._dimension.w;
+                layer._root.height = this._dimension.h;
+                layer._root.setAttribute("overflow", "hidden");
+            }
+            Mechanisms.fire(this, DDraw.RESIZE_EVENT, this._dimension);
+        }
+        resize();
+        _platform.addWindowEventListener('resize', resize, false);
     }
 
     createLayer(name) {
@@ -453,7 +497,7 @@ export class DDraw {
     }
 
     addLayer(layer) {
-        layer.setDraw(this, this._dimension);
+        layer.setDraw(this);
         _platform.appendChild(this._root, layer.root);
         this._layers.set(layer.name, layer);
         this._layersArray.push(layer);
@@ -462,7 +506,7 @@ export class DDraw {
     }
 
     setLayer(layer, index) {
-        layer.setDraw(this, this._dimension);
+        layer.setDraw(this, this);
         _platform.insertBefore(this._root, layer.root, this._layersArray[index].root);
         this._layers.set(layer.name, layer);
         this._layersArray.splice(index, 0, layer);
@@ -561,6 +605,7 @@ export class DDraw {
     }
 
 }
+DDraw.RESIZE_EVENT = "draw-resize";
 
 export class DAnimation {
 

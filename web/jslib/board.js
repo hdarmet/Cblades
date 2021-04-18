@@ -1276,6 +1276,16 @@ export class DBoard {
         this._initKeyDownActions();
         this._requestRepaint();
         DAnimator.setFinalizer(()=>this.paint());
+        Mechanisms.addListener(this);
+    }
+
+    _processGlobalEvent(source, event, value) {
+        if (event === DDraw.RESIZE_EVENT) {
+            this._adjust();
+            this._requestRepaint();
+            Mechanisms.fire(this, DBoard.RESIZE_EVENT, value);
+            this.paint();
+        }
     }
 
     _registerLevels(levels) {
@@ -1381,9 +1391,8 @@ export class DBoard {
     }
 
     repaint() {
-        for (let level of this._levels.values()) {
-            level.invalidate();
-        }
+        this._adjust();
+        this._requestRepaint();
         this.paint();
     }
 
@@ -1709,6 +1718,7 @@ DBoard.DEFAULT_BORDER_WIDTH = 10;
 DBoard.DEFAULT_SCROLL_INCREMENT = 10;
 DBoard.SCROLL_EVENT = "board-scroll";
 DBoard.ZOOM_EVENT = "board-zoom";
+DBoard.RESIZE_EVENT = "board-resize";
 
 export class DArtifactAnimation extends DAnimation {
 

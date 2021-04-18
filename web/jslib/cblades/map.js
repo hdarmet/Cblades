@@ -582,30 +582,68 @@ class MapImageArtifact extends DImageArtifact {
 
 export class CBMap {
 
-    constructor(path) {
-        let image = DImage.getImage(path);
-        this._imageArtifact = new MapImageArtifact(this, "map", image, new Point2D(0, 0), CBMap.DIMENSION);
-        this._element = new DElement(this._imageArtifact);
+    constructor(mapBoards) {
+        let imageArtifacts = [];
+        this._boardCols = 1;
+        this._boardRows = 1;
+        for (let mapBoard of mapBoards) {
+            if (mapBoard.col>=this._boardCols) this._boardCols=mapBoard.col+1;
+            if (mapBoard.row>=this._boardRows) this._boardRows=mapBoard.row+1;
+        }
+        for (let mapBoard of mapBoards) {
+            let image = DImage.getImage(mapBoard.path);
+            let imageArtifact = new MapImageArtifact(this, "map", image,
+                new Point2D(
+                    (mapBoard.col-(this._boardCols-1)/2)*CBMap.WIDTH,
+                    (mapBoard.row-(this._boardRows-1)/2)*CBMap.HEIGHT
+                ),
+                CBMap.DIMENSION);
+            if (mapBoard.invert) {
+                imageArtifact.pangle = 180;
+            }
+            imageArtifacts.push(imageArtifact);
+        }
+        this._element = new DElement(...imageArtifacts);
         this._element._map = this;
         this._hexes = [];
     }
 
+    get width() {
+        return CBMap.WIDTH*this._boardCols;
+    }
+
+    get height() {
+        return CBMap.HEIGHT*this._boardRows;
+    }
+
+    get dimension() {
+        return new Dimension2D(this.width, this.height);
+    }
+
+    get colCount() {
+        return CBMap.COL_COUNT*this._boardCols;
+    }
+
+    get rowCount() {
+        return CBMap.ROW_COUNT*this._boardRows;
+    }
+
     findPosition(hexId) {
-        let x = CBMap.WIDTH/CBMap.COL_COUNT * hexId.col-CBMap.WIDTH/2;
-        let y = CBMap.HEIGHT/CBMap.ROW_COUNT * hexId.row-CBMap.HEIGHT/2;
-        if (hexId.col%2) y-= CBMap.HEIGHT/CBMap.ROW_COUNT/2;
+        let x = this.width/this.colCount * hexId.col-this.width/2;
+        let y = this.height/this.rowCount * hexId.row-this.height/2;
+        if (hexId.col%2) y-= this.height/this.rowCount/2;
         return new Point2D(x, y);
     }
 
     inMap(hex) {
         let location = hex.location;
-        return location.x<=CBMap.WIDTH && location.y<=CBMap.HEIGHT;
+        return location.x<=this.width && location.y<=this.height;
     }
 
     get hexes() {
         let hexes = [];
-        for (let col=0; col<=CBMap.COL_COUNT; col++) {
-            for (let row=0; row<=CBMap.ROW_COUNT; row++) {
+        for (let col=0; col<=this.colCount; col++) {
+            for (let row=0; row<=this.rowCount; row++) {
                 let hex = this.getHex(col, row);
                 if (this.inMap(hex)) {
                     hexes.push(hex);
@@ -816,7 +854,7 @@ export class CBMap {
         let col = 0;
         let row = 0;
         let inc = -1;
-        while (col<=CBMap.COL_COUNT) {
+        while (col<=this.colCount) {
             zone.push(this.getHex(col, row));
             col++; row+=inc;
             inc = -inc;
@@ -827,9 +865,9 @@ export class CBMap {
     getSouthZone() {
         let zone = [];
         let col = 0;
-        let row = CBMap.ROW_COUNT;
+        let row = this.rowCount;
         let inc = 1;
-        while (col<=CBMap.COL_COUNT) {
+        while (col<=this.colCount) {
             zone.push(this.getHex(col, row));
             col++; row+=inc;
             inc = -inc;
@@ -840,7 +878,7 @@ export class CBMap {
     getWestZone() {
         let zone = [];
         let row = 0;
-        while (row<=CBMap.ROW_COUNT) {
+        while (row<=this.rowCount) {
             zone.push(this.getHex(0, row));
             row++;
         }
@@ -850,8 +888,8 @@ export class CBMap {
     getEastZone() {
         let zone = [];
         let row = 0;
-        while (row<=CBMap.ROW_COUNT) {
-            zone.push(this.getHex(CBMap.COL_COUNT, row));
+        while (row<=this.rowCount) {
+            zone.push(this.getHex(this.colCount, row));
             row++;
         }
         return zone;
