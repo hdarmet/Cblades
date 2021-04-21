@@ -484,6 +484,10 @@ export class CBGame {
         Mechanisms.addListener(this);
     }
 
+    fitWindow() {
+        this._board.fitWindow();
+    }
+
     _buildBoard(map) {
         function createHexArtifactSlot(slotIndex) {
             let delta = Matrix2D.translate(new Point2D(-slotIndex*20, -slotIndex*20+20));
@@ -835,7 +839,10 @@ export class CBGame {
         this._editorCommand = new DMultiStatePushButton(
             ["/CBlades/images/commands/editor.png", "/CBlades/images/commands/field.png"],
             new Point2D(-480, -60), (state, animation)=>{
-                if (!state) CBGame.edit(this); else this.closeActuators();
+                if (!state)
+                    CBGame.edit(this);
+                else
+                    this.closeActuators();
                 animation();
         }).setTurnAnimation(true, ()=>this._editorCommand.setState(this._editorCommand.state?0:1));
         this._insertLevelCommand = new DMultiStatePushButton(
@@ -851,7 +858,10 @@ export class CBGame {
         this._fullScreenCommand = new DMultiStatePushButton(
             ["/CBlades/images/commands/full-screen-on.png", "/CBlades/images/commands/full-screen-off.png"],
             new Point2D(-600, -60), (state, animation)=>{
-                if (!state) getDrawPlatform().requestFullscreen(); else getDrawPlatform().exitFullscreen();
+                if (!state)
+                    getDrawPlatform().requestFullscreen();
+                else
+                    getDrawPlatform().exitFullscreen();
                 animation();
             }).setTurnAnimation(true, ()=>this._fullScreenCommand.setState(this._fullScreenCommand.state?0:1));
         this._settingsCommand.active = false;

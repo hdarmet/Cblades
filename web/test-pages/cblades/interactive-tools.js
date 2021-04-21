@@ -131,6 +131,55 @@ export function clickOnResult(game) {
     clickOnArtifact(game, getResult(game));
 }
 
+export function showMap(image, [a, b, c, d, e, f]) {
+    return [
+        "save()",
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            `drawImage(/CBlades/images/maps/${image}.png, -1023, -1575, 2046, 3150)`,
+        "restore()"
+    ]
+}
+
+export function showGameCommand(image, x, y) {
+    return [
+        "save()",
+            `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+            "shadowColor = #00FFFF", "shadowBlur = 10",
+            `drawImage(/CBlades/images/commands/${image}.png, -25, -25, 50, 50)`,
+        "restore()"
+    ];
+}
+
+export function showGameInactiveCommand(image, x, y) {
+    return [
+        "save()",
+            `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+            "shadowColor = #000000", "shadowBlur = 10",
+            `drawImage(/CBlades/images/commands/${image}.png, -25, -25, 50, 50)`,
+        "restore()"
+    ];
+}
+
+export function showActuatorTrigger(image, w, h, [a, b, c, d, e, f]) {
+    return [
+        "save()",
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #00FFFF", "shadowBlur = 10",
+            `drawImage(/CBlades/images/actuators/${image}.png, -${w/2}, -${h/2}, ${w}, ${h})`,
+        "restore()"
+    ]
+}
+
+export function showSelectedActuatorTrigger(image, w, h, [a, b, c, d, e, f]) {
+    return [
+        "save()",
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #FF0000", "shadowBlur = 10",
+            `drawImage(/CBlades/images/actuators/${image}.png, -${w/2}, -${h/2}, ${w}, ${h})`,
+        "restore()"
+    ]
+}
+
 export function showTroop(image, [a, b, c, d, e, f]) {
     return[
         "save()",
@@ -141,12 +190,22 @@ export function showTroop(image, [a, b, c, d, e, f]) {
     ];
 }
 
+export function showOverTroop(image, [a, b, c, d, e, f]) {
+    return[
+        "save()",
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #00FFFF", "shadowBlur = 15",
+            `drawImage(/CBlades/images/units/${image}.png, -71, -71, 142, 142)`,
+        "restore()"
+    ];
+}
+
 export function showSelectedTroop(image, [a, b, c, d, e, f]) {
     return[
         "save()",
-        `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-        "shadowColor = #FF0000", "shadowBlur = 15",
-        `drawImage(/CBlades/images/units/${image}.png, -71, -71, 142, 142)`,
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #FF0000", "shadowBlur = 15",
+            `drawImage(/CBlades/images/units/${image}.png, -71, -71, 142, 142)`,
         "restore()"
     ];
 }
@@ -171,6 +230,16 @@ export function showSelectedCharacter(image, [a, b, c, d, e, f]) {
     ];
 }
 
+export function showOverFormation(image, [a, b, c, d, e, f]) {
+    return[
+        "save()",
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #00FFFF", "shadowBlur = 15",
+            `drawImage(/CBlades/images/units/${image}.png, -142, -71, 284, 142)`,
+        "restore()"
+    ];
+}
+
 export function showSelectedFormation(image, [a, b, c, d, e, f]) {
     return[
         "save()",
@@ -184,9 +253,9 @@ export function showSelectedFormation(image, [a, b, c, d, e, f]) {
 export function showFormation(image, [a, b, c, d, e, f]) {
     return[
         "save()",
-        `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-        "shadowColor = #000000", "shadowBlur = 15",
-        `drawImage(/CBlades/images/units/${image}.png, -142, -71, 284, 142)`,
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #000000", "shadowBlur = 15",
+            `drawImage(/CBlades/images/units/${image}.png, -142, -71, 284, 142)`,
         "restore()"
     ];
 }
@@ -197,6 +266,26 @@ export function showMarker(image, [a, b, c, d, e, f]) {
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #000000", "shadowBlur = 15",
             `drawImage(/CBlades/images/markers/${image}.png, -32, -32, 64, 64)`,
+        "restore()"
+    ];
+}
+
+export function showActiveMarker(image, [a, b, c, d, e, f]) {
+    return [
+        "save()",
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #00FFFF", "shadowBlur = 10",
+            `drawImage(/CBlades/images/markers/${image}.png, -32, -32, 64, 64)`,
+        "restore()"
+    ];
+}
+
+export function showCommandMarker(image, [a, b, c, d, e, f]) {
+    return [
+        "save()",
+        `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+        "shadowColor = #000000", "shadowBlur = 15",
+        `drawImage(/CBlades/images/markers/${image}.png, -40, -40, 80, 80)`,
         "restore()"
     ];
 }
@@ -229,13 +318,13 @@ export function showInsert(insert, x, y, w, h) {
 export function showMultiInsert(insert, x, y, w, h, frames) {
     let model = [
         "save()",
-        `setTransform(1, 0, 0, 1, ${x}, ${y})`,
-        "shadowColor = #000000", "shadowBlur = 10",
-        "strokeStyle = #000000", "lineWidth = 1",
-        `strokeRect(-${w/2}, -${h/2}, ${w}, ${h})`,
+            `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+            "shadowColor = #000000", "shadowBlur = 10",
+            "strokeStyle = #000000", "lineWidth = 1",
+            `strokeRect(-${w/2}, -${h/2}, ${w}, ${h})`,
         "restore()",
         "save()",
-        `setTransform(1, 0, 0, 1, ${x}, ${y})`
+            `setTransform(1, 0, 0, 1, ${x}, ${y})`
     ];
     for (let frame of frames) {
         model.push(`drawImage(/CBlades/images/inserts/${insert}-insert.png, ${frame.xs}, ${frame.ys}, ${frame.w}, ${frame.h}, ${frame.xd}, ${frame.yd}, ${frame.w}, ${frame.h})`);

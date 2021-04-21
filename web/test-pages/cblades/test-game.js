@@ -4,12 +4,13 @@ import {
     assert, before, describe, it
 } from "../../jstest/jtest.js";
 import {
+    DAnimator,
     DImage, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
-    assertDirectives,
+    assertDirectives, assertNoMoreDirectives, assertClearDirectives,
     createEvent,
-    getDirectives, getLayers, loadAllImages, mockPlatform, resetDirectives
+    getDirectives, getLayers, loadAllImages, mockPlatform, resetDirectives, skipDirectives
 } from "../mocks.js";
 import {
     Mechanisms, Memento
@@ -50,7 +51,20 @@ import {
     mouseMoveOutOfTrigger,
     paint,
     repaint,
-    clickOnTrigger, showInsertMark
+    clickOnTrigger,
+    showTroop,
+    zoomAndRotate0,
+    showMap,
+    showActuatorTrigger,
+    showSelectedActuatorTrigger,
+    showGameCommand,
+    showGameInactiveCommand,
+    showInsert,
+    showMask,
+    zoomAndRotate60,
+    showMarker,
+    showSelectedTroop,
+    showOverTroop, showFormation, zoomAndRotate90, showSelectedFormation, showOverFormation, executeAllAnimations
 } from "./interactive-tools.js";
 
 class CBTestUnit extends CBAbstractUnit {
@@ -178,14 +192,14 @@ class CBTestUnitActuator extends RetractableActuatorMixin(CBActionActuator) {
 
 }
 
-export function prepareTinyGame() {
+function prepareTinyGame() {
     var game = new CBGame();
     var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
     game.setMap(map);
     return {game, map};
 }
 
-export function createTinyGame() {
+function createTinyGame() {
     var game = new CBGame();
     var arbitrator = new CBAbstractArbitrator();
     game.setArbitrator(arbitrator);
@@ -200,29 +214,54 @@ export function createTinyGame() {
     return { game, arbitrator, player, map, unit };
 }
 
+function showFakeInsert(x, y, w, h) {
+    return [
+        "save()",
+            `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+            "shadowColor = #000000", "shadowBlur = 15",
+            "strokeStyle = #000000", "lineWidth = 1",
+            `strokeRect(-${w/2}, -${h/2}, ${w}, ${h})`,
+            "fillStyle = #FFFFFF",
+            `fillRect(-${w/2}, -${h/2}, ${w}, ${h})`,
+        "restore()"
+    ];
+}
+
+function showFakeCounter(image, [a, b, c, d, e, f], s=50) {
+    return [
+        "save()",
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #000000", "shadowBlur = 15",
+            `drawImage(/CBlades/images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
+        "restore()"
+    ];
+}
+
+function showOverFakeCounter(image, [a, b, c, d, e, f], s=50) {
+    return [
+        "save()",
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #00FFFF", "shadowBlur = 15",
+            `drawImage(/CBlades/images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
+        "restore()"
+    ];
+}
+
 describe("Game", ()=> {
 
     before(() => {
         setDrawPlatform(mockPlatform);
         DImage.resetCache();
+        DAnimator.clear();
         Mechanisms.reset();
         Memento.clear();
     });
 
     it("Checks game building", () => {
         given:
-            var game = new CBGame();
-            var arbitrator = new CBAbstractArbitrator();
-            game.setArbitrator(arbitrator);
-            var player = new CBAbstractPlayer();
-            game.addPlayer(player);
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
-            game.setMap(map);
+            var {game, map, player, arbitrator} = createTinyGame();
             var [mapLayer, unitsLayer] = getLayers(game.board, "map","units-0");
-            let unit = new CBTestUnit(player, ["/CBlades/images/units/misc/unit.png"]);
-            game.addUnit(unit, map.getHex(5, 8));
         when:
-            game.start();
             loadAllImages();
         then:
             assert(game.board).is(DBoard);
@@ -231,15 +270,40 @@ describe("Game", ()=> {
             assert(game.map).equalsTo(map);
             assert(player.game).equalsTo(game);
             assert(game.currentPlayer).equalsTo(player);
-            assert(getDirectives(mapLayer, 4)).arrayEqualsTo([
+            assertClearDirectives(mapLayer);
+            assertDirectives(mapLayer, showMap("map", zoomAndRotate0(500, 400)));
+            assertNoMoreDirectives(mapLayer);
+            assertClearDirectives(unitsLayer);
+            assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
+            assertNoMoreDirectives(unitsLayer);
+    });
+
+    it("Checks game fitting on window", () => {
+        given:
+            var {game} = createTinyGame();
+            var [mapLayer, unitsLayer] = getLayers(game.board, "map","units-0");
+        when:
+            resetDirectives(mapLayer, unitsLayer);
+            game.fitWindow();
+            loadAllImages();
+        then:
+            assert(getDirectives(mapLayer)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 500, 400)",
+                    "resetTransform()",
+                    "clearRect(0, 0, 1500, 1000)",
+                "restore()",
+                "save()",
+                    "setTransform(0.7331, 0, 0, 0.7331, 750, 500)",
                     "drawImage(/CBlades/images/maps/map.png, -1023, -1575, 2046, 3150)",
                 "restore()"
             ]);
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+            assert(getDirectives(unitsLayer)).arrayEqualsTo([
                 "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
+                    "resetTransform()",
+                    "clearRect(0, 0, 1500, 1000)",
+                "restore()",
+                "save()",
+                    "setTransform(0.7331, 0, 0, 0.7331, 625, 427.8317)",
                     "shadowColor = #000000", "shadowBlur = 15",
                     "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
@@ -285,46 +349,35 @@ describe("Game", ()=> {
             assert(game.actuators).arrayEqualsTo([actuator1, actuator2]);
     });
 
-
-
-
-
     it("Checks actuators management", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [actuatorsLevel] = getLayers(game.board, "actuators");
+            var [actuatorsLayer] = getLayers(game.board, "actuators");
             game.setMenu();
             game._showCommand.action();
         when:
             var action = new CBAction(game, unit);
             var actuator = new CBTestActuator(action);
-            resetDirectives(actuatorsLevel);
+            resetDirectives(actuatorsLayer);
             game.openActuator(actuator);
             paint(game);
             loadAllImages();
         then:
             assert([...Mechanisms.manager._listeners]).contains(actuator);
-            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/test.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(actuatorsLayer);
+            assertDirectives(actuatorsLayer, showActuatorTrigger("test", 50, 50, zoomAndRotate0(416.6667, 351.8878)))
+            assertNoMoreDirectives(actuatorsLayer);
         when:
             game._insertLevelCommand.action();
-            resetDirectives(actuatorsLevel);
+            resetDirectives(actuatorsLayer);
             repaint(game);
         then:
-            assert(getDirectives(actuatorsLevel, 4)).arrayEqualsTo([
+            assertClearDirectives(actuatorsLayer);
+            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
                 "save()",
                 "restore()"
             ]);
     });
-
-
-
-
 
     it("Checks mouse move over a trigger of an actuator", () => {
         given:
@@ -340,45 +393,25 @@ describe("Game", ()=> {
         then:
             assert(actuator.getTrigger()).isDefined();
             assert(actuator.failToGetTrigger()).isNotDefined();
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/test.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(actuatorsLayer);
+            assertDirectives(actuatorsLayer, showActuatorTrigger("test", 50, 50, zoomAndRotate0(416.6667, 351.8878)))
+            assertNoMoreDirectives(actuatorsLayer);
         when:
             resetDirectives(actuatorsLayer);
             mouseMoveOnTrigger(game, actuator.getTrigger());
             paint(game);
         then:
-            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
-                "save()",
-                    "resetTransform()",
-                    "clearRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                    "shadowColor = #FF0000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/test.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(actuatorsLayer);
+            assertDirectives(actuatorsLayer, showSelectedActuatorTrigger("test", 50, 50, zoomAndRotate0(416.6667, 351.8878)))
+            assertNoMoreDirectives(actuatorsLayer);
         when:
             resetDirectives(actuatorsLayer);
             mouseMoveOutOfTrigger(game, actuator.getTrigger());
             paint(game);
         then:
-            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
-                "save()",
-                    "resetTransform()",
-                    "clearRect(0, 0, 1000, 800)",
-                "restore()",
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/test.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(actuatorsLayer);
+            assertDirectives(actuatorsLayer, showActuatorTrigger("test", 50, 50, zoomAndRotate0(416.6667, 351.8878)))
+            assertNoMoreDirectives(actuatorsLayer);
         when:
             clickOnTrigger(game, actuator.getTrigger());
             assert(actuator.clicked).equalsTo(actuator.getTrigger());
@@ -396,13 +429,9 @@ describe("Game", ()=> {
             paint(game);
             loadAllImages();
         then:
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 255.6635)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/test.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(actuatorsLayer);
+            assertDirectives(actuatorsLayer, showActuatorTrigger("test", 142, 142, zoomAndRotate0(416.6667, 255.6635)))
+            assertNoMoreDirectives(actuatorsLayer);
         when:
             clickOnTrigger(game, actuator.trigger);
         then:
@@ -421,26 +450,18 @@ describe("Game", ()=> {
             paint(game);
             loadAllImages();
         then:
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/test1.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(actuatorsLayer);
+            assertDirectives(actuatorsLayer, showActuatorTrigger("test1", 50, 50, zoomAndRotate0(416.6667, 351.8878)))
+            assertNoMoreDirectives(actuatorsLayer);
         when:
             resetDirectives(actuatorsLayer);
             actuator.trigger.changeImage(1);
             paint(game);
             loadAllImages();
         then:
-            assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/test2.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(actuatorsLayer);
+            assertDirectives(actuatorsLayer, showActuatorTrigger("test2", 50, 50, zoomAndRotate0(416.6667, 351.8878)))
+            assertNoMoreDirectives(actuatorsLayer);
     });
 
     it("Checks that clicking on the map re-centers the viewport ", () => {
@@ -498,16 +519,9 @@ describe("Game", ()=> {
             paint(game);
         then:
             assert(game.popup).equalsTo(popup1);
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 55, 105)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-50, -100, 100, 200)",
-                    "fillStyle = #FFFFFF",
-                    "fillRect(-50, -100, 100, 200)",
-                "restore()"
-            ]);
+            assertClearDirectives(widgetsLevel);
+            assertDirectives(widgetsLevel, showFakeInsert(55, 105, 100, 200));
+            assertNoMoreDirectives(widgetsLevel);
         when:
             resetDirectives(widgetsLevel);
             var popup2 = new DPopup(new Dimension2D(150, 250));
@@ -515,16 +529,9 @@ describe("Game", ()=> {
             paint(game);
         then:
             assert(game.popup).equalsTo(popup2);
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 80, 130)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-75, -125, 150, 250)",
-                    "fillStyle = #FFFFFF",
-                    "fillRect(-75, -125, 150, 250)",
-                "restore()"
-            ]);
+            assertClearDirectives(widgetsLevel);
+            assertDirectives(widgetsLevel, showFakeInsert(80, 130, 150, 250));
+            assertNoMoreDirectives(widgetsLevel);
         when:
             Memento.open();
             resetDirectives(widgetsLevel);
@@ -538,113 +545,55 @@ describe("Game", ()=> {
             resetDirectives(widgetsLevel);
             paint(game);
         then:
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 80, 130)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-75, -125, 150, 250)",
-                    "fillStyle = #FFFFFF",
-                    "fillRect(-75, -125, 150, 250)",
-                "restore()"
-            ]);
+            assertClearDirectives(widgetsLevel);
+            assertDirectives(widgetsLevel, showFakeInsert(80, 130, 150, 250));
+            assertNoMoreDirectives(widgetsLevel);
     });
 
-    it("Checks global push buttons menu", () => {
+    it("Checks global push menu button", () => {
         given:
             var game = new CBGame();
             var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
-            var [commandsLevel] = getLayers(game.board, "widget-commands");
+            var [commandsLayer] = getLayers(game.board, "widget-commands");
         when:
             game.setMenu();
             game.start();
             loadAllImages();
         then:
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 940, 740)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/turn.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 880, 740)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/show.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(commandsLayer);
+            assertDirectives(commandsLayer, showGameCommand("turn", 940, 740));
+            assertDirectives(commandsLayer, showGameCommand("show", 880, 740));
+            assertNoMoreDirectives(commandsLayer);
         when:
-            resetDirectives(commandsLevel);
+            resetDirectives(commandsLayer);
             game._showCommand.action();
             paint(game);
         then:
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 940, 740)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/turn.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 880, 740)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/hide.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 820, 740)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/undo.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 760, 740)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/redo.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 700, 740)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/settings-inactive.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 640, 740)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/save-inactive.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 580, 740)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/load-inactive.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 520, 740)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/editor.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 460, 740)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/insert2.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(commandsLayer);
+            assertDirectives(commandsLayer, showGameCommand("turn", 940, 740));
+            assertDirectives(commandsLayer, showGameCommand("hide", 880, 740));
+            assertDirectives(commandsLayer, showGameCommand("undo", 820, 740));
+            assertDirectives(commandsLayer, showGameCommand("redo", 760, 740));
+            assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 700, 740));
+            assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 640, 740));
+            assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 580, 740));
+            assertDirectives(commandsLayer, showGameCommand("editor", 520, 740));
+            assertDirectives(commandsLayer, showGameCommand("insert2", 460, 740));
+            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 400, 740));
+            assertNoMoreDirectives(commandsLayer);
         when:
-            resetDirectives(commandsLevel);
+            resetDirectives(commandsLayer);
             game._hideCommand.action();
             paint(game);
         then:
-            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 940, 740)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/turn.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 880, 740)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/show.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(commandsLayer);
+            assertDirectives(commandsLayer, showGameCommand("turn", 940, 740));
+            assertDirectives(commandsLayer, showGameCommand("show", 880, 740));
+            assertNoMoreDirectives(commandsLayer);
     });
 
-    it("Checks undo/redo push buttons menu", () => {
+    it("Checks undo/redo push menu button", () => {
         given:
             var game = new CBGame();
             var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
@@ -675,29 +624,135 @@ describe("Game", ()=> {
             assert(something.value).isFalse();
     });
 
-    it("Checks edit push buttons menu", () => {
+    it("Checks edit push menu button", () => {
         try {
             given:
                 var cbgameEdit = CBGame.edit;
                 var editMode = false;
                 CBGame.edit = function() {
-                    editMode = true;
+                    editMode = !editMode;
                 }
                 var game = new CBGame();
                 var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
                 game.setMap(map);
                 game.setMenu();
                 game.start();
+                var [commandsLayer] = getLayers(game.board, "widget-commands");
                 loadAllImages();
                 game._showCommand.action();
-                paint(game);
+                executeAllAnimations();
             when:
                 game._editorCommand.action();
+                executeAllAnimations();
+                resetDirectives(commandsLayer);
+                repaint(game);
             then:
                 assert(editMode).isTrue();
+                assertClearDirectives(commandsLayer);
+                assertDirectives(commandsLayer, showGameCommand("turn", 940, 740));
+                assertDirectives(commandsLayer, showGameCommand("hide", 880, 740));
+                assertDirectives(commandsLayer, showGameCommand("undo", 820, 740));
+                assertDirectives(commandsLayer, showGameCommand("redo", 760, 740));
+                assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 700, 740));
+                assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 640, 740));
+                assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 580, 740));
+                assertDirectives(commandsLayer, showGameCommand("field", 520, 740));
+                assertDirectives(commandsLayer, showGameCommand("insert2", 460, 740));
+                assertDirectives(commandsLayer, showGameCommand("full-screen-on", 400, 740));
+                assertNoMoreDirectives(commandsLayer);
+            when:
+                editMode = false;
+                game._editorCommand.action();
+                executeAllAnimations();
+                resetDirectives(commandsLayer);
+                repaint(game);
+            then:
+                assert(editMode).isFalse();
+                assertClearDirectives(commandsLayer);
+                assertDirectives(commandsLayer, showGameCommand("turn", 940, 740));
+                assertDirectives(commandsLayer, showGameCommand("hide", 880, 740));
+                assertDirectives(commandsLayer, showGameCommand("undo", 820, 740));
+                assertDirectives(commandsLayer, showGameCommand("redo", 760, 740));
+                assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 700, 740));
+                assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 640, 740));
+                assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 580, 740));
+                assertDirectives(commandsLayer, showGameCommand("editor", 520, 740));
+                assertDirectives(commandsLayer, showGameCommand("insert2", 460, 740));
+                assertDirectives(commandsLayer, showGameCommand("full-screen-on", 400, 740));
+                assertNoMoreDirectives(commandsLayer);
         } finally {
             CBGame.edit = cbgameEdit;
         }
+    });
+
+    it("Checks full screen push menu button", () => {
+        given:
+            var game = new CBGame();
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            game.setMap(map);
+            game.setMenu();
+            game.start();
+            game.fitWindow();
+            var [mapLayer, commandsLayer] = getLayers(game.board,"map", "widget-commands");
+            loadAllImages();
+        when:
+            game._showCommand.action();
+            executeAllAnimations();
+            game._fullScreenCommand.action();
+            executeAllAnimations();
+            resetDirectives(mapLayer, commandsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(mapLayer)).arrayEqualsTo([
+                "save()",
+                    "resetTransform()",
+                    "clearRect(0, 0, 2000, 1500)",
+                "restore()",
+                "save()",
+                    "setTransform(0.9775, 0, 0, 0.9775, 1000, 750)",
+                    "drawImage(/CBlades/images/maps/map.png, -1023, -1575, 2046, 3150)",
+                "restore()"
+            ]);
+            assertClearDirectives(commandsLayer, 2000, 1500);
+            assertDirectives(commandsLayer, showGameCommand("turn", 1940, 1440));
+            assertDirectives(commandsLayer, showGameCommand("hide", 1880, 1440));
+            assertDirectives(commandsLayer, showGameCommand("undo", 1820, 1440));
+            assertDirectives(commandsLayer, showGameCommand("redo", 1760, 1440));
+            assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 1700, 1440));
+            assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 1640, 1440));
+            assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 1580, 1440));
+            assertDirectives(commandsLayer, showGameCommand("editor", 1520, 1440));
+            assertDirectives(commandsLayer, showGameCommand("insert2", 1460, 1440));
+            assertDirectives(commandsLayer, showGameCommand("full-screen-off", 1400, 1440));
+            assertNoMoreDirectives(commandsLayer);
+        when:
+            game._fullScreenCommand.action();
+            executeAllAnimations();
+            resetDirectives(mapLayer, commandsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(mapLayer)).arrayEqualsTo([
+                "save()",
+                    "resetTransform()",
+                    "clearRect(0, 0, 1500, 1000)",
+                "restore()",
+                "save()",
+                    "setTransform(0.9775, 0, 0, 0.9775, 750, 500)",
+                    "drawImage(/CBlades/images/maps/map.png, -1023, -1575, 2046, 3150)",
+                "restore()"
+            ]);
+            assertClearDirectives(commandsLayer, 1500, 1000);
+            assertDirectives(commandsLayer, showGameCommand("turn", 1440, 940));
+            assertDirectives(commandsLayer, showGameCommand("hide", 1380, 940));
+            assertDirectives(commandsLayer, showGameCommand("undo", 1320, 940));
+            assertDirectives(commandsLayer, showGameCommand("redo", 1260, 940));
+            assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 1200, 940));
+            assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 1140, 940));
+            assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 1080, 940));
+            assertDirectives(commandsLayer, showGameCommand("editor", 1020, 940));
+            assertDirectives(commandsLayer, showGameCommand("insert2", 960, 940));
+            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 900, 940));
+            assertNoMoreDirectives(commandsLayer);
     });
 
     class TestInsert extends WidgetLevelMixin(DInsert) {
@@ -706,7 +761,7 @@ describe("Game", ()=> {
         }
     }
 
-    it("Checks visibility level management (on insert as exemple)", () => {
+    it("Checks visibility level management (on insert as example)", () => {
         given:
             var game = new CBGame();
             var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
@@ -715,6 +770,7 @@ describe("Game", ()=> {
             game.setMenu();
             game.start();
             game._showCommand.action();
+            executeAllAnimations();
         when:
             var insert = new TestInsert(game);
         then:
@@ -726,20 +782,12 @@ describe("Game", ()=> {
             loadAllImages();
         then:
             assert([...Mechanisms.manager._listeners]).contains(insert);
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 150, 200)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-100, -150, 200, 300)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 150, 200)",
-                    "drawImage(/CBlades/images/inserts/test-insert.png, 0, 0, 200, 300, -100, -150, 200, 300)",
-                "restore()"
-            ]);
+            assertClearDirectives(widgetsLevel);
+            assertDirectives(widgetsLevel, showInsert("test", 150, 200, 200, 300));
+            assertNoMoreDirectives(widgetsLevel);
         when:
             game._insertLevelCommand.action();
+            executeAllAnimations();
             resetDirectives(widgetsLevel);
             repaint(game);
         then:
@@ -761,7 +809,7 @@ describe("Game", ()=> {
             assert([...Mechanisms.manager._listeners]).notContains(insert);
     });
 
-    it("Checks mask thats depends on the visibility level", () => {
+    it("Checks mask that depends on the visibility level", () => {
         given:
             var game = new CBGame();
             var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
@@ -770,6 +818,7 @@ describe("Game", ()=> {
             game.start();
             game.setMenu();
             game._showCommand.action();
+            executeAllAnimations();
         when:
             var mask = new CBMask(game);
             resetDirectives(widgetsLevel);
@@ -777,15 +826,12 @@ describe("Game", ()=> {
             paint(game);
         then:
             assert([...Mechanisms.manager._listeners]).contains(mask);
-            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
-                    "globalAlpha = 0.3", "fillStyle = #000000",
-                    "fillRect(0, 0, 1000, 800)",
-                "restore()"
-            ]);
+            assertClearDirectives(widgetsLevel);
+            assertDirectives(widgetsLevel, showMask());
+            assertNoMoreDirectives(widgetsLevel);
         when:
             game._insertLevelCommand.action();
+            executeAllAnimations();
             resetDirectives(widgetsLevel);
             repaint(game);
         then:
@@ -833,13 +879,9 @@ describe("Game", ()=> {
             assert(counter.element.artifacts[0]).equalsTo(counter.artifact);
             assert(counter.location.toString()).equalsTo("point(100, 200)");
             assert(counter.viewportLocation.toString()).equalsTo("point(548.8759, 507.5269)");
-            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 548.8759, 507.5269)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(hexLayer);
+            assertDirectives(hexLayer, showFakeCounter("misc/counter", [0.3456, 0.3456, -0.3456, 0.3456, 548.8759, 507.5269]));
+            assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
             counter.location = new Point2D(10, 20);
@@ -847,13 +889,9 @@ describe("Game", ()=> {
         then:
             assert(counter.location.toString()).equalsTo("point(10, 20)");
             assert(counter.viewportLocation.toString()).equalsTo("point(504.8876, 419.5503)");
-            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 419.5503)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(hexLayer);
+            assertDirectives(hexLayer, showFakeCounter("misc/counter", [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 419.5503]));
+            assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
             paint(game);
@@ -864,13 +902,9 @@ describe("Game", ()=> {
             counter.refresh();
             paint(game);
         then:
-            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 419.5503)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(hexLayer);
+            assertDirectives(hexLayer, showFakeCounter("misc/counter", [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 419.5503]));
+            assertNoMoreDirectives(hexLayer);
         when:
             mouseClickOnCounter(game, counter); // checks that tests does not crash
     });
@@ -927,9 +961,9 @@ describe("Game", ()=> {
             var player = new CBAbstractPlayer();
             game.addPlayer(player);
             let unit1 = new CBTestUnit(player, ["/CBlades/images/units/misc/unit1.png"]);
-            let markerImage = DImage.getImage("/CBlades/images/units/misc/markers1.png");
+            let markerImage = DImage.getImage("/CBlades/images/markers/misc/markers1.png");
             let marker = new CBTestMarker(unit1,"units", [markerImage],
-                new Point2D(0, 0), new Dimension2D(142, 142));
+                new Point2D(0, 0), new Dimension2D(64, 64));
             unit1._element.addArtifact(marker);
             let unit2 = new CBTestUnit(player, ["/CBlades/images/units/misc/unit2.png"]);
             let spell = new CBTestPlayable(unit2, CBGame.ULAYERS.SPELLS, "units", ["/CBlades/images/units/misc/spell.png"],
@@ -952,41 +986,21 @@ describe("Game", ()=> {
             resetDirectives(unitsLayer0, markersLayer0, unitsLayer1, spellsLayer1, optionsLayer1);
             repaint(game);
         then:
-            assert(getDirectives(unitsLayer0, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(markersLayer0, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/markers1.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit2.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(spellsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/spell.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(optionsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/option.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer0);
+            assertDirectives(unitsLayer0, showTroop("misc/unit1", zoomAndRotate0(333.3333, 111.327)));
+            assertNoMoreDirectives(unitsLayer0);
+            assertClearDirectives(markersLayer0);
+            assertDirectives(markersLayer0, showMarker("misc/markers1", zoomAndRotate0(333.3333, 111.327)));
+            assertNoMoreDirectives(markersLayer0);
+            assertClearDirectives(unitsLayer1);
+            assertDirectives(unitsLayer1, showTroop("misc/unit2", zoomAndRotate0(343.1085, 101.5518)));
+            assertNoMoreDirectives(unitsLayer1);
+            assertClearDirectives(spellsLayer1);
+            assertDirectives(spellsLayer1, showFakeCounter("misc/spell", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertNoMoreDirectives(spellsLayer1);
+            assertClearDirectives(optionsLayer1);
+            assertDirectives(optionsLayer1, showFakeCounter("misc/option", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertNoMoreDirectives(optionsLayer1);
     });
 
     it("Checks formations and formation's marker and options registration on layers", () => {
@@ -996,9 +1010,9 @@ describe("Game", ()=> {
             game.addPlayer(player);
             let formation1 = new CBTestFormation(player, ["/CBlades/images/units/misc/formation1.png"]);
             formation1.angle = 60;
-            let markerImage = DImage.getImage("/CBlades/images/units/misc/markers1.png");
+            let markerImage = DImage.getImage("/CBlades/images/markers/misc/markers1.png");
             let marker = new CBTestMarker(formation1, "units", [markerImage],
-                new Point2D(0, 0), new Dimension2D(142, 142));
+                new Point2D(0, 0), new Dimension2D(64, 64));
             formation1._element.addArtifact(marker);
             let formation2 = new CBTestFormation(player, ["/CBlades/images/units/misc/formation2.png"]);
             formation2.angle = 60;
@@ -1020,34 +1034,18 @@ describe("Game", ()=> {
             resetDirectives(formationsLayer0, fmarkersLayer0, formationsLayer1, foptionsLayer1);
             repaint(game);
         then:
-            assert(getDirectives(formationsLayer0, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 375, 135.3831)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/formation1.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(fmarkersLayer0, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 375, 135.3831)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/markers1.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(formationsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.2444, 0.4233, -0.4233, 0.2444, 379.8876, 130.4955)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/formation2.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(foptionsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/option.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(formationsLayer0);
+            assertDirectives(formationsLayer0, showFormation("misc/formation1", zoomAndRotate60(375, 135.3831)));
+            assertNoMoreDirectives(formationsLayer0);
+            assertClearDirectives(fmarkersLayer0);
+            assertDirectives(fmarkersLayer0, showMarker("misc/markers1", zoomAndRotate60(375, 135.3831)));
+            assertNoMoreDirectives(fmarkersLayer0);
+            assertClearDirectives(formationsLayer1);
+            assertDirectives(formationsLayer1, showFormation("misc/formation2", zoomAndRotate60(379.8876, 130.4955)));
+            assertNoMoreDirectives(formationsLayer1);
+            assertClearDirectives(foptionsLayer1);
+            assertDirectives(foptionsLayer1, showFakeCounter("misc/option", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertNoMoreDirectives(foptionsLayer1);
     });
 
     it("Checks unit selection/deselection appearance", () => {
@@ -1059,25 +1057,17 @@ describe("Game", ()=> {
             unit.select();
             paint(game);
         then:
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer);
+            assertDirectives(unitsLayer, showSelectedTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
+            assertNoMoreDirectives(unitsLayer);
         when:
             resetDirectives(unitsLayer);
             unit.unselect();
             paint(game);
         then:
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer);
+            assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
+            assertNoMoreDirectives(unitsLayer);
     });
 
     it("Checks unit addition and removing from game and map", () => {
@@ -1149,13 +1139,9 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.playables).arrayEqualsTo([playable]);
-            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 121.1022)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/playable.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(hexLayer);
+            assertDirectives(hexLayer, showFakeCounter("misc/playable", zoomAndRotate0(333.3333, 121.1022)));
+            assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
             playable.removeFromMap();
@@ -1180,13 +1166,9 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.playables).arrayEqualsTo([playable]);
-            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 121.1022)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/playable.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(hexLayer);
+            assertDirectives(hexLayer, showFakeCounter("misc/playable", zoomAndRotate0(333.3333, 121.1022)));
+            assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
             Memento.open();
@@ -1202,13 +1184,9 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.playables).arrayEqualsTo([playable]);
-            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 121.1022)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/playable.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(hexLayer);
+            assertDirectives(hexLayer, showFakeCounter("misc/playable", zoomAndRotate0(333.3333, 121.1022)));
+            assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
             Memento.undo();
@@ -1236,13 +1214,9 @@ describe("Game", ()=> {
         then:
             assert(hexId1.playables).arrayEqualsTo([playable]);
             assert(hexId2.playables).arrayEqualsTo([playable]);
-            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 169.2143)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/playable.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(hexLayer);
+            assertDirectives(hexLayer, showFakeCounter("misc/playable", zoomAndRotate0(333.3333, 169.2143)));
+            assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
             playable.removeFromMap();
@@ -1271,13 +1245,9 @@ describe("Game", ()=> {
         then:
             assert(hexId1.playables).arrayEqualsTo([playable]);
             assert(hexId2.playables).arrayEqualsTo([playable]);
-            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 169.2143)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/playable.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(hexLayer);
+            assertDirectives(hexLayer, showFakeCounter("misc/playable", zoomAndRotate0(333.3333, 169.2143)));
+            assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
             Memento.open();
@@ -1295,13 +1265,9 @@ describe("Game", ()=> {
         then:
             assert(hexId1.playables).arrayEqualsTo([playable]);
             assert(hexId2.playables).arrayEqualsTo([playable]);
-            assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 169.2143)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/playable.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
+            assertClearDirectives(hexLayer);
+            assertDirectives(hexLayer, showFakeCounter("misc/playable", zoomAndRotate0(333.3333, 169.2143)));
+            assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
             Memento.undo();
@@ -1331,13 +1297,9 @@ describe("Game", ()=> {
             assert(hexId.units).arrayEqualsTo([unit]);
             assert(game.counters).setEqualsTo(new Set([unit]));
             assert(unit.isOnBoard()).equalsTo(true);
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer);
+            assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(333.3333, 111.327)));
+            assertNoMoreDirectives(unitsLayer);
         when:
             resetDirectives(unitsLayer);
             unit.removeFromMap();
@@ -1368,13 +1330,9 @@ describe("Game", ()=> {
             assert(hexId.units).arrayEqualsTo([unit]);
             assert(game.counters).setEqualsTo(new Set([unit]));
             assert(unit.isOnBoard()).equalsTo(true);
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer);
+            assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(333.3333, 111.327)));
+            assertNoMoreDirectives(unitsLayer);
         when:
             resetDirectives(unitsLayer);
             Memento.open();
@@ -1394,13 +1352,9 @@ describe("Game", ()=> {
             assert(hexId.units).arrayEqualsTo([unit]);
             assert(game.counters).setEqualsTo(new Set([unit]));
             assert(unit.isOnBoard()).equalsTo(true);
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer);
+            assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(333.3333, 111.327)));
+            assertNoMoreDirectives(unitsLayer);
         when:
             resetDirectives(unitsLayer);
             Memento.undo();
@@ -1418,7 +1372,7 @@ describe("Game", ()=> {
             var { game, map } = prepareTinyGame();
             var player = new CBAbstractPlayer();
             game.addPlayer(player);
-            let unit = new CBTestFormation(player, ["/CBlades/images/units/misc/unit.png"]);
+            let unit = new CBTestFormation(player, ["/CBlades/images/units/misc/formation.png"]);
             unit.angle = 90;
             game.start();
             loadAllImages();
@@ -1435,13 +1389,9 @@ describe("Game", ()=> {
             assert(hexId2.units).arrayEqualsTo([unit]);
             assert(game.counters).setEqualsTo(new Set([unit]));
             assert(unit.isOnBoard()).equalsTo(true);
-            assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0, 0.4888, -0.4888, 0, 333.3333, 159.4391)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(formationsLayer);
+            assertDirectives(formationsLayer, showFormation("misc/formation", zoomAndRotate90(333.3333, 159.4391)));
+            assertNoMoreDirectives(formationsLayer);
         when:
             resetDirectives(formationsLayer);
             unit.removeFromMap();
@@ -1451,8 +1401,7 @@ describe("Game", ()=> {
             assert(hexId2.units).arrayEqualsTo([]);
             assert(game.counters).setEqualsTo(new Set());
             assert(unit.isOnBoard()).equalsTo(false);
-            assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([
-            ]);
+            assertNoMoreDirectives(formationsLayer, 4);
     });
 
     it("Checks unit addition and removing on a Hex Side (undoable)", () => {
@@ -1460,7 +1409,7 @@ describe("Game", ()=> {
             var { game, map } = prepareTinyGame();
             var player = new CBAbstractPlayer();
             game.addPlayer(player);
-            let unit = new CBTestFormation(player, ["/CBlades/images/units/misc/unit.png"]);
+            let unit = new CBTestFormation(player, ["/CBlades/images/units/misc/formation.png"]);
             unit.angle = 90;
             game.start();
             loadAllImages();
@@ -1477,13 +1426,9 @@ describe("Game", ()=> {
             assert(hexId2.units).arrayEqualsTo([unit]);
             assert(game.counters).setEqualsTo(new Set([unit]));
             assert(unit.isOnBoard()).equalsTo(true);
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0, 0.4888, -0.4888, 0, 333.3333, 159.4391)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer);
+            assertDirectives(unitsLayer, showFormation("misc/formation", zoomAndRotate90(333.3333, 159.4391)));
+            assertNoMoreDirectives(unitsLayer);
         when:
             resetDirectives(unitsLayer);
             Memento.open();
@@ -1505,13 +1450,9 @@ describe("Game", ()=> {
             assert(hexId2.units).arrayEqualsTo([unit]);
             assert(game.counters).setEqualsTo(new Set([unit]));
             assert(unit.isOnBoard()).equalsTo(true);
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0, 0.4888, -0.4888, 0, 333.3333, 159.4391)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer);
+            assertDirectives(unitsLayer, showFormation("misc/formation", zoomAndRotate90(333.3333, 159.4391)));
+            assertNoMoreDirectives(unitsLayer);
         when:
             resetDirectives(unitsLayer);
             Memento.undo();
@@ -1542,13 +1483,9 @@ describe("Game", ()=> {
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
             assert(game.counters).setEqualsTo(new Set([unit]));
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer);
+            assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(333.3333, 111.327)));
+            assertNoMoreDirectives(unitsLayer);
         when:
             resetDirectives(unitsLayer);
             var hexId2 = map.getHex(4, 6);
@@ -1557,13 +1494,9 @@ describe("Game", ()=> {
         then:
             assert(hexId.units).arrayEqualsTo([]);
             assert(game.counters).setEqualsTo(new Set([unit]));
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 207.5513)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer);
+            assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(333.3333, 207.5513)));
+            assertNoMoreDirectives(unitsLayer);
         when:
             resetDirectives(unitsLayer);
             unit.hexLocation = null;
@@ -1839,35 +1772,23 @@ describe("Game", ()=> {
             var [unitsLayer] = getLayers(game.board, "units-0");
             paint(game);
         then:
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer);
+            assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
+            assertNoMoreDirectives(unitsLayer);
         when:
             resetDirectives(unitsLayer);
             mouseMoveOnCounter(game, unit);
         then:
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                "shadowColor = #00FFFF", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer);
+            assertDirectives(unitsLayer, showOverTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
+            assertNoMoreDirectives(unitsLayer);
         when:
             resetDirectives(unitsLayer);
             mouseMoveOutOfCounter(game, unit);
         then:
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer);
+            assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
+            assertNoMoreDirectives(unitsLayer);
         when:
             unit.select();
             paint(game);
@@ -1899,46 +1820,24 @@ describe("Game", ()=> {
             paint(game);
             var [unitsLayer1, unitsLayer2] = getLayers(game.board, "units-1", "units-2");
         then:
-            assert(getDirectives(unitsLayer0, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter1.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(unitsLayer1)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter2.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(unitsLayer2)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 352.8837, 91.7766)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter3.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer0);
+            assertDirectives(unitsLayer0, showFakeCounter("misc/counter1", zoomAndRotate0(333.3333, 111.327), 142));
+            assertNoMoreDirectives(unitsLayer0);
+            assertDirectives(unitsLayer1, showFakeCounter("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertNoMoreDirectives(unitsLayer1);
+            assertDirectives(unitsLayer2, showFakeCounter("misc/counter3", zoomAndRotate0(352.8837, 91.7766), 142));
+            assertNoMoreDirectives(unitsLayer2);
         when:
             resetDirectives(unitsLayer0, unitsLayer1, unitsLayer2);
             mouseMove(game, 343-71/2+5, 101-71/2+5); // On counter2 but not counter3
             paint(game);
         then:
-            assert(getDirectives(unitsLayer0, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter1.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
-                    "shadowColor = #00FFFF", "shadowBlur = 15", // Ready to be selected
-                    "drawImage(/CBlades/images/units/misc/counter2.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer0);
+            assertDirectives(unitsLayer0, showFakeCounter("misc/counter1", zoomAndRotate0(333.3333, 111.327), 142));
+            assertNoMoreDirectives(unitsLayer0);
+            assertClearDirectives(unitsLayer1);
+            assertDirectives(unitsLayer1, showOverFakeCounter("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertNoMoreDirectives(unitsLayer1);
             assert(getDirectives(unitsLayer2, 4)).arrayEqualsTo([
                 "save()",
                 "restore()"
@@ -1948,27 +1847,15 @@ describe("Game", ()=> {
             mouseMove(game, 100, 100); // not on any counter
             paint(game);
         then:
-            assert(getDirectives(unitsLayer0, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 111.327)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter1.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter2.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(unitsLayer2, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 352.8837, 91.7766)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter3.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer0);
+            assertDirectives(unitsLayer0, showFakeCounter("misc/counter1", zoomAndRotate0(333.3333, 111.327), 142));
+            assertNoMoreDirectives(unitsLayer0);
+            assertClearDirectives(unitsLayer1);
+            assertDirectives(unitsLayer1, showFakeCounter("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertNoMoreDirectives(unitsLayer1);
+            assertClearDirectives(unitsLayer2);
+            assertDirectives(unitsLayer2, showFakeCounter("misc/counter3", zoomAndRotate0(352.8837, 91.7766), 142));
+            assertNoMoreDirectives(unitsLayer2);
     });
 
     it("Checks that when the mouse is over a actuator's (unit) trigger, the units above are retracted", () => {
@@ -1984,27 +1871,15 @@ describe("Game", ()=> {
             resetDirectives(unitsLayer0, actuatorsLayer0, unitsLayer1);
             repaint(game);
         then:
-            assert(getDirectives(actuatorsLayer0, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 159.4391)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/test.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(unitsLayer0, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 159.4391)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit2.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(actuatorsLayer0);
+            assertDirectives(actuatorsLayer0, showActuatorTrigger("test", 142, 142, zoomAndRotate0(416.6667, 159.4391)))
+            assertNoMoreDirectives(actuatorsLayer0);
+            assertClearDirectives(unitsLayer0);
+            assertDirectives(unitsLayer0, showTroop("misc/unit1", zoomAndRotate0(416.6667, 159.4391)));
+            assertNoMoreDirectives(unitsLayer0);
+            assertClearDirectives(unitsLayer1);
+            assertDirectives(unitsLayer1, showTroop("misc/unit2", zoomAndRotate0(426.4418, 149.664)));
+            assertNoMoreDirectives(unitsLayer1);
         when:
             resetDirectives(unitsLayer1);
             mouseMove(game, 417-71/2+5, 159-71/2+5); // On counter2's actuator but not counter3
@@ -2019,13 +1894,9 @@ describe("Game", ()=> {
             mouseMove(game, 100, 100); // not on any counter
             paint(game);
         then:
-            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit2.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer1);
+            assertDirectives(unitsLayer1, showTroop("misc/unit2", zoomAndRotate0(426.4418, 149.664)));
+            assertNoMoreDirectives(unitsLayer1);
     });
 
     it("Checks that when the mouse is a unit is retracted, its actuator is retracted too", () => {
@@ -2041,27 +1912,15 @@ describe("Game", ()=> {
             resetDirectives(unitsLayer0, actuatorsLayer1, unitsLayer1);
             repaint(game);
         then:
-            assert(getDirectives(actuatorsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/test.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(unitsLayer0, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 159.4391)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit1.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit2.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(actuatorsLayer1);
+            assertDirectives(actuatorsLayer1, showActuatorTrigger("test", 142, 142, zoomAndRotate0(426.4418, 149.664)))
+            assertNoMoreDirectives(actuatorsLayer1);
+            assertClearDirectives(unitsLayer0);
+            assertDirectives(unitsLayer0, showTroop("misc/unit1", zoomAndRotate0(416.6667, 159.4391)));
+            assertNoMoreDirectives(unitsLayer0);
+            assertClearDirectives(unitsLayer1);
+            assertDirectives(unitsLayer1, showTroop("misc/unit2", zoomAndRotate0(426.4418, 149.664)));
+            assertNoMoreDirectives(unitsLayer1);
         when:
             resetDirectives(unitsLayer1, actuatorsLayer1);
             mouseMove(game, 417-71/2+5, 159-71/2+5); // On counter1 but not counter2
@@ -2080,20 +1939,12 @@ describe("Game", ()=> {
             mouseMove(game, 100, 100); // not on any counter
             paint(game);
         then:
-            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit2.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(actuatorsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 426.4418, 149.664)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/actuators/test.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer1);
+            assertDirectives(unitsLayer1, showTroop("misc/unit2", zoomAndRotate0(426.4418, 149.664)));
+            assertNoMoreDirectives(unitsLayer1);
+            assertClearDirectives(actuatorsLayer1);
+            assertDirectives(actuatorsLayer1, showActuatorTrigger("test", 142, 142, zoomAndRotate0(426.4418, 149.664)))
+            assertNoMoreDirectives(actuatorsLayer1);
     });
 
     it("Checks that when the mouse is over a formation, the above counters are retracted", () => {
@@ -2114,37 +1965,20 @@ describe("Game", ()=> {
             paint(game);
             var [unitsLayer1] = getLayers(game.board, "units-1");
         then:
-            assert(getDirectives(formationsLayer0, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 333.3333, 159.4391)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/formation1.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(unitsLayer1)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter2.png, -71, -71, 142, 142)",
-                "restore()",
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 197.7761)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter3.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(formationsLayer0);
+            assertDirectives(formationsLayer0, showFormation("misc/formation1", zoomAndRotate90(333.3333, 159.4391)));
+            assertNoMoreDirectives(formationsLayer0);
+            assertDirectives(unitsLayer1, showFakeCounter("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(unitsLayer1, showFakeCounter("misc/counter3", zoomAndRotate0(343.1085, 197.7761), 142));
+            assertNoMoreDirectives(unitsLayer1);
         when:
             resetDirectives(formationsLayer0, unitsLayer1);
             mouseMove(game, 333-71/2+5, 159-142/2+5); // On formation1 but not on counter2 or counter3
             paint(game);
         then:
-            assert(getDirectives(formationsLayer0, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 333.3333, 159.4391)",
-                    "shadowColor = #00FFFF", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/formation1.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(formationsLayer0);
+            assertDirectives(formationsLayer0, showOverFormation("misc/formation1", zoomAndRotate90(333.3333, 159.4391)));
+            assertNoMoreDirectives(formationsLayer0);
             assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
                 "save()",
                 "restore()",
@@ -2156,25 +1990,14 @@ describe("Game", ()=> {
             mouseMove(game, 100, 100); // not on any counter
             paint(game);
         then:
-            assert(getDirectives(formationsLayer0, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0, 0.4888, -0.4888, 0, 333.3333, 159.4391)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/formation1.png, -142, -71, 284, 142)",
-                "restore()"
-            ]);
-            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 101.5518)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter2.png, -71, -71, 142, 142)",
-                "restore()",
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 343.1085, 197.7761)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/counter3.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(formationsLayer0);
+            assertDirectives(formationsLayer0, showFormation("misc/formation1", zoomAndRotate90(333.3333, 159.4391)));
+            assertNoMoreDirectives(formationsLayer0);
+            assertNoMoreDirectives(formationsLayer0);
+            assertClearDirectives(unitsLayer1);
+            assertDirectives(unitsLayer1, showFakeCounter("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(unitsLayer1, showFakeCounter("misc/counter3", zoomAndRotate0(343.1085, 197.7761), 142));
+            assertNoMoreDirectives(unitsLayer1);
     });
 
     it("Checks that clicking on a unit select the unit ", () => {
@@ -2192,13 +2015,9 @@ describe("Game", ()=> {
             assert(game.selectedUnit).equalsTo(unit);
             assert(actionLaunched).isTrue();
             loadAllImages();
-            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 351.8878)",
-                    "shadowColor = #FF0000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
-                "restore()"
-            ]);
+            assertClearDirectives(unitsLayer);
+            assertDirectives(unitsLayer, showSelectedTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
+            assertNoMoreDirectives(unitsLayer);
         when:   // Check that "reselecting" an already selected unit relaunch action
             actionLaunched = false;
             mouseClickOnCounter(game, unit);
@@ -2366,64 +2185,42 @@ describe("Game", ()=> {
     it("Checks playable sorting on Hex", () => {
         given:
             var { game, map } = prepareTinyGame();
-        var spell = new CBPlayable("terran", ["/CBlades/images/units/misc/spell.png"], new Dimension2D(50, 50));
-        spell.spellNature = true;
-        var blaze = new CBPlayable("terran", ["/CBlades/images/units/misc/blaze.png"], new Dimension2D(50, 50));
-        blaze.elementNature = true;
-        game.start();
-        var [hexLayer0] = getLayers(game.board, "hex-0");
+            var spell = new CBPlayable("terran", ["/CBlades/images/units/misc/spell.png"], new Dimension2D(50, 50));
+            spell.spellNature = true;
+            var blaze = new CBPlayable("terran", ["/CBlades/images/units/misc/blaze.png"], new Dimension2D(50, 50));
+            blaze.elementNature = true;
+            game.start();
+            var [hexLayer0] = getLayers(game.board, "hex-0");
         when:
             spell.appendToMap(map.getHex(4, 5));
-        blaze.appendToMap(map.getHex(4, 5));
-        loadAllImages();
-        resetDirectives(hexLayer0);
-        repaint(game);
-        var [hexLayer1] = getLayers(game.board, "hex-1");
+            blaze.appendToMap(map.getHex(4, 5));
+            loadAllImages();
+            resetDirectives(hexLayer0);
+            repaint(game);
+            var [hexLayer1] = getLayers(game.board, "hex-1");
         then:
-            assert(getDirectives(hexLayer0, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 121.1022)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/blaze.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
-        assert(getDirectives(hexLayer1)).arrayEqualsTo([
-            "save()",
-            "setTransform(0.4888, 0, 0, 0.4888, 323.5582, 111.327)",
-            "shadowColor = #000000", "shadowBlur = 15",
-            "drawImage(/CBlades/images/units/misc/spell.png, -25, -25, 50, 50)",
-            "restore()"
-        ]);
+            assertClearDirectives(hexLayer0);
+            assertDirectives(hexLayer0, showFakeCounter("misc/blaze", zoomAndRotate0(333.3333, 121.1022)));
+            assertNoMoreDirectives(hexLayer0);
+            assertDirectives(hexLayer1, showFakeCounter("misc/spell", zoomAndRotate0(323.5582, 111.327)));
+            assertNoMoreDirectives(hexLayer1);
         when:
             var trap = new CBPlayable("terran", ["/CBlades/images/units/misc/trap.png"], new Dimension2D(50, 50));
-        trap.featureNature = true;
-        trap.appendToMap(map.getHex(4, 5));
-        loadAllImages();
-        resetDirectives(hexLayer0, hexLayer1);
-        repaint(game);
-        var [hexLayer2] = getLayers(game.board, "hex-2");
+            trap.featureNature = true;
+            trap.appendToMap(map.getHex(4, 5));
+            loadAllImages();
+            resetDirectives(hexLayer0, hexLayer1);
+            repaint(game);
+            var [hexLayer2] = getLayers(game.board, "hex-2");
         then:
-            assert(getDirectives(hexLayer0, 4)).arrayEqualsTo([
-                "save()",
-                "setTransform(0.4888, 0, 0, 0.4888, 333.3333, 121.1022)",
-                "shadowColor = #000000", "shadowBlur = 15",
-                "drawImage(/CBlades/images/units/misc/trap.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
-        assert(getDirectives(hexLayer1, 4)).arrayEqualsTo([
-            "save()",
-            "setTransform(0.4888, 0, 0, 0.4888, 323.5582, 111.327)",
-            "shadowColor = #000000", "shadowBlur = 15",
-            "drawImage(/CBlades/images/units/misc/blaze.png, -25, -25, 50, 50)",
-            "restore()"
-        ]);
-        assert(getDirectives(hexLayer2)).arrayEqualsTo([
-            "save()",
-            "setTransform(0.4888, 0, 0, 0.4888, 313.783, 101.5518)",
-            "shadowColor = #000000", "shadowBlur = 15",
-            "drawImage(/CBlades/images/units/misc/spell.png, -25, -25, 50, 50)",
-            "restore()"
-        ]);
+            assertClearDirectives(hexLayer0);
+            assertDirectives(hexLayer0, showFakeCounter("misc/trap", zoomAndRotate0(333.3333, 121.1022)));
+            assertNoMoreDirectives(hexLayer0);
+            assertClearDirectives(hexLayer1);
+            assertDirectives(hexLayer1, showFakeCounter("misc/blaze", zoomAndRotate0(323.5582, 111.327)));
+            assertNoMoreDirectives(hexLayer1);
+            assertDirectives(hexLayer2, showFakeCounter("misc/spell", zoomAndRotate0(313.783, 101.5518)));
+            assertNoMoreDirectives(hexLayer2);
     });
 
 });

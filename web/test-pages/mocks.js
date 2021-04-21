@@ -6,6 +6,9 @@ import {
 import {
     assert
 } from "../jstest/jtest.js";
+import {
+    Dimension2D
+} from "../jslib/geometry.js";
 
 export function round(v) {
     return Math.round(v*10000)/10000;
@@ -21,10 +24,60 @@ export let mockPlatform = {
 
     init() {
         this._pixel = [255, 255, 255, 255];
+        this._mockWindow = {
+            innerWidth:1500, innerHeight:1000,
+                defaultWidth:1500, defaultHeight:1000,
+                body:{
+                style:{}
+            },
+            fullScreen: false
+        };
+    },
+
+    requestFullscreen() {
+        this._mockWindow.fullScreen = true;
+        this._mockWindow.innerWidth = 2000;
+        this._mockWindow.innerHeight = 1500;
+        this.dispatchWindowEvent("resize", {});
+    },
+
+    exitFullscreen() {
+        this._mockWindow.fullScreen = false;
+        this._mockWindow.innerWidth = this._mockWindow.defaultWidth;
+        this._mockWindow.innerHeight = this._mockWindow.defaultHeight;
+        this.dispatchWindowEvent("resize", {});
+    },
+
+    resizeWindow(width, height) {
+        this._mockWindow.innerWidth = width;
+        this._mockWindow.innerHeight = height;
+        this._mockWindow.defaultWidth = width;
+        this._mockWindow.defaultHeight = height;
+        this.dispatchWindowEvent("resize", {});
+    },
+
+    setStyleAttribute(element, attrName, attrValue) {
+        element.style[attrName] = attrValue;
+    },
+
+    setWindowStyleAttribute(attrName, attrValue) {
+        this._mockWindow.body.style[attrName] = attrValue;
+    },
+
+    getWindowDimension() {
+        return new Dimension2D(this._mockWindow.innerWidth, this._mockWindow.innerHeight);
+    },
+
+    addWindowEventListener(event, func, option=true) {
+        this.addEventListener(this._mockWindow, event, func, option=true);
+    },
+
+    dispatchWindowEvent(eventType, event) {
+        this.dispatchEvent(this._mockWindow, eventType, event);
     },
 
     createElement(tagName) {
-        return {tagName, children:[]};
+        return {tagName, style:{}, children:[]};
     },
 
     setAttribute(element, attrName, attrValue) {
@@ -213,6 +266,15 @@ export function assertDirectives(layer, model) {
 export function assertNoMoreDirectives(layer, count=0) {
     if (count) skipDirectives(layer, count);
     assert(layer._context.directives.length).equalsTo(0);
+}
+
+export function assertClearDirectives(layer, w= 1000, h= 800) {
+    assertDirectives(layer, [
+        "save()",
+            "resetTransform()",
+            `clearRect(0, 0, ${w}, ${h})`,
+        "restore()"
+    ]);
 }
 
 export function findInDirectives(layer, model, start=0, end =-1) {

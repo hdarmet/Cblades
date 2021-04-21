@@ -26,6 +26,10 @@ let _targetPlatform = {
         return document.createElement(tagName);
     },
 
+    setStyleAttribute(element, attrName, attrValue) {
+        element.style[attrName] = attrValue;
+    },
+
     setAttribute(element, attrName, attrValue) {
         element.setAttribute(attrName, attrValue);
     },
@@ -245,6 +249,11 @@ export class DLayer {
         this._updateSize();
     }
 
+    _setSize(dimension) {
+        this._root.width = dimension.w;
+        this._root.height = dimension.h;
+    }
+
     _execute(todo) {
         if (this._todos) {
             this._todos.push(todo);
@@ -390,8 +399,7 @@ export class DLayer {
     }
 
     _updateSize() {
-        _platform.setAttribute(this._root, "width", this._draw.dimension.w);
-        _platform.setAttribute(this._root, "height", this._draw.dimension.h);
+        this._setSize(this._draw.dimension);
     }
 
     clear() {
@@ -463,30 +471,19 @@ export class DDraw {
 
     constructor(dimension) {
         this._root = _platform.createElement("div");
-        this._dimension = dimension;
-        _platform.setAttribute(this.root, "style", `width: ${this._dimension.w}px; height:${this._dimension.h}px; border: 1px solid; position: relative, overflow:hidden`);
-        _platform.setAttribute(this.root, "tabindex", "0");
         this._layers = new Map();
         this._layersArray = [];
+        _platform.setAttribute(this.root, "style", `border: 1px solid; position: relative, overflow: hidden`);
+        _platform.setAttribute(this.root, "tabindex", "0");
+        this.setSize(dimension);
         this._transform = Matrix2D.IDENTITY;
-        this.fitWindow();
     }
 
     fitWindow() {
         let resize= ()=>{
             _platform.setWindowStyleAttribute("margin", "0px");
             _platform.setWindowStyleAttribute("padding", "0px");
-            this._dimension = _platform.getWindowDimension();
-            _platform.setAttribute(this.root, "style", `width: ${this._dimension.w}px; height:${this._dimension.h}px; border: 1px solid; position: relative, overflow:hidden`);
-            _platform.setAttribute(this.root, "tabindex", "0");
-            this._root.width = this._dimension.w;
-            this._root.height = this._dimension.h;
-            for(let layer of this._layers.values()) {
-                layer._root.width = this._dimension.w;
-                layer._root.height = this._dimension.h;
-                layer._root.setAttribute("overflow", "hidden");
-            }
-            Mechanisms.fire(this, DDraw.RESIZE_EVENT, this._dimension);
+            this.setSize(_platform.getWindowDimension());
         }
         resize();
         _platform.addWindowEventListener('resize', resize, false);
@@ -554,10 +551,12 @@ export class DDraw {
 
     setSize(dimension) {
         this._dimension = dimension;
-        _platform.setAttribute(this.root, "style", `width: ${this._dimension.w}px; height:${this._dimension.h}px; border: 1px solid; position: relative`);
-        for (let layer of this._layers.values()) {
+        this._root.width = this._dimension.w;
+        this._root.height = this._dimension.h;
+        for(let layer of this._layers.values()) {
             layer._setSize(dimension);
         }
+        Mechanisms.fire(this, DDraw.RESIZE_EVENT, this._dimension);
     }
 
     clear() {

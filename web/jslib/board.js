@@ -1279,6 +1279,10 @@ export class DBoard {
         Mechanisms.addListener(this);
     }
 
+    fitWindow() {
+        this._draw.fitWindow();
+    }
+
     _processGlobalEvent(source, event, value) {
         if (event === DDraw.RESIZE_EVENT) {
             this._adjust();

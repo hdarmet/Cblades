@@ -21,11 +21,15 @@ import {
 import {
     mockPlatform, getContextDirectives, resetContextDirectives
 } from "./mocks.js";
+import {
+    Mechanisms
+} from "../jslib/mechanisms.js";
 
 describe("Drawing fundamentals", ()=> {
 
     before(() => {
         setDrawPlatform(mockPlatform);
+        Mechanisms.reset();
         DImage.resetCache();
         DAnimator.clear();
     });
@@ -42,7 +46,7 @@ describe("Drawing fundamentals", ()=> {
             var draw = new DDraw(new Dimension2D(500, 300));
         then:
             assert(draw.root.tagName).equalsTo('div');
-            assert(draw.root.style).equalsTo("width: 500px; height:300px; border: 1px solid; position: relative");
+            assert(draw.root.style).equalsTo("border: 1px solid; position: relative, overflow: hidden");
             assert(draw.root.tabindex).equalsTo("0");
             assert(draw.dimension.w).equalsTo(500);
             assert(draw.dimension.h).equalsTo(300);
@@ -244,6 +248,42 @@ describe("Drawing fundamentals", ()=> {
             ]);
     });
 
+    it("Checks DDraw fit on window", () => {
+        given:
+            var draw = buildBasicDrawWithOneLayerNamedLayer1();
+            var layer = draw.getLayer("layer1");
+        when: /* draws an unloaded image */
+            var resizeCount = 0;
+            Mechanisms.addListener({
+                _processGlobalEvent(source, event, value) {
+                    resizeCount++;
+                    assert(source).equalsTo(draw);
+                    assert(event).equalsTo("draw-resize");
+                }
+            });
+            draw.fitWindow();
+        then:
+            assert(resizeCount).equalsTo(1);
+            assert(draw.dimension.w).equalsTo(1500);
+            assert(draw.dimension.h).equalsTo(1000);
+            assert(layer.root.width).equalsTo(1500);
+            assert(layer.root.height).equalsTo(1000);
+        when:
+            getDrawPlatform().requestFullscreen();
+        then:
+            assert(draw.dimension.w).equalsTo(2000);
+            assert(draw.dimension.h).equalsTo(1500);
+            assert(layer.root.width).equalsTo(2000);
+            assert(layer.root.height).equalsTo(1500);
+        when:
+            getDrawPlatform().exitFullscreen();
+        then:
+            assert(draw.dimension.w).equalsTo(1500);
+            assert(draw.dimension.h).equalsTo(1000);
+            assert(layer.root.width).equalsTo(1500);
+            assert(layer.root.height).equalsTo(1000);
+    });
+
     it("Checks DDraw resize", () => {
         given:
             var draw = buildBasicDrawWithOneLayerNamedLayer1();
@@ -361,7 +401,96 @@ describe("Drawing fundamentals", ()=> {
             assert(keyDown).isTrue();
     });
 
-    it("Checks all drawing methods of the target platform", () => {
+    it("Checks requestFullscreen function call on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
+            var requestFullscreenInvoked = false;
+            window.document.documentElement.requestFullscreen = function(...params) {
+                assert(params).arrayEqualsTo([]);
+                requestFullscreenInvoked = true;
+            }
+        when:
+            getDrawPlatform().requestFullscreen();
+        then:
+            assert(requestFullscreenInvoked).isTrue();
+    });
+
+    it("Checks exitFullscreen function call on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
+            var exitFullscreenInvoked = false;
+            window.document.exitFullscreen = function(...params) {
+                assert(params).arrayEqualsTo([]);
+                exitFullscreenInvoked = true;
+            }
+        when:
+            getDrawPlatform().exitFullscreen();
+        then:
+            assert(exitFullscreenInvoked).isTrue();
+    });
+
+    it("Checks style attribute setter on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
+            Object.defineProperty(CanvasRenderingContext2D.prototype, "style", {
+                get: function(style) {
+                    this._style = [];
+                    return this._style;
+                }
+            });
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer");
+            getDrawPlatform().setStyleAttribute(layer.root, "border", "5px solid red");
+        then:
+            assert(layer.root.style["border"]).equalsTo("5px solid red");
+    });
+
+    it("Checks window style attribute setter on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
+            Object.defineProperty(HTMLBodyElement.prototype, "style", {
+                get: function(style) {
+                    this._style = this._style || {};
+                    return this._style;
+                }
+            });
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer");
+            getDrawPlatform().setWindowStyleAttribute("margin", "0px");
+        then:
+            assert(window.document.body.style["margin"]).equalsTo("0px");
+    });
+
+    it("Checks window window sier attribute setters on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
+            var innerWidthInvoked = false;
+            delete window.innerWidth;
+            delete window.innerHeight;
+            Object.defineProperty(Window.prototype, "innerWidth", {
+                get: function(style) {
+                    innerWidthInvoked = true;
+                    return 2000;
+                }
+            });
+            var innerHeightInvoked = false;
+            Object.defineProperty(Window.prototype, "innerHeight", {
+                get: function(style) {
+                    innerHeightInvoked = true;
+                    return 1500;
+                }
+            });
+        when:
+            var dimension = getDrawPlatform().getWindowDimension();
+        then:
+            assert(dimension.toString()).equalsTo("dimension(1998, 1498)");
+            assert(innerWidthInvoked).isTrue();
+            assert(innerHeightInvoked).isTrue();
+    });
+
+    it("Checks strokeRect method call on the target platform", () => {
         given:
             setDrawPlatform(targetPlatform());
             var strokeRectInvoked = false;
@@ -369,32 +498,103 @@ describe("Drawing fundamentals", ()=> {
                 assert(params).arrayEqualsTo([10, 15, 20, 25]);
                 strokeRectInvoked = true;
             }
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer");
+            layer.drawRect(new Point2D(10, 15), new Dimension2D(20, 25));
+        then:
+            assert(strokeRectInvoked).isTrue();
+    });
+
+    it("Checks fillRect method call on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
             var fillRectInvoked = false;
             CanvasRenderingContext2D.prototype.fillRect = function(...params) {
                 assert(params).arrayEqualsTo([10, 15, 20, 25]);
                 fillRectInvoked = true;
             }
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer");
+            layer.fillRect(new Point2D(10, 15), new Dimension2D(20, 25));
+        then:
+            assert(fillRectInvoked).isTrue();
+    });
+
+    it("Checks clearRect method call on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
             var clearRectInvoked = false;
             CanvasRenderingContext2D.prototype.clearRect = function(...params) {
                 assert(params).arrayEqualsTo([0, 0, 500, 300]);
                 clearRectInvoked = true;
             }
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer");
+            layer.clear();
+        then:
+            assert(clearRectInvoked).isTrue();
+    });
+
+    it("Checks drawImage method call on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
             var drawImageInvoked = false;
             CanvasRenderingContext2D.prototype.drawImage = function(image, ...params) {
                 assert(image.src).equalsTo('here/where/image.typ');
                 assert(params).arrayEqualsTo([15, 10]);
                 drawImageInvoked = true;
             }
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer");
+            var image = {
+                draw(layer, ...params) {
+                    getDrawPlatform().drawImage(layer._context,{src:'here/where/image.typ'}, ...params);
+                }
+            }
+            layer.drawImage(image, 15, 10);
+        then:
+            assert(drawImageInvoked).isTrue();
+    });
+
+    it("Checks strokeText method call on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
             var strokeTextInvoked = false;
             CanvasRenderingContext2D.prototype.strokeText = function(...params) {
                 assert(params).arrayEqualsTo(["text", 10, 15]);
                 strokeTextInvoked = true;
             }
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer");
+            layer.drawText("text",new Point2D(10, 15));
+        then:
+            assert(strokeTextInvoked).isTrue();
+    });
+
+    it("Checks fillText method call on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
             var fillTextInvoked = false;
             CanvasRenderingContext2D.prototype.fillText = function(...params) {
                 assert(params).arrayEqualsTo(["text", 10, 15]);
                 fillTextInvoked = true;
             }
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer");
+            layer.fillText("text", new Point2D(10, 15));
+        then:
+            assert(fillTextInvoked).isTrue();
+    });
+
+    it("Checks getImageData method call on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
             var getImageData = false;
             CanvasRenderingContext2D.prototype.getImageData = function(...params) {
                 assert(params).arrayEqualsTo([100, 150, 1, 1]);
@@ -402,6 +602,17 @@ describe("Drawing fundamentals", ()=> {
                 return {data:[100, 150, 180, 200]};
             }
         when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer");
+            var pixel = layer.getPixel(new Point2D(100, 150));
+        then:
+            assert(getImageData).isTrue();
+            assert(pixel).arrayEqualsTo([100, 150, 180, 200]);
+    });
+
+    it("Checks element building methods of the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
             var draw = new DDraw(new Dimension2D(500, 300));
         then:
             assert(draw.root).is(HTMLDivElement);
@@ -418,45 +629,9 @@ describe("Drawing fundamentals", ()=> {
             assert(layer.root).is(HTMLCanvasElement);
             assert(layer._context).is(CanvasRenderingContext2D);
             assert(canvas).arrayEqualsTo([layer1.root, layer2.root, layer.root, layer3.root]);
-        when:
-            layer.drawRect(new Point2D(10, 15), new Dimension2D(20, 25));
-        then:
-            assert(strokeRectInvoked).isTrue();
-        when:
-            var rectInvoked = false;
-            layer.fillRect(new Point2D(10, 15), new Dimension2D(20, 25));
-        then:
-            assert(fillRectInvoked).isTrue();
-        when:
-            layer.clear();
-        then:
-            assert(clearRectInvoked).isTrue();
-        when:
-            var image = {
-                draw(layer, ...params) {
-                    getDrawPlatform().drawImage(layer._context,{src:'here/where/image.typ'}, ...params);
-                }
-            }
-            layer.drawImage(image, 15, 10);
-        then:
-            assert(drawImageInvoked).isTrue();
-        when:
-            layer.drawText("text",new Point2D(10, 15));
-        then:
-            assert(strokeTextInvoked).isTrue();
-        when:
-            var textInvoked = false;
-            layer.fillText("text", new Point2D(10, 15));
-        then:
-            assert(fillTextInvoked).isTrue();
-        when:
-            var pixel = layer.getPixel(new Point2D(100, 150));
-        then:
-            assert(getImageData).isTrue();
-            assert(pixel).arrayEqualsTo([100, 150, 180, 200]);
     });
 
-    it("Checks settings methods of the target platform", () => {
+    it("Checks setTransform method call on the target platform", () => {
         given:
             setDrawPlatform(targetPlatform());
             var setTransformInvoked = false;
@@ -464,6 +639,17 @@ describe("Drawing fundamentals", ()=> {
                 assert(params).arrayEqualsTo([2, 0, 0, 2, 10, 15]);
                 setTransformInvoked = true;
             }
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer1");
+            layer.setTransformSettings(new Matrix2D(2, 0, 0, 2, 10, 15));
+        then:
+            assert(setTransformInvoked).isTrue();
+    });
+
+    it("Checks strokeStyle and lineWidth setter call on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
             var strokeStyleInvoked = false;
             Object.defineProperty(CanvasRenderingContext2D.prototype, "strokeStyle", {
                 set: function(style) {
@@ -478,6 +664,18 @@ describe("Drawing fundamentals", ()=> {
                     lineWidthInvoked = true;
                 }
             });
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer1");
+            layer.setStrokeSettings("#0F0F0F", 2);
+        then:
+            assert(strokeStyleInvoked).isTrue();
+            assert(lineWidthInvoked).isTrue();
+    });
+
+    it("Checks fillStyle setter call on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
             var fillStyleInvoked = false;
             Object.defineProperty(CanvasRenderingContext2D.prototype, "fillStyle", {
                 set: function(style) {
@@ -485,6 +683,17 @@ describe("Drawing fundamentals", ()=> {
                     fillStyleInvoked = true;
                 }
             });
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer1");
+            layer.setFillSettings("#0F0F0F");
+        then:
+            assert(fillStyleInvoked).isTrue();
+    });
+
+    it("Checks shadowColor & shadowBlur setter call on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
             var shadowColorInvoked = false;
             Object.defineProperty(CanvasRenderingContext2D.prototype, "shadowColor", {
                 set: function(style) {
@@ -499,6 +708,19 @@ describe("Drawing fundamentals", ()=> {
                     shadowBlurInvoked = true;
                 }
             });
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer1");
+        when:
+            layer.setShadowSettings("#0F0F0F", 15);
+        then:
+            assert(shadowColorInvoked).isTrue();
+            assert(shadowBlurInvoked).isTrue();
+    });
+
+    it("Checks globalAlpha setter call on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
             var globalAlphaInvoked = false;
             Object.defineProperty(CanvasRenderingContext2D.prototype, "globalAlpha", {
                 set: function(style) {
@@ -506,6 +728,17 @@ describe("Drawing fundamentals", ()=> {
                     globalAlphaInvoked = true;
                 }
             });
+        when:
+            var draw = new DDraw(new Dimension2D(500, 300));
+            var layer = draw.createLayer("layer1");
+            layer.setAlphaSettings(0.3);
+        then:
+            assert(globalAlphaInvoked).isTrue();
+    });
+
+    it("Checks font & textAlign setter call on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
             var fontInvoked = false;
             Object.defineProperty(CanvasRenderingContext2D.prototype, "font", {
                 set: function(style) {
@@ -523,35 +756,13 @@ describe("Drawing fundamentals", ()=> {
         when:
             var draw = new DDraw(new Dimension2D(500, 300));
             var layer = draw.createLayer("layer1");
-            layer.setStrokeSettings("#0F0F0F", 2);
-        then:
-            assert(strokeStyleInvoked).isTrue();
-            assert(lineWidthInvoked).isTrue();
-        when:
-            layer.setTransformSettings(new Matrix2D(2, 0, 0, 2, 10, 15));
-        then:
-            assert(setTransformInvoked).isTrue();
-        when:
-            layer.setFillSettings("#0F0F0F");
-        then:
-            assert(fillStyleInvoked).isTrue();
-        when:
-            layer.setShadowSettings("#0F0F0F", 15);
-        then:
-            assert(shadowColorInvoked).isTrue();
-            assert(shadowBlurInvoked).isTrue();
-        when:
-            layer.setAlphaSettings(0.3);
-        then:
-            assert(globalAlphaInvoked).isTrue();
-        when:
             layer.setTextSettings("18px serif", "center");
         then:
             assert(fontInvoked).isTrue();
             assert(textAlignInvoked).isTrue();
     });
 
-    it("Checks all non canvas methods of the target platform", () => {
+    it("Checks setTimeout function call on the target platform", () => {
         given:
             setDrawPlatform(targetPlatform());
             var setTimeoutInvoked = false;
@@ -562,21 +773,7 @@ describe("Drawing fundamentals", ()=> {
                 setTimeoutInvoked = true;
                 return "token";
             }
-            var clearTimeoutInvoked = false;
-            Window.prototype.clearTimeout = function(token) {
-                assert(token).equalsTo("token");
-                clearTimeoutInvoked = true;
-            }
-            var addEventListenerInvoked = false;
-            EventTarget.prototype.addEventListener = function(eventType, eventListener, ...args) {
-                assert(eventType).equalsTo("click");
-                eventListener({preventDefault(){}});
-                assert(args).arrayEqualsTo([true]);
-                addEventListenerInvoked = true;
-            }
         when:
-            var draw = new DDraw(new Dimension2D(500, 300));
-            var layer = draw.createLayer("layer1");
             try {
                 var testSetTimeout = window.setTimeout; // remove test setTimeout
                 delete window.setTimeout;
@@ -588,6 +785,16 @@ describe("Drawing fundamentals", ()=> {
         then:
             assert(token).equalsTo("token");
             assert(setTimeoutInvoked).isTrue();
+    });
+
+    it("Checks clearTimeout function call on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
+            var clearTimeoutInvoked = false;
+            Window.prototype.clearTimeout = function(token) {
+                assert(token).equalsTo("token");
+                clearTimeoutInvoked = true;
+            }
         when:
             try {
                 var testClearTimeout = window.clearTimeout; // remove test setTimeout
@@ -599,10 +806,39 @@ describe("Drawing fundamentals", ()=> {
             }
         then:
             assert(clearTimeoutInvoked).isTrue();
+    });
+
+    it("Checks addEventListener of the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
+            var addEventListenerInvoked = false;
+            EventTarget.prototype.addEventListener = function(eventType, eventListener, ...args) {
+                assert(eventType).equalsTo("click");
+                eventListener({preventDefault(){}});
+                assert(args).arrayEqualsTo([true]);
+                addEventListenerInvoked = true;
+            }
         when:
+            var draw = new DDraw(new Dimension2D(500, 300));
             draw.onMouseClick(function(event) {return true});
         then:
             assert(addEventListenerInvoked).isTrue();
+    });
+
+    it("Checks addWindowEventListener of the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
+            var addWindowEventListenerInvoked = false;
+            Window.prototype.addEventListener = function(eventType, eventListener, ...args) {
+                assert(eventType).equalsTo("resize");
+                eventListener({preventDefault(){}});
+                assert(args).arrayEqualsTo([true]);
+                addWindowEventListenerInvoked = true;
+            }
+        when:
+            getDrawPlatform().addWindowEventListener("resize", event=>true);
+        then:
+            assert(addWindowEventListenerInvoked).isTrue();
     });
 
     it("Checks random of the target platform", () => {

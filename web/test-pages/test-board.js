@@ -18,7 +18,7 @@ import {
     DTextArtifact, DStaticLevel, DLayeredLevel, DStackedLevel, DRectArtifact, DComposedImageArtifact
 } from "../jslib/board.js";
 import {
-    mockPlatform, getDirectives, resetDirectives, createEvent, loadAllImages, getLayers
+    mockPlatform, getDirectives, resetDirectives, createEvent, loadAllImages, getLayers, assertDirectives
 } from "./mocks.js";
 
 describe("Board", ()=> {
@@ -39,7 +39,7 @@ describe("Board", ()=> {
                 new DSimpleLevel("markers"));
         then:
             assert(board.root.tagName).equalsTo('div');
-            assert(board.root.style).equalsTo("width: 500px; height:300px; border: 1px solid; position: relative");
+            assert(board.root.style).equalsTo("border: 1px solid; position: relative, overflow: hidden");
             assert(board.viewportDimension.w).equalsTo(500);
             assert(board.viewportDimension.h).equalsTo(300);
             assert(board.dimension.w).equalsTo(500);
@@ -55,6 +55,37 @@ describe("Board", ()=> {
             assert(levelMap._layer).is(DLayer);
             assert(levelMap.transform.toString()).equalsTo("matrix(1, 0, 0, 1, 250, 150)");
             assert(levelMap.viewportDimension.toString()).equalsTo("dimension(500, 300)");
+    });
+
+    it("Checks board fit on window", () => {
+        given:
+            var board = new DBoard(new Dimension2D(2500, 2000), new Dimension2D(500, 300),
+                new DSimpleLevel("map"));
+            var [mapLayer] = getLayers(board, "map");
+        when:
+            var resizeCount = 0;
+            Mechanisms.addListener({
+                _processGlobalEvent(source, event, value) {
+                    if (event === "board-resize") {
+                        resizeCount++;
+                        assert(source).equalsTo(board);
+                    }
+                }
+            });
+            resetDirectives(mapLayer);
+            board.fitWindow();
+        then:
+            assert(board.viewportDimension.w).equalsTo(1500);
+            assert(board.viewportDimension.h).equalsTo(1000);
+            assert(board.dimension.w).equalsTo(2500);
+            assert(board.dimension.h).equalsTo(2000);
+            assert(resizeCount).equalsTo(1)
+            assert(getDirectives(mapLayer)).arrayEqualsTo([ // ensure that a paint is done...
+                "save()",
+                    "resetTransform()",
+                    "clearRect(0, 0, 1500, 1000)",
+                "restore()"
+            ]);
     });
 
     function createBoardWithMapUnitsAndMarkersLevels(width, height, viewPortWidth, viewPortHeight) {
@@ -112,11 +143,13 @@ describe("Board", ()=> {
             var element = new DElement(artifact);
             element.setLocation(new Point2D(100, 50));
         then:
+            assert(element.shown).isFalse();
             assert(artifact.isShown()).isFalse();
         when:
             resetDirectives(layer);
             element.setOnBoard(board);
         then: /* No paint here... */
+            assert(element.shown).isTrue();
             assert(artifact.board).equalsTo(board);
             assert(element.board).equalsTo(board);
             assert(artifact.isShown()).isTrue();

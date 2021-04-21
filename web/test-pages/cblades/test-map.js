@@ -7,7 +7,7 @@ import {
     DImage, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
-    createEvent, getDirectives, getLayers, mockPlatform
+    createEvent, getDirectives, getLayers, loadAllImages, mockPlatform
 } from "../mocks.js";
 import {
     Mechanisms, Memento
@@ -78,7 +78,6 @@ describe("Map", ()=> {
             var game = new CBTestGame();
             var hexId = map.getHex(3, 4);
             var hexSideId = new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5));
-            var [mapLayer] = getLayers(game.board, "map");
         when:
             game.setMap(map);
         then:
@@ -90,6 +89,50 @@ describe("Map", ()=> {
             mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
         then:
             assert(game.centeredOn.toString()).equalsTo("point(500, 410)");
+    });
+
+    it("Checks a map with several mapboard", () => {
+        given:
+            var map = new CBMap([
+                {path:"/CBlades/images/maps/map1.png", col:0, row:0, invert:true},
+                {path:"/CBlades/images/maps/map2.png", col:0, row:1},
+                {path:"/CBlades/images/maps/map3.png", col:1, row:0},
+                {path:"/CBlades/images/maps/map4.png", col:1, row:1, invert:true}
+            ]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var [mapLayer] = getLayers(game.board, "map");
+            game.board.paint();
+            loadAllImages();
+        then:
+            assert(getDirectives(mapLayer)).arrayEqualsTo([
+                "save()",
+                    "resetTransform()",
+                    "clearRect(0, 0, 500, 250)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.5, 0, 0, -0.5, -261.5, -662.5)",
+                    "drawImage(/CBlades/images/maps/map1.png, -1023, -1575, 2046, 3150)",
+                "restore()",
+                "save()",
+                    "setTransform(0.5, 0, 0, 0.5, -261.5, 912.5)",
+                    "drawImage(/CBlades/images/maps/map2.png, -1023, -1575, 2046, 3150)",
+                "restore()",
+                "save()",
+                    "setTransform(0.5, 0, 0, 0.5, 761.5, -662.5)",
+                    "drawImage(/CBlades/images/maps/map3.png, -1023, -1575, 2046, 3150)",
+                "restore()",
+                "save()",
+                    "setTransform(-0.5, 0, 0, -0.5, 761.5, 912.5)",
+                    "drawImage(/CBlades/images/maps/map4.png, -1023, -1575, 2046, 3150)",
+                "restore()"
+            ]);
+            assert(map.width).equalsTo(4092);
+            assert(map.height).equalsTo(6300);
+            assert(map.dimension.toString()).equalsTo("dimension(4092, 6300)");
+            assert(map.colCount).equalsTo(24);
+            assert(map.rowCount).equalsTo(32);
     });
 
     it("Checks map borders", () => {
@@ -708,7 +751,6 @@ describe("Map", ()=> {
         then:
             assert(hexId.playables).arrayEqualsTo([trap, blaze, spell]);
     });
-
 
     it("Checks unit stacking basic features", () => {
         given:
