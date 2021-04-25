@@ -118,8 +118,8 @@ describe("Interactive Magic", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMenuPanel(2, 6, 361.6667, 190));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showMenuItem(1, 5, "icons/cast-spell-gray", 2, 6, 361.6667, 190));
-            assertDirectives(itemsLayer, showMenuItem(0, 5, "icons/select-spell-gray", 2, 6, 361.6667, 190));
+            assertDirectives(itemsLayer, showMenuItem(1, 5, "icons/cast-spell", 2, 6, 361.6667, 190));
+            assertDirectives(itemsLayer, showMenuItem(0, 5, "icons/select-spell", 2, 6, 361.6667, 190));
     });
 
     function clickOnChoseSpellAction(game) {

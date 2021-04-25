@@ -692,7 +692,7 @@ describe("Movement teacher", ()=> {
             map.getHex(3, 11).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
         when:
             unit11.move(map.getHex(4, 9));
-            var hexes = arbitrator.createRootPathFinding(unit11);
+            var hexes = arbitrator.createRoutPathFinding(unit11);
         then:
             assert(hexes).setEqualsTo(new Set([map.getHex(3, 10)]));
     });

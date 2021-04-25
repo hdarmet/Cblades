@@ -113,6 +113,7 @@ describe("Arbitrator", ()=> {
             assert(allowedActions.moveForward).isDefined();
             assert(allowedActions.moveBack).isDefined();
             assert(allowedActions.escape).isDefined();
+            /*
             assert(allowedActions.confront).isDefined();
             assert(allowedActions.shockAttack).isDefined();
             assert(allowedActions.fireAttack).isDefined();
@@ -134,6 +135,7 @@ describe("Arbitrator", ()=> {
             assert(allowedActions.castSpell).isDefined();
             assert(allowedActions.mergeUnit).isDefined();
             assert(allowedActions.miscAction).isDefined();
+            */
     });
 
 });

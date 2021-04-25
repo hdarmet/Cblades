@@ -308,7 +308,7 @@ export class InteractiveGiveOrdersAction extends CBAction {
     giveOrder(leader, unit, event) {
         let cost = this.game.arbitrator.getOrderGivenCost(leader, unit).cost;
         this.unit.receiveCommandPoints(this.unit.commandPoints-cost);
-        unit.receiveOrder(true);
+        unit.receivesOrder(true);
         this.game.closeActuators();
         this._selectUnitsToGiveOrders();
     }

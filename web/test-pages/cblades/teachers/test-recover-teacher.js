@@ -147,6 +147,10 @@ describe("Recover teacher", ()=> {
         when:
             unit12.rout();
         then:
+            assert(arbitrator.isAllowedToRally(unit12)).isFalse();
+        when:
+            unit12.receivesOrder(true);
+        then:
             assert(arbitrator.isAllowedToRally(unit12)).isTrue();
     });
 

@@ -7,12 +7,13 @@ import {
     diffAngle, reverseAngle, sumAngle
 } from "../../geometry.js";
 import {
-    CBHexSideId, CBPathFinding
+    CBHexSideId, CBPathFinding, distanceFromHexLocationToHexLocation
 } from "../map.js";
 
 export class CBMovementTeacher {
 
     isAllowedToMove(unit) {
+        if (this.isUnitEngaged(unit)) return false;
         return true;
     }
 
@@ -293,27 +294,67 @@ export class CBMovementTeacher {
         );
     }
 
-    createRootPathFinding(unit) {
-        let pathFinding = new CBPathFinding(unit.hexLocation, unit.angle, unit.wing.retreatZone,
-            (from, to)=>{
-                let angle = from.getAngle(to);
-                let cost = this.game.arbitrator.getMovementCost(unit, angle, from, angle);
-                switch(cost.type) {
-                    case CBMoveProfile.COST_TYPE.IMPASSABLE: return 10000;
-                    case CBMoveProfile.COST_TYPE.MINIMAL_MOVE: return unit.type.getExtendedMovementPoints(unit.remainingStepCount);
-                    default: return cost.value;
-                }
-            },
-            (hex, fromAngle, toAngle)=>{
-                let cost = this.game.arbitrator.getRotationCost(unit, toAngle, hex, fromAngle);
-                switch(cost.type) {
-                    case CBMoveProfile.COST_TYPE.IMPASSABLE: return 10000;
-                    case CBMoveProfile.COST_TYPE.MINIMAL_MOVE: return unit.type.getExtendedMovementPoints(unit.remainingStepCount);
-                    default: return cost.value;
-                }
+    getMoveCostMethod(unit, freeHexLocation) {
+        return (from, to)=> {
+            if (freeHexLocation && freeHexLocation.hasHex(to)) return 0;
+            let angle = from.getAngle(to);
+            let cost = this.getMovementCost(unit, angle, from, angle);
+            switch (cost.type) {
+                case CBMoveProfile.COST_TYPE.IMPASSABLE:
+                    return null;
+                case CBMoveProfile.COST_TYPE.MINIMAL_MOVE:
+                    return unit.type.getExtendedMovementPoints(unit.remainingStepCount);
+                default:
+                    return cost.value;
             }
+        }
+    }
+
+    getTurnCostMethod(unit) {
+        return (hex, fromAngle, toAngle)=> {
+            let cost = this.getRotationCost(unit, toAngle, hex, fromAngle);
+            switch (cost.type) {
+                case CBMoveProfile.COST_TYPE.IMPASSABLE:
+                    return null;
+                case CBMoveProfile.COST_TYPE.MINIMAL_MOVE:
+                    return unit.type.getExtendedMovementPoints(unit.remainingStepCount);
+                default:
+                    return cost.value;
+            }
+        }
+    }
+
+    createRoutPathFinding(unit) {
+        let pathFinding = new CBPathFinding(unit.hexLocation, unit.angle, unit.wing.retreatZone,
+            this.getMoveCostMethod(unit), this.getTurnCostMethod(unit),
+            unit.moveProfile.getMinimalMoveCost()
         );
         return new Set(pathFinding.getGoodNextMoves());
+    }
+
+    getCostToEngage(unit, foe) {
+        let pathFinding = new CBPathFinding(foe.hexLocation, foe.angle, unit.hexLocation.hexes,
+            this.getMoveCostMethod(foe, unit.hexLocation), this.getTurnCostMethod(foe),
+            foe.moveProfile.getMinimalMoveCost(), foe.moveProfile.movementPoints
+        );
+        return pathFinding.getPathCost();
+    }
+
+    foesThatCanJoinAndEngage(unit) {
+        let foes = this.getFoes(unit);
+        let result = [];
+        for (let foe of foes) {
+            if (this.isAllowedToMove(foe)) {
+                let minimalCost = foe.moveProfile.getMinimalMoveCost();
+                let distanceToJoin = distanceFromHexLocationToHexLocation(foe.hexLocation, unit.hexLocation)-minimalCost;
+                let range = foe.moveProfile.movementPoints / minimalCost;
+                if (range >= distanceToJoin) {
+                    let realCost = this.getCostToEngage(unit, foe);
+                    if (realCost < foe.moveProfile.movementPoints) result.push(foe);
+                }
+            }
+        }
+        return result;
     }
 
 }

@@ -19,7 +19,11 @@ export class CBRecoveringTeacher {
     }
 
     isAllowedToRally(unit) {
-        return unit.cohesion === CBCohesion.ROUTED;
+        if (!unit.isRouted()) return false;
+        if (this.isUnitEngaged(unit)) return false;
+        if (unit.hasReceivedOrder()) return true;
+        if (unit.moralProfile.autoRally) return true;
+        return false;
     }
 
     processRestResult(unit, diceResult) {

@@ -14,7 +14,7 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBHexSideId, CBMoveType, CBPathFinding
+    CBHexSideId, CBMoveType
 } from "./map.js";
 import {
     CBAction, CBActionActuator, CBActuator, CBActuatorImageTrigger, CBActuatorTriggerMixin, CBMask, WidgetLevelMixin
@@ -373,7 +373,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     }
 
     _createMovementActuators(start) {
-        this._goodMoves = this.game.arbitrator.createRootPathFinding(this.unit);
+        this._goodMoves = this.game.arbitrator.createRoutPathFinding(this.unit);
         return super._createMovementActuators(start);
     }
 
@@ -403,6 +403,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     }
 
     checkDisengagement(point, action) {
+        this.game.closeActuators();
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();

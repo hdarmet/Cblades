@@ -102,10 +102,10 @@ describe("Interactive Formation", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMenuPanel(4, 4, 301.6667, 236.8878));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showMenuItem(2, 3, "icons/leave-formation-gray", 4, 4, 301.6667, 236.8878));
-            assertDirectives(itemsLayer, showMenuItem(3, 3, "icons/dismiss-formation-gray", 4, 4, 301.6667, 236.8878));
-            assertDirectives(itemsLayer, showMenuItem(0, 3, "icons/create-formation-gray", 4, 4, 301.6667, 236.8878));
-            assertDirectives(itemsLayer, showMenuItem(1, 3, "icons/join-formation-gray", 4, 4, 301.6667, 236.8878));
+            assertDirectives(itemsLayer, showMenuItem(2, 3, "icons/leave-formation", 4, 4, 301.6667, 236.8878));
+            assertDirectives(itemsLayer, showMenuItem(3, 3, "icons/dismiss-formation", 4, 4, 301.6667, 236.8878));
+            assertDirectives(itemsLayer, showMenuItem(0, 3, "icons/create-formation", 4, 4, 301.6667, 236.8878));
+            assertDirectives(itemsLayer, showMenuItem(1, 3, "icons/join-formation", 4, 4, 301.6667, 236.8878));
     });
 
     function clickOnCreateFormationAction(game) {
@@ -128,8 +128,8 @@ describe("Interactive Formation", ()=> {
             unit2.fixRemainingLossSteps(2);
             unit1.move(map.getHex(8, 8), 0);
             unit2.move(map.getHex(8, 7), 0);
-            unit1.receiveOrder(true);
-            unit2.receiveOrder(true);
+            unit1.receivesOrder(true);
+            unit2.receivesOrder(true);
             leader.move(null, 0);
             var [unitsLayer, formationsLayer, actuatorsLayer] = getLayers(game.board,"units-0", "formations-0", "actuators");
             clickOnCounter(game, unit1);
@@ -165,7 +165,7 @@ describe("Interactive Formation", ()=> {
     it("Checks break formation action process", () => {
         given:
             var {game, map, leader, formation} = createTinyFormationGame();
-            formation.receiveOrder(true);
+            formation.receivesOrder(true);
             loadAllImages();
             paint(game);
             var [unitsLayer, formationsLayer] = getLayers(game.board,"units-0", "formations-0");
@@ -195,7 +195,7 @@ describe("Interactive Formation", ()=> {
     it("Checks release troops from formation action process", () => {
         given:
             var {game, formation} = createTinyFormationGame();
-            formation.receiveOrder(true);
+            formation.receivesOrder(true);
             var [unitsLayer, formationsLayer, fmarkersLayer, actuatorsLayer] =
                 getLayers(game.board,"units-0", "formations-0", "fmarkers-0", "actuators");
             clickOnCounter(game, formation);
@@ -274,15 +274,15 @@ describe("Interactive Formation", ()=> {
             unit2.angle = 90;
             unit1.fixRemainingLossSteps(1);
             unit2.fixRemainingLossSteps(2);
-            unit1.receiveOrder(true);
-            unit2.receiveOrder(true);
+            unit1.receivesOrder(true);
+            unit2.receivesOrder(true);
             leader.move(null, 0);
             formation.angle = 90;
             formation.fixRemainingLossSteps(4);
             unit1.move(map.getHex(8, 8), 0);
             formation.move(new CBHexSideId(unit1.hexLocation, unit2.hexLocation), 0);
             unit2.move(map.getHex(8, 7), 0);
-            formation.receiveOrder(true);
+            formation.receivesOrder(true);
             clickOnCounter(game, formation);
         when:
             var [unitsLayer, formationsLayer] = getLayers(game.board,"units-0", "formations-0");

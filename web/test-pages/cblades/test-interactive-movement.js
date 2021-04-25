@@ -165,7 +165,7 @@ describe("Interactive Movement", ()=> {
             assertDirectives(widgetsLayer, showMenuPanel(4, 1, 301.6667, 326.8878));
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showMenuItem(2, 0, "icons/escape", 4, 1, 301.6667, 326.8878));
-            assertDirectives(itemsLayer, showMenuItem(3, 0, "icons/to-face-gray", 4, 1, 301.6667, 326.8878));
+            assertDirectives(itemsLayer, showMenuItem(3, 0, "icons/to-face", 4, 1, 301.6667, 326.8878));
             assertDirectives(itemsLayer, showMenuItem(0, 0, "icons/move", 4, 1, 301.6667, 326.8878));
             assertDirectives(itemsLayer, showMenuItem(1, 0, "icons/move-back", 4, 1, 301.6667, 326.8878));
     });

@@ -178,10 +178,10 @@ describe("Interactive Combat", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMenuPanel(4, 2, 301.6667, 296.8878));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showMenuItem(2, 1, "icons/shock-duel-gray", 4, 2, 301.6667, 296.8878));
-            assertDirectives(itemsLayer, showMenuItem(3, 1, "icons/fire-duel-gray", 4, 2, 301.6667, 296.8878));
-            assertDirectives(itemsLayer, showMenuItem(0, 1, "icons/shock-attack-gray", 4, 2, 301.6667, 296.8878));
-            assertDirectives(itemsLayer, showMenuItem(1, 1, "icons/fire-attack-gray", 4, 2, 301.6667, 296.8878));
+            assertDirectives(itemsLayer, showMenuItem(2, 1, "icons/shock-duel", 4, 2, 301.6667, 296.8878));
+            assertDirectives(itemsLayer, showMenuItem(3, 1, "icons/fire-duel", 4, 2, 301.6667, 296.8878));
+            assertDirectives(itemsLayer, showMenuItem(0, 1, "icons/shock-attack", 4, 2, 301.6667, 296.8878));
+            assertDirectives(itemsLayer, showMenuItem(1, 1, "icons/fire-attack", 4, 2, 301.6667, 296.8878));
     });
 
     it("Checks when a unit failed to pass a defender engagement check", () => {

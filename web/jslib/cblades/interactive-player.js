@@ -20,18 +20,20 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         super();
     }
 
-    beforeActivation(unit, action) {
+    startActivation(unit, action) {
         if (unit.isEngaging()) {
             unit.markAsEngaging(false);
         }
         if (this.game.arbitrator.isUnitEngaged(unit, true)) {
             this.checkDefenderEngagement(unit, unit.viewportLocation, () => {
-                this.game.setFocusedUnit(unit);
-                super.beforeActivation(unit, action);
+                if (unit.isOnBoard()) {
+                    this.game.setFocusedUnit(unit);
+                    super.startActivation(unit, action);
+                }
             });
         }
         else {
-            super.beforeActivation(unit, action);
+            super.startActivation(unit, action);
         }
     }
 

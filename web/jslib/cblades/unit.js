@@ -89,6 +89,10 @@ export class CBMoveProfile extends CBProfile {
         return this.movementPoints*1.5;
     }
 
+    getMinimalMoveCost() {
+        return 1;
+    }
+
     getMovementCostOnHex(hex) {
         return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
     }
@@ -159,6 +163,14 @@ export class CBMoralProfile extends CBProfile {
 
     get moral() {
         return 8 + this._capacity;
+    }
+
+    getAutoRally() {
+        return false;
+    }
+
+    get autoRally() {
+        return this.getAutoRally();
     }
 
 }
@@ -721,7 +733,7 @@ export class CBUnit extends CBAbstractUnit {
         return counters;
     }
 
-    receiveOrder(order) {
+    receivesOrder(order) {
         Memento.register(this);
         this._orderGiven = order;
         this._updatePlayed();
@@ -776,8 +788,7 @@ export class CBUnit extends CBAbstractUnit {
     }
 
     destroy() {
-        Memento.register(this);
-        this.deleteFromMap();
+        super.destroy();
         this._cohesion = CBCohesion.DESTROYED;
     }
 
@@ -1172,6 +1183,10 @@ export class CBTroop extends CBUnit {
         return copy;
     }
 
+    get troopNature() {
+        return true;
+    }
+
 }
 
 export class FormationImageArtifact extends UnitImageArtifact {
@@ -1190,6 +1205,10 @@ export class CBFormation extends CBUnit {
 
     constructor(type, wing) {
         super(type, type.getFormationPaths(), wing, CBFormation.DIMENSION);
+    }
+
+    get troopNature() {
+        return true;
     }
 
     createArtifact(levelName, images, location, dimension) {

@@ -70,7 +70,7 @@ describe("Interactive Miscellaneous", ()=> {
             assert(getDirectives(widgetItemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 331.6667, 340)",
-                    "drawImage(/CBlades/images/icons/do-fusion-gray.png, -25, -25, 50, 50)",
+                    "drawImage(/CBlades/images/icons/do-fusion.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 391.6667, 340)",
@@ -90,8 +90,8 @@ describe("Interactive Miscellaneous", ()=> {
             unit2.fixRemainingLossSteps(1);
             unit1.move(map.getHex(8, 8), 0);
             unit2.move(map.getHex(8, 8), 0);
-            unit1.receiveOrder(true);
-            unit2.receiveOrder(true);
+            unit1.receivesOrder(true);
+            unit2.receivesOrder(true);
             loadAllImages();
             paint(game); // units1 layer is created here !
             var [unitsLayer, units1Layer, markersLayer] = getLayers(game.board,"units-0", "units-1", "markers-0");

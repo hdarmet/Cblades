@@ -24,7 +24,7 @@ import {
     clickOnCounter,
     clickOnMask, rollFor,
     clickOnDice, executeAllAnimations, clickOnResult, showMask, showInsert, showSuccessResult, showPlayedDice,
-    showDice, showIndicator, showInsertCommand, showFailureResult
+    showDice, showIndicator, showInsertCommand, showFailureResult, showMenuPanel, showMenuItem
 } from "./interactive-tools.js";
 import {
     createTinyGame
@@ -52,12 +52,13 @@ describe("Interactive Recover", ()=> {
     it("Checks that the unit menu contains menu items for recovering", () => {
         given:
             var {game, unit} = createTinyGame();
-            var [unitsLayer, widgetsLayer, widgetItemsLayer] = getLayers(game.board, "units-0", "widgets", "widget-items");
+            var [unitsLayer, widgetsLayer, itemsLayer] = getLayers(game.board, "units-0", "widgets", "widget-items");
             loadAllImages();
         when:
-            resetDirectives(unitsLayer, widgetsLayer, widgetItemsLayer);
+            resetDirectives(unitsLayer, widgetsLayer, itemsLayer);
             clickOnCounter(game, unit);
         then:
+        /*
             loadAllImages();
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
@@ -87,6 +88,18 @@ describe("Interactive Recover", ()=> {
                     "drawImage(/CBlades/images/icons/do-reload-gray.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
+
+         */
+
+        loadAllImages();
+        skipDirectives(widgetsLayer, 4);
+        assertDirectives(widgetsLayer, showMenuPanel(4, 3, 301.6667, 266.8878));
+        skipDirectives(itemsLayer, 4);
+        assertDirectives(itemsLayer, showMenuItem(2, 2, "icons/do-reorganize", 4, 1, 301.6667, 206.8878));
+        assertDirectives(itemsLayer, showMenuItem(3, 2, "icons/do-rally", 4, 1, 301.6667, 206.8878));
+        assertDirectives(itemsLayer, showMenuItem(0, 2, "icons/do-rest", 4, 1, 301.6667, 206.8878));
+        assertDirectives(itemsLayer, showMenuItem(1, 2, "icons/do-reload", 4, 1, 301.6667, 206.8878));
+
     });
 
     function clickOnRestAction(game) {

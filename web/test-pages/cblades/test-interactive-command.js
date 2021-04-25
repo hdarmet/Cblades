@@ -122,10 +122,10 @@ describe("Interactive Command", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMenuPanel(4, 5, 301.6667, 206.8878));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showMenuItem(2, 4, "icons/change-orders-gray", 4, 5, 301.6667, 206.8878));
-            assertDirectives(itemsLayer, showMenuItem(3, 4, "icons/give-specific-orders-gray", 4, 5, 301.6667, 206.8878));
-            assertDirectives(itemsLayer, showMenuItem(0, 4, "icons/take-command-gray", 4, 5, 301.6667, 206.8878));
-            assertDirectives(itemsLayer, showMenuItem(1, 4, "icons/leave-command-gray", 4, 5, 301.6667, 206.8878));
+            assertDirectives(itemsLayer, showMenuItem(2, 4, "icons/change-orders", 4, 5, 301.6667, 206.8878));
+            assertDirectives(itemsLayer, showMenuItem(3, 4, "icons/give-specific-orders", 4, 5, 301.6667, 206.8878));
+            assertDirectives(itemsLayer, showMenuItem(0, 4, "icons/take-command", 4, 5, 301.6667, 206.8878));
+            assertDirectives(itemsLayer, showMenuItem(1, 4, "icons/leave-command", 4, 5, 301.6667, 206.8878));
     });
 
     function clickOnTakeCommandAction(game) {

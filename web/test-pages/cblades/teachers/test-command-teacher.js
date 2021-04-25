@@ -201,12 +201,12 @@ describe("Command teacher", ()=> {
                 {unit:unit11, cost:2, detail:{base:1}}, {unit:unit12, cost:2, detail:{base:1, disrupted:1}}
             ]);
         when:
-            unit11.receiveOrder(true)
+            unit11.receivesOrder(true)
             units = arbitrator.getUnitsThatMayReceiveOrders(leader11, 5);
         then:
             assert(units).unorderedArrayEqualsTo([{unit:unit12, cost:2, detail:{base:1, disrupted:1}}]);
         when:
-            unit11.receiveOrder(false)
+            unit11.receivesOrder(false)
             unit12.launchAction(new CBAction(game, unit12));
             unit12.action.markAsStarted();
             units = arbitrator.getUnitsThatMayReceiveOrders(leader11, 5);
@@ -256,8 +256,8 @@ describe("Command teacher", ()=> {
             unit12.move(map.getHex(8, 8));
             unit11.fixRemainingLossSteps(1);
             unit12.fixRemainingLossSteps(1);
-            unit11.receiveOrder(true);
-            unit12.receiveOrder(true);
+            unit11.receivesOrder(true);
+            unit12.receivesOrder(true);
         then:
             assert(arbitrator.isAllowedToMerge(unit11)).isTrue();
         when:
@@ -272,11 +272,11 @@ describe("Command teacher", ()=> {
             assert(arbitrator.isAllowedToMerge(unit11)).isFalse();
         when:
             unit11.fixRemainingLossSteps(1);
-            unit12.receiveOrder(false);
+            unit12.receivesOrder(false);
         then:
             assert(arbitrator.isAllowedToMerge(unit11)).isFalse();
         when:
-            unit12.receiveOrder(true);
+            unit12.receivesOrder(true);
             unit11.disrupt();
         then:
             assert(arbitrator.isAllowedToMerge(unit11)).isFalse();
@@ -302,8 +302,8 @@ describe("Command teacher", ()=> {
             leader12.move(map.getHex(8, 8));
             leader11.fixRemainingLossSteps(1);
             leader12.fixRemainingLossSteps(1);
-            leader11.receiveOrder(true);
-            leader12.receiveOrder(true);
+            leader11.receivesOrder(true);
+            leader12.receivesOrder(true);
         then:
             assert(arbitrator.isAllowedToMerge(leader11)).isFalse();
     });
@@ -315,8 +315,8 @@ describe("Command teacher", ()=> {
             unit12.move(map.getHex(8, 8));
             unit11.fixRemainingLossSteps(1);
             unit12.fixRemainingLossSteps(1);
-            unit11.receiveOrder(true);
-            unit12.receiveOrder(true);
+            unit11.receivesOrder(true);
+            unit12.receivesOrder(true);
             unit12.addOneTirednessLevel();
             unit12.addOneLackOfMunitionsLevel();
         when:
@@ -367,17 +367,17 @@ describe("Command teacher", ()=> {
     it("Checks if a formation is allowed to break", () => {
         given:
             var {arbitrator, unit1, formation} = createTinyFormationAndTroopsForTheSamePlayerGame();
-            unit1.receiveOrder(true);
-            formation.receiveOrder(true);
+            unit1.receivesOrder(true);
+            formation.receivesOrder(true);
         then:
             assert(arbitrator.isAllowedToBreakFormation(unit1)).isFalse();
             assert(arbitrator.isAllowedToBreakFormation(formation)).isTrue();
         when:
-            formation.receiveOrder(false);
+            formation.receivesOrder(false);
         then:
             assert(arbitrator.isAllowedToBreakFormation(formation)).isFalse();
         when:
-            formation.receiveOrder(true);
+            formation.receivesOrder(true);
             formation.fixTirednessLevel(CBTiredness.EXHAUSTED);
         then:
             assert(arbitrator.isAllowedToBreakFormation(formation)).isFalse();
@@ -421,17 +421,17 @@ describe("Command teacher", ()=> {
     it("Checks if a formation is allowed to release troops", () => {
         given:
             var {arbitrator, unit1, unit2, formation} = createTinyFormationAndTroopsForTheSamePlayerGame();
-            unit1.receiveOrder(true);
-            formation.receiveOrder(true);
+            unit1.receivesOrder(true);
+            formation.receivesOrder(true);
         then:
             assert(arbitrator.isAllowedToReleaseTroops(unit1)).isFalse();
             assert(arbitrator.isAllowedToReleaseTroops(formation)).isTrue();
         when:
-            formation.receiveOrder(false);
+            formation.receivesOrder(false);
         then:
             assert(arbitrator.isAllowedToReleaseTroops(formation)).isFalse();
         when:
-            formation.receiveOrder(true);
+            formation.receivesOrder(true);
             formation.fixTirednessLevel(CBTiredness.EXHAUSTED);
         then:
             assert(arbitrator.isAllowedToReleaseTroops(formation)).isFalse();
@@ -516,8 +516,8 @@ describe("Command teacher", ()=> {
     it("Checks if a formation is allowed to include troops", () => {
         given:
             var {arbitrator, unit1, unit2, formation} = createTinyFormationAndTroopsForTheSamePlayerGame();
-            unit1.receiveOrder(true);
-            formation.receiveOrder(true);
+            unit1.receivesOrder(true);
+            formation.receivesOrder(true);
             formation.fixRemainingLossSteps(4);
             unit1.angle = 90;
             unit1.move(formation.hexLocation.fromHex, 0);
@@ -526,11 +526,11 @@ describe("Command teacher", ()=> {
             assert(arbitrator.isAllowedToIncludeTroops(unit1)).isFalse();
             assert(arbitrator.isAllowedToIncludeTroops(formation)).isTrue();
         when:
-            formation.receiveOrder(false);
+            formation.receivesOrder(false);
         then:
             assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
         when:
-            formation.receiveOrder(true);
+            formation.receivesOrder(true);
             formation.fixTirednessLevel(CBTiredness.EXHAUSTED);
         then:
             assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
@@ -541,11 +541,11 @@ describe("Command teacher", ()=> {
             assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
         when:
             formation.reorganize();
-            unit1.receiveOrder(false);
+            unit1.receivesOrder(false);
         then:
             assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
         when:
-            unit1.receiveOrder(true);
+            unit1.receivesOrder(true);
             unit1.fixTirednessLevel(CBTiredness.EXHAUSTED);
         then:
             assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
@@ -571,8 +571,8 @@ describe("Command teacher", ()=> {
     it("Checks a formation including troops", () => {
         given:
             var {arbitrator, unit1, unit2, formation} = createTinyFormationAndTroopsForTheSamePlayerGame();
-            unit1.receiveOrder(true);
-            formation.receiveOrder(true);
+            unit1.receivesOrder(true);
+            formation.receivesOrder(true);
             formation.fixRemainingLossSteps(4);
             unit1.angle = 90;
             unit1.move(formation.hexLocation.fromHex, 0);
@@ -600,22 +600,22 @@ describe("Command teacher", ()=> {
     it("Checks if troops may be merged to create a formation", () => {
         given:
             var {arbitrator, unit1, unit2, unit3, formation, map} = createTinyFormationAndTroopsForTheSamePlayerGame();
-            unit1.receiveOrder(true);
+            unit1.receivesOrder(true);
             unit1.angle = 90;
             unit1.move(map.getHex(3, 4), 0);
-            unit2.receiveOrder(true);
+            unit2.receivesOrder(true);
             unit2.angle = 90;
             unit2.move(map.getHex(3, 5), 0);
         then:
             assert(arbitrator.isAllowedToCreateFormation(unit1)).isTrue();
             assert(arbitrator.isAllowedToCreateFormation(unit2)).isTrue();
         when:
-            unit1.receiveOrder(false);
+            unit1.receivesOrder(false);
         then:
             assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
             assert(arbitrator.isAllowedToCreateFormation(unit2)).isFalse();
         when:
-            unit1.receiveOrder(true);
+            unit1.receivesOrder(true);
             unit1.fixTirednessLevel(CBTiredness.EXHAUSTED);
         then:
             assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
@@ -652,13 +652,13 @@ describe("Command teacher", ()=> {
             unit1.angle = 90;
             unit2.move(null, 0);
             unit3.move(map.getHex(3, 5), 0);
-            unit3.receiveOrder(true);
+            unit3.receivesOrder(true);
         then:
             assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
         when:
             unit3.move(null, 0);
             formation.move(new CBHexSideId(map.getHex(3, 5), map.getHex(3, 6)), 0);
-            formation.receiveOrder(true);
+            formation.receivesOrder(true);
         then:
             assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
     });
@@ -666,10 +666,10 @@ describe("Command teacher", ()=> {
     it("Checks formation creation", () => {
         given:
             var {arbitrator, unit1, unit2, map} = createTinyFormationAndTroopsForTheSamePlayerGame();
-            unit1.receiveOrder(true);
+            unit1.receivesOrder(true);
             unit1.angle = 90;
             unit1.move(map.getHex(3, 4), 0);
-            unit2.receiveOrder(true);
+            unit2.receivesOrder(true);
             unit2.angle = 90;
             unit2.move(map.getHex(3, 5), 0);
         when:

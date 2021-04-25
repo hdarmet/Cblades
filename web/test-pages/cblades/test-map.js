@@ -898,29 +898,23 @@ describe("Map", ()=> {
             var pathfinding = new CBPathFinding(map.getHex(10, 2), 120,
                 [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
                 (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
-                (fromHex, fromAngle, toAngle)=>0.5
+                (fromHex, fromAngle, toAngle)=>0.5, 1
             );
             pathfinding._computeForward();
         then:
             //printPathFindingResult(pathfinding);
-            checkRecord(pathfinding, map, 10, 2, 0, 120, 1);
-            checkRecord(pathfinding, map, 10, 1, 2, 0, 0.5);
-            checkRecord(pathfinding, map, 11, 2, 1.5, 60, 1.5);
-            checkRecord(pathfinding, map, 11, 3, 1.5, 120, 2);
-            checkRecord(pathfinding, map, 10, 3, 1.5, 180, 1.5);
-            checkRecord(pathfinding, map, 9, 3, 1.5, 240, 2);
-            checkRecord(pathfinding, map, 9, 2, 1.5, 300, 1.5);
+            checkRecord(pathfinding, map, 10, 2, 0, 120, 2);
+            checkRecord(pathfinding, map, 10, 1, 2, 0, 1);
+            checkRecord(pathfinding, map, 11, 2, 1.5, 60, 2);
+            checkRecord(pathfinding, map, 11, 3, 1.5, 120, 3);
+            checkRecord(pathfinding, map, 10, 3, 1.5, 180, 3);
+            checkRecord(pathfinding, map, 9, 3, 1.5, 240, 3);
+            checkRecord(pathfinding, map, 9, 2, 1.5, 300, 2);
             checkRecord(pathfinding, map, 10, 0, 3.5, 0, 0);
-            checkRecord(pathfinding, map, 11, 1, 3, 0, 1);
+            checkRecord(pathfinding, map, 11, 1, 3.5, 60, 1);
             checkRecord(pathfinding, map, 9, 1, 3, 0, 1);
-            checkRecord(pathfinding, map, 8, 2, 3, 240, 1.5);
-            checkRecord(pathfinding, map, 8, 1, 3, 300, 1);
-            checkRecord(pathfinding, map, 12, 1, 3, 60, 1);
-            checkRecord(pathfinding, map, 12, 2, 3, 120, 1.5);
-            checkRecord(pathfinding, map, 11, 4, 3, 120, 2.5);
-            checkRecord(pathfinding, map, 10, 4, 3, 180, 2);
-            checkRecord(pathfinding, map, 9, 4, 3, 240, 2.5);
-            checkRecord(pathfinding, map, 8, 3, 3, 240, 2);
+            checkRecord(pathfinding, map, 8, 2, 3, 240, 3);
+            checkRecord(pathfinding, map, 8, 1, 3, 300, 2);
     });
 
     it("Checks backward path finding", () => {
@@ -933,48 +927,28 @@ describe("Map", ()=> {
             var pathfinding = new CBPathFinding(map.getHex(10, 2), 120,
                 [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
                     (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
-                    (fromHex, fromAngle, toAngle)=>0.5
+                    (fromHex, fromAngle, toAngle)=>0.5, 1
                 );
             pathfinding._computeBackward();
         then:
             //printPathFindingResult(pathfinding);
-            checkRecord(pathfinding, map, 9, -1, 0, null, 2);
-            checkRecord(pathfinding, map, 10, 0, 0, null, 1);
-            checkRecord(pathfinding, map, 11, -1, 0, null, 2);
-            checkRecord(pathfinding, map, 10, -1, 1, 180, 1.5);
-            checkRecord(pathfinding, map, 11, 0, 1, 240, 1.5);
-            checkRecord(pathfinding, map, 11, 1, 1, 300, 1);
-            checkRecord(pathfinding, map, 10, 1, 1, 0, 0.5);
-            checkRecord(pathfinding, map, 9, 1, 1, 60, 1);
-            checkRecord(pathfinding, map, 9, 0, 1, 120, 1.5);
-            checkRecord(pathfinding, map, 11, 2, 2.5, 0, 0.5);
+            checkRecord(pathfinding, map, 10, 0, 0, null, 2);
+            checkRecord(pathfinding, map, 11, -1, 0, null, 4);
+            checkRecord(pathfinding, map, 10, -1, 1, 180, 3);
+            checkRecord(pathfinding, map, 11, 0, 1, 240, 3);
+            checkRecord(pathfinding, map, 11, 1, 1, 300, 2);
+            checkRecord(pathfinding, map, 10, 1, 1, 0, 1);
+            checkRecord(pathfinding, map, 9, 1, 1, 60, 2);
+            checkRecord(pathfinding, map, 9, 0, 1, 120, 3);
+            checkRecord(pathfinding, map, 11, 2, 2.5, 0, 1);
             checkRecord(pathfinding, map, 10, 2, 3.5, 0, 0);
-            checkRecord(pathfinding, map, 9, 2, 2.5, 0, 0.5);
-            checkRecord(pathfinding, map, 9, -2, 1, 180, 2.5);
-            checkRecord(pathfinding, map, 10, -2, 1, 240, 2);
-            checkRecord(pathfinding, map, 8, -1, 1, 60, 2);
-            checkRecord(pathfinding, map, 8, -2, 1, 120, 2.5);
-            checkRecord(pathfinding, map, 8, 1, 2.5, 60, 1);
-            checkRecord(pathfinding, map, 8, 0, 2.5, 120, 1.5);
-            checkRecord(pathfinding, map, 11, -2, 1, 180, 2.5);
-            checkRecord(pathfinding, map, 12, -2, 1, 240, 2.5);
-            checkRecord(pathfinding, map, 12, -1, 1, 300, 2);
-            checkRecord(pathfinding, map, 12, 0, 2.5, 240, 1.5);
-            checkRecord(pathfinding, map, 12, 1, 2.5, 300, 1);
-            checkRecord(pathfinding, map, 7, 0, 2.5, 60, 2);
-            checkRecord(pathfinding, map, 7, -1, 2.5, 120, 2.5);
+            checkRecord(pathfinding, map, 9, 2, 2.5, 0, 1);
+            checkRecord(pathfinding, map, 8, 1, 2.5, 60, 2);
+            checkRecord(pathfinding, map, 8, 0, 2.5, 120, 3);
+            checkRecord(pathfinding, map, 12, 0, 2.5, 240, 3);
+            checkRecord(pathfinding, map, 12, 1, 2.5, 300, 2);
             checkRecord(pathfinding, map, 9, 3, 4, 0, 1);
-            checkRecord(pathfinding, map, 8, 2, 4, 60, 1);
-            checkRecord(pathfinding, map, 10, -3, 2.5, 180, 2.5);
-            checkRecord(pathfinding, map, 12, 2, 4, 300, 1);
-            checkRecord(pathfinding, map, 11, 3, 4, 0, 1);
-            checkRecord(pathfinding, map, 13, -1, 2.5, 240, 2.5);
-            checkRecord(pathfinding, map, 13, 0, 2.5, 300, 2);
-            checkRecord(pathfinding, map, 9, -3, 2.5, 180, 3);
-            checkRecord(pathfinding, map, 8, -3, 2.5, 180, 3);
-            checkRecord(pathfinding, map, 7, -2, 2.5, 120, 3);
-            checkRecord(pathfinding, map, 7, 2, 4, 60, 1.5);
-            checkRecord(pathfinding, map, 7, 1, 4, 120, 1.5);
+            checkRecord(pathfinding, map, 8, 2, 4, 60, 2);
     });
 
     it("Checks best next moves ", () => {
@@ -987,13 +961,12 @@ describe("Map", ()=> {
             var pathfinding = new CBPathFinding(map.getHex(10, 2), 120,
                 [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
                 (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
-                (fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5
+                (fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5, 1
             );
             var nextMoves = pathfinding.getGoodNextMoves();
         then:
             assert(nextMoves).unorderedArrayEqualsTo([
                 map.getHex(10, 1),
-                map.getHex(11, 2),
                 map.getHex(9, 2)
             ]);
     });

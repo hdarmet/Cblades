@@ -38,7 +38,9 @@ export class CBAbstractPlayer {
             let lastUnit = this.game.selectedUnit;
             if (lastUnit) {
                 lastUnit.player.afterActivation(lastUnit, () => {
-                    lastUnit !== unit && lastUnit.player.unselectUnit(lastUnit, event);
+                    if (lastUnit !== unit && lastUnit === this.game.selectedUnit) {
+                        lastUnit.player.unselectUnit(lastUnit, event);
+                    }
                     this.selectUnit(unit, event);
                 });
             }
@@ -52,7 +54,7 @@ export class CBAbstractPlayer {
         if (!unit.hasBeenActivated()) {
             this.game.closeWidgets();
             if (this.game.selectedUnit !== unit) {
-                this.beforeActivation(unit, () => {
+                this.startActivation(unit, () => {
                     unit.select();
                     this.launchUnitAction(unit, event);
                 });
@@ -73,7 +75,7 @@ export class CBAbstractPlayer {
         unit.unselect();
     }
 
-    beforeActivation(unit, action) {
+    startActivation(unit, action) {
         action();
     }
 
@@ -152,7 +154,7 @@ export class CBAction {
                 this.unit.updatePlayed();
             }
             this.game.setFocusedUnit(null);
-            Mechanisms.fire(this, CBAction.PROGRESSION, CBAction.STARTED);
+            Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.STARTED);
         }
     }
 
@@ -164,7 +166,7 @@ export class CBAction {
                 this.unit.updatePlayed();
             }
             this.game.setFocusedUnit(null);
-            Mechanisms.fire(this, CBAction.PROGRESSION, CBAction.FINISHED);
+            Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINISHED);
         }
     }
 
@@ -175,7 +177,7 @@ export class CBAction {
         this._game.closeWidgets();
         this.unit.removeAction();
         action && action();
-        Mechanisms.fire(this, CBAction.PROGRESSION, CBAction.CANCELLED);
+        Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.CANCELLED);
     }
 
     finalize(action) {
@@ -188,7 +190,7 @@ export class CBAction {
             if (this.unit.isCurrentPlayer()) {
                 this.unit.updatePlayed();
             }
-            Mechanisms.fire(this, CBAction.PROGRESSION, CBAction.FINALIZED);
+            Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINALIZED);
         }
     }
 
@@ -207,7 +209,7 @@ CBAction.STARTED = 1;
 CBAction.FINISHED = 2;
 CBAction.FINALIZED = 3;
 CBAction.CANCELLED = -1;
-CBAction.PROGRESSION = "progression";
+CBAction.PROGRESSION_EVENT = "action-progression";
 
 export function CBActivableMixin(clazz) {
 
@@ -581,6 +583,14 @@ export class CBGame {
         if (event===DBoard.RESIZE_EVENT) {
             this._refresfCommands();
         }
+        else if (event===CBAbstractUnit.DESTROYED_EVENT) {
+            if (this.focusedUnit === source) {
+                this.setFocusedUnit(null);
+            }
+            if (this.selectedUnit === source) {
+                this.setSelectedUnit(null);
+            }
+        }
     }
 
     recenter(vpoint) {
@@ -636,26 +646,38 @@ export class CBGame {
         unit.deleteFromMap();
     }
 
-    _addUnit(unit) {
+    _addCounter(unit) {
         console.assert(!this._counters.has(unit));
         this._counters.add(unit)
     }
 
-    _removeUnit(unit) {
+    _removeCounter(unit) {
         console.assert(this._counters.has(unit));
         this._counters.delete(unit);
     }
 
-    _appendUnit(unit) {
+    _appendCounter(unit) {
         console.assert(!this._counters.has(unit));
         Memento.register(this);
         this._counters.add(unit)
     }
 
-    _deleteUnit(unit) {
+    _deleteCounter(unit) {
         console.assert(this._counters.has(unit));
         Memento.register(this);
         this._counters.delete(unit);
+    }
+
+    get units() {
+        let units = [];
+        if (this._counters) {
+            for (let counter of this._counters) {
+                if (counter.unitNature) {
+                    units.push(counter);
+                }
+            }
+        }
+        return units;
     }
 
     getPlayerUnits(player) {
@@ -730,7 +752,7 @@ export class CBGame {
 
     setFocusedUnit(unit) {
         Memento.register(this);
-        if (unit) {
+        if (unit && unit.isOnBoard()) {
             this._focusedUnit = unit;
         }
         else {
@@ -757,7 +779,7 @@ export class CBGame {
             this.currentPlayer.finishTurn(animation);
         }).setTurnAnimation(true);
         this._endOfTurnCommand._processGlobalEvent = (source, event)=>{
-            if (source instanceof CBAction || source===this) {
+            if (event === CBGame.TURN_EVENT || event === CBAction.PROGRESSION_EVENT || event === CBAbstractUnit.DESTROYED_EVENT) {
                 this._endOfTurnCommand.active = this.turnIsFinishable();
             }
         }
@@ -898,7 +920,7 @@ export class CBGame {
             this._initCounters(this._currentPlayer);
             animation && animation();
             Memento.clear();
-            Mechanisms.fire(this, CBGame.PROGRESSION);
+            Mechanisms.fire(this, CBGame.TURN_EVENT);
         }
     }
 
@@ -976,8 +998,8 @@ export class CBGame {
     }
 
 }
+CBGame.TURN_EVENT = "game-turn";
 CBGame.POPUP_MARGIN = 10;
-CBGame.PROGRESSION = "progression";
 CBGame.ULAYERS = {
     SPELLS: 0,
     FORMATIONS: 1,
@@ -1379,6 +1401,12 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
         }
     }
 
+    destroy() {
+        Memento.register(this);
+        this.deleteFromMap();
+        Mechanisms.fire(this, CBAbstractUnit.DESTROYED_EVENT);
+    }
+
     reset(player) {
         if (player === this.player) {
             delete this._action;
@@ -1463,7 +1491,7 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
 
     addToMap(hexId, moveType) {
         console.assert(!this._hexLocation);
-        hexId.game._addUnit(this);
+        hexId.game._addCounter(this);
         this._hexLocation = hexId;
         hexId._addUnit(this, moveType);
         this._setOnGame(hexId.map.game);
@@ -1472,7 +1500,7 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
 
     removeFromMap() {
         console.assert(this._hexLocation);
-        this.game._removeUnit(this);
+        this.game._removeCounter(this);
         this._hexLocation._removeUnit(this);
         this._removeFromGame();
         delete this._hexLocation;
@@ -1481,7 +1509,7 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
     appendToMap(hexLocation, moveType) {
         console.assert(!this._hexLocation);
         Memento.register(this);
-        hexLocation.game._appendUnit(this);
+        hexLocation.game._appendCounter(this);
         this._hexLocation = hexLocation;
         hexLocation._appendUnit(this, moveType);
         this._show(hexLocation.map.game);
@@ -1491,7 +1519,7 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
     deleteFromMap() {
         console.assert(this._hexLocation);
         Memento.register(this);
-        this.game._deleteUnit(this);
+        this.game._deleteCounter(this);
         this._hexLocation._deleteUnit(this);
         this._hide();
         delete this._hexLocation;
@@ -1519,3 +1547,4 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
         }
     }
 }
+CBAbstractUnit.DESTROYED_EVENT = "unit-destroyed";

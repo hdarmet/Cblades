@@ -51,7 +51,15 @@ export class CBUnitManagementTeacher {
         return false;
     }
 
+    mayUnitCharge(unit) {
+        if (unit.formationNature) return false;
+        if (unit.isExhausted()) return false;
+        if (!unit.isInGoodOrder()) return false;
+        return true;
+    }
+
     wouldUnitEngage(unit, hexLocation, angle, predicate=foe=>true) {
+        if (unit.isRouted()) return false;
         let directions = this.getPotentialForwardZone(hexLocation, angle)
         for (let sangle in directions) {
             let angle = parseInt(sangle);
@@ -63,11 +71,8 @@ export class CBUnitManagementTeacher {
         return false;
     }
 
-    mayUnitCharge(unit) {
-        if (unit.formationNature) return false;
-        if (unit.isExhausted()) return false;
-        if (!unit.isInGoodOrder()) return false;
-        return true;
+    isCharacterAloneInHex(unit) {
+        return unit.characterNature && unit.hexLocation.units.length === 1;
     }
 
     doesUnitEngage(unit) {
@@ -75,6 +80,7 @@ export class CBUnitManagementTeacher {
     }
 
     isAUnitEngageAnotherUnit(unit, potentialFoe, unitMustHaveAnEngagingMarker=false) {
+        if (unit.isRouted()) return false;
         if (unitMustHaveAnEngagingMarker && !unit.isEngaging() && !unit.isCharging()) return false;
         if (!this.areUnitsFoes(unit, potentialFoe)) return false;
         return this.isHexLocationInForwardZone(unit, potentialFoe.hexLocation);
@@ -120,6 +126,16 @@ export class CBUnitManagementTeacher {
 
     canPlayUnit(unit) {
         return unit.isOnBoard() && !unit.hasBeenActivated() && !unit.hasBeenPlayed();
+    }
+
+    getFoes(unit) {
+        let foes = new Set();
+        for (let potentialFoe of this.game.units) {
+            if (potentialFoe.isOnBoard() && this.areUnitsFoes(unit, potentialFoe)) {
+                foes.add(potentialFoe);
+            }
+        }
+        return foes;
     }
 
 }

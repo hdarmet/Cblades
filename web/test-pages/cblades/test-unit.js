@@ -920,7 +920,7 @@ describe("Unit", ()=> {
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
-            unit.receiveOrder(true);
+            unit.receivesOrder(true);
             paint(game);
             loadAllImages(); // to load ordegiven.png
         then:
@@ -941,7 +941,7 @@ describe("Unit", ()=> {
         given:
             var {game, unit, map} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
-            unit.receiveOrder(true);
+            unit.receivesOrder(true);
             paint(game);
         when:
             resetDirectives(markersLayer);
@@ -1725,7 +1725,7 @@ describe("Unit", ()=> {
             formation.addOneLackOfMunitionsLevel();
             formation.addOneTirednessLevel();
             formation.addOneCohesionLevel();
-            formation.receiveOrder(true);
+            formation.receivesOrder(true);
             loadAllImages();
             paint(game);
         then:

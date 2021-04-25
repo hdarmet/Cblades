@@ -54,12 +54,17 @@ export class PedestrianMoveProfile extends CBMoveProfile {
 
     getRotationCost(angle) {
         if (angle<0) angle=-angle;
-        return {type:CBMoveProfile.COST_TYPE.ADD, value:angle <=60 ? 0 : 0.5};
+        return {type:CBMoveProfile.COST_TYPE.ADD, value:angle<=60 ? 0 : 0.5};
     }
 
     getFormationRotationCost(angle) {
         return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
     }
+
+    getMinimalMoveCost() {
+        return 1;
+    }
+
 }
 
 export class AnimalMoveProfile extends CBMoveProfile {
@@ -104,12 +109,17 @@ export class AnimalMoveProfile extends CBMoveProfile {
 
     getRotationCost(angle) {
         if (angle<0) angle=-angle;
-        return {type:CBMoveProfile.COST_TYPE.ADD, value:angle <=60 ? 0 : 0.5};
+        return {type:CBMoveProfile.COST_TYPE.ADD, value:angle<=60 ? 0 : 0.5};
     }
 
     getFormationRotationCost(angle) {
         return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
     }
+
+    getMinimalMoveCost() {
+        return 1;
+    }
+
 }
 
 export class CavalryMoveProfile extends CBMoveProfile {
@@ -154,12 +164,17 @@ export class CavalryMoveProfile extends CBMoveProfile {
 
     getRotationCost(angle) {
         if (angle<0) angle=-angle;
-        return {type:CBMoveProfile.COST_TYPE.ADD, value:angle <=60 ? 0.5 : 1};
+        return {type:CBMoveProfile.COST_TYPE.ADD, value:angle===0 ? 0 : angle<=60 ? 0.5 : 1};
     }
 
     getFormationRotationCost(angle) {
         return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
     }
+
+    getMinimalMoveCost() {
+        return 0.5;
+    }
+
 }
 
 export class MediumCavalryWeaponProfile extends CBWeaponProfile {
@@ -253,6 +268,10 @@ export class EliteMoralProfile extends CBMoralProfile {
 
     constructor(capacity) {
         super(capacity);
+    }
+
+    getAutoRally() {
+        return true;
     }
 
 }
