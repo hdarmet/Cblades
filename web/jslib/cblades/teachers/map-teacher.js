@@ -50,14 +50,6 @@ export class CBMapTeacher {
         return hexes;
     }
 
-    getAdjacentZone(hexId) {
-        let hexes = new Map();
-        for (let angle=0; angle<=300; angle+=60) {
-            hexes.set(hexId.getNearHex(angle), angle);
-        }
-        return hexes;
-    }
-
     get360Area(hex, range) {
         function processHex(areaMap, hex, distance) {
             if (hex && (!areaMap.has(hex) || areaMap.get(hex)>distance)) {
@@ -79,14 +71,7 @@ export class CBMapTeacher {
     }
 
     getUnitAdjacentZone(unit) {
-        if (unit.formationNature) {
-            let zone1 = this.getAdjacentZone(unit.hexLocation.fromHex);
-            let zone2 = this.getAdjacentZone(unit.hexLocation.toHex);
-            return this.formatMapZone(this.mergeMapZone(zone1, zone2, [unit.hexLocation.fromHex, unit.hexLocation.toHex]));
-        }
-        else {
-            return this.formatMapZone(this.getAdjacentZone(unit.hexLocation));
-        }
+        return this.formatMapZone(unit.hexLocation.nearHexes);
     }
 
     getForwardZone(hexId, angle) {

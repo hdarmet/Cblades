@@ -1106,59 +1106,60 @@ describe("Interactive Movement", ()=> {
 
     it("Checks rout action actuators appearance for a troop", () => {
         given:
-            var { game, unit1 } = create2PlayersTinyGame();
-        var [unitsLayer, actuatorsLayer] = getLayers(game.board, "units-0", "actuators");
-        clickOnCounter(game, unit1);
-        clickOnRoutAction(game);
-        loadAllImages();
-        let orientationActuator = getOrientationActuator(game);
+            var { game, unit1, unit2 } = create2PlayersTinyGame();
+            var [unitsLayer, actuatorsLayer] = getLayers(game.board, "units-0", "actuators");
+            clickOnCounter(game, unit1);
+            clickOnRoutAction(game);
+            loadAllImages();
+            let orientationActuator = getOrientationActuator(game);
         when:
             resetDirectives(unitsLayer, actuatorsLayer);
-        repaint(game);
+            repaint(game);
         then:
             skipDirectives(unitsLayer, 4);
-        assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate0(416.6667, 351.8878)));
-        skipDirectives(actuatorsLayer, 4);
-        assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300( 308.3333, 289.342)));
-        assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(341.6667, 308.5869)));
-        assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate240(354.1667, 387.972)));
-        assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate240( 370.8333, 378.3495)));
-        assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate300(354.1667, 315.8037)));
-        assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5", zoomAndRotate300(370.8333, 325.4261)));
-        assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate0(431.3294, 366.5506)));
+            assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate0(416.6667, 351.8878)));
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300( 308.3333, 289.342)));
+            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(341.6667, 308.5869)));
+            assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate240(354.1667, 387.972)));
+            assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate240( 370.8333, 378.3495)));
+            assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate300(354.1667, 315.8037)));
+            assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5", zoomAndRotate300(370.8333, 325.4261)));
+            assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate0(431.3294, 366.5506)));
         when:
             resetDirectives(unitsLayer, actuatorsLayer);
-        clickOnTrigger(game, orientationActuator.getTrigger(240));
+            clickOnTrigger(game, orientationActuator.getTrigger(240));
         then:
             skipDirectives(unitsLayer, 4);
-        assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate240(416.6667, 351.8878)));
-        skipDirectives(actuatorsLayer, 4);
-        assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate240( 308.3333, 414.4337)));
-        assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate240(341.6667, 395.1888)));
-        assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300( 308.3333, 289.342)));
-        assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(341.6667, 308.5869)));
-        assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate240(422.0336, 331.8581)));
+            assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate240(416.6667, 351.8878)));
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate240( 308.3333, 414.4337)));
+            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate240(341.6667, 395.1888)));
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300( 308.3333, 289.342)));
+            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(341.6667, 308.5869)));
+            assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate240(422.0336, 331.8581)));
         when:
             resetDirectives(unitsLayer, actuatorsLayer);
-        var moveActuator = getMoveActuator(game);
-        clickOnTrigger(game, moveActuator.getTrigger(240));
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
         then:
+            moveActuator = getMoveActuator(game);
             skipDirectives(unitsLayer, 4);
-        assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate240( 333.3333, 400)));
-        skipDirectives(actuatorsLayer, 4);
-        assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate240( 225, 462.5458)));
-        assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate240(258.3333, 443.301)));
-        assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300( 225, 337.4542)));
-        assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(258.3333, 356.699)));
-        assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate300(270.8333, 363.9159)));
-        assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate300( 287.5, 373.5383)));
-        assertDirectives(actuatorsLayer, showMovementHelp("1", zoomAndRotate240(338.7003, 379.9703)));
+            assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate240( 333.3333, 400)));
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate240( 225, 462.5458)));
+            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate240(258.3333, 443.301)));
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate300( 225, 337.4542)));
+            assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate300(258.3333, 356.699)));
+            assertDirectives(actuatorsLayer, showTowardTrigger(zoomAndRotate300(270.8333, 363.9159)));
+            assertDirectives(actuatorsLayer, showTowardCostTrigger("0.5",zoomAndRotate300( 287.5, 373.5383)));
+            assertDirectives(actuatorsLayer, showMovementHelp("1", zoomAndRotate240(338.7003, 379.9703)));
         when:
             moveActuator = getMoveActuator(game);
-        clickOnTrigger(game, moveActuator.getTrigger(240));
-        resetDirectives(unitsLayer, actuatorsLayer);
-        moveActuator = getMoveActuator(game);
-        clickOnTrigger(game, moveActuator.getTrigger(240));
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+            resetDirectives(unitsLayer, actuatorsLayer);
+            moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
         then:
             assertNoMoreDirectives(actuatorsLayer, 4);
     });

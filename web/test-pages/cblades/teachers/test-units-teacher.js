@@ -11,7 +11,7 @@ import {
     CBGame, CBAbstractPlayer, CBAction, CBCounter
 } from "../../../jslib/cblades/game.js";
 import {
-    CBCharacter, CBCharge,
+    CBCharacter, CBCharge, CBCohesion,
     CBCommandProfile,
     CBFormation,
     CBMoralProfile,
@@ -166,9 +166,9 @@ describe("Units teacher", ()=> {
         given:
             var {map, arbitrator, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
         then:
-            assert(arbitrator.doesHexContainFoes(unit11, map.getHex(2, 2))).isFalse();
-            assert(arbitrator.doesHexContainFoes(unit11, unit12.hexLocation)).isFalse();
-            assert(arbitrator.doesHexContainFoes(unit11, unit21.hexLocation)).isTrue();
+            assert(arbitrator.doesHexLocationContainFoes(unit11, map.getHex(2, 2))).isFalse();
+            assert(arbitrator.doesHexLocationContainFoes(unit11, unit12.hexLocation)).isFalse();
+            assert(arbitrator.doesHexLocationContainFoes(unit11, unit21.hexLocation)).isTrue();
     });
 
     it("Checks if units are friends", () => {
@@ -183,9 +183,22 @@ describe("Units teacher", ()=> {
         given:
             var {map, arbitrator, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
         then:
-            assert(arbitrator.doesHexContainFriends(unit11, map.getHex(2, 2))).isFalse();
-            assert(arbitrator.doesHexContainFriends(unit11, unit12.hexLocation)).isTrue();
-            assert(arbitrator.doesHexContainFriends(unit11, unit21.hexLocation)).isFalse();
+            assert(arbitrator.doesHexLocationContainFriends(unit11, map.getHex(2, 2))).isFalse();
+            assert(arbitrator.doesHexLocationContainFriends(unit11, unit12.hexLocation)).isTrue();
+            assert(arbitrator.doesHexLocationContainFriends(unit11, unit21.hexLocation)).isFalse();
+    });
+
+    it("Checks if a character is alone in a hex", () => {
+        given:
+            var {arbitrator, map, unit11, leader11} = create2Players4UnitsTinyGame();
+        when:
+            leader11.move(unit11.hexLocation);
+        then:
+            assert(arbitrator.isCharacterAloneInHex(leader11)).isFalse();
+        when:
+            unit11.move(null);
+        then:
+            assert(arbitrator.isCharacterAloneInHex(leader11)).isTrue();
     });
 
     it("Checks if a unit contact a foe", () => {
@@ -193,7 +206,7 @@ describe("Units teacher", ()=> {
             var {arbitrator, map, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
         when:
             unit12.move(map.getHex(2, 3));
-        unit21.move(map.getHex(2, 2));
+            unit21.move(map.getHex(2, 2));
         then:
             assert(arbitrator.doesUnitEngage(unit12)).isTrue();
             assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit21)).isTrue();
@@ -209,8 +222,15 @@ describe("Units teacher", ()=> {
             assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit21, true)).isTrue();
             assert(arbitrator.isUnitEngaged(unit21, true)).isTrue();
         when:
+            unit12.rout();
+        then:
+            assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit21, true)).isFalse();
+            assert(arbitrator.isUnitEngaged(unit21, true)).isFalse();
+            assert(arbitrator.doesUnitEngage(unit12)).isFalse();
+        when:
+            unit12.cohesion = CBCohesion.GOOD_ORDER;
             unit21.move(map.getHex(7, 2));
-        unit11.move(map.getHex(2, 2));
+            unit11.move(map.getHex(2, 2));
         then:
             assert(arbitrator.doesUnitEngage(unit12)).isFalse();
             assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit11)).isFalse();
@@ -318,6 +338,13 @@ describe("Units teacher", ()=> {
             unit12.fixTirednessLevel(CBTiredness.NONE);
         then:
             assert(arbitrator.canGetTired(unit12)).isTrue();
+    });
+
+    it("Checks a unit's foe list", () => {
+        given:
+            var {arbitrator, unit12, unit21, unit22, leader21} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.getFoes(unit12)).setEqualsTo(new Set([unit21, unit22, leader21]));
     });
 
 });

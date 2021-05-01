@@ -483,6 +483,35 @@ describe("Unit", ()=> {
             assert(unit.counters).arrayEqualsTo([carried, unit, option])
     });
 
+    it("Checks units types", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+        when:
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            var wing = new CBWing(player);
+            wing.setRetreatZone(map.getSouthZone());
+            let unitType1 = new CBTestUnitType("unit1",
+                ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"],
+                ["/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png"]);
+            var unit = new CBTroop(unitType1, wing);
+            var formation = new CBFormation(unitType1, wing);
+            var character = new CBCharacter(unitType1, wing);
+        then:
+            assert(unit.unitNature).isTrue();
+            assert(formation.unitNature).isTrue();
+            assert(character.unitNature).isTrue();
+            assert(unit.troopNature).isTrue();
+            assert(formation.troopNature).isTrue();
+            assert(character.troopNature).isNotDefined();
+            assert(unit.formationNature).isNotDefined();
+            assert(formation.formationNature).isTrue();
+            assert(character.formationNature).isNotDefined();
+            assert(unit.characterNature).isNotDefined();
+            assert(formation.characterNature).isNotDefined();
+            assert(character.characterNature).isTrue();
+    });
+
     it("Checks unit/wing/player structure", () => {
         given:
             var { game, map } = prepareTinyGame();
@@ -529,6 +558,7 @@ describe("Unit", ()=> {
             assert(unit.moveProfile.getMovementCostOnHexSide(unit.hexLocation.toward(60))).objectEqualsTo({
                 type:CBMoveProfile.COST_TYPE.ADD, value:0
             });
+            assert(unit.moveProfile.getMinimalMoveCost()).equalsTo(1);
             assert(unit.moveProfile.getRotationCost(120)).objectEqualsTo({
                 type:CBMoveProfile.COST_TYPE.ADD, value:0.5
             });
@@ -565,6 +595,7 @@ describe("Unit", ()=> {
         then:
             assert(unit.moralProfile.capacity).equalsTo(0);
             assert(unit.moralProfile.moral).equalsTo(8);
+            assert(unit.moralProfile.autoRally).isFalse();
             assert(unit.type.getMoral(1)).equalsTo(7);
             assert(unit.moral).equalsTo(8);
     });

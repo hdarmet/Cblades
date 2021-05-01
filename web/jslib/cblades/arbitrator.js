@@ -47,7 +47,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         if (this._processDefendingWingBelongingUnit(unit, allowedActions)) return allowedActions;
         if (this._processAttackingWingBelongingUnit(unit, allowedActions)) return allowedActions;
         if (this._processUnitWithAnOrder(unit, allowedActions)) return allowedActions;
-        if (this._processCharacter(unit, allowedActions)) return allowedActions;
+        /*if (*/this._processCharacter(unit, allowedActions)/*) return allowedActions;*/
         return allowedActions;
     }
 

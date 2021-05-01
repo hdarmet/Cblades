@@ -1,5 +1,13 @@
 'use strict'
 
+import {
+    diffAngle
+} from "../../geometry.js";
+import {
+    CBEngageSideMode
+} from "../unit.js";
+
+
 export class CBUnitManagementTeacher {
 
     processAttackerEngagementResult(unit, diceResult) {
@@ -36,14 +44,14 @@ export class CBUnitManagementTeacher {
         return unit1.player === unit2.player;
     }
 
-    doesHexContainFoes(unit, hex, predicate=foe=>true) {
-        for (let foe of hex.units) {
+    doesHexLocationContainFoes(unit, hexLocation, predicate=foe=>true) {
+        for (let foe of hexLocation.units) {
             if (this.areUnitsFoes(unit, foe) && predicate(foe)) return true;
         }
         return false;
     }
 
-    doesHexContainFriends(unit, hex) {
+    doesHexLocationContainFriends(unit, hex) {
         let units = hex.units;
         if (units.length) {
             if (this.areUnitsFriends(unit, units[0])) return true;
@@ -64,7 +72,7 @@ export class CBUnitManagementTeacher {
         for (let sangle in directions) {
             let angle = parseInt(sangle);
             let direction = directions[angle];
-            if (this.doesHexContainFoes(unit, direction.hex, predicate)) {
+            if (this.doesHexLocationContainFoes(unit, direction.hex, predicate)) {
                 return true;
             }
         }
@@ -79,31 +87,43 @@ export class CBUnitManagementTeacher {
         return this.wouldUnitEngage(unit, unit.hexLocation, unit.angle);
     }
 
-    isAUnitEngageAnotherUnit(unit, potentialFoe, unitMustHaveAnEngagingMarker=false) {
+    isAUnitPotentiallyEngageAnotherUnit(unit, potentialFoe, foeHexLocation, unitMustHaveAnEngagingMarker=false) {
         if (unit.isRouted()) return false;
         if (unitMustHaveAnEngagingMarker && !unit.isEngaging() && !unit.isCharging()) return false;
         if (!this.areUnitsFoes(unit, potentialFoe)) return false;
-        return this.isHexLocationInForwardZone(unit, potentialFoe.hexLocation);
+        if (this.isHexLocationInForwardZone(unit, foeHexLocation)) {
+            let dangle = diffAngle(unit.angle, potentialFoe.angle);
+            if (dangle>=-60 || dangle<=60) return CBEngageSideMode.BACK;
+            else if (dangle<=-60 || dangle>=120) return CBEngageSideMode.FRONT;
+            else return CBEngageSideMode.SIDE;
+        }
     }
 
-    getEngagingFoes(unit, foesMustHaveEngagingMarkers=false) {
-        let hexes = this.getUnitAdjacentZone(unit);
-        let foes = [];
-        for (let sangle in hexes) {
-            let angle = parseInt(sangle);
-            let hexId = hexes[angle].hex;
+    isAUnitEngageAnotherUnit(unit, potentialFoe, unitMustHaveAnEngagingMarker=false) {
+        return this.isAUnitPotentiallyEngageAnotherUnit(unit, potentialFoe, potentialFoe.hexLocation, unitMustHaveAnEngagingMarker);
+    }
+
+    getPotentialEngagingFoes(unit, hexLocation, foesMustHaveEngagingMarkers=false) {
+        let hexes = hexLocation.nearHexes;
+        let foes = new Map();
+        for (let [hexId, angle] of hexes.entries()) {
             let nearUnits = hexId.map.getUnitsOnHex(hexId);
             for (let nearUnit of nearUnits) {
-                if (this.isAUnitEngageAnotherUnit(nearUnit, unit, foesMustHaveEngagingMarkers)) {
-                    foes.push(nearUnit);
+                let side = this.isAUnitPotentiallyEngageAnotherUnit(nearUnit, unit, hexLocation, foesMustHaveEngagingMarkers);
+                if (side) {
+                    foes.set(nearUnit, side);
                 }
             }
         }
         return foes;
     }
 
+    getEngagingFoes(unit, foesMustHaveEngagingMarkers=false) {
+        return this.getPotentialEngagingFoes(unit, unit.hexLocation, foesMustHaveEngagingMarkers)
+    }
+
     isUnitEngaged(unit, foesMustHaveEngagingMarkers=false) {
-        return this.getEngagingFoes(unit, foesMustHaveEngagingMarkers).length>0;
+        return this.getEngagingFoes(unit, foesMustHaveEngagingMarkers).size>0;
     }
 
     getWingTiredness(unit) {

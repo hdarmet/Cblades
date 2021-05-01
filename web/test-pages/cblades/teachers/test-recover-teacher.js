@@ -137,7 +137,7 @@ describe("Recover teacher", ()=> {
 
     it("Checks if a rally action is allowed", () => {
         given:
-            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+            var {arbitrator, unit12, unit21} = create2Players4UnitsTinyGame();
         then:
             assert(arbitrator.isAllowedToRally(unit12)).isFalse();
         when:
@@ -152,6 +152,18 @@ describe("Recover teacher", ()=> {
             unit12.receivesOrder(true);
         then:
             assert(arbitrator.isAllowedToRally(unit12)).isTrue();
+        when:
+            unit12.receivesOrder(false);
+            Object.defineProperty(unit12.moralProfile, "autoRally", {
+                get: function() { return true; }
+            });
+        then:
+            assert(arbitrator.isAllowedToRally(unit12)).isTrue();
+        when:
+            unit21.move(unit12.hexLocation.getNearHex(0));
+            unit21.angle = 180;
+        then:
+            assert(arbitrator.isAllowedToRally(unit12)).isFalse();
     });
 
     it("Checks rest result processing", () => {

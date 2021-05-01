@@ -15,7 +15,7 @@ import {
 import {
     CBMap,
     CBHexSideId,
-    CBHexVertexId, CBMoveType, CBPathFinding, CBHex
+    CBHexVertexId, CBMoveType, CBHexPathFinding, CBHex, CBHexSidePathFinding, CBHexId
 } from "../../jslib/cblades/map.js";
 import {
     DBoard, DSimpleLevel
@@ -143,76 +143,74 @@ describe("Map", ()=> {
             game.setMap(map);
         then:
             assert(map.getNorthZone()).unorderedArrayEqualsTo([
-                map.getHex(0, 0),
-                map.getHex(1, -1),
-                map.getHex(2, 0),
-                map.getHex(3, -1),
-                map.getHex(4, 0),
-                map.getHex(5, -1),
-                map.getHex(6, 0),
-                map.getHex(7, -1),
-                map.getHex(8, 0),
-                map.getHex(9, -1),
-                map.getHex(10, 0),
-                map.getHex(11, -1),
-                map.getHex(12, 0)
+                map.getHex(0, -1),
+                map.getHex(1, 0),
+                map.getHex(2, -1),
+                map.getHex(3, 0),
+                map.getHex(4, -1),
+                map.getHex(5, 0),
+                map.getHex(6, -1),
+                map.getHex(7, 0),
+                map.getHex(8, -1),
+                map.getHex(9, 0),
+                map.getHex(10, -1),
+                map.getHex(11, 0),
+                map.getHex(12, -1)
             ]);
             assert(map.getSouthZone()).unorderedArrayEqualsTo([
-                map.getHex(0, 16),
+                map.getHex(0, 17),
                 map.getHex(1, 17),
-                map.getHex(2, 16),
+                map.getHex(2, 17),
                 map.getHex(3, 17),
-                map.getHex(4, 16),
+                map.getHex(4, 17),
                 map.getHex(5, 17),
-                map.getHex(6, 16),
+                map.getHex(6, 17),
                 map.getHex(7, 17),
-                map.getHex(8, 16),
+                map.getHex(8, 17),
                 map.getHex(9, 17),
-                map.getHex(10, 16),
+                map.getHex(10, 17),
                 map.getHex(11, 17),
-                map.getHex(12, 16)
+                map.getHex(12, 17)
             ]);
             assert(map.getWestZone()).unorderedArrayEqualsTo([
-                map.getHex(0, 0),
-                map.getHex(0, 1),
-                map.getHex(0, 2),
-                map.getHex(0, 3),
-                map.getHex(0, 4),
-                map.getHex(0, 5),
-                map.getHex(0, 6),
-                map.getHex(0, 7),
-                map.getHex(0, 8),
-                map.getHex(0, 9),
-                map.getHex(0, 10),
-                map.getHex(0, 11),
-                map.getHex(0, 12),
-                map.getHex(0, 13),
-                map.getHex(0, 14),
-                map.getHex(0, 15),
-                map.getHex(0, 16)
+                map.getHex(-1, 0),
+                map.getHex(-1, 1),
+                map.getHex(-1, 2),
+                map.getHex(-1, 3),
+                map.getHex(-1, 4),
+                map.getHex(-1, 5),
+                map.getHex(-1, 6),
+                map.getHex(-1, 7),
+                map.getHex(-1, 8),
+                map.getHex(-1, 9),
+                map.getHex(-1, 10),
+                map.getHex(-1, 11),
+                map.getHex(-1, 12),
+                map.getHex(-1, 13),
+                map.getHex(-1, 14),
+                map.getHex(-1, 15)
             ]);
             assert(map.getEastZone()).unorderedArrayEqualsTo([
-                map.getHex(12, 0),
-                map.getHex(12, 1),
-                map.getHex(12, 2),
-                map.getHex(12, 3),
-                map.getHex(12, 4),
-                map.getHex(12, 5),
-                map.getHex(12, 6),
-                map.getHex(12, 7),
-                map.getHex(12, 8),
-                map.getHex(12, 9),
-                map.getHex(12, 10),
-                map.getHex(12, 11),
-                map.getHex(12, 12),
-                map.getHex(12, 13),
-                map.getHex(12, 14),
-                map.getHex(12, 15),
-                map.getHex(12, 16)
+                map.getHex(13, 0),
+                map.getHex(13, 1),
+                map.getHex(13, 2),
+                map.getHex(13, 3),
+                map.getHex(13, 4),
+                map.getHex(13, 5),
+                map.getHex(13, 6),
+                map.getHex(13, 7),
+                map.getHex(13, 8),
+                map.getHex(13, 9),
+                map.getHex(13, 10),
+                map.getHex(13, 11),
+                map.getHex(13, 12),
+                map.getHex(13, 13),
+                map.getHex(13, 14),
+                map.getHex(13, 15)
             ]);
     });
 
-    it("Checks hexIds on odd columns", () => {
+    it("Checks hexIds general features", () => {
         given:
             var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(3, 4);
@@ -226,6 +224,22 @@ describe("Map", ()=> {
             assert(hexId.similar(map.getHex(3, 4))).isTrue();
             assert(hexId.similar(map.getHex(4, 3))).isFalse();
             assert(hexId.toString()).equalsTo("Hex(3, 4)");
+            assert(hexId.equalsTo(hexId)).isTrue();
+            assert(hexId.equalsTo(new CBHexId(map, 3, 4))).isTrue();
+            assert(hexId.equalsTo(map.getHex(4, 3))).isFalse();
+            assert(hexId.equalsTo(null)).isFalse();
+            assert(hexId.onMap).isTrue();
+            assert(map.getHex(0, 0).onMap).isTrue();
+            assert(map.getHex(-1, 0).onMap).isFalse();
+            assert(map.getHex(12, 0).onMap).isTrue();
+            assert(map.getHex(13, 0).onMap).isFalse();
+    });
+
+    it("Checks hexIds on odd columns", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var hexId = map.getHex(3, 4);
+        then:
             assert(hexId.location.toString()).equalsTo("point(-511.5, -885.9375)");
         when:
             var nearHexId = hexId.getNearHex(0);
@@ -280,14 +294,6 @@ describe("Map", ()=> {
             var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(4, 3);
         then:
-            assert(hexId.hasHex(map.getHex(4, 3))).isTrue();
-            assert(hexId.hasHex(map.getHex(4, 4))).isFalse();
-            assert(hexId.col).equalsTo(4);
-            assert(hexId.row).equalsTo(3);
-            assert(hexId.map).equalsTo(map);
-            assert(hexId.similar(map.getHex(4, 3))).isTrue();
-            assert(hexId.similar(map.getHex(3, 4))).isFalse();
-            assert(hexId.toString()).equalsTo("Hex(4, 3)");
             assert(hexId.location.toString()).equalsTo("point(-341, -984.375)");
         when:
             var nearHexId = hexId.getNearHex(0);
@@ -383,6 +389,10 @@ describe("Map", ()=> {
             assert(CBHexSideId.equals(hexSide, new CBHexSideId(hexId2, hexId1))).isFalse();
             assert(hexSide.similar(new CBHexSideId(hexId3, hexId1))).isFalse();
             assert(CBHexSideId.equals(hexSide, new CBHexSideId(hexId3, hexId1))).isFalse();
+            assert(hexSide.equalsTo(hexSide)).isTrue();
+            assert(hexSide.equalsTo(new CBHexSideId(hexId1, hexId2))).isTrue();
+            assert(hexSide.equalsTo(new CBHexSideId(hexId2, hexId1))).isFalse();
+            assert(hexSide.equalsTo(null)).isFalse();
             assert(hexSide.location.toString()).equalsTo("point(-255.75, -1033.5937)");
             assert(hexSide.isNearHex(map.getHex(7, 3))).isFalse();
             assert(hexSide.isNearHex(hexId2.getNearHex(300))).equalsTo(330);
@@ -390,7 +400,15 @@ describe("Map", ()=> {
             assert(hexSide.isNearHex(hexId1.getNearHex(240))).equalsTo(240);
             assert(hexSide.isNearHex(hexId2.getNearHex(60))).equalsTo(60);
             assert(hexSide.turnTo(180).toString()).equalsTo("Hexside(Hex(4, 3), Hex(5, 4))");
+            assert(hexSide.moveTo(180).toString()).equalsTo("Hexside(Hex(4, 4), Hex(5, 4))");
             assert(hexSide.turnMove(180).toString()).equalsTo("Hexside(Hex(5, 3), Hex(5, 4))");
+        when:
+            var hexSide11 = hexId1.toward(60);
+            var hexId4 = map.getHex(-1, 4);
+            var hexSide41 = hexId4.toward(60);
+        then:
+            assert(hexSide11.onMap).isTrue();
+            assert(hexSide41.onMap).isFalse();
     });
 
     it("Checks hexSideIds face hexes on even column", () => {
@@ -449,6 +467,7 @@ describe("Map", ()=> {
             var hexId4 = hexId1.getNearHex(300);
             var hexVertex = new CBHexVertexId(hexId1, hexId2, hexId3);
         then:
+            assert(hexVertex.map).equalsTo(map);
             assert(hexVertex.hexes).arrayEqualsTo([hexId1, hexId2, hexId3]);
             assert(hexVertex.fromHex).equalsTo(hexId1);
             assert(hexVertex.toHexSide.similar(new CBHexSideId(hexId2, hexId3))).isTrue();
@@ -457,6 +476,16 @@ describe("Map", ()=> {
             assert(hexVertex.similar(new CBHexVertexId(hexId3, hexId2, hexId1))).isTrue();
             assert(hexVertex.similar(new CBHexVertexId(hexId4, hexId1, hexId2))).isFalse();
             assert(hexVertex.location.toString()).equalsTo("point(-227.3333, -984.375)");
+            assert(hexVertex.equalsTo(hexVertex)).isTrue();
+            assert(hexVertex.equalsTo(new CBHexVertexId(hexId1, hexId2, hexId3))).isTrue();
+            assert(hexVertex.equalsTo(new CBHexSideId(hexId2, hexId1, hexId3))).isFalse();
+            assert(hexVertex.equalsTo(null)).isFalse();
+            assert(hexId1.getNearHexVertex(90).similar(hexVertex));
+        when:
+            var hexVertex2 = map.getHex(-1, 4).getNearHexVertex(90);
+        then:
+            assert(hexVertex.onMap).isTrue();
+            assert(hexVertex2.onMap).isFalse();
     });
 
     it("Checks hexId collection", () => {
@@ -464,7 +493,7 @@ describe("Map", ()=> {
             var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             var hexes = map.hexes;
         then:
-            assert(hexes.length).equalsTo(221);
+            assert(hexes.length).equalsTo(215);
         when:
             var minCol = Number.MAX_VALUE;
             var minRow = Number.MAX_VALUE;
@@ -488,7 +517,7 @@ describe("Map", ()=> {
             var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             var hexSides = map.hexSides;
         then:
-            assert(hexSides.length).equalsTo(663);
+            assert(hexSides.length).equalsTo(586);
         when:
             var minCol = Number.MAX_VALUE;
             var minRow = Number.MAX_VALUE;
@@ -505,10 +534,10 @@ describe("Map", ()=> {
                 if (hexSide.toHex.row>maxRow) maxRow = hexSide.toHex.row;
             }
         then:
-            assert(minCol).equalsTo(-1);
-            assert(maxCol).equalsTo(13);
+            assert(minCol).equalsTo(0);
+            assert(maxCol).equalsTo(12);
             assert(minRow).equalsTo(0);
-            assert(maxRow).equalsTo(17);
+            assert(maxRow).equalsTo(16);
     });
 
     it("Checks hex type management", () => {
@@ -627,7 +656,7 @@ describe("Map", ()=> {
             hexSideId._addPlayable(playable);
         then:
             assert(hexId1.playables).arrayEqualsTo([playable]);
-            assert(hexId2.playables).arrayEqualsTo([playable]);;
+            assert(hexId2.playables).arrayEqualsTo([playable]);
         when:
             hexSideId._removePlayable(playable);
         then:
@@ -872,7 +901,7 @@ describe("Map", ()=> {
             assert(hexSideId.playables).unorderedArrayEqualsTo([playable1, playable2]);
     });
 
-    function checkRecord(pathfinding, map, col, row, cost, angle, distance) {
+    function checkHexRecord(pathfinding, map, col, row, cost, angle, distance) {
         let record = pathfinding.getRecord(map.getHex(col, row));
         assert(record).isDefined();
         assert(record.cost).equalsTo(cost);
@@ -880,95 +909,475 @@ describe("Map", ()=> {
         assert(record.distance).equalsTo(distance);
     }
 
-    function printPathFindingResult(pathfinding) {
+    function printHexPathFindingResult(pathfinding) {
         var result="";
         for (let record of pathfinding._records.values()) {
-            result+=`checkRecord(pathfinding, map, ${record.hex.col}, ${record.hex.row}, ${record.cost}, ${record.angle}, ${record.distance});\n`;
+            result+=`checkHexRecord(pathfinding, map, ${record.hexLocation.col}, ${record.hexLocation.row}, ${record.cost}, ${record.angle}, ${record.distance});\n`;
         }
         console.log(result);
     }
 
-    it("Checks forward path finding", () => {
+    it("Checks forward hex path finding", () => {
         given:
             var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var expensiveHexes = new Set([/*map.getHex(9,0),*/ map.getHex(10,1)/*, map.getHex(11,0)*/]);
-            var pathfinding = new CBPathFinding(map.getHex(10, 2), 120,
+            var pathfinding = new CBHexPathFinding(map.getHex(10, 2), 120,
                 [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
                 (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
                 (fromHex, fromAngle, toAngle)=>0.5, 1
             );
             pathfinding._computeForward();
         then:
-            //printPathFindingResult(pathfinding);
-            checkRecord(pathfinding, map, 10, 2, 0, 120, 2);
-            checkRecord(pathfinding, map, 10, 1, 2, 0, 1);
-            checkRecord(pathfinding, map, 11, 2, 1.5, 60, 2);
-            checkRecord(pathfinding, map, 11, 3, 1.5, 120, 3);
-            checkRecord(pathfinding, map, 10, 3, 1.5, 180, 3);
-            checkRecord(pathfinding, map, 9, 3, 1.5, 240, 3);
-            checkRecord(pathfinding, map, 9, 2, 1.5, 300, 2);
-            checkRecord(pathfinding, map, 10, 0, 3.5, 0, 0);
-            checkRecord(pathfinding, map, 11, 1, 3.5, 60, 1);
-            checkRecord(pathfinding, map, 9, 1, 3, 0, 1);
-            checkRecord(pathfinding, map, 8, 2, 3, 240, 3);
-            checkRecord(pathfinding, map, 8, 1, 3, 300, 2);
+            //printHexPathFindingResult(pathfinding);
+            checkHexRecord(pathfinding, map, 10, 2, 0, 120, 2);
+            checkHexRecord(pathfinding, map, 10, 1, 2, 0, 1);
+            checkHexRecord(pathfinding, map, 11, 2, 1.5, 60, 2);
+            checkHexRecord(pathfinding, map, 11, 3, 1.5, 120, 3);
+            checkHexRecord(pathfinding, map, 10, 3, 1.5, 180, 3);
+            checkHexRecord(pathfinding, map, 9, 3, 1.5, 240, 3);
+            checkHexRecord(pathfinding, map, 9, 2, 1.5, 300, 2);
+            checkHexRecord(pathfinding, map, 10, 0, 3.5, 0, 0);
+            checkHexRecord(pathfinding, map, 11, 1, 3, 0, 1);
+            checkHexRecord(pathfinding, map, 9, 1, 3, 0, 1);
+            checkHexRecord(pathfinding, map, 8, 2, 3, 240, 3);
+            checkHexRecord(pathfinding, map, 8, 1, 3, 300, 2);
+            checkHexRecord(pathfinding, map, 12, 1, 3, 60, 2);
+            checkHexRecord(pathfinding, map, 12, 2, 3, 120, 3);
     });
 
-    it("Checks backward path finding", () => {
+    it("Checks forward hex path finding when a maximum cost is set", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([/*map.getHex(9,0),*/ map.getHex(10,1)/*, map.getHex(11,0)*/]);
+            var pathfinding = new CBHexPathFinding(map.getHex(10, 2), 120,
+                [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
+                (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+                (fromHex, fromAngle, toAngle)=>0.5,
+                1, 3
+            );
+            pathfinding._computeForward();
+        then:
+            //printHexPathFindingResult(pathfinding);
+            checkHexRecord(pathfinding, map, 10, 2, 0, 120, 2);
+            checkHexRecord(pathfinding, map, 10, 1, 2, 0, 1);
+    });
+
+    it("Checks forward hex path finding when some hexes are forbidden", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+            when:
+                game.setMap(map);
+            var forbiddenHexes = new Set([/*map.getHex(9,0),*/ map.getHex(10,1)/*, map.getHex(11,0)*/]);
+            var pathfinding = new CBHexPathFinding(map.getHex(10, 2), 120,
+                [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
+                (fromHex, toHex)=>forbiddenHexes.has(toHex)?null:1,
+                (fromHex, fromAngle, toAngle)=>diffAngle(fromAngle, toAngle)>90?null:0.5, 1
+            );
+            pathfinding._computeForward();
+        then:
+            //printHexPathFindingResult(pathfinding);
+            checkHexRecord(pathfinding, map, 10, 2, 0, 120, 2);
+            checkHexRecord(pathfinding, map, 11, 2, 1.5, 60, 2);
+            checkHexRecord(pathfinding, map, 11, 3, 1.5, 120, 3);
+            checkHexRecord(pathfinding, map, 10, 3, 1.5, 180, 3);
+            checkHexRecord(pathfinding, map, 11, 1, 3, 0, 1);
+            checkHexRecord(pathfinding, map, 12, 1, 3, 60, 2);
+            checkHexRecord(pathfinding, map, 12, 2, 3, 120, 3);
+            checkHexRecord(pathfinding, map, 12, 0, 4.5, 60, 2);
+            checkHexRecord(pathfinding, map, 10, 0, 4.5, 300, 0);
+            checkHexRecord(pathfinding, map, 11, 4, 3, 120, 4);
+            checkHexRecord(pathfinding, map, 10, 4, 3, 180, 4);
+            checkHexRecord(pathfinding, map, 9, 4, 3, 240, 4);
+            checkHexRecord(pathfinding, map, 12, 3, 3, 120, 4);
+    });
+
+    it("Checks backward hex path finding", () => {
         given:
             var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var expensiveHexes = new Set([map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)]);
-            var pathfinding = new CBPathFinding(map.getHex(10, 2), 120,
+            var pathfinding = new CBHexPathFinding(map.getHex(10, 2), 120,
                 [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
                     (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
                     (fromHex, fromAngle, toAngle)=>0.5, 1
                 );
             pathfinding._computeBackward();
         then:
-            //printPathFindingResult(pathfinding);
-            checkRecord(pathfinding, map, 10, 0, 0, null, 2);
-            checkRecord(pathfinding, map, 11, -1, 0, null, 4);
-            checkRecord(pathfinding, map, 10, -1, 1, 180, 3);
-            checkRecord(pathfinding, map, 11, 0, 1, 240, 3);
-            checkRecord(pathfinding, map, 11, 1, 1, 300, 2);
-            checkRecord(pathfinding, map, 10, 1, 1, 0, 1);
-            checkRecord(pathfinding, map, 9, 1, 1, 60, 2);
-            checkRecord(pathfinding, map, 9, 0, 1, 120, 3);
-            checkRecord(pathfinding, map, 11, 2, 2.5, 0, 1);
-            checkRecord(pathfinding, map, 10, 2, 3.5, 0, 0);
-            checkRecord(pathfinding, map, 9, 2, 2.5, 0, 1);
-            checkRecord(pathfinding, map, 8, 1, 2.5, 60, 2);
-            checkRecord(pathfinding, map, 8, 0, 2.5, 120, 3);
-            checkRecord(pathfinding, map, 12, 0, 2.5, 240, 3);
-            checkRecord(pathfinding, map, 12, 1, 2.5, 300, 2);
-            checkRecord(pathfinding, map, 9, 3, 4, 0, 1);
-            checkRecord(pathfinding, map, 8, 2, 4, 60, 2);
+            //printHexPathFindingResult(pathfinding);
+            checkHexRecord(pathfinding, map, 9, -1, 0, null, 4);
+            checkHexRecord(pathfinding, map, 10, 0, 0, null, 2);
+            checkHexRecord(pathfinding, map, 11, -1, 0, null, 4);
+            checkHexRecord(pathfinding, map, 11, 1, 1, 300, 2);
+            checkHexRecord(pathfinding, map, 10, 1, 1, 0, 1);
+            checkHexRecord(pathfinding, map, 9, 1, 1, 60, 2);
+            checkHexRecord(pathfinding, map, 11, 2, 2.5, 0, 1);
+            checkHexRecord(pathfinding, map, 10, 2, 3.5, 0, 0);
+            checkHexRecord(pathfinding, map, 9, 2, 2.5, 0, 1);
+            checkHexRecord(pathfinding, map, 8, 1, 2.5, 60, 2);
+            checkHexRecord(pathfinding, map, 8, 0, 2.5, 120, 3);
+            checkHexRecord(pathfinding, map, 12, 0, 2.5, 240, 3);
+            checkHexRecord(pathfinding, map, 12, 1, 2.5, 300, 2);
+            checkHexRecord(pathfinding, map, 9, 3, 4, 0, 1);
+            checkHexRecord(pathfinding, map, 8, 2, 4, 60, 2);
+            checkHexRecord(pathfinding, map, 12, 2, 4, 300, 2);
+            checkHexRecord(pathfinding, map, 11, 3, 4, 0, 1);
     });
 
-    it("Checks best next moves ", () => {
+    it("Checks backward hex path finding when a miximum cost is set", () => {
         given:
             var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var expensiveHexes = new Set([map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)]);
-            var pathfinding = new CBPathFinding(map.getHex(10, 2), 120,
+            var pathfinding = new CBHexPathFinding(map.getHex(10, 2), 120,
+                [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
+                (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
+                (fromHex, fromAngle, toAngle)=>0.5,
+                1, 3
+            );
+            pathfinding._computeBackward();
+        then:
+            //printHexPathFindingResult(pathfinding);
+            checkHexRecord(pathfinding, map, 10, 0, 0, null, 2);
+            checkHexRecord(pathfinding, map, 11, 1, 1, 300, 2);
+            checkHexRecord(pathfinding, map, 10, 1, 1, 0, 1);
+            checkHexRecord(pathfinding, map, 9, 1, 1, 60, 2);
+    });
+
+    it("Checks backward hex path finding when some hexes are forbidden", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var forbiddenHexes = new Set([map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)]);
+            var pathfinding = new CBHexPathFinding(map.getHex(10, 2), 120,
+                [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
+                (fromHex, toHex)=>forbiddenHexes.has(toHex)?null:1,
+                (fromHex, fromAngle, toAngle)=>diffAngle(fromAngle, toAngle)>90?null:0.5, 1
+            );
+            pathfinding._computeBackward();
+        then:
+            //printHexPathFindingResult(pathfinding);
+            checkHexRecord(pathfinding, map, 9, -1, 0, null, 4);
+            checkHexRecord(pathfinding, map, 10, 0, 0, null, 2);
+            checkHexRecord(pathfinding, map, 11, -1, 0, null, 4);
+            checkHexRecord(pathfinding, map, 11, 1, 1, 300, 2);
+            checkHexRecord(pathfinding, map, 10, 1, 1, 0, 1);
+            checkHexRecord(pathfinding, map, 9, 1, 1, 60, 2);
+            checkHexRecord(pathfinding, map, 9, 2, 2.5, 0, 1);
+            checkHexRecord(pathfinding, map, 8, 1, 2.5, 60, 2);
+            checkHexRecord(pathfinding, map, 8, 0, 2.5, 120, 3);
+            checkHexRecord(pathfinding, map, 12, 0, 2.5, 240, 3);
+            checkHexRecord(pathfinding, map, 12, 1, 2.5, 300, 2);
+            checkHexRecord(pathfinding, map, 11, 2, 2.5, 0, 1);
+            checkHexRecord(pathfinding, map, 10, 2, 4, 300, 0);
+            checkHexRecord(pathfinding, map, 9, 3, 4, 0, 1);
+            checkHexRecord(pathfinding, map, 8, 2, 4, 60, 2);
+            checkHexRecord(pathfinding, map, 12, 2, 4, 300, 2);
+            checkHexRecord(pathfinding, map, 11, 3, 4, 0, 1);
+    });
+
+    it("Checks best hex next moves", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)]);
+            var pathfinding = new CBHexPathFinding(map.getHex(10, 2), 180,
                 [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
                 (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
                 (fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5, 1
             );
             var nextMoves = pathfinding.getGoodNextMoves();
         then:
+            //printHexPathFindingResult(pathfinding);
             assert(nextMoves).unorderedArrayEqualsTo([
+                map.getHex(9, 2),
                 map.getHex(10, 1),
-                map.getHex(9, 2)
+                map.getHex(11, 2)
             ]);
+    });
+
+    it("Checks best hex next moves when there is no solution because of max distance exceeded", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)]);
+            var pathfinding = new CBHexPathFinding(map.getHex(10, 2), 120,
+                [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
+                (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
+                (fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5,
+                1, 2
+            );
+            var nextMoves = pathfinding.getGoodNextMoves();
+        then:
+            assert(nextMoves).arrayEqualsTo([]);
+    });
+
+    it("Checks hex path cost moves", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+            when:
+                game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)]);
+            var pathfinding = new CBHexPathFinding(map.getHex(10, 2), 120,
+                [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
+                (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
+                (fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5, 1
+            );
+            var pathCost = pathfinding.getPathCost();
+        then:
+            assert(pathCost).equalsTo(3);
+    });
+
+    it("Checks hex path cost when there is no solution because of max distance exceeded", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)]);
+            var pathfinding = new CBHexPathFinding(map.getHex(10, 2), 120,
+                [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
+                (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
+                (fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5,
+                1, 2
+            );
+            var pathCost = pathfinding.getPathCost();
+        then:
+            assert(pathCost).equalsTo(null);
+    });
+
+    it("Checks hex path cost when there is no solution", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var forbiddenHexes = new Set([
+                map.getHex(9,4), map.getHex(9,5),
+                map.getHex(10,3), map.getHex(10,5),
+                map.getHex(11,4), map.getHex(11,5)
+            ]);
+            var pathfinding = new CBHexPathFinding(map.getHex(10, 4), 120,
+                [map.getHex(9, 1), map.getHex(10, 0), map.getHex(11, 1)],
+                (fromHex, toHex)=>forbiddenHexes.has(toHex)?null:1,
+                (fromHex, fromAngle, toAngle)=>0, 1
+            );
+            var pathCost = pathfinding.getPathCost();
+        then:
+            assert(pathCost).equalsTo(null);
+    });
+
+    function checkHexSideRecord(pathfinding, map, fcol, frow, tcol, trow, cost, angle, distance) {
+        let record = pathfinding.getRecord(new CBHexSideId(map.getHex(fcol, frow), map.getHex(tcol, trow)));
+        assert(record).isDefined();
+        assert(record.cost).equalsTo(cost);
+        assert(record.angle).equalsTo(angle);
+        assert(record.distance).equalsTo(distance);
+    }
+
+    function printHexSidePathFindingResult(pathfinding) {
+        var result="";
+        for (let record of pathfinding._records.values()) {
+            result+=`checkHexSideRecord(pathfinding, map, ${record.hexLocation.fromHex.col}, ${record.hexLocation.fromHex.row}, ${record.hexLocation.toHex.col}, ${record.hexLocation.toHex.row}, ${record.cost}, ${record.angle}, ${record.distance});\n`;
+        }
+        console.log(result);
+    }
+
+    it("Checks hexside forward path finding", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(10,1)]);
+            var pathfinding = new CBHexSidePathFinding(new CBHexSideId(map.getHex(9, 3), map.getHex(10, 3)), 210,
+                [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
+                (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+                (fromHex, fromAngle, toAngle)=>1, 1
+            );
+            pathfinding._computeForward();
+        then:
+            //printHexSidePathFindingResult(pathfinding);
+            checkHexSideRecord(pathfinding, map, 9, 3, 10, 3, 0, 210, 3);
+            checkHexSideRecord(pathfinding, map, 8, 3, 9, 4, 1, 210, 4);
+            checkHexSideRecord(pathfinding, map, 9, 3, 9, 4, 1, 270, 3);
+            checkHexSideRecord(pathfinding, map, 10, 3, 9, 4, 1, 150, 3);
+            checkHexSideRecord(pathfinding, map, 9, 4, 10, 4, 1, 210, 4);
+            checkHexSideRecord(pathfinding, map, 10, 2, 11, 3, 2, 30, 2);
+            checkHexSideRecord(pathfinding, map, 10, 3, 10, 2, 2, 90, 2);
+            checkHexSideRecord(pathfinding, map, 9, 3, 10, 2, 2, 330, 2);
+            checkHexSideRecord(pathfinding, map, 9, 2, 10, 2, 2, 30, 2);
+            checkHexSideRecord(pathfinding, map, 8, 2, 8, 3, 2, 270, 3);
+            checkHexSideRecord(pathfinding, map, 9, 3, 8, 3, 2, 330, 3);
+            checkHexSideRecord(pathfinding, map, 8, 3, 8, 4, 2, 270, 4);
+            checkHexSideRecord(pathfinding, map, 10, 3, 10, 4, 2, 90, 3);
+            checkHexSideRecord(pathfinding, map, 10, 4, 9, 5, 2, 150, 4);
+            checkHexSideRecord(pathfinding, map, 11, 4, 10, 4, 2, 150, 4);
+            checkHexSideRecord(pathfinding, map, 10, 1, 11, 2, 3.5, 30, 1);
+            checkHexSideRecord(pathfinding, map, 10, 2, 10, 1, 3.5, 90, 1);
+            checkHexSideRecord(pathfinding, map, 9, 2, 10, 1, 3.5, 330, 1);
+            checkHexSideRecord(pathfinding, map, 9, 1, 10, 1, 3.5, 30, 1);
+            checkHexSideRecord(pathfinding, map, 8, 2, 9, 3, 4, 210, 3);
+            checkHexSideRecord(pathfinding, map, 9, 2, 9, 3, 3, 270, 2);
+            checkHexSideRecord(pathfinding, map, 8, 2, 9, 2, 3, 330, 2);
+            checkHexSideRecord(pathfinding, map, 10, 3, 11, 3, 3, 150, 3);
+            checkHexSideRecord(pathfinding, map, 11, 4, 11, 3, 3, 90, 3);
+            checkHexSideRecord(pathfinding, map, 11, 3, 11, 2, 3, 90, 2);
+            checkHexSideRecord(pathfinding, map, 11, 2, 12, 2, 3, 30, 2);
+            checkHexSideRecord(pathfinding, map, 10, 2, 11, 2, 3, 330, 2);
+            checkHexSideRecord(pathfinding, map, 10, 3, 11, 4, 4, 210, 3);
+            checkHexSideRecord(pathfinding, map, 10, 0, 11, 1, 4.5, 30, 0);
+            checkHexSideRecord(pathfinding, map, 10, 1, 10, 0, 4.5, 90, 0);
+            checkHexSideRecord(pathfinding, map, 9, 1, 10, 0, 4.5, 330, 0);
+            checkHexSideRecord(pathfinding, map, 8, 1, 9, 2, 5.5, 210, 2);
+            checkHexSideRecord(pathfinding, map, 9, 1, 9, 2, 4.5, 270, 1);
+            checkHexSideRecord(pathfinding, map, 8, 1, 9, 1, 4.5, 330, 1);
+            checkHexSideRecord(pathfinding, map, 11, 2, 11, 1, 4.5, 90, 1);
+            checkHexSideRecord(pathfinding, map, 11, 1, 12, 1, 4.5, 30, 1);
+            checkHexSideRecord(pathfinding, map, 10, 1, 11, 1, 4.5, 330, 1);
+    });
+
+    it("Checks hexside backward path finding", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(10,1)]);
+            var pathfinding = new CBHexSidePathFinding(new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)), 90,
+                [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
+                (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+                (fromHex, fromAngle, toAngle)=>1, 1
+            );
+            pathfinding._computeBackward();
+        then:
+            //printHexSidePathFindingResult(pathfinding);
+            checkHexSideRecord(pathfinding, map, 10, 2, 9, 2, 2.5, 30, 0);
+            checkHexSideRecord(pathfinding, map, 10, 2, 9, 3, 2.5, 330, 0);
+            checkHexSideRecord(pathfinding, map, 10, 1, 10, 2, 2, 270, 0);
+            checkHexSideRecord(pathfinding, map, 11, 2, 10, 2, 2.5, 330, 0);
+            checkHexSideRecord(pathfinding, map, 10, 2, 11, 3, 2.5, 30, 0);
+    });
+
+    it("Checks best hexside next moves", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([]);
+            var pathfinding = new CBHexSidePathFinding(new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)), 90,
+                [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+                (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+                (fromHex, fromAngle, toAngle)=>1, 1
+            );
+            var nextMoves = pathfinding.getGoodNextMoves(true);
+        then:
+            assert(nextMoves).unorderedArrayEqualsTo([
+                new CBHexSideId(map.getHex(11, 2), map.getHex(11, 3)),
+                new CBHexSideId(map.getHex(10, 2), map.getHex(11, 3)),
+                new CBHexSideId(map.getHex(10, 3), map.getHex(11, 3))
+            ]);
+        when:
+            nextMoves = pathfinding.getGoodNextMoves(false);
+        then:
+            assert(nextMoves).unorderedArrayEqualsTo([
+                new CBHexSideId(map.getHex(11, 2), map.getHex(11, 3)),
+                new CBHexSideId(map.getHex(10, 2), map.getHex(11, 3)),
+                new CBHexSideId(map.getHex(10, 3), map.getHex(11, 3)),
+                new CBHexSideId(map.getHex(9, 2), map.getHex(9, 3)),
+                new CBHexSideId(map.getHex(10, 2), map.getHex(9, 3)),
+                new CBHexSideId(map.getHex(10, 3), map.getHex(9, 3))
+            ]);
+    });
+
+    it("Checks best hexside next moves when there is no solution because of max distance exceeded", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([/*map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)*/]);
+            var pathfinding = new CBHexSidePathFinding(new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)), 90,
+                [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+                (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+                (fromHex, fromAngle, toAngle)=>1,
+                1, 2
+            );
+            var nextMoves = pathfinding.getGoodNextMoves();
+        then:
+            assert(nextMoves).arrayEqualsTo([]);
+    });
+
+    it("Checks hexside path cost", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(9,1), map.getHex(10,1), map.getHex(11,1)]);
+            var pathfinding = new CBHexSidePathFinding(new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)), 90,
+                [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+                (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+                (fromHex, fromAngle, toAngle)=>1, 1
+            );
+            var pathCost = pathfinding.getPathCost();
+        then:
+            //printHexSidePathFindingResult(pathfinding);
+            assert(pathCost).equalsTo(4.5);
+    });
+
+    it("Checks hexside path cost when some hexes are forbidden", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var forbiddenHexes = new Set([map.getHex(9,3), map.getHex(10,3), map.getHex(11,3)]);
+            var pathfinding = new CBHexSidePathFinding(new CBHexSideId(map.getHex(10, 4), map.getHex(10, 5)), 90,
+            [map.getHex(9, 2), map.getHex(10, 2), map.getHex(11, 2)],
+                (fromHex, toHex)=>forbiddenHexes.has(toHex)?null:1,
+                (fromHex, fromAngle, toAngle)=>1, 1
+            );
+            var pathCost = pathfinding.getPathCost();
+        then:
+            //printHexSidePathFindingResult(pathfinding);
+            assert(pathCost).equalsTo(10);
+    });
+
+    it("Checks hexside path cost when there is no solution because of max distance exceeded", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)]);
+            var pathfinding = new CBHexSidePathFinding(new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)), 90,
+                [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+                (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+                (fromHex, fromAngle, toAngle)=>1,
+                1, 2
+            );
+            var pathCost = pathfinding.getPathCost();
+        then:
+            assert(pathCost).equalsTo(null);
     });
 
 });

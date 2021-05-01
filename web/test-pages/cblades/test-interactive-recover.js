@@ -58,48 +58,14 @@ describe("Interactive Recover", ()=> {
             resetDirectives(unitsLayer, widgetsLayer, itemsLayer);
             clickOnCounter(game, unit);
         then:
-        /*
             loadAllImages();
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 301.6667, 266.8878)",
-                    "shadowColor = #000000", "shadowBlur = 15",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-125, -95, 250, 190)",
-                    "fillStyle = #FFFFFF",
-                    "fillRect(-125, -95, 250, 190)",
-                "restore()"
-            ]);
-            assert(getDirectives(widgetItemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 331.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/do-reorganize-gray.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 391.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/do-rally-gray.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 211.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/do-rest-gray.png, -25, -25, 50, 50)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 271.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/do-reload-gray.png, -25, -25, 50, 50)",
-                "restore()"
-            ]);
-
-         */
-
-        loadAllImages();
-        skipDirectives(widgetsLayer, 4);
-        assertDirectives(widgetsLayer, showMenuPanel(4, 3, 301.6667, 266.8878));
-        skipDirectives(itemsLayer, 4);
-        assertDirectives(itemsLayer, showMenuItem(2, 2, "icons/do-reorganize", 4, 1, 301.6667, 206.8878));
-        assertDirectives(itemsLayer, showMenuItem(3, 2, "icons/do-rally", 4, 1, 301.6667, 206.8878));
-        assertDirectives(itemsLayer, showMenuItem(0, 2, "icons/do-rest", 4, 1, 301.6667, 206.8878));
-        assertDirectives(itemsLayer, showMenuItem(1, 2, "icons/do-reload", 4, 1, 301.6667, 206.8878));
-
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMenuPanel(4, 3, 301.6667, 266.8878));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showMenuItem(2, 2, "icons/do-reorganize", 4, 1, 301.6667, 206.8878));
+            assertDirectives(itemsLayer, showMenuItem(3, 2, "icons/do-rally", 4, 1, 301.6667, 206.8878));
+            assertDirectives(itemsLayer, showMenuItem(0, 2, "icons/do-rest", 4, 1, 301.6667, 206.8878));
+            assertDirectives(itemsLayer, showMenuItem(1, 2, "icons/do-reload", 4, 1, 301.6667, 206.8878));
     });
 
     function clickOnRestAction(game) {

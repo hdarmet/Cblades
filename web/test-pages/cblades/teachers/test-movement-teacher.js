@@ -87,18 +87,15 @@ describe("Movement teacher", ()=> {
         }
     }
 
-    function create2Players4UnitsTinyGame() {
+    function createTinyGame() {
         let game = new CBGame();
+        let map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+        game.setMap(map);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBAbstractPlayer();
         game.addPlayer(player1);
         let wing1 = new CBWing(player1);
-        let player2 = new CBAbstractPlayer();
-        game.addPlayer(player2);
-        let wing2 = new CBWing(player2);
-        let map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
-        game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"])
         let unit11 = new CBTroop(unitType1, wing1);
         game.addUnit(unit11, map.getHex(5, 8));
@@ -107,6 +104,16 @@ describe("Movement teacher", ()=> {
         let leaderType1 = new CBTestUnitType("leader1", ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"])
         let leader11 = new CBCharacter(leaderType1, wing1);
         game.addUnit(leader11, map.getHex(6, 7));
+        game.start();
+        loadAllImages();
+        return {game, arbitrator, map, player1, wing1, unit11, unit12, leader11};
+    }
+
+    function create2Players4UnitsTinyGame() {
+        let {game, arbitrator, map, player1, wing1, unit11, unit12, leader11} = createTinyGame();
+        let player2 = new CBAbstractPlayer();
+        game.addPlayer(player2);
+        let wing2 = new CBWing(player2);
         let unitType2 = new CBTestUnitType("unit2", ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit1b.png"])
         let unit21 = new CBTroop(unitType2, wing2);
         game.addUnit(unit21, map.getHex(7, 8));
@@ -155,7 +162,7 @@ describe("Movement teacher", ()=> {
         game.addUnit(leader21, map.getHex(8, 7));
         game.start();
         loadAllImages();
-        return {game, arbitrator, map, player1, formation1, leader11, player2, unit21, unit22, leader21};
+        return {game, arbitrator, map, player1, wing1, formation1, leader11, player2, wing2, unit21, unit22, leader21};
     }
 
     function assertNoMove(moves, angle) {
@@ -170,9 +177,14 @@ describe("Movement teacher", ()=> {
 
     it("Checks if a move action is allowed", () => {
         given:
-            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+            var {arbitrator, unit12, unit21} = create2Players4UnitsTinyGame();
         then:
             assert(arbitrator.isAllowedToMove(unit12)).isTrue();
+        when:
+            unit21.move(unit12.hexLocation.getNearHex(0));
+            unit21.angle = 180;
+        then:
+            assert(arbitrator.isAllowedToMove(unit12)).isFalse();
     });
 
     it("Checks if a move back action is allowed", () => {
@@ -184,7 +196,13 @@ describe("Movement teacher", ()=> {
 
     it("Checks if a rout action is allowed", () => {
         given:
-            var {arbitrator, unit21, formation1} = create2Players1Formation2TroopsTinyGame();
+            var {arbitrator, map, wing1, wing2, unit21, formation1} = create2Players1Formation2TroopsTinyGame();
+        then:
+            assert(arbitrator.isAllowedToRout(unit21)).isFalse();
+            assert(arbitrator.isAllowedToRout(formation1)).isFalse();
+        when:
+            wing1.setRetreatZone(map.getSouthZone());
+            wing2.setRetreatZone(map.getSouthZone());
         then:
             assert(arbitrator.isAllowedToRout(unit21)).isTrue();
             assert(arbitrator.isAllowedToRout(formation1)).isFalse();
@@ -244,8 +262,9 @@ describe("Movement teacher", ()=> {
 
     it("Checks unit allowed moves", () => {
         given:
-            var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
-            unit21.move(map.getHex(5, 6)); // foes on forward zone
+            var {arbitrator, map, unit12, unit21, unit22} = create2Players4UnitsTinyGame();
+            unit22.hexLocation = map.getHex(8, 8); // Far, far away...
+            unit21.hexLocation = map.getHex(5, 6); // foes on forward zone
         when:
             var allowedMoves = arbitrator.getAllowedMoves(unit12);
         then:
@@ -279,7 +298,7 @@ describe("Movement teacher", ()=> {
 
     it("Checks unit allowed moves according to terran", () => {
         given:
-            var {arbitrator, unit11} = create2Players4UnitsTinyGame();
+            var {arbitrator, unit11} = createTinyGame();
             // unit11 on Hex(5, 8)
             unit11.type.setMoveProfile(2, new MoveProfile());
             unit11.hexLocation.getNearHex(300).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
@@ -301,8 +320,9 @@ describe("Movement teacher", ()=> {
 
     it("Checks unit allowed moves back", () => {
         given:
-            var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
-            unit21.move(map.getHex(5, 6)); // foes on forward zone
+            var {arbitrator, map, unit12, unit21, unit22} = create2Players4UnitsTinyGame();
+            unit22.hexLocation = map.getHex(8, 8); // far, far away...
+            unit21.hexLocation = map.getHex(5, 6); // foes on forward zone
             unit12.angle = 180;
         when:
             var allowedMoves = arbitrator.getAllowedMovesBack(unit12);
@@ -621,6 +641,7 @@ describe("Movement teacher", ()=> {
             formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             unit21.move(map.getHex(3, 6)); // foes on backward zone
             unit22.move(map.getHex(2, 5)); // foes on backward zone
+            unit22.angle = 270;
         when:
             var allowedMoves = arbitrator.getConfrontFormationAllowedRotations(formation1);
         then:
@@ -688,13 +709,31 @@ describe("Movement teacher", ()=> {
             }
             unit11.type.setMoveProfile(2, moveProfile);
             wing1.setRetreatZone(map.getSouthZone());
-            map.getHex(4, 11).type = CBHex.HEX_TYPES.IMPASSABLE;
-            map.getHex(3, 11).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            map.getHex(4, 10).type = CBHex.HEX_TYPES.IMPASSABLE;
+            map.getHex(3, 10).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
         when:
             unit11.move(map.getHex(4, 9));
             var hexes = arbitrator.createRoutPathFinding(unit11);
         then:
-            assert(hexes).setEqualsTo(new Set([map.getHex(3, 10)]));
+            assert(hexes).setEqualsTo(new Set([map.getHex(5, 10)]));
+    });
+
+    it("Checks cost to engage computation", () => {
+        given:
+            var {arbitrator, map, unit11, unit21, unit22, leader21} = create2Players4UnitsTinyGame();
+        when:
+            var costToEngage = arbitrator.getCostToEngage(unit11, unit21);
+            var whoJoined = arbitrator.foesThatCanJoinAndEngage(unit11);
+        then:
+            assert(costToEngage).equalsTo(1.5);
+            assert(whoJoined).unorderedArrayEqualsTo([unit21, leader21]);
+        when:
+            unit11.move(map.getHex(0, 5));
+            costToEngage = arbitrator.getCostToEngage(unit11, unit21);
+            whoJoined = arbitrator.foesThatCanJoinAndEngage(unit11);
+        then:
+            assert(costToEngage).isNotDefined();
+            assert(whoJoined).arrayEqualsTo([]);
     });
 
 });

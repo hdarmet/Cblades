@@ -44,6 +44,8 @@ export class Assertor {
             if (value<model-NUMBER_MARGIN || value>model+NUMBER_MARGIN) {
                 return false;
             }
+        } else if (model!== null && model.equalsTo) {
+            return model.equalsTo(value)
         } else if (model!==value) {
             return false;
         }
@@ -408,6 +410,7 @@ export function assert(value) {
 
 let _itCount = 0;
 let _itFailed = 0;
+let _thisSuiteItCount = 0;
 let _testSuite;
 let _startTime = new Date().getTime();
 let _suites = [];
@@ -418,6 +421,7 @@ function executeNextSuite(suite) {
         _suites[next]._execute();
     }
     else {
+        if (_thisSuiteItCount) console.log(`${_thisSuiteItCount} tests executed.`)
         console.log(`${_itCount} tests executed. ${_itCount-_itFailed} passed. ${_itFailed} failed. ${new Date().getTime() - _startTime} ms `);
     }
 }
@@ -460,6 +464,7 @@ export class TestSuite {
         while (this._index<this._its.length) {
             try {
                 _itCount++;
+                _thisSuiteItCount++;
                 this._clearTimeouts();
                 this._timeoutsID = 0;
                 setTimeout = (action, delay, ...args)=> {
@@ -498,8 +503,10 @@ export class TestSuite {
     }
 
     _execute() {
+        if (_thisSuiteItCount) console.log(`${_thisSuiteItCount} tests executed.`)
         _testSuite = this;
-        console.log(this._title);
+        console.log(`==== ${this._title} ====`);
+        _thisSuiteItCount = 0;
         this._executeIt(0);
     }
 
@@ -516,7 +523,7 @@ export class TestSuite {
 
     _processSuccess() {
         let time = new Date().getTime() - _startTime;
-        console.log(`- ${this._its[this._index]._caseTitle} -> OK (${time})`);
+        //console.log(`- ${this._its[this._index]._caseTitle} -> OK (${time})`);
     }
 
     _executeTimeouts() {

@@ -1125,6 +1125,23 @@ describe("Game", ()=> {
             assert(unit.hexLocation).isNotDefined();
     });
 
+    it("Checks unit list from game", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            let unit1 = new CBTestUnit(player, ["/CBlades/images/units/misc/unit.png"]);
+            let unit2 = new CBTestUnit(player, ["/CBlades/images/units/misc/unit.png"]);
+            game.start();
+        when:
+            game.addUnit(unit1, map.getHex(4, 5));
+            game.addUnit(unit2, map.getHex(5, 4));
+            let counter = new CBCounter("terran", ["/CBlades/images/units/misc/counter.png"], new Dimension2D(50, 50));
+            game.addCounter(counter, new Point2D(100, 200));
+        then:
+            assert(game.units).arrayEqualsTo([unit1, unit2]);
+    });
+
     it("Checks playable addition and removing on a Hex (not undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
@@ -1633,6 +1650,23 @@ describe("Game", ()=> {
             action.markAsFinished();
         then:
             assert(game.canUnselectUnit(unit1)).isTrue();
+    });
+
+    it("Checks unit destruction", () => {
+        given:
+            var { game, unit1, unit2 } = create2UnitsTinyGame();
+            unit1.select();
+            game.setFocusedUnit(unit1);
+        then:
+            assert(unit1.isOnBoard()).isTrue();
+            assert(game.focusedUnit).equalsTo(unit1);
+            assert(game.selectedUnit).equalsTo(unit1);
+        when:
+            unit1.destroy();
+        then:
+            assert(unit1.isOnBoard()).isFalse();
+            assert(game.focusedUnit).isNotDefined();
+            assert(game.selectedUnit).isNotDefined();
     });
 
     it("Checks basic processing of an action", () => {

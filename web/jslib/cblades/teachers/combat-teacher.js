@@ -46,7 +46,7 @@ export class CBCombatTeacher {
 
         function processZone(zone, unit, moveType) {
             zone.moveType = moveType;
-            return !this.doesHexContainFoes(unit, zone.hex);
+            return !this.doesHexLocationContainFoes(unit, zone.hex);
         }
 
         function processZones(result, zones, moveType, forbiddenZones) {

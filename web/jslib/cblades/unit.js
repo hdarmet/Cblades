@@ -22,6 +22,12 @@ export let CBMovement = {
     MINIMAL : "minimal"
 }
 
+export let CBEngageSideMode = {
+    FRONT: 1,
+    SIDE: 2,
+    BACK: 3
+}
+
 export let CBCharge = {
     NONE: 0,
     BEGIN_CHARGE: 1,
