@@ -266,7 +266,7 @@ describe("Movement teacher", ()=> {
             unit22.hexLocation = map.getHex(8, 8); // Far, far away...
             unit21.hexLocation = map.getHex(5, 6); // foes on forward zone
         when:
-            var allowedMoves = arbitrator.getAllowedMoves(unit12);
+            var allowedMoves = arbitrator.getAllowedSubsequentMoves(unit12);
         then:
             assertMove(allowedMoves, 300, 4, 6, CBMovement.NORMAL);
             assertNoMove(allowedMoves, 0); // occupied by a foe
@@ -277,7 +277,7 @@ describe("Movement teacher", ()=> {
         when:
             unit12.movementPoints = 0.5;
             unit12.angle = 30;
-            allowedMoves = arbitrator.getAllowedMoves(unit12);
+            allowedMoves = arbitrator.getAllowedSubsequentMoves(unit12);
         then:
             assertNoMove(allowedMoves, 0); // occupied by a foe
             assertMove(allowedMoves, 60, 6, 6, CBMovement.EXTENDED);
@@ -287,11 +287,11 @@ describe("Movement teacher", ()=> {
             assertNoMove(allowedMoves, 300);
         when:
             unit12.extendedMovementPoints = 0.5;
-            allowedMoves = arbitrator.getAllowedMoves(unit12);
+            allowedMoves = arbitrator.getAllowedSubsequentMoves(unit12);
         then:
             assertNoMove(allowedMoves, 60);
         when:
-            allowedMoves = arbitrator.getAllowedMoves(unit12, true);
+            allowedMoves = arbitrator.getAllowedFirstMoves(unit12);
         then:
             assertMove(allowedMoves, 60, 6, 6, CBMovement.MINIMAL);
     });
@@ -305,13 +305,13 @@ describe("Movement teacher", ()=> {
             unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.IMPASSABLE;
             unit11.hexLocation.getNearHex(60).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
         when:
-            var allowedMoves = arbitrator.getAllowedMoves(unit11, true);
+            var allowedMoves = arbitrator.getAllowedFirstMoves(unit11);
         then:
             assertMove(allowedMoves, 300, 4, 7, CBMovement.EXTENDED);
             assertNoMove(allowedMoves, 0); // Terran impassable
             assertMove(allowedMoves, 60, 6, 7, CBMovement.MINIMAL);
         when:
-            allowedMoves = arbitrator.getAllowedMoves(unit11, false);
+            allowedMoves = arbitrator.getAllowedSubsequentMoves(unit11);
         then:
             assertMove(allowedMoves, 300, 4, 7, CBMovement.EXTENDED);
             assertNoMove(allowedMoves, 0); // Terran impassable
@@ -357,7 +357,7 @@ describe("Movement teacher", ()=> {
             formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             unit21.move(map.getHex(4, 3)); // foes on forward zone
         when:
-            var allowedMoves = arbitrator.getFormationAllowedMoves(formation1);
+            var allowedMoves = arbitrator.getFormationAllowedSubsequentMoves(formation1);
         then:
             assertNoMove(allowedMoves, 0); // Not in forward zone
             assertNoMove(allowedMoves, 60); // occupied by a foe
@@ -369,16 +369,16 @@ describe("Movement teacher", ()=> {
             assertNoMove(allowedMoves, 300); // Not in forward zone
         when:
             formation1.movementPoints = 0.5;
-            allowedMoves = arbitrator.getFormationAllowedMoves(formation1);
+            allowedMoves = arbitrator.getFormationAllowedSubsequentMoves(formation1);
         then:
             assertMove(allowedMoves, 120, 4, 5, CBMovement.EXTENDED);
         when:
             formation1.extendedMovementPoints = 0.5;
-            allowedMoves = arbitrator.getFormationAllowedMoves(formation1);
+            allowedMoves = arbitrator.getFormationAllowedSubsequentMoves(formation1);
         then:
             assertNoMove(allowedMoves, 120);
         when:
-            allowedMoves = arbitrator.getFormationAllowedMoves(formation1, true);
+            allowedMoves = arbitrator.getFormationAllowedFirstMoves(formation1);
         then:
             assertMove(allowedMoves, 120, 4, 5,  CBMovement.MINIMAL);
     });
@@ -388,7 +388,7 @@ describe("Movement teacher", ()=> {
             var {arbitrator, map, formation1, unit21} = create2Players1Formation2TroopsTinyGame();
             formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
         when:
-            var allowedMoves = arbitrator.getFormationAllowedTurns(formation1);
+            var allowedMoves = arbitrator.getFormationAllowedSubsequentTurns(formation1);
         then:
             assertNoMove(allowedMoves, 0); // Not in forward zone
             assertMove(allowedMoves, 60, 4, 4, CBMovement.NORMAL);
@@ -400,25 +400,25 @@ describe("Movement teacher", ()=> {
             assertNoMove(allowedMoves, 300); // Not in forward zone
         when:
             formation1.movementPoints = 0.5;
-            allowedMoves = arbitrator.getFormationAllowedTurns(formation1);
+            allowedMoves = arbitrator.getFormationAllowedSubsequentTurns(formation1);
         then:
             assertMove(allowedMoves, 60, 4, 4, CBMovement.EXTENDED);
             assertMove(allowedMoves, 120, 4, 4, CBMovement.EXTENDED);
         when:
             formation1.extendedMovementPoints = 0.5;
-            allowedMoves = arbitrator.getFormationAllowedTurns(formation1);
+            allowedMoves = arbitrator.getFormationAllowedSubsequentTurns(formation1);
         then:
             assertNoMove(allowedMoves, 60);
             assertNoMove(allowedMoves, 120);
         when:
-            allowedMoves = arbitrator.getFormationAllowedTurns(formation1, true);
+            allowedMoves = arbitrator.getFormationAllowedFirstTurns(formation1);
         then:
             assertMove(allowedMoves, 60, 4, 4, CBMovement.MINIMAL);
             assertMove(allowedMoves, 120, 4, 4, CBMovement.MINIMAL);
         given:
             unit21.move(map.getHex(4, 4)); // foes on forward zone
         when:
-            allowedMoves = arbitrator.getFormationAllowedTurns(formation1);
+            allowedMoves = arbitrator.getFormationAllowedSubsequentTurns(formation1);
         then:
             assertNoMove(allowedMoves, 60);
             assertNoMove(allowedMoves, 120);
@@ -431,7 +431,7 @@ describe("Movement teacher", ()=> {
             formation1.angle = 270;
             unit21.move(map.getHex(4, 3)); // foes on backward zone
         when:
-            var allowedMoves = arbitrator.getFormationAllowedMovesBack(formation1);
+            var allowedMoves = arbitrator.getFormationAllowedMovesBack(formation1, false, true);
         then:
             assertNoMove(allowedMoves, 0); // Not in forward zone
             assertNoMove(allowedMoves, 60); // occupied by a foe
@@ -443,12 +443,12 @@ describe("Movement teacher", ()=> {
             assertNoMove(allowedMoves, 300); // Not in forward zone
         when:
             formation1.movementPoints = 0.5;
-            allowedMoves = arbitrator.getFormationAllowedMovesBack(formation1);
+            allowedMoves = arbitrator.getFormationAllowedMovesBack(formation1, false, true);
         then:
             assertMove(allowedMoves, 120, 4, 5, CBMovement.EXTENDED);
         when:
             formation1.extendedMovementPoints = 0.5;
-            allowedMoves = arbitrator.getFormationAllowedMovesBack(formation1);
+            allowedMoves = arbitrator.getFormationAllowedMovesBack(formation1, false, true);
         then:
             assertMove(allowedMoves, 120, 4, 5,  CBMovement.MINIMAL);
     });
@@ -459,7 +459,7 @@ describe("Movement teacher", ()=> {
             formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             formation1.angle = 270;
         when:
-            var allowedMoves = arbitrator.getFormationAllowedMovesBackTurns(formation1);
+            var allowedMoves = arbitrator.getFormationAllowedMovesBackTurns(formation1, true);
         then:
             assertNoMove(allowedMoves, 0); // Not in forward zone
             assertMove(allowedMoves, 60, 4, 4, CBMovement.NORMAL);
@@ -471,20 +471,20 @@ describe("Movement teacher", ()=> {
             assertNoMove(allowedMoves, 300); // Not in forward zone
         when:
             formation1.movementPoints = 0.5;
-            allowedMoves = arbitrator.getFormationAllowedMovesBackTurns(formation1);
+            allowedMoves = arbitrator.getFormationAllowedMovesBackTurns(formation1, true);
         then:
             assertMove(allowedMoves, 60, 4, 4, CBMovement.EXTENDED);
             assertMove(allowedMoves, 120, 4, 4, CBMovement.EXTENDED);
         when:
             formation1.extendedMovementPoints = 0.5;
-            allowedMoves = arbitrator.getFormationAllowedMovesBackTurns(formation1);
+            allowedMoves = arbitrator.getFormationAllowedMovesBackTurns(formation1, true);
         then:
             assertMove(allowedMoves, 60, 4, 4, CBMovement.MINIMAL);
             assertMove(allowedMoves, 120, 4, 4, CBMovement.MINIMAL);
         given:
             unit21.move(map.getHex(4, 4)); // foes on backward zone
         when:
-            allowedMoves = arbitrator.getFormationAllowedMovesBackTurns(formation1);
+            allowedMoves = arbitrator.getFormationAllowedMovesBackTurns(formation1, true);
         then:
             assertNoMove(allowedMoves, 60);
             assertNoMove(allowedMoves, 120);
@@ -510,7 +510,7 @@ describe("Movement teacher", ()=> {
         given:
             var {arbitrator, unit12} = create2Players4UnitsTinyGame();
         when:
-            var allowedRotations = arbitrator.getAllowedRotations(unit12);
+            var allowedRotations = arbitrator.getAllowedSubsequentRotations(unit12);
         then:
             assertNoRotation(allowedRotations, 0);
             assertVertexRotation(allowedRotations, 30, 5, 6, 6, 6, CBMovement.NORMAL);
@@ -527,7 +527,7 @@ describe("Movement teacher", ()=> {
         when:
             unit12.movementPoints = 0;
             unit12.angle = 30;
-            allowedRotations = arbitrator.getAllowedRotations(unit12);
+            allowedRotations = arbitrator.getAllowedSubsequentRotations(unit12);
         then:
             assertSideRotation(allowedRotations, 0, 5, 6, CBMovement.EXTENDED);
             assertNoRotation(allowedRotations, 30);
@@ -543,7 +543,7 @@ describe("Movement teacher", ()=> {
             assertVertexRotation(allowedRotations, 330, 4, 6, 5, 6, CBMovement.EXTENDED);
         when:
             unit12.extendedMovementPoints = 0;
-        allowedRotations = arbitrator.getAllowedRotations(unit12);
+        allowedRotations = arbitrator.getAllowedSubsequentRotations(unit12);
         then:
             assertNoRotation(allowedRotations, 0);
             assertNoRotation(allowedRotations, 30);
@@ -558,7 +558,7 @@ describe("Movement teacher", ()=> {
             assertNoRotation(allowedRotations, 300);
             assertNoRotation(allowedRotations, 330);
         when:
-            allowedRotations = arbitrator.getAllowedRotations(unit12, true);
+            allowedRotations = arbitrator.getAllowedFirstRotations(unit12);
         then:
             assertSideRotation(allowedRotations, 0, 5, 6, CBMovement.MINIMAL);
             assertNoRotation(allowedRotations, 30);
@@ -609,7 +609,7 @@ describe("Movement teacher", ()=> {
             formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             unit21.move(map.getHex(4, 3)); // foes on forward zone
         when:
-            var allowedRotations = arbitrator.getAllowedRotations(formation1);
+            var allowedRotations = arbitrator.getAllowedSubsequentRotations(formation1);
         then:
             assertNoMove(allowedRotations, 0); // angle not allowed
             assertNoMove(allowedRotations, 60); // angle not allowed
@@ -621,16 +621,16 @@ describe("Movement teacher", ()=> {
             assertNoMove(allowedRotations, 300); // angle not allowed
         when:
             formation1.movementPoints = 0.5;
-            allowedRotations = arbitrator.getAllowedRotations(formation1);
+            allowedRotations = arbitrator.getAllowedSubsequentRotations(formation1);
         then:
             assertRotate(allowedRotations, 270, map.getHex(2, 5), map.getHex(2, 3), CBMovement.EXTENDED);
         when:
             formation1.extendedMovementPoints = 0.5;
-            allowedRotations = arbitrator.getAllowedRotations(formation1);
+            allowedRotations = arbitrator.getAllowedSubsequentRotations(formation1);
         then:
             assertNoMove(allowedRotations, 270);
         when:
-            allowedRotations = arbitrator.getAllowedRotations(formation1, true);
+            allowedRotations = arbitrator.getAllowedFirstRotations(formation1);
         then:
             assertRotate(allowedRotations, 270, map.getHex(2, 5), map.getHex(2, 3), CBMovement.MINIMAL);
     });
@@ -640,8 +640,9 @@ describe("Movement teacher", ()=> {
             var {arbitrator, map, formation1, unit21, unit22} = create2Players1Formation2TroopsTinyGame();
             formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             unit21.move(map.getHex(3, 6)); // foes on backward zone
+            unit21.angle = 60;
             unit22.move(map.getHex(2, 5)); // foes on backward zone
-            unit22.angle = 270;
+            unit22.angle = 60;
         when:
             var allowedMoves = arbitrator.getConfrontFormationAllowedRotations(formation1);
         then:

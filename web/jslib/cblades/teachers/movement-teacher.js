@@ -19,7 +19,13 @@ export class CBMovementTeacher {
     }
 
     isAllowedToMoveBack(unit) {
-        if (this.getAllowedMovesBack(unit).length===0) return false;
+        if (unit.formationNature) {
+            if (this.getFormationAllowedMovesBack(unit).length===0 &&
+                this.getFormationAllowedMovesBackTurns(unit).length===0) return false;
+        }
+        else {
+            if (this.getAllowedMovesBack(unit).length===0) return false;
+        }
         return true;
     }
 
@@ -33,111 +39,203 @@ export class CBMovementTeacher {
         return this.isUnitEngaged(unit) && !this.doesUnitEngage(unit);
     }
 
-    _processMovementOpportunity(direction, hexLocation, unit, cost, first) {
-        let canGetTired = this.canGetTired(unit);
-        direction.cost = cost;
-        if (cost.type === CBMoveProfile.COST_TYPE.IMPASSABLE) return false;
-        if (this.doesHexLocationContainFoes(unit, hexLocation)) {
+    _checkOpportunityAdjacentFoes(unit, unitHexLocation, unitAngle, checkEngagement) {
+        if (this.doesHexLocationContainFoes(unit, unitHexLocation)) {
             return false;
         }
-        let foes = this.getPotentialEngagingFoes(unit, hexLocation);
-        for (let [side] of foes.entries()) {
-            if (side !== CBEngageSideMode.FRONT) return false;
+        if (checkEngagement) {
+            let foes = this.getPotentialEngagingFoes(unit, unitHexLocation, unitAngle);
+            for (let side of foes.values()) {
+                if (side !== CBEngageSideMode.FRONT) return false;
+            }
         }
+        return true;
+    }
+
+    _checkAndReportOpportunityMoveCost(opportunity, unit, cost, first) {
+        opportunity.cost = cost;
+        if (cost.type === CBMoveProfile.COST_TYPE.IMPASSABLE) return false;
+        let canGetTired = this.canGetTired(unit);
         if (cost.type === CBMoveProfile.COST_TYPE.MINIMAL_MOVE) {
             if (first && canGetTired) {
-                direction.type = CBMovement.MINIMAL;
+                opportunity.type = CBMovement.MINIMAL;
                 return true;
             }
             else return false;
         }
         if (unit.movementPoints>=cost.value) {
-            direction.type = CBMovement.NORMAL;
+            opportunity.type = CBMovement.NORMAL;
             return true;
         }
         else if (canGetTired) {
             if (unit.extendedMovementPoints >= cost.value) {
-                direction.type = CBMovement.EXTENDED;
+                opportunity.type = CBMovement.EXTENDED;
                 return true;
             } else if (first) {
-                direction.type = CBMovement.MINIMAL;
+                opportunity.type = CBMovement.MINIMAL;
                 return true;
             }
             else return false;
         }
     }
 
-    getAllowedMoves(unit, first=false) {
-        let directions = this.getUnitForwardZone(unit);
+    _getAllowedMoves(unit, predicate, first) {
+        let opportunities = this.getUnitForwardZone(unit);
         let result = [];
-        for (let sangle in directions) {
+        for (let sangle in opportunities) {
             let angle = parseInt(sangle);
-            let direction = directions[angle];
+            let opportunity = opportunities[angle];
             let cost = this.getMovementCost(unit, angle);
-            if (this._processMovementOpportunity(direction, direction.hex, unit, cost, first)) {
-                result[angle] = direction;
+            if (predicate(opportunity) &&
+                this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, first)) {
+                result[angle] = opportunity;
             }
         }
         return result;
     }
 
-    getFormationAllowedMoves(unit, first=false) {
-        let directions = this.getUnitForwardZone(unit);
+    getAllowedFirstMoves(unit) {
+        return this._getAllowedMoves(unit,
+            opportunity=>this._checkOpportunityAdjacentFoes(
+                unit, opportunity.hex, unit.angle, true),
+            true
+        );
+    }
+
+    getAllowedSubsequentMoves(unit) {
+        return this._getAllowedMoves(unit,
+            opportunity=>this._checkOpportunityAdjacentFoes(
+                unit, opportunity.hex, unit.angle, true),
+            false
+        );
+    }
+
+    _getFormationAllowedMoves(unit, predicate, first) {
+        let opportunities = this.getUnitForwardZone(unit);
         let result = [];
-        for (let sangle in directions) {
+        for (let sangle in opportunities) {
             let angle = parseInt(sangle);
             if (!(angle % 60)) {
-                let direction = directions[angle];
+                let opportunity = opportunities[angle];
                 let cost = this.getFormationMovementCost(unit, angle);
-                if (this._processMovementOpportunity(direction, unit.hexLocation.moveTo(angle), unit, cost, first)) {
-                    result[angle] = direction;
+                if (predicate(angle) &&
+                    this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, first)) {
+                    result[angle] = opportunity;
                 }
             }
         }
         return result;
     }
 
-    getFormationAllowedTurns(unit, first=false) {
-        let directions = this.getUnitForwardZone(unit);
+    getFormationAllowedFirstMoves(unit) {
+        return this._getFormationAllowedMoves(unit,
+            angle=>this._checkOpportunityAdjacentFoes(
+                unit, unit.hexLocation.moveTo(angle), unit.angle, true),
+            true
+        );
+    }
+
+    getFormationAllowedSubsequentMoves(unit) {
+        return this._getFormationAllowedMoves(unit,
+            angle=>this._checkOpportunityAdjacentFoes(
+                unit, unit.hexLocation.moveTo(angle), unit.angle, true),
+            false
+        );
+    }
+
+    _getFormationAllowedTurns(unit, predicate, first) {
+        let opportunities = this.getUnitForwardZone(unit);
         let result = [];
-        for (let sangle in directions) {
+        for (let sangle in opportunities) {
             let angle = parseInt(sangle);
             if (!(angle % 60)) {
-                let direction = directions[angle];
-                direction.hex = unit.hexLocation.getFaceHex(unit.angle);
+                let opportunity = opportunities[angle];
+                opportunity.hex = unit.hexLocation.getFaceHex(unit.angle);
                 let cost = this.getFormationTurnCost(unit, angle);
-                if (this._processMovementOpportunity(direction, direction.hex, unit, cost, first)) {
-                    result[angle] = direction;
+                if (predicate(angle) &&
+                    this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, first)) {
+                    result[angle] = opportunity;
                 }
+            }
+        }
+        return result;
+    }
+
+    getFormationAllowedFirstTurns(unit) {
+        return this._getFormationAllowedTurns(unit,
+            angle=>this._checkOpportunityAdjacentFoes(
+                unit, unit.hexLocation.turnTo(angle), unit.getTurnOrientation(angle), true),
+            true
+        );
+    }
+
+    getFormationAllowedSubsequentTurns(unit) {
+        return this._getFormationAllowedTurns(unit,
+            angle=>this._checkOpportunityAdjacentFoes(
+                unit, unit.hexLocation.turnTo(angle), unit.getTurnOrientation(angle),
+                true),
+            false
+        );
+    }
+
+    _getAllowedMovesBack(unit, predicate) {
+        let opportunities = this.getUnitBackwardZone(unit);
+        let result = [];
+        for (let sangle in opportunities) {
+            let angle = parseInt(sangle);
+            let opportunity = opportunities[angle];
+            let cost = this.getMovementCost(unit, angle);
+            if (predicate(opportunity) &&
+                this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, true)) {
+                result[angle] = opportunity;
             }
         }
         return result;
     }
 
     getAllowedMovesBack(unit) {
-        let directions = this.getUnitBackwardZone(unit);
+        return this._getAllowedMovesBack(unit,
+            opportunity=>this._checkOpportunityAdjacentFoes(
+                unit, opportunity.hex, unit.angle, true)
+        )
+    }
+
+    _getFormationAllowedMovesBack(unit, predicate) {
+        let opportunities = this.getUnitBackwardZone(unit);
         let result = [];
-        for (let sangle in directions) {
+        for (let sangle in opportunities) {
             let angle = parseInt(sangle);
-            let direction = directions[angle];
-            let cost = this.getMovementCost(unit, angle);
-            if (this._processMovementOpportunity(direction, direction.hex, unit, cost, true)) {
-                result[angle] = direction;
+            if (!(angle % 60)) {
+                let opportunity = opportunities[angle];
+                let cost = this.getFormationMovementCost(unit, angle);
+                if (predicate(angle) &&
+                    this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, true)) {
+                    result[angle] = opportunity;
+                }
             }
         }
         return result;
     }
 
     getFormationAllowedMovesBack(unit) {
-        let directions = this.getUnitBackwardZone(unit);
+        return this._getFormationAllowedMovesBack(unit,
+            angle=>this._checkOpportunityAdjacentFoes(
+                unit, unit.hexLocation.moveTo(angle), unit.angle, true)
+        );
+    }
+
+    _getFormationAllowedMovesBackTurns(unit, predicate) {
+        let opportunities = this.getUnitBackwardZone(unit);
         let result = [];
-        for (let sangle in directions) {
+        for (let sangle in opportunities) {
             let angle = parseInt(sangle);
             if (!(angle % 60)) {
-                let direction = directions[angle];
-                let cost = this.getFormationMovementCost(unit, angle);
-                if (this._processMovementOpportunity(direction, unit.hexLocation.moveTo(angle), unit, cost, true)) {
-                    result[angle] = direction;
+                let opportunity = opportunities[angle];
+                opportunity.hex = unit.hexLocation.getFaceHex(reverseAngle(unit.angle));
+                let cost = this.getFormationTurnCost(unit, angle);
+                if (predicate(angle) &&
+                    this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, true)) {
+                    result[angle] = opportunity;
                 }
             }
         }
@@ -145,96 +243,94 @@ export class CBMovementTeacher {
     }
 
     getFormationAllowedMovesBackTurns(unit) {
-        let directions = this.getUnitBackwardZone(unit);
-        let result = [];
-        for (let sangle in directions) {
-            let angle = parseInt(sangle);
-            if (!(angle % 60)) {
-                let direction = directions[angle];
-                direction.hex = unit.hexLocation.getFaceHex(reverseAngle(unit.angle));
-                let cost = this.getFormationTurnCost(unit, angle);
-                if (this._processMovementOpportunity(direction, direction.hex, unit, cost, true)) {
-                    result[angle] = direction;
-                }
-            }
-        }
-        return result;
+        return this._getFormationAllowedMovesBackTurns(unit,
+            angle=>this._checkOpportunityAdjacentFoes(
+                unit, unit.hexLocation.turnTo(angle), unit.getTurnOrientation(angle), true)
+        );
     }
 
-    _checkAllowedRotations(unit, predicate, first) {
-
-        function processAngle(directions, hexes, unit, angle, cost) {
-            console.assert(cost.type===CBMoveProfile.COST_TYPE.ADD);
-            let canGetTired = this.canGetTired(unit);
-            let nearHexId = angle%60 ?
-                new CBHexSideId(hexes[angle-30].hex, hexes[(angle+30)%360].hex) :
-                hexes[angle].hex;
-            if (unit.movementPoints>=cost.value) {
-                directions[angle] = { hex:nearHexId, type:CBMovement.NORMAL, cost};
-            }
-            else if (canGetTired) {
-                if (unit.extendedMovementPoints >= cost.value) {
-                    directions[angle] = { hex:nearHexId, type:CBMovement.EXTENDED, cost};
-                } else if (first) {
-                    directions[angle] = { hex:nearHexId, type:CBMovement.MINIMAL, cost};
-                }
-            }
-
+    _checkAndReportOpportunityRotationCost(hexes, angle, unit, cost, first) {
+        console.assert(cost.type===CBMoveProfile.COST_TYPE.ADD);
+        let canGetTired = this.canGetTired(unit);
+        let nearHexId = angle%60 ?
+            new CBHexSideId(hexes[angle-30].hex, hexes[(angle+30)%360].hex) :
+            hexes[angle].hex;
+        if (unit.movementPoints>=cost.value) {
+            return { hex:nearHexId, type:CBMovement.NORMAL, cost};
         }
+        else if (canGetTired) {
+            if (unit.extendedMovementPoints >= cost.value) {
+                return { hex:nearHexId, type:CBMovement.EXTENDED, cost};
+            } else if (first) {
+                return { hex:nearHexId, type:CBMovement.MINIMAL, cost};
+            }
+        }
+        return null;
+    }
 
+    _getAllowedRotations(unit, predicate, first) {
         let hexes = this.getUnitAdjacentZone(unit);
-        let directions = [];
+        let opportunities = [];
         if (unit.formationNature) {
             let angle = (unit.angle+180)%360;
             let cost = this.getFormationRotationCost(unit, angle);
             if (predicate(angle)) {
-                processAngle.call(this, directions, hexes, unit, angle, cost);
+                let opportunity = this._checkAndReportOpportunityRotationCost(hexes, angle, unit, cost, first);
+                if (opportunity) {
+                    opportunities[angle] = opportunity;
+                }
             }
         }
         else {
             for (let angle = 0; angle < 360; angle += 30) {
                 let cost = this.getRotationCost(unit, angle);
                 if (predicate(angle)) {
-                    processAngle.call(this, directions, hexes, unit, angle, cost);
+                    let opportunity = this._checkAndReportOpportunityRotationCost(hexes, angle, unit, cost, first);
+                    if (opportunity) {
+                        opportunities[angle] = opportunity;
+                    }
                 }
             }
-            delete directions[unit.angle];
+            delete opportunities[unit.angle];
         }
-        return directions;
+        return opportunities;
     }
 
-    getAllowedRotations(unit, first = false) {
-        return this._checkAllowedRotations(unit, ()=>true, first);
+    getAllowedFirstRotations(unit) {
+        return this._getAllowedRotations(unit,
+            angle=>this._checkOpportunityAdjacentFoes(unit, unit.hexLocation, angle),
+            true);
+    }
+
+    getAllowedSubsequentRotations(unit) {
+        return this._getAllowedRotations(unit,
+            angle=>this._checkOpportunityAdjacentFoes(unit, unit.hexLocation, angle),
+            false);
     }
 
     getConfrontAllowedRotations(unit) {
-        return this._checkAllowedRotations(unit, angle=>this.wouldUnitEngage(unit, unit.hexLocation, angle), true);
+        return this._getAllowedRotations(unit,
+                angle=>this.wouldUnitEngage(unit, unit.hexLocation, angle),
+            true);
     }
 
-    getConfrontFormationAllowedRotations(unit) {
+    _checkThatFormationWouldConfront(formation, angle, foes) {
+        let newHexLocation = formation.hexLocation.turnTo(angle);
+        let delta = diffAngle(formation.angle, angle)*2;
+        let newAngle = sumAngle(formation.angle, delta);
+        return this.wouldUnitEngage(formation, newHexLocation, newAngle, foe=>foes.has(foe));
+    }
 
-        function filter(orientation, angle, foes) {
-            let newHexLocation = unit.hexLocation.turnTo(angle);
-            let delta = diffAngle(unit.angle, angle)*2;
-            let newAngle = sumAngle(unit.angle, delta);
-            return this.wouldUnitEngage(unit, newHexLocation, newAngle, foe=>foes.has(foe));
-        }
-
-        let foes = this.getEngagingFoes(unit);
-        let forwardRotations = this.getFormationAllowedTurns(unit);
-        let backwardRotations = this.getFormationAllowedMovesBackTurns(unit);
-        let result = [];
-        for (let sangle in forwardRotations) {
-            let angle = parseInt(sangle);
-            if (filter.call(this, forwardRotations[angle], angle, foes)) {
-                result[angle] = forwardRotations[angle];
-            }
-        }
+    getConfrontFormationAllowedRotations(formation) {
+        let foes = this.getEngagingFoes(formation);
+        let result = this._getFormationAllowedTurns(formation,
+            angle=>this._checkThatFormationWouldConfront(formation, angle, foes),
+            false);
+        let backwardRotations = this._getFormationAllowedMovesBackTurns(formation,
+            angle=>this._checkThatFormationWouldConfront(formation, angle, foes)
+        );
         for (let sangle in backwardRotations) {
-            let angle = parseInt(sangle);
-            if (filter.call(this, backwardRotations[angle], angle, foes)) {
-                result[angle] = backwardRotations[angle];
-            }
+            result[sangle] = backwardRotations[sangle];
         }
         return result;
     }

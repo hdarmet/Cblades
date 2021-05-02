@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    Point2D, Dimension2D
+    Point2D, Dimension2D, diffAngle, sumAngle
 } from "../geometry.js";
 import {
     DImage
@@ -1255,6 +1255,17 @@ export class CBFormation extends CBUnit {
 
     get minStepCount() {
         return this.type.getFormationMinStepCount();
+    }
+
+    getTurnOrientation(angle) {
+        let delta = diffAngle(this.angle, angle)*2;
+        return sumAngle(this.angle, delta);
+    }
+
+
+    turn(angle, cost=null, moveType = CBMoveType.BACKWARD) {
+        this.move(this.hexLocation.turnTo(angle, cost, moveType));
+        this.reorient(this.getTurnOrientation(angle));
     }
 
     takeALoss() {

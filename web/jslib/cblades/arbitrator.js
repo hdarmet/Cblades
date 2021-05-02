@@ -39,9 +39,9 @@ export class CBArbitrator extends CBAbstractArbitrator{
 
         if (this._processRoutedUnitAllowedActions(unit, allowedActions)) return allowedActions;
         if (this._processChargingUnitAllowedActions(unit, allowedActions)) return allowedActions;
+        if (this._processEngagedUnitThatDoesNotEngage(unit, allowedActions)) return allowedActions;
         if (this._processRegroupingWingBelongingUnitNearEnemies(unit, allowedActions)) return allowedActions;
         if (this._processRetreatingWingBelongingUnitNearEnemies(unit, allowedActions)) return allowedActions;
-        if (this._processEngagedUnitThatDoesNotEngage(unit, allowedActions)) return allowedActions;
         if (this._processUnitRecovering(unit, allowedActions)) return allowedActions;
         if (this._processRegroupingWingBelongingUnitFarFromEnemies(unit, allowedActions)) return allowedActions;
         if (this._processDefendingWingBelongingUnit(unit, allowedActions)) return allowedActions;
@@ -91,6 +91,14 @@ export class CBArbitrator extends CBAbstractArbitrator{
         }
     }
 
+    _processEngagedUnitThatDoesNotEngage(unit, allowedActions) {
+        if (this.isAllowedToConfront(unit)) {
+            allowedActions.confront = true;
+            return true;
+        }
+        return false;
+    }
+
     _processRegroupingWingBelongingUnitNearEnemies(unit, allowedActions) {
         if (!unit.troopNature || unit.hasReceivedOrder()) return false;
         if (unit.wing.orderInstruction === CBOrderInstruction.REGROUP) {
@@ -100,20 +108,12 @@ export class CBArbitrator extends CBAbstractArbitrator{
                 if (allowedActions.moveBack || allowedActions.escape) {
                     return true;
                 }
-                else {
-                    if (this.isAllowedToConfront(unit)) {
-                        allowedActions.confront = true;
-                        return true;
-                    }
-                    else {
-                        if (this.isAllowedToShockAttack(unit)) {
-                            allowedActions.shockAttack = true;
-                            return true;
-                        }
-                    }
+                else if (this.isAllowedToShockAttack(unit)) {
+                    allowedActions.shockAttack = true;
+                    return true;
                 }
             }
-            else if (this.foesThatCanJoinAndEngage(unit)) {
+            else if (this.foesThatCanJoinAndEngage(unit).length>0) {
                 if (this.isAllowedToMove(unit)) {
                     allowedActions.moveForward = true;
                     allowedActions.moveMode =CBMoveMode.REGROUP;
@@ -135,17 +135,9 @@ export class CBArbitrator extends CBAbstractArbitrator{
                 if (allowedActions.moveBack || allowedActions.escape) {
                     return true;
                 }
-                else {
-                    if (this.isAllowedToConfront(unit)) {
-                        allowedActions.confront = true;
-                        return true;
-                    }
-                    else {
-                        if (this.isAllowedToShockAttack(unit)) {
-                            allowedActions.shockAttack = true;
-                            return true;
-                        }
-                    }
+                else if (this.isAllowedToShockAttack(unit)) {
+                    allowedActions.shockAttack = true;
+                    return true;
                 }
             }
             else {
@@ -157,14 +149,6 @@ export class CBArbitrator extends CBAbstractArbitrator{
                 if (this.isAllowedToRout(unit)) allowedActions.escape = true;
                 return allowedActions.moveForward || allowedActions.moveBack || allowedActions.escape;
             }
-        }
-        return false;
-    }
-
-    _processEngagedUnitThatDoesNotEngage(unit, allowedActions) {
-        if (this.isAllowedToConfront(unit)) {
-            allowedActions.confront = true;
-            return true;
         }
         return false;
     }

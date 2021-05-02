@@ -73,16 +73,24 @@ export class InteractiveAbstractMovementAction extends CBAction {
     }
 
     getAllowedMoves(start) {
-        return this.game.arbitrator.getAllowedMoves(this.unit, start);
+        return start ?
+            this.game.arbitrator.getAllowedFirstMoves(this.unit) :
+            this.game.arbitrator.getAllowedSubsequentMoves(this.unit);
     }
 
     getAllowedRotations(start) {
-        return this.game.arbitrator.getAllowedRotations(this.unit, start);
+        return start ?
+            this.game.arbitrator.getAllowedFirstRotations(this.unit):
+            this.game.arbitrator.getAllowedSubsequentRotations(this.unit);
     }
 
     getFormationAllowedMoves(start) {
-        let moveDirections = this.game.arbitrator.getFormationAllowedMoves(this.unit, start);
-        let turnDirections = this.game.arbitrator.getFormationAllowedTurns(this.unit, start);
+        let moveDirections = start ?
+            this.game.arbitrator.getFormationAllowedFirstMoves(this.unit) :
+            this.game.arbitrator.getFormationAllowedSubsequentMoves(this.unit);
+        let turnDirections = start ?
+            this.game.arbitrator.getFormationAllowedFirstTurns(this.unit) :
+            this.game.arbitrator.getFormationAllowedSubsequentTurns(this.unit);
         return {moveDirections, turnDirections};
     }
 
@@ -177,6 +185,14 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this._markUnitActivationAfterMovement(played);
     }
 
+    _turnUnit(angle, start, cost) {
+        this.game.closeActuators();
+        cost = this._updateTirednessForMovement(cost, start);
+        this.unit.turn(angle, cost, CBMoveType.FORWARD);
+        let played = !this._continueAfterMove();
+        this._markUnitActivationAfterMovement(played);
+    }
+
     moveUnit(hexId, angle, start) {
         this._displaceUnit(hexId, start, this.game.arbitrator.getMovementCost(this.unit, angle));
     }
@@ -185,12 +201,8 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this._displaceUnit(hexSideId, start, this.game.arbitrator.getFormationMovementCost(this.unit, angle));
     }
 
-    turnFormation(hexSideId, angle, start) {
-        this._displaceUnit(hexSideId, start, this.game.arbitrator.getFormationTurnCost(this.unit, angle));
-    }
-
-    reorientUnit(angle) {
-        this.unit.reorient(angle);
+    turnFormation(angle, start) {
+        this._turnUnit(angle, start, this.game.arbitrator.getFormationTurnCost(this.unit, angle));
     }
 
     _updateTirednessForMovement(cost) {
@@ -552,17 +564,17 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
         return result;
     }
 
-    getAllowedMoves(start) {
-        return this.game.arbitrator.getAllowedMovesBack(this.unit);
-    }
-
     getAllowedRotations(start) {
         return [];
     }
 
+    getAllowedMoves(start) {
+        return this.game.arbitrator.getAllowedMovesBack(this.unit);
+    }
+
     getFormationAllowedMoves(start) {
-        let moveDirections = this.game.arbitrator.getFormationAllowedMovesBack(this.unit, start);
-        let turnDirections = this.game.arbitrator.getFormationAllowedMovesBackTurns(this.unit, start);
+        let moveDirections = this.game.arbitrator.getFormationAllowedMovesBack(this.unit);
+        let turnDirections = this.game.arbitrator.getFormationAllowedMovesBackTurns(this.unit);
         return {moveDirections, turnDirections};
     }
 
@@ -1069,9 +1081,7 @@ export class CBFormationMoveActuator extends CBActionActuator {
 
     onMouseClick(trigger, event) {
         if (trigger.rotate) {
-            let delta = diffAngle(this.unit.angle, trigger.angle)*2;
-            this.action.reorientUnit(sumAngle(this.unit.angle, delta));
-            this.action.turnFormation(this.unit.hexLocation.turnTo(trigger.angle), trigger.angle);
+            this.action.turnFormation(trigger.angle);
         }
         else {
             let hex1 = this.unit.hexLocation.fromHex.getNearHex(trigger.angle);

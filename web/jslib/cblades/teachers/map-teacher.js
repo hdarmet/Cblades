@@ -103,23 +103,20 @@ export class CBMapTeacher {
         return this.getPotentialForwardZone(unit.hexLocation, unit.angle);
     }
 
-    isHexLocationInForwardZone(unit, hexLocation) {
-        function _checkHex(hexId) {
-            let unitAngle = unit.angle;
-            let hexAngle = unit.hexLocation.isNearHex(hexId);
-            if (hexAngle === false) return false;
-            let diff = diffAngle(hexAngle, unitAngle);
-            return diff >= -60 && diff <= 60;
-        }
-        if (hexLocation instanceof CBHexId) {
-            return _checkHex(hexLocation);
-        }
-        else {
-            console.assert(hexLocation instanceof CBHexSideId);
-            if (_checkHex(hexLocation.fromHex)) return true;
-            if (_checkHex(hexLocation.toHex)) return true;
-            return false;
-        }
+    isHexInForwardZone(unit, unitHexId, targetHexId) {
+        let attackerAngle = unit.angle;
+        let hexAngle = unitHexId.isNearHex(targetHexId);
+        if (hexAngle === false) return false;
+        let diff = diffAngle(hexAngle, attackerAngle);
+        return diff >= -60 && diff <= 60 ? hexAngle : false;
+    }
+
+    isHexInBackwardZone(unit, unitHexId, targetHexId) {
+        let attackerAngle = unit.angle;
+        let hexAngle = unitHexId.isNearHex(targetHexId);
+        if (hexAngle === false) return false;
+        let diff = diffAngle(hexAngle, attackerAngle);
+        return diff<=-120 || diff>=120 ? hexAngle : false;
     }
 
     getBackwardZone(hexId, angle) {
@@ -144,25 +141,6 @@ export class CBMapTeacher {
         }
         else {
             return this.formatMapZone(this.getBackwardZone(unit.hexLocation, unit.angle));
-        }
-    }
-
-    isHexLocationInBackwardZone(unit, hexLocation) {
-        function _checkHex(hexId) {
-            let unitAngle = unit.angle;
-            let hexAngle = unit.hexLocation.isNearHex(hexId);
-            if (hexAngle === false) return false;
-            let diff = diffAngle(hexAngle, unitAngle);
-            return diff<=-120 || diff>=120;
-        }
-        if (hexLocation instanceof CBHexId) {
-            return _checkHex(hexLocation);
-        }
-        else {
-            console.assert(hexLocation instanceof CBHexSideId);
-            if (_checkHex(hexLocation.fromHex)) return true;
-            if (_checkHex(hexLocation.toHex)) return true;
-            return false;
         }
     }
 

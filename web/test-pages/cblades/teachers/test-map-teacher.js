@@ -203,33 +203,33 @@ describe("Map teacher", ()=> {
             var zones = arbitrator.getUnitForwardZone(unit12);
         then:
             assertInZone(zones, 300, 4, 6);
-            assert(arbitrator.isHexLocationInForwardZone(unit12, unit12.hexLocation.getNearHex(300))).isTrue();
+            assert(arbitrator.isHexInForwardZone(unit12, unit12.hexLocation, unit12.hexLocation.getNearHex(300))).equalsTo(300);
             assertInZone(zones, 0, 5, 6);
-            assert(arbitrator.isHexLocationInForwardZone(unit12, unit12.hexLocation.getNearHex(0))).isTrue();
+            assert(arbitrator.isHexInForwardZone(unit12, unit12.hexLocation, unit12.hexLocation.getNearHex(0))).equalsTo(0);
             assertInZone(zones, 60, 6, 6);
-            assert(arbitrator.isHexLocationInForwardZone(unit12, unit12.hexLocation.getNearHex(60))).isTrue();
+            assert(arbitrator.isHexInForwardZone(unit12, unit12.hexLocation, unit12.hexLocation.getNearHex(60))).equalsTo(60);
             assertNotInZone(zones, 120);
-            assert(arbitrator.isHexLocationInForwardZone(unit12, unit12.hexLocation.getNearHex(120))).isFalse();
+            assert(arbitrator.isHexInForwardZone(unit12, unit12.hexLocation, unit12.hexLocation.getNearHex(120))).isFalse();
             assertNotInZone(zones, 180);
-            assert(arbitrator.isHexLocationInForwardZone(unit12, unit12.hexLocation.getNearHex(180))).isFalse();
+            assert(arbitrator.isHexInForwardZone(unit12, unit12.hexLocation, unit12.hexLocation.getNearHex(180))).isFalse();
             assertNotInZone(zones, 240);
-            assert(arbitrator.isHexLocationInForwardZone(unit12, unit12.hexLocation.getNearHex(240))).isFalse();
+            assert(arbitrator.isHexInForwardZone(unit12, unit12.hexLocation, unit12.hexLocation.getNearHex(240))).isFalse();
         when:
             unit12.angle = 30;
             zones = arbitrator.getUnitForwardZone(unit12);
         then:
             assertInZone(zones, 0, 5, 6);
-            assert(arbitrator.isHexLocationInForwardZone(unit12, unit12.hexLocation.getNearHex(0))).isTrue();
+            assert(arbitrator.isHexInForwardZone(unit12, unit12.hexLocation, unit12.hexLocation.getNearHex(0))).equalsTo(0);
             assertInZone(zones, 60, 6, 6);
-            assert(arbitrator.isHexLocationInForwardZone(unit12, unit12.hexLocation.getNearHex(60))).isTrue();
+            assert(arbitrator.isHexInForwardZone(unit12, unit12.hexLocation, unit12.hexLocation.getNearHex(60))).equalsTo(60);
             assertNotInZone(zones, 120);
-            assert(arbitrator.isHexLocationInForwardZone(unit12, unit12.hexLocation.getNearHex(120))).isFalse();
+            assert(arbitrator.isHexInForwardZone(unit12, unit12.hexLocation, unit12.hexLocation.getNearHex(120))).isFalse();
             assertNotInZone(zones, 180);
-            assert(arbitrator.isHexLocationInForwardZone(unit12, unit12.hexLocation.getNearHex(180))).isFalse();
+            assert(arbitrator.isHexInForwardZone(unit12, unit12.hexLocation, unit12.hexLocation.getNearHex(180))).isFalse();
             assertNotInZone(zones, 240);
-            assert(arbitrator.isHexLocationInForwardZone(unit12, unit12.hexLocation.getNearHex(240))).isFalse();
+            assert(arbitrator.isHexInForwardZone(unit12, unit12.hexLocation, unit12.hexLocation.getNearHex(240))).isFalse();
             assertNotInZone(zones, 300);
-            assert(arbitrator.isHexLocationInForwardZone(unit12, unit12.hexLocation.getNearHex(300))).isFalse();
+            assert(arbitrator.isHexInForwardZone(unit12, unit12.hexLocation, unit12.hexLocation.getNearHex(300))).isFalse();
     });
 
     it("Checks unit forward area", () => {
@@ -268,33 +268,33 @@ describe("Map teacher", ()=> {
             var zones = arbitrator.getUnitBackwardZone(unit11);
         then:
             assertInZone(zones, 120, 6, 8);
-            assert(arbitrator.isHexLocationInBackwardZone(unit11, unit11.hexLocation.getNearHex(120))).isTrue();
+            assert(arbitrator.isHexInBackwardZone(unit11, unit11.hexLocation, unit11.hexLocation.getNearHex(120))).equalsTo(120);
             assertInZone(zones, 180, 5, 9);
-            assert(arbitrator.isHexLocationInBackwardZone(unit11, unit11.hexLocation.getNearHex(180))).isTrue();
+            assert(arbitrator.isHexInBackwardZone(unit11, unit11.hexLocation, unit11.hexLocation.getNearHex(180))).equalsTo(180);
             assertInZone(zones, 240, 4, 8);
-            assert(arbitrator.isHexLocationInBackwardZone(unit11, unit11.hexLocation.getNearHex(240))).isTrue();
+            assert(arbitrator.isHexInBackwardZone(unit11, unit11.hexLocation, unit11.hexLocation.getNearHex(240))).equalsTo(240);
             assertNotInZone(zones, 300);
-            assert(arbitrator.isHexLocationInBackwardZone(unit11, unit11.hexLocation.getNearHex(300))).isFalse();
+            assert(arbitrator.isHexInBackwardZone(unit11, unit11.hexLocation, unit11.hexLocation.getNearHex(300))).isFalse();
             assertNotInZone(zones, 0);
-            assert(arbitrator.isHexLocationInBackwardZone(unit11, unit11.hexLocation.getNearHex(0))).isFalse();
+            assert(arbitrator.isHexInBackwardZone(unit11, unit11.hexLocation, unit11.hexLocation.getNearHex(0))).isFalse();
             assertNotInZone(zones, 60);
-            assert(arbitrator.isHexLocationInBackwardZone(unit11, unit11.hexLocation.getNearHex(60))).isFalse();
+            assert(arbitrator.isHexInBackwardZone(unit11, unit11.hexLocation, unit11.hexLocation.getNearHex(60))).isFalse();
         when:
             unit11.angle = 30;
             zones = arbitrator.getUnitBackwardZone(unit11);
         then:
             assertInZone(zones, 180, 5, 9);
-            assert(arbitrator.isHexLocationInBackwardZone(unit11, unit11.hexLocation.getNearHex(180))).isTrue();
+            assert(arbitrator.isHexInBackwardZone(unit11, unit11.hexLocation, unit11.hexLocation.getNearHex(180))).equalsTo(180);
             assertInZone(zones, 240, 4, 8);
-            assert(arbitrator.isHexLocationInBackwardZone(unit11, unit11.hexLocation.getNearHex(240))).isTrue();
+            assert(arbitrator.isHexInBackwardZone(unit11, unit11.hexLocation, unit11.hexLocation.getNearHex(240))).equalsTo(240);
             assertNotInZone(zones, 0);
-            assert(arbitrator.isHexLocationInBackwardZone(unit11, unit11.hexLocation.getNearHex(0))).isFalse();
+            assert(arbitrator.isHexInBackwardZone(unit11, unit11.hexLocation, unit11.hexLocation.getNearHex(0))).isFalse();
             assertNotInZone(zones, 60);
-            assert(arbitrator.isHexLocationInBackwardZone(unit11, unit11.hexLocation.getNearHex(60))).isFalse();
+            assert(arbitrator.isHexInBackwardZone(unit11, unit11.hexLocation, unit11.hexLocation.getNearHex(60))).isFalse();
             assertNotInZone(zones, 120);
-            assert(arbitrator.isHexLocationInBackwardZone(unit11, unit11.hexLocation.getNearHex(120))).isFalse();
+            assert(arbitrator.isHexInBackwardZone(unit11, unit11.hexLocation, unit11.hexLocation.getNearHex(120))).isFalse();
             assertNotInZone(zones, 300);
-            assert(arbitrator.isHexLocationInBackwardZone(unit11, unit11.hexLocation.getNearHex(300))).isFalse();
+            assert(arbitrator.isHexInBackwardZone(unit11, unit11.hexLocation, unit11.hexLocation.getNearHex(300))).isFalse();
     });
 
     function create2Players1Formation2TroopsTinyGame() {
@@ -383,25 +383,6 @@ describe("Map teacher", ()=> {
             assertInZone(zones, 240, 2, 5);
             assertInZone(zones, 270, 2, 4);
             assertInZone(zones, 300, 2, 3);
-    });
-
-    it("Checks that a hexside is in the forward/backward zone of a unit if at least one of its hexes is in that zone", () => {
-        given:
-            var {arbitrator, unit11} = create2Players4UnitsTinyGame();
-        when:
-            var hex1 = unit11.hexLocation.getNearHex(unit11.angle);
-            var hex2 = hex1.getNearHex(unit11.angle);
-            var hex3 = hex2.getNearHex(unit11.angle);
-        then:
-            assert(arbitrator.isHexLocationInForwardZone(unit11, new CBHexSideId(hex1, hex2))).isTrue();
-            assert(arbitrator.isHexLocationInForwardZone(unit11, new CBHexSideId(hex2, hex1))).isTrue();
-            assert(arbitrator.isHexLocationInForwardZone(unit11, new CBHexSideId(hex2, hex3))).isFalse();
-        when:
-            unit11.angle = reverseAngle(unit11.angle);
-        then:
-            assert(arbitrator.isHexLocationInBackwardZone(unit11, new CBHexSideId(hex1, hex2))).isTrue();
-            assert(arbitrator.isHexLocationInBackwardZone(unit11, new CBHexSideId(hex2, hex1))).isTrue();
-            assert(arbitrator.isHexLocationInBackwardZone(unit11, new CBHexSideId(hex2, hex3))).isFalse();
     });
 
     it("Checks get weather", () => {
