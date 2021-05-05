@@ -21,9 +21,6 @@ import {
     CBWing
 } from "../../../jslib/cblades/unit.js";
 import {
-    reverseAngle
-} from "../../../jslib/geometry.js";
-import {
     CBMapTeacher
 } from "../../../jslib/cblades/teachers/map-teacher.js";
 import {
@@ -230,6 +227,10 @@ describe("Map teacher", ()=> {
             assert(arbitrator.isHexInForwardZone(unit12, unit12.hexLocation, unit12.hexLocation.getNearHex(240))).isFalse();
             assertNotInZone(zones, 300);
             assert(arbitrator.isHexInForwardZone(unit12, unit12.hexLocation, unit12.hexLocation.getNearHex(300))).isFalse();
+        when:
+            var farHexLocation = unit12.hexLocation.getNearHex(60).getNearHex(60);
+        then:
+            assert(arbitrator.isHexInForwardZone(unit12, unit12.hexLocation, farHexLocation)).isFalse();
     });
 
     it("Checks unit forward area", () => {
@@ -295,6 +296,10 @@ describe("Map teacher", ()=> {
             assert(arbitrator.isHexInBackwardZone(unit11, unit11.hexLocation, unit11.hexLocation.getNearHex(120))).isFalse();
             assertNotInZone(zones, 300);
             assert(arbitrator.isHexInBackwardZone(unit11, unit11.hexLocation, unit11.hexLocation.getNearHex(300))).isFalse();
+        when:
+            var farHexLocation = unit11.hexLocation.getNearHex(240).getNearHex(240);
+        then:
+            assert(arbitrator.isHexInBackwardZone(unit11, unit11.hexLocation, farHexLocation)).isFalse();
     });
 
     function create2Players1Formation2TroopsTinyGame() {

@@ -39,6 +39,9 @@ import {
     create2PlayersTinyGame,
     createTinyFormationGame, create2PlayersTinyFormationGame
 } from "./game-examples.js";
+import {
+    CBTiredness
+} from "../../jslib/cblades/unit.js";
 
 describe("Interactive Movement", ()=> {
 
@@ -395,7 +398,6 @@ describe("Interactive Movement", ()=> {
             clickOnCounter(game, unit);
             clickOnMoveAction(game);
             loadAllImages();
-            var moveActuator1 = getMoveActuator(game);
             var orientationActuator1 = getOrientationActuator(game);
         then:
             assert(unit.location.toString()).equalsTo("point(-170.5, -98.4375)");
@@ -435,6 +437,24 @@ describe("Interactive Movement", ()=> {
             assert(unit.angle).equalsTo(90);
             assert(getMoveActuator(game)).equalsTo(moveActuator4);
             assert(getOrientationActuator(game)).equalsTo(orientationActuator4);
+    });
+
+    it("Checks that a unit is automatically played when its movement points are exhausted", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            unit.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
+        when:
+            var orientationActuator = getOrientationActuator(game);
+            clickOnTrigger(game, orientationActuator.getTrigger(60));
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(60));
+            orientationActuator = getOrientationActuator(game);
+            clickOnTrigger(game, orientationActuator.getTrigger(90));
+        then:
+            assert(unit.angle).equalsTo(90);
+            assert(unit.hasBeenPlayed()).isTrue();
     });
 
     function getFormationMoveActuator(game) {
@@ -703,6 +723,38 @@ describe("Interactive Movement", ()=> {
             assert(moveActuator.getTrigger(0).image.path).equalsTo("/CBlades/images/actuators/minimal-move.png");
     });
 
+    it("Checks that move may inflict tiredness", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
+        when:
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(60));
+            moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(60));
+            moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(60));
+        then:
+            assert(unit.isTired()).isTrue();
+    });
+
+    it("Checks that rotation may inflict tiredness", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            clickOnCounter(game, unit);
+            clickOnMoveAction(game);
+        when:
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(60));
+            moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(60));
+            let orientationActuator = getOrientationActuator(game);
+            clickOnTrigger(game, orientationActuator.getTrigger(90));
+        then:
+            assert(unit.isTired()).isTrue();
+    });
+
     it("Checks Unit tiredness progression (fresh -> tired -> exhausted)", () => {
         given:
             var {game, unit} = createTinyGame();
@@ -718,7 +770,7 @@ describe("Interactive Movement", ()=> {
             clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
             loadAllImages();
         then:
-            assert(unit.tiredness).equalsTo(1);
+            assert(unit.tiredness).equalsTo(CBTiredness.TIRED);
             skipDirectives(unitsLayer, 4);
             assertDirectives(unitsLayer, showSelectedTroop("misc/unit", zoomAndRotate0(416.6667, 255.6635)));
             skipDirectives(markersLayer, 4);
@@ -733,7 +785,7 @@ describe("Interactive Movement", ()=> {
             clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
             loadAllImages();
         then:
-            assert(unit.tiredness).equalsTo(2);
+            assert(unit.tiredness).equalsTo(CBTiredness.EXHAUSTED);
             assert(unit.hasBeenPlayed()).isTrue();   // Unit is played automatically because no further movement/reorientation is possble
             skipDirectives(markersLayer, 4);
             assertDirectives(markersLayer, showMarker("exhausted", zoomAndRotate0(381.9648, 159.4391)));
@@ -1164,14 +1216,14 @@ describe("Interactive Movement", ()=> {
             assertNoMoreDirectives(actuatorsLayer, 4);
     });
 
-    it("Checks route rules showing", () => {
+    it("Checks rout rules showing", () => {
         given:
             var { game, unit1 } = create2PlayersTinyGame();
             var [widgetsLayer] = getLayers(game.board, "widgets");
             clickOnCounter(game, unit1);
             clickOnRoutAction(game);
             loadAllImages();
-        let helpActuator = getMovementHelpActuator(game);
+            let helpActuator = getMovementHelpActuator(game);
         when:
             resetDirectives(widgetsLayer);
             clickOnTrigger(game, helpActuator.getTrigger());

@@ -210,6 +210,32 @@ export class Assertor {
         }
     }
 
+    _setContentEquals(model, value) {
+        if (!value || !(value instanceof Set)) {
+            throw new AssertionError(`${value} is not a set.`);
+        }
+        if (value.size !== model.length) {
+            throw new AssertionError(`${value} does not contain the same number of elements (${model.length}).`);
+        }
+        for (let elem of model) {
+            if (!value.has(elem)) throw new AssertionError(`${value} does not contain (${elem}).`);
+        }
+    }
+
+    _mapContentEquals(model, value) {
+        if (!value || !(value instanceof Map)) {
+            throw new AssertionError(`${value} is not a set.`);
+        }
+        if (value.size !== model.length) {
+            throw new AssertionError(`${value} does not contain the same number of elements (${model.length}).`);
+        }
+        for (let entry of model) {
+            let mapValue = value.get(entry[0]);
+            if (mapValue === undefined) throw new AssertionError(`${value} does not contain the key (${entry[0]}).`);
+            this._equals(entry[1], mapValue);
+        }
+    }
+
     _setEquals(model, value) {
         if (!model || !(model instanceof Set)) {
             throw new AssertionError(`${model} is not a set.`);
@@ -354,6 +380,14 @@ export class Assertor {
     arrayEqualsTo(model) {
         this._arrayEquals(model, this._value);
         return this;
+    }
+
+    setContentEqualsTo(model) {
+        this._setContentEquals(model, this._value);
+    }
+
+    mapContentEqualsTo(model) {
+        this._mapContentEquals(model, this._value);
     }
 
     setContains(model) {

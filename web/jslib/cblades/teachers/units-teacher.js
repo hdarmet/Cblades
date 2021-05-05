@@ -79,8 +79,8 @@ export class CBUnitManagementTeacher {
         return false;
     }
 
-    isCharacterAloneInHex(character) {
-        return character.characterNature && character.hexLocation.units.length === 1;
+    isAloneInHex(unit) {
+        return unit.hexLocation.units.length === 1;
     }
 
     doesUnitEngage(attacker) {

@@ -119,9 +119,9 @@ describe("Magic teacher", ()=> {
             var {arbitrator, leader11, unit11} = create2Players4UnitsTinyGame();
         then:
             assert(arbitrator.isAllowedToChoseSpell(unit11)).isFalse();
-        assert(arbitrator.isAllowedToChoseSpell(leader11)).isTrue();
-        assert(arbitrator.isAllowedToCastSpell(unit11)).isFalse();
-        assert(arbitrator.isAllowedToCastSpell(leader11)).isFalse();
+            assert(arbitrator.isAllowedToChoseSpell(leader11)).isTrue();
+            assert(arbitrator.isAllowedToCastSpell(unit11)).isFalse();
+            assert(arbitrator.isAllowedToCastSpell(leader11)).isFalse();
         when:
             leader11.choseSpell(new TestSpellDefinition());
         then:

@@ -7,7 +7,7 @@ import {
     diffAngle, moyAngle
 } from "../../geometry.js";
 import {
-    CBHexId, CBHexSideId
+    CBHexSideId
 } from "../map.js";
 
 export class CBMapTeacher {

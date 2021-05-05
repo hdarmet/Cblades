@@ -39,19 +39,19 @@ export function executeAllAnimations() {
 
 export function clickOnArtifact(boardOrGame, artifact) {
     let arifactLocation = artifact.viewportLocation;
-    var mouseEvent = createEvent("click", {offsetX:arifactLocation.x, offsetY:arifactLocation.y});
+    var mouseEvent = createEvent("click", {offsetX:arifactLocation.x, offsetY:arifactLocation.y, artifact});
     mockPlatform.dispatchEvent(boardOrGame.root, "click", mouseEvent);
 }
 
 export function mouseMoveOnArtifact(gameOrBoard, artifact) {
     let artifactLocation = artifact.viewportLocation;
-    var mouseEvent = createEvent("mousemove", {offsetX:artifactLocation.x, offsetY:artifactLocation.y});
+    var mouseEvent = createEvent("mousemove", {offsetX:artifactLocation.x, offsetY:artifactLocation.y, artifact});
     mockPlatform.dispatchEvent(gameOrBoard.root, "mousemove", mouseEvent);
 }
 
-export function mouseMoveOutOfArtifact(gameOrBoard, trigger) {
-    let artifactLocation = trigger.viewportBoundingArea;
-    var mouseEvent = createEvent("mousemove", {offsetX:artifactLocation.left-5, offsetY:artifactLocation.top});
+export function mouseMoveOutOfArtifact(gameOrBoard, artifact) {
+    let artifactLocation = artifact.viewportBoundingArea;
+    var mouseEvent = createEvent("mousemove", {offsetX:artifactLocation.left-5, offsetY:artifactLocation.top, artifact:null});
     mockPlatform.dispatchEvent(gameOrBoard.root, "mousemove", mouseEvent);
 }
 

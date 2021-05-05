@@ -1314,7 +1314,7 @@ export class DBoard {
             let ignored = new Set();
             while (!processed) {
                 let offset = new Point2D(event.offsetX, event.offsetY);
-                let artifact = this.getArtifactOnPoint(offset, ignored);
+                let artifact = event.artifact!==undefined ? event.artifact : this.getArtifactOnPoint(offset, ignored);
                 if (!artifact) {
                     processed = true;
                 } else {
@@ -1344,7 +1344,7 @@ export class DBoard {
             let ignored = new Set();
             while (!processed) {
                 let offset = new Point2D(event.offsetX, event.offsetY);
-                let artifact = this.getArtifactOnPoint(offset, ignored);
+                let artifact = event.artifact!==undefined ? event.artifact : this.getArtifactOnPoint(offset, ignored);
                 if (artifact) ignored.add(artifact);
                 if (artifact !== this._mouseOverArtifact) {
                     if (this._mouseOverArtifact) {

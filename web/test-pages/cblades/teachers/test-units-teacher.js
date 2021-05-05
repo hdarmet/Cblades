@@ -12,7 +12,7 @@ import {
 } from "../../../jslib/cblades/game.js";
 import {
     CBCharacter, CBCharge, CBCohesion,
-    CBCommandProfile,
+    CBCommandProfile, CBEngageSideMode,
     CBFormation,
     CBMoralProfile,
     CBMoveProfile, CBTiredness,
@@ -190,15 +190,15 @@ describe("Units teacher", ()=> {
 
     it("Checks if a character is alone in a hex", () => {
         given:
-            var {arbitrator, map, unit11, leader11} = create2Players4UnitsTinyGame();
+            var {arbitrator, unit11, leader11} = create2Players4UnitsTinyGame();
         when:
             leader11.move(unit11.hexLocation);
         then:
-            assert(arbitrator.isCharacterAloneInHex(leader11)).isFalse();
+            assert(arbitrator.isAloneInHex(leader11)).isFalse();
         when:
             unit11.move(null);
         then:
-            assert(arbitrator.isCharacterAloneInHex(leader11)).isTrue();
+            assert(arbitrator.isAloneInHex(leader11)).isTrue();
     });
 
     it("Checks if a unit contact a foe", () => {
@@ -235,6 +235,24 @@ describe("Units teacher", ()=> {
             assert(arbitrator.doesUnitEngage(unit12)).isFalse();
             assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit11)).isFalse();
             assert(arbitrator.isUnitEngaged(unit11)).isFalse();
+    });
+
+    it("Checks on which side a unit contact a foe", () => {
+        given:
+            var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
+        when:
+            unit12.angle = 0;
+            unit21.angle = 180;
+        then:
+            assert(arbitrator.doesAUnitPotentiallyEngageAnotherUnit(
+                unit12, unit21, unit12.hexLocation.getNearHex(0), 0)
+            ).equalsTo(CBEngageSideMode.BACK);
+            assert(arbitrator.doesAUnitPotentiallyEngageAnotherUnit(
+                unit12, unit21, unit12.hexLocation.getNearHex(0), 90)
+            ).equalsTo(CBEngageSideMode.SIDE);
+            assert(arbitrator.doesAUnitPotentiallyEngageAnotherUnit(
+                unit12, unit21, unit12.hexLocation.getNearHex(0), 180)
+            ).equalsTo(CBEngageSideMode.FRONT);
     });
 
     it("Checks if a unit is allowed to charge", () => {

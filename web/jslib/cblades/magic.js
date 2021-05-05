@@ -4,7 +4,7 @@ import {
     CBPlayable, CBCounterImageArtifact, RetractableArtifactMixin, RetractableCounterMixin, CBGame
 } from "./game.js";
 import {
-    Dimension2D, Point2D
+    Dimension2D
 } from "../geometry.js";
 import {
     Memento

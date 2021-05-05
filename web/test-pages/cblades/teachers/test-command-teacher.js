@@ -107,10 +107,6 @@ describe("Command teacher", ()=> {
             var {arbitrator, leader11, unit11, wing1} = create2Players4UnitsTinyGame();
         then:
             assert(arbitrator.isAllowedToGiveOrders(unit11)).isFalse();
-            assert(arbitrator.isAllowedToGiveOrders(leader11)).isFalse();
-        when:
-            wing1.setLeader(leader11);
-        then:
             assert(arbitrator.isAllowedToGiveOrders(leader11)).isTrue();
     });
 
@@ -345,7 +341,8 @@ describe("Command teacher", ()=> {
             [
                 "/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png",
                 "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png",
-                "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png"
+                "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png",
+                "/CBlades/images/units/misc/formation4.png", "/CBlades/images/units/misc/formation4b.png"
             ]);
         let unitType2 = new CBTestUnitType("unit2", [
             "/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"
@@ -371,6 +368,10 @@ describe("Command teacher", ()=> {
             formation.receivesOrder(true);
         then:
             assert(arbitrator.isAllowedToBreakFormation(unit1)).isFalse();
+            assert(arbitrator.isAllowedToBreakFormation(formation)).isFalse();
+        when:
+            formation.fixRemainingLossSteps(7);
+        then:
             assert(arbitrator.isAllowedToBreakFormation(formation)).isTrue();
         when:
             formation.receivesOrder(false);

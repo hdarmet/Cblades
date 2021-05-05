@@ -233,6 +233,11 @@ describe("Map", ()=> {
             assert(map.getHex(-1, 0).onMap).isFalse();
             assert(map.getHex(12, 0).onMap).isTrue();
             assert(map.getHex(13, 0).onMap).isFalse();
+            assert(hexId.nearHexes).mapContentEqualsTo([
+                [map.getHex(3, 3), 0], [map.getHex(4, 3), 60],
+                [map.getHex(4, 4), 120], [map.getHex(3, 5), 180],
+                [map.getHex(2, 4), 240], [map.getHex(2, 3), 300]
+            ]);
     });
 
     it("Checks hexIds on odd columns", () => {
@@ -402,6 +407,12 @@ describe("Map", ()=> {
             assert(hexSide.turnTo(180).toString()).equalsTo("Hexside(Hex(4, 3), Hex(5, 4))");
             assert(hexSide.moveTo(180).toString()).equalsTo("Hexside(Hex(4, 4), Hex(5, 4))");
             assert(hexSide.turnMove(180).toString()).equalsTo("Hexside(Hex(5, 3), Hex(5, 4))");
+            assert(hexSide.nearHexes).mapContentEqualsTo([
+                [map.getHex(4, 2), 330], [map.getHex(5, 2), 0],
+                [map.getHex(6, 2), 60], [map.getHex(6, 3), 120],
+                [map.getHex(5, 4), 150], [map.getHex(4, 4), 180],
+                [map.getHex(3, 4), 240], [map.getHex(3, 3), 300]
+        ]);
         when:
             var hexSide11 = hexId1.toward(60);
             var hexId4 = map.getHex(-1, 4);
@@ -481,6 +492,13 @@ describe("Map", ()=> {
             assert(hexVertex.equalsTo(new CBHexSideId(hexId2, hexId1, hexId3))).isFalse();
             assert(hexVertex.equalsTo(null)).isFalse();
             assert(hexId1.getNearHexVertex(90).similar(hexVertex));
+            assert(hexVertex.nearHexes).mapContentEqualsTo([
+                [map.getHex(4, 2), 330], [map.getHex(5, 2), 0],
+                [map.getHex(6, 2), 60], [map.getHex(6, 3), 90],
+                [map.getHex(6, 4), 120], [map.getHex(5, 5), 180],
+                [map.getHex(4, 4), 210], [map.getHex(3, 4), 240],
+                [map.getHex(3, 3), 300]
+            ]);
         when:
             var hexVertex2 = map.getHex(-1, 4).getNearHexVertex(90);
         then:

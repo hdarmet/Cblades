@@ -281,7 +281,7 @@ export class CBCombatTeacher {
     }
 
     getFoesThatMayBeFireAttacked(unit) {
-        let hexes = this._getForwardZoneThatMayBeFireAttached(unit, 3);
+        let hexes = this._getForwardZoneThatMayBeFireAttached(unit, unit.weaponProfile.getFireRange());
         let foes = [];
         let foesSet = new Set();
         for (let hex of hexes) {

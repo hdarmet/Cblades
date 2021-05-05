@@ -187,11 +187,26 @@ describe("Movement teacher", ()=> {
             assert(arbitrator.isAllowedToMove(unit12)).isFalse();
     });
 
-    it("Checks if a move back action is allowed", () => {
+    it("Checks if a move back action is allowed for a troop", () => {
         given:
-            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+            var {arbitrator, unit12, unit21} = create2Players4UnitsTinyGame();
         then:
             assert(arbitrator.isAllowedToMoveBack(unit12)).isTrue();
+        when:
+            unit21.hexLocation = unit12.hexLocation.getNearHex(180);
+        then:
+            assert(arbitrator.isAllowedToMoveBack(unit12)).isFalse();
+    });
+
+    it("Checks if a move back action is allowed for a formation", () => {
+        given:
+            var {arbitrator, formation1, unit21} = create2Players1Formation2TroopsTinyGame();
+        then:
+            assert(arbitrator.isAllowedToMoveBack(formation1)).isTrue();
+        when:
+            unit21.hexLocation = formation1.hexLocation.getFaceHex(270);
+        then:
+            assert(arbitrator.isAllowedToMoveBack(formation1)).isFalse();
     });
 
     it("Checks if a rout action is allowed", () => {

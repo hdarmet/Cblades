@@ -285,12 +285,12 @@ export class CBHexSideId {
             let hex = this.fromHex.getNearHex(angle)
             if (hex!==this.toHex) {
                 let pangle = hexes.get(hex);
-                hexes.set(hex, pangle!== undefined ? (pangle+angle)/2:angle);
+                hexes.set(hex, pangle!== undefined ? moyAngle(pangle, angle):angle);
             }
             hex = this.toHex.getNearHex(angle);
             if (hex!==this.fromHex) {
                 let pangle = hexes.get(hex);
-                hexes.set(hex, pangle!== undefined ? (pangle+angle)/2:angle);
+                hexes.set(hex, pangle!== undefined ? moyAngle(pangle, angle):angle);
             }
         }
         return hexes;
@@ -456,17 +456,17 @@ export class CBHexVertexId {
             let hex = this._hexId1.getNearHex(angle)
             if (hex!==this._hexId2 && hex!==this._hexId3) {
                 let pangle = hexes.get(hex);
-                hexes.set(hex, pangle!== undefined ? (pangle+angle)/2:angle);
+                hexes.set(hex, pangle!== undefined ? moyAngle(pangle, angle):angle);
             }
             hex = this._hexId2.getNearHex(angle)
             if (hex!==this._hexId1 && hex!==this._hexId3) {
                 let pangle = hexes.get(hex);
-                hexes.set(hex, pangle!== undefined ? (pangle+angle)/2:angle);
+                hexes.set(hex, pangle!== undefined ? moyAngle(pangle, angle):angle);
             }
             hex = this._hexId3.getNearHex(angle)
             if (hex!==this._hexId1 && hex!==this._hexId2) {
                 let pangle = hexes.get(hex);
-                hexes.set(hex, pangle!== undefined ? (pangle+angle)/2:angle);
+                hexes.set(hex, pangle!== undefined ? moyAngle(pangle, angle):angle);
             }
         }
         return hexes;

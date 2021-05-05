@@ -50,9 +50,9 @@ import {
     showTroop,
     zoomAndRotate0,
     zoomAndRotate120,
-    zoomAndRotate150,
-    zoomAndRotate240,
-    zoomAndRotate300,
+    zoomAndRotate150, zoomAndRotate210,
+    zoomAndRotate240, zoomAndRotate30,
+    zoomAndRotate300, zoomAndRotate330,
     zoomAndRotate60,
     zoomAndRotate90
 } from "./interactive-tools.js";
@@ -1834,6 +1834,40 @@ describe("Unit", ()=> {
             assert(sHexId2.units).arrayEqualsTo([]);
             assert(mHexId1.units).arrayEqualsTo([formation]);
             assert(mHexId2.units).arrayEqualsTo([formation]);
+    });
+
+    it("Checks formation turning", () => {
+        given:
+            var { game, formation, map } = prepareTinyGameWithFormation();
+            var [formationsLayer] = getLayers(game.board, "formations-0");
+            var sHexId1 = map.getHex(7, 8);
+            var sHexId2 = map.getHex(7, 9);
+            formation.hexLocation = new CBHexSideId(sHexId1, sHexId2);
+            formation.angle = 90;
+            paint(game);
+        when:
+            Memento.open();
+            resetDirectives(formationsLayer);
+            formation.turn(60);
+            paint(game);
+        then:
+            assertClearDirectives(formationsLayer);
+            assertDirectives(formationsLayer, showFormation("misc/formation", zoomAndRotate30(625, 375.9439)));
+            assertNoMoreDirectives(formationsLayer);
+            assert(sHexId1.units).arrayEqualsTo([formation]);
+            assert(sHexId2.units).arrayEqualsTo([]);
+            assert(sHexId2.getNearHex(60).units).arrayEqualsTo([formation]);
+            assert(formation.angle).equalsTo(30);
+        when: // undo formation move
+            resetDirectives(formationsLayer);
+            Memento.undo();
+            paint(game);
+        then:
+            assertClearDirectives(formationsLayer);
+            assertDirectives(formationsLayer, showFormation("misc/formation", zoomAndRotate90(583.3333, 400)));
+            assertNoMoreDirectives(formationsLayer);
+            assert(sHexId1.units).arrayEqualsTo([formation]);
+            assert(sHexId2.units).arrayEqualsTo([formation]);
     });
 
     it("Checks formation cloning", () => {

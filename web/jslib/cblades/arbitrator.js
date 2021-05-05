@@ -42,12 +42,12 @@ export class CBArbitrator extends CBAbstractArbitrator{
         if (this._processEngagedUnitThatDoesNotEngage(unit, allowedActions)) return allowedActions;
         if (this._processRegroupingWingBelongingUnitNearEnemies(unit, allowedActions)) return allowedActions;
         if (this._processRetreatingWingBelongingUnitNearEnemies(unit, allowedActions)) return allowedActions;
-        if (this._processUnitRecovering(unit, allowedActions)) return allowedActions;
+        /*if (*/this._processUnitRecovering(unit, allowedActions)/*) return allowedActions*/;
         if (this._processRegroupingWingBelongingUnitFarFromEnemies(unit, allowedActions)) return allowedActions;
         if (this._processDefendingWingBelongingUnit(unit, allowedActions)) return allowedActions;
         if (this._processAttackingWingBelongingUnit(unit, allowedActions)) return allowedActions;
         if (this._processUnitWithAnOrder(unit, allowedActions)) return allowedActions;
-        /*if (*/this._processCharacter(unit, allowedActions)/*) return allowedActions;*/
+        /*if (*/this._processCharacter(unit, allowedActions)/*) return allowedActions*/;
         return allowedActions;
     }
 
@@ -83,7 +83,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
                     allowedActions.moveForward = true;
                     allowedActions.moveMode =CBMoveMode.ATTACK;
                 }
-                return allowedActions.moveForward && !unit.hasReceivedOrder();
+                return allowedActions.moveForward && !unit.characterNature && !unit.hasReceivedOrder();
             }
         }
         else {
@@ -185,7 +185,6 @@ export class CBArbitrator extends CBAbstractArbitrator{
             if (this.isAllowedToRest(unit)) allowedActions.rest = true;
             if (this.isAllowedToReplenishMunitions(unit)) allowedActions.reload = true;
             if (this.isAllowedToReorganize(unit)) allowedActions.reorganize = true;
-            if (this.isAllowedToRally(unit)) allowedActions.rally = true;
             if (this.isAllowedToCreateFormation(unit)) allowedActions.createFormation = true;
             if (this.isAllowedToIncludeTroops(unit)) allowedActions.joinFormation = true;
             if (this.isAllowedToReleaseTroops(unit)) allowedActions.leaveFormation = true;
@@ -224,14 +223,13 @@ export class CBArbitrator extends CBAbstractArbitrator{
     }
 
     _processAttackingWingBelongingUnit(unit, allowedActions) {
-        if (!unit.troopNature || unit.hasReceivedOrder()) return false;
-        if (unit.wing.orderInstruction === CBOrderInstruction.ATTACK) {
+        if (unit.troopNature && !unit.hasReceivedOrder() &&
+            unit.wing.orderInstruction === CBOrderInstruction.ATTACK) {
             if (this.doesUnitEngage(unit)) {
                 if (this.isAllowedToShockAttack(unit)) allowedActions.shockAttack = true;
                 if (this.isAllowedToFireAttack(unit)) allowedActions.fireAttack = true;
                 return true;
-            }
-            else {
+            } else {
                 if (this.isAllowedToFireAttack(unit)) {
                     allowedActions.fireAttack = true;
                     if (this.isAllowedToMove(unit)) {
@@ -239,8 +237,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
                         allowedActions.moveMode = CBMoveMode.FIRE;
                     }
                     return true;
-                }
-                else if (this.isAllowedToMove(unit)) {
+                } else if (this.isAllowedToMove(unit)) {
                     allowedActions.moveForward = true;
                     allowedActions.moveMode = CBMoveMode.ATTACK;
                     return true;
@@ -269,7 +266,6 @@ export class CBArbitrator extends CBAbstractArbitrator{
             if (this.isAllowedToRest(unit)) allowedActions.rest = true;
             if (this.isAllowedToReplenishMunitions(unit)) allowedActions.reload = true;
             if (this.isAllowedToReorganize(unit)) allowedActions.reorganize = true;
-            if (this.isAllowedToRally(unit)) allowedActions.rally = true;
             if (this.isAllowedToCreateFormation(unit)) allowedActions.createFormation = true;
             if (this.isAllowedToIncludeTroops(unit)) allowedActions.joinFormation = true;
             if (this.isAllowedToReleaseTroops(unit)) allowedActions.leaveFormation = true;
@@ -282,7 +278,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
 
     _processCharacter(unit, allowedActions) {
         if (!unit.characterNature) return false;
-        if (this.doesUnitEngage(unit) && this.isCharacterAloneInHex(unit)) {
+        if (this.doesUnitEngage(unit) && this.isAloneInHex(unit)) {
             if (this.isAllowedToMoveBack(unit)) allowedActions.moveBack = true;
             if (this.isAllowedToRout(unit)) allowedActions.escape = true;
             if (this.isAllowedToShockAttack(unit)) allowedActions.shockAttack = true;
@@ -301,7 +297,6 @@ export class CBArbitrator extends CBAbstractArbitrator{
             if (this.isAllowedToRest(unit)) allowedActions.rest = true;
             if (this.isAllowedToReplenishMunitions(unit)) allowedActions.reload = true;
             if (this.isAllowedToReorganize(unit)) allowedActions.reorganize = true;
-            if (this.isAllowedToRally(unit)) allowedActions.rally = true;
             if (unit.hasReceivedOrder()) {
                 if (this.isAllowedToTakeCommand(unit)) allowedActions.takeCommand = true;
                 if (this.isAllowedToDismissCommand(unit)) allowedActions.leaveCommand = true;

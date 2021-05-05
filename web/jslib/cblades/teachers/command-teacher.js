@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    CBCharacter, CBFormation, CBLackOfMunitions, CBTiredness, CBTroop
+    CBCharacter, CBFormation, CBLackOfMunitions, CBOrderInstruction, CBTiredness, CBTroop
 } from "../unit.js";
 import {
     distanceFromHexToHex
@@ -10,19 +10,19 @@ import {
 export class CBCommandTeacher {
 
     isAllowedToChangeOrderInstruction(unit) {
-        return unit instanceof CBCharacter && unit.wing.leader === unit;
+        return unit.characterNature && unit.wing.leader === unit;
     }
 
     isAllowedToGiveOrders(unit) {
-        return unit instanceof CBCharacter && unit.wing.leader === unit;
+        return unit.characterNature;
     }
 
     isAllowedToTakeCommand(unit) {
-        return unit instanceof CBCharacter && unit.wing.leader !== unit;
+        return unit.characterNature && unit.wing.leader !== unit;
     }
 
     isAllowedToDismissCommand(unit) {
-        return unit instanceof CBCharacter && unit.wing.leader === unit;
+        return unit.characterNature && unit.wing.leader === unit;
     }
 
     processChangeOrderInstructionResult(leader, diceResult) {
@@ -79,11 +79,17 @@ export class CBCommandTeacher {
         return { success };
     }
 
+    hasOrderToCombine(unit) {
+        return unit.hasReceivedOrder() || unit.wing.orderInstruction === CBOrderInstruction.REGROUP;
+    }
+
     isAllowedToBreakFormation(unit) {
-        return (!!unit.formationNature) &&
-            unit.hasReceivedOrder() &&
-            !unit.isExhausted() &&
-            unit.isInGoodOrder();
+        if (!unit.formationNature) return false;
+        if (!this.hasOrderToCombine(unit)) return false;
+        if (unit.remainingStepCount>8) return false;
+        if (unit.isExhausted()) return false;
+        if (!unit.isInGoodOrder()) return false;
+        return true;
     }
 
     isAllowedToMerge(unit) {
@@ -94,7 +100,7 @@ export class CBCommandTeacher {
         if (!unit1.isInGoodOrder() || !unit2.isInGoodOrder()) return false;
         if (unit1.isExhausted() || unit2.isExhausted()) return false;
         if (unit1.hasBeenPlayed() || unit2.hasBeenPlayed()) return false;
-        if (!unit1.hasReceivedOrder() || !unit2.hasReceivedOrder()) return false;
+        if (!this.hasOrderToCombine(unit1) || !this.hasOrderToCombine(unit2)) return false;
         if (unit1.remainingStepCount + unit2.remainingStepCount > unit.maxStepCount) return false;
         return true;
     }
@@ -152,7 +158,7 @@ export class CBCommandTeacher {
         if (unit.angle !== toJoin.angle) return false;
         if (!unit.isInGoodOrder()) return false;
         if (unit.isExhausted()) return false;
-        if (!unit.hasReceivedOrder()) return false;
+        if (!this.hasOrderToCombine(unit)) return false;
         if (unit.hasBeenActivated()) return false;
         return true;
     }
