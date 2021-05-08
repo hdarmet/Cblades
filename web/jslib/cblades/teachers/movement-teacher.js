@@ -8,7 +8,7 @@ import {
     diffAngle, reverseAngle, sumAngle
 } from "../../geometry.js";
 import {
-    CBHexSideId, CBHexPathFinding, distanceFromHexLocationToHexLocation
+    CBHexSideId, CBHexPathFinding, distanceFromHexLocationToHexLocation, CBHexSidePathFinding
 } from "../map.js";
 
 export class CBMovementTeacher {
@@ -252,17 +252,17 @@ export class CBMovementTeacher {
     _checkAndReportOpportunityRotationCost(hexes, angle, unit, cost, first) {
         console.assert(cost.type===CBMoveProfile.COST_TYPE.ADD);
         let canGetTired = this.canGetTired(unit);
-        let nearHexId = angle%60 ?
+        let nearHexLocation = angle%60 ?
             new CBHexSideId(hexes[angle-30].hex, hexes[(angle+30)%360].hex) :
             hexes[angle].hex;
         if (unit.movementPoints>=cost.value) {
-            return { hex:nearHexId, type:CBMovement.NORMAL, cost};
+            return { hex:nearHexLocation, type:CBMovement.NORMAL, cost};
         }
         else if (canGetTired) {
             if (unit.extendedMovementPoints >= cost.value) {
-                return { hex:nearHexId, type:CBMovement.EXTENDED, cost};
+                return { hex:nearHexLocation, type:CBMovement.EXTENDED, cost};
             } else if (first) {
-                return { hex:nearHexId, type:CBMovement.MINIMAL, cost};
+                return { hex:nearHexLocation, type:CBMovement.MINIMAL, cost};
             }
         }
         return null;
@@ -335,57 +335,21 @@ export class CBMovementTeacher {
         return result;
     }
 
-    getRotationCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
-        return unit.moveProfile.getRotationCost(diffAngle(orientation, angle));
-    }
-
-    _mergeCosts(cost1, cost2) {
-        if (cost1.type === CBMoveProfile.COST_TYPE.SET) return cost1;
-        if (cost1.type === CBMoveProfile.COST_TYPE.IMPASSABLE) return cost1;
-        if (cost2.type === CBMoveProfile.COST_TYPE.IMPASSABLE) return cost2;
-        if (cost1.type === CBMoveProfile.COST_TYPE.MINIMAL_MOVE) return cost1;
-        if (cost2.type === CBMoveProfile.COST_TYPE.MINIMAL_MOVE) return cost2;
-        return {type:CBMoveProfile.COST_TYPE.ADD, value:cost1.value+cost2.value};
-    }
-
-    getMovementCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
-        let targetHex = hex.getNearHex(angle);
-        return this._mergeCosts(
-            unit.moveProfile.getMovementCostOnHexSide(hex.to(targetHex)),
-            unit.moveProfile.getMovementCostOnHex(targetHex)
-        );
-    }
-
-    getFormationRotationCost(unit, angle, orientation=unit.angle) {
-        return unit.moveProfile.getFormationRotationCost(diffAngle(orientation, angle));
-    }
-
-    getFormationMovementCost(unit, angle, hexSide=unit.hexLocation) {
-        let fromHexTarget = hexSide.fromHex.getNearHex(angle);
-        let fromHexCost = this._mergeCosts(
-            unit.moveProfile.getMovementCostOnHexSide(hexSide.fromHex.to(fromHexTarget)),
-            unit.moveProfile.getMovementCostOnHex(fromHexTarget)
-        );
-        let toHexTarget = hexSide.toHex.getNearHex(angle);
-        let toHexCost = this._mergeCosts(
-            unit.moveProfile.getMovementCostOnHex(toHexTarget),
-            unit.moveProfile.getMovementCostOnHexSide(hexSide.toHex.to(toHexTarget))
-        );
-        return fromHexCost>toHexCost ? fromHexCost : toHexCost;
-    }
-
-    getFormationTurnCost(unit, angle, hexSide=unit.hexLocation) {
-        let turnMove = hexSide.turnMove(angle);
-        return this._mergeCosts(
-            unit.moveProfile.getMovementCostOnHexSide(turnMove),
-            unit.moveProfile.getMovementCostOnHex(turnMove.toHex)
-        );
-    }
-
     doesMovementInflictTiredness(unit, cost) {
         return unit.movementPoints>=0 && (
             cost.type === CBMoveProfile.COST_TYPE.MINIMAL_MOVE || cost.value>unit.movementPoints
         );
+    }
+
+    getFoesOccupiedHexes(unit) {
+        let occupiedHexes = new Set();
+        let foes = this.getFoes(unit);
+        for (let foe of foes) {
+            for (let hexId of foe.hexLocation.hexes) {
+                occupiedHexes.add(hexId);
+            }
+        }
+        return occupiedHexes;
     }
 
     getFoesControlledHexes(unit) {
@@ -405,8 +369,20 @@ export class CBMovementTeacher {
         return controlledHexes;
     }
 
-    getMoveCostMethod(unit, freeHexLocation) {
-        let forbiddenHexes = this.getFoesControlledHexes(unit);
+    getHexesAdjacentToFoes(unit) {
+        let foeHexes = this.getFoesOccupiedHexes(unit);
+        let hexes = new Set();
+        for (let foeHexId of foeHexes) {
+            for (let hexId of foeHexId.nearHexes.keys()) {
+                if (!foeHexes.has(hexId)) {
+                    hexes.add(hexId);
+                }
+            }
+        }
+        return hexes;
+    }
+
+    getMoveCostMethod(unit, freeHexLocation, forbiddenHexes) {
         return (from, to)=> {
             if (freeHexLocation && freeHexLocation.hasHex(to)) return 0;
             if (forbiddenHexes.has(to)) return null;
@@ -421,6 +397,16 @@ export class CBMovementTeacher {
                     return cost.value;
             }
         }
+    }
+
+    getStandardMoveCostMethod(unit, freeHexLocation) {
+        let forbiddenHexes = this.getFoesControlledHexes(unit);
+        return this.getMoveCostMethod(unit, freeHexLocation, forbiddenHexes);
+    }
+
+    getAttackMoveCostMethod(unit, freeHexLocation) {
+        let forbiddenHexes = this.getFoesOccupiedHexes(unit);
+        return this.getMoveCostMethod(unit, freeHexLocation, forbiddenHexes);
     }
 
     getTurnCostMethod(unit, freeHexLocation) {
@@ -440,7 +426,7 @@ export class CBMovementTeacher {
 
     createRoutPathFinding(unit) {
         let pathFinding = new CBHexPathFinding(unit.hexLocation, unit.angle, unit.wing.retreatZone,
-            this.getMoveCostMethod(unit, unit.hexLocation), this.getTurnCostMethod(unit, unit.hexLocation),
+            this.getStandardMoveCostMethod(unit, unit.hexLocation), this.getTurnCostMethod(unit, unit.hexLocation),
             unit.moveProfile.getMinimalMoveCost()
         );
         return new Set(pathFinding.getGoodNextMoves());
@@ -449,6 +435,52 @@ export class CBMovementTeacher {
     hasRoutPath(unit) {
         let routPath = this.createRoutPathFinding(unit);
         return !!routPath.size;
+    }
+
+    createAttackPathFinding(unit) {
+        return unit.formationNature ?
+            this._createAttackHexSidePathFinding(unit) :
+            this._createAttackHexPathFinding(unit);
+    }
+
+    _createAttackHexPathFinding(unit) {
+        let hexes = this.getHexesAdjacentToFoes(unit);
+        let pathFinding = new CBHexPathFinding(unit.hexLocation, unit.angle, [...hexes],
+            this.getAttackMoveCostMethod(unit), this.getTurnCostMethod(unit, unit.hexLocation),
+            unit.moveProfile.getMinimalMoveCost()
+        );
+        return new Set(pathFinding.getGoodNextMoves());
+    }
+
+    _createAttackHexSidePathFinding(unit) {
+        let hexes = this.getHexesAdjacentToFoes(unit);
+        let pathFinding = new CBHexSidePathFinding(unit.hexLocation, unit.angle, [...hexes],
+            this.getAttackMoveCostMethod(unit), this.getTurnCostMethod(unit, unit.hexLocation),
+            unit.moveProfile.getMinimalMoveCost()
+        );
+        return new Set(pathFinding.getGoodNextMoves());
+    }
+
+    createRetreatPathFinding(unit) {
+        return unit.formationNature ?
+            this._createRetreatHexSidePathFinding(unit) :
+            this._createRetreatHexPathFinding(unit);
+    }
+
+    _createRetreatHexPathFinding(unit) {
+        let pathFinding = new CBHexPathFinding(unit.hexLocation, unit.angle, unit.wing.retreatZone,
+            this.getStandardMoveCostMethod(unit, unit.hexLocation), this.getTurnCostMethod(unit, unit.hexLocation),
+            unit.moveProfile.getMinimalMoveCost()
+        );
+        return new Set(pathFinding.getGoodNextMoves());
+    }
+
+    _createRetreatHexSidePathFinding(unit) {
+        let pathFinding = new CBHexSidePathFinding(unit.hexLocation, unit.angle, unit.wing.retreatZone,
+            this.getStandardMoveCostMethod(unit, unit.hexLocation), this.getTurnCostMethod(unit, unit.hexLocation),
+            unit.moveProfile.getMinimalMoveCost()
+        );
+        return new Set(pathFinding.getGoodNextMoves());
     }
 
     getCostToEngage(unit, foe) {

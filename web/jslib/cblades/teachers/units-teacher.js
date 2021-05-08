@@ -4,7 +4,7 @@ import {
     diffAngle
 } from "../../geometry.js";
 import {
-    CBEngageSideMode
+    CBEngageSideMode, CBOrderInstruction
 } from "../unit.js";
 
 
@@ -51,6 +51,14 @@ export class CBUnitManagementTeacher {
         return false;
     }
 
+    isHexLocationAdjacentToFoes(unit, hexLocation) {
+        let hexes = this.getAdjacentHexes(unit, hexLocation);
+        for (let hex of hexes.keys()) {
+            if (this.doesHexLocationContainFoes(unit, hex)) return true;
+        }
+        return false;
+    }
+
     doesHexLocationContainFriends(unit, hex) {
         let units = hex.units;
         if (units.length) {
@@ -63,12 +71,25 @@ export class CBUnitManagementTeacher {
         if (unit.formationNature) return false;
         if (unit.isExhausted()) return false;
         if (!unit.isInGoodOrder()) return false;
+        if (!unit.hasReceivedOrder() && unit.wing.orderInstruction !== CBOrderInstruction.ATTACK) return false;
         return true;
+    }
+
+    getMaxMovementPoints(unit) {
+        return unit.isExhausted() ? unit.movementPoints : unit.extendedMovementPoints;
+    }
+
+    getMinCostForAttackMove(unit) {
+        return Math.ceil(unit.movementPoints/2);
+    }
+
+    getMinCostForRoutMove(unit) {
+        return this.getMaxMovementPoints(unit);
     }
 
     wouldUnitEngage(attacker, attackerHexLocation, angle, predicate=foe=>true) {
         if (attacker.isRouted()) return false;
-        let directions = this.getPotentialForwardZone(attackerHexLocation, angle)
+        let directions = this.getPotentialForwardZone(attacker, attackerHexLocation, angle)
         for (let sangle in directions) {
             let angle = parseInt(sangle);
             let direction = directions[angle];

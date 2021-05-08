@@ -151,7 +151,7 @@ export class CBCombatTeacher {
     }
 
     isHexMayBeShockAttackedFromHex(unit, attackHex, attackedLocation) {
-        let zones = this.getPotentialForwardZone(attackHex, unit.angle);
+        let zones = this.getPotentialForwardZone(unit, attackHex, unit.angle);
         for (let sangle in zones) {
             let angle = parseInt(sangle);
             if (attackedLocation.hasHex(zones[angle].hex)) return true;
@@ -171,9 +171,9 @@ export class CBCombatTeacher {
                     return this.getUnitForwardZone(unit);
                 } else {
                     if (toHexAttack)
-                        return this.getPotentialForwardZone(unit.hexLocation.fromHex, unit.angle);
+                        return this.getPotentialForwardZone(unit, unit.hexLocation.fromHex, unit.angle);
                     else
-                        return this.getPotentialForwardZone(unit.hexLocation.toHex, unit.angle);
+                        return this.getPotentialForwardZone(unit, unit.hexLocation.toHex, unit.angle);
                 }
             }
             else return {};

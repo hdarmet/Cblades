@@ -300,8 +300,10 @@ export class CBArbitrator extends CBAbstractArbitrator{
             if (unit.hasReceivedOrder()) {
                 if (this.isAllowedToTakeCommand(unit)) allowedActions.takeCommand = true;
                 if (this.isAllowedToDismissCommand(unit)) allowedActions.leaveCommand = true;
-                if (this.isAllowedToChangeOrderInstruction(unit)) allowedActions.changeOrders = true;
             }
+
+            if (this.isAllowedToChangeOrderInstruction(unit)) allowedActions.changeOrders = true;
+
             if (this.isAllowedToGiveOrders(unit)) allowedActions.giveSpecificOrders = true;
             if (this.isAllowedToChoseSpell(unit)) allowedActions.prepareSpell = true;
             if (this.isAllowedToCastSpell(unit)) allowedActions.castSpell = true;

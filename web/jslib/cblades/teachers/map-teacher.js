@@ -1,6 +1,7 @@
 'use strict'
 
 import {
+    CBMoveProfile,
     CBWeather
 } from "../unit.js";
 import {
@@ -14,31 +15,6 @@ export class CBMapTeacher {
 
     getWeather() {
         return CBWeather.CLEAR;
-    }
-
-    formatMapZone(mapZone) {
-        let zones = {};
-        for (let zone of mapZone) {
-            zones[zone[1]] = {hex:zone[0]};
-        }
-        return zones;
-    }
-
-    mergeMapZone(mapZoneDest, mapZoneSrc, forbiddenHexes) {
-        let forbidden = new Set(forbiddenHexes);
-        for (let zone of mapZoneSrc) {
-            let current = mapZoneDest.get(zone[0]);
-            if (current !== undefined) {
-                mapZoneDest.set(zone[0], moyAngle(current, zone[1]));
-            }
-            else {
-                mapZoneDest.set(zone[0], zone[1]);
-            }
-        }
-        for (let hex of forbiddenHexes) {
-            mapZoneDest.delete(hex);
-        }
-        return mapZoneDest;
     }
 
     getHexesFromZones(zones) {
@@ -70,10 +46,6 @@ export class CBMapTeacher {
         return result;
     }
 
-    getUnitAdjacentZone(unit) {
-        return this.formatMapZone(unit.hexLocation.nearHexes);
-    }
-
     getForwardZone(hexId, angle) {
         let zones = new Map();
         if (angle%60) {
@@ -86,21 +58,6 @@ export class CBMapTeacher {
             zones.set(hexId.getNearHex((angle + 60) % 360), (angle + 60) % 360);
         }
         return zones;
-    }
-
-    getPotentialForwardZone(hexLocation, angle) {
-        if (hexLocation instanceof CBHexSideId) {
-            let zone1 = this.getForwardZone(hexLocation.fromHex, angle);
-            let zone2 = this.getForwardZone(hexLocation.toHex, angle);
-            return this.formatMapZone(this.mergeMapZone(zone1, zone2, [hexLocation.fromHex, hexLocation.toHex]));
-        }
-        else {
-            return this.formatMapZone(this.getForwardZone(hexLocation, angle));
-        }
-    }
-
-    getUnitForwardZone(unit) {
-        return this.getPotentialForwardZone(unit.hexLocation, unit.angle);
     }
 
     isHexInForwardZone(unit, unitHexId, targetHexId) {
@@ -133,17 +90,6 @@ export class CBMapTeacher {
         return zones;
     }
 
-    getUnitBackwardZone(unit) {
-        if (unit.formationNature) {
-            let zone1 = this.getBackwardZone(unit.hexLocation.fromHex, unit.angle);
-            let zone2 = this.getBackwardZone(unit.hexLocation.toHex, unit.angle);
-            return this.formatMapZone(this.mergeMapZone(zone1, zone2, [unit.hexLocation.fromHex, unit.hexLocation.toHex]));
-        }
-        else {
-            return this.formatMapZone(this.getBackwardZone(unit.hexLocation, unit.angle));
-        }
-    }
-
     getForwardArea(border, angle) {
         let hexes = new Set();
         for (let hexId of border) {
@@ -174,6 +120,141 @@ export class CBMapTeacher {
     getUnitForwardArea(unit, range) {
         let border = (unit.formationNature) ? [unit.hexLocation.fromHex, unit.hexLocation.toHex] : [unit.hexLocation];
         return this._getUnitForwardAreaFromBorder(unit, border, range);
+    }
+
+    getRotationCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
+        return unit.moveProfile.getRotationCost(diffAngle(orientation, angle));
+    }
+
+    _mergeCosts(cost1, cost2) {
+        if (cost1.type === CBMoveProfile.COST_TYPE.SET) return cost1;
+        if (cost1.type === CBMoveProfile.COST_TYPE.IMPASSABLE) return cost1;
+        if (cost2.type === CBMoveProfile.COST_TYPE.IMPASSABLE) return cost2;
+        if (cost1.type === CBMoveProfile.COST_TYPE.MINIMAL_MOVE) return cost1;
+        if (cost2.type === CBMoveProfile.COST_TYPE.MINIMAL_MOVE) return cost2;
+        return {type:CBMoveProfile.COST_TYPE.ADD, value:cost1.value+cost2.value};
+    }
+
+    getMovementCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
+        let targetHex = hex.getNearHex(angle);
+        return this._mergeCosts(
+            unit.moveProfile.getMovementCostOnHexSide(hex.to(targetHex)),
+            unit.moveProfile.getMovementCostOnHex(targetHex)
+        );
+    }
+
+    getFormationRotationCost(unit, angle, orientation=unit.angle) {
+        return unit.moveProfile.getFormationRotationCost(diffAngle(orientation, angle));
+    }
+
+    getFormationMovementCost(unit, angle, hexSide=unit.hexLocation) {
+        let fromHexTarget = hexSide.fromHex.getNearHex(angle);
+        let fromHexCost = this._mergeCosts(
+            unit.moveProfile.getMovementCostOnHexSide(hexSide.fromHex.to(fromHexTarget)),
+            unit.moveProfile.getMovementCostOnHex(fromHexTarget)
+        );
+        let toHexTarget = hexSide.toHex.getNearHex(angle);
+        let toHexCost = this._mergeCosts(
+            unit.moveProfile.getMovementCostOnHex(toHexTarget),
+            unit.moveProfile.getMovementCostOnHexSide(hexSide.toHex.to(toHexTarget))
+        );
+        return fromHexCost>toHexCost ? fromHexCost : toHexCost;
+    }
+
+    getFormationTurnCost(unit, angle, hexSide=unit.hexLocation) {
+        let turnMove = hexSide.turnMove(angle);
+        return this._mergeCosts(
+            unit.moveProfile.getMovementCostOnHexSide(turnMove),
+            unit.moveProfile.getMovementCostOnHex(turnMove.toHex)
+        );
+    }
+
+    canCross(unit, fromHex, toHex) {
+        if (unit.moveProfile.getMovementCostOnHexSide(fromHex.to(toHex)).type === CBMoveProfile.COST_TYPE.IMPASSABLE) return false;
+        return (unit.moveProfile.getMovementCostOnHex(toHex).type !== CBMoveProfile.COST_TYPE.IMPASSABLE);
+    }
+
+    _filterUnitZone(unit, fromHex, mapZone) {
+        let result = new Map();
+        for (let zone of mapZone) {
+            if (this.canCross(unit, fromHex, zone[0])) {
+                result.set(zone[0], zone[1])
+            }
+        }
+        return result;
+    }
+
+    _formatUnitZone(mapZone) {
+        let zones = {};
+        for (let zone of mapZone) {
+            zones[zone[1]] = {hex: zone[0]};
+        }
+        return zones;
+    }
+
+    _mergeUnitZone(mapZoneDest, mapZoneSrc, forbiddenHexes) {
+        let forbidden = new Set(forbiddenHexes);
+        for (let zone of mapZoneSrc) {
+            let current = mapZoneDest.get(zone[1]);
+            if (current !== undefined) {
+                mapZoneDest.set(zone[1], moyAngle(current, zone[0]));
+            }
+            else {
+                mapZoneDest.set(zone[1], zone[0]);
+            }
+        }
+        for (let hex of forbiddenHexes) {
+            mapZoneDest.delete(hex);
+        }
+        return mapZoneDest;
+    }
+
+    getPotentialForwardZone(unit, hexLocation, angle) {
+        if (hexLocation instanceof CBHexSideId) {
+            let zone1 = this._filterUnitZone(unit, hexLocation.fromHex, this.getForwardZone(hexLocation.fromHex, angle));
+            let zone2 = this._filterUnitZone(unit, hexLocation.toHex, this.getForwardZone(hexLocation.toHex, angle));
+            return this._formatUnitZone(this._mergeUnitZone(zone1, zone2, [hexLocation.fromHex, hexLocation.toHex]));
+        }
+        else {
+            return this._formatUnitZone(this._filterUnitZone(unit, hexLocation, this.getForwardZone(hexLocation, angle)));
+        }
+    }
+
+    getUnitForwardZone(unit) {
+        return this.getPotentialForwardZone(unit, unit.hexLocation, unit.angle);
+    }
+
+    getPotentialBackwardZone(unit, hexLocation, angle) {
+        if (hexLocation instanceof CBHexSideId) {
+            let zone1 = this._filterUnitZone(unit, hexLocation.fromHex, this.getBackwardZone(hexLocation.fromHex, angle));
+            let zone2 = this._filterUnitZone(unit, hexLocation.toHex, this.getBackwardZone(hexLocation.toHex, angle));
+            return this._formatUnitZone(this._mergeUnitZone(zone1, zone2, [hexLocation.fromHex, hexLocation.toHex]));
+        }
+        else {
+            return this._formatUnitZone(this._filterUnitZone(unit, hexLocation, this.getBackwardZone(hexLocation, angle)));
+        }
+    }
+
+    getUnitBackwardZone(unit) {
+        return this.getPotentialBackwardZone(unit, unit.hexLocation, unit.angle);
+    }
+
+    getAdjacentHexes(unit, hexLocation) {
+        let hexes = new Map();
+        for (let fromHexId of hexLocation.hexes) {
+            let nearHexes = fromHexId.nearHexes;
+            for (let [toHexId, angle] of nearHexes) {
+                if (!hexLocation.hasHex(toHexId) && this.canCross(unit, fromHexId, toHexId)) {
+                    let pangle = hexes.get(toHexId);
+                    hexes.set(toHexId, pangle!==undefined ? moyAngle(pangle, angle) : angle);
+                }
+            }
+        }
+        return hexes;
+    }
+
+    getUnitAdjacentZone(unit) {
+        return this._formatUnitZone(this.getAdjacentHexes(unit, unit.hexLocation));
     }
 
 }

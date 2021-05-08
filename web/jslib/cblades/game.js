@@ -206,8 +206,9 @@ export class CBAction {
 }
 CBAction.INITIATED = 0;
 CBAction.STARTED = 1;
-CBAction.FINISHED = 2;
-CBAction.FINALIZED = 3;
+CBAction.FINISHABLE = 1;
+CBAction.FINISHED = 3;
+CBAction.FINALIZED = 4;
 CBAction.CANCELLED = -1;
 CBAction.PROGRESSION_EVENT = "action-progression";
 
@@ -317,6 +318,7 @@ export class CBActuator {
 
     constructor() {
         this._shown = false;
+        this._hideAllowed = true;
     }
 
     get triggers() {
@@ -381,6 +383,14 @@ export class CBActuator {
         this._shown = false;
         Mechanisms.removeListener(this);
         this.element.hide(game.board);
+    }
+
+    canBeHidden() {
+        return this._hideAllowed;
+    }
+
+    enableHide(closeAllowed) {
+        this._hideAllowed = closeAllowed;
     }
 
     setVisibility(level) {}
@@ -710,12 +720,24 @@ export class CBGame {
         this._actuators.push(actuator);
     }
 
+    enableActuatorsClosing(allowed) {
+        for (let actuator of this._actuators) {
+            actuator.enableHide(allowed);
+        }
+    }
+
     closeActuators() {
         Memento.register(this);
-        for (let actuator of this._actuators) {
-            actuator.hide(this);
-        }
+        let actuators = this._actuators;
         this._actuators = [];
+        for (let actuator of actuators) {
+            if (actuator.canBeHidden()) {
+                actuator.hide(this);
+            }
+            else {
+                this._actuators.push(actuator);
+            }
+        }
     }
 
     closeWidgets() {
