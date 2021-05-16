@@ -5,11 +5,14 @@ import {
     CBMovement, CBMoveProfile
 } from "../unit.js";
 import {
-    diffAngle, reverseAngle, sumAngle
+    diffAngle, invertAngle, reverseAngle, sumAngle
 } from "../../geometry.js";
 import {
-    CBHexSideId, CBHexPathFinding, distanceFromHexLocationToHexLocation, CBHexSidePathFinding
+    CBHexSideId, distanceFromHexLocationToHexLocation
 } from "../map.js";
+import {
+    getArrivalAreaCosts, getPathCost, getGoodNextMoves, collectHexLocationOptions
+} from "../pathfinding.js";
 
 export class CBMovementTeacher {
 
@@ -252,8 +255,8 @@ export class CBMovementTeacher {
     _checkAndReportOpportunityRotationCost(hexes, angle, unit, cost, first) {
         console.assert(cost.type===CBMoveProfile.COST_TYPE.ADD);
         let canGetTired = this.canGetTired(unit);
-        let nearHexLocation = angle%60 ?
-            new CBHexSideId(hexes[angle-30].hex, hexes[(angle+30)%360].hex) :
+        let nearHexLocation = !unit.formationNature && angle%60 ?
+            new CBHexSideId(hexes[angle-30].hex, hexes[sumAngle(angle, 30)].hex) :
             hexes[angle].hex;
         if (unit.movementPoints>=cost.value) {
             return { hex:nearHexLocation, type:CBMovement.NORMAL, cost};
@@ -272,7 +275,7 @@ export class CBMovementTeacher {
         let hexes = this.getUnitAdjacentZone(unit);
         let opportunities = [];
         if (unit.formationNature) {
-            let angle = (unit.angle+180)%360;
+            let angle = invertAngle(unit.angle);
             let cost = this.getFormationRotationCost(unit, angle);
             if (predicate(angle)) {
                 let opportunity = this._checkAndReportOpportunityRotationCost(hexes, angle, unit, cost, first);
@@ -341,26 +344,24 @@ export class CBMovementTeacher {
         );
     }
 
-    getFoesOccupiedHexes(unit) {
+    getOccupiedHexes(units) {
         let occupiedHexes = new Set();
-        let foes = this.getFoes(unit);
-        for (let foe of foes) {
-            for (let hexId of foe.hexLocation.hexes) {
+        for (let unit of units) {
+            for (let hexId of unit.hexLocation.hexes) {
                 occupiedHexes.add(hexId);
             }
         }
         return occupiedHexes;
     }
 
-    getFoesControlledHexes(unit) {
+    getControlledHexes(units) {
         let controlledHexes = new Set();
-        let foes = this.getFoes(unit);
-        for (let foe of foes) {
-            for (let hexId of foe.hexLocation.hexes) {
+        for (let unit of units) {
+            for (let hexId of unit.hexLocation.hexes) {
                 controlledHexes.add(hexId);
             }
-            if (!foe.isRouted()) {
-                let zones = this.getUnitForwardZone(foe);
+            if (!unit.isRouted()) {
+                let zones = this.getUnitForwardZone(unit);
                 for (let sangle in zones) {
                     controlledHexes.add(zones[sangle].hex);
                 }
@@ -369,12 +370,20 @@ export class CBMovementTeacher {
         return controlledHexes;
     }
 
-    getHexesAdjacentToFoes(unit) {
-        let foeHexes = this.getFoesOccupiedHexes(unit);
+    getFoesOccupiedHexes(unit) {
+        return this.getOccupiedHexes(this.getFoes(unit));
+    }
+
+    getFoesControlledHexes(unit) {
+        return this.getControlledHexes(this.getFoes(unit));
+    }
+
+    getHexesAdjacentToUnits(unit, units) {
+        let unitsHexes = this.getOccupiedHexes(units);
         let hexes = new Set();
-        for (let foeHexId of foeHexes) {
-            for (let hexId of foeHexId.nearHexes.keys()) {
-                if (!foeHexes.has(hexId)) {
+        for (let unitHexId of unitsHexes) {
+            for (let hexId of unitHexId.nearHexes.keys()) {
+                if (!hexes.has(hexId) && this.canCross(unit, hexId, unitHexId)) {
                     hexes.add(hexId);
                 }
             }
@@ -382,10 +391,14 @@ export class CBMovementTeacher {
         return hexes;
     }
 
-    getMoveCostMethod(unit, freeHexLocation, forbiddenHexes) {
+    getHexesAdjacentToFoes(unit) {
+        return this.getHexesAdjacentToUnits(unit, this.getFoes(unit));
+    }
+
+    getMoveCostMethod(unit, freeHexes, forbiddenHexes) {
         return (from, to)=> {
-            if (freeHexLocation && freeHexLocation.hasHex(to)) return 0;
-            if (forbiddenHexes.has(to)) return null;
+            if (freeHexes && freeHexes.has(to)) return 0;
+            if (forbiddenHexes && forbiddenHexes.has(to)) return null;
             let angle = from.getAngle(to);
             let cost = this.getMovementCost(unit, angle, from, angle);
             switch (cost.type) {
@@ -399,19 +412,19 @@ export class CBMovementTeacher {
         }
     }
 
-    getStandardMoveCostMethod(unit, freeHexLocation) {
+    getStandardMoveCostMethod(unit, freeHexes) {
         let forbiddenHexes = this.getFoesControlledHexes(unit);
-        return this.getMoveCostMethod(unit, freeHexLocation, forbiddenHexes);
+        return this.getMoveCostMethod(unit, freeHexes, forbiddenHexes);
     }
 
-    getAttackMoveCostMethod(unit, freeHexLocation) {
-        let forbiddenHexes = this.getFoesOccupiedHexes(unit);
-        return this.getMoveCostMethod(unit, freeHexLocation, forbiddenHexes);
+    getAttackMoveCostMethod(unit) {
+        let freeHexes = this.getFoesOccupiedHexes(unit);
+        return this.getMoveCostMethod(unit, freeHexes, null);
     }
 
-    getTurnCostMethod(unit, freeHexLocation) {
+    getTurnCostMethod(unit, freeHexes) {
         return (hex, fromAngle, toAngle)=> {
-            if (freeHexLocation && freeHexLocation.hasHex(hex)) return 0;
+            if (freeHexes && freeHexes.has(hex)) return 0;
             let cost = this.getRotationCost(unit, toAngle, hex, fromAngle);
             switch (cost.type) {
                 case CBMoveProfile.COST_TYPE.IMPASSABLE:
@@ -424,88 +437,200 @@ export class CBMovementTeacher {
         }
     }
 
-    createRoutPathFinding(unit) {
-        let pathFinding = new CBHexPathFinding(unit.hexLocation, unit.angle, unit.wing.retreatZone,
-            this.getStandardMoveCostMethod(unit, unit.hexLocation), this.getTurnCostMethod(unit, unit.hexLocation),
-            unit.moveProfile.getMinimalMoveCost()
-        );
-        return new Set(pathFinding.getGoodNextMoves());
+    getAllowedRoutMoves(unit) {
+        return new Set(getGoodNextMoves({
+            start:unit.hexLocation, startAngle:unit.angle,
+            arrivals:unit.wing.retreatZone,
+            costMove:this.getStandardMoveCostMethod(unit, new Set(unit.hexLocation.hexes)),
+            costRotate:this.getTurnCostMethod(unit, new Set(unit.hexLocation.hexes)),
+            minimalCost:unit.moveProfile.getMinimalMoveCost()
+        }));
     }
 
     hasRoutPath(unit) {
-        let routPath = this.createRoutPathFinding(unit);
+        let routPath = this.getAllowedRoutMoves(unit);
         return !!routPath.size;
     }
 
-    createAttackPathFinding(unit) {
-        return unit.formationNature ?
-            this._createAttackHexSidePathFinding(unit) :
-            this._createAttackHexPathFinding(unit);
+    getAllowedAttackMoves(unit) {
+        //let hexes = this.getHexesAdjacentToFoes(unit);
+        return new Set(getGoodNextMoves({
+            start:unit.hexLocation, startAngle:unit.angle,
+            arrivals:[...this.getFoesOccupiedHexes(unit)],
+            costMove:this.getAttackMoveCostMethod(unit),
+            costRotate:this.getTurnCostMethod(unit, new Set(unit.hexLocation.hexes)),
+            minimalCost:unit.moveProfile.getMinimalMoveCost()
+        }));
     }
 
-    _createAttackHexPathFinding(unit) {
-        let hexes = this.getHexesAdjacentToFoes(unit);
-        let pathFinding = new CBHexPathFinding(unit.hexLocation, unit.angle, [...hexes],
-            this.getAttackMoveCostMethod(unit), this.getTurnCostMethod(unit, unit.hexLocation),
-            unit.moveProfile.getMinimalMoveCost()
-        );
-        return new Set(pathFinding.getGoodNextMoves());
-    }
-
-    _createAttackHexSidePathFinding(unit) {
-        let hexes = this.getHexesAdjacentToFoes(unit);
-        let pathFinding = new CBHexSidePathFinding(unit.hexLocation, unit.angle, [...hexes],
-            this.getAttackMoveCostMethod(unit), this.getTurnCostMethod(unit, unit.hexLocation),
-            unit.moveProfile.getMinimalMoveCost()
-        );
-        return new Set(pathFinding.getGoodNextMoves());
-    }
-
-    createRetreatPathFinding(unit) {
-        return unit.formationNature ?
-            this._createRetreatHexSidePathFinding(unit) :
-            this._createRetreatHexPathFinding(unit);
-    }
-
-    _createRetreatHexPathFinding(unit) {
-        let pathFinding = new CBHexPathFinding(unit.hexLocation, unit.angle, unit.wing.retreatZone,
-            this.getStandardMoveCostMethod(unit, unit.hexLocation), this.getTurnCostMethod(unit, unit.hexLocation),
-            unit.moveProfile.getMinimalMoveCost()
-        );
-        return new Set(pathFinding.getGoodNextMoves());
-    }
-
-    _createRetreatHexSidePathFinding(unit) {
-        let pathFinding = new CBHexSidePathFinding(unit.hexLocation, unit.angle, unit.wing.retreatZone,
-            this.getStandardMoveCostMethod(unit, unit.hexLocation), this.getTurnCostMethod(unit, unit.hexLocation),
-            unit.moveProfile.getMinimalMoveCost()
-        );
-        return new Set(pathFinding.getGoodNextMoves());
+    getAllowedRetreatMoves(unit) {
+        return new Set(getGoodNextMoves({
+            start:unit.hexLocation, startAngle:unit.angle,
+            arrivals:unit.wing.retreatZone,
+            costMove:this.getStandardMoveCostMethod(unit, new Set(unit.hexLocation.hexes)),
+            costRotate:this.getTurnCostMethod(unit, new Set(unit.hexLocation.hexes)),
+            minimalCost:unit.moveProfile.getMinimalMoveCost()
+        }));
     }
 
     getCostToEngage(unit, foe) {
-        let pathFinding = new CBHexPathFinding(foe.hexLocation, foe.angle, unit.hexLocation.hexes,
-            this.getMoveCostMethod(foe, unit.hexLocation), this.getTurnCostMethod(foe, unit.hexLocation),
-            foe.moveProfile.getMinimalMoveCost(), foe.moveProfile.movementPoints
-        );
-        return pathFinding.getPathCost();
+        return getPathCost({
+            start:foe.hexLocation, startAngle:foe.angle,
+            arrivals:unit.hexLocation.hexes,
+            costMove:this.getMoveCostMethod(foe, new Set(unit.hexLocation.hexes)),
+            costRotate:this.getTurnCostMethod(foe, new Set(unit.hexLocation.hexes)),
+            minimalCost:foe.moveProfile.getMinimalMoveCost(),
+            maxCost:foe.moveProfile.movementPoints
+        });
     }
 
-    foesThatCanJoinAndEngage(unit) {
-        let foes = this.getFoes(unit);
+    _getReachableFoes(unit) {
         let result = [];
+        let foes = this.getFoes(unit);
         for (let foe of foes) {
             if (this.isAllowedToMove(foe)) {
                 let minimalCost = foe.moveProfile.getMinimalMoveCost();
-                let distanceToJoin = distanceFromHexLocationToHexLocation(foe.hexLocation, unit.hexLocation)-minimalCost;
-                let range = foe.moveProfile.movementPoints / minimalCost;
+                let distanceToJoin = distanceFromHexLocationToHexLocation(foe.hexLocation, unit.hexLocation);
+                let range = foe.moveProfile.movementPoints / minimalCost +2;
                 if (range >= distanceToJoin) {
-                    let realCost = this.getCostToEngage(unit, foe);
-                    if (realCost < foe.moveProfile.movementPoints) result.push(foe);
+                    result.push(foe);
                 }
             }
         }
         return result;
+    }
+
+    getNearestFoesThatCanJoinAndEngage(unit) {
+        let result = [];
+        let maxRemainingPoints = -1;
+        for (let foe of this._getReachableFoes(unit)) {
+            let realCost = this.getCostToEngage(unit, foe);
+            let remainingMovementPoints = foe.moveProfile.movementPoints - realCost;
+            if (remainingMovementPoints>maxRemainingPoints) {
+                maxRemainingPoints = remainingMovementPoints;
+                result = [foe];
+            }
+            else if (remainingMovementPoints === maxRemainingPoints) {
+                result.push(foe);
+            }
+        }
+        return {foes:result, remainingMovementPoints:maxRemainingPoints};
+    }
+
+    _tryToFindAPathToMoveAwayFromAllFoes(foeRecords) {
+        let maxRemainingPoints = -Number.MAX_VALUE;
+        let result = null;
+        for (let {foe, costRecords} of foeRecords) {
+            let remainingMovementPoints = foe.moveProfile.movementPoints - costRecords.cost;
+            let minCost = foe.moveProfile.movementPoints < costRecords.cost ? foe.moveProfile.movementPoints : costRecords.cost;
+            if (remainingMovementPoints > maxRemainingPoints) {
+                maxRemainingPoints = remainingMovementPoints;
+                result = new Map();
+                for (let [hexLocation, cost] of costRecords.hexLocations) {
+                    if (cost > minCost) {
+                        result.set(hexLocation.location.toString(), hexLocation);
+                    }
+                }
+            }
+            if (remainingMovementPoints === maxRemainingPoints) {
+                for (let [hexLocation, cost] of costRecords.hexLocations) {
+                    if (cost <= minCost) {
+                        result.delete(hexLocation.location.toString());
+                    }
+                }
+            }
+        }
+        return result ? new Set(result.values()) : null;
+    }
+
+    _tryToFindAPathToNotApproachFoes(foeRecords) {
+        let maxRemainingPoints = -Number.MAX_VALUE;
+        let result = null;
+        for (let {foe, costRecords} of foeRecords) {
+            let remainingMovementPoints = foe.moveProfile.movementPoints - costRecords.cost;
+            let minCost = foe.moveProfile.movementPoints < costRecords.cost ? foe.moveProfile.movementPoints : costRecords.cost;
+            if (remainingMovementPoints > maxRemainingPoints) {
+                maxRemainingPoints = remainingMovementPoints;
+                result = new Map();
+                for (let [hexLocation, cost] of costRecords.hexLocations) {
+                    if (cost > minCost) {
+                        result.set(hexLocation.location.toString(), hexLocation);
+                    }
+                }
+            }
+            if (remainingMovementPoints === maxRemainingPoints) {
+                for (let [hexLocation, cost] of costRecords.hexLocations) {
+                    if (cost < minCost) {
+                        result.delete(hexLocation.location.toString());
+                    }
+                }
+            }
+        }
+        return result ? new Set(result.values()) : null;
+    }
+
+    _tryToFindAPathToMoveAwayFromAtLeastOneFoe(foeRecords) {
+        let maxRemainingPoints = -Number.MAX_VALUE;
+        let result = null;
+        for (let {foe, costRecords} of foeRecords) {
+            let remainingMovementPoints = foe.moveProfile.movementPoints - costRecords.cost;
+            let minCost = foe.moveProfile.movementPoints < costRecords.cost ? foe.moveProfile.movementPoints : costRecords.cost;
+            if (remainingMovementPoints >= maxRemainingPoints) {
+                if (remainingMovementPoints > maxRemainingPoints) {
+                    maxRemainingPoints = remainingMovementPoints;
+                    result = new Set();
+                }
+                for (let [hexLocation, cost] of costRecords.hexLocations) {
+                    if (cost > minCost) {
+                        result.add(hexLocation);
+                    }
+                }
+            }
+        }
+        return result ? new Set(result.values()) : null;
+    }
+
+    getAllowedMoveAwayMoves(unit) {
+        function getCost(locations, hexLocation) {
+            let cost = Number.MAX_VALUE;
+            for (let hexId of hexLocation.hexes) {
+                let lCost = locations.hexes.get(hexId);
+                if (lCost<cost) cost = lCost;
+            }
+            return cost;
+        }
+
+        let maxRemainingPoints = -1;
+        let foeRecords = [];
+        let minCost = Number.MAX_VALUE;
+        for (let foe of this._getReachableFoes(unit)) {
+            let locations = getArrivalAreaCosts({
+                start: foe.hexLocation, startAngle:foe.angle,
+                arrivals:[unit.hexLocation],
+                costMove:this.getMoveCostMethod(foe),
+                costRotate:this.getTurnCostMethod(foe, new Set(foe.hexLocation.hexes)),
+                minimalCost:foe.moveProfile.getMinimalMoveCost(),
+                costGetter:record=>record.previous.cost
+            });
+            let options = collectHexLocationOptions(unit.hexLocation, unit.angle);
+            let hexLocations = [];
+            for (let option of options) {
+                hexLocations.push([option.hexLocation, getCost(locations, option.hexLocation)]);
+            }
+            let cost = getCost(locations, unit.hexLocation);
+            if (cost < minCost) {
+                minCost = cost;
+                foeRecords = [];
+            }
+            if (cost === minCost) {
+                foeRecords.push({foe, costRecords: {cost, hexLocations}});
+            }
+        }
+        let result = this._tryToFindAPathToMoveAwayFromAllFoes(foeRecords);
+        if (result && result.size) return result;
+        result = this._tryToFindAPathToNotApproachFoes(foeRecords);
+        if (result && result.size) return result;
+        return this._tryToFindAPathToMoveAwayFromAtLeastOneFoe(foeRecords);
     }
 
 }

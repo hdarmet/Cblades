@@ -5,7 +5,7 @@ import {
     CBWeather
 } from "../unit.js";
 import {
-    diffAngle, moyAngle
+    diffAngle, moyAngle, sumAngle
 } from "../../geometry.js";
 import {
     CBHexSideId
@@ -46,26 +46,30 @@ export class CBMapTeacher {
         return result;
     }
 
-    getForwardZone(hexId, angle) {
-        let zones = new Map();
-        if (angle%60) {
-            zones.set(hexId.getNearHex(angle -30), angle-30);
-            zones.set(hexId.getNearHex((angle + 30) % 360), (angle + 30) % 360);
-        }
-        else {
-            zones.set(hexId.getNearHex((angle + 300) % 360), (angle + 300) % 360);
-            zones.set(hexId.getNearHex(angle), angle);
-            zones.set(hexId.getNearHex((angle + 60) % 360), (angle + 60) % 360);
-        }
-        return zones;
-    }
-
     isHexInForwardZone(unit, unitHexId, targetHexId) {
         let attackerAngle = unit.angle;
         let hexAngle = unitHexId.isNearHex(targetHexId);
         if (hexAngle === false) return false;
         let diff = diffAngle(hexAngle, attackerAngle);
         return diff >= -60 && diff <= 60 ? hexAngle : false;
+    }
+
+    getForwardZone(hexId, angle) {
+        let zones = new Map();
+        if (angle%60) {
+            let langle = sumAngle(angle, -30);
+            zones.set(hexId.getNearHex(langle), langle);
+            langle = sumAngle(angle, 30);
+            zones.set(hexId.getNearHex(langle), langle);
+        }
+        else {
+            let langle = sumAngle(angle, -60);
+            zones.set(hexId.getNearHex(langle), langle);
+            zones.set(hexId.getNearHex(angle), angle);
+            langle = sumAngle(angle, 60);
+            zones.set(hexId.getNearHex(langle), langle);
+        }
+        return zones;
     }
 
     isHexInBackwardZone(unit, unitHexId, targetHexId) {
@@ -79,13 +83,18 @@ export class CBMapTeacher {
     getBackwardZone(hexId, angle) {
         let zones = new Map();
         if (angle%60) {
-            zones.set(hexId.getNearHex((angle + 150) % 360), (angle + 150) % 360);
-            zones.set(hexId.getNearHex((angle + 210) % 360), (angle + 210) % 360);
+            let langle = sumAngle(angle, 150);
+            zones.set(hexId.getNearHex(langle), langle);
+            langle = sumAngle(angle, 210);
+            zones.set(hexId.getNearHex(langle), langle);
         }
         else {
-            zones.set(hexId.getNearHex((angle + 120) % 360), (angle + 120) % 360);
-            zones.set(hexId.getNearHex((angle + 180) % 360), (angle + 180) % 360);
-            zones.set(hexId.getNearHex((angle + 240) % 360), (angle + 240) % 360);
+            let langle = sumAngle(angle, 120);
+            zones.set(hexId.getNearHex(langle), langle);
+            langle = sumAngle(angle, 180);
+            zones.set(hexId.getNearHex(langle), langle);
+            langle = sumAngle(angle, 240);
+            zones.set(hexId.getNearHex(langle), langle);
         }
         return zones;
     }
@@ -170,8 +179,8 @@ export class CBMapTeacher {
     }
 
     canCross(unit, fromHex, toHex) {
-        if (unit.moveProfile.getMovementCostOnHexSide(fromHex.to(toHex)).type === CBMoveProfile.COST_TYPE.IMPASSABLE) return false;
-        return (unit.moveProfile.getMovementCostOnHex(toHex).type !== CBMoveProfile.COST_TYPE.IMPASSABLE);
+        let cost = unit.moveProfile.getMovementCostOnHexSide(fromHex.to(toHex));
+        return cost && cost.type !== CBMoveProfile.COST_TYPE.IMPASSABLE;
     }
 
     _filterUnitZone(unit, fromHex, mapZone) {
@@ -195,12 +204,12 @@ export class CBMapTeacher {
     _mergeUnitZone(mapZoneDest, mapZoneSrc, forbiddenHexes) {
         let forbidden = new Set(forbiddenHexes);
         for (let zone of mapZoneSrc) {
-            let current = mapZoneDest.get(zone[1]);
+            let current = mapZoneDest.get(zone[0]);
             if (current !== undefined) {
-                mapZoneDest.set(zone[1], moyAngle(current, zone[0]));
+                mapZoneDest.set(zone[0], moyAngle(current, zone[1]));
             }
             else {
-                mapZoneDest.set(zone[1], zone[0]);
+                mapZoneDest.set(zone[0], zone[1]);
             }
         }
         for (let hex of forbiddenHexes) {

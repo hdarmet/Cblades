@@ -3,7 +3,7 @@
 import {
     Area2D,
     canonizeAngle,
-    Dimension2D, Point2D
+    Dimension2D, invertAngle, Point2D
 } from "../geometry.js";
 import {
     DAbstractInsert,
@@ -32,6 +32,9 @@ import {
 import {
     DImageArtifact
 } from "../board.js";
+import {
+    stringifyHexLocations
+} from "./pathfinding.js";
 
 export function registerInteractiveMovement() {
     CBInteractivePlayer.prototype.startMoveUnit = function (unit, moveMode, event) {
@@ -50,6 +53,7 @@ export function registerInteractiveMovement() {
         createMovementMenuItems
     );
 }
+
 export function unregisterInteractiveMovement() {
     delete CBInteractivePlayer.prototype.startMoveUnit;
     delete CBInteractivePlayer.prototype.startRoutUnit;
@@ -68,12 +72,15 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this._event = event;
         this._movementCost = 0;
         this._minMovementCost = 0;
+        this._moves = 0;
+        this._minMoves = 0;
     }
 
     _memento() {
         let memento = super._memento();
         memento.minMovementCost = this._minMovementCost;
         memento.movementCost = this._movementCost;
+        memento.moves = this._moves;
         return memento;
     }
 
@@ -81,6 +88,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         super._revert(memento);
         this._minMovementCost = memento.minMovementCost;
         this._movementCost = memento.movementCost;
+        this._moves = memento.moves;
     }
 
     set minMovementCost(minMovementCost) {
@@ -92,8 +100,26 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this._minMovementCost = minMovementCost;
     }
 
+    set minMoves(minMoves) {
+        this._minMoves = minMoves;
+    }
+
+    setMinMoves(minMoves) {
+        Memento.register(this);
+        this._minMoves = minMoves;
+    }
+
+    get moves() {
+        return this._moves;
+    }
+
+    setMoves(moves) {
+        Memento.register(this);
+        this._moves = moves;
+    }
+
     isFinishable() {
-        return this._movementCost>=this._minMovementCost;
+        return this._movementCost>=this._minMovementCost && this._moves>=this._minMoves;
     }
 
     play() {
@@ -249,6 +275,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
     }
 
     _continueAfterMove() {
+        this.setMoves(this.moves+1);
         return false
     }
 
@@ -319,35 +346,15 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
     constructor(game, unit, moveMode, event) {
         super(game, unit, event);
         this._moveMode = moveMode;
-        this._moves = 0;
-    }
-
-    _memento() {
-        let memento = super._memento();
-        memento.moves = this._moves;
-        return memento;
-    }
-
-    _revert(memento) {
-        super._revert(memento);
-        this._moves = memento.moves;
     }
 
     isFinishable() {
         return super.isFinishable() || this.game.arbitrator.doesUnitEngage(this.unit);
     }
 
-    _stringify(hexLocations) {
-        let result = new Set();
-        for (let hexLocation of hexLocations) {
-            result.add(hexLocation.location.toString());
-        }
-        return result;
-    }
-
-    _createMovementActuators(start) {
+    _prepareMovementConstraints() {
         if (this._moveMode === CBMoveMode.ATTACK) {
-            this._goodMoves = this._stringify(this.game.arbitrator.createAttackPathFinding(this.unit));
+            this._allowedMoves = stringifyHexLocations(this.game.arbitrator.getAllowedAttackMoves(this.unit));
             this._filterForMoves = this._filterHex;
             this._filterForRotations = this._filterHex;
             this._filterForFormationMoves = this._filterHexSide;
@@ -356,25 +363,33 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         }
         else if (this._moveMode === CBMoveMode.DEFEND) {
             this._filterForMoves = this._filterNotAdjacent;
-            this._filterForFormationMoves = this._filterNotAdjacent;
-            this._filterForFormationTurns = this._filterNotAdjacent;
+            this._filterForFormationMoves = this._filterFormationMoveNotAdjacent;
+            this._filterForFormationTurns = this._filterFormationTurnNotAdjacent;
+        }
+        else if (this._moveMode === CBMoveMode.REGROUP) {
+            this._allowedMoves = stringifyHexLocations(this.game.arbitrator.getAllowedMoveAwayMoves(this.unit));
+            this._filterForMoves = this._filterHex;
+            this._filterForRotations = this.moves===0 ? this._filterHex : null;
+            this._filterForFormationMoves = this._filterHexSide;
+            this._filterForFormationTurns = this._filterHexTurn;
+            this.minMoves = 1;
         }
         else if (this._moveMode === CBMoveMode.RETREAT) {
-            this._goodMoves = this._stringify(this.game.arbitrator.createRetreatPathFinding(this.unit));
+            this._allowedMoves = stringifyHexLocations(this.game.arbitrator.getAllowedRetreatMoves(this.unit));
             this._filterForMoves = this._filterHex;
             this._filterForFormationMoves = this._filterHexSide;
             this._filterForFormationTurns = this._filterHexTurn;
         }
-        return super._createMovementActuators(start);
     }
 
     _filterHex(zones) {
+        if (!this._allowedMoves) return zones;
         let result = [];
         for (let sangle in zones) {
             let angle = parseInt(sangle);
             let toInclude = true;
             for (let hexId of zones[angle].hex.hexes) {
-                if (!this._goodMoves.has(hexId.location.toString())) {
+                if (!this._allowedMoves.has(hexId.location.toString())) {
                     toInclude = false; break;
                 }
             }
@@ -386,11 +401,12 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
     }
 
     _filterHexSide(zones) {
+        if (!this._allowedMoves) return zones;
         let result = [];
         for (let sangle in zones) {
             let angle = parseInt(sangle);
             let hexSide = this.unit.hexLocation.moveTo(angle);
-            if (this._goodMoves.has(hexSide.location.toString())) {
+            if (this._allowedMoves.has(hexSide.location.toString())) {
                 result[angle] = zones[angle];
             }
         }
@@ -398,11 +414,12 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
     }
 
     _filterHexTurn(zones) {
+        if (!this._allowedMoves) return zones;
         let result = [];
         for (let sangle in zones) {
             let angle = parseInt(sangle);
             let hexSide = this.unit.hexLocation.turnTo(angle);
-            if (this._goodMoves.has(hexSide.location.toString())) {
+            if (this._allowedMoves.has(hexSide.location.toString())) {
                 result[angle] = zones[angle];
             }
         }
@@ -414,6 +431,30 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         for (let sangle in zones) {
             let angle = parseInt(sangle);
             if (!this.game.arbitrator.isHexLocationAdjacentToFoes(this.unit, zones[angle].hex)) {
+                result[angle] = zones[angle];
+            }
+        }
+        return result;
+    }
+
+    _filterFormationMoveNotAdjacent(zones) {
+        let result = [];
+        for (let sangle in zones) {
+            let angle = parseInt(sangle);
+            let hexLocation = this.unit.hexLocation.moveTo(angle);
+            if (!this.game.arbitrator.isHexLocationAdjacentToFoes(this.unit, hexLocation)) {
+                result[angle] = zones[angle];
+            }
+        }
+        return result;
+    }
+
+    _filterFormationTurnNotAdjacent(zones) {
+        let result = [];
+        for (let sangle in zones) {
+            let angle = parseInt(sangle);
+            let hexLocation = this.unit.hexLocation.turnTo(angle);
+            if (!this.game.arbitrator.isHexLocationAdjacentToFoes(this.unit, hexLocation)) {
                 result[angle] = zones[angle];
             }
         }
@@ -451,7 +492,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
     finalize(action) {
         if (!this.isFinalized()) {
             let engaging = this.unit.isEngaging();
-            if (this._moves>=2 || (this._moves===1 && engaging)) {
+            if (this.moves>=2 || (this.moves===1 && engaging)) {
                 this.unit.acknowledgeCharge(true);
             }
             else {
@@ -534,14 +575,19 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         super.moveUnit(hexId, angle, start);
     }
 
-    _continueAfterRotation() {
+    _createMovementActuators(start) {
+        this._prepareMovementConstraints();
+        return super._createMovementActuators(start);
+    }
+
+    _continueAfterRotation(start) {
         this.unit.checkEngagement(this.game.arbitrator.doesUnitEngage(this.unit), false);
-        return super._continueAfterRotation();
+        this._prepareMovementConstraints();
+        return super._continueAfterRotation(start);
     }
 
     _continueAfterMove() {
-        Memento.register(this);
-        this._moves++;
+        super._continueAfterMove();
         let mayCharge = this.game.arbitrator.mayUnitCharge(this.unit);
         this.unit.checkEngagement(this.game.arbitrator.doesUnitEngage(this.unit), mayCharge);
         return this._createMovementActuators(false);
@@ -579,7 +625,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     }
 
     _createMovementActuators(start) {
-        this._goodMoves = this.game.arbitrator.createRoutPathFinding(this.unit);
+        this._allowedMoves = this.game.arbitrator.getAllowedRoutMoves(this.unit);
         return super._createMovementActuators(start);
     }
 
@@ -587,7 +633,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
         let result = [];
         for (let cangle in zones) {
             let angle = parseInt(cangle);
-            if (this._goodMoves.has(zones[angle].hex)) {
+            if (this._allowedMoves.has(zones[angle].hex)) {
                 result[angle] = zones[angle];
             }
         }
@@ -675,6 +721,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     }
 
     _continueAfterMove() {
+        super._continueAfterMove();
         return this._createMovementActuators(false);
     }
 }
@@ -1134,7 +1181,7 @@ class MoveFormationTrigger extends CBActuatorImageTrigger {
         super(actuator, "actuators", image, new Point2D(0, 0), MoveFormationTrigger.DIMENSION);
         this.pangle = angle;
         this.rotate = false;
-        let unitHex =  hex.getNearHex((angle+180)%360);
+        let unitHex =  hex.getNearHex(invertAngle(angle));
         let startLocation = Point2D.position(actuator.unit.location, unitHex.location, 1);
         let targetPosition = Point2D.position(unitHex.location, hex.location, 0.9);
         this.position = startLocation.plusPoint(targetPosition);
@@ -1155,7 +1202,7 @@ class MoveFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         this._type = type;
         this.pangle = angle;
         this.rotate = false;
-        let unitHex =  hex.getNearHex((angle+180)%360);
+        let unitHex =  hex.getNearHex(invertAngle(angle));
         let startLocation = Point2D.position(actuator.unit.location, unitHex.location, 1);
         let targetPosition = Point2D.position(unitHex.location, hex.location, 1.3);
         this.position = startLocation.plusPoint(targetPosition);
@@ -1186,7 +1233,7 @@ class TurnFormationTrigger extends CBActuatorImageTrigger {
         super(actuator, "actuators", image, new Point2D(0, 0), TurnFormationTrigger.DIMENSION);
         this.pangle = angle;
         this.rotate = true;
-        this.hex =  hex.getNearHex((angle+180)%360);
+        this.hex =  hex.getNearHex(invertAngle(angle));
         let startLocation = Point2D.position(actuator.unit.location, this.hex.location, 1.5);
         let targetPosition = Point2D.position(this.hex.location, hex.location, 0.8);
         this.position = startLocation.plusPoint(targetPosition);
@@ -1207,7 +1254,7 @@ class TurnFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         this._type = type;
         this.pangle = angle;
         this.rotate = true;
-        this.hex =  hex.getNearHex((angle+180)%360);
+        this.hex =  hex.getNearHex(invertAngle(angle));
         let startLocation = Point2D.position(actuator.unit.location, this.hex.location, 1.5);
         let targetPosition = Point2D.position(this.hex.location, hex.location, 1.1);
         this.position = startLocation.plusPoint(targetPosition);

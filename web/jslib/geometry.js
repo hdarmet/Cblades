@@ -78,6 +78,25 @@ export function moyAngle(angle1, angle2) {
 }
 
 /**
+ * Compute the opposite angle
+ */
+export function invertAngle(angle) {
+    return (angle + 180)%360
+}
+
+/**
+ * Checks if an angle is comprised in a range (clockwise)
+ */
+export function isAngleBetween(angle, bounds) {
+    if (bounds[0]>bounds[1]) {
+        return angle>=bounds[0] || angle<=bounds[1];
+    }
+    else {
+        return angle>=bounds[0] && angle<=bounds[1];
+    }
+}
+
+/**
  * Checks if a point is inside a polygon
  */
 export function inside(target, polygon) {

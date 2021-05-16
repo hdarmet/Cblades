@@ -33,7 +33,7 @@ import {
     CBArbitrator
 } from "../../jslib/cblades/arbitrator.js";
 import {
-    Dimension2D
+    Dimension2D, invertAngle
 } from "../../jslib/geometry.js";
 
 describe("Arbitrator", ()=> {
@@ -182,7 +182,7 @@ describe("Arbitrator", ()=> {
 
     function moveToEngage(engaging, engaged, angle) {
         engaging.hexLocation = engaged.hexLocation.getNearHex(angle);
-        engaging.angle = (angle+180)%360;
+        engaging.angle = invertAngle(angle);
     }
 
     function assertActions(model, value) {

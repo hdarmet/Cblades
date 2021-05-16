@@ -729,7 +729,7 @@ describe("Movement teacher", ()=> {
             map.getHex(3, 10).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
         when:
             unit11.move(map.getHex(4, 9));
-            var hexes = arbitrator.createRoutPathFinding(unit11);
+            var hexes = arbitrator.getAllowedRoutMoves(unit11);
         then:
             assert(hexes).setEqualsTo(new Set([map.getHex(5, 10)]));
     });
@@ -739,14 +739,14 @@ describe("Movement teacher", ()=> {
             var {arbitrator, map, unit11, unit21, unit22, leader21} = create2Players4UnitsTinyGame();
         when:
             var costToEngage = arbitrator.getCostToEngage(unit11, unit21);
-            var whoJoined = arbitrator.foesThatCanJoinAndEngage(unit11);
+            var whoJoined = arbitrator.getNearestFoesThatCanJoinAndEngage(unit11).result;
         then:
             assert(costToEngage).equalsTo(1.5);
             assert(whoJoined).unorderedArrayEqualsTo([unit21, leader21]);
         when:
             unit11.move(map.getHex(0, 5));
             costToEngage = arbitrator.getCostToEngage(unit11, unit21);
-            whoJoined = arbitrator.foesThatCanJoinAndEngage(unit11);
+            whoJoined = arbitrator.getNearestFoesThatCanJoinAndEngage(unit11).result;
         then:
             assert(costToEngage).isNotDefined();
             assert(whoJoined).arrayEqualsTo([]);

@@ -113,7 +113,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
                     return true;
                 }
             }
-            else if (this.foesThatCanJoinAndEngage(unit).length>0) {
+            else if (this.getNearestFoesThatCanJoinAndEngage(unit).foes.length>0) {
                 if (this.isAllowedToMove(unit)) {
                     allowedActions.moveForward = true;
                     allowedActions.moveMode =CBMoveMode.REGROUP;

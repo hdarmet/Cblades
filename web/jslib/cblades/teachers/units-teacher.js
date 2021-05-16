@@ -32,6 +32,30 @@ export class CBUnitManagementTeacher {
         return { success };
     }
 
+    getUnitOfType(units, type) {
+        let troops = [];
+        for (let unit of units) {
+            if (unit.type === type) {
+                troops.push(unit);
+            }
+        }
+        return troops;
+    }
+
+    canPlayUnit(unit) {
+        return unit.isOnBoard() && !unit.hasBeenActivated() && !unit.hasBeenPlayed();
+    }
+
+    getFoes(unit) {
+        let foes = new Set();
+        for (let potentialFoe of this.game.units) {
+            if (potentialFoe.isOnBoard() && this.areUnitsFoes(unit, potentialFoe)) {
+                foes.add(potentialFoe);
+            }
+        }
+        return foes;
+    }
+
     arePlayersFoes(player1, player2) {
         return player1 !== player2;
     }
@@ -87,6 +111,10 @@ export class CBUnitManagementTeacher {
         return this.getMaxMovementPoints(unit);
     }
 
+    isAloneInHex(unit) {
+        return unit.hexLocation.units.length === 1;
+    }
+
     wouldUnitEngage(attacker, attackerHexLocation, angle, predicate=foe=>true) {
         if (attacker.isRouted()) return false;
         let directions = this.getPotentialForwardZone(attacker, attackerHexLocation, angle)
@@ -98,10 +126,6 @@ export class CBUnitManagementTeacher {
             }
         }
         return false;
-    }
-
-    isAloneInHex(unit) {
-        return unit.hexLocation.units.length === 1;
     }
 
     doesUnitEngage(attacker) {
@@ -124,8 +148,10 @@ export class CBUnitManagementTeacher {
         let side = 0;
         for (let attackerHex of attacker.hexLocation.hexes) {
             for (let defenderHex of defenderHexLocation.hexes) {
-                let sideForHex = this._getEngagementSide(attacker, attackerHex, defender, defenderHex, defenderAngle);
-                if (sideForHex>side) side = sideForHex;
+                if (attackerHex.isNearHex(defenderHex) && this.canCross(attacker, attackerHex, defenderHex)) {
+                    let sideForHex = this._getEngagementSide(attacker, attackerHex, defender, defenderHex, defenderAngle);
+                    if (sideForHex > side) side = sideForHex;
+                }
             }
         }
         return side;
@@ -164,30 +190,6 @@ export class CBUnitManagementTeacher {
 
     canGetTired(unit) {
         return !unit.isExhausted() && (!unit.isCharging() || !unit.isTired())
-    }
-
-    getUnitOfType(units, type) {
-        let troops = [];
-        for (let unit of units) {
-            if (unit.type === type) {
-                troops.push(unit);
-            }
-        }
-        return troops;
-    }
-
-    canPlayUnit(unit) {
-        return unit.isOnBoard() && !unit.hasBeenActivated() && !unit.hasBeenPlayed();
-    }
-
-    getFoes(unit) {
-        let foes = new Set();
-        for (let potentialFoe of this.game.units) {
-            if (potentialFoe.isOnBoard() && this.areUnitsFoes(unit, potentialFoe)) {
-                foes.add(potentialFoe);
-            }
-        }
-        return foes;
     }
 
 }

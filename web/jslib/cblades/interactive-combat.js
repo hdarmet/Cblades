@@ -4,7 +4,7 @@ import {
     Area2D,
     canonizeAngle,
     diffAngle,
-    Dimension2D, Point2D, sumAngle
+    Dimension2D, invertAngle, Point2D, sumAngle
 } from "../geometry.js";
 import {
     DAbstractInsert,
@@ -18,8 +18,7 @@ import {
     CBHexSideId
 } from "./map.js";
 import {
-    CBCharge,
-    CBFormation
+    CBCharge
 } from "./unit.js";
 import {
     CBActionMenu,
@@ -809,7 +808,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
                     new Point2D(0, 0), new Dimension2D(80, 130));
                 orientation.pangle = parseInt(angle);
                 orientation.rotate = false;
-                let unitHex =  moveDirections[angle].hex.getNearHex((angle+180)%360);
+                let unitHex =  moveDirections[angle].hex.getNearHex(invertAngle(angle));
                 let startLocation = Point2D.position(this.unit.location, unitHex.location, 1);
                 let targetPosition = Point2D.position(unitHex.location, moveDirections[angle].hex.location, 0.9);
                 orientation.position = startLocation.plusPoint(targetPosition);
@@ -826,7 +825,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
                     new Point2D(0, 0), new Dimension2D(80, 96));
                 orientation.pangle = parseInt(angle);
                 orientation.rotate = true;
-                orientation.hex =  rotateDirections[angle].hex.getNearHex((angle+180)%360);
+                orientation.hex =  rotateDirections[angle].hex.getNearHex(invertAngle(angle));
                 let startLocation = Point2D.position(this.unit.location, orientation.hex.location, 1.5);
                 let targetPosition = Point2D.position(orientation.hex.location, rotateDirections[angle].hex.location, 0.9);
                 orientation.position = startLocation.plusPoint(targetPosition);

@@ -1,11 +1,14 @@
 'use strict'
 
 import {
-    CBCharacter, CBFormation, CBLackOfMunitions, CBOrderInstruction, CBTiredness, CBTroop
+    CBFormation, CBLackOfMunitions, CBOrderInstruction, CBTiredness, CBTroop
 } from "../unit.js";
 import {
     distanceFromHexToHex
 } from "../map.js";
+import {
+    sumAngle
+} from "../../geometry.js";
 
 export class CBCommandTeacher {
 
@@ -185,11 +188,11 @@ export class CBCommandTeacher {
             mayJoin.call(this, unit, unit.hexLocation))) return false;
         if (!(unit.angle%60)) return false;
         let hexes = [];
-        let hex = unit.hexLocation.getNearHex((unit.angle+90)%360);
+        let hex = unit.hexLocation.getNearHex(sumAngle(unit.angle, 90));
         if (mayJoin.call(this, unit, hex)) {
             hexes.push(hex);
         }
-        hex = unit.hexLocation.getNearHex((unit.angle+270)%360);
+        hex = unit.hexLocation.getNearHex(sumAngle(unit.angle, -90));
         if (mayJoin.call(this, unit, hex)) {
             hexes.push(hex);
         }
