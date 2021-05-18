@@ -148,7 +148,7 @@ export class CBUnitManagementTeacher {
         let side = 0;
         for (let attackerHex of attacker.hexLocation.hexes) {
             for (let defenderHex of defenderHexLocation.hexes) {
-                if (attackerHex.isNearHex(defenderHex) && this.canCross(attacker, attackerHex, defenderHex)) {
+                if (attackerHex.isNearHex(defenderHex)!==false && this.canCross(attacker, attackerHex, defenderHex)) {
                     let sideForHex = this._getEngagementSide(attacker, attackerHex, defender, defenderHex, defenderAngle);
                     if (sideForHex > side) side = sideForHex;
                 }

@@ -10,8 +10,12 @@ export class CBCombatTeacher {
         return this.getFoesThatMayBeShockAttacked(unit).length>0;
     }
 
+    hasFireAttackCapacity(unit) {
+        return unit.weaponProfile.getFireAttackCode();
+    }
+
     isAllowedToFireAttack(unit) {
-        return unit.weaponProfile.getFireAttackCode() && this.getFoesThatMayBeFireAttacked(unit).length>0;
+        return this.hasFireAttackCapacity(unit) && this.getFoesThatMayBeFireAttacked(unit).length>0;
     }
 
     containsAtLeastOneTroop(hexLocation) {

@@ -81,7 +81,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             else {
                 if (this.isAllowedToMove(unit)) {
                     allowedActions.moveForward = true;
-                    allowedActions.moveMode =CBMoveMode.ATTACK;
+                    allowedActions.moveMode = CBMoveMode.ATTACK;
                 }
                 return allowedActions.moveForward && !unit.characterNature && !unit.hasReceivedOrder();
             }

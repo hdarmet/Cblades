@@ -3,7 +3,7 @@
 import {
     Area2D,
     canonizeAngle,
-    Dimension2D, invertAngle, Point2D
+    Dimension2D, invertAngle, Point2D, sumAngle
 } from "../geometry.js";
 import {
     DAbstractInsert,
@@ -71,14 +71,11 @@ export class InteractiveAbstractMovementAction extends CBAction {
         super(game, unit);
         this._event = event;
         this._movementCost = 0;
-        this._minMovementCost = 0;
         this._moves = 0;
-        this._minMoves = 0;
     }
 
     _memento() {
         let memento = super._memento();
-        memento.minMovementCost = this._minMovementCost;
         memento.movementCost = this._movementCost;
         memento.moves = this._moves;
         return memento;
@@ -86,27 +83,12 @@ export class InteractiveAbstractMovementAction extends CBAction {
 
     _revert(memento) {
         super._revert(memento);
-        this._minMovementCost = memento.minMovementCost;
         this._movementCost = memento.movementCost;
         this._moves = memento.moves;
     }
 
-    set minMovementCost(minMovementCost) {
-        this._minMovementCost = minMovementCost;
-    }
-
-    setMinMovementCost(minMovementCost) {
-        Memento.register(this);
-        this._minMovementCost = minMovementCost;
-    }
-
-    set minMoves(minMoves) {
-        this._minMoves = minMoves;
-    }
-
-    setMinMoves(minMoves) {
-        Memento.register(this);
-        this._minMoves = minMoves;
+    get movementCost() {
+        return this._movementCost;
     }
 
     get moves() {
@@ -119,7 +101,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
     }
 
     isFinishable() {
-        return this._movementCost>=this._minMovementCost && this._moves>=this._minMoves;
+        return this._constraint ? this._constraint.isActionFinishable() : true;
     }
 
     play() {
@@ -140,6 +122,10 @@ export class InteractiveAbstractMovementAction extends CBAction {
         return zones;
     }
 
+    _filterFormationRotations(zones) {
+        return zones;
+    }
+
     _filterFormationMoves(zones) {
         return zones;
     }
@@ -152,6 +138,12 @@ export class InteractiveAbstractMovementAction extends CBAction {
         return start ?
             this.game.arbitrator.getAllowedFirstRotations(this.unit):
             this.game.arbitrator.getAllowedSubsequentRotations(this.unit);
+    }
+
+    _getAllowedFormationRotations(start) {
+        return start ?
+            this.game.arbitrator.getAllowedFormationFirstRotations(this.unit):
+            this.game.arbitrator.getAllowedFormationSubsequentRotations(this.unit);
     }
 
     _getFormationAllowedMoves(start) {
@@ -172,6 +164,10 @@ export class InteractiveAbstractMovementAction extends CBAction {
         return this._filterRotations(this._getAllowedRotations(start));
     }
 
+    getAllowedFormationRotations(start) {
+        return this._filterFormationRotations(this._getAllowedFormationRotations(start));
+    }
+
     getFormationAllowedMoves(start) {
         let allowedZones = this._getFormationAllowedMoves(start);
         return {
@@ -183,7 +179,6 @@ export class InteractiveAbstractMovementAction extends CBAction {
     _buildMoveActuator(start, finishable) {
         if (this.unit.formationNature) {
             let  {moveDirections, turnDirections} = this.getFormationAllowedMoves(start);
-            if (moveDirections.length===0) this.setMinMovementCost(0);
             if (moveDirections.length || turnDirections.length) {
                 let moveFormationActuator = this.createFormationMoveActuator(moveDirections, turnDirections, start);
                 moveFormationActuator.enableHide(finishable);
@@ -193,7 +188,6 @@ export class InteractiveAbstractMovementAction extends CBAction {
         }
         else {
             let moveDirections = this.getAllowedMoves(start);
-            if (moveDirections.length===0) this.setMinMovementCost(0);
             if (moveDirections.length) {
                 let moveActuator = this.createMoveActuator(moveDirections, start);
                 moveActuator.enableHide(finishable);
@@ -210,7 +204,9 @@ export class InteractiveAbstractMovementAction extends CBAction {
     }
 
     _buildRotationActuator(start, finishable) {
-        let orientationDirections = this.getAllowedRotations(start)
+        let orientationDirections = this.unit.formationNature ?
+            this.getAllowedFormationRotations(start) :
+            this.getAllowedRotations(start);
         if (orientationDirections.length) {
             let orientationActuator = this.createRotationActuator(orientationDirections, start);
             orientationActuator.enableHide(finishable);
@@ -341,48 +337,70 @@ export class InteractiveAbstractMovementAction extends CBAction {
 
 }
 
-export class InteractiveMovementAction extends InteractiveAbstractMovementAction {
+export class MovementConstraint {
 
-    constructor(game, unit, moveMode, event) {
-        super(game, unit, event);
-        this._moveMode = moveMode;
+    constructor(action) {
+        this._action = action;
     }
 
-    isFinishable() {
-        return super.isFinishable() || this.game.arbitrator.doesUnitEngage(this.unit);
+    get action() {
+        return this._action;
     }
 
-    _prepareMovementConstraints() {
-        if (this._moveMode === CBMoveMode.ATTACK) {
-            this._allowedMoves = stringifyHexLocations(this.game.arbitrator.getAllowedAttackMoves(this.unit));
-            this._filterForMoves = this._filterHex;
-            this._filterForRotations = this._filterHex;
-            this._filterForFormationMoves = this._filterHexSide;
-            this._filterForFormationTurns = this._filterHexTurn;
-            this.minMovementCost = this.game.arbitrator.getMinCostForAttackMove(this.unit);
-        }
-        else if (this._moveMode === CBMoveMode.DEFEND) {
-            this._filterForMoves = this._filterNotAdjacent;
-            this._filterForFormationMoves = this._filterFormationMoveNotAdjacent;
-            this._filterForFormationTurns = this._filterFormationTurnNotAdjacent;
-        }
-        else if (this._moveMode === CBMoveMode.REGROUP) {
-            this._allowedMoves = stringifyHexLocations(this.game.arbitrator.getAllowedMoveAwayMoves(this.unit));
-            this._filterForMoves = this._filterHex;
-            this._filterForRotations = this.moves===0 ? this._filterHex : null;
-            this._filterForFormationMoves = this._filterHexSide;
-            this._filterForFormationTurns = this._filterHexTurn;
-            this.minMoves = 1;
-        }
-        else if (this._moveMode === CBMoveMode.RETREAT) {
-            this._allowedMoves = stringifyHexLocations(this.game.arbitrator.getAllowedRetreatMoves(this.unit));
-            this._filterForMoves = this._filterHex;
-            this._filterForFormationMoves = this._filterHexSide;
-            this._filterForFormationTurns = this._filterHexTurn;
-        }
+    filterForMoves(zones) {
+        return zones;
     }
 
-    _filterHex(zones) {
+    filterForRotations(zones) {
+        return zones;
+    }
+
+    filterForFormationMoves(zones) {
+        return zones;
+    }
+
+    filterForFormationTurns(zones) {
+        return zones;
+    }
+
+    filterForFormationRotations(zones) {
+        return zones;
+    }
+
+    isActionFinishable() {
+        return true;
+    }
+
+}
+
+export class ControlledAreaMovementConstraint extends MovementConstraint {
+
+    constructor(action, allowedMoves) {
+        super(action);
+        this._allowedMoves = allowedMoves ? stringifyHexLocations(allowedMoves) : null;
+    }
+
+    filterForMoves(zones) {
+        return this._filterAllHex(zones);
+    }
+
+    filterForRotations(zones) {
+        return this._filterAllHex(zones);
+    }
+
+    filterForFormationMoves(zones) {
+        return this._filterHexSide(zones);
+    }
+
+    filterForFormationTurns(zones) {
+        return this._filterHexTurn;(zones);
+    }
+
+    filterForFormationRotations(zones) {
+        return this._filterHexSideRotations(zones);
+    }
+
+    _filterAllHex(zones) {
         if (!this._allowedMoves) return zones;
         let result = [];
         for (let sangle in zones) {
@@ -400,15 +418,53 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         return result;
     }
 
+    _filterAnyHex(zones) {
+        if (!this._allowedMoves) return zones;
+        let result = [];
+        for (let sangle in zones) {
+            let angle = parseInt(sangle);
+            let toInclude = false;
+            for (let hexId of zones[angle].hex.hexes) {
+                if (this._allowedMoves.has(hexId.location.toString())) {
+                    toInclude = true; break;
+                }
+            }
+            if (toInclude) {
+                result[angle] = zones[angle];
+            }
+        }
+        return result;
+    }
+
     _filterHexSide(zones) {
         if (!this._allowedMoves) return zones;
         let result = [];
         for (let sangle in zones) {
             let angle = parseInt(sangle);
-            let hexSide = this.unit.hexLocation.moveTo(angle);
+            let hexSide = this.action.unit.hexLocation.moveTo(angle);
             if (this._allowedMoves.has(hexSide.location.toString())) {
                 result[angle] = zones[angle];
             }
+        }
+        return result;
+    }
+
+    _filterHexSideRotations(zones) {
+        function checkOption(angle, delta) {
+            let hexSideMove = this.action.unit.hexLocation.moveTo(sumAngle(angle, delta));
+            let hexSideTurn = this.action.unit.hexLocation.turnTo(sumAngle(angle, delta));
+            if (this._allowedMoves.has(hexSideMove.location.toString()) ||
+                this._allowedMoves.has(hexSideTurn.location.toString())) {
+                result[angle] = zones[angle];
+            }
+        }
+
+        if (!this._allowedMoves) return zones;
+        let result = [];
+        for (let sangle in zones) {
+            let angle = parseInt(sangle);
+            checkOption.call(this, angle, -30);
+            checkOption.call(this, angle, 30);
         }
         return result;
     }
@@ -418,7 +474,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         let result = [];
         for (let sangle in zones) {
             let angle = parseInt(sangle);
-            let hexSide = this.unit.hexLocation.turnTo(angle);
+            let hexSide = this.action.unit.hexLocation.turnTo(angle);
             if (this._allowedMoves.has(hexSide.location.toString())) {
                 result[angle] = zones[angle];
             }
@@ -426,11 +482,57 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         return result;
     }
 
+}
+
+export class AttackMovementConstraint extends ControlledAreaMovementConstraint {
+
+    constructor(action) {
+        super(action, action.game.arbitrator.getAllowedAttackMoves(action.unit));
+        this._minMovementCost = action.game.arbitrator.getMinCostForAttackMove(action.unit);
+    }
+
+    isActionFinishable() {
+        return this.action.game.arbitrator.isAllowedToFireAttack(this.action.unit) ||
+            this.action.movementCost>=this._minMovementCost;
+    }
+
+}
+
+export class FireMovementConstraint extends ControlledAreaMovementConstraint {
+
+    constructor(action) {
+        super(action, action.game.arbitrator.getAllowedFireMoves(action.unit));
+    }
+
+    isActionFinishable() {
+        return this.action.game.arbitrator.isAllowedToFireAttack(this.action.unit);
+    }
+
+}
+
+export class DefenseMovementConstraint extends MovementConstraint {
+
+    constructor(action) {
+        super(action);
+    }
+
+    filterForMoves(zones) {
+        return this._filterNotAdjacent(zones);
+    }
+
+    filterForFormationMoves(zones) {
+        return this._filterFormationMoveNotAdjacent(zones);
+    }
+
+    filterForFormationTurns(zones) {
+        return this._filterFormationTurnNotAdjacent;(zones);
+    }
+
     _filterNotAdjacent(zones) {
         let result = [];
         for (let sangle in zones) {
             let angle = parseInt(sangle);
-            if (!this.game.arbitrator.isHexLocationAdjacentToFoes(this.unit, zones[angle].hex)) {
+            if (!this.action.game.arbitrator.isHexLocationAdjacentToFoes(this.action.unit, zones[angle].hex)) {
                 result[angle] = zones[angle];
             }
         }
@@ -441,8 +543,8 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         let result = [];
         for (let sangle in zones) {
             let angle = parseInt(sangle);
-            let hexLocation = this.unit.hexLocation.moveTo(angle);
-            if (!this.game.arbitrator.isHexLocationAdjacentToFoes(this.unit, hexLocation)) {
+            let hexLocation = this.action.unit.hexLocation.moveTo(angle);
+            if (!this.action.game.arbitrator.isHexLocationAdjacentToFoes(this.action.unit, hexLocation)) {
                 result[angle] = zones[angle];
             }
         }
@@ -453,40 +555,100 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         let result = [];
         for (let sangle in zones) {
             let angle = parseInt(sangle);
-            let hexLocation = this.unit.hexLocation.turnTo(angle);
-            if (!this.game.arbitrator.isHexLocationAdjacentToFoes(this.unit, hexLocation)) {
+            let hexLocation = this.action.unit.hexLocation.turnTo(angle);
+            if (!this.action.game.arbitrator.isHexLocationAdjacentToFoes(this.action.unit, hexLocation)) {
                 result[angle] = zones[angle];
             }
         }
         return result;
     }
 
-    _filterMoves(zones) {
-        if (this._filterForMoves) {
-            return this._filterForMoves(zones);
+}
+
+export class RegroupMovementConstraint extends ControlledAreaMovementConstraint {
+
+    constructor(action) {
+        let allowedMoves = action.game.arbitrator.getAllowedMoveAwayMoves(action.unit);
+        super(action, allowedMoves ? allowedMoves.hexLocations : null);
+        this._minMoves = (allowedMoves && allowedMoves.maxRemainingPoints>=0) ? 1 : 0;
+    }
+
+    filterForRotations(zones) {
+        return this.action.moves===0 ? this._filterAnyHex(zones) : zones;
+    }
+
+    isActionFinishable() {
+        return this.action.moves>=this._minMoves;
+    }
+
+}
+
+export class RetreatMovementConstraint extends ControlledAreaMovementConstraint {
+
+    constructor(action) {
+        super(action, action.game.arbitrator.getAllowedRetreatMoves(action.unit));
+    }
+
+    filterForRotations(zones) {
+        return this.action.moves===0 ? this._filterAnyHex(zones) : zones;
+    }
+
+    isActionFinishable() {
+        return this.action.moves>=1;
+    }
+
+}
+
+export class InteractiveMovementAction extends InteractiveAbstractMovementAction {
+
+    constructor(game, unit, moveMode, event) {
+        super(game, unit, event);
+        this._moveMode = moveMode;
+    }
+
+    isFinishable() {
+        return super.isFinishable() || this.game.arbitrator.doesUnitEngage(this.unit);
+    }
+
+    _prepareMovementConstraints() {
+        if (this._moveMode === CBMoveMode.NO_CONSTRAINT) {
+            this._constraint = new MovementConstraint(this);
         }
-        else return super._filterMoves(zones);
+        else if (this._moveMode === CBMoveMode.ATTACK) {
+            this._constraint = new AttackMovementConstraint(this);
+        }
+        else if (this._moveMode === CBMoveMode.FIRE) {
+            this._constraint = new FireMovementConstraint(this);
+        }
+        else if (this._moveMode === CBMoveMode.DEFEND) {
+            this._constraint = new DefenseMovementConstraint(this);
+        }
+        else if (this._moveMode === CBMoveMode.REGROUP) {
+            this._constraint = new RegroupMovementConstraint(this);
+        }
+        else if (this._moveMode === CBMoveMode.RETREAT) {
+            this._constraint = new RetreatMovementConstraint(this);
+        }
+    }
+
+    _filterMoves(zones) {
+        return this._constraint.filterForMoves(zones);
     }
 
     _filterRotations(zones) {
-        if (this._filterForRotations) {
-            return this._filterForRotations(zones);
-        }
-        else return super._filterRotations(zones);
+        return this._constraint.filterForRotations(zones);
+    }
+
+    _filterFormationRotations(zones) {
+        return this._constraint.filterForFormationRotations(zones);
     }
 
     _filterFormationMoves(zones) {
-        if (this._filterForFormationMoves) {
-            return this._filterForFormationMoves(zones);
-        }
-        else return super._filterFormationMoves(zones);
+        return this._constraint.filterForFormationMoves(zones);
     }
 
     _filterFormationTurns(zones) {
-        if (this._filterForFormationTurns) {
-            return this._filterForFormationTurns(zones);
-        }
-        else return super._filterFormationTurns(zones);
+        return this._constraint.filterForFormationTurns(zones);
     }
 
     finalize(action) {
@@ -645,6 +807,10 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     }
 
     _filterRotations(zones) {
+        return this._filterZones(zones);
+    }
+
+    _filterFormationRotations(zones) {
         return this._filterZones(zones);
     }
 
