@@ -452,13 +452,14 @@ export class CBMovementTeacher {
     }
 
     getAllowedRoutMoves(unit) {
-        return new Set(getGoodNextMoves({
+        let config = {
             start:unit.hexLocation, startAngle:unit.angle,
             arrivals:unit.wing.retreatZone,
             costMove:this.getStandardMoveCostMethod(unit, new Set(unit.hexLocation.hexes)),
             costRotate:this.getTurnCostMethod(unit, new Set(unit.hexLocation.hexes)),
             minimalCost:unit.moveProfile.getMinimalMoveCost()
-        }));
+        };
+        return new Set(getGoodNextMoves(config));
     }
 
     hasRoutPath(unit) {
@@ -467,17 +468,18 @@ export class CBMovementTeacher {
     }
 
     getAllowedAttackMoves(unit) {
-        return new Set(getGoodNextMoves({
+        let config = {
             start:unit.hexLocation, startAngle:unit.angle,
             arrivals:[...this.getHexesAdjacentToFoes(unit)],
             costMove:this.getAttackMoveCostMethod(unit),
             costRotate:this.getTurnCostMethod(unit, new Set(unit.hexLocation.hexes)),
             minimalCost:unit.moveProfile.getMinimalMoveCost()
-        }));
+        };
+        return new Set(getGoodNextMoves(config));
     }
 
     getAllowedFireMoves(unit) {
-        return new Set(getInRangeMoves({
+        let config = {
             start:unit.hexLocation, startAngle:unit.angle,
             range: unit.weaponProfile.getFireRange(),
             arrivals:[...this.getFoesOccupiedHexes(unit)],
@@ -485,28 +487,30 @@ export class CBMovementTeacher {
             costRotate:this.getTurnCostMethod(unit, new Set(unit.hexLocation.hexes)),
             minimalCost:unit.moveProfile.getMinimalMoveCost(),
             maxCost:this.getMaxMovementPoints(unit)
-        }));
+        };
+        return new Set(getInRangeMoves(config));
     }
 
     getAllowedRetreatMoves(unit) {
-        return new Set(getGoodNextMoves({
+        let config = {
             start:unit.hexLocation, startAngle:unit.angle,
             arrivals:unit.wing.retreatZone,
             costMove:this.getStandardMoveCostMethod(unit, new Set(unit.hexLocation.hexes)),
             costRotate:this.getTurnCostMethod(unit, new Set(unit.hexLocation.hexes)),
             minimalCost:unit.moveProfile.getMinimalMoveCost()
-        }));
+        };
+        return new Set(getGoodNextMoves(config));
     }
 
     getCostToEngage(unit, foe) {
-        return getPathCost({
+        let config = {
             start:foe.hexLocation, startAngle:foe.angle,
             arrivals:unit.hexLocation.hexes,
             costMove:this.getMoveCostMethod(foe, new Set(unit.hexLocation.hexes)),
             costRotate:this.getTurnCostMethod(foe, new Set(unit.hexLocation.hexes)),
-            minimalCost:foe.moveProfile.getMinimalMoveCost(),
-            maxCost:foe.moveProfile.movementPoints
-        });
+            minimalCost: foe.moveProfile.getMinimalMoveCost()
+        };
+        return getPathCost(config);
     }
 
     _getReachableFoes(unit) {
@@ -530,13 +534,14 @@ export class CBMovementTeacher {
         let maxRemainingPoints = -1;
         for (let foe of this._getReachableFoes(unit)) {
             let realCost = this.getCostToEngage(unit, foe);
-            let remainingMovementPoints = foe.moveProfile.movementPoints - realCost;
-            if (remainingMovementPoints>maxRemainingPoints) {
-                maxRemainingPoints = remainingMovementPoints;
-                result = [foe];
-            }
-            else if (remainingMovementPoints === maxRemainingPoints) {
-                result.push(foe);
+            if (realCost !== null) {
+                let remainingMovementPoints = foe.moveProfile.movementPoints - realCost;
+                if (remainingMovementPoints > maxRemainingPoints) {
+                    maxRemainingPoints = remainingMovementPoints;
+                    result = [foe];
+                } else if (remainingMovementPoints === maxRemainingPoints) {
+                    result.push(foe);
+                }
             }
         }
         return {foes:result, remainingMovementPoints:maxRemainingPoints};

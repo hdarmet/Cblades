@@ -15,7 +15,7 @@ import {
     CBCommandProfile, CBEngageSideMode,
     CBFormation,
     CBMoralProfile,
-    CBMoveProfile, CBTiredness,
+    CBMoveProfile, CBOrderInstruction, CBTiredness,
     CBTroop,
     CBUnitType, CBWeaponProfile,
     CBWeather,
@@ -257,7 +257,20 @@ describe("Units teacher", ()=> {
 
     it("Checks if a unit is allowed to charge", () => {
         given:
-            var {arbitrator, unit1, unit2, formation2} = create2PlayersTinyFormationGame();
+            var {arbitrator, unit1, unit2, wing1, formation2, wing2} = create2PlayersTinyFormationGame();
+        then:
+            assert(arbitrator.mayUnitCharge(unit1)).isFalse();
+            assert(arbitrator.mayUnitCharge(formation2)).isFalse();
+        when:
+            unit1.receivesOrder(true);
+            formation2.receivesOrder(true);
+        then:
+            assert(arbitrator.mayUnitCharge(unit1)).isTrue();
+            assert(arbitrator.mayUnitCharge(formation2)).isFalse();
+        when:
+            unit1.receivesOrder(false);
+            wing1.setOrderInstruction(CBOrderInstruction.ATTACK);
+            wing2.setOrderInstruction(CBOrderInstruction.ATTACK);
         then:
             assert(arbitrator.mayUnitCharge(unit1)).isTrue();
             assert(arbitrator.mayUnitCharge(formation2)).isFalse();

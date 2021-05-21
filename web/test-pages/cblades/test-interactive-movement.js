@@ -42,6 +42,9 @@ import {
 import {
     CBTiredness
 } from "../../jslib/cblades/unit.js";
+import {
+    CBMoveMode
+} from "../../jslib/cblades/map.js";
 
 describe("Interactive Movement", ()=> {
 
@@ -832,14 +835,14 @@ describe("Interactive Movement", ()=> {
         then:
             assert(unit1.isEngaging()).isTrue();
         when:
-            unit1.action.moveUnit(map.getHex(5, 5), dummyEvent);
+            moveUnitByAction(unit1, map.getHex(5, 5));
         then:
             assert(unit1.isEngaging()).isFalse();
     });
 
     function moveUnitByAction(unit, hex) {
-        unit.player.startMoveUnit(unit, dummyEvent);
-        unit.action.moveUnit(hex);
+        unit.player.startMoveUnit(unit, CBMoveMode.NO_CONSTRAINT, dummyEvent);
+        unit.action.moveUnit(hex, unit.hexLocation.isNearHex(hex));
     }
 
     function moveUnit1OnContactToUnit2(map, unit1, unit2) {

@@ -525,7 +525,7 @@ export class DefenseMovementConstraint extends MovementConstraint {
     }
 
     filterForFormationTurns(zones) {
-        return this._filterFormationTurnNotAdjacent;(zones);
+        return this._filterFormationTurnNotAdjacent(zones);
     }
 
     _filterNotAdjacent(zones) {
@@ -993,6 +993,10 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
         return [moveDirections, turnDirections];
     }
 
+    _getAllowedFormationRotations(start) {
+        return [];
+    }
+
 }
 
 export class InteractiveConfrontAction extends InteractiveAbstractMovementAction {
@@ -1089,6 +1093,10 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
 
     _getAllowedRotations(start) {
         return this.game.arbitrator.getConfrontAllowedRotations(this.unit);
+    }
+
+    _getAllowedFormationRotations(start) {
+        return [];
     }
 
 }

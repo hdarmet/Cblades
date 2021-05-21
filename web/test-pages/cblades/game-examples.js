@@ -53,7 +53,7 @@ export class CBTestArbitrator extends CBArbitrator {
     getAllowedActions(unit) {
         return {
             moveForward: true,
-            moveMove: CBMoveMode.NO_CONSTRAINT,
+            moveMode: CBMoveMode.NO_CONSTRAINT,
             moveBack: true,
             escape: true,
             confront: true,

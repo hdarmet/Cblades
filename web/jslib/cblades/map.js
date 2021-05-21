@@ -240,6 +240,14 @@ export class CBHexSideId {
         return this === hexSide || (this.fromHex.equalsTo(hexSide.fromHex) && this.toHex.equalsTo(hexSide.toHex));
     }
 
+    get col() {
+        return (this._fromHex.col + this._toHex.col)/2;
+    }
+
+    get row() {
+        return (this._fromHex.row + this._toHex.row)/2;
+    }
+
     get fromHex() {
         return this._fromHex;
     }

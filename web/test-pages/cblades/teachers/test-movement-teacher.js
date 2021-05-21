@@ -611,10 +611,9 @@ describe("Movement teacher", ()=> {
             assertVertexRotation(allowedRotations, 330, 4, 6, 5, 6, CBMovement.NORMAL);
     });
 
-    function assertRotate(rotates, angle, hexId1, hexId2, type) {
+    function assertFormationRotate(rotates, angle, hexId, type) {
         assert(rotates[angle]).isDefined();
-        assert(rotates[angle].hex.fromHex).equalsTo(hexId1);
-        assert(rotates[angle].hex.toHex).equalsTo(hexId2);
+        assert(rotates[angle].hex).equalsTo(hexId);
         assert(rotates[angle].type).equalsTo(type);
     }
 
@@ -624,7 +623,7 @@ describe("Movement teacher", ()=> {
             formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             unit21.move(map.getHex(4, 3)); // foes on forward zone
         when:
-            var allowedRotations = arbitrator.getAllowedSubsequentRotations(formation1);
+            var allowedRotations = arbitrator.getAllowedFormationSubsequentRotations(formation1);
         then:
             assertNoMove(allowedRotations, 0); // angle not allowed
             assertNoMove(allowedRotations, 60); // angle not allowed
@@ -632,22 +631,22 @@ describe("Movement teacher", ()=> {
             assertNoMove(allowedRotations, 120); // angle not allowed
             assertNoMove(allowedRotations, 180); // angle not allowed
             assertNoMove(allowedRotations, 240); // angle not allowed
-            assertRotate(allowedRotations, 270, map.getHex(2, 5), map.getHex(2, 3), CBMovement.NORMAL);
+            assertFormationRotate(allowedRotations, 270, map.getHex(2, 4), CBMovement.NORMAL);
             assertNoMove(allowedRotations, 300); // angle not allowed
         when:
             formation1.movementPoints = 0.5;
-            allowedRotations = arbitrator.getAllowedSubsequentRotations(formation1);
+            allowedRotations = arbitrator.getAllowedFormationSubsequentRotations(formation1);
         then:
-            assertRotate(allowedRotations, 270, map.getHex(2, 5), map.getHex(2, 3), CBMovement.EXTENDED);
+            assertFormationRotate(allowedRotations, 270, map.getHex(2, 4), CBMovement.EXTENDED);
         when:
             formation1.extendedMovementPoints = 0.5;
-            allowedRotations = arbitrator.getAllowedSubsequentRotations(formation1);
+            allowedRotations = arbitrator.getAllowedFormationSubsequentRotations(formation1);
         then:
             assertNoMove(allowedRotations, 270);
         when:
-            allowedRotations = arbitrator.getAllowedFirstRotations(formation1);
+            allowedRotations = arbitrator.getAllowedFormationFirstRotations(formation1);
         then:
-            assertRotate(allowedRotations, 270, map.getHex(2, 5), map.getHex(2, 3), CBMovement.MINIMAL);
+            assertFormationRotate(allowedRotations, 270, map.getHex(2, 4), CBMovement.MINIMAL);
     });
 
     it("Checks formation confront allowed rotations", () => {
@@ -736,19 +735,28 @@ describe("Movement teacher", ()=> {
 
     it("Checks cost to engage computation", () => {
         given:
-            var {arbitrator, map, unit11, unit21, unit22, leader21} = create2Players4UnitsTinyGame();
+            var {arbitrator, map, unit11, unit21, leader21} = create2Players4UnitsTinyGame();
         when:
+            leader21.angle = 270;
             var costToEngage = arbitrator.getCostToEngage(unit11, unit21);
-            var whoJoined = arbitrator.getNearestFoesThatCanJoinAndEngage(unit11).result;
+            var whoJoined = arbitrator.getNearestFoesThatCanJoinAndEngage(unit11).foes;
         then:
-            assert(costToEngage).equalsTo(1.5);
+            assert(costToEngage).equalsTo(1);
+            assert(whoJoined).unorderedArrayEqualsTo([unit21]);
+        when:
+            unit21.angle = 270;
+            unit21.hexLocation = leader21.hexLocation.getNearHex(0);
+            costToEngage = arbitrator.getCostToEngage(unit11, unit21);
+            whoJoined = arbitrator.getNearestFoesThatCanJoinAndEngage(unit11).foes;
+        then:
+            assert(costToEngage).equalsTo(2);
             assert(whoJoined).unorderedArrayEqualsTo([unit21, leader21]);
         when:
             unit11.move(map.getHex(0, 5));
             costToEngage = arbitrator.getCostToEngage(unit11, unit21);
-            whoJoined = arbitrator.getNearestFoesThatCanJoinAndEngage(unit11).result;
+            whoJoined = arbitrator.getNearestFoesThatCanJoinAndEngage(unit11).foes;
         then:
-            assert(costToEngage).isNotDefined();
+            assert(costToEngage).equalsTo(7);
             assert(whoJoined).arrayEqualsTo([]);
     });
 
