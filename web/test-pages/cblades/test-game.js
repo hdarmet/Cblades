@@ -358,6 +358,44 @@ describe("Game", ()=> {
         when:
             var action = new CBAction(game, unit);
             var actuator = new CBTestActuator(action);
+            actuator.enableHide(false);
+            resetDirectives(actuatorsLayer);
+            game.openActuator(actuator);
+            paint(game);
+            loadAllImages();
+        then:
+            assertClearDirectives(actuatorsLayer);
+            assertDirectives(actuatorsLayer, showActuatorTrigger("test", 50, 50, zoomAndRotate0(416.6667, 351.8878)))
+            assertNoMoreDirectives(actuatorsLayer);
+        when:
+            game.closeActuators();
+            resetDirectives(actuatorsLayer);
+            repaint(game);
+        then:
+            assertClearDirectives(actuatorsLayer);
+            assertDirectives(actuatorsLayer, showActuatorTrigger("test", 50, 50, zoomAndRotate0(416.6667, 351.8878)))
+            assertNoMoreDirectives(actuatorsLayer);
+            assert(game._actuators).arrayEqualsTo([actuator]);
+        when:
+            game.enableActuatorsClosing(true);
+            game.closeActuators();
+            resetDirectives(actuatorsLayer);
+            repaint(game);
+        then:
+            assertClearDirectives(actuatorsLayer);
+            assertNoMoreDirectives(actuatorsLayer);
+            assert(game._actuators).arrayEqualsTo([]);
+    });
+
+    it("Checks that actuator closing may be preempted", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [actuatorsLayer] = getLayers(game.board, "actuators");
+            game.setMenu();
+            game._showCommand.action();
+        when:
+            var action = new CBAction(game, unit);
+            var actuator = new CBTestActuator(action);
             resetDirectives(actuatorsLayer);
             game.openActuator(actuator);
             paint(game);
@@ -374,9 +412,9 @@ describe("Game", ()=> {
         then:
             assertClearDirectives(actuatorsLayer);
             assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
-                "save()",
-                "restore()"
-            ]);
+            "save()",
+            "restore()"
+        ]);
     });
 
     it("Checks mouse move over a trigger of an actuator", () => {

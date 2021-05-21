@@ -15,7 +15,7 @@ import {
 import {
     CBMap,
     CBHexSideId,
-    CBHexVertexId, CBMoveType, CBHex, CBHexId
+    CBHexVertexId, CBMoveType, CBHex, CBHexId, distanceFromHexToHex, distanceFromHexLocationToHexLocation
 } from "../../jslib/cblades/map.js";
 import {
     DBoard, DSimpleLevel
@@ -70,6 +70,21 @@ describe("Map", ()=> {
         DImage.resetCache();
         Mechanisms.reset();
         Memento.clear();
+    });
+
+    it("Checks distance methods", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var hexId1 = map.getHex(3, 4);
+            var hexId2 = map.getHex(5, 7);
+            var hexId3 = map.getHex(8, 4);
+            var hexSide = new CBHexSideId(hexId2, hexId2.getNearHex(60));
+        then:
+            assert(distanceFromHexToHex(hexId1, hexId2)).equalsTo(4);
+            assert(distanceFromHexToHex(hexId2, hexId1)).equalsTo(4);
+            assert(distanceFromHexToHex(hexId1, hexId3)).equalsTo(5);
+            assert(distanceFromHexLocationToHexLocation(hexId1, hexId2)).equalsTo(4);
+            assert(distanceFromHexLocationToHexLocation(hexSide, hexId2)).equalsTo(1);
     });
 
     it("Checks map general features", () => {
@@ -385,6 +400,8 @@ describe("Map", ()=> {
             assert(hexSide.getOtherHex(hexId1)).equalsTo(hexId2);
             assert(hexSide.getOtherHex(hexId2)).equalsTo(hexId1);
             assert(hexSide.angle).equalsTo(60);
+            assert(hexSide.col).equalsTo(4.5);
+            assert(hexSide.row).equalsTo(3);
             assert(CBHexSideId.equals(null, null)).isTrue();
             assert(CBHexSideId.equals(null, hexSide)).isFalse();
             assert(CBHexSideId.equals(hexSide, null)).isFalse();

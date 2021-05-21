@@ -646,18 +646,18 @@ export class AVLTree {
     }
 
     get forInsertList() {
-        let result = [this._root];
+        let result = [this._root._data];
         let toProcess = [this._root];
         while(toProcess.length>0) {
             let nextToProcess = [];
             for (let record of toProcess) {
                 if (record._left) {
                     nextToProcess.push(record._left);
-                    result.push(record._left);
+                    result.push(record._left._data);
                 }
                 if (record._right) {
                     nextToProcess.push(record._right);
-                    result.push(record._right);
+                    result.push(record._right._data);
                 }
             }
             toProcess = nextToProcess;

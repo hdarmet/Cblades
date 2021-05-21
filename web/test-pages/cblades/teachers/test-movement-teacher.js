@@ -670,34 +670,6 @@ describe("Movement teacher", ()=> {
             assertMove(allowedMoves, 300, 2, 4, CBMovement.NORMAL);
     });
 
-    it("Checks unit move cost", () => {
-        given:
-            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
-        then:
-            assert(arbitrator.getMovementCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
-    });
-
-    it("Checks unit rotation cost", () => {
-        given:
-            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
-        then:
-            assert(arbitrator.getRotationCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:0.5});
-    });
-
-    it("Checks formation move cost", () => {
-        given:
-            var {arbitrator, formation1} = create2Players1Formation2TroopsTinyGame();
-        then:
-            assert(arbitrator.getFormationMovementCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
-    });
-
-    it("Checks formation rotation cost", () => {
-        given:
-            var {arbitrator, formation1} = create2Players1Formation2TroopsTinyGame();
-        then:
-            assert(arbitrator.getFormationRotationCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
-    });
-
     it("Checks if movement inflicts tiredness", () => {
         given:
             var {arbitrator, unit12} = create2Players4UnitsTinyGame();

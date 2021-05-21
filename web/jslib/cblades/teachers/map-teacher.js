@@ -167,7 +167,7 @@ export class CBMapTeacher {
             unit.moveProfile.getMovementCostOnHex(toHexTarget),
             unit.moveProfile.getMovementCostOnHexSide(hexSide.toHex.to(toHexTarget))
         );
-        return fromHexCost>toHexCost ? fromHexCost : toHexCost;
+        return fromHexCost.type>toHexCost.type ? fromHexCost : toHexCost;
     }
 
     getFormationTurnCost(unit, angle, hexSide=unit.hexLocation) {

@@ -553,4 +553,10 @@ describe("Mechansism", ()=> {
         assert(tree.size).equalsTo(8);
     });
 
+    it("Retrieve an AVL list optimized for insertion", () => {
+        let tree = new AVLTree((a, b) => a - b, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        let values = [...tree.forInsertList];
+        assert(values).arrayEqualsTo([3, 1, 7, 0, 2, 5, 8, 4, 6, 9]);
+    });
+
 });

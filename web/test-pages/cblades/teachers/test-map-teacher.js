@@ -4,6 +4,7 @@ import {
     assert, before, describe, it
 } from "../../../jstest/jtest.js";
 import {
+    CBHex,
     CBHexSideId, CBMap, CBMoveType
 } from "../../../jslib/cblades/map.js";
 import {
@@ -14,7 +15,7 @@ import {
     CBCommandProfile,
     CBFormation,
     CBMoralProfile,
-    CBMoveProfile,
+    CBMoveProfile, CBProfile,
     CBTroop,
     CBUnitType, CBWeaponProfile,
     CBWeather,
@@ -80,11 +81,38 @@ describe("Map teacher", ()=> {
             assert(hexMap.get(map.getHex(2, 6))).equalsTo(2);
     });
 
+    class TestMoveProfile extends CBMoveProfile {
+
+        constructor(capacity = 0) {
+            super(capacity);
+        }
+
+        getMovementCostOnHex(hex) {
+            switch (hex.type) {
+                case CBHex.HEX_TYPES.OUTDOOR_ROUGH: return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
+                case CBHex.HEX_TYPES.OUTDOOR_DIFFICULT: return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
+                case CBHex.HEX_TYPES.IMPASSABLE: return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            }
+            return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+        }
+
+        getMovementCostOnHexSide(hexSide) {
+            switch (hexSide.type) {
+                case CBHex.HEXSIDE_TYPES.EASY: return {type:CBMoveProfile.COST_TYPE.SET, value:0.5};
+                case CBHex.HEXSIDE_TYPES.DIFFICULT: return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
+                case CBHex.HEXSIDE_TYPES.CLIMB: return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
+                case CBHex.HEXSIDE_TYPES.WALL: return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            }
+            return {type:CBMoveProfile.COST_TYPE.ADD, value:0};
+        }
+
+    }
+
     class CBTestUnitType extends CBUnitType {
         constructor(name, troopPaths, formationPaths=[]) {
             super(name, troopPaths, formationPaths);
             for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
-                this.setMoveProfile(index, new CBMoveProfile());
+                this.setMoveProfile(index, new TestMoveProfile());
                 this.setWeaponProfile(index, new CBWeaponProfile());
                 this.setCommandProfile(index, new CBCommandProfile());
                 this.setMoralProfile(index, new CBMoralProfile());
@@ -395,6 +423,61 @@ describe("Map teacher", ()=> {
             var {arbitrator} = create2Players4UnitsTinyGame();
         then:
             assert(arbitrator.getWeather()).equalsTo(CBWeather.CLEAR);
+    });
+
+    it("Checks unit move cost", () => {
+        given:
+            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.getMovementCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
+        when:
+            unit12.hexLocation.toward(60).type = CBHex.HEXSIDE_TYPES.EASY;
+        then:
+            assert(arbitrator.getMovementCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.SET, value:0.5});
+        when:
+            unit12.hexLocation.toward(60).type = CBHex.HEXSIDE_TYPES.CLIMB;
+        then:
+            assert(arbitrator.getMovementCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE});
+        when:
+            unit12.hexLocation.toward(60).type = CBHex.HEXSIDE_TYPES.WALL;
+        then:
+            assert(arbitrator.getMovementCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE});
+    });
+
+    it("Checks unit rotation cost", () => {
+        given:
+            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.getRotationCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:0.5});
+    });
+
+    it("Checks formation move cost", () => {
+        given:
+            var {arbitrator, formation1} = create2Players1Formation2TroopsTinyGame();
+        then:
+            assert(arbitrator.getFormationMovementCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
+        when:
+            formation1.hexLocation.fromHex.getNearHex(60).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+        then:
+            assert(arbitrator.getFormationMovementCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE});
+        when:
+            formation1.hexLocation.fromHex.getNearHex(60).type = CBHex.HEX_TYPES.IMPASSABLE;
+        then:
+            assert(arbitrator.getFormationMovementCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE});
+    });
+
+    it("Checks formation turn cost", () => {
+        given:
+            var {arbitrator, formation1} = create2Players1Formation2TroopsTinyGame();
+        then:
+            assert(arbitrator.getFormationTurnCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
+    });
+
+    it("Checks formation rotation cost", () => {
+        given:
+            var {arbitrator, formation1} = create2Players1Formation2TroopsTinyGame();
+        then:
+            assert(arbitrator.getFormationRotationCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
     });
 
 });

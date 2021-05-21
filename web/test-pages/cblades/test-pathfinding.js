@@ -383,7 +383,7 @@ describe("Pathfinding", ()=> {
             stopWhenTargetVicinityIsCompleted(pathfinding);
             pathfinding.computePath();
         then:
-            printHexSidePathFindingResult(pathfinding);
+            //printHexSidePathFindingResult(pathfinding);
             checkHexSideRecord(pathfinding, map, 10, 3, 10, 4, 4, 90, 0);
     });
 

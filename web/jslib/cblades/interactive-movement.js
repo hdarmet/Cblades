@@ -78,6 +78,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         let memento = super._memento();
         memento.movementCost = this._movementCost;
         memento.moves = this._moves;
+        memento.isFinishable = this._isFinishable;
         return memento;
     }
 
@@ -85,6 +86,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         super._revert(memento);
         this._movementCost = memento.movementCost;
         this._moves = memento.moves;
+        this._isFinishable = memento.isFinishable;
     }
 
     get movementCost() {
@@ -252,9 +254,9 @@ export class InteractiveAbstractMovementAction extends CBAction {
     }
 
     _checkActionProgession(cost) {
-        let finishable = this.isFinishable();
         this._movementCost += cost;
-        if (this.isFinishable()!==finishable) {
+        if (this.isFinishable() && !this._isFinishable) {
+            this._isFinishable = true;
             Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINISHABLE);
         }
     }
@@ -271,7 +273,6 @@ export class InteractiveAbstractMovementAction extends CBAction {
     }
 
     _continueAfterMove() {
-        this.setMoves(this.moves+1);
         return false
     }
 
@@ -294,10 +295,12 @@ export class InteractiveAbstractMovementAction extends CBAction {
     }
 
     moveUnit(hexId, angle, start) {
+        this.setMoves(this.moves+1);
         this._displaceUnit(hexId, start, this.game.arbitrator.getMovementCost(this.unit, angle));
     }
 
     moveFormation(hexSideId, angle, start) {
+        this.setMoves(this.moves+1);
         this._displaceUnit(hexSideId, start, this.game.arbitrator.getFormationMovementCost(this.unit, angle));
     }
 
@@ -393,7 +396,7 @@ export class ControlledAreaMovementConstraint extends MovementConstraint {
     }
 
     filterForFormationTurns(zones) {
-        return this._filterHexTurn;(zones);
+        return this._filterHexTurn(zones);
     }
 
     filterForFormationRotations(zones) {
@@ -577,6 +580,10 @@ export class RegroupMovementConstraint extends ControlledAreaMovementConstraint 
         return this.action.moves===0 ? this._filterAnyHex(zones) : zones;
     }
 
+    filterForFormationRotations(zones) {
+        return this.action.moves===0 ? super.filterForFormationRotations(zones) : zones;
+    }
+
     isActionFinishable() {
         return this.action.moves>=this._minMoves;
     }
@@ -591,6 +598,10 @@ export class RetreatMovementConstraint extends ControlledAreaMovementConstraint 
 
     filterForRotations(zones) {
         return this.action.moves===0 ? this._filterAnyHex(zones) : zones;
+    }
+
+    filterForFormationRotations(zones) {
+        return this.action.moves===0 ? super.filterForFormationRotations(zones) : zones;
     }
 
     isActionFinishable() {

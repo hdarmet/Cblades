@@ -4,7 +4,19 @@ import {
     describe, it, assert
 } from "../jstest/jtest.js";
 import {
-    Point2D, Dimension2D, Matrix2D, Area2D, same, inside, atan2, diffAngle, sumAngle, moyAngle, reverseAngle, canonizeAngle
+    Point2D,
+    Dimension2D,
+    Matrix2D,
+    Area2D,
+    same,
+    inside,
+    atan2,
+    diffAngle,
+    sumAngle,
+    moyAngle,
+    reverseAngle,
+    canonizeAngle,
+    invertAngle, isAngleBetween
 } from "../jslib/geometry.js";
 
 describe("Geometry", ()=> {
@@ -20,33 +32,32 @@ describe("Geometry", ()=> {
         assert(atan2(-15, -15)).equalsTo(315);
     });
 
-    it("Checks 'diffAngle' method", () => {
+    it("Checks angle methods", () => {
         assert(diffAngle(0, 300)).equalsTo(-60);
         assert(diffAngle(300, 0)).equalsTo(60);
         assert(diffAngle(30, 90)).equalsTo(60);
         assert(diffAngle(90, 30)).equalsTo(-60);
-    });
-
-    it("Checks 'reverseAngle' and 'canonizeAngle' methods", () => {
         assert(reverseAngle(0)).equalsTo(180);
         assert(reverseAngle(180)).equalsTo(0);
         assert(reverseAngle(60)).equalsTo(240);
         assert(reverseAngle(240)).equalsTo(60);
-
         assert(canonizeAngle(60)).equalsTo(60);
         assert(canonizeAngle(-60)).equalsTo(300);
-    });
-
-    it("Checks 'sumAngle' method", () => {
         assert(sumAngle(30, 100)).equalsTo(130);
         assert(sumAngle(300, 100)).equalsTo(40);
         assert(sumAngle(30, -100)).equalsTo(290);
-        assert(sumAngle(-300, 100)).equalsTo(160);    });
-
-    it("Checks 'moyAngle' method", () => {
+        assert(sumAngle(-300, 100)).equalsTo(160);
         assert(moyAngle(60, 100)).equalsTo(80);
         assert(moyAngle(300, 100)).equalsTo(20);
         assert(moyAngle(100, 300)).equalsTo(20);
+        assert(invertAngle(60)).equalsTo(240);
+        assert(invertAngle(300)).equalsTo(120);
+        assert(invertAngle(120)).equalsTo(300);
+        assert(isAngleBetween(30, [60, 120])).isFalse();
+        assert(isAngleBetween(90, [60, 120])).isTrue();
+        assert(isAngleBetween(210, [300, 120])).isFalse();
+        assert(isAngleBetween(330, [300, 120])).isTrue();
+        assert(isAngleBetween(60, [300, 120])).isTrue();
     });
 
     it("Checks 'same' method", () => {
