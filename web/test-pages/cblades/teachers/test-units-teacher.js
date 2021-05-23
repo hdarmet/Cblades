@@ -171,6 +171,14 @@ describe("Units teacher", ()=> {
             assert(arbitrator.doesHexLocationContainFoes(unit11, unit21.hexLocation)).isTrue();
     });
 
+    it("Checks if a hex is adjacent to foes", () => {
+        given:
+            var {map, arbitrator, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.isHexLocationAdjacentToFoes(unit11, unit21.hexLocation.getNearHex(60))).isTrue();
+            assert(arbitrator.isHexLocationAdjacentToFoes(unit11, unit21.hexLocation.getNearHex(180).getNearHex(180))).isFalse();
+    });
+
     it("Checks if units are friends", () => {
         given:
             var {arbitrator, unit11, unit12, unit21} = create2Players4UnitsTinyGame();
@@ -346,6 +354,21 @@ describe("Units teacher", ()=> {
             var units = [unit1, unit2, unit3];
         then:
             assert(arbitrator.getUnitOfType(units, type1)).unorderedArrayEqualsTo([unit1, unit3]);
+    });
+
+    it("Checks if how many movement point a unit can use", () => {
+        given:
+            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.getMaxMovementPoints(unit12)).equalsTo(3);
+            assert(arbitrator.getMinCostForAttackMove(unit12)).equalsTo(1);
+            assert(arbitrator.getMinCostForRoutMove(unit12)).equalsTo(3);
+        when:
+            unit12.fixTirednessLevel(CBTiredness.EXHAUSTED);
+        then:
+            assert(arbitrator.getMaxMovementPoints(unit12)).equalsTo(2);
+            assert(arbitrator.getMinCostForAttackMove(unit12)).equalsTo(1);
+            assert(arbitrator.getMinCostForRoutMove(unit12)).equalsTo(2);
     });
 
     it("Checks if a unit can get tired", () => {

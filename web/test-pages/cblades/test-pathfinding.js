@@ -14,7 +14,7 @@ import {
 } from "../../jslib/mechanisms.js";
 import {
     CBMap,
-    CBHexSideId
+    CBHexSideId, CBHexId
 } from "../../jslib/cblades/map.js";
 import {
     DBoard, DSimpleLevel
@@ -26,12 +26,12 @@ import {
 import {
     backwardMixin,
     CBAbstractPathFinding,
-    forwardMixin,
-    getGoodNextMoves,
+    forwardMixin, getArrivalAreaCosts,
+    getGoodNextMoves, getInRangeMoves,
     getPathCost,
     hexPathFindingMixin,
     hexSidePathFindingMixin,
-    stopWhenTargetVicinityIsCompleted,
+    stopWhenTargetVicinityIsCompleted, stringifyHexLocations,
 } from "../../jslib/cblades/pathfinding.js";
 
 class CBTestGame {
@@ -74,6 +74,11 @@ describe("Pathfinding", ()=> {
         }
         console.log(result);
     }
+
+    it("Checks miscellaneous features about path finding", () => {
+        then:
+            assert(stringifyHexLocations(null)).isNotDefined();
+    });
 
     it("Checks forward hex path finding", () => {
         given:
@@ -510,6 +515,117 @@ describe("Pathfinding", ()=> {
             var pathCost = getPathCost(config);
         then:
             assert(pathCost).equalsTo(null);
+    });
+
+    it("Checks hex area cost", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(9,2), map.getHex(10,2), map.getHex(11,2)]);
+            let config = {
+                start: map.getHex(10, 3),
+                startAngle: 0,
+                arrivals: [map.getHex(10, 1)],
+                costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+                costRotate: (fromHex, fromAngle, toAngle)=>1,
+                minimalCost: 1
+            };
+            var areaCosts = getArrivalAreaCosts(config);
+        then:
+            assert(areaCosts.cost).equalsTo(2.5);
+            assert(areaCosts.hexes).mapContentEqualsTo([
+                [map.getHex(10, 2), 1.5],
+                [map.getHex(10, 1), 2.5],
+                [map.getHex(9, 2), 2.5],
+                [map.getHex(11, 2), 2.5],
+                [map.getHex(9, 1), 3.5],
+                [map.getHex(10, 0), 3.5],
+                [map.getHex(11, 1), 3.5]
+            ]);
+    });
+
+    it("Checks hexside area cost", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(9,1), map.getHex(10,1), map.getHex(11,1)]);
+            let config = {
+                start: new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
+                startAngle: 90,
+                arrivals: [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+                costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+                costRotate: (fromHex, fromAngle, toAngle)=>1,
+                minimalCost: 1
+            };
+            var areaCosts = getArrivalAreaCosts(config);
+        then:
+            assert(areaCosts.cost).equalsTo(4);
+            assert(areaCosts.hexes).mapContentEqualsTo([
+                [map.getHex(10, 1), 3.5],
+                [map.getHex(11, 1), 3.5],
+                [map.getHex(10, 0), 4],
+                [map.getHex(11, 0), 4.5],
+                [map.getHex(9, 1), 4.5],
+                [map.getHex(9, 0), 5.5],
+                [map.getHex(12, 0), 4.5],
+                [map.getHex(8, 0), 5.5]
+            ]);
+    });
+
+    it("Checks in range cost for an hex", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(9,1), map.getHex(10,1), map.getHex(11,1)]);
+            let config = {
+                start: map.getHex(10, 2),
+                startAngle: 90,
+                range: 2,
+                arrivals: [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+                costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+                costRotate: (fromHex, fromAngle, toAngle)=>1,
+                minimalCost: 1,
+                maxCost: 2
+            };
+            var inRangeMoves = getInRangeMoves(config);
+        then:
+            assert([...new Set(inRangeMoves.values())]).unorderedArrayEqualsTo([
+                map.getHex(10, 1),
+                map.getHex(11, 2),
+                map.getHex(11, 3),
+                map.getHex(9, 2)
+            ]);
+    });
+
+    it("Checks hexside in range cost", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(9,1), map.getHex(10,1), map.getHex(11,1)]);
+            let config = {
+                start: map.getHex(10, 2).toward(120),
+                range: 2,
+                arrivals: [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+                costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+                costRotate: (fromHex, fromAngle, toAngle)=>1,
+                minimalCost: 1,
+                maxCost: 2
+            };
+            var inRangeMoves = getInRangeMoves(config);
+        then:
+            assert([...new Set(inRangeMoves.values())]).unorderedArrayEqualsTo([
+                new CBHexSideId(map.getHex(9, 3), map.getHex(10, 3)),
+                new CBHexSideId(map.getHex(11, 2), map.getHex(12, 2)),
+                new CBHexSideId(map.getHex(10, 1), map.getHex(11, 2))
+            ]);
     });
 
 });

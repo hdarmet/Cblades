@@ -77,6 +77,7 @@ describe("Profile", ()=> {
         then:
             assert(profile.movementPoints).equalsTo(4);
             assert(profile.extendedMovementPoints).equalsTo(6);
+            assert(profile.getMinimalMoveCost()).equalsTo(1);
             assert(profile.getMovementCostOnHex(map.getHex(1, 1))).objectEqualsTo(
                 {type:CBMoveProfile.COST_TYPE.ADD, value:1}
             );
@@ -164,6 +165,7 @@ describe("Profile", ()=> {
         then:
             assert(profile.movementPoints).equalsTo(5);
             assert(profile.extendedMovementPoints).equalsTo(7.5);
+            assert(profile.getMinimalMoveCost()).equalsTo(1);
             assert(profile.getMovementCostOnHex(map.getHex(1, 1))).objectEqualsTo(
                 {type:CBMoveProfile.COST_TYPE.ADD, value:1}
             );
@@ -251,6 +253,7 @@ describe("Profile", ()=> {
         then:
             assert(profile.movementPoints).equalsTo(5);
             assert(profile.extendedMovementPoints).equalsTo(7.5);
+            assert(profile.getMinimalMoveCost()).equalsTo(0.5);
             assert(profile.getMovementCostOnHex(map.getHex(1, 1))).objectEqualsTo(
                 {type:CBMoveProfile.COST_TYPE.ADD, value:0.5}
             );
@@ -381,7 +384,7 @@ describe("Profile", ()=> {
             assert(profile.commandLevel).equalsTo(10);
     });
 
-    it("Checks Regular Command Profile", () => {
+    it("Checks Chaotic Command Profile", () => {
         given:
             var profile = new ChaoticCommandProfile(2);
         then:
@@ -393,6 +396,7 @@ describe("Profile", ()=> {
             var profile = new StandardMoralProfile(1);
         then:
             assert(profile.moral).equalsTo(9);
+            assert(profile.getAutoRally()).isFalse();
     });
 
     it("Checks Elite Moral Profile", () => {
@@ -400,6 +404,7 @@ describe("Profile", ()=> {
             var profile = new EliteMoralProfile(1);
         then:
             assert(profile.moral).equalsTo(9);
+            assert(profile.getAutoRally()).isTrue();
     });
 
     it("Checks Exalted Moral Profile", () => {
@@ -407,6 +412,7 @@ describe("Profile", ()=> {
             var profile = new ExaltedMoralProfile(1);
         then:
             assert(profile.moral).equalsTo(9);
+            assert(profile.getAutoRally()).isFalse();
     });
 
 });

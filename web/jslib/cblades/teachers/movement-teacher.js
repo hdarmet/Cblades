@@ -8,10 +8,11 @@ import {
     diffAngle, invertAngle, reverseAngle, sumAngle
 } from "../../geometry.js";
 import {
+    CBHexId,
     CBHexSideId, distanceFromHexLocationToHexLocation
 } from "../map.js";
 import {
-    getArrivalAreaCosts, getPathCost, getGoodNextMoves, collectHexLocationOptions, getInRangeMoves
+    getArrivalAreaCosts, getPathCost, getGoodNextMoves, getInRangeMoves, collectHexOptions, collectHexSideOptions
 } from "../pathfinding.js";
 
 export class CBMovementTeacher {
@@ -452,6 +453,7 @@ export class CBMovementTeacher {
     }
 
     getAllowedRoutMoves(unit) {
+        if (!unit.wing.retreatZone.length) return null;
         let config = {
             start:unit.hexLocation, startAngle:unit.angle,
             arrivals:unit.wing.retreatZone,
@@ -464,7 +466,7 @@ export class CBMovementTeacher {
 
     hasRoutPath(unit) {
         let routPath = this.getAllowedRoutMoves(unit);
-        return !!routPath.size;
+        return routPath && !!routPath.size;
     }
 
     getAllowedAttackMoves(unit) {
@@ -492,6 +494,7 @@ export class CBMovementTeacher {
     }
 
     getAllowedRetreatMoves(unit) {
+        if (!unit.wing.retreatZone.length) return null;
         let config = {
             start:unit.hexLocation, startAngle:unit.angle,
             arrivals:unit.wing.retreatZone,
@@ -642,7 +645,10 @@ export class CBMovementTeacher {
                 minimalCost:foe.moveProfile.getMinimalMoveCost(),
                 costGetter:record=>record.previous ? record.previous.cost : 0
             });
-            let options = collectHexLocationOptions(unit.hexLocation, unit.angle);
+
+            let options = unit.hexLocation instanceof CBHexId ?
+                collectHexOptions(unit.hexLocation) :
+                collectHexSideOptions(unit.hexLocation, unit.angle);
             let hexLocations = [];
             for (let option of options) {
                 hexLocations.push([option.hexLocation, getCost(locations, option.hexLocation)]);

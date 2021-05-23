@@ -732,4 +732,154 @@ describe("Movement teacher", ()=> {
             assert(whoJoined).arrayEqualsTo([]);
     });
 
+    it("Checks move away moves when the unit can escape all near enemies", () => {
+        given:
+            var {arbitrator, map, unit11, unit21, unit22, leader21} = create2Players4UnitsTinyGame();
+            unit11.hexLocation = map.getHex(8, 9);
+            unit11.angle = 0;
+            unit21.hexLocation = map.getHex(9, 7);
+            unit21.angle = 180;
+            unit22.hexLocation = map.getHex(7, 7);
+            unit22.angle = 180;
+            leader21.hexLocation = null;
+        when:
+            var moves = arbitrator.getAllowedMoveAwayMoves(unit11);
+        then:
+            assert(moves.maxRemainingPoints).equalsTo(0);
+            assert(moves.hexLocations).setContentEqualsTo([
+                map.getHex(8, 10), map.getHex(7, 10)
+            ])
+    });
+
+    it("Checks move away moves when the unit can escape some enemies only but can avoid to approch to others", () => {
+        given:
+            var {arbitrator, map, unit11, unit21, unit22, leader21} = create2Players4UnitsTinyGame();
+            unit11.hexLocation = map.getHex(8, 9);
+            unit11.angle = 0;
+            unit21.hexLocation = map.getHex(8, 6);
+            unit21.angle = 180;
+            unit22.hexLocation = map.getHex(11, 9);
+            unit22.angle = 240;
+            leader21.hexLocation = map.getHex(5, 9);
+            leader21.angle = 120;
+        when:
+            var moves = arbitrator.getAllowedMoveAwayMoves(unit11);
+        then:
+            assert(moves.maxRemainingPoints).equalsTo(0);
+            assert(moves.hexLocations).setContentEqualsTo([
+                map.getHex(8, 10)
+            ])
+    });
+
+    it("Checks move away moves when the unit can escape some enemies but cannot avoid to approch to others", () => {
+        given:
+            var {arbitrator, map, unit11, unit21, unit22, leader21} = create2Players4UnitsTinyGame();
+            unit11.hexLocation = map.getHex(8, 9);
+            unit11.angle = 0;
+            unit21.hexLocation = map.getHex(8, 7);
+            unit21.angle = 180;
+            unit22.hexLocation = map.getHex(9, 11);
+            unit22.angle = 240;
+            leader21.hexLocation = map.getHex(7, 11);
+            leader21.angle = 120;
+        when:
+            var moves = arbitrator.getAllowedMoveAwayMoves(unit11);
+        then:
+            assert(moves.maxRemainingPoints).equalsTo(1);
+            assert(moves.hexLocations).setContentEqualsTo([
+                map.getHex(8, 8), map.getHex(9, 10), map.getHex(9, 9),
+                map.getHex(8, 10), map.getHex(7, 10), map.getHex(7, 9)
+            ]);
+    });
+
+    it("Checks move away moves when for a formation", () => {
+        given:
+            var {arbitrator, map, formation1, unit21, unit22, leader21} = create2Players1Formation2TroopsTinyGame();
+            formation1.hexLocation = map.getHex(8, 9).toward(120);
+            formation1.angle = 30;
+            unit21.hexLocation = map.getHex(9, 7);
+            unit21.angle = 180;
+            unit22.hexLocation = map.getHex(7, 7);
+            unit22.angle = 180;
+            leader21.hexLocation = null;
+        when:
+            var moves = arbitrator.getAllowedMoveAwayMoves(formation1);
+        then:
+            assert(moves.maxRemainingPoints).equalsTo(0);
+            assert([...moves.hexLocations]).unorderedArrayEqualsTo([
+                new CBHexSideId(map.getHex(7, 10), map.getHex(8, 10)),
+                new CBHexSideId(map.getHex(8, 10), map.getHex(9, 11))
+            ]);
+    });
+
+    it("Checks attack moves", () => {
+        given:
+            var {arbitrator, map, unit11, unit21, unit22, leader21} = create2Players4UnitsTinyGame();
+            unit11.hexLocation = map.getHex(8, 10);
+            unit11.angle = 0;
+            unit21.hexLocation = map.getHex(9, 6);
+            unit21.angle = 180;
+            unit22.hexLocation = map.getHex(7, 6);
+            unit22.angle = 180;
+            leader21.hexLocation = null;
+        when:
+            var moves = arbitrator.getAllowedAttackMoves(unit11);
+        then:
+            assert(moves).setContentEqualsTo([
+                map.getHex(8, 9), map.getHex(9, 10), map.getHex(7, 10)
+            ])
+    });
+
+    it("Checks fire moves", () => {
+        given:
+            var {arbitrator, map, unit11, unit21, unit22, leader21} = create2Players4UnitsTinyGame();
+            unit11.hexLocation = map.getHex(8, 10);
+            unit11.angle = 0;
+            unit21.hexLocation = map.getHex(9, 6);
+            unit21.angle = 180;
+            unit22.hexLocation = map.getHex(7, 6);
+            unit22.angle = 180;
+            leader21.hexLocation = null;
+        when:
+            var moves = arbitrator.getAllowedFireMoves(unit11);
+        then:
+            assert(moves).setContentEqualsTo([
+                map.getHex(8, 9), map.getHex(9, 10), map.getHex(7, 11), map.getHex(7, 10)
+            ])
+    });
+
+    it("Checks retreat moves", () => {
+        given:
+            var {arbitrator, map, wing1, unit11, unit21, unit22, leader21} = create2Players4UnitsTinyGame();
+            wing1.setRetreatZone(map.getSouthZone());
+            unit11.hexLocation = map.getHex(8, 10);
+            unit11.angle = 0;
+            unit21.hexLocation = map.getHex(9, 6);
+            unit21.angle = 180;
+            unit22.hexLocation = map.getHex(7, 6);
+            unit22.angle = 180;
+            leader21.hexLocation = null;
+        when:
+            var moves = arbitrator.getAllowedRetreatMoves(unit11);
+        then:
+            assert(moves).setContentEqualsTo([
+                map.getHex(7, 11), map.getHex(8, 11), map.getHex(9, 11)
+            ])
+    });
+
+    it("Checks retreat moves when no retreat zone is defined", () => {
+        given:
+            var {arbitrator, map, unit11, unit21, unit22, leader21} = create2Players4UnitsTinyGame();
+            unit11.hexLocation = map.getHex(8, 10);
+            unit11.angle = 0;
+            unit21.hexLocation = map.getHex(9, 6);
+            unit21.angle = 180;
+            unit22.hexLocation = map.getHex(7, 6);
+            unit22.angle = 180;
+            leader21.hexLocation = null;
+        when:
+            var moves = arbitrator.getAllowedRetreatMoves(unit11);
+        then:
+            assert(moves).isNotDefined();
+    });
 });
