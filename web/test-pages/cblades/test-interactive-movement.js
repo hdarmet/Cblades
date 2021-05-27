@@ -40,6 +40,7 @@ import {
     createTinyFormationGame, create2PlayersTinyFormationGame
 } from "./game-examples.js";
 import {
+    CBOrderInstruction,
     CBTiredness
 } from "../../jslib/cblades/unit.js";
 import {
@@ -1578,6 +1579,362 @@ describe("Interactive Movement", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.isDisrupted()).isTrue();
+    });
+
+    it("Checks Troop when it attack moves", () => {
+        given:
+            var {game, map, arbitrator, wing1, unit1} = create2PlayersTinyGame();
+            unit1.hexLocation = map.getHex(2, 8);
+            arbitrator.updateAllowedActions(actions=>{
+                actions.moveMode = CBMoveMode.ATTACK;
+                return actions;
+            });
+            var [actuatorLayer] = getLayers(game.board,"actuators");
+        when:
+            clickOnCounter(game, unit1);
+            resetDirectives(actuatorLayer);
+            clickOnMoveAction(game);
+            var moveActuator = getMoveActuator(game);
+            var orientationActuator = getOrientationActuator(game);
+            loadAllImages();
+        then:
+            assert(moveActuator).isDefined();
+            assert(moveActuator.getTrigger(300)).isNotDefined();
+            assert(moveActuator.getTrigger(0)).isNotDefined();
+            assert(moveActuator.getTrigger(60)).isDefined();
+            assert(moveActuator.getTrigger(120)).isNotDefined();
+            assert(moveActuator.getTrigger(180)).isNotDefined();
+            assert(moveActuator.getTrigger(240)).isNotDefined();
+            assert(orientationActuator).isDefined();
+            assert(orientationActuator.getTrigger(0)).isNotDefined();
+            assert(orientationActuator.getTrigger(30)).isNotDefined();
+            assert(orientationActuator.getTrigger(60)).isDefined();
+            assert(orientationActuator.getTrigger(90)).isDefined();
+            assert(orientationActuator.getTrigger(120)).isDefined();
+            assert(orientationActuator.getTrigger(150)).isNotDefined();
+            assert(orientationActuator.getTrigger(180)).isNotDefined();
+            assert(orientationActuator.getTrigger(210)).isNotDefined();
+            assert(orientationActuator.getTrigger(240)).isNotDefined();
+            assert(orientationActuator.getTrigger(270)).isNotDefined();
+            assert(orientationActuator.getTrigger(300)).isNotDefined();
+            assert(orientationActuator.getTrigger(330)).isNotDefined();
+    });
+
+    it("Checks Formation when it attack moves", () => {
+        given:
+            var {game, map, arbitrator, wing2, formation2} = create2PlayersTinyFormationGame();
+            formation2.hexLocation = map.getHex(10, 8).toward(120);
+            formation2.angle = 210;
+            arbitrator.updateAllowedActions(actions=>{
+                actions.moveMode = CBMoveMode.ATTACK;
+                return actions;
+            });
+            game.nextTurn(null);
+            var [actuatorLayer] = getLayers(game.board,"actuators");
+        when:
+            clickOnCounter(game, formation2);
+            resetDirectives(actuatorLayer);
+            clickOnMoveAction(game);
+            var moveActuator = getFormationMoveActuator(game);
+            var orientationActuator = getOrientationActuator(game);
+            loadAllImages();
+        then:
+            assert(moveActuator).isDefined();
+            assert(moveActuator.getTrigger(300)).isNotDefined();
+            assert(moveActuator.getTrigger(0)).isNotDefined();
+            assert(moveActuator.getTrigger(60)).isNotDefined();
+            assert(moveActuator.getTrigger(120)).isNotDefined();
+            assert(moveActuator.getTrigger(180)).isNotDefined();
+            assert(moveActuator.getTrigger(240)).isDefined();
+            assert(moveActuator.getTurnTrigger(300)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(0)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(60)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(120)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(180)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(240)).isDefined();
+            assert(orientationActuator).isNotDefined();
+    });
+
+    it("Checks Formation when it has to turn to attack moves", () => {
+        given:
+            var {game, map, arbitrator, wing2, formation2} = create2PlayersTinyFormationGame();
+            formation2.hexLocation = map.getHex(10, 8).toward(120);
+            formation2.angle = 30;
+            arbitrator.updateAllowedActions(actions=>{
+                actions.moveMode = CBMoveMode.ATTACK;
+                return actions;
+            });
+            game.nextTurn(null);
+            var [actuatorLayer] = getLayers(game.board,"actuators");
+        when:
+            clickOnCounter(game, formation2);
+            resetDirectives(actuatorLayer);
+            clickOnMoveAction(game);
+            var moveActuator = getFormationMoveActuator(game);
+            var orientationActuator = getOrientationActuator(game);
+            loadAllImages();
+        then:
+            assert(moveActuator).isNotDefined();
+            assert(orientationActuator).isDefined();
+            assert(orientationActuator.getTrigger(210)).isDefined();
+    });
+
+    it("Checks Troop when it fire moves", () => {
+        given:
+            var {game, map, arbitrator, wing1, unit1} = create2PlayersTinyGame();
+            unit1.hexLocation = map.getHex(5, 8);
+            arbitrator.updateAllowedActions(actions=>{
+                actions.moveMode = CBMoveMode.FIRE;
+                return actions;
+            });
+            var [actuatorLayer] = getLayers(game.board,"actuators");
+        when:
+            clickOnCounter(game, unit1);
+            resetDirectives(actuatorLayer);
+            clickOnMoveAction(game);
+            var moveActuator = getMoveActuator(game);
+            var orientationActuator = getOrientationActuator(game);
+            loadAllImages();
+        then:
+            assert(moveActuator).isDefined();
+            assert(moveActuator.getTrigger(300)).isDefined();
+            assert(moveActuator.getTrigger(0)).isDefined();
+            assert(moveActuator.getTrigger(60)).isNotDefined();
+            assert(moveActuator.getTrigger(120)).isNotDefined();
+            assert(moveActuator.getTrigger(180)).isNotDefined();
+            assert(moveActuator.getTrigger(240)).isNotDefined();
+            assert(orientationActuator).isDefined();
+            assert(orientationActuator.getTrigger(0)).isNotDefined();
+            assert(orientationActuator.getTrigger(30)).isDefined();
+            assert(orientationActuator.getTrigger(60)).isDefined();
+            assert(orientationActuator.getTrigger(90)).isDefined();
+            assert(orientationActuator.getTrigger(120)).isDefined();
+            assert(orientationActuator.getTrigger(150)).isDefined();
+            assert(orientationActuator.getTrigger(180)).isDefined();
+            assert(orientationActuator.getTrigger(210)).isDefined();
+            assert(orientationActuator.getTrigger(240)).isDefined();
+            assert(orientationActuator.getTrigger(270)).isDefined();
+            assert(orientationActuator.getTrigger(300)).isDefined();
+            assert(orientationActuator.getTrigger(330)).isDefined();
+    });
+
+    it("Checks Troop when it moves in defense mode", () => {
+        given:
+            var {game, map, arbitrator, wing1, unit1} = create2PlayersTinyGame();
+            unit1.angle = 60
+            arbitrator.updateAllowedActions(actions=>{
+                actions.moveMode = CBMoveMode.DEFEND;
+                return actions;
+            });
+            var [actuatorLayer] = getLayers(game.board,"actuators");
+        when:
+            clickOnCounter(game, unit1);
+            resetDirectives(actuatorLayer);
+            clickOnMoveAction(game);
+            var moveActuator = getMoveActuator(game);
+            var orientationActuator = getOrientationActuator(game);
+            loadAllImages();
+        then:
+            assert(moveActuator).isDefined();
+            assert(moveActuator.getTrigger(300)).isNotDefined();
+            assert(moveActuator.getTrigger(0)).isDefined();
+            assert(moveActuator.getTrigger(60)).isNotDefined();
+            assert(moveActuator.getTrigger(120)).isNotDefined();
+            assert(moveActuator.getTrigger(180)).isNotDefined();
+            assert(moveActuator.getTrigger(240)).isNotDefined();
+            assert(orientationActuator).isDefined();
+            assert(orientationActuator.getTrigger(0)).isDefined();
+            assert(orientationActuator.getTrigger(30)).isDefined();
+            assert(orientationActuator.getTrigger(60)).isNotDefined();
+            assert(orientationActuator.getTrigger(90)).isDefined();
+            assert(orientationActuator.getTrigger(120)).isDefined();
+            assert(orientationActuator.getTrigger(150)).isDefined();
+            assert(orientationActuator.getTrigger(180)).isDefined();
+            assert(orientationActuator.getTrigger(210)).isDefined();
+            assert(orientationActuator.getTrigger(240)).isDefined();
+            assert(orientationActuator.getTrigger(270)).isDefined();
+            assert(orientationActuator.getTrigger(300)).isDefined();
+            assert(orientationActuator.getTrigger(330)).isDefined();
+    });
+
+    it("Checks Formation when it moves in defense mode", () => {
+        given:
+            var {game, map, arbitrator, formation2} = create2PlayersTinyFormationGame();
+            formation2.hexLocation = map.getHex(10, 8).toward(120);
+            formation2.angle = 210;
+            arbitrator.updateAllowedActions(actions=>{
+                actions.moveMode = CBMoveMode.DEFEND;
+                return actions;
+            });
+            game.nextTurn(null);
+            var [actuatorLayer] = getLayers(game.board,"actuators");
+        when:
+            clickOnCounter(game, formation2);
+            resetDirectives(actuatorLayer);
+            clickOnMoveAction(game);
+            var moveActuator = getFormationMoveActuator(game);
+            var orientationActuator = getOrientationActuator(game);
+            loadAllImages();
+        then:
+            assert(moveActuator).isDefined();
+            assert(moveActuator.getTrigger(300)).isNotDefined();
+            assert(moveActuator.getTrigger(0)).isNotDefined();
+            assert(moveActuator.getTrigger(60)).isNotDefined();
+            assert(moveActuator.getTrigger(120)).isNotDefined();
+            assert(moveActuator.getTrigger(180)).isDefined();
+            assert(moveActuator.getTrigger(240)).isDefined();
+            assert(moveActuator.getTurnTrigger(300)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(0)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(60)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(120)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(180)).isDefined();
+            assert(moveActuator.getTurnTrigger(240)).isDefined();
+            assert(orientationActuator).isDefined();
+            assert(orientationActuator.getTrigger(30)).isDefined();
+    });
+
+    it("Checks Troop when it moves in regroup mode", () => {
+        given:
+            var {game, map, arbitrator, wing1, unit1} = create2PlayersTinyGame();
+            unit1.angle = 60
+            arbitrator.updateAllowedActions(actions=>{
+                actions.moveMode = CBMoveMode.REGROUP;
+                return actions;
+            });
+            var [actuatorLayer] = getLayers(game.board,"actuators");
+        when:
+            clickOnCounter(game, unit1);
+            resetDirectives(actuatorLayer);
+            clickOnMoveAction(game);
+            var moveActuator = getMoveActuator(game);
+            var orientationActuator = getOrientationActuator(game);
+            loadAllImages();
+        then:
+            assert(moveActuator).isDefined();
+            assert(moveActuator.getTrigger(300)).isNotDefined();
+            assert(moveActuator.getTrigger(0)).isDefined();
+            assert(moveActuator.getTrigger(60)).isNotDefined();
+            assert(moveActuator.getTrigger(120)).isNotDefined();
+            assert(moveActuator.getTrigger(180)).isNotDefined();
+            assert(moveActuator.getTrigger(240)).isNotDefined();
+            assert(orientationActuator).isDefined();
+            assert(orientationActuator.getTrigger(0)).isDefined();
+            assert(orientationActuator.getTrigger(30)).isDefined();
+            assert(orientationActuator.getTrigger(60)).isNotDefined();
+            assert(orientationActuator.getTrigger(90)).isDefined();
+            assert(orientationActuator.getTrigger(120)).isDefined();
+            assert(orientationActuator.getTrigger(150)).isDefined();
+            assert(orientationActuator.getTrigger(180)).isDefined();
+            assert(orientationActuator.getTrigger(210)).isDefined();
+            assert(orientationActuator.getTrigger(240)).isDefined();
+            assert(orientationActuator.getTrigger(270)).isDefined();
+            assert(orientationActuator.getTrigger(300)).isDefined();
+            assert(orientationActuator.getTrigger(330)).isDefined();
+    });
+
+    it("Checks Formation when it moves in regroup mode", () => {
+        given:
+            var {game, map, arbitrator, formation2} = create2PlayersTinyFormationGame();
+            formation2.hexLocation = map.getHex(10, 8).toward(120);
+            formation2.angle = 210;
+            arbitrator.updateAllowedActions(actions=>{
+                actions.moveMode = CBMoveMode.REGROUP;
+                return actions;
+            });
+            game.nextTurn(null);
+            var [actuatorLayer] = getLayers(game.board,"actuators");
+        when:
+            clickOnCounter(game, formation2);
+            resetDirectives(actuatorLayer);
+            clickOnMoveAction(game);
+            var moveActuator = getFormationMoveActuator(game);
+            var orientationActuator = getOrientationActuator(game);
+            loadAllImages();
+        then:
+            assert(moveActuator).isDefined();
+            assert(moveActuator.getTrigger(300)).isNotDefined();
+            assert(moveActuator.getTrigger(0)).isNotDefined();
+            assert(moveActuator.getTrigger(60)).isNotDefined();
+            assert(moveActuator.getTrigger(120)).isNotDefined();
+            assert(moveActuator.getTrigger(180)).isDefined();
+            assert(moveActuator.getTrigger(240)).isDefined();
+            assert(moveActuator.getTurnTrigger(300)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(0)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(60)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(120)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(180)).isDefined();
+            assert(moveActuator.getTurnTrigger(240)).isDefined();
+            assert(orientationActuator).isDefined();
+            assert(orientationActuator.getTrigger(30)).isDefined();
+    });
+
+    it("Checks Troop when it moves in retreat mode", () => {
+        given:
+            var {game, map, arbitrator, wing1, unit1} = create2PlayersTinyGame();
+            unit1.angle = 60
+            arbitrator.updateAllowedActions(actions=>{
+                actions.moveMode = CBMoveMode.RETREAT;
+                return actions;
+            });
+            var [actuatorLayer] = getLayers(game.board,"actuators");
+        when:
+            clickOnCounter(game, unit1);
+            resetDirectives(actuatorLayer);
+            clickOnMoveAction(game);
+            var moveActuator = getMoveActuator(game);
+            var orientationActuator = getOrientationActuator(game);
+            loadAllImages();
+        then:
+            assert(moveActuator).isNotDefined();
+            assert(orientationActuator).isDefined();
+            assert(orientationActuator.getTrigger(0)).isNotDefined();
+            assert(orientationActuator.getTrigger(30)).isNotDefined();
+            assert(orientationActuator.getTrigger(60)).isNotDefined();
+            assert(orientationActuator.getTrigger(90)).isNotDefined();
+            assert(orientationActuator.getTrigger(120)).isNotDefined();
+            assert(orientationActuator.getTrigger(150)).isNotDefined();
+            assert(orientationActuator.getTrigger(180)).isNotDefined();
+            assert(orientationActuator.getTrigger(210)).isDefined();
+            assert(orientationActuator.getTrigger(240)).isDefined();
+            assert(orientationActuator.getTrigger(270)).isDefined();
+            assert(orientationActuator.getTrigger(300)).isDefined();
+            assert(orientationActuator.getTrigger(330)).isDefined();
+    });
+
+    it("Checks Formation when it moves in retreat mode", () => {
+        given:
+            var {game, map, arbitrator, formation2} = create2PlayersTinyFormationGame();
+            formation2.hexLocation = map.getHex(10, 8).toward(120);
+            formation2.angle = 210;
+            arbitrator.updateAllowedActions(actions=>{
+                actions.moveMode = CBMoveMode.RETREAT;
+                return actions;
+            });
+            game.nextTurn(null);
+            var [actuatorLayer] = getLayers(game.board,"actuators");
+        when:
+            clickOnCounter(game, formation2);
+            resetDirectives(actuatorLayer);
+            clickOnMoveAction(game);
+            var moveActuator = getFormationMoveActuator(game);
+            var orientationActuator = getOrientationActuator(game);
+            loadAllImages();
+        then:
+            assert(moveActuator).isDefined();
+            assert(moveActuator.getTrigger(300)).isNotDefined();
+            assert(moveActuator.getTrigger(0)).isNotDefined();
+            assert(moveActuator.getTrigger(60)).isNotDefined();
+            assert(moveActuator.getTrigger(120)).isNotDefined();
+            assert(moveActuator.getTrigger(180)).isDefined();
+            assert(moveActuator.getTrigger(240)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(300)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(0)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(60)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(120)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(180)).isNotDefined();
+            assert(moveActuator.getTurnTrigger(240)).isNotDefined();
+            assert(orientationActuator).isDefined();
+            assert(orientationActuator.getTrigger(30)).isDefined();
     });
 
 });

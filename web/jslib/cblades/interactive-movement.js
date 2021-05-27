@@ -798,7 +798,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     }
 
     _createMovementActuators(start) {
-        this._allowedMoves = this.game.arbitrator.getAllowedRoutMoves(this.unit);
+        this._allowedMoves = stringifyHexLocations(this.game.arbitrator.getAllowedRoutMoves(this.unit));
         return super._createMovementActuators(start);
     }
 
@@ -806,7 +806,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
         let result = [];
         for (let cangle in zones) {
             let angle = parseInt(cangle);
-            if (this._allowedMoves.has(zones[angle].hex)) {
+            if (this._allowedMoves.has(zones[angle].hex.location.toString())) {
                 result[angle] = zones[angle];
             }
         }
@@ -818,18 +818,6 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     }
 
     _filterRotations(zones) {
-        return this._filterZones(zones);
-    }
-
-    _filterFormationRotations(zones) {
-        return this._filterZones(zones);
-    }
-
-    _filterFormationMoves(zones) {
-        return this._filterZones(zones);
-    }
-
-    _filterFormationTurns(zones) {
         return this._filterZones(zones);
     }
 
