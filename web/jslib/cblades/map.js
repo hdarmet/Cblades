@@ -14,7 +14,6 @@ import {
     DElement, DImageArtifact
 } from "../board.js";
 
-
 export let CBMoveType = {
     FORWARD: 0,
     BACKWARD: 1

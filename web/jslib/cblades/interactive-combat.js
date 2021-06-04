@@ -45,7 +45,12 @@ export function registerInteractiveCombat() {
         unit.launchAction(new InteractiveDuelFireAction(this.game, unit, event));
     }
     CBInteractivePlayer.prototype.applyLossesToUnit = function(unit, losses, attacker, advance, continuation) {
-        unit.launchAction(new InteractiveRetreatAction(this.game, unit, losses, attacker, advance, continuation));
+        for (let loss=1; loss<losses; loss++) {
+            unit.takeALoss();
+        }
+        if (!unit.isDestroyed()) {
+            unit.launchAction(new InteractiveRetreatAction(this.game, unit, losses, attacker, advance, continuation));
+        }
     }
     CBInteractivePlayer.prototype.advanceAttacker = function(unit, directions, continuation) {
         unit.launchAction(new InteractiveAdvanceAction(this.game, unit, directions, continuation));
@@ -197,24 +202,47 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
     constructor(game, unit, event) {
         super(game, unit);
         this._event = event;
+        this._attackHex = unit.formationNature ? unit.hexLocation.fromHex : unit.hexLocation;
+        this._attackHexes = new Set();
     }
 
     play() {
         this._createShockAttackActuator(this.unit);
     }
 
+    _memento() {
+        let memento =  super._memento();
+        memento.attackHex = this._attackHex;
+        return memento;
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        this._attackHex = memento.attackHex;
+    }
+
+    get attackHex() {
+        return this._attackHex;
+    }
+
     _createCombatRecords(foes) {
         let combats = [];
-        for (let foe of foes) {
-            let combat = {foe:foe.unit};
-            combats.push(combat);
-            if (foe.unsupported) {
-                combat.unsupported=true;
-                combat.unsupportedAdvantage=this.game.arbitrator.getShockAttackAdvantage(this.unit, foe.unit, false);
-            }
-            if (foe.supported) {
-                combat.supported=true;
-                combat.supportedAdvantage=this.game.arbitrator.getShockAttackAdvantage(this.unit, foe.unit, true);
+        for (let attackHex of this.unit.hexLocation.hexes) {
+            for (let foe of foes) {
+                for (let attackedHex of foe.unit.hexLocation.hexes) {
+                    if (attackHex.isNearHex(attackedHex)!==false && this.game.arbitrator.canCross(this.unit, attackHex, attackedHex)) {
+                        let combat = {foe: foe.unit, attackHex, attackedHex};
+                        combats.push(combat);
+                        if (foe.unsupported) {
+                            combat.unsupported = true;
+                            combat.unsupportedAdvantage = this.game.arbitrator.getShockAttackAdvantage(this.unit, attackHex, foe.unit, attackedHex, false); // LA
+                        }
+                        if (foe.supported) {
+                            combat.supported = true;
+                            combat.supportedAdvantage = this.game.arbitrator.getShockAttackAdvantage(this.unit, attackHex, foe.unit, attackedHex, true); // LA
+                        }
+                    }
+                }
             }
         }
         return combats;
@@ -224,16 +252,35 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         let foesThatMayBeShockAttacked = this._getFoes(this.unit);
         this.game.closeActuators();
         if (foesThatMayBeShockAttacked.length) {
-            let shockAttackActuator = this.createShockAttackActuator(foesThatMayBeShockAttacked);
+            let shockHexActuator = this.createShockHexActuator();
+            this.game.openActuator(shockHexActuator);
+            let combats = this._createCombatRecords(foesThatMayBeShockAttacked);
+            let shockAttackActuator = this.createShockAttackActuator(combats);
             this.game.openActuator(shockAttackActuator);
-            let shockHelpActuator = this.createShockHelpActuator(this._createCombatRecords(foesThatMayBeShockAttacked));
+            let shockHelpActuator = this.createShockHelpActuator(combats);
             this.game.openActuator(shockHelpActuator);
             return true;
         }
         return false;
     }
 
-    shockAttackUnit(foe, supported, event) {
+    changeAttackHex(attackHex) {
+        this.game.closeActuators();
+        this._attackHex = attackHex;
+        this._createShockAttackActuator();
+    }
+
+    _hasPlayed() {
+        let played = true;
+        for (let hex of this.unit.hexLocation.hexes) {
+            if (!this._attackHexes.has(hex)) {
+                return false;
+            }
+        }
+        return played;
+    }
+
+    shockAttackUnit(attackerHex, defender, defenderHex, supported, advantage, event) { // LA
         this.game.closeActuators();
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
@@ -248,20 +295,20 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         scene.addWidget(
             new CBCombatResultTableInsert(this.game), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
         ).addWidget(
-            new CBShockAttackInsert(this.game), new Point2D(-250, CBShockAttackInsert.DIMENSION.h/2-40)
+            new CBShockAttackInsert(this.game, advantage), new Point2D(-250, CBShockAttackInsert.DIMENSION.h/2-40)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
-                let report = this._processShockAttackResult(foe, supported, dice.result);
+                let report = this._processShockAttackResult(attackerHex, defender, defenderHex, supported, dice.result);
                 let continuation = ()=>{
                     this.unit.changeAction(this);   // In case, attack action is replaced by advance action...
-                    if (report.played || !this._createShockAttackActuator(this.unit)) {
+                    if (this._hasPlayed() || !this._createShockAttackActuator(this.unit)) {
                         this.markAsFinished();
                     }
                 }
                 if (report.success) {
                     result.success().appear();
-                    foe.player.applyLossesToUnit(foe, result.lossesForDefender, this.unit, true, continuation);
+                    defender.player.applyLossesToUnit(defender, report.lossesForDefender, this.unit, true, continuation);
                 }
                 else {
                     result.failure().appear();
@@ -276,9 +323,15 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
     }
 
-    _processShockAttackResult(foe, supported, diceResult) {
-        let result = this.game.arbitrator.processShockAttackResult(this.unit, foe, supported, diceResult);
-        this.unit.setAttackLocation(result.attackLocation);
+    _processShockAttackResult(attackerHex, defender, defenderHex, supported, diceResult) { // LA
+        let result = this.game.arbitrator.processShockAttackResult(this.unit, attackerHex, defender, defenderHex, supported, diceResult);
+        this._attackHexes.add(attackerHex);
+        for (let hex of this.unit.hexLocation.hexes) {
+            if (!this._attackHexes.has(hex)) {
+                this._attackHex = hex;
+                break;
+            }
+        }
         if (result.tirednessForAttacker) {
             this.unit.addOneTirednessLevel();
         }
@@ -290,7 +343,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         return this.game.arbitrator.getShockWeaponCell(this.unit, foe);
     }
 
-    showRules(foe, supported, event) {
+    showRules(foe, supported, advantage, event) {
         let advantageCell = this._getAdvantageCell(foe);
         let scene = new DScene();
         let mask = new CBMask(this.game, "#000000", 0.3);
@@ -301,7 +354,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         mask.setAction(close);
         mask.open(this.game.board, new Point2D(event.offsetX, event.offsetY));
         scene.addWidget(
-            new CBShockAttackInsert(this.game), new Point2D(-250, CBShockAttackInsert.DIMENSION.h/2-40)
+            new CBShockAttackInsert(this.game, advantage), new Point2D(-250, CBShockAttackInsert.DIMENSION.h/2-40)
         ).addWidget(
             new CBWeaponTableInsert(this.game).focus(
                 advantageCell.col, advantageCell.row),
@@ -309,8 +362,12 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
     }
 
-    createShockAttackActuator(foes) {
-        return new CBShockAttackActuator(this, foes);
+    createShockHexActuator() {
+        return new CBShockHexActuator(this);
+    }
+
+    createShockAttackActuator(combats) {
+        return new CBShockAttackActuator(this, combats);
     }
 
     createShockHelpActuator(combats) {
@@ -348,6 +405,8 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
     constructor(game, unit, event) {
         super(game, unit);
         this._event = event;
+        this._attackHex = unit.formationNature ? unit.hexLocation.fromHex : unit.hexLocation;
+        this._attackHexes = new Set();
     }
 
     play() {
@@ -355,32 +414,72 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         this._createFireAttackActuator(this.unit);
     }
 
+    _memento() {
+        let memento =  super._memento();
+        memento.attackHex = this._attackHex;
+        return memento;
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        this._attackHex = memento.attackHex;
+    }
+
+    get attackHex() {
+        return this._attackHex;
+    }
+
+    changeAttackHex(attackHex) {
+        this.game.closeActuators();
+        this._attackHex = attackHex;
+        this._createFireAttackActuator();
+    }
+
+    _hasPlayed() {
+        let played = true;
+        for (let hex of this.unit.hexLocation.hexes) {
+            if (!this._attackHexes.has(hex)) {
+                return false;
+            }
+        }
+        return played;
+    }
+
     _createFireRecords(foes) {
         let fires = [];
-        for (let foe of foes) {
-            let fire = {
-                foe:foe.unit,
-                advantage:this.game.arbitrator.getFireAttackAdvantage(this.unit, foe.unit)
+        for (let attackHex of this.unit.hexLocation.hexes) {
+            for (let foe of foes) {
+                for (let attackedHex of foe.unit.hexLocation.hexes) {
+                    let fire = {
+                        foe: foe.unit,
+                        advantage: this.game.arbitrator.getFireAttackAdvantage(this.unit, attackHex, foe.unit, attackedHex),
+                        attackHex,
+                        attackedHex
+                    }
+                    fires.push(fire);
+                }
             }
-            fires.push(fire);
         }
         return fires;
     }
 
     _createFireAttackActuator() {
-        let foesThatMayBeFireAttacked = this._getFoes(this.unit);
+        let foesThatMayBeFireAttacked = this._getFoes(this.unit, this._attackHex);
         this.game.closeActuators();
         if (foesThatMayBeFireAttacked.length) {
-            let fireAttackActuator = this.createFireAttackActuator(foesThatMayBeFireAttacked);
+            let fireHexActuator = this.createFireHexActuator();
+            this.game.openActuator(fireHexActuator);
+            let fires = this._createFireRecords(foesThatMayBeFireAttacked);
+            let fireAttackActuator = this.createFireAttackActuator(fires);
             this.game.openActuator(fireAttackActuator);
-            let fireHelpActuator = this.createFireHelpActuator(this._createFireRecords(foesThatMayBeFireAttacked));
+            let fireHelpActuator = this.createFireHelpActuator(fires);
             this.game.openActuator(fireHelpActuator);
             return true;
         }
         return false;
     }
 
-    fireAttackUnit(foe, event) {
+    fireAttackUnit(firerHex, target, targetHex, advantage, event) {
         this.game.closeActuators();
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
@@ -395,19 +494,19 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         scene.addWidget(
             new CBCombatResultTableInsert(this.game), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
         ).addWidget(
-            new CBFireAttackInsert(this.game), new Point2D(-250, CBFireAttackInsert.DIMENSION.h/2-40)
+            new CBFireAttackInsert(this.game, advantage), new Point2D(-250, CBFireAttackInsert.DIMENSION.h/2-40)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
-                let report = this._processFireAttackResult(foe, dice.result);
+                let report = this._processFireAttackResult(firerHex, target, targetHex, dice.result);
                 let continuation = ()=>{
-                    if (report.played || !this._createFireAttackActuator(this.unit)) {
+                    if (this._hasPlayed() || !this._createFireAttackActuator(this.unit)) {
                         this.markAsFinished();
                     }
                 }
                 if (report.success) {
                     result.success().appear();
-                    foe.player.applyLossesToUnit(foe, report.lossesForDefender, this.unit, false, continuation);
+                    target.player.applyLossesToUnit(target, report.lossesForDefender, this.unit, false, continuation);
                 }
                 else {
                     result.failure().appear();
@@ -421,18 +520,19 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
     }
 
-    _processFireAttackResult(foe, diceResult) {
-        let result = this.game.arbitrator.processFireAttackResult(this.unit, foe, diceResult);
-        this.unit.setAttackLocation(result.attackLocation);
+    _processFireAttackResult(firerHex, target, targetHex, diceResult) {
+        let result = this.game.arbitrator.processFireAttackResult(this.unit, firerHex, target, targetHex, diceResult);
+        this._attackHexes.add(firerHex);
+        for (let hex of this.unit.hexLocation.hexes) {
+            if (!this._attackHexes.has(hex)) {
+                this._attackHex = hex;
+                break;
+            }
+        }
         if (result.lowerFirerMunitions) {
             this.unit.addOneLackOfMunitionsLevel();
         }
-        if (result.played) {
-            this.markAsFinished();
-        }
-        else {
-            this.markAsStarted();
-        }
+        this.markAsStarted();
         return result;
     }
 
@@ -440,7 +540,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         return this.game.arbitrator.getFireWeaponCell(this.unit, foe);
     }
 
-    showRules(foe, event) {
+    showRules(foe, advantage, event) {
         let advantageCell = this._getAdvantageCell(foe);
         let scene = new DScene();
         let mask = new CBMask(this.game, "#000000", 0.3);
@@ -451,7 +551,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         mask.setAction(close);
         mask.open(this.game.board, new Point2D(event.offsetX, event.offsetY));
         scene.addWidget(
-            new CBFireAttackInsert(this.game), new Point2D(-250, CBFireAttackInsert.DIMENSION.h/2-40)
+            new CBFireAttackInsert(this.game, advantage), new Point2D(-250, CBFireAttackInsert.DIMENSION.h/2-40)
         ).addWidget(
             new CBWeaponTableInsert(this.game).focus(
                 advantageCell.col, advantageCell.row),
@@ -460,8 +560,12 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
     }
 
-    createFireAttackActuator(foes) {
-        return new CBFireAttackActuator(this, foes);
+    createFireHexActuator() {
+        return new CBFireHexActuator(this);
+    }
+
+    createFireAttackActuator(fires) {
+        return new CBFireAttackActuator(this, fires);
     }
 
     createFireHelpActuator(fires) {
@@ -476,8 +580,8 @@ export class InteractiveFireAttackAction extends InteractiveAbstractFireAttackAc
         super(game, unit, event);
     }
 
-    _getFoes(unit) {
-        return this.game.arbitrator.getFoesThatMayBeFireAttacked(unit);
+    _getFoes(unit, hexId) {
+        return this.game.arbitrator.getFoesThatMayBeFireAttackedFromHex(unit, hexId);
     }
 
 }
@@ -488,8 +592,8 @@ export class InteractiveDuelFireAction extends InteractiveAbstractFireAttackActi
         super(game, unit, event);
     }
 
-    _getFoes(unit) {
-        return this.game.arbitrator.getFoesThatMayBeDuelFired(unit);
+    _getFoes(unit, hexId) {
+        return this.game.arbitrator.getFoesThatMayBeDuelFiredFromHex(unit, hexId);
     }
 
 }
@@ -519,62 +623,172 @@ function createCombatMenuItems(unit, actions) {
     ];
 }
 
+class ShockHexTrigger extends CBUnitActuatorTrigger {
+
+    constructor(actuator, unit, attackHex) {
+        super(actuator, unit, "units",
+            DImage.getImage("/CBlades/images/actuators/shock-attacker-hex.png"),
+            new Point2D(0, 0), new Dimension2D(60, 75));
+        this.position = Point2D.position(unit.location, attackHex.location, 1); // LA
+        this.pangle = unit.angle;
+        this.attackHex = attackHex;
+    }
+
+}
+
+export class CBShockHexActuator extends RetractableActuatorMixin(CBActionActuator) {
+
+    constructor(action) {
+        super(action);
+        let imageArtifacts = [];
+        for (let hex of this.unit.hexLocation.hexes) {
+            if (hex!==this.action.attackHex && !this.action._attackHexes.has(hex)) {
+                var hexTrigger = new ShockHexTrigger(this, this.unit, hex);
+                imageArtifacts.push(hexTrigger);
+            }
+        }
+        this.initElement(imageArtifacts);
+    }
+
+    getTrigger(attackHex) {
+        return this.findTrigger(trigger=>trigger.attackHex === attackHex);
+    }
+
+    onMouseClick(trigger, event) {
+        this.action.changeAttackHex(trigger.attackHex);
+    }
+
+}
+
+class FireHexTrigger extends CBUnitActuatorTrigger {
+
+    constructor(actuator, unit, attackHex) {
+        super(actuator, unit, "units",
+            DImage.getImage("/CBlades/images/actuators/firer-hex.png"),
+            new Point2D(0, 0), new Dimension2D(60, 75));
+        this.position = Point2D.position(unit.location, attackHex.location, 1); // LA
+        this.pangle = unit.angle;
+        this.attackHex = attackHex;
+    }
+
+}
+
+export class CBFireHexActuator extends RetractableActuatorMixin(CBActionActuator) {
+
+    constructor(action) {
+        super(action);
+        let imageArtifacts = [];
+        for (let hex of this.unit.hexLocation.hexes) {
+            if (hex!==this.action.attackHex && !this.action._attackHexes.has(hex)) {
+                var hexTrigger = new FireHexTrigger(this, this.unit, hex);
+                imageArtifacts.push(hexTrigger);
+            }
+        }
+        this.initElement(imageArtifacts);
+    }
+
+    getTrigger(attackHex) {
+        return this.findTrigger(trigger=>trigger.attackHex === attackHex);
+    }
+
+    onMouseClick(trigger, event) {
+        this.action.changeAttackHex(trigger.attackHex);
+    }
+
+}
+
+class ShockAttackTrigger extends CBUnitActuatorTrigger {
+
+    constructor(actuator, unit, supported, combat) {
+        super(actuator, combat.foe, "units",
+            supported ?
+                DImage.getImage("/CBlades/images/actuators/supported-shock.png"):
+                DImage.getImage("/CBlades/images/actuators/unsupported-shock.png"),
+            new Point2D(0, 0),
+            supported ?
+                new Dimension2D(100, 133):
+                new Dimension2D(100, 111));
+        this.position = Point2D.position(unit.location, combat.attackedHex.location, 1); // LA
+        this.pangle = 30;
+        this.supported = false;
+        this.attackHex = combat.attackHex;
+        this.attackedHex = combat.attackedHex;
+        this._advantage = supported ? combat.supportedAdvantage : combat.unsupportedAdvantage;
+    }
+
+    get advantage() {
+        return this._advantage;
+    }
+
+}
+
 export class CBShockAttackActuator extends RetractableActuatorMixin(CBActionActuator) {
 
-    constructor(action, foes) {
+    constructor(action, combats) {
         super(action);
-        let unsupportedImage = DImage.getImage("/CBlades/images/actuators/unsupported-shock.png");
-        let supportedImage = DImage.getImage("/CBlades/images/actuators/supported-shock.png");
         let imageArtifacts = [];
-        for (let foe of foes) {
-            if (foe.unsupported) {
-                var unsupportedShock = new CBUnitActuatorTrigger(this, foe.unit, "units", unsupportedImage,
-                    new Point2D(0, 0), new Dimension2D(100, 111));
-                unsupportedShock.position = Point2D.position(this.unit.location, foe.unit.location, 1);
-                if (foe.supported) {
-                    unsupportedShock.position = unsupportedShock.position.translate(-40, -40);
+        for (let combat of combats) {
+            if (combat.attackHex === action.attackHex) {
+                if (combat.unsupported) {
+                    var unsupportedShock = new ShockAttackTrigger(this, this.unit, false, combat);
+                    if (combat.supported) {
+                        unsupportedShock.position = unsupportedShock.position.translate(-40, -40);
+                    }
+                    imageArtifacts.push(unsupportedShock);
                 }
-                unsupportedShock.pangle = 30;
-                unsupportedShock.supported = false;
-                imageArtifacts.push(unsupportedShock);
-            }
-            if (foe.supported) {
-                var supportedShock = new CBUnitActuatorTrigger(this, foe.unit, "units", supportedImage,
-                    new Point2D(0, 0), new Dimension2D(120, 133));
-                supportedShock.position = Point2D.position(this.unit.location, foe.unit.location, 1);
-                if (foe.unsupported) {
-                    supportedShock.position = supportedShock.position.translate(40, 40);
+                if (combat.supported) {
+                    var supportedShock = new ShockAttackTrigger(this, this.unit, true, combat);
+                    if (combat.unsupported) {
+                        supportedShock.position = supportedShock.position.translate(40, 40);
+                    }
+                    imageArtifacts.push(supportedShock);
                 }
-                supportedShock.pangle = 30;
-                supportedShock.supported = true;
-                imageArtifacts.push(supportedShock);
             }
         }
         this.initElement(imageArtifacts);
     }
 
     getTrigger(unit, supported) {
-        return this.findTrigger(artifact=>artifact.unit === unit && artifact.supported === supported);
+        return this.findTrigger(trigger=>trigger.unit === unit && trigger.supported === supported);
     }
 
     onMouseClick(trigger, event) {
-        this.action.shockAttackUnit(trigger.unit, trigger.supported, event);
+        this.action.shockAttackUnit(trigger.attackHex, trigger.unit, trigger.attackedHex, trigger.supported, trigger.advantage, event);
+    }
+
+}
+
+class FireAttackTrigger extends CBUnitActuatorTrigger {
+
+    constructor(actuator, unit, combat) {
+        super(actuator, combat.foe, "units",
+            DImage.getImage("/CBlades/images/actuators/fire.png"),
+            new Point2D(0, 0),
+            new Dimension2D(100, 155));
+        this.position = Point2D.position(unit.location, combat.foe.location, 1);
+        this.pangle = 30;
+        this.attackHex = combat.attackHex;
+        this.attackedHex = combat.attackedHex;
+        this._advantage = combat.advantage;
+    }
+
+    get advantage() {
+        return this._advantage;
     }
 
 }
 
 export class CBFireAttackActuator extends RetractableActuatorMixin(CBActionActuator) {
 
-    constructor(action, foes) {
+    constructor(action, fires) {
         super(action);
         let image = DImage.getImage("/CBlades/images/actuators/fire.png");
         let imageArtifacts = [];
-        for (let foe of foes) {
-            let fire = new CBUnitActuatorTrigger(this, foe.unit, "units", image,
-                new Point2D(0, 0), new Dimension2D(140, 155));
-            fire.position = Point2D.position(this.unit.location, foe.unit.location, 1);
-            fire.pangle = 30;
-            imageArtifacts.push(fire);
+        for (let fire of fires) {
+            if (fire.attackHex === action.attackHex) {
+                let fireTrigger = new FireAttackTrigger(this, this.unit, fire);
+                imageArtifacts.push(fireTrigger);
+            }
         }
         this.initElement(imageArtifacts);
     }
@@ -584,20 +798,20 @@ export class CBFireAttackActuator extends RetractableActuatorMixin(CBActionActua
     }
 
     onMouseClick(trigger, event) {
-        this.action.fireAttackUnit(trigger.unit, event);
+        this.action.fireAttackUnit(trigger.attackHex, trigger.unit, trigger.attackedHex, trigger.advantage, event);
     }
 
 }
 
 class ShockHelpTrigger extends CBUnitActuatorTrigger {
 
-    constructor(actuator, supported, foe, advantage) {
+    constructor(actuator, supported, foe, attackedHex, advantage) {
         let image = supported ?
             DImage.getImage("/CBlades/images/actuators/supported-shock-advantage.png"):
             DImage.getImage("/CBlades/images/actuators/unsupported-shock-advantage.png");
         super(actuator, foe, "units", image, new Point2D(0, 0), ShockHelpTrigger.DIMENSION);
         this.pangle = 0;
-        this.position = Point2D.position(actuator.unit.location, foe.location, 1);
+        this.position = Point2D.position(actuator.unit.location, attackedHex.location, 1);
         this._foe = foe;
         this._supported = supported;
         this._advantage = advantage;
@@ -608,7 +822,7 @@ class ShockHelpTrigger extends CBUnitActuatorTrigger {
         this._level.setShadowSettings("#000000", 0);
         this._level.setTextSettings("bold 30px serif", "center");
         this._level.setFillSettings(this._supported ? "#9D2F12" : "#AD5A2D");
-        this._level.fillText("" + this._advantage, new Point2D(0, 10));
+        this._level.fillText("" + this._advantage.advantage, new Point2D(0, 10));
     }
 
     get foe() {
@@ -632,24 +846,24 @@ export class CBShockHelpActuator extends RetractableActuatorMixin(CBActionActuat
         super(action);
         this._triggers = [];
         for (let combat of combats) {
-            if (combat.unsupported) {
-                let unsupportedHelp = new ShockHelpTrigger(this, false, combat.foe, combat.unsupportedAdvantage);
-                this._triggers.push(unsupportedHelp);
-                if (combat.supported) {
-                    unsupportedHelp.position = unsupportedHelp.position.translate(-75, -75);
-                }
-                else {
-                    unsupportedHelp.position = unsupportedHelp.position.translate(40, 40);
-                }
-            }
-            if (combat.supported) {
-                let supportedHelp = new ShockHelpTrigger(this, true, combat.foe, combat.supportedAdvantage);
-                this._triggers.push(supportedHelp);
+            if (combat.attackHex === action.attackHex) {
                 if (combat.unsupported) {
-                    supportedHelp.position = supportedHelp.position.translate(75, 75);
+                    let unsupportedHelp = new ShockHelpTrigger(this, false, combat.foe, combat.attackedHex, combat.unsupportedAdvantage);
+                    this._triggers.push(unsupportedHelp);
+                    if (combat.supported) {
+                        unsupportedHelp.position = unsupportedHelp.position.translate(-75, -75);
+                    } else {
+                        unsupportedHelp.position = unsupportedHelp.position.translate(40, 40);
+                    }
                 }
-                else {
-                    supportedHelp.position = supportedHelp.position.translate(40, 40);
+                if (combat.supported) {
+                    let supportedHelp = new ShockHelpTrigger(this, true, combat.foe, combat.attackedHex, combat.supportedAdvantage);
+                    this._triggers.push(supportedHelp);
+                    if (combat.unsupported) {
+                        supportedHelp.position = supportedHelp.position.translate(75, 75);
+                    } else {
+                        supportedHelp.position = supportedHelp.position.translate(40, 40);
+                    }
                 }
             }
         }
@@ -661,7 +875,7 @@ export class CBShockHelpActuator extends RetractableActuatorMixin(CBActionActuat
     }
 
     onMouseClick(trigger, event) {
-        this.action.showRules(trigger.foe, trigger._supported, event);
+        this.action.showRules(trigger.foe, trigger._supported, trigger._advantage, event);
     }
 
     setVisibility(level) {
@@ -689,11 +903,15 @@ class FireHelpTrigger extends CBUnitActuatorTrigger {
         this._level.setShadowSettings("#000000", 0);
         this._level.setTextSettings("bold 30px serif", "center");
         this._level.setFillSettings("#A1124F");
-        this._level.fillText("" + this._advantage, new Point2D(0, 10));
+        this._level.fillText("" + this._advantage.advantage, new Point2D(0, 10));
     }
 
     setVisibility(visibility) {
         this.alpha = visibility;
+    }
+
+    get foe() {
+        return this._foe;
     }
 }
 FireHelpTrigger.DIMENSION = new Dimension2D(55, 55);
@@ -704,9 +922,11 @@ export class CBFireHelpActuator extends RetractableActuatorMixin(CBActionActuato
         super(action);
         this._triggers = [];
         for (let fire of fires) {
-            let help = new FireHelpTrigger(this, fire.foe, fire.advantage);
-            this._triggers.push(help);
-            help.position = help.position.translate(40, 40);
+            if (fire.attackHex === action.attackHex) {
+                let help = new FireHelpTrigger(this, fire.foe, fire.advantage);
+                this._triggers.push(help);
+                help.position = help.position.translate(40, 40);
+            }
         }
         this.initElement(this._triggers);
     }
@@ -716,7 +936,7 @@ export class CBFireHelpActuator extends RetractableActuatorMixin(CBActionActuato
     }
 
     onMouseClick(trigger, event) {
-        this.action.showRules(trigger._foe, event);
+        this.action.showRules(trigger.foe, trigger._advantage, event);
     }
 
     setVisibility(level) {
@@ -876,23 +1096,85 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
 
 export class CBShockAttackInsert extends WidgetLevelMixin(DInsert) {
 
-    constructor(game) {
+    constructor(game, advantage) {
         super(game, "/CBlades/images/inserts/shock-attack-insert.png", CBShockAttackInsert.DIMENSION,  CBShockAttackInsert.PAGE_DIMENSION);
+        this.setMark(new Point2D(70, 248-advantage.attackerCapacity*35));
+        this.setMark(new Point2D(285, 248+advantage.defenderCapacity*35));
+        if (advantage.attackerTired) {
+            this.setMark(new Point2D(15, 438));
+        }
+        if (advantage.attackerExhausted) {
+            this.setMark(new Point2D(15, 456));
+        }
+        if (advantage.defenderExhausted) {
+            this.setMark(new Point2D(15, 474));
+        }
+        if (advantage.attackerDisrupted) {
+            this.setMark(new Point2D(15, 492));
+        }
+        if (advantage.defenderDisrupted) {
+            this.setMark(new Point2D(15, 509));
+        }
+        if (advantage.defenderRouted) {
+            this.setMark(new Point2D(15, 527));
+        }
+        if (advantage.sideAdvantage) {
+            this.setMark(new Point2D(15, 545));
+        }
+        if (advantage.backAdvantage) {
+            this.setMark(new Point2D(15, 563));
+        }
+        if (advantage.attackerIsACharacter) {
+            this.setMark(new Point2D(15, 671));
+        }
+        if (advantage.defenderIsACharacter) {
+            this.setMark(new Point2D(15, 689));
+        }
+        if (advantage.notSupported) {
+            this.setMark(new Point2D(15, 815));
+        }
     }
 
 }
-CBShockAttackInsert.DIMENSION = new Dimension2D(524, 658);
-CBShockAttackInsert.PAGE_DIMENSION = new Dimension2D(524, 850);
+CBShockAttackInsert.DIMENSION = new Dimension2D(544, 658);
+CBShockAttackInsert.PAGE_DIMENSION = new Dimension2D(544, 850);
 
 export class CBFireAttackInsert extends WidgetLevelMixin(DInsert) {
 
-    constructor(game) {
+    constructor(game, advantage) {
+        console.log(advantage);
         super(game, "/CBlades/images/inserts/fire-attack-insert.png", CBFireAttackInsert.DIMENSION,  CBFireAttackInsert.PAGE_DIMENSION);
+        this.setMark(new Point2D(70, 218-advantage.firerCapacity*35));
+        this.setMark(new Point2D(285, 218+advantage.firerCapacity*35));
+        if (advantage.firerExhausted) {
+            this.setMark(new Point2D(15, 363));
+        }
+        if (advantage.firerDisrupted) {
+            this.setMark(new Point2D(15, 381));
+        }
+        if (advantage.targetDisrupted) {
+            this.setMark(new Point2D(15, 399));
+        }
+        if (advantage.targetRouted) {
+            this.setMark(new Point2D(15, 417));
+        }
+        if (advantage.sideAdvantage) {
+            this.setMark(new Point2D(15, 435));
+        }
+        if (advantage.backAdvantage) {
+            this.setMark(new Point2D(15, 453));
+        }
+        if (advantage.firerIsACharacter) {
+            this.setMark(new Point2D(15, 668));
+        }
+        if (advantage.targetIsACharacter) {
+            this.setMark(new Point2D(15, 686));
+        }
     }
 
 }
-CBFireAttackInsert.DIMENSION = new Dimension2D(524, 658);
-CBFireAttackInsert.PAGE_DIMENSION = new Dimension2D(524, 850);
+CBFireAttackInsert.DIMENSION = new Dimension2D(544, 658);
+CBFireAttackInsert.PAGE_DIMENSION = new Dimension2D(544, 850);
 
 export class CBCombatResultTableInsert extends WidgetLevelMixin(DInsert) {
 
@@ -937,4 +1219,3 @@ CBWeaponTableInsert.MARGIN_DIMENSION = new Dimension2D(CBWeaponTableInsert.MARGI
 CBWeaponTableInsert.MARGIN_PAGE_DIMENSION = new Dimension2D(CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.PAGE_DIMENSION.h);
 CBWeaponTableInsert.CONTENT_DIMENSION = new Dimension2D(CBWeaponTableInsert.DIMENSION.w-CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.DIMENSION.h);
 CBWeaponTableInsert.CONTENT_PAGE_DIMENSION = new Dimension2D(CBWeaponTableInsert.PAGE_DIMENSION.w-CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.PAGE_DIMENSION.h);
-

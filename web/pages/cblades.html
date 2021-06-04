@@ -55,7 +55,8 @@
     import {
         RoughneckLeader,
         RoughneckKnight,
-        RoughneckLance
+        RoughneckLance,
+        RoughneckCrossbowman
     } from "../jslib/cblades/armies/roughnecks.js";
 
     registerInteractiveMovement();
@@ -111,9 +112,11 @@
     counter23.lossSteps = 4;
     let counter24 = new CBFormation(RoughneckLance, wing2, 2);
     counter24.angle = 210;
-    counter24.lossSteps = 2;
+    let counter25 = new CBFormation(RoughneckCrossbowman, wing2, 2);
+    counter25.angle = 210;
     game.addUnit(counter23, new CBHexSideId( map.getHex(9, 6),  map.getHex(10, 6)));
     game.addUnit(counter24, new CBHexSideId( map.getHex(9, 5),  map.getHex(10, 5)));
+    game.addUnit(counter25, new CBHexSideId( map.getHex(11, 7),  map.getHex(12, 7)));
     game.addUnit(character21, map.getHex(8, 6));
     game.addUnit(counter21, map.getHex(7, 7));
     game.addUnit(counter22, map.getHex(10, 7));

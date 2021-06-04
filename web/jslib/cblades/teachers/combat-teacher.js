@@ -3,6 +3,9 @@
 import {
     CBMoveType
 } from "../map.js";
+import {
+    CBEngageSideMode
+} from "../unit.js";
 
 export class CBCombatTeacher {
 
@@ -164,24 +167,7 @@ export class CBCombatTeacher {
     }
 
     _getForwardZoneThatMayBeShockAttacked(unit) {
-        if (!unit.hasAttacked()) {
-            return this.getUnitForwardZone(unit);
-        }
-        else {
-            if (unit.formationNature) {
-                let fromHexAttack = this.isHexMayBeShockAttackedFromHex(unit, unit.hexLocation.fromHex, unit.attackLocation);
-                let toHexAttack = this.isHexMayBeShockAttackedFromHex(unit, unit.hexLocation.toHex, unit.attackLocation);
-                if (fromHexAttack === toHexAttack) {
-                    return this.getUnitForwardZone(unit);
-                } else {
-                    if (toHexAttack)
-                        return this.getPotentialForwardZone(unit, unit.hexLocation.fromHex, unit.angle);
-                    else
-                        return this.getPotentialForwardZone(unit, unit.hexLocation.toHex, unit.angle);
-                }
-            }
-            else return {};
-        }
+        return this.getUnitForwardZone(unit);
     }
 
     getFoesThatMayBeShockAttacked(unit) {
@@ -212,6 +198,10 @@ export class CBCombatTeacher {
         return foes;
     }
 
+    getWeaponCapacityAdvantage(unit) {
+        return unit.weaponProfile.capacity;
+    }
+
     getCombatTableResult(diceResult, advantage) {
         let column = 0;
         let dices = diceResult[0]+diceResult[1];
@@ -235,24 +225,74 @@ export class CBCombatTeacher {
         };
     }
 
-    getShockAttackAdvantage(attacker, defender, supported) {
-        let advantage = supported ? 0 : -4;
-        advantage += this.getShockWeaponAdvantage(attacker, defender)*2;
-        return advantage;
+    getShockAttackAdvantage(attacker, attackerHex, defender, defenderHex, supported) {
+        let advantage = 0;
+        let record = {};
+        if (!supported) {
+            record.notSupported = -4;
+            advantage -=4;
+        }
+        record.weapons = this.getShockWeaponAdvantage(attacker, defender)*2;
+        advantage += record.weapons;
+        record.attackerCapacity = this.getWeaponCapacityAdvantage(attacker);
+        record.defenderCapacity = -this.getWeaponCapacityAdvantage(defender);
+        advantage += record.attackerCapacity + record.defenderCapacity;
+        if (attacker.isTired()) {
+            record.attackerTired = -1;
+            advantage -= 1;
+        }
+        if (attacker.isExhausted()) {
+            record.attackerExhausted = -2;
+            advantage -=2;
+        }
+        if (defender.isExhausted()) {
+            record.defenderExhausted = 1;
+            advantage +=1;
+        }
+        if (attacker.isDisrupted()) {
+            record.attackerDisrupted = -1;
+            advantage -=1;
+        }
+        if (defender.isDisrupted()) {
+            record.defenderDisrupted = 1;
+            advantage +=1;
+        }
+        if (defender.isRouted()) {
+            record.defenderRouted = 4;
+            advantage +=4;
+        }
+        if (attacker.characterNature) {
+            record.attackerIsACharacter = -4;
+            advantage -= 4;
+        }
+        if (defender.characterNature) {
+            record.defenderIsACharacter = 4;
+            advantage += 4;
+        }
+        let side = this.getEngagementSide(attacker, defender);
+        if (side === CBEngageSideMode.SIDE) {
+            record.sideAdvantage = 2;
+            advantage += 2;
+        }
+        if (side === CBEngageSideMode.BACK) {
+            record.backAdvantage = 4;
+            advantage += 4;
+        }
+        record.advantage = advantage;
+        return record;
     }
 
-    getShockAttackResult(unit, foe, supported, diceResult) {
+    getShockAttackResult(attacker, attackerHex, defender, defenderHex, supported, diceResult) { // LA
         //return 1;
-        return this.getCombatTableResult(diceResult, this.getShockAttackAdvantage(unit, foe, supported));
+        return this.getCombatTableResult(diceResult,
+            this.getShockAttackAdvantage(attacker, attackerHex, defender, defenderHex, supported).advantage);
     }
 
-    processShockAttackResult(unit, foe, supported, diceResult) {
-        let lossesForDefender = this.getShockAttackResult(unit, foe, supported, diceResult);
+    processShockAttackResult(attacker, attackerHex, defender, defenderHex, supported, diceResult) {
+        let lossesForDefender = this.getShockAttackResult(attacker, attackerHex, defender, defenderHex, supported, diceResult);
         let success = lossesForDefender>0;
-        let tirednessForAttacker = supported && !unit.isCharging();
-        let played = !unit.formationNature || unit.hasAttacked();
-        let attackLocation = foe.hexLocation;
-        return { success, lossesForDefender, tirednessForAttacker, played, attackLocation };
+        let tirednessForAttacker = supported && !attacker.isCharging();
+        return { success, lossesForDefender, tirednessForAttacker };
     }
 
     isHexMayBeFireAttackedFromHex(unit, range, attackHex, attackedLocation) {
@@ -263,29 +303,15 @@ export class CBCombatTeacher {
         return false;
     }
 
-    _getForwardZoneThatMayBeFireAttached(unit, range) {
-        if (!unit.hasAttacked()) {
-            return this.getUnitForwardArea(unit, range);
-        }
-        else {
-            if (unit.formationNature) {
-                let fromHexAttack = this.isHexMayBeFireAttackedFromHex(unit, range, unit.hexLocation.fromHex, unit.attackLocation);
-                let toHexAttack = this.isHexMayBeFireAttackedFromHex(unit, range, unit.hexLocation.toHex, unit.attackLocation);
-                if (fromHexAttack === toHexAttack) {
-                    return this.getUnitForwardArea(unit, range);
-                } else {
-                    if (toHexAttack)
-                        return this.getUnitForwardAreaFromHex(unit, unit.hexLocation.fromHex, range);
-                    else
-                        return this.getUnitForwardAreaFromHex(unit, unit.hexLocation.toHex, range);
-                }
-            }
-            else return [];
-        }
+    _getForwardZoneThatMayBeFireAttacked(unit, range) {
+        return this.getUnitForwardArea(unit, range);
     }
 
-    getFoesThatMayBeFireAttacked(unit) {
-        let hexes = this._getForwardZoneThatMayBeFireAttached(unit, unit.weaponProfile.getFireRange());
+    _getForwardZoneThatMayBeFireAttackedFromHex(unit, hexId, range) {
+        return this.getUnitForwardAreaFromHex(unit, hexId, range);
+    }
+
+    _getFoesForShock(unit, hexes) {
         let foes = [];
         let foesSet = new Set();
         for (let hex of hexes) {
@@ -294,8 +320,17 @@ export class CBCombatTeacher {
         return foes;
     }
 
-    getFoesThatMayBeDuelFired(unit) {
-        let hexes = this._getForwardZoneThatMayBeFireAttached(unit, unit.weaponProfile.getFireRange());
+    getFoesThatMayBeFireAttackedFromHex(unit, hexId) {
+        let hexes = this._getForwardZoneThatMayBeFireAttackedFromHex(unit, hexId, unit.weaponProfile.getFireRange());
+        return this._getFoesForShock(unit, hexes);
+    }
+
+    getFoesThatMayBeFireAttacked(unit) {
+        let hexes = this._getForwardZoneThatMayBeFireAttacked(unit, unit.weaponProfile.getFireRange());
+        return this._getFoesForShock(unit, hexes);
+    }
+
+    _getFoesForDuel(unit, hexes) {
         let foes = [];
         let foesSet = new Set();
         for (let hex of hexes) {
@@ -304,34 +339,87 @@ export class CBCombatTeacher {
         return foes;
     }
 
-    getFireWeaponAdvantage(attacker, defender) {
-        let fireRow = CBCombatTeacher.weaponTable[attacker.weaponProfile.getFireAttackCode()];
-        return fireRow ? fireRow[defender.weaponProfile.getFireDefendCode()] : null;
+    getFoesThatMayBeDuelFiredFromHex(unit, hexId) {
+        let hexes = this._getForwardZoneThatMayBeFireAttackedFromHex(unit, hexId, unit.weaponProfile.getFireRange());
+        return this._getFoesForDuel(unit, hexes);
     }
 
-    getFireWeaponCell(attacker, defender) {
+    getFoesThatMayBeDuelFired(unit) {
+        let hexes = this._getForwardZoneThatMayBeFireAttacked(unit, unit.weaponProfile.getFireRange());
+        return this._getFoesForDuel(unit, hexes);
+    }
+
+    getFireWeaponAdvantage(firer, target) {
+        let fireRow = CBCombatTeacher.weaponTable[firer.weaponProfile.getFireAttackCode()];
+        return fireRow ? fireRow[target.weaponProfile.getFireDefendCode()] : null;
+    }
+
+    getFireWeaponCell(firer, target) {
         return {
-            col:CBCombatTeacher.weaponTable[defender.weaponProfile.getFireDefendCode()].Col,
-            row:CBCombatTeacher.weaponTable[attacker.weaponProfile.getFireAttackCode()].Row
+            col:CBCombatTeacher.weaponTable[target.weaponProfile.getFireDefendCode()].Col,
+            row:CBCombatTeacher.weaponTable[firer.weaponProfile.getFireAttackCode()].Row
         };
     }
 
-    getFireAttackAdvantage(attacker, defender) {
-        let advantage = this.getFireWeaponAdvantage(attacker, defender)*2;
-        return advantage;
+    getFireAttackAdvantage(firer, firerHex, target, targetHex) {
+        let advantage = 0;
+        let record = {};
+        record.weapons = this.getFireWeaponAdvantage(firer, target)*2;
+        advantage += record.weapons;
+        record.firerCapacity = this.getWeaponCapacityAdvantage(firer);
+        record.targetCapacity = -this.getWeaponCapacityAdvantage(target);
+        advantage += record.firerCapacity + record.targetCapacity;
+        if (firer.isExhausted()) {
+            record.firerExhausted = -1;
+            advantage -=1;
+        }
+        if (firer.isDisrupted()) {
+            record.firerDisrupted = -1;
+            advantage -=1;
+        }
+        if (target.isDisrupted()) {
+            record.targetDisrupted = 1;
+            advantage +=1;
+        }
+        if (target.isRouted()) {
+            record.targetRouted = 4;
+            advantage +=4;
+        }
+        if (target) {
+            record.difficultTerrain = 2;
+            advantage += 2;
+        }
+        if (firer.characterNature) {
+            record.firerIsACharacter = -4;
+            advantage -= 4;
+        }
+        if (target.characterNature) {
+            record.targetIsACharacter = 4;
+            advantage += 4;
+        }
+        let side = this.getFireSide(firer, target);
+        if (side === CBEngageSideMode.SIDE) {
+            record.sideAdvantage = 1;
+            advantage += 1;
+        }
+        if (side === CBEngageSideMode.BACK) {
+            record.backAdvantage = 2;
+            advantage += 2;
+        }
+        record.advantage = advantage;
+        return record;
     }
 
-    getFireAttackResult(unit, foe, diceResult) {
-        return this.getCombatTableResult(diceResult, this.getFireAttackAdvantage(unit, foe));
+    getFireAttackResult(firer, firerHex, target, targetHex, diceResult) {
+        return this.getCombatTableResult(diceResult,
+            this.getFireAttackAdvantage(firer, firerHex, target, targetHex).advantage);
     }
 
-    processFireAttackResult(unit, foe, diceResult) {
-        let lossesForDefender = this.getFireAttackResult(unit, foe, diceResult);
+    processFireAttackResult(firer, firerHex, target, targetHex, diceResult) {
+        let lossesForDefender = this.getFireAttackResult(firer, firerHex, target, targetHex, diceResult);
         let success = lossesForDefender>0;
         let lowerFirerMunitions = diceResult[0] === diceResult[1];
-        let played = !unit.formationNature || unit.hasAttacked();
-        let attackLocation = foe.hexLocation;
-        return { success, lossesForDefender, lowerFirerMunitions, played, attackLocation };
+        return { success, lossesForDefender, lowerFirerMunitions };
     }
 
 }

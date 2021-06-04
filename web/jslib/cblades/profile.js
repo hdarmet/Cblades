@@ -232,6 +232,25 @@ export class LanceWeaponProfile extends CBWeaponProfile {
 
 }
 
+export class CrossbowWeaponProfile extends CBWeaponProfile {
+
+    constructor(capacity) {
+        super(capacity);
+    }
+
+    getShockAttackCode() {
+        return "Arb";
+    }
+
+    getFireAttackCode() {
+        return "Arb";
+    }
+
+    getFireRange() {
+        return 5;
+    }
+}
+
 export class RegularCommandProfile extends CBCommandProfile {
 
     constructor(capacity) {

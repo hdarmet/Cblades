@@ -252,13 +252,13 @@ describe("Units teacher", ()=> {
             unit12.angle = 0;
             unit21.angle = 180;
         then:
-            assert(arbitrator.doesAUnitPotentiallyEngageAnotherUnit(
+            assert(arbitrator.getSideWhereAUnitPotentiallyEngageAnotherUnit(
                 unit12, unit21, unit12.hexLocation.getNearHex(0), 0)
             ).equalsTo(CBEngageSideMode.BACK);
-            assert(arbitrator.doesAUnitPotentiallyEngageAnotherUnit(
+            assert(arbitrator.getSideWhereAUnitPotentiallyEngageAnotherUnit(
                 unit12, unit21, unit12.hexLocation.getNearHex(0), 90)
             ).equalsTo(CBEngageSideMode.SIDE);
-            assert(arbitrator.doesAUnitPotentiallyEngageAnotherUnit(
+            assert(arbitrator.getSideWhereAUnitPotentiallyEngageAnotherUnit(
                 unit12, unit21, unit12.hexLocation.getNearHex(0), 180)
             ).equalsTo(CBEngageSideMode.FRONT);
     });

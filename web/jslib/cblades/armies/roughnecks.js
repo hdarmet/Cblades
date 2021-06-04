@@ -6,7 +6,9 @@ import {
     CBProfileCapacity,
     HeavyCavalryWeaponProfile,
     LanceWeaponProfile,
-    EliteMoralProfile, RegularCommandProfile
+    CrossbowWeaponProfile,
+    EliteMoralProfile,
+    RegularCommandProfile
 } from "../profile.js";
 
 import {
@@ -95,3 +97,32 @@ export let RoughneckLance = new CBUnitType("Company Lancet",
 ).setMoralProfile(6, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED)
 ).setMoralProfile(7, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED)
 ).setMoralProfile(8, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED));
+
+export let RoughneckCrossbowman = new CBUnitType("Company Crossbowman",
+    [
+        "/CBlades/images/units/mercenaries/unit3L1.png",
+        "/CBlades/images/units/mercenaries/unit3L1b.png"
+    ],
+    [
+        "/CBlades/images/units/mercenaries/unit3L2.png",
+        "/CBlades/images/units/mercenaries/unit3L2b.png"
+    ]
+).setMoveProfile(1, new PedestrianMoveProfile(CBProfileCapacity.NORMAL)
+).setMoveProfile(2, new PedestrianMoveProfile(CBProfileCapacity.NORMAL)
+).setMoveProfile(3, new PedestrianMoveProfile(CBProfileCapacity.DISADVANTAGED)
+).setMoveProfile(4, new PedestrianMoveProfile(CBProfileCapacity.DISADVANTAGED)
+
+).setWeaponProfile(1, new CrossbowWeaponProfile(CBProfileCapacity.NORMAL)
+).setWeaponProfile(2, new CrossbowWeaponProfile(CBProfileCapacity.ADVANTAGED)
+).setWeaponProfile(3, new CrossbowWeaponProfile(CBProfileCapacity.ADVANTAGED)
+).setWeaponProfile(4, new CrossbowWeaponProfile(CBProfileCapacity.ADVANTAGED)
+
+).setCommandProfile(1, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)
+).setCommandProfile(2, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)
+).setCommandProfile(3, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)
+).setCommandProfile(4, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)
+
+).setMoralProfile(1, new EliteMoralProfile(CBProfileCapacity.NORMAL)
+).setMoralProfile(2, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED)
+).setMoralProfile(3, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED)
+).setMoralProfile(4, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED));

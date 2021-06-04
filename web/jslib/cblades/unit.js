@@ -23,6 +23,7 @@ export let CBMovement = {
 }
 
 export let CBEngageSideMode = {
+    NONE: 0,
     FRONT: 1,
     SIDE: 2,
     BACK: 3
@@ -543,7 +544,6 @@ export class CBUnit extends CBAbstractUnit {
             engagingArtifact: this._engagingArtifact,
             orderGiven: this._orderGiven,
             lossSteps: this._lossSteps,
-            attackLocation: this._attackLocation,
             carried: [...this._carried],
             options: [...this._options]
         };
@@ -565,7 +565,6 @@ export class CBUnit extends CBAbstractUnit {
         this._engagingArtifact = memento.engagingArtifact;
         this._orderGiven = memento.orderGiven;
         this._lossSteps = memento.lossSteps;
-        this._attackLocation = memento.attackLocation;
         this._carried = memento.carried;
         this._options = memento.options;
     }
@@ -686,7 +685,6 @@ export class CBUnit extends CBAbstractUnit {
         super.reset(player);
         if (player === this.player) {
             this._orderGiven = false;
-            delete this._attackLocation;
             this._updatePlayed();
         }
     }
@@ -850,19 +848,6 @@ export class CBUnit extends CBAbstractUnit {
 
     advance(hexLocation) {
         this._changeLocation(hexLocation, CBMoveType.FORWARD);
-    }
-
-    setAttackLocation(hexLocation) {
-        Memento.register(this);
-        this._attackLocation = hexLocation;
-    }
-
-    get attackLocation() {
-        return this._attackLocation;
-    }
-
-    hasAttacked() {
-        return !!this._attackLocation;
     }
 
     reorient(angle) {
