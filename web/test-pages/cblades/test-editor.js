@@ -47,7 +47,7 @@ describe("Editor", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                `drawImage(/CBlades/images/actuators/terran/${type}.png, -30, -30, 60, 60)`,
+                `drawImage(/CBlades/images/actuators/ground/${type}.png, -30, -30, 60, 60)`,
             "restore()"
         ]
     }
@@ -57,7 +57,7 @@ describe("Editor", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                `drawImage(/CBlades/images/actuators/terran/${type}.png, -23, -10, 46, 20)`,
+                `drawImage(/CBlades/images/actuators/ground/${type}.png, -23, -10, 46, 20)`,
             "restore()"
         ]
     }

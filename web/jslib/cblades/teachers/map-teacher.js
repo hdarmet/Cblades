@@ -8,6 +8,7 @@ import {
     diffAngle, moyAngle, sumAngle
 } from "../../geometry.js";
 import {
+    CBHex,
     CBHexSideId
 } from "../map.js";
 
@@ -266,4 +267,37 @@ export class CBMapTeacher {
         return this._formatUnitZone(this.getAdjacentHexes(unit, unit.hexLocation));
     }
 
+    isClearGround(hexId) {
+        return hexId.type === CBHex.HEX_TYPES.OUTDOOR_CLEAR ||
+            hexId.type === CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE ||
+            hexId.type === CBHex.HEX_TYPES.CAVE_CLEAR ||
+            hexId.type === CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+    }
+
+    isClearHexSide(hexSideId) {
+        return hexSideId.type === CBHex.HEXSIDE_TYPES.NORMAL ||
+            hexSideId.type === CBHex.HEXSIDE_TYPES.EASY;
+    }
+
+    isRoughGround(hexId) {
+        return hexId.type === CBHex.HEX_TYPES.OUTDOOR_ROUGH ||
+            hexId.type === CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE ||
+            hexId.type === CBHex.HEX_TYPES.CAVE_ROUGH ||
+            hexId.type === CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+    }
+
+    isDifficultGround(hexId) {
+        return hexId.type === CBHex.HEX_TYPES.OUTDOOR_DIFFICULT ||
+            hexId.type === CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE ||
+            hexId.type === CBHex.HEX_TYPES.CAVE_DIFFICULT ||
+            hexId.type === CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+    }
+
+    isDifficultHexSide(hexSideId) {
+        return hexSideId.type === CBHex.HEXSIDE_TYPES.DIFFICULT;
+    }
+
+    isImpassableHexSide(hexSideId) {
+        return hexSideId.type === CBHex.HEXSIDE_TYPES.CLIMB || hexSideId.type === CBHex.HEXSIDE_TYPES.WALL;
+    }
 }

@@ -23,8 +23,8 @@ export let RoughneckLeader = new CBUnitType("Company Leader",
 ).setMoveProfile(1, new CavalryMoveProfile(CBProfileCapacity.INFERIOR)
 ).setMoveProfile(2, new CavalryMoveProfile(CBProfileCapacity.DISADVANTAGED)
 
-).setWeaponProfile(1, new HeavyCavalryWeaponProfile(CBProfileCapacity.ADVANTAGED)
-).setWeaponProfile(2, new HeavyCavalryWeaponProfile(CBProfileCapacity.SUPERIOR)
+).setWeaponProfile(1, new HeavyCavalryWeaponProfile(CBProfileCapacity.ADVANTAGED, 0, 1, 0)
+).setWeaponProfile(2, new HeavyCavalryWeaponProfile(CBProfileCapacity.SUPERIOR, 1, 1, 0)
 
 ).setCommandProfile(1, new RegularCommandProfile(CBProfileCapacity.DISADVANTAGED)
 ).setCommandProfile(2, new RegularCommandProfile(CBProfileCapacity.NORMAL)
@@ -73,12 +73,12 @@ export let RoughneckLance = new CBUnitType("Company Lancet",
 
 ).setWeaponProfile(1, new LanceWeaponProfile(CBProfileCapacity.NORMAL)
 ).setWeaponProfile(2, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED)
-).setWeaponProfile(3, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED)
-).setWeaponProfile(4, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED)
-).setWeaponProfile(5, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED)
-).setWeaponProfile(6, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED)
-).setWeaponProfile(7, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED)
-).setWeaponProfile(8, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED)
+).setWeaponProfile(3, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED, 1, 1, 0)
+).setWeaponProfile(4, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED, 1, 1, 0)
+).setWeaponProfile(5, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED, 2, 2, 0)
+).setWeaponProfile(6, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED, 2, 2, 0)
+).setWeaponProfile(7, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED, 2, 3, 0)
+).setWeaponProfile(8, new LanceWeaponProfile(CBProfileCapacity.ADVANTAGED, 2, 3, 0)
 
 ).setCommandProfile(1, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)
 ).setCommandProfile(2, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)
@@ -114,8 +114,8 @@ export let RoughneckCrossbowman = new CBUnitType("Company Crossbowman",
 
 ).setWeaponProfile(1, new CrossbowWeaponProfile(CBProfileCapacity.NORMAL)
 ).setWeaponProfile(2, new CrossbowWeaponProfile(CBProfileCapacity.ADVANTAGED)
-).setWeaponProfile(3, new CrossbowWeaponProfile(CBProfileCapacity.ADVANTAGED)
-).setWeaponProfile(4, new CrossbowWeaponProfile(CBProfileCapacity.ADVANTAGED)
+).setWeaponProfile(3, new CrossbowWeaponProfile(CBProfileCapacity.ADVANTAGED, 0, 1, 1)
+).setWeaponProfile(4, new CrossbowWeaponProfile(CBProfileCapacity.ADVANTAGED, 0, 1, 1)
 
 ).setCommandProfile(1, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)
 ).setCommandProfile(2, new RegularCommandProfile(CBProfileCapacity.ADVANTAGED)

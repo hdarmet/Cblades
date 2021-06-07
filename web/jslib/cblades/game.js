@@ -551,7 +551,7 @@ export class CBGame {
 
         this._board = new DBoard(map.dimension, new Dimension2D(1000, 800),
             new DSimpleLevel("map"),
-            new DStackedLevel("terran", getHexArtifactSlot, getHexArtifactLayer, createHexArtifactSlot),
+            new DStackedLevel("ground", getHexArtifactSlot, getHexArtifactLayer, createHexArtifactSlot),
             new DStackedLevel("units", getUnitArtifactSlot, getUnitArtifactLayer, createUnitArtifactSlot),
             new DSimpleLevel("actuators"),
             new DStaticLevel("widgets"),

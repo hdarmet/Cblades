@@ -114,6 +114,15 @@ export class CBUnitManagementTeacher {
         return unit.hexLocation.units.length === 1;
     }
 
+    isStackedTroop(unit) {
+        if (!unit.troopNature) return false;
+        let units = unit.hexLocation.units;
+        for (let aUnit of units) {
+            if (aUnit !== unit && aUnit.troopNature) return true;
+        }
+        return false;
+    }
+
     wouldUnitEngage(attacker, attackerHexLocation, angle, predicate=foe=>true) {
         if (attacker.isRouted()) return false;
         let directions = this.getPotentialForwardZone(attacker, attackerHexLocation, angle)

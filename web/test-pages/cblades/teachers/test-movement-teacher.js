@@ -234,7 +234,7 @@ describe("Movement teacher", ()=> {
             assert(arbitrator.isAllowedToConfront(unit11)).isTrue();
     });
 
-    it("Checks movement costs according to terran", () => {
+    it("Checks movement costs according to ground", () => {
         given:
             var {arbitrator, unit11} = create2Players4UnitsTinyGame();
             // unit11 on Hex(5, 8)
@@ -311,7 +311,7 @@ describe("Movement teacher", ()=> {
             assertMove(allowedMoves, 60, 6, 6, CBMovement.MINIMAL);
     });
 
-    it("Checks unit allowed moves according to terran", () => {
+    it("Checks unit allowed moves according to ground", () => {
         given:
             var {arbitrator, unit11} = createTinyGame();
             // unit11 on Hex(5, 8)
@@ -323,13 +323,13 @@ describe("Movement teacher", ()=> {
             var allowedMoves = arbitrator.getAllowedFirstMoves(unit11);
         then:
             assertMove(allowedMoves, 300, 4, 7, CBMovement.EXTENDED);
-            assertNoMove(allowedMoves, 0); // Terran impassable
+            assertNoMove(allowedMoves, 0); // impassable ground
             assertMove(allowedMoves, 60, 6, 7, CBMovement.MINIMAL);
         when:
             allowedMoves = arbitrator.getAllowedSubsequentMoves(unit11);
         then:
             assertMove(allowedMoves, 300, 4, 7, CBMovement.EXTENDED);
-            assertNoMove(allowedMoves, 0); // Terran impassable
+            assertNoMove(allowedMoves, 0); // impassable ground
             assertNoMove(allowedMoves, 60); // Not a first move
     });
 

@@ -900,7 +900,7 @@ describe("Game", ()=> {
     it("Checks counter basic appearance and features", () => {
         given:
             var { game } = prepareTinyGame();
-            let counter = new CBCounter("terran", ["/CBlades/images/units/misc/counter.png"], new Dimension2D(50, 50));
+            let counter = new CBCounter("ground", ["/CBlades/images/units/misc/counter.png"], new Dimension2D(50, 50));
             game.addCounter(counter, new Point2D(100, 200));
             game.start();
             loadAllImages();
@@ -1174,7 +1174,7 @@ describe("Game", ()=> {
         when:
             game.addUnit(unit1, map.getHex(4, 5));
             game.addUnit(unit2, map.getHex(5, 4));
-            let counter = new CBCounter("terran", ["/CBlades/images/units/misc/counter.png"], new Dimension2D(50, 50));
+            let counter = new CBCounter("ground", ["/CBlades/images/units/misc/counter.png"], new Dimension2D(50, 50));
             game.addCounter(counter, new Point2D(100, 200));
         then:
             assert(game.units).arrayEqualsTo([unit1, unit2]);
@@ -1183,7 +1183,7 @@ describe("Game", ()=> {
     it("Checks playable addition and removing on a Hex (not undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
-            let playable = new CBPlayable("terran", ["/CBlades/images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBPlayable("ground", ["/CBlades/images/units/misc/playable.png"], new Dimension2D(50, 50));
             game.start();
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "hex-0");
@@ -1210,7 +1210,7 @@ describe("Game", ()=> {
     it("Checks playable addition and removing on a Hex (undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
-            let playable = new CBPlayable("terran", ["/CBlades/images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBPlayable("ground", ["/CBlades/images/units/misc/playable.png"], new Dimension2D(50, 50));
             game.start();
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "hex-0");
@@ -1255,7 +1255,7 @@ describe("Game", ()=> {
     it("Checks playable addition and removing on a Hex Side (not undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
-            let playable = new CBPlayable("terran", ["/CBlades/images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBPlayable("ground", ["/CBlades/images/units/misc/playable.png"], new Dimension2D(50, 50));
             game.start();
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "hex-0");
@@ -1286,7 +1286,7 @@ describe("Game", ()=> {
     it("Checks playable addition and removing on a Hex Side (undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
-            let playable = new CBPlayable("terran", ["/CBlades/images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBPlayable("ground", ["/CBlades/images/units/misc/playable.png"], new Dimension2D(50, 50));
             game.start();
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "hex-0");
@@ -2257,9 +2257,9 @@ describe("Game", ()=> {
     it("Checks playable sorting on Hex", () => {
         given:
             var { game, map } = prepareTinyGame();
-            var spell = new CBPlayable("terran", ["/CBlades/images/units/misc/spell.png"], new Dimension2D(50, 50));
+            var spell = new CBPlayable("ground", ["/CBlades/images/units/misc/spell.png"], new Dimension2D(50, 50));
             spell.spellNature = true;
-            var blaze = new CBPlayable("terran", ["/CBlades/images/units/misc/blaze.png"], new Dimension2D(50, 50));
+            var blaze = new CBPlayable("ground", ["/CBlades/images/units/misc/blaze.png"], new Dimension2D(50, 50));
             blaze.elementNature = true;
             game.start();
             var [hexLayer0] = getLayers(game.board, "hex-0");
@@ -2277,7 +2277,7 @@ describe("Game", ()=> {
             assertDirectives(hexLayer1, showFakeCounter("misc/spell", zoomAndRotate0(323.5582, 111.327)));
             assertNoMoreDirectives(hexLayer1);
         when:
-            var trap = new CBPlayable("terran", ["/CBlades/images/units/misc/trap.png"], new Dimension2D(50, 50));
+            var trap = new CBPlayable("ground", ["/CBlades/images/units/misc/trap.png"], new Dimension2D(50, 50));
             trap.featureNature = true;
             trap.appendToMap(map.getHex(4, 5));
             loadAllImages();

@@ -41,7 +41,7 @@ describe("Profile", ()=> {
         Memento.clear();
     });
 
-    function setTerran(map) {
+    function setGround(map) {
         map.getHex(1, 1).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
         map.getHex(1, 2).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
         map.getHex(1, 3).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
@@ -71,7 +71,7 @@ describe("Profile", ()=> {
             var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
-            setTerran(map);
+            setGround(map);
         when:
             var profile = new PedestrianMoveProfile(2);
         then:
@@ -159,7 +159,7 @@ describe("Profile", ()=> {
             var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
-            setTerran(map);
+            setGround(map);
         when:
             var profile = new AnimalMoveProfile(2);
         then:
@@ -247,7 +247,7 @@ describe("Profile", ()=> {
             var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
-            setTerran(map);
+            setGround(map);
         when:
             var profile = new CavalryMoveProfile(2);
         then:

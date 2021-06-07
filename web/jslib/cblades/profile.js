@@ -18,10 +18,6 @@ export let CBProfileCapacity = {
 
 export class PedestrianMoveProfile extends CBMoveProfile {
 
-    constructor(capacity) {
-        super(capacity);
-    }
-
     getMovementCostOnHex(hex) {
         switch (hex.type) {
             case CBHex.HEX_TYPES.OUTDOOR_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
@@ -68,10 +64,6 @@ export class PedestrianMoveProfile extends CBMoveProfile {
 }
 
 export class AnimalMoveProfile extends CBMoveProfile {
-
-    constructor(capacity) {
-        super(capacity);
-    }
 
     get movementPoints() {
         return 3+this.capacity;
@@ -124,10 +116,6 @@ export class AnimalMoveProfile extends CBMoveProfile {
 
 export class CavalryMoveProfile extends CBMoveProfile {
 
-    constructor(capacity) {
-        super(capacity);
-    }
-
     get movementPoints() {
         return 3+this.capacity;
     }
@@ -179,10 +167,6 @@ export class CavalryMoveProfile extends CBMoveProfile {
 
 export class MediumCavalryWeaponProfile extends CBWeaponProfile {
 
-    constructor(capacity) {
-        super(capacity);
-    }
-
     getShockAttackCode() {
         return "MCv";
     }
@@ -191,10 +175,6 @@ export class MediumCavalryWeaponProfile extends CBWeaponProfile {
 
 export class HeavyCavalryWeaponProfile extends CBWeaponProfile {
 
-    constructor(capacity) {
-        super(capacity);
-    }
-
     getShockAttackCode() {
         return "HCv";
     }
@@ -202,10 +182,6 @@ export class HeavyCavalryWeaponProfile extends CBWeaponProfile {
 }
 
 export class LightInfantryWeaponProfile extends CBWeaponProfile {
-
-    constructor(capacity) {
-        super(capacity);
-    }
 
     getShockAttackCode() {
         return "LIf";
@@ -218,13 +194,13 @@ export class LightInfantryWeaponProfile extends CBWeaponProfile {
     getFireRange() {
         return 2;
     }
+
+    getFireMalusSegmentSize() {
+        return 2;
+    }
 }
 
 export class LanceWeaponProfile extends CBWeaponProfile {
-
-    constructor(capacity) {
-        super(capacity);
-    }
 
     getShockAttackCode() {
         return "Lan";
@@ -233,10 +209,6 @@ export class LanceWeaponProfile extends CBWeaponProfile {
 }
 
 export class CrossbowWeaponProfile extends CBWeaponProfile {
-
-    constructor(capacity) {
-        super(capacity);
-    }
 
     getShockAttackCode() {
         return "Arb";
@@ -253,41 +225,21 @@ export class CrossbowWeaponProfile extends CBWeaponProfile {
 
 export class RegularCommandProfile extends CBCommandProfile {
 
-    constructor(capacity) {
-        super(capacity);
-    }
-
 }
 
 export class IrregularCommandProfile extends CBCommandProfile {
-
-    constructor(capacity) {
-        super(capacity);
-    }
 
 }
 
 export class ChaoticCommandProfile extends CBCommandProfile {
 
-    constructor(capacity) {
-        super(capacity);
-    }
-
 }
 
 export class StandardMoralProfile extends CBMoralProfile {
 
-    constructor(capacity) {
-        super(capacity);
-    }
-
 }
 
 export class EliteMoralProfile extends CBMoralProfile {
-
-    constructor(capacity) {
-        super(capacity);
-    }
 
     getAutoRally() {
         return true;
@@ -296,9 +248,5 @@ export class EliteMoralProfile extends CBMoralProfile {
 }
 
 export class ExaltedMoralProfile extends CBMoralProfile {
-
-    constructor(capacity) {
-        super(capacity);
-    }
 
 }

@@ -111,6 +111,18 @@ export class CBHexId {
         this.hex.changeType(type);
     }
 
+    get height() {
+        return this.hex.height;
+    }
+
+    set height(height) {
+        this.hex.height = height;
+    }
+
+    changeHeight(height) {
+        this.hex.changeHeight(height);
+    }
+
     similar(hexLocation) {
         return this.location.equalsTo(hexLocation.location);
     }
@@ -497,6 +509,7 @@ export class CBHex {
         this._units = [];
         this._hexType = {
             type: CBHex.HEX_TYPES.OUTDOOR_CLEAR,
+            height: 0,
             side120 : CBHex.HEXSIDE_TYPES.NORMAL,
             side180 : CBHex.HEXSIDE_TYPES.NORMAL,
             side240 : CBHex.HEXSIDE_TYPES.NORMAL
@@ -513,6 +526,7 @@ export class CBHex {
             units: [...this._units],
             playables: [...this._playables],
             type: this._hexType.type,
+            height: this._hexType.height,
             side120 : this._hexType.side120,
             side180 : this._hexType.side180,
             side240 : this._hexType.side240
@@ -523,6 +537,7 @@ export class CBHex {
         this._units = memento.units;
         this._playables = memento.playables;
         this._hexType.type = memento.type;
+        this._hexType.height = memento.height;
         this._hexType.side120 = memento.side120;
         this._hexType.side180 = memento.side180;
         this._hexType.side240 = memento.side240;
@@ -539,6 +554,19 @@ export class CBHex {
     changeType(type) {
         Memento.register(this);
         this._hexType.type = type;
+    }
+
+    get height() {
+        return this._hexType.height;
+    }
+
+    set height(height) {
+        this._hexType.height = height;
+    }
+
+    changeHeight(height) {
+        Memento.register(this);
+        this._hexType.height = height;
     }
 
     getSideType(angle) {

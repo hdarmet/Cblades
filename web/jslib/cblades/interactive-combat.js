@@ -30,6 +30,9 @@ import {
 import {
     CBCombatTeacher
 } from "./teachers/combat-teacher.js";
+import {
+    CrossbowWeaponProfile
+} from "./profile.js";
 
 export function registerInteractiveCombat() {
     CBInteractivePlayer.prototype.unitShockAttack = function (unit, event) {
@@ -271,13 +274,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
     }
 
     _hasPlayed() {
-        let played = true;
-        for (let hex of this.unit.hexLocation.hexes) {
-            if (!this._attackHexes.has(hex)) {
-                return false;
-            }
-        }
-        return played;
+        return this._attackHexes.size===this.unit.formationNature ? 2 : 1;
     }
 
     shockAttackUnit(attackerHex, defender, defenderHex, supported, advantage, event) { // LA
@@ -1100,6 +1097,18 @@ export class CBShockAttackInsert extends WidgetLevelMixin(DInsert) {
         super(game, "/CBlades/images/inserts/shock-attack-insert.png", CBShockAttackInsert.DIMENSION,  CBShockAttackInsert.PAGE_DIMENSION);
         this.setMark(new Point2D(70, 248-advantage.attackerCapacity*35));
         this.setMark(new Point2D(285, 248+advantage.defenderCapacity*35));
+        if (advantage.attackBonus) {
+            this.setMark(new Point2D(15, 346));
+        }
+        if (advantage.defenseBonus) {
+            this.setMark(new Point2D(15, 364));
+        }
+        if (advantage.attackerCharging) {
+            this.setMark(new Point2D(15, 382));
+        }
+        if (advantage.defenderCharging) {
+            this.setMark(new Point2D(15, 420));
+        }
         if (advantage.attackerTired) {
             this.setMark(new Point2D(15, 438));
         }
@@ -1124,15 +1133,37 @@ export class CBShockAttackInsert extends WidgetLevelMixin(DInsert) {
         if (advantage.backAdvantage) {
             this.setMark(new Point2D(15, 563));
         }
+        if (advantage.attackerAboveDefenfer) {
+            this.setMark(new Point2D(15, 581));
+        }
+        if (advantage.attackerBelowDefenfer) {
+            this.setMark(new Point2D(15, 599));
+        }
+        if (advantage.attackerOnRoughGround || advantage.defenderOnRoughGround) {
+            this.setMark(new Point2D(15, 617));
+        }
+        if (advantage.attackerOnDifficultGround || advantage.defenderOnDifficultGround) {
+            this.setMark(new Point2D(15, 635));
+        }
+        if (advantage.difficultHexSide) {
+            this.setMark(new Point2D(15, 653));
+        }
         if (advantage.attackerIsACharacter) {
             this.setMark(new Point2D(15, 671));
         }
         if (advantage.defenderIsACharacter) {
             this.setMark(new Point2D(15, 689));
         }
+        if (advantage.attackerStacked) {
+            this.setMark(new Point2D(15, 707));
+        }
+        if (advantage.defenderStacked) {
+            this.setMark(new Point2D(15, 725));
+        }
         if (advantage.notSupported) {
             this.setMark(new Point2D(15, 815));
         }
+
     }
 
 }
@@ -1146,6 +1177,12 @@ export class CBFireAttackInsert extends WidgetLevelMixin(DInsert) {
         super(game, "/CBlades/images/inserts/fire-attack-insert.png", CBFireAttackInsert.DIMENSION,  CBFireAttackInsert.PAGE_DIMENSION);
         this.setMark(new Point2D(70, 218-advantage.firerCapacity*35));
         this.setMark(new Point2D(285, 218+advantage.firerCapacity*35));
+        if (advantage.fireBonus) {
+            this.setMark(new Point2D(15, 327));
+        }
+        if (advantage.defenseBonus) {
+            this.setMark(new Point2D(15, 345));
+        }
         if (advantage.firerExhausted) {
             this.setMark(new Point2D(15, 363));
         }
@@ -1164,11 +1201,42 @@ export class CBFireAttackInsert extends WidgetLevelMixin(DInsert) {
         if (advantage.backAdvantage) {
             this.setMark(new Point2D(15, 453));
         }
+        if (advantage.firerAboveTarget) {
+            this.setMark(new Point2D(15, 471));
+        }
+        if (advantage.firerBelowTarget) {
+            this.setMark(new Point2D(15, 489));
+        }
+        if (advantage.firerOnDifficultGround) {
+            this.setMark(new Point2D(15, 507));
+        }
+        if (advantage.targetOnRoughGround) {
+            this.setMark(new Point2D(15, 525));
+        }
+        if (advantage.targetOnDifficultGround) {
+            this.setMark(new Point2D(15, 543));
+        }
+        if (advantage.targetProtection) {
+            this.setMark(new Point2D(15, 561));
+        }
+        if ((advantage.firer.weaponProfile instanceof CrossbowWeaponProfile) &&
+            advantage.distanceMalus) {
+            this.setMark(new Point2D(15, 581));
+        }
+        if (advantage.scarceMunitions) {
+            this.setMark(new Point2D(15, 653));
+        }
         if (advantage.firerIsACharacter) {
             this.setMark(new Point2D(15, 668));
         }
         if (advantage.targetIsACharacter) {
             this.setMark(new Point2D(15, 686));
+        }
+        if (advantage.firerStacked) {
+            this.setMark(new Point2D(15, 705));
+        }
+        if (advantage.targetStacked) {
+            this.setMark(new Point2D(15, 723));
         }
     }
 

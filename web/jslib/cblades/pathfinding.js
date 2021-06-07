@@ -557,6 +557,75 @@ export function getInRangeMoves({
     return allowedMoves;
 }
 
+export class CBLineOfSight {
+
+    constructor(startHex, targetHex) {
+        this._path = this._buildPath(startHex, targetHex);
+    }
+
+    _buildPath(startHex, targetHex) {
+        let angle = atan2(targetHex.location.x-startHex.location.x, targetHex.location.y-startHex.location.y);
+        if (angle%60 === 0) {
+            return this._buildStraitPath(angle, startHex, targetHex);
+        }
+        else if (angle%30 === 0) {
+            return this._buildSidePath(angle, startHex, targetHex);
+        }
+        else {
+            return this._buildNormalPath(angle, startHex, targetHex);
+        }
+    }
+
+    _buildStraitPath(angle, startHex, targetHex) {
+        let path = [[startHex]];
+        while (startHex !== targetHex) {
+            startHex = startHex.getNearHex(angle);
+            path.push([startHex]);
+        }
+        return path;
+    }
+
+    _buildNormalPath(angle, startHex, targetHex) {
+        let path = [[startHex]];
+        let diffAngle = 0;
+        while (startHex !== targetHex) {
+            let nextAngle = atan2(targetHex.location.x-startHex.location.x, targetHex.location.y-startHex.location.y);
+            let minAngle = Math.floor(nextAngle/60)*60;
+            let maxAngle = Math.ceil(nextAngle/60)*60;
+            let chosenAngle;
+            if (Math.abs(diffAngle+minAngle-angle)>=Math.abs(diffAngle+maxAngle-angle)) {
+                diffAngle +=maxAngle-angle;
+                chosenAngle = maxAngle;
+            }
+            else {
+                diffAngle +=minAngle-angle;
+                chosenAngle = minAngle;
+            }
+            if (chosenAngle===360) chosenAngle = 0;
+            startHex = startHex.getNearHex(chosenAngle);
+            path.push([startHex]);
+        }
+        return path;
+    }
+
+    _buildSidePath(angle, startHex, targetHex) {
+        let path = [[startHex]];
+        while (startHex !== targetHex) {
+            let nextAngle = Math.round(angle/60)*60;
+            let hex1 = startHex.getNearHex(Math.floor(angle/60)*60);
+            let hex2 = startHex.getNearHex(sumAngle(angle, 30));
+            path.push([hex1, hex2]);
+            startHex = hex1.getNearHex(sumAngle(angle, 30));
+            path.push([startHex]);
+        }
+        return path;
+    }
+
+    getPath() {
+        return this._path;
+    }
+}
+
 /*
 function getHexesFormHexLocations(hexLocations) {
     if (hexLocations.length===0) return new Set();

@@ -203,13 +203,13 @@ export function HexTargetedMixin(clazz) {
 
         _activate() {
             super._activate();
-            this.artifact.changeLevel("terran");
+            this.artifact.changeLevel("ground");
         }
 
         setOn(hex) {
             this._hex = hex;
             this._activated = true;
-            this.artifact.setLevel("terran");
+            this.artifact.setLevel("ground");
             this.artifact.changeImage(this._spellLevel);
             this.addToMap(this.hex);
             this._angle = 0;

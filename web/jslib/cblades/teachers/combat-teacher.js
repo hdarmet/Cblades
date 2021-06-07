@@ -1,11 +1,15 @@
 'use strict'
 
 import {
-    CBMoveType
+    CBHex, CBHexSideId,
+    CBMoveType, distanceFromHexToHex
 } from "../map.js";
 import {
     CBEngageSideMode
 } from "../unit.js";
+import {
+    CBLineOfSight
+} from "../pathfinding.js";
 
 export class CBCombatTeacher {
 
@@ -225,9 +229,49 @@ export class CBCombatTeacher {
         };
     }
 
+    isClearGroundForShock(hexId) {
+        return this.isClearGround(hexId);
+    }
+
+    isClearHexSideForShock(hexSideId) {
+        return this.isClearHexSide(hexSideId);
+    }
+
+    isRoughGroundForShock(hexId) {
+        return this.isRoughGround(hexId);
+    }
+
+    isDifficultGroundForShock(hexId) {
+        return this.isDifficultGround(hexId) ||
+            hexId.type === CBHex.HEX_TYPES.LAVA ||
+            hexId.type === CBHex.HEX_TYPES.WATER;
+    }
+
+    isDifficultHexSideForShock(hexSideId) {
+        return this.isDifficultHexSide(hexSideId);
+    }
+
+    isDifficultHexSideForFire(hexSideId) {
+        return this.isDifficultHexSide(hexSideId) || this.isImpassableHexSide(hexSideId);
+    }
+
+    isChargeAllowed(attackerHex, defenderHex) {
+        if (!this.isClearGroundForShock(defenderHex)) return false;
+        if (!this.isClearHexSideForShock(new CBHexSideId(attackerHex, defenderHex))) return false;
+        return true;
+    }
+
+    isAboveForShock(attackerHex, defenderHex) {
+        return attackerHex.height > defenderHex.height
+    }
+
+    isBelowForShock(attackerHex, defenderHex) {
+        return attackerHex.height < defenderHex.height
+    }
+
     getShockAttackAdvantage(attacker, attackerHex, defender, defenderHex, supported) {
         let advantage = 0;
-        let record = {};
+        let record = {attacker, defender};
         if (!supported) {
             record.notSupported = -4;
             advantage -=4;
@@ -237,6 +281,14 @@ export class CBCombatTeacher {
         record.attackerCapacity = this.getWeaponCapacityAdvantage(attacker);
         record.defenderCapacity = -this.getWeaponCapacityAdvantage(defender);
         advantage += record.attackerCapacity + record.defenderCapacity;
+        if (attacker.isCharging() && this.isChargeAllowed(attackerHex, defenderHex)) {
+            record.attackerCharging = 2;
+            advantage += 2;
+        }
+        if (defender.isCharging()) {
+            record.defenderCharging = -2;
+            advantage -= 2;
+        }
         if (attacker.isTired()) {
             record.attackerTired = -1;
             advantage -= 1;
@@ -277,6 +329,50 @@ export class CBCombatTeacher {
         if (side === CBEngageSideMode.BACK) {
             record.backAdvantage = 4;
             advantage += 4;
+        }
+        if (this.isAboveForShock(attackerHex, defenderHex)) {
+            record.attackerAboveDefenfer = 1;
+            advantage += 1;
+        }
+        if (this.isBelowForShock(attackerHex, defenderHex)) {
+            record.attackerBelowDefenfer = -1;
+            advantage -= 1;
+        }
+        if (this.isRoughGroundForShock(attackerHex)) {
+            record.attackerOnRoughGround = -1;
+            advantage -= 1;
+        }
+        if (this.isDifficultGroundForShock(attackerHex)) {
+            record.attackerOnDifficultGround = -2;
+            advantage -= 2;
+        }
+        if (this.isRoughGroundForShock(defenderHex)) {
+            record.defenderOnRoughGround = -1;
+            advantage -= 1;
+        }
+        if (this.isDifficultGroundForShock(defenderHex)) {
+            record.defenderOnDifficultGround = -2;
+            advantage -= 2;
+        }
+        if (this.isDifficultHexSideForShock(new CBHexSideId(attackerHex, defenderHex))) {
+            record.difficultHexSide = -1;
+            advantage -= 1;
+        }
+        if (attacker.weaponProfile.getAttackBonus()) {
+            record.attackBonus = attacker.weaponProfile.getAttackBonus();
+            advantage += attacker.weaponProfile.getAttackBonus();
+        }
+        if (defender.weaponProfile.getDefenseBonus()) {
+            record.defenseBonus = -defender.weaponProfile.getDefenseBonus();
+            advantage -= defender.weaponProfile.getDefenseBonus();
+        }
+        if (this.isStackedTroop(attacker)) {
+            record.attackerStacked = -2;
+            advantage -= 2;
+        }
+        if (this.isStackedTroop(defender)) {
+            record.defenderStacked = 2;
+            advantage += 2;
         }
         record.advantage = advantage;
         return record;
@@ -361,9 +457,40 @@ export class CBCombatTeacher {
         };
     }
 
+    isAboveForFire(attackerHex, defenderHex) {
+        return attackerHex.height > defenderHex.height
+    }
+
+    isBelowForFire(attackerHex, defenderHex) {
+        return attackerHex.height < defenderHex.height
+    }
+
+    isRoughGroundForFire(hexId) {
+        return this.isRoughGround(hexId);
+    }
+
+    isDifficultGroundForFire(hexId) {
+        return this.isDifficultGround(hexId);
+    }
+
+    getFireDistanceMalus(firer, firerHex, targetHex) {
+        return (distanceFromHexToHex(firerHex, targetHex)-1)/firer.weaponProfile.getFireMalusSegmentSize();
+    }
+
+    _isLastHexSideHindered(firerHex, targetHex) {
+        let path = new CBLineOfSight(firerHex, targetHex).getPath();
+        let lastSides = path[path.length-2];
+        for (let lastHex of lastSides) {
+            if (this.isDifficultHexSideForFire(new CBHexSideId(lastHex, targetHex))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     getFireAttackAdvantage(firer, firerHex, target, targetHex) {
         let advantage = 0;
-        let record = {};
+        let record = {firer, target};
         record.weapons = this.getFireWeaponAdvantage(firer, target)*2;
         advantage += record.weapons;
         record.firerCapacity = this.getWeaponCapacityAdvantage(firer);
@@ -385,10 +512,6 @@ export class CBCombatTeacher {
             record.targetRouted = 4;
             advantage +=4;
         }
-        if (target) {
-            record.difficultTerrain = 2;
-            advantage += 2;
-        }
         if (firer.characterNature) {
             record.firerIsACharacter = -4;
             advantage -= 4;
@@ -404,6 +527,55 @@ export class CBCombatTeacher {
         }
         if (side === CBEngageSideMode.BACK) {
             record.backAdvantage = 2;
+            advantage += 2;
+        }
+        if (this.isAboveForFire(firerHex, targetHex)) {
+            record.firerAboveTarget = 1;
+            advantage += 1;
+        }
+        if (this.isBelowForFire(firerHex, targetHex)) {
+            record.firerBelowTarget = -1;
+            advantage -= 1;
+        }
+        if (this.isRoughGroundForFire(firerHex) || this.isDifficultGroundForFire(firerHex)) {
+            record.firerOnDifficultGround = -1;
+            advantage -= 1;
+        }
+        if (this.isRoughGroundForFire(targetHex)) {
+            record.targetOnRoughGround = -2;
+            advantage -= 2;
+        }
+        if (this.isDifficultGroundForFire(targetHex)) {
+            record.targetOnDifficultGround = -4;
+            advantage -= 4;
+        }
+        if (firer.weaponProfile.getFireBonus()) {
+            record.fireBonus = firer.weaponProfile.getFireBonus();
+            advantage += firer.weaponProfile.getFireBonus();
+        }
+        if (target.weaponProfile.getDefenseBonus()) {
+            record.defenseBonus = -target.weaponProfile.getDefenseBonus();
+            advantage -= target.weaponProfile.getDefenseBonus();
+        }
+        if (this._isLastHexSideHindered(firerHex, targetHex)) {
+            record.targetProtection = -1;
+            advantage -= 1;
+        }
+        let distanceMalus = this.getFireDistanceMalus(firer, firerHex, targetHex);
+        if (distanceMalus) {
+            record.distanceMalus = -distanceMalus;
+            advantage -= distanceMalus;
+        }
+        if (firer.areMunitionsScarce()) {
+            record.scarceMunitions = -1;
+            advantage -= 1;
+        }
+        if (this.isStackedTroop(firer)) {
+            record.firerStacked = -2;
+            advantage -= 2;
+        }
+        if (this.isStackedTroop(target)) {
+            record.targetStacked = 2;
             advantage += 2;
         }
         record.advantage = advantage;

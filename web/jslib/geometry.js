@@ -154,6 +154,14 @@ export class Point2D {
         return new Point2D(this.x, this.y);
     }
 
+    plus(x, y) {
+        return new Point2D(this.x + x, this.y + y);
+    }
+
+    minus(x, y) {
+        return new Point2D(this.x - x, this.y - y);
+    }
+
     plusPoint(point) {
         return new Point2D(this.x + point.x, this.y + point.y);
     }

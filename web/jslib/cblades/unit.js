@@ -125,8 +125,11 @@ CBMoveProfile.COST_TYPE = {
 
 export class CBWeaponProfile extends CBProfile {
 
-    constructor(capacity = 0) {
+    constructor(capacity=0, attackBonus=0, defenseBonus=0, fireBonus=0) {
         super(capacity);
+        this._attackBonus = attackBonus;
+        this._defenseBonus = defenseBonus;
+        this._fireBonus = fireBonus;
     }
 
     getShockAttackCode() {
@@ -143,6 +146,22 @@ export class CBWeaponProfile extends CBProfile {
 
     getFireRange() {
         return 3;
+    }
+
+    getFireMalusSegmentSize() {
+        return 1;
+    }
+
+    getAttackBonus() {
+        return this._attackBonus;
+    }
+
+    getDefenseBonus() {
+        return this._defenseBonus;
+    }
+
+    getFireBonus() {
+        return this._fireBonus;
     }
 
     getFireDefendCode() {
