@@ -310,58 +310,21 @@ describe("Combat teacher", ()=> {
             var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
             unit21.move(map.getHex(5, 6));
         when:
-            var result = arbitrator.processShockAttackResult(unit12, unit21, true, [1, 2]);
+            var result = arbitrator.processShockAttackResult(unit12, unit12.hexLocation, unit21, unit21.hexLocation, true, [1, 2]);
         then:
             assert(result.success).isTrue();
             assert(result.lossesForDefender).equalsTo(2);
             assert(result.tirednessForAttacker).isTrue();
         when:
-            result = arbitrator.processShockAttackResult(unit12, unit21, false, [2, 3]);
+            result = arbitrator.processShockAttackResult(unit12, unit12.hexLocation, unit21, unit21.hexLocation, false, [2, 3]);
         then:
             assert(result.success).isTrue();
             assert(result.lossesForDefender).equalsTo(1);
             assert(result.tirednessForAttacker).isFalse();
         when:
-            result = arbitrator.processShockAttackResult(unit12, unit21, false, [5, 5]);
+            result = arbitrator.processShockAttackResult(unit12, unit12.hexLocation, unit21, unit21.hexLocation, false, [5, 5]);
         then:
             assert(result.success).isFalse();
-    });
-
-    it("Checks that formation may attack twice but not troops", () => {
-        given:
-            var {arbitrator, map, unit1, unit2, formation2} = create2PlayersTinyFormationGame();
-            var unit1Location = map.getHex(6, 7).getNearHex(60);
-            var unit2Location = map.getHex(6, 8).getNearHex(120);
-            unit1.angle = 210;
-            unit2.angle = 210;
-            unit1.move(unit1Location, 0);
-            unit2.move(unit2Location, 0);
-        when:
-            var foes = arbitrator.getFoesThatMayBeShockAttacked(unit1);
-        then:
-            assert(foes.length === 1 && foes[0].unit === formation2).isTrue();
-        when: // A troop cannot attack twice
-            unit1.setAttackLocation(map.getHex(6, 6));
-            foes = arbitrator.getFoesThatMayBeShockAttacked(unit1);
-        then:
-            assert(arbitrator.isAllowedToShockAttack(unit1)).isFalse();
-            assert(foes.length).equalsTo(0);
-        when: // A formation can attack twice
-            formation2.setAttackLocation(formation2.hexLocation.getFaceHex(90));
-            foes = arbitrator.getFoesThatMayBeShockAttacked(formation2);
-        then:
-            assert(arbitrator.isAllowedToShockAttack(formation2)).isTrue();
-            assert(foes.length).equalsTo(2);
-        when: // A formation may sometime attack from only one of its hex
-            formation2.setAttackLocation(unit1Location);
-            foes = arbitrator.getFoesThatMayBeShockAttacked(formation2);
-        then:
-            assert(foes.length === 1 && foes[0].unit === unit2).isTrue();
-        when:
-            formation2.setAttackLocation(unit2Location);
-            foes = arbitrator.getFoesThatMayBeShockAttacked(formation2);
-        then:
-            assert(foes.length === 1 && foes[0].unit === unit1).isTrue();
     });
 
     it("Checks if a character is allowed to fire by duel", () => {
@@ -411,59 +374,22 @@ describe("Combat teacher", ()=> {
             var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
             unit21.move(map.getHex(5, 5));
         when:
-            var result = arbitrator.processFireAttackResult(unit12, unit21, [1, 1]);
+            var result = arbitrator.processFireAttackResult(unit12, unit12.hexLocation, unit21, unit21.hexLocation, [1, 1]);
         then:
             assert(result.success).isTrue();
-            assert(result.lossesForDefender).equalsTo(2);
+            assert(result.lossesForDefender).equalsTo(3);
             assert(result.lowerFirerMunitions).isTrue();
         when:
-            result = arbitrator.processFireAttackResult(unit12, unit21, [4, 3]);
+            result = arbitrator.processFireAttackResult(unit12, unit12.hexLocation, unit21, unit21.hexLocation, [4, 3]);
         then:
             assert(result.success).isTrue();
             assert(result.lossesForDefender).equalsTo(1);
             assert(result.lowerFirerMunitions).isFalse();
         when:
-            result = arbitrator.processFireAttackResult(unit12, unit21, [5, 5]);
+            result = arbitrator.processFireAttackResult(unit12, unit12.hexLocation, unit21, unit21.hexLocation, [5, 5]);
         then:
             assert(result.success).isFalse();
             assert(result.lowerFirerMunitions).isTrue();
-    });
-
-    it("Checks that formation may fire  attack twice but not troops", () => {
-        given:
-            var {arbitrator, map, unit1, unit2, formation2} = create2PlayersTinyFormationGame();
-            var unit1Location = map.getHex(6, 7).getNearHex(60).getNearHex(60);
-            var unit2Location = map.getHex(6, 8).getNearHex(120).getNearHex(120);
-            unit1.angle = 210;
-            unit2.angle = 210;
-            unit1.move(unit1Location, 0);
-            unit2.move(unit2Location, 0);
-        when:
-            var foes = arbitrator.getFoesThatMayBeFireAttacked(unit1);
-        then:
-            assert(foes.length === 1 && foes[0].unit === formation2).isTrue();
-        when: // A troop cannot attack twice
-            unit1.setAttackLocation(map.getHex(6, 6));
-            foes = arbitrator.getFoesThatMayBeFireAttacked(unit1);
-        then:
-            assert(arbitrator.isAllowedToFireAttack(unit1)).isFalse();
-            assert(foes.length).equalsTo(0);
-        when: // A formation can attack twice
-            formation2.setAttackLocation(formation2.hexLocation.getFaceHex(90));
-            foes = arbitrator.getFoesThatMayBeFireAttacked(formation2);
-        then:
-            assert(arbitrator.isAllowedToFireAttack(formation2)).isTrue();
-            assert(foes.length).equalsTo(2);
-        when: // A formation may sometime attack from only one of its hex
-            formation2.setAttackLocation(unit1Location);
-            foes = arbitrator.getFoesThatMayBeFireAttacked(formation2);
-        then:
-            assert(foes.length === 1 && foes[0].unit === unit2).isTrue();
-        when:
-            formation2.setAttackLocation(unit2Location);
-            foes = arbitrator.getFoesThatMayBeFireAttacked(formation2);
-        then:
-            assert(foes.length === 1 && foes[0].unit === unit1).isTrue();
     });
 
     function assertNotInZone(zones, angle) {

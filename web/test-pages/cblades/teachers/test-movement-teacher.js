@@ -713,7 +713,7 @@ describe("Movement teacher", ()=> {
             var costToEngage = arbitrator.getCostToEngage(unit11, unit21);
             var whoJoined = arbitrator.getNearestFoesThatCanJoinAndEngage(unit11).foes;
         then:
-            assert(costToEngage).equalsTo(1);
+            assert(costToEngage).equalsTo(1.5);
             assert(whoJoined).unorderedArrayEqualsTo([unit21]);
         when:
             unit21.angle = 270;
@@ -721,14 +721,14 @@ describe("Movement teacher", ()=> {
             costToEngage = arbitrator.getCostToEngage(unit11, unit21);
             whoJoined = arbitrator.getNearestFoesThatCanJoinAndEngage(unit11).foes;
         then:
-            assert(costToEngage).equalsTo(2);
+            assert(costToEngage).equalsTo(2.5);
             assert(whoJoined).unorderedArrayEqualsTo([unit21, leader21]);
         when:
             unit11.move(map.getHex(0, 5));
             costToEngage = arbitrator.getCostToEngage(unit11, unit21);
             whoJoined = arbitrator.getNearestFoesThatCanJoinAndEngage(unit11).foes;
         then:
-            assert(costToEngage).equalsTo(7);
+            assert(costToEngage).equalsTo(7.5);
             assert(whoJoined).arrayEqualsTo([]);
     });
 
@@ -844,7 +844,9 @@ describe("Movement teacher", ()=> {
             var moves = arbitrator.getAllowedFireMoves(unit11);
         then:
             assert(moves).setContentEqualsTo([
-                map.getHex(8, 9), map.getHex(9, 10), map.getHex(7, 11), map.getHex(7, 10)
+                map.getHex(8, 9), map.getHex(9, 10),
+                map.getHex(9, 11), map.getHex(7, 11),
+                map.getHex(7, 10)
             ])
     });
 

@@ -528,10 +528,10 @@ export function getArrivalAreaCosts({
 
     let pathFinding = (start instanceof CBHexId) ?
         new GetArrivalAreaCostsHexPathFinding(start, startAngle,
-            createArrivalsFromHexes(arrivals),
+            createArrivalsFromHexes(start, arrivals),
             costMove, costRotate, minimalCost, maxCost) :
         new GetArrivalAreaCostsHexSidePathFinding(start, startAngle,
-            createArrivalsHexSidesFromHexes(arrivals),
+            createArrivalsHexSidesFromHexes(start, arrivals),
             costMove, costRotate, minimalCost, maxCost);
     let locations = stopWhenArrivalAreaIsCovered(pathFinding, arrivals);
     pathFinding.computePath();
@@ -558,7 +558,7 @@ export function getInRangeMoves({
      costGetter = record=>record.cost,
      maxCost
  }) {
-    let finder = new CBDistanceFinder(start, arrivals, 2, range);
+    let finder = new CBDistanceFinder(start, arrivals, maxCost, range);
     let pathFinding = (start instanceof CBHexId) ?
         new GetPathCostToRangeHexPathFinding(
             start, startAngle,
@@ -709,7 +709,7 @@ export class CBDistanceFinder {
             }
         }
         let time = new Date().getTime() - startTime;
-        console.log("Time to resolve: "+time);
+        //console.log("Time to resolve: "+time);
         return this._result;
     }
 
@@ -756,7 +756,7 @@ export class CBDistanceFinder {
     }
 
     findHexes() {
-        let result = new Map();
+        let result = [];
         let allRecords = this._findHexes();
         for (let record of allRecords.values()) {
             for (let angle of record.angles) {

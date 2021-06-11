@@ -1134,27 +1134,6 @@ describe("Unit", ()=> {
             assert(unit.isDestroyed()).isFalse();
     });
 
-    it("Checks unit attack feature related methods", () => {
-        given:
-            var {game, unit, map} = createTinyGame();
-        when:
-            var hexId = unit.hexLocation.getNearHex(60);
-            unit.setAttackLocation(hexId);
-        then:
-            assert(unit.attackLocation).equalsTo(hexId);
-            assert(unit.hasAttacked()).isTrue();
-        when:
-            Memento.undo();
-        then:
-            assert(unit.attackLocation).isNotDefined();
-            assert(unit.hasAttacked()).isFalse();
-        when:
-            Memento.redo();
-        then:
-            assert(unit.attackLocation).equalsTo(hexId);
-            assert(unit.hasAttacked()).isTrue();
-    });
-
     it("Checks a troop taking losses", () => {
         given:
             var {game, unit} = createTinyGame();

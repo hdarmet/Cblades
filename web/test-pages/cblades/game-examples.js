@@ -41,6 +41,18 @@ export class CBTestUnitType extends CBUnitType {
         super(name, troopPaths, formationPaths);
         for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
             this.setMoveProfile(index, new CBMoveProfile());
+            this.setWeaponProfile(index, new CBWeaponProfile());
+            this.setCommandProfile(index, new CBCommandProfile());
+            this.setMoralProfile(index, new CBMoralProfile());
+        }
+    }
+}
+
+export class CBTestFireUnitType extends CBUnitType {
+    constructor(name, troopPaths, formationPaths=[]) {
+        super(name, troopPaths, formationPaths);
+        for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
+            this.setMoveProfile(index, new CBMoveProfile());
             this.setWeaponProfile(index, new FireWeaponProfile());
             this.setCommandProfile(index, new CBCommandProfile());
             this.setMoralProfile(index, new CBMoralProfile());
@@ -196,6 +208,40 @@ export function create2PlayersTinyFormationGame() {
     let wing2 = new CBWing(player2);
     wing2.setRetreatZone(map.getEastZone());
     let unitType2 = new CBTestUnitType("unit2", [
+            "/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"
+        ],
+        [
+            "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png"
+        ]
+    );
+    let formation2 = new CBFormation(unitType2, wing2);
+    formation2.angle = 90;
+    game.addUnit(formation2, new CBHexSideId(map.getHex(6, 8), map.getHex(6, 7)));
+    game.start();
+    loadAllImages();
+    return {game, arbitrator, map, unit1, formation2, wing1, wing2, player1, player2};
+}
+
+export function create2PlayersTinyFireFormationGame() {
+    let game = new CBGame();
+    let arbitrator = new CBTestArbitrator();
+    game.setArbitrator(arbitrator);
+    let player1 = new CBInteractivePlayer();
+    game.addPlayer(player1);
+    let player2 = new CBInteractivePlayer();
+    game.addPlayer(player2);
+    var map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
+    game.setMap(map);
+    let wing1 = new CBWing(player1);
+    wing1.setRetreatZone(map.getWestZone());
+    let unitType1 = new CBTestUnitType("unit1", [
+        "/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"
+    ]);
+    let unit1 = new CBTroop(unitType1, wing1);
+    game.addUnit(unit1, map.getHex(5, 8));
+    let wing2 = new CBWing(player2);
+    wing2.setRetreatZone(map.getEastZone());
+    let unitType2 = new CBTestFireUnitType("unit2", [
             "/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"
         ],
         [

@@ -45,9 +45,19 @@ describe("Editor", ()=> {
     function showHexTypeTrigger(type, [a, b, c, d, e, f]) {
         return [
             "save()",
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #00FFFF", "shadowBlur = 10",
+            `drawImage(/CBlades/images/actuators/ground/${type}.png, -30, -30, 60, 60)`,
+            "restore()"
+        ]
+    }
+
+    function showHexHeightTrigger(height, [a, b, c, d, e, f]) {
+        return [
+            "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                `drawImage(/CBlades/images/actuators/ground/${type}.png, -30, -30, 60, 60)`,
+                `drawImage(/CBlades/images/actuators/ground/level-${height}.png, -35, -35, 70, 70)`,
             "restore()"
         ]
     }
@@ -92,11 +102,14 @@ describe("Editor", ()=> {
             loadAllImages();
         then:
             skipDirectives(actuatorsLayer, 4);
-            assert(getDirectives(actuatorsLayer).length).equalsTo(2622);
-            assert(getDirectives(actuatorsLayer, 0, 6)).arrayEqualsTo(
-                showHexTypeTrigger("outdoor-clear", zoomAndRotate0(0, 15.1026))
+            assert(getDirectives(actuatorsLayer).length).equalsTo(3180);
+            assert(getDirectives(actuatorsLayer, 54, 54+6)).arrayEqualsTo(
+                showHexTypeTrigger("outdoor-clear", zoomAndRotate0(63.783, 63.2148))
             );
-            assert(getDirectives(actuatorsLayer, 2622-6, 2622)).arrayEqualsTo(
+            assert(getDirectives(actuatorsLayer, 54+6, 54+12)).arrayEqualsTo(
+                showHexHeightTrigger(0, zoomAndRotate0(102.8837, 63.2148))
+            );
+            assert(getDirectives(actuatorsLayer, 3180-6, 3180)).arrayEqualsTo(
                 showHexSideTypeTrigger("normal", zoomAndRotate240(958.3333, 808.9534))
             );
     });
@@ -120,105 +133,105 @@ describe("Editor", ()=> {
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("outdoor-rough", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("outdoor-rough", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("outdoor-difficult", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("outdoor-difficult", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("outdoor-clear-flammable", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("outdoor-clear-flammable", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("outdoor-rough-flammable", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("outdoor-rough-flammable", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("outdoor-difficult-flammable", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("outdoor-difficult-flammable", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("water", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("water", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("lava", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("lava", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("impassable", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("impassable", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("cave-clear", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("cave-clear", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("cave-rough", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("cave-rough", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("cave-difficult", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("cave-difficult", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("cave-clear-flammable", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("cave-clear-flammable", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("cave-rough-flammable", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("cave-rough-flammable", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("cave-difficult-flammable", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("cave-difficult-flammable", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("outdoor-clear", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("outdoor-clear", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
@@ -226,7 +239,7 @@ describe("Editor", ()=> {
             paint(game);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("cave-difficult-flammable", zoomAndRotate0(333.3333, 111.327))
+                showHexTypeTrigger("cave-difficult-flammable", zoomAndRotate0(313.783, 111.327))
             );
     });
 

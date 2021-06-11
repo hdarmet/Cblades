@@ -635,7 +635,6 @@ export class CBMovementTeacher {
             return cost;
         }
 
-        let maxRemainingPoints = -1;
         let foeRecords = [];
         let minCost = Number.MAX_VALUE;
         for (let foe of this._getReachableFoes(unit)) {

@@ -190,7 +190,7 @@ export class CBUnitManagementTeacher {
     }
 
     isAUnitEngageAnotherUnit(attacker, defender, unitMustHaveAnEngagingMarker=false) {
-        return this.getSideWhereAUnitPotentiallyEngageAnotherUnit(attacker, defender, defender.hexLocation, defender.angle, unitMustHaveAnEngagingMarker)!==false;
+        return this.getSideWhereAUnitPotentiallyEngageAnotherUnit(attacker, defender, defender.hexLocation, defender.angle, unitMustHaveAnEngagingMarker);
     }
 
     getPotentialEngagingFoes(defender, defenderHexLocation, defenderAngle, foesMustHaveEngagingMarkers=false) {

@@ -1658,8 +1658,8 @@ describe("Interactive Movement", ()=> {
     it("Checks Formation when it has to turn to attack moves", () => {
         given:
             var {game, map, arbitrator, wing2, formation2} = create2PlayersTinyFormationGame();
-            formation2.hexLocation = map.getHex(10, 8).toward(120);
-            formation2.angle = 30;
+            formation2.hexLocation = map.getHex(10, 8).toward(180);
+            formation2.angle = 90;
             arbitrator.updateAllowedActions(actions=>{
                 actions.moveMode = CBMoveMode.ATTACK;
                 return actions;
@@ -1676,7 +1676,7 @@ describe("Interactive Movement", ()=> {
         then:
             assert(moveActuator).isNotDefined();
             assert(orientationActuator).isDefined();
-            assert(orientationActuator.getTrigger(210)).isDefined();
+            assert(orientationActuator.getTrigger(270)).isDefined();
     });
 
     it("Checks Troop when it fire moves", () => {
@@ -1707,9 +1707,9 @@ describe("Interactive Movement", ()=> {
             assert(orientationActuator.getTrigger(0)).isNotDefined();
             assert(orientationActuator.getTrigger(30)).isDefined();
             assert(orientationActuator.getTrigger(60)).isDefined();
-            assert(orientationActuator.getTrigger(90)).isDefined();
-            assert(orientationActuator.getTrigger(120)).isDefined();
-            assert(orientationActuator.getTrigger(150)).isDefined();
+            assert(orientationActuator.getTrigger(90)).isNotDefined();
+            assert(orientationActuator.getTrigger(120)).isNotDefined();
+            assert(orientationActuator.getTrigger(150)).isNotDefined();
             assert(orientationActuator.getTrigger(180)).isDefined();
             assert(orientationActuator.getTrigger(210)).isDefined();
             assert(orientationActuator.getTrigger(240)).isDefined();
