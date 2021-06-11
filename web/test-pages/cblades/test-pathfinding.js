@@ -27,7 +27,7 @@ import {
     backwardMixin,
     CBAbstractPathFinding,
     forwardMixin, getArrivalAreaCosts,
-    getGoodNextMoves, getInRangeMoves,
+    getGoodNextMoves, getHexSidesFromHexes, getInRangeMoves,
     getPathCost,
     hexPathFindingMixin,
     hexSidePathFindingMixin,
@@ -361,7 +361,9 @@ describe("Pathfinding", ()=> {
             var expensiveHexes = new Set([map.getHex(10,2)]);
             var pathfinding = new (hexSidePathFindingMixin(forwardMixin(CBAbstractPathFinding)))(
                 new CBHexSideId(map.getHex(9, 4), map.getHex(10, 4)), 210,
-                [map.getHex(9, 1), map.getHex(10, 1), map.getHex(11, 1)],
+                [...getHexSidesFromHexes([
+                    map.getHex(9, 1), map.getHex(10, 1), map.getHex(11, 1)
+                ])],
                 (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
                 (fromHex, fromAngle, toAngle)=>1, 1
             );
@@ -381,7 +383,11 @@ describe("Pathfinding", ()=> {
             var expensiveHexes = new Set(); //new Set([map.getHex(10,2)]);
             var pathfinding = new (hexSidePathFindingMixin(backwardMixin(CBAbstractPathFinding)))(
                 new CBHexSideId(map.getHex(10, 3), map.getHex(10, 4)), 90,
-                [map.getHex(9, 1), map.getHex(10, 1), map.getHex(11, 1)],
+                [...getHexSidesFromHexes([
+                    map.getHex(9, 1),
+                    map.getHex(10, 1),
+                    map.getHex(11, 1)
+                ])],
                 (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
                 (fromHex, fromAngle, toAngle)=>1, 1
             );
@@ -610,10 +616,10 @@ describe("Pathfinding", ()=> {
         when:
             game.setMap(map);
             var expensiveHexes = new Set([map.getHex(9,1), map.getHex(10,1), map.getHex(11,1)]);
-            let config = {
+            const config = {
                 start: map.getHex(10, 2).toward(120),
                 range: 2,
-                arrivals: [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+                arrivals: [map.getHex(10, 0)],
                 costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
                 costRotate: (fromHex, fromAngle, toAngle)=>1,
                 minimalCost: 1,

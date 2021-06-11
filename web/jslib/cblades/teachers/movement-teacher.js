@@ -440,7 +440,9 @@ export class CBMovementTeacher {
     getTurnCostMethod(unit, freeHexes) {
         return (hex, fromAngle, toAngle)=> {
             if (freeHexes && freeHexes.has(hex)) return 0;
-            let cost = this.getRotationCost(unit, toAngle, hex, fromAngle);
+            let cost = unit.formationNature ?
+                this.getFormationRotationCost(unit, toAngle, hex, fromAngle):
+                this.getRotationCost(unit, toAngle, hex, fromAngle);
             switch (cost.type) {
                 case CBMoveProfile.COST_TYPE.IMPASSABLE:
                     return null;

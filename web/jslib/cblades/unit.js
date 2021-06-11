@@ -1268,7 +1268,7 @@ export class CBFormation extends CBUnit {
 
 
     turn(angle, cost=null, moveType = CBMoveType.BACKWARD) {
-        this.move(this.hexLocation.turnTo(angle, cost, moveType));
+        this.move(this.hexLocation.turnTo(angle), cost, moveType);
         this.reorient(this.getTurnOrientation(angle));
     }
 
