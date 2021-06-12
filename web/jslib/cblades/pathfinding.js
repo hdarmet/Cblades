@@ -51,10 +51,10 @@ export class CBAbstractPathFinding {
     }
 
     _registerProcessed(record) {
-        let key = record.hexLocation.location.toString();
-        let oldRecord = this._processed.get(key);
+        let recordKey = key(record.hexLocation, record.angle);
+        let oldRecord = this._processed.get(recordKey);
         if (!oldRecord  || oldRecord.cost>record.cost) {
-            this._processed.set(key, record);
+            this._processed.set(recordKey, record);
         }
     }
 
@@ -62,9 +62,13 @@ export class CBAbstractPathFinding {
         return this._start;
     }
 
-    getProcessedRecord(hexLocation) {
-        let key = hexLocation.location.toString();
-        return this._processed.get(key);
+    get startAngle() {
+        return this._startAngle;
+    }
+
+    getProcessedRecord(option) {
+        let optionKey = key(option.hexLocation, option.angle);
+        return this._processed.get(optionKey);
     }
 
     _getAccessibleHexes() {
@@ -313,7 +317,7 @@ export function getHexSidesFromHexes(hexes) {
 export function createArrivalsFromHexes(start, hexes) {
     let result = [];
     for (let hex of hexes) {
-        let diff = start.location.minusPoint(hex.location);
+        let diff = hex.location.minusPoint(start.location);
         let angle = Math.round(atan2(diff.x, diff.y) / 30) * 30;
         result.push({hexLocation:hex, angle})
     }
@@ -323,7 +327,7 @@ export function createArrivalsFromHexes(start, hexes) {
 export function createArrivalsFromHexSides(start, hexSides) {
     let result = [];
     for (let hexSide of hexSides) {
-        let diff = start.location.minusPoint(hexSide.location);
+        let diff = hexSide.location.minusPoint(start.location);
         let hangle = Math.round(atan2(diff.x, diff.y) / 30) * 30;
         let rangle = sumAngle(hexSide.angle, 90);
         let dangle = diffAngle(hangle, rangle);
@@ -399,7 +403,7 @@ export function stopWhenTargetVicinityIsCompleted(pathFinding) {
     let reachCost = null;
     pathFinding._stopPredicate = record => {
         if (reachCost !== null && record.cost + record.distance > reachCost) return true;
-        if (record.distance === 0) {
+        if (record.distance === 0 && record.angle === pathFinding.startAngle) {
             reachCost = record.cost;
         }
         return false;
@@ -432,7 +436,7 @@ export function getGoodNextMoves({
     if (!startRecord) return [];
     let cost = costGetter(startRecord);
     for (let option of pathFinding.collectOptions(startRecord.hexLocation, startRecord.angle)) {
-        let record = pathFinding.getProcessedRecord(option.hexLocation);
+        let record = pathFinding.getProcessedRecord(option);
         let firstMovementCost = pathFinding.getCost(record, start, withAngle ? startAngle:null, option.hexLocation, option.angle);
         if (firstMovementCost!==null && record && costGetter(record)+firstMovementCost<=cost) {
             goodMoves.add(option.hexLocation);
@@ -489,16 +493,21 @@ export function stopWhenArrivalAreaIsCovered(pathFinding, arrivals) {
 }
 
 export function stopWhenStartNeighborhoodIsCovered(pathFinding) {
-    let locationsToReach = stringifyHexLocations(pathFinding.start instanceof CBHexId ?
+    let locationsToReach = new Set();
+    let hexLocations = pathFinding.start instanceof CBHexId ?
         new Set(pathFinding._start.nearHexes.keys()) :
-        getHexSidesFromHexes(pathFinding._start.nearHexes.keys())
-    );
-    let neighborhood = [];
+        getHexSidesFromHexes(pathFinding._start.nearHexes.keys());
+    for (let hexLocation of hexLocations) {
+        for (let angle=0; angle<360; angle+=30) {
+            locationsToReach.add(key(hexLocation, angle));
+        }
+    }
+   let neighborhood = [];
     pathFinding._stopPredicate = record => {
         if (locationsToReach.size === 0) {
             return true;
         }
-        if (locationsToReach.delete(record.hexLocation.location.toString())) {
+        if (locationsToReach.delete(key(record.hexLocation, record.angle))) {
             neighborhood.push(record);
         }
         return false;
@@ -559,26 +568,35 @@ export function getInRangeMoves({
      maxCost
  }) {
     let finder = new CBDistanceFinder(start, arrivals, maxCost, range);
+    let allowedOptions = (start instanceof CBHexId) ? finder.findHexes() : finder.findHexSides();
     let pathFinding = (start instanceof CBHexId) ?
         new GetPathCostToRangeHexPathFinding(
-            start, startAngle,
-            finder.findHexes(),
+            start, startAngle, allowedOptions,
             costMove, costRotate, minimalCost, maxCost) :
         new GetPathCostToRangeHexSidePathFinding(
-            start, startAngle,
-            finder.findHexSides(),
+            start, startAngle, allowedOptions,
             costMove, costRotate, minimalCost, maxCost);
     stopWhenStartNeighborhoodIsCovered(pathFinding)
     pathFinding.computePath();
     //pathFinding._printRecords();
     let allowedMoves = [];
     let startRecord = pathFinding.getStartRecord();
-    for (let option of pathFinding.collectOptions(startRecord.hexLocation, startRecord.angle)) {
-        let record = pathFinding.getProcessedRecord(option.hexLocation);
-        if (record) {
-            let firstMovementCost = pathFinding.getCost(record, start, startAngle, option.hexLocation, option.angle);
-            if (firstMovementCost !== null && costGetter(record) + firstMovementCost <= maxCost) {
-                allowedMoves.push(option.hexLocation);
+    if (startRecord) {
+        for (let option of pathFinding.collectOptions(startRecord.hexLocation, startRecord.angle)) {
+            let record = pathFinding.getProcessedRecord(option);
+            if (record) {
+                let firstMovementCost = pathFinding.getCost(record, start, startAngle, option.hexLocation, option.angle);
+                if (firstMovementCost !== null && costGetter(record) + firstMovementCost <= maxCost) {
+                    allowedMoves.push(option.hexLocation);
+                }
+            }
+        }
+    }
+    else {
+        let startLocation = pathFinding.start.location.toString();
+        for (let option of allowedOptions) {
+            if (option.hexLocation.location.toString()===startLocation && !(option.angle%60)) {
+                allowedMoves.push(option.hexLocation.getNearHex(option.angle));
             }
         }
     }
@@ -716,8 +734,9 @@ export class CBDistanceFinder {
     getAngles(startHex, arrivalHex) {
         let startLocation = startHex.location;
         let arrivalLocation = arrivalHex.location;
-        let angleMin = (Math.floor(atan2(arrivalLocation.x-startLocation.x, arrivalLocation.y-startLocation.y)/60)*60)%360;
-        let angleMax = (Math.ceil(atan2(arrivalLocation.x-startLocation.x, arrivalLocation.y-startLocation.y)/60)*60)%360;
+        let canonicalAngle = atan2(arrivalLocation.x-startLocation.x, arrivalLocation.y-startLocation.y);
+        let angleMin = (Math.floor(canonicalAngle/60)*60)%360;
+        let angleMax = (Math.ceil(canonicalAngle/60)*60)%360;
         return angleMin===angleMax ?
             new Set([
                 sumAngle(angleMin, -60), sumAngle(angleMin, -30),

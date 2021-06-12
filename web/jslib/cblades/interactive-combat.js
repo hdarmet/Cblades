@@ -702,9 +702,7 @@ class ShockAttackTrigger extends CBUnitActuatorTrigger {
                 DImage.getImage("/CBlades/images/actuators/supported-shock.png"):
                 DImage.getImage("/CBlades/images/actuators/unsupported-shock.png"),
             new Point2D(0, 0),
-            supported ?
-                new Dimension2D(100, 133):
-                new Dimension2D(100, 111));
+            new Dimension2D(100, 111));
         this.position = Point2D.position(unit.location, combat.attackedHex.location, 1); // LA
         this.pangle = 30;
         this.supported = false;

@@ -73,7 +73,7 @@ describe("Interactive Combat", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/supported-shock.png, -60, -66.5, 120, 133)",
+                "drawImage(/CBlades/images/actuators/supported-shock.png, -50, -55.5, 100, 111)",
             "restore()"
         ];
     }
@@ -247,8 +247,8 @@ describe("Interactive Combat", ()=> {
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showUnsupportedShock(zoomAndRotate30(397.1163, 236.1131)));
             assertDirectives(actuatorsLayer, showSupportedShock(zoomAndRotate30(436.217, 275.2138)));
-            assertDirectives(actuatorsLayer, showUnsupportedShockAdvantage(-4, zoomAndRotate0(380.0098, 219.0066)));
-            assertDirectives(actuatorsLayer, showSupportedShockAdvantage(0, zoomAndRotate0(453.3236, 292.3204)));
+            assertDirectives(actuatorsLayer, showUnsupportedShockAdvantage(0, zoomAndRotate0(380.0098, 219.0066)));
+            assertDirectives(actuatorsLayer, showSupportedShockAdvantage(4, zoomAndRotate0(453.3236, 292.3204)));
             assert(getDirectives(actuatorsLayer)).arrayEqualsTo([]);
         when:
             var shockAttackActuator = getShockAttackActuator(game);
