@@ -401,4 +401,62 @@ describe("Units teacher", ()=> {
             assert(arbitrator.getFoes(unit12)).setEqualsTo(new Set([unit21, unit22, leader21]));
     });
 
+    it("Checks if a troop is stocked with a troop", () => {
+        given:
+            var {arbitrator, unit11, unit12, leader11} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.isStackedTroop(unit11)).isFalse();
+        when:
+            leader11.hexLocation = unit11.hexLocation;
+        then:
+            assert(arbitrator.isStackedTroop(unit11)).isFalse();
+            assert(arbitrator.isStackedTroop(leader11)).isFalse();
+        when:
+            unit12.hexLocation = unit11.hexLocation;
+        then:
+            assert(arbitrator.isStackedTroop(unit11)).isTrue();
+            assert(arbitrator.isStackedTroop(unit12)).isTrue();
+            assert(arbitrator.isStackedTroop(leader11)).isFalse();
+    });
+
+    it("Checks shock attack side", () => {
+        given:
+            var {arbitrator, unit11, unit21} = create2Players4UnitsTinyGame();
+            unit21.hexLocation = unit11.hexLocation.getNearHex(60).getNearHex(60);
+            unit11.angle = 60;
+            unit21.angle = 240;
+        then:
+            assert(arbitrator.getEngagementSide(unit11, unit21)).equalsTo(CBEngageSideMode.NONE);
+        when:
+            unit21.hexLocation = unit11.hexLocation.getNearHex(60);
+        then:
+            assert(arbitrator.getEngagementSide(unit11, unit21)).equalsTo(CBEngageSideMode.FRONT);
+        when:
+            unit21.angle = 150;
+        then:
+            assert(arbitrator.getEngagementSide(unit11, unit21)).equalsTo(CBEngageSideMode.SIDE);
+        when:
+            unit21.angle = 90;
+        then:
+            assert(arbitrator.getEngagementSide(unit11, unit21)).equalsTo(CBEngageSideMode.BACK);
+    });
+
+    it("Checks fire attack side", () => {
+        given:
+            var {arbitrator, unit11, unit21} = create2Players4UnitsTinyGame();
+            unit21.hexLocation = unit11.hexLocation.getNearHex(60).getNearHex(60);
+            unit11.angle = 60;
+            unit21.angle = 240;
+        then:
+            assert(arbitrator.getFireSide(unit11, unit21)).equalsTo(CBEngageSideMode.FRONT);
+        when:
+            unit21.angle = 150;
+        then:
+            assert(arbitrator.getFireSide(unit11, unit21)).equalsTo(CBEngageSideMode.SIDE);
+        when:
+            unit21.angle = 90;
+        then:
+            assert(arbitrator.getFireSide(unit11, unit21)).equalsTo(CBEngageSideMode.BACK);
+    });
+
 });

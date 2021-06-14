@@ -88,8 +88,8 @@ describe("Unit", ()=> {
             super(...args);
             this.setMoveProfile(1, new CBMoveProfile(-1));
             this.setMoveProfile(2, new CBMoveProfile(0));
-            this.setWeaponProfile(1, new CBWeaponProfile(-1));
-            this.setWeaponProfile(2, new CBWeaponProfile(0));
+            this.setWeaponProfile(1, new CBWeaponProfile(-1, 1, 2, 3));
+            this.setWeaponProfile(2, new CBWeaponProfile(0, 1, 2, 3));
             this.setCommandProfile(1, new CBCommandProfile(-1));
             this.setCommandProfile(2, new CBCommandProfile(0));
             this.setMoralProfile(1, new CBMoralProfile(-1));
@@ -577,6 +577,10 @@ describe("Unit", ()=> {
             assert(unit.weaponProfile.getFireAttackCode()).isNotDefined();
             assert(unit.weaponProfile.getFireRange()).equalsTo(3);
             assert(unit.weaponProfile.getFireDefendCode()).equalsTo("Bow");
+            assert(unit.weaponProfile.getFireMalusSegmentSize()).equalsTo(1);
+            assert(unit.weaponProfile.getAttackBonus()).equalsTo(1);
+            assert(unit.weaponProfile.getDefenseBonus()).equalsTo(2);
+            assert(unit.weaponProfile.getFireBonus()).equalsTo(3);
     });
 
     it("Checks unit command profile", () => {

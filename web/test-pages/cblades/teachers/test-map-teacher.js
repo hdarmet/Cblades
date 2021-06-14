@@ -480,4 +480,160 @@ describe("Map teacher", ()=> {
             assert(arbitrator.getFormationRotationCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
     });
 
+    it("Checks if a hex is clear", () => {
+        given:
+            var {arbitrator, map} = createTinyGame();
+            map.getHex(3, 0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
+            map.getHex(3, 1).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            map.getHex(3, 2).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            map.getHex(3, 3).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
+            map.getHex(3, 4).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
+            map.getHex(3, 5).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 6).type = CBHex.HEX_TYPES.WATER;
+            map.getHex(3, 7).type = CBHex.HEX_TYPES.LAVA;
+            map.getHex(3, 8).type = CBHex.HEX_TYPES.IMPASSABLE;
+            map.getHex(4, 1).type = CBHex.HEX_TYPES.CAVE_CLEAR;
+            map.getHex(4, 2).type = CBHex.HEX_TYPES.CAVE_ROUGH;
+            map.getHex(4, 3).type = CBHex.HEX_TYPES.CAVE_DIFFICULT;
+            map.getHex(4, 4).type = CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+            map.getHex(4, 5).type = CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+            map.getHex(4, 6).type = CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+        then:
+            assert(arbitrator.isClearGround(map.getHex(3, 0))).isTrue();
+            assert(arbitrator.isClearGround(map.getHex(3, 1))).isFalse();
+            assert(arbitrator.isClearGround(map.getHex(3, 2))).isFalse();
+            assert(arbitrator.isClearGround(map.getHex(3, 3))).isTrue();
+            assert(arbitrator.isClearGround(map.getHex(3, 4))).isFalse();
+            assert(arbitrator.isClearGround(map.getHex(3, 5))).isFalse();
+            assert(arbitrator.isClearGround(map.getHex(3, 6))).isFalse();
+            assert(arbitrator.isClearGround(map.getHex(3, 7))).isFalse();
+            assert(arbitrator.isClearGround(map.getHex(3, 8))).isFalse();
+            assert(arbitrator.isClearGround(map.getHex(4, 1))).isTrue();
+            assert(arbitrator.isClearGround(map.getHex(4, 2))).isFalse();
+            assert(arbitrator.isClearGround(map.getHex(4, 3))).isFalse();
+            assert(arbitrator.isClearGround(map.getHex(4, 4))).isTrue();
+            assert(arbitrator.isClearGround(map.getHex(4, 5))).isFalse();
+            assert(arbitrator.isClearGround(map.getHex(4, 6))).isFalse();
+    });
+
+    it("Checks if a hex is rough", () => {
+        given:
+            var {arbitrator, map} = createTinyGame();
+            map.getHex(3, 0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
+            map.getHex(3, 1).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            map.getHex(3, 2).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            map.getHex(3, 3).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
+            map.getHex(3, 4).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
+            map.getHex(3, 5).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 6).type = CBHex.HEX_TYPES.WATER;
+            map.getHex(3, 7).type = CBHex.HEX_TYPES.LAVA;
+            map.getHex(3, 8).type = CBHex.HEX_TYPES.IMPASSABLE;
+            map.getHex(4, 1).type = CBHex.HEX_TYPES.CAVE_CLEAR;
+            map.getHex(4, 2).type = CBHex.HEX_TYPES.CAVE_ROUGH;
+            map.getHex(4, 3).type = CBHex.HEX_TYPES.CAVE_DIFFICULT;
+            map.getHex(4, 4).type = CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+            map.getHex(4, 5).type = CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+            map.getHex(4, 6).type = CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+        then:
+            assert(arbitrator.isRoughGround(map.getHex(3, 0))).isFalse();
+            assert(arbitrator.isRoughGround(map.getHex(3, 1))).isTrue();
+            assert(arbitrator.isRoughGround(map.getHex(3, 2))).isFalse();
+            assert(arbitrator.isRoughGround(map.getHex(3, 3))).isFalse();
+            assert(arbitrator.isRoughGround(map.getHex(3, 4))).isTrue();
+            assert(arbitrator.isRoughGround(map.getHex(3, 5))).isFalse();
+            assert(arbitrator.isRoughGround(map.getHex(3, 6))).isFalse();
+            assert(arbitrator.isRoughGround(map.getHex(3, 7))).isFalse();
+            assert(arbitrator.isRoughGround(map.getHex(3, 8))).isFalse();
+            assert(arbitrator.isRoughGround(map.getHex(4, 1))).isFalse();
+            assert(arbitrator.isRoughGround(map.getHex(4, 2))).isTrue();
+            assert(arbitrator.isRoughGround(map.getHex(4, 3))).isFalse();
+            assert(arbitrator.isRoughGround(map.getHex(4, 4))).isFalse();
+            assert(arbitrator.isRoughGround(map.getHex(4, 5))).isTrue();
+            assert(arbitrator.isRoughGround(map.getHex(4, 6))).isFalse();
+    });
+
+    it("Checks if a hex is difficult", () => {
+        given:
+            var {arbitrator, map} = createTinyGame();
+            map.getHex(3, 0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
+            map.getHex(3, 1).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            map.getHex(3, 2).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            map.getHex(3, 3).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
+            map.getHex(3, 4).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
+            map.getHex(3, 5).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 6).type = CBHex.HEX_TYPES.WATER;
+            map.getHex(3, 7).type = CBHex.HEX_TYPES.LAVA;
+            map.getHex(3, 8).type = CBHex.HEX_TYPES.IMPASSABLE;
+            map.getHex(4, 1).type = CBHex.HEX_TYPES.CAVE_CLEAR;
+            map.getHex(4, 2).type = CBHex.HEX_TYPES.CAVE_ROUGH;
+            map.getHex(4, 3).type = CBHex.HEX_TYPES.CAVE_DIFFICULT;
+            map.getHex(4, 4).type = CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+            map.getHex(4, 5).type = CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+            map.getHex(4, 6).type = CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+        then:
+            assert(arbitrator.isDifficultGround(map.getHex(3, 0))).isFalse();
+            assert(arbitrator.isDifficultGround(map.getHex(3, 1))).isFalse();
+            assert(arbitrator.isDifficultGround(map.getHex(3, 2))).isTrue();
+            assert(arbitrator.isDifficultGround(map.getHex(3, 3))).isFalse();
+            assert(arbitrator.isDifficultGround(map.getHex(3, 4))).isFalse();
+            assert(arbitrator.isDifficultGround(map.getHex(3, 5))).isTrue();
+            assert(arbitrator.isDifficultGround(map.getHex(3, 6))).isFalse();
+            assert(arbitrator.isDifficultGround(map.getHex(3, 7))).isFalse();
+            assert(arbitrator.isDifficultGround(map.getHex(3, 8))).isFalse();
+            assert(arbitrator.isDifficultGround(map.getHex(4, 1))).isFalse();
+            assert(arbitrator.isDifficultGround(map.getHex(4, 2))).isFalse();
+            assert(arbitrator.isDifficultGround(map.getHex(4, 3))).isTrue();
+            assert(arbitrator.isDifficultGround(map.getHex(4, 4))).isFalse();
+            assert(arbitrator.isDifficultGround(map.getHex(4, 5))).isFalse();
+            assert(arbitrator.isDifficultGround(map.getHex(4, 6))).isTrue();
+    });
+
+    it("Checks if a hex side is clear", () => {
+        given:
+            var {arbitrator, map} = createTinyGame();
+            map.getHex(3, 0).toward(60).type = CBHex.HEXSIDE_TYPES.NORMAL;
+            map.getHex(3, 1).toward(60).type = CBHex.HEXSIDE_TYPES.EASY;
+            map.getHex(3, 2).toward(60).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            map.getHex(3, 3).toward(60).type = CBHex.HEXSIDE_TYPES.CLIMB;
+            map.getHex(3, 4).toward(60).type = CBHex.HEXSIDE_TYPES.WALL;
+        then:
+            assert(arbitrator.isClearHexSide(map.getHex(3, 0).toward(60))).isTrue();
+            assert(arbitrator.isClearHexSide(map.getHex(3, 1).toward(60))).isTrue();
+            assert(arbitrator.isClearHexSide(map.getHex(3, 2).toward(60))).isFalse();
+            assert(arbitrator.isClearHexSide(map.getHex(3, 3).toward(60))).isFalse();
+            assert(arbitrator.isClearHexSide(map.getHex(3, 4).toward(60))).isFalse();
+    });
+
+    it("Checks if a hex side is difficult", () => {
+        given:
+            var {arbitrator, map} = createTinyGame();
+            map.getHex(3, 0).toward(60).type = CBHex.HEXSIDE_TYPES.NORMAL;
+            map.getHex(3, 1).toward(60).type = CBHex.HEXSIDE_TYPES.EASY;
+            map.getHex(3, 2).toward(60).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            map.getHex(3, 3).toward(60).type = CBHex.HEXSIDE_TYPES.CLIMB;
+            map.getHex(3, 4).toward(60).type = CBHex.HEXSIDE_TYPES.WALL;
+        then:
+            assert(arbitrator.isDifficultHexSide(map.getHex(3, 0).toward(60))).isFalse();
+            assert(arbitrator.isDifficultHexSide(map.getHex(3, 1).toward(60))).isFalse();
+            assert(arbitrator.isDifficultHexSide(map.getHex(3, 2).toward(60))).isTrue();
+            assert(arbitrator.isDifficultHexSide(map.getHex(3, 3).toward(60))).isFalse();
+            assert(arbitrator.isDifficultHexSide(map.getHex(3, 4).toward(60))).isFalse();
+    });
+
+    it("Checks if a hex side is impassable", () => {
+        given:
+            var {arbitrator, map} = createTinyGame();
+            map.getHex(3, 0).toward(60).type = CBHex.HEXSIDE_TYPES.NORMAL;
+            map.getHex(3, 1).toward(60).type = CBHex.HEXSIDE_TYPES.EASY;
+            map.getHex(3, 2).toward(60).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            map.getHex(3, 3).toward(60).type = CBHex.HEXSIDE_TYPES.CLIMB;
+            map.getHex(3, 4).toward(60).type = CBHex.HEXSIDE_TYPES.WALL;
+        then:
+            assert(arbitrator.isImpassableHexSide(map.getHex(3, 0).toward(60))).isFalse();
+            assert(arbitrator.isImpassableHexSide(map.getHex(3, 1).toward(60))).isFalse();
+            assert(arbitrator.isImpassableHexSide(map.getHex(3, 2).toward(60))).isFalse();
+            assert(arbitrator.isImpassableHexSide(map.getHex(3, 3).toward(60))).isTrue();
+            assert(arbitrator.isImpassableHexSide(map.getHex(3, 4).toward(60))).isTrue();
+    });
+
 });

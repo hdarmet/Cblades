@@ -596,6 +596,27 @@ describe("Map", ()=> {
             assert(hexId.type).equalsTo(CBHex.HEX_TYPES.OUTDOOR_DIFFICULT);
     });
 
+    it("Checks hex height management", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var hexId = map.getHex(4, 3);
+            Memento.activate();
+        then:
+            assert(hexId.height).equalsTo(0);
+        when:
+            hexId.height = 1;
+        then:
+            assert(hexId.height).equalsTo(1);
+        when:
+            hexId.changeHeight(-1);
+        then:
+            assert(hexId.height).equalsTo(-1);
+        when:
+            Memento.undo();
+        then:
+            assert(hexId.height).equalsTo(1);
+    });
+
     it("Checks hexside type management", () => {
         given:
             var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);

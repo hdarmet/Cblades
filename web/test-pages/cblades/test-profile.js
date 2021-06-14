@@ -25,7 +25,7 @@ import {
 } from "../../jslib/cblades/unit.js";
 import {
     AnimalMoveProfile,
-    CavalryMoveProfile, ChaoticCommandProfile, EliteMoralProfile, ExaltedMoralProfile,
+    CavalryMoveProfile, ChaoticCommandProfile, CrossbowWeaponProfile, EliteMoralProfile, ExaltedMoralProfile,
     HeavyCavalryWeaponProfile, IrregularCommandProfile, LanceWeaponProfile,
     LightInfantryWeaponProfile,
     MediumCavalryWeaponProfile,
@@ -368,6 +368,19 @@ describe("Profile", ()=> {
             assert(profile.getFireAttackCode()).equalsTo("LIf");
             assert(profile.getFireDefendCode()).equalsTo("LIf");
             assert(profile.getFireRange()).equalsTo(2);
+            assert(profile.getFireMalusSegmentSize()).equalsTo(2);
+    });
+
+    it("Checks Crossbow Infantry Weapon Profile", () => {
+        given:
+            var profile = new CrossbowWeaponProfile(2);
+        then:
+            assert(profile.getShockAttackCode()).equalsTo("Arb");
+            assert(profile.getShockDefendCode()).equalsTo("Arb");
+            assert(profile.getFireAttackCode()).equalsTo("Arb");
+            assert(profile.getFireDefendCode()).equalsTo("Arb");
+            assert(profile.getFireRange()).equalsTo(5);
+            assert(profile.getFireMalusSegmentSize()).equalsTo(1);
     });
 
     it("Checks Regular Command Profile", () => {

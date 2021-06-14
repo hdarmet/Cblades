@@ -298,6 +298,7 @@ export class CBMapTeacher {
     }
 
     isImpassableHexSide(hexSideId) {
-        return hexSideId.type === CBHex.HEXSIDE_TYPES.CLIMB || hexSideId.type === CBHex.HEXSIDE_TYPES.WALL;
+        return hexSideId.type === CBHex.HEXSIDE_TYPES.CLIMB ||
+            hexSideId.type === CBHex.HEXSIDE_TYPES.WALL;
     }
 }

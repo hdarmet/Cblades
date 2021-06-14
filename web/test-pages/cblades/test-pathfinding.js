@@ -25,7 +25,7 @@ import {
 } from "../../jslib/geometry.js";
 import {
     backwardMixin,
-    CBAbstractPathFinding, createArrivalsFromHexes, createArrivalsHexSidesFromHexes,
+    CBAbstractPathFinding, CBLineOfSight, createArrivalsFromHexes, createArrivalsHexSidesFromHexes,
     forwardMixin, getArrivalAreaCosts,
     getGoodNextMoves, getHexSidesFromHexes, getInRangeMoves,
     getPathCost,
@@ -618,6 +618,154 @@ describe("Pathfinding", ()=> {
             assert([...new Set(inRangeMoves.values())]).unorderedArrayEqualsTo([
                 new CBHexSideId(map.getHex(11, 2), map.getHex(12, 2)),
                 new CBHexSideId(map.getHex(10, 2), map.getHex(11, 2))
+            ]);
+    });
+
+    it("Checks in range moves for an hex when the max cost is not enough to move one hex", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+        var game = new CBTestGame();
+        when:
+            game.setMap(map);
+        var expensiveHexes = new Set([map.getHex(9,1), map.getHex(10,1), map.getHex(11,1)]);
+        let config = {
+            start: map.getHex(10, 2),
+            startAngle: 90,
+            range: 2,
+            arrivals: [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+            costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+            costRotate: (fromHex, fromAngle, toAngle)=>1,
+            minimalCost: 1,
+            maxCost: 0.5
+        };
+        var inRangeMoves = getInRangeMoves(config);
+        then:
+            assert([...new Set(inRangeMoves.values())]).unorderedArrayEqualsTo([
+                map.getHex(11, 2),
+                map.getHex(10, 1),
+                map.getHex(9, 2)
+            ]);
+    });
+
+    it("Checks in range moves for an hex when the max cost is big enough to move around the target hex", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(9,1), map.getHex(10,1), map.getHex(11,1)]);
+            let config = {
+                start: map.getHex(10, 2),
+                startAngle: 90,
+                range: 2,
+                arrivals: [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+                costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+                costRotate: (fromHex, fromAngle, toAngle)=>1,
+                minimalCost: 1,
+                maxCost: 8
+            };
+            var inRangeMoves = getInRangeMoves(config);
+        then:
+            assert([...new Set(inRangeMoves.values())]).unorderedArrayEqualsTo([
+                map.getHex(11, 2),
+                map.getHex(11, 3),
+                map.getHex(10, 1),
+                map.getHex(10, 3),
+                map.getHex(9, 2),
+                map.getHex(9, 3)
+            ]);
+    });
+
+    it("Checks in range moves for an hex when the range is big enough to encompass the target hex", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(9,1), map.getHex(10,1), map.getHex(11,1)]);
+            let config = {
+                start: map.getHex(10, 2),
+                startAngle: 90,
+                range: 8,
+                arrivals: [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+                costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+                costRotate: (fromHex, fromAngle, toAngle)=>1,
+                minimalCost: 1,
+                maxCost: 3
+            };
+            var inRangeMoves = getInRangeMoves(config);
+        then:
+            assert([...new Set(inRangeMoves.values())]).unorderedArrayEqualsTo([
+                map.getHex(11, 2),
+                map.getHex(11, 3),
+                map.getHex(10, 1),
+                map.getHex(9, 2),
+                map.getHex(9, 3)
+            ]);
+    });
+
+    it("Checks line of sight along a string a aligned hexes", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var lineOfSight = new CBLineOfSight(map.getHex(4, 5), map.getHex(6, 4));
+        then:
+            assert(lineOfSight.getPath()).arrayEqualsTo([
+                [map.getHex(4, 5)],
+                [map.getHex(5, 5)],
+                [map.getHex(6, 4)]
+            ]);
+    });
+
+    it("Checks line of sight along a vertex", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var lineOfSight = new CBLineOfSight(map.getHex(4, 5), map.getHex(5, 4));
+        then:
+            assert(lineOfSight.getPath()).arrayEqualsTo([
+                [map.getHex(4, 5)],
+                [map.getHex(4, 4), map.getHex(5, 5)],
+                [map.getHex(5, 4)]
+            ]);
+    });
+
+    it("Checks line of sight along a random path", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var lineOfSight = new CBLineOfSight(map.getHex(4, 5), map.getHex(6, 3));
+        then:
+            assert(lineOfSight.getPath()).arrayEqualsTo([
+                [map.getHex(4, 5)],
+                [map.getHex(5, 5)],
+                [map.getHex(5, 4)],
+                [map.getHex(6, 3)]
+            ]);
+    });
+
+    it("Checks line of sight along a random path", () => {
+        given:
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var lineOfSight = new CBLineOfSight(map.getHex(4, 5), map.getHex(3, 0));
+        then:
+            assert(lineOfSight.getPath()).arrayEqualsTo([
+                [map.getHex(4, 5)],
+                [map.getHex(4, 4)],
+                [map.getHex(4, 3)],
+                [map.getHex(4, 2)],
+                [map.getHex(3, 2)],
+                [map.getHex(3, 1)],
+                [map.getHex(3, 0)]
             ]);
     });
 

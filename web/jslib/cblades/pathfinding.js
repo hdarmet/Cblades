@@ -385,24 +385,6 @@ export function collectHexSideOptions(hexSide, angle) {
     return options;
 }
 
-export function getHexSidesExtendingHexes(hexes) {
-    let hexSet = new Set(hexes);
-    let hexSides = [];
-    let hexSideSet = new Set();
-    for (let hex of hexSet) {
-        for (let sangle of [0, 60, 120, 180, 240, 300]) {
-            let angle = parseInt(sangle);
-            let hexSide = hex.toward(angle);
-            let key = hexSide.location.toString();
-            if (!hexSideSet.has(key)) {
-                hexSideSet.add(key);
-                hexSides.push(hexSide);
-            }
-        }
-    }
-    return hexSides;
-}
-
 export function stopWhenTargetVicinityIsCompleted(pathFinding) {
     let reachCost = null;
     pathFinding._stopPredicate = record => {

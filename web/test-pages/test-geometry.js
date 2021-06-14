@@ -92,6 +92,8 @@ describe("Geometry", ()=> {
             assert(point.toString()).equalsTo("point(30, 40)");
             assert(point.toArray()).arrayEqualsTo([30, 40]);
             assert(point.translate(10, 15).toString()).equalsTo("point(40, 55)");
+            assert(point.plus(10, 15).toString()).equalsTo("point(40, 55)");
+            assert(point.minus(10, 15).toString()).equalsTo("point(20, 25)");
             assert(point.plusPoint(new Point2D(10, 15)).toString()).equalsTo("point(40, 55)");
             assert(point.minusPoint(new Point2D(10, 15)).toString()).equalsTo("point(20, 25)");
             assert(point.plusDim(new Dimension2D(10, 15)).toString()).equalsTo("point(40, 55)");
