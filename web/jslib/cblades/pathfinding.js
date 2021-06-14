@@ -319,7 +319,11 @@ export function createArrivalsFromHexes(start, hexes) {
     for (let hex of hexes) {
         let diff = hex.location.minusPoint(start.location);
         let angle = Math.round(atan2(diff.x, diff.y) / 30) * 30;
-        result.push({hexLocation:hex, angle})
+        result.push(
+            {hexLocation:hex, angle:sumAngle(angle, -30)},
+            {hexLocation:hex, angle},
+            {hexLocation:hex, angle:sumAngle(angle, 30)}
+        )
     }
     return result;
 }

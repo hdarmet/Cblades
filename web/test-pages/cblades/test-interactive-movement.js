@@ -1920,19 +1920,7 @@ describe("Interactive Movement", ()=> {
             var orientationActuator = getOrientationActuator(game);
             loadAllImages();
         then:
-            assert(moveActuator).isDefined();
-            assert(moveActuator.getTrigger(300)).isNotDefined();
-            assert(moveActuator.getTrigger(0)).isNotDefined();
-            assert(moveActuator.getTrigger(60)).isNotDefined();
-            assert(moveActuator.getTrigger(120)).isNotDefined();
-            assert(moveActuator.getTrigger(180)).isDefined();
-            assert(moveActuator.getTrigger(240)).isNotDefined();
-            assert(moveActuator.getTurnTrigger(300)).isNotDefined();
-            assert(moveActuator.getTurnTrigger(0)).isNotDefined();
-            assert(moveActuator.getTurnTrigger(60)).isNotDefined();
-            assert(moveActuator.getTurnTrigger(120)).isNotDefined();
-            assert(moveActuator.getTurnTrigger(180)).isNotDefined();
-            assert(moveActuator.getTurnTrigger(240)).isNotDefined();
+            assert(moveActuator).isNotDefined();
             assert(orientationActuator).isDefined();
             assert(orientationActuator.getTrigger(30)).isDefined();
     });

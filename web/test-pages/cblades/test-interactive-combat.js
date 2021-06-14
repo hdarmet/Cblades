@@ -26,15 +26,48 @@ import {
     unregisterInteractiveCombat
 } from "../../jslib/cblades/interactive-combat.js";
 import {
-    repaint, paint, clickOnActionMenu, clickOnCounter, clickOnTrigger, clickOnDice,
-    executeAllAnimations, clickOnResult, dummyEvent, clickOnMask,
-    rollFor, showMask, showInsert, showSuccessResult, showPlayedDice, showFailureResult, zoomAndRotate300,
-    zoomAndRotate30, showDice, showInsertCommand, showMarker,
-    zoomAndRotate0, zoomAndRotate60, zoomAndRotate120, zoomAndRotate240, showTroop, zoomAndRotate180,
-    showSelectedTroop, zoomAndRotate210, showFormation, zoomAndRotate270, showMenuPanel, showMenuItem, showMultiInsert
+    repaint,
+    paint,
+    clickOnActionMenu,
+    clickOnCounter,
+    clickOnTrigger,
+    clickOnDice,
+    executeAllAnimations,
+    clickOnResult,
+    dummyEvent,
+    clickOnMask,
+    rollFor,
+    showMask,
+    showInsert,
+    showSuccessResult,
+    showPlayedDice,
+    showFailureResult,
+    zoomAndRotate300,
+    zoomAndRotate30,
+    showDice,
+    showInsertCommand,
+    showMarker,
+    zoomAndRotate0,
+    zoomAndRotate60,
+    zoomAndRotate120,
+    zoomAndRotate240,
+    showTroop,
+    zoomAndRotate180,
+    showSelectedTroop,
+    zoomAndRotate210,
+    showFormation,
+    zoomAndRotate270,
+    showMenuPanel,
+    showMenuItem,
+    showMultiInsert,
+    showInsertMark
 } from "./interactive-tools.js";
 import {
-    createTinyGame, create2PlayersTinyGame, create2PlayersTinyFormationGame, create2Players2Units2LeadersTinyGame
+    createTinyGame,
+    create2PlayersTinyGame,
+    create2PlayersTinyFormationGame,
+    create2Players2Units2LeadersTinyGame,
+    create2PlayersFireTinyGame
 } from "./game-examples.js";
 import {
     CBHexSideId
@@ -109,7 +142,7 @@ describe("Interactive Combat", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/fire.png, -70, -77.5, 140, 155)",
+                "drawImage(/CBlades/images/actuators/fire.png, -50, -77.5, 100, 155)",
             "restore()"
         ];
     }
@@ -310,11 +343,11 @@ describe("Interactive Combat", ()=> {
             assertNoMoreDirectives(actuatorsLayer, 4);
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
-            assertDirectives(widgetsLayer, showInsert("combat-result-table", 517, 100, 804, 174));
-            assertDirectives(widgetsLayer, showInsert("shock-attack", 267, 466, 524, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 267, 760));
+            assertDirectives(widgetsLayer, showInsert("combat-result-table", 527, 100, 804, 174));
+            assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showDice(1, 1, 617, 207));
+            assertDirectives(itemsLayer, showDice(1, 1, 627, 207));
         when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             clickOnMask(game);
@@ -348,13 +381,13 @@ describe("Interactive Combat", ()=> {
         then:
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
-            assertDirectives(widgetsLayer, showInsert("combat-result-table", 517, 100, 804, 174));
-            assertDirectives(widgetsLayer, showInsert("shock-attack", 267, 466, 524, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 267, 760));
+            assertDirectives(widgetsLayer, showInsert("combat-result-table", 527, 100, 804, 174));
+            assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
             skipDirectives(commandsLayer, 4);
-            assertDirectives(commandsLayer, showSuccessResult(517, 177));
+            assertDirectives(commandsLayer, showSuccessResult(527, 177));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showPlayedDice(1, 2, 617, 207));
+            assertDirectives(itemsLayer, showPlayedDice(1, 2, 627, 207));
         when:
             clickOnResult(game);
             loadAllImages();
@@ -401,13 +434,13 @@ describe("Interactive Combat", ()=> {
         then:
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
-            assertDirectives(widgetsLayer, showInsert("combat-result-table", 517, 100, 804, 174));
-            assertDirectives(widgetsLayer, showInsert("shock-attack", 267, 466, 524, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 267, 760));
+            assertDirectives(widgetsLayer, showInsert("combat-result-table", 527, 100, 804, 174));
+            assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
             skipDirectives(commandsLayer, 4);
-            assertDirectives(commandsLayer, showFailureResult(517, 177));
+            assertDirectives(commandsLayer, showFailureResult(527, 177));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showPlayedDice(5, 6, 617, 207));
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 627, 207));
         when:
             clickOnResult(game);
             loadAllImages();
@@ -434,7 +467,7 @@ describe("Interactive Combat", ()=> {
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
-            rollFor(1,2);
+            rollFor(2, 3);
             clickOnDice(game);
             executeAllAnimations();
             clickOnResult(game);
@@ -466,7 +499,7 @@ describe("Interactive Combat", ()=> {
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
-            rollFor(1,2);
+            rollFor(2, 3);
             clickOnDice(game);
             executeAllAnimations();
             clickOnResult(game);
@@ -507,8 +540,8 @@ describe("Interactive Combat", ()=> {
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showUnsupportedShock(zoomAndRotate30(397.1163, 236.1131)));
             assertDirectives(actuatorsLayer, showSupportedShock(zoomAndRotate30(436.217, 275.2138)));
-            assertDirectives(actuatorsLayer, showUnsupportedShockAdvantage(-4, zoomAndRotate0(380.0098, 219.0066)));
-            assertDirectives(actuatorsLayer, showSupportedShockAdvantage(0, zoomAndRotate0(453.3236, 292.3204)));
+            assertDirectives(actuatorsLayer, showUnsupportedShockAdvantage(0, zoomAndRotate0(380.0098, 219.0066)));
+            assertDirectives(actuatorsLayer, showSupportedShockAdvantage(4, zoomAndRotate0(453.3236, 292.3204)));
         when:
             var shockHelpActuator = getShockHelpActuator(game);
         when:
@@ -519,9 +552,12 @@ describe("Interactive Combat", ()=> {
         then:
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
-            assertDirectives(widgetsLayer, showInsert("shock-attack", 267, 466, 524, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 267, 760));
-            assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 747, 427, 500, 500, [
+            assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showInsertMark(75, 385));
+            assertDirectives(widgetsLayer, showInsertMark(290, 385));
+            assertDirectives(widgetsLayer, showInsertMark(20, 700));
+            assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 757, 427, 500, 500, [
                 {xs:0, ys:179.75, xd:-250, yd:-250, w:86, h:500},
                 {xs:272.5294, ys:179.75, xd:-164, yd:-250, w:414, h:500}
             ]));
@@ -558,9 +594,9 @@ describe("Interactive Combat", ()=> {
             repaint(game);
         then:
             skipDirectives(commandsLayer, 4);
-            assertDirectives(commandsLayer, showFailureResult(517, 177));
+            assertDirectives(commandsLayer, showFailureResult(527, 177));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showPlayedDice(5, 6, 617, 207));
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 627, 207));
         when:
             clickOnResult(game);
             loadAllImages();
@@ -639,9 +675,9 @@ describe("Interactive Combat", ()=> {
             repaint(game);
         then:
             skipDirectives(commandsLayer, 4);
-            assertDirectives(commandsLayer, showSuccessResult(517, 177));
+            assertDirectives(commandsLayer, showSuccessResult(527, 177));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showPlayedDice(1, 2, 617, 207));
+            assertDirectives(itemsLayer, showPlayedDice(1, 2, 627, 207));
         when:
             clickOnResult(game);
             loadAllImages();
@@ -675,7 +711,7 @@ describe("Interactive Combat", ()=> {
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(formation2, true));
-            rollFor(1,2);
+            rollFor(2, 3);
             clickOnDice(game);
             executeAllAnimations();
             clickOnResult(game);
@@ -705,7 +741,7 @@ describe("Interactive Combat", ()=> {
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(formation2, true));
-            rollFor(1,2);
+            rollFor(2, 3);
             clickOnDice(game);
             executeAllAnimations();
             clickOnResult(game);
@@ -743,7 +779,7 @@ describe("Interactive Combat", ()=> {
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(formation2, true));
-            rollFor(1,2);
+            rollFor(1, 2);
             clickOnDice(game);
             executeAllAnimations();
             clickOnResult(game);
@@ -782,7 +818,7 @@ describe("Interactive Combat", ()=> {
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
-            rollFor(1,2);
+            rollFor(2,3);
             clickOnDice(game);
             executeAllAnimations();
             clickOnResult(game);
@@ -812,7 +848,7 @@ describe("Interactive Combat", ()=> {
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(formation2, true));
-            rollFor(1,2);
+            rollFor(2,3);
             clickOnDice(game);
             executeAllAnimations();
             clickOnResult(game);
@@ -854,7 +890,7 @@ describe("Interactive Combat", ()=> {
         then:
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showFire(zoomAndRotate30(416.6667, 159.4391)));
-            assertDirectives(actuatorsLayer, showFireAdvantage(4, zoomAndRotate0(436.217, 178.9895)));
+            assertDirectives(actuatorsLayer, showFireAdvantage(1, zoomAndRotate0(436.217, 178.9895)));
         when:
             var fireAttackActuator = getFireAttackActuator(game);
         then:
@@ -882,11 +918,11 @@ describe("Interactive Combat", ()=> {
             assertNoMoreDirectives(actuatorsLayer, 4);
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
-            assertDirectives(widgetsLayer, showInsert("combat-result-table", 517, 92, 804, 174));
-            assertDirectives(widgetsLayer, showInsert("fire-attack", 267, 458, 524, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 267, 752));
+            assertDirectives(widgetsLayer, showInsert("combat-result-table", 527, 92, 804, 174));
+            assertDirectives(widgetsLayer, showInsert("fire-attack", 277, 458, 544, 658));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 752));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showDice(1, 1, 617, 199));
+            assertDirectives(itemsLayer, showDice(1, 1, 627, 199));
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
@@ -919,9 +955,9 @@ describe("Interactive Combat", ()=> {
             repaint(game);
         then:
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showPlayedDice(1, 2, 617, 199));
+            assertDirectives(itemsLayer, showPlayedDice(1, 2, 627, 199));
             skipDirectives(commandsLayer, 4);
-            assertDirectives(commandsLayer, showSuccessResult(517, 169));
+            assertDirectives(commandsLayer, showSuccessResult(527, 169));
         when:
             clickOnResult(game);
             loadAllImages();
@@ -930,7 +966,6 @@ describe("Interactive Combat", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
-            assert(unit1.hasBeenPlayed()).isTrue();
             assert(game.focusedUnit).equalsTo(unit2);
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showLossTrigger(zoomAndRotate0(416.6667, 159.4391)));
@@ -969,9 +1004,9 @@ describe("Interactive Combat", ()=> {
             repaint(game);
         then:
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showPlayedDice(5, 6, 617, 207));
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 627, 207));
             skipDirectives(commandsLayer, 4);
-            assertDirectives(commandsLayer, showFailureResult(517, 177));
+            assertDirectives(commandsLayer, showFailureResult(527, 177));
         when:
             clickOnResult(game);
             loadAllImages();
@@ -1017,7 +1052,7 @@ describe("Interactive Combat", ()=> {
 
     it("Checks combat rules showing", () => {
         given:
-            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+            var { game, map, unit1, unit2 } = create2PlayersFireTinyGame();
             var [widgetsLayer, actuatorsLayer] = getLayers(game.board, "widgets", "actuators-0");
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 6));
@@ -1030,7 +1065,7 @@ describe("Interactive Combat", ()=> {
         then:
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showFire(zoomAndRotate30(416.6667, 159.4391)));
-            assertDirectives(actuatorsLayer, showFireAdvantage(4, zoomAndRotate0(436.217, 178.9895)));
+            assertDirectives(actuatorsLayer, showFireAdvantage(5, zoomAndRotate0(436.217, 178.9895)));
         when:
             var fireHelpActuator = getFireHelpActuator(game);
         when:
@@ -1041,9 +1076,12 @@ describe("Interactive Combat", ()=> {
         then:
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
-            assertDirectives(widgetsLayer, showInsert("fire-attack", 267, 466, 524, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 267, 760));
-            assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 747, 427, 500, 500, [
+            assertDirectives(widgetsLayer, showInsert("fire-attack", 277, 466, 544, 658));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showInsertMark(75, 355));
+            assertDirectives(widgetsLayer, showInsertMark(290, 355));
+            assertDirectives(widgetsLayer, showInsertMark(20, 590));
+            assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 757, 427, 500, 500, [
                 {xs:0, ys:237.05, xd:-250, yd:-250, w:86, h:500},
                 {xs:272.5294, ys:237.05, xd:-164, yd:-250, w:414, h:500}
             ]));
@@ -1080,9 +1118,9 @@ describe("Interactive Combat", ()=> {
             repaint(game);
         then:
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showPlayedDice(5, 6, 617, 199));
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 627, 199));
             skipDirectives(commandsLayer, 4);
-            assertDirectives(commandsLayer, showFailureResult(517, 169));
+            assertDirectives(commandsLayer, showFailureResult(527, 169));
         when:
             clickOnResult(game);
             loadAllImages();
@@ -1155,11 +1193,11 @@ describe("Interactive Combat", ()=> {
             assertNoMoreDirectives(actuatorsLayer, 4);
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
-            assertDirectives(widgetsLayer, showInsert("combat-result-table", 517, 100, 804, 174));
-            assertDirectives(widgetsLayer, showInsert("shock-attack", 267, 466, 524, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 267, 760));
+            assertDirectives(widgetsLayer, showInsert("combat-result-table", 527, 100, 804, 174));
+            assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showDice(1, 1, 617, 207));
+            assertDirectives(itemsLayer, showDice(1, 1, 627, 207));
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
@@ -1195,11 +1233,11 @@ describe("Interactive Combat", ()=> {
             assertNoMoreDirectives(actuatorsLayer, 4);
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
-            assertDirectives(widgetsLayer, showInsert("combat-result-table", 517, 92, 804, 174));
-            assertDirectives(widgetsLayer, showInsert("fire-attack", 267, 458, 524, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 267, 752));
+            assertDirectives(widgetsLayer, showInsert("combat-result-table", 527, 92, 804, 174));
+            assertDirectives(widgetsLayer, showInsert("fire-attack", 277, 458, 544, 658));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 752));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showDice(1, 1, 617, 199));
+            assertDirectives(itemsLayer, showDice(1, 1, 627, 199));
          when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);

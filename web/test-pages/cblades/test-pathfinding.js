@@ -168,7 +168,7 @@ describe("Pathfinding", ()=> {
             pathfinding.computePath();
         then:
             //printHexPathFindingResult(pathfinding);
-            checkHexRecord(pathfinding, map, 10, 2, 4, 120, 0);
+            checkHexRecord(pathfinding, map, 10, 2, 3.5, 120, 0);
     });
 
     it("Checks backward hex path finding when a maximum cost is set", () => {
@@ -189,12 +189,16 @@ describe("Pathfinding", ()=> {
             pathfinding.computePath();
         then:
             //printHexPathFindingResult(pathfinding);
-            checkHexRecord(pathfinding, map, 10, 0, 0, 180, 2);
+            checkHexRecord(pathfinding, map, 10, 0, 0, 0, 2);
+            checkHexRecord(pathfinding, map, 11, 1, 1, 0, 2);
             checkHexRecord(pathfinding, map, 10, 1, 1.5, 300, 1);
-            checkHexRecord(pathfinding, map, 10, 1, 1.5, 330, 1);
-            checkHexRecord(pathfinding, map, 10, 1, 1.5, 0, 1);
-            checkHexRecord(pathfinding, map, 10, 1, 1.5, 30, 1);
+            checkHexRecord(pathfinding, map, 10, 1, 1, 330, 1);
+            checkHexRecord(pathfinding, map, 10, 1, 1, 0, 1);
+            checkHexRecord(pathfinding, map, 10, 1, 1, 30, 1);
             checkHexRecord(pathfinding, map, 10, 1, 1.5, 60, 1);
+            checkHexRecord(pathfinding, map, 9, 1, 1, 0, 2);
+            checkHexRecord(pathfinding, map, 9, 2, 2, 0, 1);
+            checkHexRecord(pathfinding, map, 11, 2, 2, 0, 1);
     });
 
     it("Checks backward hex path finding when some hexes are forbidden", () => {
@@ -214,7 +218,7 @@ describe("Pathfinding", ()=> {
             pathfinding.computePath();
         then:
             //printHexPathFindingResult(pathfinding);
-            checkHexRecord(pathfinding, map, 10, 2, 4, 120, 0);
+            checkHexRecord(pathfinding, map, 10, 2, 3.5, 120, 0);
     });
 
     it("Checks best hex next moves", () => {
@@ -387,7 +391,7 @@ describe("Pathfinding", ()=> {
             pathfinding.computePath();
         then:
             //printHexSidePathFindingResult(pathfinding);
-            checkHexSideRecord(pathfinding, map, 10, 3, 10, 4, 4, 90, 0);
+            checkHexSideRecord(pathfinding, map, 10, 3, 10, 4, 5, 90, 0);
     });
 
     it("Checks best hexside next moves", () => {
@@ -408,9 +412,7 @@ describe("Pathfinding", ()=> {
             });
         then:
             assert(nextMoves).unorderedArrayEqualsTo([
-                new CBHexSideId(map.getHex(11, 3), map.getHex(11, 2)),
-                new CBHexSideId(map.getHex(10, 2), map.getHex(11, 3)),
-                new CBHexSideId(map.getHex(10, 3), map.getHex(11, 3))
+                new CBHexSideId(map.getHex(10, 2), map.getHex(11, 3))
             ]);
         when:
             nextMoves = getGoodNextMoves({
@@ -424,12 +426,8 @@ describe("Pathfinding", ()=> {
             });
         then:
             assert(nextMoves).unorderedArrayEqualsTo([
-                new CBHexSideId(map.getHex(11, 3), map.getHex(11, 2)),
                 new CBHexSideId(map.getHex(10, 2), map.getHex(11, 3)),
-                new CBHexSideId(map.getHex(10, 3), map.getHex(11, 3)),
-                new CBHexSideId(map.getHex(9, 3), map.getHex(9, 2)),
-                new CBHexSideId(map.getHex(10, 2), map.getHex(9, 3)),
-                new CBHexSideId(map.getHex(10, 3), map.getHex(9, 3))
+                new CBHexSideId(map.getHex(10, 2), map.getHex(9, 3))
             ]);
     });
 
@@ -471,7 +469,7 @@ describe("Pathfinding", ()=> {
             };
             var pathCost = getPathCost(config);
         then:
-            assert(pathCost).equalsTo(4.5);
+            assert(pathCost).equalsTo(5.5);
     });
 
     it("Checks hexside path cost when some hexes are forbidden", () => {
@@ -491,7 +489,7 @@ describe("Pathfinding", ()=> {
             };
             var pathCost = getPathCost(config);
         then:
-            assert(pathCost).equalsTo(10);
+            assert(pathCost).equalsTo(9);
     });
 
     it("Checks hexside path cost when there is no solution because of max distance exceeded", () => {
@@ -595,7 +593,6 @@ describe("Pathfinding", ()=> {
         then:
             assert([...new Set(inRangeMoves.values())]).unorderedArrayEqualsTo([
                 map.getHex(11, 2),
-                map.getHex(11, 3),
                 map.getHex(9, 2)
             ]);
     });
@@ -619,10 +616,7 @@ describe("Pathfinding", ()=> {
             var inRangeMoves = getInRangeMoves(config);
         then:
             assert([...new Set(inRangeMoves.values())]).unorderedArrayEqualsTo([
-                new CBHexSideId(map.getHex(9, 3), map.getHex(10, 3)),
-                new CBHexSideId(map.getHex(11, 3), map.getHex(10, 3)),
                 new CBHexSideId(map.getHex(11, 2), map.getHex(12, 2)),
-                new CBHexSideId(map.getHex(11, 3), map.getHex(11, 2)),
                 new CBHexSideId(map.getHex(10, 2), map.getHex(11, 2))
             ]);
     });

@@ -509,11 +509,11 @@ export class CBMovementTeacher {
 
     getCostToEngage(unit, foe) {
         let config = {
-            start:foe.hexLocation, startAngle:foe.angle,
-            arrivals:unit.hexLocation.hexes,
-            costMove:this.getMoveCostMethod(foe, new Set(unit.hexLocation.hexes)),
-            costRotate:this.getTurnCostMethod(foe, new Set(unit.hexLocation.hexes)),
-            minimalCost: foe.moveProfile.getMinimalMoveCost()
+            start:unit.hexLocation, startAngle:unit.angle,
+            arrivals:foe.hexLocation.hexes,
+            costMove:this.getMoveCostMethod(unit, new Set(foe.hexLocation.hexes)),
+            costRotate:this.getTurnCostMethod(unit, new Set(foe.hexLocation.hexes)),
+            minimalCost: unit.moveProfile.getMinimalMoveCost()
         };
         return getPathCost(config);
     }
@@ -538,7 +538,7 @@ export class CBMovementTeacher {
         let result = [];
         let maxRemainingPoints = -1;
         for (let foe of this._getReachableFoes(unit)) {
-            let realCost = this.getCostToEngage(unit, foe);
+            let realCost = this.getCostToEngage(foe, unit);
             if (realCost !== null) {
                 let remainingMovementPoints = foe.moveProfile.movementPoints - realCost;
                 if (remainingMovementPoints > maxRemainingPoints) {

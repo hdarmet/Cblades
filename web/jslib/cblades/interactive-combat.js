@@ -54,6 +54,9 @@ export function registerInteractiveCombat() {
         if (!unit.isDestroyed()) {
             unit.launchAction(new InteractiveRetreatAction(this.game, unit, losses, attacker, advance, continuation));
         }
+        else {
+            continuation();
+        }
     }
     CBInteractivePlayer.prototype.advanceAttacker = function(unit, directions, continuation) {
         unit.launchAction(new InteractiveAdvanceAction(this.game, unit, directions, continuation));
@@ -274,7 +277,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
     }
 
     _hasPlayed() {
-        return this._attackHexes.size===this.unit.formationNature ? 2 : 1;
+        return this._attackHexes.size===(this.unit.formationNature ? 2 : 1);
     }
 
     shockAttackUnit(attackerHex, defender, defenderHex, supported, advantage, event) { // LA
@@ -705,7 +708,7 @@ class ShockAttackTrigger extends CBUnitActuatorTrigger {
             new Dimension2D(100, 111));
         this.position = Point2D.position(unit.location, combat.attackedHex.location, 1); // LA
         this.pangle = 30;
-        this.supported = false;
+        this.supported = supported;
         this.attackHex = combat.attackHex;
         this.attackedHex = combat.attackedHex;
         this._advantage = supported ? combat.supportedAdvantage : combat.unsupportedAdvantage;
@@ -1171,7 +1174,6 @@ CBShockAttackInsert.PAGE_DIMENSION = new Dimension2D(544, 850);
 export class CBFireAttackInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game, advantage) {
-        console.log(advantage);
         super(game, "/CBlades/images/inserts/fire-attack-insert.png", CBFireAttackInsert.DIMENSION,  CBFireAttackInsert.PAGE_DIMENSION);
         this.setMark(new Point2D(70, 218-advantage.firerCapacity*35));
         this.setMark(new Point2D(285, 218+advantage.firerCapacity*35));

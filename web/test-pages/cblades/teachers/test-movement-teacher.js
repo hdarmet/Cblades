@@ -710,7 +710,7 @@ describe("Movement teacher", ()=> {
             var {arbitrator, map, unit11, unit21, leader21} = create2Players4UnitsTinyGame();
         when:
             leader21.angle = 270;
-            var costToEngage = arbitrator.getCostToEngage(unit11, unit21);
+            var costToEngage = arbitrator.getCostToEngage(unit21, unit11);
             var whoJoined = arbitrator.getNearestFoesThatCanJoinAndEngage(unit11).foes;
         then:
             assert(costToEngage).equalsTo(1.5);
@@ -725,7 +725,7 @@ describe("Movement teacher", ()=> {
             assert(whoJoined).unorderedArrayEqualsTo([unit21, leader21]);
         when:
             unit11.move(map.getHex(0, 5));
-            costToEngage = arbitrator.getCostToEngage(unit11, unit21);
+            costToEngage = arbitrator.getCostToEngage(unit21, unit11);
             whoJoined = arbitrator.getNearestFoesThatCanJoinAndEngage(unit11).foes;
         then:
             assert(costToEngage).equalsTo(7.5);
