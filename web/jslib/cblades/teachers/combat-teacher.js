@@ -161,15 +161,6 @@ export class CBCombatTeacher {
         }
     }
 
-    isHexMayBeShockAttackedFromHex(unit, attackHex, attackedLocation) {
-        let zones = this.getPotentialForwardZone(unit, attackHex, unit.angle);
-        for (let sangle in zones) {
-            let angle = parseInt(sangle);
-            if (attackedLocation.hasHex(zones[angle].hex)) return true;
-        }
-        return false;
-    }
-
     _getForwardZoneThatMayBeShockAttacked(unit) {
         return this.getUnitForwardZone(unit);
     }
@@ -335,7 +326,7 @@ export class CBCombatTeacher {
             advantage += 1;
         }
         if (this.isBelowForShock(attackerHex, defenderHex)) {
-            record.attackerBelowDefenfer = -1;
+            record.attackerBelowDefender = -1;
             advantage -= 1;
         }
         if (this.isRoughGroundForShock(attackerHex)) {
@@ -389,14 +380,6 @@ export class CBCombatTeacher {
         let success = lossesForDefender>0;
         let tirednessForAttacker = supported && !attacker.isCharging();
         return { success, lossesForDefender, tirednessForAttacker };
-    }
-
-    isHexMayBeFireAttackedFromHex(unit, range, attackHex, attackedLocation) {
-        let hexes = this.getUnitForwardAreaFromHex(unit, attackHex, range);
-        for (let hex of hexes) {
-            if (attackedLocation.hasHex(hex)) return true;
-        }
-        return false;
     }
 
     _getForwardZoneThatMayBeFireAttacked(unit, range) {

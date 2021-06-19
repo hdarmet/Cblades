@@ -99,6 +99,16 @@ export function getMessage(game) {
     return null;
 }
 
+export function getInsert(game, clazz) {
+    var widgetsLevel = game.board.getLevel("widgets");
+    for (let item of widgetsLevel.artifacts) {
+        if (item.element instanceof clazz) {
+            return item.element;
+        }
+    }
+    return null;
+}
+
 export function clickOnMessage(game) {
     clickOnArtifact(game, getMessage(game));
 }
@@ -311,6 +321,21 @@ export function showInsert(insert, x, y, w, h) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             `drawImage(/CBlades/images/inserts/${insert}-insert.png, 0, 0, ${w}, ${h}, -${w/2}, -${h/2}, ${w}, ${h})`,
+        "restore()"
+    ];
+}
+
+export function showScrolledInsert(insert, x, y, w, h, dx, dy) {
+    return [
+        "save()",
+        `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+        "shadowColor = #000000", "shadowBlur = 10",
+        "strokeStyle = #000000", "lineWidth = 1",
+        `strokeRect(-${w/2}, -${h/2}, ${w}, ${h})`,
+        "restore()",
+        "save()",
+        `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+        `drawImage(/CBlades/images/inserts/${insert}-insert.png, ${dx}, ${dy}, ${w}, ${h}, -${w/2}, -${h/2}, ${w}, ${h})`,
         "restore()"
     ];
 }

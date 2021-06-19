@@ -776,7 +776,7 @@ describe("Interactive Movement", ()=> {
         then:
             assert(unit.tiredness).equalsTo(CBTiredness.TIRED);
             skipDirectives(unitsLayer, 4);
-            assertDirectives(unitsLayer, showSelectedTroop("misc/unit", zoomAndRotate0(416.6667, 255.6635)));
+            assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate0(416.6667, 255.6635)));
             skipDirectives(markersLayer, 4);
             assertDirectives(markersLayer, showMarker("tired", zoomAndRotate0(381.9648, 255.6635)));
         when:
@@ -1027,7 +1027,7 @@ describe("Interactive Movement", ()=> {
             repaint(game);
         then:
             skipDirectives(formationsLayer, 4);
-            assertDirectives(formationsLayer, showSelectedFormation("misc/formation2", zoomAndRotate90(500, 351.8878)));
+            assertDirectives(formationsLayer, showSelectedFormation("misc/formation12", zoomAndRotate90(500, 351.8878)));
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate240(391.6667, 462.5458)));
             assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate240(425, 443.301)));
@@ -1043,7 +1043,7 @@ describe("Interactive Movement", ()=> {
             clickOnTrigger(game, moveActuator.getTrigger(240));
         then:
             skipDirectives(formationsLayer, 4);
-            assertDirectives(formationsLayer, showSelectedFormation("misc/formation2", zoomAndRotate90(416.6667, 400)));
+            assertDirectives(formationsLayer, showSelectedFormation("misc/formation12", zoomAndRotate90(416.6667, 400)));
             assertNoMoreDirectives(actuatorsLayer, 4);
     });
 
@@ -1461,7 +1461,7 @@ describe("Interactive Movement", ()=> {
             repaint(game);
         then:
             skipDirectives(formationsLayer, 4);
-            assertDirectives(formationsLayer, showSelectedFormation("misc/formation2", zoomAndRotate90(500, 351.8878)));
+            assertDirectives(formationsLayer, showSelectedFormation("misc/formation12", zoomAndRotate90(500, 351.8878)));
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showTurnCostTrigger("1",zoomAndRotate120( 591.6667, 332.643)));
             assertDirectives(actuatorsLayer, showTurnTrigger(zoomAndRotate120(566.6667, 318.2093)));
@@ -1471,7 +1471,7 @@ describe("Interactive Movement", ()=> {
             clickOnTrigger(game, moveActuator.getTurnTrigger(120));
         then:
             skipDirectives(formationsLayer, 4);
-            assertDirectives(formationsLayer, showSelectedFormation("misc/formation2", zoomAndRotate150(541.6667, 375.9439)));
+            assertDirectives(formationsLayer, showSelectedFormation("misc/formation12", zoomAndRotate150(541.6667, 375.9439)));
             assertNoMoreDirectives(actuatorsLayer, 4);
     });
 

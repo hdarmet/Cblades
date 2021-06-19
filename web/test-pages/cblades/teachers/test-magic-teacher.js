@@ -4,21 +4,17 @@ import {
     assert, before, describe, it
 } from "../../../jstest/jtest.js";
 import {
-    CBHex,
-    CBHexSideId, CBMap, CBMoveType
+    CBMap
 } from "../../../jslib/cblades/map.js";
 import {
-    CBGame, CBAbstractPlayer, CBAction, CBCounter
+    CBGame, CBAbstractPlayer, CBCounter
 } from "../../../jslib/cblades/game.js";
 import {
-    CBCharacter, CBCharge, CBCohesion,
-    CBCommandProfile,
-    CBFormation, CBLackOfMunitions,
-    CBMoralProfile, CBMovement,
-    CBMoveProfile, CBTiredness,
+    CBCharacter, CBCommandProfile,
+    CBMoralProfile,
+    CBMoveProfile,
     CBTroop,
     CBUnitType, CBWeaponProfile,
-    CBWeather,
     CBWing
 } from "../../../jslib/cblades/unit.js";
 import {
@@ -36,13 +32,10 @@ import {
     CBUnitManagementTeacher
 } from "../../../jslib/cblades/teachers/units-teacher.js";
 import {
-    CBRecoveringTeacher
-} from "../../../jslib/cblades/teachers/recover-teacher.js";
-import {
     CBWizardryTeacher
 } from "../../../jslib/cblades/teachers/magic-teacher.js";
 import {
-    Dimension2D, reverseAngle
+    Dimension2D
 } from "../../../jslib/geometry.js";
 
 describe("Magic teacher", ()=> {

@@ -8,17 +8,14 @@ import {
     CBHexSideId, CBMap, CBMoveType
 } from "../../../jslib/cblades/map.js";
 import {
-    CBGame, CBAbstractPlayer, CBAction, CBCounter
+    CBGame, CBAbstractPlayer
 } from "../../../jslib/cblades/game.js";
 import {
-    CBCharacter, CBCharge, CBCohesion,
-    CBCommandProfile,
-    CBFormation, CBLackOfMunitions,
-    CBMoralProfile, CBMovement,
+    CBCharge,
+    CBCommandProfile, CBLackOfMunitions,
+    CBMoralProfile,
     CBMoveProfile, CBTiredness,
-    CBTroop,
     CBUnitType, CBWeaponProfile,
-    CBWeather,
     CBWing
 } from "../../../jslib/cblades/unit.js";
 import {
@@ -28,7 +25,6 @@ import {
     setDrawPlatform
 } from "../../../jslib/draw.js";
 import {
-    loadAllImages,
     mergeClasses,
     mockPlatform
 } from "../../mocks.js";
@@ -36,11 +32,11 @@ import {
     CBUnitManagementTeacher
 } from "../../../jslib/cblades/teachers/units-teacher.js";
 import {
-    Dimension2D, reverseAngle
-} from "../../../jslib/geometry.js";
-import {
     CBCombatTeacher
 } from "../../../jslib/cblades/teachers/combat-teacher.js";
+import {
+    createTroop, createCharacter, createFormation
+} from "./../game-examples.js";
 
 describe("Combat teacher", ()=> {
 
@@ -51,8 +47,8 @@ describe("Combat teacher", ()=> {
     let Arbitrator = mergeClasses(CBMapTeacher, CBUnitManagementTeacher, CBCombatTeacher);
 
     class FireWeaponProfile extends CBWeaponProfile {
-        constructor() {
-            super(0);
+        constructor(...args) {
+            super(...args);
         }
         getFireAttackCode() {
             return "FBw";
@@ -64,71 +60,94 @@ describe("Combat teacher", ()=> {
             super(name, troopPaths, formationPaths);
             for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
                 this.setMoveProfile(index, new CBMoveProfile());
-                this.setWeaponProfile(index, new FireWeaponProfile());
+                this.setWeaponProfile(index, new CBWeaponProfile(1, 1, 2, 0));
                 this.setCommandProfile(index, new CBCommandProfile());
                 this.setMoralProfile(index, new CBMoralProfile());
             }
         }
     }
 
-    function create2Players4UnitsTinyGame() {
-        let game = new CBGame();
-        let arbitrator = new Arbitrator();
-        game.setArbitrator(arbitrator);
-        let player1 = new CBAbstractPlayer();
-        game.addPlayer(player1);
-        let wing1 = new CBWing(player1);
-        let player2 = new CBAbstractPlayer();
-        game.addPlayer(player2);
-        let wing2 = new CBWing(player2);
-        var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
-        game.setMap(map);
-        let unitType1 = new CBTestUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"])
-        let unit11 = new CBTroop(unitType1, wing1);
-        game.addUnit(unit11, map.getHex(5, 8));
-        let unit12 = new CBTroop(unitType1, wing1);
-        game.addUnit(unit12, map.getHex(5, 7));
-        let leaderType1 = new CBTestUnitType("leader1", ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"])
-        let leader11 = new CBCharacter(leaderType1, wing1);
-        game.addUnit(leader11, map.getHex(6, 7));
-        let unitType2 = new CBTestUnitType("unit2", ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit1b.png"])
-        let unit21 = new CBTroop(unitType2, wing2);
-        game.addUnit(unit21, map.getHex(7, 8));
-        let unit22 = new CBTroop(unitType2, wing2);
-        game.addUnit(unit22, map.getHex(7, 7));
-        let leaderType2 = new CBTestUnitType("leader2", ["/CBlades/images/units/misc/leader2.png", "/CBlades/images/units/misc/leader2b.png"])
-        let leader21 = new CBCharacter(leaderType2, wing2);
-        game.addUnit(leader21, map.getHex(8, 7));
-        game.start();
-        return {game, arbitrator, map, player1, wing1, wing2, unit11, unit12, leader11, player2, unit21, unit22, leader21};
+    class CBTestFireUnitType extends CBUnitType {
+        constructor(name, troopPaths, formationPaths=[]) {
+            super(name, troopPaths, formationPaths);
+            for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
+                this.setMoveProfile(index, new CBMoveProfile());
+                this.setWeaponProfile(index, new FireWeaponProfile(0, 0, 1, 2));
+                this.setCommandProfile(index, new CBCommandProfile());
+                this.setMoralProfile(index, new CBMoralProfile());
+            }
+        }
     }
 
-    function create2PlayersTinyFormationGame() {
+    function createTinyGame() {
         let game = new CBGame();
+        var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBAbstractPlayer();
         game.addPlayer(player1);
+        let wing1 = new CBWing(player1);
         let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
-        var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
-        game.setMap(map);
-        let wing1 = new CBWing(player1);
-        let unitType1 = new CBTestUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
-        let unit1 = new CBTroop(unitType1, wing1);
-        game.addUnit(unit1, map.getHex(5, 8));
-        let unit2 = new CBTroop(unitType1, wing1);
-        game.addUnit(unit2, map.getHex(5, 6));
         let wing2 = new CBWing(player2);
+        game.setMap(map);
+        game.start();
+        let unitFireType1 = new CBTestFireUnitType("unit1",
+            ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"],
+            [
+                "/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png",
+                "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png",
+                "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png"
+            ]);
         let unitType2 = new CBTestUnitType("unit2",
             ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"],
             ["/CBlades/)images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png"]);
-        let formation2 = new CBFormation(unitType2, wing2);
-        formation2.angle = 90;
-        game.addUnit(formation2, new CBHexSideId(map.getHex(6, 8), map.getHex(6, 7)));
-        game.start();
-        loadAllImages();
-        return {game, arbitrator, map, unit1, unit2, formation2, wing1, wing2, player1, player2};
+        let leaderFireType1 = new CBTestUnitType("leader1", ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"]);
+        let leaderType2 = new CBTestUnitType("leader2", ["/CBlades/images/units/misc/leader2.png", "/CBlades/images/units/misc/leader2b.png"]);
+        return {
+            game, map, arbitrator,
+            player1, wing1,
+            player2, wing2,
+            unitFireType1, leaderFireType1,
+            unitType2, leaderType2
+        };
+    }
+
+    function create2Players4UnitsTinyGame() {
+        let tinyGame = createTinyGame();
+        let {
+            game, map,
+            wing1, wing2,
+            unitFireType1,
+            unitType2
+        } = tinyGame;
+        return {
+            ...tinyGame,
+            unit11 : createTroop(game, map, unitFireType1, wing1, 0, 5, 8),
+            unit12 : createTroop(game, map, unitFireType1, wing1, 0, 5, 7),
+            leader11 : createCharacter(game, map, unitFireType1, wing1, 0, 6, 7),
+            unit21 : createTroop(game, map, unitType2, wing2, 0, 7, 8),
+            unit22 : createTroop(game, map, unitType2, wing2, 0, 7, 7),
+            leader21 : createCharacter(game, map, unitType2, wing2, 0, 8, 7)
+        }
+    }
+
+    function create2Players1Formation2TroopsTinyGame() {
+        let tinyGame = createTinyGame();
+        let {
+            game, map,
+            wing1, wing2,
+            unitFireType1,
+            unitType2
+        } = tinyGame;
+        return {
+            ...tinyGame,
+            formation1 : createFormation(game, map, unitFireType1, wing1, 90,5, 8,5, 7),
+            leader11 : createCharacter(game, map, unitFireType1, wing1, 0, 6, 7),
+            unit21 : createTroop(game, map, unitType2, wing2, 0, 7, 8),
+            unit22 : createTroop(game, map, unitType2, wing2, 0, 7, 7),
+            leader21 : createCharacter(game, map, unitType2, wing2, 0, 8, 7)
+        }
     }
 
     function assertInRetreatZone(zones, angle, col, row, moveType) {
@@ -137,43 +156,40 @@ describe("Combat teacher", ()=> {
         assert(zones[angle].moveType).equalsTo(moveType);
     }
 
-    function create2Players1Formation2TroopsTinyGame() {
-        let game = new CBGame();
-        let arbitrator = new Arbitrator();
-        game.setArbitrator(arbitrator);
-        let player1 = new CBAbstractPlayer();
-        game.addPlayer(player1);
-        let wing1 = new CBWing(player1);
-        let player2 = new CBAbstractPlayer();
-        game.addPlayer(player2);
-        let wing2 = new CBWing(player2);
-        let map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
-        game.setMap(map);
-        let unitType1 = new CBTestUnitType("unit1",
-            ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"],
-            [
-                "/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png",
-                "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png",
-                "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png"
-            ])
-        let formation1 = new CBFormation(unitType1, wing1);
-        game.addUnit(formation1, new CBHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
-        formation1.angle = 90;
-        let leaderType1 = new CBTestUnitType("leader1", ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"])
-        let leader11 = new CBCharacter(leaderType1, wing1);
-        game.addUnit(leader11, map.getHex(6, 7));
-        let unitType2 = new CBTestUnitType("unit2", ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit1b.png"])
-        let unit21 = new CBTroop(unitType2, wing2);
-        game.addUnit(unit21, map.getHex(7, 8));
-        let unit22 = new CBTroop(unitType2, wing2);
-        game.addUnit(unit22, map.getHex(7, 7));
-        let leaderType2 = new CBTestUnitType("leader2", ["/CBlades/images/units/misc/leader2.png", "/CBlades/images/units/misc/leader2b.png"])
-        let leader21 = new CBCharacter(leaderType2, wing2);
-        game.addUnit(leader21, map.getHex(8, 7));
-        game.start();
-        loadAllImages();
-        return {game, arbitrator, map, player1, formation1, leader11, player2, unit21, unit22, leader21};
-    }
+    it("Checks that a unit is allowed to shock attack", () => {
+        given:
+            var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
+        when:
+            unit21.hexLocation = unit12.hexLocation.getNearHex(0);
+        then:
+            assert(arbitrator.isAllowedToShockAttack(unit12)).isTrue();
+        when:
+            unit12.angle = 180;
+        then:
+            assert(arbitrator.isAllowedToShockAttack(unit12)).isFalse();
+    });
+
+    it("Checks if a unit has fire capacities", () => {
+        given:
+            var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.hasFireAttackCapacity(unit12)).isTrue();
+            assert(arbitrator.hasFireAttackCapacity(unit21)).isFalse();
+    });
+
+    it("Checks that a unit is allowed to fire attack", () => {
+        given:
+            var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
+        when:
+            unit21.hexLocation = unit12.hexLocation.getNearHex(0).getNearHex(0);
+        then:
+            assert(arbitrator.isAllowedToFireAttack(unit12)).isTrue();
+            assert(arbitrator.isAllowedToFireAttack(unit21)).isFalse();
+        when:
+            unit12.angle = 180;
+        then:
+            assert(arbitrator.isAllowedToFireAttack(unit12)).isFalse();
+    });
 
     it("Checks formation allowed retreat", () => {
         given:
@@ -305,6 +321,161 @@ describe("Combat teacher", ()=> {
             assert(arbitrator.getFireWeaponCell(unit12, unit21)).objectEqualsTo({col:7, row:8});
     });
 
+    it("Checks if a hex is clear for shock", () => {
+        given:
+            var {arbitrator, map} = createTinyGame();
+            map.getHex(3, 0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
+            map.getHex(3, 1).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            map.getHex(3, 2).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            map.getHex(3, 3).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
+            map.getHex(3, 4).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
+            map.getHex(3, 5).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 6).type = CBHex.HEX_TYPES.WATER;
+            map.getHex(3, 7).type = CBHex.HEX_TYPES.LAVA;
+            map.getHex(3, 8).type = CBHex.HEX_TYPES.IMPASSABLE;
+            map.getHex(4, 1).type = CBHex.HEX_TYPES.CAVE_CLEAR;
+            map.getHex(4, 2).type = CBHex.HEX_TYPES.CAVE_ROUGH;
+            map.getHex(4, 3).type = CBHex.HEX_TYPES.CAVE_DIFFICULT;
+            map.getHex(4, 4).type = CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+            map.getHex(4, 5).type = CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+            map.getHex(4, 6).type = CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+        then:
+            assert(arbitrator.isClearGroundForShock(map.getHex(3, 0))).isTrue();
+            assert(arbitrator.isClearGroundForShock(map.getHex(3, 1))).isFalse();
+            assert(arbitrator.isClearGroundForShock(map.getHex(3, 2))).isFalse();
+            assert(arbitrator.isClearGroundForShock(map.getHex(3, 3))).isTrue();
+            assert(arbitrator.isClearGroundForShock(map.getHex(3, 4))).isFalse();
+            assert(arbitrator.isClearGroundForShock(map.getHex(3, 5))).isFalse();
+            assert(arbitrator.isClearGroundForShock(map.getHex(3, 6))).isFalse();
+            assert(arbitrator.isClearGroundForShock(map.getHex(3, 7))).isFalse();
+            assert(arbitrator.isClearGroundForShock(map.getHex(3, 8))).isFalse();
+            assert(arbitrator.isClearGroundForShock(map.getHex(4, 1))).isTrue();
+            assert(arbitrator.isClearGroundForShock(map.getHex(4, 2))).isFalse();
+            assert(arbitrator.isClearGroundForShock(map.getHex(4, 3))).isFalse();
+            assert(arbitrator.isClearGroundForShock(map.getHex(4, 4))).isTrue();
+            assert(arbitrator.isClearGroundForShock(map.getHex(4, 5))).isFalse();
+            assert(arbitrator.isClearGroundForShock(map.getHex(4, 6))).isFalse();
+    });
+
+    it("Checks if a hex is rough for shock", () => {
+        given:
+            var {arbitrator, map} = createTinyGame();
+            map.getHex(3, 0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
+            map.getHex(3, 1).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            map.getHex(3, 2).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            map.getHex(3, 3).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
+            map.getHex(3, 4).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
+            map.getHex(3, 5).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 6).type = CBHex.HEX_TYPES.WATER;
+            map.getHex(3, 7).type = CBHex.HEX_TYPES.LAVA;
+            map.getHex(3, 8).type = CBHex.HEX_TYPES.IMPASSABLE;
+            map.getHex(4, 1).type = CBHex.HEX_TYPES.CAVE_CLEAR;
+            map.getHex(4, 2).type = CBHex.HEX_TYPES.CAVE_ROUGH;
+            map.getHex(4, 3).type = CBHex.HEX_TYPES.CAVE_DIFFICULT;
+            map.getHex(4, 4).type = CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+            map.getHex(4, 5).type = CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+            map.getHex(4, 6).type = CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+        then:
+            assert(arbitrator.isRoughGroundForShock(map.getHex(3, 0))).isFalse();
+            assert(arbitrator.isRoughGroundForShock(map.getHex(3, 1))).isTrue();
+            assert(arbitrator.isRoughGroundForShock(map.getHex(3, 2))).isFalse();
+            assert(arbitrator.isRoughGroundForShock(map.getHex(3, 3))).isFalse();
+            assert(arbitrator.isRoughGroundForShock(map.getHex(3, 4))).isTrue();
+            assert(arbitrator.isRoughGroundForShock(map.getHex(3, 5))).isFalse();
+            assert(arbitrator.isRoughGroundForShock(map.getHex(3, 6))).isFalse();
+            assert(arbitrator.isRoughGroundForShock(map.getHex(3, 7))).isFalse();
+            assert(arbitrator.isRoughGroundForShock(map.getHex(3, 8))).isFalse();
+            assert(arbitrator.isRoughGroundForShock(map.getHex(4, 1))).isFalse();
+            assert(arbitrator.isRoughGroundForShock(map.getHex(4, 2))).isTrue();
+            assert(arbitrator.isRoughGroundForShock(map.getHex(4, 3))).isFalse();
+            assert(arbitrator.isRoughGroundForShock(map.getHex(4, 4))).isFalse();
+            assert(arbitrator.isRoughGroundForShock(map.getHex(4, 5))).isTrue();
+            assert(arbitrator.isRoughGroundForShock(map.getHex(4, 6))).isFalse();
+    });
+
+    it("Checks if a hex is difficult for shock", () => {
+        given:
+            var {arbitrator, map} = createTinyGame();
+            map.getHex(3, 0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
+            map.getHex(3, 1).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            map.getHex(3, 2).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            map.getHex(3, 3).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
+            map.getHex(3, 4).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
+            map.getHex(3, 5).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 6).type = CBHex.HEX_TYPES.WATER;
+            map.getHex(3, 7).type = CBHex.HEX_TYPES.LAVA;
+            map.getHex(3, 8).type = CBHex.HEX_TYPES.IMPASSABLE;
+            map.getHex(4, 1).type = CBHex.HEX_TYPES.CAVE_CLEAR;
+            map.getHex(4, 2).type = CBHex.HEX_TYPES.CAVE_ROUGH;
+            map.getHex(4, 3).type = CBHex.HEX_TYPES.CAVE_DIFFICULT;
+            map.getHex(4, 4).type = CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+            map.getHex(4, 5).type = CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+            map.getHex(4, 6).type = CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+        then:
+            assert(arbitrator.isDifficultGroundForShock(map.getHex(3, 0))).isFalse();
+            assert(arbitrator.isDifficultGroundForShock(map.getHex(3, 1))).isFalse();
+            assert(arbitrator.isDifficultGroundForShock(map.getHex(3, 2))).isTrue();
+            assert(arbitrator.isDifficultGroundForShock(map.getHex(3, 3))).isFalse();
+            assert(arbitrator.isDifficultGroundForShock(map.getHex(3, 4))).isFalse();
+            assert(arbitrator.isDifficultGroundForShock(map.getHex(3, 5))).isTrue();
+            assert(arbitrator.isDifficultGroundForShock(map.getHex(3, 6))).isTrue();
+            assert(arbitrator.isDifficultGroundForShock(map.getHex(3, 7))).isTrue();
+            assert(arbitrator.isDifficultGroundForShock(map.getHex(3, 8))).isFalse();
+            assert(arbitrator.isDifficultGroundForShock(map.getHex(4, 1))).isFalse();
+            assert(arbitrator.isDifficultGroundForShock(map.getHex(4, 2))).isFalse();
+            assert(arbitrator.isDifficultGroundForShock(map.getHex(4, 3))).isTrue();
+            assert(arbitrator.isDifficultGroundForShock(map.getHex(4, 4))).isFalse();
+            assert(arbitrator.isDifficultGroundForShock(map.getHex(4, 5))).isFalse();
+            assert(arbitrator.isDifficultGroundForShock(map.getHex(4, 6))).isTrue();
+    });
+
+    it("Checks if a hex side is clear for shock", () => {
+        given:
+            var {arbitrator, map} = createTinyGame();
+            map.getHex(3, 0).toward(60).type = CBHex.HEXSIDE_TYPES.NORMAL;
+            map.getHex(3, 1).toward(60).type = CBHex.HEXSIDE_TYPES.EASY;
+            map.getHex(3, 2).toward(60).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            map.getHex(3, 3).toward(60).type = CBHex.HEXSIDE_TYPES.CLIMB;
+            map.getHex(3, 4).toward(60).type = CBHex.HEXSIDE_TYPES.WALL;
+        then:
+            assert(arbitrator.isClearHexSideForShock(map.getHex(3, 0).toward(60))).isTrue();
+            assert(arbitrator.isClearHexSideForShock(map.getHex(3, 1).toward(60))).isTrue();
+            assert(arbitrator.isClearHexSideForShock(map.getHex(3, 2).toward(60))).isFalse();
+            assert(arbitrator.isClearHexSideForShock(map.getHex(3, 3).toward(60))).isFalse();
+            assert(arbitrator.isClearHexSideForShock(map.getHex(3, 4).toward(60))).isFalse();
+    });
+
+    it("Checks if a hex side is difficult for shock", () => {
+        given:
+            var {arbitrator, map} = createTinyGame();
+            map.getHex(3, 0).toward(60).type = CBHex.HEXSIDE_TYPES.NORMAL;
+            map.getHex(3, 1).toward(60).type = CBHex.HEXSIDE_TYPES.EASY;
+            map.getHex(3, 2).toward(60).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            map.getHex(3, 3).toward(60).type = CBHex.HEXSIDE_TYPES.CLIMB;
+            map.getHex(3, 4).toward(60).type = CBHex.HEXSIDE_TYPES.WALL;
+        then:
+            assert(arbitrator.isDifficultHexSide(map.getHex(3, 0).toward(60))).isFalse();
+            assert(arbitrator.isDifficultHexSide(map.getHex(3, 1).toward(60))).isFalse();
+            assert(arbitrator.isDifficultHexSide(map.getHex(3, 2).toward(60))).isTrue();
+            assert(arbitrator.isDifficultHexSide(map.getHex(3, 3).toward(60))).isFalse();
+            assert(arbitrator.isDifficultHexSide(map.getHex(3, 4).toward(60))).isFalse();
+    });
+
+    it("Checks if terrain allows charge", () => {
+        given:
+            var {arbitrator, map} = createTinyGame();
+        then:
+            assert(arbitrator.isChargeAllowed(map.getHex(3, 1), map.getHex(3, 2))).isTrue();
+        when:
+            map.getHex(3, 2).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+        then:
+            assert(arbitrator.isChargeAllowed(map.getHex(3, 1), map.getHex(3, 2))).isFalse();
+        when:
+            map.getHex(4, 1).toward(180).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+        then:
+            assert(arbitrator.isChargeAllowed(map.getHex(4, 1), map.getHex(4, 2))).isFalse();
+    });
+
     it("Checks shock attack processing", () => {
         given:
             var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();
@@ -325,6 +496,134 @@ describe("Combat teacher", ()=> {
             result = arbitrator.processShockAttackResult(unit12, unit12.hexLocation, unit21, unit21.hexLocation, false, [5, 5]);
         then:
             assert(result.success).isFalse();
+    });
+
+    it("Checks shock attack computing advantage - first case", () => {
+        given:
+            var {arbitrator, map, unit12, leader21} = create2Players4UnitsTinyGame();
+            leader21.hexLocation = unit12.hexLocation.getNearHex(0);
+            unit12.fixTirednessLevel(CBTiredness.TIRED);
+            unit12.markAsCharging(CBCharge.CHARGING);
+            unit12.hexLocation.height = 1;
+            leader21.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            leader21.disrupt();
+        when:
+            var advantage = arbitrator.getShockAttackAdvantage(unit12, unit12.hexLocation, leader21, leader21.hexLocation, true);
+        then:
+            assert(advantage).objectEqualsTo({
+                advantage: 9,
+                attacker: unit12,
+                attackerAboveDefenfer: 1,
+                attackerCapacity: 0,
+                attackerCharging: 2,
+                attackerTired: -1,
+                backAdvantage: 4,
+                defender: leader21,
+                defenderCapacity: -1,
+                defenderDisrupted: 1,
+                defenderExhausted: 1,
+                defenderIsACharacter: 4,
+                defenseBonus: -2,
+                weapons: 0
+            });
+
+    });
+
+    it("Checks shock attack computing advantage - second case", () => {
+        given:
+            var {arbitrator, unit11, unit12, leader21} = create2Players4UnitsTinyGame();
+            leader21.hexLocation = unit12.hexLocation.getNearHex(0);
+            leader21.angle = 180;
+            unit12.fixTirednessLevel(CBTiredness.TIRED);
+            unit12.hexLocation.height = 1;
+            unit12.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit11.hexLocation = unit12.hexLocation;
+            leader21.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            leader21.disrupt();
+            leader21.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+        when:
+            var advantage = arbitrator.getShockAttackAdvantage(leader21, leader21.hexLocation, unit12, unit12.hexLocation, true);
+        then:
+            assert(advantage).objectEqualsTo({
+                advantage: -8,
+                attackBonus: 1,
+                attacker: leader21,
+                attackerBelowDefender: -1,
+                attackerCapacity: 1,
+                attackerDisrupted: -1,
+                attackerExhausted: -2,
+                attackerIsACharacter: -4,
+                attackerOnDifficultGround: -2,
+                defender: unit12,
+                defenderCapacity: -0,
+                defenderOnRoughGround: -1,
+                defenderStacked: 2,
+                defenseBonus: -1,
+                weapons: 0
+            });
+
+    });
+
+    it("Checks shock attack computing advantage - third case", () => {
+        given:
+            var {arbitrator, unit11, unit12, unit21, unit22} = create2Players4UnitsTinyGame();
+            unit21.hexLocation = unit12.hexLocation.getNearHex(0);
+            unit22.hexLocation = unit21.hexLocation;
+            unit22.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            unit21.angle = 90;
+            unit22.angle = 90;
+            unit12.fixTirednessLevel(CBTiredness.TIRED);
+            unit12.hexLocation.height = 1;
+            unit12.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit11.hexLocation = unit12.hexLocation;
+            unit21.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit21.rout();
+            unit12.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+        when:
+            var advantage = arbitrator.getShockAttackAdvantage(unit12, unit12.hexLocation, unit21, unit21.hexLocation, true);
+        then:
+            assert(advantage).objectEqualsTo({
+                advantage: 0,
+                attacker: unit12,
+                attackerAboveDefenfer: 1,
+                attackerCapacity: 0,
+                attackerOnRoughGround: -1,
+                attackerStacked: -2,
+                attackerTired: -1,
+                defender: unit21,
+                defenderCapacity: -1,
+                defenderExhausted: 1,
+                defenderOnDifficultGround: -2,
+                defenderRouted: 4,
+                defenderStacked: 2,
+                defenseBonus: -2,
+                difficultHexSide: -1,
+                sideAdvantage: 2,
+                weapons: 0
+            });
+
+    });
+
+    it("Checks shock attack computing advantage - fourth case", () => {
+        given:
+            var {arbitrator, unit12, unit21} = create2Players4UnitsTinyGame();
+            unit21.hexLocation = unit12.hexLocation.getNearHex(0);
+            unit21.angle = 90;
+            unit21.markAsCharging(CBCharge.CHARGING);
+        when:
+            var advantage = arbitrator.getShockAttackAdvantage(unit12, unit12.hexLocation, unit21, unit21.hexLocation, true);
+        then:
+            assert(advantage).objectEqualsTo({
+                advantage: -3,
+                attacker: unit12,
+                attackerCapacity: 0,
+                defender: unit21,
+                defenderCapacity: -1,
+                defenderCharging: -2,
+                defenseBonus: -2,
+                sideAdvantage: 2,
+                weapons: 0
+            });
     });
 
     it("Checks if a character is allowed to fire by duel", () => {
@@ -354,6 +653,11 @@ describe("Combat teacher", ()=> {
         then:
             assert(units.length).equalsTo(1);
             assert(units[0].unit).equalsTo(unit21);
+        when:
+            units = arbitrator.getFoesThatMayBeFireAttackedFromHex(unit12, unit12.hexLocation);
+        then:
+            assert(units.length).equalsTo(1);
+            assert(units[0].unit).equalsTo(unit21);
     });
 
     it("Checks leaders that may be fired by duel", () => {
@@ -367,6 +671,11 @@ describe("Combat teacher", ()=> {
         then:
             assert(foes.length).equalsTo(1);
             assert(foes[0].unit).equalsTo(leader21);
+        when:
+            foes = arbitrator.getFoesThatMayBeDuelFiredFromHex(leader11, leader11.hexLocation);
+        then:
+            assert(foes.length).equalsTo(1);
+            assert(foes[0].unit).equalsTo(leader21);
     });
 
     it("Checks fire attack processing", () => {
@@ -377,7 +686,7 @@ describe("Combat teacher", ()=> {
             var result = arbitrator.processFireAttackResult(unit12, unit12.hexLocation, unit21, unit21.hexLocation, [1, 1]);
         then:
             assert(result.success).isTrue();
-            assert(result.lossesForDefender).equalsTo(3);
+            assert(result.lossesForDefender).equalsTo(2);
             assert(result.lowerFirerMunitions).isTrue();
         when:
             result = arbitrator.processFireAttackResult(unit12, unit12.hexLocation, unit21, unit21.hexLocation, [4, 3]);
@@ -390,6 +699,84 @@ describe("Combat teacher", ()=> {
         then:
             assert(result.success).isFalse();
             assert(result.lowerFirerMunitions).isTrue();
+    });
+
+    it("Checks fire attack computing advantage - first case", () => {
+        given:
+            var {arbitrator, map, unit11, unit12, leader21} = create2Players4UnitsTinyGame();
+            leader21.hexLocation = unit12.hexLocation.getNearHex(0).getNearHex(0).getNearHex(0);
+            unit12.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit12.disrupt();
+            unit12.markAsCharging(CBCharge.CHARGING);
+            unit12.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit12.hexLocation.height = 1;
+            unit12.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            unit11.hexLocation = unit12.hexLocation;
+            leader21.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            leader21.disrupt();
+            leader21.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+        when:
+            var advantage = arbitrator.getFireAttackAdvantage(unit12, unit12.hexLocation, leader21, leader21.hexLocation, true);
+        then:
+            assert(advantage).objectEqualsTo({
+                advantage: -1,
+                backAdvantage: 2,
+                defenseBonus: -2,
+                distanceMalus: -2,
+                fireBonus: 2,
+                firer: unit12,
+                firerAboveTarget: 1,
+                firerCapacity: 0,
+                firerDisrupted: -1,
+                firerExhausted: -1,
+                firerOnDifficultGround: -1,
+                firerStacked: -2,
+                scarceMunitions: -1,
+                target: leader21,
+                targetCapacity: -1,
+                targetDisrupted: 1,
+                targetIsACharacter: 4,
+                targetOnDifficultGround: -4,
+                weapons: 4
+            });
+    });
+
+    it("Checks fire attack computing advantage - second case", () => {
+        given:
+            var {arbitrator, map, unit11, unit12, leader21} = create2Players4UnitsTinyGame();
+            leader21.hexLocation = unit12.hexLocation.getNearHex(0).getNearHex(0).getNearHex(0);
+            unit12.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit12.rout();
+            unit12.angle = 90;
+            unit12.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            unit12.hexLocation.height = 1;
+            unit12.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit11.hexLocation = unit12.hexLocation;
+            leader21.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            leader21.disrupt();
+            leader21.angle = 180;
+        when:
+            var advantage = arbitrator.getFireAttackAdvantage(leader21, leader21.hexLocation, unit12, unit12.hexLocation, true);
+        then:
+            assert(advantage).objectEqualsTo({
+                advantage: -5,
+                defenseBonus: -1,
+                distanceMalus: -2,
+                firer: leader21,
+                firerBelowTarget: -1,
+                firerCapacity: 1,
+                firerDisrupted: -1,
+                firerExhausted: -1,
+                firerIsACharacter: -4,
+                sideAdvantage: 1,
+                target: unit12,
+                targetCapacity: 0,
+                targetOnRoughGround: -2,
+                targetProtection: -1,
+                targetRouted: 4,
+                targetStacked: 2,
+                weapons: 0
+            });
     });
 
     function assertNotInZone(zones, angle) {

@@ -19,9 +19,9 @@ import {
 } from "../../jslib/mechanisms.js";
 import {
     CBAdvanceActuator,
-    CBFireAttackActuator, CBFireHelpActuator, CBFormationRetreatActuator,
+    CBFireAttackActuator, CBFireHelpActuator, CBFireHexActuator, CBFormationRetreatActuator,
     CBRetreatActuator,
-    CBShockAttackActuator, CBShockHelpActuator,
+    CBShockAttackActuator, CBShockAttackInsert, CBFireAttackInsert, CBShockHelpActuator, CBShockHexActuator,
     registerInteractiveCombat,
     unregisterInteractiveCombat
 } from "../../jslib/cblades/interactive-combat.js";
@@ -60,20 +60,24 @@ import {
     showMenuPanel,
     showMenuItem,
     showMultiInsert,
-    showInsertMark
+    showInsertMark, zoomAndRotate330, clickOnArtifact, getInsert, showScrolledInsert
 } from "./interactive-tools.js";
 import {
     createTinyGame,
     create2PlayersTinyGame,
     create2PlayersTinyFormationGame,
     create2Players2Units2LeadersTinyGame,
-    create2PlayersFireTinyGame
+    create2PlayersFireTinyGame,
+    setWeaponBonuses,
+    create2Players4UnitsTinyGame,
+    createTroop,
+    create2Players4UnitsFireTinyGame
 } from "./game-examples.js";
 import {
-    CBHexSideId
+    CBHexSideId, CBHex
 } from "../../jslib/cblades/map.js";
 import {
-    CBCharge
+    CBCharge, CBLackOfMunitions, CBTiredness
 } from "../../jslib/cblades/unit.js";
 
 describe("Interactive Combat", ()=> {
@@ -111,6 +115,17 @@ describe("Interactive Combat", ()=> {
         ];
     }
 
+    function showShockHex([a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF",
+                "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/shock-attacker-hex.png, -30, -37.5, 60, 75)",
+            "restore()"
+        ];
+    }
+
     function showUnsupportedShockAdvantage(advantage, [a, b, c, d, e, f]) {
         return [
             "save()",
@@ -143,6 +158,17 @@ describe("Interactive Combat", ()=> {
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/fire.png, -50, -77.5, 100, 155)",
+            "restore()"
+        ];
+    }
+
+    function showFireHex([a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF",
+                "shadowBlur = 10",
+                "drawImage(/CBlades/images/actuators/firer-hex.png, -30, -37.5, 60, 75)",
             "restore()"
         ];
     }
@@ -544,7 +570,6 @@ describe("Interactive Combat", ()=> {
             assertDirectives(actuatorsLayer, showSupportedShockAdvantage(4, zoomAndRotate0(453.3236, 292.3204)));
         when:
             var shockHelpActuator = getShockHelpActuator(game);
-        when:
             resetDirectives(widgetsLayer);
             clickOnTrigger(game, shockHelpActuator.getTrigger(unit2, true));
             paint(game);
@@ -569,6 +594,209 @@ describe("Interactive Combat", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
     });
 
+    it("Checks combat inset markers - first case", () => {
+        given:
+            var { game, map, unit11, unitType1, unit21, unitType2 } = create2Players4UnitsTinyGame();
+            var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
+            unit11.move(map.getHex(5, 8));
+            unit11.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit11.hexLocation.height = 1;
+            unit21.move(map.getHex(5, 7));
+            unit21.disrupt();
+            unit11.fixTirednessLevel(CBTiredness.TIRED);
+            unit21.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit21.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            setWeaponBonuses(unitType1, 2, 1, 0, 0);
+            setWeaponBonuses(unitType2, 2, 0, 2, 0);
+            clickOnCounter(game, unit11);
+            clickOnShockAttackAction(game);
+            loadAllImages();
+        when:
+            var shockHelpActuator = getShockHelpActuator(game);
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, shockHelpActuator.getTrigger(unit21, true));
+            paint(game);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showInsertMark(75, 385));
+            assertDirectives(widgetsLayer, showInsertMark(290, 385));
+            assertDirectives(widgetsLayer, showInsertMark(20, 483));
+            assertDirectives(widgetsLayer, showInsertMark(20, 501));
+            assertDirectives(widgetsLayer, showInsertMark(20, 575));
+            assertDirectives(widgetsLayer, showInsertMark(20, 611));
+            assertDirectives(widgetsLayer, showInsertMark(20, 646));
+            assertDirectives(widgetsLayer, showInsertMark(20, 700));
+            assertDirectives(widgetsLayer, showInsertMark(20, 718));
+            assertDirectives(widgetsLayer, showInsertMark(20, 754));
+            assertDirectives(widgetsLayer, showInsertMark(20, 772));
+            assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 757, 427, 500, 500, [
+            {xs:0, ys:179.75, xd:-250, yd:-250, w:86, h:500},
+            {xs:272.5294, ys:179.75, xd:-164, yd:-250, w:414, h:500}
+        ]));
+    });
+
+    it("Checks combat inset markers - second case", () => {
+        given:
+            var { game, map, unit11, unit21 } = create2Players4UnitsTinyGame();
+            var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
+            unit11.move(map.getHex(5, 8));
+            unit11.disrupt();
+            unit11.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            unit11.hexLocation.height = -1;
+            unit21.move(map.getHex(5, 7));
+            unit21.rout();
+            unit21.angle = 90;
+            unit11.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit21.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            clickOnCounter(game, unit11);
+            clickOnShockAttackAction(game);
+            loadAllImages();
+        when:
+            var shockHelpActuator = getShockHelpActuator(game);
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, shockHelpActuator.getTrigger(unit21, false));
+            paint(game);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showInsertMark(75, 385));
+            assertDirectives(widgetsLayer, showInsertMark(290, 385));
+            assertDirectives(widgetsLayer, showInsertMark(20, 593));
+            assertDirectives(widgetsLayer, showInsertMark(20, 629));
+            assertDirectives(widgetsLayer, showInsertMark(20, 664));
+            assertDirectives(widgetsLayer, showInsertMark(20, 682));
+            assertDirectives(widgetsLayer, showInsertMark(20, 736));
+            assertDirectives(widgetsLayer, showInsertMark(20, 754));
+            assertDirectives(widgetsLayer, showInsertMark(20, 772));
+            assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 757, 427, 500, 500, [
+                {xs:0, ys:179.75, xd:-250, yd:-250, w:86, h:500},
+                {xs:272.5294, ys:179.75, xd:-164, yd:-250, w:414, h:500}
+            ]));
+    });
+
+    it("Checks combat inset markers - third case", () => {
+        given:
+            var { game, map, unit11, unit21} = create2Players4UnitsTinyGame();
+            var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
+            unit11.move(map.getHex(5, 8));
+            unit11.markAsCharging(CBCharge.CHARGING);
+            unit21.move(map.getHex(5, 7));
+            unit21.markAsCharging(CBCharge.CHARGING);
+            unit21.angle = 90;
+            clickOnCounter(game, unit11);
+            clickOnShockAttackAction(game);
+            loadAllImages();
+        when:
+            var shockHelpActuator = getShockHelpActuator(game);
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, shockHelpActuator.getTrigger(unit21, true));
+            paint(game);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showInsertMark(75, 385));
+            assertDirectives(widgetsLayer, showInsertMark(290, 385));
+            assertDirectives(widgetsLayer, showInsertMark(20, 519));
+            assertDirectives(widgetsLayer, showInsertMark(20, 557));
+            assertDirectives(widgetsLayer, showInsertMark(20, 682));
+            assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 757, 427, 500, 500, [
+                {xs:0, ys:179.75, xd:-250, yd:-250, w:86, h:500},
+                {xs:272.5294, ys:179.75, xd:-164, yd:-250, w:414, h:500}
+            ]));
+    });
+
+    it("Checks combat inset markers - fourth case", () => {
+        given:
+            var { game, map, unit11, unit12, unit21, unit22 } = create2Players4UnitsTinyGame();
+            var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
+            unit11.move(map.getHex(5, 8));
+            unit12.move(map.getHex(5, 8));
+            unit21.move(map.getHex(5, 7));
+            unit22.move(map.getHex(5, 7));
+            unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            clickOnCounter(game, unit11);
+            clickOnShockAttackAction(game);
+            var shockHelpActuator = getShockHelpActuator(game);
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, shockHelpActuator.getTrigger(unit21, false));
+            clickOnArtifact(game, getInsert(game, CBShockAttackInsert).downButton);
+            resetDirectives(widgetsLayer);
+            clickOnArtifact(game, getInsert(game, CBShockAttackInsert).downButton);
+            paint(game);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showScrolledInsert("shock-attack", 277, 466, 544, 658, 0, 192));
+            assertDirectives(widgetsLayer, showInsertMark(75, 193));
+            assertDirectives(widgetsLayer, showInsertMark(290, 193));
+            assertDirectives(widgetsLayer, showInsertMark(20, 508));
+            assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 757, 427, 500, 500, [
+            {xs:0, ys:179.75, xd:-250, yd:-250, w:86, h:500},
+            {xs:272.5294, ys:179.75, xd:-164, yd:-250, w:414, h:500}
+        ]));
+            assertDirectives(widgetsLayer, showInsertMark(790, 437));
+            assertDirectives(widgetsLayer, showInsertCommand("right", 972, 427));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 800, 642));
+            assertDirectives(widgetsLayer, showInsertCommand("left", 628, 427));
+            assertDirectives(widgetsLayer, showInsertCommand("up", 800, 212));
+            assertDirectives(widgetsLayer, showInsertMark(20, 598));
+            assertDirectives(widgetsLayer, showInsertMark(20, 652));
+            assertDirectives(widgetsLayer, showInsertMark(20, 670));
+            assertDirectives(widgetsLayer, showInsertMark(20, 760));
+            assertDirectives(widgetsLayer, showInsertCommand("up", 277, 172));
+    });
+
+    it("Checks combat inset markers - fifth case", () => {
+        given:
+            var { game, map, leader1, leader2 } = create2Players2Units2LeadersTinyGame();
+            var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
+            leader1.move(map.getHex(5, 8));
+            leader2.move(map.getHex(5, 7));
+            clickOnCounter(game, leader1);
+            clickOnShockAttackAction(game);
+            var shockHelpActuator = getShockHelpActuator(game);
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, shockHelpActuator.getTrigger(leader2, true));
+            clickOnArtifact(game, getInsert(game, CBShockAttackInsert).downButton);
+            resetDirectives(widgetsLayer);
+            clickOnArtifact(game, getInsert(game, CBShockAttackInsert).downButton);
+            paint(game);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showScrolledInsert("shock-attack", 277, 466, 544, 658, 0, 192));
+            assertDirectives(widgetsLayer, showInsertMark(75, 193));
+            assertDirectives(widgetsLayer, showInsertMark(290, 193));
+            assertDirectives(widgetsLayer, showInsertMark(20, 508));
+            assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 757, 427, 500, 500, [
+                {xs:0, ys:179.75, xd:-250, yd:-250, w:86, h:500},
+                {xs:272.5294, ys:179.75, xd:-164, yd:-250, w:414, h:500}
+            ]));
+            assertDirectives(widgetsLayer, showInsertMark(790, 437));
+            assertDirectives(widgetsLayer, showInsertCommand("right", 972, 427));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 800, 642));
+            assertDirectives(widgetsLayer, showInsertCommand("left", 628, 427));
+            assertDirectives(widgetsLayer, showInsertCommand("up", 800, 212));
+            assertDirectives(widgetsLayer, showInsertMark(20, 616));
+            assertDirectives(widgetsLayer, showInsertMark(20, 634));
+            assertDirectives(widgetsLayer, showInsertCommand("up", 277, 172));
+    });
+
+
     it("Checks that a formation may shock attack twice", () => {
         given:
             var { game, map, unit1, formation2, player2 } = create2PlayersTinyFormationGame();
@@ -581,8 +809,16 @@ describe("Interactive Combat", ()=> {
             unit1.move(map.getHex(5, 7));
             unit1.angle = 180;
             clickOnCounter(game, formation2);
+            loadAllImages();
+        when:
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
             clickOnShockAttackAction(game);
-            let shockAttackActuator = getShockAttackActuator(game);
+            loadAllImages();
+        then:
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showShockHex(zoomAndRotate330(500, 303.7757)));
+        when:
+            var shockAttackActuator = getShockAttackActuator(game);
             resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
             clickOnTrigger(game, shockAttackActuator.getTrigger(unit1, true));
             loadAllImages();
@@ -611,6 +847,59 @@ describe("Interactive Combat", ()=> {
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showUnsupportedShock(zoomAndRotate30(397.1163, 236.1131)));
             assertDirectives(actuatorsLayer, showSupportedShock(zoomAndRotate30(436.217, 275.2138)));
+    });
+
+    function getShockHexActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBShockHexActuator) return actuator;
+        }
+        return null;
+    }
+
+    it("Checks that on a formation that may shock attack twice, one may change attack Hex", () => {
+        given:
+            var { game, map, unit1, formation2, player2 } = create2PlayersTinyFormationGame();
+            var [actuatorsLayer] = getLayers(game.board,
+                "actuators-0"
+            );
+            game.currentPlayer = player2;
+            formation2.angle = 330;
+            let fromHex = map.getHex(5, 8);
+            let toHex = fromHex.getNearHex(60);
+            formation2.move(new CBHexSideId(fromHex, toHex), 0);
+            unit1.move(map.getHex(5, 7));
+            unit1.angle = 180;
+            clickOnCounter(game, formation2);
+        when:
+            resetDirectives(actuatorsLayer);
+            clickOnShockAttackAction(game);
+            loadAllImages();
+        then:
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showShockHex(zoomAndRotate330(500, 303.7757)));
+        when:
+            var shockAttackActuator = getShockHexActuator(game);
+            resetDirectives(actuatorsLayer);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(toHex));
+            loadAllImages();
+        then:
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showShockHex(zoomAndRotate330(416.6667, 351.8878)));
+        when:
+            shockAttackActuator = getShockHexActuator(game);
+            resetDirectives(actuatorsLayer);
+            assert(shockAttackActuator.getTrigger(toHex)).isNotDefined();
+            assert(shockAttackActuator.getTrigger(fromHex)).isDefined();
+        when:
+            Memento.undo();
+            resetDirectives(actuatorsLayer);
+            repaint(game);
+            shockAttackActuator = getShockHexActuator(game);
+        then:
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showShockHex(zoomAndRotate330(500, 303.7757)));
+            assert(shockAttackActuator.getTrigger(toHex)).isDefined();
+            assert(shockAttackActuator.getTrigger(fromHex)).isNotDefined();
     });
 
     it("Checks that a formation finishes attack action if there is no more unit to shock attack", () => {
@@ -698,6 +987,29 @@ describe("Interactive Combat", ()=> {
             assert(retreatActuator.getTrigger(120)).isNotDefined();
     });
 
+    it("Checks when a unit is immediately destroyed", () => {
+        given:
+            var { game, map, unit1, unit2 } = create2PlayersTinyGame();
+            var [actuatorsLayer, unitsLayer] = getLayers(game.board,
+                "actuators", "units-0"
+            );
+            unit1.move(map.getHex(5, 8));
+            unit2.move(map.getHex(5, 7));
+            unit2.angle = 180;
+            unit2.lossSteps = 1;
+            clickOnCounter(game, unit1);
+            clickOnShockAttackAction(game);
+            let shockAttackActuator = getShockAttackActuator(game);
+            clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
+            rollFor(1, 1);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnResult(game);
+        when:
+            assert(getRetreatActuator(game)).isNotDefined();
+            assert(unit2.isDestroyed()).isTrue();
+    });
+
     it("Checks when a formation retreat", () => {
         given:
             var { game, map, unit1, formation2 } = create2PlayersTinyFormationGame();
@@ -723,7 +1035,7 @@ describe("Interactive Combat", ()=> {
             repaint(game);
         then:
             skipDirectives(formationLayer, 4);
-            assertDirectives(formationLayer, showFormation("misc/formation2", zoomAndRotate210(458.3333, 183.4952)));
+            assertDirectives(formationLayer, showFormation("misc/formation12", zoomAndRotate210(458.3333, 183.4952)));
             assert(formation2.angle).equalsTo(210);
             assertNoMoreDirectives(actuatorsLayer, 4);
     });
@@ -753,7 +1065,7 @@ describe("Interactive Combat", ()=> {
             repaint(game);
         then:
             skipDirectives(formationLayer, 4);
-            assertDirectives(formationLayer, showFormation("misc/formation2", zoomAndRotate270(583.3333, 303.7757)));
+            assertDirectives(formationLayer, showFormation("misc/formation12", zoomAndRotate270(583.3333, 303.7757)));
             assert(formation2.angle).equalsTo(270);
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
@@ -860,7 +1172,7 @@ describe("Interactive Combat", ()=> {
             repaint(game);
         then:
             skipDirectives(formationLayer, 4);
-            assertDirectives(formationLayer, showFormation("misc/formation2b", zoomAndRotate210(458.3333, 279.7196)));
+            assertDirectives(formationLayer, showFormation("misc/formation12b", zoomAndRotate210(458.3333, 279.7196)));
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
 
@@ -1050,7 +1362,7 @@ describe("Interactive Combat", ()=> {
         return null;
     }
 
-    it("Checks combat rules showing", () => {
+    it("Checks fire rules showing", () => {
         given:
             var { game, map, unit1, unit2 } = create2PlayersFireTinyGame();
             var [widgetsLayer, actuatorsLayer] = getLayers(game.board, "widgets", "actuators-0");
@@ -1068,7 +1380,6 @@ describe("Interactive Combat", ()=> {
             assertDirectives(actuatorsLayer, showFireAdvantage(5, zoomAndRotate0(436.217, 178.9895)));
         when:
             var fireHelpActuator = getFireHelpActuator(game);
-        when:
             resetDirectives(widgetsLayer);
             clickOnTrigger(game, fireHelpActuator.getTrigger(unit2));
             paint(game);
@@ -1081,10 +1392,12 @@ describe("Interactive Combat", ()=> {
             assertDirectives(widgetsLayer, showInsertMark(75, 355));
             assertDirectives(widgetsLayer, showInsertMark(290, 355));
             assertDirectives(widgetsLayer, showInsertMark(20, 590));
+            assertDirectives(widgetsLayer, showInsertMark(20, 718));
             assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 757, 427, 500, 500, [
                 {xs:0, ys:237.05, xd:-250, yd:-250, w:86, h:500},
                 {xs:272.5294, ys:237.05, xd:-164, yd:-250, w:414, h:500}
             ]));
+            assertDirectives(widgetsLayer, showInsertMark(790, 437));
         when:
             resetDirectives(widgetsLayer);
             clickOnMask(game);
@@ -1092,6 +1405,186 @@ describe("Interactive Combat", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
     });
+
+
+
+
+    it("Checks fire insert markers - first case", () => {
+        given:
+            var { game, map, unit1, unitType1, unit2, unitType2 } = create2PlayersFireTinyGame();
+            var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
+            unit1.move(map.getHex(5, 8));
+            unit1.disrupt();
+            unit1.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            unit1.hexLocation.height = 1;
+            unit2.move(map.getHex(5, 6));
+            unit2.disrupt();
+            unit2.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            unit2.hexLocation.toward(180).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            setWeaponBonuses(unitType1, 2, 0, 0, 1);
+            setWeaponBonuses(unitType2, 2, 0, 2, 0);
+            clickOnCounter(game, unit1);
+            clickOnFireAttackAction(game);
+            loadAllImages();
+            var fireHelpActuator = getFireHelpActuator(game);
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, fireHelpActuator.getTrigger(unit2));
+            paint(game);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("fire-attack", 277, 466, 544, 658));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showInsertMark(75, 355));
+            assertDirectives(widgetsLayer, showInsertMark(290, 355));
+            assertDirectives(widgetsLayer, showInsertMark(20, 464));
+            assertDirectives(widgetsLayer, showInsertMark(20, 482));
+            assertDirectives(widgetsLayer, showInsertMark(20, 518));
+            assertDirectives(widgetsLayer, showInsertMark(20, 536));
+            assertDirectives(widgetsLayer, showInsertMark(20, 590));
+            assertDirectives(widgetsLayer, showInsertMark(20, 608));
+            assertDirectives(widgetsLayer, showInsertMark(20, 644));
+            assertDirectives(widgetsLayer, showInsertMark(20, 680));
+            assertDirectives(widgetsLayer, showInsertMark(20, 698));
+            assertDirectives(widgetsLayer, showInsertMark(20, 718));
+            assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 757, 427, 500, 500, [
+                {xs:0, ys:237.05, xd:-250, yd:-250, w:86, h:500},
+                {xs:272.5294, ys:237.05, xd:-164, yd:-250, w:414, h:500}
+            ]));
+            assertDirectives(widgetsLayer, showInsertMark(790, 437));
+    });
+
+    it("Checks fire insert markers - second case", () => {
+        given:
+            var { game, map, unit1, unitType1, unit2, unitType2 } = create2PlayersFireTinyGame();
+            var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
+            unit1.move(map.getHex(5, 8));
+            unit1.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit1.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit1.hexLocation.height = -1;
+            unit2.move(map.getHex(5, 6));
+            unit2.angle = 90;
+            unit2.rout();
+            unit2.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            clickOnCounter(game, unit1);
+            clickOnFireAttackAction(game);
+            loadAllImages();
+            var fireHelpActuator = getFireHelpActuator(game);
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, fireHelpActuator.getTrigger(unit2));
+            paint(game);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("fire-attack", 277, 466, 544, 658));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showInsertMark(75, 355));
+            assertDirectives(widgetsLayer, showInsertMark(290, 355));
+            assertDirectives(widgetsLayer, showInsertMark(20, 500));
+            assertDirectives(widgetsLayer, showInsertMark(20, 554));
+            assertDirectives(widgetsLayer, showInsertMark(20, 572));
+            assertDirectives(widgetsLayer, showInsertMark(20, 626));
+            assertDirectives(widgetsLayer, showInsertMark(20, 644));
+            assertDirectives(widgetsLayer, showInsertMark(20, 662));
+            assertDirectives(widgetsLayer, showInsertMark(20, 718));
+            assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 757, 427, 500, 500, [
+                {xs:0, ys:237.05, xd:-250, yd:-250, w:86, h:500},
+                {xs:272.5294, ys:237.05, xd:-164, yd:-250, w:414, h:500}
+            ]));
+            assertDirectives(widgetsLayer, showInsertMark(790, 437));
+    });
+
+
+
+    it("Checks fire insert markers - third case", () => {
+        given:
+            var { game, map, unit11, unit12, unit21, unit22 } = create2Players4UnitsFireTinyGame();
+            var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
+            unit11.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            unit11.move(map.getHex(5, 8));
+            unit12.move(map.getHex(5, 8));
+            unit21.move(map.getHex(5, 6));
+            unit22.move(map.getHex(5, 6));
+            clickOnCounter(game, unit11);
+            clickOnFireAttackAction(game);
+            loadAllImages();
+            var fireHelpActuator = getFireHelpActuator(game);
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, fireHelpActuator.getTrigger(unit21));
+            clickOnArtifact(game, getInsert(game, CBFireAttackInsert).downButton);
+            resetDirectives(widgetsLayer);
+            clickOnArtifact(game, getInsert(game, CBFireAttackInsert).downButton);
+            paint(game);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showScrolledInsert("fire-attack", 277, 466, 544, 658, 0, 192));
+            assertDirectives(widgetsLayer, showInsertMark(75, 163));
+            assertDirectives(widgetsLayer, showInsertMark(290, 163));
+            assertDirectives(widgetsLayer, showInsertMark(20, 398));
+            assertDirectives(widgetsLayer, showInsertMark(20, 526));
+            assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 757, 427, 500, 500, [
+                {xs:0, ys:237.05, xd:-250, yd:-250, w:86, h:500},
+                {xs:272.5294, ys:237.05, xd:-164, yd:-250, w:414, h:500}
+            ]));
+            assertDirectives(widgetsLayer, showInsertMark(790, 437));
+            assertDirectives(widgetsLayer, showInsertCommand("right", 972, 427));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 800, 642));
+            assertDirectives(widgetsLayer, showInsertCommand("left", 628, 427));
+            assertDirectives(widgetsLayer, showInsertCommand("up", 800, 212));
+            assertDirectives(widgetsLayer, showInsertMark(20, 598));
+            assertDirectives(widgetsLayer, showInsertMark(20, 650));
+            assertDirectives(widgetsLayer, showInsertMark(20, 668));
+            assertDirectives(widgetsLayer, showInsertCommand("up", 277, 172));
+    });
+
+    it("Checks fire insert markers - fourth case", () => {
+        given:
+            var { game, map, leader1, leader2 } = create2Players2Units2LeadersTinyGame();
+            var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
+            leader1.move(map.getHex(5, 6));
+            leader2.move(map.getHex(5, 8));
+            game.nextTurn();
+            clickOnCounter(game, leader2);
+            clickOnFireAttackAction(game);
+            loadAllImages();
+            var fireHelpActuator = getFireHelpActuator(game);
+        when:
+            resetDirectives(widgetsLayer);
+            clickOnTrigger(game, fireHelpActuator.getTrigger(leader1));
+            clickOnArtifact(game, getInsert(game, CBFireAttackInsert).downButton);
+            resetDirectives(widgetsLayer);
+            clickOnArtifact(game, getInsert(game, CBFireAttackInsert).downButton);
+            paint(game);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showScrolledInsert("fire-attack", 277, 466, 544, 658, 0, 192));
+            assertDirectives(widgetsLayer, showInsertMark(75, 163));
+            assertDirectives(widgetsLayer, showInsertMark(290, 163));
+            assertDirectives(widgetsLayer, showInsertMark(20, 398));
+            assertDirectives(widgetsLayer, showInsertMark(20, 526));
+            assertDirectives(widgetsLayer, showMultiInsert("weapon-table", 757, 427, 500, 500, [
+                {xs:0, ys:237.05, xd:-250, yd:-250, w:86, h:500},
+                {xs:272.5294, ys:237.05, xd:-164, yd:-250, w:414, h:500}
+            ]));
+            assertDirectives(widgetsLayer, showInsertMark(790, 437));
+            assertDirectives(widgetsLayer, showInsertCommand("right", 972, 427));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 800, 642));
+            assertDirectives(widgetsLayer, showInsertCommand("left", 628, 427));
+            assertDirectives(widgetsLayer, showInsertCommand("up", 800, 212));
+            assertDirectives(widgetsLayer, showInsertMark(20, 613));
+            assertDirectives(widgetsLayer, showInsertMark(20, 631));
+            assertDirectives(widgetsLayer, showInsertCommand("up", 277, 172));
+    });
+
 
     it("Checks that a formation may fire attack twice", () => {
         given:
@@ -1105,8 +1598,17 @@ describe("Interactive Combat", ()=> {
             unit1.move(map.getHex(5, 6));
             unit1.angle = 180;
             clickOnCounter(game, formation2);
+            loadAllImages();
+        when:
+            resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
             clickOnFireAttackAction(game);
-            let fireAttackActuator = getFireAttackActuator(game);
+            loadAllImages();
+        then:
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showFireHex(zoomAndRotate330(500, 303.7757)));
+            assertDirectives(actuatorsLayer, showFire(zoomAndRotate30(416.6667, 159.4391)));
+        when:
+            var fireAttackActuator = getFireAttackActuator(game);
             resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
             clickOnTrigger(game, fireAttackActuator.getTrigger(unit1));
             loadAllImages();
@@ -1134,6 +1636,59 @@ describe("Interactive Combat", ()=> {
             assert(game.focusedUnit).isNotDefined();
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showFire(zoomAndRotate30(416.6667, 159.4391)));
+    });
+
+    function getFireHexActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBFireHexActuator) return actuator;
+        }
+        return null;
+    }
+
+    it("Checks that on a formation that may fire attack twice, one may change attack Hex", () => {
+        given:
+            var { game, map, unit1, formation2, player2 } = create2PlayersTinyFormationGame();
+            var [actuatorsLayer] = getLayers(game.board,
+                "actuators-0"
+            );
+            game.currentPlayer = player2;
+            formation2.angle = 330;
+            let fromHex = map.getHex(5, 8);
+            let toHex = fromHex.getNearHex(60);
+            formation2.move(new CBHexSideId(fromHex, toHex), 0);
+            unit1.move(map.getHex(5, 6));
+            unit1.angle = 180;
+            clickOnCounter(game, formation2);
+        when:
+            resetDirectives(actuatorsLayer);
+            clickOnFireAttackAction(game);
+            loadAllImages();
+        then:
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showFireHex(zoomAndRotate330(500, 303.7757)));
+        when:
+            var fireAttackActuator = getFireHexActuator(game);
+            resetDirectives(actuatorsLayer);
+            clickOnTrigger(game, fireAttackActuator.getTrigger(toHex));
+            loadAllImages();
+        then:
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showFireHex(zoomAndRotate330(416.6667, 351.8878)));
+        when:
+            fireAttackActuator = getFireHexActuator(game);
+            resetDirectives(actuatorsLayer);
+            assert(fireAttackActuator.getTrigger(toHex)).isNotDefined();
+            assert(fireAttackActuator.getTrigger(fromHex)).isDefined();
+        when:
+            Memento.undo();
+            resetDirectives(actuatorsLayer);
+            repaint(game);
+            fireAttackActuator = getFireHexActuator(game);
+        then:
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, showFireHex(zoomAndRotate330(500, 303.7757)));
+            assert(fireAttackActuator.getTrigger(toHex)).isDefined();
+            assert(fireAttackActuator.getTrigger(fromHex)).isNotDefined();
     });
 
     it("Checks that a formation finishes attack action if there is no more unit to shock attack", () => {

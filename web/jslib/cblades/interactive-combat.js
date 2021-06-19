@@ -33,6 +33,9 @@ import {
 import {
     CrossbowWeaponProfile
 } from "./profile.js";
+import {
+    Memento
+} from "../mechanisms.js";
 
 export function registerInteractiveCombat() {
     CBInteractivePlayer.prototype.unitShockAttack = function (unit, event) {
@@ -272,6 +275,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
 
     changeAttackHex(attackHex) {
         this.game.closeActuators();
+        Memento.register(this);
         this._attackHex = attackHex;
         this._createShockAttackActuator();
     }
@@ -431,6 +435,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
 
     changeAttackHex(attackHex) {
         this.game.closeActuators();
+        Memento.register(this);
         this._attackHex = attackHex;
         this._createFireAttackActuator();
     }
@@ -1137,7 +1142,7 @@ export class CBShockAttackInsert extends WidgetLevelMixin(DInsert) {
         if (advantage.attackerAboveDefenfer) {
             this.setMark(new Point2D(15, 581));
         }
-        if (advantage.attackerBelowDefenfer) {
+        if (advantage.attackerBelowDefender) {
             this.setMark(new Point2D(15, 599));
         }
         if (advantage.attackerOnRoughGround || advantage.defenderOnRoughGround) {
@@ -1219,8 +1224,7 @@ export class CBFireAttackInsert extends WidgetLevelMixin(DInsert) {
         if (advantage.targetProtection) {
             this.setMark(new Point2D(15, 561));
         }
-        if ((advantage.firer.weaponProfile instanceof CrossbowWeaponProfile) &&
-            advantage.distanceMalus) {
+        if (advantage.firer.weaponProfile.getFireMalusSegmentSize()===1 && advantage.distanceMalus) {
             this.setMark(new Point2D(15, 581));
         }
         if (advantage.scarceMunitions) {

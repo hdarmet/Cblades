@@ -308,11 +308,13 @@ export class DArtifact extends LocalisationAware(Object) {
     }
 
     get viewportTransform() {
+        this.level.forArtifact(this);
         let transform = this.transform;
         return transform ? this.level.transform.concat(transform) : this.level.transform;
     }
 
     get viewportLocation() {
+        this.level.forArtifact(this);
         return this.level.transform.point(this.location);
     }
 }

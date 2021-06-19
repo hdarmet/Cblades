@@ -699,9 +699,10 @@ export class DInsertFrame {
                 if (!this._insert[buttonName]) {
                     this._insert[buttonName] = createButton();
                 }
-                if (!this._insert.hasArtifact(this._insert[buttonName])) {
-                    this._insert.addArtifact(this._insert[buttonName]);
+                if (this._insert.hasArtifact(this._insert[buttonName])) {
+                    this._insert.removeArtifact(this._insert[buttonName]);
                 }
+                this._insert.addArtifact(this._insert[buttonName]);
             }
             else {
                 if (this._insert.hasArtifact(this._insert[buttonName])) {
@@ -728,16 +729,16 @@ export class DInsertFrame {
             _manageButton.call(this,
                 composition.sourceArea.right<this._pageArea.right, "_rightButton",
                 ()=>{
-                    let downImage = DImage.getImage("/CBlades/images/commands/right.png");
+                    let rightImage = DImage.getImage("/CBlades/images/commands/right.png");
                     let position = new Point2D(
                         this._area.right-this._insert.dimension.w/2-DInsertCommand.DIMENSION.w/2-10,
                         this._area.y-this._insert.dimension.h/2);
-                    return new DInsertCommand(downImage, position, this._insert.rightPage);
+                    return new DInsertCommand(rightImage, position, this._insert.rightPage);
                 }
             );
         }
 
-        function _manageNextButton() {
+        function _managePreviousButton() {
             _manageButton.call(this,
                 composition.sourceArea.top>this._pageArea.top, "_upButton",
                 ()=>{
@@ -750,7 +751,7 @@ export class DInsertFrame {
             );
         }
 
-        function _managePreviousButton() {
+        function _manageNextButton() {
             _manageButton.call(this,
                 composition.sourceArea.bottom<this._pageArea.bottom, "_downButton",
                 ()=>{

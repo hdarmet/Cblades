@@ -141,8 +141,8 @@ describe("Interactive Formation", ()=> {
             repaint(game);
         then:
             skipDirectives(unitsLayer, 4);
-            assertDirectives(unitsLayer, showSelectedTroop("misc/unitb", zoomAndRotate90(666.6667, 400)));
-            assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate90(666.6667, 303.7757)));
+            assertDirectives(unitsLayer, showSelectedTroop("misc/unit1b", zoomAndRotate90(666.6667, 400)));
+            assertDirectives(unitsLayer, showTroop("misc/unit1", zoomAndRotate90(666.6667, 303.7757)));
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showFormationTrigger(zoomAndRotate180(666.6667, 351.8878)));
             assert(createFormationActuator.getTrigger(unit2.hexLocation)).isDefined();
@@ -153,7 +153,7 @@ describe("Interactive Formation", ()=> {
             paint(game);
         then:
             skipDirectives(formationsLayer, 4);
-            assertDirectives(formationsLayer, showFormation("misc/formation1b", zoomAndRotate90(666.6667, 351.8878)));
+            assertDirectives(formationsLayer, showFormation("misc/formation31b", zoomAndRotate90(666.6667, 351.8878)));
             assertNoMoreDirectives(actuatorsLayer, 4);
             assertNoMoreDirectives(unitsLayer, 4);
     });
@@ -177,8 +177,8 @@ describe("Interactive Formation", ()=> {
             repaint(game);
         then:
             skipDirectives(unitsLayer, 4);
-            assertDirectives(unitsLayer, showTroop("misc/troop", zoomAndRotate90(416.6667, 351.8878)));
-            assertDirectives(unitsLayer, showTroop("misc/troop", zoomAndRotate90(416.6667, 255.6635)));
+            assertDirectives(unitsLayer, showTroop("misc/unit1", zoomAndRotate90(416.6667, 351.8878)));
+            assertDirectives(unitsLayer, showTroop("misc/unit1", zoomAndRotate90(416.6667, 255.6635)));
     });
 
     function clickOnReleaseTroopsAction(game) {
@@ -206,7 +206,7 @@ describe("Interactive Formation", ()=> {
             repaint(game);
         then:
             skipDirectives(formationsLayer, 4);
-            assertDirectives(formationsLayer, showSelectedFormation("misc/formation3", zoomAndRotate90(416.6667, 303.7757)));
+            assertDirectives(formationsLayer, showSelectedFormation("misc/formation11", zoomAndRotate90(416.6667, 303.7757)));
             skipDirectives(fmarkersLayer, 4);
             assertDirectives(fmarkersLayer, showMarker("ordergiven", zoomAndRotate90(451.3685, 373.1794)));
             skipDirectives(actuatorsLayer, 4);
@@ -231,10 +231,10 @@ describe("Interactive Formation", ()=> {
             var [units1Layer, formations1Layer, fmarkers1Layer] = getLayers(game.board,"units-1", "formations-1", "fmarkers-1");
         then:
             skipDirectives(unitsLayer, 4);
-            assertDirectives(unitsLayer, showTroop("misc/troop", zoomAndRotate90(416.6667, 351.8878)));
+            assertDirectives(unitsLayer, showTroop("misc/unit1", zoomAndRotate90(416.6667, 351.8878)));
             assertNoMoreDirectives(formationsLayer, 4);
             assertNoMoreDirectives(fmarkersLayer, 4);
-            assertDirectives(formations1Layer, showSelectedFormation("misc/formation2", zoomAndRotate90(421.5543, 298.8881)));
+            assertDirectives(formations1Layer, showSelectedFormation("misc/formation21", zoomAndRotate90(421.5543, 298.8881)));
             assertDirectives(fmarkers1Layer, showMarker("ordergiven", zoomAndRotate90(461.1437, 363.4042)));
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showQuitHalfTrigger(zoomAndRotate90(458.3333, 274.9084)));
@@ -253,11 +253,11 @@ describe("Interactive Formation", ()=> {
             paint(game);
         then:
             skipDirectives(unitsLayer, 4);
-            assertDirectives(unitsLayer, showTroop("misc/troop", zoomAndRotate90(416.6667, 351.8878)));
+            assertDirectives(unitsLayer, showTroop("misc/unit1", zoomAndRotate90(416.6667, 351.8878)));
             assertNoMoreDirectives(formationsLayer, 4);
             assertNoMoreDirectives(fmarkersLayer, 4);
             skipDirectives(formations1Layer, 4);
-            assertDirectives(formations1Layer, showSelectedFormation("misc/formation2b", zoomAndRotate90(421.5543, 298.8881)));
+            assertDirectives(formations1Layer, showSelectedFormation("misc/formation21b", zoomAndRotate90(421.5543, 298.8881)));
             skipDirectives(fmarkers1Layer, 4);
             assertDirectives(fmarkers1Layer, showMarker("actiondone", zoomAndRotate90(461.1437, 363.4042)));
             assertNoMoreDirectives(actuatorsLayer, 4);
@@ -292,6 +292,6 @@ describe("Interactive Formation", ()=> {
         then:
             assertNoMoreDirectives(unitsLayer, 4);
             skipDirectives(formationsLayer, 4);
-            assertDirectives(formationsLayer, showSelectedFormation("misc/formation3b", zoomAndRotate90(666.6667, 351.8878)));
+            assertDirectives(formationsLayer, showSelectedFormation("misc/formation11b", zoomAndRotate90(666.6667, 351.8878)));
     });
 });

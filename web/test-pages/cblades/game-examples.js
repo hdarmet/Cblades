@@ -27,38 +27,97 @@ import {
     CBWing
 } from "../../jslib/cblades/unit.js";
 
+export function createBaseGame() {
+    let game = new CBGame();
+    let arbitrator = new CBTestArbitrator();
+    game.setArbitrator(arbitrator);
+    var map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
+    game.setMap(map);
+    game.start();
+    return {game, arbitrator, map};
+}
+
+export function create1PlayerBaseGame() {
+    let baseGame = createBaseGame();
+    let {game, map} = baseGame;
+    let player = new CBInteractivePlayer();
+    game.addPlayer(player);
+    let wing = new CBWing(player);
+    wing.setRetreatZone(map.getWestZone());
+    return {
+        ...baseGame,
+        player,
+        wing
+    };
+}
+
+export function create2PlayersBaseGame() {
+    let baseGame = createBaseGame();
+    let {game, map} = baseGame;
+    let player1 = new CBInteractivePlayer();
+    game.addPlayer(player1);
+    let player2 = new CBInteractivePlayer();
+    game.addPlayer(player2);
+    let wing1 = new CBWing(player1);
+    wing1.setRetreatZone(map.getWestZone());
+    let wing2 = new CBWing(player2);
+    wing2.setRetreatZone(map.getEastZone());
+    return {
+        ...baseGame,
+        player1,
+        player2,
+        wing1,
+        wing2
+    };
+}
+
+export function createUnitType(clazz, name, number, maxFigurines) {
+    let formationsImages = [];
+    for (let figurine=1; figurine<maxFigurines; figurine++) {
+        formationsImages.push(`/CBlades/images/units/misc/formation${figurine}${number}.png`, `/CBlades/images/units/misc/formation${figurine}${number}b.png`);
+    }
+    return new clazz(name,
+        [`/CBlades/images/units/misc/${name}${number}.png`, `/CBlades/images/units/misc/${name}${number}b.png`],
+        formationsImages
+    );
+}
+
+export function setWeaponBonuses(unitType, step, attackBonus, defenseBonus, fireBonus) {
+    unitType.getWeaponProfile(step)._attackBonus = attackBonus;
+    unitType.getWeaponProfile(step)._defenseBonus = defenseBonus;
+    unitType.getWeaponProfile(step)._fireBonus = fireBonus;
+}
+
+export function createTroop(game, map, unitType, wing, angle, x, y) {
+    let troop = new CBTroop(unitType, wing);
+    troop.angle = angle;
+    game.addUnit(troop, map.getHex(x, y));
+    return troop;
+}
+
+export function createFormation(game, map, unitType, wing, angle, x1, y1, x2, y2) {
+    let formation = new CBFormation(unitType, wing);
+    formation.angle = angle;
+    game.addUnit(formation, new CBHexSideId(map.getHex(x1, y1), map.getHex(x2, y2)));
+    return formation;
+}
+
+export function createCharacter(game, map, unitType, wing, angle, x, y) {
+    let leader = new CBCharacter(unitType, wing);
+    leader.angle = angle;
+    game.addUnit(leader, map.getHex(x, y));
+    return leader;
+}
+
 export class FireWeaponProfile extends CBWeaponProfile {
-    constructor() {
-        super(0);
+    constructor(...args) {
+        super(...args);
     }
     getFireAttackCode() {
         return "FBw";
     }
 }
 
-export class CBTestUnitType extends CBUnitType {
-    constructor(name, troopPaths, formationPaths=[]) {
-        super(name, troopPaths, formationPaths);
-        for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
-            this.setMoveProfile(index, new CBMoveProfile());
-            this.setWeaponProfile(index, new CBWeaponProfile());
-            this.setCommandProfile(index, new CBCommandProfile());
-            this.setMoralProfile(index, new CBMoralProfile());
-        }
-    }
-}
-
-export class CBTestFireUnitType extends CBUnitType {
-    constructor(name, troopPaths, formationPaths=[]) {
-        super(name, troopPaths, formationPaths);
-        for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
-            this.setMoveProfile(index, new CBMoveProfile());
-            this.setWeaponProfile(index, new FireWeaponProfile());
-            this.setCommandProfile(index, new CBCommandProfile());
-            this.setMoralProfile(index, new CBMoralProfile());
-        }
-    }
-}
 
 export class CBTestArbitrator extends CBArbitrator {
 
@@ -102,304 +161,197 @@ export class CBTestArbitrator extends CBArbitrator {
     }
 }
 
-export function prepareTinyGame() {
-    let game = new CBGame();
-    let map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
-    game.setMap(map);
-    return {game, map};
+export class CBTestUnitType extends CBUnitType {
+    constructor(name, troopPaths, formationPaths=[]) {
+        super(name, troopPaths, formationPaths);
+        for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
+            this.setMoveProfile(index, new CBMoveProfile());
+            this.setWeaponProfile(index, new CBWeaponProfile(0));
+            this.setCommandProfile(index, new CBCommandProfile());
+            this.setMoralProfile(index, new CBMoralProfile());
+        }
+    }
+}
+
+export class CBTestFireUnitType extends CBUnitType {
+    constructor(name, troopPaths, formationPaths=[]) {
+        super(name, troopPaths, formationPaths);
+        for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
+            this.setMoveProfile(index, new CBMoveProfile());
+            this.setWeaponProfile(index, new FireWeaponProfile(0));
+            this.setCommandProfile(index, new CBCommandProfile());
+            this.setMoralProfile(index, new CBMoralProfile());
+        }
+    }
 }
 
 export function createTinyGame() {
-    let game = new CBGame();
-    let arbitrator = new CBTestArbitrator();
-    game.setArbitrator(arbitrator);
-    let player = new CBInteractivePlayer();
-    game.addPlayer(player);
-    let wing = new CBWing(player);
-    let map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
-    game.setMap(map);
-    let unitType = new CBTestUnitType("unit", ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
-    let unit = new CBTroop(unitType, wing);
-    game.addUnit(unit, map.getHex(5, 8));
-    game.start();
+    let tinyGame = create1PlayerBaseGame();
+    let {game, map, wing} = tinyGame;
+    let unitType = createUnitType(CBTestUnitType,"unit", 1, 1);
+    let unit = createTroop(game, map, unitType, wing, 0, 5, 8);
     loadAllImages();
-    return {game, arbitrator, player, wing, map, unit};
+    return {
+        ...tinyGame,
+        unitType, unit
+    };
 }
 
 export function createTinyFormationGame() {
-    let game = new CBGame();
-    let arbitrator = new CBTestArbitrator();
-    game.setArbitrator(arbitrator);
-    let player = new CBInteractivePlayer();
-    game.addPlayer(player);
-    let wing = new CBWing(player);
-    let map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
-    game.setMap(map);
-    let unitType = new CBTestUnitType("unit",
-        ["/CBlades/images/units/misc/troop.png", "/CBlades/images/units/misc/troopb.png"],
-        [
-            "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png",
-            "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png",
-            "/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png"
-        ]);
-    let formation = new CBFormation(unitType, wing);
-    formation.angle = 90;
-    game.addUnit(formation, new CBHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
-    game.start();
+    let tinyGame = create1PlayerBaseGame();
+    let {game, map, wing} = tinyGame;
+    let unitType = createUnitType(CBTestUnitType,"unit", 1, 4);
+    let formation = createFormation(game, map, unitType, wing, 90, 5, 8, 5, 7);
     loadAllImages();
-    return {game, arbitrator, player, wing, map, formation};
+    return {
+        ...tinyGame,
+        unitType, formation
+    };
 }
 
 export function create2PlayersTinyGame() {
-    let game = new CBGame();
-    let arbitrator = new CBTestArbitrator();
-    game.setArbitrator(arbitrator);
-    let player1 = new CBInteractivePlayer();
-    game.addPlayer(player1);
-    let player2 = new CBInteractivePlayer();
-    game.addPlayer(player2);
-    var map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
-    game.setMap(map);
-    let wing1 = new CBWing(player1);
-    wing1.setRetreatZone(map.getWestZone());
-    let unitType1 = new CBTestUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
-    let unit1 = new CBTroop(unitType1, wing1);
-    game.addUnit(unit1, map.getHex(5, 8));
-    let wing2 = new CBWing(player2);
-    wing2.setRetreatZone(map.getEastZone());
-    let unitType2 = new CBTestUnitType("unit2", ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"]);
-    let unit2 = new CBTroop(unitType2, wing2);
-    game.addUnit(unit2, map.getHex(6, 8));
-    game.start();
+    let tinyGame = create2PlayersBaseGame();
+    let {game, map, wing1, wing2} = tinyGame;
+    let unitType1 = createUnitType(CBTestUnitType,"unit", 1, 1);
+    let unit1 = createTroop(game, map, unitType1, wing1, 0, 5, 8);
+    let unitType2 = createUnitType(CBTestUnitType,"unit", 2, 1);
+    let unit2 = createTroop(game, map, unitType2, wing2, 0, 6, 8);
     loadAllImages();
-    return {game, arbitrator, map, unit1, unit2, wing1, wing2, player1, player2};
+    return {
+        ...tinyGame,
+        unitType1, unit1,
+        unitType2, unit2
+    };
+}
+
+export function create2Players4UnitsTinyGame() {
+    let tinyGame = create2PlayersBaseGame();
+    let {game, map, wing1, wing2} = tinyGame;
+    let unitType1 = createUnitType(CBTestUnitType,"unit", 1, 1);
+    let unit11 = createTroop(game, map, unitType1, wing1, 0, 5, 8);
+    let unit12 = createTroop(game, map, unitType1, wing1, 0, 5, 9);
+    let unitType2 = createUnitType(CBTestUnitType,"unit", 2, 1);
+    let unit21 = createTroop(game, map, unitType2, wing2, 0, 6, 8);
+    let unit22 = createTroop(game, map, unitType2, wing2, 0, 6, 9);
+    loadAllImages();
+    return {
+        ...tinyGame,
+        unitType1, unit11, unit12,
+        unitType2, unit21, unit22
+    };
+}
+
+export function create2Players4UnitsFireTinyGame() {
+    let tinyGame = create2PlayersBaseGame();
+    let {game, map, wing1, wing2} = tinyGame;
+    let unitType1 = createUnitType(CBTestFireUnitType,"unit", 1, 1);
+    let unit11 = createTroop(game, map, unitType1, wing1, 0, 5, 8);
+    let unit12 = createTroop(game, map, unitType1, wing1, 0, 5, 9);
+    let unitType2 = createUnitType(CBTestFireUnitType,"unit", 2, 1);
+    let unit21 = createTroop(game, map, unitType2, wing2, 0, 6, 8);
+    let unit22 = createTroop(game, map, unitType2, wing2, 0, 6, 9);
+    loadAllImages();
+    return {
+        ...tinyGame,
+        unitType1, unit11, unit12,
+        unitType2, unit21, unit22
+    };
 }
 
 export function create2PlayersFireTinyGame() {
-    let game = new CBGame();
-    let arbitrator = new CBTestArbitrator();
-    game.setArbitrator(arbitrator);
-    let player1 = new CBInteractivePlayer();
-    game.addPlayer(player1);
-    let player2 = new CBInteractivePlayer();
-    game.addPlayer(player2);
-    var map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
-    game.setMap(map);
-    let wing1 = new CBWing(player1);
-    wing1.setRetreatZone(map.getWestZone());
-    let unitType1 = new CBTestFireUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
-    let unit1 = new CBTroop(unitType1, wing1);
-    game.addUnit(unit1, map.getHex(5, 8));
-    let wing2 = new CBWing(player2);
-    wing2.setRetreatZone(map.getEastZone());
-    let unitType2 = new CBTestFireUnitType("unit2", ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"]);
-    let unit2 = new CBTroop(unitType2, wing2);
-    game.addUnit(unit2, map.getHex(6, 8));
-    game.start();
+    let tinyGame = create2PlayersBaseGame();
+    let {game, map, wing1, wing2} = tinyGame;
+    let unitType1 = createUnitType(CBTestFireUnitType,"unit", 1, 1);
+    let unit1 = createTroop(game, map, unitType1, wing1, 0, 5, 8);
+    let unitType2 = createUnitType(CBTestFireUnitType,"unit", 2, 1);
+    let unit2 = createTroop(game, map, unitType2, wing2, 0, 6, 8);
     loadAllImages();
-    return {game, arbitrator, map, unit1, unit2, wing1, wing2, player1, player2};
+    return {
+        ...tinyGame,
+        unitType1, unit1,
+        unitType2, unit2
+    };
 }
 
 export function create2Players2Units2LeadersTinyGame() {
-    let {game, map, unit1, unit2, wing1, wing2, player1, player2} = create2PlayersTinyGame();
-    let leader1Type = new CBTestUnitType("leader1",
-        ["/CBlades/images/units/misc/character1.png", "/CBlades/images/units/misc/character1b.png"]);
-    let leader1 = new CBCharacter(leader1Type, wing1);
-    game.addUnit(leader1, unit1.hexLocation);
-    let leader2Type = new CBTestUnitType("leader2",
-        ["/CBlades/images/units/misc/character2.png", "/CBlades/images/units/misc/character2b.png"]);
-    let leader2 = new CBCharacter(leader2Type, wing2);
-    game.addUnit(leader2, unit2.hexLocation);
-    return {game, map, unit1, unit2, wing1, wing2, leader1, leader2, player1, player2};
+    let tinyGame = create2PlayersTinyGame();
+    let {game, map, wing1, wing2} = tinyGame;
+    let leaderType1 = createUnitType(CBTestUnitType, "leader", 1, 1);
+    let leader1 = createCharacter(game, map, leaderType1, wing1, 0, 5, 8);
+    let leaderType2 = createUnitType(CBTestFireUnitType,"leader", 2, 1);
+    let leader2 = createCharacter(game, map, leaderType2, wing2, 0, 6, 8);
+    return {
+        ...tinyGame,
+        leaderType1, leader1,
+        leaderType2, leader2
+    };
 }
 
 export function create2PlayersTinyFormationGame() {
-    let game = new CBGame();
-    let arbitrator = new CBTestArbitrator();
-    game.setArbitrator(arbitrator);
-    let player1 = new CBInteractivePlayer();
-    game.addPlayer(player1);
-    let player2 = new CBInteractivePlayer();
-    game.addPlayer(player2);
-    var map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
-    game.setMap(map);
-    let wing1 = new CBWing(player1);
-    wing1.setRetreatZone(map.getWestZone());
-    let unitType1 = new CBTestUnitType("unit1", [
-        "/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"
-    ]);
-    let unit1 = new CBTroop(unitType1, wing1);
-    game.addUnit(unit1, map.getHex(5, 8));
-    let wing2 = new CBWing(player2);
-    wing2.setRetreatZone(map.getEastZone());
-    let unitType2 = new CBTestUnitType("unit2", [
-            "/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"
-        ],
-        [
-            "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png"
-        ]
-    );
-    let formation2 = new CBFormation(unitType2, wing2);
-    formation2.angle = 90;
-    game.addUnit(formation2, new CBHexSideId(map.getHex(6, 8), map.getHex(6, 7)));
-    game.start();
+    let tinyGame = create2PlayersBaseGame();
+    let {game, map, wing1, wing2} = tinyGame;
+    let unitType1 = createUnitType(CBTestUnitType,"unit", 1, 1);
+    let unit1 = createTroop(game, map, unitType1, wing1, 0, 5, 8);
+    let unitType2 = createUnitType(CBTestUnitType,"unit", 2, 4);
+    let formation2 = createFormation(game, map, unitType2, wing2, 90, 6, 8, 6, 7);
     loadAllImages();
-    return {game, arbitrator, map, unit1, formation2, wing1, wing2, player1, player2};
+    return {
+        ...tinyGame,
+        unitType1, unit1,
+        unitType2, formation2
+    };
 }
 
 export function create2PlayersTinyFireFormationGame() {
-    let game = new CBGame();
-    let arbitrator = new CBTestArbitrator();
-    game.setArbitrator(arbitrator);
-    let player1 = new CBInteractivePlayer();
-    game.addPlayer(player1);
-    let player2 = new CBInteractivePlayer();
-    game.addPlayer(player2);
-    var map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
-    game.setMap(map);
-    let wing1 = new CBWing(player1);
-    wing1.setRetreatZone(map.getWestZone());
-    let unitType1 = new CBTestUnitType("unit1", [
-        "/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"
-    ]);
-    let unit1 = new CBTroop(unitType1, wing1);
-    game.addUnit(unit1, map.getHex(5, 8));
-    let wing2 = new CBWing(player2);
-    wing2.setRetreatZone(map.getEastZone());
-    let unitType2 = new CBTestFireUnitType("unit2", [
-            "/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"
-        ],
-        [
-            "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png"
-        ]
-    );
-    let formation2 = new CBFormation(unitType2, wing2);
-    formation2.angle = 90;
-    game.addUnit(formation2, new CBHexSideId(map.getHex(6, 8), map.getHex(6, 7)));
-    game.start();
+    let tinyGame = create2PlayersBaseGame();
+    let {game, map, wing1, wing2} = tinyGame;
+    let unitType1 = createUnitType(CBTestFireUnitType,"unit", 1, 1);
+    let unit1 = createTroop(game, map, unitType1, wing1, 0, 5, 8);
+    let unitType2 = createUnitType(CBTestFireUnitType,"unit", 2, 4);
+    let formation2 = createFormation(game, map, unitType2, wing2, 90, 6, 8, 6, 7);
     loadAllImages();
-    return {game, arbitrator, map, unit1, formation2, wing1, wing2, player1, player2};
+    return {
+        ...tinyGame,
+        unitType1, unit1,
+        unitType2, formation2
+    };
 }
 
 export function create2UnitsTinyGame() {
-    let game = new CBGame();
-    let arbitrator = new CBTestArbitrator();
-    game.setArbitrator(arbitrator);
-    let player = new CBInteractivePlayer();
-    game.addPlayer(player);
-    let map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
-    game.setMap(map);
-    let wing = new CBWing(player);
-    let leaderType = new CBTestUnitType("leader",
-        ["/CBlades/images/units/misc/character.png", "/CBlades/images/units/misc/characterb.png"]);
-    let leader = new CBCharacter(leaderType, wing);
-    let unitType = new CBTestUnitType("unit",
-        [
-            "/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"
-        ],
-        [
-            "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png",
-            "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png",
-            "/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png"
-        ]);
-    let unit1 = new CBTroop(unitType, wing);
-    let unit2 = new CBTroop(unitType, wing);
-    game.addUnit(leader, map.getHex(6, 9));
-    game.addUnit(unit1, map.getHex(5, 8));
-    game.addUnit(unit2, map.getHex(8, 7));
-    game.start();
+    let tinyGame = create1PlayerBaseGame();
+    let {game, map, wing} = tinyGame;
+    let unitType = createUnitType(CBTestUnitType,"unit", 1, 4);
+    let unit1 = createTroop(game, map, unitType, wing, 0, 5, 8);
+    let unit2 = createTroop(game, map, unitType, wing, 0, 8, 7);
+    let leaderType = createUnitType(CBTestUnitType, "leader", 1, 1);
+    let leader = createCharacter(game, map, leaderType, wing, 0, 6, 9);
     loadAllImages();
-    return {game, map, unit1, unit2, wing, leader, player};
+    return {
+        ...tinyGame,
+        unitType, unit1, unit2,
+        leaderType, leader
+    };
 }
 
 export function create2UnitsAndAFormationTinyGame() {
-    let game = new CBGame();
-    let arbitrator = new CBTestArbitrator();
-    game.setArbitrator(arbitrator);
-    let player = new CBInteractivePlayer();
-    game.addPlayer(player);
-    let map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
-    game.setMap(map);
-    let wing = new CBWing(player);
-    let leaderType = new CBTestUnitType("leader",
-        ["/CBlades/images/units/misc/character.png", "/CBlades/images/units/misc/characterb.png"]);
-    let leader = new CBCharacter(leaderType, wing);
-    let unitType = new CBTestUnitType("unit",
-        [
-            "/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"
-        ],
-        [
-            "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png",
-            "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png",
-            "/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png"
-        ]);
-    let unit1 = new CBTroop(unitType, wing);
-    let unit2 = new CBTroop(unitType, wing);
-    let formation = new CBFormation(unitType, wing);
-    formation.angle = 90;
-    game.addUnit(leader, map.getHex(6, 9));
-    game.addUnit(unit1, map.getHex(5, 8));
-    game.addUnit(unit2, map.getHex(8, 7));
-    game.addUnit(formation, new CBHexSideId(map.getHex(6, 6), map.getHex(6, 7)));
-    game.start();
+    let tinyGame = create2UnitsTinyGame();
+    let {game, map, wing, unitType} = tinyGame;
+    let formation = createFormation(game, map, unitType, wing, 90, 6, 6, 6, 7);
     loadAllImages();
-    return {game, map, unit1, unit2, wing, leader, formation, player};
+    return {
+        ...tinyGame,
+        formation
+    };
 }
 
 export function createTinyGameWithLeader() {
-    let game = new CBGame();
-    let arbitrator = new CBTestArbitrator();
-    game.setArbitrator(arbitrator);
-    let player = new CBInteractivePlayer();
-    game.addPlayer(player);
-    let wing = new CBWing(player);
-    let map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
-    game.setMap(map);
-    let unitType = new CBTestUnitType("unit",
-        ["/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"]);
-    let unit = new CBTroop(unitType, wing);
-    game.addUnit(unit, map.getHex(5, 8));
-    let leaderType = new CBTestUnitType("unit",
-        ["/CBlades/images/units/misc/leader.png", "/CBlades/images/units/misc/leaderb.png"]);
-    let leader = new CBCharacter(leaderType, wing);
-    game.addUnit(leader, map.getHex(5, 9));
-    game.start();
+    let tinyGame = createTinyGame();
+    let {game, map, wing} = tinyGame;
+    let leaderType = createUnitType(CBTestUnitType, "leader", 1, 1);
+    let leader = createCharacter(game, map, leaderType, wing, 0, 5, 9);
     loadAllImages();
-    return {game, arbitrator, player, wing, map, unit, leader};
-}
-
-export function create2PlayersTinyGameWithLeader() {
-    let game = new CBGame();
-    let arbitrator = new CBTestArbitrator();
-    game.setArbitrator(arbitrator);
-    let map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
-    game.setMap(map);
-
-    var player1 = new CBInteractivePlayer();
-    game.addPlayer(player1);
-    var wing1 = new CBWing(player1);
-    let unitType1 = new CBTestUnitType("unit1",
-        ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"]);
-    let unit1 = new CBTroop(unitType1, wing1);
-    game.addUnit(unit1, map.getHex(5, 8));
-    let leaderType1 = new CBTestUnitType("leader1",
-        ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"]);
-    let leader1 = new CBCharacter(leaderType1, wing1);
-    game.addUnit(leader1, map.getHex(5, 9));
-
-    var player2 = new CBInteractivePlayer();
-    game.addPlayer(player2);
-    var wing2 = new CBWing(player2);
-    let unitType2 = new CBTestUnitType("unit2",
-        ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"]);
-    let unit2 = new CBTroop(unitType2, wing2);
-    game.addUnit(unit2, map.getHex(7, 8));
-    let leaderType2 = new CBTestUnitType("leader2",
-        ["/CBlades/images/units/misc/leader2.png", "/CBlades/images/units/misc/leader2b.png"]);
-    let leader2 = new CBCharacter(leaderType2, wing2);
-    game.addUnit(leader2, map.getHex(7, 9));
-
-    game.start();
-    loadAllImages();
-    return {game, arbitrator, map, player1, wing1, unit1, leader1, player2, wing2, unit2, leader2};
+    return {
+        ...tinyGame,
+        leaderType, leader
+    };
 }

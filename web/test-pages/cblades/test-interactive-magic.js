@@ -11,7 +11,7 @@ import {
 import {
     assertDirectives, assertNoMoreDirectives,
     createEvent, findInDirectives,
-    getDirectives, getLayers,
+    getLayers,
     loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
 } from "../mocks.js";
@@ -32,13 +32,13 @@ import {
     rollFor,
     showDice,
     showFailureResult,
-    showInsert, showInsertCommand,
+    showInsert,
     showMask, showMenuItem, showMenuPanel, showPlayedDice,
     showSuccessResult,
     zoomAndRotate0
 } from "./interactive-tools.js";
 import {
-    create2PlayersTinyGameWithLeader,
+    create2Players2Units2LeadersTinyGame,
     createTinyGame, createTinyGameWithLeader
 } from "./game-examples.js";
 import {
@@ -371,7 +371,9 @@ describe("Interactive Magic", ()=> {
 
     it("Checks successful cast foe targeted spell (fireball) action process ", () => {
         given:
-            var {game, unit2:foe, leader1:wizard} = create2PlayersTinyGameWithLeader();
+            var {game, map, unit2:foe, leader1:wizard} = create2Players2Units2LeadersTinyGame();
+            wizard.hexLocation = map.getHex(5, 9);
+            foe.hexLocation = map.getHex(7, 8);
             wizard.choseSpell(CBSpell.laboratory.get("fireball1"));
             var [actuatorsLayer, optionsLayer] = getLayers(game.board,"actuators-0", "options-0");
             clickOnCounter(game, wizard);
@@ -386,7 +388,7 @@ describe("Interactive Magic", ()=> {
         then:
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, spellTargetFoe(zoomAndRotate0(583.3333, 351.8878)));
-            assertDirectives(actuatorsLayer, spellTargetFoe(zoomAndRotate0(583.3333, 448.1122)));
+            assertDirectives(actuatorsLayer, spellTargetFoe(zoomAndRotate0(500, 400)));
         when:
             var actuator = getTargetFoeActuator(game);
             var trigger = actuator.getTrigger(foe);
@@ -402,7 +404,7 @@ describe("Interactive Magic", ()=> {
 
     it("Checks a fireball successful resolution action process ", () => {
         given:
-            var {game, unit2:foe, leader1:wizard} = create2PlayersTinyGameWithLeader();
+            var {game, unit2:foe, leader1:wizard} = create2Players2Units2LeadersTinyGame();
             wizard.choseSpell(CBSpell.laboratory.get("fireball1"));
             var [widgetsLayer, itemsLayer, commandsLayer, unitsLayer, optionsLayer] =
                 getLayers(game.board,"widgets", "widget-items", "widget-commands", "units-0", "options-0");
@@ -449,7 +451,7 @@ describe("Interactive Magic", ()=> {
 
     it("Checks a fireball failed resolution action process ", () => {
         given:
-            var {game, unit2:foe, leader1:wizard} = create2PlayersTinyGameWithLeader();
+            var {game, unit2:foe, leader1:wizard} = create2Players2Units2LeadersTinyGame();
             wizard.choseSpell(CBSpell.laboratory.get("fireball1"));
             var [widgetsLayer, itemsLayer, commandsLayer, unitsLayer, optionsLayer] =
                 getLayers(game.board,"widgets", "widget-items", "widget-commands", "units-0", "options-0");

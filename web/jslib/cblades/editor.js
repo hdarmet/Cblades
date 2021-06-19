@@ -173,8 +173,19 @@ export class CBMapEditActuator extends CBActuator {
         this.initElement(imageArtifacts);
     }
 
-    getTrigger(hexLocation) {
-        return this.findTrigger(trigger=>trigger.hexLocation.similar(hexLocation));
+    getHexTypeTrigger(hexLocation) {
+        return this.findTrigger(trigger=>trigger instanceof CBMapEditorHexTypeTrigger &&
+            trigger.hexLocation.similar(hexLocation));
+    }
+
+    getHexHeightTrigger(hexLocation) {
+        return this.findTrigger(trigger=>trigger instanceof CBMapEditorHexHeightTrigger &&
+            trigger.hexLocation.similar(hexLocation));
+    }
+
+    getHexSideTypeTrigger(hexLocation) {
+        return this.findTrigger(trigger=>trigger instanceof CBMapEditorHexSideTypeTrigger &&
+            trigger.hexLocation.similar(hexLocation));
     }
 
 }

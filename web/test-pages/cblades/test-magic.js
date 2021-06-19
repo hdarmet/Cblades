@@ -19,7 +19,7 @@ import {
     CBRainFireSpell, CBSpell, CBSpellDefinition, HexTargetedMixin, UnitTargetedMixin
 } from "../../jslib/cblades/magic.js";
 import {
-    create2PlayersTinyGameWithLeader,
+    create2Players2Units2LeadersTinyGame,
     createTinyGameWithLeader
 } from "./game-examples.js";
 import {
@@ -319,7 +319,9 @@ describe("Magic", ()=> {
 
     it("Checks successful fireball spell", () => {
         given:
-            var {unit2:foe, leader1:wizard} = create2PlayersTinyGameWithLeader();
+            var {map, unit2:foe, leader1:wizard} = create2Players2Units2LeadersTinyGame();
+            wizard.hexLocation = map.getHex(5, 9);
+            foe.hexLocation = map.getHex(7, 8);
             wizard.choseSpell(CBSpell.laboratory.get("fireball1"));
             var spell = wizard.chosenSpell;
         when:
@@ -354,7 +356,9 @@ describe("Magic", ()=> {
 
     it("Checks failed fireball spell", () => {
         given:
-            var {unit2:foe, leader1:wizard} = create2PlayersTinyGameWithLeader();
+            var {map, unit2:foe, leader1:wizard} = create2Players2Units2LeadersTinyGame();
+            wizard.hexLocation = map.getHex(5, 9);
+            foe.hexLocation = map.getHex(7, 8);
             wizard.choseSpell(CBSpell.laboratory.get("fireball1"));
             var spell = wizard.chosenSpell;
             spell.selectUnit(foe);

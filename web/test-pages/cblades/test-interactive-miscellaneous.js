@@ -103,8 +103,8 @@ describe("Interactive Miscellaneous", ()=> {
             repaint(game);
         then:
             skipDirectives(unitsLayer, 4);
-            assertDirectives(unitsLayer, showCharacter("misc/character", zoomAndRotate0(500, 496.2243)));
-            assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(666.6667, 400)));
+            assertDirectives(unitsLayer, showCharacter("misc/leader1", zoomAndRotate0(500, 496.2243)));
+            assertDirectives(unitsLayer, showTroop("misc/unit1", zoomAndRotate0(666.6667, 400)));
             assert(getDirectives(units1Layer, 4)).arrayEqualsTo([
             ]);
             assert(unit1.hexLocation).isNotDefined();

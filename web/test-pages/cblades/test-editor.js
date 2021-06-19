@@ -125,7 +125,7 @@ describe("Editor", ()=> {
             paint(game);
             loadAllImages();
             let mapEditActuator = getMapEditorActuator(game);
-            let hexTrigger = mapEditActuator.getTrigger(map.getHex(4, 5));
+            let hexTrigger = mapEditActuator.getHexTypeTrigger(map.getHex(4, 5));
         when:
             filterPainting(hexTrigger);
             stopRegister(actuatorsLayer);
@@ -254,7 +254,7 @@ describe("Editor", ()=> {
             paint(game);
             loadAllImages();
             let mapEditActuator = getMapEditorActuator(game);
-            let hexSideTrigger = mapEditActuator.getTrigger(map.getHex(4, 5).toward(240));
+            let hexSideTrigger = mapEditActuator.getHexSideTypeTrigger(map.getHex(4, 5).toward(240));
         when:
             filterPainting(hexSideTrigger);
             stopRegister(actuatorsLayer);
@@ -299,6 +299,79 @@ describe("Editor", ()=> {
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
                 showHexSideTypeTrigger("wall", zoomAndRotate240(291.6667, 135.3831))
+            );
+    });
+
+    it("Checks edit a hex side height", () => {
+        given:
+            var game = new CBGame();
+            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            game.setMap(map);
+            game.start();
+            var [actuatorsLayer] = getLayers(game.board, "actuators");
+            CBGame.edit(game);
+            paint(game);
+            loadAllImages();
+            let mapEditActuator = getMapEditorActuator(game);
+            let hexHeightTrigger = mapEditActuator.getHexHeightTrigger(map.getHex(4, 5));
+        when:
+            filterPainting(hexHeightTrigger);
+            stopRegister(actuatorsLayer);
+            resetDirectives(actuatorsLayer);
+            clickOnTrigger(game, hexHeightTrigger);
+        then:
+            assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
+                showHexHeightTrigger("up-1", zoomAndRotate0(352.8837, 111.327))
+            );
+        when:
+            resetDirectives(actuatorsLayer);
+            clickOnTrigger(game, hexHeightTrigger);
+        then:
+            assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
+                showHexHeightTrigger("up-2", zoomAndRotate0(352.8837, 111.327))
+            );
+        when:
+            resetDirectives(actuatorsLayer);
+            clickOnTrigger(game, hexHeightTrigger);
+        then:
+            assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
+                showHexHeightTrigger("up-3", zoomAndRotate0(352.8837, 111.327))
+            );
+        when:
+            resetDirectives(actuatorsLayer);
+            clickOnTrigger(game, hexHeightTrigger);
+        then:
+            assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
+                showHexHeightTrigger("up-4", zoomAndRotate0(352.8837, 111.327))
+            );
+        when:
+            resetDirectives(actuatorsLayer);
+            clickOnTrigger(game, hexHeightTrigger);
+        then:
+            assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
+                showHexHeightTrigger("up-5", zoomAndRotate0(352.8837, 111.327))
+            );
+        when:
+            resetDirectives(actuatorsLayer);
+            clickOnTrigger(game, hexHeightTrigger);
+        then:
+            assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
+                showHexHeightTrigger("down-5", zoomAndRotate0(352.8837, 111.327))
+            );
+        when:
+            resetDirectives(actuatorsLayer);
+            clickOnTrigger(game, hexHeightTrigger);
+        then:
+            assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
+                showHexHeightTrigger("down-4", zoomAndRotate0(352.8837, 111.327))
+            );
+        when:
+            resetDirectives(actuatorsLayer);
+            Memento.undo();
+            paint(game);
+        then:
+            assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
+                showHexHeightTrigger("down-5", zoomAndRotate0(352.8837, 111.327))
             );
     });
 
