@@ -609,22 +609,22 @@ function createCombatMenuItems(unit, actions) {
             0, 1, event => {
                 unit.player.unitShockAttack(unit, event);
                 return true;
-            }).setActive(actions.shockAttack),
+            }, "Attaquer au choc").setActive(actions.shockAttack),
         new DIconMenuItem("/CBlades/images/icons/fire-attack.png", "/CBlades/images/icons/fire-attack-gray.png",
             1, 1, event => {
                 unit.player.unitFireAttack(unit, event);
                 return true;
-            }).setActive(actions.fireAttack),
+            }, "Attaquer au tir").setActive(actions.fireAttack),
         new DIconMenuItem("/CBlades/images/icons/shock-duel.png", "/CBlades/images/icons/shock-duel-gray.png",
             2, 1, event => {
                 unit.player.unitDuelAttack(unit, event);
                 return true;
-            }).setActive(actions.shockDuel),
+            }, "Provoquer un duel au choc").setActive(actions.shockDuel),
         new DIconMenuItem("/CBlades/images/icons/fire-duel.png", "/CBlades/images/icons/fire-duel-gray.png",
             3, 1, event => {
                 unit.player.unitDuelFire(unit, event);
                 return true;
-            }).setActive(actions.fireDuel)
+            }, "Provoquer un duel au tir").setActive(actions.fireDuel)
     ];
 }
 

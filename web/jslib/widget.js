@@ -5,18 +5,18 @@ import {
     Memento
 } from "./mechanisms.js";
 import {
-    DImage, getDrawPlatform
+    DImage, getDrawPlatform, measureText, targetPlatform
 } from "./draw.js";
 import {
     DArtifact,
-    RectArtifact,
+    AreaArtifact,
     DElement,
     DImageArtifact,
     DBoard,
     DArtifactRotateAnimation,
     DMultiImagesArtifact,
     DArtifactAnimation,
-    DArtifactAlphaAnimation, DTextArtifact, DRectArtifact, DComposedImageArtifact
+    DArtifactAlphaAnimation, DTextArtifact, DRectArtifact, DComposedImageArtifact, RectArtifact, TextArtifact
 } from "./board.js";
 import {
     Area2D,
@@ -72,6 +72,13 @@ export class DWidget extends DElement {
         return this._dimension;
     }
 
+    adjustArtifact(artifact, point) {
+        let area = Area2D.rectBoundingArea( this._panel.transform,
+            -artifact.dimension.w/2, -artifact.dimension.h/2,
+            artifact.dimension.w, artifact.dimension.h);
+        return adjustOnScreen(this._panel.level, area, point);
+    }
+
     adjust(point) {
         let area = Area2D.rectBoundingArea( this._panel.transform,
             -this.dimension.w/2, -this.dimension.h/2,
@@ -82,7 +89,7 @@ export class DWidget extends DElement {
 }
 DWidget.ADJUST_MARGIN = 5;
 
-export class DPanel extends RectArtifact(DArtifact) {
+export class DPanel extends AreaArtifact(DArtifact) {
 
     constructor(dimension) {
         super(dimension,"widgets", new Point2D(0, 0));
@@ -131,9 +138,42 @@ export class DPopup extends DWidget {
 
 }
 
+export class DTooltip extends TextArtifact(RectArtifact(AreaArtifact(DArtifact))) {
+
+    constructor(message, widget, position) {
+        let measure = measureText(message, DTooltip.FONT);
+        let width = measure.width+DTooltip.MARGIN*2;
+        let height = DTooltip.HEIGHT+DTooltip.MARGIN*2;
+        super(
+            new Dimension2D(width, height),
+            "widget-commands", new Point2D(0, 0), 0);
+        this.position = widget.adjustArtifact(this, position);
+        this._setRectSettings(1, "#000000", "#FFFFE4");
+        this._setTextSettings(
+            null, "#000000", 0,
+            null, 0,
+            DTooltip.FONT, "center", "middle", message
+        );
+    }
+
+    _paint() {
+        this._paintRect();
+        this._paintText();
+    }
+
+    onMouseLeave(event) {
+        this.element.closeTooltip(this);
+    }
+
+}
+DTooltip.DELAY = 500;
+DTooltip.HEIGHT = 20;
+DTooltip.FONT = "15px serif";
+DTooltip.MARGIN = 5;
+
 export class DIconMenuItem extends DImageArtifact {
 
-    constructor(path, pathInactive, col, row, action) {
+    constructor(path, pathInactive, col, row, action, tooltipMessage = null) {
         super("widget-items", DImage.getImage(path),
             new Point2D(
                 DIconMenuItem.MARGIN+DIconMenuItem.ICON_SIZE/2 + (DIconMenuItem.MARGIN+DIconMenuItem.ICON_SIZE)*col,
@@ -145,6 +185,7 @@ export class DIconMenuItem extends DImageArtifact {
         this._col = col;
         this._row = row;
         this._action = action;
+        this._tooltipMessage = tooltipMessage;
     }
 
     get image() {
@@ -187,6 +228,7 @@ export class DIconMenuItem extends DImageArtifact {
     }
 
     onMouseEnter(event) {
+        this._startMouseOn = targetPlatform().getTime();
         if (this._active) {
             this.setSettings(this.mouseOverSettings);
             this.element.refresh();
@@ -195,6 +237,7 @@ export class DIconMenuItem extends DImageArtifact {
     }
 
     onMouseLeave(event) {
+        delete this._startMouseOn;
         if (this._active) {
             this.setSettings(null);
             this.element.refresh();
@@ -208,6 +251,16 @@ export class DIconMenuItem extends DImageArtifact {
         }
     }
 
+    onMouseMove(event) {
+        if (this._tooltipMessage && this._startMouseOn) {
+            let time = targetPlatform().getTime();
+            if (time - this._startMouseOn > DTooltip.DELAY) {
+                delete this._startMouseOn;
+                this.element.openTooltip(this._tooltipMessage, this._level.getPoint(new Point2D(event.offsetX, event.offsetY)));
+            }
+        }
+        return true;
+    }
 }
 DIconMenuItem.MARGIN = 10;
 DIconMenuItem.ICON_SIZE = 50;
@@ -251,6 +304,19 @@ export class DIconMenu extends DPopup {
     closeMenu() {
         this.close();
     }
+
+    closeTooltip(tooltip) {
+        console.assert(tooltip===this._tooltip);
+        this.removeArtifact(this._tooltip);
+        delete this._tooltip;
+    }
+
+    openTooltip(tooltipMessage, position) {
+        if (this._tooltip) this.closeTooltip(this._tooltip);
+        this._tooltip = new DTooltip(tooltipMessage, this, position.minusPoint(this.location));
+        this.addArtifact(this._tooltip);
+    }
+
 }
 
 /**
@@ -1179,11 +1245,11 @@ export class DMessage extends DElement {
     appear(text, ...values) {
         this._values = values;
         this._textArtifact = new DTextArtifact("widget-commands",
-            new Point2D(0, 30),
+            new Point2D(0, 10),
             new Dimension2D(0, 0),
-            "#0000FF","#8080FF",
+            "#0000FF","#8080FF", 3,
             "#000000", 5,
-            "90px serif", "center", text);
+            "90px serif", "center", "middle", text);
         this.addArtifact(this._textArtifact);
         if (this._targetBoard) {
             this.show(this._targetBoard);

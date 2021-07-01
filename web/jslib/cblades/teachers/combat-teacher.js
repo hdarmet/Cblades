@@ -370,7 +370,6 @@ export class CBCombatTeacher {
     }
 
     getShockAttackResult(attacker, attackerHex, defender, defenderHex, supported, diceResult) { // LA
-        //return 1;
         return this.getCombatTableResult(diceResult,
             this.getShockAttackAdvantage(attacker, attackerHex, defender, defenderHex, supported).advantage);
     }
@@ -380,6 +379,100 @@ export class CBCombatTeacher {
         let success = lossesForDefender>0;
         let tirednessForAttacker = supported && !attacker.isCharging();
         return { success, lossesForDefender, tirednessForAttacker };
+    }
+
+    getFoeConditionForEngagement(foe, unit) {
+        let condition = {};
+        let weapons = this.getShockWeaponAdvantage(foe, unit);
+        let modifier = weapons;
+        condition.weapons = weapons;
+        let unitCapacity = this.getWeaponCapacityAdvantage(unit);
+        let foeCapacity = this.getWeaponCapacityAdvantage(foe);
+        if (unitCapacity!==foeCapacity) {
+            condition.capacity = unitCapacity>foeCapacity ? -1 : 1;
+            modifier += condition.capacity;
+        }
+        if (unit.characterNature) {
+            condition.unitIsACharacter = 1;
+            modifier += 1;
+        }
+        if (foe.characterNature) {
+            condition.foeIsACharacter = -1;
+            modifier -= 1;
+        }
+        if (unit.isCharging()) {
+            condition.unitIsCharging = -1;
+            modifier -= 1;
+        }
+        if (foe.isCharging()) {
+            condition.foeIsCharging = 1;
+            modifier += 1;
+        }
+        let side = this.getEngagementSide(foe, unit);
+        if (side === CBEngageSideMode.SIDE) {
+            condition.sideAdvantage = 1;
+            modifier += 1;
+        }
+        if (side === CBEngageSideMode.BACK) {
+            condition.backAdvantage = 2;
+            modifier += 2;
+        }
+        condition.modifier = modifier;
+        return condition;
+    }
+
+    getEngagementCondition(unit) {
+        let foes = this.getEngagingFoes(unit);
+        let foeCondition = null;
+        for (let foe of foes.keys()) {
+            let thisFoeCondition = this.getFoeConditionForEngagement(foe, unit);
+            if (!foeCondition || thisFoeCondition.modifier<foeCondition.modifier) {
+                foeCondition = thisFoeCondition;
+            }
+        }
+        return foeCondition;
+    }
+
+    getAttackerEngagementCondition(unit) {
+        return this.getEngagementCondition(unit);
+    }
+
+    getDefenderEngagementCondition(unit) {
+        return this.getEngagementCondition(unit);
+    }
+
+    getConfrontEngagementCondition(unit) {
+        return this.getEngagementCondition(unit);
+    }
+
+    processAttackerEngagementResult(unit, diceResult) {
+        let condition = this.getAttackerEngagementCondition(unit);
+        let total = diceResult[0]+diceResult[1];
+        let success = total===2 ? true : total===12 ? false : total<=unit.moral-condition.modifier;
+        return {
+            modifier: condition.modifier,
+            success
+        };
+    }
+
+    processDefenderEngagementResult(unit, diceResult) {
+        let condition = this.getDefenderEngagementCondition(unit);
+        let total = diceResult[0]+diceResult[1];
+        let success = total===2 ? true : total===12 ? false : total<=unit.moral-condition.modifier;
+        return {
+            modifier: condition.modifier,
+            success
+        };
+    }
+
+    processConfrontEngagementResult(unit, diceResult) {
+        let condition = this.getConfrontEngagementCondition(unit);
+        let total = diceResult[0]+diceResult[1];
+        let success = total===2 ? true : total===12 ? false : total<=unit.moral-condition.modifier;
+        return {
+            modifier: condition.modifier,
+            success
+        };
     }
 
     _getForwardZoneThatMayBeFireAttacked(unit, range) {

@@ -294,12 +294,12 @@ function createMagicMenuItems(unit, actions) {
             0, 5, event => {
                 unit.player.choseSpell(unit, event);
                 return true;
-            }).setActive(actions.prepareSpell),
+            }, "Choisir un sort").setActive(actions.prepareSpell),
         new DIconMenuItem("/CBlades/images/icons/cast-spell.png", "/CBlades/images/icons/cast-spell-gray.png",
             1, 5, event => {
                 unit.player.tryToCastSpell(unit, event);
                 return true;
-            }).setActive(actions.castSpell)
+            }, "Lancer le sort choisi").setActive(actions.castSpell)
     ];
 }
 
@@ -319,7 +319,7 @@ export class CBSpellsMenu extends DIconMenu {
                             unit.choseSpell(spellDefinition);
                             unit.markAsBeingPlayed();
                             return true;
-                        }).setActive(true)
+                        }, spellDefinition.label).setActive(true)
                 )
                 col++;
                 if (col===6) {

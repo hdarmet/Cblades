@@ -190,6 +190,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             if (this.isAllowedToReleaseTroops(unit)) allowedActions.leaveFormation = true;
             if (this.isAllowedToBreakFormation(unit)) allowedActions.breakFormation = true;
             if (this.isAllowedToMerge(unit)) allowedActions.mergeUnit = true;
+            if (this.isAllowedToPerformMiscellaneousActions(unit)) allowedActions.miscActions = true;
             if (!unit.isTired() && !unit.isExhausted()) allowedActions.noAction = true;
             return true;
         }
@@ -215,6 +216,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
                 if (this.isAllowedToRout(unit)) allowedActions.escape = true;
                 if (this.isAllowedToFireAttack(unit)) allowedActions.fireAttack = true;
                 if (this.isAllowedToReplenishMunitions(unit)) allowedActions.reload = true;
+                if (this.isAllowedToPerformMiscellaneousActions(unit)) allowedActions.miscActions = true;
                 if (!unit.isTired() && !unit.isExhausted()) allowedActions.noAction = true;
                 return true;
             }
@@ -271,6 +273,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             if (this.isAllowedToReleaseTroops(unit)) allowedActions.leaveFormation = true;
             if (this.isAllowedToBreakFormation(unit)) allowedActions.breakFormation = true;
             if (this.isAllowedToMerge(unit)) allowedActions.mergeUnit = true;
+            if (this.isAllowedToPerformMiscellaneousActions(unit)) allowedActions.miscActions = true;
             if (!unit.isTired() && !unit.isExhausted()) allowedActions.noAction = true;
         }
         return true;
@@ -301,12 +304,11 @@ export class CBArbitrator extends CBAbstractArbitrator{
                 if (this.isAllowedToTakeCommand(unit)) allowedActions.takeCommand = true;
                 if (this.isAllowedToDismissCommand(unit)) allowedActions.leaveCommand = true;
             }
-
             if (this.isAllowedToChangeOrderInstruction(unit)) allowedActions.changeOrders = true;
-
             if (this.isAllowedToGiveOrders(unit)) allowedActions.giveSpecificOrders = true;
             if (this.isAllowedToChoseSpell(unit)) allowedActions.prepareSpell = true;
             if (this.isAllowedToCastSpell(unit)) allowedActions.castSpell = true;
+            if (this.isAllowedToPerformMiscellaneousActions(unit)) allowedActions.miscActions = true;
             if (!unit.isTired() && !unit.isExhausted()) allowedActions.noAction = true;
         }
         return true;

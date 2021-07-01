@@ -269,22 +269,22 @@ function createRecoverMenuItems(unit, actions) {
             0, 2, event => {
                 unit.player.restUnit(unit, event);
                 return true;
-            }).setActive(actions.rest),
+            },"Se reposer").setActive(actions.rest),
         new DIconMenuItem("/CBlades/images/icons/do-reload.png", "/CBlades/images/icons/do-reload-gray.png",
             1, 2, event => {
                 unit.player.replenishUnitMunitions(unit, event);
                 return true;
-            }).setActive(actions.reload),
+            }, "Se ravitailler en munitions").setActive(actions.reload),
         new DIconMenuItem("/CBlades/images/icons/do-reorganize.png", "/CBlades/images/icons/do-reorganize-gray.png",
             2, 2, event => {
                 unit.player.reorganizeUnit(unit, event);
                 return true;
-            }).setActive(actions.reorganize),
+            }, "Se réorganiser").setActive(actions.reorganize),
         new DIconMenuItem("/CBlades/images/icons/do-rally.png", "/CBlades/images/icons/do-rally-gray.png",
             3, 2, event => {
                 unit.player.rallyUnit(unit, event);
                 return true;
-            }).setActive(actions.rally)
+            }, "Se rallier").setActive(actions.rally)
     ];
 }
 

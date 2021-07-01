@@ -14,6 +14,17 @@ import {
  */
 let _targetPlatform = {
 
+    getDefaultContext() {
+        if (!this._defaultCanvas) {
+            this._defaultCanvas = document.createElement('canvas');
+        }
+        return this._defaultCanvas.getContext('2d');
+    },
+
+    getTime() {
+        return new Date().getTime();
+    },
+
     requestFullscreen() {
         window.document.documentElement.requestFullscreen();
     },
@@ -110,6 +121,10 @@ let _targetPlatform = {
         context.textAlign = align;
     },
 
+    textBaseline(context, baseline) {
+        context.textBaseline = baseline;
+    },
+
     font(context, font) {
         context.font = font;
     },
@@ -120,6 +135,10 @@ let _targetPlatform = {
 
     strokeText(context, text, x, y) {
         context.strokeText(text, x, y);
+    },
+
+    measureText(context, text) {
+        return context.measureText(text);
     },
 
     setTransform(context, a, b, c, d, e, f) {
@@ -167,9 +186,19 @@ export function targetPlatform() {
 export function getDrawPlatform() {
     return _platform;
 }
+
 export function setDrawPlatform(platform) {
     _platform = platform;
     _platform.init && _platform.init();
+}
+
+export function measureText(text, font) {
+    let context = _platform.getDefaultContext();
+    _platform.save(context);
+    _platform.font(context, font);
+    let measure = _platform.measureText(context, text);
+    _platform.restore(context);
+    return measure;
 }
 
 /**
@@ -360,10 +389,11 @@ export class DLayer {
         return this;
     }
 
-    setTextSettings(font, textAlign) {
+    setTextSettings(font, textAlign = 'center', textBaseline = 'middle') {
         this._execute(()=> {
             _platform.font(this._context, font);
             _platform.textAlign(this._context, textAlign);
+            _platform.textBaseline(this._context, textBaseline);
         });
         return this;
     }

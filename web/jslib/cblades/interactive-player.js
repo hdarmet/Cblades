@@ -91,8 +91,9 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         }
         mask.setAction(close);
         mask.open(this.game.board, point);
+        let condition = this.game.arbitrator.getDefenderEngagementCondition(unit);
         scene.addWidget(
-            new CBCheckDefenderEngagementInsert(this.game), new Point2D(-CBCheckDefenderEngagementInsert.DIMENSION.w/2, 0)
+            new CBCheckDefenderEngagementInsert(this.game, condition), new Point2D(-CBCheckDefenderEngagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
             new CBMoralInsert(this.game, unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
         ).addWidget(
@@ -201,10 +202,42 @@ export class CBWeatherIndicator extends DIndicator {
 }
 CBWeatherIndicator.DIMENSION = new Dimension2D(142, 142);
 
-export class CBCheckDefenderEngagementInsert extends WidgetLevelMixin(DInsert) {
+export class CBCheckEngagementInsert extends WidgetLevelMixin(DInsert) {
 
-    constructor(game) {
-        super(game, "/CBlades/images/inserts/check-defender-engagement-insert.png", CBCheckDefenderEngagementInsert.DIMENSION);
+    constructor(game, url, dimension, condition) {
+        super(game, url, dimension);
+        if (condition.weapons) {
+            this.setMark(new Point2D(15, 367));
+        }
+        if (condition.capacity) {
+            this.setMark(new Point2D(15, 385));
+        }
+        if (condition.unitIsACharacter) {
+            this.setMark(new Point2D(15, 420));
+        }
+        if (condition.foeIsACharacter) {
+            this.setMark(new Point2D(15, 437));
+        }
+        if (condition.unitIsCharging) {
+            this.setMark(new Point2D(15, 455));
+        }
+        if (condition.foeIsCharging) {
+            this.setMark(new Point2D(15, 505));
+        }
+        if (condition.sideAdvantage) {
+            this.setMark(new Point2D(15, 523));
+        }
+        if (condition.backAdvantage) {
+            this.setMark(new Point2D(15, 541));
+        }
+    }
+
+}
+
+export class CBCheckDefenderEngagementInsert extends CBCheckEngagementInsert {
+
+    constructor(game, condition) {
+        super(game, "/CBlades/images/inserts/check-defender-engagement-insert.png", CBCheckDefenderEngagementInsert.DIMENSION, condition);
     }
 
 }

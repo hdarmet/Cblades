@@ -27,7 +27,7 @@ import {
     DImage
 } from "../draw.js";
 import {
-    CBActionMenu, CBInteractivePlayer, CBMoralInsert
+    CBActionMenu, CBCheckEngagementInsert, CBInteractivePlayer, CBMoralInsert
 } from "./interactive-player.js";
 import {
     DImageArtifact
@@ -697,8 +697,9 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         }
         mask.setAction(close);
         mask.open(this.game.board, point);
+        let condition = this.game.arbitrator.getAttackerEngagementCondition(this.unit);
         scene.addWidget(
-            new CBCheckAttackerEngagementInsert(this.game), new Point2D(-CBCheckAttackerEngagementInsert.DIMENSION.w/2, 0)
+            new CBCheckAttackerEngagementInsert(this.game, condition), new Point2D(-CBCheckAttackerEngagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
             new CBMoralInsert(this.game, this.unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
         ).addWidget(
@@ -1036,8 +1037,9 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
         }
         mask.setAction(close);
         mask.open(this.game.board, point);
+        let condition = this.game.arbitrator.getConfrontEngagementCondition(this.unit);
         scene.addWidget(
-            new CBCheckConfrontEngagementInsert(this.game), new Point2D(-CBCheckConfrontEngagementInsert.DIMENSION.w/2, 0)
+            new CBCheckConfrontEngagementInsert(this.game, condition), new Point2D(-CBCheckConfrontEngagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
             new CBMoralInsert(this.game, this.unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
         ).addWidget(
@@ -1106,22 +1108,22 @@ function createMovementMenuItems(unit, actions) {
             0, 0, event => {
                 unit.player.startMoveUnit(unit, actions.moveMode, event);
                 return true;
-            }).setActive(actions.moveForward),
+            }, "Bouger normalement").setActive(actions.moveForward),
         new DIconMenuItem("/CBlades/images/icons/move-back.png", "/CBlades/images/icons/move-back-gray.png",
             1, 0, event => {
                 unit.player.startMoveBackUnit(unit, event);
                 return true;
-            }).setActive(actions.moveBack),
+            }, "Reculer").setActive(actions.moveBack),
         new DIconMenuItem("/CBlades/images/icons/escape.png", "/CBlades/images/icons/escape-gray.png",
             2, 0, event => {
                 unit.player.startRoutUnit(unit, event);
                 return true;
-            }).setActive(actions.escape),
+            }, "Fuir").setActive(actions.escape),
         new DIconMenuItem("/CBlades/images/icons/to-face.png", "/CBlades/images/icons/to-face-gray.png",
             3, 0, event => {
                 unit.player.startConfrontUnit(unit, event);
                 return true;
-            }).setActive(actions.confront)
+            }, "Faire face").setActive(actions.confront)
     ];
 }
 
@@ -1517,19 +1519,25 @@ export class CBFormationMoveActuator extends CBActionActuator {
 
 }
 
-export class CBCheckAttackerEngagementInsert extends WidgetLevelMixin(DInsert) {
+export class CBCheckAttackerEngagementInsert extends CBCheckEngagementInsert {
 
-    constructor(game) {
-        super(game, "/CBlades/images/inserts/check-attacker-engagement-insert.png", CBCheckAttackerEngagementInsert.DIMENSION);
+    constructor(game, condition) {
+        super(game,
+            "/CBlades/images/inserts/check-attacker-engagement-insert.png",
+            CBCheckAttackerEngagementInsert.DIMENSION,
+            condition);
     }
 
 }
 CBCheckAttackerEngagementInsert.DIMENSION = new Dimension2D(444, 763);
 
-export class CBCheckConfrontEngagementInsert extends WidgetLevelMixin(DInsert) {
+export class CBCheckConfrontEngagementInsert extends CBCheckEngagementInsert {
 
-    constructor(game) {
-        super(game,"/CBlades/images/inserts/check-confront-engagement-insert.png", CBCheckConfrontEngagementInsert.DIMENSION);
+    constructor(game, condition) {
+        super(game,
+            "/CBlades/images/inserts/check-confront-engagement-insert.png",
+            CBCheckConfrontEngagementInsert.DIMENSION,
+            condition);
     }
 
 }

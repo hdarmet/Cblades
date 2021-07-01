@@ -9,23 +9,6 @@ import {
 
 export class CBUnitManagementTeacher {
 
-    processAttackerEngagementResult(unit, diceResult) {
-        //return { success: true }
-        let success = diceResult[0]+diceResult[1]<=unit.moral;
-        return { success };
-    }
-
-    processDefenderEngagementResult(unit, diceResult) {
-        //return { success: true }
-        let success = diceResult[0]+diceResult[1]<=unit.moral;
-        return { success };
-    }
-
-    processConfrontEngagementResult(unit, diceResult) {
-        let success = diceResult[0]+diceResult[1]<=unit.moral;
-        return { success };
-    }
-
     processDisengagementResult(unit, diceResult) {
         let success = diceResult[0]+diceResult[1]<=unit.moral;
         return { success };

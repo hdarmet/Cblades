@@ -1221,8 +1221,8 @@ export class CBFormation extends CBUnit {
         return true;
     }
 
-    createArtifact(levelName, images, location, dimension) {
-        return new FormationImageArtifact(this, levelName, images, location, dimension);
+    createArtifact(levelName, images, position, dimension) {
+        return new FormationImageArtifact(this, levelName, images, position, dimension);
     }
 
     clone() {

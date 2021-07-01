@@ -255,22 +255,22 @@ function createFormationMenuItems(unit, actions) {
             0, 3, event => {
                 unit.player.createFormation(unit, event);
                 return true;
-            }).setActive(actions.createFormation),
+            }, "Se mettre en formation").setActive(actions.createFormation),
         new DIconMenuItem("/CBlades/images/icons/join-formation.png", "/CBlades/images/icons/join-formation-gray.png",
             1, 3, event => {
                 unit.player.includeTroops(unit, event);
                 return true;
-            }).setActive(actions.joinFormation),
+            }, "Joindre la formation").setActive(actions.joinFormation),
         new DIconMenuItem("/CBlades/images/icons/leave-formation.png", "/CBlades/images/icons/leave-formation-gray.png",
             2, 3, event => {
                 unit.player.releaseTroops(unit, event);
                 return true;
-            }).setActive(actions.leaveFormation),
+            }, "Quitter la formation").setActive(actions.leaveFormation),
         new DIconMenuItem("/CBlades/images/icons/dismiss-formation.png", "/CBlades/images/icons/dismiss-formation-gray.png",
             3, 3, event => {
                 unit.player.breakFormation(unit, event);
                 return true;
-            }).setActive(actions.breakFormation)
+            }, "Rompre la formation").setActive(actions.breakFormation)
     ];
 }
 

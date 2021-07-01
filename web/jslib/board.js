@@ -322,7 +322,7 @@ export class DArtifact extends LocalisationAware(Object) {
 /**
  * Mixin containing methods for Artifact that have a rect shape
  */
-export function RectArtifact(clazz) {
+export function AreaArtifact(clazz) {
     return class extends clazz {
 
         constructor(dimension, ...args) {
@@ -356,92 +356,124 @@ export function RectArtifact(clazz) {
     }
 }
 
+export function RectArtifact(clazz) {
+
+    return class extends clazz {
+
+        _setRectSettings(strokeWidth, strokeColor, fillColor) {
+            this._rectStrokeWidth = strokeWidth;
+            this._rectStrokeColor = strokeColor;
+            this._rectFillColor = fillColor;
+        }
+
+        get strokeWidth() {
+            return this._rectStrokeWidth;
+        }
+
+        get strokeColor() {
+            return this._rectStrokeColor;
+        }
+
+        get fillColor() {
+            return this._rectFillColor;
+        }
+
+        drawRect() {
+            this._level.setStrokeSettings(this.strokeColor, this.strokeWidth);
+            this._level.drawRect(
+                new Point2D(-this.dimension.w/2, -this.dimension.h/2),
+                this.dimension);
+        }
+
+        fillRect() {
+            this._level.setFillSettings(this.fillColor);
+            this._level.fillRect(
+                new Point2D(-this.dimension.w/2, -this.dimension.h/2),
+                this.dimension);
+        }
+
+        _paintRect() {
+            if (this.fillColor) this.fillRect();
+            if (this.strokeColor) this.drawRect();
+        }
+
+    }
+
+}
 /**
  * Base class for all simple rectangular artifact
  */
-export class DRectArtifact extends RectArtifact(DArtifact) {
+export class DRectArtifact extends RectArtifact(AreaArtifact(DArtifact)) {
 
     constructor(levelName, position, dimension, strokeWidth, strokeColor, fillColor, pangle=0) {
         super(dimension, levelName, position, pangle);
-        this._strokeWidth = strokeWidth;
-        this._strokeColor = strokeColor;
-        this._fillColor = fillColor;
-    }
-
-    get strokeWidth() {
-        return this._strokeWidth;
-    }
-
-    get strokeColor() {
-        return this._strokeColor;
-    }
-
-    get fillColor() {
-        return this._fillColor;
-    }
-
-    drawRect() {
-        this._level.setStrokeSettings(this.strokeColor, this.strokeWidth);
-        this._level.drawRect(
-            new Point2D(-this.dimension.w/2, -this.dimension.h/2),
-            this.dimension);
-    }
-
-    fillRect() {
-        this._level.setFillSettings(this.fillColor);
-        this._level.fillRect(
-            new Point2D(-this.dimension.w/2, -this.dimension.h/2),
-            this.dimension);
+        this._setRectSettings(strokeWidth, strokeColor, fillColor);
     }
 
     _paint() {
-        if (this.fillColor) this.fillRect();
-        if (this.strokeColor) this.drawRect();
+        this._paintRect();
     }
 
 }
 
-export class DTextArtifact extends RectArtifact(DArtifact) {
+export function TextArtifact(clazz) {
+
+    return class extends clazz {
+
+        _setTextSettings(strokeColor, fillColor, strokeWidth, shadowColor, shadowWidth, font, align, baseline, text) {
+            this._textStrokeColor = strokeColor;
+            this._textFillColor = fillColor;
+            this._textStrokeWidth = strokeWidth;
+            this._textShadowColor = shadowColor;
+            this._textShadowWidth = shadowWidth;
+            this._textFont = font;
+            this._textAlign = align;
+            this._textBaseline = baseline;
+            this._text = text;
+        }
+
+        _memento() {
+            let memento = super._memento();
+            memento.text = this._text;
+            return memento;
+        }
+
+        _revert(memento) {
+            super._revert(memento);
+            this._text = memento.text;
+        }
+
+        setText(text) {
+            Memento.register(this);
+            this._text = text;
+            this.refresh();
+        }
+
+        _paintText() {
+            console.assert(this._level);
+            this._level.setTextSettings(this._textFont, this._textAlign, this._textBaseline);
+            this._level.setShadowSettings(this._textShadowColor, this._textShadowWidth);
+            this._level.setStrokeSettings(this._textStrokeColor, this._textStrokeWidth);
+            this._level.drawText(this._text, new Point2D(0, 0));
+            this._level.setFillSettings(this._textFillColor);
+            this._level.fillText(this._text, new Point2D(0, 0));
+        }
+
+    }
+}
+
+export class DTextArtifact extends TextArtifact(AreaArtifact(DArtifact)) {
 
     constructor(level, position, dimension,
-                strokeColor, fillColor,
+                strokeColor, fillColor, strokeWidth,
                 shadowColor, shadowWidth,
-                font, align, text) {
+                font, align, baseline, text) {
         super(dimension, level, position);
-        this._strokeColor = strokeColor;
-        this._fillColor = fillColor;
-        this._shadowColor = shadowColor;
-        this._shadowWidth = shadowWidth;
-        this._font = font;
-        this._align = align;
-        this._text = text;
-    }
-
-    _memento() {
-        let memento = super._memento();
-        memento.text = this._text;
-        return memento;
-    }
-
-    _revert(memento) {
-        super._revert(memento);
-        this._text = memento.text;
-    }
-
-    setText(text) {
-        Memento.register(this);
-        this._text = text;
-        this.refresh();
+        this._setTextSettings(strokeColor, fillColor, strokeWidth, shadowColor, shadowWidth, font, align, baseline, text);
     }
 
     _paint() {
-        console.assert(this._level);
-        this._level.setTextSettings(this._font, this._align);
-        this._level.setShadowSettings(this._shadowColor, this._shadowWidth)
-        this._level.setStrokeSettings(this._strokeColor, 3);
-        this._level.drawText(this._text, new Point2D(0, 0));
-        this._level.setFillSettings(this._fillColor);
-        this._level.fillText(this._text, new Point2D(0, 0));
+        this._paintText();
     }
 
 }
@@ -449,7 +481,7 @@ export class DTextArtifact extends RectArtifact(DArtifact) {
 /**
  * Base class for all image wrapper artifact
  */
-export class DImageAbstractArtifact extends RectArtifact(DArtifact) {
+export class DImageAbstractArtifact extends AreaArtifact(DArtifact) {
 
     constructor(dimension, levelName, position, sPosition = null, sDimension=null) {
         super(dimension, levelName, position, 0);
@@ -563,7 +595,7 @@ export class DMultiImagesArtifact extends DImageAbstractArtifact {
 /**
  * Class of artifacts that are composed of several images (or parts of)
  */
-export class DComposedImageArtifact extends RectArtifact(DArtifact) {
+export class DComposedImageArtifact extends AreaArtifact(DArtifact) {
 
     constructor(levelName, position, dimension) {
         super(dimension, levelName, position, 0);

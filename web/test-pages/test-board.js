@@ -1428,8 +1428,8 @@ describe("Board", ()=> {
             var { board, markersLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
         when:
             var artifact = new DTextArtifact("markers", new Point2D(10, 15), new Dimension2D(50, 50),
-                "#FF0000", "#00FF00", "#0000FF", 5,
-                "18px serif", "start", "text");
+                "#FF0000", "#00FF00", 3, "#0000FF", 5,
+                "18px serif", "start", "middle", "text");
             var element = new DElement(artifact);
             resetDirectives(layer);
             element.setOnBoard(board);

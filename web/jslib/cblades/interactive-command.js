@@ -320,22 +320,22 @@ function createCommandMenuItems(unit, actions) {
             0, 4, event => {
                 unit.player.tryToTakeCommand(unit, event);
                 return true;
-            }).setActive(actions.takeCommand),
+            }, "Prendre le commandement de l'aile").setActive(actions.takeCommand),
         new DIconMenuItem("/CBlades/images/icons/leave-command.png", "/CBlades/images/icons/leave-command-gray.png",
             1, 4, event => {
                 unit.player.tryToDismissCommand(unit, event);
                 return true;
-            }).setActive(actions.leaveCommand),
+            }, "Abandonner le commandement de l'aile").setActive(actions.leaveCommand),
         new DIconMenuItem("/CBlades/images/icons/change-orders.png", "/CBlades/images/icons/change-orders-gray.png",
             2, 4, event => {
                 unit.player.tryToChangeOrderInstructions(unit, event);
                 return true;
-            }).setActive(actions.changeOrders),
+            }, "Changer les consignes").setActive(actions.changeOrders),
         new DIconMenuItem("/CBlades/images/icons/give-specific-orders.png", "/CBlades/images/icons/give-specific-orders-gray.png",
             3, 4, event => {
                 unit.player.startToGiveOrders(unit, event);
                 return true;
-            }).setActive(actions.giveSpecificOrders)
+            }, "Donner des ordres").setActive(actions.giveSpecificOrders)
     ];
 }
 
@@ -346,22 +346,22 @@ export class CBOrderInstructionMenu extends DIconMenu {
             0, 0, event => {
                 unit.player.changeOrderInstruction(unit, CBOrderInstruction.ATTACK, event);
                 return true;
-            }).setActive(allowedOrderInstructions.attack),
+            }, "Attaque").setActive(allowedOrderInstructions.attack),
             new DIconMenuItem("/CBlades/images/markers/defend.png","/CBlades/images/markers/defend-gray.png",
                 1, 0, event => {
                     unit.player.changeOrderInstruction(unit, CBOrderInstruction.DEFEND, event);
                     return true;
-                }).setActive(allowedOrderInstructions.defend),
+                }, "Défense").setActive(allowedOrderInstructions.defend),
             new DIconMenuItem("/CBlades/images/markers/regroup.png","/CBlades/images/markers/regroup-gray.png",
                 0, 1, event => {
                     unit.player.changeOrderInstruction(unit, CBOrderInstruction.REGROUP, event);
                     return true;
-                }).setActive(allowedOrderInstructions.regroup),
+                }, "Regroupement").setActive(allowedOrderInstructions.regroup),
             new DIconMenuItem("/CBlades/images/markers/retreat.png","/CBlades/images/markers/retreat-gray.png",
                 1, 1, event => {
                     unit.player.changeOrderInstruction(unit, CBOrderInstruction.RETREAT, event);
                     return true;
-                }).setActive(allowedOrderInstructions.retreat)
+                }, "Retraite").setActive(allowedOrderInstructions.retreat)
         );
         this._game = game;
     }
@@ -482,11 +482,21 @@ export class CBGiveOrdersInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game, detail) {
         super(game, "/CBlades/images/inserts/orders-given-insert.png", CBGiveOrdersInsert.DIMENSION, CBGiveOrdersInsert.PAGE_DIMENSION);
-        if (detail.base) this.setMark(new Point2D(20, 427));
-        if (detail.routed) this.setMark(new Point2D(25, 545));
-        if (detail.disrupted) this.setMark(new Point2D(25, 510));
-        if (detail.exhausted) this.setMark(new Point2D(25, 530));
-        if (detail.distance) this.setMark(new Point2D(25, 565));
+        if (detail.base) {
+            this.setMark(new Point2D(20, 427));
+        }
+        if (detail.routed) {
+            this.setMark(new Point2D(25, 545));
+        }
+        if (detail.disrupted) {
+            this.setMark(new Point2D(25, 510));
+        }
+        if (detail.exhausted) {
+            this.setMark(new Point2D(25, 530));
+        }
+        if (detail.distance) {
+            this.setMark(new Point2D(25, 565));
+        }
     }
 
 }

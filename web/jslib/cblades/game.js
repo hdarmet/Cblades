@@ -636,8 +636,7 @@ export class CBGame {
     addCounter(counter, location) {
         this._counters.add(counter)
         counter.location = location;
-        counter.game = this;
-        counter.element.setOnBoard(this._board);
+        counter._setOnGame(this);
     }
 
     addUnit(unit, hexLocation) {
@@ -1051,6 +1050,10 @@ export class CBCounterImageArtifact extends DMultiImagesArtifact {
         return this._counter;
     }
 
+    get game() {
+        return this.counter.game;
+    }
+
     get settings() {
         return level=>{
             level.setShadowSettings("#000000", 15);
@@ -1196,8 +1199,8 @@ export class CBCounter {
         this._element._unit = this;
     }
 
-    createArtifact(levelName, images, location, dimension) {
-        return new CBCounterImageArtifact(this, levelName, images, location, dimension);
+    createArtifact(levelName, images, position, dimension) {
+        return new CBCounterImageArtifact(this, levelName, images, position, dimension);
     }
 
     _memento() {
@@ -1247,10 +1250,6 @@ export class CBCounter {
         this._element.refresh();
     }
 
-    set game(game) {
-        this._game = game;
-    }
-
     get game() {
         return this._game;
     }
@@ -1260,19 +1259,25 @@ export class CBCounter {
     }
 
     _show(game) {
+        Memento.register(this);
         this._element.show(game.board);
+        this._game = game;
     }
 
     _hide() {
+        Memento.register(this);
         this._element.hide();
+        delete this._game;
     }
 
     _setOnGame(game) {
         this._element.setOnBoard(game.board);
+        this._game = game;
     }
 
     _removeFromGame() {
         this._element.removeFromBoard();
+        delete this._game;
     }
 
     collectArtifactsToRetract(artifacts) {
@@ -1306,18 +1311,24 @@ export class CBPlayable extends CBCounter {
     }
 
     _addPlayable(hexLocation) {
+        hexLocation.game._addCounter(this);
         hexLocation._addPlayable(this);
     }
 
     _removePlayable(hexLocation) {
+        console.assert(hexLocation.game === this.game);
+        hexLocation.game._removeCounter(this);
         hexLocation._removePlayable(this);
     }
 
     _appendPlayable(hexLocation) {
+        hexLocation.game._appendCounter(this);
         hexLocation._appendPlayable(this);
     }
 
     _deletePlayable(hexLocation) {
+        console.assert(hexLocation.game === this.game);
+        hexLocation.game._deleteCounter(this);
         hexLocation._deletePlayable(this);
     }
 
@@ -1356,7 +1367,16 @@ export class CBPlayable extends CBCounter {
     get hexLocation() {
         return this._hexLocation;
     }
+
+    static getByType(hexLocation, type) {
+        for (let playable of hexLocation.playables) {
+            if (playable instanceof type) return playable;
+        }
+        return null;
+    }
+
 }
+
 
 export class UnitImageArtifact extends RetractableArtifactMixin(SelectableMixin(CBCounterImageArtifact)) {
 
@@ -1387,8 +1407,8 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
         super("units", paths, dimension);
     }
 
-    createArtifact(levelName, images, location, dimension) {
-        return new UnitImageArtifact(this, levelName, images, location, dimension);
+    createArtifact(levelName, images, position, dimension) {
+        return new UnitImageArtifact(this, levelName, images, position, dimension);
     }
 
     _memento() {
@@ -1499,10 +1519,6 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
         return this.player.canFinishUnit(this);
     }
 
-    get game() {
-        return this.player.game;
-    }
-
     isOnBoard() {
         return !!this._hexLocation;
     }
@@ -1511,13 +1527,13 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
         return this._action;
     }
 
-    addToMap(hexId, moveType) {
+    addToMap(hexLocation, moveType) {
         console.assert(!this._hexLocation);
-        hexId.game._addCounter(this);
-        this._hexLocation = hexId;
-        hexId._addUnit(this, moveType);
-        this._setOnGame(hexId.map.game);
-        this._setLocation(hexId.location);
+        hexLocation.game._addCounter(this);
+        this._hexLocation = hexLocation;
+        hexLocation._addUnit(this, moveType);
+        this._setOnGame(hexLocation.map.game);
+        this._setLocation(hexLocation.location);
     }
 
     removeFromMap() {
