@@ -93,7 +93,7 @@ describe("Miscellaneous teacher", ()=> {
         given:
             var {arbitrator, unit11} = create2Players4UnitsTinyGame();
         then:
-            assert(arbitrator.isAllowedToPerformMiscellaneousActions(unit11)).isFalse();
+            assert(arbitrator.isAllowedToPerformMiscellaneousActions(unit11)).isTrue();
     });
 
 });

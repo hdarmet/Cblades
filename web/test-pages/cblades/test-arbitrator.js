@@ -256,6 +256,7 @@ describe("Arbitrator", ()=> {
                 moveMode: CBMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 escape: true,
+                miscActions: true,
                 noAction: true
             });
         when:
@@ -280,6 +281,7 @@ describe("Arbitrator", ()=> {
                 moveMode: CBMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 escape: true,
+                miscActions: true,
                 giveSpecificOrders: true,
                 prepareSpell: true,
                 noAction: true
@@ -471,6 +473,7 @@ describe("Arbitrator", ()=> {
                 moveMode: CBMoveMode.REGROUP,
                 moveBack: true,
                 escape: true,
+                miscActions: true,
                 fireAttack: true,
                 noAction: true
             });
@@ -488,6 +491,7 @@ describe("Arbitrator", ()=> {
                 moveMode: CBMoveMode.REGROUP,
                 moveBack: true,
                 escape: true,
+                miscActions: true,
                 reorganize: true,
                 reload: true,
                 rest: true
@@ -506,6 +510,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
+                miscActions: true,
                 moveMode: CBMoveMode.REGROUP,
                 moveBack: true,
                 breakFormation: true,
@@ -520,6 +525,7 @@ describe("Arbitrator", ()=> {
                 moveMode: CBMoveMode.REGROUP,
                 moveBack: true,
                 escape: true,
+                miscActions: true,
                 createFormation: true,
                 noAction: true
             });
@@ -534,6 +540,7 @@ describe("Arbitrator", ()=> {
                 breakFormation: true,
                 joinFormation: true,
                 leaveFormation: true,
+                miscActions: true,
                 noAction: true
             });
         when:
@@ -556,6 +563,7 @@ describe("Arbitrator", ()=> {
                 moveMode: CBMoveMode.REGROUP,
                 moveBack: true,
                 escape: true,
+                miscActions: true,
                 mergeUnit: true,
                 noAction: true
             });
@@ -576,6 +584,7 @@ describe("Arbitrator", ()=> {
                 moveBack: true,
                 escape: true,
                 fireAttack: true,
+                miscActions: true,
                 reload: true,
                 noAction: true
             });
@@ -609,6 +618,7 @@ describe("Arbitrator", ()=> {
                 escape: true,
                 reorganize: true,
                 fireAttack: true,
+                miscActions: true,
                 reload: true,
                 noAction: true
             });
@@ -621,6 +631,7 @@ describe("Arbitrator", ()=> {
                 moveMode: CBMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 escape: true,
+                miscActions: true,
                 rest: true,
                 reorganize: true,
                 fireAttack: true,
@@ -661,6 +672,7 @@ describe("Arbitrator", ()=> {
                 moveBack: true,
                 breakFormation: true,
                 leaveFormation: true,
+                miscActions: true,
                 noAction: true
             });
         when:
@@ -671,6 +683,7 @@ describe("Arbitrator", ()=> {
                 moveMode: CBMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 escape: true,
+                miscActions: true,
                 createFormation: true,
                 noAction: true
             });
@@ -685,6 +698,7 @@ describe("Arbitrator", ()=> {
                 breakFormation: true,
                 joinFormation: true,
                 leaveFormation: true,
+                miscActions: true,
                 noAction: true
             });
         when:
@@ -709,6 +723,7 @@ describe("Arbitrator", ()=> {
                 moveMode: CBMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 escape: true,
+                miscActions: true,
                 mergeUnit: true,
                 noAction: true
             });
@@ -731,6 +746,7 @@ describe("Arbitrator", ()=> {
                 reload: true,
                 reorganize: true,
                 giveSpecificOrders: true,
+                miscActions: true,
                 prepareSpell: true,
                 noAction: true
             });
@@ -748,6 +764,7 @@ describe("Arbitrator", ()=> {
                 reorganize: true,
                 rest: true,
                 giveSpecificOrders: true,
+                miscActions: true,
                 prepareSpell: true,
                 castSpell: true
             });
@@ -776,6 +793,7 @@ describe("Arbitrator", ()=> {
                 escape: true,
                 fireAttack: true,
                 giveSpecificOrders: true,
+                miscActions: true,
                 prepareSpell: true,
                 noAction: true
             });
@@ -790,6 +808,7 @@ describe("Arbitrator", ()=> {
                 shockDuel: true,
                 fireDuel: true,
                 giveSpecificOrders: true,
+                miscActions: true,
                 prepareSpell: true,
                 noAction: true
             });
@@ -810,6 +829,7 @@ describe("Arbitrator", ()=> {
                 escape: true,
                 takeCommand: true,
                 giveSpecificOrders: true,
+                miscActions: true,
                 prepareSpell: true,
                 noAction: true
             });
@@ -825,6 +845,7 @@ describe("Arbitrator", ()=> {
                 leaveCommand: true,
                 changeOrders: true,
                 giveSpecificOrders: true,
+                miscActions: true,
                 prepareSpell: true,
                 noAction: true
             });

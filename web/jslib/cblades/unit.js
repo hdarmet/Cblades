@@ -1284,13 +1284,14 @@ export class CBFormation extends CBUnit {
 
     breakFormation(replacementOnFromHex, replacementOnToHex) {
         let hexLocation = this.hexLocation;
-        this.game.deleteUnit(this);
+        let game = this.game;
+        game.deleteUnit(this);
         this.move(null, 0);
         for (let replacement of replacementOnFromHex) {
-            this.game.appendUnit(replacement, hexLocation.fromHex);
+            game.appendUnit(replacement, hexLocation.fromHex);
         }
         for (let replacement of replacementOnToHex) {
-            this.game.appendUnit(replacement, hexLocation.toHex);
+            game.appendUnit(replacement, hexLocation.toHex);
         }
     }
 

@@ -156,6 +156,52 @@ describe("Combat teacher", ()=> {
         assert(zones[angle].moveType).equalsTo(moveType);
     }
 
+
+    it("Checks attacker engagement result", () => {
+        given:
+            var {arbitrator, unit12, unit21} = create2Players4UnitsTinyGame();
+            unit21.hexLocation = unit12.hexLocation.getNearHex(0);
+            unit21.angle = 180;
+        when:
+            var result = arbitrator.processAttackerEngagementResult(unit12, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processAttackerEngagementResult(unit12, [6, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks defender engagement result", () => {
+        given:
+            var {arbitrator, unit12, unit21} = create2Players4UnitsTinyGame();
+            unit21.hexLocation = unit12.hexLocation.getNearHex(0);
+            unit21.angle = 180;
+        when:
+            var result = arbitrator.processDefenderEngagementResult(unit12, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processDefenderEngagementResult(unit12, [6, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks confront engagement result", () => {
+        given:
+            var {arbitrator, unit12, unit21} = create2Players4UnitsTinyGame();
+            unit21.hexLocation = unit12.hexLocation.getNearHex(0);
+            unit21.angle = 180;
+        when:
+            var result = arbitrator.processConfrontEngagementResult(unit12, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processConfrontEngagementResult(unit12, [6, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
     it("Checks that a unit is allowed to shock attack", () => {
         given:
             var {arbitrator, map, unit12, unit21} = create2Players4UnitsTinyGame();

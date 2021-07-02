@@ -161,6 +161,10 @@ export let mockPlatform = {
         write(context, `font = ${font}`);
     },
 
+    textBaseline(context, baseline) {
+        write(context, `textBaseline = ${baseline}`);
+    },
+
     fillText(context, text, x, y) {
         write(context, `fillText(${text}, ${x}, ${y})`);
     },

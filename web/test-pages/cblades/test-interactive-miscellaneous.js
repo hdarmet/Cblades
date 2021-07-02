@@ -74,7 +74,7 @@ describe("Interactive Miscellaneous", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 391.6667, 340)",
-                    "drawImage(/CBlades/images/icons/do-many.png, -25, -25, 50, 50)",
+                    "drawImage(/CBlades/images/icons/do-many-gray.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });

@@ -1440,7 +1440,7 @@ describe("Board", ()=> {
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 260, 165)",
-                    "font = 18px serif", "textAlign = start",
+                    "font = 18px serif", "textAlign = start", "textBaseline = middle",
                     "shadowColor = #0000FF", "shadowBlur = 5",
                     "strokeStyle = #FF0000", "lineWidth = 3",
                     "strokeText(text, 0, 0)",
@@ -1456,7 +1456,7 @@ describe("Board", ()=> {
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 260, 165)",
-                    "font = 18px serif", "textAlign = start",
+                    "font = 18px serif", "textAlign = start", "textBaseline = middle",
                     "shadowColor = #0000FF", "shadowBlur = 5",
                     "strokeStyle = #FF0000", "lineWidth = 3",
                     "strokeText(TEXT, 0, 0)",
@@ -1472,7 +1472,7 @@ describe("Board", ()=> {
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 260, 165)",
-                    "font = 18px serif", "textAlign = start",
+                    "font = 18px serif", "textAlign = start", "textBaseline = middle",
                     "shadowColor = #0000FF", "shadowBlur = 5",
                     "strokeStyle = #FF0000", "lineWidth = 3",
                     "strokeText(text, 0, 0)",

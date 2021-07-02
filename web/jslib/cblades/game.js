@@ -1267,7 +1267,6 @@ export class CBCounter {
     _hide() {
         Memento.register(this);
         this._element.hide();
-        delete this._game;
     }
 
     _setOnGame(game) {
@@ -1277,7 +1276,6 @@ export class CBCounter {
 
     _removeFromGame() {
         this._element.removeFromBoard();
-        delete this._game;
     }
 
     collectArtifactsToRetract(artifacts) {

@@ -133,7 +133,7 @@ describe("Interactive Combat", ()=> {
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/unsupported-shock-advantage.png, -27.5, -27.5, 55, 55)",
                 "shadowColor = #000000", "shadowBlur = 0",
-                "font = bold 30px serif", "textAlign = center", "fillStyle = #AD5A2D",
+                "font = bold 30px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #AD5A2D",
                 `fillText(${advantage}, 0, 10)`,
             "restore()"
         ];
@@ -146,7 +146,7 @@ describe("Interactive Combat", ()=> {
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/supported-shock-advantage.png, -27.5, -27.5, 55, 55)",
                 "shadowColor = #000000", "shadowBlur = 0",
-                "font = bold 30px serif", "textAlign = center", "fillStyle = #9D2F12",
+                "font = bold 30px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #9D2F12",
             `fillText(${advantage}, 0, 10)`,
             "restore()"
         ];
@@ -180,7 +180,7 @@ describe("Interactive Combat", ()=> {
             "shadowColor = #00FFFF", "shadowBlur = 10",
             "drawImage(/CBlades/images/actuators/fire-advantage.png, -27.5, -27.5, 55, 55)",
             "shadowColor = #000000", "shadowBlur = 0",
-            "font = bold 30px serif", "textAlign = center", "fillStyle = #A1124F",
+            "font = bold 30px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #A1124F",
             `fillText(${advantage}, 0, 10)`,
             "restore()"
         ];

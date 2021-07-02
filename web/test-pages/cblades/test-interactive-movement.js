@@ -78,8 +78,8 @@ describe("Interactive Movement", ()=> {
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/standard-move-cost.png, -35, -35, 70, 70)",
-                "font = bold 35px serif", "textAlign = center", "fillStyle = #2F528F",
-                `fillText(${cost}, 0, 10)`,
+                "font = bold 35px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #2F528F",
+            `fillText(${cost}, 0, 10)`,
             "restore()",
         ];
     }
@@ -100,8 +100,8 @@ describe("Interactive Movement", ()=> {
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/standard-move-cost.png, -27.5, -27.5, 55, 55)",
-                "font = bold 30px serif", "textAlign = center", "fillStyle = #2F528F",
-                `fillText(${cost}, 0, 10)`,
+                "font = bold 30px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #2F528F",
+            `fillText(${cost}, 0, 10)`,
             "restore()",
         ];
     }
@@ -112,8 +112,8 @@ describe("Interactive Movement", ()=> {
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/standard-movement-points.png, -27.5, -27.5, 55, 55)",
-                "font = bold 30px serif", "textAlign = center", "fillStyle = #2F528F",
-                `fillText(${move}, 0, 10)`,
+                "font = bold 30px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #2F528F",
+            `fillText(${move}, 0, 10)`,
             "restore()"
         ];
     }
@@ -134,8 +134,8 @@ describe("Interactive Movement", ()=> {
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/standard-turn-cost.png, -35, -35, 70, 70)",
-                "font = bold 35px serif", "textAlign = center", "fillStyle = #2F528F",
-                `fillText(${cost}, 0, 10)`,
+                "font = bold 35px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #2F528F",
+            `fillText(${cost}, 0, 10)`,
             "restore()"
         ];
     }

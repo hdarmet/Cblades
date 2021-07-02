@@ -133,19 +133,6 @@ describe("Units teacher", ()=> {
             assert(arbitrator.canPlayUnit(unit12)).isFalse();
     });
 
-    it("Checks defender engagement result", () => {
-        given:
-            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
-        when:
-            var result = arbitrator.processDefenderEngagementResult(unit12, [1, 2]);
-        then:
-            assert(result.success).isTrue();
-        when:
-            result = arbitrator.processDefenderEngagementResult(unit12, [6, 6]);
-        then:
-            assert(result.success).isFalse();
-    });
-
     it("Checks if players are foes", () => {
         given:
             var {arbitrator, player1, player2} = create2Players4UnitsTinyGame();
@@ -294,32 +281,6 @@ describe("Units teacher", ()=> {
             unit2.disrupt();
         then:
             assert(arbitrator.mayUnitCharge(unit2)).isFalse();
-    });
-
-    it("Checks attacker engagement result", () => {
-        given:
-            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
-        when:
-            var result = arbitrator.processAttackerEngagementResult(unit12, [1, 2]);
-        then:
-            assert(result.success).isTrue();
-        when:
-            result = arbitrator.processAttackerEngagementResult(unit12, [6, 6]);
-        then:
-            assert(result.success).isFalse();
-    });
-
-    it("Checks confront engagement result", () => {
-        given:
-            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
-        when:
-            var result = arbitrator.processConfrontEngagementResult(unit12, [1, 2]);
-        then:
-            assert(result.success).isTrue();
-        when:
-            result = arbitrator.processConfrontEngagementResult(unit12, [6, 6]);
-        then:
-            assert(result.success).isFalse();
     });
 
     it("Checks disengagement result", () => {
