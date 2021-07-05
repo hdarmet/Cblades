@@ -13,13 +13,13 @@ import {
     DAnimation,
     DAnimator,
     DLayer,
-    DTranslateLayer
+    DTranslateLayer, measureText
 } from "../jslib/draw.js";
 import {
     Point2D, Matrix2D, Dimension2D
 } from "../jslib/geometry.js";
 import {
-    mockPlatform, getContextDirectives, resetContextDirectives
+    mockPlatform, getContextDirectives, resetContextDirectives, assertDirectives
 } from "./mocks.js";
 import {
     Mechanisms
@@ -88,6 +88,19 @@ describe("Drawing fundamentals", ()=> {
         draw.createLayer("layer1");
         return draw;
     }
+
+    it("Checks measureText", () => {
+        given:
+            resetDirectives({_context:getDrawPlatform().getDefaultContext()});
+            var measure = measureText("Texte", "9px SansSerif");
+        when:
+            assert(measure).objectEqualsTo({
+                width: 25
+            })
+            assertDirectives({_context:getDrawPlatform().getDefaultContext()}, [
+                "save()", "font = 9px SansSerif", "measureText(Texte)", "restore()"
+            ]);
+    });
 
     it("Checks rects drawing on DDraw", () => {
         given:
@@ -463,7 +476,7 @@ describe("Drawing fundamentals", ()=> {
             assert(window.document.body.style["margin"]).equalsTo("0px");
     });
 
-    it("Checks window window sier attribute setters on the target platform", () => {
+    it("Checks window attribute setters on the target platform", () => {
         given:
             setDrawPlatform(targetPlatform());
             var innerWidthInvoked = false;
@@ -647,6 +660,44 @@ describe("Drawing fundamentals", ()=> {
             assert(setTransformInvoked).isTrue();
     });
 
+    it("Checks getTime method call on the target platform", () => {
+        let getTime = Date.prototype.getTime;
+        try {
+            given:
+                setDrawPlatform(targetPlatform());
+                var getTimeInvoked = false;
+                Date.prototype.getTime = function (...params) {
+                    assert(params.length).equalsTo(0);
+                    getTimeInvoked = true;
+                    return 5555;
+                }
+            when:
+                var time = getDrawPlatform().getTime();
+            then:
+                assert(getTimeInvoked).isTrue();
+                assert(time).objectEqualsTo(5555);
+        }
+        finally {
+            Date.prototype.getTime = getTime;
+        }
+    });
+
+    it("Checks measureText method call on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
+            var measureTextInvoked = false;
+            CanvasRenderingContext2D.prototype.measureText = function(...params) {
+                assert(params).arrayEqualsTo(["My text"]);
+                measureTextInvoked = true;
+                return {width: 50};
+            }
+        when:
+            var measure = getDrawPlatform().measureText(getDrawPlatform().getDefaultContext(), "My text");
+        then:
+            assert(measureTextInvoked).isTrue();
+            assert(measure).objectEqualsTo({width: 50});
+    });
+
     it("Checks strokeStyle and lineWidth setter call on the target platform", () => {
         given:
             setDrawPlatform(targetPlatform());
@@ -753,13 +804,21 @@ describe("Drawing fundamentals", ()=> {
                     textAlignInvoked = true;
                 }
             });
+            var textBaselineInvoked = false;
+            Object.defineProperty(CanvasRenderingContext2D.prototype, "textBaseline", {
+                set: function(style) {
+                    assert(style).equalsTo("middle");
+                    textBaselineInvoked = true;
+                }
+            });
         when:
             var draw = new DDraw(new Dimension2D(500, 300));
             var layer = draw.createLayer("layer1");
-            layer.setTextSettings("18px serif", "center");
+            layer.setTextSettings("18px serif", "center", "middle");
         then:
             assert(fontInvoked).isTrue();
             assert(textAlignInvoked).isTrue();
+            assert(textBaselineInvoked).isTrue();
     });
 
     it("Checks setTimeout function call on the target platform", () => {

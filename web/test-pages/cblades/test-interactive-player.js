@@ -38,7 +38,7 @@ import {
 import {
     createTinyGame,
     create2UnitsTinyGame,
-    create2PlayersTinyGame
+    create2PlayersTinyGame, create2Players4UnitsTinyGame, create2Players2Units2LeadersTinyGame
 } from "./game-examples.js";
 import {
     CBActionMenu, CBWeatherIndicator, CBWingTirednessIndicator
@@ -49,6 +49,9 @@ import {
 import {
     Point2D
 } from "../../jslib/geometry.js";
+import {
+    CBCharge
+} from "../../jslib/cblades/unit.js";
 
 describe("Interactive Player", ()=> {
 
@@ -255,6 +258,8 @@ describe("Interactive Player", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("check-defender-engagement", 227, 386.5, 444, 763));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 372));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 390));
             assertDirectives(widgetsLayer, showInsert("moral", 661, 202, 444, 389));
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showDice(1, 1, 549, 426.5));
@@ -269,12 +274,14 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
     });
 
-    it("Checks marks on defender engagement insert", () => {
+    it("Checks marks on defender engagement insert (first case)", () => {
         given:
             var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit1.disrupt();
+            unit1.angle = 90;
             unit1IsEngagedByUnit2(map, unit1, unit2);
+            unit2.markAsCharging(CBCharge.CHARGING);
         when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             player1.selectUnit(unit1, dummyEvent)
@@ -284,9 +291,42 @@ describe("Interactive Player", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("check-defender-engagement", 227, 386.5, 444, 763));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 372));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 390));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 510));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 528));
             assertDirectives(widgetsLayer, showInsert("moral", 661, 202, 444, 389));
             assertDirectives(widgetsLayer, showInsertMark( 459, 124.5)); // Mark for base moral level
             assertDirectives(widgetsLayer, showInsertMark(459, 232.5)); // Mark for disruption
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 426.5));
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
+    });
+
+    it("Checks marks on defender engagement insert (second case)", () => {
+        given:
+            var {game, map, player1, leader1, leader2} = create2Players2Units2LeadersTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            unit1IsEngagedByUnit2(map, leader1, leader2);
+            leader1.angle = 180;
+            leader1.markAsCharging(CBCharge.CHARGING);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            player1.selectUnit(leader1, dummyEvent)
+            loadAllImages();
+            paint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("check-defender-engagement", 227, 386.5, 444, 763));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 372));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 390));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 425));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 442));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 460));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 546));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 202, 444, 389));
+            assertDirectives(widgetsLayer, showInsertMark( 459, 124.5)); // Mark for base moral level
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showDice(1, 1, 549, 426.5));
             assert(getDirectives(commandsLayer)).arrayEqualsTo([]);

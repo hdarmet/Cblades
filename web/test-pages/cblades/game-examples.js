@@ -118,6 +118,23 @@ export class FireWeaponProfile extends CBWeaponProfile {
     }
 }
 
+export class LanceWeaponProfile extends CBWeaponProfile {
+    constructor(...args) {
+        super(...args);
+    }
+    getShockAttackCode() {
+        return "Lan";
+    }
+}
+
+export class LightInfantryWeaponProfile extends CBWeaponProfile {
+    constructor(...args) {
+        super(...args);
+    }
+    getShockAttackCode() {
+        return "LIf";
+    }
+}
 
 export class CBTestArbitrator extends CBArbitrator {
 
@@ -152,7 +169,7 @@ export class CBTestArbitrator extends CBArbitrator {
             prepareSpell: true,
             castSpell: true,
             mergeUnit: true,
-            miscAction: true
+            miscActions: true
         });
     }
 
@@ -166,7 +183,19 @@ export class CBTestUnitType extends CBUnitType {
         super(name, troopPaths, formationPaths);
         for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
             this.setMoveProfile(index, new CBMoveProfile());
-            this.setWeaponProfile(index, new CBWeaponProfile(0));
+            this.setWeaponProfile(index, new LanceWeaponProfile(1));
+            this.setCommandProfile(index, new CBCommandProfile());
+            this.setMoralProfile(index, new CBMoralProfile());
+        }
+    }
+}
+
+export class CBTestOtherUnitType extends CBUnitType {
+    constructor(name, troopPaths, formationPaths=[]) {
+        super(name, troopPaths, formationPaths);
+        for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
+            this.setMoveProfile(index, new CBMoveProfile());
+            this.setWeaponProfile(index, new LightInfantryWeaponProfile(2));
             this.setCommandProfile(index, new CBCommandProfile());
             this.setMoralProfile(index, new CBMoralProfile());
         }
@@ -214,7 +243,7 @@ export function create2PlayersTinyGame() {
     let {game, map, wing1, wing2} = tinyGame;
     let unitType1 = createUnitType(CBTestUnitType,"unit", 1, 1);
     let unit1 = createTroop(game, map, unitType1, wing1, 0, 5, 8);
-    let unitType2 = createUnitType(CBTestUnitType,"unit", 2, 1);
+    let unitType2 = createUnitType(CBTestOtherUnitType,"unit", 2, 1);
     let unit2 = createTroop(game, map, unitType2, wing2, 0, 6, 8);
     loadAllImages();
     return {

@@ -15,22 +15,22 @@ export class CBMiscellaneousTeacher {
         };
     }
 
-    processSetFireResult(leader, diceResult) {
+    processSetFireResult(unit, diceResult) {
         let success = diceResult[0]+diceResult[1]<=8;
         return { success };
     }
 
-    processExtinguishFireResult(leader, diceResult) {
+    processExtinguishFireResult(unit, diceResult) {
         let success = diceResult[0]+diceResult[1]<=8;
         return { success };
     }
 
-    processSetStakesResult(leader, diceResult) {
+    processSetStakesResult(unit, diceResult) {
         let success = diceResult[0]+diceResult[1]<=8;
         return { success };
     }
 
-    processRemoveStakesResult(leader, diceResult) {
+    processRemoveStakesResult(unit, diceResult) {
         let success = diceResult[0]+diceResult[1]<=8;
         return { success };
     }

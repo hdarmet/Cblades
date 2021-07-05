@@ -58,11 +58,12 @@ describe("Magic", ()=> {
     it("Checks spell definition", () => {
         given:
             var {leader:wizard} = createTinyGameWithLeader();
-            var definition = new CBSpellDefinition("/CBlades/images/magic/test/spell2.png", CBTestSpell,2);
+            var definition = new CBSpellDefinition("/CBlades/images/magic/test/spell2.png", CBTestSpell,2, "spell two");
         when:
             var spell = definition.createSpellCounter(wizard);
         then:
             assert(definition.path).equalsTo("/CBlades/images/magic/test/spell2.png");
+            assert(definition.label).equalsTo("spell two");
             assert(spell).is(CBTestSpell);
     });
 

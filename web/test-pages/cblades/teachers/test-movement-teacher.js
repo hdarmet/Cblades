@@ -350,8 +350,8 @@ describe("Movement teacher", ()=> {
             assertNoMove(allowedMoves, 240);
         when:
             unit12.movementPoints = 0.5;
-        unit12.angle = 210;
-        allowedMoves = arbitrator.getAllowedMovesBack(unit12);
+            unit12.angle = 210;
+            allowedMoves = arbitrator.getAllowedMovesBack(unit12);
         then:
             assertNoMove(allowedMoves, 0); // occupied by a foe
             assertMove(allowedMoves, 60, 6, 6, CBMovement.EXTENDED);
@@ -830,6 +830,25 @@ describe("Movement teacher", ()=> {
             ])
     });
 
+    it("Checks attack moves for a formation", () => {
+        given:
+            var {arbitrator, map, formation1, unit21, unit22, leader21} = create2Players1Formation2TroopsTinyGame();
+            formation1.hexLocation = map.getHex(8, 10).toward(120);
+            formation1.angle = 30;
+            unit21.hexLocation = map.getHex(9, 6);
+            unit21.angle = 180;
+            unit22.hexLocation = map.getHex(7, 6);
+            unit22.angle = 180;
+            leader21.hexLocation = null;
+        when:
+            var moves = arbitrator.getAllowedAttackMoves(formation1);
+        then:
+            assert(moves.size).equalsTo(1);
+            assert([...moves][0].location.toString()).equalsTo(
+                new CBHexSideId(map.getHex(9, 10), map.getHex(8, 9)).location.toString()
+            );
+    });
+
     it("Checks fire moves", () => {
         given:
             var {arbitrator, map, unit11, unit21, unit22, leader21} = create2Players4UnitsTinyGame();
@@ -884,4 +903,5 @@ describe("Movement teacher", ()=> {
         then:
             assert(moves).isNotDefined();
     });
+
 });

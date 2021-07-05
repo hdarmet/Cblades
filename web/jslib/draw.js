@@ -10,7 +10,7 @@ import {
 /**
  * _platform is a facade used to abstract the real (DOM) platform. Useful when this platform has to be replaced by a
  * fake one for tests purposes.
- * _targetPlateform is the facade that connect to the real platform (i.e. the canvas DOM objects on the navigator)
+ * _targetPlatform is the facade that connect to the real platform (i.e. the canvas DOM objects on the navigator)
  */
 let _targetPlatform = {
 
@@ -347,7 +347,9 @@ export class DLayer {
 
     setStrokeSettings(color, width) {
         this._execute(()=> {
-            _platform.setStrokeStyle(this._context, color);
+            if (color) {
+                _platform.setStrokeStyle(this._context, color);
+            }
             _platform.setLineWidth(this._context, width);
         });
         return this;
@@ -362,7 +364,9 @@ export class DLayer {
 
     setShadowSettings(color, width) {
         this._execute(()=> {
-            _platform.setShadowColor(this._context, color);
+            if (width && color) {
+                _platform.setShadowColor(this._context, color);
+            }
             _platform.setShadowBlur(this._context, width);
         });
         return this;
@@ -392,8 +396,12 @@ export class DLayer {
     setTextSettings(font, textAlign = 'center', textBaseline = 'middle') {
         this._execute(()=> {
             _platform.font(this._context, font);
-            _platform.textAlign(this._context, textAlign);
-            _platform.textBaseline(this._context, textBaseline);
+            if (textAlign) {
+                _platform.textAlign(this._context, textAlign);
+            }
+            if (textBaseline) {
+                _platform.textBaseline(this._context, textBaseline);
+            }
         });
         return this;
     }

@@ -24,13 +24,38 @@ export let mockPlatform = {
 
     init() {
         this._pixel = [255, 255, 255, 255];
+        this._defaultContext = this.getContext();
+        this._time = 100;
         this._mockWindow = {
             innerWidth:1500, innerHeight:1000,
-                defaultWidth:1500, defaultHeight:1000,
-                body:{
+            defaultWidth:1500, defaultHeight:1000,
+            body:{
                 style:{}
             },
             fullScreen: false
+        };
+    },
+
+    getDefaultContext() {
+        return this._defaultContext;
+    },
+
+    setTime(time) {
+        this._time = time;
+    },
+
+    addTime(delay) {
+        this._time += delay;
+    },
+
+    getTime() {
+        return this._time;
+    },
+
+    measureText(context, text) {
+        write(context, `measureText(${text})`);
+        return {
+            width: text.length*5
         };
     },
 

@@ -18,11 +18,11 @@ class FireStartArtifact extends RetractableArtifactMixin(CBCounterImageArtifact)
 export class CBFireStart extends RetractableCounterMixin(CBPlayable) {
 
     constructor() {
-        super("map", ['/CBlades/images/actions/start-fire.png'], CBFireStart.DIMENSION);
+        super("ground", ['/CBlades/images/actions/start-fire.png'], CBFireStart.DIMENSION);
     }
 
     createArtifact(levelName, images, position, dimension) {
-        return new FireStartArtifact(this, levelName, images, position.plus(-15, 15), dimension);
+        return new FireStartArtifact(this, levelName, images, position/*.plus(-15, 15)*/, dimension);
     }
 
     /*
@@ -50,11 +50,11 @@ class StakesArtifact extends RetractableArtifactMixin(CBCounterImageArtifact) {
 export class CBStakes extends RetractableCounterMixin(CBPlayable) {
 
     constructor() {
-        super("map", ['/CBlades/images/actions/stakes.png'], CBStakes.DIMENSION);
+        super("ground", ['/CBlades/images/actions/stakes.png'], CBStakes.DIMENSION);
     }
 
     createArtifact(levelName, images, position, dimension) {
-        return new StakesArtifact(this, levelName, images, position.plus(-15, 15), dimension);
+        return new StakesArtifact(this, levelName, images, position/*.plus(-15, 15)*/, dimension);
     }
 
     /*

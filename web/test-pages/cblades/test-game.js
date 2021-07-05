@@ -993,6 +993,23 @@ describe("Game", ()=> {
         }
     }
 
+    it("Checks miscellaneous Aretifact methods ", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            let unit = new CBTestUnit(player, ["/CBlades/images/units/misc/unit1.png"]);
+            let markerImage = DImage.getImage("/CBlades/images/markers/misc/markers1.png");
+            let marker = new CBTestMarker(unit, "units", [markerImage],
+                new Point2D(0, 0), new Dimension2D(64, 64));
+            unit._element.addArtifact(marker);
+            game.start();
+            var hexId = map.getHex(4, 5);
+            unit.addToMap(hexId, CBMoveType.BACKWARD);
+        then:
+            assert(marker.game).equalsTo(game);
+    });
+
     it("Checks unit and option counters registration on layers", () => {
         given:
             var { game, map } = prepareTinyGame();
@@ -1205,6 +1222,24 @@ describe("Game", ()=> {
             assert(hexId.playables).arrayEqualsTo([]);
             assert(getDirectives(hexLayer, 4)).arrayEqualsTo([
             ]);
+    });
+
+    it("Checks getByType method", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            class PlayableOne extends CBPlayable {};
+            class PlayableTwo extends CBPlayable {};
+            class PlayableThree extends CBPlayable {};
+            var playable1 = new PlayableOne("ground", ["/CBlades/images/units/misc/one.png"], new Dimension2D(50, 50));
+            var playable2 = new PlayableTwo("ground", ["/CBlades/images/units/misc/two.png"], new Dimension2D(50, 50));
+            game.start();
+            var hexId = map.getHex(4, 5);
+        when:
+            playable1.addToMap(hexId);
+            playable2.addToMap(hexId);
+        then:
+            assert(CBPlayable.getByType(hexId, PlayableOne)).equalsTo(playable1);
+            assert(CBPlayable.getByType(hexId, PlayableThree)).isNotDefined();
     });
 
     it("Checks playable addition and removing on a Hex (undoable)", () => {

@@ -96,4 +96,70 @@ describe("Miscellaneous teacher", ()=> {
             assert(arbitrator.isAllowedToPerformMiscellaneousActions(unit11)).isTrue();
     });
 
+    it("Checks misceallaneous actions acceptance", () => {
+        given:
+            var {arbitrator, unit11} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.getAllowedMiscellaneousActions(unit11);
+        then:
+            assert(result).objectEqualsTo({
+                setFire: true,
+                extinguishFire: true,
+                setStakes: true,
+                removeStakes: true
+            });
+    });
+
+    it("Checks set fire success checking", () => {
+        given:
+            var {arbitrator, unit11} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processSetFireResult(unit11, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processSetFireResult(unit11, [5, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks extinguish fire success checking", () => {
+        given:
+            var {arbitrator, unit11} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processExtinguishFireResult(unit11, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processExtinguishFireResult(unit11, [5, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks set stakes success checking", () => {
+        given:
+            var {arbitrator, unit11} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processSetStakesResult(unit11, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processSetStakesResult(unit11, [5, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks remove stakes success checking", () => {
+        given:
+            var {arbitrator, unit11} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processRemoveStakesResult(unit11, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processRemoveStakesResult(unit11, [5, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
 });

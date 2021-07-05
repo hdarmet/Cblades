@@ -228,7 +228,7 @@ export class DIconMenuItem extends DImageArtifact {
     }
 
     onMouseEnter(event) {
-        this._startMouseOn = targetPlatform().getTime();
+        this._startMouseOn = getDrawPlatform().getTime();
         if (this._active) {
             this.setSettings(this.mouseOverSettings);
             this.element.refresh();
@@ -253,8 +253,8 @@ export class DIconMenuItem extends DImageArtifact {
 
     onMouseMove(event) {
         if (this._tooltipMessage && this._startMouseOn) {
-            let time = targetPlatform().getTime();
-            if (time - this._startMouseOn > DTooltip.DELAY) {
+            let time = getDrawPlatform().getTime();
+            if (time - this._startMouseOn >= DTooltip.DELAY) {
                 delete this._startMouseOn;
                 this.element.openTooltip(this._tooltipMessage, this._level.getPoint(new Point2D(event.offsetX, event.offsetY)));
             }

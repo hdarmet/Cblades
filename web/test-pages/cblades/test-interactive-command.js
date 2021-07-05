@@ -92,7 +92,7 @@ describe("Interactive Command", ()=> {
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/order-given-cost.png, -27.5, -27.5, 55, 55)",
-                "shadowColor = #000000", "shadowBlur = 0",
+                "shadowBlur = 0",
                 "font = bold 30px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #006600",
                 `fillText(${cost}, 0, 10)`,
             "restore()"
@@ -342,7 +342,7 @@ describe("Interactive Command", ()=> {
             assert(wing.orderInstruction).equalsTo(CBOrderInstruction.DEFEND);
     });
 
-    it("Checks failed change order command action process ", () => {
+    it("Checks failed change order command action process", () => {
         given:
             var {game, wing, leader} = createTinyGameWithLeader();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
@@ -680,4 +680,5 @@ describe("Interactive Command", ()=> {
             assertDirectives(widgetsLayer, showInsertMark(525.3333, 760)); // Mark for distance
             assertNoMoreDirectives(widgetsLayer);
     });
+
 });

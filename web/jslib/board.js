@@ -1033,8 +1033,8 @@ export class DLevel {
         this.layer.fillRect(anchor, dimension);
     }
 
-    setTextSettings(font, align) {
-        this.layer.setTextSettings(font, align);
+    setTextSettings(font, align, baseline) {
+        this.layer.setTextSettings(font, align, baseline);
     }
 
     drawText(anchor, text) {

@@ -32,7 +32,7 @@ import {
     zoomAndRotate0, zoomAndRotate30, zoomAndRotate60, zoomAndRotate90, zoomAndRotate120, zoomAndRotate150,
     zoomAndRotate180, zoomAndRotate210, zoomAndRotate240, zoomAndRotate270, zoomAndRotate300, zoomAndRotate330,
     showFailureResult, showSuccessResult, showInsert, showMask, showDice, showPlayedDice, showMarker, showSelectedTroop,
-    showSelectedFormation, showMenuPanel, showMenuItem, showMultiInsert, showInsertCommand
+    showSelectedFormation, showMenuPanel, showMenuItem, showMultiInsert, showInsertCommand, showInsertMark
 } from "./interactive-tools.js";
 import {
     createTinyGame,
@@ -871,6 +871,8 @@ describe("Interactive Movement", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("check-attacker-engagement", 227, 386.5, 444, 763));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 372));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 390));
             assertDirectives(widgetsLayer, showInsert("moral", 661, 202, 444, 389));
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showDice(1, 1, 549, 426.5));
@@ -1495,6 +1497,8 @@ describe("Interactive Movement", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("check-confront-engagement", 227, 386.5, 444, 763));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 372));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 390));
             assertDirectives(widgetsLayer, showInsert("moral", 661, 202, 444, 389));
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showDice(1, 1, 549, 426.5));
@@ -1528,6 +1532,8 @@ describe("Interactive Movement", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("check-confront-engagement", 227, 386.5, 444, 763));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 372));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 390));
             assertDirectives(widgetsLayer, showInsert("moral", 661, 202, 444, 389));
             skipDirectives(commandsLayer, 4);
             assertDirectives(commandsLayer, showSuccessResult(449, 386.5));
@@ -1565,6 +1571,8 @@ describe("Interactive Movement", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("check-confront-engagement", 227, 386.5, 444, 763));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 372));
+            assertDirectives(widgetsLayer, showInsertMark( 20, 390));
             assertDirectives(widgetsLayer, showInsert("moral", 661, 202, 444, 389));
             skipDirectives(commandsLayer, 4);
             assertDirectives(commandsLayer, showFailureResult(449, 386.5));

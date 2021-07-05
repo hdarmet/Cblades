@@ -426,7 +426,7 @@ export class CBCombatTeacher {
         let foeCondition = null;
         for (let foe of foes.keys()) {
             let thisFoeCondition = this.getFoeConditionForEngagement(foe, unit);
-            if (!foeCondition || thisFoeCondition.modifier<foeCondition.modifier) {
+            if (!foeCondition || thisFoeCondition.modifier>foeCondition.modifier) {
                 foeCondition = thisFoeCondition;
             }
         }

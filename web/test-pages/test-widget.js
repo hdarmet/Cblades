@@ -272,6 +272,143 @@ describe("Widget", ()=> {
             ]);
     });
 
+    it("Checks tooltip (of icon menu item) behavior", () => {
+        given:
+            var { board, commandsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            resetDirectives(commandsLayer);
+            let clicked = 0;
+            let icon1 = new DIconMenuItem("/CBlades/images/icons/menu1.png", "/CBlades/images/icons/menu1-grayed.png",
+                0, 0,
+                ()=>{
+                    clicked++;
+                    return clicked===2; // click two times to return true;
+                },
+                "tooltip message");
+            let icon2 = new DIconMenuItem("/CBlades/images/icons/menu2.png", "/CBlades/images/icons/menu2-grayed.png",
+                0, 1,
+                ()=>{
+                    clicked++;
+                    return clicked===2; // click two times to return true;
+                },
+                "other tooltip message");
+            let menu = new DIconMenu(false, icon1, icon2);
+            menu.open(board, new Point2D(5, 5));
+            loadAllImages();
+            board.paint();
+            var iconVPLocation = icon1.viewportLocation;
+        when: // mouseover icon
+            resetDirectives(commandsLayer);
+            var event = createEvent("mousemove", {offsetX:iconVPLocation.x, offsetY:iconVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
+        when:
+            getDrawPlatform().addTime(500);
+            resetDirectives(commandsLayer);
+            executeTimeouts();
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo( [
+                "save()",
+                    "setTransform(1, 0, 0, 1, 47.5, 40)",
+                    "fillStyle = #FFFFE4",
+                    "fillRect(-42.5, -15, 85, 30)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-42.5, -15, 85, 30)",
+                    "font = 15px serif", "textAlign = center", "textBaseline = middle",
+                    "shadowBlur = 0", "lineWidth = 0",
+                    "strokeText(tooltip message, 0, 0)",
+                    "fillStyle = #000000",
+                    "fillText(tooltip message, 0, 0)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(commandsLayer);
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 47.5, 40)",
+                    "fillStyle = #FFFFE4", "fillRect(-42.5, -15, 85, 30)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-42.5, -15, 85, 30)",
+                    "font = 15px serif", "textAlign = center", "textBaseline = middle",
+                    "shadowBlur = 0", "lineWidth = 0",
+                    "strokeText(tooltip message, 0, 0)",
+                    "fillStyle = #000000",
+                    "fillText(tooltip message, 0, 0)",
+                "restore()"
+            ]);
+        when:
+            iconVPLocation = icon2.viewportLocation;
+            event = createEvent("mousemove", {offsetX:iconVPLocation.x, offsetY:iconVPLocation.y});
+            resetDirectives(commandsLayer);
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+            ]);
+    });
+
+
+    it("Checks that a tooltip is automatically closed if another one is opened", () => {
+        given:
+            var { board, commandsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            resetDirectives(commandsLayer);
+            let clicked = 0;
+            let icon1 = new DIconMenuItem("/CBlades/images/icons/menu1.png", "/CBlades/images/icons/menu1-grayed.png",
+                0, 0,
+                ()=>{
+                    clicked++;
+                    return clicked===2; // click two times to return true;
+                },
+                "tooltip message");
+            let menu = new DIconMenu(false, icon1);
+            menu.open(board, new Point2D(5, 5));
+            menu.openTooltip("First tooltip", new Point2D(-20, -20));
+            loadAllImages();
+            board.paint();
+            var iconVPLocation = icon1.viewportLocation;
+        when: // mouseover icon
+            resetDirectives(commandsLayer);
+            var event = createEvent("mousemove", {offsetX:iconVPLocation.x, offsetY:iconVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 42.5, 20)",
+                    "fillStyle = #FFFFE4",
+                    "fillRect(-37.5, -15, 75, 30)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-37.5, -15, 75, 30)",
+                    "font = 15px serif", "textAlign = center", "textBaseline = middle",
+                    "shadowBlur = 0", "lineWidth = 0",
+                    "strokeText(First tooltip, 0, 0)",
+                    "fillStyle = #000000",
+                    "fillText(First tooltip, 0, 0)",
+                "restore()"
+            ]);
+        when:
+            getDrawPlatform().addTime(500);
+            resetDirectives(commandsLayer);
+            executeTimeouts();
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo( [
+                "save()",
+                "setTransform(1, 0, 0, 1, 47.5, 40)",
+                "fillStyle = #FFFFE4",
+                "fillRect(-42.5, -15, 85, 30)",
+                "strokeStyle = #000000", "lineWidth = 1",
+                "strokeRect(-42.5, -15, 85, 30)",
+                "font = 15px serif", "textAlign = center", "textBaseline = middle",
+                "shadowBlur = 0", "lineWidth = 0",
+                "strokeText(tooltip message, 0, 0)",
+                "fillStyle = #000000",
+                "fillText(tooltip message, 0, 0)",
+                "restore()"
+            ]);
+    });
+
     it("Checks inactive icon menu item behavior", () => {
         given:
             var { board, itemsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);

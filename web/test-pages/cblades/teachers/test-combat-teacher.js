@@ -156,7 +156,6 @@ describe("Combat teacher", ()=> {
         assert(zones[angle].moveType).equalsTo(moveType);
     }
 
-
     it("Checks attacker engagement result", () => {
         given:
             var {arbitrator, unit12, unit21} = create2Players4UnitsTinyGame();
@@ -213,6 +212,69 @@ describe("Combat teacher", ()=> {
             unit12.angle = 180;
         then:
             assert(arbitrator.isAllowedToShockAttack(unit12)).isFalse();
+    });
+
+    it("Checks engagement condition (first case)", () => {
+        given:
+            var {arbitrator, unit12, unit21} = create2Players4UnitsTinyGame();
+            unit12.markAsCharging(CBCharge.CHARGING);
+            unit12.angle = 90;
+            unit21.hexLocation = unit12.hexLocation.getNearHex(0);
+            unit21.angle = 180;
+            unit21.markAsCharging(CBCharge.CHARGING);
+        when:
+            var condition = arbitrator.getEngagementCondition(unit12);
+        then:
+            assert(condition).objectEqualsTo({
+                capacity: 1,
+                foeIsCharging: 1,
+                sideAdvantage: 1,
+                unitIsCharging: -1,
+                weapons: 0,
+                modifier: 2
+            });
+    });
+
+    it("Checks engagement condition (second case)", () => {
+        given:
+            var {map, arbitrator, leader11, leader21} = create2Players4UnitsTinyGame();
+            leader11.hexLocation = map.getHex(4, 3);
+            leader11.angle = 180;
+            leader21.hexLocation = leader11.hexLocation.getNearHex(0);
+            leader21.angle = 180;
+        when:
+            var condition = arbitrator.getEngagementCondition(leader11);
+        then:
+            assert(condition).objectEqualsTo({
+                backAdvantage: 2,
+                capacity: 1,
+                foeIsACharacter: -1,
+                unitIsACharacter: 1,
+                weapons: 0,
+                modifier: 3
+            });
+    });
+
+    it("Checks that for an engagement the worst foe is selected", () => {
+        given:
+            var {arbitrator, unit12, unit21, unit22} = create2Players4UnitsTinyGame();
+            unit12.markAsCharging(CBCharge.CHARGING);
+            unit12.angle = 30;
+            unit21.hexLocation = unit12.hexLocation.getNearHex(0);
+            unit21.angle = 180;
+            unit22.hexLocation = unit12.hexLocation.getNearHex(60);
+            unit22.angle = 240;
+            unit22.markAsCharging(CBCharge.CHARGING);
+        when:
+            var condition = arbitrator.getEngagementCondition(unit12);
+        then:
+            assert(condition).objectEqualsTo({
+                weapons: 0,
+                capacity: 1,
+                foeIsCharging: 1,
+                unitIsCharging: -1,
+                modifier: 1
+            });
     });
 
     it("Checks if a unit has fire capacities", () => {
