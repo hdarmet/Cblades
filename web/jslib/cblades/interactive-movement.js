@@ -1147,7 +1147,7 @@ class HelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         this._level.setFillSettings(this._extended ? "#bF9000" : "#2F528F");
         this._level.fillText(
             "" + (this._extended ? this.actuator.unit.extendedMovementPoints :  this.actuator.unit.movementPoints),
-            new Point2D(0, 10)
+            new Point2D(0, 0)
         );
     }
 
@@ -1212,7 +1212,7 @@ class RotateCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         if (this._cost.value !== undefined) {
             this._level.setTextSettings("bold 30px serif", "center");
             this._level.setFillSettings(this._type === CBMovement.NORMAL ? "#2F528F" : "#bF9000");
-            this._level.fillText("" + this._cost.value, new Point2D(0, 10));
+            this._level.fillText("" + this._cost.value, new Point2D(0, 0));
         }
     }
 
@@ -1297,7 +1297,7 @@ class MoveCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         if (this._cost.value !== undefined) {
             this._level.setTextSettings("bold 35px serif", "center");
             this._level.setFillSettings(this._type === CBMovement.NORMAL ? "#2F528F" : "#bF9000");
-            this._level.fillText("" + this._cost.value, new Point2D(0, 10));
+            this._level.fillText("" + this._cost.value, new Point2D(0, 0));
         }
     }
 
@@ -1388,7 +1388,7 @@ class MoveFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         if (this._cost.value !== undefined) {
             this._level.setTextSettings("bold 35px serif", "center");
             this._level.setFillSettings(this._type === CBMovement.NORMAL ? "#2F528F" : "#bF9000");
-            this._level.fillText("" + this._cost.value, new Point2D(0, 10));
+            this._level.fillText("" + this._cost.value, new Point2D(0, 0));
         }
     }
 
@@ -1440,7 +1440,7 @@ class TurnFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         if (this._cost.value !== undefined) {
             this._level.setTextSettings("bold 35px serif", "center");
             this._level.setFillSettings(this._type === CBMovement.NORMAL ? "#2F528F" : "#bF9000");
-            this._level.fillText("" + this._cost.value, new Point2D(0, 10));
+            this._level.fillText("" + this._cost.value, new Point2D(0, 0));
         }
     }
 

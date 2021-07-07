@@ -14,6 +14,56 @@ export class CBUnitManagementTeacher {
         return { success };
     }
 
+    processCohesionLostResult(unit, diceResult) {
+        let success = diceResult[0]+diceResult[1]<=unit.moral;
+        return { success };
+    }
+
+    getFriendNonRoutedNeighbors(unit) {
+        let friends = [];
+        for (let neighbor of this.getNeighbors(unit.hexLocation)) {
+            if (this.areUnitsFriends(unit, neighbor) && !neighbor.isRouted()) {
+                friends.push(neighbor);
+            }
+        }
+        return friends;
+    }
+
+    doesANonRoutedUnitHaveRoutedNeighbors(unit) {
+        if (unit.isRouted()) return false;
+        for (let neighbor of this.getNeighbors(unit.hexLocation)) {
+            if (this.areUnitsFriends(unit, neighbor) && neighbor.isRouted()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    doesARoutedUnitHaveNonRoutedNeighbors(unit) {
+        if (!unit.isRouted()) return false;
+        for (let neighbor of this.getNeighbors(unit.hexLocation)) {
+            if (this.areUnitsFriends(unit, neighbor) && !neighbor.isRouted()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    doesADestroyedUnitHaveNonRoutedNeighbors(unit, hexLocation) {
+        for (let neighbor of this.getNeighbors(hexLocation)) {
+            if (this.areUnitsFriends(unit, neighbor) && !neighbor.isRouted()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    getUnitCohesionLostCondition(unit) {
+        return {
+            modifier: 0
+        }
+    }
+
     getUnitOfType(units, type) {
         let troops = [];
         for (let unit of units) {
@@ -176,16 +226,24 @@ export class CBUnitManagementTeacher {
         return this.getSideWhereAUnitPotentiallyEngageAnotherUnit(attacker, defender, defender.hexLocation, defender.angle, unitMustHaveAnEngagingMarker);
     }
 
-    getPotentialEngagingFoes(defender, defenderHexLocation, defenderAngle, foesMustHaveEngagingMarkers=false) {
-        let hexes = defenderHexLocation.nearHexes;
-        let foes = new Map();
-        for (let [hexId, angle] of hexes.entries()) {
+    getNeighbors(hexLocation) {
+        let hexes = hexLocation.nearHexes;
+        let neighbors = new Set();
+        for (let [hexId] of hexes.entries()) {
             let nearUnits = hexId.map.getUnitsOnHex(hexId);
             for (let nearUnit of nearUnits) {
-                let side = this.getSideWhereAUnitPotentiallyEngageAnotherUnit(nearUnit, defender, defenderHexLocation, defenderAngle, foesMustHaveEngagingMarkers);
-                if (side) {
-                    foes.set(nearUnit, side);
-                }
+                neighbors.add(nearUnit);
+            }
+        }
+        return [...neighbors];
+    }
+
+    getPotentialEngagingFoes(defender, defenderHexLocation, defenderAngle, foesMustHaveEngagingMarkers=false) {
+        let foes = new Map();
+        for (let nearUnit of this.getNeighbors(defenderHexLocation)) {
+            let side = this.getSideWhereAUnitPotentiallyEngageAnotherUnit(nearUnit, defender, defenderHexLocation, defenderAngle, foesMustHaveEngagingMarkers);
+            if (side) {
+                foes.set(nearUnit, side);
             }
         }
         return foes;

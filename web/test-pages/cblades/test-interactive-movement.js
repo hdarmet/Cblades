@@ -79,7 +79,7 @@ describe("Interactive Movement", ()=> {
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/standard-move-cost.png, -35, -35, 70, 70)",
                 "font = bold 35px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #2F528F",
-            `fillText(${cost}, 0, 10)`,
+            `fillText(${cost}, 0, 0)`,
             "restore()",
         ];
     }
@@ -101,7 +101,7 @@ describe("Interactive Movement", ()=> {
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/standard-move-cost.png, -27.5, -27.5, 55, 55)",
                 "font = bold 30px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #2F528F",
-            `fillText(${cost}, 0, 10)`,
+            `fillText(${cost}, 0, 0)`,
             "restore()",
         ];
     }
@@ -113,7 +113,7 @@ describe("Interactive Movement", ()=> {
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/standard-movement-points.png, -27.5, -27.5, 55, 55)",
                 "font = bold 30px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #2F528F",
-            `fillText(${move}, 0, 10)`,
+            `fillText(${move}, 0, 0)`,
             "restore()"
         ];
     }
@@ -135,7 +135,7 @@ describe("Interactive Movement", ()=> {
                 "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(/CBlades/images/actuators/standard-turn-cost.png, -35, -35, 70, 70)",
                 "font = bold 35px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #2F528F",
-            `fillText(${cost}, 0, 10)`,
+            `fillText(${cost}, 0, 0)`,
             "restore()"
         ];
     }

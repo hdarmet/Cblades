@@ -5,7 +5,7 @@ import {
     DDice, DIconMenu, DIconMenuItem, DIndicator, DInsert, DMask, DResult, DScene
 } from "../widget.js";
 import {
-    Mechanisms
+    Mechanisms, Memento
 } from "../mechanisms.js";
 import {
     CBAbstractPlayer, CBGame, WidgetLevelMixin
@@ -20,21 +20,90 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         super();
     }
 
-    startActivation(unit, action) {
-        if (unit.isEngaging()) {
-            unit.markAsEngaging(false);
+    _doDisruptChecking(unit, processing) {
+        if (this.game.arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit)) {
+            this.checkIfAUnitLoseCohesion(unit, () => {
+                this.game.setFocusedUnit(unit);
+                Memento.clear();
+                processing();
+            });
         }
+        else {
+            processing();
+        }
+    }
+
+    _doRoutChecking(unit, processing) {
+        if (this.game.arbitrator.doesARoutedUnitHaveNonRoutedNeighbors(unit)) {
+            this.checkIfNeighborsLoseCohesion(unit, () => {
+                this.game.setFocusedUnit(unit);
+                Memento.clear();
+                this._doDisruptChecking(unit, processing);
+            });
+        }
+        else {
+            this._doDisruptChecking(unit, processing);
+        }
+    }
+
+    _checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing) {
+        if (neighbors.length) {
+            let neighbor = neighbors.pop();
+            this.checkIfAUnitLoseCohesion(neighbor, () => {
+                this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing);
+            });
+        }
+        else {
+            processing();
+        }
+    }
+
+    checkIfNeighborsLoseCohesion(unit, processing) {
+        let neighbors = this.game.arbitrator.getFriendNonRoutedNeighbors(unit);
+        if (neighbors.length) {
+            this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing);
+        }
+        else {
+            processing();
+        }
+    }
+
+    _doDestroyedChecking(unit, hexLocation) {
+        if (this.game.arbitrator.doesADestroyedUnitHaveNonRoutedNeighbors(unit, hexLocation)) {
+            this.checkIfNeighborsLoseCohesion(unit, () => {
+                this.game.setFocusedUnit(unit);
+            });
+        }
+    }
+
+    _doEngagementChecking(unit, processing) {
         if (this.game.arbitrator.isUnitEngaged(unit, true)) {
             this.checkDefenderEngagement(unit, unit.viewportLocation, () => {
+                let hexLocation = unit.hexLocation;
                 if (unit.isOnBoard()) {
                     this.game.setFocusedUnit(unit);
-                    super.startActivation(unit, action);
+                    Memento.clear();
+                    this._doRoutChecking(unit, processing);
+                }
+                else {
+                    this._doDestroyedChecking(unit, hexLocation);
                 }
             });
         }
         else {
-            super.startActivation(unit, action);
+            this._doRoutChecking(unit, processing);
         }
+    }
+
+    _doPreliminaryActions(unit, processing) {
+        this._doEngagementChecking(unit, processing);
+    }
+
+    startActivation(unit, action) {
+        if (unit.isEngaging()) {
+            unit.markAsEngaging(false);
+        }
+        this._doPreliminaryActions(unit, ()=> super.startActivation(unit, action));
     }
 
     launchUnitAction(unit, event) {
@@ -77,6 +146,43 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         });
     }
 
+    checkIfAUnitLoseCohesion(unit, action) {
+        let result = new DResult();
+        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+            if (result.finished) {
+                action();
+            }
+        }
+        mask.setAction(close);
+        mask.open(this.game.board, unit.viewportLocation);
+        let condition = this.game.arbitrator.getUnitCohesionLostCondition(unit);
+        scene.addWidget(
+            new CBLoseCohesionInsert(this.game, condition), new Point2D(-CBLoseCohesionInsert.DIMENSION.w/2, 0)
+        ).addWidget(
+            new CBMoralInsert(this.game, unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+        ).addWidget(
+            dice.setFinalAction(()=>{
+                dice.active = false;
+                let {success} = this._processCohesionLostResult(unit, dice.result);
+                if (success) {
+                    result.success().appear();
+                }
+                else {
+                    result.failure().appear();
+                }
+            }),
+            new Point2D(70, 70)
+        ).addWidget(
+            result.setFinalAction(close),
+            new Point2D(0, 0)
+        ).open(this.game.board, unit.viewportLocation);
+    }
+
     checkDefenderEngagement(unit, point, action) {
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
@@ -113,6 +219,14 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
             new Point2D(0, 0)
         ).open(this.game.board, point);
 
+    }
+
+    _processCohesionLostResult(unit, diceResult) {
+        let result = this.game.arbitrator.processCohesionLostResult(unit, diceResult);
+        if (!result.success) {
+            unit.addOneCohesionLevel();
+        }
+        return result;
     }
 
     _processDefenderEngagementResult(unit, diceResult) {
@@ -242,6 +356,16 @@ export class CBCheckDefenderEngagementInsert extends CBCheckEngagementInsert {
 
 }
 CBCheckDefenderEngagementInsert.DIMENSION = new Dimension2D(444, 763);
+
+export class CBLoseCohesionInsert extends WidgetLevelMixin(DInsert) {
+
+    constructor(game, condition) {
+        super(game, "/CBlades/images/inserts/lose-cohesion-insert.png", CBLoseCohesionInsert.DIMENSION);
+        this._condition = condition;
+    }
+
+}
+CBLoseCohesionInsert.DIMENSION = new Dimension2D(444, 330);
 
 export class CBMoralInsert extends WidgetLevelMixin(DInsert) {
 

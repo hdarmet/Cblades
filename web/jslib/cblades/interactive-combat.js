@@ -31,9 +31,6 @@ import {
     CBCombatTeacher
 } from "./teachers/combat-teacher.js";
 import {
-    CrossbowWeaponProfile
-} from "./profile.js";
-import {
     Memento
 } from "../mechanisms.js";
 
@@ -825,7 +822,7 @@ class ShockHelpTrigger extends CBUnitActuatorTrigger {
         this._level.setShadowSettings("#000000", 0);
         this._level.setTextSettings("bold 30px serif", "center");
         this._level.setFillSettings(this._supported ? "#9D2F12" : "#AD5A2D");
-        this._level.fillText("" + this._advantage.advantage, new Point2D(0, 10));
+        this._level.fillText("" + this._advantage.advantage, new Point2D(0, 0));
     }
 
     get foe() {
@@ -906,7 +903,7 @@ class FireHelpTrigger extends CBUnitActuatorTrigger {
         this._level.setShadowSettings("#000000", 0);
         this._level.setTextSettings("bold 30px serif", "center");
         this._level.setFillSettings("#A1124F");
-        this._level.fillText("" + this._advantage.advantage, new Point2D(0, 10));
+        this._level.fillText("" + this._advantage.advantage, new Point2D(0, 0));
     }
 
     setVisibility(visibility) {

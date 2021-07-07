@@ -388,7 +388,7 @@ class OrderGivenHelpTrigger extends CBUnitActuatorTrigger {
         this._level.setShadowSettings("#000000", 0);
         this._level.setTextSettings("bold 30px serif", "center");
         this._level.setFillSettings("#006600");
-        this._level.fillText("" + this._order.cost, new Point2D(0, 10));
+        this._level.fillText("" + this._order.cost, new Point2D(0, 0));
     }
 
     get order() {

@@ -94,7 +94,7 @@ describe("Interactive Command", ()=> {
                 "drawImage(/CBlades/images/actuators/order-given-cost.png, -27.5, -27.5, 55, 55)",
                 "shadowBlur = 0",
                 "font = bold 30px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #006600",
-                `fillText(${cost}, 0, 10)`,
+                `fillText(${cost}, 0, 0)`,
             "restore()"
         ]
     }
