@@ -20,59 +20,66 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         super();
     }
 
-    _doDisruptChecking(unit, processing) {
+    _doDestroyedChecking(unit, hexLocation) {
+        if (this.game.arbitrator.doesADestroyedUnitHaveNonRoutedNeighbors(unit, hexLocation)) {
+            this._checkIfNeighborsLoseCohesion(unit, hexLocation, () => {
+                Memento.clear();
+            }, false);
+        }
+    }
+
+    loseUnit(unit) {
+        let hexLocation = unit.hexLocation;
+        super.loseUnit(unit);
+        this._doDestroyedChecking(unit, hexLocation);
+    }
+
+    _doDisruptChecking(unit, processing, cancellable) {
         if (this.game.arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit)) {
             this.checkIfAUnitLoseCohesion(unit, () => {
-                this.game.setFocusedUnit(unit);
+                this._selectAndFocusUnit(unit);
                 Memento.clear();
                 processing();
-            });
+            }, cancellable);
         }
         else {
             processing();
         }
     }
 
-    _doRoutChecking(unit, processing) {
+    _doRoutChecking(unit, processing, cancellable) {
         if (this.game.arbitrator.doesARoutedUnitHaveNonRoutedNeighbors(unit)) {
-            this.checkIfNeighborsLoseCohesion(unit, () => {
-                this.game.setFocusedUnit(unit);
+            this._checkIfNeighborsLoseCohesion(unit, unit.hexLocation, () => {
+                this._selectAndFocusUnit(unit);
                 Memento.clear();
-                this._doDisruptChecking(unit, processing);
-            });
+                this._doDisruptChecking(unit, processing, false);
+            }, cancellable);
         }
         else {
-            this._doDisruptChecking(unit, processing);
+            this._doDisruptChecking(unit, processing, cancellable);
         }
     }
 
-    _checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing) {
+    _checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable) {
         if (neighbors.length) {
             let neighbor = neighbors.pop();
             this.checkIfAUnitLoseCohesion(neighbor, () => {
-                this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing);
-            });
+                Memento.clear();
+                this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, false);
+            }, cancellable);
         }
         else {
             processing();
         }
     }
 
-    checkIfNeighborsLoseCohesion(unit, processing) {
-        let neighbors = this.game.arbitrator.getFriendNonRoutedNeighbors(unit);
+    _checkIfNeighborsLoseCohesion(unit, hexLocation, processing, cancellable) {
+        let neighbors = this.game.arbitrator.getFriendNonRoutedNeighbors(unit, hexLocation);
         if (neighbors.length) {
-            this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing);
+            this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable);
         }
         else {
             processing();
-        }
-    }
-
-    _doDestroyedChecking(unit, hexLocation) {
-        if (this.game.arbitrator.doesADestroyedUnitHaveNonRoutedNeighbors(unit, hexLocation)) {
-            this.checkIfNeighborsLoseCohesion(unit, () => {
-                this.game.setFocusedUnit(unit);
-            });
         }
     }
 
@@ -81,22 +88,24 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
             this.checkDefenderEngagement(unit, unit.viewportLocation, () => {
                 let hexLocation = unit.hexLocation;
                 if (unit.isOnBoard()) {
-                    this.game.setFocusedUnit(unit);
+                    this._selectAndFocusUnit(unit);
                     Memento.clear();
-                    this._doRoutChecking(unit, processing);
-                }
-                else {
-                    this._doDestroyedChecking(unit, hexLocation);
+                    this._doRoutChecking(unit, processing, false);
                 }
             });
         }
         else {
-            this._doRoutChecking(unit, processing);
+            this._doRoutChecking(unit, processing, true);
         }
     }
 
     _doPreliminaryActions(unit, processing) {
         this._doEngagementChecking(unit, processing);
+    }
+
+    _selectAndFocusUnit(unit) {
+        this.game.setSelectedUnit(unit);
+        this.game.setFocusedUnit(unit);
     }
 
     startActivation(unit, action) {
@@ -146,15 +155,21 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         });
     }
 
-    checkIfAUnitLoseCohesion(unit, action) {
+    checkIfAUnitLoseCohesion(unit, action, cancellable) {
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            if (cancellable) {
+                mask.close();
+                scene.close();
+            }
             if (result.finished) {
+                if (!cancellable) {
+                    mask.close();
+                    scene.close();
+                }
                 action();
             }
         }

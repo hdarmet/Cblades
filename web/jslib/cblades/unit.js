@@ -816,13 +816,14 @@ export class CBUnit extends CBAbstractUnit {
     }
 
     takeALoss() {
-        Memento.register(this);
-        this._lossSteps++;
-        if (this._lossSteps >= this.maxStepCount) {
-            this.destroy();
-        }
-        else {
-            this.artifact.changeImage(this._lossSteps);
+        if (this._lossSteps <= this.maxStepCount) {
+            Memento.register(this);
+            this._lossSteps++;
+            if (this._lossSteps === this.maxStepCount) {
+                this.destroy();
+            } else {
+                this.artifact.changeImage(this._lossSteps);
+            }
         }
     }
 

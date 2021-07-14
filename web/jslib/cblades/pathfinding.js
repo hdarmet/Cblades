@@ -335,7 +335,7 @@ export function createArrivalsFromHexSides(start, hexSides) {
         let hangle = Math.round(atan2(diff.x, diff.y) / 30) * 30;
         let rangle = sumAngle(hexSide.angle, 90);
         let dangle = diffAngle(hangle, rangle);
-        result.push({hexLocation:hexSide, angle:(dangle < -90 || dangle > 90) ? rangle : invertAngle(rangle)})
+        result.push({hexLocation:hexSide, angle:(dangle < -90 || dangle > 90) ? invertAngle(rangle) : rangle})
     }
     return result;
 }

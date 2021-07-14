@@ -19,9 +19,9 @@ export class CBUnitManagementTeacher {
         return { success };
     }
 
-    getFriendNonRoutedNeighbors(unit) {
+    getFriendNonRoutedNeighbors(unit, hexLocation) {
         let friends = [];
-        for (let neighbor of this.getNeighbors(unit.hexLocation)) {
+        for (let neighbor of this.getNeighbors(hexLocation)) {
             if (this.areUnitsFriends(unit, neighbor) && !neighbor.isRouted()) {
                 friends.push(neighbor);
             }

@@ -47,6 +47,15 @@ export function registerInteractiveMiscellaneous() {
     CBInteractivePlayer.prototype.tryToRemoveStakes = function(unit, event) {
         unit.launchAction(new InteractiveRemoveStakesAction(this.game, unit, event));
     }
+    CBInteractivePlayer.prototype.playWeather = function(counter, event) {
+        if (this.game.canUnselectUnit()) {
+            let action = new InteractivePlayWeatherAction(this.game, counter, event);
+            let unit = this.game.selectedUnit;
+            this.afterActivation(unit, () => {
+                action.play();
+            });
+        }
+    }
     CBActionMenu.menuBuilders.push(
         createMiscellaneousMenuItems
     );
@@ -303,6 +312,84 @@ export class InteractiveRemoveStakesAction extends CBAction {
 
 }
 
+
+export class CBCounterAction {
+
+    constructor(game, counter) {
+        this._game = game;
+        this._counter = counter;
+    }
+
+    get game() {
+        return this._game;
+    }
+
+    get counter() {
+        return this._counter;
+    }
+
+    markAsPlayed() {
+        this._counter.markAsPlayed();
+    }
+
+}
+
+export class InteractivePlayWeatherAction extends CBCounterAction {
+
+    constructor(game, counter, event) {
+        super(game, counter);
+        this._event = event;
+    }
+
+    play() {
+        this.game.closePopup();
+        this.game.closeActuators();
+        let weather = this.game.arbitrator.getWeather();
+        let result = new DResult();
+        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+        };
+        mask.setAction(close);
+        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        scene.addWidget(
+            new CBPlayWeatherInsert(this.game),
+            new Point2D(-CBPlayWeatherInsert.DIMENSION.w/2, 0)
+        ).addWidget(
+            new CBWeatherIndicator(weather),
+            new Point2D(CBWeatherIndicator.DIMENSION.w/2-20, 100)
+        ).addWidget(
+            dice.setFinalAction(()=>{
+                dice.active = false;
+                let {success} = this._processPlayWeatherResult(this.unit, dice.result);
+                if (success) {
+                    result.success().appear();
+                }
+                else {
+                    result.failure().appear();
+                }
+            }),
+            new Point2D(60, -100)
+        ).addWidget(
+            result.setFinalAction(close),
+            new Point2D(0, 0)
+        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+    }
+
+    _processPlayWeatherResult(unit, diceResult) {
+        let result = this.game.arbitrator.processPlayWeatherResult(this.unit, diceResult);
+        if (result.success) {
+
+        }
+        this.markAsPlayed();
+        return result;
+    }
+
+}
+
 function createMiscellaneousMenuItems(unit, actions) {
     return [
         new DIconMenuItem("/CBlades/images/icons/do-fusion.png", "/CBlades/images/icons/do-fusion-gray.png",
@@ -397,3 +484,13 @@ export class CBRemoveStakesInsert extends WidgetLevelMixin(DInsert) {
 
 }
 CBRemoveStakesInsert.DIMENSION = new Dimension2D(444, 306);
+
+export class CBPlayWeatherInsert extends WidgetLevelMixin(DInsert) {
+
+    constructor(game) {
+        super(game, "/CBlades/images/inserts/meteo-insert.png", CBPlayWeatherInsert.DIMENSION, CBPlayWeatherInsert.PAGE_DIMENSION);
+    }
+
+}
+CBPlayWeatherInsert.DIMENSION = new Dimension2D(444, 600);
+CBPlayWeatherInsert.PAGE_DIMENSION = new Dimension2D(444, 1124);

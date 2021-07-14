@@ -68,6 +68,10 @@ export class CBAbstractPlayer {
         return this.game.getPlayerUnits(this);
     }
 
+    loseUnit(unit) {
+        unit.deleteFromMap();
+    }
+
     unselectUnit(unit) {
         if (unit.action) {
             unit.action.markAsFinished();
@@ -203,14 +207,15 @@ export class CBAction {
     get game() {
         return this._game;
     }
+
+    static INITIATED = 0;
+    static STARTED = 1;
+    static FINISHABLE = 1;
+    static FINISHED = 3;
+    static FINALIZED = 4;
+    static CANCELLED = -1;
+    static PROGRESSION_EVENT = "action-progression";
 }
-CBAction.INITIATED = 0;
-CBAction.STARTED = 1;
-CBAction.FINISHABLE = 1;
-CBAction.FINISHED = 3;
-CBAction.FINALIZED = 4;
-CBAction.CANCELLED = -1;
-CBAction.PROGRESSION_EVENT = "action-progression";
 
 export function CBActivableMixin(clazz) {
 
@@ -218,7 +223,31 @@ export function CBActivableMixin(clazz) {
 
         constructor(...args) {
             super(...args);
+            this._active = true;
             this.setSettings(this.settings);
+        }
+
+        _memento() {
+            let memento = super._memento();
+            memento.active = this._active;
+            return memento;
+        }
+
+        _register(memento) {
+            super._register(memento);
+            this._active = memento.active;
+        }
+
+        activate() {
+            Memento.register(this);
+            this._active = true;
+            this.setSettings(this.settings);
+        }
+
+        desactivate() {
+            Memento.register(this);
+            delete this._active;
+            this.setSettings(this.inactiveSettings);
         }
 
         get settings() {
@@ -233,15 +262,25 @@ export function CBActivableMixin(clazz) {
             }
         }
 
+        get inactiveSettings() {
+            return level => {
+                level.setShadowSettings("#000000", 10);
+            }
+        }
+
         onMouseEnter(event) {
-            this.setSettings(this.overSettings);
-            this.element.refresh();
+            if (this._active) {
+                this.setSettings(this.overSettings);
+                this.element.refresh();
+            }
             return true;
         }
 
         onMouseLeave(event) {
-            this.setSettings(this.settings);
-            this.element.refresh();
+            if (this._active) {
+                this.setSettings(this.settings);
+                this.element.refresh();
+            }
             return true;
         }
 
@@ -395,9 +434,9 @@ export class CBActuator {
 
     setVisibility(level) {}
 
+    static FULL_VISIBILITY = 2;
+    static VISIBILITY = {};
 }
-CBActuator.FULL_VISIBILITY = 2;
-CBActuator.VISIBILITY = {};
 
 export class CBActionActuator extends CBActuator {
 
@@ -485,6 +524,202 @@ export class CBMask extends WidgetLevelMixin(DMask) {
 
 }
 
+export function Displayable(clazz) {
+
+    return class extends clazz {
+
+        setOnGame(game) {
+            game.counterDisplay.addCounter(this);
+        }
+
+        removeFromGame(game) {
+            game.counterDisplay.removeCounter(this);
+        }
+
+        show(game) {
+            game.counterDisplay.appendCounter(this);
+        }
+
+        hide(game) {
+            game.counterDisplay.deleteCounter(this);
+        }
+
+        onMouseClick(event) {
+            if (!this.played) {
+                this.play(event);
+            }
+        }
+
+        isFinishable() {
+            return this.played;
+        }
+
+        markAsPlayed() {
+            this._played = true;
+        }
+
+        reset() {
+            delete this._played;
+        }
+
+        get played() {
+            return !!this._played;
+        }
+
+    }
+
+}
+
+export class CBCounterDisplay {
+
+    constructor(game) {
+        this._game = game;
+        this._counters = [];
+        this._vertical = CBCounterDisplay.TOP;
+        this._horizontal = CBCounterDisplay.LEFT;
+        Mechanisms.addListener(this);
+    }
+
+    _memento() {
+        return {
+            counters : [...this._counters],
+            vertical : this._vertical,
+            horizontal : this._horizontal
+        }
+    }
+
+    _revert(memento) {
+        this._counters = memento.counters;
+        this._vertical = memento.vertical;
+        this._horizontal = memento.horizontal;
+    }
+
+    _processGlobalEvent(source, event, value) {
+        if (event===DBoard.ZOOM_EVENT || event===DBoard.RESIZE_EVENT) {
+            this.adjustCounterLocations();
+        }
+        else if (event===DBoard.BORDER_EVENT) {
+            switch(value) {
+                case DBoard.BORDER.LEFT:
+                    this.setHorizontal(CBCounterDisplay.RIGHT);
+                    break;
+                case DBoard.BORDER.RIGHT:
+                    this.setHorizontal(CBCounterDisplay.LEFT);
+                    break;
+                case DBoard.BORDER.TOP:
+                    this.setVertical(CBCounterDisplay.BOTTOM);
+                    break;
+                case DBoard.BORDER.BOTTOM:
+                    this.setVertical(CBCounterDisplay.TOP);
+                    break;
+            }
+        }
+    }
+
+    addCounter(counter) {
+        console.assert(this._counters.indexOf(counter)<0);
+        this._counters.push(counter);
+        this._game._addCounter(counter);
+        this.setCounterLocations();
+        counter._setOnGame(this._game);
+    }
+
+    removeCounter(counter) {
+        let counterIndex = this._counters.indexOf(counter);
+        console.assert(counterIndex>=0);
+        this._counters.splice(counterIndex, 1);
+        this._game._removeCounter(counter);
+        this.setCounterLocations();
+        counter._removeFromGame();
+    }
+
+    appendCounter(counter) {
+        console.assert(this._counters.indexOf(counter)<0);
+        Memento.register(this);
+        this._counters.push(counter);
+        this._game._appendCounter(counter);
+        this.adjustCounterLocations();
+        counter._show(this._game);
+    }
+
+    deleteCounter(counter) {
+        let counterIndex = this._counters.indexOf(counter);
+        console.assert(counterIndex>=0);
+        Memento.register(this);
+        this._counters.splice(counterIndex, 1);
+        this._game._deleteCounter(counter);
+        this.removeCounter(counter);
+        this.adjustCounterLocations();
+        counter._hide(this._game);
+    }
+
+    get horizontal() {
+        return this._horizontal;
+    }
+
+    set horizontal(horizontal) {
+        this._horizontal = horizontal;
+        this.setCounterLocations();
+    }
+
+    setHorizontal(horizontal) {
+        Memento.register(this);
+        this.horizontal = horizontal;
+        this.adjustCounterLocations();
+    }
+
+    get vertical() {
+        return this._vertical;
+    }
+
+    set vertical(vertical) {
+        this._vertical = vertical;
+        this.setCounterLocations();
+    }
+
+    setVertical(vertical) {
+        Memento.register(this);
+        this.vertical = vertical;
+        this.adjustCounterLocations();
+    }
+
+    _computeCounterLocation(setLocation) {
+        let level = this._game.board.getLevel("counters");
+        let markersLevel = this._game.board.getLevel("counter-markers");
+        let zoomFactor= this._game.zoomFactor;
+        level.setTransform(Matrix2D.scale(new Point2D(zoomFactor, zoomFactor), new Point2D(0, 0)));
+        markersLevel.setTransform(Matrix2D.scale(new Point2D(zoomFactor, zoomFactor), new Point2D(0, 0)));
+        let leftBottomPoint = level.getFinalPoint();
+        let index = 0;
+        for (let counter of this._counters) {
+            let x = this._horizontal === CBCounterDisplay.LEFT ?
+                CBCounterDisplay.MARGIN * index + CBCounterDisplay.XMARGIN :
+                leftBottomPoint.x -CBCounterDisplay.MARGIN * index -CBCounterDisplay.YMARGIN ;
+            let y = this._vertical === CBCounterDisplay.TOP ?
+                CBCounterDisplay.YMARGIN :
+                leftBottomPoint.y -CBCounterDisplay.YMARGIN;
+            setLocation(counter, new Point2D(x, y));
+            index += 1;
+        }
+    }
+
+    setCounterLocations() {
+        this._computeCounterLocation((counter, point)=>counter.location = point);
+    }
+
+    adjustCounterLocations() {
+        this._computeCounterLocation((counter, point)=>counter.setLocation(point));
+    }
+
+    static MARGIN = 200;
+    static XMARGIN = 125;
+    static YMARGIN = 125;
+    static LEFT = 0;
+    static RIGHT = 1;
+    static TOP = 0;
+    static BOTTOM = 1;
+}
+
 export class CBGame {
 
     constructor() {
@@ -493,6 +728,7 @@ export class CBGame {
         this._counters = new Set();
         this._visibility = 2;
         this._commands = new Set();
+        this._counterDisplay = new CBCounterDisplay(this);
         Mechanisms.addListener(this);
     }
 
@@ -501,6 +737,7 @@ export class CBGame {
     }
 
     _buildBoard(map) {
+
         function createHexArtifactSlot(slotIndex) {
             let delta = Matrix2D.translate(new Point2D(-slotIndex*20, -slotIndex*20+20));
             return [
@@ -554,6 +791,8 @@ export class CBGame {
             new DStackedLevel("ground", getHexArtifactSlot, getHexArtifactLayer, createHexArtifactSlot),
             new DStackedLevel("units", getUnitArtifactSlot, getUnitArtifactLayer, createUnitArtifactSlot),
             new DSimpleLevel("actuators"),
+            new DStaticLevel("counters"),
+            new DStaticLevel("counter-markers"),
             new DStaticLevel("widgets"),
             new DStaticLevel("widget-items"),
             new DStaticLevel("widget-commands"));
@@ -613,8 +852,16 @@ export class CBGame {
         this._arbitrator.game = this;
     }
 
+    get counterDisplay() {
+        return this._counterDisplay;
+    }
+
     get map() {
         return this._map;
+    }
+
+    get zoomFactor() {
+        return this.board.zoomFactor;
     }
 
     setMap(map) {
@@ -633,9 +880,8 @@ export class CBGame {
         }
     }
 
-    addCounter(counter, location) {
+    addCounter(counter) {
         this._counters.add(counter)
-        counter.location = location;
         counter._setOnGame(this);
     }
 
@@ -800,7 +1046,9 @@ export class CBGame {
             this.currentPlayer.finishTurn(animation);
         }).setTurnAnimation(true);
         this._endOfTurnCommand._processGlobalEvent = (source, event)=>{
-            if (event === CBGame.TURN_EVENT || event === CBAction.PROGRESSION_EVENT || event === CBAbstractUnit.DESTROYED_EVENT) {
+            if (event === CBGame.TURN_EVENT ||
+                event === CBAction.PROGRESSION_EVENT ||
+                event === CBAbstractUnit.DESTROYED_EVENT) {
                 this._endOfTurnCommand.active = this.turnIsFinishable();
             }
         }
@@ -1018,20 +1266,20 @@ export class CBGame {
         }
     }
 
+    static TURN_EVENT = "game-turn";
+    static POPUP_MARGIN = 10;
+    static ULAYERS = {
+        SPELLS: 0,
+        FORMATIONS: 1,
+        FMARKERS: 2,
+        FOPTIONS: 3,
+        UNITS: 4,
+        MARKERS: 5,
+        OPTIONS: 6,
+        ACTUATORS: 7
+    }
+    static edit = function(game) {};
 }
-CBGame.TURN_EVENT = "game-turn";
-CBGame.POPUP_MARGIN = 10;
-CBGame.ULAYERS = {
-    SPELLS: 0,
-    FORMATIONS: 1,
-    FMARKERS: 2,
-    FOPTIONS: 3,
-    UNITS: 4,
-    MARKERS: 5,
-    OPTIONS: 6,
-    ACTUATORS: 7
-}
-CBGame.edit = function(game) {};
 
 export class CBCounterImageArtifact extends DMultiImagesArtifact {
 
@@ -1073,6 +1321,7 @@ export class CBCounterImageArtifact extends DMultiImagesArtifact {
 function SelectableMixin(clazz) {
 
     return class extends clazz {
+
         constructor(...args) {
             super(...args);
         }
@@ -1114,7 +1363,9 @@ function SelectableMixin(clazz) {
             }
             return true;
         }
+
     }
+
 }
 
 export function RetractableArtifactMixin(clazz) {
@@ -1242,6 +1493,11 @@ export class CBCounter {
         this._setLocation(location);
     }
 
+    setLocation(location) {
+        Memento.register(this);
+        this._setLocation(location);
+    }
+
     get element() {
         return this._element;
     }
@@ -1258,6 +1514,15 @@ export class CBCounter {
         return !!this._element.board;
     }
 
+    _setOnGame(game) {
+        this._element.setOnBoard(game.board);
+        this._game = game;
+    }
+
+    _removeFromGame() {
+        this._element.removeFromBoard();
+    }
+
     _show(game) {
         Memento.register(this);
         this._element.show(game.board);
@@ -1267,15 +1532,6 @@ export class CBCounter {
     _hide() {
         Memento.register(this);
         this._element.hide();
-    }
-
-    _setOnGame(game) {
-        this._element.setOnBoard(game.board);
-        this._game = game;
-    }
-
-    _removeFromGame() {
-        this._element.removeFromBoard();
     }
 
     collectArtifactsToRetract(artifacts) {
@@ -1375,7 +1631,6 @@ export class CBPlayable extends CBCounter {
 
 }
 
-
 export class UnitImageArtifact extends RetractableArtifactMixin(SelectableMixin(CBCounterImageArtifact)) {
 
     constructor(unit, ...args) {
@@ -1443,7 +1698,7 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
 
     destroy() {
         Memento.register(this);
-        this.deleteFromMap();
+        this.player.loseUnit(this);
         Mechanisms.fire(this, CBAbstractUnit.DESTROYED_EVENT);
     }
 
@@ -1582,5 +1837,6 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
             if (actuator.collectArtifactsToRetract) actuator.collectArtifactsToRetract(this, artifacts);
         }
     }
+
+    static DESTROYED_EVENT = "unit-destroyed";
 }
-CBAbstractUnit.DESTROYED_EVENT = "unit-destroyed";

@@ -292,6 +292,17 @@ export class DIconMenu extends DPopup {
         }
     }
 
+    _memento() {
+        let memento = super._memento();
+        memento.tooltip = this._tooltip;
+        return memento;
+    }
+
+    _register(memento) {
+        super._register(memento);
+        this._tooltip = memento.tooltip;
+    }
+
     getItem(col, row) {
         for (let artifact of this.artifacts) {
             if (artifact instanceof DIconMenuItem && artifact.col===col && artifact.row===row) {
@@ -306,15 +317,17 @@ export class DIconMenu extends DPopup {
     }
 
     closeTooltip(tooltip) {
+        Memento.register(this);
         console.assert(tooltip===this._tooltip);
-        this.removeArtifact(this._tooltip);
+        this.deleteArtifact(this._tooltip);
         delete this._tooltip;
     }
 
     openTooltip(tooltipMessage, position) {
+        Memento.register(this);
         if (this._tooltip) this.closeTooltip(this._tooltip);
         this._tooltip = new DTooltip(tooltipMessage, this, position.minusPoint(this.location));
-        this.addArtifact(this._tooltip);
+        this.appendArtifact(this._tooltip);
     }
 
 }

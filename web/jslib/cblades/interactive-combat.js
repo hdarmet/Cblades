@@ -290,6 +290,21 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         let close = ()=>{
             mask.close();
             scene.close();
+            if (result.finished) {
+                let continuation = ()=>{
+                    this.unit.changeAction(this);   // In case, attack action is replaced by advance action...
+                    if (this._hasPlayed() || !this._createShockAttackActuator(this.unit)) {
+                        this.markAsFinished();
+                    }
+                }
+                if (result.report.success) {
+                    defender.player.applyLossesToUnit(defender, result.report.lossesForDefender, this.unit, true, continuation);
+                }
+                else {
+                    this.unit.markAsCharging(CBCharge.NONE);
+                    continuation();
+                }
+            }
         };
         mask.setAction(close);
         mask.open(this.game.board, new Point2D(event.offsetX, event.offsetY));
@@ -300,21 +315,12 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
-                let report = this._processShockAttackResult(attackerHex, defender, defenderHex, supported, dice.result);
-                let continuation = ()=>{
-                    this.unit.changeAction(this);   // In case, attack action is replaced by advance action...
-                    if (this._hasPlayed() || !this._createShockAttackActuator(this.unit)) {
-                        this.markAsFinished();
-                    }
-                }
-                if (report.success) {
+                result.report = this._processShockAttackResult(attackerHex, defender, defenderHex, supported, dice.result);
+                if (result.report.success) {
                     result.success().appear();
-                    defender.player.applyLossesToUnit(defender, report.lossesForDefender, this.unit, true, continuation);
                 }
                 else {
                     result.failure().appear();
-                    this.unit.markAsCharging(CBCharge.NONE);
-                    continuation();
                 }
             }),
             new Point2D(70, 60)
@@ -490,6 +496,18 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         let close = ()=>{
             mask.close();
             scene.close();
+            if (result.finished) {
+                let continuation = () => {
+                    if (this._hasPlayed() || !this._createFireAttackActuator(this.unit)) {
+                        this.markAsFinished();
+                    }
+                }
+                if (result.report.success) {
+                    target.player.applyLossesToUnit(target, result.report.lossesForDefender, this.unit, false, continuation);
+                } else {
+                    continuation();
+                }
+            }
         };
         mask.setAction(close);
         mask.open(this.game.board, new Point2D(event.offsetX, event.offsetY));
@@ -500,19 +518,12 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
-                let report = this._processFireAttackResult(firerHex, target, targetHex, dice.result);
-                let continuation = ()=>{
-                    if (this._hasPlayed() || !this._createFireAttackActuator(this.unit)) {
-                        this.markAsFinished();
-                    }
-                }
-                if (report.success) {
+                result.report = this._processFireAttackResult(firerHex, target, targetHex, dice.result);
+                if (result.report.success) {
                     result.success().appear();
-                    target.player.applyLossesToUnit(target, report.lossesForDefender, this.unit, false, continuation);
-                }
+                 }
                 else {
                     result.failure().appear();
-                    continuation();
                 }
             }),
             new Point2D(70, 60)

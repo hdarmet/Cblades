@@ -9,7 +9,7 @@
 <script type="module">
 
     import {
-        CBMap, CBHexId, CBHexSideId
+        CBMap, CBHexSideId
     } from "../jslib/cblades/map.js";
     import {
         CBGame
@@ -58,6 +58,9 @@
         RoughneckLance,
         RoughneckCrossbowman
     } from "../jslib/cblades/armies/roughnecks.js";
+    import {
+        CBWeather
+    } from "../jslib/cblades/miscellaneous.js";
 
     registerInteractiveMovement();
     registerInteractiveCombat();
@@ -79,6 +82,7 @@
     let arbitrator = new CBArbitrator();
     game.setArbitrator(arbitrator);
     game.setMenu();
+    new CBWeather().setOnGame(game);
 
     let player1 = new CBInteractivePlayer();
     game.addPlayer(player1);

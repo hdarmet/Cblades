@@ -1286,6 +1286,10 @@ export class DStaticLevel extends DBasicLevel {
         super(new DStaticLayer(name));
     }
 
+    setTransform(transform) {
+        this.layer.setTransform(transform);
+    }
+
 }
 
 
@@ -1563,19 +1567,55 @@ export class DBoard {
             this._zoomFactor=this.maxZoomFactor;
         }
         let deltaX = this.viewportDimension.w/2/this._zoomFactor;
-        if (deltaX>this._dimension.w/2+this._location.x) {
+        if (deltaX>=this._dimension.w/2+this._location.x) {
             this._location = new Point2D(deltaX-this._dimension.w/2, this._location.y);
+            Mechanisms.fire(this, DBoard.BORDER_EVENT, DBoard.BORDER.LEFT);
+            this._onLeft = true;
         }
-        if (deltaX>this._dimension.w/2-this._location.x) {
+        else {
+            delete this._onLeft;
+        }
+        if (deltaX>=this._dimension.w/2-this._location.x) {
             this._location = new Point2D(this._dimension.w/2-deltaX, this._location.y);
+            Mechanisms.fire(this, DBoard.BORDER_EVENT, DBoard.BORDER.RIGHT);
+            this._onRight = true;
+        }
+        else {
+            delete this._onRight;
         }
         let deltaY = this.viewportDimension.h/2/this._zoomFactor;
-        if (deltaY>this._dimension.h/2+this._location.y) {
+        if (deltaY>=this._dimension.h/2+this._location.y) {
             this._location = new Point2D(this._location.x, deltaY-this._dimension.h/2);
+            Mechanisms.fire(this, DBoard.BORDER_EVENT, DBoard.BORDER.TOP);
+            this._onTop = true;
         }
-        if (deltaY>this._dimension.h/2-this._location.y) {
+        else {
+            delete this._onTop;
+        }
+        if (deltaY>=this._dimension.h/2-this._location.y) {
             this._location = new Point2D(this._location.x, this._dimension.h/2-deltaY);
+            Mechanisms.fire(this, DBoard.BORDER_EVENT, DBoard.BORDER.BOTTOM);
+            this._onBottom = true;
         }
+        else {
+            delete this._onBottom;
+        }
+    }
+
+    get onLeft() {
+        return !!this._onLeft;
+    }
+
+    get onRight() {
+        return !!this._onRight;
+    }
+
+    get onTop() {
+        return !!this._onTop;
+    }
+
+    get onBottom() {
+        return !!this._onBottom;
     }
 
     get zoomFactor() {
@@ -1757,6 +1797,14 @@ DBoard.DEFAULT_SCROLL_INCREMENT = 10;
 DBoard.SCROLL_EVENT = "board-scroll";
 DBoard.ZOOM_EVENT = "board-zoom";
 DBoard.RESIZE_EVENT = "board-resize";
+DBoard.BORDER_EVENT = "board-border";
+DBoard.BORDER = {
+    LEFT: 0,
+    RIGHT: 1,
+    TOP: 2,
+    BOTTOM: 3
+};
+
 
 export class DArtifactAnimation extends DAnimation {
 
