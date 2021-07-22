@@ -62,15 +62,6 @@ export let CBOrderInstruction = {
     RETREAT: 3
 }
 
-export let CBWeather = {
-    HOT : 1,
-    CLEAR : 2,
-    CLOUDY : 3,
-    OVERCAST : 4,
-    RAIN : 5,
-    STORM : 6
-}
-
 export class CBProfile {
 
     constructor(capacity = 0) {
@@ -775,10 +766,10 @@ export class CBUnit extends CBAbstractUnit {
         this._playedArtifact && this._element.deleteArtifact(this._playedArtifact);
         delete this._playedArtifact;
         if (this.hasBeenPlayed()) {
-            this._playedArtifact = this.createMarkerArtifact("/CBlades/images/markers/actiondone.png", 0);
+            this._playedArtifact = this.createMarkerArtifact("./../images/markers/actiondone.png", 0);
         }
         else if (this._orderGiven) {
-            this._playedArtifact = this.createMarkerArtifact("/CBlades/images/markers/ordergiven.png", 0);
+            this._playedArtifact = this.createMarkerArtifact("./../images/markers/ordergiven.png", 0);
         }
     }
 
@@ -893,10 +884,10 @@ export class CBUnit extends CBAbstractUnit {
         this._tirednessArtifact && this._element.deleteArtifact(this._tirednessArtifact);
         delete this._tirednessArtifact;
         if (this._tiredness === CBTiredness.TIRED) {
-            this._tirednessArtifact = this.createMarkerArtifact("/CBlades/images/markers/tired.png", 2);
+            this._tirednessArtifact = this.createMarkerArtifact("./../images/markers/tired.png", 2);
         }
         else if (this._tiredness === CBTiredness.EXHAUSTED) {
-            this._tirednessArtifact = this.createMarkerArtifact("/CBlades/images/markers/exhausted.png", 2);
+            this._tirednessArtifact = this.createMarkerArtifact("./../images/markers/exhausted.png", 2);
         }
     }
 
@@ -905,10 +896,10 @@ export class CBUnit extends CBAbstractUnit {
         this._tirednessArtifact && this._element.removeArtifact(this._tirednessArtifact);
         delete this._tirednessArtifact;
         if (this._tiredness === CBTiredness.TIRED) {
-            this._tirednessArtifact = this.setMarkerArtifact("/CBlades/images/markers/tired.png", 2);
+            this._tirednessArtifact = this.setMarkerArtifact("./../images/markers/tired.png", 2);
         }
         else if (this._tiredness === CBTiredness.EXHAUSTED) {
-            this._tirednessArtifact = this.setMarkerArtifact("/CBlades/images/markers/exhausted.png", 2);
+            this._tirednessArtifact = this.setMarkerArtifact("./../images/markers/exhausted.png", 2);
         }
     }
 
@@ -947,10 +938,10 @@ export class CBUnit extends CBAbstractUnit {
         this._lackOfMunitionsArtifact && this._element.deleteArtifact(this._lackOfMunitionsArtifact);
         delete this._lackOfMunitionsArtifact;
         if (this._lackOfMunitions === CBLackOfMunitions.SCARCE) {
-            this._lackOfMunitionsArtifact = this.createMarkerArtifact("/CBlades/images/markers/scarceamno.png", 4);
+            this._lackOfMunitionsArtifact = this.createMarkerArtifact("./../images/markers/scarceamno.png", 4);
         }
         else if (this._lackOfMunitions === CBLackOfMunitions.EXHAUSTED) {
-            this._lackOfMunitionsArtifact = this.createMarkerArtifact("/CBlades/images/markers/lowamno.png", 4);
+            this._lackOfMunitionsArtifact = this.createMarkerArtifact("./../images/markers/lowamno.png", 4);
         }
     }
 
@@ -959,10 +950,10 @@ export class CBUnit extends CBAbstractUnit {
         this._lackOfMunitionsArtifact && this._element.removeArtifact(this._lackOfMunitionsArtifact);
         delete this._lackOfMunitionsArtifact;
         if (this._lackOfMunitions === CBLackOfMunitions.SCARCE) {
-            this._lackOfMunitionsArtifact = this.setMarkerArtifact("/CBlades/images/markers/scarceamno.png", 4);
+            this._lackOfMunitionsArtifact = this.setMarkerArtifact("./../images/markers/scarceamno.png", 4);
         }
         else if (this._lackOfMunitions === CBLackOfMunitions.EXHAUSTED) {
-            this._lackOfMunitionsArtifact = this.setMarkerArtifact("/CBlades/images/markers/lowamno.png", 4);
+            this._lackOfMunitionsArtifact = this.setMarkerArtifact("./../images/markers/lowamno.png", 4);
         }
     }
 
@@ -1007,10 +998,10 @@ export class CBUnit extends CBAbstractUnit {
         this._cohesionArtifact && this._element.deleteArtifact(this._cohesionArtifact);
         delete this._cohesionArtifact;
         if (this._cohesion === CBCohesion.DISRUPTED) {
-            this._cohesionArtifact = this.createMarkerArtifact("/CBlades/images/markers/disrupted.png", 3);
+            this._cohesionArtifact = this.createMarkerArtifact("./../images/markers/disrupted.png", 3);
         }
         else if (this._cohesion === CBCohesion.ROUTED) {
-            this._cohesionArtifact = this.createMarkerArtifact("/CBlades/images/markers/fleeing.png", 3);
+            this._cohesionArtifact = this.createMarkerArtifact("./../images/markers/fleeing.png", 3);
         }
     }
 
@@ -1019,10 +1010,10 @@ export class CBUnit extends CBAbstractUnit {
         this._cohesionArtifact && this._element.removeArtifact(this._cohesionArtifact);
         delete this._cohesionArtifact;
         if (this._cohesion === CBCohesion.DISRUPTED) {
-            this._cohesionArtifact = this.setMarkerArtifact("/CBlades/images/markers/disrupted.png", 3);
+            this._cohesionArtifact = this.setMarkerArtifact("./../images/markers/disrupted.png", 3);
         }
         else if (this._cohesion === CBCohesion.ROUTED) {
-            this._cohesionArtifact = this.setMarkerArtifact("/CBlades/images/markers/fleeing.png", 3);
+            this._cohesionArtifact = this.setMarkerArtifact("./../images/markers/fleeing.png", 3);
         }
     }
 
@@ -1091,17 +1082,17 @@ export class CBUnit extends CBAbstractUnit {
             this._engagingArtifact && this._element.deleteArtifact(this._engagingArtifact);
             delete this._engagingArtifact;
             if (this._charging === CBCharge.CHARGING) {
-                this._engagingArtifact = this.createMarkerArtifact("/CBlades/images/markers/charge.png", 1);
+                this._engagingArtifact = this.createMarkerArtifact("./../images/markers/charge.png", 1);
             }
             else if (this._charging === CBCharge.CAN_CHARGE) {
                 this._engagingArtifact = this.createActivableMarkerArtifact([
-                    "/CBlades/images/markers/possible-charge.png", "/CBlades/images/markers/charge.png"
+                    "./../images/markers/possible-charge.png", "./../images/markers/charge.png"
                 ], marker=>{
                     marker.setImage((marker.imageIndex+1)%2);
                 }, 1);
             }
             else if (this._engaging) {
-                this._engagingArtifact = this.createMarkerArtifact("/CBlades/images/markers/contact.png", 1);
+                this._engagingArtifact = this.createMarkerArtifact("./../images/markers/contact.png", 1);
             }
         }
     }
@@ -1416,8 +1407,8 @@ export class CBCharacter extends CBUnit {
 CBCharacter.DIMENSION = new Dimension2D(120, 120);
 CBCharacter.ORDER_INSTRUCTION_DIMENSION = new Dimension2D(80, 80);
 CBCharacter.ORDER_INSTRUCTION_PATHS = [
-    "/CBlades/images/markers/attack.png",
-    "/CBlades/images/markers/defend.png",
-    "/CBlades/images/markers/regroup.png",
-    "/CBlades/images/markers/retreat.png"
+    "./../images/markers/attack.png",
+    "./../images/markers/defend.png",
+    "./../images/markers/regroup.png",
+    "./../images/markers/retreat.png"
 ];

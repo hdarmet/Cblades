@@ -81,7 +81,7 @@ describe("Combat teacher", ()=> {
 
     function createTinyGame() {
         let game = new CBGame();
-        var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+        var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBAbstractPlayer();
@@ -93,17 +93,17 @@ describe("Combat teacher", ()=> {
         game.setMap(map);
         game.start();
         let unitFireType1 = new CBTestFireUnitType("unit1",
-            ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"],
+            ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"],
             [
-                "/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png",
-                "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png",
-                "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png"
+                "./../images/units/misc/formation1.png", "./../images/units/misc/formation1b.png",
+                "./../images/units/misc/formation2.png", "./../images/units/misc/formation2b.png",
+                "./../images/units/misc/formation3.png", "./../images/units/misc/formation3b.png"
             ]);
         let unitType2 = new CBTestUnitType("unit2",
-            ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit2b.png"],
-            ["/CBlades/)images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png"]);
-        let leaderFireType1 = new CBTestUnitType("leader1", ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"]);
-        let leaderType2 = new CBTestUnitType("leader2", ["/CBlades/images/units/misc/leader2.png", "/CBlades/images/units/misc/leader2b.png"]);
+            ["./../images/units/misc/unit2.png", "./../images/units/misc/unit2b.png"],
+            ["./../)images/units/misc/formation2.png", "./../images/units/misc/formation2b.png"]);
+        let leaderFireType1 = new CBTestUnitType("leader1", ["./../images/units/misc/leader1.png", "./../images/units/misc/leader1b.png"]);
+        let leaderType2 = new CBTestUnitType("leader2", ["./../images/units/misc/leader2.png", "./../images/units/misc/leader2b.png"]);
         return {
             game, map, arbitrator,
             player1, wing1,

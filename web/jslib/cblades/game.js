@@ -16,8 +16,25 @@ import {
     DMask, DMultiStatePushButton, DPushButton
 } from "../widget.js";
 import {
-    CBMap, CBMoveType
+    CBMoveType
 } from "./map.js";
+
+export let CBWeather = {
+    HOT : 0,
+    CLEAR : 1,
+    CLOUDY : 2,
+    OVERCAST : 3,
+    RAIN : 4,
+    STORM : 5
+}
+
+export let CBFog = {
+    NO_FOG: 0,
+    MIST : 1,
+    DENSE_MIST : 2,
+    FOG : 3,
+    DENSE_FOG : 4
+}
 
 export class CBAbstractArbitrator {
 
@@ -729,11 +746,43 @@ export class CBGame {
         this._visibility = 2;
         this._commands = new Set();
         this._counterDisplay = new CBCounterDisplay(this);
+        this._settings = {
+            _weather: CBWeather.CLEAR,
+            _fog: CBFog.MIST
+        }
         Mechanisms.addListener(this);
     }
 
     fitWindow() {
         this._board.fitWindow();
+    }
+
+    get weather() {
+        return this._settings._weather;
+    }
+
+    set weather(weather) {
+        this._settings._weather = weather;
+    }
+
+    changeWeather(weather) {
+        Memento.register(this);
+        this._settings._weather = weather;
+        Mechanisms.fire(this, CBGame.SETTINGS_EVENT, {weather});
+    }
+
+    get fog() {
+        return this._settings._fog;
+    }
+
+    set fog(fog) {
+        this._settings._fog = fog;
+    }
+
+    changeFog(fog) {
+        Memento.register(this);
+        this._settings._fog = fog;
+        Mechanisms.fire(this, CBGame.SETTINGS_EVENT, {fog});
     }
 
     _buildBoard(map) {
@@ -811,7 +860,11 @@ export class CBGame {
             focusedUnit: this._focusedUnit,
             actuators: [...this._actuators],
             counters: new Set(this._counters),
-            popup: this._popup
+            popup: this._popup,
+            setting: {
+                _weather: this._settings._weather,
+                _fog: this._settings._fog
+            }
         };
     }
 
@@ -822,11 +875,12 @@ export class CBGame {
         this._counters = memento.counters;
         if (memento.popup) {
             this._popup = memento.popup;
-        }
-        else {
+        } else {
             delete this._popup;
         }
+        this._settings = memento.settings;
     }
+
 
     _processGlobalEvent(source, event, value) {
         if (event===DBoard.RESIZE_EVENT) {
@@ -1041,7 +1095,7 @@ export class CBGame {
 
     _createEndOfTurnCommand() {
         this._endOfTurnCommand = new DPushButton(
-            "/CBlades/images/commands/turn.png", "/CBlades/images/commands/turn-inactive.png",
+            "./../images/commands/turn.png", "./../images/commands/turn-inactive.png",
             new Point2D(-60, -60), animation=>{
             this.currentPlayer.finishTurn(animation);
         }).setTurnAnimation(true);
@@ -1076,7 +1130,7 @@ export class CBGame {
         this._createEndOfTurnCommand();
         this.showCommand(this._endOfTurnCommand);
         this._showCommand = new DPushButton(
-            "/CBlades/images/commands/show.png", "/CBlades/images/commands/show-inactive.png",
+            "./../images/commands/show.png", "./../images/commands/show-inactive.png",
             new Point2D(-120, -60), animation=>{
             this.hideCommand(this._showCommand);
             this.showCommand(this._hideCommand);
@@ -1092,7 +1146,7 @@ export class CBGame {
         });
         this.showCommand(this._showCommand);
         this._hideCommand = new DPushButton(
-            "/CBlades/images/commands/hide.png", "/CBlades/images/commands/hide-inactive.png",
+            "./../images/commands/hide.png", "./../images/commands/hide-inactive.png",
             new Point2D(-120, -60), animation=>{
             this.showCommand(this._showCommand);
             this.hideCommand(this._hideCommand);
@@ -1107,28 +1161,28 @@ export class CBGame {
             animation();
         });
         this._undoCommand = new DPushButton(
-            "/CBlades/images/commands/undo.png", "/CBlades/images/commands/undo-inactive.png",
+            "./../images/commands/undo.png", "./../images/commands/undo-inactive.png",
             new Point2D(-180, -60), animation=>{
             Memento.undo();
             animation();
         }).setTurnAnimation(false);
         this._redoCommand = new DPushButton(
-            "/CBlades/images/commands/redo.png", "/CBlades/images/commands/redo-inactive.png",
+            "./../images/commands/redo.png", "./../images/commands/redo-inactive.png",
             new Point2D(-240, -60), animation=>{
             Memento.redo();
             animation();
         }).setTurnAnimation(true);
         this._settingsCommand = new DPushButton(
-            "/CBlades/images/commands/settings.png","/CBlades/images/commands/settings-inactive.png",
+            "./../images/commands/settings.png","./../images/commands/settings-inactive.png",
             new Point2D(-300, -60), animation=>{});
         this._saveCommand = new DPushButton(
-            "/CBlades/images/commands/save.png", "/CBlades/images/commands/save-inactive.png",
+            "./../images/commands/save.png", "./../images/commands/save-inactive.png",
             new Point2D(-360, -60), animation=>{});
         this._loadCommand = new DPushButton(
-            "/CBlades/images/commands/load.png", "/CBlades/images/commands/load-inactive.png",
+            "./../images/commands/load.png", "./../images/commands/load-inactive.png",
             new Point2D(-420, -60), animation=>{});
         this._editorCommand = new DMultiStatePushButton(
-            ["/CBlades/images/commands/editor.png", "/CBlades/images/commands/field.png"],
+            ["./../images/commands/editor.png", "./../images/commands/field.png"],
             new Point2D(-480, -60), (state, animation)=>{
                 if (!state)
                     CBGame.edit(this);
@@ -1137,7 +1191,7 @@ export class CBGame {
                 animation();
         }).setTurnAnimation(true, ()=>this._editorCommand.setState(this._editorCommand.state?0:1));
         this._insertLevelCommand = new DMultiStatePushButton(
-            ["/CBlades/images/commands/insert0.png", "/CBlades/images/commands/insert1.png", "/CBlades/images/commands/insert2.png"],
+            ["./../images/commands/insert0.png", "./../images/commands/insert1.png", "./../images/commands/insert2.png"],
             new Point2D(-540, -60), (state, animation)=>{
                 this._visibility = (state+1)%3;
                 Mechanisms.fire(this, CBActuator.VISIBILITY, this._visibility);
@@ -1147,7 +1201,7 @@ export class CBGame {
             .setState(this._visibility)
             .setTurnAnimation(true, ()=>this._insertLevelCommand.setState(this._visibility));
         this._fullScreenCommand = new DMultiStatePushButton(
-            ["/CBlades/images/commands/full-screen-on.png", "/CBlades/images/commands/full-screen-off.png"],
+            ["./../images/commands/full-screen-on.png", "./../images/commands/full-screen-off.png"],
             new Point2D(-600, -60), (state, animation)=>{
                 if (!state)
                     getDrawPlatform().requestFullscreen();
@@ -1267,6 +1321,7 @@ export class CBGame {
     }
 
     static TURN_EVENT = "game-turn";
+    static SETTINGS_EVENT = "settings-turn";
     static POPUP_MARGIN = 10;
     static ULAYERS = {
         SPELLS: 0,

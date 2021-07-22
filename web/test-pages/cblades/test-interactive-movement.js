@@ -690,19 +690,19 @@ describe("Interactive Movement", ()=> {
             var moveActuator = getMoveActuator(game);
             var orientationActuator = getOrientationActuator(game);
         then:
-            assert(moveActuator.getTrigger(0).image.path).equalsTo("/CBlades/images/actuators/standard-move.png");
-            assert(moveActuator.getCostTrigger(0).image.path).equalsTo("/CBlades/images/actuators/standard-move-cost.png");
-            assert(orientationActuator.getTrigger(30).image.path).equalsTo("/CBlades/images/actuators/toward.png");
-            assert(orientationActuator.getCostTrigger(90).image.path).equalsTo("/CBlades/images/actuators/standard-move-cost.png");
+            assert(moveActuator.getTrigger(0).image.path).equalsTo("./../images/actuators/standard-move.png");
+            assert(moveActuator.getCostTrigger(0).image.path).equalsTo("./../images/actuators/standard-move-cost.png");
+            assert(orientationActuator.getTrigger(30).image.path).equalsTo("./../images/actuators/toward.png");
+            assert(orientationActuator.getCostTrigger(90).image.path).equalsTo("./../images/actuators/standard-move-cost.png");
         when:
             clickOnTrigger(game, moveActuator.getCostTrigger(0));
             moveActuator = getMoveActuator(game);
             orientationActuator = getOrientationActuator(game);
         then:
-            assert(moveActuator.getTrigger(0).image.path).equalsTo("/CBlades/images/actuators/extended-move.png");
-            assert(moveActuator.getCostTrigger(0).image.path).equalsTo("/CBlades/images/actuators/extended-move-cost.png");
-            assert(orientationActuator.getTrigger(30).image.path).equalsTo("/CBlades/images/actuators/extended-toward.png");
-            assert(orientationActuator.getCostTrigger(90).image.path).equalsTo("/CBlades/images/actuators/extended-move-cost.png");
+            assert(moveActuator.getTrigger(0).image.path).equalsTo("./../images/actuators/extended-move.png");
+            assert(moveActuator.getCostTrigger(0).image.path).equalsTo("./../images/actuators/extended-move-cost.png");
+            assert(orientationActuator.getTrigger(30).image.path).equalsTo("./../images/actuators/extended-toward.png");
+            assert(orientationActuator.getCostTrigger(90).image.path).equalsTo("./../images/actuators/extended-move-cost.png");
         when:
             clickOnTrigger(game, moveActuator.getCostTrigger(0));
             moveActuator = getMoveActuator(game);
@@ -724,7 +724,7 @@ describe("Interactive Movement", ()=> {
         then:
             assert(unit.movementPoints).equalsTo(0.5);
             assert(unit.extendedMovementPoints).equalsTo(0.5);
-            assert(moveActuator.getTrigger(0).image.path).equalsTo("/CBlades/images/actuators/minimal-move.png");
+            assert(moveActuator.getTrigger(0).image.path).equalsTo("./../images/actuators/minimal-move.png");
     });
 
     it("Checks that move may inflict tiredness", () => {

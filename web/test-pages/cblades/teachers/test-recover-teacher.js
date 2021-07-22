@@ -4,21 +4,18 @@ import {
     assert, before, describe, it
 } from "../../../jstest/jtest.js";
 import {
-    CBHex,
-    CBHexSideId, CBMap, CBMoveType
+    CBMap
 } from "../../../jslib/cblades/map.js";
 import {
-    CBGame, CBAbstractPlayer, CBAction, CBCounter
+    CBGame, CBAbstractPlayer, CBWeather
 } from "../../../jslib/cblades/game.js";
 import {
-    CBCharacter, CBCharge, CBCohesion,
+    CBCharacter,
     CBCommandProfile,
-    CBFormation, CBLackOfMunitions,
     CBMoralProfile, CBMovement,
     CBMoveProfile, CBTiredness,
     CBTroop,
     CBUnitType, CBWeaponProfile,
-    CBWeather,
     CBWing
 } from "../../../jslib/cblades/unit.js";
 import {
@@ -38,12 +35,6 @@ import {
 import {
     CBRecoveringTeacher
 } from "../../../jslib/cblades/teachers/recover-teacher.js";
-import {
-    CBWizardryTeacher
-} from "../../../jslib/cblades/teachers/magic-teacher.js";
-import {
-    Dimension2D, reverseAngle
-} from "../../../jslib/geometry.js";
 
 describe("Recover teacher", ()=> {
 
@@ -75,22 +66,22 @@ describe("Recover teacher", ()=> {
         let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
         let wing2 = new CBWing(player2);
-        let map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
-        let unitType1 = new CBTestUnitType("unit1", ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"])
+        let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
         let unit11 = new CBTroop(unitType1, wing1);
         game.addUnit(unit11, map.getHex(5, 8));
         let unit12 = new CBTroop(unitType1, wing1);
         game.addUnit(unit12, map.getHex(5, 7));
-        let leaderType1 = new CBTestUnitType("leader1", ["/CBlades/images/units/misc/leader1.png", "/CBlades/images/units/misc/leader1b.png"])
+        let leaderType1 = new CBTestUnitType("leader1", ["./../images/units/misc/leader1.png", "./../images/units/misc/leader1b.png"])
         let leader11 = new CBCharacter(leaderType1, wing1);
         game.addUnit(leader11, map.getHex(6, 7));
-        let unitType2 = new CBTestUnitType("unit2", ["/CBlades/images/units/misc/unit2.png", "/CBlades/images/units/misc/unit1b.png"])
+        let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
         let unit21 = new CBTroop(unitType2, wing2);
         game.addUnit(unit21, map.getHex(7, 8));
         let unit22 = new CBTroop(unitType2, wing2);
         game.addUnit(unit22, map.getHex(7, 7));
-        let leaderType2 = new CBTestUnitType("leader2", ["/CBlades/images/units/misc/leader2.png", "/CBlades/images/units/misc/leader2b.png"])
+        let leaderType2 = new CBTestUnitType("leader2", ["./../images/units/misc/leader2.png", "./../images/units/misc/leader2b.png"])
         let leader21 = new CBCharacter(leaderType2, wing2);
         game.addUnit(leader21, map.getHex(8, 7));
         game.start();
@@ -222,9 +213,9 @@ describe("Recover teacher", ()=> {
 
     it("Checks get weather", () => {
         given:
-            var {arbitrator} = create2Players4UnitsTinyGame();
+            var {game, arbitrator} = create2Players4UnitsTinyGame();
         then:
-            assert(arbitrator.getWeather()).equalsTo(CBWeather.CLEAR);
+            assert(arbitrator.getWeather(game)).equalsTo(CBWeather.CLEAR);
     });
 
     it("Check get wingTiredness", () => {

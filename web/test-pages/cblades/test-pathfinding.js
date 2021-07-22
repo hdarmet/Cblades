@@ -82,7 +82,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks forward hex path finding", () => {
         given:
-            var map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
+            var map = new CBMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -106,7 +106,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks forward hex path finding when a maximum cost is set", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -131,7 +131,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks forward hex path finding when some hexes are forbidden", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
             when:
                 game.setMap(map);
@@ -153,7 +153,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks backward hex path finding", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -173,7 +173,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks backward hex path finding when a maximum cost is set", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -203,7 +203,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks backward hex path finding when some hexes are forbidden", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -223,7 +223,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks best hex next moves", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -248,7 +248,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks best hex next moves when there is no solution because of max distance exceeded", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -268,7 +268,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hex path cost moves", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
             when:
                 game.setMap(map);
@@ -288,7 +288,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hex path cost when there is no solution because of max distance exceeded", () => {
         given:
-            var map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
+            var map = new CBMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -308,7 +308,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hex path cost when there is no solution", () => {
         given:
-            var map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
+            var map = new CBMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -348,7 +348,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hexside forward path finding", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -371,7 +371,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hexside backward path finding", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -396,7 +396,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks best hexside next moves", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -433,7 +433,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks best hexside next moves when there is no solution because of max distance exceeded", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -454,7 +454,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hexside path cost", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -474,7 +474,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hexside path cost when some hexes are forbidden", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -494,7 +494,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hexside path cost when there is no solution because of max distance exceeded", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -515,7 +515,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hex area cost", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -544,7 +544,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hexside area cost", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -574,7 +574,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks in range cost for an hex", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -599,7 +599,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hexside in range cost", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -623,7 +623,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks in range moves for an hex when the max cost is not enough to move one hex", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -649,7 +649,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks in range moves for an hex when the max cost is big enough to move around the target hex", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -678,7 +678,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks in range moves for an hex when the range is big enough to encompass the target hex", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -706,7 +706,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks line of sight along a string a aligned hexes", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -721,7 +721,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks line of sight along a vertex", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -736,7 +736,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks line of sight along a random path", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -752,7 +752,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks line of sight along a random path", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);

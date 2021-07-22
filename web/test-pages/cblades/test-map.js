@@ -74,7 +74,7 @@ describe("Map", ()=> {
 
     it("Checks distance methods", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId1 = map.getHex(3, 4);
             var hexId2 = map.getHex(5, 7);
             var hexId3 = map.getHex(8, 4);
@@ -89,7 +89,7 @@ describe("Map", ()=> {
 
     it("Checks map general features", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
             var hexId = map.getHex(3, 4);
             var hexSideId = new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5));
@@ -109,10 +109,10 @@ describe("Map", ()=> {
     it("Checks a map with several mapboard", () => {
         given:
             var map = new CBMap([
-                {path:"/CBlades/images/maps/map1.png", col:0, row:0, invert:true},
-                {path:"/CBlades/images/maps/map2.png", col:0, row:1},
-                {path:"/CBlades/images/maps/map3.png", col:1, row:0},
-                {path:"/CBlades/images/maps/map4.png", col:1, row:1, invert:true}
+                {path:"./../images/maps/map1.png", col:0, row:0, invert:true},
+                {path:"./../images/maps/map2.png", col:0, row:1},
+                {path:"./../images/maps/map3.png", col:1, row:0},
+                {path:"./../images/maps/map4.png", col:1, row:1, invert:true}
             ]);
             var game = new CBTestGame();
         when:
@@ -152,7 +152,7 @@ describe("Map", ()=> {
 
     it("Checks map borders", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -227,7 +227,7 @@ describe("Map", ()=> {
 
     it("Checks hexIds general features", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(3, 4);
         then:
             assert(hexId.hexes).arrayEqualsTo([hexId]);
@@ -257,7 +257,7 @@ describe("Map", ()=> {
 
     it("Checks hexIds on odd columns", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(3, 4);
         then:
             assert(hexId.location.toString()).equalsTo("point(-511.5, -885.9375)");
@@ -311,7 +311,7 @@ describe("Map", ()=> {
 
     it("Checks hexIds on even columns", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(4, 3);
         then:
             assert(hexId.location.toString()).equalsTo("point(-341, -984.375)");
@@ -360,7 +360,7 @@ describe("Map", ()=> {
 
     it("Checks when hexes are NOT near", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         when:
             var hexId = map.getHex(4, 3);
         then:
@@ -385,7 +385,7 @@ describe("Map", ()=> {
 
     it("Checks hexSideIds", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId1 = map.getHex(4, 3);
             var hexId2 = hexId1.getNearHex(60);
             var hexId3 = hexId1.getNearHex(120);
@@ -441,7 +441,7 @@ describe("Map", ()=> {
 
     it("Checks hexSideIds face hexes on even column", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId1 = map.getHex(4, 3);
             var hexId2 = hexId1.getNearHex(60);
             var hexId3 = hexId1.getNearHex(120);
@@ -460,7 +460,7 @@ describe("Map", ()=> {
 
     it("Checks hexSideIds face hexes on odd column", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId1 = map.getHex(3, 3);
             var hexId2 = hexId1.getNearHex(60);
             var hexId3 = hexId1.getNearHex(120);
@@ -479,7 +479,7 @@ describe("Map", ()=> {
 
     it("Checks hexId near hexSides", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(3, 3);
         then:
             assert(hexId.getNearHexSide(90).fromHex.toString()).equalsTo("Hex(4, 3)");
@@ -488,7 +488,7 @@ describe("Map", ()=> {
 
     it("Checks hexVertexIds", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId1 = map.getHex(4, 3);
             var hexId2 = hexId1.getNearHex(60);
             var hexId3 = hexId1.getNearHex(120);
@@ -525,7 +525,7 @@ describe("Map", ()=> {
 
     it("Checks hexId collection", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexes = map.hexes;
         then:
             assert(hexes.length).equalsTo(215);
@@ -549,7 +549,7 @@ describe("Map", ()=> {
 
     it("Checks hexsideId collection", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexSides = map.hexSides;
         then:
             assert(hexSides.length).equalsTo(586);
@@ -577,7 +577,7 @@ describe("Map", ()=> {
 
     it("Checks hex type management", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(4, 3);
             Memento.activate();
         then:
@@ -598,7 +598,7 @@ describe("Map", ()=> {
 
     it("Checks hex height management", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(4, 3);
             Memento.activate();
         then:
@@ -619,7 +619,7 @@ describe("Map", ()=> {
 
     it("Checks hexside type management", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(4, 3);
             Memento.activate();
         then:
@@ -670,7 +670,7 @@ describe("Map", ()=> {
 
     it("Checks playable addition and removing on a Hex", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             let playable = new CBTestPlayable();
             var hexId = map.getHex(4, 5);
         when:
@@ -703,7 +703,7 @@ describe("Map", ()=> {
 
     it("Checks playable addition and removing on a Hex Side", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             let playable = new CBTestPlayable();
             var hexId1 = map.getHex(4, 5);
             var hexId2 = map.getHex(4, 6);
@@ -744,7 +744,7 @@ describe("Map", ()=> {
 
     it("Checks unit addition and removing on a Hex", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             let unit = new CBTestUnit();
             var hexId = map.getHex(4, 5);
         when:
@@ -777,7 +777,7 @@ describe("Map", ()=> {
 
     it("Checks unit addition and removing on a Hex Side", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             let unit = new CBTestUnit();
             var hexId1 = map.getHex(4, 5);
             var hexId2 = map.getHex(4, 6);
@@ -818,7 +818,7 @@ describe("Map", ()=> {
 
     it("Checks playable sorting on Hex", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var spell = new CBTestPlayable();
             spell.spellNature = true;
             var blaze = new CBTestPlayable();
@@ -839,7 +839,7 @@ describe("Map", ()=> {
 
     it("Checks unit stacking basic features", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(8, 8);
         then:
             assert(hexId.empty).isTrue();
@@ -860,7 +860,7 @@ describe("Map", ()=> {
 
     it("Checks unit backward stacking", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(8, 8);
             var unit1 = new CBTestUnit();
             var unit2 = new CBTestUnit();
@@ -890,7 +890,7 @@ describe("Map", ()=> {
 
     it("Checks unit forward stacking", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(8, 8);
             var unit1 = new CBTestUnit();
             var unit2 = new CBTestUnit();
@@ -920,7 +920,7 @@ describe("Map", ()=> {
 
     it("Checks units and playables collection", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(8, 8);
             var unit1 = new CBTestUnit();
             var unit2 = new CBTestUnit();
@@ -939,7 +939,7 @@ describe("Map", ()=> {
 
     it("Checks units and playables collection on Hex Side", () => {
         given:
-            var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId1 = map.getHex(8, 8);
             var hexId2 = map.getHex(8, 9);
             var hexSideId = new CBHexSideId(hexId1, hexId2);

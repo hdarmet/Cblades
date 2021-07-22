@@ -40,8 +40,8 @@ describe("Roughnecks Army", ()=> {
             var unit = RoughneckLeader;
         then:
             assert(unit.getTroopPaths()).arrayEqualsTo([
-                "/CBlades/images/units/mercenaries/character1L.png",
-                "/CBlades/images/units/mercenaries/character1Lb.png"
+                "./../images/units/mercenaries/character1L.png",
+                "./../images/units/mercenaries/character1Lb.png"
             ]);
             assert(unit.getFormationPaths()).isNotDefined();
         when:
@@ -91,8 +91,8 @@ describe("Roughnecks Army", ()=> {
             var unit = RoughneckKnight;
         then:
             assert(unit.getTroopPaths()).arrayEqualsTo([
-                "/CBlades/images/units/mercenaries/unit1L.png",
-                "/CBlades/images/units/mercenaries/unit1Lb.png"
+                "./../images/units/mercenaries/unit1L.png",
+                "./../images/units/mercenaries/unit1Lb.png"
             ]);
             assert(unit.getFormationPaths()).isNotDefined();
         when:
@@ -143,16 +143,16 @@ describe("Roughnecks Army", ()=> {
             var unit = RoughneckLance;
         then:
             assert(unit.getTroopPaths()).arrayEqualsTo([
-                "/CBlades/images/units/mercenaries/unit2L1.png",
-                "/CBlades/images/units/mercenaries/unit2L1b.png"
+                "./../images/units/mercenaries/unit2L1.png",
+                "./../images/units/mercenaries/unit2L1b.png"
             ]);
             assert(unit.getFormationPaths()).arrayEqualsTo([
-                "/CBlades/images/units/mercenaries/unit2L4.png",
-                "/CBlades/images/units/mercenaries/unit2L4b.png",
-                "/CBlades/images/units/mercenaries/unit2L3.png",
-                "/CBlades/images/units/mercenaries/unit2L3b.png",
-                "/CBlades/images/units/mercenaries/unit2L2.png",
-                "/CBlades/images/units/mercenaries/unit2L2b.png"
+                "./../images/units/mercenaries/unit2L4.png",
+                "./../images/units/mercenaries/unit2L4b.png",
+                "./../images/units/mercenaries/unit2L3.png",
+                "./../images/units/mercenaries/unit2L3b.png",
+                "./../images/units/mercenaries/unit2L2.png",
+                "./../images/units/mercenaries/unit2L2b.png"
             ]);
         when:
             var profile = unit.getMoveProfile(1);

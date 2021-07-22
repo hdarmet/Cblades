@@ -160,16 +160,16 @@ describe("Widget", ()=> {
             resetDirectives(widgetsLayer);
             resetDirectives(itemsLayer);
             let iconMenuItem = new DIconMenuItem(
-                "/CBlades/images/icons/menu3.png", "/CBlades/images/icons/menu3-grayed.png",
+                "./../images/icons/menu3.png", "./../images/icons/menu3-grayed.png",
                 0, 1, ()=>{return true;});
             let menu = new DIconMenu(
                 false,
-                new DIconMenuItem("/CBlades/images/icons/menu1.png", "/CBlades/images/icons/menu1-grayed.png",
+                new DIconMenuItem("./../images/icons/menu1.png", "./../images/icons/menu1-grayed.png",
                     0, 0, ()=>{return true;}),
-                new DIconMenuItem("/CBlades/images/icons/menu2.png", "/CBlades/images/icons/menu2-grayed.png",
+                new DIconMenuItem("./../images/icons/menu2.png", "./../images/icons/menu2-grayed.png",
                     1, 0, ()=>{return true;}),
                 iconMenuItem,
-                new DIconMenuItem("/CBlades/images/icons/menu4.png", "/CBlades/images/icons/menu4-grayed.png",
+                new DIconMenuItem("./../images/icons/menu4.png", "./../images/icons/menu4-grayed.png",
                     1, 1, ()=>{return true;})
             );
             menu.open(board, new Point2D(5, 5));
@@ -209,7 +209,7 @@ describe("Widget", ()=> {
             board.paint();
             resetDirectives(itemsLayer);
             let clicked = 0;
-            let icon = new DIconMenuItem("/CBlades/images/icons/menu1.png", "/CBlades/images/icons/menu1-grayed.png",
+            let icon = new DIconMenuItem("./../images/icons/menu1.png", "./../images/icons/menu1-grayed.png",
                 0, 0,
                 ()=>{
                     clicked++;
@@ -278,14 +278,14 @@ describe("Widget", ()=> {
             board.paint();
             resetDirectives(commandsLayer);
             let clicked = 0;
-            let icon1 = new DIconMenuItem("/CBlades/images/icons/menu1.png", "/CBlades/images/icons/menu1-grayed.png",
+            let icon1 = new DIconMenuItem("./../images/icons/menu1.png", "./../images/icons/menu1-grayed.png",
                 0, 0,
                 ()=>{
                     clicked++;
                     return clicked===2; // click two times to return true;
                 },
                 "tooltip message");
-            let icon2 = new DIconMenuItem("/CBlades/images/icons/menu2.png", "/CBlades/images/icons/menu2-grayed.png",
+            let icon2 = new DIconMenuItem("./../images/icons/menu2.png", "./../images/icons/menu2-grayed.png",
                 0, 1,
                 ()=>{
                     clicked++;
@@ -356,7 +356,7 @@ describe("Widget", ()=> {
             board.paint();
             resetDirectives(commandsLayer);
             let clicked = 0;
-            let icon1 = new DIconMenuItem("/CBlades/images/icons/menu1.png", "/CBlades/images/icons/menu1-grayed.png",
+            let icon1 = new DIconMenuItem("./../images/icons/menu1.png", "./../images/icons/menu1-grayed.png",
                 0, 0,
                 ()=>{
                     clicked++;
@@ -415,7 +415,7 @@ describe("Widget", ()=> {
             board.paint();
             resetDirectives(itemsLayer);
             let clicked = false;
-            let icon = new DIconMenuItem("/CBlades/images/icons/menu1.png", "/CBlades/images/icons/menu1-grayed.png",
+            let icon = new DIconMenuItem("./../images/icons/menu1.png", "./../images/icons/menu1-grayed.png",
                 0, 0,
                 ()=>{
                 clicked=true;
@@ -453,7 +453,7 @@ describe("Widget", ()=> {
             var { board, widgetsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
             resetDirectives(widgetsLayer);
-            let icon = new DIconMenuItem("/CBlades/images/icons/menu1.png", "/CBlades/images/icons/menu1-grayed.png",
+            let icon = new DIconMenuItem("./../images/icons/menu1.png", "./../images/icons/menu1-grayed.png",
                 0, 0,
                 ()=>{ return true });
             let menu = new DIconMenu(true, icon);
@@ -484,8 +484,8 @@ describe("Widget", ()=> {
             board.paint();
             resetDirectives(commandsLayer);
             let pushButton = new DPushButton(
-                "/CBlades/images/commands/button1.png",
-                "/CBlades/images/commands/button1-inactive.png",
+                "./../images/commands/button1.png",
+                "./../images/commands/button1-inactive.png",
                 new Point2D(60, 60), ()=>{return true;});
             pushButton.setOnBoard(board);
             loadAllImages();
@@ -519,8 +519,8 @@ describe("Widget", ()=> {
             resetDirectives(commandsLayer);
             var clicked = false;
             let pushButton = new DPushButton(
-                "/CBlades/images/commands/button1.png",
-                "/CBlades/images/commands/button1-inactive.png",
+                "./../images/commands/button1.png",
+                "./../images/commands/button1-inactive.png",
                 new Point2D(60, 60),
                 ()=>{clicked = true;});
             pushButton.setOnBoard(board);
@@ -566,7 +566,7 @@ describe("Widget", ()=> {
             resetDirectives(commandsLayer);
             var clicked = false;
             let pushButton = new DPushButton(
-                "/CBlades/images/commands/button1.png", "/CBlades/images/commands/button1-inactive.png",
+                "./../images/commands/button1.png", "./../images/commands/button1-inactive.png",
                 new Point2D(60, 60),
                 ()=>{clicked = true;});
             pushButton.setOnBoard(board);
@@ -614,7 +614,7 @@ describe("Widget", ()=> {
             var { board, commandsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             var clicked = false;
             let pushButton = new DPushButton(
-                "/CBlades/images/commands/button1.png", "/CBlades/images/commands/button1-inactive.png",
+                "./../images/commands/button1.png", "./../images/commands/button1-inactive.png",
                 new Point2D(60, 60),
                 animation=>{clicked = true; animation()});
             pushButton.setOnBoard(board);
@@ -645,7 +645,7 @@ describe("Widget", ()=> {
             var { board, commandsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             resetDirectives(commandsLayer);
             let pushButton = new DMultiStatePushButton(
-                ["/CBlades/images/commands/button1.png", "/CBlades/images/commands/button2.png"],
+                ["./../images/commands/button1.png", "./../images/commands/button2.png"],
                 new Point2D(60, 60), (state)=>{return true;}
             );
             pushButton.setOnBoard(board);
@@ -691,7 +691,7 @@ describe("Widget", ()=> {
             var { board, commandsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             var buttonState = -1;
             let pushButton = new DMultiStatePushButton(
-                ["/CBlades/images/commands/button1.png", "/CBlades/images/commands/button2.png"],
+                ["./../images/commands/button1.png", "./../images/commands/button2.png"],
                 new Point2D(60, 60), (state, animation)=>{
                     buttonState = state;
                     animation();
@@ -847,7 +847,7 @@ describe("Widget", ()=> {
         given:
             var { board, widgetsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
-            let indicator = new DIndicator(["/CBlades/images/indicators/indicator1.png"], new Dimension2D(50, 50));
+            let indicator = new DIndicator(["./../images/indicators/indicator1.png"], new Dimension2D(50, 50));
             loadAllImages();
         when:
             resetDirectives(widgetsLayer);
@@ -873,7 +873,7 @@ describe("Widget", ()=> {
         given:
             var { board, widgetsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
-            let insert = new DInsert("/CBlades/images/inserts/insert.png", new Dimension2D(200, 190));
+            let insert = new DInsert("./../images/inserts/insert.png", new Dimension2D(200, 190));
             loadAllImages();
         when:
             resetDirectives(widgetsLayer);
@@ -904,7 +904,7 @@ describe("Widget", ()=> {
         given:
             var { board, widgetsLayer, commandsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
-            let insert = new DInsert("/CBlades/images/inserts/insert.png",
+            let insert = new DInsert("./../images/inserts/insert.png",
                 new Dimension2D(200, 300),
                 new Dimension2D(290, 390)
             );
@@ -1088,7 +1088,7 @@ describe("Widget", ()=> {
         given:
             var { board, widgetsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
-            let insert = new DInsert("/CBlades/images/inserts/insert.png",
+            let insert = new DInsert("./../images/inserts/insert.png",
                 new Dimension2D(200, 300),
                 new Dimension2D(200, 390)
             );
@@ -1124,7 +1124,7 @@ describe("Widget", ()=> {
         given:
             var { board, widgetsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
-            let insert = new DInsert("/CBlades/images/inserts/insert.png",
+            let insert = new DInsert("./../images/inserts/insert.png",
                 new Dimension2D(200, 300),
                 new Dimension2D(200, 390)
             );
@@ -1504,8 +1504,8 @@ describe("Widget", ()=> {
         given:
             var { board, widgetsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
-            let indicator1 = new DIndicator(["/CBlades/images/indicators/indicator1.png"], new Dimension2D(50, 50));
-            let indicator2 = new DIndicator(["/CBlades/images/indicators/indicator2.png"], new Dimension2D(70, 80));
+            let indicator1 = new DIndicator(["./../images/indicators/indicator1.png"], new Dimension2D(50, 50));
+            let indicator2 = new DIndicator(["./../images/indicators/indicator2.png"], new Dimension2D(70, 80));
             let scene = new DScene()
                 .addWidget(indicator1, new Point2D(0, -100))
                 .addWidget(indicator2, new Point2D(0, 100));
@@ -1538,8 +1538,8 @@ describe("Widget", ()=> {
     it("Checks that a scene opening/closing is undoable", () => {
         given:
             var { board, widgetsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
-            let indicator = new DIndicator(["/CBlades/images/indicators/indicator1.png"], new Dimension2D(50, 50));
-            let insert = new DInsert("/CBlades/images/inserts/insert.png", new Dimension2D(200, 190));
+            let indicator = new DIndicator(["./../images/indicators/indicator1.png"], new Dimension2D(50, 50));
+            let insert = new DInsert("./../images/inserts/insert.png", new Dimension2D(200, 190));
             let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
             let scene = new DScene()
                 .addWidget(indicator, new Point2D(-100, -100))

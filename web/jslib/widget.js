@@ -562,12 +562,12 @@ export class DDice extends DElement {
         super();
         for (let point of points) {
             this.addArtifact(new DiceArtifact([
-                DImage.getImage("/CBlades/images/dice/d1.png"),
-                DImage.getImage("/CBlades/images/dice/d2.png"),
-                DImage.getImage("/CBlades/images/dice/d3.png"),
-                DImage.getImage("/CBlades/images/dice/d4.png"),
-                DImage.getImage("/CBlades/images/dice/d5.png"),
-                DImage.getImage("/CBlades/images/dice/d6.png")
+                DImage.getImage("./../images/dice/d1.png"),
+                DImage.getImage("./../images/dice/d2.png"),
+                DImage.getImage("./../images/dice/d3.png"),
+                DImage.getImage("./../images/dice/d4.png"),
+                DImage.getImage("./../images/dice/d5.png"),
+                DImage.getImage("./../images/dice/d6.png")
             ], point));
         }
         this._active = true;
@@ -673,14 +673,33 @@ class IndicatorImageArtifact extends DMultiImagesArtifact {
 
 export class DIndicator extends DElement {
 
-    constructor(paths, dimension) {
+    constructor(paths, dimension, state) {
         super();
         let images = [];
         for (let path of paths) {
             images.push(DImage.getImage(path));
         }
         this._artifact = new IndicatorImageArtifact(images, dimension);
+        this._oldArtifact = new IndicatorImageArtifact(images, dimension);
         this.addArtifact(this._artifact);
+        this.addArtifact(this._oldArtifact);
+        this._artifact.setImage(state);
+        this._oldArtifact.alpha = 0;
+    }
+
+    get artifact() {
+        return this._artifact;
+    }
+
+    get state() {
+        return this.artifact.imageIndex;
+    }
+
+    changeState(state) {
+        this._oldArtifact.setImage(this._artifact.imageIndex);
+        this._oldArtifact.alpha = 1;
+        this._artifact.changeImage(state);
+        new DArtifactAlphaAnimation(this._oldArtifact, 0, 0, 1000);
     }
 
     open(board, location) {
@@ -708,12 +727,11 @@ class InsertImageArtifact extends DComposedImageArtifact {
         this.addComposition(this._image, area, area);
     }
 
-    /*
     onMouseClick(event) {
-        console.log(this.getPoint(Point2D.getEventPoint(event)).plusDim(this.dimension.half));
+        //console.log(this.getPoint(Point2D.getEventPoint(event)).plusDim(this.dimension.half));
         return true;
     }
-     */
+
 }
 
 export class DInsertCommand extends ActivableArtifact(DImageArtifact) {
@@ -795,7 +813,7 @@ export class DInsertFrame {
             _manageButton.call(this,
                 composition.sourceArea.left>this._pageArea.left, "_leftButton",
                 ()=>{
-                    let leftImage = DImage.getImage("/CBlades/images/commands/left.png");
+                    let leftImage = DImage.getImage("./../images/commands/left.png");
                     let position = new Point2D(
                         this._area.left+DInsertCommand.DIMENSION.w/2+10-this._insert.dimension.w/2,
                         this._area.y-this._insert.dimension.h/2);
@@ -808,7 +826,7 @@ export class DInsertFrame {
             _manageButton.call(this,
                 composition.sourceArea.right<this._pageArea.right, "_rightButton",
                 ()=>{
-                    let rightImage = DImage.getImage("/CBlades/images/commands/right.png");
+                    let rightImage = DImage.getImage("./../images/commands/right.png");
                     let position = new Point2D(
                         this._area.right-this._insert.dimension.w/2-DInsertCommand.DIMENSION.w/2-10,
                         this._area.y-this._insert.dimension.h/2);
@@ -821,7 +839,7 @@ export class DInsertFrame {
             _manageButton.call(this,
                 composition.sourceArea.top>this._pageArea.top, "_upButton",
                 ()=>{
-                    let upImage = DImage.getImage("/CBlades/images/commands/up.png");
+                    let upImage = DImage.getImage("./../images/commands/up.png");
                     let position = new Point2D(
                         this._area.x-this._insert.dimension.w/2,
                         this._area.top+DInsertCommand.DIMENSION.w/2+10-this._insert.dimension.h/2);
@@ -834,7 +852,7 @@ export class DInsertFrame {
             _manageButton.call(this,
                 composition.sourceArea.bottom<this._pageArea.bottom, "_downButton",
                 ()=>{
-                    let downImage = DImage.getImage("/CBlades/images/commands/down.png");
+                    let downImage = DImage.getImage("./../images/commands/down.png");
                     let position = new Point2D(
                         this._area.x-this._insert.dimension.w/2,
                         this._area.bottom-DInsertCommand.DIMENSION.w/2-10-this._insert.dimension.h/2);
@@ -972,7 +990,7 @@ export class DAbstractInsert extends DElement {
     }
 
     setMark(location) {
-        let okImage = DImage.getImage("/CBlades/images/inserts/ok.png");
+        let okImage = DImage.getImage("./../images/inserts/ok.png");
         let mark = {
             location,
             artifact:new DImageArtifact(
@@ -1070,8 +1088,8 @@ class ResultImageArtifact extends DMultiImagesArtifact {
 
     constructor(image, dimension) {
         super("widget-commands", [
-            DImage.getImage("/CBlades/images/dice/failure.png"),
-            DImage.getImage("/CBlades/images/dice/success.png")
+            DImage.getImage("./../images/dice/failure.png"),
+            DImage.getImage("./../images/dice/success.png")
         ], new Point2D(0, 0), ResultImageArtifact.DIMENSION, 0);
         this.alpha = 0;
     }
@@ -1195,11 +1213,169 @@ export class DResult extends DElement {
 
 }
 
+class SwipeImageArtifact extends DMultiImagesArtifact {
+
+    constructor(image, dimension) {
+        super("widget-commands", [
+            DImage.getImage("./../images/dice/swipe-up.png"),
+            DImage.getImage("./../images/dice/no-swipe.png"),
+            DImage.getImage("./../images/dice/swipe-down.png")
+        ], new Point2D(0, 0), SwipeImageArtifact.DIMENSION, 0);
+        this.alpha = 0;
+    }
+
+    swipeUp() {
+        this.setImage(0);
+        this._insideSettings = this.swipeUpOverSettings;
+        this._outsideSettings = this.swipeUpSettings;
+        this.setSettings(this._outsideSettings);
+        return this;
+    }
+
+    swipeDown() {
+        this.setImage(2);
+        this._insideSettings = this.swipeDownOverSettings;
+        this._outsideSettings = this.swipeDownSettings;
+        this.setSettings(this._outsideSettings);
+        return this;
+    }
+
+    noSwipe() {
+        this.setImage(1);
+        this._insideSettings = this.noSwipeOverSettings;
+        this._outsideSettings = this.noSwipeSettings;
+        this.setSettings(this._outsideSettings);
+        return this;
+    }
+
+    get swipeUpSettings() {
+        return level => {
+            level.setShadowSettings("#00A000", 100);
+        }
+    }
+
+    get swipeUpOverSettings() {
+        return level => {
+            level.setShadowSettings("#00FF00", 100);
+        }
+    }
+
+    get noSwipeSettings() {
+        return level => {
+            level.setShadowSettings("#00A000", 100);
+        }
+    }
+
+    get noSwipeOverSettings() {
+        return level => {
+            level.setShadowSettings("#00FF00", 100);
+        }
+    }
+
+    get swipeDownSettings() {
+        return level => {
+            level.setShadowSettings("#00A000", 100);
+        }
+    }
+
+    get swipeDownOverSettings() {
+        return level => {
+            level.setShadowSettings("#00FF00", 100);
+        }
+    }
+
+    onMouseClick(event) {
+        this._element.onMouseClick();
+        return true;
+    }
+
+    onMouseEnter(event) {
+        this.setSettings(this._insideSettings);
+        return true;
+    }
+
+    onMouseLeave(event) {
+        this.setSettings(this._outsideSettings);
+        return true;
+    }
+
+}
+SwipeImageArtifact.DIMENSION = new Dimension2D(150, 150);
+
+export class DSwipe extends DElement {
+
+    constructor() {
+        super();
+        this._artifact = new SwipeImageArtifact();
+        this.addArtifact(this._artifact);
+    }
+
+    setFinalAction(action) {
+        this._finalAction = action;
+        return this;
+    }
+
+    get trigger() {
+        return this._artifact;
+    }
+
+    swipeUp() {
+        this._artifact.swipeUp();
+        this._swipe = 0;
+        this._finished = true;
+        return this;
+    }
+
+    noSwipe() {
+        this._artifact.noSwipe();
+        this._swipe = 1;
+        this._finished = true;
+        return this;
+    }
+
+    swipeDown() {
+        this._artifact.swipeDown();
+        this._swipe = 2;
+        this._finished = true;
+        return this;
+    }
+
+    get finished() {
+        return this._finished;
+    }
+
+    open(board, location) {
+        this.move(location);
+        this._targetBoard = board;
+    }
+
+    appear() {
+        if (this._targetBoard) {
+            this.show(this._targetBoard);
+            new DArtifactAlphaAnimation(this._artifact, 1, 0, 500);
+        }
+    }
+
+    close() {
+        delete this._targetBoard;
+        if (this._board) {
+            this.hide();
+        }
+        Memento.clear();
+    }
+
+    onMouseClick() {
+        this._finalAction && this._finalAction(this._swipe);
+        return true;
+    }
+
+}
+
 class MessageImageArtifact extends DImageArtifact {
 
     constructor() {
         super("widget-commands",
-            DImage.getImage("/CBlades/images/dice/message.png"),
+            DImage.getImage("./../images/dice/message.png"),
             new Point2D(0, 0), MessageImageArtifact.DIMENSION, 0);
         this.alpha = 0;
     }
@@ -1230,6 +1406,7 @@ class MessageImageArtifact extends DImageArtifact {
         this.setSettings(this.settings);
         return true;
     }
+
 }
 MessageImageArtifact.DIMENSION = new Dimension2D(150, 150);
 

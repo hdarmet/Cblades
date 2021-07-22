@@ -613,22 +613,22 @@ export class InteractiveDuelFireAction extends InteractiveAbstractFireAttackActi
 
 function createCombatMenuItems(unit, actions) {
     return [
-        new DIconMenuItem("/CBlades/images/icons/shock-attack.png", "/CBlades/images/icons/shock-attack-gray.png",
+        new DIconMenuItem("./../images/icons/shock-attack.png", "./../images/icons/shock-attack-gray.png",
             0, 1, event => {
                 unit.player.unitShockAttack(unit, event);
                 return true;
             }, "Attaquer au choc").setActive(actions.shockAttack),
-        new DIconMenuItem("/CBlades/images/icons/fire-attack.png", "/CBlades/images/icons/fire-attack-gray.png",
+        new DIconMenuItem("./../images/icons/fire-attack.png", "./../images/icons/fire-attack-gray.png",
             1, 1, event => {
                 unit.player.unitFireAttack(unit, event);
                 return true;
             }, "Attaquer au tir").setActive(actions.fireAttack),
-        new DIconMenuItem("/CBlades/images/icons/shock-duel.png", "/CBlades/images/icons/shock-duel-gray.png",
+        new DIconMenuItem("./../images/icons/shock-duel.png", "./../images/icons/shock-duel-gray.png",
             2, 1, event => {
                 unit.player.unitDuelAttack(unit, event);
                 return true;
             }, "Provoquer un duel au choc").setActive(actions.shockDuel),
-        new DIconMenuItem("/CBlades/images/icons/fire-duel.png", "/CBlades/images/icons/fire-duel-gray.png",
+        new DIconMenuItem("./../images/icons/fire-duel.png", "./../images/icons/fire-duel-gray.png",
             3, 1, event => {
                 unit.player.unitDuelFire(unit, event);
                 return true;
@@ -640,7 +640,7 @@ class ShockHexTrigger extends CBUnitActuatorTrigger {
 
     constructor(actuator, unit, attackHex) {
         super(actuator, unit, "units",
-            DImage.getImage("/CBlades/images/actuators/shock-attacker-hex.png"),
+            DImage.getImage("./../images/actuators/shock-attacker-hex.png"),
             new Point2D(0, 0), new Dimension2D(60, 75));
         this.position = Point2D.position(unit.location, attackHex.location, 1); // LA
         this.pangle = unit.angle;
@@ -677,7 +677,7 @@ class FireHexTrigger extends CBUnitActuatorTrigger {
 
     constructor(actuator, unit, attackHex) {
         super(actuator, unit, "units",
-            DImage.getImage("/CBlades/images/actuators/firer-hex.png"),
+            DImage.getImage("./../images/actuators/firer-hex.png"),
             new Point2D(0, 0), new Dimension2D(60, 75));
         this.position = Point2D.position(unit.location, attackHex.location, 1); // LA
         this.pangle = unit.angle;
@@ -715,8 +715,8 @@ class ShockAttackTrigger extends CBUnitActuatorTrigger {
     constructor(actuator, unit, supported, combat) {
         super(actuator, combat.foe, "units",
             supported ?
-                DImage.getImage("/CBlades/images/actuators/supported-shock.png"):
-                DImage.getImage("/CBlades/images/actuators/unsupported-shock.png"),
+                DImage.getImage("./../images/actuators/supported-shock.png"):
+                DImage.getImage("./../images/actuators/unsupported-shock.png"),
             new Point2D(0, 0),
             new Dimension2D(100, 111));
         this.position = Point2D.position(unit.location, combat.attackedHex.location, 1); // LA
@@ -773,7 +773,7 @@ class FireAttackTrigger extends CBUnitActuatorTrigger {
 
     constructor(actuator, unit, combat) {
         super(actuator, combat.foe, "units",
-            DImage.getImage("/CBlades/images/actuators/fire.png"),
+            DImage.getImage("./../images/actuators/fire.png"),
             new Point2D(0, 0),
             new Dimension2D(100, 155));
         this.position = Point2D.position(unit.location, combat.foe.location, 1);
@@ -793,7 +793,7 @@ export class CBFireAttackActuator extends RetractableActuatorMixin(CBActionActua
 
     constructor(action, fires) {
         super(action);
-        let image = DImage.getImage("/CBlades/images/actuators/fire.png");
+        let image = DImage.getImage("./../images/actuators/fire.png");
         let imageArtifacts = [];
         for (let fire of fires) {
             if (fire.attackHex === action.attackHex) {
@@ -818,8 +818,8 @@ class ShockHelpTrigger extends CBUnitActuatorTrigger {
 
     constructor(actuator, supported, foe, attackedHex, advantage) {
         let image = supported ?
-            DImage.getImage("/CBlades/images/actuators/supported-shock-advantage.png"):
-            DImage.getImage("/CBlades/images/actuators/unsupported-shock-advantage.png");
+            DImage.getImage("./../images/actuators/supported-shock-advantage.png"):
+            DImage.getImage("./../images/actuators/unsupported-shock-advantage.png");
         super(actuator, foe, "units", image, new Point2D(0, 0), ShockHelpTrigger.DIMENSION);
         this.pangle = 0;
         this.position = Point2D.position(actuator.unit.location, attackedHex.location, 1);
@@ -901,7 +901,7 @@ export class CBShockHelpActuator extends RetractableActuatorMixin(CBActionActuat
 class FireHelpTrigger extends CBUnitActuatorTrigger {
 
     constructor(actuator, foe, advantage) {
-        let image = DImage.getImage("/CBlades/images/actuators/fire-advantage.png");
+        let image = DImage.getImage("./../images/actuators/fire-advantage.png");
         super(actuator, foe, "units", image, new Point2D(0, 0), ShockHelpTrigger.DIMENSION);
         this.pangle = 0;
         this.position = Point2D.position(actuator.unit.location, foe.location, 1);
@@ -963,7 +963,7 @@ export class CBAdvanceActuator extends CBActionActuator {
     constructor(action, directions) {
         super(action);
         let imageArtifacts = [];
-        let advanceImage = DImage.getImage("/CBlades/images/actuators/advance-move.png");
+        let advanceImage = DImage.getImage("./../images/actuators/advance-move.png");
         for (let sangle in directions) {
             let angle = parseInt(sangle);
             let orientation = new CBActuatorImageTrigger(this, "actuators", advanceImage,
@@ -990,12 +990,12 @@ export class CBRetreatActuator extends CBActionActuator {
     constructor(action, directions) {
         super(action);
         let imageArtifacts = [];
-        let bloodImage = DImage.getImage("/CBlades/images/actuators/blood.png");
+        let bloodImage = DImage.getImage("./../images/actuators/blood.png");
         let loss = new CBActuatorImageTrigger(this, "actuators", bloodImage,
             new Point2D(0, 0), new Dimension2D(125, 173));
         loss.loss = true;
         imageArtifacts.push(loss);
-        let retreatImage = DImage.getImage("/CBlades/images/actuators/retreat-move.png");
+        let retreatImage = DImage.getImage("./../images/actuators/retreat-move.png");
         for (let sangle in directions) {
             let angle = parseInt(sangle);
             let orientation = new CBActuatorImageTrigger(this, "actuators", retreatImage,
@@ -1032,7 +1032,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
     constructor(action, moveDirections, rotateDirections) {
 
         function createMoveTriggers(imageArtifacts) {
-            let moveImage = DImage.getImage("/CBlades/images/actuators/retreat-move.png");
+            let moveImage = DImage.getImage("./../images/actuators/retreat-move.png");
             for (let sangle in moveDirections) {
                 let angle = parseInt(sangle);
                 let orientation = new CBActuatorImageTrigger(this, "actuators", moveImage,
@@ -1049,7 +1049,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
         }
 
         function createRotateTriggers(imageArtifacts) {
-            let rotateImage = DImage.getImage("/CBlades/images/actuators/retreat-rotate.png");
+            let rotateImage = DImage.getImage("./../images/actuators/retreat-rotate.png");
             for (let sangle in rotateDirections) {
                 let angle = parseInt(sangle);
                 let orientation = new CBActuatorImageTrigger(this, "actuators", rotateImage,
@@ -1067,7 +1067,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
 
         super(action);
         let imageArtifacts = [];
-        let bloodImage = DImage.getImage("/CBlades/images/actuators/blood.png");
+        let bloodImage = DImage.getImage("./../images/actuators/blood.png");
         let loss = new CBUnitActuatorTrigger(this, this.unit, "actuators", bloodImage,
             new Point2D(0, 0), new Dimension2D(125, 173));
         loss.loss = true;
@@ -1108,7 +1108,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
 export class CBShockAttackInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game, advantage) {
-        super(game, "/CBlades/images/inserts/shock-attack-insert.png", CBShockAttackInsert.DIMENSION,  CBShockAttackInsert.PAGE_DIMENSION);
+        super(game, "./../images/inserts/shock-attack-insert.png", CBShockAttackInsert.DIMENSION,  CBShockAttackInsert.PAGE_DIMENSION);
         this.setMark(new Point2D(70, 248-advantage.attackerCapacity*35));
         this.setMark(new Point2D(285, 248+advantage.defenderCapacity*35));
         if (advantage.attackBonus) {
@@ -1187,7 +1187,7 @@ CBShockAttackInsert.PAGE_DIMENSION = new Dimension2D(544, 850);
 export class CBFireAttackInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game, advantage) {
-        super(game, "/CBlades/images/inserts/fire-attack-insert.png", CBFireAttackInsert.DIMENSION,  CBFireAttackInsert.PAGE_DIMENSION);
+        super(game, "./../images/inserts/fire-attack-insert.png", CBFireAttackInsert.DIMENSION,  CBFireAttackInsert.PAGE_DIMENSION);
         this.setMark(new Point2D(70, 218-advantage.firerCapacity*35));
         this.setMark(new Point2D(285, 218+advantage.firerCapacity*35));
         if (advantage.fireBonus) {
@@ -1259,7 +1259,7 @@ CBFireAttackInsert.PAGE_DIMENSION = new Dimension2D(544, 850);
 export class CBCombatResultTableInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/combat-result-table-insert.png", CBCombatResultTableInsert.DIMENSION);
+        super(game, "./../images/inserts/combat-result-table-insert.png", CBCombatResultTableInsert.DIMENSION);
     }
 
 }
@@ -1268,7 +1268,7 @@ CBCombatResultTableInsert.DIMENSION = new Dimension2D(804, 174);
 export class CBWeaponTableInsert extends WidgetLevelMixin(DAbstractInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/weapon-table-insert.png", CBWeaponTableInsert.DIMENSION, CBWeaponTableInsert.PAGE_DIMENSION);
+        super(game, "./../images/inserts/weapon-table-insert.png", CBWeaponTableInsert.DIMENSION, CBWeaponTableInsert.PAGE_DIMENSION);
         this._margin = new DInsertFrame(this, 0,
             Area2D.create(new Point2D(0, 0), CBWeaponTableInsert.MARGIN_DIMENSION),
             Area2D.create(new Point2D(0, 0), CBWeaponTableInsert.MARGIN_PAGE_DIMENSION)

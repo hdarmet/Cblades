@@ -1104,22 +1104,22 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
 
 function createMovementMenuItems(unit, actions) {
     return [
-        new DIconMenuItem("/CBlades/images/icons/move.png","/CBlades/images/icons/move-gray.png",
+        new DIconMenuItem("./../images/icons/move.png","./../images/icons/move-gray.png",
             0, 0, event => {
                 unit.player.startMoveUnit(unit, actions.moveMode, event);
                 return true;
             }, "Bouger normalement").setActive(actions.moveForward),
-        new DIconMenuItem("/CBlades/images/icons/move-back.png", "/CBlades/images/icons/move-back-gray.png",
+        new DIconMenuItem("./../images/icons/move-back.png", "./../images/icons/move-back-gray.png",
             1, 0, event => {
                 unit.player.startMoveBackUnit(unit, event);
                 return true;
             }, "Reculer").setActive(actions.moveBack),
-        new DIconMenuItem("/CBlades/images/icons/escape.png", "/CBlades/images/icons/escape-gray.png",
+        new DIconMenuItem("./../images/icons/escape.png", "./../images/icons/escape-gray.png",
             2, 0, event => {
                 unit.player.startRoutUnit(unit, event);
                 return true;
             }, "Fuir").setActive(actions.escape),
-        new DIconMenuItem("/CBlades/images/icons/to-face.png", "/CBlades/images/icons/to-face-gray.png",
+        new DIconMenuItem("./../images/icons/to-face.png", "./../images/icons/to-face-gray.png",
             3, 0, event => {
                 unit.player.startConfrontUnit(unit, event);
                 return true;
@@ -1130,8 +1130,8 @@ function createMovementMenuItems(unit, actions) {
 class HelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 
     constructor(actuator, canGetTired) {
-        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-movement-points.png");
-        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-movement-points.png");
+        let normalImage = DImage.getImage("./../images/actuators/standard-movement-points.png");
+        let extendedImage = DImage.getImage("./../images/actuators/extended-movement-points.png");
         let extended = actuator.unit.movementPoints<=0 && canGetTired;
         let image = extended ? extendedImage : normalImage;
         super(actuator,"actuators", image, new Point2D(0, 0), HelpTrigger.DIMENSION, 0);
@@ -1182,8 +1182,8 @@ export class CBMovementHelpActuator extends CBActionActuator {
 class RotateTrigger extends CBActuatorImageTrigger {
 
     constructor(actuator, type, angle, location) {
-        let normalImage = DImage.getImage("/CBlades/images/actuators/toward.png");
-        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-toward.png");
+        let normalImage = DImage.getImage("./../images/actuators/toward.png");
+        let extendedImage = DImage.getImage("./../images/actuators/extended-toward.png");
         let image = type === CBMovement.NORMAL ? normalImage : extendedImage;
         super(actuator, "actuators", image, new Point2D(0, 0), RotateTrigger.DIMENSION);
         this.pangle = angle;
@@ -1196,9 +1196,9 @@ RotateTrigger.DIMENSION = new Dimension2D(60, 80);
 class RotateCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 
     constructor(actuator, cost, type, angle, location) {
-        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-move-cost.png");
-        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-move-cost.png");
-        let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-move-cost.png");
+        let normalImage = DImage.getImage("./../images/actuators/standard-move-cost.png");
+        let extendedImage = DImage.getImage("./../images/actuators/extended-move-cost.png");
+        let minimalImage = DImage.getImage("./../images/actuators/minimal-move-cost.png");
         let image = type === CBMovement.NORMAL ? normalImage : type === CBMovement.EXTENDED ? extendedImage : minimalImage;
         super(actuator,"actuators", image, new Point2D(0, 0), RotateCostTrigger.DIMENSION, 0);
         this._cost = cost;
@@ -1266,9 +1266,9 @@ export class CBRotationActuator extends CBActionActuator {
 class MoveTrigger extends CBActuatorImageTrigger {
 
     constructor(actuator, type, angle, location) {
-        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-move.png");
-        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-move.png");
-        let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-move.png");
+        let normalImage = DImage.getImage("./../images/actuators/standard-move.png");
+        let extendedImage = DImage.getImage("./../images/actuators/extended-move.png");
+        let minimalImage = DImage.getImage("./../images/actuators/minimal-move.png");
         let image = type === CBMovement.NORMAL ? normalImage : type === CBMovement.EXTENDED ? extendedImage : minimalImage;
         super(actuator, "actuators", image, new Point2D(0, 0), MoveTrigger.DIMENSION);
         this.pangle = angle;
@@ -1281,9 +1281,9 @@ MoveTrigger.DIMENSION = new Dimension2D(80, 130);
 class MoveCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 
     constructor(actuator, cost, type, angle, location) {
-        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-move-cost.png");
-        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-move-cost.png");
-        let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-move-cost.png");
+        let normalImage = DImage.getImage("./../images/actuators/standard-move-cost.png");
+        let extendedImage = DImage.getImage("./../images/actuators/extended-move-cost.png");
+        let minimalImage = DImage.getImage("./../images/actuators/minimal-move-cost.png");
         let image = type === CBMovement.NORMAL ? normalImage : type === CBMovement.EXTENDED ? extendedImage : minimalImage;
         super(actuator,"actuators", image, new Point2D(0, 0), MoveCostTrigger.DIMENSION, 0);
         this._cost = cost;
@@ -1349,9 +1349,9 @@ export class CBMoveActuator extends CBActionActuator {
 class MoveFormationTrigger extends CBActuatorImageTrigger {
 
     constructor(actuator, type, hex, angle) {
-        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-move.png");
-        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-move.png");
-        let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-move.png");
+        let normalImage = DImage.getImage("./../images/actuators/standard-move.png");
+        let extendedImage = DImage.getImage("./../images/actuators/extended-move.png");
+        let minimalImage = DImage.getImage("./../images/actuators/minimal-move.png");
         let image = type === CBMovement.NORMAL ? normalImage : type === CBMovement.EXTENDED ? extendedImage : minimalImage;
         super(actuator, "actuators", image, new Point2D(0, 0), MoveFormationTrigger.DIMENSION);
         this.pangle = angle;
@@ -1368,9 +1368,9 @@ MoveFormationTrigger.DIMENSION = new Dimension2D(80, 130);
 class MoveFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 
     constructor(actuator, cost, type, hex, angle) {
-        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-move-cost.png");
-        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-move-cost.png");
-        let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-move-cost.png");
+        let normalImage = DImage.getImage("./../images/actuators/standard-move-cost.png");
+        let extendedImage = DImage.getImage("./../images/actuators/extended-move-cost.png");
+        let minimalImage = DImage.getImage("./../images/actuators/minimal-move-cost.png");
         let image = type === CBMovement.NORMAL ? normalImage : type === CBMovement.EXTENDED ? extendedImage : minimalImage;
         super(actuator,"actuators", image, new Point2D(0, 0), MoveFormationCostTrigger.DIMENSION, 0);
         this._cost = cost;
@@ -1401,9 +1401,9 @@ MoveFormationCostTrigger.DIMENSION = new Dimension2D(70, 70);
 class TurnFormationTrigger extends CBActuatorImageTrigger {
 
     constructor(actuator, type, hex, angle) {
-        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-turn.png");
-        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-turn.png");
-        let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-turn.png");
+        let normalImage = DImage.getImage("./../images/actuators/standard-turn.png");
+        let extendedImage = DImage.getImage("./../images/actuators/extended-turn.png");
+        let minimalImage = DImage.getImage("./../images/actuators/minimal-turn.png");
         let image = type === CBMovement.NORMAL ? normalImage : type === CBMovement.EXTENDED ? extendedImage : minimalImage;
         super(actuator, "actuators", image, new Point2D(0, 0), TurnFormationTrigger.DIMENSION);
         this.pangle = angle;
@@ -1420,9 +1420,9 @@ TurnFormationTrigger.DIMENSION = new Dimension2D(80, 96);
 class TurnFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 
     constructor(actuator, cost, type, hex, angle) {
-        let normalImage = DImage.getImage("/CBlades/images/actuators/standard-turn-cost.png");
-        let extendedImage = DImage.getImage("/CBlades/images/actuators/extended-turn-cost.png");
-        let minimalImage = DImage.getImage("/CBlades/images/actuators/minimal-turn-cost.png");
+        let normalImage = DImage.getImage("./../images/actuators/standard-turn-cost.png");
+        let extendedImage = DImage.getImage("./../images/actuators/extended-turn-cost.png");
+        let minimalImage = DImage.getImage("./../images/actuators/minimal-turn-cost.png");
         let image = type === CBMovement.NORMAL ? normalImage : type === CBMovement.EXTENDED ? extendedImage : minimalImage;
         super(actuator,"actuators", image, new Point2D(0, 0), MoveFormationCostTrigger.DIMENSION, 0);
         this._cost = cost;
@@ -1523,7 +1523,7 @@ export class CBCheckAttackerEngagementInsert extends CBCheckEngagementInsert {
 
     constructor(game, condition) {
         super(game,
-            "/CBlades/images/inserts/check-attacker-engagement-insert.png",
+            "./../images/inserts/check-attacker-engagement-insert.png",
             CBCheckAttackerEngagementInsert.DIMENSION,
             condition);
     }
@@ -1535,7 +1535,7 @@ export class CBCheckConfrontEngagementInsert extends CBCheckEngagementInsert {
 
     constructor(game, condition) {
         super(game,
-            "/CBlades/images/inserts/check-confront-engagement-insert.png",
+            "./../images/inserts/check-confront-engagement-insert.png",
             CBCheckConfrontEngagementInsert.DIMENSION,
             condition);
     }
@@ -1546,7 +1546,7 @@ CBCheckConfrontEngagementInsert.DIMENSION = new Dimension2D(444, 763);
 export class CBCheckDisengagementInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/disengagement-insert.png", CBCheckDisengagementInsert.DIMENSION);
+        super(game, "./../images/inserts/disengagement-insert.png", CBCheckDisengagementInsert.DIMENSION);
     }
 
 }
@@ -1555,7 +1555,7 @@ CBCheckDisengagementInsert.DIMENSION = new Dimension2D(444, 797);
 export class CBMovementTableInsert extends WidgetLevelMixin(DAbstractInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/movement-table-insert.png", CBMovementTableInsert.DIMENSION, CBMovementTableInsert.PAGE_DIMENSION);
+        super(game, "./../images/inserts/movement-table-insert.png", CBMovementTableInsert.DIMENSION, CBMovementTableInsert.PAGE_DIMENSION);
         this.addFrame(new DInsertFrame(this, 0,
                 Area2D.create(new Point2D(0, 0), CBMovementTableInsert.MARGIN),
                 Area2D.create(new Point2D(0, 0), CBMovementTableInsert.MARGIN)
@@ -1581,7 +1581,7 @@ CBMovementTableInsert.PAGE_DIMENSION = new Dimension2D(1041, 366);
 export class CBMovementInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/movement-insert.png", CBMovementInsert.DIMENSION, CBMovementInsert.PAGE_DIMENSION);
+        super(game, "./../images/inserts/movement-insert.png", CBMovementInsert.DIMENSION, CBMovementInsert.PAGE_DIMENSION);
     }
 
 }
@@ -1591,7 +1591,7 @@ CBMovementInsert.PAGE_DIMENSION = new Dimension2D(444, 2470);
 export class CBRoutInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/rout-insert.png", CBRoutInsert.DIMENSION, CBRoutInsert.PAGE_DIMENSION);
+        super(game, "./../images/inserts/rout-insert.png", CBRoutInsert.DIMENSION, CBRoutInsert.PAGE_DIMENSION);
     }
 
 }
@@ -1601,7 +1601,7 @@ CBRoutInsert.PAGE_DIMENSION = new Dimension2D(444, 1433);
 export class CBMoveBackInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/move-back-insert.png", CBMoveBackInsert.DIMENSION, CBMoveBackInsert.PAGE_DIMENSION);
+        super(game, "./../images/inserts/move-back-insert.png", CBMoveBackInsert.DIMENSION, CBMoveBackInsert.PAGE_DIMENSION);
     }
 
 }
@@ -1611,7 +1611,7 @@ CBMoveBackInsert.PAGE_DIMENSION = new Dimension2D(444, 678);
 export class CBToFaceInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/to-face-insert.png", CBToFaceInsert.DIMENSION);
+        super(game, "./../images/inserts/to-face-insert.png", CBToFaceInsert.DIMENSION);
     }
 
 }

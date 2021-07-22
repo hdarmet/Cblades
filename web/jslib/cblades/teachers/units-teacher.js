@@ -265,4 +265,11 @@ export class CBUnitManagementTeacher {
         return !unit.isExhausted() && (!unit.isCharging() || !unit.isTired())
     }
 
+    getWeather(game) {
+        return game.weather;
+    }
+
+    getFog(game) {
+        return game.fog;
+    }
 }

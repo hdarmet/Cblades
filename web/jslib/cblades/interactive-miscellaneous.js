@@ -3,13 +3,13 @@
 import {
     DDice,
     DIconMenu,
-    DIconMenuItem, DInsert, DMask, DResult, DScene
+    DIconMenuItem, DInsert, DMask, DResult, DScene, DSwipe
 } from "../widget.js";
 import {
     CBAction, CBGame, CBPlayable, WidgetLevelMixin
 } from "./game.js";
 import {
-    CBActionMenu, CBInteractivePlayer, CBWeatherIndicator
+    CBActionMenu, CBInteractivePlayer, CBWeatherIndicator, CBFogIndicator
 } from "./interactive-player.js";
 import {
     CBCharge
@@ -20,6 +20,9 @@ import {
 import {
     CBFireStart, CBStakes
 } from "./miscellaneous.js";
+import {
+    Memento
+} from "../mechanisms.js";
 
 export function registerInteractiveMiscellaneous() {
     CBInteractivePlayer.prototype.mergeUnits = function(unit, event) {
@@ -50,6 +53,15 @@ export function registerInteractiveMiscellaneous() {
     CBInteractivePlayer.prototype.playWeather = function(counter, event) {
         if (this.game.canUnselectUnit()) {
             let action = new InteractivePlayWeatherAction(this.game, counter, event);
+            let unit = this.game.selectedUnit;
+            this.afterActivation(unit, () => {
+                action.play();
+            });
+        }
+    }
+    CBInteractivePlayer.prototype.playFog = function(counter, event) {
+        if (this.game.canUnselectUnit()) {
+            let action = new InteractivePlayFogAction(this.game, counter, event);
             let unit = this.game.selectedUnit;
             this.afterActivation(unit, () => {
                 action.play();
@@ -100,7 +112,7 @@ export class InteractiveSetFireAction extends CBAction {
 
     play() {
         this.game.closeActuators();
-        let weather = this.game.arbitrator.getWeather();
+        let weather = this.game.arbitrator.getWeather(this.game);
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
@@ -156,7 +168,7 @@ export class InteractiveExtinguishFireAction extends CBAction {
 
     play() {
         this.game.closeActuators();
-        let weather = this.game.arbitrator.getWeather();
+        let weather = this.game.arbitrator.getWeather(this.game);
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
@@ -344,9 +356,10 @@ export class InteractivePlayWeatherAction extends CBCounterAction {
     play() {
         this.game.closePopup();
         this.game.closeActuators();
-        let weather = this.game.arbitrator.getWeather();
-        let result = new DResult();
+        let weather = this.game.arbitrator.getWeather(this.game);
+        let swipeResult = new DSwipe();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let weatherIndicator = new CBWeatherIndicator(weather);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
@@ -359,31 +372,102 @@ export class InteractivePlayWeatherAction extends CBCounterAction {
             new CBPlayWeatherInsert(this.game),
             new Point2D(-CBPlayWeatherInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBWeatherIndicator(weather),
+            weatherIndicator,
             new Point2D(CBWeatherIndicator.DIMENSION.w/2-20, 100)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
-                let {success} = this._processPlayWeatherResult(this.unit, dice.result);
-                if (success) {
-                    result.success().appear();
+                let {swipe} = this._processPlayWeatherResult(this.game, dice.result);
+                if (weather>0 && swipe === -1) {
+                    swipeResult.swipeUp().appear();
+                    this.game.changeWeather(weather-1);
+                    weatherIndicator.changeState(weather-1);
+                }
+                else if (weather<5 && swipe === 1) {
+                    swipeResult.swipeDown().appear();
+                    this.game.changeWeather(weather+1);
+                    weatherIndicator.changeState(weather+1);
                 }
                 else {
-                    result.failure().appear();
+                    swipeResult.noSwipe().appear();
                 }
+                Memento.clear();
             }),
             new Point2D(60, -100)
         ).addWidget(
-            result.setFinalAction(close),
+            swipeResult.setFinalAction(close),
             new Point2D(0, 0)
         ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
-    _processPlayWeatherResult(unit, diceResult) {
-        let result = this.game.arbitrator.processPlayWeatherResult(this.unit, diceResult);
-        if (result.success) {
+    _processPlayWeatherResult(game, diceResult) {
+        let result = this.game.arbitrator.processPlayWeatherResult(game, diceResult);
+        this.markAsPlayed();
+        return result;
+    }
 
-        }
+}
+
+
+
+
+
+export class InteractivePlayFogAction extends CBCounterAction {
+
+    constructor(game, counter, event) {
+        super(game, counter);
+        this._event = event;
+    }
+
+    play() {
+        this.game.closePopup();
+        this.game.closeActuators();
+        let fog = this.game.arbitrator.getFog(this.game);
+        let swipeResult = new DSwipe();
+        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let weatherIndicator = new CBFogIndicator(fog);
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+        };
+        mask.setAction(close);
+        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        scene.addWidget(
+            new CBPlayFogInsert(this.game),
+            new Point2D(-CBPlayFogInsert.DIMENSION.w/2, 0)
+        ).addWidget(
+            weatherIndicator,
+            new Point2D(CBFogIndicator.DIMENSION.w/2-20, 100)
+        ).addWidget(
+            dice.setFinalAction(()=>{
+                dice.active = false;
+                let {swipe} = this._processPlayFogResult(this.game, dice.result);
+                if (fog>0 && swipe === -1) {
+                    swipeResult.swipeUp().appear();
+                    this.game.changeFog(fog-1);
+                    weatherIndicator.changeState(fog-1);
+                }
+                else if (fog<5 && swipe === 1) {
+                    swipeResult.swipeDown().appear();
+                    this.game.changeWeather(fog+1);
+                    weatherIndicator.changeState(fog+1);
+                }
+                else {
+                    swipeResult.noSwipe().appear();
+                }
+                Memento.clear();
+            }),
+            new Point2D(60, -100)
+        ).addWidget(
+            swipeResult.setFinalAction(close),
+            new Point2D(0, 0)
+        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+    }
+
+    _processPlayFogResult(game, diceResult) {
+        let result = this.game.arbitrator.processPlayFogResult(game, diceResult);
         this.markAsPlayed();
         return result;
     }
@@ -392,12 +476,12 @@ export class InteractivePlayWeatherAction extends CBCounterAction {
 
 function createMiscellaneousMenuItems(unit, actions) {
     return [
-        new DIconMenuItem("/CBlades/images/icons/do-fusion.png", "/CBlades/images/icons/do-fusion-gray.png",
+        new DIconMenuItem("./../images/icons/do-fusion.png", "./../images/icons/do-fusion-gray.png",
             2, 5, event => {
                 unit.player.mergeUnits(unit, event);
                 return true;
             }, "Fusionner les troupes").setActive(actions.mergeUnit),
-        new DIconMenuItem("/CBlades/images/icons/do-many.png", "/CBlades/images/icons/do-many-gray.png",
+        new DIconMenuItem("./../images/icons/do-many.png", "./../images/icons/do-many-gray.png",
             3, 5, event => {
                 unit.player.choseMiscAction(unit, event);
                 return true;
@@ -408,22 +492,22 @@ function createMiscellaneousMenuItems(unit, actions) {
 export class CBMiscellaneousActionsMenu extends DIconMenu {
 
     constructor(game, unit, allowedMiscellaneousActions) {
-        super(false, new DIconMenuItem("/CBlades/images/actions/start-fire.png","/CBlades/images/actions/start-fire-gray.png",
+        super(false, new DIconMenuItem("./../images/actions/start-fire.png","./../images/actions/start-fire-gray.png",
             0, 0, event => {
                 unit.player.tryToSetFire(unit, event);
                 return true;
             }, "Mêttre le feu").setActive(allowedMiscellaneousActions.setFire),
-            new DIconMenuItem("/CBlades/images/actions/extinguish-fire.png","/CBlades/images/actions/extinguish-fire-gray.png",
+            new DIconMenuItem("./../images/actions/extinguish-fire.png","./../images/actions/extinguish-fire-gray.png",
                 1, 0, event => {
                     unit.player.tryToExtinguishFire(unit, event);
                     return true;
                 }, "Eteindre le feu").setActive(allowedMiscellaneousActions.extinguishFire),
-            new DIconMenuItem("/CBlades/images/actions/set-stakes.png","/CBlades/images/actions/set-stakes-gray.png",
+            new DIconMenuItem("./../images/actions/set-stakes.png","./../images/actions/set-stakes-gray.png",
                 0, 1, event => {
                     unit.player.tryToSetStakes(unit, event);
                     return true;
                 }, "Poser des pieux").setActive(allowedMiscellaneousActions.setStakes),
-            new DIconMenuItem("/CBlades/images/actions/remove-stakes.png","/CBlades/images/actions/remove-stakes-gray.png",
+            new DIconMenuItem("./../images/actions/remove-stakes.png","./../images/actions/remove-stakes-gray.png",
                 1, 1, event => {
                     unit.player.tryToRemoveStakes(unit, event);
                     return true;
@@ -443,7 +527,7 @@ export class CBMiscellaneousActionsMenu extends DIconMenu {
 export class CBMiscActionsInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/misc-actions-insert.png", CBMiscActionsInsert.DIMENSION);
+        super(game, "./../images/inserts/misc-actions-insert.png", CBMiscActionsInsert.DIMENSION);
     }
 
 }
@@ -452,7 +536,7 @@ CBMiscActionsInsert.DIMENSION = new Dimension2D(444, 641);
 export class CBSetFireInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/set-fire-insert.png", CBSetFireInsert.DIMENSION);
+        super(game, "./../images/inserts/set-fire-insert.png", CBSetFireInsert.DIMENSION);
     }
 
 }
@@ -461,7 +545,7 @@ CBSetFireInsert.DIMENSION = new Dimension2D(444, 385);
 export class CBExtinguishFireInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/extinguish-fire-insert.png", CBExtinguishFireInsert.DIMENSION);
+        super(game, "./../images/inserts/extinguish-fire-insert.png", CBExtinguishFireInsert.DIMENSION);
     }
 
 }
@@ -470,7 +554,7 @@ CBExtinguishFireInsert.DIMENSION = new Dimension2D(444, 397);
 export class CBSetStakesInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/set-stakes-insert.png", CBSetStakesInsert.DIMENSION);
+        super(game, "./../images/inserts/set-stakes-insert.png", CBSetStakesInsert.DIMENSION);
     }
 
 }
@@ -479,7 +563,7 @@ CBSetStakesInsert.DIMENSION = new Dimension2D(444, 334);
 export class CBRemoveStakesInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/remove-stakes-insert.png", CBRemoveStakesInsert.DIMENSION);
+        super(game, "./../images/inserts/remove-stakes-insert.png", CBRemoveStakesInsert.DIMENSION);
     }
 
 }
@@ -488,9 +572,19 @@ CBRemoveStakesInsert.DIMENSION = new Dimension2D(444, 306);
 export class CBPlayWeatherInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/meteo-insert.png", CBPlayWeatherInsert.DIMENSION, CBPlayWeatherInsert.PAGE_DIMENSION);
+        super(game, "./../images/inserts/meteo-insert.png", CBPlayWeatherInsert.DIMENSION, CBPlayWeatherInsert.PAGE_DIMENSION);
     }
 
 }
 CBPlayWeatherInsert.DIMENSION = new Dimension2D(444, 600);
 CBPlayWeatherInsert.PAGE_DIMENSION = new Dimension2D(444, 1124);
+
+export class CBPlayFogInsert extends WidgetLevelMixin(DInsert) {
+
+    constructor(game) {
+        super(game, "./../images/inserts/fog-insert.png", CBPlayFogInsert.DIMENSION, CBPlayFogInsert.PAGE_DIMENSION);
+    }
+
+}
+CBPlayFogInsert.DIMENSION = new Dimension2D(444, 600);
+CBPlayFogInsert.PAGE_DIMENSION = new Dimension2D(444, 686);

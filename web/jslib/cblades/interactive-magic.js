@@ -216,7 +216,7 @@ export class CBSpellTargetFoesActuator extends RetractableActuatorMixin(CBAction
 
     constructor(action, foes) {
         super(action);
-        let image = DImage.getImage("/CBlades/images/actuators/spell-target-foe.png");
+        let image = DImage.getImage("./../images/actuators/spell-target-foe.png");
         let imageArtifacts = [];
         for (let foe of foes) {
             let target = new CBUnitActuatorTrigger(this, foe,"units", image,
@@ -241,7 +241,7 @@ export class CBSpellTargetFriendsActuator extends RetractableActuatorMixin(CBAct
 
     constructor(action, friends) {
         super(action);
-        let image = DImage.getImage("/CBlades/images/actuators/spell-target-friend.png");
+        let image = DImage.getImage("./../images/actuators/spell-target-friend.png");
         let imageArtifacts = [];
         for (let friend of friends) {
             let target = new CBUnitActuatorTrigger(this, friend, "units", image,
@@ -266,7 +266,7 @@ export class CBSpellTargetHexesActuator extends CBActionActuator {
 
     constructor(action, hexes) {
         super(action);
-        let image = DImage.getImage("/CBlades/images/actuators/spell-target-hex.png");
+        let image = DImage.getImage("./../images/actuators/spell-target-hex.png");
         let imageArtifacts = [];
         for (let hex of hexes) {
             let target = new CBActuatorImageTrigger(this, "actuators", image,
@@ -290,12 +290,12 @@ export class CBSpellTargetHexesActuator extends CBActionActuator {
 
 function createMagicMenuItems(unit, actions) {
     return [
-        new DIconMenuItem("/CBlades/images/icons/select-spell.png", "/CBlades/images/icons/select-spell-gray.png",
+        new DIconMenuItem("./../images/icons/select-spell.png", "./../images/icons/select-spell-gray.png",
             0, 5, event => {
                 unit.player.choseSpell(unit, event);
                 return true;
             }, "Choisir un sort").setActive(actions.prepareSpell),
-        new DIconMenuItem("/CBlades/images/icons/cast-spell.png", "/CBlades/images/icons/cast-spell-gray.png",
+        new DIconMenuItem("./../images/icons/cast-spell.png", "./../images/icons/cast-spell-gray.png",
             1, 5, event => {
                 unit.player.tryToCastSpell(unit, event);
                 return true;
@@ -346,7 +346,7 @@ export class CBSpellsMenu extends DIconMenu {
 export class CBCastSpellInsert extends DInsert {
 
     constructor() {
-        super("/CBlades/images/inserts/cast-spell-insert.png", CBCastSpellInsert.DIMENSION, CBCastSpellInsert.PAGE_DIMENSION);
+        super("./../images/inserts/cast-spell-insert.png", CBCastSpellInsert.DIMENSION, CBCastSpellInsert.PAGE_DIMENSION);
     }
 
 }
@@ -389,7 +389,7 @@ CBFireballSpell.resolver = function(action) {
 export class CBFireballInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/fireball-insert.png", CBFireballInsert.DIMENSION);
+        super(game, "./../images/inserts/fireball-insert.png", CBFireballInsert.DIMENSION);
     }
 
 }

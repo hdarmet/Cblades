@@ -31,10 +31,10 @@ describe("Magic", ()=> {
     class CBTestSpell extends CBSpell {
         constructor(wizard, level) {
             super([
-                "/CBlades/images/magic/test/spellb.png",
-                "/CBlades/images/magic/test/spell1.png",
-                "/CBlades/images/magic/test/spell2.png",
-                "/CBlades/images/magic/test/spell3.png"
+                "./../images/magic/test/spellb.png",
+                "./../images/magic/test/spell1.png",
+                "./../images/magic/test/spell2.png",
+                "./../images/magic/test/spell3.png"
             ], wizard, level);
         }
 
@@ -58,11 +58,11 @@ describe("Magic", ()=> {
     it("Checks spell definition", () => {
         given:
             var {leader:wizard} = createTinyGameWithLeader();
-            var definition = new CBSpellDefinition("/CBlades/images/magic/test/spell2.png", CBTestSpell,2, "spell two");
+            var definition = new CBSpellDefinition("./../images/magic/test/spell2.png", CBTestSpell,2, "spell two");
         when:
             var spell = definition.createSpellCounter(wizard);
         then:
-            assert(definition.path).equalsTo("/CBlades/images/magic/test/spell2.png");
+            assert(definition.path).equalsTo("./../images/magic/test/spell2.png");
             assert(definition.label).equalsTo("spell two");
             assert(spell).is(CBTestSpell);
     });
@@ -70,7 +70,7 @@ describe("Magic", ()=> {
     it("Checks when a wizard chose a spell and cast it", () => {
         given:
             var {game, map, leader:wizard} = createTinyGameWithLeader();
-            var definition = new CBSpellDefinition("/CBlades/images/magic/test/spell2.png", CBTestSpell,2);
+            var definition = new CBSpellDefinition("./../images/magic/test/spell2.png", CBTestSpell,2);
         when:
             wizard.choseSpell(definition);
             var spell = wizard.chosenSpell;
@@ -88,7 +88,7 @@ describe("Magic", ()=> {
             assert(spell.hexLocation).equalsTo(wizard.hexLocation);
             assert(spell.hexLocation.playables.indexOf(spell)).equalsTo(-1);
             assert(spell.activated).isFalse();
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/test/spellb.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/test/spellb.png");
         when:
             Memento.open();
             spell.apply();
@@ -96,7 +96,7 @@ describe("Magic", ()=> {
             assert(spell.isOption()).isFalse();
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(spell.activated).isTrue();
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/test/spell2.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/test/spell2.png");
         when:
             var hexId = map.getHex(2, 3);
             assert(spell.appendToMap(hexId));
@@ -112,7 +112,7 @@ describe("Magic", ()=> {
             assert(wizard.carried.indexOf(spell)).notEqualsTo(-1);
             assert(spell.hexLocation).equalsTo(wizard.hexLocation);
             assert(spell.activated).isFalse();
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/test/spellb.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/test/spellb.png");
         when:
             spell.apply();
             assert(spell.addToMap(hexId));
@@ -129,7 +129,7 @@ describe("Magic", ()=> {
     it("Checks when a wizard chose a hex targeted spell and cast it", () => {
         given:
             var {map, leader:wizard} = createTinyGameWithLeader();
-            var definition = new CBSpellDefinition("/CBlades/images/magic/test/spell2.png", CBTestHexSpell,2);
+            var definition = new CBSpellDefinition("./../images/magic/test/spell2.png", CBTestHexSpell,2);
             wizard.choseSpell(definition);
             var spell = wizard.chosenSpell;
         when:
@@ -187,7 +187,7 @@ describe("Magic", ()=> {
     it("Checks when a wizard chose a unit targeted spell and cast it", () => {
         given:
             var {map, unit, leader:wizard} = createTinyGameWithLeader();
-            var definition = new CBSpellDefinition("/CBlades/images/magic/test/spell2.png", CBTestUnitSpell,2);
+            var definition = new CBSpellDefinition("./../images/magic/test/spell2.png", CBTestUnitSpell,2);
             wizard.choseSpell(definition);
             var spell = wizard.chosenSpell;
         when:
@@ -258,24 +258,24 @@ describe("Magic", ()=> {
         given:
             var {leader:wizard} = createTinyGameWithLeader();
         then:
-            checkSpellInLaboratory(wizard, "firePentacle1", CBFirePentacleSpell, 1, "/CBlades/images/magic/fire/pentacle1.png");
-            checkSpellInLaboratory(wizard, "firePentacle2", CBFirePentacleSpell, 2, "/CBlades/images/magic/fire/pentacle2.png");
-            checkSpellInLaboratory(wizard, "firePentacle3", CBFirePentacleSpell, 3, "/CBlades/images/magic/fire/pentacle3.png");
-            checkSpellInLaboratory(wizard, "fireCircle1", CBFireCircleSpell, 1, "/CBlades/images/magic/fire/circle1.png");
-            checkSpellInLaboratory(wizard, "fireCircle2", CBFireCircleSpell, 2, "/CBlades/images/magic/fire/circle2.png");
-            checkSpellInLaboratory(wizard, "fireCircle3", CBFireCircleSpell, 3, "/CBlades/images/magic/fire/circle3.png");
-            checkSpellInLaboratory(wizard, "fireball1", CBFireballSpell, 1, "/CBlades/images/magic/fire/fireball1.png");
-            checkSpellInLaboratory(wizard, "fireball2", CBFireballSpell, 2, "/CBlades/images/magic/fire/fireball2.png");
-            checkSpellInLaboratory(wizard, "fireball3", CBFireballSpell, 3, "/CBlades/images/magic/fire/fireball3.png");
-            checkSpellInLaboratory(wizard, "fireSword1", CBFireswordSpell, 1, "/CBlades/images/magic/fire/firesword1.png");
-            checkSpellInLaboratory(wizard, "fireSword2", CBFireswordSpell, 2, "/CBlades/images/magic/fire/firesword2.png");
-            checkSpellInLaboratory(wizard, "fireSword3", CBFireswordSpell, 3, "/CBlades/images/magic/fire/firesword3.png");
-            checkSpellInLaboratory(wizard, "blaze1", CBBlazeSpell, 1, "/CBlades/images/magic/fire/blaze1.png");
-            checkSpellInLaboratory(wizard, "blaze2", CBBlazeSpell, 2, "/CBlades/images/magic/fire/blaze2.png");
-            checkSpellInLaboratory(wizard, "blaze3", CBBlazeSpell, 3, "/CBlades/images/magic/fire/blaze3.png");
-            checkSpellInLaboratory(wizard, "rainFire1", CBRainFireSpell, 1, "/CBlades/images/magic/fire/rainfire1.png");
-            checkSpellInLaboratory(wizard, "rainFire2", CBRainFireSpell, 2, "/CBlades/images/magic/fire/rainfire2.png");
-            checkSpellInLaboratory(wizard, "rainFire3", CBRainFireSpell, 3, "/CBlades/images/magic/fire/rainfire3.png");
+            checkSpellInLaboratory(wizard, "firePentacle1", CBFirePentacleSpell, 1, "./../images/magic/fire/pentacle1.png");
+            checkSpellInLaboratory(wizard, "firePentacle2", CBFirePentacleSpell, 2, "./../images/magic/fire/pentacle2.png");
+            checkSpellInLaboratory(wizard, "firePentacle3", CBFirePentacleSpell, 3, "./../images/magic/fire/pentacle3.png");
+            checkSpellInLaboratory(wizard, "fireCircle1", CBFireCircleSpell, 1, "./../images/magic/fire/circle1.png");
+            checkSpellInLaboratory(wizard, "fireCircle2", CBFireCircleSpell, 2, "./../images/magic/fire/circle2.png");
+            checkSpellInLaboratory(wizard, "fireCircle3", CBFireCircleSpell, 3, "./../images/magic/fire/circle3.png");
+            checkSpellInLaboratory(wizard, "fireball1", CBFireballSpell, 1, "./../images/magic/fire/fireball1.png");
+            checkSpellInLaboratory(wizard, "fireball2", CBFireballSpell, 2, "./../images/magic/fire/fireball2.png");
+            checkSpellInLaboratory(wizard, "fireball3", CBFireballSpell, 3, "./../images/magic/fire/fireball3.png");
+            checkSpellInLaboratory(wizard, "fireSword1", CBFireswordSpell, 1, "./../images/magic/fire/firesword1.png");
+            checkSpellInLaboratory(wizard, "fireSword2", CBFireswordSpell, 2, "./../images/magic/fire/firesword2.png");
+            checkSpellInLaboratory(wizard, "fireSword3", CBFireswordSpell, 3, "./../images/magic/fire/firesword3.png");
+            checkSpellInLaboratory(wizard, "blaze1", CBBlazeSpell, 1, "./../images/magic/fire/blaze1.png");
+            checkSpellInLaboratory(wizard, "blaze2", CBBlazeSpell, 2, "./../images/magic/fire/blaze2.png");
+            checkSpellInLaboratory(wizard, "blaze3", CBBlazeSpell, 3, "./../images/magic/fire/blaze3.png");
+            checkSpellInLaboratory(wizard, "rainFire1", CBRainFireSpell, 1, "./../images/magic/fire/rainfire1.png");
+            checkSpellInLaboratory(wizard, "rainFire2", CBRainFireSpell, 2, "./../images/magic/fire/rainfire2.png");
+            checkSpellInLaboratory(wizard, "rainFire3", CBRainFireSpell, 3, "./../images/magic/fire/rainfire3.png");
     });
 
     it("Checks fire pentacle spell", () => {
@@ -287,12 +287,12 @@ describe("Magic", ()=> {
             var cinematic = spell.getNextCinematic();
         then:
             assert(spell).is(CBFirePentacleSpell);
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/fireb.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/fireb.png");
             assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.APPLY);
         when:
             spell.apply();
         then:
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/pentacle1.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/pentacle1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(wizard.hexLocation.playables.indexOf(spell)).notEqualsTo(-1);
             assert(spell.isOption()).isFalse();
@@ -307,12 +307,12 @@ describe("Magic", ()=> {
             var cinematic = spell.getNextCinematic();
         then:
             assert(spell).is(CBFireCircleSpell);
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/fireb.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/fireb.png");
             assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.APPLY);
         when:
             spell.apply();
         then:
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/circle1.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/circle1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(wizard.hexLocation.playables.indexOf(spell)).notEqualsTo(-1);
             assert(spell.isOption()).isFalse();
@@ -329,21 +329,21 @@ describe("Magic", ()=> {
             var cinematic = spell.getNextCinematic();
         then:
             assert(spell).is(CBFireballSpell);
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/fireb.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/fireb.png");
             assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.SELECT_FOE);
         when:
             spell.selectUnit(foe);
             cinematic = spell.getNextCinematic();
         then:
             assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.CONTINUE);
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/fireb.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/fireb.png");
             assert(spell.unit).equalsTo(foe);
         when:
             spell.apply();
             cinematic = spell.getNextCinematic();
         then:
             assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.RESOLVE);
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/fireball1.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/fireball1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(foe.options.indexOf(spell)).notEqualsTo(-1);
             assert(spell.isOption()).isTrue();
@@ -380,19 +380,19 @@ describe("Magic", ()=> {
             var cinematic = spell.getNextCinematic();
         then:
             assert(spell).is(CBFireswordSpell);
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/fireb.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/fireb.png");
             assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.SELECT_FRIEND);
         when:
             spell.selectUnit(unit);
             cinematic = spell.getNextCinematic();
         then:
             assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.APPLY);
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/fireb.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/fireb.png");
             assert(spell.unit).equalsTo(unit);
         when:
             spell.apply();
         then:
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/firesword1.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/firesword1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(unit.options.indexOf(spell)).notEqualsTo(-1);
             assert(spell.isOption()).isTrue();
@@ -407,7 +407,7 @@ describe("Magic", ()=> {
             var cinematic = spell.getNextCinematic();
         then:
             assert(spell).is(CBBlazeSpell);
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/fireb.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/fireb.png");
             assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.SELECT_HEX);
         when:
             var hexId = map.getHex(5, 6);
@@ -415,12 +415,12 @@ describe("Magic", ()=> {
             cinematic = spell.getNextCinematic();
         then:
             assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.APPLY);
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/fireb.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/fireb.png");
             assert(spell.hex).equalsTo(hexId);
         when:
             spell.apply();
         then:
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/blaze1.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/blaze1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(hexId.playables.indexOf(spell)).notEqualsTo(-1);
             assert(spell.isOption()).isFalse();
@@ -435,7 +435,7 @@ describe("Magic", ()=> {
             var cinematic = spell.getNextCinematic();
         then:
             assert(spell).is(CBRainFireSpell);
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/fireb.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/fireb.png");
             assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.SELECT_HEX);
         when:
             var hexId = map.getHex(5, 6);
@@ -443,12 +443,12 @@ describe("Magic", ()=> {
             cinematic = spell.getNextCinematic();
         then:
             assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.APPLY);
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/fireb.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/fireb.png");
             assert(spell.hex).equalsTo(hexId);
         when:
             spell.apply();
         then:
-            assert(spell.artifact.image.path).equalsTo("/CBlades/images/magic/fire/rainfire1.png");
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/rainfire1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(hexId.playables.indexOf(spell)).notEqualsTo(-1);
             assert(spell.isOption()).isFalse();

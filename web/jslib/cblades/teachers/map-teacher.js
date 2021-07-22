@@ -1,8 +1,7 @@
 'use strict'
 
 import {
-    CBMoveProfile,
-    CBWeather
+    CBMoveProfile
 } from "../unit.js";
 import {
     diffAngle, moyAngle, sumAngle
@@ -13,10 +12,6 @@ import {
 } from "../map.js";
 
 export class CBMapTeacher {
-
-    getWeather() {
-        return CBWeather.CLEAR;
-    }
 
     getHexesFromZones(zones) {
         let hexes = new Set();

@@ -301,10 +301,10 @@ export class CBFirePentacleSpell extends HexTargetedMixin(CBSpell) {
 
     constructor(wizard, level) {
         super([
-            "/CBlades/images/magic/fire/fireb.png",
-            "/CBlades/images/magic/fire/pentacle1.png",
-            "/CBlades/images/magic/fire/pentacle2.png",
-            "/CBlades/images/magic/fire/pentacle3.png"
+            "./../images/magic/fire/fireb.png",
+            "./../images/magic/fire/pentacle1.png",
+            "./../images/magic/fire/pentacle2.png",
+            "./../images/magic/fire/pentacle3.png"
         ], wizard, level);
     }
 
@@ -323,10 +323,10 @@ export class CBFireCircleSpell extends HexTargetedMixin(CBSpell) {
 
     constructor(wizard, level) {
         super([
-            "/CBlades/images/magic/fire/fireb.png",
-            "/CBlades/images/magic/fire/circle1.png",
-            "/CBlades/images/magic/fire/circle2.png",
-            "/CBlades/images/magic/fire/circle3.png"
+            "./../images/magic/fire/fireb.png",
+            "./../images/magic/fire/circle1.png",
+            "./../images/magic/fire/circle2.png",
+            "./../images/magic/fire/circle3.png"
         ], wizard, level);
     }
 
@@ -345,10 +345,10 @@ export class CBFireballSpell extends UnitTargetedMixin(CBSpell) {
 
     constructor(wizard, level) {
         super([
-            "/CBlades/images/magic/fire/fireb.png",
-            "/CBlades/images/magic/fire/fireball1.png",
-            "/CBlades/images/magic/fire/fireball2.png",
-            "/CBlades/images/magic/fire/fireball3.png"
+            "./../images/magic/fire/fireb.png",
+            "./../images/magic/fire/fireball1.png",
+            "./../images/magic/fire/fireball2.png",
+            "./../images/magic/fire/fireball3.png"
         ], wizard, level);
     }
 
@@ -382,10 +382,10 @@ export class CBFireswordSpell extends UnitTargetedMixin(CBSpell) {
 
     constructor(wizard, level) {
         super([
-            "/CBlades/images/magic/fire/fireb.png",
-            "/CBlades/images/magic/fire/firesword1.png",
-            "/CBlades/images/magic/fire/firesword2.png",
-            "/CBlades/images/magic/fire/firesword3.png"
+            "./../images/magic/fire/fireb.png",
+            "./../images/magic/fire/firesword1.png",
+            "./../images/magic/fire/firesword2.png",
+            "./../images/magic/fire/firesword3.png"
         ], wizard, level);
     }
 
@@ -404,10 +404,10 @@ export class CBBlazeSpell extends HexTargetedMixin(CBSpell) {
 
     constructor(wizard, level) {
         super([
-            "/CBlades/images/magic/fire/fireb.png",
-            "/CBlades/images/magic/fire/blaze1.png",
-            "/CBlades/images/magic/fire/blaze2.png",
-            "/CBlades/images/magic/fire/blaze3.png"
+            "./../images/magic/fire/fireb.png",
+            "./../images/magic/fire/blaze1.png",
+            "./../images/magic/fire/blaze2.png",
+            "./../images/magic/fire/blaze3.png"
         ], wizard, level);
     }
 
@@ -426,10 +426,10 @@ export class CBRainFireSpell extends HexTargetedMixin(CBSpell) {
 
     constructor(wizard, level) {
         super([
-            "/CBlades/images/magic/fire/fireb.png",
-            "/CBlades/images/magic/fire/rainfire1.png",
-            "/CBlades/images/magic/fire/rainfire2.png",
-            "/CBlades/images/magic/fire/rainfire3.png"
+            "./../images/magic/fire/fireb.png",
+            "./../images/magic/fire/rainfire1.png",
+            "./../images/magic/fire/rainfire2.png",
+            "./../images/magic/fire/rainfire3.png"
         ], wizard, level);
     }
 
@@ -446,75 +446,75 @@ export class CBRainFireSpell extends HexTargetedMixin(CBSpell) {
 
 CBSpell.laboratory = new Map([
     ["firePentacle1",
-        new CBSpellDefinition("/CBlades/images/magic/fire/pentacle1.png", CBFirePentacleSpell,1,
+        new CBSpellDefinition("./../images/magic/fire/pentacle1.png", CBFirePentacleSpell,1,
         "Pentacle niveau 1")
     ],
     ["firePentacle2",
-        new CBSpellDefinition("/CBlades/images/magic/fire/pentacle2.png", CBFirePentacleSpell,2,
+        new CBSpellDefinition("./../images/magic/fire/pentacle2.png", CBFirePentacleSpell,2,
         "Pentacle niveau 2")
     ],
     ["firePentacle3",
-        new CBSpellDefinition("/CBlades/images/magic/fire/pentacle3.png", CBFirePentacleSpell,3,
+        new CBSpellDefinition("./../images/magic/fire/pentacle3.png", CBFirePentacleSpell,3,
         "Pentacle niveau 1")
     ],
     ["fireCircle1",
-        new CBSpellDefinition("/CBlades/images/magic/fire/circle1.png", CBFireCircleSpell,1,
+        new CBSpellDefinition("./../images/magic/fire/circle1.png", CBFireCircleSpell,1,
         "Cercle de feu niveau 1")
     ],
     ["fireCircle2",
-        new CBSpellDefinition("/CBlades/images/magic/fire/circle2.png", CBFireCircleSpell,2,
+        new CBSpellDefinition("./../images/magic/fire/circle2.png", CBFireCircleSpell,2,
         "Cercle de feu niveau 2")
     ],
     ["fireCircle3",
-        new CBSpellDefinition("/CBlades/images/magic/fire/circle3.png", CBFireCircleSpell,3,
+        new CBSpellDefinition("./../images/magic/fire/circle3.png", CBFireCircleSpell,3,
         "Cercle de feu niveau 3")
     ],
     ["fireball1",
-        new CBSpellDefinition("/CBlades/images/magic/fire/fireball1.png", CBFireballSpell,1,
+        new CBSpellDefinition("./../images/magic/fire/fireball1.png", CBFireballSpell,1,
         "Boule de feu niveau 1")
     ],
     ["fireball2",
-        new CBSpellDefinition("/CBlades/images/magic/fire/fireball2.png", CBFireballSpell,2,
+        new CBSpellDefinition("./../images/magic/fire/fireball2.png", CBFireballSpell,2,
         "Boule de feu niveau 2")
     ],
     ["fireball3",
-        new CBSpellDefinition("/CBlades/images/magic/fire/fireball3.png", CBFireballSpell,3,
+        new CBSpellDefinition("./../images/magic/fire/fireball3.png", CBFireballSpell,3,
         "Boule de feu niveau 3")
     ],
     ["fireSword1",
-        new CBSpellDefinition("/CBlades/images/magic/fire/firesword1.png", CBFireswordSpell,1,
+        new CBSpellDefinition("./../images/magic/fire/firesword1.png", CBFireswordSpell,1,
         "Epées enflammées niveau 1")
     ],
     ["fireSword2",
-        new CBSpellDefinition("/CBlades/images/magic/fire/firesword2.png", CBFireswordSpell,2,
+        new CBSpellDefinition("./../images/magic/fire/firesword2.png", CBFireswordSpell,2,
         "Epées enflammées niveau 2")
     ],
     ["fireSword3",
-        new CBSpellDefinition("/CBlades/images/magic/fire/firesword3.png", CBFireswordSpell,3,
+        new CBSpellDefinition("./../images/magic/fire/firesword3.png", CBFireswordSpell,3,
         "Epées enflammées niveau 3")
     ],
     ["blaze1",
-        new CBSpellDefinition("/CBlades/images/magic/fire/blaze1.png", CBBlazeSpell,1,
+        new CBSpellDefinition("./../images/magic/fire/blaze1.png", CBBlazeSpell,1,
         "Brasier niveau 1")
     ],
     ["blaze2",
-        new CBSpellDefinition("/CBlades/images/magic/fire/blaze2.png", CBBlazeSpell,2,
+        new CBSpellDefinition("./../images/magic/fire/blaze2.png", CBBlazeSpell,2,
         "Brasier niveau 2")
     ],
     ["blaze3",
-        new CBSpellDefinition("/CBlades/images/magic/fire/blaze3.png", CBBlazeSpell,3,
+        new CBSpellDefinition("./../images/magic/fire/blaze3.png", CBBlazeSpell,3,
         "Brasier niveau 3")
     ],
     ["rainFire1",
-        new CBSpellDefinition("/CBlades/images/magic/fire/rainfire1.png", CBRainFireSpell,1,
+        new CBSpellDefinition("./../images/magic/fire/rainfire1.png", CBRainFireSpell,1,
         "Pluie de feu niveau 1")
     ],
     ["rainFire2",
-        new CBSpellDefinition("/CBlades/images/magic/fire/rainfire2.png", CBRainFireSpell,2,
+        new CBSpellDefinition("./../images/magic/fire/rainfire2.png", CBRainFireSpell,2,
         "Pluie de feu niveau 2")
     ],
     ["rainFire3",
-        new CBSpellDefinition("/CBlades/images/magic/fire/rainfire3.png", CBRainFireSpell,3,
+        new CBSpellDefinition("./../images/magic/fire/rainfire3.png", CBRainFireSpell,3,
         "Pluie de feu niveau 3")
     ]
 ]);

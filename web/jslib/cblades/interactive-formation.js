@@ -184,7 +184,7 @@ export class CBCreateFormationActuator extends CBActionActuator {
 
     constructor(action, joinableHexes) {
         super(action);
-        let image = DImage.getImage("/CBlades/images/actuators/formation.png");
+        let image = DImage.getImage("./../images/actuators/formation.png");
         let imageArtifacts = [];
         for (let hex of joinableHexes) {
             let creation = new CBActuatorImageTrigger(this, "actuators", image,
@@ -225,8 +225,8 @@ export class CBReleaseTroopActuator extends CBActionActuator {
         }
 
         super(action);
-        let oneStepImage = DImage.getImage("/CBlades/images/actuators/quit-half.png");
-        let twoStepsImage = DImage.getImage("/CBlades/images/actuators/quit-full.png");
+        let oneStepImage = DImage.getImage("./../images/actuators/quit-half.png");
+        let twoStepsImage = DImage.getImage("./../images/actuators/quit-full.png");
         let imageArtifacts = [];
         for (let hex of hexes) {
             imageArtifacts.push(_createTrigger.call(this, oneStepImage, hex, action.unit.angle, 0.6, 1, CBMoveType.BACKWARD));
@@ -251,22 +251,22 @@ export class CBReleaseTroopActuator extends CBActionActuator {
 
 function createFormationMenuItems(unit, actions) {
     return [
-        new DIconMenuItem("/CBlades/images/icons/create-formation.png", "/CBlades/images/icons/create-formation-gray.png",
+        new DIconMenuItem("./../images/icons/create-formation.png", "./../images/icons/create-formation-gray.png",
             0, 3, event => {
                 unit.player.createFormation(unit, event);
                 return true;
             }, "Se mettre en formation").setActive(actions.createFormation),
-        new DIconMenuItem("/CBlades/images/icons/join-formation.png", "/CBlades/images/icons/join-formation-gray.png",
+        new DIconMenuItem("./../images/icons/join-formation.png", "./../images/icons/join-formation-gray.png",
             1, 3, event => {
                 unit.player.includeTroops(unit, event);
                 return true;
             }, "Joindre la formation").setActive(actions.joinFormation),
-        new DIconMenuItem("/CBlades/images/icons/leave-formation.png", "/CBlades/images/icons/leave-formation-gray.png",
+        new DIconMenuItem("./../images/icons/leave-formation.png", "./../images/icons/leave-formation-gray.png",
             2, 3, event => {
                 unit.player.releaseTroops(unit, event);
                 return true;
             }, "Quitter la formation").setActive(actions.leaveFormation),
-        new DIconMenuItem("/CBlades/images/icons/dismiss-formation.png", "/CBlades/images/icons/dismiss-formation-gray.png",
+        new DIconMenuItem("./../images/icons/dismiss-formation.png", "./../images/icons/dismiss-formation-gray.png",
             3, 3, event => {
                 unit.player.breakFormation(unit, event);
                 return true;

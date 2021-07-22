@@ -31,7 +31,7 @@ export function createBaseGame() {
     let game = new CBGame();
     let arbitrator = new CBTestArbitrator();
     game.setArbitrator(arbitrator);
-    var map = new CBMap([{path: "/CBlades/images/maps/map.png", col: 0, row: 0}]);
+    var map = new CBMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
     game.setMap(map);
     game.start();
     return {game, arbitrator, map};

@@ -40,8 +40,8 @@ describe("Orcs Army", ()=> {
             var unit = GoblinLeader;
         then:
             assert(unit.getTroopPaths()).arrayEqualsTo([
-                "/CBlades/images/units/orcs/character1L.png",
-                "/CBlades/images/units/orcs/character1Lb.png"
+                "./../images/units/orcs/character1L.png",
+                "./../images/units/orcs/character1Lb.png"
             ]);
             assert(unit.getFormationPaths()).isNotDefined();
         when:
@@ -91,8 +91,8 @@ describe("Orcs Army", ()=> {
             var unit = GoblinWolfRider;
         then:
             assert(unit.getTroopPaths()).arrayEqualsTo([
-                "/CBlades/images/units/orcs/unit1L.png",
-                "/CBlades/images/units/orcs/unit1Lb.png"
+                "./../images/units/orcs/unit1L.png",
+                "./../images/units/orcs/unit1Lb.png"
             ]);
             assert(unit.getFormationPaths()).isNotDefined();
         when:
@@ -142,8 +142,8 @@ describe("Orcs Army", ()=> {
             var unit = GoblinSkirmisher;
         then:
             assert(unit.getTroopPaths()).arrayEqualsTo([
-                "/CBlades/images/units/orcs/unit2L.png",
-                "/CBlades/images/units/orcs/unit2Lb.png"
+                "./../images/units/orcs/unit2L.png",
+                "./../images/units/orcs/unit2Lb.png"
             ]);
             assert(unit.getFormationPaths()).isNotDefined();
         when:

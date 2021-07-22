@@ -26,7 +26,7 @@ class FireStartArtifact extends RetractableArtifactMixin(CBCounterImageArtifact)
 export class CBFireStart extends RetractableCounterMixin(CBPlayable) {
 
     constructor() {
-        super("ground", ['/CBlades/images/actions/start-fire.png'], CBFireStart.DIMENSION);
+        super("ground", ["./../images/actions/start-fire.png"], CBFireStart.DIMENSION);
     }
 
     createArtifact(levelName, images, position, dimension) {
@@ -58,7 +58,7 @@ class StakesArtifact extends RetractableArtifactMixin(CBCounterImageArtifact) {
 export class CBStakes extends RetractableCounterMixin(CBPlayable) {
 
     constructor() {
-        super("ground", ['/CBlades/images/actions/stakes.png'], CBStakes.DIMENSION);
+        super("ground", ["./../images/actions/stakes.png"], CBStakes.DIMENSION);
     }
 
     createArtifact(levelName, images, position, dimension) {
@@ -100,17 +100,29 @@ export class CBWeather extends Displayable(CBPlayable) {
 
     constructor() {
         super("counters", [
-            '/CBlades/images/counters/meteo1.png',
-            '/CBlades/images/counters/meteo2.png',
-            '/CBlades/images/counters/meteo3.png',
-            '/CBlades/images/counters/meteo4.png',
-            '/CBlades/images/counters/meteo5.png',
-            '/CBlades/images/counters/meteo6.png'
-        ], CBStakes.DIMENSION);
+            "./../images/counters/meteo1.png",
+            "./../images/counters/meteo2.png",
+            "./../images/counters/meteo3.png",
+            "./../images/counters/meteo4.png",
+            "./../images/counters/meteo5.png",
+            "./../images/counters/meteo6.png"
+        ], CBWeather.DIMENSION);
+        Mechanisms.addListener(this);
     }
 
     createArtifact(levelName, images, position, dimension) {
         return new WeatherArtifact(this, levelName, images, position, dimension);
+    }
+
+    setOnGame(game) {
+        super.setOnGame(game);
+        this.artifact.setImage(game.arbitrator.getWeather(game));
+    }
+
+    _processGlobalEvent(source, event, value) {
+        if (event===CBGame.SETTINGS_EVENT && value.weather!==undefined) {
+            this.artifact.setImage(value.weather);
+        }
     }
 
     play(event) {
@@ -119,7 +131,7 @@ export class CBWeather extends Displayable(CBPlayable) {
 
     markAsPlayed() {
         super.markAsPlayed();
-        this._marker = new CBCounterMarkerArtifact(this, '/CBlades/images/markers/actiondone.png',
+        this._marker = new CBCounterMarkerArtifact(this, "./../images/markers/actiondone.png",
             new Point2D(CBWeather.DIMENSION.w/2, -CBWeather.DIMENSION.h/2));
         this.element.appendArtifact(this._marker);
         this.artifact.desactivate();
@@ -152,3 +164,78 @@ export class CBWeather extends Displayable(CBPlayable) {
 
 }
 CBWeather.DIMENSION = new Dimension2D(142, 142);
+
+class FogArtifact extends CBActivableMixin(CBCounterImageArtifact) {
+
+    constructor(fire, ...args) {
+        super(fire, ...args);
+    }
+
+}
+
+export class CBFog extends Displayable(CBPlayable) {
+
+    constructor() {
+        super("counters", [
+            "./../images/counters/fog0.png",
+            "./../images/counters/fog1.png",
+            "./../images/counters/fog2.png",
+            "./../images/counters/fog3.png"
+        ], CBFog.DIMENSION);
+        Mechanisms.addListener(this);
+    }
+
+    createArtifact(levelName, images, position, dimension) {
+        return new FogArtifact(this, levelName, images, position, dimension);
+    }
+
+    setOnGame(game) {
+        super.setOnGame(game);
+        this.artifact.setImage(game.arbitrator.getFog(game));
+    }
+
+    _processGlobalEvent(source, event, value) {
+        if (event===CBGame.SETTINGS_EVENT && value.fog!==undefined) {
+            this.artifact.setImage(value.fog);
+        }
+    }
+
+    play(event) {
+        this.game.currentPlayer.playFog(this, event);
+    }
+
+    markAsPlayed() {
+        super.markAsPlayed();
+        this._marker = new CBCounterMarkerArtifact(this, "./../images/markers/actiondone.png",
+            new Point2D(CBWeather.DIMENSION.w/2, -CBWeather.DIMENSION.h/2));
+        this.element.appendArtifact(this._marker);
+        this.artifact.desactivate();
+        Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINISHED);
+    }
+
+    reset() {
+        super.reset();
+        this.artifact.activate();
+        if (this._marker) {
+            this.element.deleteArtifact(this._marker);
+        }
+    }
+
+    _memento() {
+        let memento = super._memento();
+        memento.marker = this._marker;
+        return memento;
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        if (memento.marker) {
+            this._marker = memento.marker;
+        }
+        else {
+            delete this._marker;
+        }
+    }
+
+}
+CBFog.DIMENSION = new Dimension2D(142, 142);

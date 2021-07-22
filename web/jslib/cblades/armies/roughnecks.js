@@ -17,8 +17,8 @@ import {
 
 export let RoughneckLeader = new CBUnitType("Company Leader",
     [
-        "/CBlades/images/units/mercenaries/character1L.png",
-        "/CBlades/images/units/mercenaries/character1Lb.png"
+        "./../images/units/mercenaries/character1L.png",
+        "./../images/units/mercenaries/character1Lb.png"
     ]
 ).setMoveProfile(1, new CavalryMoveProfile(CBProfileCapacity.INFERIOR)
 ).setMoveProfile(2, new CavalryMoveProfile(CBProfileCapacity.DISADVANTAGED)
@@ -34,8 +34,8 @@ export let RoughneckLeader = new CBUnitType("Company Leader",
 
 export let RoughneckKnight = new CBUnitType("Company Knight",
     [
-        "/CBlades/images/units/mercenaries/unit1L.png",
-        "/CBlades/images/units/mercenaries/unit1Lb.png"
+        "./../images/units/mercenaries/unit1L.png",
+        "./../images/units/mercenaries/unit1Lb.png"
     ]
 ).setMoveProfile(1, new CavalryMoveProfile(CBProfileCapacity.DISADVANTAGED)
 ).setMoveProfile(2, new CavalryMoveProfile(CBProfileCapacity.DISADVANTAGED)
@@ -51,16 +51,16 @@ export let RoughneckKnight = new CBUnitType("Company Knight",
 
 export let RoughneckLance = new CBUnitType("Company Lancet",
     [
-        "/CBlades/images/units/mercenaries/unit2L1.png",
-        "/CBlades/images/units/mercenaries/unit2L1b.png"
+        "./../images/units/mercenaries/unit2L1.png",
+        "./../images/units/mercenaries/unit2L1b.png"
     ],
     [
-        "/CBlades/images/units/mercenaries/unit2L4.png",
-        "/CBlades/images/units/mercenaries/unit2L4b.png",
-        "/CBlades/images/units/mercenaries/unit2L3.png",
-        "/CBlades/images/units/mercenaries/unit2L3b.png",
-        "/CBlades/images/units/mercenaries/unit2L2.png",
-        "/CBlades/images/units/mercenaries/unit2L2b.png"
+        "./../images/units/mercenaries/unit2L4.png",
+        "./../images/units/mercenaries/unit2L4b.png",
+        "./../images/units/mercenaries/unit2L3.png",
+        "./../images/units/mercenaries/unit2L3b.png",
+        "./../images/units/mercenaries/unit2L2.png",
+        "./../images/units/mercenaries/unit2L2b.png"
     ]
 ).setMoveProfile(1, new PedestrianMoveProfile(CBProfileCapacity.ADVANTAGED)
 ).setMoveProfile(2, new PedestrianMoveProfile(CBProfileCapacity.ADVANTAGED)
@@ -100,12 +100,12 @@ export let RoughneckLance = new CBUnitType("Company Lancet",
 
 export let RoughneckCrossbowman = new CBUnitType("Company Crossbowman",
     [
-        "/CBlades/images/units/mercenaries/unit3L1.png",
-        "/CBlades/images/units/mercenaries/unit3L1b.png"
+        "./../images/units/mercenaries/unit3L1.png",
+        "./../images/units/mercenaries/unit3L1b.png"
     ],
     [
-        "/CBlades/images/units/mercenaries/unit3L2.png",
-        "/CBlades/images/units/mercenaries/unit3L2b.png"
+        "./../images/units/mercenaries/unit3L2.png",
+        "./../images/units/mercenaries/unit3L2b.png"
     ]
 ).setMoveProfile(1, new PedestrianMoveProfile(CBProfileCapacity.NORMAL)
 ).setMoveProfile(2, new PedestrianMoveProfile(CBProfileCapacity.NORMAL)

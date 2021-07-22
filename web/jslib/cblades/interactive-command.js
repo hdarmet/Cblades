@@ -316,22 +316,22 @@ export class InteractiveGiveOrdersAction extends CBAction {
 
 function createCommandMenuItems(unit, actions) {
     return [
-        new DIconMenuItem("/CBlades/images/icons/take-command.png", "/CBlades/images/icons/take-command-gray.png",
+        new DIconMenuItem("./../images/icons/take-command.png", "./../images/icons/take-command-gray.png",
             0, 4, event => {
                 unit.player.tryToTakeCommand(unit, event);
                 return true;
             }, "Prendre le commandement de l'aile").setActive(actions.takeCommand),
-        new DIconMenuItem("/CBlades/images/icons/leave-command.png", "/CBlades/images/icons/leave-command-gray.png",
+        new DIconMenuItem("./../images/icons/leave-command.png", "./../images/icons/leave-command-gray.png",
             1, 4, event => {
                 unit.player.tryToDismissCommand(unit, event);
                 return true;
             }, "Abandonner le commandement de l'aile").setActive(actions.leaveCommand),
-        new DIconMenuItem("/CBlades/images/icons/change-orders.png", "/CBlades/images/icons/change-orders-gray.png",
+        new DIconMenuItem("./../images/icons/change-orders.png", "./../images/icons/change-orders-gray.png",
             2, 4, event => {
                 unit.player.tryToChangeOrderInstructions(unit, event);
                 return true;
             }, "Changer les consignes").setActive(actions.changeOrders),
-        new DIconMenuItem("/CBlades/images/icons/give-specific-orders.png", "/CBlades/images/icons/give-specific-orders-gray.png",
+        new DIconMenuItem("./../images/icons/give-specific-orders.png", "./../images/icons/give-specific-orders-gray.png",
             3, 4, event => {
                 unit.player.startToGiveOrders(unit, event);
                 return true;
@@ -342,22 +342,22 @@ function createCommandMenuItems(unit, actions) {
 export class CBOrderInstructionMenu extends DIconMenu {
 
     constructor(game, unit, allowedOrderInstructions) {
-        super(true, new DIconMenuItem("/CBlades/images/markers/attack.png","/CBlades/images/markers/attack-gray.png",
+        super(true, new DIconMenuItem("./../images/markers/attack.png","./../images/markers/attack-gray.png",
             0, 0, event => {
                 unit.player.changeOrderInstruction(unit, CBOrderInstruction.ATTACK, event);
                 return true;
             }, "Attaque").setActive(allowedOrderInstructions.attack),
-            new DIconMenuItem("/CBlades/images/markers/defend.png","/CBlades/images/markers/defend-gray.png",
+            new DIconMenuItem("./../images/markers/defend.png","./../images/markers/defend-gray.png",
                 1, 0, event => {
                     unit.player.changeOrderInstruction(unit, CBOrderInstruction.DEFEND, event);
                     return true;
                 }, "Défense").setActive(allowedOrderInstructions.defend),
-            new DIconMenuItem("/CBlades/images/markers/regroup.png","/CBlades/images/markers/regroup-gray.png",
+            new DIconMenuItem("./../images/markers/regroup.png","./../images/markers/regroup-gray.png",
                 0, 1, event => {
                     unit.player.changeOrderInstruction(unit, CBOrderInstruction.REGROUP, event);
                     return true;
                 }, "Regroupement").setActive(allowedOrderInstructions.regroup),
-            new DIconMenuItem("/CBlades/images/markers/retreat.png","/CBlades/images/markers/retreat-gray.png",
+            new DIconMenuItem("./../images/markers/retreat.png","./../images/markers/retreat-gray.png",
                 1, 1, event => {
                     unit.player.changeOrderInstruction(unit, CBOrderInstruction.RETREAT, event);
                     return true;
@@ -377,7 +377,7 @@ export class CBOrderInstructionMenu extends DIconMenu {
 class OrderGivenHelpTrigger extends CBUnitActuatorTrigger {
 
     constructor(actuator, order) {
-        let image = DImage.getImage("/CBlades/images/actuators/order-given-cost.png");
+        let image = DImage.getImage("./../images/actuators/order-given-cost.png");
         super(actuator, order.unit, "units", image, new Point2D(order.unit.location.x, order.unit.location.y-125), OrderGivenHelpTrigger.DIMENSION);
         this.pangle = 0;
         this._order = order;
@@ -441,7 +441,7 @@ export class CBOrderGivenActuator extends RetractableActuatorMixin(CBActionActua
     constructor(action, orders) {
         super(action);
         let imageArtifacts = [];
-        let orderImage = DImage.getImage("/CBlades/images/actuators/order.png");
+        let orderImage = DImage.getImage("./../images/actuators/order.png");
         for (let order of orders) {
             let trigger = new CBUnitActuatorTrigger(this, order.unit, "units", orderImage,
                 new Point2D(order.unit.location.x, order.unit.location.y-80), new Dimension2D(105, 97));
@@ -463,7 +463,7 @@ export class CBOrderGivenActuator extends RetractableActuatorMixin(CBActionActua
 export class CBCommandInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/command-insert.png", CBCommandInsert.DIMENSION);
+        super(game, "./../images/inserts/command-insert.png", CBCommandInsert.DIMENSION);
     }
 
 }
@@ -472,7 +472,7 @@ CBCommandInsert.DIMENSION = new Dimension2D(444, 680);
 export class CBChangeOrderInstructionInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/change-order-instruction-insert.png", CBChangeOrderInstructionInsert.DIMENSION);
+        super(game, "./../images/inserts/change-order-instruction-insert.png", CBChangeOrderInstructionInsert.DIMENSION);
     }
 
 }
@@ -481,7 +481,7 @@ CBChangeOrderInstructionInsert.DIMENSION = new Dimension2D(444, 254);
 export class CBGiveOrdersInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game, detail) {
-        super(game, "/CBlades/images/inserts/orders-given-insert.png", CBGiveOrdersInsert.DIMENSION, CBGiveOrdersInsert.PAGE_DIMENSION);
+        super(game, "./../images/inserts/orders-given-insert.png", CBGiveOrdersInsert.DIMENSION, CBGiveOrdersInsert.PAGE_DIMENSION);
         if (detail.base) {
             this.setMark(new Point2D(20, 427));
         }
@@ -506,7 +506,7 @@ CBGiveOrdersInsert.DIMENSION = new Dimension2D(444, 600);
 export class CBTakeCommandInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/take-command-insert.png", CBTakeCommandInsert.DIMENSION);
+        super(game, "./../images/inserts/take-command-insert.png", CBTakeCommandInsert.DIMENSION);
     }
 
 }
@@ -515,7 +515,7 @@ CBTakeCommandInsert.DIMENSION = new Dimension2D(444, 298);
 export class CBDismissCommandInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/dismiss-command-insert.png", CBDismissCommandInsert.DIMENSION);
+        super(game, "./../images/inserts/dismiss-command-insert.png", CBDismissCommandInsert.DIMENSION);
     }
 
 }

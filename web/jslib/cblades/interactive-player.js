@@ -297,9 +297,9 @@ export class CBWingTirednessIndicator extends DIndicator {
     constructor(tiredness) {
         function getPaths(tiredness) {
             let paths = [];
-            paths.push(`/CBlades/images/inserts/tiredness${tiredness}.png`);
+            paths.push(`./../images/inserts/tiredness${tiredness}.png`);
             if (tiredness>4) {
-                paths.push(`/CBlades/images/inserts/tiredness${tiredness-1}.png`);
+                paths.push(`./../images/inserts/tiredness${tiredness-1}.png`);
             }
             return paths;
         }
@@ -313,23 +313,32 @@ CBWingTirednessIndicator.DIMENSION = new Dimension2D(142, 142);
 export class CBWeatherIndicator extends DIndicator {
 
     constructor(weather) {
-        function getPaths(weather) {
-            let paths = [];
-            paths.push(`/CBlades/images/inserts/meteo${weather}.png`);
-            if (weather>1) {
-                paths.push(`/CBlades/images/inserts/meteo${weather-1}.png`);
-            }
-            if (weather<6) {
-                paths.push(`/CBlades/images/inserts/meteo${weather+1}.png`);
-            }
-            return paths;
-        }
-
-        super(getPaths(weather), CBWingTirednessIndicator.DIMENSION);
+        super( [
+            `./../images/inserts/meteo1.png`,
+            `./../images/inserts/meteo2.png`,
+            `./../images/inserts/meteo3.png`,
+            `./../images/inserts/meteo4.png`,
+            `./../images/inserts/meteo5.png`,
+            `./../images/inserts/meteo6.png`
+        ], CBWeatherIndicator.DIMENSION, weather);
     }
 
 }
 CBWeatherIndicator.DIMENSION = new Dimension2D(142, 142);
+
+export class CBFogIndicator extends DIndicator {
+
+    constructor(fog) {
+        super( [
+            `./../images/inserts/fog0.png`,
+            `./../images/inserts/fog1.png`,
+            `./../images/inserts/fog2.png`,
+            `./../images/inserts/fog3.png`
+        ], CBFogIndicator.DIMENSION, fog);
+    }
+
+}
+CBFogIndicator.DIMENSION = new Dimension2D(142, 142);
 
 export class CBCheckEngagementInsert extends WidgetLevelMixin(DInsert) {
 
@@ -366,7 +375,7 @@ export class CBCheckEngagementInsert extends WidgetLevelMixin(DInsert) {
 export class CBCheckDefenderEngagementInsert extends CBCheckEngagementInsert {
 
     constructor(game, condition) {
-        super(game, "/CBlades/images/inserts/check-defender-engagement-insert.png", CBCheckDefenderEngagementInsert.DIMENSION, condition);
+        super(game, "./../images/inserts/check-defender-engagement-insert.png", CBCheckDefenderEngagementInsert.DIMENSION, condition);
     }
 
 }
@@ -375,7 +384,7 @@ CBCheckDefenderEngagementInsert.DIMENSION = new Dimension2D(444, 763);
 export class CBLoseCohesionInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game, condition) {
-        super(game, "/CBlades/images/inserts/lose-cohesion-insert.png", CBLoseCohesionInsert.DIMENSION);
+        super(game, "./../images/inserts/lose-cohesion-insert.png", CBLoseCohesionInsert.DIMENSION);
         this._condition = condition;
     }
 
@@ -385,7 +394,7 @@ CBLoseCohesionInsert.DIMENSION = new Dimension2D(444, 330);
 export class CBMoralInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game, unit) {
-        super(game, "/CBlades/images/inserts/moral-insert.png", CBMoralInsert.DIMENSION);
+        super(game, "./../images/inserts/moral-insert.png", CBMoralInsert.DIMENSION);
         let delta = (177-57)/4;
         this.setMark(new Point2D(20, 177-(unit.moralProfile.capacity+2)*delta));
         if (unit.isDisrupted() || unit.isRouted()) {

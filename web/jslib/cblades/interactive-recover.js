@@ -59,7 +59,7 @@ export class InteractiveRestingAction extends CBAction {
         this.game.closeActuators();
         this.unit.markAsCharging(CBCharge.NONE);
         let wingTiredness = this.game.arbitrator.getWingTiredness(this.unit);
-        let weather = this.game.arbitrator.getWeather();
+        let weather = this.game.arbitrator.getWeather(this.game);
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
@@ -265,22 +265,22 @@ export class InteractiveRallyAction extends CBAction {
 
 function createRecoverMenuItems(unit, actions) {
     return [
-        new DIconMenuItem("/CBlades/images/icons/do-rest.png", "/CBlades/images/icons/do-rest-gray.png",
+        new DIconMenuItem("./../images/icons/do-rest.png", "./../images/icons/do-rest-gray.png",
             0, 2, event => {
                 unit.player.restUnit(unit, event);
                 return true;
             },"Se reposer").setActive(actions.rest),
-        new DIconMenuItem("/CBlades/images/icons/do-reload.png", "/CBlades/images/icons/do-reload-gray.png",
+        new DIconMenuItem("./../images/icons/do-reload.png", "./../images/icons/do-reload-gray.png",
             1, 2, event => {
                 unit.player.replenishUnitMunitions(unit, event);
                 return true;
             }, "Se ravitailler en munitions").setActive(actions.reload),
-        new DIconMenuItem("/CBlades/images/icons/do-reorganize.png", "/CBlades/images/icons/do-reorganize-gray.png",
+        new DIconMenuItem("./../images/icons/do-reorganize.png", "./../images/icons/do-reorganize-gray.png",
             2, 2, event => {
                 unit.player.reorganizeUnit(unit, event);
                 return true;
             }, "Se réorganiser").setActive(actions.reorganize),
-        new DIconMenuItem("/CBlades/images/icons/do-rally.png", "/CBlades/images/icons/do-rally-gray.png",
+        new DIconMenuItem("./../images/icons/do-rally.png", "./../images/icons/do-rally-gray.png",
             3, 2, event => {
                 unit.player.rallyUnit(unit, event);
                 return true;
@@ -291,7 +291,7 @@ function createRecoverMenuItems(unit, actions) {
 export class CBRestInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/rest-insert.png", CBRestInsert.DIMENSION);
+        super(game, "./../images/inserts/rest-insert.png", CBRestInsert.DIMENSION);
     }
 
 }
@@ -300,7 +300,7 @@ CBRestInsert.DIMENSION = new Dimension2D(444, 195);
 export class CBCheckRestInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/check-rest-insert.png", CBCheckRestInsert.DIMENSION);
+        super(game, "./../images/inserts/check-rest-insert.png", CBCheckRestInsert.DIMENSION);
     }
 
 }
@@ -309,7 +309,7 @@ CBCheckRestInsert.DIMENSION = new Dimension2D(444, 451);
 export class CBReplenishMunitionsInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/check-replenish-munitions-insert.png", CBReplenishMunitionsInsert.DIMENSION);
+        super(game, "./../images/inserts/check-replenish-munitions-insert.png", CBReplenishMunitionsInsert.DIMENSION);
     }
 
 }
@@ -318,7 +318,7 @@ CBReplenishMunitionsInsert.DIMENSION = new Dimension2D(444, 383);
 export class CBReorganizeInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/reorganize-insert.png", CBReorganizeInsert.DIMENSION);
+        super(game, "./../images/inserts/reorganize-insert.png", CBReorganizeInsert.DIMENSION);
     }
 
 }
@@ -327,7 +327,7 @@ CBReorganizeInsert.DIMENSION = new Dimension2D(444, 263);
 export class CBCheckReorganizeInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/check-reorganize-insert.png", CBCheckReorganizeInsert.DIMENSION);
+        super(game, "./../images/inserts/check-reorganize-insert.png", CBCheckReorganizeInsert.DIMENSION);
     }
 
 }
@@ -336,7 +336,7 @@ CBCheckReorganizeInsert.DIMENSION = new Dimension2D(444, 245);
 export class CBRallyInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/rally-insert.png", CBRallyInsert.DIMENSION);
+        super(game, "./../images/inserts/rally-insert.png", CBRallyInsert.DIMENSION);
     }
 
 }
@@ -345,7 +345,7 @@ CBRallyInsert.DIMENSION = new Dimension2D(444, 279);
 export class CBCheckRallyInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "/CBlades/images/inserts/check-rally-insert.png", CBCheckRallyInsert.DIMENSION);
+        super(game, "./../images/inserts/check-rally-insert.png", CBCheckRallyInsert.DIMENSION);
     }
 
 }

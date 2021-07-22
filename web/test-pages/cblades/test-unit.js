@@ -78,7 +78,7 @@ describe("Unit", ()=> {
 
     function prepareTinyGame() {
         var game = new CBGame();
-        var map = new CBMap([{path:"/CBlades/images/maps/map.png", col:0, row:0}]);
+        var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         return {game, map};
     }
@@ -103,7 +103,7 @@ describe("Unit", ()=> {
         game.addPlayer(player);
         let wing = new CBWing(player);
         let unitType = new CBTestUnitType("unit", [
-            "/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"
+            "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
         ]);
         let unit = new CBTroop(unitType, wing);
         game.addUnit(unit, map.getHex(5, 8));
@@ -118,12 +118,12 @@ describe("Unit", ()=> {
         game.addPlayer(player);
         let wing = new CBWing(player);
         let unitType = new CBTestUnitType("unit", [
-            "/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"
+            "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
             ],
             [
-                "/CBlades/images/units/misc/formation4.png", "/CBlades/images/units/misc/formation4b.png",
-                "/CBlades/images/units/misc/formation3.png", "/CBlades/images/units/misc/formation3b.png",
-                "/CBlades/images/units/misc/formation2.png", "/CBlades/images/units/misc/formation2b.png"
+                "./../images/units/misc/formation4.png", "./../images/units/misc/formation4b.png",
+                "./../images/units/misc/formation3.png", "./../images/units/misc/formation3b.png",
+                "./../images/units/misc/formation2.png", "./../images/units/misc/formation2b.png"
             ]);
         let formation = new CBFormation(unitType, wing);
         formation.angle = 90;
@@ -145,10 +145,10 @@ describe("Unit", ()=> {
         let player = new CBAbstractPlayer();
         game.addPlayer(player);
         let wing = new CBWing(player);
-        let unitType1 = new CBTestUnitType("unit1", ["/CBlades/images/units/misc/unit1.png"]);
+        let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png"]);
         let unit1 = new CBTroop(unitType1, wing);
         game.addUnit(unit1, map.getHex(5, 8));
-        let unitType2 = new CBTestUnitType("unit2", ["/CBlades/images/units/misc/unit2.png"]);
+        let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png"]);
         let unit2 = new CBTroop(unitType2, wing);
         game.addUnit(unit2, map.getHex(5, 7));
         if (start) {
@@ -193,14 +193,14 @@ describe("Unit", ()=> {
             game.addPlayer(player);
             var wing = new CBWing(player);
             let unitType1 = new CBTestUnitType("unit1",
-                ["/CBlades/images/units/misc/unit1.png"]);
+                ["./../images/units/misc/unit1.png"]);
             var unit = new CBTroop(unitType1, wing);
             let hexId = map.getHex(5, 8);
             let nextHexId = map.getHex(6, 8);
             game.addUnit(unit, hexId);
             var [spellsLayer] = getLayers(game.board, "spells-0");
         when:
-            var playable1 = new CBTestCarriable(unit,["/CBlades/images/units/misc/playable1.png"]);
+            var playable1 = new CBTestCarriable(unit,["./../images/units/misc/playable1.png"]);
             unit.addCarried(playable1);
             paint(game);
             loadAllImages();
@@ -254,7 +254,7 @@ describe("Unit", ()=> {
             var [spellsLayer] = getLayers(game.board, "spells-0");
         when:
             resetDirectives(spellsLayer);
-            var playable1 = new CBTestCarriable(unit,["/CBlades/images/units/misc/playable1.png"]);
+            var playable1 = new CBTestCarriable(unit,["./../images/units/misc/playable1.png"]);
             unit.carry(playable1);
             paint(game);
             loadAllImages();
@@ -357,15 +357,15 @@ describe("Unit", ()=> {
             game.addPlayer(player);
             var wing = new CBWing(player);
             let unitType1 = new CBTestUnitType("unit1",
-                ["/CBlades/images/units/misc/unit1.png"]);
+                ["./../images/units/misc/unit1.png"]);
             var unit = new CBTroop(unitType1, wing);
             let hexId = map.getHex(5, 8);
             game.addUnit(unit, hexId);
             var [optionsLayer] = getLayers(game.board, "options-0");
         when:
-            var option0 = createOption(unit, "/CBlades/images/units/misc/option0.png");
-            var option1 = createOption(unit, "/CBlades/images/units/misc/option1.png");
-            var option2 = createOption(unit, "/CBlades/images/units/misc/option2.png");
+            var option0 = createOption(unit, "./../images/units/misc/option0.png");
+            var option1 = createOption(unit, "./../images/units/misc/option1.png");
+            var option2 = createOption(unit, "./../images/units/misc/option2.png");
             paint(game);
             loadAllImages();
         then:
@@ -400,15 +400,15 @@ describe("Unit", ()=> {
             game.addPlayer(player);
             var wing = new CBWing(player);
             let unitType1 = new CBTestUnitType("unit1",
-                ["/CBlades/images/units/misc/unit1.png"]);
+                ["./../images/units/misc/unit1.png"]);
             var unit = new CBTroop(unitType1, wing);
             let hexId = map.getHex(5, 8);
             game.addUnit(unit, hexId);
             var [optionsLayer] = getLayers(game.board, "options-0");
         when:
-            var option0 = createOption(unit, "/CBlades/images/units/misc/option0.png");
-            var option1 = createOption(unit, "/CBlades/images/units/misc/option1.png");
-            var option2 = createOption(unit, "/CBlades/images/units/misc/option2.png");
+            var option0 = createOption(unit, "./../images/units/misc/option0.png");
+            var option1 = createOption(unit, "./../images/units/misc/option1.png");
+            var option2 = createOption(unit, "./../images/units/misc/option2.png");
             paint(game);
             loadAllImages();
         then:
@@ -470,13 +470,13 @@ describe("Unit", ()=> {
             game.addPlayer(player);
             var wing = new CBWing(player);
             let unitType1 = new CBTestUnitType("unit1",
-                ["/CBlades/images/units/misc/unit1.png"]);
+                ["./../images/units/misc/unit1.png"]);
             var unit = new CBTroop(unitType1, wing);
             let hexId = map.getHex(5, 8);
             game.addUnit(unit, hexId);
         when:
-            var carried = createCarried(unit, "/CBlades/images/units/misc/playable1.png");
-            var option = createOption(unit, "/CBlades/images/units/misc/option0.png");
+            var carried = createCarried(unit, "./../images/units/misc/playable1.png");
+            var option = createOption(unit, "./../images/units/misc/option0.png");
             paint(game);
             loadAllImages();
         then:
@@ -492,8 +492,8 @@ describe("Unit", ()=> {
             var wing = new CBWing(player);
             wing.setRetreatZone(map.getSouthZone());
             let unitType1 = new CBTestUnitType("unit1",
-                ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"],
-                ["/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png"]);
+                ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"],
+                ["./../images/units/misc/formation1.png", "./../images/units/misc/formation1b.png"]);
             var unit = new CBTroop(unitType1, wing);
             var formation = new CBFormation(unitType1, wing);
             var character = new CBCharacter(unitType1, wing);
@@ -521,8 +521,8 @@ describe("Unit", ()=> {
             var wing = new CBWing(player);
             wing.setRetreatZone(map.getSouthZone());
             let unitType1 = new CBTestUnitType("unit1",
-                ["/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"],
-                ["/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png"]);
+                ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"],
+                ["./../images/units/misc/formation1.png", "./../images/units/misc/formation1b.png"]);
             var unit = new CBTroop(unitType1, wing);
             game.addUnit(unit, map.getHex(5, 8));
             var formation = new CBFormation(unitType1, wing);
@@ -538,10 +538,10 @@ describe("Unit", ()=> {
             assert(player.units).unorderedArrayEqualsTo([unit, formation]);
             assert(unitType1.name).equalsTo("unit1");
             assert(unitType1.getTroopPaths()).arrayEqualsTo([
-                "/CBlades/images/units/misc/unit1.png", "/CBlades/images/units/misc/unit1b.png"
+                "./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"
             ]);
             assert(unitType1.getFormationPaths()).arrayEqualsTo([
-                "/CBlades/images/units/misc/formation1.png", "/CBlades/images/units/misc/formation1b.png"
+                "./../images/units/misc/formation1.png", "./../images/units/misc/formation1b.png"
             ]);
             assert(unitType1.getTroopMaxStepCount()).equalsTo(2);
             assert(unitType1.getFormationMaxStepCount()).equalsTo(4);
@@ -1468,12 +1468,12 @@ describe("Unit", ()=> {
         game.addPlayer(player);
         let wing = new CBWing(player);
         let unitType = new CBTestUnitType("unit", [
-            "/CBlades/images/units/misc/unit.png", "/CBlades/images/units/misc/unitb.png"
+            "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
         ]);
         let unit = new CBTroop(unitType, wing);
         game.addUnit(unit, map.getHex(5, 8));
         let leaderType = new CBTestUnitType("leader", [
-            "/CBlades/images/units/misc/leader.png", "/CBlades/images/units/misc/leaderb.png"
+            "./../images/units/misc/leader.png", "./../images/units/misc/leaderb.png"
         ]);
         let leader = new CBCharacter(leaderType, wing);
         game.addUnit(leader, map.getHex(5, 9));
@@ -1622,7 +1622,7 @@ describe("Unit", ()=> {
 
         class TestSpell extends CBCounter {
             constructor(wizard) {
-                super("units", ["/CBlades/images/magic/red/redspell.png"], new Dimension2D(142, 142));
+                super("units", ["./../images/magic/red/redspell.png"], new Dimension2D(142, 142));
                 this.wizard = wizard;
             }
             _rotate(angle) {}
@@ -1712,7 +1712,7 @@ describe("Unit", ()=> {
         game.addPlayer(player);
         let wing = new CBWing(player);
         let unitType = new CBTestUnitType("unit", [], [
-            "/CBlades/images/units/misc/formation.png", "/CBlades/images/units/misc/formationb.png"
+            "./../images/units/misc/formation.png", "./../images/units/misc/formationb.png"
         ]);
         let formation = new CBFormation(unitType, wing);
         formation.angle = 150;

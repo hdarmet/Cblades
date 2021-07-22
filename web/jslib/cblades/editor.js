@@ -18,17 +18,17 @@ export class CBMapEditorHexHeightTrigger extends CBActuatorMultiImagesTrigger {
 
     constructor(actuator, hex) {
         let images = [
-            DImage.getImage("/CBlades/images/actuators/ground/level-down-5.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/level-down-4.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/level-down-3.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/level-down-2.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/level-down-1.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/level-0.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/level-up-1.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/level-up-2.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/level-up-3.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/level-up-4.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/level-up-5.png")
+            DImage.getImage("./../images/actuators/ground/level-down-5.png"),
+            DImage.getImage("./../images/actuators/ground/level-down-4.png"),
+            DImage.getImage("./../images/actuators/ground/level-down-3.png"),
+            DImage.getImage("./../images/actuators/ground/level-down-2.png"),
+            DImage.getImage("./../images/actuators/ground/level-down-1.png"),
+            DImage.getImage("./../images/actuators/ground/level-0.png"),
+            DImage.getImage("./../images/actuators/ground/level-up-1.png"),
+            DImage.getImage("./../images/actuators/ground/level-up-2.png"),
+            DImage.getImage("./../images/actuators/ground/level-up-3.png"),
+            DImage.getImage("./../images/actuators/ground/level-up-4.png"),
+            DImage.getImage("./../images/actuators/ground/level-up-5.png")
         ];
         super(actuator, "actuators", images,  hex.location.plus(40, 0), new Dimension2D(70, 70));
         this._hex = hex;
@@ -65,21 +65,21 @@ export class CBMapEditorHexTypeTrigger extends CBActuatorMultiImagesTrigger {
 
     constructor(actuator, hex) {
         let images = [
-            DImage.getImage("/CBlades/images/actuators/ground/outdoor-clear.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/outdoor-rough.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/outdoor-difficult.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/outdoor-clear-flammable.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/outdoor-rough-flammable.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/outdoor-difficult-flammable.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/water.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/lava.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/impassable.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/cave-clear.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/cave-rough.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/cave-difficult.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/cave-clear-flammable.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/cave-rough-flammable.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/cave-difficult-flammable.png")
+            DImage.getImage("./../images/actuators/ground/outdoor-clear.png"),
+            DImage.getImage("./../images/actuators/ground/outdoor-rough.png"),
+            DImage.getImage("./../images/actuators/ground/outdoor-difficult.png"),
+            DImage.getImage("./../images/actuators/ground/outdoor-clear-flammable.png"),
+            DImage.getImage("./../images/actuators/ground/outdoor-rough-flammable.png"),
+            DImage.getImage("./../images/actuators/ground/outdoor-difficult-flammable.png"),
+            DImage.getImage("./../images/actuators/ground/water.png"),
+            DImage.getImage("./../images/actuators/ground/lava.png"),
+            DImage.getImage("./../images/actuators/ground/impassable.png"),
+            DImage.getImage("./../images/actuators/ground/cave-clear.png"),
+            DImage.getImage("./../images/actuators/ground/cave-rough.png"),
+            DImage.getImage("./../images/actuators/ground/cave-difficult.png"),
+            DImage.getImage("./../images/actuators/ground/cave-clear-flammable.png"),
+            DImage.getImage("./../images/actuators/ground/cave-rough-flammable.png"),
+            DImage.getImage("./../images/actuators/ground/cave-difficult-flammable.png")
         ];
         super(actuator, "actuators", images,  hex.location.minus(40, 0), new Dimension2D(60, 60));
         this._hex = hex;
@@ -116,11 +116,11 @@ export class CBMapEditorHexSideTypeTrigger extends CBActuatorMultiImagesTrigger 
 
     constructor(actuator, hexSide) {
         let images = [
-            DImage.getImage("/CBlades/images/actuators/ground/normal.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/easy.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/difficult.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/climb.png"),
-            DImage.getImage("/CBlades/images/actuators/ground/wall.png")
+            DImage.getImage("./../images/actuators/ground/normal.png"),
+            DImage.getImage("./../images/actuators/ground/easy.png"),
+            DImage.getImage("./../images/actuators/ground/difficult.png"),
+            DImage.getImage("./../images/actuators/ground/climb.png"),
+            DImage.getImage("./../images/actuators/ground/wall.png")
         ];
         super(actuator, "actuators", images,  hexSide.location, new Dimension2D(46, 20));
         this._hexSide = hexSide;

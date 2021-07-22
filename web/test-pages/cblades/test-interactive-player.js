@@ -64,11 +64,11 @@ describe("Interactive Player", ()=> {
         CBActionMenu.menuBuilders = [
             function createTestActionMenuItems(unit, actions) {
                 return [
-                    new DIconMenuItem("/CBlades/images/icons/do-this.png", "/CBlades/images/icons/do-this-gray.png",
+                    new DIconMenuItem("./../images/icons/do-this.png", "./../images/icons/do-this-gray.png",
                         0, 0, () => {
                         return true;
                         }).setActive(true),
-                    new DIconMenuItem("/CBlades/images/icons/do-that.png", "/CBlades/images/icons/do-that-gray.png",
+                    new DIconMenuItem("./../images/icons/do-that.png", "./../images/icons/do-that-gray.png",
                         1, 1, () => {
                         return false;
                         }).setActive(false)
@@ -425,7 +425,7 @@ describe("Interactive Player", ()=> {
         given:
             var {game} = createTinyGame();
             var [widgetsLayer] = getLayers(game.board,"widgets");
-            let weather = game.arbitrator.getWeather();
+            let weather = game.arbitrator.getWeather(game);
             var weatherIndicator = new CBWeatherIndicator(weather);
             loadAllImages();
         when:
