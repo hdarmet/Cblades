@@ -15,6 +15,10 @@ import {
     CBUnitType
 } from "../unit.js";
 
+export let RoughneckBanner0 = "./../images/units/mercenaries/banners/banner0.png";
+export let RoughneckBanner1 = "./../images/units/mercenaries/banners/banner1.png";
+export let RoughneckBanner2 = "./../images/units/mercenaries/banners/banner2.png";
+
 export let RoughneckLeader = new CBUnitType("Company Leader",
     [
         "./../images/units/mercenaries/character1L.png",

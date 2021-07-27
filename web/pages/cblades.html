@@ -50,18 +50,20 @@
         registerEditor
     } from "../jslib/cblades/editor.js";
     import {
+        GoblinBanner1,
         GoblinLeader,
         GoblinWolfRider,
         GoblinSkirmisher
     } from "../jslib/cblades/armies/orcs.js";
     import {
+        RoughneckBanner1,
         RoughneckLeader,
         RoughneckKnight,
         RoughneckLance,
         RoughneckCrossbowman
     } from "../jslib/cblades/armies/roughnecks.js";
     import {
-        CBWeather, CBFog
+        CBWeather, CBFog, CBWindDirection, CBWingTiredness, CBWingMoral
     } from "../jslib/cblades/miscellaneous.js";
 
     registerInteractiveMovement();
@@ -84,32 +86,42 @@
     let arbitrator = new CBArbitrator();
     game.setArbitrator(arbitrator);
     game.setMenu();
+    /*
     new CBWeather().setOnGame(game);
+    new CBWindDirection().setOnGame(game);
     new CBFog().setOnGame(game);
+    */
 
     let player1 = new CBInteractivePlayer();
     game.addPlayer(player1);
-    let wing1 = new CBWing(player1);
+    let wing1 = new CBWing(player1, GoblinBanner1);
     wing1.setRetreatZone(map.getSouthZone());
+    /*
     let character11 = new CBCharacter(GoblinLeader, wing1);
     wing1.setLeader(character11);
     let counter11 = new CBTroop(GoblinWolfRider, wing1);
     counter11.lossSteps = 1;
+    */
     let counter12 = new CBTroop(GoblinWolfRider, wing1);
     counter12.lossSteps = 1;
+    /*
     let counter13 = new CBTroop(GoblinSkirmisher, wing1);
     game.addUnit(character11, map.getHex(4, 11)); // 4, 11
     game.addUnit(counter11, map.getHex(3, 10));
+    */
     game.addUnit(counter12, map.getHex(6, 10));
-    game.addUnit(counter13, map.getHex(8, 10));
+    //game.addUnit(counter13, map.getHex(8, 10));
+    new CBWingTiredness(wing1).registerOnGame(game);
+    new CBWingMoral(wing1).registerOnGame(game);
 
     let player2 = new CBInteractivePlayer();
     game.addPlayer(player2);
-    let wing2 = new CBWing(player2);
+    let wing2 = new CBWing(player2, RoughneckBanner1);
     wing2.setRetreatZone(map.getNorthZone());
     let character21 = new CBCharacter(RoughneckLeader, wing2);
     wing2.setLeader(character21);
     character21.angle = 180;
+    /*
     let counter21 = new CBTroop(RoughneckKnight, wing2);
     counter21.angle = 180;
     let counter22 = new CBTroop(RoughneckKnight, wing2);
@@ -124,9 +136,12 @@
     game.addUnit(counter23, new CBHexSideId( map.getHex(9, 6),  map.getHex(10, 6)));
     game.addUnit(counter24, new CBHexSideId( map.getHex(9, 5),  map.getHex(10, 5)));
     game.addUnit(counter25, new CBHexSideId( map.getHex(11, 7),  map.getHex(12, 7)));
+    */
     game.addUnit(character21, map.getHex(8, 6));
-    game.addUnit(counter21, map.getHex(7, 7));
-    game.addUnit(counter22, map.getHex(10, 7));
+    //game.addUnit(counter21, map.getHex(7, 7));
+    //game.addUnit(counter22, map.getHex(10, 7));
+    //new CBWingTiredness(wing2).registerOnGame(game);
+    //new CBWingMoral(wing2).registerOnGame(game);
 
     game.start();
 </script>

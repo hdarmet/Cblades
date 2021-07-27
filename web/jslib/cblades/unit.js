@@ -7,6 +7,7 @@ import {
     DImage
 } from "../draw.js";
 import {
+    Mechanisms,
     Memento
 } from "../mechanisms.js";
 import {
@@ -288,15 +289,20 @@ export class CBUnitType {
 
 export class CBWing {
 
-    constructor(player) {
+    constructor(player, banner) {
         this._player = player;
         this._orderInstruction = CBOrderInstruction.DEFEND;
         this._retreatZone = [];
+        this._moral = 11;
+        this._tiredness = 11;
+        this._banner = banner;
     }
 
     _memento() {
         let memento = {
-            orderInstruction : this._orderInstruction
+            orderInstruction : this._orderInstruction,
+            moral : this._moral,
+            tiredness : this._tiredness
         }
         this._leader && (memento.leader = this._leader);
         return memento;
@@ -304,8 +310,10 @@ export class CBWing {
 
     _revert(memento) {
         this._orderInstruction = memento.orderInstruction;
+        this._moral = memento.moral;
+        this._tiredness = memento.tiredness;
         if (memento.leader) {
-            this._leader = memento.leader
+            this._leader = memento.leader;
         }
         else {
             delete this._leader;
@@ -318,6 +326,10 @@ export class CBWing {
 
     get leader() {
         return this._leader;
+    }
+
+    get banner() {
+        return this._banner;
     }
 
     get retreatZone() {
@@ -362,6 +374,42 @@ export class CBWing {
         this._leader && this._leader.updateOrderInstructionArtifact();
     }
 
+    get moral() {
+        return this._moral;
+    }
+
+    setMoral(moral) {
+        console.assert(moral>=4 || moral<=11);
+        this._moral = moral;
+        Mechanisms.fire(this, CBWing.MORAL_EVENT, {wing:this, moral});
+    }
+
+    changeMoral(moral) {
+        Memento.register(this);
+        console.assert(moral>=4 || moral<=11);
+        this._moral = moral;
+        Mechanisms.fire(this, CBWing.MORAL_EVENT, {wing:this, moral});
+    }
+
+    get tiredness() {
+        return this._tiredness;
+    }
+
+    setTiredness(tiredness) {
+        console.assert(tiredness>=4 || tiredness<=11);
+        this._tiredness = tiredness;
+        Mechanisms.fire(this, CBWing.TIREDNESS_EVENT, {wing:this, tiredness});
+    }
+
+    changeTiredness(tiredness) {
+        Memento.register(this);
+        console.assert(tiredness>=4 || tiredness<=11);
+        this._tiredness = tiredness;
+        Mechanisms.fire(this, CBWing.TIREDNESS_EVENT, {wing:this, tiredness});
+    }
+
+    static MORAL_EVENT = "moral-event";
+    static TIREDNESS_EVENT = "tiredness-event";
 }
 
 export function OptionArtifactMixin(clazz) {

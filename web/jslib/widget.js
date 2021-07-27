@@ -298,8 +298,8 @@ export class DIconMenu extends DPopup {
         return memento;
     }
 
-    _register(memento) {
-        super._register(memento);
+    _revert(memento) {
+        super._revert(memento);
         this._tooltip = memento.tooltip;
     }
 
@@ -584,6 +584,10 @@ export class DDice extends DElement {
 
     rollDie() {
         let value = getDrawPlatform().random();
+        let keyValue = prompt("Dice value:");
+        if (keyValue) {
+            return parseInt(keyValue);
+        }
         return Math.floor(value*6)+1;
     }
 
@@ -673,22 +677,45 @@ class IndicatorImageArtifact extends DMultiImagesArtifact {
 
 export class DIndicator extends DElement {
 
-    constructor(paths, dimension, state) {
+    constructor(paths, dimension) {
         super();
-        let images = [];
+        this._images = [];
         for (let path of paths) {
-            images.push(DImage.getImage(path));
+            this._images.push(DImage.getImage(path));
         }
-        this._artifact = new IndicatorImageArtifact(images, dimension);
-        this._oldArtifact = new IndicatorImageArtifact(images, dimension);
+        this._artifact = new IndicatorImageArtifact(this._images, dimension);
         this.addArtifact(this._artifact);
-        this.addArtifact(this._oldArtifact);
-        this._artifact.setImage(state);
-        this._oldArtifact.alpha = 0;
+    }
+
+    get images() {
+        return this._images;
     }
 
     get artifact() {
         return this._artifact;
+    }
+
+    open(board, location) {
+        this.show(board);
+        this.move(location);
+    }
+
+    close() {
+        if (this._board) {
+            this.hide();
+        }
+    }
+
+}
+
+export class DMultiImagesIndicator extends DIndicator {
+
+    constructor(paths, dimension, state) {
+        super(paths, dimension);
+        this._oldArtifact = new IndicatorImageArtifact(this.images, dimension);
+        this.addArtifact(this._oldArtifact);
+        this._oldArtifact.alpha = 0;
+        this._artifact.setImage(state);
     }
 
     get state() {
@@ -702,15 +729,24 @@ export class DIndicator extends DElement {
         new DArtifactAlphaAnimation(this._oldArtifact, 0, 0, 1000);
     }
 
-    open(board, location) {
-        this.show(board);
-        this.move(location);
+}
+
+export class DRotatableIndicator extends DIndicator {
+
+    constructor(paths, dimension, angle) {
+        super(paths, dimension);
+        this.artifact.pangle = angle;
     }
 
-    close() {
-        if (this._board) {
-            this.hide();
-        }
+    get state() {
+        return this.artifact.pangle;
+    }
+
+    changeState(newAngle) {
+        let angle = newAngle-this.artifact.pangle;
+        if (angle>180) angle -= 360;
+        if (angle<-180) angle += 360;
+        new DArtifactRotateAnimation(this._artifact, angle, 0, 1000);
     }
 
 }

@@ -641,8 +641,8 @@ export class DDraw {
         },true);
     }
 
+    static RESIZE_EVENT = "draw-resize";
 }
-DDraw.RESIZE_EVENT = "draw-resize";
 
 export class DAnimation {
 

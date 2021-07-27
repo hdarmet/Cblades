@@ -64,6 +64,7 @@ export class InteractiveRestingAction extends CBAction {
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
+        let tirednessIndicator = new CBWingTirednessIndicator(this.unit.wing);
         let close = ()=>{mask.close(); scene.close();};
         mask.setAction(close);
         mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
@@ -72,7 +73,7 @@ export class InteractiveRestingAction extends CBAction {
         ).addWidget(
             new CBCheckRestInsert(this.game), new Point2D(-20, CBCheckRestInsert.DIMENSION.h/2)
         ).addWidget(
-            new CBWingTirednessIndicator(wingTiredness),
+            tirednessIndicator,
             new Point2D(-CBRestInsert.DIMENSION.w/2-CBWingTirednessIndicator.DIMENSION.w/2-10, 0)
         ).addWidget(
             new CBWeatherIndicator(weather),
@@ -80,7 +81,10 @@ export class InteractiveRestingAction extends CBAction {
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
-                let {success, minorRestingCapacity} = this._processRestResult(this.unit, dice.result);
+                let {success, restingCapacity} = this._processRestResult(this.unit, dice.result);
+                if (restingCapacity!==undefined) {
+                    tirednessIndicator.changeState(restingCapacity-4);
+                }
                 if (success) {
                     result.success().appear();
                 }
@@ -99,6 +103,9 @@ export class InteractiveRestingAction extends CBAction {
         let result = this.game.arbitrator.processRestResult(this.unit, diceResult);
         if (result.success) {
             this.unit.removeOneTirednessLevel();
+        }
+        if (result.restingCapacity!==undefined) {
+            this.unit.wing.changeTiredness(result.restingCapacity);
         }
         this.markAsFinished();
         return result;

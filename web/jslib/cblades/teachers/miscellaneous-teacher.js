@@ -3,6 +3,9 @@
 import {
     CBWeather, CBFog
 } from "../game.js";
+import {
+    sumAngle
+} from "../../geometry.js";
 
 export class CBMiscellaneousTeacher {
 
@@ -60,7 +63,7 @@ export class CBMiscellaneousTeacher {
                 if (diceResult[0]+diceResult[1]<=2) swipe = -1;
                 break;
         }
-        return { swipe };
+        return { swipe, weather: weather+swipe };
     }
 
     processPlayFogResult(game, diceResult) {
@@ -79,7 +82,26 @@ export class CBMiscellaneousTeacher {
                 if (diceResult[0]+diceResult[1]>=12) swipe = -1;
                 break;
         }
-        return { swipe };
+        return { swipe, fog: fog+swipe };
+    }
+
+    processPlayWindDirectionResult(game, diceResult) {
+        let swipe = 0;
+        if (diceResult[0]===1) swipe = -1;
+        if (diceResult[0]===6) swipe = 1;
+        return { swipe, windDirection: sumAngle(game.windDirection, swipe*60) };
+    }
+
+    processPlayTirednessResult(game, wing, diceResult) {
+        let swipe = 0;
+        if (diceResult[0]+diceResult[1]===2) swipe = -1;
+        return { swipe, tiredness: wing.tiredness+swipe };
+    }
+
+    processPlayMoralResult(game, wing, diceResult) {
+        let swipe = 0;
+        if (diceResult[0]+diceResult[1]===2) swipe = -1;
+        return { swipe, moral: wing.moral+swipe };
     }
 
 }

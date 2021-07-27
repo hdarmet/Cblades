@@ -26,7 +26,7 @@ import {
     DIconMenuItem,
     DPushButton,
     DDice,
-    DIndicator,
+    DMultiImagesIndicator,
     DInsert,
     DResult,
     DMask,
@@ -847,7 +847,7 @@ describe("Widget", ()=> {
         given:
             var { board, widgetsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
-            let indicator = new DIndicator(["./../images/indicators/indicator1.png"], new Dimension2D(50, 50));
+            let indicator = new DMultiImagesIndicator(["./../images/indicators/indicator1.png"], new Dimension2D(50, 50));
             loadAllImages();
         when:
             resetDirectives(widgetsLayer);
@@ -1504,8 +1504,8 @@ describe("Widget", ()=> {
         given:
             var { board, widgetsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
-            let indicator1 = new DIndicator(["./../images/indicators/indicator1.png"], new Dimension2D(50, 50));
-            let indicator2 = new DIndicator(["./../images/indicators/indicator2.png"], new Dimension2D(70, 80));
+            let indicator1 = new DMultiImagesIndicator(["./../images/indicators/indicator1.png"], new Dimension2D(50, 50));
+            let indicator2 = new DMultiImagesIndicator(["./../images/indicators/indicator2.png"], new Dimension2D(70, 80));
             let scene = new DScene()
                 .addWidget(indicator1, new Point2D(0, -100))
                 .addWidget(indicator2, new Point2D(0, 100));
@@ -1538,7 +1538,7 @@ describe("Widget", ()=> {
     it("Checks that a scene opening/closing is undoable", () => {
         given:
             var { board, widgetsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
-            let indicator = new DIndicator(["./../images/indicators/indicator1.png"], new Dimension2D(50, 50));
+            let indicator = new DMultiImagesIndicator(["./../images/indicators/indicator1.png"], new Dimension2D(50, 50));
             let insert = new DInsert("./../images/inserts/insert.png", new Dimension2D(200, 190));
             let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
             let scene = new DScene()

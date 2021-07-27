@@ -9,7 +9,13 @@ import {
     CBAction, CBGame, CBPlayable, WidgetLevelMixin
 } from "./game.js";
 import {
-    CBActionMenu, CBInteractivePlayer, CBWeatherIndicator, CBFogIndicator
+    CBActionMenu,
+    CBInteractivePlayer,
+    CBWeatherIndicator,
+    CBFogIndicator,
+    CBWindDirectionIndicator,
+    CBWingTirednessIndicator,
+    CBWingMoralIndicator
 } from "./interactive-player.js";
 import {
     CBCharge
@@ -62,6 +68,33 @@ export function registerInteractiveMiscellaneous() {
     CBInteractivePlayer.prototype.playFog = function(counter, event) {
         if (this.game.canUnselectUnit()) {
             let action = new InteractivePlayFogAction(this.game, counter, event);
+            let unit = this.game.selectedUnit;
+            this.afterActivation(unit, () => {
+                action.play();
+            });
+        }
+    }
+    CBInteractivePlayer.prototype.playWindDirection = function(counter, event) {
+        if (this.game.canUnselectUnit()) {
+            let action = new InteractivePlayWindDirectionAction(this.game, counter, event);
+            let unit = this.game.selectedUnit;
+            this.afterActivation(unit, () => {
+                action.play();
+            });
+        }
+    }
+    CBInteractivePlayer.prototype.playTiredness = function(counter, event) {
+        if (this.game.canUnselectUnit()) {
+            let action = new InteractivePlayTirednessAction(this.game, counter, event);
+            let unit = this.game.selectedUnit;
+            this.afterActivation(unit, () => {
+                action.play();
+            });
+        }
+    }
+    CBInteractivePlayer.prototype.playMoral = function(counter, event) {
+        if (this.game.canUnselectUnit()) {
+            let action = new InteractivePlayMoralAction(this.game, counter, event);
             let unit = this.game.selectedUnit;
             this.afterActivation(unit, () => {
                 action.play();
@@ -377,16 +410,14 @@ export class InteractivePlayWeatherAction extends CBCounterAction {
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
-                let {swipe} = this._processPlayWeatherResult(this.game, dice.result);
+                let {swipe, weather:nextWeather} = this._processPlayWeatherResult(this.game, dice.result);
                 if (weather>0 && swipe === -1) {
                     swipeResult.swipeUp().appear();
-                    this.game.changeWeather(weather-1);
-                    weatherIndicator.changeState(weather-1);
+                    weatherIndicator.changeState(nextWeather);
                 }
                 else if (weather<5 && swipe === 1) {
                     swipeResult.swipeDown().appear();
-                    this.game.changeWeather(weather+1);
-                    weatherIndicator.changeState(weather+1);
+                    weatherIndicator.changeState(nextWeather);
                 }
                 else {
                     swipeResult.noSwipe().appear();
@@ -403,14 +434,11 @@ export class InteractivePlayWeatherAction extends CBCounterAction {
     _processPlayWeatherResult(game, diceResult) {
         let result = this.game.arbitrator.processPlayWeatherResult(game, diceResult);
         this.markAsPlayed();
+        this.game.changeWeather(result.weather);
         return result;
     }
 
 }
-
-
-
-
 
 export class InteractivePlayFogAction extends CBCounterAction {
 
@@ -443,19 +471,17 @@ export class InteractivePlayFogAction extends CBCounterAction {
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
-                let {swipe} = this._processPlayFogResult(this.game, dice.result);
+                let {swipe, fog:nextFog} = this._processPlayFogResult(this.game, dice.result);
                 if (fog>0 && swipe === -1) {
                     swipeResult.swipeUp().appear();
-                    this.game.changeFog(fog-1);
-                    weatherIndicator.changeState(fog-1);
                 }
                 else if (fog<5 && swipe === 1) {
                     swipeResult.swipeDown().appear();
-                    this.game.changeWeather(fog+1);
-                    weatherIndicator.changeState(fog+1);
+                    weatherIndicator.changeState(nextFog);
                 }
                 else {
                     swipeResult.noSwipe().appear();
+                    weatherIndicator.changeState(nextFog);
                 }
                 Memento.clear();
             }),
@@ -469,6 +495,184 @@ export class InteractivePlayFogAction extends CBCounterAction {
     _processPlayFogResult(game, diceResult) {
         let result = this.game.arbitrator.processPlayFogResult(game, diceResult);
         this.markAsPlayed();
+        this.game.changeFog(result.fog);
+        return result;
+    }
+
+}
+
+export class InteractivePlayWindDirectionAction extends CBCounterAction {
+
+    constructor(game, counter, event) {
+        super(game, counter);
+        this._event = event;
+    }
+
+    play() {
+        this.game.closePopup();
+        this.game.closeActuators();
+        let windDirection = this.game.arbitrator.getWindDirection(this.game);
+        let swipeResult = new DSwipe();
+        let dice = new DDice([new Point2D(0, 0)]);
+        let windDirectionIndicator = new CBWindDirectionIndicator(windDirection);
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+        };
+        mask.setAction(close);
+        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        scene.addWidget(
+            new CBPlayWindDirectionInsert(this.game),
+            new Point2D(-CBPlayWindDirectionInsert.DIMENSION.w/2, -50)
+        ).addWidget(
+            windDirectionIndicator,
+            new Point2D(CBWindDirectionIndicator.DIMENSION.w/2-20, 75)
+        ).addWidget(
+            dice.setFinalAction(()=>{
+                dice.active = false;
+                let {swipe, windDirection:nextWindDirection} = this._processPlayWindDirectionResult(this.game, dice.result);
+                if (swipe === -1) {
+                    swipeResult.swipeUp().appear();
+                    windDirectionIndicator.changeState(nextWindDirection);
+                }
+                else if (swipe === 1) {
+                    swipeResult.swipeDown().appear();
+                    windDirectionIndicator.changeState(nextWindDirection);
+                }
+                else {
+                    swipeResult.noSwipe().appear();
+                }
+            }),
+            new Point2D(60, -50)
+        ).addWidget(
+            swipeResult.setFinalAction(close),
+            new Point2D(0, 0)
+        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+    }
+
+    _processPlayWindDirectionResult(game, diceResult) {
+        let result = this.game.arbitrator.processPlayWindDirectionResult(game, diceResult);
+        this.markAsPlayed();
+        this.game.changeWindDirection(result.windDirection);
+        Memento.clear();
+        return result;
+    }
+
+}
+
+export class InteractivePlayTirednessAction extends CBCounterAction {
+
+    constructor(game, counter, event) {
+        super(game, counter);
+        this._event = event;
+    }
+
+    play() {
+        this.game.closePopup();
+        this.game.closeActuators();
+        let swipeResult = new DSwipe();
+        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let tirednessIndicator = new CBWingTirednessIndicator(this.counter.wing);
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+        };
+        mask.setAction(close);
+        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        scene.addWidget(
+            new CBPlayTirednessInsert(this.game),
+            new Point2D(-CBPlayTirednessInsert.DIMENSION.w/2, 0)
+        ).addWidget(
+            tirednessIndicator,
+            new Point2D(CBWingTirednessIndicator.DIMENSION.w/2-20, 100)
+        ).addWidget(
+            dice.setFinalAction(()=>{
+                dice.active = false;
+                let {swipe, tiredness:nextTiredness} = this._processPlayTirednessResult(this.game, dice.result);
+                if (nextTiredness>0 && swipe === -1) {
+                    swipeResult.swipeUp().appear();
+                }
+                else {
+                    swipeResult.noSwipe().appear();
+                    tirednessIndicator.changeState(nextTiredness-4);
+                }
+                Memento.clear();
+            }),
+            new Point2D(60, -100)
+        ).addWidget(
+            swipeResult.setFinalAction(close),
+            new Point2D(0, 0)
+        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+    }
+
+    _processPlayTirednessResult(game, diceResult) {
+        let result = this.game.arbitrator.processPlayTirednessResult(game, this.counter.wing, diceResult);
+        this.markAsPlayed();
+        if (result.swipe) {
+            this.counter.wing.changeTiredness(result.tiredness);
+        }
+        return result;
+    }
+
+}
+
+export class InteractivePlayMoralAction extends CBCounterAction {
+
+    constructor(game, counter, event) {
+        super(game, counter);
+        this._event = event;
+    }
+
+    play() {
+        this.game.closePopup();
+        this.game.closeActuators();
+        let swipeResult = new DSwipe();
+        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let moralIndicator = new CBWingMoralIndicator(this.counter.wing);
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            mask.close();
+            scene.close();
+        };
+        mask.setAction(close);
+        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        scene.addWidget(
+            new CBPlayMoralInsert(this.game),
+            new Point2D(-CBPlayMoralInsert.DIMENSION.w/2, 0)
+        ).addWidget(
+            moralIndicator,
+            new Point2D(CBWingMoralIndicator.DIMENSION.w/2-20, 100)
+        ).addWidget(
+            dice.setFinalAction(()=>{
+                dice.active = false;
+                let {swipe, moral:nextMoral} = this._processPlayMoralResult(this.game, dice.result);
+                if (nextMoral>0 && swipe === -1) {
+                    swipeResult.swipeUp().appear();
+                }
+                else {
+                    swipeResult.noSwipe().appear();
+                    moralIndicator.changeState(nextMoral-4);
+                }
+                Memento.clear();
+            }),
+            new Point2D(60, -100)
+        ).addWidget(
+            swipeResult.setFinalAction(close),
+            new Point2D(0, 0)
+        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+    }
+
+    _processPlayMoralResult(game, diceResult) {
+        let result = this.game.arbitrator.processPlayMoralResult(game, this.counter.wing, diceResult);
+        this.markAsPlayed();
+        if (result.swipe) {
+            this.counter.wing.changeMoral(result.moral);
+        }
         return result;
     }
 
@@ -530,8 +734,8 @@ export class CBMiscActionsInsert extends WidgetLevelMixin(DInsert) {
         super(game, "./../images/inserts/misc-actions-insert.png", CBMiscActionsInsert.DIMENSION);
     }
 
+    static DIMENSION = new Dimension2D(444, 641);
 }
-CBMiscActionsInsert.DIMENSION = new Dimension2D(444, 641);
 
 export class CBSetFireInsert extends WidgetLevelMixin(DInsert) {
 
@@ -539,8 +743,8 @@ export class CBSetFireInsert extends WidgetLevelMixin(DInsert) {
         super(game, "./../images/inserts/set-fire-insert.png", CBSetFireInsert.DIMENSION);
     }
 
+    static DIMENSION = new Dimension2D(444, 385);
 }
-CBSetFireInsert.DIMENSION = new Dimension2D(444, 385);
 
 export class CBExtinguishFireInsert extends WidgetLevelMixin(DInsert) {
 
@@ -548,8 +752,8 @@ export class CBExtinguishFireInsert extends WidgetLevelMixin(DInsert) {
         super(game, "./../images/inserts/extinguish-fire-insert.png", CBExtinguishFireInsert.DIMENSION);
     }
 
+    static DIMENSION = new Dimension2D(444, 397);
 }
-CBExtinguishFireInsert.DIMENSION = new Dimension2D(444, 397);
 
 export class CBSetStakesInsert extends WidgetLevelMixin(DInsert) {
 
@@ -557,8 +761,8 @@ export class CBSetStakesInsert extends WidgetLevelMixin(DInsert) {
         super(game, "./../images/inserts/set-stakes-insert.png", CBSetStakesInsert.DIMENSION);
     }
 
+    static DIMENSION = new Dimension2D(444, 334);
 }
-CBSetStakesInsert.DIMENSION = new Dimension2D(444, 334);
 
 export class CBRemoveStakesInsert extends WidgetLevelMixin(DInsert) {
 
@@ -566,8 +770,8 @@ export class CBRemoveStakesInsert extends WidgetLevelMixin(DInsert) {
         super(game, "./../images/inserts/remove-stakes-insert.png", CBRemoveStakesInsert.DIMENSION);
     }
 
+    static DIMENSION = new Dimension2D(444, 306);
 }
-CBRemoveStakesInsert.DIMENSION = new Dimension2D(444, 306);
 
 export class CBPlayWeatherInsert extends WidgetLevelMixin(DInsert) {
 
@@ -575,9 +779,9 @@ export class CBPlayWeatherInsert extends WidgetLevelMixin(DInsert) {
         super(game, "./../images/inserts/meteo-insert.png", CBPlayWeatherInsert.DIMENSION, CBPlayWeatherInsert.PAGE_DIMENSION);
     }
 
+    static DIMENSION = new Dimension2D(444, 600);
+    static PAGE_DIMENSION = new Dimension2D(444, 1124);
 }
-CBPlayWeatherInsert.DIMENSION = new Dimension2D(444, 600);
-CBPlayWeatherInsert.PAGE_DIMENSION = new Dimension2D(444, 1124);
 
 export class CBPlayFogInsert extends WidgetLevelMixin(DInsert) {
 
@@ -585,6 +789,33 @@ export class CBPlayFogInsert extends WidgetLevelMixin(DInsert) {
         super(game, "./../images/inserts/fog-insert.png", CBPlayFogInsert.DIMENSION, CBPlayFogInsert.PAGE_DIMENSION);
     }
 
+    static DIMENSION = new Dimension2D(444, 600);
+    static PAGE_DIMENSION = new Dimension2D(444, 686);
 }
-CBPlayFogInsert.DIMENSION = new Dimension2D(444, 600);
-CBPlayFogInsert.PAGE_DIMENSION = new Dimension2D(444, 686);
+
+export class CBPlayWindDirectionInsert extends WidgetLevelMixin(DInsert) {
+
+    constructor(game) {
+        super(game, "./../images/inserts/wind-direction-insert.png", CBPlayWindDirectionInsert.DIMENSION);
+    }
+
+    static DIMENSION = new Dimension2D(444, 177);
+}
+
+export class CBPlayTirednessInsert extends WidgetLevelMixin(DInsert) {
+
+    constructor(game) {
+        super(game, "./../images/inserts/wing-rest-insert.png", CBPlayTirednessInsert.DIMENSION);
+    }
+
+    static DIMENSION = new Dimension2D(444, 118);
+}
+
+export class CBPlayMoralInsert extends WidgetLevelMixin(DInsert) {
+
+    constructor(game) {
+        super(game, "./../images/inserts/wing-moral-insert.png", CBPlayMoralInsert.DIMENSION);
+    }
+
+    static DIMENSION = new Dimension2D(444, 119);
+}

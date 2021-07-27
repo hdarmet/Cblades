@@ -10,6 +10,10 @@ import {
     CBUnitType
 } from "../unit.js";
 
+export let GoblinBanner0 = "./../images/units/orcs/banners/banner0.png";
+export let GoblinBanner1 = "./../images/units/orcs/banners/banner1.png";
+export let GoblinBanner2 = "./../images/units/orcs/banners/banner2.png";
+
 export let GoblinLeader = new CBUnitType("Goblin Leader",
     [
         "./../images/units/orcs/character1L.png",

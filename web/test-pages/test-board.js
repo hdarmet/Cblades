@@ -143,13 +143,13 @@ describe("Board", ()=> {
             var element = new DElement(artifact);
             element.setLocation(new Point2D(100, 50));
         then:
-            assert(element.shown).isFalse();
+            assert(element.isShown()).isFalse();
             assert(artifact.isShown()).isFalse();
         when:
             resetDirectives(layer);
             element.setOnBoard(board);
         then: /* No paint here... */
-            assert(element.shown).isTrue();
+            assert(element.isShown()).isTrue();
             assert(artifact.board).equalsTo(board);
             assert(element.board).equalsTo(board);
             assert(artifact.isShown()).isTrue();

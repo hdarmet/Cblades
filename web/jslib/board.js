@@ -11,6 +11,7 @@ import {
     Mechanisms,
     Memento
 } from "./mechanisms.js";
+//import {DisplayablePlayableArtifact} from "./cblades/miscellaneous.js";
 
 /**
  * Mixin for classes whose instances deals with location and orientation on the board. DElements and their contained
@@ -719,6 +720,7 @@ export class DElement extends LocalisationAware(Object) {
     }
 
     removeArtifact(artifact) {
+        console.assert(this._artifacts.indexOf(artifact)>=0);
         this._artifacts.splice(this._artifacts.indexOf(artifact), 1);
         artifact._setElement(null);
         if (this._board) {
@@ -739,6 +741,7 @@ export class DElement extends LocalisationAware(Object) {
     }
 
     deleteArtifact(artifact) {
+        console.assert(this._artifacts.indexOf(artifact)>=0);
         Memento.register(this);
         this._artifacts.splice(this._artifacts.indexOf(artifact), 1);
         artifact._attach(null);
@@ -862,7 +865,7 @@ export class DElement extends LocalisationAware(Object) {
         return area;
     }
 
-    get shown() {
+    isShown() {
         return !!this.board;
     }
 

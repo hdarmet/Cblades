@@ -272,4 +272,8 @@ export class CBUnitManagementTeacher {
     getFog(game) {
         return game.fog;
     }
+
+    getWindDirection(game) {
+        return game.windDirection;
+    }
 }

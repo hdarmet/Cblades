@@ -2,7 +2,7 @@ import {
     Dimension2D, Point2D
 } from "../geometry.js";
 import {
-    DDice, DIconMenu, DIconMenuItem, DIndicator, DInsert, DMask, DResult, DScene
+    DDice, DIconMenu, DMultiImagesIndicator, DInsert, DMask, DResult, DScene, DRotatableIndicator
 } from "../widget.js";
 import {
     Mechanisms, Memento
@@ -11,8 +11,11 @@ import {
     CBAbstractPlayer, CBGame, WidgetLevelMixin
 } from "./game.js";
 import {
-    DBoard
+    DBoard, DImageArtifact
 } from "../board.js";
+import {
+    DImage
+} from "../draw.js";
 
 export class CBInteractivePlayer extends CBAbstractPlayer {
 
@@ -292,25 +295,68 @@ export class CBActionMenu extends DIconMenu {
 }
 CBActionMenu.menuBuilders = [];
 
-export class CBWingTirednessIndicator extends DIndicator {
+export class CBWingIndicator extends DMultiImagesIndicator {
 
-    constructor(tiredness) {
-        function getPaths(tiredness) {
-            let paths = [];
-            paths.push(`./../images/inserts/tiredness${tiredness}.png`);
-            if (tiredness>4) {
-                paths.push(`./../images/inserts/tiredness${tiredness-1}.png`);
-            }
-            return paths;
-        }
-
-        super(getPaths(tiredness), CBWingTirednessIndicator.DIMENSION);
+    constructor(wing, paths) {
+        super(paths, CBWingIndicator.DIMENSION, 0);
+        this.artifact.changeImage(this._getValue(wing));
+        this._bannerArtifact = new DImageArtifact("widgets",
+            DImage.getImage(wing.banner),
+            new Point2D(
+                CBWingIndicator.DIMENSION.w/2 - CBWingIndicator.BANNER_DIMENSION.w/2 - CBWingIndicator.MARGIN,
+                0
+            ),
+            CBWingIndicator.BANNER_DIMENSION
+        );
+        this.addArtifact(this._bannerArtifact);
     }
 
+    static DIMENSION = new Dimension2D(142, 142);
+    static BANNER_DIMENSION = new Dimension2D(50, 120);
+    static MARGIN =5;
 }
-CBWingTirednessIndicator.DIMENSION = new Dimension2D(142, 142);
 
-export class CBWeatherIndicator extends DIndicator {
+export class CBWingTirednessIndicator extends CBWingIndicator {
+
+    constructor(wing) {
+        super(wing, [
+            `./../images/inserts/tiredness4.png`,
+            `./../images/inserts/tiredness5.png`,
+            `./../images/inserts/tiredness6.png`,
+            `./../images/inserts/tiredness7.png`,
+            `./../images/inserts/tiredness8.png`,
+            `./../images/inserts/tiredness9.png`,
+            `./../images/inserts/tiredness10.png`,
+            `./../images/inserts/tiredness11.png`
+        ]);
+    }
+
+    _getValue(wing) {
+        return wing.tiredness-4;
+    }
+}
+
+export class CBWingMoralIndicator extends CBWingIndicator {
+
+    constructor(wing) {
+        super(wing, [
+            `./../images/inserts/moral4.png`,
+            `./../images/inserts/moral5.png`,
+            `./../images/inserts/moral6.png`,
+            `./../images/inserts/moral7.png`,
+            `./../images/inserts/moral8.png`,
+            `./../images/inserts/moral9.png`,
+            `./../images/inserts/moral10.png`,
+            `./../images/inserts/moral11.png`
+        ]);
+    }
+
+    _getValue(wing) {
+        return wing.moral-4;
+    }
+}
+
+export class CBWeatherIndicator extends DMultiImagesIndicator {
 
     constructor(weather) {
         super( [
@@ -323,10 +369,11 @@ export class CBWeatherIndicator extends DIndicator {
         ], CBWeatherIndicator.DIMENSION, weather);
     }
 
+    static DIMENSION = new Dimension2D(142, 142);
 }
-CBWeatherIndicator.DIMENSION = new Dimension2D(142, 142);
 
-export class CBFogIndicator extends DIndicator {
+
+export class CBFogIndicator extends DMultiImagesIndicator {
 
     constructor(fog) {
         super( [
@@ -337,8 +384,21 @@ export class CBFogIndicator extends DIndicator {
         ], CBFogIndicator.DIMENSION, fog);
     }
 
+    static DIMENSION = new Dimension2D(142, 142);
 }
-CBFogIndicator.DIMENSION = new Dimension2D(142, 142);
+
+
+export class CBWindDirectionIndicator extends DRotatableIndicator {
+
+    constructor(angle) {
+        super( [
+            `./../images/inserts/wind-direction.png`
+        ], CBWindDirectionIndicator.DIMENSION, angle);
+    }
+
+    static DIMENSION = new Dimension2D(142, 142);
+}
+
 
 export class CBCheckEngagementInsert extends WidgetLevelMixin(DInsert) {
 
@@ -378,8 +438,8 @@ export class CBCheckDefenderEngagementInsert extends CBCheckEngagementInsert {
         super(game, "./../images/inserts/check-defender-engagement-insert.png", CBCheckDefenderEngagementInsert.DIMENSION, condition);
     }
 
+    static DIMENSION = new Dimension2D(444, 763);
 }
-CBCheckDefenderEngagementInsert.DIMENSION = new Dimension2D(444, 763);
 
 export class CBLoseCohesionInsert extends WidgetLevelMixin(DInsert) {
 
@@ -388,8 +448,8 @@ export class CBLoseCohesionInsert extends WidgetLevelMixin(DInsert) {
         this._condition = condition;
     }
 
+    static DIMENSION = new Dimension2D(444, 330);
 }
-CBLoseCohesionInsert.DIMENSION = new Dimension2D(444, 330);
 
 export class CBMoralInsert extends WidgetLevelMixin(DInsert) {
 
@@ -400,7 +460,9 @@ export class CBMoralInsert extends WidgetLevelMixin(DInsert) {
         if (unit.isDisrupted() || unit.isRouted()) {
             this.setMark(new Point2D(20, 225));
         }
+
     }
 
+    static DIMENSION = new Dimension2D(444, 389);
 }
-CBMoralInsert.DIMENSION = new Dimension2D(444, 389);
+

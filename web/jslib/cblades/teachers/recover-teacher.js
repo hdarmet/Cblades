@@ -28,8 +28,11 @@ export class CBRecoveringTeacher {
 
     processRestResult(unit, diceResult) {
         let success = diceResult[0]+diceResult[1]<=10;
-        let minorRestingCapacity = diceResult[0]===diceResult[1];
-        return { success, minorRestingCapacity };
+        let result = { success };
+        if (diceResult[0]===diceResult[1] && unit.wing.tiredness>4) {
+            result.restingCapacity = unit.wing.tiredness-1;
+        }
+        return result;
     }
 
     processReplenishMunitionsResult(unit, diceResult) {

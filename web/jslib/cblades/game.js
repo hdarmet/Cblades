@@ -68,11 +68,11 @@ export class CBAbstractPlayer {
     }
 
     selectUnit(unit, event) {
+        unit.select();
         if (!unit.hasBeenActivated()) {
             this.game.closeWidgets();
             if (this.game.selectedUnit !== unit) {
                 this.startActivation(unit, () => {
-                    unit.select();
                     this.launchUnitAction(unit, event);
                 });
             } else {
@@ -250,8 +250,8 @@ export function CBActivableMixin(clazz) {
             return memento;
         }
 
-        _register(memento) {
-            super._register(memento);
+        _revert(memento) {
+            super._revert(memento);
             this._active = memento.active;
         }
 
@@ -545,6 +545,21 @@ export function Displayable(clazz) {
 
     return class extends clazz {
 
+        _memento() {
+            let memento = super._memento();
+            memento.played = this._played;
+            return memento;
+        }
+
+        _revert(memento) {
+            if (memento.played) {
+                this._played = memento.played;
+            }
+            else {
+                delete this._played;
+            }
+        }
+
         setOnGame(game) {
             game.counterDisplay.addCounter(this);
         }
@@ -561,6 +576,10 @@ export function Displayable(clazz) {
             game.counterDisplay.deleteCounter(this);
         }
 
+        isShown() {
+            return this.element.isShown();
+        }
+
         onMouseClick(event) {
             if (!this.played) {
                 this.play(event);
@@ -572,6 +591,7 @@ export function Displayable(clazz) {
         }
 
         markAsPlayed() {
+            Memento.register(this);
             this._played = true;
         }
 
@@ -654,7 +674,6 @@ export class CBCounterDisplay {
         console.assert(this._counters.indexOf(counter)<0);
         Memento.register(this);
         this._counters.push(counter);
-        this._game._appendCounter(counter);
         this.adjustCounterLocations();
         counter._show(this._game);
     }
@@ -664,8 +683,6 @@ export class CBCounterDisplay {
         console.assert(counterIndex>=0);
         Memento.register(this);
         this._counters.splice(counterIndex, 1);
-        this._game._deleteCounter(counter);
-        this.removeCounter(counter);
         this.adjustCounterLocations();
         counter._hide(this._game);
     }
@@ -711,7 +728,7 @@ export class CBCounterDisplay {
         for (let counter of this._counters) {
             let x = this._horizontal === CBCounterDisplay.LEFT ?
                 CBCounterDisplay.MARGIN * index + CBCounterDisplay.XMARGIN :
-                leftBottomPoint.x -CBCounterDisplay.MARGIN * index -CBCounterDisplay.YMARGIN ;
+                leftBottomPoint.x -CBCounterDisplay.MARGIN * (this._counters.length -index -1) -CBCounterDisplay.YMARGIN ;
             let y = this._vertical === CBCounterDisplay.TOP ?
                 CBCounterDisplay.YMARGIN :
                 leftBottomPoint.y -CBCounterDisplay.YMARGIN;
@@ -748,7 +765,8 @@ export class CBGame {
         this._counterDisplay = new CBCounterDisplay(this);
         this._settings = {
             _weather: CBWeather.CLEAR,
-            _fog: CBFog.MIST
+            _fog: CBFog.MIST,
+            _windDirection: 0
         }
         Mechanisms.addListener(this);
     }
@@ -783,6 +801,20 @@ export class CBGame {
         Memento.register(this);
         this._settings._fog = fog;
         Mechanisms.fire(this, CBGame.SETTINGS_EVENT, {fog});
+    }
+
+    get windDirection() {
+        return this._settings._windDirection;
+    }
+
+    set windDirection(windDirection) {
+        this._settings._windDirection = windDirection;
+    }
+
+    changeWindDirection(windDirection) {
+        Memento.register(this);
+        this._settings._windDirection = windDirection;
+        Mechanisms.fire(this, CBGame.SETTINGS_EVENT, {windDirection});
     }
 
     _buildBoard(map) {
@@ -861,9 +893,10 @@ export class CBGame {
             actuators: [...this._actuators],
             counters: new Set(this._counters),
             popup: this._popup,
-            setting: {
+            settings: {
                 _weather: this._settings._weather,
-                _fog: this._settings._fog
+                _fog: this._settings._fog,
+                _windDirection: this._settings._windDirection
             }
         };
     }
@@ -1058,7 +1091,7 @@ export class CBGame {
     }
 
     canSelectUnit(unit) {
-        return (!this.focusedUnit || this.focusedUnit===unit) && unit.isCurrentPlayer() && !unit.hasBeenActivated();
+        return (!this.focusedUnit || this.focusedUnit===unit) && unit.isCurrentPlayer()/* && !unit.hasBeenActivated()*/;
     }
 
     setSelectedUnit(unit) {
@@ -1783,12 +1816,14 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
         this.game.setSelectedUnit(null);
         this._imageArtifact.unselect();
         this.element.refresh();
+        Mechanisms.fire(this, CBAbstractUnit.UNSELECTED_EVENT);
     }
 
     select() {
         this.game.setSelectedUnit(this);
         this._imageArtifact.select();
         this.refresh();
+        Mechanisms.fire(this, CBAbstractUnit.SELECTED_EVENT);
     }
 
     get hexLocation() {
@@ -1892,6 +1927,7 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
             if (actuator.collectArtifactsToRetract) actuator.collectArtifactsToRetract(this, artifacts);
         }
     }
-
+    static SELECTED_EVENT = "unit-selected";
+    static UNSELECTED_EVENT = "unit-unselected";
     static DESTROYED_EVENT = "unit-destroyed";
 }

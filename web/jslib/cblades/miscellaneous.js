@@ -1,6 +1,7 @@
 'use strict'
 
 import {
+    CBAbstractUnit,
     CBAction,
     CBActivableMixin,
     CBCounterImageArtifact, CBGame, CBPlayable, Displayable, RetractableArtifactMixin, RetractableCounterMixin
@@ -14,6 +15,12 @@ import {
 import {
     Mechanisms
 } from "../mechanisms.js";
+import {
+    DImageArtifact
+} from "../board.js";
+import {
+    CBWing
+} from "./unit.js";
 
 class FireStartArtifact extends RetractableArtifactMixin(CBCounterImageArtifact) {
 
@@ -44,8 +51,8 @@ export class CBFireStart extends RetractableCounterMixin(CBPlayable) {
     }
     */
 
+    static DIMENSION = new Dimension2D(142, 142);
 }
-CBFireStart.DIMENSION = new Dimension2D(142, 142);
 
 class StakesArtifact extends RetractableArtifactMixin(CBCounterImageArtifact) {
 
@@ -76,8 +83,8 @@ export class CBStakes extends RetractableCounterMixin(CBPlayable) {
     }
     */
 
+    static DIMENSION = new Dimension2D(142, 142);
 }
-CBStakes.DIMENSION = new Dimension2D(142, 142);
 
 export class CBCounterMarkerArtifact extends CBCounterImageArtifact {
 
@@ -85,10 +92,10 @@ export class CBCounterMarkerArtifact extends CBCounterImageArtifact {
         super(counter, "counter-markers", [DImage.getImage(path)], position, dimension);
     }
 
+    static MARKER_DIMENSION = new Dimension2D(64, 64);
 }
-CBCounterMarkerArtifact.MARKER_DIMENSION = new Dimension2D(64, 64);
 
-class WeatherArtifact extends CBActivableMixin(CBCounterImageArtifact) {
+export class DisplayablePlayableArtifact extends CBActivableMixin(CBCounterImageArtifact) {
 
     constructor(fire, ...args) {
         super(fire, ...args);
@@ -96,10 +103,57 @@ class WeatherArtifact extends CBActivableMixin(CBCounterImageArtifact) {
 
 }
 
-export class CBWeather extends Displayable(CBPlayable) {
+export class CBDisplayablePlayable extends Displayable(CBPlayable) {
+
+    constructor(paths, dimension) {
+        super("counters", paths, dimension);
+        Mechanisms.addListener(this);
+    }
+
+    createArtifact(levelName, images, position, dimension) {
+        return new DisplayablePlayableArtifact(this, levelName, images, position, dimension);
+    }
+
+    markAsPlayed() {
+        super.markAsPlayed();
+        this._marker = new CBCounterMarkerArtifact(this, "./../images/markers/actiondone.png",
+            new Point2D(CBWeather.DIMENSION.w/2, -CBWeather.DIMENSION.h/2));
+        this.element.appendArtifact(this._marker);
+        this.artifact.desactivate();
+        Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINISHED);
+    }
+
+    reset() {
+        super.reset();
+        this.artifact.activate();
+        if (this._marker) {
+            this.element.deleteArtifact(this._marker);
+            delete this._marker;
+        }
+    }
+
+    _memento() {
+        let memento = super._memento();
+        memento.marker = this._marker;
+        return memento;
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        if (memento.marker) {
+            this._marker = memento.marker;
+        }
+        else {
+            delete this._marker;
+        }
+    }
+
+}
+
+export class CBWeather extends CBDisplayablePlayable {
 
     constructor() {
-        super("counters", [
+        super([
             "./../images/counters/meteo1.png",
             "./../images/counters/meteo2.png",
             "./../images/counters/meteo3.png",
@@ -107,11 +161,6 @@ export class CBWeather extends Displayable(CBPlayable) {
             "./../images/counters/meteo5.png",
             "./../images/counters/meteo6.png"
         ], CBWeather.DIMENSION);
-        Mechanisms.addListener(this);
-    }
-
-    createArtifact(levelName, images, position, dimension) {
-        return new WeatherArtifact(this, levelName, images, position, dimension);
     }
 
     setOnGame(game) {
@@ -129,64 +178,18 @@ export class CBWeather extends Displayable(CBPlayable) {
         this.game.currentPlayer.playWeather(this, event);
     }
 
-    markAsPlayed() {
-        super.markAsPlayed();
-        this._marker = new CBCounterMarkerArtifact(this, "./../images/markers/actiondone.png",
-            new Point2D(CBWeather.DIMENSION.w/2, -CBWeather.DIMENSION.h/2));
-        this.element.appendArtifact(this._marker);
-        this.artifact.desactivate();
-        Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINISHED);
-    }
-
-    reset() {
-        super.reset();
-        this.artifact.activate();
-        if (this._marker) {
-            this.element.deleteArtifact(this._marker);
-        }
-    }
-
-    _memento() {
-        let memento = super._memento();
-        memento.marker = this._marker;
-        return memento;
-    }
-
-    _revert(memento) {
-        super._revert(memento);
-        if (memento.marker) {
-            this._marker = memento.marker;
-        }
-        else {
-            delete this._marker;
-        }
-    }
-
-}
-CBWeather.DIMENSION = new Dimension2D(142, 142);
-
-class FogArtifact extends CBActivableMixin(CBCounterImageArtifact) {
-
-    constructor(fire, ...args) {
-        super(fire, ...args);
-    }
-
+    static DIMENSION = new Dimension2D(142, 142);
 }
 
-export class CBFog extends Displayable(CBPlayable) {
+export class CBFog extends CBDisplayablePlayable {
 
     constructor() {
-        super("counters", [
+        super( [
             "./../images/counters/fog0.png",
             "./../images/counters/fog1.png",
             "./../images/counters/fog2.png",
             "./../images/counters/fog3.png"
         ], CBFog.DIMENSION);
-        Mechanisms.addListener(this);
-    }
-
-    createArtifact(levelName, images, position, dimension) {
-        return new FogArtifact(this, levelName, images, position, dimension);
     }
 
     setOnGame(game) {
@@ -204,38 +207,159 @@ export class CBFog extends Displayable(CBPlayable) {
         this.game.currentPlayer.playFog(this, event);
     }
 
-    markAsPlayed() {
-        super.markAsPlayed();
-        this._marker = new CBCounterMarkerArtifact(this, "./../images/markers/actiondone.png",
-            new Point2D(CBWeather.DIMENSION.w/2, -CBWeather.DIMENSION.h/2));
-        this.element.appendArtifact(this._marker);
-        this.artifact.desactivate();
-        Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINISHED);
+    static DIMENSION = new Dimension2D(142, 142);
+}
+
+export class CBWindDirection extends CBDisplayablePlayable {
+
+    constructor() {
+        super( [
+            "./../images/counters/wind-direction.png"
+        ], CBWindDirection.DIMENSION);
     }
 
-    reset() {
-        super.reset();
-        this.artifact.activate();
-        if (this._marker) {
-            this.element.deleteArtifact(this._marker);
+    setOnGame(game) {
+        super.setOnGame(game);
+        this.artifact.turn(game.arbitrator.getWindDirection(game));
+    }
+
+    _processGlobalEvent(source, event, value) {
+        if (event===CBGame.SETTINGS_EVENT && value.windDirection!==undefined) {
+            this.artifact.turn(value.windDirection);
         }
     }
 
-    _memento() {
-        let memento = super._memento();
-        memento.marker = this._marker;
-        return memento;
+    play(event) {
+        this.game.currentPlayer.playWindDirection(this, event);
     }
 
-    _revert(memento) {
-        super._revert(memento);
-        if (memento.marker) {
-            this._marker = memento.marker;
+    static DIMENSION = new Dimension2D(142, 142);
+}
+
+export class CBWingDisplayablePlayable extends CBDisplayablePlayable {
+
+    constructor(wing, paths) {
+        super( paths, CBWingTiredness.DIMENSION);
+        this._wing = wing;
+        this.artifact.changeImage(this.getValue(this._wing));
+        this._bannerArtifact = new DImageArtifact("counters",
+            DImage.getImage(wing.banner),
+            new Point2D(
+                CBWingDisplayablePlayable.DIMENSION.w/2 - CBWingDisplayablePlayable.BANNER_DIMENSION.w/2 - CBWingDisplayablePlayable.MARGIN,
+                0
+            ),
+            CBWingTiredness.BANNER_DIMENSION
+        );
+        this.element.addArtifact(this._bannerArtifact);
+    }
+
+    get wing() {
+        return this._wing;
+    }
+
+    registerOnGame(game) {
+        this._game = game;
+        game._addCounter(this);
+    }
+
+    _processGlobalEvent(source, event, value) {
+        if (event===CBAbstractUnit.SELECTED_EVENT) {
+            console.log(event);
+        }
+        if (event===CBAbstractUnit.SELECTED_EVENT
+            && (source.wing && source.wing === this.wing)) {
+            !this.isShown() && this.show(this._game);
+        } else if ((event===CBAbstractUnit.UNSELECTED_EVENT || event===CBAbstractUnit.DESTROYED_EVENT)
+            && (source.wing && source.wing === this.wing)) {
+            this.isShown() && this.hide(this._game);
+        }
+    }
+
+    isFinishable() {
+        return this.wing.player!==this.game.currentPlayer || super.isFinishable();
+    }
+
+    static DIMENSION = new Dimension2D(142, 142);
+    static BANNER_DIMENSION = new Dimension2D(50, 120);
+    static MARGIN =5;
+}
+
+export class CBWingTiredness extends CBWingDisplayablePlayable {
+
+    constructor(wing) {
+        super(wing, [
+            "./../images/counters/tiredness4.png",
+            "./../images/counters/tiredness5.png",
+            "./../images/counters/tiredness6.png",
+            "./../images/counters/tiredness7.png",
+            "./../images/counters/tiredness8.png",
+            "./../images/counters/tiredness9.png",
+            "./../images/counters/tiredness10.png",
+            "./../images/counters/tiredness11.png"
+        ]);
+    }
+
+    getValue(wing) {
+        return wing.tiredness-4
+    }
+
+    play(event) {
+        if (this.wing.tiredness===11) {
+            this.markAsPlayed();
         }
         else {
-            delete this._marker;
+            this.game.currentPlayer.playTiredness(this, event);
         }
     }
 
+    _processGlobalEvent(source, event, value) {
+        super._processGlobalEvent(source, event, value);
+        if (event===CBWing.TIREDNESS_EVENT) {
+            this.artifact.changeImage(this.getValue(this._wing));
+        }
+    }
+
+    isFinishable() {
+        return this.wing.tiredness===11 || super.isFinishable();
+    }
 }
-CBFog.DIMENSION = new Dimension2D(142, 142);
+
+export class CBWingMoral extends CBWingDisplayablePlayable {
+
+    constructor(wing) {
+        super(wing, [
+            "./../images/counters/moral4.png",
+            "./../images/counters/moral5.png",
+            "./../images/counters/moral6.png",
+            "./../images/counters/moral7.png",
+            "./../images/counters/moral8.png",
+            "./../images/counters/moral9.png",
+            "./../images/counters/moral10.png",
+            "./../images/counters/moral11.png"
+        ]);
+    }
+
+    getValue(wing) {
+        return wing.moral-4
+    }
+
+    play(event) {
+        if (this.wing.moral===11) {
+            this.markAsPlayed();
+        }
+        else {
+            this.game.currentPlayer.playMoral(this, event);
+        }
+    }
+
+    _processGlobalEvent(source, event, value) {
+        super._processGlobalEvent(source, event, value);
+        if (event===CBWing.MORAL_EVENT) {
+            this.artifact.changeImage(this.getValue(this._wing));
+        }
+    }
+
+    isFinishable() {
+        return this.wing.moral===11 || super.isFinishable();
+    }
+}

@@ -164,12 +164,12 @@ describe("Recover teacher", ()=> {
             var result = arbitrator.processRestResult(unit12, [1, 2]);
         then:
             assert(result.success).isTrue();
-        assert(result.minorRestingCapacity).isFalse();
+            assert(result.restingCapacity).isFalse();
         when:
             result = arbitrator.processRestResult(unit12, [6, 6]);
         then:
             assert(result.success).isFalse();
-        assert(result.minorRestingCapacity).isTrue();
+            assert(result.restingCapacity).isTrue();
     });
 
     it("Checks replenish munitions result processing", () => {
