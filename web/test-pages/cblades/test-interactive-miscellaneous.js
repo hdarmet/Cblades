@@ -91,11 +91,11 @@ describe("Interactive Miscellaneous", ()=> {
             assert(getDirectives(widgetItemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 331.6667, 340)",
-                    "drawImage(/CBlades/images/icons/do-fusion.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/icons/do-fusion.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 391.6667, 340)",
-                    "drawImage(/CBlades/images/icons/do-many.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/icons/do-many.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });

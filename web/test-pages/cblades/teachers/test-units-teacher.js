@@ -8,7 +8,7 @@ import {
     CBHexSideId, CBMap, CBMoveType
 } from "../../../jslib/cblades/map.js";
 import {
-    CBGame, CBAbstractPlayer, CBAction, CBCounter
+    CBGame, CBAbstractPlayer, CBAction, CBCounter, CBWeather
 } from "../../../jslib/cblades/game.js";
 import {
     CBCharacter, CBCharge, CBCohesion,
@@ -61,10 +61,10 @@ describe("Units teacher", ()=> {
         game.setArbitrator(arbitrator);
         let player1 = new CBAbstractPlayer();
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1);
+        let wing1 = new CBWing(player1, "./../units/banner1.png");
         let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2);
+        let wing2 = new CBWing(player2, "./../units/banner2.png");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
@@ -98,13 +98,13 @@ describe("Units teacher", ()=> {
         game.addPlayer(player2);
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
-        let wing1 = new CBWing(player1);
+        let wing1 = new CBWing(player1, "./../units/banner1.png");
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"]);
         let unit1 = new CBTroop(unitType1, wing1);
         game.addUnit(unit1, map.getHex(5, 8));
         let unit2 = new CBTroop(unitType1, wing1);
         game.addUnit(unit2, map.getHex(5, 6));
-        let wing2 = new CBWing(player2);
+        let wing2 = new CBWing(player2, "./../units/banner2.png");
         let unitType2 = new CBTestUnitType("unit2",
             ["./../images/units/misc/unit2.png", "./../images/units/misc/unit2b.png"],
             ["./../)images/units/misc/formation2.png", "./../images/units/misc/formation2b.png"]);
@@ -115,6 +115,13 @@ describe("Units teacher", ()=> {
         loadAllImages();
         return {game, arbitrator, map, unit1, unit2, formation2, wing1, wing2, player1, player2};
     }
+
+    it("Checks get weather", () => {
+        given:
+            var {game, arbitrator} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.getWeather(game)).equalsTo(CBWeather.CLEAR);
+    });
 
     it("Checks if a unit can be played", () => {
         given:
@@ -307,7 +314,7 @@ describe("Units teacher", ()=> {
             var arbitrator = new Arbitrator();
             var type1 = new CBTestUnitType("red", ["red/unit1", "red/unit1b"]);
             var type2 = new CBTestUnitType("blue", ["blue/unit1", "blue/unit1b"]);
-            var wing1 = new CBWing(new CBAbstractPlayer());
+            var wing1 = new CBWing(new CBAbstractPlayer(), "./../units/banner.png");
             var unit1 = new CBTroop(type1, wing1);
             var unit2 = new CBTroop(type2, wing1);
             var unit3 = new CBTroop(type1, wing1);

@@ -108,11 +108,11 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(widgetItemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 391.6667, 326.8878)",
-                    "drawImage(/CBlades/images/icons/do-that-gray.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/icons/do-that-gray.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 331.6667, 266.8878)",
-                    "drawImage(/CBlades/images/icons/do-this.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/icons/do-this.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -387,19 +387,19 @@ describe("Interactive Player", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 549, 426.5)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d5.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 489, 486.5)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d6.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d6.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 449, 386.5)",
                     "shadowColor = #A00000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
+                    "drawImage(./../images/dice/failure.png, -75, -75, 150, 150)",
                 "restore()"
             ]);
         when:
@@ -437,16 +437,16 @@ describe("Interactive Player", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/meteo2.png, -71, -71, 142, 142)",
+                    "drawImage(./../images/inserts/meteo2.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
     });
 
     it("Checks tiredness indicator appearance", () => {
         given:
-            var {game} = createTinyGame();
+            var {game, wing} = createTinyGame();
             var [widgetsLayer] = getLayers(game.board,"widgets");
-            var tirednessIndicator = new CBWingTirednessIndicator(8);
+            var tirednessIndicator = new CBWingTirednessIndicator(wing);
             loadAllImages();
         when:
             tirednessIndicator.open(game.board, new Point2D(0, 0));
@@ -457,7 +457,11 @@ describe("Interactive Player", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 0, 0)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/inserts/tiredness8.png, -71, -71, 142, 142)",
+                    "drawImage(./../images/inserts/tiredness11.png, -71, -71, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 41, 0)",
+                    "drawImage(./../units/banner.png, -25, -60, 50, 120)",
                 "restore()"
             ]);
     });

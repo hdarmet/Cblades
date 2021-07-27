@@ -145,7 +145,7 @@ export function showMap(image, [a, b, c, d, e, f]) {
     return [
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            `drawImage(/CBlades/images/maps/${image}.png, -1023, -1575, 2046, 3150)`,
+            `drawImage(./../images/maps/${image}.png, -1023, -1575, 2046, 3150)`,
         "restore()"
     ]
 }
@@ -155,7 +155,7 @@ export function showGameCommand(image, x, y) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #00FFFF", "shadowBlur = 10",
-            `drawImage(/CBlades/images/commands/${image}.png, -25, -25, 50, 50)`,
+            `drawImage(./../images/commands/${image}.png, -25, -25, 50, 50)`,
         "restore()"
     ];
 }
@@ -165,7 +165,7 @@ export function showGameInactiveCommand(image, x, y) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #000000", "shadowBlur = 10",
-            `drawImage(/CBlades/images/commands/${image}.png, -25, -25, 50, 50)`,
+            `drawImage(./../images/commands/${image}.png, -25, -25, 50, 50)`,
         "restore()"
     ];
 }
@@ -175,7 +175,7 @@ export function showActuatorTrigger(image, w, h, [a, b, c, d, e, f]) {
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #00FFFF", "shadowBlur = 10",
-            `drawImage(/CBlades/images/actuators/${image}.png, -${w/2}, -${h/2}, ${w}, ${h})`,
+            `drawImage(./../images/actuators/${image}.png, -${w/2}, -${h/2}, ${w}, ${h})`,
         "restore()"
     ]
 }
@@ -185,7 +185,7 @@ export function showSelectedActuatorTrigger(image, w, h, [a, b, c, d, e, f]) {
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #FF0000", "shadowBlur = 10",
-            `drawImage(/CBlades/images/actuators/${image}.png, -${w/2}, -${h/2}, ${w}, ${h})`,
+            `drawImage(./../images/actuators/${image}.png, -${w/2}, -${h/2}, ${w}, ${h})`,
         "restore()"
     ]
 }
@@ -195,7 +195,7 @@ export function showTroop(image, [a, b, c, d, e, f]) {
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #000000", "shadowBlur = 15",
-            `drawImage(/CBlades/images/units/${image}.png, -71, -71, 142, 142)`,
+            `drawImage(./../images/units/${image}.png, -71, -71, 142, 142)`,
         "restore()"
     ];
 }
@@ -205,7 +205,7 @@ export function showOverTroop(image, [a, b, c, d, e, f]) {
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #00FFFF", "shadowBlur = 15",
-            `drawImage(/CBlades/images/units/${image}.png, -71, -71, 142, 142)`,
+            `drawImage(./../images/units/${image}.png, -71, -71, 142, 142)`,
         "restore()"
     ];
 }
@@ -215,7 +215,7 @@ export function showSelectedTroop(image, [a, b, c, d, e, f]) {
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #FF0000", "shadowBlur = 15",
-            `drawImage(/CBlades/images/units/${image}.png, -71, -71, 142, 142)`,
+            `drawImage(./../images/units/${image}.png, -71, -71, 142, 142)`,
         "restore()"
     ];
 }
@@ -225,7 +225,7 @@ export function showCharacter(image, [a, b, c, d, e, f]) {
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #000000", "shadowBlur = 15",
-            `drawImage(/CBlades/images/units/${image}.png, -60, -60, 120, 120)`,
+            `drawImage(./../images/units/${image}.png, -60, -60, 120, 120)`,
         "restore()",
     ];
 }
@@ -235,7 +235,7 @@ export function showSelectedCharacter(image, [a, b, c, d, e, f]) {
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #FF0000", "shadowBlur = 15",
-            `drawImage(/CBlades/images/units/${image}.png, -60, -60, 120, 120)`,
+            `drawImage(./../images/units/${image}.png, -60, -60, 120, 120)`,
         "restore()",
     ];
 }
@@ -245,7 +245,7 @@ export function showOverFormation(image, [a, b, c, d, e, f]) {
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #00FFFF", "shadowBlur = 15",
-            `drawImage(/CBlades/images/units/${image}.png, -142, -71, 284, 142)`,
+            `drawImage(./../images/units/${image}.png, -142, -71, 284, 142)`,
         "restore()"
     ];
 }
@@ -255,7 +255,7 @@ export function showSelectedFormation(image, [a, b, c, d, e, f]) {
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #FF0000", "shadowBlur = 15",
-            `drawImage(/CBlades/images/units/${image}.png, -142, -71, 284, 142)`,
+            `drawImage(./../images/units/${image}.png, -142, -71, 284, 142)`,
         "restore()"
     ];
 }
@@ -265,7 +265,7 @@ export function showFormation(image, [a, b, c, d, e, f]) {
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #000000", "shadowBlur = 15",
-            `drawImage(/CBlades/images/units/${image}.png, -142, -71, 284, 142)`,
+            `drawImage(./../images/units/${image}.png, -142, -71, 284, 142)`,
         "restore()"
     ];
 }
@@ -275,7 +275,7 @@ export function showMarker(image, [a, b, c, d, e, f]) {
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #000000", "shadowBlur = 15",
-            `drawImage(/CBlades/images/markers/${image}.png, -32, -32, 64, 64)`,
+            `drawImage(./../images/markers/${image}.png, -32, -32, 64, 64)`,
         "restore()"
     ];
 }
@@ -285,7 +285,7 @@ export function showActiveMarker(image, [a, b, c, d, e, f]) {
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #00FFFF", "shadowBlur = 10",
-            `drawImage(/CBlades/images/markers/${image}.png, -32, -32, 64, 64)`,
+            `drawImage(./../images/markers/${image}.png, -32, -32, 64, 64)`,
         "restore()"
     ];
 }
@@ -295,7 +295,7 @@ export function showCommandMarker(image, [a, b, c, d, e, f]) {
         "save()",
         `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
         "shadowColor = #000000", "shadowBlur = 15",
-        `drawImage(/CBlades/images/markers/${image}.png, -40, -40, 80, 80)`,
+        `drawImage(./../images/markers/${image}.png, -40, -40, 80, 80)`,
         "restore()"
     ];
 }
@@ -320,7 +320,7 @@ export function showInsert(insert, x, y, w, h) {
         "restore()",
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
-            `drawImage(/CBlades/images/inserts/${insert}-insert.png, 0, 0, ${w}, ${h}, -${w/2}, -${h/2}, ${w}, ${h})`,
+            `drawImage(./../images/inserts/${insert}-insert.png, 0, 0, ${w}, ${h}, -${w/2}, -${h/2}, ${w}, ${h})`,
         "restore()"
     ];
 }
@@ -335,7 +335,7 @@ export function showScrolledInsert(insert, x, y, w, h, dx, dy) {
         "restore()",
         "save()",
         `setTransform(1, 0, 0, 1, ${x}, ${y})`,
-        `drawImage(/CBlades/images/inserts/${insert}-insert.png, ${dx}, ${dy}, ${w}, ${h}, -${w/2}, -${h/2}, ${w}, ${h})`,
+        `drawImage(./../images/inserts/${insert}-insert.png, ${dx}, ${dy}, ${w}, ${h}, -${w/2}, -${h/2}, ${w}, ${h})`,
         "restore()"
     ];
 }
@@ -352,7 +352,7 @@ export function showMultiInsert(insert, x, y, w, h, frames) {
             `setTransform(1, 0, 0, 1, ${x}, ${y})`
     ];
     for (let frame of frames) {
-        model.push(`drawImage(/CBlades/images/inserts/${insert}-insert.png, ${frame.xs}, ${frame.ys}, ${frame.w}, ${frame.h}, ${frame.xd}, ${frame.yd}, ${frame.w}, ${frame.h})`);
+        model.push(`drawImage(./../images/inserts/${insert}-insert.png, ${frame.xs}, ${frame.ys}, ${frame.w}, ${frame.h}, ${frame.xd}, ${frame.yd}, ${frame.w}, ${frame.h})`);
     }
     model.push("restore()");
     return model;
@@ -363,7 +363,7 @@ export function showInsertCommand(command, x, y) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #00FFFF", "shadowBlur = 10",
-            `drawImage(/CBlades/images/commands/${command}.png, -25, -25, 50, 50)`,
+            `drawImage(./../images/commands/${command}.png, -25, -25, 50, 50)`,
         "restore()"
     ];
 }
@@ -372,7 +372,7 @@ export function showInsertMark(x, y) {
     return [
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
-            "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+            "drawImage(./../images/inserts/ok.png, -12.5, -12.5, 25, 25)",
         "restore()"
     ];
 }
@@ -382,7 +382,21 @@ export function showIndicator(image, x, y) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #000000", "shadowBlur = 10",
-            `drawImage(/CBlades/images/inserts/${image}.png, -71, -71, 142, 142)`,
+            `drawImage(./../images/inserts/${image}.png, -71, -71, 142, 142)`,
+        "restore()"
+    ];
+}
+
+export function showWingIndicator(image, banner, x, y) {
+    return [
+        "save()",
+            `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+            "shadowColor = #000000", "shadowBlur = 10",
+            `drawImage(./../images/inserts/${image}.png, -71, -71, 142, 142)`,
+        "restore()",
+        "save()",
+            `setTransform(1, 0, 0, 1, ${x+41}, ${y})`,
+            `drawImage(./../units/${banner}.png, -25, -60, 50, 120)`,
         "restore()"
     ];
 }
@@ -392,12 +406,12 @@ export function showDice(d1, d2, x, y) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #00FFFF", "shadowBlur = 10",
-            `drawImage(/CBlades/images/dice/d${d1}.png, -50, -44.5, 100, 89)`,
+            `drawImage(./../images/dice/d${d1}.png, -50, -44.5, 100, 89)`,
         "restore()",
         "save()",
             `setTransform(1, 0, 0, 1, ${x-60}, ${y+60})`,
             "shadowColor = #00FFFF", "shadowBlur = 10",
-            `drawImage(/CBlades/images/dice/d${d2}.png, -50, -44.5, 100, 89)`,
+            `drawImage(./../images/dice/d${d2}.png, -50, -44.5, 100, 89)`,
         "restore()"
     ];
 }
@@ -407,12 +421,12 @@ export function showPlayedDice(d1, d2, x, y) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #000000", "shadowBlur = 10",
-            `drawImage(/CBlades/images/dice/d${d1}.png, -50, -44.5, 100, 89)`,
+            `drawImage(./../images/dice/d${d1}.png, -50, -44.5, 100, 89)`,
         "restore()",
         "save()",
             `setTransform(1, 0, 0, 1, ${x-60}, ${y+60})`,
             "shadowColor = #000000", "shadowBlur = 10",
-            `drawImage(/CBlades/images/dice/d${d2}.png, -50, -44.5, 100, 89)`,
+            `drawImage(./../images/dice/d${d2}.png, -50, -44.5, 100, 89)`,
         "restore()"
     ];
 }
@@ -422,7 +436,7 @@ export function showDie(d1, x, y) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #00FFFF", "shadowBlur = 10",
-            `drawImage(/CBlades/images/dice/d${d1}.png, -50, -44.5, 100, 89)`,
+            `drawImage(./../images/dice/d${d1}.png, -50, -44.5, 100, 89)`,
         "restore()",
     ];
 }
@@ -432,7 +446,7 @@ export function showPlayedDie(d1, x, y) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #000000", "shadowBlur = 10",
-            `drawImage(/CBlades/images/dice/d${d1}.png, -50, -44.5, 100, 89)`,
+            `drawImage(./../images/dice/d${d1}.png, -50, -44.5, 100, 89)`,
         "restore()",
     ];
 }
@@ -442,7 +456,7 @@ export function showSuccessResult(x, y) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #00A000", "shadowBlur = 100",
-            "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
+            "drawImage(./../images/dice/success.png, -75, -75, 150, 150)",
         "restore()"
     ];
 }
@@ -452,7 +466,7 @@ export function showFailureResult(x, y) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #A00000", "shadowBlur = 100",
-            "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
+            "drawImage(./../images/dice/failure.png, -75, -75, 150, 150)",
         "restore()"
     ];
 }
@@ -478,7 +492,7 @@ export function showMenuItem(col, row, image, colCount, rowCount, x, y) {
     return [
         "save()",
             `setTransform(1, 0, 0, 1, ${lx}, ${ly})`,
-            `drawImage(/CBlades/images/${image}.png, -25, -25, 50, 50)`,
+            `drawImage(./../images/${image}.png, -25, -25, 50, 50)`,
         "restore()"
     ];
 }
@@ -487,7 +501,7 @@ export function showMessage(message, x, y) {
     return [
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
-            "drawImage(/CBlades/images/dice/message.png, -75, -75, 150, 150)",
+            "drawImage(./../images/dice/message.png, -75, -75, 150, 150)",
         "restore()",
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y+10})`,

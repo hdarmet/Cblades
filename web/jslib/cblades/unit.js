@@ -1087,7 +1087,7 @@ export class CBUnit extends CBAbstractUnit {
 
     addOneCohesionLevel() {
         Memento.register(this);
-        if (this._cohesion == CBCohesion.ROUTED) {
+        if (this._cohesion === CBCohesion.ROUTED) {
             this.destroy();
         }
         else {

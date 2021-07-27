@@ -64,10 +64,10 @@ describe("Magic teacher", ()=> {
         game.setArbitrator(arbitrator);
         let player1 = new CBAbstractPlayer();
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1);
+        let wing1 = new CBWing(player1, "./../units/banner1.png");
         let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2);
+        let wing2 = new CBWing(player2, "./../units/banner2.png");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])

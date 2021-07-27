@@ -42,7 +42,7 @@ export function create1PlayerBaseGame() {
     let {game, map} = baseGame;
     let player = new CBInteractivePlayer();
     game.addPlayer(player);
-    let wing = new CBWing(player);
+    let wing = new CBWing(player, "./../units/banner.png");
     wing.setRetreatZone(map.getWestZone());
     return {
         ...baseGame,
@@ -58,9 +58,9 @@ export function create2PlayersBaseGame() {
     game.addPlayer(player1);
     let player2 = new CBInteractivePlayer();
     game.addPlayer(player2);
-    let wing1 = new CBWing(player1);
+    let wing1 = new CBWing(player1, "./../units/banner1.png");
     wing1.setRetreatZone(map.getWestZone());
-    let wing2 = new CBWing(player2);
+    let wing2 = new CBWing(player2, "./../units/banner2.png");
     wing2.setRetreatZone(map.getEastZone());
     return {
         ...baseGame,
@@ -74,10 +74,10 @@ export function create2PlayersBaseGame() {
 export function createUnitType(clazz, name, number, maxFigurines) {
     let formationsImages = [];
     for (let figurine=1; figurine<maxFigurines; figurine++) {
-        formationsImages.push(`/CBlades/images/units/misc/formation${figurine}${number}.png`, `/CBlades/images/units/misc/formation${figurine}${number}b.png`);
+        formationsImages.push(`./../images/units/misc/formation${figurine}${number}.png`, `./../images/units/misc/formation${figurine}${number}b.png`);
     }
     return new clazz(name,
-        [`/CBlades/images/units/misc/${name}${number}.png`, `/CBlades/images/units/misc/${name}${number}b.png`],
+        [`./../images/units/misc/${name}${number}.png`, `./../images/units/misc/${name}${number}b.png`],
         formationsImages
     );
 }

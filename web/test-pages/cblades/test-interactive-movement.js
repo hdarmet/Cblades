@@ -67,7 +67,7 @@ describe("Interactive Movement", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)",
+                "drawImage(./../images/actuators/standard-move.png, -40, -65, 80, 130)",
             "restore()",
         ];
     }
@@ -77,7 +77,7 @@ describe("Interactive Movement", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/standard-move-cost.png, -35, -35, 70, 70)",
+                "drawImage(./../images/actuators/standard-move-cost.png, -35, -35, 70, 70)",
                 "font = bold 35px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #2F528F",
             `fillText(${cost}, 0, 0)`,
             "restore()",
@@ -89,7 +89,7 @@ describe("Interactive Movement", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)",
+                "drawImage(./../images/actuators/toward.png, -30, -40, 60, 80)",
             "restore()",
         ];
     }
@@ -99,7 +99,7 @@ describe("Interactive Movement", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/standard-move-cost.png, -27.5, -27.5, 55, 55)",
+                "drawImage(./../images/actuators/standard-move-cost.png, -27.5, -27.5, 55, 55)",
                 "font = bold 30px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #2F528F",
             `fillText(${cost}, 0, 0)`,
             "restore()",
@@ -111,7 +111,7 @@ describe("Interactive Movement", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/standard-movement-points.png, -27.5, -27.5, 55, 55)",
+                "drawImage(./../images/actuators/standard-movement-points.png, -27.5, -27.5, 55, 55)",
                 "font = bold 30px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #2F528F",
             `fillText(${move}, 0, 0)`,
             "restore()"
@@ -123,7 +123,7 @@ describe("Interactive Movement", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/standard-turn.png, -40, -48, 80, 96)",
+                "drawImage(./../images/actuators/standard-turn.png, -40, -48, 80, 96)",
             "restore()"
         ];
     }
@@ -133,7 +133,7 @@ describe("Interactive Movement", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/standard-turn-cost.png, -35, -35, 70, 70)",
+                "drawImage(./../images/actuators/standard-turn-cost.png, -35, -35, 70, 70)",
                 "font = bold 35px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #2F528F",
             `fillText(${cost}, 0, 0)`,
             "restore()"
@@ -294,7 +294,7 @@ describe("Interactive Movement", ()=> {
             assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
                 "setTransform(0.4888, 0, 0, 0.4888, 416.6667, 265.2859)",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/standard-move.png, -40, -65, 80, 130)"
+                "drawImage(./../images/actuators/standard-move.png, -40, -65, 80, 130)"
             ]);
         when:
             removeFilterPainting(moveActuator.getTrigger(0));
@@ -306,7 +306,7 @@ describe("Interactive Movement", ()=> {
             assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
                 "setTransform(0.4233, 0.2444, -0.2444, 0.4233, 452.9167, 289.1014)",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/toward.png, -30, -40, 60, 80)"
+                "drawImage(./../images/actuators/toward.png, -30, -40, 60, 80)"
             ]);
     });
 

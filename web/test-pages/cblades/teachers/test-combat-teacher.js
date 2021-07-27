@@ -86,10 +86,10 @@ describe("Combat teacher", ()=> {
         game.setArbitrator(arbitrator);
         let player1 = new CBAbstractPlayer();
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1);
+        let wing1 = new CBWing(player1, "./../units/banner1.png");
         let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2);
+        let wing2 = new CBWing(player2, "./../units/banner2.png");
         game.setMap(map);
         game.start();
         let unitFireType1 = new CBTestFireUnitType("unit1",

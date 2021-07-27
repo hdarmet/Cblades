@@ -126,10 +126,10 @@ describe("Map teacher", ()=> {
         game.setArbitrator(arbitrator);
         let player1 = new CBAbstractPlayer();
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1);
+        let wing1 = new CBWing(player1, "./../units/banner1.png");
         let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2);
+        let wing2 = new CBWing(player2, "./../units/banner2.png");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
@@ -162,13 +162,13 @@ describe("Map teacher", ()=> {
         game.addPlayer(player2);
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
-        let wing1 = new CBWing(player1);
+        let wing1 = new CBWing(player1, "./../units/banner1.png");
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"]);
         let unit1 = new CBTroop(unitType1, wing1);
         game.addUnit(unit1, map.getHex(5, 8));
         let unit2 = new CBTroop(unitType1, wing1);
         game.addUnit(unit2, map.getHex(5, 6));
-        let wing2 = new CBWing(player2);
+        let wing2 = new CBWing(player2, "./../units/banner2.png");
         let unitType2 = new CBTestUnitType("unit2",
             ["./../images/units/misc/unit2.png", "./../images/units/misc/unit2b.png"],
             ["./../)images/units/misc/formation2.png", "./../images/units/misc/formation2b.png"]);
@@ -336,10 +336,10 @@ describe("Map teacher", ()=> {
         game.setArbitrator(arbitrator);
         let player1 = new CBAbstractPlayer();
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1);
+        let wing1 = new CBWing(player1, "./../units/banner1.png");
         let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2);
+        let wing2 = new CBWing(player2, "./../units/banner2.png");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1",
@@ -416,13 +416,6 @@ describe("Map teacher", ()=> {
             assertInZone(zones, 240, 2, 5);
             assertInZone(zones, 270, 2, 4);
             assertInZone(zones, 300, 2, 3);
-    });
-
-    it("Checks get weather", () => {
-        given:
-            var {game, arbitrator} = create2Players4UnitsTinyGame();
-        then:
-            assert(arbitrator.getWeather(game)).equalsTo(CBWeather.CLEAR);
     });
 
     it("Checks unit move cost", () => {

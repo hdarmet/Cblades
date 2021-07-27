@@ -68,10 +68,11 @@ export class CBAbstractPlayer {
     }
 
     selectUnit(unit, event) {
+        let currentSelectedUnit = this.game.selectedUnit;
         unit.select();
         if (!unit.hasBeenActivated()) {
             this.game.closeWidgets();
-            if (this.game.selectedUnit !== unit) {
+            if (currentSelectedUnit !== unit) {
                 this.startActivation(unit, () => {
                     this.launchUnitAction(unit, event);
                 });
@@ -638,16 +639,16 @@ export class CBCounterDisplay {
         else if (event===DBoard.BORDER_EVENT) {
             switch(value) {
                 case DBoard.BORDER.LEFT:
-                    this.setHorizontal(CBCounterDisplay.RIGHT);
+                    this.horizontal = CBCounterDisplay.RIGHT;
                     break;
                 case DBoard.BORDER.RIGHT:
-                    this.setHorizontal(CBCounterDisplay.LEFT);
+                    this.horizontal = CBCounterDisplay.LEFT;
                     break;
                 case DBoard.BORDER.TOP:
-                    this.setVertical(CBCounterDisplay.BOTTOM);
+                    this.vertical = CBCounterDisplay.BOTTOM;
                     break;
                 case DBoard.BORDER.BOTTOM:
-                    this.setVertical(CBCounterDisplay.TOP);
+                    this.vertical = CBCounterDisplay.TOP;
                     break;
             }
         }

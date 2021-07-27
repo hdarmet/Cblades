@@ -584,10 +584,12 @@ export class DDice extends DElement {
 
     rollDie() {
         let value = getDrawPlatform().random();
+        /*
         let keyValue = prompt("Dice value:");
         if (keyValue) {
             return parseInt(keyValue);
         }
+         */
         return Math.floor(value*6)+1;
     }
 
@@ -710,7 +712,7 @@ export class DIndicator extends DElement {
 
 export class DMultiImagesIndicator extends DIndicator {
 
-    constructor(paths, dimension, state) {
+    constructor(paths, dimension, state=0) {
         super(paths, dimension);
         this._oldArtifact = new IndicatorImageArtifact(this.images, dimension);
         this.addArtifact(this._oldArtifact);

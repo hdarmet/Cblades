@@ -81,7 +81,7 @@ describe("Interactive Command", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/order.png, -52.5, -48.5, 105, 97)",
+                "drawImage(./../images/actuators/order.png, -52.5, -48.5, 105, 97)",
             "restore()",
         ];
     }
@@ -91,7 +91,7 @@ describe("Interactive Command", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/order-given-cost.png, -27.5, -27.5, 55, 55)",
+                "drawImage(./../images/actuators/order-given-cost.png, -27.5, -27.5, 55, 55)",
                 "shadowBlur = 0",
                 "font = bold 30px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #006600",
                 `fillText(${cost}, 0, 0)`,
@@ -104,7 +104,7 @@ describe("Interactive Command", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #000000", "shadowBlur = 15",
-                `drawImage(/CBlades/images/markers/${marker}.png, -40, -40, 80, 80)`,
+                `drawImage(./../images/markers/${marker}.png, -40, -40, 80, 80)`,
             "restore()"
         ];
     }

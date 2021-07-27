@@ -232,7 +232,7 @@ function showFakeCounter(image, [a, b, c, d, e, f], s=50) {
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #000000", "shadowBlur = 15",
-            `drawImage(/CBlades/images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
+            `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
         "restore()"
     ];
 }
@@ -242,7 +242,7 @@ function showOverFakeCounter(image, [a, b, c, d, e, f], s=50) {
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #00FFFF", "shadowBlur = 15",
-            `drawImage(/CBlades/images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
+            `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
         "restore()"
     ];
 }
@@ -294,7 +294,7 @@ describe("Game", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(0.7331, 0, 0, 0.7331, 750, 500)",
-                    "drawImage(/CBlades/images/maps/map.png, -1023, -1575, 2046, 3150)",
+                    "drawImage(./../images/maps/map.png, -1023, -1575, 2046, 3150)",
                 "restore()"
             ]);
             assert(getDirectives(unitsLayer)).arrayEqualsTo([
@@ -305,7 +305,7 @@ describe("Game", ()=> {
                 "save()",
                     "setTransform(0.7331, 0, 0, 0.7331, 625, 427.8317)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/units/misc/unit.png, -71, -71, 142, 142)",
+                    "drawImage(./../images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
     });
@@ -411,10 +411,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assertClearDirectives(actuatorsLayer);
-            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([
-            "save()",
-            "restore()"
-        ]);
+            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([]);
     });
 
     it("Checks mouse move over a trigger of an actuator", () => {
@@ -748,7 +745,7 @@ describe("Game", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(0.9775, 0, 0, 0.9775, 1000, 750)",
-                    "drawImage(/CBlades/images/maps/map.png, -1023, -1575, 2046, 3150)",
+                    "drawImage(./../images/maps/map.png, -1023, -1575, 2046, 3150)",
                 "restore()"
             ]);
             assertClearDirectives(commandsLayer, 2000, 1500);
@@ -776,7 +773,7 @@ describe("Game", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(0.9775, 0, 0, 0.9775, 750, 500)",
-                    "drawImage(/CBlades/images/maps/map.png, -1023, -1575, 2046, 3150)",
+                    "drawImage(./../images/maps/map.png, -1023, -1575, 2046, 3150)",
                 "restore()"
             ]);
             assertClearDirectives(commandsLayer, 1500, 1000);
@@ -830,7 +827,6 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
-                "save()", "restore()", "save()", "restore()"
             ]);
         when:
             Memento.open();
@@ -874,7 +870,6 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
-                "save()", "restore()"
             ]);
         when:
             Memento.open();
@@ -901,7 +896,8 @@ describe("Game", ()=> {
         given:
             var { game } = prepareTinyGame();
             let counter = new CBCounter("ground", ["./../images/units/misc/counter.png"], new Dimension2D(50, 50));
-            game.addCounter(counter, new Point2D(100, 200));
+            game.addCounter(counter);
+            counter.location = new Point2D(100, 200);
             game.start();
             loadAllImages();
             counter.angle = 45;
@@ -1946,8 +1942,6 @@ describe("Game", ()=> {
             assertDirectives(unitsLayer1, showOverFakeCounter("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
             assertNoMoreDirectives(unitsLayer1);
             assert(getDirectives(unitsLayer2, 4)).arrayEqualsTo([
-                "save()",
-                "restore()"
             ]);
         when:
             resetDirectives(unitsLayer0, unitsLayer1, unitsLayer2);
@@ -1993,8 +1987,6 @@ describe("Game", ()=> {
             paint(game);
         then:
             assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                "restore()"
             ]);
         when:
             resetDirectives(unitsLayer1);
@@ -2034,12 +2026,8 @@ describe("Game", ()=> {
             paint(game);
         then:
             assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                "restore()"
             ]);
             assert(getDirectives(actuatorsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                "restore()"
             ]);
         when:
             resetDirectives(unitsLayer1, actuatorsLayer1);
@@ -2087,10 +2075,6 @@ describe("Game", ()=> {
             assertDirectives(formationsLayer0, showOverFormation("misc/formation1", zoomAndRotate90(333.3333, 159.4391)));
             assertNoMoreDirectives(formationsLayer0);
             assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
-                "save()",
-                "restore()",
-                "save()",
-                "restore()"
             ]);
         when:
             resetDirectives(formationsLayer0, unitsLayer1);

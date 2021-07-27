@@ -189,16 +189,16 @@ describe("Widget", ()=> {
             ]);
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 100, 100)", "drawImage(/CBlades/images/icons/menu4.png, -25, -25, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 100, 100)", "drawImage(./../images/icons/menu4.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 40, 40)", "drawImage(/CBlades/images/icons/menu1.png, -25, -25, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 40, 40)", "drawImage(./../images/icons/menu1.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 100, 40)", "drawImage(/CBlades/images/icons/menu2.png, -25, -25, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 100, 40)", "drawImage(./../images/icons/menu2.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
-                    "setTransform(1, 0, 0, 1, 40, 100)", "drawImage(/CBlades/images/icons/menu3.png, -25, -25, 50, 50)",
+                    "setTransform(1, 0, 0, 1, 40, 100)", "drawImage(./../images/icons/menu3.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });
@@ -225,7 +225,7 @@ describe("Widget", ()=> {
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 40, 40)",
-                    "drawImage(/CBlades/images/icons/menu1.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/icons/menu1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when: // mouseover icon
@@ -237,7 +237,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 40, 40)",
                     "shadowColor = #FF0000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/icons/menu1.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/icons/menu1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when: // mouse outside icon
@@ -248,7 +248,7 @@ describe("Widget", ()=> {
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 40, 40)",
-                    "drawImage(/CBlades/images/icons/menu1.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/icons/menu1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when: // click icon once: icon action returns false => menu is not closed
@@ -431,7 +431,7 @@ describe("Widget", ()=> {
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 40, 40)",
-                    "drawImage(/CBlades/images/icons/menu1-grayed.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/icons/menu1-grayed.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when: // mouseover icon
@@ -495,7 +495,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 60, 60)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/button1.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/button1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -507,7 +507,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 431, 240)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/button1.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/button1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });
@@ -536,7 +536,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 60, 60)",
                     "shadowColor = #FF0000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/button1.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/button1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when: // mouse outside icon
@@ -548,7 +548,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 60, 60)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/button1.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/button1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when: // click icon once: icon action returns false => menu is not closed
@@ -586,7 +586,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 60, 60)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/button1-inactive.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/button1-inactive.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when: // mouse outside icon
@@ -598,7 +598,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 60, 60)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/button1-inactive.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/button1-inactive.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when: // click icon once: icon action returns false => menu is not closed
@@ -635,7 +635,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(0.9686, -0.2487, 0.2487, 0.9686, 60, 60)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/button1.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/button1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });
@@ -657,7 +657,7 @@ describe("Widget", ()=> {
                 "save()",
                 "setTransform(1, 0, 0, 1, 60, 60)",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/commands/button1.png, -25, -25, 50, 50)",
+                "drawImage(./../images/commands/button1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -670,7 +670,7 @@ describe("Widget", ()=> {
                 "save()",
                 "setTransform(1, 0, 0, 1, 60, 60)",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/commands/button2.png, -25, -25, 50, 50)",
+                "drawImage(./../images/commands/button2.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });
@@ -718,7 +718,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 60, 60)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/button2.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/button2.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });
@@ -740,12 +740,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 40, -10)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, -20, 50)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
         when:
@@ -763,12 +763,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(-0.309, 0.9511, -0.9511, -0.309, 40, -30)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d3.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d3.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
                     "setTransform(-0.3256, -0.9455, 0.9455, -0.3256, -8, 5)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d5.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d5.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
         when:
@@ -782,12 +782,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 40, -10)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, -20, 50)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d2.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
             assert(dice.result).arrayEqualsTo([1, 2]);
@@ -800,12 +800,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 40, -10)",
                     "shadowColor = #FF0000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, -20, 50)",
                     "shadowColor = #FF0000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d2.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
         when: // Inactivation : shadows become black
@@ -818,12 +818,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 40, -10)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d1.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, -20, 50)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/dice/d2.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d2.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
         when: // Dice not active : dice are not redrawn
@@ -858,7 +858,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 20)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/indicators/indicator1.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/indicators/indicator1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -889,7 +889,7 @@ describe("Widget", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 20)",
-                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 190, -100, -95, 200, 190)",
+                    "drawImage(./../images/inserts/insert.png, 0, 0, 200, 190, -100, -95, 200, 190)",
                 "restore()"
             ]);
         when:
@@ -923,17 +923,17 @@ describe("Widget", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 300, -100, -150, 200, 300)",
+                    "drawImage(./../images/inserts/insert.png, 0, 0, 200, 300, -100, -150, 200, 300)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 215, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/right.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/right.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 315)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/down.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -950,17 +950,17 @@ describe("Widget", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "drawImage(/CBlades/images/inserts/insert.png, 0, 90, 200, 300, -100, -150, 200, 300)",
+                    "drawImage(./../images/inserts/insert.png, 0, 90, 200, 300, -100, -150, 200, 300)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 215, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/right.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/right.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 85)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/up.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/up.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -977,17 +977,17 @@ describe("Widget", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "drawImage(/CBlades/images/inserts/insert.png, 90, 90, 200, 300, -100, -150, 200, 300)",
+                    "drawImage(./../images/inserts/insert.png, 90, 90, 200, 300, -100, -150, 200, 300)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 85, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/left.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/left.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 85)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/up.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/up.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -1004,17 +1004,17 @@ describe("Widget", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "drawImage(/CBlades/images/inserts/insert.png, 90, 0, 200, 300, -100, -150, 200, 300)",
+                    "drawImage(./../images/inserts/insert.png, 90, 0, 200, 300, -100, -150, 200, 300)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 85, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/left.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/left.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 315)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/down.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -1031,17 +1031,17 @@ describe("Widget", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 300, -100, -150, 200, 300)",
+                    "drawImage(./../images/inserts/insert.png, 0, 0, 200, 300, -100, -150, 200, 300)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 215, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/right.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/right.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 315)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/down.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -1058,28 +1058,28 @@ describe("Widget", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "drawImage(/CBlades/images/inserts/insert.png, 45, 45, 200, 300, -100, -150, 200, 300)",
+                    "drawImage(./../images/inserts/insert.png, 45, 45, 200, 300, -100, -150, 200, 300)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 85, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/left.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/left.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 215, 200)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/right.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/right.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 315)",
                     "shadowColor = #00FFFF",
                     "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/down.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 85)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/up.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/up.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });
@@ -1103,7 +1103,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 315)",
                     "shadowColor = #FF0000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/down.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
         when:
@@ -1115,7 +1115,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 315)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/down.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });
@@ -1139,11 +1139,11 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 315)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/down.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 70, 100)",
-                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                    "drawImage(./../images/inserts/ok.png, -12.5, -12.5, 25, 25)",
                 "restore()"
             ]);
         when: // set second marker
@@ -1155,15 +1155,15 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 315)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/down.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/down.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 70, 100)",
-                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                    "drawImage(./../images/inserts/ok.png, -12.5, -12.5, 25, 25)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 70, 240)",
-                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                    "drawImage(./../images/inserts/ok.png, -12.5, -12.5, 25, 25)",
                 "restore()"
             ]);
         when: // scroll insert making 1st marker non visible
@@ -1175,12 +1175,12 @@ describe("Widget", ()=> {
             assert(getDirectives(widgetsLayer, 16)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 70, 150)",
-                    "drawImage(/CBlades/images/inserts/ok.png, -12.5, -12.5, 25, 25)",
+                    "drawImage(./../images/inserts/ok.png, -12.5, -12.5, 25, 25)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 85)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/commands/up.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/commands/up.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });
@@ -1201,8 +1201,6 @@ describe("Widget", ()=> {
         then:
             assert(result.finished).isTrue();
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "restore()"
             ]);
         when:
             var directives = executeAllAnimations(commandsLayer);
@@ -1214,7 +1212,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 20)",
                     "shadowColor = #00A000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
+                    "drawImage(./../images/dice/success.png, -75, -75, 150, 150)",
                 "restore()"
             ]);
         when: // Activation shadow
@@ -1226,7 +1224,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 20)",
                     "shadowColor = #00FF00", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
+                    "drawImage(./../images/dice/success.png, -75, -75, 150, 150)",
                 "restore()"
             ]);
         when: // Activation shadow
@@ -1238,7 +1236,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 20)",
                     "shadowColor = #00A000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/success.png, -75, -75, 150, 150)",
+                    "drawImage(./../images/dice/success.png, -75, -75, 150, 150)",
                 "restore()"
             ]);
         when:
@@ -1264,8 +1262,6 @@ describe("Widget", ()=> {
         then:
             assert(result.finished).isTrue();
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                "restore()"
             ]);
         when:
             var directives = executeAllAnimations(commandsLayer);
@@ -1277,7 +1273,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 20)",
                     "shadowColor = #A00000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
+                    "drawImage(./../images/dice/failure.png, -75, -75, 150, 150)",
                 "restore()"
             ]);
         when: // Acivation shadow
@@ -1289,7 +1285,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 20)",
                     "shadowColor = #FF0000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
+                    "drawImage(./../images/dice/failure.png, -75, -75, 150, 150)",
                 "restore()"
             ]);
         when: // Acivation shadow
@@ -1301,7 +1297,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 20)",
                     "shadowColor = #A00000", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/failure.png, -75, -75, 150, 150)",
+                    "drawImage(./../images/dice/failure.png, -75, -75, 150, 150)",
                 "restore()"
             ]);
         when:
@@ -1351,8 +1347,6 @@ describe("Widget", ()=> {
         then:
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
-                "restore()",
-                "save()",
                     "setTransform(1, 0, 0, 1, 10, 30)",
                     "font = 90px serif", "textAlign = center", "textBaseline = middle",
                     "shadowColor = #000000", "shadowBlur = 5",
@@ -1371,7 +1365,7 @@ describe("Widget", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 20)",
-                    "drawImage(/CBlades/images/dice/message.png, -75, -75, 150, 150)",
+                    "drawImage(./../images/dice/message.png, -75, -75, 150, 150)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 30)",
@@ -1391,7 +1385,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 20)",
                     "shadowColor = #00FFFF", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/message.png, -75, -75, 150, 150)",
+                    "drawImage(./../images/dice/message.png, -75, -75, 150, 150)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 30)",
@@ -1412,7 +1406,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 20)",
                     "shadowColor = #A0FFFF", "shadowBlur = 100",
-                    "drawImage(/CBlades/images/dice/message.png, -75, -75, 150, 150)",
+                    "drawImage(./../images/dice/message.png, -75, -75, 150, 150)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 30)",
@@ -1519,12 +1513,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 40, 30)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/indicators/indicator1.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/indicators/indicator1.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 40, 230)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/indicators/indicator2.png, -35, -40, 70, 80)",
+                    "drawImage(./../images/indicators/indicator2.png, -35, -40, 70, 80)",
                 "restore()"
             ]);
         when:
@@ -1556,7 +1550,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 0)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/indicators/indicator1.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/indicators/indicator1.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
@@ -1566,7 +1560,7 @@ describe("Widget", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 190, -100, -95, 200, 190)",
+                    "drawImage(./../images/inserts/insert.png, 0, 0, 200, 190, -100, -95, 200, 190)",
                 "restore()"
             ]);
         when:
@@ -1585,7 +1579,7 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 0)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(/CBlades/images/indicators/indicator1.png, -25, -25, 50, 50)",
+                    "drawImage(./../images/indicators/indicator1.png, -25, -25, 50, 50)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
@@ -1595,7 +1589,7 @@ describe("Widget", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 150, 200)",
-                    "drawImage(/CBlades/images/inserts/insert.png, 0, 0, 200, 190, -100, -95, 200, 190)",
+                    "drawImage(./../images/inserts/insert.png, 0, 0, 200, 190, -100, -95, 200, 190)",
                 "restore()"
             ]);
         when:

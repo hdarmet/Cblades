@@ -72,7 +72,7 @@ describe("Interactive Magic", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #000000", "shadowBlur = 15",
-                `drawImage(/CBlades/images/magic/${spell}.png, -71, -71, 142, 142)`,
+                `drawImage(./../images/magic/${spell}.png, -71, -71, 142, 142)`,
             "restore()"
         ];
     }
@@ -82,7 +82,7 @@ describe("Interactive Magic", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/spell-target-foe.png, -50, -55.5, 100, 111)",
+                "drawImage(./../images/actuators/spell-target-foe.png, -50, -55.5, 100, 111)",
             "restore()"
         ];
     }
@@ -91,7 +91,7 @@ describe("Interactive Magic", ()=> {
             "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #00FFFF", "shadowBlur = 10",
-            "drawImage(/CBlades/images/actuators/spell-target-friend.png, -50, -55.5, 100, 111)",
+            "drawImage(./../images/actuators/spell-target-friend.png, -50, -55.5, 100, 111)",
             "restore()"
         ];
     }
@@ -100,7 +100,7 @@ describe("Interactive Magic", ()=> {
             "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #00FFFF", "shadowBlur = 10",
-            "drawImage(/CBlades/images/actuators/spell-target-hex.png, -50, -55.5, 100, 111)",
+            "drawImage(./../images/actuators/spell-target-hex.png, -50, -55.5, 100, 111)",
             "restore()"
         ];
     }
@@ -446,7 +446,7 @@ describe("Interactive Magic", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assertNoMoreDirectives(optionsLayer, 4);
-            assert(findInDirectives(unitsLayer, "drawImage(/CBlades/images/units/misc/unit2b.png, -71, -71, 142, 142)")).isTrue();
+            assert(findInDirectives(unitsLayer, "drawImage(./../images/units/misc/unit2b.png, -71, -71, 142, 142)")).isTrue();
     });
 
     it("Checks a fireball failed resolution action process ", () => {
@@ -482,6 +482,6 @@ describe("Interactive Magic", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assertNoMoreDirectives(optionsLayer, 4);
-            assert(findInDirectives(unitsLayer, "drawImage(/CBlades/images/units/misc/unit2b.png, -71, -71, 142, 142)")).isFalse();
+            assert(findInDirectives(unitsLayer, "drawImage(./../images/units/misc/unit2b.png, -71, -71, 142, 142)")).isFalse();
     });
 });

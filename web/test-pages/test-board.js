@@ -2180,8 +2180,6 @@ describe("Board", ()=> {
             executeTimeouts();
         then:
             assert(getDirectives(layer, 4)).arrayEqualsTo([
-                "save()",
-                "restore()"
             ]);
     });
 

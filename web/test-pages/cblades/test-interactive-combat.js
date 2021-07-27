@@ -100,7 +100,7 @@ describe("Interactive Combat", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/unsupported-shock.png, -50, -55.5, 100, 111)",
+                "drawImage(./../images/actuators/unsupported-shock.png, -50, -55.5, 100, 111)",
             "restore()"
         ];
     }
@@ -110,7 +110,7 @@ describe("Interactive Combat", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/supported-shock.png, -50, -55.5, 100, 111)",
+                "drawImage(./../images/actuators/supported-shock.png, -50, -55.5, 100, 111)",
             "restore()"
         ];
     }
@@ -121,7 +121,7 @@ describe("Interactive Combat", ()=> {
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF",
                 "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/shock-attacker-hex.png, -30, -37.5, 60, 75)",
+                "drawImage(./../images/actuators/shock-attacker-hex.png, -30, -37.5, 60, 75)",
             "restore()"
         ];
     }
@@ -131,7 +131,7 @@ describe("Interactive Combat", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/unsupported-shock-advantage.png, -27.5, -27.5, 55, 55)",
+                "drawImage(./../images/actuators/unsupported-shock-advantage.png, -27.5, -27.5, 55, 55)",
                 "shadowBlur = 0",
                 "font = bold 30px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #AD5A2D",
                 `fillText(${advantage}, 0, 0)`,
@@ -144,7 +144,7 @@ describe("Interactive Combat", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/supported-shock-advantage.png, -27.5, -27.5, 55, 55)",
+                "drawImage(./../images/actuators/supported-shock-advantage.png, -27.5, -27.5, 55, 55)",
                 "shadowBlur = 0",
                 "font = bold 30px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #9D2F12",
             `fillText(${advantage}, 0, 0)`,
@@ -157,7 +157,7 @@ describe("Interactive Combat", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/fire.png, -50, -77.5, 100, 155)",
+                "drawImage(./../images/actuators/fire.png, -50, -77.5, 100, 155)",
             "restore()"
         ];
     }
@@ -168,7 +168,7 @@ describe("Interactive Combat", ()=> {
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF",
                 "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/firer-hex.png, -30, -37.5, 60, 75)",
+                "drawImage(./../images/actuators/firer-hex.png, -30, -37.5, 60, 75)",
             "restore()"
         ];
     }
@@ -178,7 +178,7 @@ describe("Interactive Combat", ()=> {
             "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
             "shadowColor = #00FFFF", "shadowBlur = 10",
-            "drawImage(/CBlades/images/actuators/fire-advantage.png, -27.5, -27.5, 55, 55)",
+            "drawImage(./../images/actuators/fire-advantage.png, -27.5, -27.5, 55, 55)",
             "shadowBlur = 0",
             "font = bold 30px serif", "textAlign = center", "textBaseline = middle", "fillStyle = #A1124F",
             `fillText(${advantage}, 0, 0)`,
@@ -191,7 +191,7 @@ describe("Interactive Combat", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/blood.png, -62.5, -86.5, 125, 173)",
+                "drawImage(./../images/actuators/blood.png, -62.5, -86.5, 125, 173)",
             "restore()",
         ];
     }
@@ -201,7 +201,7 @@ describe("Interactive Combat", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/retreat-move.png, -40, -65, 80, 130)",
+                "drawImage(./../images/actuators/retreat-move.png, -40, -65, 80, 130)",
             "restore()",
         ];
     }
@@ -211,7 +211,7 @@ describe("Interactive Combat", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/advance-move.png, -40, -65, 80, 130)",
+                "drawImage(./../images/actuators/advance-move.png, -40, -65, 80, 130)",
             "restore()",
         ];
     }
@@ -1348,6 +1348,14 @@ describe("Interactive Combat", ()=> {
             loadAllImages();
             resetDirectives(markersLayer);
             repaint(game);
+        then:
+            skipDirectives(markersLayer, 4);
+            assertDirectives(markersLayer, showMarker("scarceamno", zoomAndRotate0(416.6667, 386.5897)));
+        when:
+            clickOnResult(game);
+            resetDirectives(markersLayer);
+            repaint(game);
+            loadAllImages();
         then:
             skipDirectives(markersLayer, 4);
             assertDirectives(markersLayer, showMarker("scarceamno", zoomAndRotate0(416.6667, 386.5897)));

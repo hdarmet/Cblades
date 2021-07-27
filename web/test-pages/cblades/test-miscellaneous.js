@@ -51,7 +51,7 @@ describe("Miscellaneous", ()=> {
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/actions/start-fire.png, -71, -71, 142, 142)",
+                    "drawImage(./../images/actions/start-fire.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
     });
@@ -73,7 +73,7 @@ describe("Miscellaneous", ()=> {
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
                     "shadowColor = #000000", "shadowBlur = 15",
-                    "drawImage(/CBlades/images/actions/stakes.png, -71, -71, 142, 142)",
+                    "drawImage(./../images/actions/stakes.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
     });

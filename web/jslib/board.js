@@ -155,16 +155,14 @@ export class DArtifact extends LocalisationAware(Object) {
 
     paint() {
         console.assert(this._level);
-        if (this.alpha>0) {
-            this._level.setTransformSettings(this.transform);
-            if (this._settings) {
-                this._settings(this._level);
-            }
-            if (this.alpha<1) {
-                this._level.setAlphaSettings(this.alpha);
-            }
-            this._paint();
+        this._level.setTransformSettings(this.transform);
+        if (this._settings) {
+            this._settings(this._level);
         }
+        if (this.alpha<1) {
+            this._level.setAlphaSettings(this.alpha);
+        }
+        this._paint();
     }
 
     setLevel(levelName) {
@@ -984,10 +982,12 @@ export class DLevel {
         if (this._dirty) {
             this.clear();
             for (let artifact of this.visibleArtifacts) {
-                this.forArtifact(artifact);
-                this.layer.withSettings(() => {
-                    artifact.paint();
-                });
+                if (artifact.alpha>0) {
+                    this.forArtifact(artifact);
+                    this.layer.withSettings(() => {
+                        artifact.paint();
+                    });
+                }
             }
             delete this._dirty;
         }

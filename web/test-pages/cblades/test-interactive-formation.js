@@ -64,7 +64,7 @@ describe("Interactive Formation", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/quit-full.png, -32, -30, 64, 60)",
+                "drawImage(./../images/actuators/quit-full.png, -32, -30, 64, 60)",
             "restore()"
         ];
     }
@@ -74,7 +74,7 @@ describe("Interactive Formation", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/quit-half.png, -32, -30, 64, 60)",
+                "drawImage(./../images/actuators/quit-half.png, -32, -30, 64, 60)",
             "restore()",
         ]
     }
@@ -84,7 +84,7 @@ describe("Interactive Formation", ()=> {
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(/CBlades/images/actuators/formation.png, -40, -85, 80, 170)",
+                "drawImage(./../images/actuators/formation.png, -40, -85, 80, 170)",
             "restore()"
         ];
     }

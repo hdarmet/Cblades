@@ -78,7 +78,7 @@ describe("Arbitrator", ()=> {
         game.setArbitrator(arbitrator);
         let player1 = new CBAbstractPlayer();
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1);
+        let wing1 = new CBWing(player1, "./../units/banner1.png");
         wing1.setRetreatZone(map.getWestZone());
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
         let unit11 = new CBTroop(unitType1, wing1);
@@ -97,7 +97,7 @@ describe("Arbitrator", ()=> {
         let {game, arbitrator, map, player1, wing1, unit11, unit12, leader11} = createTinyGame();
         let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2);
+        let wing2 = new CBWing(player2, "./../units/banner2.png");
         //wing2.setRetreatZone(map.getEastZone());
         let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
         let unit21 = new CBTroop(unitType2, wing2);
@@ -119,7 +119,7 @@ describe("Arbitrator", ()=> {
         game.setArbitrator(arbitrator);
         let player1 = new CBAbstractPlayer();
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1);
+        let wing1 = new CBWing(player1, "./../units/banner1.png");
         wing1.setRetreatZone(map.getWestZone());
         let unitType1 = new CBTestUnitType("unit1",
             ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"],
@@ -150,7 +150,7 @@ describe("Arbitrator", ()=> {
         let {game, arbitrator, map, player1, wing1, formation11, unit11, unit12, leader11} = createTinyFormationGame();
         let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2);
+        let wing2 = new CBWing(player2, "./../units/banner2.png");
         //wing2.setRetreatZone(map.getEastZone());
         let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
         let unit21 = new CBTroop(unitType2, wing2);

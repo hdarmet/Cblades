@@ -24,7 +24,7 @@ import {
     clickOnCounter,
     clickOnMask, rollFor,
     clickOnDice, executeAllAnimations, clickOnResult, showMask, showInsert, showSuccessResult, showPlayedDice,
-    showDice, showIndicator, showInsertCommand, showFailureResult, showMenuPanel, showMenuItem
+    showDice, showIndicator, showInsertCommand, showFailureResult, showMenuPanel, showMenuItem, showWingIndicator
 } from "./interactive-tools.js";
 import {
     createTinyGame
@@ -88,7 +88,7 @@ describe("Interactive Recover", ()=> {
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("rest", 379, 239.3878, 444, 195));
             assertDirectives(widgetsLayer, showInsert("check-rest", 359, 552.3878, 444, 451));
-            assertDirectives(widgetsLayer, showIndicator("tiredness10", 76, 326.8878));
+            assertDirectives(widgetsLayer, showWingIndicator("tiredness11", "banner", 76, 326.8878));
             assertDirectives(widgetsLayer, showIndicator("meteo2", 642, 526.8878));
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showDice(1, 1, 671, 296.8878));

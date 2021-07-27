@@ -128,19 +128,19 @@ describe("Map", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(-0.5, 0, 0, -0.5, -261.5, -662.5)",
-                    "drawImage(/CBlades/images/maps/map1.png, -1023, -1575, 2046, 3150)",
+                    "drawImage(./../images/maps/map1.png, -1023, -1575, 2046, 3150)",
                 "restore()",
                 "save()",
                     "setTransform(0.5, 0, 0, 0.5, -261.5, 912.5)",
-                    "drawImage(/CBlades/images/maps/map2.png, -1023, -1575, 2046, 3150)",
+                    "drawImage(./../images/maps/map2.png, -1023, -1575, 2046, 3150)",
                 "restore()",
                 "save()",
                     "setTransform(0.5, 0, 0, 0.5, 761.5, -662.5)",
-                    "drawImage(/CBlades/images/maps/map3.png, -1023, -1575, 2046, 3150)",
+                    "drawImage(./../images/maps/map3.png, -1023, -1575, 2046, 3150)",
                 "restore()",
                 "save()",
                     "setTransform(-0.5, 0, 0, -0.5, 761.5, 912.5)",
-                    "drawImage(/CBlades/images/maps/map4.png, -1023, -1575, 2046, 3150)",
+                    "drawImage(./../images/maps/map4.png, -1023, -1575, 2046, 3150)",
                 "restore()"
             ]);
             assert(map.width).equalsTo(4092);

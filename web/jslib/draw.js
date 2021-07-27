@@ -513,7 +513,7 @@ export class DDraw {
         this._layersArray = [];
         _platform.setAttribute(this.root, "style", `border: 1px solid; position: relative, overflow: hidden`);
         _platform.setAttribute(this.root, "tabindex", "0");
-        this.setSize(dimension);
+        this._setSize(dimension);
         this._transform = Matrix2D.IDENTITY;
     }
 
@@ -587,13 +587,17 @@ export class DDraw {
         return this._transform;
     }
 
-    setSize(dimension) {
+    _setSize(dimension) {
         this._dimension = dimension;
         this._root.width = this._dimension.w;
         this._root.height = this._dimension.h;
         for(let layer of this._layers.values()) {
             layer._setSize(dimension);
         }
+    }
+
+    setSize(dimension) {
+        this._setSize(dimension);
         Mechanisms.fire(this, DDraw.RESIZE_EVENT, this._dimension);
     }
 

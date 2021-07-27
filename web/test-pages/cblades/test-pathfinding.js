@@ -391,7 +391,7 @@ describe("Pathfinding", ()=> {
             pathfinding.computePath();
         then:
             //printHexSidePathFindingResult(pathfinding);
-            checkHexSideRecord(pathfinding, map, 10, 3, 10, 4, 5, 90, 0);
+            checkHexSideRecord(pathfinding, map, 10, 3, 10, 4, 4, 90, 0);
     });
 
     it("Checks best hexside next moves", () => {
@@ -469,7 +469,7 @@ describe("Pathfinding", ()=> {
             };
             var pathCost = getPathCost(config);
         then:
-            assert(pathCost).equalsTo(5.5);
+            assert(pathCost).equalsTo(4.5);
     });
 
     it("Checks hexside path cost when some hexes are forbidden", () => {
@@ -489,7 +489,7 @@ describe("Pathfinding", ()=> {
             };
             var pathCost = getPathCost(config);
         then:
-            assert(pathCost).equalsTo(9);
+            assert(pathCost).equalsTo(10);
     });
 
     it("Checks hexside path cost when there is no solution because of max distance exceeded", () => {
