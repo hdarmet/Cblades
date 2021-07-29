@@ -14,10 +14,11 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBHexSideId, CBMoveMode, CBMoveType
+    CBHexSideId
 } from "./map.js";
 import {
-    CBAction, CBActionActuator, CBActuator, CBActuatorImageTrigger, CBActuatorTriggerMixin, CBMask, WidgetLevelMixin
+    CBAction, CBActionActuator, CBActuator, CBActuatorImageTrigger, CBActuatorTriggerMixin, CBMask, WidgetLevelMixin,
+    CBMoveMode, CBMoveType
 } from "./game.js";
 import {
     CBCharge,
@@ -220,7 +221,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
     _createMovementActuators(start) {
         this.game.closeActuators();
         let finishable = this.isFinishable();
-        this.game.setFocusedUnit(finishable ? null : this.unit);
+        this.game.setFocusedCounter(finishable ? null : this.unit);
         if ((this._buildMoveActuator(start, finishable) + this._buildRotationActuator(start, finishable)) !== 0) {
             this._buildMovementHelpActuator(finishable)
            return true;
@@ -233,7 +234,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
     _continueAfterRotation() {
         this.game.closeActuators();
         let finishable = this.isFinishable();
-        this.game.setFocusedUnit(finishable ? null : this.unit);
+        this.game.setFocusedCounter(finishable ? null : this.unit);
         if (this._buildMoveActuator(false, finishable) !== 0) {
             this._buildMovementHelpActuator(finishable);
             return true;

@@ -14,7 +14,7 @@ import {
     Mechanisms, Memento
 } from "../jslib/mechanisms.js";
 import {
-    DBoard, DStaticLevel
+    DBoard, DMultiImagesArtifact, DStaticLevel
 } from "../jslib/board.js";
 import {
     mockPlatform, getDirectives, resetDirectives, loadAllImages, createEvent, getLayers
@@ -32,7 +32,7 @@ import {
     DMask,
     DScene,
     DMessage,
-    DMultiStatePushButton
+    DMultiStatePushButton, DRotatableIndicator, DSwipe
 } from "../jslib/widget.js";
 import {
     clickOnArtifact, mouseMoveOnArtifact, mouseMoveOutOfArtifact
@@ -308,7 +308,7 @@ describe("Widget", ()=> {
             resetDirectives(commandsLayer);
             executeTimeouts();
         then:
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo( [
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 47.5, 40)",
                     "fillStyle = #FFFFE4",
@@ -349,6 +349,96 @@ describe("Widget", ()=> {
             ]);
     });
 
+    it("Checks that tooltip may be undone", () => {
+        given:
+            var { board, commandsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            Memento.activate();
+            board.paint();
+            resetDirectives(commandsLayer);
+            let clicked = 0;
+            let icon1 = new DIconMenuItem("./../images/icons/menu1.png", "./../images/icons/menu1-grayed.png",
+                0, 0,
+                ()=>{
+                    clicked++;
+                    return clicked===2; // click two times to return true;
+                },
+                "tooltip message");
+            let menu = new DIconMenu(false, icon1);
+            menu.open(board, new Point2D(5, 5));
+            loadAllImages();
+            board.paint();
+            var iconVPLocation = icon1.viewportLocation;
+        when: // tooltip opened
+            Memento.open();
+            var event = createEvent("mousemove", {offsetX:iconVPLocation.x, offsetY:iconVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+            getDrawPlatform().addTime(500);
+            resetDirectives(commandsLayer);
+            executeTimeouts();
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 47.5, 40)",
+                    "fillStyle = #FFFFE4", "fillRect(-42.5, -15, 85, 30)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-42.5, -15, 85, 30)",
+                    "font = 15px serif", "textAlign = center", "textBaseline = middle",
+                    "shadowBlur = 0", "lineWidth = 0",
+                    "strokeText(tooltip message, 0, 0)",
+                    "fillStyle = #000000", "fillText(tooltip message, 0, 0)",
+                "restore()"
+            ]);
+        when: // current artifact is tooltip
+            Memento.open();
+            event = createEvent("mousemove", {offsetX:iconVPLocation.x+1, offsetY:iconVPLocation.y+1});
+            resetDirectives(commandsLayer);
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 47.5, 40)",
+                    "fillStyle = #FFFFE4", "fillRect(-42.5, -15, 85, 30)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-42.5, -15, 85, 30)",
+                    "font = 15px serif", "textAlign = center", "textBaseline = middle",
+                    "shadowBlur = 0", "lineWidth = 0",
+                    "strokeText(tooltip message, 0, 0)",
+                    "fillStyle = #000000", "fillText(tooltip message, 0, 0)",
+                "restore()"
+            ]);
+        when: // leave tooltip
+            Memento.open();
+            event = createEvent("mousemove", {offsetX:iconVPLocation.x+200, offsetY:iconVPLocation.y+200});
+            resetDirectives(commandsLayer);
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+            ]);
+        when:
+            Memento.undo();
+            resetDirectives(commandsLayer);
+            board.paint();
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 47.5, 40)",
+                    "fillStyle = #FFFFE4", "fillRect(-42.5, -15, 85, 30)",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-42.5, -15, 85, 30)",
+                    "font = 15px serif", "textAlign = center", "textBaseline = middle",
+                    "shadowBlur = 0", "lineWidth = 0",
+                    "strokeText(tooltip message, 0, 0)",
+                    "fillStyle = #000000", "fillText(tooltip message, 0, 0)",
+                "restore()"
+            ]);
+        when:
+            Memento.undo();
+            resetDirectives(commandsLayer);
+            board.paint();
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+            ]);
+    });
 
     it("Checks that a tooltip is automatically closed if another one is opened", () => {
         given:
@@ -843,7 +933,7 @@ describe("Widget", ()=> {
             ]);
     });
 
-    it("Checks indicator widget", () => {
+    it("Checks indicator widget basic features", () => {
         given:
             var { board, widgetsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
@@ -854,6 +944,7 @@ describe("Widget", ()=> {
             indicator.open(board, new Point2D(10, 20));
             board.paint();
         then:
+            assert(indicator.artifact).is(DMultiImagesArtifact);
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 10, 20)",
@@ -867,6 +958,93 @@ describe("Widget", ()=> {
             board.paint();
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks multi images indicator widget features", () => {
+        given:
+            var { board, widgetsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            let indicator = new DMultiImagesIndicator([
+                "./../images/indicators/indicator0.png",
+                "./../images/indicators/indicator1.png"
+            ], new Dimension2D(50, 50));
+            loadAllImages();
+        when:
+            indicator.open(board, new Point2D(10, 20));
+            resetDirectives(widgetsLayer);
+            indicator.changeState(1);
+            board.paint();
+        then:
+            assert(indicator.state).equalsTo(1);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 10, 20)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(./../images/indicators/indicator1.png, -25, -25, 50, 50)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 10, 20)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(./../images/indicators/indicator0.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            executeAllAnimations(widgetsLayer);
+            board.repaint();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 10, 20)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(./../images/indicators/indicator1.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks rotatble indicator widget features", () => {
+        given:
+            var { board, widgetsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            let indicator = new DRotatableIndicator([
+                "./../images/indicators/indicator0.png"
+            ], new Dimension2D(50, 50));
+            loadAllImages();
+        when:
+            indicator.open(board, new Point2D(10, 20));
+            resetDirectives(widgetsLayer);
+            indicator.changeState(60);
+            board.paint();
+        then:
+            assert(indicator.state).equalsTo(0);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 10, 20)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(./../images/indicators/indicator0.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            executeAllAnimations(widgetsLayer);
+            board.repaint();
+        then:
+            assert(indicator.state).equalsTo(60);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.5, 0.866, -0.866, 0.5, 10, 20)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(./../images/indicators/indicator0.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            indicator.changeState(300);
+            executeAllAnimations(widgetsLayer);
+        then:
+            assert(indicator.state).equalsTo(-60);
+        when:
+            indicator.changeState(-300);
+            executeAllAnimations(widgetsLayer);
+        then:
+            assert(indicator.state).equalsTo(60);
     });
 
     it("Checks simple insert widget", () => {
@@ -898,6 +1076,7 @@ describe("Widget", ()=> {
             board.paint();
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(insert.artifact.onMouseClick()).isTrue();
     });
 
     it("Checks scrollable insert widget", () => {
@@ -1188,7 +1367,6 @@ describe("Widget", ()=> {
     it("Checks success result widget", () => {
         given:
             var { board, commandsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
-
             board.paint();
             let result = new DResult().success();
             loadAllImages();
@@ -1326,6 +1504,213 @@ describe("Widget", ()=> {
             mockPlatform.dispatchEvent(board.root, "click", event);
         then:
             assert(clicked).isTrue();
+        when: // Test animation when widget is closed
+            var directives = executeAllAnimations(commandsLayer);
+        then:
+            assert(directives).arrayEqualsTo([]);
+    });
+
+    it("Checks swipe widget with no swipe", () => {
+        given:
+            var { board, commandsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            let swipe = new DSwipe().noSwipe();
+            loadAllImages();
+        when:
+            resetDirectives(commandsLayer);
+            swipe.open(board, new Point2D(10, 20));
+            swipe.appear();
+            var resultVPLocation = swipe.trigger.viewportLocation;
+            board.paint();
+        then:
+            assert(swipe.finished).isTrue();
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+        ]);
+        when:
+            var directives = executeAllAnimations(commandsLayer);
+        then:
+            assert(directives).arrayEqualsTo([
+                "save()",
+                    "resetTransform()", "clearRect(0, 0, 500, 300)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 10, 20)",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(./../images/dice/no-swipe.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+        when: // Activation shadow
+            resetDirectives(commandsLayer);
+            var event = createEvent("mousemove", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 10, 20)",
+                    "shadowColor = #00FF00", "shadowBlur = 100",
+                    "drawImage(./../images/dice/no-swipe.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+        when: // Activation shadow
+            resetDirectives(commandsLayer);
+            var event = createEvent("mousemove", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y+150});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 10, 20)",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(./../images/dice/no-swipe.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(commandsLayer);
+            swipe.close();
+            board.paint();
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks swipe widget with swipe up", () => {
+        given:
+            var { board, commandsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            let swipe = new DSwipe().swipeUp();
+            loadAllImages();
+        when:
+            resetDirectives(commandsLayer);
+            swipe.open(board, new Point2D(10, 20));
+            swipe.appear();
+            var resultVPLocation = swipe.trigger.viewportLocation;
+            board.paint();
+        then:
+            assert(swipe.finished).isTrue();
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+            ]);
+        when:
+            var directives = executeAllAnimations(commandsLayer);
+        then:
+            assert(directives).arrayEqualsTo([
+                "save()",
+                    "resetTransform()", "clearRect(0, 0, 500, 300)",
+                    "restore()",
+                    "save()",
+                    "setTransform(1, 0, 0, 1, 10, 20)",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(./../images/dice/swipe-up.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+        when: // Activation shadow
+            resetDirectives(commandsLayer);
+            var event = createEvent("mousemove", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 10, 20)",
+                    "shadowColor = #00FF00", "shadowBlur = 100",
+                    "drawImage(./../images/dice/swipe-up.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+        when: // Activation shadow
+            resetDirectives(commandsLayer);
+            var event = createEvent("mousemove", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y+150});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 10, 20)",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(./../images/dice/swipe-up.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(commandsLayer);
+            swipe.close();
+            board.paint();
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks swipe widget with swipe down", () => {
+        given:
+            var { board, commandsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            let swipe = new DSwipe().swipeDown();
+            loadAllImages();
+        when:
+            resetDirectives(commandsLayer);
+            swipe.open(board, new Point2D(10, 20));
+            swipe.appear();
+            var resultVPLocation = swipe.trigger.viewportLocation;
+            board.paint();
+        then:
+            assert(swipe.finished).isTrue();
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+            ]);
+        when:
+            var directives = executeAllAnimations(commandsLayer);
+        then:
+            assert(directives).arrayEqualsTo([
+                "save()",
+                    "resetTransform()", "clearRect(0, 0, 500, 300)",
+                    "restore()",
+                    "save()",
+                    "setTransform(1, 0, 0, 1, 10, 20)",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(./../images/dice/swipe-down.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+        when: // Activation shadow
+            resetDirectives(commandsLayer);
+            var event = createEvent("mousemove", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 10, 20)",
+                    "shadowColor = #00FF00", "shadowBlur = 100",
+                    "drawImage(./../images/dice/swipe-down.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+        when: // Activation shadow
+            resetDirectives(commandsLayer);
+            var event = createEvent("mousemove", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y+150});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 10, 20)",
+                    "shadowColor = #00A000", "shadowBlur = 100",
+                    "drawImage(./../images/dice/swipe-down.png, -75, -75, 150, 150)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(commandsLayer);
+            swipe.close();
+            board.paint();
+        then:
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks swipe widget final action", () => {
+        given:
+            var { board, commandsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            let receivedValue = null;
+            let swipe = new DSwipe().swipeDown().setFinalAction(swipeValue=>{
+                receivedValue = swipeValue;
+                swipe.close();
+            });
+            swipe.open(board, new Point2D(10, 20));
+            swipe.appear();
+            executeAllAnimations(commandsLayer);
+            var resultVPLocation = swipe.trigger.viewportLocation;
+        when:
+            var event = createEvent("click", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            assert(receivedValue).equalsTo(DSwipe.SWIPE_DOWN);
         when: // Test animation when widget is closed
             var directives = executeAllAnimations(commandsLayer);
         then:

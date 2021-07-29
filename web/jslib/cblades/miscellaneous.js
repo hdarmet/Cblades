@@ -3,7 +3,7 @@
 import {
     CBAbstractUnit,
     CBAction,
-    CBActivableMixin,
+    CBActivableMixin, CBCounter,
     CBCounterImageArtifact, CBGame, CBPlayable, Displayable, RetractableArtifactMixin, RetractableCounterMixin
 } from "./game.js";
 import {
@@ -103,7 +103,7 @@ export class DisplayablePlayableArtifact extends CBActivableMixin(CBCounterImage
 
 }
 
-export class CBDisplayablePlayable extends Displayable(CBPlayable) {
+export class CBDisplayablePlayable extends Displayable(CBCounter) {
 
     constructor(paths, dimension) {
         super("counters", paths, dimension);
@@ -259,7 +259,7 @@ export class CBWingDisplayablePlayable extends CBDisplayablePlayable {
 
     registerOnGame(game) {
         this._game = game;
-        game._addCounter(this);
+        game._registerCounter(this);
     }
 
     _processGlobalEvent(source, event, value) {

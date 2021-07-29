@@ -230,7 +230,7 @@ export class CBUnitManagementTeacher {
         let hexes = hexLocation.nearHexes;
         let neighbors = new Set();
         for (let [hexId] of hexes.entries()) {
-            let nearUnits = hexId.map.getUnitsOnHex(hexId);
+            let nearUnits = hexId.units;
             for (let nearUnit of nearUnits) {
                 neighbors.add(nearUnit);
             }

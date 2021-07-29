@@ -1,32 +1,17 @@
 'use strict'
 
 import {
-    atan2, Point2D, Dimension2D, moyAngle, sumAngle, diffAngle, invertAngle, isAngleBetween
+    atan2, Point2D, Dimension2D, moyAngle, sumAngle
 } from "../geometry.js";
 import {
     DImage
 } from "../draw.js";
 import {
-    AVLTree,
     Memento
 } from "../mechanisms.js";
 import {
     DElement, DImageArtifact
 } from "../board.js";
-
-export let CBMoveType = {
-    FORWARD: 0,
-    BACKWARD: 1
-}
-
-export let CBMoveMode = {
-    NO_CONSTRAINT: 0,
-    ATTACK: 1,
-    FIRE: 2,
-    DEFEND: 3,
-    REGROUP: 4,
-    RETREAT: 5
-}
 
 export function distanceFromHexToHex(start, arrival) {
     let dcol = arrival.col-start.col;
@@ -53,9 +38,28 @@ export function distanceFromHexLocationToHexLocation(start, arrival) {
     return result;
 }
 
-export class CBHexId {
+export class CBHexLocation {
+
+    get game() {
+        return this.map.game;
+    }
+
+    similar(hexLocation) {
+        return this.location.equalsTo(hexLocation.location);
+    }
+
+    getAngle(hexLocation) {
+        let loc1 = this.location;
+        let loc2 = hexLocation.location;
+        return atan2(loc2.x-loc1.x, loc2.y-loc1.y);
+    }
+
+}
+
+export class CBHexId extends CBHexLocation{
 
     constructor(map, col, row) {
+        super();
         this._map = map;
         this._col = col;
         this._row = row;
@@ -72,10 +76,6 @@ export class CBHexId {
 
     get onMap() {
         return this._map.onMap(this);
-    }
-
-    get game() {
-        return this.map.game;
     }
 
     get col() {
@@ -123,10 +123,6 @@ export class CBHexId {
         this.hex.changeHeight(height);
     }
 
-    similar(hexLocation) {
-        return this.location.equalsTo(hexLocation.location);
-    }
-
     isNearHex(hexId) {
         return this._map.isNearHex(this, hexId);
     }
@@ -155,62 +151,32 @@ export class CBHexId {
         return new CBHexVertexId(this, hex1, hex2);
     }
 
-    getAngle(hexId) {
-        let loc1 = this.location;
-        let loc2 = hexId.location;
-        return atan2(loc2.x-loc1.x, loc2.y-loc1.y);
+    _pushCounter(counter) {
+        this.hex._pushCounter(counter);
     }
 
-    _addUnit(unit) {
-        this.hex.addUnit(unit);
+    _unshiftCounter(counter) {
+        this.hex._unshiftCounter(counter);
     }
 
-    _removeUnit(unit) {
-        this.hex.removeUnit(unit);
+    _removeCounter(counter) {
+        this.hex._removeCounter(counter);
     }
 
-    _appendUnit(unit, moveType) {
-        this.hex.appendUnit(unit, moveType);
+    _appendCounterOnTop(counter) {
+        this.hex._appendCounterOnTop(counter);
     }
 
-    _deleteUnit(unit) {
-        this.hex.deleteUnit(unit);
+    _appendCounterOnBottom(counter) {
+        this.hex._appendCounterOnBottom(counter);
     }
 
-    get units() {
-        return this.hex.units;
+    _deleteCounter(counter) {
+        this.hex._deleteCounter(counter);
     }
 
-    get empty() {
-        return this.hex.empty;
-    }
-
-    _addPlayable(playable) {
-        this.hex.addPlayable(playable);
-    }
-
-    _removePlayable(playable) {
-        this.hex.removePlayable(playable);
-    }
-
-    _appendPlayable(playable) {
-        this.hex.appendPlayable(playable);
-    }
-
-    _deletePlayable(playable) {
-        this.hex.deletePlayable(playable);
-    }
-
-    get playables() {
-        return this.hex.playables;
-    }
-
-    get allCounters() {
-        let counters = [...this.playables];
-        for (let unit of this.units) {
-            counters.push(...unit.counters);
-        }
-        return counters;
+    get counters() {
+        return this.hex.counters;
     }
 
     // TODO : add map ref
@@ -232,9 +198,10 @@ export class CBHexId {
 
 }
 
-export class CBHexSideId {
+export class CBHexSideId extends CBHexLocation {
 
     constructor(hexId1, hexId2) {
+        super();
         console.assert(hexId1.isNearHex(hexId2)!==false);
         this._fromHex = hexId1;
         this._toHex = hexId2;
@@ -285,10 +252,6 @@ export class CBHexSideId {
         return this._fromHex.onMap && this._toHex.onMap;
     }
 
-    get game() {
-        return this.map.game;
-    }
-
     get hexes() {
         return [this._fromHex, this._toHex];
     }
@@ -331,10 +294,6 @@ export class CBHexSideId {
         return hexId===this._fromHex ? this._toHex :this._fromHex;
     }
 
-    similar(hexLocation) {
-        return this.location.equalsTo(hexLocation.location);
-    }
-
     isNearHex(hexId) {
         let angle1 = this.map.isNearHex(this.fromHex, hexId);
         let angle2 = this.map.isNearHex(this.toHex, hexId);
@@ -348,48 +307,38 @@ export class CBHexSideId {
         return this._fromHex === hexId || this._toHex === hexId;
     }
 
-    _addUnit(unit) {
-        this.toHex._addUnit(unit);
-        this.fromHex._addUnit(unit);
+    _pushCounter(counter) {
+        this.toHex._pushCounter(counter);
+        this.fromHex._pushCounter(counter);
     }
 
-    _removeUnit(unit) {
-        this.toHex._removeUnit(unit);
-        this.fromHex._removeUnit(unit);
+    _unshiftCounter(counter) {
+        this.toHex._unshiftCounter(counter);
+        this.fromHex._unshiftCounter(counter);
     }
 
-    _appendUnit(unit) {
-        this.toHex._appendUnit(unit);
-        this.fromHex._appendUnit(unit);
+    _removeCounter(counter) {
+        this.toHex._removeCounter(counter);
+        this.fromHex._removeCounter(counter);
     }
 
-    _deleteUnit(unit) {
-        this.toHex._deleteUnit(unit);
-        this.fromHex._deleteUnit(unit);
+    _appendCounterOnTop(counter) {
+        this.toHex._appendCounterOnTop(counter);
+        this.fromHex._appendCounterOnTop(counter);
     }
 
-    get units() {
-        return [...new Set([...this.toHex.units, ...this.fromHex.units])];
+    _appendCounterOnBottom(counter) {
+        this.toHex._appendCounterOnBottom(counter);
+        this.fromHex._appendCounterOnBottom(counter);
     }
 
-    _addPlayable(playable) {
-        this.toHex._addPlayable(playable);
-        this.fromHex._addPlayable(playable);
+    _deleteCounter(counter) {
+        this.toHex._deleteCounter(counter);
+        this.fromHex._deleteCounter(counter);
     }
 
-    _removePlayable(playable) {
-        this.toHex._removePlayable(playable);
-        this.fromHex._removePlayable(playable);
-    }
-
-    _appendPlayable(playable) {
-        this.toHex._appendPlayable(playable);
-        this.fromHex._appendPlayable(playable);
-    }
-
-    _deletePlayable(playable) {
-        this.toHex._deletePlayable(playable);
-        this.fromHex._deletePlayable(playable);
+    get counters() {
+        return [...new Set([...this.toHex.counters, ...this.fromHex.counters])];
     }
 
     turnTo(angle) {
@@ -419,15 +368,12 @@ export class CBHexSideId {
         return `Hexside(${this.fromHex}, ${this.toHex})`;
     }
 
-    get playables() {
-        return [...new Set([...this.toHex.playables, ...this.fromHex.playables])];
-    }
-
 }
 
-export class CBHexVertexId {
+export class CBHexVertexId extends CBHexLocation {
 
     constructor(hexId1, hexId2, hexId3) {
+        super();
         this._hexId1 = hexId1;
         this._hexId2 = hexId2;
         this._hexId3 = hexId3;
@@ -494,19 +440,47 @@ export class CBHexVertexId {
         return hexes;
     }
 
-    similar(hexLocation) {
-        return this.location.equalsTo(hexLocation.location);
+    _pushCounter(counter) {
+        this.toHexSide._pushCounter(counter);
+        this.fromHex._pushCounter(counter);
     }
 
+    _unshiftCounter(counter) {
+        this.toHexSide._unshiftCounter(counter);
+        this.fromHex._unshiftCounter(counter);
+    }
+
+    _removeCounter(counter) {
+        this.toHexSide._removeCounter(counter);
+        this.fromHex._removeCounter(counter);
+    }
+
+    _appendCounterOnTop(counter) {
+        this.toHexSide._appendCounterOnTop(counter);
+        this.fromHex._appendCounterOnTop(counter);
+    }
+
+    _appendCounterOnBottom(counter) {
+        this.toHexSide._appendCounterOnBottom(counter);
+        this.fromHex._appendCounterOnBottom(counter);
+    }
+
+    _deleteCounter(counter) {
+        this.toHexSide._deleteCounter(counter);
+        this.fromHex._deleteCounter(counter);
+    }
+
+    get counters() {
+        return [...new Set([...this.toHexSide.counters, ...this.fromHex.counters])];
+    }
 }
 
 export class CBHex {
 
     constructor(map, col, row) {
-        console.assert(col+row !== NaN);
+        console.assert(!isNaN(col+row));
         this._id = new CBHexId(map, col, row);
-        this._playables = [];
-        this._units = [];
+        this._counters = [];
         this._hexType = {
             type: CBHex.HEX_TYPES.OUTDOOR_CLEAR,
             height: 0,
@@ -523,8 +497,7 @@ export class CBHex {
 
     _memento() {
         return {
-            units: [...this._units],
-            playables: [...this._playables],
+            counters: [...this._counters],
             type: this._hexType.type,
             height: this._hexType.height,
             side120 : this._hexType.side120,
@@ -534,8 +507,7 @@ export class CBHex {
     }
 
     _revert(memento) {
-        this._units = memento.units;
-        this._playables = memento.playables;
+        this._counters = memento.counters;
         this._hexType.type = memento.type;
         this._hexType.height = memento.height;
         this._hexType.side120 = memento.side120;
@@ -603,88 +575,57 @@ export class CBHex {
         }
     }
 
-    addPlayable(playable) {
-        console.assert((playable.playableNature) && (this._playables.indexOf(playable)<0));
-        this._playables.push(playable);
-    }
-
-    removePlayable(playable) {
-        console.assert((playable.playableNature) && (this._playables.indexOf(playable)>=0));
-        this._playables.splice(this._playables.indexOf(playable), 1);
-    }
-
-    appendPlayable(playable) {
-        console.assert((playable.playableNature) && (this._playables.indexOf(playable)<0));
-        Memento.register(this);
-        this._playables.push(playable);
-        let index = this._playables.length-1;
-        if (!playable.spellNature) {
-            while(index>0 && this._playables[index-1].spellNature) {
-                this._playables[index] = this._playables[index-1];
-                this._playables[index-1] = playable;
-                index--;
-            }
-        }
-        if (playable.featureNature) {
-            while(index>0 && !this._playables[index-1].featureNature) {
-                this._playables[index] = this._playables[index-1];
-                this._playables[index-1] = playable;
-                index--;
-            }
-        }
-    }
-
-    deletePlayable(playable) {
-        console.assert((playable.playableNature) && (this._playables.indexOf(playable)>=0));
-        Memento.register(this);
-        this._playables.splice(this._playables.indexOf(playable), 1);
-    }
-
-    get playables() {
-        return this._playables;
-    }
-
-    addUnit(unit) {
-        console.assert((unit.unitNature) && (this._units.indexOf(unit)<0));
-        this._units.push(unit);
-    }
-
-    removeUnit(unit) {
-        console.assert((unit.unitNature) && (this._units.indexOf(unit)>=0));
-        this._units.splice(this._units.indexOf(unit), 1);
-    }
-
-    appendUnit(unit, moveType) {
-        console.assert((unit.unitNature) && (this._units.indexOf(unit)<0));
-        Memento.register(this);
-        if (moveType === CBMoveType.BACKWARD) {
-            this._units.push(unit);
+    static compareCounter(counter1, counter2) {
+        if (counter1.playableNature && counter2.unitNature) return -1;
+        if (counter1.unitNature && counter2.playableNature) return 1;
+        if (counter1.playableNature) {
+            if (counter1.featureNature && !counter2.featureNature) return -1;
+            if (!counter1.featureNature && counter2.featureNature) return 1;
+            if (counter1.spellNature && !counter2.spellNature) return 1;
+            if (!counter1.spellNature && counter2.spellNature) return -1;
+            return 0;
         }
         else {
-            this._units.unshift(unit);
+            if (counter1.characterNature && !counter2.characterNature) return 1;
+            if (!counter1.characterNature && counter2.characterNature) return -1;
+            return 0;
         }
-        this._units.sort((unit1, unit2)=>{
-            if (unit1.characterNature) {
-                return unit2.characterNature ? 0 : 1;
-            }
-            else {
-                return unit2.characterNature ? -1 : 0;
-            }
-        });
     }
 
-    deleteUnit(unit) {
-        console.assert((unit.unitNature) && (this._units.indexOf(unit)>=0));
+    _pushCounter(counter) {
+        console.assert(this._counters.indexOf(counter)<0);
+        this._counters.push(counter);
+        this._counters.sort(CBHex.compareCounter);
+    }
+
+    _unshiftCounter(counter) {
+        console.assert(this._counters.indexOf(counter)<0);
+        this._counters.unshift(counter);
+        this._counters.sort(CBHex.compareCounter);
+    }
+
+    _removeCounter(counter) {
+        console.assert(this._counters.indexOf(counter)>=0);
+        this._counters.splice(this._counters.indexOf(counter), 1);
+    }
+
+    _appendCounterOnTop(counter) {
         Memento.register(this);
-        this._units.splice(this._units.indexOf(unit), 1);
+        this._pushCounter(counter);
     }
 
-    get units() {
-        return this._units;
+    _appendCounterOnBottom(counter) {
+        Memento.register(this);
+        this._unshiftCounter(counter);
     }
 
-    get empty() {
-        return this.units.length === 0;
+    _deleteCounter(counter) {
+        Memento.register(this);
+        this._removeCounter(counter);
+    }
+
+    get counters() {
+        return this._counters;
     }
 
 }
@@ -969,16 +910,6 @@ export class CBMap {
         ).id;
     }
 
-    getUnitsOnHex(hexId) {
-        console.assert(hexId.map===this);
-        return this._hex(hexId.col, hexId.row).units;
-    }
-
-    getPlayablesOnHex(hexId) {
-        console.assert(hexId.map===this);
-        return this._hex(hexId.col, hexId.row).playables;
-    }
-
     getLocation(point) {
         return this._element.getLocation(point);
     }
@@ -1050,4 +981,3 @@ CBMap.HEIGHT = 3150;
 CBMap.DIMENSION = new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT);
 CBMap.COL_COUNT = 12;
 CBMap.ROW_COUNT = 16;
-

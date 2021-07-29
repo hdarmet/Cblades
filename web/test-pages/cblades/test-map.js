@@ -15,13 +15,12 @@ import {
 import {
     CBMap,
     CBHexSideId,
-    CBHexVertexId, CBMoveType, CBHex, CBHexId, distanceFromHexToHex, distanceFromHexLocationToHexLocation
+    CBHexVertexId, CBHex, CBHexId, distanceFromHexToHex, distanceFromHexLocationToHexLocation
 } from "../../jslib/cblades/map.js";
 import {
     DBoard, DSimpleLevel
 } from "../../jslib/board.js";
 import {
-    diffAngle,
     Dimension2D
 } from "../../jslib/geometry.js";
 
@@ -668,152 +667,78 @@ describe("Map", ()=> {
             assert(hexId.toward(300).type).equalsTo(CBHex.HEXSIDE_TYPES.EASY);
     });
 
-    it("Checks playable addition and removing on a Hex", () => {
+    it("Checks counter addition and removing on a Hex", () => {
         given:
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
-            let playable = new CBTestPlayable();
+            let counter = new CBTestUnit();
             var hexId = map.getHex(4, 5);
         when:
-            hexId._addPlayable(playable);
+            hexId._pushCounter(counter);
         then:
-            assert(hexId.playables).arrayEqualsTo([playable]);
+            assert(hexId.counters).arrayEqualsTo([counter]);
         when:
-            hexId._removePlayable(playable);
+            hexId._removeCounter(counter);
         then:
-            assert(hexId.playables).arrayEqualsTo([]);
-        when:
-            Memento.open();
-            hexId._appendPlayable(playable);
-        then:
-            assert(hexId.playables).arrayEqualsTo([playable]);
+            assert(hexId.counters).arrayEqualsTo([]);
         when:
             Memento.open();
-            hexId._deletePlayable(playable);
+            hexId._appendCounterOnTop(counter);
         then:
-            assert(hexId.playables).arrayEqualsTo([]);
+            assert(hexId.counters).arrayEqualsTo([counter]);
+        when:
+            Memento.open();
+            hexId._deleteCounter(counter);
+        then:
+            assert(hexId.counters).arrayEqualsTo([]);
         when:
             Memento.undo();
         then:
-            assert(hexId.playables).arrayEqualsTo([playable]);
+            assert(hexId.counters).arrayEqualsTo([counter]);
         when:
             Memento.undo();
         then:
-            assert(hexId.playables).arrayEqualsTo([]);
+            assert(hexId.counters).arrayEqualsTo([]);
     });
 
-    it("Checks playable addition and removing on a Hex Side", () => {
+    it("Checks counter addition and removing on a Hex Side", () => {
         given:
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
-            let playable = new CBTestPlayable();
+            let counter = new CBTestUnit();
             var hexId1 = map.getHex(4, 5);
             var hexId2 = map.getHex(4, 6);
             var hexSideId = new CBHexSideId(hexId1, hexId2);
         when:
-            hexSideId._addPlayable(playable);
+            hexSideId._pushCounter(counter);
         then:
-            assert(hexId1.playables).arrayEqualsTo([playable]);
-            assert(hexId2.playables).arrayEqualsTo([playable]);
+            assert(hexId1.counters).arrayEqualsTo([counter]);
+            assert(hexId2.counters).arrayEqualsTo([counter]);
         when:
-            hexSideId._removePlayable(playable);
+            hexSideId._removeCounter(counter);
         then:
-            assert(hexId1.playables).arrayEqualsTo([]);
-            assert(hexId2.playables).arrayEqualsTo([]);
-        when:
-            Memento.open();
-            hexSideId._appendPlayable(playable);
-        then:
-            assert(hexId1.playables).arrayEqualsTo([playable]);
-            assert(hexId2.playables).arrayEqualsTo([playable]);
+            assert(hexId1.counters).arrayEqualsTo([]);
+            assert(hexId2.counters).arrayEqualsTo([]);
         when:
             Memento.open();
-            hexSideId._deletePlayable(playable);
+            hexSideId._appendCounterOnTop(counter);
         then:
-            assert(hexId1.playables).arrayEqualsTo([]);
-            assert(hexId2.playables).arrayEqualsTo([]);
+            assert(hexId1.counters).arrayEqualsTo([counter]);
+            assert(hexId2.counters).arrayEqualsTo([counter]);
+        when:
+            Memento.open();
+            hexSideId._deleteCounter(counter);
+        then:
+            assert(hexId1.counters).arrayEqualsTo([]);
+            assert(hexId2.counters).arrayEqualsTo([]);
         when:
             Memento.undo();
         then:
-            assert(hexId1.playables).arrayEqualsTo([playable]);
-            assert(hexId2.playables).arrayEqualsTo([playable]);
+            assert(hexId1.counters).arrayEqualsTo([counter]);
+            assert(hexId2.counters).arrayEqualsTo([counter]);
         when:
             Memento.undo();
         then:
-            assert(hexId1.playables).arrayEqualsTo([]);
-            assert(hexId2.playables).arrayEqualsTo([]);
-    });
-
-    it("Checks unit addition and removing on a Hex", () => {
-        given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
-            let unit = new CBTestUnit();
-            var hexId = map.getHex(4, 5);
-        when:
-            hexId._addUnit(unit);
-        then:
-            assert(hexId.units).arrayEqualsTo([unit]);
-        when:
-            hexId._removeUnit(unit);
-        then:
-            assert(hexId.units).arrayEqualsTo([]);
-        when:
-            Memento.open();
-            hexId._appendUnit(unit);
-        then:
-            assert(hexId.units).arrayEqualsTo([unit]);
-        when:
-            Memento.open();
-            hexId._deleteUnit(unit);
-        then:
-            assert(hexId.units).arrayEqualsTo([]);
-        when:
-            Memento.undo();
-        then:
-            assert(hexId.units).arrayEqualsTo([unit]);
-        when:
-            Memento.undo();
-        then:
-            assert(hexId.units).arrayEqualsTo([]);
-    });
-
-    it("Checks unit addition and removing on a Hex Side", () => {
-        given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
-            let unit = new CBTestUnit();
-            var hexId1 = map.getHex(4, 5);
-            var hexId2 = map.getHex(4, 6);
-            var hexSideId = new CBHexSideId(hexId1, hexId2);
-        when:
-            hexSideId._addUnit(unit);
-        then:
-            assert(hexId1.units).arrayEqualsTo([unit]);
-            assert(hexId2.units).arrayEqualsTo([unit]);
-        when:
-            hexSideId._removeUnit(unit);
-        then:
-            assert(hexId1.units).arrayEqualsTo([]);
-            assert(hexId2.units).arrayEqualsTo([]);
-        when:
-            Memento.open();
-            hexSideId._appendUnit(unit);
-        then:
-            assert(hexId1.units).arrayEqualsTo([unit]);
-            assert(hexId2.units).arrayEqualsTo([unit]);
-        when:
-            Memento.open();
-            hexSideId._deleteUnit(unit);
-        then:
-            assert(hexId1.units).arrayEqualsTo([]);
-            assert(hexId2.units).arrayEqualsTo([]);
-        when:
-            Memento.undo();
-        then:
-            assert(hexId1.units).arrayEqualsTo([unit]);
-            assert(hexId2.units).arrayEqualsTo([unit]);
-        when:
-            Memento.undo();
-        then:
-            assert(hexId1.units).arrayEqualsTo([]);
-            assert(hexId2.units).arrayEqualsTo([]);
+            assert(hexId1.counters).arrayEqualsTo([]);
+            assert(hexId2.counters).arrayEqualsTo([]);
     });
 
     it("Checks playable sorting on Hex", () => {
@@ -825,37 +750,16 @@ describe("Map", ()=> {
             blaze.elementNature = true;
             var hexId = map.getHex(4, 5);
         when:
-            hexId._appendPlayable(spell);
-            hexId._appendPlayable(blaze);
+            hexId._appendCounterOnTop(spell);
+            hexId._appendCounterOnTop(blaze);
         then:
-            assert(hexId.playables).arrayEqualsTo([blaze, spell]);
+            assert(hexId.counters).arrayEqualsTo([blaze, spell]);
         when:
             var trap = new CBTestPlayable();
             trap.featureNature = true;
-            hexId._appendPlayable(trap);
+            hexId._appendCounterOnTop(trap);
         then:
-            assert(hexId.playables).arrayEqualsTo([trap, blaze, spell]);
-    });
-
-    it("Checks unit stacking basic features", () => {
-        given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
-            var hexId = map.getHex(8, 8);
-        then:
-            assert(hexId.empty).isTrue();
-        when:
-            var unit1 = new CBTestUnit();
-            var unit2 = new CBTestUnit();
-            hexId._addUnit(unit1);
-            var units = hexId.units;
-        then:
-            assert(units).arrayEqualsTo([unit1]);
-            assert(hexId.empty).isFalse();
-        when:
-            hexId._appendUnit(unit2, CBMoveType.FORWARD);
-            units = hexId.units;
-        then:
-            assert(units).arrayEqualsTo([unit2, unit1]);
+            assert(hexId.counters).arrayEqualsTo([trap, blaze, spell]);
     });
 
     it("Checks unit backward stacking", () => {
@@ -867,23 +771,23 @@ describe("Map", ()=> {
             var leader1 = new CBTestLeader();
             var leader2 = new CBTestLeader();
         when:
-            hexId._appendUnit(leader1, CBMoveType.BACKWARD);
-            var units = hexId.units;
+            hexId._appendCounterOnTop(leader1);
+            var units = hexId.counters;
         then:
             assert(units).arrayEqualsTo([leader1]);
         when:
-            hexId._appendUnit(leader2, CBMoveType.BACKWARD);
-            units = hexId.units;
+            hexId._appendCounterOnTop(leader2);
+            units = hexId.counters;
         then:
             assert(units).arrayEqualsTo([leader1, leader2]);
         when:
-            hexId._appendUnit(unit1, CBMoveType.BACKWARD);
-            units = hexId.units;
+            hexId._appendCounterOnTop(unit1);
+            units = hexId.counters;
         then:
             assert(units).arrayEqualsTo([unit1, leader1, leader2]);
         when:
-            hexId._appendUnit(unit2, CBMoveType.BACKWARD);
-            units = hexId.units;
+            hexId._appendCounterOnTop(unit2);
+            units = hexId.counters;
         then:
             assert(units).arrayEqualsTo([unit1, unit2, leader1, leader2]);
     });
@@ -897,23 +801,23 @@ describe("Map", ()=> {
             var leader1 = new CBTestLeader();
             var leader2 = new CBTestLeader();
         when:
-            hexId._appendUnit(unit1, CBMoveType.FORWARD);
-            var units = hexId.units;
+            hexId._appendCounterOnTop(unit1);
+            var units = hexId.counters;
         then:
             assert(units).arrayEqualsTo([unit1]);
         when:
-            hexId._appendUnit(unit2, CBMoveType.FORWARD);
-            units = hexId.units;
+            hexId._appendCounterOnBottom(unit2);
+            units = hexId.counters;
         then:
             assert(units).arrayEqualsTo([unit2, unit1]);
         when:
-            hexId._appendUnit(leader1, CBMoveType.FORWARD);
-            units = hexId.units;
+            hexId._appendCounterOnTop(leader1);
+            units = hexId.counters;
         then:
             assert(units).arrayEqualsTo([unit2, unit1, leader1]);
         when:
-            hexId._appendUnit(leader2, CBMoveType.FORWARD);
-            units = hexId.units;
+            hexId._appendCounterOnBottom(leader2);
+            units = hexId.counters;
         then:
             assert(units).arrayEqualsTo([unit2, unit1, leader2, leader1]);
     });
@@ -927,14 +831,12 @@ describe("Map", ()=> {
             var playable1 = new CBTestPlayable();
             var playable2 = new CBTestPlayable();
         when:
-            hexId._appendUnit(unit1, CBMoveType.FORWARD);
-            hexId._appendUnit(unit2, CBMoveType.FORWARD);
-            hexId._appendPlayable(playable1);
-            hexId._appendPlayable(playable2);
+            hexId._appendCounterOnBottom(unit1);
+            hexId._appendCounterOnBottom(unit2);
+            hexId._appendCounterOnTop(playable1);
+            hexId._appendCounterOnTop(playable2);
         then:
-            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([unit2, unit1]);
-            assert(map.getPlayablesOnHex(hexId)).arrayEqualsTo([playable1, playable2]);
-            assert(hexId.allCounters).arrayEqualsTo([playable1, playable2, unit2, unit1]);
+            assert(hexId.counters).arrayEqualsTo([playable1, playable2, unit2, unit1]);
     });
 
     it("Checks units and playables collection on Hex Side", () => {
@@ -948,13 +850,12 @@ describe("Map", ()=> {
             var playable1 = new CBTestPlayable();
             var playable2 = new CBTestPlayable();
         when:
-            hexId1._appendUnit(unit1, CBMoveType.FORWARD);
-            hexSideId._appendUnit(unit2, CBMoveType.FORWARD);
-            hexSideId._appendPlayable(playable1);
-            hexId2._appendPlayable(playable2);
+            hexId1._appendCounterOnBottom(unit1);
+            hexSideId._appendCounterOnBottom(unit2);
+            hexSideId._appendCounterOnTop(playable1);
+            hexId2._appendCounterOnTop(playable2);
         then:
-            assert(hexSideId.units).unorderedArrayEqualsTo([unit2, unit1]);
-            assert(hexSideId.playables).unorderedArrayEqualsTo([playable1, playable2]);
+            assert(hexSideId.counters).arrayEqualsTo([playable1, playable2, unit2, unit1]);
     });
 
 });

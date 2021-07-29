@@ -248,7 +248,7 @@ describe("Interactive Combat", ()=> {
             var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit1IsEngagedByUnit2(map, unit1, unit2);
-            player1.selectUnit(unit1, dummyEvent)
+            player1.selectCounter(unit1, dummyEvent)
             loadAllImages();
         when:
             rollFor(5,6);
@@ -423,7 +423,7 @@ describe("Interactive Combat", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.hasBeenPlayed()).isFalse();
-            assert(game.focusedUnit).equalsTo(unit2);
+            assert(game.focusedCounter).equalsTo(unit2);
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showLossTrigger(zoomAndRotate0(416.6667, 255.6635)));
             assertDirectives(actuatorsLayer, showRetreatTrigger(zoomAndRotate0(416.6667, 169.0616)));
@@ -476,7 +476,7 @@ describe("Interactive Combat", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.hasBeenPlayed()).isTrue();
-            assert(game.focusedUnit).isNotDefined();
+            assert(game.focusedCounter).isNotDefined();
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
 
@@ -842,7 +842,7 @@ describe("Interactive Combat", ()=> {
             assertNoMoreDirectives(commandsLayer, 4);
             assert(formation2.hasBeenActivated()).isTrue();
             assert(formation2.hasBeenPlayed()).isFalse();
-            assert(game.focusedUnit).isNotDefined();
+            assert(game.focusedCounter).isNotDefined();
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showUnsupportedShock(zoomAndRotate30(397.1163, 236.1131)));
             assertDirectives(actuatorsLayer, showSupportedShock(zoomAndRotate30(436.217, 275.2138)));
@@ -930,7 +930,7 @@ describe("Interactive Combat", ()=> {
             assertNoMoreDirectives(actuatorsLayer, 4);
             assert(formation2.hasBeenActivated()).isTrue();
             assert(formation2.hasBeenPlayed()).isTrue();
-            assert(game.focusedUnit).isNotDefined();
+            assert(game.focusedCounter).isNotDefined();
     });
 
     function getFormationRetreatActuator(game) {
@@ -974,7 +974,7 @@ describe("Interactive Combat", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(game.focusedUnit).equalsTo(formation2);
+            assert(game.focusedCounter).equalsTo(formation2);
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showLossTrigger(zoomAndRotate0(458.3333, 279.7196)));
             assertDirectives(actuatorsLayer, showRetreatTrigger(zoomAndRotate0(416.6667, 169.0616)));
@@ -1277,7 +1277,7 @@ describe("Interactive Combat", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
-            assert(game.focusedUnit).equalsTo(unit2);
+            assert(game.focusedCounter).equalsTo(unit2);
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showLossTrigger(zoomAndRotate0(416.6667, 159.4391)));
             assertDirectives(actuatorsLayer, showRetreatTrigger(zoomAndRotate0(416.6667, 72.8372)));
@@ -1327,7 +1327,7 @@ describe("Interactive Combat", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit1.hasBeenPlayed()).isTrue();
-            assert(game.focusedUnit).isNotDefined();
+            assert(game.focusedCounter).isNotDefined();
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
 
@@ -1634,7 +1634,7 @@ describe("Interactive Combat", ()=> {
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(formation2.hasBeenActivated()).isTrue();
             assert(formation2.hasBeenPlayed()).isFalse();
-            assert(game.focusedUnit).isNotDefined();
+            assert(game.focusedCounter).isNotDefined();
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showFire(zoomAndRotate30(416.6667, 159.4391)));
     });
@@ -1720,7 +1720,7 @@ describe("Interactive Combat", ()=> {
             assertNoMoreDirectives(actuatorsLayer, 4);
             assert(formation2.hasBeenActivated()).isTrue();
             assert(formation2.hasBeenPlayed()).isTrue();
-            assert(game.focusedUnit).isNotDefined();
+            assert(game.focusedCounter).isNotDefined();
     });
 
     function clickOnShockDuelAction(game) {

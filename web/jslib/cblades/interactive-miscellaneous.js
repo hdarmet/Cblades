@@ -6,7 +6,7 @@ import {
     DIconMenuItem, DInsert, DMask, DResult, DScene, DSwipe
 } from "../widget.js";
 import {
-    CBAction, CBGame, CBPlayable, WidgetLevelMixin
+    CBAction, CBGame, CBMoveType, CBPlayable, WidgetLevelMixin
 } from "./game.js";
 import {
     CBActionMenu,
@@ -57,45 +57,45 @@ export function registerInteractiveMiscellaneous() {
         unit.launchAction(new InteractiveRemoveStakesAction(this.game, unit, event));
     }
     CBInteractivePlayer.prototype.playWeather = function(counter, event) {
-        if (this.game.canUnselectUnit()) {
+        if (this.game.canUnselectCounter()) {
             let action = new InteractivePlayWeatherAction(this.game, counter, event);
-            let unit = this.game.selectedUnit;
+            let unit = this.game.selectedCounter;
             this.afterActivation(unit, () => {
                 action.play();
             });
         }
     }
     CBInteractivePlayer.prototype.playFog = function(counter, event) {
-        if (this.game.canUnselectUnit()) {
+        if (this.game.canUnselectCounter()) {
             let action = new InteractivePlayFogAction(this.game, counter, event);
-            let unit = this.game.selectedUnit;
+            let unit = this.game.selectedCounter;
             this.afterActivation(unit, () => {
                 action.play();
             });
         }
     }
     CBInteractivePlayer.prototype.playWindDirection = function(counter, event) {
-        if (this.game.canUnselectUnit()) {
+        if (this.game.canUnselectCounter()) {
             let action = new InteractivePlayWindDirectionAction(this.game, counter, event);
-            let unit = this.game.selectedUnit;
+            let unit = this.game.selectedCounter;
             this.afterActivation(unit, () => {
                 action.play();
             });
         }
     }
     CBInteractivePlayer.prototype.playTiredness = function(counter, event) {
-        if (this.game.canUnselectUnit()) {
+        if (this.game.canUnselectCounter()) {
             let action = new InteractivePlayTirednessAction(this.game, counter, event);
-            let unit = this.game.selectedUnit;
+            let unit = this.game.selectedCounter;
             this.afterActivation(unit, () => {
                 action.play();
             });
         }
     }
     CBInteractivePlayer.prototype.playMoral = function(counter, event) {
-        if (this.game.canUnselectUnit()) {
+        if (this.game.canUnselectCounter()) {
             let action = new InteractivePlayMoralAction(this.game, counter, event);
-            let unit = this.game.selectedUnit;
+            let unit = this.game.selectedCounter;
             this.afterActivation(unit, () => {
                 action.play();
             });
@@ -125,11 +125,11 @@ export class InteractiveMergeUnitAction extends CBAction {
         this.unit.markAsCharging(CBCharge.NONE);
         let {replacement, replaced} = this.game.arbitrator.mergedUnit(this.unit);
         let hexLocation = this.unit.hexLocation;
-        this.game.appendUnit(replacement, hexLocation);
+        replacement.appendToMap(hexLocation, CBMoveType.BACKWARD);
         replacement.rotate(this.unit.angle);
         replacement.markAsBeingPlayed();
         for (let replacedUnit of replaced) {
-            this.game.deleteUnit(replacedUnit);
+            replacedUnit.deleteFromMap();
         }
         this.markAsFinished();
     }

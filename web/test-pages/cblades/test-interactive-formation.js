@@ -10,7 +10,7 @@ import {
 } from "../../jslib/draw.js";
 import {
     assertDirectives, assertNoMoreDirectives,
-    getDirectives, getLayers,
+    getLayers,
     loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
 } from "../mocks.js";
@@ -40,9 +40,11 @@ import {
     unregisterInteractiveFormation
 } from "../../jslib/cblades/interactive-formation.js";
 import {
-    CBHexSideId,
-    CBMoveType
+    CBHexSideId
 } from "../../jslib/cblades/map.js";
+import {
+    CBMoveType
+} from "../../jslib/cblades/game.js";
 
 describe("Interactive Formation", ()=> {
 

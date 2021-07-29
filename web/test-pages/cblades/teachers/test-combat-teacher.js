@@ -5,10 +5,10 @@ import {
 } from "../../../jstest/jtest.js";
 import {
     CBHex,
-    CBHexSideId, CBMap, CBMoveType
+    CBHexSideId, CBMap
 } from "../../../jslib/cblades/map.js";
 import {
-    CBGame, CBAbstractPlayer
+    CBGame, CBAbstractPlayer, CBMoveType
 } from "../../../jslib/cblades/game.js";
 import {
     CBCharge,

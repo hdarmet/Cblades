@@ -15,11 +15,10 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
-    CBHexSideId,
-    CBMap, CBMoveMode
+    CBHexSideId, CBMap
 } from "../../jslib/cblades/map.js";
 import {
-    CBGame, CBAbstractPlayer, CBCounter
+    CBGame, CBAbstractPlayer, CBCounter, CBMoveMode
 } from "../../jslib/cblades/game.js";
 import {
     CBCharacter, CBCharge, CBCommandProfile, CBFormation, CBLackOfMunitions, CBMoralProfile,
@@ -82,12 +81,12 @@ describe("Arbitrator", ()=> {
         wing1.setRetreatZone(map.getWestZone());
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
         let unit11 = new CBTroop(unitType1, wing1);
-        game.addUnit(unit11, map.getHex(5, 8));
+        unit11.addToMap(map.getHex(5, 8));
         let unit12 = new CBTroop(unitType1, wing1);
-        game.addUnit(unit12, map.getHex(5, 7));
+        unit12.addToMap(map.getHex(5, 7));
         let leaderType1 = new CBTestUnitType("leader1", ["./../images/units/misc/leader1.png", "./../images/units/misc/leader1b.png"])
         let leader11 = new CBCharacter(leaderType1, wing1);
-        game.addUnit(leader11, map.getHex(6, 7));
+        leader11.addToMap(map.getHex(6, 7));
         game.start();
         loadAllImages();
         return {game, arbitrator, map, player1, wing1, unit11, unit12, leader11};
@@ -101,12 +100,12 @@ describe("Arbitrator", ()=> {
         //wing2.setRetreatZone(map.getEastZone());
         let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
         let unit21 = new CBTroop(unitType2, wing2);
-        game.addUnit(unit21, map.getHex(7, 8));
+        unit21.addToMap(map.getHex(7, 8));
         let unit22 = new CBTroop(unitType2, wing2);
-        game.addUnit(unit22, map.getHex(7, 7));
+        unit22.addToMap(map.getHex(7, 7));
         let leaderType2 = new CBTestUnitType("leader2", ["./../images/units/misc/leader2.png", "./../images/units/misc/leader2b.png"])
         let leader21 = new CBCharacter(leaderType2, wing2);
-        game.addUnit(leader21, map.getHex(8, 7));
+        leader21.addToMap(map.getHex(8, 7));
         loadAllImages();
         return {game, arbitrator, map, player1, wing1, wing2, unit11, unit12, leader11, player2, unit21, unit22, leader21};
     }
@@ -129,18 +128,18 @@ describe("Arbitrator", ()=> {
                 "./../images/units/misc/unit1L1.png", "./../images/units/misc/unit1L1b.png"
             ])
         let formation11 = new CBFormation(unitType1, wing1);
-        game.addUnit(formation11, new CBHexSideId(map.getHex(5, 8), map.getHex(6, 8)));
+        formation11.addToMap(new CBHexSideId(map.getHex(5, 8), map.getHex(6, 8)));
         formation11.angle = 30;
         let unit11 = new CBTroop(unitType1, wing1);
-        game.addUnit(unit11, map.getHex(5, 9));
+        unit11.addToMap(map.getHex(5, 9));
         unit11.angle = 30;
         let unit12 = new CBTroop(unitType1, wing1);
-        game.addUnit(unit12, map.getHex(6, 9));
+        unit12.addToMap(map.getHex(6, 9));
         unit12.angle = 30;
         let leaderType1 = new CBTestUnitType("leader1", [
             "./../images/units/misc/leader1.png", "./../images/units/misc/leader1b.png"])
         let leader11 = new CBCharacter(leaderType1, wing1);
-        game.addUnit(leader11, map.getHex(6, 7));
+        leader11.addToMap(map.getHex(6, 7));
         game.start();
         loadAllImages();
         return {game, arbitrator, map, player1, wing1, formation11, unit11, unit12, leader11};
@@ -154,12 +153,12 @@ describe("Arbitrator", ()=> {
         //wing2.setRetreatZone(map.getEastZone());
         let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
         let unit21 = new CBTroop(unitType2, wing2);
-        game.addUnit(unit21, map.getHex(7, 8));
+        unit21.addToMap(map.getHex(7, 8));
         let unit22 = new CBTroop(unitType2, wing2);
-        game.addUnit(unit22, map.getHex(7, 7));
+        unit22.addToMap(map.getHex(7, 7));
         let leaderType2 = new CBTestUnitType("leader2", ["./../images/units/misc/leader2.png", "./../images/units/misc/leader2b.png"])
         let leader21 = new CBCharacter(leaderType2, wing2);
-        game.addUnit(leader21, map.getHex(8, 7));
+        leader21.addToMap(map.getHex(8, 7));
         loadAllImages();
         return {game, arbitrator, map, player1, wing1, wing2, formation11, unit11, unit12, leader11, player2, unit21, unit22, leader21};
     }

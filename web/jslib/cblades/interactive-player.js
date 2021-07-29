@@ -40,7 +40,7 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
     _doDisruptChecking(unit, processing, cancellable) {
         if (this.game.arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit)) {
             this.checkIfAUnitLoseCohesion(unit, () => {
-                this._selectAndFocusUnit(unit);
+                this._selectAndFocusCounter(unit);
                 Memento.clear();
                 processing();
             }, cancellable);
@@ -53,7 +53,7 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
     _doRoutChecking(unit, processing, cancellable) {
         if (this.game.arbitrator.doesARoutedUnitHaveNonRoutedNeighbors(unit)) {
             this._checkIfNeighborsLoseCohesion(unit, unit.hexLocation, () => {
-                this._selectAndFocusUnit(unit);
+                this._selectAndFocusCounter(unit);
                 Memento.clear();
                 this._doDisruptChecking(unit, processing, false);
             }, cancellable);
@@ -91,7 +91,7 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
             this.checkDefenderEngagement(unit, unit.viewportLocation, () => {
                 let hexLocation = unit.hexLocation;
                 if (unit.isOnBoard()) {
-                    this._selectAndFocusUnit(unit);
+                    this._selectAndFocusCounter(unit);
                     Memento.clear();
                     this._doRoutChecking(unit, processing, false);
                 }
@@ -106,9 +106,9 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         this._doEngagementChecking(unit, processing);
     }
 
-    _selectAndFocusUnit(unit) {
-        this.game.setSelectedUnit(unit);
-        this.game.setFocusedUnit(unit);
+    _selectAndFocusCounter(unit) {
+        this.game.setSelectedCounter(unit);
+        this.game.setFocusedCounter(unit);
     }
 
     startActivation(unit, action) {
@@ -118,11 +118,13 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         this._doPreliminaryActions(unit, ()=> super.startActivation(unit, action));
     }
 
-    launchUnitAction(unit, event) {
-        if (!unit.isDestroyed()) {
-            this.openActionMenu(unit,
-                new Point2D(event.offsetX, event.offsetY),
-                this.game.arbitrator.getAllowedActions(unit));
+    launchCounterAction(counter, event) {
+        if (counter.unitNature) {
+            if (!counter.isDestroyed()) {
+                this.openActionMenu(counter,
+                    new Point2D(event.offsetX, event.offsetY),
+                    this.game.arbitrator.getAllowedActions(counter));
+            }
         }
     }
 
@@ -147,13 +149,13 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         }
     }
 
-    canFinishUnit(unit) {
-        return !this.game.arbitrator.canPlayUnit(unit);
+    canFinishCounter(counter) {
+        return !this.game.arbitrator.canPlayUnit(counter);
     }
 
     finishTurn(animation) {
-        let unit = this.game.selectedUnit;
-        this.afterActivation(unit, ()=>{
+        let counter = this.game.selectedCounter;
+        this.afterActivation(counter, ()=>{
             super.finishTurn(animation);
         });
     }

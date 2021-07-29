@@ -304,6 +304,7 @@ describe("Board", ()=> {
             let board = new DBoard(new Dimension2D(1000, 500), new Dimension2D(500, 250), widgetsLevel);
             let [widgetsLayer] = getLayers(board, "widgets");
         when:
+            widgetsLevel.setTransform(Matrix2D.translate(new Point2D(55, 65)));
             var image = DImage.getImage("../images/widget.png");
             image._root.onload();
             var artifact = new DImageArtifact("widgets", image, new Point2D(0, 0), new Dimension2D(50, 50));;
@@ -313,7 +314,7 @@ describe("Board", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
-                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "setTransform(1, 0, 0, 1, 55, 65)",
                     "drawImage(../images/widget.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
@@ -1604,6 +1605,10 @@ describe("Board", ()=> {
             assert(board.zoomFactor).equalsTo(0.5);
             board.zoom(new Point2D(250, 150), 0.2); // Try to zoom in above limits
         then:
+            assert(board.onTop).isTrue();
+            assert(board.onBottom).isTrue();
+            assert(board.onLeft).isTrue();
+            assert(board.onRight).isTrue();
             assert(board.zoomFactor).equalsTo(0.5);
         when:
             board.zoom(new Point2D(250, 150), 12);
@@ -1613,11 +1618,19 @@ describe("Board", ()=> {
             board.zoom(new Point2D(250, 150), 1);
             board.center(new Point2D(-499, -299)); // Try to center next left/top border
         then:
+            assert(board.onTop).isTrue();
+            assert(board.onBottom).isFalse();
+            assert(board.onLeft).isTrue();
+            assert(board.onRight).isFalse();
             assert(board.location.x).equalsTo(-250);
             assert(board.location.y).equalsTo(-150);
         when:
             board.center(new Point2D(499, 299)); // Try to center next right/bottom border
         then:
+            assert(board.onTop).isFalse();
+            assert(board.onBottom).isTrue();
+            assert(board.onLeft).isFalse();
+            assert(board.onRight).isTrue();
             assert(board.location.x).equalsTo(250);
             assert(board.location.y).equalsTo(150);
     });

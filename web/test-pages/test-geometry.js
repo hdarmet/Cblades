@@ -14,7 +14,6 @@ import {
     diffAngle,
     sumAngle,
     moyAngle,
-    reverseAngle,
     canonizeAngle,
     invertAngle, isAngleBetween
 } from "../jslib/geometry.js";
@@ -37,10 +36,6 @@ describe("Geometry", ()=> {
         assert(diffAngle(300, 0)).equalsTo(60);
         assert(diffAngle(30, 90)).equalsTo(60);
         assert(diffAngle(90, 30)).equalsTo(-60);
-        assert(reverseAngle(0)).equalsTo(180);
-        assert(reverseAngle(180)).equalsTo(0);
-        assert(reverseAngle(60)).equalsTo(240);
-        assert(reverseAngle(240)).equalsTo(60);
         assert(canonizeAngle(60)).equalsTo(60);
         assert(canonizeAngle(-60)).equalsTo(300);
         assert(sumAngle(30, 100)).equalsTo(130);

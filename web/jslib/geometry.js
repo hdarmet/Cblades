@@ -39,13 +39,6 @@ export function degree(rad) {
 }
 
 /**
- * Compute the reverse of an angle
- */
-export function reverseAngle(angle) {
-    return (angle + 180)%360;
-}
-
-/**
  * Set the angle value between
  */
 export function canonizeAngle(angle) {

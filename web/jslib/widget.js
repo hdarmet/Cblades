@@ -735,7 +735,7 @@ export class DMultiImagesIndicator extends DIndicator {
 
 export class DRotatableIndicator extends DIndicator {
 
-    constructor(paths, dimension, angle) {
+    constructor(paths, dimension, angle=0) {
         super(paths, dimension);
         this.artifact.pangle = angle;
     }
@@ -1359,21 +1359,21 @@ export class DSwipe extends DElement {
 
     swipeUp() {
         this._artifact.swipeUp();
-        this._swipe = 0;
+        this._swipe = DSwipe.SWIPE_UP;
         this._finished = true;
         return this;
     }
 
     noSwipe() {
         this._artifact.noSwipe();
-        this._swipe = 1;
+        this._swipe = DSwipe.NO_SWIPE;
         this._finished = true;
         return this;
     }
 
     swipeDown() {
         this._artifact.swipeDown();
-        this._swipe = 2;
+        this._swipe = DSwipe.SWIPE_DOWN;
         this._finished = true;
         return this;
     }
@@ -1407,6 +1407,9 @@ export class DSwipe extends DElement {
         return true;
     }
 
+    static SWIPE_UP = 0;
+    static NO_SWIPE = 1;
+    static SWIPE_DOWN = 2;
 }
 
 class MessageImageArtifact extends DImageArtifact {

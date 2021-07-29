@@ -7,10 +7,10 @@ import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
-    CBHexSideId, CBMoveType
+    CBHexSideId
 } from "./map.js";
 import {
-    CBAction, CBActionActuator, CBActuatorImageTrigger
+    CBAction, CBActionActuator, CBActuatorImageTrigger, CBMoveType
 } from "./game.js";
 import {
     Dimension2D, Point2D, sumAngle
@@ -98,11 +98,11 @@ export class InteractiveCreateFormationAction extends CBAction {
         this.game.closeActuators();
         let {replacement, replaced} = this.game.arbitrator.createFormation(this.unit, hexId);
         let hexLocation = this.unit.hexLocation;
-        this.game.appendUnit(replacement, new CBHexSideId(hexLocation, hexId));
+        replacement.appendToMap(new CBHexSideId(hexLocation, hexId), CBMoveType.BACKWARD);
         replacement.rotate(replaced[0].angle);
         replacement.markAsBeingPlayed();
         for (let troop of replaced) {
-            this.game.deleteUnit(troop);
+            troop.deleteFromMap();
             troop.move(null, 0);
         }
         this.markAsFinished();
@@ -173,7 +173,7 @@ export class InteractiveIncludeTroopsAction extends CBAction {
         this.unit.fixLackOfMunitionsLevel(lackOfMunitions);
         this.unit.markAsBeingPlayed();
         for (let removedUnit of removed) {
-            this.game.deleteUnit(removedUnit);
+            removedUnit.deleteFromMap();
         }
         this.markAsFinished();
     }

@@ -4,10 +4,10 @@ import {
     loadAllImages
 } from "../mocks.js";
 import {
-    CBHexSideId, CBMap, CBMoveMode
+    CBHexSideId, CBMap
 } from "../../jslib/cblades/map.js";
 import {
-    CBGame
+    CBGame, CBMoveMode
 } from "../../jslib/cblades/game.js";
 import {
     CBArbitrator
@@ -26,9 +26,12 @@ import {
     CBWeaponProfile,
     CBWing
 } from "../../jslib/cblades/unit.js";
+import {
+    WeatherMixin
+} from "../../jslib/cblades/weather.js";
 
 export function createBaseGame() {
-    let game = new CBGame();
+    let game = new (WeatherMixin(CBGame))();
     let arbitrator = new CBTestArbitrator();
     game.setArbitrator(arbitrator);
     var map = new CBMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
@@ -91,21 +94,21 @@ export function setWeaponBonuses(unitType, step, attackBonus, defenseBonus, fire
 export function createTroop(game, map, unitType, wing, angle, x, y) {
     let troop = new CBTroop(unitType, wing);
     troop.angle = angle;
-    game.addUnit(troop, map.getHex(x, y));
+    troop.addToMap(map.getHex(x, y));
     return troop;
 }
 
 export function createFormation(game, map, unitType, wing, angle, x1, y1, x2, y2) {
     let formation = new CBFormation(unitType, wing);
     formation.angle = angle;
-    game.addUnit(formation, new CBHexSideId(map.getHex(x1, y1), map.getHex(x2, y2)));
+    formation.addToMap(new CBHexSideId(map.getHex(x1, y1), map.getHex(x2, y2)));
     return formation;
 }
 
 export function createCharacter(game, map, unitType, wing, angle, x, y) {
     let leader = new CBCharacter(unitType, wing);
     leader.angle = angle;
-    game.addUnit(leader, map.getHex(x, y));
+    leader.addToMap(map.getHex(x, y));
     return leader;
 }
 

@@ -86,7 +86,7 @@ export class InteractiveAdvanceAction extends CBAction {
     }
 
     play() {
-        this.game.setFocusedUnit(this.unit);
+        this.game.setFocusedCounter(this.unit);
         this._createAdvanceActuator();
     }
 
@@ -127,7 +127,7 @@ export class InteractiveRetreatAction extends CBAction {
 
     play() {
         this.unit.markAsCharging(CBCharge.NONE);
-        this.game.setFocusedUnit(this.unit);
+        this.game.setFocusedCounter(this.unit);
         this._createRetreatActuator();
     }
 

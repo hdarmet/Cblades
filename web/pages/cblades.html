@@ -17,7 +17,10 @@
         CBGame
     } from "../jslib/cblades/game.js";
     import {
-        CBTroop, CBWing, CBCharacter, CBFormation, CBUnitType
+        WeatherMixin
+    } from "../jslib/cblades/weather.js";
+    import {
+        CBTroop, CBWing, CBCharacter, CBFormation
     } from "../jslib/cblades/unit.js";
     import {
         CBInteractivePlayer
@@ -75,7 +78,7 @@
     registerInteractiveMiscellaneous();
     registerEditor();
 
-    let game = new CBGame();
+    let game = new (WeatherMixin(CBGame))();
     let map = new CBMap([
         {path:"./../images/maps/map1.png", col:0, row:0, invert:true},
         {path:"./../images/maps/map4.png", col:1, row:0}
@@ -101,10 +104,11 @@
     let counter12 = new CBTroop(GoblinWolfRider, wing1);
     counter12.lossSteps = 1;
     let counter13 = new CBTroop(GoblinSkirmisher, wing1);
-    game.addUnit(character11, map.getHex(4, 11)); // 4, 11
-    game.addUnit(counter11, map.getHex(3, 10));
-    game.addUnit(counter12, map.getHex(6, 10));
-    game.addUnit(counter13, map.getHex(8, 10));
+    character11.addToMap(map.getHex(4, 11));
+    counter11.addToMap(map.getHex(3, 10));
+    counter12.addToMap(map.getHex(6, 10));
+    counter13.addToMap(map.getHex(8, 10));
+
     new CBWingTiredness(wing1).registerOnGame(game);
     new CBWingMoral(wing1).registerOnGame(game);
 
@@ -126,12 +130,12 @@
     counter24.angle = 210;
     let counter25 = new CBFormation(RoughneckCrossbowman, wing2, 2);
     counter25.angle = 210;
-    game.addUnit(counter23, new CBHexSideId( map.getHex(9, 6),  map.getHex(10, 6)));
-    game.addUnit(counter24, new CBHexSideId( map.getHex(9, 5),  map.getHex(10, 5)));
-    game.addUnit(counter25, new CBHexSideId( map.getHex(11, 7),  map.getHex(12, 7)));
-    game.addUnit(character21, map.getHex(8, 6));
-    game.addUnit(counter21, map.getHex(7, 7));
-    game.addUnit(counter22, map.getHex(10, 7));
+    counter23.addToMap(new CBHexSideId( map.getHex(9, 6),  map.getHex(10, 6)));
+    counter24.addToMap(new CBHexSideId( map.getHex(9, 5),  map.getHex(10, 5)));
+    counter25.addToMap(new CBHexSideId( map.getHex(11, 7),  map.getHex(12, 7)));
+    character21.addToMap(map.getHex(8, 6));
+    counter21.addToMap(map.getHex(7, 7));
+    counter22.addToMap(map.getHex(10, 7));
     new CBWingTiredness(wing2).registerOnGame(game);
     new CBWingMoral(wing2).registerOnGame(game);
 

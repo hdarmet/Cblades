@@ -39,10 +39,10 @@ describe("Miscellaneous", ()=> {
             var {game, map} = createTinyGame();
             var [groundLayer] = getLayers(game.board,"hex-0");
             var hexId = map.getHex(7,8);
-        when:
-            var fireStart = new CBFireStart();
-            resetDirectives(groundLayer);
-            fireStart.addToMap(hexId);
+        when:            var fireStart = new CBFireStart();
+        resetDirectives(groundLayer);
+        fireStart.addToMap(hexId);
+
             paint(game);
             loadAllImages();
         then:

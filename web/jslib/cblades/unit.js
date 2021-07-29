@@ -11,10 +11,8 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
+    CBCounterImageArtifact, CBAbstractUnit, CBGame, RetractableArtifactMixin, UnitImageArtifact, CBActivableMixin,
     CBMoveType
-} from "./map.js";
-import {
-    CBCounterImageArtifact, CBAbstractUnit, CBGame, RetractableArtifactMixin, UnitImageArtifact, CBActivableMixin
 } from "./game.js";
 
 export let CBMovement = {
@@ -875,9 +873,9 @@ export class CBUnit extends CBAbstractUnit {
 
     _changeLocation(hexLocation, moveType) {
         Memento.register(this);
-        this._hexLocation._deleteUnit(this);
+        this._hexLocation._deleteCounter(this);
         this._hexLocation = hexLocation;
-        hexLocation._appendUnit(this, moveType);
+        moveType===CBMoveType.FORWARD ? hexLocation._appendCounterOnBottom(this) : hexLocation._appendCounterOnTop(this);
         this._element.move(hexLocation.location);
         for (let carried of this._carried) {
             carried._move(hexLocation);
@@ -1325,13 +1323,13 @@ export class CBFormation extends CBUnit {
     breakFormation(replacementOnFromHex, replacementOnToHex) {
         let hexLocation = this.hexLocation;
         let game = this.game;
-        game.deleteUnit(this);
+        this.deleteFromMap();
         this.move(null, 0);
         for (let replacement of replacementOnFromHex) {
-            game.appendUnit(replacement, hexLocation.fromHex);
+            replacement.appendToMap(hexLocation.fromHex, CBMoveType.BACKWARD);
         }
         for (let replacement of replacementOnToHex) {
-            game.appendUnit(replacement, hexLocation.toHex);
+            replacement.appendToMap(hexLocation.toHex, CBMoveType.BACKWARD);
         }
     }
 

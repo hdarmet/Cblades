@@ -45,7 +45,7 @@ import {
 } from "../../jslib/cblades/unit.js";
 import {
     CBMoveMode
-} from "../../jslib/cblades/map.js";
+} from "../../jslib/cblades/game.js";
 
 describe("Interactive Movement", ()=> {
 
@@ -189,7 +189,7 @@ describe("Interactive Movement", ()=> {
             let orientationActuator = getOrientationActuator(game);
             loadAllImages();
         then:
-            assert(game.selectedUnit).equalsTo(unit);
+            assert(game.selectedCounter).equalsTo(unit);
             assert(moveActuator).isDefined();
             assert(moveActuator.getTrigger(300)).isDefined();
             assert(moveActuator.getTrigger(0)).isDefined();
@@ -255,7 +255,7 @@ describe("Interactive Movement", ()=> {
             let moveActuator = getMoveActuator(game);
             let orientationActuator = getOrientationActuator(game);
         then:
-            assert(game.selectedUnit).equalsTo(unit);
+            assert(game.selectedCounter).equalsTo(unit);
             assert(moveActuator).isDefined();
             assert(moveActuator.getTrigger(300)).isNotDefined();
             assert(moveActuator.getTrigger(0)).isDefined();
@@ -480,7 +480,7 @@ describe("Interactive Movement", ()=> {
             let orientationActuator = getOrientationActuator(game);
             loadAllImages();
         then:
-            assert(game.selectedUnit).equalsTo(formation);
+            assert(game.selectedCounter).equalsTo(formation);
             assert(moveActuator).isDefined();
             assert(moveActuator.getTurnTrigger(60)).isDefined();
             assert(moveActuator.getTurnTrigger(120)).isDefined();
@@ -850,7 +850,7 @@ describe("Interactive Movement", ()=> {
         unit1.move(map.getHex(2, 5));
         unit2.move(map.getHex(2, 3));
         unit2.rotate(180);
-        unit1.player.selectUnit(unit1, dummyEvent);
+        unit1.player.selectCounter(unit1, dummyEvent);
         map.game.closePopup();
         moveUnitByAction(unit1, map.getHex(2, 4));
         loadAllImages();

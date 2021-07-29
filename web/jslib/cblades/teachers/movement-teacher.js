@@ -5,7 +5,7 @@ import {
     CBMovement, CBMoveProfile
 } from "../unit.js";
 import {
-    diffAngle, invertAngle, reverseAngle, sumAngle
+    diffAngle, invertAngle, sumAngle
 } from "../../geometry.js";
 import {
     CBHexId,
@@ -235,7 +235,7 @@ export class CBMovementTeacher {
             let angle = parseInt(sangle);
             if (!(angle % 60)) {
                 let opportunity = opportunities[angle];
-                opportunity.hex = unit.hexLocation.getFaceHex(reverseAngle(unit.angle));
+                opportunity.hex = unit.hexLocation.getFaceHex(invertAngle(unit.angle));
                 let cost = this.getFormationTurnCost(unit, angle);
                 if (predicate(angle) &&
                     this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, true)) {

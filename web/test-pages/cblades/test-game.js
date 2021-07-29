@@ -17,9 +17,12 @@ import {
 } from "../../jslib/mechanisms.js";
 import {
     CBMap,
-    CBHexSideId,
-    CBMoveType, CBHexId
+    CBHexSideId
 } from "../../jslib/cblades/map.js";
+import {
+    CBMoveType
+} from "../../jslib/cblades/game.js";
+
 import {
     CBGame,
     CBActionActuator,
@@ -208,7 +211,7 @@ function createTinyGame() {
     var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
     game.setMap(map);
     let unit = new CBTestUnit(player, ["./../images/units/misc/unit.png"]);
-    game.addUnit(unit, map.getHex(5, 8));
+    unit.addToMap(map.getHex(5, 8));
     game.start();
     loadAllImages();
     return { game, arbitrator, player, map, unit };
@@ -527,19 +530,19 @@ describe("Game", ()=> {
     it("Checks that a unit selection closes the actuators", () => {
         given:
             var { game, unit1, unit2, player } = create2UnitsTinyGame();
-            player.launchUnitAction = function(unit, event) {};
+            player.launchCounterAction = function(unit, event) {};
             clickOnCounter(game, unit1);
             var action = new CBAction(game, unit1);
             var actuator = new CBTestActuator(action);
             game.openActuator(actuator);
             loadAllImages();
         then:
-            assert(game.selectedUnit).equalsTo(unit1);
+            assert(game.selectedCounter).equalsTo(unit1);
             assert(getTestActuator(game)).isDefined();
         when:
             clickOnCounter(game, unit2);
         then:
-            assert(game.selectedUnit).equalsTo(unit2);
+            assert(game.selectedCounter).equalsTo(unit2);
             assert(getTestActuator(game)).isNotDefined();
     });
 
@@ -892,6 +895,7 @@ describe("Game", ()=> {
         mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
     }
 
+    /*
     it("Checks counter basic appearance and features", () => {
         given:
             var { game } = prepareTinyGame();
@@ -942,6 +946,7 @@ describe("Game", ()=> {
         when:
             mouseClickOnCounter(game, counter); // checks that tests does not crash
     });
+*/
 
     class CBTestPlayable extends CBPlayable {
         constructor(unit, layer, ...args) {
@@ -1119,78 +1124,6 @@ describe("Game", ()=> {
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
             assertNoMoreDirectives(unitsLayer);
-    });
-
-    it("Checks unit addition and removing from game and map", () => {
-        given:
-            var { game, map } = prepareTinyGame();
-            var player = new CBAbstractPlayer();
-            game.addPlayer(player);
-            let unit = new CBTestUnit(player, ["./../images/units/misc/unit.png"]);
-            game.start();
-            loadAllImages();
-            var [unitsLayer] = getLayers(game.board, "units-0");
-            var hexId = map.getHex(4, 5);
-        when:
-            game.addUnit(unit, hexId);
-        then:
-            assert(hexId.units).arrayEqualsTo([unit]);
-            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([unit]);
-            assert(game.counters).setEqualsTo(new Set([unit]));
-            assert(unit.hexLocation).equalsTo(hexId);
-        when:
-            game.removeUnit(unit);
-        then:
-            assert(hexId.units).arrayEqualsTo([]);
-            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([]);
-            assert(game.counters).setEqualsTo(new Set([]));
-            assert(unit.hexLocation).isNotDefined();
-        when:
-            game.appendUnit(unit, hexId);
-        then:
-            assert(hexId.units).arrayEqualsTo([unit]);
-            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([unit]);
-            assert(game.counters).setEqualsTo(new Set([unit]));
-            assert(unit.hexLocation).equalsTo(hexId);
-        when:
-            Memento.open();
-            game.deleteUnit(unit, hexId);
-        then:
-            assert(hexId.units).arrayEqualsTo([]);
-            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([]);
-            assert(game.counters).setEqualsTo(new Set());
-            assert(unit.hexLocation).isNotDefined();
-        when:
-            Memento.undo();
-        then:
-            assert(hexId.units).arrayEqualsTo([unit]);
-            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([unit]);
-            assert(game.counters).setEqualsTo(new Set([unit]));
-            assert(unit.hexLocation).equalsTo(hexId);
-        when:
-            Memento.undo();
-        then:
-            assert(hexId.units).arrayEqualsTo([]);
-            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([]);
-            assert(game.counters).setEqualsTo(new Set());
-            assert(unit.hexLocation).isNotDefined();
-    });
-
-    it("Checks unit list from game", () => {
-        given:
-            var { game, map } = prepareTinyGame();
-            var player = new CBAbstractPlayer();
-            game.addPlayer(player);
-            let unit1 = new CBTestUnit(player, ["./../images/units/misc/unit.png"]);
-            let unit2 = new CBTestUnit(player, ["./../images/units/misc/unit.png"]);
-            game.start();
-        when:
-            game.addUnit(unit1, map.getHex(4, 5));
-            game.addUnit(unit2, map.getHex(5, 4));
-            let counter = new CBCounter("ground", ["./../images/units/misc/counter.png"], new Dimension2D(50, 50));
-            game.addCounter(counter, new Point2D(100, 200));
-        then:
-            assert(game.units).arrayEqualsTo([unit1, unit2]);
     });
 
     it("Checks playable addition and removing on a Hex (not undoable)", () => {
@@ -1381,7 +1314,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
-            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(game.counters).arrayEqualsTo([unit]);
             assert(unit.isOnBoard()).equalsTo(true);
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(333.3333, 111.327)));
@@ -1392,7 +1325,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([]);
-            assert(game.counters).setEqualsTo(new Set());
+            assert(game.counters).arrayEqualsTo([]);
             assert(unit.isOnBoard()).equalsTo(false);
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
             ]);
@@ -1414,7 +1347,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
-            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(game.counters).arrayEqualsTo([unit]);
             assert(unit.isOnBoard()).equalsTo(true);
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(333.3333, 111.327)));
@@ -1426,7 +1359,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([]);
-            assert(game.counters).setEqualsTo(new Set());
+            assert(game.counters).arrayEqualsTo([]);
             assert(unit.isOnBoard()).equalsTo(false);
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
             ]);
@@ -1436,7 +1369,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
-            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(game.counters).arrayEqualsTo([unit]);
             assert(unit.isOnBoard()).equalsTo(true);
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(333.3333, 111.327)));
@@ -1447,7 +1380,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([]);
-            assert(game.counters).setEqualsTo(new Set());
+            assert(game.counters).arrayEqualsTo([]);
             assert(unit.isOnBoard()).equalsTo(false);
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
             ]);
@@ -1473,7 +1406,7 @@ describe("Game", ()=> {
         then:
             assert(hexId1.units).arrayEqualsTo([unit]);
             assert(hexId2.units).arrayEqualsTo([unit]);
-            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(game.counters).arrayEqualsTo([unit]);
             assert(unit.isOnBoard()).equalsTo(true);
             assertClearDirectives(formationsLayer);
             assertDirectives(formationsLayer, showFormation("misc/formation", zoomAndRotate90(333.3333, 159.4391)));
@@ -1485,7 +1418,7 @@ describe("Game", ()=> {
         then:
             assert(hexId1.units).arrayEqualsTo([]);
             assert(hexId2.units).arrayEqualsTo([]);
-            assert(game.counters).setEqualsTo(new Set());
+            assert(game.counters).arrayEqualsTo([]);
             assert(unit.isOnBoard()).equalsTo(false);
             assertNoMoreDirectives(formationsLayer, 4);
     });
@@ -1510,7 +1443,7 @@ describe("Game", ()=> {
         then:
             assert(hexId1.units).arrayEqualsTo([unit]);
             assert(hexId2.units).arrayEqualsTo([unit]);
-            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(game.counters).arrayEqualsTo([unit]);
             assert(unit.isOnBoard()).equalsTo(true);
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showFormation("misc/formation", zoomAndRotate90(333.3333, 159.4391)));
@@ -1523,7 +1456,7 @@ describe("Game", ()=> {
         then:
             assert(hexId1.units).arrayEqualsTo([]);
             assert(hexId2.units).arrayEqualsTo([]);
-            assert(game.counters).setEqualsTo(new Set());
+            assert(game.counters).arrayEqualsTo([]);
             assert(unit.isOnBoard()).equalsTo(false);
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
             ]);
@@ -1534,7 +1467,7 @@ describe("Game", ()=> {
         then:
             assert(hexId1.units).arrayEqualsTo([unit]);
             assert(hexId2.units).arrayEqualsTo([unit]);
-            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(game.counters).arrayEqualsTo([unit]);
             assert(unit.isOnBoard()).equalsTo(true);
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showFormation("misc/formation", zoomAndRotate90(333.3333, 159.4391)));
@@ -1546,7 +1479,7 @@ describe("Game", ()=> {
         then:
             assert(hexId1.units).arrayEqualsTo([]);
             assert(hexId2.units).arrayEqualsTo([]);
-            assert(game.counters).setEqualsTo(new Set());
+            assert(game.counters).arrayEqualsTo([]);
             assert(unit.isOnBoard()).equalsTo(false);
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
             ]);
@@ -1568,7 +1501,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
-            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(game.counters).arrayEqualsTo([unit]);
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(333.3333, 111.327)));
             assertNoMoreDirectives(unitsLayer);
@@ -1579,7 +1512,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([]);
-            assert(game.counters).setEqualsTo(new Set([unit]));
+            assert(game.counters).arrayEqualsTo([unit]);
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(333.3333, 207.5513)));
             assertNoMoreDirectives(unitsLayer);
@@ -1588,63 +1521,8 @@ describe("Game", ()=> {
             unit.hexLocation = null;
             repaint(game);
         then:
-            assert(game.counters).setEqualsTo(new Set());
+            assert(game.counters).arrayEqualsTo([]);
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
-    });
-
-    it("Checks unit addition and removing from game and map", () => {
-        given:
-            var { game, map } = prepareTinyGame();
-            var player = new CBAbstractPlayer();
-            game.addPlayer(player);
-            let unit = new CBTestUnit(player, ["./../images/units/misc/unit.png"]);
-            game.start();
-            loadAllImages();
-            var [unitsLayer] = getLayers(game.board, "units-0");
-            var hexId = map.getHex(4, 5);
-        when:
-            game.addUnit(unit, hexId);
-        then:
-            assert(hexId.units).arrayEqualsTo([unit]);
-            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([unit]);
-            assert(game.counters).setEqualsTo(new Set([unit]));
-            assert(unit.hexLocation).equalsTo(hexId);
-        when:
-            game.removeUnit(unit);
-        then:
-            assert(hexId.units).arrayEqualsTo([]);
-            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([]);
-            assert(game.counters).setEqualsTo(new Set([]));
-            assert(unit.hexLocation).isNotDefined();
-        when:
-            game.appendUnit(unit, hexId);
-        then:
-            assert(hexId.units).arrayEqualsTo([unit]);
-            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([unit]);
-            assert(game.counters).setEqualsTo(new Set([unit]));
-            assert(unit.hexLocation).equalsTo(hexId);
-        when:
-            Memento.open();
-            game.deleteUnit(unit, hexId);
-        then:
-            assert(hexId.units).arrayEqualsTo([]);
-            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([]);
-            assert(game.counters).setEqualsTo(new Set());
-            assert(unit.hexLocation).isNotDefined();
-        when:
-            Memento.undo();
-        then:
-            assert(hexId.units).arrayEqualsTo([unit]);
-            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([unit]);
-            assert(game.counters).setEqualsTo(new Set([unit]));
-            assert(unit.hexLocation).equalsTo(hexId);
-        when:
-            Memento.undo();
-        then:
-            assert(hexId.units).arrayEqualsTo([]);
-            assert(map.getUnitsOnHex(hexId)).arrayEqualsTo([]);
-            assert(game.counters).setEqualsTo(new Set());
-            assert(unit.hexLocation).isNotDefined();
     });
 
     function create2UnitsTinyGame(start = true) {
@@ -1652,9 +1530,9 @@ describe("Game", ()=> {
         let player = new CBAbstractPlayer();
         game.addPlayer(player);
         let unit1 = new CBTestUnit(player,["./../images/units/misc/unit1.png"]);
-        game.addUnit(unit1, map.getHex(5, 6));
+        unit1.addToMap(map.getHex(5, 6));
         let unit2 = new CBTestUnit(player,["./../images/units/misc/unit2.png"]);
-        game.addUnit(unit2, map.getHex(5, 7));
+        unit2.addToMap(map.getHex(5, 7));
         if (start) {
             game.start();
             loadAllImages();
@@ -1666,39 +1544,39 @@ describe("Game", ()=> {
         given:
             var { game, unit1, unit2 } = create2UnitsTinyGame();
         then:
-            assert(game.canSelectUnit(unit1)).isTrue();
+            assert(game.canSelectCounter(unit1)).isTrue();
             assert(game.mayChangeSelection(unit1)).isTrue();
         when:
             unit1.select();
         then:
-            assert(game.selectedUnit).equalsTo(unit1);
-            assert(game.focusedUnit).isNotDefined();
+            assert(game.selectedCounter).equalsTo(unit1);
+            assert(game.focusedCounter).isNotDefined();
         when: // if an item is "focused", selection of another item is not possible
-            game.setFocusedUnit(unit1);
+            game.setFocusedCounter(unit1);
         then:
-            assert(game.canUnselectUnit(unit1)).isFalse();
-            assert(game.canSelectUnit(unit2)).isFalse();
+            assert(game.canUnselectCounter(unit1)).isFalse();
+            assert(game.canSelectCounter(unit2)).isFalse();
             assert(game.mayChangeSelection(unit2)).isFalse();
         when: // can select focused unit
-            game.setFocusedUnit(unit2);
+            game.setFocusedCounter(unit2);
         then:
-            assert(game.canUnselectUnit(unit1)).isFalse();
-            assert(game.canSelectUnit(unit2)).isTrue();
+            assert(game.canUnselectCounter(unit1)).isFalse();
+            assert(game.canSelectCounter(unit2)).isTrue();
             assert(game.mayChangeSelection(unit2)).isFalse();
         when: // No focused unit : selection is possible
-            game.setFocusedUnit();
+            game.setFocusedCounter();
         then:
-            assert(game.canUnselectUnit(unit1)).isTrue();
-            assert(game.canSelectUnit(unit2)).isTrue();
+            assert(game.canUnselectCounter(unit1)).isTrue();
+            assert(game.canSelectCounter(unit2)).isTrue();
             assert(game.mayChangeSelection(unit2)).isTrue();
         when:
             unit2.select();
         then:
-            assert(game.selectedUnit).equalsTo(unit2);
+            assert(game.selectedCounter).equalsTo(unit2);
         when:
             unit2.unselect();
         then:
-            assert(game.selectedUnit).isNotDefined();
+            assert(game.selectedCounter).isNotDefined();
     });
 
     it("Checks unit selection/deselection regarding actions", () => {
@@ -1710,32 +1588,32 @@ describe("Game", ()=> {
             unit1.select();
             unit1.launchAction(action);
         then:
-            assert(game.canUnselectUnit(unit1)).isTrue();
+            assert(game.canUnselectCounter(unit1)).isTrue();
         when:
             action.markAsStarted();
         then:
-            assert(game.canUnselectUnit(unit1)).isFalse();
+            assert(game.canUnselectCounter(unit1)).isFalse();
         when:
             action.markAsFinished();
         then:
-            assert(game.canUnselectUnit(unit1)).isTrue();
+            assert(game.canUnselectCounter(unit1)).isTrue();
     });
 
     it("Checks unit destruction", () => {
         given:
             var { game, unit1, unit2 } = create2UnitsTinyGame();
             unit1.select();
-            game.setFocusedUnit(unit1);
+            game.setFocusedCounter(unit1);
         then:
             assert(unit1.isOnBoard()).isTrue();
-            assert(game.focusedUnit).equalsTo(unit1);
-            assert(game.selectedUnit).equalsTo(unit1);
+            assert(game.focusedCounter).equalsTo(unit1);
+            assert(game.selectedCounter).equalsTo(unit1);
         when:
             unit1.destroy();
         then:
             assert(unit1.isOnBoard()).isFalse();
-            assert(game.focusedUnit).isNotDefined();
-            assert(game.selectedUnit).isNotDefined();
+            assert(game.focusedCounter).isNotDefined();
+            assert(game.selectedCounter).isNotDefined();
     });
 
     it("Checks basic processing of an action", () => {
@@ -1914,9 +1792,9 @@ describe("Game", ()=> {
             let counter1 = new CBTestUnit(player, ["./../images/units/misc/counter1.png"]);
             let counter2 = new CBTestUnit(player, ["./../images/units/misc/counter2.png"]);
             let counter3 = new CBTestUnit(player, ["./../images/units/misc/counter3.png"]);
-            game.addUnit(counter1, map.getHex(4, 5));
-            game.addUnit(counter2, map.getHex(4, 5));
-            game.addUnit(counter3, map.getHex(4, 5));
+            counter1.addToMap(map.getHex(4, 5));
+            counter2.addToMap(map.getHex(4, 5));
+            counter3.addToMap(map.getHex(4, 5));
             game.start();
             loadAllImages();
             var [unitsLayer0] = getLayers(game.board, "units-0");
@@ -2051,9 +1929,9 @@ describe("Game", ()=> {
             formation1.angle = 90;
             let counter2 = new CBTestUnit(player, ["./../images/units/misc/counter2.png"]);
             let counter3 = new CBTestUnit(player, ["./../images/units/misc/counter3.png"]);
-            game.addUnit(formation1, new CBHexSideId(map.getHex(4, 5), map.getHex(4, 6)));
-            game.addUnit(counter2, map.getHex(4, 5));
-            game.addUnit(counter3, map.getHex(4, 6));
+            formation1.addToMap(new CBHexSideId(map.getHex(4, 5), map.getHex(4, 6)));
+            counter2.addToMap(map.getHex(4, 5));
+            counter3.addToMap(map.getHex(4, 6));
             game.start();
             loadAllImages();
             var [formationsLayer0] = getLayers(game.board, "formations-0");
@@ -2096,14 +1974,14 @@ describe("Game", ()=> {
             var { game, player, unit } = createTinyGame();
             var [unitsLayer] = getLayers(game.board, "units-0");
             var actionLaunched = false;
-            player.launchUnitAction = function(unit, event) {
+            player.launchCounterAction = function(unit, event) {
                 actionLaunched = true;
             }
         when:
             resetDirectives(unitsLayer);
             mouseClickOnCounter(game, unit)
         then:
-            assert(game.selectedUnit).equalsTo(unit);
+            assert(game.selectedCounter).equalsTo(unit);
             assert(actionLaunched).isTrue();
             loadAllImages();
             assertClearDirectives(unitsLayer);
@@ -2113,7 +1991,7 @@ describe("Game", ()=> {
             actionLaunched = false;
             mouseClickOnCounter(game, unit);
         then:
-            assert(game.selectedUnit).equalsTo(unit);
+            assert(game.selectedCounter).equalsTo(unit);
             assert(actionLaunched).isTrue();
     });
 
@@ -2124,11 +2002,11 @@ describe("Game", ()=> {
         let player2 = new CBAbstractPlayer();
         game.addPlayer(player2);
         let unit0 = new CBTestUnit(player1, ["./../images/units/misc/unit0.png"]);
-        game.addUnit(unit0, map.getHex(5, 8));
+        unit0.addToMap(map.getHex(5, 8));
         let unit1 = new CBTestUnit(player1, ["./../images/units/misc/unit1.png"]);
-        game.addUnit(unit1, map.getHex(5, 8));
+        unit1.addToMap(map.getHex(5, 8));
         let unit2 = new CBTestUnit(player2, ["./../images/units/misc/unit2.png"]);
-        game.addUnit(unit2, map.getHex(5, 7));
+        unit2.addToMap(map.getHex(5, 7));
         game.start();
         loadAllImages();
         return {game, map, unit0, unit1, unit2, player1, player2};
@@ -2155,7 +2033,7 @@ describe("Game", ()=> {
             unit1.select();
             unit1.launchAction(new CBAction(unit1, dummyEvent));
         then:
-            assert(game.selectedUnit).equalsTo(unit1);
+            assert(game.selectedCounter).equalsTo(unit1);
         when:
             unit1.updatePlayed();
             assert(unit1.status).equalsTo("played");
@@ -2181,7 +2059,7 @@ describe("Game", ()=> {
         given:
             var {game, unit1} = create2PlayersTinyGame();
             game.setMenu();
-            game.setSelectedUnit(unit1);
+            game.setSelectedCounter(unit1);
             let action = new CBAction(game, unit1);
             action.isFinishable = ()=>false;
             unit1.launchAction(action);
@@ -2250,7 +2128,7 @@ describe("Game", ()=> {
     it("Checks played status of a unit when selection is changed or turn is changed", () => {
         given:
             var {game, player, unit1, unit2} = create2UnitsTinyGame();
-            player.launchUnitAction = function(unit, event) {
+            player.launchCounterAction = function(unit, event) {
                 unit.launchAction(new CBAction(game, unit));
             }
         when:

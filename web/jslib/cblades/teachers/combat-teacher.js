@@ -2,8 +2,11 @@
 
 import {
     CBHex, CBHexSideId,
-    CBMoveType, distanceFromHexToHex
+    distanceFromHexToHex
 } from "../map.js";
+import {
+    CBMoveType
+} from "../game.js";
 import {
     CBEngageSideMode
 } from "../unit.js";

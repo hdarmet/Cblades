@@ -1,5 +1,5 @@
 import {
-    CBAbstractArbitrator
+    CBAbstractArbitrator, CBMoveMode
 } from "./game.js";
 import {
     CBMapTeacher
@@ -28,9 +28,6 @@ import {
 import {
     CBOrderInstruction
 } from "./unit.js";
-import {
-    CBMoveMode
-} from "./map.js";
 
 export class CBArbitrator extends CBAbstractArbitrator{
 

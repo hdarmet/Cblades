@@ -2,7 +2,7 @@
 
 import {
     CBWeather, CBFog
-} from "../game.js";
+} from "../weather.js";
 import {
     sumAngle
 } from "../../geometry.js";
