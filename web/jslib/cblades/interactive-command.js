@@ -70,6 +70,10 @@ export class InteractiveTakeCommandAction extends CBAction {
         this._event = event;
     }
 
+    get unit() {
+        return this.playable;
+    }
+
     play() {
         this.unit.markAsCharging(CBCharge.NONE);
         this.game.closeActuators();
@@ -123,6 +127,10 @@ export class InteractiveDismissCommandAction extends CBAction {
         this._event = event;
     }
 
+    get unit() {
+        return this.playable;
+    }
+
     play() {
         this.unit.markAsCharging(CBCharge.NONE);
         this.game.closeActuators();
@@ -174,6 +182,10 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
     constructor(game, unit, event) {
         super(game, unit);
         this._event = event;
+    }
+
+    get unit() {
+        return this.playable;
     }
 
     play() {
@@ -230,6 +242,10 @@ export class InteractiveGiveOrdersAction extends CBAction {
     constructor(game, unit, event) {
         super(game, unit);
         this._event = event;
+    }
+
+    get unit() {
+        return this.playable;
     }
 
     play() {
@@ -455,7 +471,7 @@ export class CBOrderGivenActuator extends RetractableActuatorMixin(CBActionActua
     }
 
     onMouseClick(trigger, event) {
-        this.action.giveOrder(this.unit, trigger._unit, event);
+        this.action.giveOrder(this.playable, trigger._unit, event);
     }
 
 }

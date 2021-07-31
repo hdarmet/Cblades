@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    CBPlayable, CBCounterImageArtifact, RetractableArtifactMixin, RetractableCounterMixin, CBGame
+    CBCounter, CBPieceImageArtifact, RetractableArtifactMixin, RetractablePlayableMixin, CBGame
 } from "./game.js";
 import {
     Dimension2D
@@ -15,14 +15,14 @@ import {
     OptionMixin
 } from "./unit.js";
 
-class SpellImageArtifact extends OptionArtifactMixin(RetractableArtifactMixin(CBCounterImageArtifact)) {
+class SpellImageArtifact extends OptionArtifactMixin(RetractableArtifactMixin(CBPieceImageArtifact)) {
 
     constructor(spell, ...args) {
         super(spell, ...args);
     }
 
     get spell() {
-        return this._counter;
+        return this.piece;
     }
 
     get game() {
@@ -38,12 +38,12 @@ class SpellImageArtifact extends OptionArtifactMixin(RetractableArtifactMixin(CB
     }
 
     get layer() {
-        return this.counter.isOption() ? CBGame.ULAYERS.OPTIONS : CBGame.ULAYERS.SPELLS;
+        return this.piece.isOption() ? CBGame.ULAYERS.OPTIONS : CBGame.ULAYERS.SPELLS;
     }
 
 }
 
-export class CBSpell extends RetractableCounterMixin(CarriableMixin(CBPlayable)) {
+export class CBSpell extends RetractablePlayableMixin(CarriableMixin(CBCounter)) {
 
     constructor(paths, wizard, spellLevel) {
         super("units", paths, CBSpell.DIMENSION);

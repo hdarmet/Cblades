@@ -29,7 +29,7 @@ import {
     repaint,
     paint,
     clickOnActionMenu,
-    clickOnCounter,
+    clickOnPiece,
     clickOnTrigger,
     clickOnDice,
     executeAllAnimations,
@@ -231,7 +231,7 @@ describe("Interactive Combat", ()=> {
             loadAllImages();
         when:
             resetDirectives(unitsLayer, widgetsLayer, itemsLayer);
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
         then:
             loadAllImages();
             skipDirectives(widgetsLayer, 4);
@@ -248,7 +248,7 @@ describe("Interactive Combat", ()=> {
             var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit1IsEngagedByUnit2(map, unit1, unit2);
-            player1.selectCounter(unit1, dummyEvent)
+            player1.selectPlayable(unit1, dummyEvent)
             loadAllImages();
         when:
             rollFor(5,6);
@@ -296,7 +296,7 @@ describe("Interactive Combat", ()=> {
             var [actuatorsLayer] = getLayers(game.board, "actuators-0");
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 7));
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
             loadAllImages();
         when:
@@ -333,7 +333,7 @@ describe("Interactive Combat", ()=> {
             unit1.addOneTirednessLevel();
             unit1.addOneTirednessLevel();
             unit2.move(map.getHex(5, 7));
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
             loadAllImages();
         when:
@@ -357,7 +357,7 @@ describe("Interactive Combat", ()=> {
             );
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 7));
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
             loadAllImages();
             let shockAttackActuator = getShockAttackActuator(game);
@@ -392,7 +392,7 @@ describe("Interactive Combat", ()=> {
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 7));
             unit2.angle = 180;
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             resetDirectives(actuatorsLayer, widgetsLayer, itemsLayer);
@@ -423,7 +423,7 @@ describe("Interactive Combat", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.hasBeenPlayed()).isFalse();
-            assert(game.focusedCounter).equalsTo(unit2);
+            assert(game.focusedPlayable).equalsTo(unit2);
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showLossTrigger(zoomAndRotate0(416.6667, 255.6635)));
             assertDirectives(actuatorsLayer, showRetreatTrigger(zoomAndRotate0(416.6667, 169.0616)));
@@ -445,7 +445,7 @@ describe("Interactive Combat", ()=> {
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 7));
             unit2.angle = 180;
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
@@ -476,7 +476,7 @@ describe("Interactive Combat", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.hasBeenPlayed()).isTrue();
-            assert(game.focusedCounter).isNotDefined();
+            assert(game.focusedPlayable).isNotDefined();
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
 
@@ -489,7 +489,7 @@ describe("Interactive Combat", ()=> {
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 7));
             unit2.angle = 180;
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
@@ -521,7 +521,7 @@ describe("Interactive Combat", ()=> {
             unit1.markAsCharging(CBCharge.CHARGING);
             unit2.move(map.getHex(5, 7));
             unit2.angle = 180;
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
@@ -556,7 +556,7 @@ describe("Interactive Combat", ()=> {
             var [widgetsLayer, actuatorsLayer] = getLayers(game.board, "widgets", "actuators-0");
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 7));
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
             loadAllImages();
         when:
@@ -608,7 +608,7 @@ describe("Interactive Combat", ()=> {
             unit21.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
             setWeaponBonuses(unitType1, 2, 1, 0, 0);
             setWeaponBonuses(unitType2, 2, 0, 2, 0);
-            clickOnCounter(game, unit11);
+            clickOnPiece(game, unit11);
             clickOnShockAttackAction(game);
             loadAllImages();
         when:
@@ -652,7 +652,7 @@ describe("Interactive Combat", ()=> {
             unit21.angle = 90;
             unit11.fixTirednessLevel(CBTiredness.EXHAUSTED);
             unit21.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
-            clickOnCounter(game, unit11);
+            clickOnPiece(game, unit11);
             clickOnShockAttackAction(game);
             loadAllImages();
         when:
@@ -690,7 +690,7 @@ describe("Interactive Combat", ()=> {
             unit21.move(map.getHex(5, 7));
             unit21.markAsCharging(CBCharge.CHARGING);
             unit21.angle = 90;
-            clickOnCounter(game, unit11);
+            clickOnPiece(game, unit11);
             clickOnShockAttackAction(game);
             loadAllImages();
         when:
@@ -724,7 +724,7 @@ describe("Interactive Combat", ()=> {
             unit21.move(map.getHex(5, 7));
             unit22.move(map.getHex(5, 7));
             unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
-            clickOnCounter(game, unit11);
+            clickOnPiece(game, unit11);
             clickOnShockAttackAction(game);
             var shockHelpActuator = getShockHelpActuator(game);
         when:
@@ -764,7 +764,7 @@ describe("Interactive Combat", ()=> {
             var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
             leader1.move(map.getHex(5, 8));
             leader2.move(map.getHex(5, 7));
-            clickOnCounter(game, leader1);
+            clickOnPiece(game, leader1);
             clickOnShockAttackAction(game);
             var shockHelpActuator = getShockHelpActuator(game);
         when:
@@ -807,7 +807,7 @@ describe("Interactive Combat", ()=> {
             formation2.move(map.getHex(5, 8).toward(60), 0);
             unit1.move(map.getHex(5, 7));
             unit1.angle = 180;
-            clickOnCounter(game, formation2);
+            clickOnPiece(game, formation2);
             loadAllImages();
         when:
             resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
@@ -842,7 +842,7 @@ describe("Interactive Combat", ()=> {
             assertNoMoreDirectives(commandsLayer, 4);
             assert(formation2.hasBeenActivated()).isTrue();
             assert(formation2.hasBeenPlayed()).isFalse();
-            assert(game.focusedCounter).isNotDefined();
+            assert(game.focusedPlayable).isNotDefined();
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showUnsupportedShock(zoomAndRotate30(397.1163, 236.1131)));
             assertDirectives(actuatorsLayer, showSupportedShock(zoomAndRotate30(436.217, 275.2138)));
@@ -868,7 +868,7 @@ describe("Interactive Combat", ()=> {
             formation2.move(new CBHexSideId(fromHex, toHex), 0);
             unit1.move(map.getHex(5, 7));
             unit1.angle = 180;
-            clickOnCounter(game, formation2);
+            clickOnPiece(game, formation2);
         when:
             resetDirectives(actuatorsLayer);
             clickOnShockAttackAction(game);
@@ -912,7 +912,7 @@ describe("Interactive Combat", ()=> {
             formation2.move(map.getHex(5, 8).toward(60), 0);
             unit1.move(map.getHex(5, 7));
             unit1.angle = 180;
-            clickOnCounter(game, formation2);
+            clickOnPiece(game, formation2);
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(unit1, true));
@@ -930,7 +930,7 @@ describe("Interactive Combat", ()=> {
             assertNoMoreDirectives(actuatorsLayer, 4);
             assert(formation2.hasBeenActivated()).isTrue();
             assert(formation2.hasBeenPlayed()).isTrue();
-            assert(game.focusedCounter).isNotDefined();
+            assert(game.focusedPlayable).isNotDefined();
     });
 
     function getFormationRetreatActuator(game) {
@@ -949,7 +949,7 @@ describe("Interactive Combat", ()=> {
             unit1.move(map.getHex(5, 8));
             formation2.move(new CBHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
             formation2.angle = 180;
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
@@ -974,7 +974,7 @@ describe("Interactive Combat", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(game.focusedCounter).equalsTo(formation2);
+            assert(game.focusedPlayable).equalsTo(formation2);
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showLossTrigger(zoomAndRotate0(458.3333, 279.7196)));
             assertDirectives(actuatorsLayer, showRetreatTrigger(zoomAndRotate0(416.6667, 169.0616)));
@@ -996,7 +996,7 @@ describe("Interactive Combat", ()=> {
             unit2.move(map.getHex(5, 7));
             unit2.angle = 180;
             unit2.lossSteps = 1;
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
@@ -1018,7 +1018,7 @@ describe("Interactive Combat", ()=> {
             unit1.move(map.getHex(5, 8));
             formation2.move(new CBHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
             formation2.angle = 210;
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(formation2, true));
@@ -1048,7 +1048,7 @@ describe("Interactive Combat", ()=> {
             unit1.move(map.getHex(5, 8));
             formation2.move(new CBHexSideId(map.getHex(6, 7), map.getHex(7, 8)));
             formation2.angle = 210;
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(formation2, true));
@@ -1086,7 +1086,7 @@ describe("Interactive Combat", ()=> {
             unit1.markAsCharging(CBCharge.CHARGING);
             formation2.move(new CBHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
             formation2.angle = 210;
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(formation2, true));
@@ -1125,7 +1125,7 @@ describe("Interactive Combat", ()=> {
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 7));
             unit2.angle = 180;
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(unit2, true));
@@ -1155,7 +1155,7 @@ describe("Interactive Combat", ()=> {
             unit1.move(map.getHex(5, 8));
             formation2.move(new CBHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
             formation2.angle = 210;
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
             let shockAttackActuator = getShockAttackActuator(game);
             clickOnTrigger(game, shockAttackActuator.getTrigger(formation2, true));
@@ -1192,7 +1192,7 @@ describe("Interactive Combat", ()=> {
             var [actuatorsLayer] = getLayers(game.board, "actuators-0");
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 6));
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnFireAttackAction(game);
             loadAllImages();
         when:
@@ -1217,7 +1217,7 @@ describe("Interactive Combat", ()=> {
             );
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 6));
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnFireAttackAction(game);
             loadAllImages();
             let fireAttackActuator = getFireAttackActuator(game);
@@ -1252,7 +1252,7 @@ describe("Interactive Combat", ()=> {
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 6));
             unit2.angle = 180;
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnFireAttackAction(game);
             let fireAttackActuator = getFireAttackActuator(game);
             resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
@@ -1277,7 +1277,7 @@ describe("Interactive Combat", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
-            assert(game.focusedCounter).equalsTo(unit2);
+            assert(game.focusedPlayable).equalsTo(unit2);
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showLossTrigger(zoomAndRotate0(416.6667, 159.4391)));
             assertDirectives(actuatorsLayer, showRetreatTrigger(zoomAndRotate0(416.6667, 72.8372)));
@@ -1301,7 +1301,7 @@ describe("Interactive Combat", ()=> {
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 7));
             unit2.angle = 180;
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnFireAttackAction(game);
             let fireAttackActuator = getFireAttackActuator(game);
             resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
@@ -1327,7 +1327,7 @@ describe("Interactive Combat", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit1.hasBeenPlayed()).isTrue();
-            assert(game.focusedCounter).isNotDefined();
+            assert(game.focusedPlayable).isNotDefined();
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
 
@@ -1337,7 +1337,7 @@ describe("Interactive Combat", ()=> {
             var [markersLayer] = getLayers(game.board,"markers-0");
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 7));
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnFireAttackAction(game);
             let fireAttackActuator = getFireAttackActuator(game);
             clickOnTrigger(game, fireAttackActuator.getTrigger(unit2));
@@ -1375,7 +1375,7 @@ describe("Interactive Combat", ()=> {
             var [widgetsLayer, actuatorsLayer] = getLayers(game.board, "widgets", "actuators-0");
             unit1.move(map.getHex(5, 8));
             unit2.move(map.getHex(5, 6));
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnFireAttackAction(game);
             loadAllImages();
         when:
@@ -1427,7 +1427,7 @@ describe("Interactive Combat", ()=> {
             unit2.hexLocation.toward(180).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
             setWeaponBonuses(unitType1, 2, 0, 0, 1);
             setWeaponBonuses(unitType2, 2, 0, 2, 0);
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnFireAttackAction(game);
             loadAllImages();
             var fireHelpActuator = getFireHelpActuator(game);
@@ -1472,7 +1472,7 @@ describe("Interactive Combat", ()=> {
             unit2.angle = 90;
             unit2.rout();
             unit2.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnFireAttackAction(game);
             loadAllImages();
             var fireHelpActuator = getFireHelpActuator(game);
@@ -1511,7 +1511,7 @@ describe("Interactive Combat", ()=> {
             unit12.move(map.getHex(5, 8));
             unit21.move(map.getHex(5, 6));
             unit22.move(map.getHex(5, 6));
-            clickOnCounter(game, unit11);
+            clickOnPiece(game, unit11);
             clickOnFireAttackAction(game);
             loadAllImages();
             var fireHelpActuator = getFireHelpActuator(game);
@@ -1553,7 +1553,7 @@ describe("Interactive Combat", ()=> {
             leader1.move(map.getHex(5, 6));
             leader2.move(map.getHex(5, 8));
             game.nextTurn();
-            clickOnCounter(game, leader2);
+            clickOnPiece(game, leader2);
             clickOnFireAttackAction(game);
             loadAllImages();
             var fireHelpActuator = getFireHelpActuator(game);
@@ -1598,7 +1598,7 @@ describe("Interactive Combat", ()=> {
             formation2.move(map.getHex(5, 8).toward(60), 0);
             unit1.move(map.getHex(5, 6));
             unit1.angle = 180;
-            clickOnCounter(game, formation2);
+            clickOnPiece(game, formation2);
             loadAllImages();
         when:
             resetDirectives(actuatorsLayer, widgetsLayer, commandsLayer, itemsLayer);
@@ -1634,7 +1634,7 @@ describe("Interactive Combat", ()=> {
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(formation2.hasBeenActivated()).isTrue();
             assert(formation2.hasBeenPlayed()).isFalse();
-            assert(game.focusedCounter).isNotDefined();
+            assert(game.focusedPlayable).isNotDefined();
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showFire(zoomAndRotate30(416.6667, 159.4391)));
     });
@@ -1659,7 +1659,7 @@ describe("Interactive Combat", ()=> {
             formation2.move(new CBHexSideId(fromHex, toHex), 0);
             unit1.move(map.getHex(5, 6));
             unit1.angle = 180;
-            clickOnCounter(game, formation2);
+            clickOnPiece(game, formation2);
         when:
             resetDirectives(actuatorsLayer);
             clickOnFireAttackAction(game);
@@ -1703,7 +1703,7 @@ describe("Interactive Combat", ()=> {
             unit1.move(map.getHex(5, 6));
             unit1.takeALoss();
             unit1.angle = 180;
-            clickOnCounter(game, formation2);
+            clickOnPiece(game, formation2);
             clickOnFireAttackAction(game);
             let fireAttackActuator = getFireAttackActuator(game);
             clickOnTrigger(game, fireAttackActuator.getTrigger(unit1));
@@ -1720,7 +1720,7 @@ describe("Interactive Combat", ()=> {
             assertNoMoreDirectives(actuatorsLayer, 4);
             assert(formation2.hasBeenActivated()).isTrue();
             assert(formation2.hasBeenPlayed()).isTrue();
-            assert(game.focusedCounter).isNotDefined();
+            assert(game.focusedPlayable).isNotDefined();
     });
 
     function clickOnShockDuelAction(game) {
@@ -1737,7 +1737,7 @@ describe("Interactive Combat", ()=> {
             unit2.move(map.getHex(5, 7));
             leader1.move(unit1.hexLocation);
             leader2.move(unit2.hexLocation);
-            clickOnCounter(game, leader1);
+            clickOnPiece(game, leader1);
             clickOnShockDuelAction(game);
             loadAllImages();
             let shockAttackActuator = getShockAttackActuator(game);
@@ -1777,7 +1777,7 @@ describe("Interactive Combat", ()=> {
             unit2.move(map.getHex(5, 6));
             leader1.move(unit1.hexLocation);
             leader2.move(unit2.hexLocation);
-            clickOnCounter(game, leader1);
+            clickOnPiece(game, leader1);
             clickOnFireDuelAction(game);
             loadAllImages();
             let fireAttackActuator = getFireAttackActuator(game);

@@ -10,7 +10,7 @@ import {
     CBHexSideId
 } from "./map.js";
 import {
-    CBAction, CBActionActuator, CBActuatorImageTrigger, CBMoveType
+    CBAction, CBActionActuator, CBActuatorImageTrigger, CBStacking
 } from "./game.js";
 import {
     Dimension2D, Point2D, sumAngle
@@ -57,6 +57,10 @@ export class InteractiveBreakFormationAction extends CBAction {
         this._event = event;
     }
 
+    get unit() {
+        return this.playable;
+    }
+
     play() {
         this.unit.markAsCharging(CBCharge.NONE);
         this.game.closeActuators();
@@ -80,6 +84,10 @@ export class InteractiveCreateFormationAction extends CBAction {
         this._event = event;
     }
 
+    get unit() {
+        return this.playable;
+    }
+
     play() {
         this.unit.markAsCharging(CBCharge.NONE);
         this._createCreateFormationActuator();
@@ -98,7 +106,7 @@ export class InteractiveCreateFormationAction extends CBAction {
         this.game.closeActuators();
         let {replacement, replaced} = this.game.arbitrator.createFormation(this.unit, hexId);
         let hexLocation = this.unit.hexLocation;
-        replacement.appendToMap(new CBHexSideId(hexLocation, hexId), CBMoveType.BACKWARD);
+        replacement.appendToMap(new CBHexSideId(hexLocation, hexId), CBStacking.TOP);
         replacement.rotate(replaced[0].angle);
         replacement.markAsBeingPlayed();
         for (let troop of replaced) {
@@ -119,6 +127,10 @@ export class InteractiveReleaseTroopsAction extends CBAction {
     constructor(game, unit, event) {
         super(game, unit);
         this._event = event;
+    }
+
+    get unit() {
+        return this.playable;
     }
 
     play() {
@@ -164,6 +176,10 @@ export class InteractiveIncludeTroopsAction extends CBAction {
         this._event = event;
     }
 
+    get unit() {
+        return this.playable;
+    }
+
     play() {
         this.unit.markAsCharging(CBCharge.NONE);
         this.game.closeActuators();
@@ -189,7 +205,7 @@ export class CBCreateFormationActuator extends CBActionActuator {
         for (let hex of joinableHexes) {
             let creation = new CBActuatorImageTrigger(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(80, 170));
-            creation.position = Point2D.position(this.unit.location, new CBHexSideId(action.unit.hexLocation, hex).location, 1);
+            creation.position = Point2D.position(this.playable.location, new CBHexSideId(action.unit.hexLocation, hex).location, 1);
             creation.hex = hex;
             creation.pangle = sumAngle(action.unit.angle, 90);
             imageArtifacts.push(creation);
@@ -214,7 +230,7 @@ export class CBReleaseTroopActuator extends CBActionActuator {
         function _createTrigger(image, hex, angle, factor, stepCount, moveType) {
             let trigger = new CBActuatorImageTrigger(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(64, 60));
-            let startLocation = Point2D.position(this.unit.location, hex.location, factor);
+            let startLocation = Point2D.position(this.playable.location, hex.location, factor);
             let targetPosition = Point2D.position(hex.location, hex.getNearHexSide(angle).location, 0.5);
             trigger.position = startLocation.plusPoint(targetPosition);
             trigger.hex = hex;
@@ -229,11 +245,11 @@ export class CBReleaseTroopActuator extends CBActionActuator {
         let twoStepsImage = DImage.getImage("./../images/actuators/quit-full.png");
         let imageArtifacts = [];
         for (let hex of hexes) {
-            imageArtifacts.push(_createTrigger.call(this, oneStepImage, hex, action.unit.angle, 0.6, 1, CBMoveType.BACKWARD));
-            imageArtifacts.push(_createTrigger.call(this, oneStepImage, hex, sumAngle(action.unit.angle, 180), 0.6, 1, CBMoveType.FORWARD));
+            imageArtifacts.push(_createTrigger.call(this, oneStepImage, hex, action.unit.angle, 0.6, 1, CBStacking.TOP));
+            imageArtifacts.push(_createTrigger.call(this, oneStepImage, hex, sumAngle(action.unit.angle, 180), 0.6, 1, CBStacking.BOTTOM));
             if (stepCount>1) {
-                imageArtifacts.push(_createTrigger.call(this, twoStepsImage, hex, action.unit.angle, 1.2, 2, CBMoveType.BACKWARD));
-                imageArtifacts.push(_createTrigger.call(this, twoStepsImage, hex, sumAngle(action.unit.angle, 180), 1.2, 2, CBMoveType.FORWARD));
+                imageArtifacts.push(_createTrigger.call(this, twoStepsImage, hex, action.unit.angle, 1.2, 2, CBStacking.TOP));
+                imageArtifacts.push(_createTrigger.call(this, twoStepsImage, hex, sumAngle(action.unit.angle, 180), 1.2, 2, CBStacking.BOTTOM));
             }
         }
         this.initElement(imageArtifacts);

@@ -55,6 +55,10 @@ export class InteractiveRestingAction extends CBAction {
         this._event = event;
     }
 
+    get unit() {
+        return this.playable;
+    }
+
     play() {
         this.game.closeActuators();
         this.unit.markAsCharging(CBCharge.NONE);
@@ -120,6 +124,10 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
         this._event = event;
     }
 
+    get unit() {
+        return this.playable;
+    }
+
     play() {
         this.game.closeActuators();
         this.unit.markAsCharging(CBCharge.NONE);
@@ -169,6 +177,10 @@ export class InteractiveReorganizeAction extends CBAction {
     constructor(game, unit, event) {
         super(game, unit);
         this._event = event;
+    }
+
+    get unit() {
+        return this.playable;
     }
 
     play() {
@@ -222,6 +234,10 @@ export class InteractiveRallyAction extends CBAction {
     constructor(game, unit, event) {
         super(game, unit);
         this._event = event;
+    }
+
+    get unit() {
+        return this.playable;
     }
 
     play() {

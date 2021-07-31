@@ -27,7 +27,7 @@ import {
     repaint,
     paint,
     clickOnActionMenu,
-    clickOnCounter,
+    clickOnPiece,
     clickOnDice,
     executeAllAnimations,
     clickOnResult,
@@ -92,7 +92,7 @@ describe("Interactive Player", ()=> {
             loadAllImages();
         when:
             resetDirectives(unitsLayer, widgetsLayer, widgetItemsLayer);
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
         then:
             loadAllImages();
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
@@ -128,7 +128,7 @@ describe("Interactive Player", ()=> {
         given:
             var {game, unit} = createTinyGame();
             var [widgetsLayer] = getLayers(game.board, "widgets");
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             loadAllImages();
         when:
             resetDirectives(widgetsLayer);
@@ -137,7 +137,7 @@ describe("Interactive Player", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
         when:
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             resetDirectives(widgetsLayer);
             Mechanisms.fire(game, DBoard.SCROLL_EVENT);
             repaint(game);
@@ -154,11 +154,11 @@ describe("Interactive Player", ()=> {
         when:
             unit2.onMouseClick({offsetX:0, offsetY:0});
         then:
-            assert(game.selectedCounter).equalsTo(unit1);
+            assert(game.selectedPlayable).equalsTo(unit1);
         when:
             unit2.onMouseClick({offsetX:0, offsetY:0});  // Not executed ! Player2 is not the current player
         then:
-            assert(game.selectedCounter).equalsTo(unit1);
+            assert(game.selectedPlayable).equalsTo(unit1);
     });
 
     it("Checks that a selected unit's action is finalized when there is an end of turn", () => {
@@ -221,7 +221,7 @@ describe("Interactive Player", ()=> {
             var {game, unit1, player} = create2UnitsTinyGame();
             var finished = false;
         then:
-            assert(player.canFinishCounter(unit1)).isFalse();
+            assert(player.canFinishPlayable(unit1)).isFalse();
             assert(game.turnIsFinishable()).isFalse();
     });
 
@@ -231,7 +231,7 @@ describe("Interactive Player", ()=> {
             unit1.hexLocation = map.getHex(5, 5);
             unit1.markAsEngaging(true);
         when:
-            player1.selectCounter(unit1, dummyEvent);
+            player1.selectPlayable(unit1, dummyEvent);
         then:
             assert(unit1.isEngaging()).isFalse();
     });
@@ -251,7 +251,7 @@ describe("Interactive Player", ()=> {
             unit1IsEngagedByUnit2(map, unit1, unit2);
         when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
-            player1.selectCounter(unit1, dummyEvent)
+            player1.selectPlayable(unit1, dummyEvent)
             loadAllImages();
             paint(game);
         then:
@@ -284,7 +284,7 @@ describe("Interactive Player", ()=> {
             unit2.markAsCharging(CBCharge.CHARGING);
         when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
-            player1.selectCounter(unit1, dummyEvent)
+            player1.selectPlayable(unit1, dummyEvent)
             loadAllImages();
             paint(game);
         then:
@@ -312,7 +312,7 @@ describe("Interactive Player", ()=> {
             leader1.markAsCharging(CBCharge.CHARGING);
         when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
-            player1.selectCounter(leader1, dummyEvent)
+            player1.selectPlayable(leader1, dummyEvent)
             loadAllImages();
             paint(game);
         then:
@@ -337,7 +337,7 @@ describe("Interactive Player", ()=> {
             var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit1IsEngagedByUnit2(map, unit1, unit2);
-            player1.selectCounter(unit1, dummyEvent)
+            player1.selectPlayable(unit1, dummyEvent)
             loadAllImages();
         when:
             rollFor(1,2);
@@ -374,7 +374,7 @@ describe("Interactive Player", ()=> {
             var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit1IsEngagedByUnit2(map, unit1, unit2);
-            player1.selectCounter(unit1, dummyEvent)
+            player1.selectPlayable(unit1, dummyEvent)
             loadAllImages();
         when:
             rollFor(5,6);

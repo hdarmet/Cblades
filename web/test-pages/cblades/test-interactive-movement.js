@@ -27,7 +27,7 @@ import {
     registerInteractiveMovement, unregisterInteractiveMovement
 } from "../../jslib/cblades/interactive-movement.js";
 import {
-    repaint, paint, clickOnActionMenu, clickOnCounter, clickOnTrigger,
+    repaint, paint, clickOnActionMenu, clickOnPiece, clickOnTrigger,
     dummyEvent, clickOnMask, rollFor,
     zoomAndRotate0, zoomAndRotate30, zoomAndRotate60, zoomAndRotate90, zoomAndRotate120, zoomAndRotate150,
     zoomAndRotate180, zoomAndRotate210, zoomAndRotate240, zoomAndRotate270, zoomAndRotate300, zoomAndRotate330,
@@ -165,7 +165,7 @@ describe("Interactive Movement", ()=> {
             loadAllImages();
         when:
             resetDirectives(unitsLayer, widgetsLayer, itemsLayer);
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
         then:
             loadAllImages();
             skipDirectives(widgetsLayer, 4);
@@ -182,14 +182,14 @@ describe("Interactive Movement", ()=> {
             var { game, unit } = createTinyGame();
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             resetDirectives(actuatorLayer);
             clickOnMoveAction(game);
             let moveActuator = getMoveActuator(game);
             let orientationActuator = getOrientationActuator(game);
             loadAllImages();
         then:
-            assert(game.selectedCounter).equalsTo(unit);
+            assert(game.selectedPlayable).equalsTo(unit);
             assert(moveActuator).isDefined();
             assert(moveActuator.getTrigger(300)).isDefined();
             assert(moveActuator.getTrigger(0)).isDefined();
@@ -250,12 +250,12 @@ describe("Interactive Movement", ()=> {
             var { game, unit } = createTinyGame();
         when:
             unit.angle = 30;
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnMoveAction(game);
             let moveActuator = getMoveActuator(game);
             let orientationActuator = getOrientationActuator(game);
         then:
-            assert(game.selectedCounter).equalsTo(unit);
+            assert(game.selectedPlayable).equalsTo(unit);
             assert(moveActuator).isDefined();
             assert(moveActuator.getTrigger(300)).isNotDefined();
             assert(moveActuator.getTrigger(0)).isDefined();
@@ -280,7 +280,7 @@ describe("Interactive Movement", ()=> {
         given:
             var { game, unit } = createTinyGame();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnMoveAction(game);
             loadAllImages();
             let moveActuator = getMoveActuator(game);
@@ -321,7 +321,7 @@ describe("Interactive Movement", ()=> {
         given:
             var { game, unit } = createTinyGame();
             var [widgetsLayer] = getLayers(game.board, "widgets");
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnMoveAction(game);
             loadAllImages();
             let helpActuator = getMovementHelpActuator(game);
@@ -351,7 +351,7 @@ describe("Interactive Movement", ()=> {
     it("Checks Unit move using actuators (move, rotate, move)", () => {
         given:
             var {game, unit} = createTinyGame()
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnMoveAction(game);
             loadAllImages();
             var moveActuator1 = getMoveActuator(game);
@@ -399,7 +399,7 @@ describe("Interactive Movement", ()=> {
     it("Checks Unit move using actuators (rotate, move, rotate)", () => {
         given:
             var {game, unit} = createTinyGame()
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnMoveAction(game);
             loadAllImages();
             var orientationActuator1 = getOrientationActuator(game);
@@ -447,7 +447,7 @@ describe("Interactive Movement", ()=> {
         given:
             var {game, unit} = createTinyGame();
             unit.fixTirednessLevel(CBTiredness.EXHAUSTED);
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnMoveAction(game);
         when:
             var orientationActuator = getOrientationActuator(game);
@@ -473,14 +473,14 @@ describe("Interactive Movement", ()=> {
             var { game, formation } = createTinyFormationGame();
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
-            clickOnCounter(game, formation);
+            clickOnPiece(game, formation);
             resetDirectives(actuatorLayer);
             clickOnMoveAction(game);
             let moveActuator = getFormationMoveActuator(game);
             let orientationActuator = getOrientationActuator(game);
             loadAllImages();
         then:
-            assert(game.selectedCounter).equalsTo(formation);
+            assert(game.selectedPlayable).equalsTo(formation);
             assert(moveActuator).isDefined();
             assert(moveActuator.getTurnTrigger(60)).isDefined();
             assert(moveActuator.getTurnTrigger(120)).isDefined();
@@ -510,7 +510,7 @@ describe("Interactive Movement", ()=> {
     it("Checks Formation move using actuators (advance, rotate, turn around) using move triggers", () => {
         given:
             var {game, formation} = createTinyFormationGame()
-            clickOnCounter(game, formation);
+            clickOnPiece(game, formation);
             clickOnMoveAction(game);
             loadAllImages();
             var moveActuator1 = getFormationMoveActuator(game);
@@ -555,7 +555,7 @@ describe("Interactive Movement", ()=> {
     it("Checks Formation move using actuators (advance, rotate, turn around) using cost triggers", () => {
         given:
             var {game, formation} = createTinyFormationGame()
-            clickOnCounter(game, formation);
+            clickOnPiece(game, formation);
             clickOnMoveAction(game);
             loadAllImages();
             var moveActuator1 = getFormationMoveActuator(game);
@@ -608,7 +608,7 @@ describe("Interactive Movement", ()=> {
             paint(game);
             resetAllDirectives(game);
         when:
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             loadAllImages();
             resetAllDirectives(game);
             clickOnMoveAction(game);
@@ -649,7 +649,7 @@ describe("Interactive Movement", ()=> {
     it("Checks Unit movement points management during move (using normal triggers)", () => {
         given:
             var {game, unit} = createTinyGame()
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnMoveAction(game);
             loadAllImages();
             var moveActuator = getMoveActuator(game);
@@ -684,7 +684,7 @@ describe("Interactive Movement", ()=> {
             var {game, unit} = createTinyGame()
             unit.movementPoints = 1;
             unit.extendedMovementPoints = 2;
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnMoveAction(game);
             loadAllImages();
             var moveActuator = getMoveActuator(game);
@@ -717,7 +717,7 @@ describe("Interactive Movement", ()=> {
             var {game, unit} = createTinyGame()
             unit.movementPoints = 0.5;
             unit.extendedMovementPoints = 0.5;
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnMoveAction(game);
             loadAllImages();
             var moveActuator = getMoveActuator(game);
@@ -730,7 +730,7 @@ describe("Interactive Movement", ()=> {
     it("Checks that move may inflict tiredness", () => {
         given:
             var {game, unit} = createTinyGame();
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnMoveAction(game);
         when:
             var moveActuator = getMoveActuator(game);
@@ -746,7 +746,7 @@ describe("Interactive Movement", ()=> {
     it("Checks that rotation may inflict tiredness", () => {
         given:
             var {game, unit} = createTinyGame();
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnMoveAction(game);
         when:
             var moveActuator = getMoveActuator(game);
@@ -763,7 +763,7 @@ describe("Interactive Movement", ()=> {
         given:
             var {game, unit} = createTinyGame();
             var [unitsLayer, markersLayer] = getLayers(game.board,"units-0", "markers-0");
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnMoveAction(game);
             unit.movementPoints = 0.5;
             loadAllImages();
@@ -782,7 +782,7 @@ describe("Interactive Movement", ()=> {
         when:
             game.nextTurn();
             unit.movementPoints = 0.5;
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnMoveAction(game);
             paint(game);
             resetDirectives(markersLayer);
@@ -850,7 +850,7 @@ describe("Interactive Movement", ()=> {
         unit1.move(map.getHex(2, 5));
         unit2.move(map.getHex(2, 3));
         unit2.rotate(180);
-        unit1.player.selectCounter(unit1, dummyEvent);
+        unit1.player.selectPlayable(unit1, dummyEvent);
         map.game.closePopup();
         moveUnitByAction(unit1, map.getHex(2, 4));
         loadAllImages();
@@ -958,7 +958,7 @@ describe("Interactive Movement", ()=> {
         given:
             var { game, unit1 } = create2PlayersTinyGame();
             var [unitsLayer, actuatorsLayer] = getLayers(game.board, "units-0", "actuators");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnMoveBackAction(game);
             loadAllImages();
             let moveActuator = getMoveActuator(game);
@@ -987,7 +987,7 @@ describe("Interactive Movement", ()=> {
         given:
             var { game, unit1 } = create2PlayersTinyGame();
             var [widgetsLayer] = getLayers(game.board, "widgets");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnMoveBackAction(game);
             loadAllImages();
             let helpActuator = getMovementHelpActuator(game);
@@ -1020,7 +1020,7 @@ describe("Interactive Movement", ()=> {
             var [formationsLayer, actuatorsLayer] = getLayers(game.board, "formations-0", "actuators");
             unit1.move(null);
             game.nextTurn();
-            clickOnCounter(game, formation2);
+            clickOnPiece(game, formation2);
             clickOnMoveBackAction(game);
             loadAllImages();
             let moveActuator = getFormationMoveActuator(game);
@@ -1055,8 +1055,8 @@ describe("Interactive Movement", ()=> {
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             unit2.move(unit1.hexLocation.getNearHex(0));
             unit2.rotate(180, 0);
-            clickOnCounter(game, unit1);
-            unit2.markAsEngaging(true); // AFTER clickOnCounter to avoid engagement test
+            clickOnPiece(game, unit1);
+            unit2.markAsEngaging(true); // AFTER clickOnPiece to avoid engagement test
             clickOnMoveBackAction(game);
             paint(game);
             loadAllImages();
@@ -1088,8 +1088,8 @@ describe("Interactive Movement", ()=> {
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit2.move(unit1.hexLocation.getNearHex(0));
             unit2.rotate(180, 0);
-            clickOnCounter(game, unit1);
-            unit2.markAsEngaging(true); // AFTER clickOnCounter to avoid engagement test
+            clickOnPiece(game, unit1);
+            unit2.markAsEngaging(true); // AFTER clickOnPiece to avoid engagement test
             clickOnMoveBackAction(game);
             let moveActuator = getMoveActuator(game);
         when:
@@ -1126,8 +1126,8 @@ describe("Interactive Movement", ()=> {
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit2.move(unit1.hexLocation.getNearHex(0));
             unit2.rotate(180, 0);
-            clickOnCounter(game, unit1);
-            unit2.markAsEngaging(true); // AFTER clickOnCounter to avoid engagement test
+            clickOnPiece(game, unit1);
+            unit2.markAsEngaging(true); // AFTER clickOnPiece to avoid engagement test
             clickOnMoveBackAction(game);
             let moveActuator = getMoveActuator(game);
         when:
@@ -1166,7 +1166,7 @@ describe("Interactive Movement", ()=> {
         given:
             var { game, unit1, unit2 } = create2PlayersTinyGame();
             var [unitsLayer, actuatorsLayer] = getLayers(game.board, "units-0", "actuators");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnRoutAction(game);
             loadAllImages();
             let orientationActuator = getOrientationActuator(game);
@@ -1226,7 +1226,7 @@ describe("Interactive Movement", ()=> {
         given:
             var { game, unit1 } = create2PlayersTinyGame();
             var [widgetsLayer] = getLayers(game.board, "widgets");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnRoutAction(game);
             loadAllImages();
             let helpActuator = getMovementHelpActuator(game);
@@ -1259,8 +1259,8 @@ describe("Interactive Movement", ()=> {
             var [actuatorsLayer, widgetsLayer, itemsLayer] = getLayers(game.board,"actuators", "widgets", "widget-items");
             unit2.move(unit1.hexLocation.getNearHex(0));
             unit2.rotate(180, 0);
-            clickOnCounter(game, unit1);
-            unit2.markAsEngaging(true); // AFTER clickOnCounter to avoid engagement test
+            clickOnPiece(game, unit1);
+            unit2.markAsEngaging(true); // AFTER clickOnPiece to avoid engagement test
             clickOnRoutAction(game);
             paint(game);
             loadAllImages();
@@ -1299,8 +1299,8 @@ describe("Interactive Movement", ()=> {
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit2.move(unit1.hexLocation.getNearHex(0));
             unit2.rotate(180, 0);
-            clickOnCounter(game, unit1);
-            unit2.markAsEngaging(true); // AFTER clickOnCounter to avoid engagement test
+            clickOnPiece(game, unit1);
+            unit2.markAsEngaging(true); // AFTER clickOnPiece to avoid engagement test
             clickOnRoutAction(game);
             let orientationActuator = getOrientationActuator(game);
         when:
@@ -1344,8 +1344,8 @@ describe("Interactive Movement", ()=> {
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit2.move(unit1.hexLocation.getNearHex(0));
             unit2.rotate(180, 0);
-            clickOnCounter(game, unit1);
-            unit2.markAsEngaging(true); // AFTER clickOnCounter to avoid engagement test
+            clickOnPiece(game, unit1);
+            unit2.markAsEngaging(true); // AFTER clickOnPiece to avoid engagement test
             clickOnRoutAction(game);
             let orientationActuator = getOrientationActuator(game);
         when:
@@ -1392,7 +1392,7 @@ describe("Interactive Movement", ()=> {
             var { game, unit1, unit2 } = create2PlayersTinyGame();
             var [unitsLayer, actuatorsLayer] = getLayers(game.board, "units-0", "actuators");
             unit2.move(unit1.hexLocation.getNearHex(120));
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnConfrontAction(game);
             loadAllImages();
             let orientationActuator = getOrientationActuator(game);
@@ -1427,7 +1427,7 @@ describe("Interactive Movement", ()=> {
         given:
             var { game, unit1 } = create2PlayersTinyGame();
             var [widgetsLayer] = getLayers(game.board, "widgets");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnConfrontAction(game);
             loadAllImages();
             let helpActuator = getMovementHelpActuator(game);
@@ -1454,7 +1454,7 @@ describe("Interactive Movement", ()=> {
             var [formationsLayer, actuatorsLayer] = getLayers(game.board, "formations-0", "actuators");
             unit1.move(formation2.hexLocation.fromHex.getNearHex(180));
             game.nextTurn();
-            clickOnCounter(game, formation2);
+            clickOnPiece(game, formation2);
             clickOnConfrontAction(game);
             loadAllImages();
             let moveActuator = getFormationMoveActuator(game);
@@ -1483,7 +1483,7 @@ describe("Interactive Movement", ()=> {
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             unit2.move(unit1.hexLocation.getNearHex(180));
             unit2.rotate(0, 0);
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnConfrontAction(game);
             paint(game);
             loadAllImages();
@@ -1517,7 +1517,7 @@ describe("Interactive Movement", ()=> {
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit2.move(unit1.hexLocation.getNearHex(180));
             unit2.rotate(0, 0);
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnConfrontAction(game);
             var orientationActuator = getOrientationActuator(game);
         when:
@@ -1556,7 +1556,7 @@ describe("Interactive Movement", ()=> {
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit2.move(unit1.hexLocation.getNearHex(180));
             unit2.rotate(0, 0);
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnConfrontAction(game);
             var orientationActuator = getOrientationActuator(game);
         when:
@@ -1599,7 +1599,7 @@ describe("Interactive Movement", ()=> {
             });
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             resetDirectives(actuatorLayer);
             clickOnMoveAction(game);
             var moveActuator = getMoveActuator(game);
@@ -1640,7 +1640,7 @@ describe("Interactive Movement", ()=> {
             game.nextTurn(null);
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
-            clickOnCounter(game, formation2);
+            clickOnPiece(game, formation2);
             resetDirectives(actuatorLayer);
             clickOnMoveAction(game);
             var moveActuator = getFormationMoveActuator(game);
@@ -1675,7 +1675,7 @@ describe("Interactive Movement", ()=> {
             game.nextTurn(null);
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
-            clickOnCounter(game, formation2);
+            clickOnPiece(game, formation2);
             resetDirectives(actuatorLayer);
             clickOnMoveAction(game);
             var moveActuator = getFormationMoveActuator(game);
@@ -1697,7 +1697,7 @@ describe("Interactive Movement", ()=> {
             });
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             resetDirectives(actuatorLayer);
             clickOnMoveAction(game);
             var moveActuator = getMoveActuator(game);
@@ -1736,7 +1736,7 @@ describe("Interactive Movement", ()=> {
             });
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             resetDirectives(actuatorLayer);
             clickOnMoveAction(game);
             var moveActuator = getMoveActuator(game);
@@ -1777,7 +1777,7 @@ describe("Interactive Movement", ()=> {
             game.nextTurn(null);
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
-            clickOnCounter(game, formation2);
+            clickOnPiece(game, formation2);
             resetDirectives(actuatorLayer);
             clickOnMoveAction(game);
             var moveActuator = getFormationMoveActuator(game);
@@ -1811,7 +1811,7 @@ describe("Interactive Movement", ()=> {
             });
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             resetDirectives(actuatorLayer);
             clickOnMoveAction(game);
             var moveActuator = getMoveActuator(game);
@@ -1852,7 +1852,7 @@ describe("Interactive Movement", ()=> {
             game.nextTurn(null);
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
-            clickOnCounter(game, formation2);
+            clickOnPiece(game, formation2);
             resetDirectives(actuatorLayer);
             clickOnMoveAction(game);
             var moveActuator = getFormationMoveActuator(game);
@@ -1886,7 +1886,7 @@ describe("Interactive Movement", ()=> {
             });
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             resetDirectives(actuatorLayer);
             clickOnMoveAction(game);
             var moveActuator = getMoveActuator(game);
@@ -1921,7 +1921,7 @@ describe("Interactive Movement", ()=> {
             game.nextTurn(null);
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
-            clickOnCounter(game, formation2);
+            clickOnPiece(game, formation2);
             resetDirectives(actuatorLayer);
             clickOnMoveAction(game);
             var moveActuator = getFormationMoveActuator(game);

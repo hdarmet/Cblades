@@ -18,7 +18,7 @@ import {
     CBHexSideId, CBMap
 } from "../../jslib/cblades/map.js";
 import {
-    CBGame, CBAbstractPlayer, CBCounter, CBMoveMode
+    CBGame, CBAbstractPlayer, CBPiece, CBMoveMode
 } from "../../jslib/cblades/game.js";
 import {
     CBCharacter, CBCharge, CBCommandProfile, CBFormation, CBLackOfMunitions, CBMoralProfile,
@@ -163,7 +163,7 @@ describe("Arbitrator", ()=> {
         return {game, arbitrator, map, player1, wing1, wing2, formation11, unit11, unit12, leader11, player2, unit21, unit22, leader21};
     }
 
-    class TestSpell extends CBCounter {
+    class TestSpell extends CBPiece {
         constructor(wizard) {
             super("units", ["./../images/magic/red/redspell.png"], new Dimension2D(142, 142));
             this.wizard = wizard;

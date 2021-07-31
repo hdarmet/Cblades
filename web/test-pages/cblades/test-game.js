@@ -20,7 +20,7 @@ import {
     CBHexSideId
 } from "../../jslib/cblades/map.js";
 import {
-    CBMoveType
+    CBStacking
 } from "../../jslib/cblades/game.js";
 
 import {
@@ -28,17 +28,16 @@ import {
     CBActionActuator,
     CBAbstractPlayer,
     CBAbstractArbitrator,
-    CBCounter,
     CBAction,
     CBAbstractUnit,
     CBActuatorImageTrigger,
-    CBPlayable,
-    CBCounterImageArtifact,
+    CBCounter,
+    CBPieceImageArtifact,
     CBUnitActuatorTrigger,
     RetractableActuatorMixin, CBActuatorMultiImagesTrigger, WidgetLevelMixin, CBMask, CBActuator
 } from "../../jslib/cblades/game.js";
 import {
-    DBoard, DElement
+    DBoard
 } from "../../jslib/board.js";
 import {
     Dimension2D,
@@ -49,7 +48,7 @@ import {
     DPopup
 } from "../../jslib/widget.js";
 import {
-    clickOnCounter,
+    clickOnPiece,
     mouseMoveOnTrigger,
     mouseMoveOutOfTrigger,
     paint,
@@ -76,7 +75,7 @@ class CBTestUnit extends CBAbstractUnit {
         this.player = player;
     }
 
-    updatePlayed() {
+    markAsPlayed() {
         this.status = "played";
     }
 
@@ -104,7 +103,7 @@ class CBTestFormation extends CBAbstractUnit {
         return true;
     }
 
-    updatePlayed() {
+    markAsPlayed() {
         this.status = "played";
     }
 
@@ -127,6 +126,10 @@ class CBTestActuator extends CBActionActuator {
         this.trigger.position = new Point2D(0, 0);
         imageArtifacts.push(this.trigger);
         this.initElement(imageArtifacts);
+    }
+
+    get unit() {
+        return this.playable;
     }
 
     getTrigger() {
@@ -163,6 +166,10 @@ class CBTestMultiImagesActuator extends CBActionActuator {
         this.initElement(imageArtifacts);
     }
 
+    get unit() {
+        return this.playable;
+    }
+
     getTrigger() {
         return this.findTrigger(artifact=>true);
     }
@@ -184,9 +191,13 @@ class CBTestUnitActuator extends RetractableActuatorMixin(CBActionActuator) {
         let imageArtifacts = [];
         this.trigger = new CBUnitActuatorTrigger(this, unit, "units", image,
             new Point2D(0, 0), new Dimension2D(142, 142));
-        this.trigger.position = Point2D.position(action.unit.location, unit.location, 1);
+        this.trigger.position = Point2D.position(action.playable.location, unit.location, 1);
         imageArtifacts.push(this.trigger);
         this.initElement(imageArtifacts);
+    }
+
+    get unit() {
+        return this.playable;
     }
 
     onMouseClick(trigger, event) {
@@ -230,7 +241,7 @@ function showFakeInsert(x, y, w, h) {
     ];
 }
 
-function showFakeCounter(image, [a, b, c, d, e, f], s=50) {
+function showFakePiece(image, [a, b, c, d, e, f], s=50) {
     return [
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
@@ -240,7 +251,7 @@ function showFakeCounter(image, [a, b, c, d, e, f], s=50) {
     ];
 }
 
-function showOverFakeCounter(image, [a, b, c, d, e, f], s=50) {
+function showOverFakePiece(image, [a, b, c, d, e, f], s=50) {
     return [
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
@@ -530,19 +541,19 @@ describe("Game", ()=> {
     it("Checks that a unit selection closes the actuators", () => {
         given:
             var { game, unit1, unit2, player } = create2UnitsTinyGame();
-            player.launchCounterAction = function(unit, event) {};
-            clickOnCounter(game, unit1);
+            player.launchPlayableAction = function(unit, event) {};
+            clickOnPiece(game, unit1);
             var action = new CBAction(game, unit1);
             var actuator = new CBTestActuator(action);
             game.openActuator(actuator);
             loadAllImages();
         then:
-            assert(game.selectedCounter).equalsTo(unit1);
+            assert(game.selectedPlayable).equalsTo(unit1);
             assert(getTestActuator(game)).isDefined();
         when:
-            clickOnCounter(game, unit2);
+            clickOnPiece(game, unit2);
         then:
-            assert(game.selectedCounter).equalsTo(unit2);
+            assert(game.selectedPlayable).equalsTo(unit2);
             assert(getTestActuator(game)).isNotDefined();
     });
 
@@ -889,9 +900,9 @@ describe("Game", ()=> {
             assert([...Mechanisms.manager._listeners]).notContains(mask);
     });
 
-    function mouseClickOnCounter(game, counter) {
-        let counterLocation = counter.artifact.viewportLocation;
-        var mouseEvent = createEvent("click", {offsetX:counterLocation.x, offsetY:counterLocation.y});
+    function mouseclickOnPiece(game, piece) {
+        let pieceLocation = piece.artifact.viewportLocation;
+        var mouseEvent = createEvent("click", {offsetX:pieceLocation.x, offsetY:pieceLocation.y});
         mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
     }
 
@@ -899,8 +910,8 @@ describe("Game", ()=> {
     it("Checks counter basic appearance and features", () => {
         given:
             var { game } = prepareTinyGame();
-            let counter = new CBCounter("ground", ["./../images/units/misc/counter.png"], new Dimension2D(50, 50));
-            game.addCounter(counter);
+            let piece = new CBPiece("ground", ["./../images/units/misc/piece.png"], new Dimension2D(50, 50));
+            game.addPlayable(counter);
             counter.location = new Point2D(100, 200);
             game.start();
             loadAllImages();
@@ -918,7 +929,7 @@ describe("Game", ()=> {
             assert(counter.location.toString()).equalsTo("point(100, 200)");
             assert(counter.viewportLocation.toString()).equalsTo("point(548.8759, 507.5269)");
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakeCounter("misc/counter", [0.3456, 0.3456, -0.3456, 0.3456, 548.8759, 507.5269]));
+            assertDirectives(hexLayer, showFakePiece("misc/counter", [0.3456, 0.3456, -0.3456, 0.3456, 548.8759, 507.5269]));
             assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
@@ -928,7 +939,7 @@ describe("Game", ()=> {
             assert(counter.location.toString()).equalsTo("point(10, 20)");
             assert(counter.viewportLocation.toString()).equalsTo("point(504.8876, 419.5503)");
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakeCounter("misc/counter", [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 419.5503]));
+            assertDirectives(hexLayer, showFakePiece("misc/counter", [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 419.5503]));
             assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
@@ -941,14 +952,14 @@ describe("Game", ()=> {
             paint(game);
         then:
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakeCounter("misc/counter", [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 419.5503]));
+            assertDirectives(hexLayer, showFakePiece("misc/counter", [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 419.5503]));
             assertNoMoreDirectives(hexLayer);
         when:
-            mouseClickOnCounter(game, counter); // checks that tests does not crash
+            mouseclickOnPiece(game, counter); // checks that tests does not crash
     });
 */
 
-    class CBTestPlayable extends CBPlayable {
+    class CBTestPlayable extends CBCounter {
         constructor(unit, layer, ...args) {
             super(...args);
             Object.defineProperty(this.artifact, "slot", {
@@ -965,7 +976,7 @@ describe("Game", ()=> {
 
     }
 
-    class CBTestOption extends CBPlayable {
+    class CBTestOption extends CBCounter {
         constructor(unit, ...args) {
             super(...args);
             Object.defineProperty(this.artifact, "slot", {
@@ -982,15 +993,15 @@ describe("Game", ()=> {
 
     }
 
-    class CBTestMarker extends CBCounterImageArtifact {
+    class CBTestMarker extends CBPieceImageArtifact {
         constructor(...args) {
             super(...args);
         }
         get layer() {
-            return this.counter.formationNature ? CBGame.ULAYERS.FMARKERS : CBGame.ULAYERS.MARKERS;
+            return this.piece.formationNature ? CBGame.ULAYERS.FMARKERS : CBGame.ULAYERS.MARKERS;
         }
         get slot() {
-            return this.counter.slot;
+            return this.piece.slot;
         }
     }
 
@@ -1006,7 +1017,7 @@ describe("Game", ()=> {
             unit._element.addArtifact(marker);
             game.start();
             var hexId = map.getHex(4, 5);
-            unit.addToMap(hexId, CBMoveType.BACKWARD);
+            unit.addToMap(hexId, CBStacking.TOP);
         then:
             assert(marker.game).equalsTo(game);
     });
@@ -1031,8 +1042,8 @@ describe("Game", ()=> {
             loadAllImages();
             game.start();
             var hexId = map.getHex(4, 5);
-            unit1.addToMap(hexId, CBMoveType.BACKWARD);
-            unit2.addToMap(hexId, CBMoveType.BACKWARD);
+            unit1.addToMap(hexId, CBStacking.TOP);
+            unit2.addToMap(hexId, CBStacking.TOP);
             spell.addToMap(hexId);
             option.addToMap(hexId);
             paint(game);
@@ -1052,10 +1063,10 @@ describe("Game", ()=> {
             assertDirectives(unitsLayer1, showTroop("misc/unit2", zoomAndRotate0(343.1085, 101.5518)));
             assertNoMoreDirectives(unitsLayer1);
             assertClearDirectives(spellsLayer1);
-            assertDirectives(spellsLayer1, showFakeCounter("misc/spell", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(spellsLayer1, showFakePiece("misc/spell", zoomAndRotate0(343.1085, 101.5518), 142));
             assertNoMoreDirectives(spellsLayer1);
             assertClearDirectives(optionsLayer1);
-            assertDirectives(optionsLayer1, showFakeCounter("misc/option", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(optionsLayer1, showFakePiece("misc/option", zoomAndRotate0(343.1085, 101.5518), 142));
             assertNoMoreDirectives(optionsLayer1);
     });
 
@@ -1080,8 +1091,8 @@ describe("Game", ()=> {
             game.start();
             var hexId = map.getHex(4, 5);
             var hexSideId = new CBHexSideId(hexId, hexId.getNearHex(120))
-            formation1.addToMap(hexSideId, CBMoveType.BACKWARD);
-            formation2.addToMap(hexSideId, CBMoveType.BACKWARD);
+            formation1.addToMap(hexSideId, CBStacking.TOP);
+            formation2.addToMap(hexSideId, CBStacking.TOP);
             option.addToMap(hexId);
             paint(game);
         when:
@@ -1100,7 +1111,7 @@ describe("Game", ()=> {
             assertDirectives(formationsLayer1, showFormation("misc/formation2", zoomAndRotate60(379.8876, 130.4955)));
             assertNoMoreDirectives(formationsLayer1);
             assertClearDirectives(foptionsLayer1);
-            assertDirectives(foptionsLayer1, showFakeCounter("misc/option", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(foptionsLayer1, showFakePiece("misc/option", zoomAndRotate0(343.1085, 101.5518), 142));
             assertNoMoreDirectives(foptionsLayer1);
     });
 
@@ -1129,7 +1140,7 @@ describe("Game", ()=> {
     it("Checks playable addition and removing on a Hex (not undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
-            let playable = new CBPlayable("ground", ["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBCounter("ground", ["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
             game.start();
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "hex-0");
@@ -1141,7 +1152,7 @@ describe("Game", ()=> {
         then:
             assert(hexId.playables).arrayEqualsTo([playable]);
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakeCounter("misc/playable", zoomAndRotate0(333.3333, 121.1022)));
+            assertDirectives(hexLayer, showFakePiece("misc/playable", zoomAndRotate0(333.3333, 121.1022)));
             assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
@@ -1156,9 +1167,9 @@ describe("Game", ()=> {
     it("Checks getByType method", () => {
         given:
             var { game, map } = prepareTinyGame();
-            class PlayableOne extends CBPlayable {};
-            class PlayableTwo extends CBPlayable {};
-            class PlayableThree extends CBPlayable {};
+            class PlayableOne extends CBCounter {};
+            class PlayableTwo extends CBCounter {};
+            class PlayableThree extends CBCounter {};
             var playable1 = new PlayableOne("ground", ["./../images/units/misc/one.png"], new Dimension2D(50, 50));
             var playable2 = new PlayableTwo("ground", ["./../images/units/misc/two.png"], new Dimension2D(50, 50));
             game.start();
@@ -1167,14 +1178,14 @@ describe("Game", ()=> {
             playable1.addToMap(hexId);
             playable2.addToMap(hexId);
         then:
-            assert(CBPlayable.getByType(hexId, PlayableOne)).equalsTo(playable1);
-            assert(CBPlayable.getByType(hexId, PlayableThree)).isNotDefined();
+            assert(CBCounter.getByType(hexId, PlayableOne)).equalsTo(playable1);
+            assert(CBCounter.getByType(hexId, PlayableThree)).isNotDefined();
     });
 
     it("Checks playable addition and removing on a Hex (undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
-            let playable = new CBPlayable("ground", ["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBCounter("ground", ["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
             game.start();
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "hex-0");
@@ -1186,7 +1197,7 @@ describe("Game", ()=> {
         then:
             assert(hexId.playables).arrayEqualsTo([playable]);
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakeCounter("misc/playable", zoomAndRotate0(333.3333, 121.1022)));
+            assertDirectives(hexLayer, showFakePiece("misc/playable", zoomAndRotate0(333.3333, 121.1022)));
             assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
@@ -1204,7 +1215,7 @@ describe("Game", ()=> {
         then:
             assert(hexId.playables).arrayEqualsTo([playable]);
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakeCounter("misc/playable", zoomAndRotate0(333.3333, 121.1022)));
+            assertDirectives(hexLayer, showFakePiece("misc/playable", zoomAndRotate0(333.3333, 121.1022)));
             assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
@@ -1219,7 +1230,7 @@ describe("Game", ()=> {
     it("Checks playable addition and removing on a Hex Side (not undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
-            let playable = new CBPlayable("ground", ["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBCounter("ground", ["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
             game.start();
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "hex-0");
@@ -1234,7 +1245,7 @@ describe("Game", ()=> {
             assert(hexId1.playables).arrayEqualsTo([playable]);
             assert(hexId2.playables).arrayEqualsTo([playable]);
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakeCounter("misc/playable", zoomAndRotate0(333.3333, 169.2143)));
+            assertDirectives(hexLayer, showFakePiece("misc/playable", zoomAndRotate0(333.3333, 169.2143)));
             assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
@@ -1250,7 +1261,7 @@ describe("Game", ()=> {
     it("Checks playable addition and removing on a Hex Side (undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
-            let playable = new CBPlayable("ground", ["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBCounter("ground", ["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
             game.start();
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "hex-0");
@@ -1265,7 +1276,7 @@ describe("Game", ()=> {
             assert(hexId1.playables).arrayEqualsTo([playable]);
             assert(hexId2.playables).arrayEqualsTo([playable]);
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakeCounter("misc/playable", zoomAndRotate0(333.3333, 169.2143)));
+            assertDirectives(hexLayer, showFakePiece("misc/playable", zoomAndRotate0(333.3333, 169.2143)));
             assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
@@ -1285,7 +1296,7 @@ describe("Game", ()=> {
             assert(hexId1.playables).arrayEqualsTo([playable]);
             assert(hexId2.playables).arrayEqualsTo([playable]);
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakeCounter("misc/playable", zoomAndRotate0(333.3333, 169.2143)));
+            assertDirectives(hexLayer, showFakePiece("misc/playable", zoomAndRotate0(333.3333, 169.2143)));
             assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
@@ -1314,7 +1325,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
-            assert(game.counters).arrayEqualsTo([unit]);
+            assert(game.playables).arrayEqualsTo([unit]);
             assert(unit.isOnBoard()).equalsTo(true);
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(333.3333, 111.327)));
@@ -1325,7 +1336,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([]);
-            assert(game.counters).arrayEqualsTo([]);
+            assert(game.playables).arrayEqualsTo([]);
             assert(unit.isOnBoard()).equalsTo(false);
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
             ]);
@@ -1347,7 +1358,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
-            assert(game.counters).arrayEqualsTo([unit]);
+            assert(game.playables).arrayEqualsTo([unit]);
             assert(unit.isOnBoard()).equalsTo(true);
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(333.3333, 111.327)));
@@ -1359,7 +1370,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([]);
-            assert(game.counters).arrayEqualsTo([]);
+            assert(game.playables).arrayEqualsTo([]);
             assert(unit.isOnBoard()).equalsTo(false);
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
             ]);
@@ -1369,7 +1380,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
-            assert(game.counters).arrayEqualsTo([unit]);
+            assert(game.playables).arrayEqualsTo([unit]);
             assert(unit.isOnBoard()).equalsTo(true);
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(333.3333, 111.327)));
@@ -1380,7 +1391,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([]);
-            assert(game.counters).arrayEqualsTo([]);
+            assert(game.playables).arrayEqualsTo([]);
             assert(unit.isOnBoard()).equalsTo(false);
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
             ]);
@@ -1406,7 +1417,7 @@ describe("Game", ()=> {
         then:
             assert(hexId1.units).arrayEqualsTo([unit]);
             assert(hexId2.units).arrayEqualsTo([unit]);
-            assert(game.counters).arrayEqualsTo([unit]);
+            assert(game.playables).arrayEqualsTo([unit]);
             assert(unit.isOnBoard()).equalsTo(true);
             assertClearDirectives(formationsLayer);
             assertDirectives(formationsLayer, showFormation("misc/formation", zoomAndRotate90(333.3333, 159.4391)));
@@ -1418,7 +1429,7 @@ describe("Game", ()=> {
         then:
             assert(hexId1.units).arrayEqualsTo([]);
             assert(hexId2.units).arrayEqualsTo([]);
-            assert(game.counters).arrayEqualsTo([]);
+            assert(game.playables).arrayEqualsTo([]);
             assert(unit.isOnBoard()).equalsTo(false);
             assertNoMoreDirectives(formationsLayer, 4);
     });
@@ -1443,7 +1454,7 @@ describe("Game", ()=> {
         then:
             assert(hexId1.units).arrayEqualsTo([unit]);
             assert(hexId2.units).arrayEqualsTo([unit]);
-            assert(game.counters).arrayEqualsTo([unit]);
+            assert(game.playables).arrayEqualsTo([unit]);
             assert(unit.isOnBoard()).equalsTo(true);
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showFormation("misc/formation", zoomAndRotate90(333.3333, 159.4391)));
@@ -1456,7 +1467,7 @@ describe("Game", ()=> {
         then:
             assert(hexId1.units).arrayEqualsTo([]);
             assert(hexId2.units).arrayEqualsTo([]);
-            assert(game.counters).arrayEqualsTo([]);
+            assert(game.playables).arrayEqualsTo([]);
             assert(unit.isOnBoard()).equalsTo(false);
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
             ]);
@@ -1467,7 +1478,7 @@ describe("Game", ()=> {
         then:
             assert(hexId1.units).arrayEqualsTo([unit]);
             assert(hexId2.units).arrayEqualsTo([unit]);
-            assert(game.counters).arrayEqualsTo([unit]);
+            assert(game.playables).arrayEqualsTo([unit]);
             assert(unit.isOnBoard()).equalsTo(true);
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showFormation("misc/formation", zoomAndRotate90(333.3333, 159.4391)));
@@ -1479,7 +1490,7 @@ describe("Game", ()=> {
         then:
             assert(hexId1.units).arrayEqualsTo([]);
             assert(hexId2.units).arrayEqualsTo([]);
-            assert(game.counters).arrayEqualsTo([]);
+            assert(game.playables).arrayEqualsTo([]);
             assert(unit.isOnBoard()).equalsTo(false);
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
             ]);
@@ -1501,7 +1512,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
-            assert(game.counters).arrayEqualsTo([unit]);
+            assert(game.playables).arrayEqualsTo([unit]);
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(333.3333, 111.327)));
             assertNoMoreDirectives(unitsLayer);
@@ -1512,7 +1523,7 @@ describe("Game", ()=> {
             repaint(game);
         then:
             assert(hexId.units).arrayEqualsTo([]);
-            assert(game.counters).arrayEqualsTo([unit]);
+            assert(game.playables).arrayEqualsTo([unit]);
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(333.3333, 207.5513)));
             assertNoMoreDirectives(unitsLayer);
@@ -1521,7 +1532,7 @@ describe("Game", ()=> {
             unit.hexLocation = null;
             repaint(game);
         then:
-            assert(game.counters).arrayEqualsTo([]);
+            assert(game.playables).arrayEqualsTo([]);
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
     });
 
@@ -1544,39 +1555,39 @@ describe("Game", ()=> {
         given:
             var { game, unit1, unit2 } = create2UnitsTinyGame();
         then:
-            assert(game.canSelectCounter(unit1)).isTrue();
+            assert(game.canSelectPlayable(unit1)).isTrue();
             assert(game.mayChangeSelection(unit1)).isTrue();
         when:
             unit1.select();
         then:
-            assert(game.selectedCounter).equalsTo(unit1);
-            assert(game.focusedCounter).isNotDefined();
+            assert(game.selectedPlayable).equalsTo(unit1);
+            assert(game.focusedPlayable).isNotDefined();
         when: // if an item is "focused", selection of another item is not possible
-            game.setFocusedCounter(unit1);
+            game.setFocusedPlayable(unit1);
         then:
-            assert(game.canUnselectCounter(unit1)).isFalse();
-            assert(game.canSelectCounter(unit2)).isFalse();
+            assert(game.canUnselectPlayable(unit1)).isFalse();
+            assert(game.canSelectPlayable(unit2)).isFalse();
             assert(game.mayChangeSelection(unit2)).isFalse();
         when: // can select focused unit
-            game.setFocusedCounter(unit2);
+            game.setFocusedPlayable(unit2);
         then:
-            assert(game.canUnselectCounter(unit1)).isFalse();
-            assert(game.canSelectCounter(unit2)).isTrue();
+            assert(game.canUnselectPlayable(unit1)).isFalse();
+            assert(game.canSelectPlayable(unit2)).isTrue();
             assert(game.mayChangeSelection(unit2)).isFalse();
         when: // No focused unit : selection is possible
-            game.setFocusedCounter();
+            game.setFocusedPlayable();
         then:
-            assert(game.canUnselectCounter(unit1)).isTrue();
-            assert(game.canSelectCounter(unit2)).isTrue();
+            assert(game.canUnselectPlayable(unit1)).isTrue();
+            assert(game.canSelectPlayable(unit2)).isTrue();
             assert(game.mayChangeSelection(unit2)).isTrue();
         when:
             unit2.select();
         then:
-            assert(game.selectedCounter).equalsTo(unit2);
+            assert(game.selectedPlayable).equalsTo(unit2);
         when:
             unit2.unselect();
         then:
-            assert(game.selectedCounter).isNotDefined();
+            assert(game.selectedPlayable).isNotDefined();
     });
 
     it("Checks unit selection/deselection regarding actions", () => {
@@ -1588,32 +1599,32 @@ describe("Game", ()=> {
             unit1.select();
             unit1.launchAction(action);
         then:
-            assert(game.canUnselectCounter(unit1)).isTrue();
+            assert(game.canUnselectPlayable(unit1)).isTrue();
         when:
             action.markAsStarted();
         then:
-            assert(game.canUnselectCounter(unit1)).isFalse();
+            assert(game.canUnselectPlayable(unit1)).isFalse();
         when:
             action.markAsFinished();
         then:
-            assert(game.canUnselectCounter(unit1)).isTrue();
+            assert(game.canUnselectPlayable(unit1)).isTrue();
     });
 
     it("Checks unit destruction", () => {
         given:
             var { game, unit1, unit2 } = create2UnitsTinyGame();
             unit1.select();
-            game.setFocusedCounter(unit1);
+            game.setFocusedPlayable(unit1);
         then:
             assert(unit1.isOnBoard()).isTrue();
-            assert(game.focusedCounter).equalsTo(unit1);
-            assert(game.selectedCounter).equalsTo(unit1);
+            assert(game.focusedPlayable).equalsTo(unit1);
+            assert(game.selectedPlayable).equalsTo(unit1);
         when:
             unit1.destroy();
         then:
             assert(unit1.isOnBoard()).isFalse();
-            assert(game.focusedCounter).isNotDefined();
-            assert(game.selectedCounter).isNotDefined();
+            assert(game.focusedPlayable).isNotDefined();
+            assert(game.selectedPlayable).isNotDefined();
     });
 
     it("Checks basic processing of an action", () => {
@@ -1735,13 +1746,13 @@ describe("Game", ()=> {
         mockPlatform.dispatchEvent(game.root, "mousemove", mouseEvent);
     }
 
-    function mouseMoveOnCounter(game, counter) {
+    function mouseMoveOnPlayable(game, counter) {
         let unitLocation = counter.artifact.viewportLocation;
         var mouseEvent = createEvent("mousemove", {offsetX:unitLocation.x, offsetY:unitLocation.y});
         mockPlatform.dispatchEvent(game.root, "mousemove", mouseEvent);
     }
 
-    function mouseMoveOutOfCounter(game, counter) {
+    function mouseMoveOutOfPlayable(game, counter) {
         let unitArea = counter.artifact.viewportBoundingArea;
         var mouseEvent = createEvent("mousemove", {offsetX:unitArea.left-5, offsetY:unitArea.top});
         mockPlatform.dispatchEvent(game.root, "mousemove", mouseEvent);
@@ -1758,14 +1769,14 @@ describe("Game", ()=> {
             assertNoMoreDirectives(unitsLayer);
         when:
             resetDirectives(unitsLayer);
-            mouseMoveOnCounter(game, unit);
+            mouseMoveOnPlayable(game, unit);
         then:
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showOverTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
             assertNoMoreDirectives(unitsLayer);
         when:
             resetDirectives(unitsLayer);
-            mouseMoveOutOfCounter(game, unit);
+            mouseMoveOutOfPlayable(game, unit);
         then:
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
@@ -1774,12 +1785,12 @@ describe("Game", ()=> {
             unit.select();
             paint(game);
             resetDirectives(unitsLayer);
-            mouseMoveOnCounter(game, unit);
+            mouseMoveOnPlayable(game, unit);
         then:
             assert(getDirectives(unitsLayer)).arrayEqualsTo([]);
         when:
             resetDirectives(unitsLayer);
-            mouseMoveOutOfCounter(game, unit);
+            mouseMoveOutOfPlayable(game, unit);
         then:
             assert(getDirectives(unitsLayer)).arrayEqualsTo([]);
     });
@@ -1802,11 +1813,11 @@ describe("Game", ()=> {
             var [unitsLayer1, unitsLayer2] = getLayers(game.board, "units-1", "units-2");
         then:
             assertClearDirectives(unitsLayer0);
-            assertDirectives(unitsLayer0, showFakeCounter("misc/counter1", zoomAndRotate0(333.3333, 111.327), 142));
+            assertDirectives(unitsLayer0, showFakePiece("misc/counter1", zoomAndRotate0(333.3333, 111.327), 142));
             assertNoMoreDirectives(unitsLayer0);
-            assertDirectives(unitsLayer1, showFakeCounter("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(unitsLayer1, showFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
             assertNoMoreDirectives(unitsLayer1);
-            assertDirectives(unitsLayer2, showFakeCounter("misc/counter3", zoomAndRotate0(352.8837, 91.7766), 142));
+            assertDirectives(unitsLayer2, showFakePiece("misc/counter3", zoomAndRotate0(352.8837, 91.7766), 142));
             assertNoMoreDirectives(unitsLayer2);
         when:
             resetDirectives(unitsLayer0, unitsLayer1, unitsLayer2);
@@ -1814,10 +1825,10 @@ describe("Game", ()=> {
             paint(game);
         then:
             assertClearDirectives(unitsLayer0);
-            assertDirectives(unitsLayer0, showFakeCounter("misc/counter1", zoomAndRotate0(333.3333, 111.327), 142));
+            assertDirectives(unitsLayer0, showFakePiece("misc/counter1", zoomAndRotate0(333.3333, 111.327), 142));
             assertNoMoreDirectives(unitsLayer0);
             assertClearDirectives(unitsLayer1);
-            assertDirectives(unitsLayer1, showOverFakeCounter("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(unitsLayer1, showOverFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
             assertNoMoreDirectives(unitsLayer1);
             assert(getDirectives(unitsLayer2, 4)).arrayEqualsTo([
             ]);
@@ -1827,13 +1838,13 @@ describe("Game", ()=> {
             paint(game);
         then:
             assertClearDirectives(unitsLayer0);
-            assertDirectives(unitsLayer0, showFakeCounter("misc/counter1", zoomAndRotate0(333.3333, 111.327), 142));
+            assertDirectives(unitsLayer0, showFakePiece("misc/counter1", zoomAndRotate0(333.3333, 111.327), 142));
             assertNoMoreDirectives(unitsLayer0);
             assertClearDirectives(unitsLayer1);
-            assertDirectives(unitsLayer1, showFakeCounter("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(unitsLayer1, showFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
             assertNoMoreDirectives(unitsLayer1);
             assertClearDirectives(unitsLayer2);
-            assertDirectives(unitsLayer2, showFakeCounter("misc/counter3", zoomAndRotate0(352.8837, 91.7766), 142));
+            assertDirectives(unitsLayer2, showFakePiece("misc/counter3", zoomAndRotate0(352.8837, 91.7766), 142));
             assertNoMoreDirectives(unitsLayer2);
     });
 
@@ -1941,8 +1952,8 @@ describe("Game", ()=> {
             assertClearDirectives(formationsLayer0);
             assertDirectives(formationsLayer0, showFormation("misc/formation1", zoomAndRotate90(333.3333, 159.4391)));
             assertNoMoreDirectives(formationsLayer0);
-            assertDirectives(unitsLayer1, showFakeCounter("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
-            assertDirectives(unitsLayer1, showFakeCounter("misc/counter3", zoomAndRotate0(343.1085, 197.7761), 142));
+            assertDirectives(unitsLayer1, showFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(unitsLayer1, showFakePiece("misc/counter3", zoomAndRotate0(343.1085, 197.7761), 142));
             assertNoMoreDirectives(unitsLayer1);
         when:
             resetDirectives(formationsLayer0, unitsLayer1);
@@ -1964,8 +1975,8 @@ describe("Game", ()=> {
             assertNoMoreDirectives(formationsLayer0);
             assertNoMoreDirectives(formationsLayer0);
             assertClearDirectives(unitsLayer1);
-            assertDirectives(unitsLayer1, showFakeCounter("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
-            assertDirectives(unitsLayer1, showFakeCounter("misc/counter3", zoomAndRotate0(343.1085, 197.7761), 142));
+            assertDirectives(unitsLayer1, showFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(unitsLayer1, showFakePiece("misc/counter3", zoomAndRotate0(343.1085, 197.7761), 142));
             assertNoMoreDirectives(unitsLayer1);
     });
 
@@ -1974,14 +1985,14 @@ describe("Game", ()=> {
             var { game, player, unit } = createTinyGame();
             var [unitsLayer] = getLayers(game.board, "units-0");
             var actionLaunched = false;
-            player.launchCounterAction = function(unit, event) {
+            player.launchPlayableAction = function(unit, event) {
                 actionLaunched = true;
             }
         when:
             resetDirectives(unitsLayer);
-            mouseClickOnCounter(game, unit)
+            mouseclickOnPiece(game, unit)
         then:
-            assert(game.selectedCounter).equalsTo(unit);
+            assert(game.selectedPlayable).equalsTo(unit);
             assert(actionLaunched).isTrue();
             loadAllImages();
             assertClearDirectives(unitsLayer);
@@ -1989,9 +2000,9 @@ describe("Game", ()=> {
             assertNoMoreDirectives(unitsLayer);
         when:   // Check that "reselecting" an already selected unit relaunch action
             actionLaunched = false;
-            mouseClickOnCounter(game, unit);
+            mouseclickOnPiece(game, unit);
         then:
-            assert(game.selectedCounter).equalsTo(unit);
+            assert(game.selectedPlayable).equalsTo(unit);
             assert(actionLaunched).isTrue();
     });
 
@@ -2033,9 +2044,9 @@ describe("Game", ()=> {
             unit1.select();
             unit1.launchAction(new CBAction(unit1, dummyEvent));
         then:
-            assert(game.selectedCounter).equalsTo(unit1);
+            assert(game.selectedPlayable).equalsTo(unit1);
         when:
-            unit1.updatePlayed();
+            unit1.markAsPlayed();
             assert(unit1.status).equalsTo("played");
             game.nextTurn();
         then:
@@ -2059,7 +2070,7 @@ describe("Game", ()=> {
         given:
             var {game, unit1} = create2PlayersTinyGame();
             game.setMenu();
-            game.setSelectedCounter(unit1);
+            game.setSelectedPlayable(unit1);
             let action = new CBAction(game, unit1);
             action.isFinishable = ()=>false;
             unit1.launchAction(action);
@@ -2128,7 +2139,7 @@ describe("Game", ()=> {
     it("Checks played status of a unit when selection is changed or turn is changed", () => {
         given:
             var {game, player, unit1, unit2} = create2UnitsTinyGame();
-            player.launchCounterAction = function(unit, event) {
+            player.launchPlayableAction = function(unit, event) {
                 unit.launchAction(new CBAction(game, unit));
             }
         when:
@@ -2138,7 +2149,7 @@ describe("Game", ()=> {
             assert(unit1.hasBeenActivated()).isTrue();
             assert(unit1.hasBeenPlayed()).isFalse();
         when:
-            mouseClickOnCounter(game, unit2);
+            mouseclickOnPiece(game, unit2);
         then:
             assert(unit1.action).isDefined();
             assert(unit1.hasBeenActivated()).isTrue();
@@ -2154,9 +2165,9 @@ describe("Game", ()=> {
     it("Checks playable sorting on Hex", () => {
         given:
             var { game, map } = prepareTinyGame();
-            var spell = new CBPlayable("ground", ["./../images/units/misc/spell.png"], new Dimension2D(50, 50));
+            var spell = new CBCounter("ground", ["./../images/units/misc/spell.png"], new Dimension2D(50, 50));
             spell.spellNature = true;
-            var blaze = new CBPlayable("ground", ["./../images/units/misc/blaze.png"], new Dimension2D(50, 50));
+            var blaze = new CBCounter("ground", ["./../images/units/misc/blaze.png"], new Dimension2D(50, 50));
             blaze.elementNature = true;
             game.start();
             var [hexLayer0] = getLayers(game.board, "hex-0");
@@ -2169,12 +2180,12 @@ describe("Game", ()=> {
             var [hexLayer1] = getLayers(game.board, "hex-1");
         then:
             assertClearDirectives(hexLayer0);
-            assertDirectives(hexLayer0, showFakeCounter("misc/blaze", zoomAndRotate0(333.3333, 121.1022)));
+            assertDirectives(hexLayer0, showFakePiece("misc/blaze", zoomAndRotate0(333.3333, 121.1022)));
             assertNoMoreDirectives(hexLayer0);
-            assertDirectives(hexLayer1, showFakeCounter("misc/spell", zoomAndRotate0(323.5582, 111.327)));
+            assertDirectives(hexLayer1, showFakePiece("misc/spell", zoomAndRotate0(323.5582, 111.327)));
             assertNoMoreDirectives(hexLayer1);
         when:
-            var trap = new CBPlayable("ground", ["./../images/units/misc/trap.png"], new Dimension2D(50, 50));
+            var trap = new CBCounter("ground", ["./../images/units/misc/trap.png"], new Dimension2D(50, 50));
             trap.featureNature = true;
             trap.appendToMap(map.getHex(4, 5));
             loadAllImages();
@@ -2183,12 +2194,12 @@ describe("Game", ()=> {
             var [hexLayer2] = getLayers(game.board, "hex-2");
         then:
             assertClearDirectives(hexLayer0);
-            assertDirectives(hexLayer0, showFakeCounter("misc/trap", zoomAndRotate0(333.3333, 121.1022)));
+            assertDirectives(hexLayer0, showFakePiece("misc/trap", zoomAndRotate0(333.3333, 121.1022)));
             assertNoMoreDirectives(hexLayer0);
             assertClearDirectives(hexLayer1);
-            assertDirectives(hexLayer1, showFakeCounter("misc/blaze", zoomAndRotate0(323.5582, 111.327)));
+            assertDirectives(hexLayer1, showFakePiece("misc/blaze", zoomAndRotate0(323.5582, 111.327)));
             assertNoMoreDirectives(hexLayer1);
-            assertDirectives(hexLayer2, showFakeCounter("misc/spell", zoomAndRotate0(313.783, 101.5518)));
+            assertDirectives(hexLayer2, showFakePiece("misc/spell", zoomAndRotate0(313.783, 101.5518)));
             assertNoMoreDirectives(hexLayer2);
     });
 

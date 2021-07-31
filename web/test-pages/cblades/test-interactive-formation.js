@@ -19,7 +19,7 @@ import {
 } from "../../jslib/mechanisms.js";
 import {
     clickOnActionMenu,
-    clickOnCounter,
+    clickOnPiece,
     clickOnTrigger,
     paint,
     repaint,
@@ -43,7 +43,7 @@ import {
     CBHexSideId
 } from "../../jslib/cblades/map.js";
 import {
-    CBMoveType
+    CBStacking
 } from "../../jslib/cblades/game.js";
 
 describe("Interactive Formation", ()=> {
@@ -98,7 +98,7 @@ describe("Interactive Formation", ()=> {
             loadAllImages();
         when:
             resetDirectives(unitsLayer, widgetsLayer, itemsLayer);
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
         then:
             loadAllImages();
             skipDirectives(widgetsLayer, 4);
@@ -134,7 +134,7 @@ describe("Interactive Formation", ()=> {
             unit2.receivesOrder(true);
             leader.move(null, 0);
             var [unitsLayer, formationsLayer, actuatorsLayer] = getLayers(game.board,"units-0", "formations-0", "actuators");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnCreateFormationAction(game);
             let createFormationActuator = getCreateFormationActuator(game);
             loadAllImages();
@@ -171,7 +171,7 @@ describe("Interactive Formation", ()=> {
             loadAllImages();
             paint(game);
             var [unitsLayer, formationsLayer] = getLayers(game.board,"units-0", "formations-0");
-            clickOnCounter(game, formation);
+            clickOnPiece(game, formation);
             clickOnBreakFormationAction(game);
             loadAllImages();
         when:
@@ -200,7 +200,7 @@ describe("Interactive Formation", ()=> {
             formation.receivesOrder(true);
             var [unitsLayer, formationsLayer, fmarkersLayer, actuatorsLayer] =
                 getLayers(game.board,"units-0", "formations-0", "fmarkers-0", "actuators");
-            clickOnCounter(game, formation);
+            clickOnPiece(game, formation);
             clickOnReleaseTroopsAction(game);
             loadAllImages();
         when:
@@ -222,7 +222,7 @@ describe("Interactive Formation", ()=> {
             assertDirectives(actuatorsLayer, showQuitFullTrigger(zoomAndRotate270(375, 246.0411)));
          when:
             var releaseTroopActuator = getReleaseTroopsActuator(game);
-            var trigger = releaseTroopActuator.getTrigger(formation.hexLocation.fromHex, 2, CBMoveType.FORWARD);
+            var trigger = releaseTroopActuator.getTrigger(formation.hexLocation.fromHex, 2, CBStacking.BOTTOM);
         then:
             assert(trigger).isDefined();
         when:
@@ -245,7 +245,7 @@ describe("Interactive Formation", ()=> {
             assertDirectives(actuatorsLayer, showQuitFullTrigger(zoomAndRotate270(375, 246.0411)));
         when:
             releaseTroopActuator = getReleaseTroopsActuator(game);
-            trigger = releaseTroopActuator.getTrigger(formation.hexLocation.toHex, 1, CBMoveType.BACKWARD);
+            trigger = releaseTroopActuator.getTrigger(formation.hexLocation.toHex, 1, CBStacking.TOP);
         then:
             assert(trigger).isDefined();
         when:
@@ -285,7 +285,7 @@ describe("Interactive Formation", ()=> {
             formation.move(new CBHexSideId(unit1.hexLocation, unit2.hexLocation), 0);
             unit2.move(map.getHex(8, 7), 0);
             formation.receivesOrder(true);
-            clickOnCounter(game, formation);
+            clickOnPiece(game, formation);
         when:
             var [unitsLayer, formationsLayer] = getLayers(game.board,"units-0", "formations-0");
             resetDirectives(unitsLayer, formationsLayer);

@@ -3,8 +3,8 @@
 import {
     CBAbstractUnit,
     CBAction,
-    CBActivableMixin, CBCounter,
-    CBCounterImageArtifact, CBGame, CBPlayable, Displayable, RetractableArtifactMixin, RetractableCounterMixin
+    CBActivableMixin, CBPiece,
+    CBPieceImageArtifact, CBGame, CBCounter, Displayable, RetractableArtifactMixin, RetractablePlayableMixin
 } from "./game.js";
 import {
     Dimension2D, Point2D
@@ -22,7 +22,7 @@ import {
     CBWing
 } from "./unit.js";
 
-class FireStartArtifact extends RetractableArtifactMixin(CBCounterImageArtifact) {
+class FireStartArtifact extends RetractableArtifactMixin(CBPieceImageArtifact) {
 
     constructor(fire, ...args) {
         super(fire, ...args);
@@ -30,7 +30,7 @@ class FireStartArtifact extends RetractableArtifactMixin(CBCounterImageArtifact)
 
 }
 
-export class CBFireStart extends RetractableCounterMixin(CBPlayable) {
+export class CBFireStart extends RetractablePlayableMixin(CBCounter) {
 
     constructor() {
         super("ground", ["./../images/actions/start-fire.png"], CBFireStart.DIMENSION);
@@ -54,7 +54,7 @@ export class CBFireStart extends RetractableCounterMixin(CBPlayable) {
     static DIMENSION = new Dimension2D(142, 142);
 }
 
-class StakesArtifact extends RetractableArtifactMixin(CBCounterImageArtifact) {
+class StakesArtifact extends RetractableArtifactMixin(CBPieceImageArtifact) {
 
     constructor(fire, ...args) {
         super(fire, ...args);
@@ -62,7 +62,7 @@ class StakesArtifact extends RetractableArtifactMixin(CBCounterImageArtifact) {
 
 }
 
-export class CBStakes extends RetractableCounterMixin(CBPlayable) {
+export class CBStakes extends RetractablePlayableMixin(CBCounter) {
 
     constructor() {
         super("ground", ["./../images/actions/stakes.png"], CBStakes.DIMENSION);
@@ -86,7 +86,7 @@ export class CBStakes extends RetractableCounterMixin(CBPlayable) {
     static DIMENSION = new Dimension2D(142, 142);
 }
 
-export class CBCounterMarkerArtifact extends CBCounterImageArtifact {
+export class CBCounterMarkerArtifact extends CBPieceImageArtifact {
 
     constructor(counter, path, position, dimension= CBCounterMarkerArtifact.MARKER_DIMENSION) {
         super(counter, "counter-markers", [DImage.getImage(path)], position, dimension);
@@ -95,7 +95,7 @@ export class CBCounterMarkerArtifact extends CBCounterImageArtifact {
     static MARKER_DIMENSION = new Dimension2D(64, 64);
 }
 
-export class DisplayablePlayableArtifact extends CBActivableMixin(CBCounterImageArtifact) {
+export class DisplayablePlayableArtifact extends CBActivableMixin(CBPieceImageArtifact) {
 
     constructor(fire, ...args) {
         super(fire, ...args);
@@ -103,7 +103,7 @@ export class DisplayablePlayableArtifact extends CBActivableMixin(CBCounterImage
 
 }
 
-export class CBDisplayablePlayable extends Displayable(CBCounter) {
+export class CBDisplayablePlayable extends Displayable(CBPiece) {
 
     constructor(paths, dimension) {
         super("counters", paths, dimension);
@@ -112,6 +112,10 @@ export class CBDisplayablePlayable extends Displayable(CBCounter) {
 
     createArtifact(levelName, images, position, dimension) {
         return new DisplayablePlayableArtifact(this, levelName, images, position, dimension);
+    }
+
+    isCurrentPlayer() {
+        return true;
     }
 
     markAsPlayed() {
@@ -259,7 +263,7 @@ export class CBWingDisplayablePlayable extends CBDisplayablePlayable {
 
     registerOnGame(game) {
         this._game = game;
-        game._registerCounter(this);
+        game._registerPlayable(this);
     }
 
     _processGlobalEvent(source, event, value) {

@@ -23,7 +23,7 @@ import {
     repaint,
     paint,
     clickOnActionMenu,
-    clickOnCounter,
+    clickOnPiece,
     clickOnDice,
     executeAllAnimations,
     clickOnResult,
@@ -116,7 +116,7 @@ describe("Interactive Command", ()=> {
             loadAllImages();
         when:
             resetDirectives(unitsLayer, widgetsLayer, itemsLayer);
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
         then:
             loadAllImages();
             skipDirectives(widgetsLayer, 4);
@@ -136,7 +136,7 @@ describe("Interactive Command", ()=> {
         given:
             var {game, wing, leader} = createTinyGameWithLeader();
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
-            clickOnCounter(game, leader);
+            clickOnPiece(game, leader);
             paint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
@@ -162,7 +162,7 @@ describe("Interactive Command", ()=> {
         given:
             var {game, wing, leader} = createTinyGameWithLeader();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
-            clickOnCounter(game, leader);
+            clickOnPiece(game, leader);
             clickOnTakeCommandAction(game);
             loadAllImages();
         when:
@@ -192,7 +192,7 @@ describe("Interactive Command", ()=> {
         given:
             var {game, wing, leader} = createTinyGameWithLeader();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
-            clickOnCounter(game, leader);
+            clickOnPiece(game, leader);
             clickOnTakeCommandAction(game);
             loadAllImages();
         when:
@@ -227,7 +227,7 @@ describe("Interactive Command", ()=> {
             var {game, wing, leader} = createTinyGameWithLeader();
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             wing.setLeader(leader);
-            clickOnCounter(game, leader);
+            clickOnPiece(game, leader);
             paint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
@@ -254,7 +254,7 @@ describe("Interactive Command", ()=> {
             var {game, wing, leader} = createTinyGameWithLeader();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             wing.setLeader(leader);
-            clickOnCounter(game, leader);
+            clickOnPiece(game, leader);
             clickOnDismissCommandAction(game);
             loadAllImages();
         when:
@@ -285,7 +285,7 @@ describe("Interactive Command", ()=> {
             var {game, wing, leader} = createTinyGameWithLeader();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             wing.setLeader(leader);
-            clickOnCounter(game, leader);
+            clickOnPiece(game, leader);
             clickOnDismissCommandAction(game);
             loadAllImages();
         when:
@@ -320,7 +320,7 @@ describe("Interactive Command", ()=> {
             var {game, wing, leader} = createTinyGameWithLeader();
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             wing.setLeader(leader);
-            clickOnCounter(game, leader);
+            clickOnPiece(game, leader);
             paint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
@@ -347,7 +347,7 @@ describe("Interactive Command", ()=> {
             var {game, wing, leader} = createTinyGameWithLeader();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             wing.setLeader(leader);
-            clickOnCounter(game, leader);
+            clickOnPiece(game, leader);
             clickOnChangeOrdersCommandAction(game);
             loadAllImages();
         when:
@@ -378,7 +378,7 @@ describe("Interactive Command", ()=> {
             var {game, wing, leader} = createTinyGameWithLeader();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             wing.setLeader(leader);
-            clickOnCounter(game, leader);
+            clickOnPiece(game, leader);
             clickOnChangeOrdersCommandAction(game);
             loadAllImages();
         when:
@@ -435,7 +435,7 @@ describe("Interactive Command", ()=> {
             var {game, wing, leader} = createTinyGameWithLeader();
             var [widgetsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             wing.setLeader(leader);
-            clickOnCounter(game, leader);
+            clickOnPiece(game, leader);
             clickOnChangeOrdersCommandAction(game);
             rollFor(1,2);
             clickOnDice(game);
@@ -486,7 +486,7 @@ describe("Interactive Command", ()=> {
             var {game, wing, leader} = createTinyGameWithLeader();
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             wing.setLeader(leader);
-            clickOnCounter(game, leader);
+            clickOnPiece(game, leader);
             paint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
@@ -521,7 +521,7 @@ describe("Interactive Command", ()=> {
             var [markersLayer, actuatorsLayer, widgetsLayer, itemsLayer, commandsLayer] =
                 getLayers(game.board,"markers-0", "actuators-0", "widgets", "widget-items", "widget-commands");
             wing.setLeader(leader);
-            clickOnCounter(game, leader);
+            clickOnPiece(game, leader);
             clickOnGiveOrdersCommandAction(game);
             loadAllImages();
         when:
@@ -587,7 +587,7 @@ describe("Interactive Command", ()=> {
             var {game, wing, unit1, leader} = create2UnitsTinyGame();
             var [widgetsLayer] = getLayers(game.board,"widgets");
             wing.setLeader(leader);
-            clickOnCounter(game, leader);
+            clickOnPiece(game, leader);
             clickOnGiveOrdersCommandAction(game);
             rollFor1Die(4);
             clickOnDice(game);
@@ -623,7 +623,7 @@ describe("Interactive Command", ()=> {
             unit1.fixTirednessLevel(CBTiredness.EXHAUSTED);
             unit1.move(map.getHex(10, 10));
             wing.setLeader(leader);
-            clickOnCounter(game, leader);
+            clickOnPiece(game, leader);
             clickOnGiveOrdersCommandAction(game);
             rollFor1Die(4);
             clickOnDice(game);
@@ -656,7 +656,7 @@ describe("Interactive Command", ()=> {
             unit1.rout();
             unit1.move(map.getHex(10, 10));
             wing.setLeader(leader);
-            clickOnCounter(game, leader);
+            clickOnPiece(game, leader);
             clickOnGiveOrdersCommandAction(game);
             rollFor1Die(4);
             clickOnDice(game);

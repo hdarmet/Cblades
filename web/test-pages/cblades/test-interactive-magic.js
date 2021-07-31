@@ -20,7 +20,7 @@ import {
 } from "../../jslib/mechanisms.js";
 import {
     clickOnActionMenu,
-    clickOnCounter,
+    clickOnPiece,
     clickOnDice,
     clickOnMap,
     clickOnMask,
@@ -112,7 +112,7 @@ describe("Interactive Magic", ()=> {
             loadAllImages();
         when:
             resetDirectives(unitsLayer, widgetsLayer, itemsLayer);
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             loadAllImages();
         then:
             skipDirectives(widgetsLayer, 4);
@@ -130,7 +130,7 @@ describe("Interactive Magic", ()=> {
         given:
             var {game, wing, leader:wizard} = createTinyGameWithLeader();
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
-            clickOnCounter(game, wizard);
+            clickOnPiece(game, wizard);
             paint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
@@ -178,7 +178,7 @@ describe("Interactive Magic", ()=> {
         given:
             var {game, wing, leader:wizard} = createTinyGameWithLeader();
             var [widgetsLayer, itemsLayer, spellsLayer0] = getLayers(game.board,"widgets", "widget-items", "spells-0");
-            clickOnCounter(game, wizard);
+            clickOnPiece(game, wizard);
             clickOnChoseSpellAction(game);
             paint(game);
             loadAllImages();
@@ -202,7 +202,7 @@ describe("Interactive Magic", ()=> {
             var {game, wing, leader:wizard} = createTinyGameWithLeader();
             wizard.choseSpell(CBSpell.laboratory.get("firePentacle1"));
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
-            clickOnCounter(game, wizard);
+            clickOnPiece(game, wizard);
             paint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
@@ -228,7 +228,7 @@ describe("Interactive Magic", ()=> {
             var {game, wing, leader:wizard} = createTinyGameWithLeader();
             wizard.choseSpell(CBSpell.laboratory.get("firePentacle1"));
             var [widgetsLayer, itemsLayer, commandsLayer, hexLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands", "hex-0");
-            clickOnCounter(game, wizard);
+            clickOnPiece(game, wizard);
             clickOnTryToCastSpellAction(game);
             loadAllImages();
         when:
@@ -259,7 +259,7 @@ describe("Interactive Magic", ()=> {
             var {game, wing, leader:wizard} = createTinyGameWithLeader();
             wizard.choseSpell(CBSpell.laboratory.get("firePentacle1"));
             var [widgetsLayer, itemsLayer, commandsLayer, hexLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands", "hex-0");
-            clickOnCounter(game, wizard);
+            clickOnPiece(game, wizard);
             clickOnTryToCastSpellAction(game);
             loadAllImages();
         when:
@@ -298,7 +298,7 @@ describe("Interactive Magic", ()=> {
             var {game, map, leader:wizard} = createTinyGameWithLeader();
             wizard.choseSpell(CBSpell.laboratory.get("blaze1"));
             var [actuatorsLayer, hexLayer] = getLayers(game.board,"actuators", "hex-0");
-            clickOnCounter(game, wizard);
+            clickOnPiece(game, wizard);
             clickOnTryToCastSpellAction(game);
             rollFor(1, 2);
             clickOnDice(game);
@@ -336,7 +336,7 @@ describe("Interactive Magic", ()=> {
             var {game, unit, leader:wizard} = createTinyGameWithLeader();
             wizard.choseSpell(CBSpell.laboratory.get("fireSword1"));
             var [actuatorsLayer, optionsLayer] = getLayers(game.board,"actuators-0", "options-0");
-            clickOnCounter(game, wizard);
+            clickOnPiece(game, wizard);
             clickOnTryToCastSpellAction(game);
             rollFor(1, 2);
             clickOnDice(game);
@@ -376,7 +376,7 @@ describe("Interactive Magic", ()=> {
             foe.hexLocation = map.getHex(7, 8);
             wizard.choseSpell(CBSpell.laboratory.get("fireball1"));
             var [actuatorsLayer, optionsLayer] = getLayers(game.board,"actuators-0", "options-0");
-            clickOnCounter(game, wizard);
+            clickOnPiece(game, wizard);
             clickOnTryToCastSpellAction(game);
             rollFor(1, 2);
             clickOnDice(game);
@@ -408,7 +408,7 @@ describe("Interactive Magic", ()=> {
             wizard.choseSpell(CBSpell.laboratory.get("fireball1"));
             var [widgetsLayer, itemsLayer, commandsLayer, unitsLayer, optionsLayer] =
                 getLayers(game.board,"widgets", "widget-items", "widget-commands", "units-0", "options-0");
-            clickOnCounter(game, wizard);   // show action menu
+            clickOnPiece(game, wizard);   // show action menu
             clickOnTryToCastSpellAction(game); // select cast action
             rollFor(1, 2);
             clickOnDice(game); // roll dices
@@ -455,7 +455,7 @@ describe("Interactive Magic", ()=> {
             wizard.choseSpell(CBSpell.laboratory.get("fireball1"));
             var [widgetsLayer, itemsLayer, commandsLayer, unitsLayer, optionsLayer] =
                 getLayers(game.board,"widgets", "widget-items", "widget-commands", "units-0", "options-0");
-            clickOnCounter(game, wizard);   // show action menu
+            clickOnPiece(game, wizard);   // show action menu
             clickOnTryToCastSpellAction(game); // select cast action
             rollFor(1, 2);
             clickOnDice(game); // roll dices

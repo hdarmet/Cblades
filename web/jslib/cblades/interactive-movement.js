@@ -18,7 +18,7 @@ import {
 } from "./map.js";
 import {
     CBAction, CBActionActuator, CBActuator, CBActuatorImageTrigger, CBActuatorTriggerMixin, CBMask, WidgetLevelMixin,
-    CBMoveMode, CBMoveType
+    CBMoveMode, CBStacking
 } from "./game.js";
 import {
     CBCharge,
@@ -73,6 +73,10 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this._event = event;
         this._movementCost = 0;
         this._moves = 0;
+    }
+
+    get unit() {
+        return this.playable;
     }
 
     _memento() {
@@ -221,7 +225,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
     _createMovementActuators(start) {
         this.game.closeActuators();
         let finishable = this.isFinishable();
-        this.game.setFocusedCounter(finishable ? null : this.unit);
+        this.game.setFocusedPlayable(finishable ? null : this.unit);
         if ((this._buildMoveActuator(start, finishable) + this._buildRotationActuator(start, finishable)) !== 0) {
             this._buildMovementHelpActuator(finishable)
            return true;
@@ -234,7 +238,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
     _continueAfterRotation() {
         this.game.closeActuators();
         let finishable = this.isFinishable();
-        this.game.setFocusedCounter(finishable ? null : this.unit);
+        this.game.setFocusedPlayable(finishable ? null : this.unit);
         if (this._buildMoveActuator(false, finishable) !== 0) {
             this._buildMovementHelpActuator(finishable);
             return true;
@@ -281,7 +285,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this.game.closeActuators();
         cost = this._updateTirednessForMovement(cost, start);
         this._checkActionProgession(cost.value);
-        this.unit.move(hexLocation, cost, CBMoveType.FORWARD);
+        this.unit.move(hexLocation, cost, CBStacking.BOTTOM);
         let played = !this._continueAfterMove();
         this._markUnitActivationAfterMovement(played);
     }
@@ -290,7 +294,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this.game.closeActuators();
         cost = this._updateTirednessForMovement(cost, start);
         this._checkActionProgession(cost.value);
-        this.unit.turn(angle, cost, CBMoveType.FORWARD);
+        this.unit.turn(angle, cost, CBStacking.BOTTOM);
         let played = !this._continueAfterMove();
         this._markUnitActivationAfterMovement(played);
     }
@@ -1133,13 +1137,13 @@ class HelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
     constructor(actuator, canGetTired) {
         let normalImage = DImage.getImage("./../images/actuators/standard-movement-points.png");
         let extendedImage = DImage.getImage("./../images/actuators/extended-movement-points.png");
-        let extended = actuator.unit.movementPoints<=0 && canGetTired;
+        let extended = actuator.playable.movementPoints<=0 && canGetTired;
         let image = extended ? extendedImage : normalImage;
         super(actuator,"actuators", image, new Point2D(0, 0), HelpTrigger.DIMENSION, 0);
         this._extended = extended
-        this.pangle = actuator.unit.angle;
-        this.position = actuator.unit.element.getLocation(new Point2D(30, 30))
-            .translate(-actuator.unit.element.location.x, -actuator.unit.element.location.y);
+        this.pangle = actuator.playable.angle;
+        this.position = actuator.playable.element.getLocation(new Point2D(30, 30))
+            .translate(-actuator.playable.element.location.x, -actuator.playable.element.location.y);
     }
 
     _paint() {
@@ -1147,7 +1151,7 @@ class HelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         this._level.setTextSettings("bold 30px serif", "center");
         this._level.setFillSettings(this._extended ? "#bF9000" : "#2F528F");
         this._level.fillText(
-            "" + (this._extended ? this.actuator.unit.extendedMovementPoints :  this.actuator.unit.movementPoints),
+            "" + (this._extended ? this.actuator.playable.extendedMovementPoints :  this.actuator.playable.movementPoints),
             new Point2D(0, 0)
         );
     }
@@ -1188,7 +1192,7 @@ class RotateTrigger extends CBActuatorImageTrigger {
         let image = type === CBMovement.NORMAL ? normalImage : extendedImage;
         super(actuator, "actuators", image, new Point2D(0, 0), RotateTrigger.DIMENSION);
         this.pangle = angle;
-        this.position = Point2D.position(actuator.unit.location, location, angle%60?0.87:0.75);
+        this.position = Point2D.position(actuator.playable.location, location, angle%60?0.87:0.75);
     }
 
 }
@@ -1205,7 +1209,7 @@ class RotateCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         this._cost = cost;
         this._type = type;
         this.pangle = angle;
-        this.position = Point2D.position(actuator.unit.location, location, angle%60?0.65:0.55);
+        this.position = Point2D.position(actuator.playable.location, location, angle%60?0.65:0.55);
     }
 
     _paint() {
@@ -1273,7 +1277,7 @@ class MoveTrigger extends CBActuatorImageTrigger {
         let image = type === CBMovement.NORMAL ? normalImage : type === CBMovement.EXTENDED ? extendedImage : minimalImage;
         super(actuator, "actuators", image, new Point2D(0, 0), MoveTrigger.DIMENSION);
         this.pangle = angle;
-        this.position = Point2D.position(actuator.unit.location, location, 0.9);
+        this.position = Point2D.position(actuator.playable.location, location, 0.9);
     }
 
 }
@@ -1290,7 +1294,7 @@ class MoveCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         this._cost = cost;
         this._type = type;
         this.pangle = angle;
-        this.position = Point2D.position(actuator.unit.location, location, 1.3);
+        this.position = Point2D.position(actuator.playable.location, location, 1.3);
     }
 
     _paint() {
@@ -1336,7 +1340,7 @@ export class CBMoveActuator extends CBActionActuator {
 
     onMouseClick(trigger, event) {
         this.game.enableActuatorsClosing(true);
-        this.action.moveUnit(this.unit.hexLocation.getNearHex(trigger.angle), trigger.angle, this._first);
+        this.action.moveUnit(this.playable.hexLocation.getNearHex(trigger.angle), trigger.angle, this._first);
     }
 
     setVisibility(level) {
@@ -1358,7 +1362,7 @@ class MoveFormationTrigger extends CBActuatorImageTrigger {
         this.pangle = angle;
         this.rotate = false;
         let unitHex =  hex.getNearHex(invertAngle(angle));
-        let startLocation = Point2D.position(actuator.unit.location, unitHex.location, 1);
+        let startLocation = Point2D.position(actuator.playable.location, unitHex.location, 1);
         let targetPosition = Point2D.position(unitHex.location, hex.location, 0.9);
         this.position = startLocation.plusPoint(targetPosition);
     }
@@ -1379,7 +1383,7 @@ class MoveFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         this.pangle = angle;
         this.rotate = false;
         let unitHex =  hex.getNearHex(invertAngle(angle));
-        let startLocation = Point2D.position(actuator.unit.location, unitHex.location, 1);
+        let startLocation = Point2D.position(actuator.playable.location, unitHex.location, 1);
         let targetPosition = Point2D.position(unitHex.location, hex.location, 1.3);
         this.position = startLocation.plusPoint(targetPosition);
     }
@@ -1410,7 +1414,7 @@ class TurnFormationTrigger extends CBActuatorImageTrigger {
         this.pangle = angle;
         this.rotate = true;
         this.hex =  hex.getNearHex(invertAngle(angle));
-        let startLocation = Point2D.position(actuator.unit.location, this.hex.location, 1.5);
+        let startLocation = Point2D.position(actuator.playable.location, this.hex.location, 1.5);
         let targetPosition = Point2D.position(this.hex.location, hex.location, 0.8);
         this.position = startLocation.plusPoint(targetPosition);
     }
@@ -1431,7 +1435,7 @@ class TurnFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
         this.pangle = angle;
         this.rotate = true;
         this.hex =  hex.getNearHex(invertAngle(angle));
-        let startLocation = Point2D.position(actuator.unit.location, this.hex.location, 1.5);
+        let startLocation = Point2D.position(actuator.playable.location, this.hex.location, 1.5);
         let targetPosition = Point2D.position(this.hex.location, hex.location, 1.1);
         this.position = startLocation.plusPoint(targetPosition);
     }
@@ -1512,8 +1516,8 @@ export class CBFormationMoveActuator extends CBActionActuator {
             this.action.turnFormation(trigger.angle);
         }
         else {
-            let hex1 = this.unit.hexLocation.fromHex.getNearHex(trigger.angle);
-            let hex2 = this.unit.hexLocation.toHex.getNearHex(trigger.angle);
+            let hex1 = this.playable.hexLocation.fromHex.getNearHex(trigger.angle);
+            let hex2 = this.playable.hexLocation.toHex.getNearHex(trigger.angle);
             this.action.moveFormation(new CBHexSideId(hex1, hex2), trigger.angle);
         }
     }

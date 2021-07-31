@@ -5,7 +5,7 @@ import {
     distanceFromHexToHex
 } from "../map.js";
 import {
-    CBMoveType
+    CBStacking
 } from "../game.js";
 import {
     CBEngageSideMode
@@ -79,9 +79,9 @@ export class CBCombatTeacher {
         if (!unit.isRouted() && !unit.isCharging()) {
             let forbiddenZones = this.getRetreatForbiddenZone(attacker);
             let zones = this.getUnitBackwardZone(unit);
-            processZones.call(this, result, zones, CBMoveType.BACKWARD, forbiddenZones);
+            processZones.call(this, result, zones, CBStacking.TOP, forbiddenZones);
             zones = this.getUnitForwardZone(unit);
-            processZones.call(this, result, zones, CBMoveType.FORWARD, forbiddenZones);
+            processZones.call(this, result, zones, CBStacking.BOTTOM, forbiddenZones);
         }
         return result;
     }
@@ -95,7 +95,7 @@ export class CBCombatTeacher {
             let zone = zones[angle];
             if (allowesZones.has(zone.hex) && zone.hex.empty) {
                 result[angle] = zone;
-                zone.moveType = CBMoveType.FORWARD;
+                zone.moveType = CBStacking.BOTTOM;
             }
         }
         return result;
@@ -135,9 +135,9 @@ export class CBCombatTeacher {
         let retreatDirections = [];
         let rotateDirections = [];
         let zones = this.getUnitForwardZone(unit);
-        processZones.call(this, zones, retreatDirections, rotateDirections, forbiddenZones, CBMoveType.FORWARD);
+        processZones.call(this, zones, retreatDirections, rotateDirections, forbiddenZones, CBStacking.BOTTOM);
         zones = this.getUnitBackwardZone(unit)
-        processZones.call(this, zones, retreatDirections, rotateDirections, forbiddenZones, CBMoveType.BACKWARD);
+        processZones.call(this, zones, retreatDirections, rotateDirections, forbiddenZones, CBStacking.TOP);
         return { retreatDirections, rotateDirections }
     }
 

@@ -6,7 +6,7 @@ import {
     DIconMenuItem, DInsert, DMask, DResult, DScene, DSwipe
 } from "../widget.js";
 import {
-    CBAction, CBGame, CBMoveType, CBPlayable, WidgetLevelMixin
+    CBAction, CBGame, CBStacking, CBCounter, WidgetLevelMixin
 } from "./game.js";
 import {
     CBActionMenu,
@@ -57,45 +57,45 @@ export function registerInteractiveMiscellaneous() {
         unit.launchAction(new InteractiveRemoveStakesAction(this.game, unit, event));
     }
     CBInteractivePlayer.prototype.playWeather = function(counter, event) {
-        if (this.game.canUnselectCounter()) {
+        if (this.game.canUnselectPlayable()) {
             let action = new InteractivePlayWeatherAction(this.game, counter, event);
-            let unit = this.game.selectedCounter;
+            let unit = this.game.selectedPlayable;
             this.afterActivation(unit, () => {
                 action.play();
             });
         }
     }
     CBInteractivePlayer.prototype.playFog = function(counter, event) {
-        if (this.game.canUnselectCounter()) {
+        if (this.game.canUnselectPlayable()) {
             let action = new InteractivePlayFogAction(this.game, counter, event);
-            let unit = this.game.selectedCounter;
+            let unit = this.game.selectedPlayable;
             this.afterActivation(unit, () => {
                 action.play();
             });
         }
     }
     CBInteractivePlayer.prototype.playWindDirection = function(counter, event) {
-        if (this.game.canUnselectCounter()) {
+        if (this.game.canUnselectPlayable()) {
             let action = new InteractivePlayWindDirectionAction(this.game, counter, event);
-            let unit = this.game.selectedCounter;
+            let unit = this.game.selectedPlayable;
             this.afterActivation(unit, () => {
                 action.play();
             });
         }
     }
     CBInteractivePlayer.prototype.playTiredness = function(counter, event) {
-        if (this.game.canUnselectCounter()) {
+        if (this.game.canUnselectPlayable()) {
             let action = new InteractivePlayTirednessAction(this.game, counter, event);
-            let unit = this.game.selectedCounter;
+            let unit = this.game.selectedPlayable;
             this.afterActivation(unit, () => {
                 action.play();
             });
         }
     }
     CBInteractivePlayer.prototype.playMoral = function(counter, event) {
-        if (this.game.canUnselectCounter()) {
+        if (this.game.canUnselectPlayable()) {
             let action = new InteractivePlayMoralAction(this.game, counter, event);
-            let unit = this.game.selectedCounter;
+            let unit = this.game.selectedPlayable;
             this.afterActivation(unit, () => {
                 action.play();
             });
@@ -120,12 +120,16 @@ export class InteractiveMergeUnitAction extends CBAction {
         this._event = event;
     }
 
+    get unit() {
+        return this.playable;
+    }
+
     play() {
         this.game.closeActuators();
         this.unit.markAsCharging(CBCharge.NONE);
         let {replacement, replaced} = this.game.arbitrator.mergedUnit(this.unit);
         let hexLocation = this.unit.hexLocation;
-        replacement.appendToMap(hexLocation, CBMoveType.BACKWARD);
+        replacement.appendToMap(hexLocation, CBStacking.TOP);
         replacement.rotate(this.unit.angle);
         replacement.markAsBeingPlayed();
         for (let replacedUnit of replaced) {
@@ -141,6 +145,10 @@ export class InteractiveSetFireAction extends CBAction {
     constructor(game, unit, event) {
         super(game, unit);
         this._event = event;
+    }
+
+    get unit() {
+        return this.playable;
     }
 
     play() {
@@ -199,6 +207,10 @@ export class InteractiveExtinguishFireAction extends CBAction {
         this._event = event;
     }
 
+    get unit() {
+        return this.playable;
+    }
+
     play() {
         this.game.closeActuators();
         let weather = this.game.arbitrator.getWeather(this.game);
@@ -239,7 +251,7 @@ export class InteractiveExtinguishFireAction extends CBAction {
     _processExtinguishFireResult(unit, diceResult) {
         let result = this.game.arbitrator.processExtinguishFireResult(this.unit, diceResult);
         if (result.success) {
-            let fireStart = CBPlayable.getByType(unit.hexLocation, CBFireStart);
+            let fireStart = CBCounter.getByType(unit.hexLocation, CBFireStart);
             if (fireStart) {
                 fireStart.removeFromMap(unit.hexLocation);
             }
@@ -255,6 +267,10 @@ export class InteractiveSetStakesAction extends CBAction {
     constructor(game, unit, event) {
         super(game, unit);
         this._event = event;
+    }
+
+    get unit() {
+        return this.playable;
     }
 
     play() {
@@ -310,6 +326,10 @@ export class InteractiveRemoveStakesAction extends CBAction {
         this._event = event;
     }
 
+    get unit() {
+        return this.playable;
+    }
+
     play() {
         this.game.closeActuators();
         let result = new DResult();
@@ -346,7 +366,7 @@ export class InteractiveRemoveStakesAction extends CBAction {
     _processRemoveStakesResult(unit, diceResult) {
         let result = this.game.arbitrator.processRemoveStakesResult(this.unit, diceResult);
         if (result.success) {
-            let stakes = CBPlayable.getByType(unit.hexLocation, CBStakes);
+            let stakes = CBCounter.getByType(unit.hexLocation, CBStakes);
             if (stakes) {
                 stakes.removeFromMap(unit.hexLocation);
             }
@@ -357,29 +377,7 @@ export class InteractiveRemoveStakesAction extends CBAction {
 
 }
 
-
-export class CBCounterAction {
-
-    constructor(game, counter) {
-        this._game = game;
-        this._counter = counter;
-    }
-
-    get game() {
-        return this._game;
-    }
-
-    get counter() {
-        return this._counter;
-    }
-
-    markAsPlayed() {
-        this._counter.markAsPlayed();
-    }
-
-}
-
-export class InteractivePlayWeatherAction extends CBCounterAction {
+export class InteractivePlayWeatherAction extends CBAction {
 
     constructor(game, counter, event) {
         super(game, counter);
@@ -433,14 +431,14 @@ export class InteractivePlayWeatherAction extends CBCounterAction {
 
     _processPlayWeatherResult(game, diceResult) {
         let result = this.game.arbitrator.processPlayWeatherResult(game, diceResult);
-        this.markAsPlayed();
+        this.markAsFinished();
         this.game.changeWeather(result.weather);
         return result;
     }
 
 }
 
-export class InteractivePlayFogAction extends CBCounterAction {
+export class InteractivePlayFogAction extends CBAction {
 
     constructor(game, counter, event) {
         super(game, counter);
@@ -494,14 +492,14 @@ export class InteractivePlayFogAction extends CBCounterAction {
 
     _processPlayFogResult(game, diceResult) {
         let result = this.game.arbitrator.processPlayFogResult(game, diceResult);
-        this.markAsPlayed();
+        this.markAsFinished();
         this.game.changeFog(result.fog);
         return result;
     }
 
 }
 
-export class InteractivePlayWindDirectionAction extends CBCounterAction {
+export class InteractivePlayWindDirectionAction extends CBAction {
 
     constructor(game, counter, event) {
         super(game, counter);
@@ -554,7 +552,7 @@ export class InteractivePlayWindDirectionAction extends CBCounterAction {
 
     _processPlayWindDirectionResult(game, diceResult) {
         let result = this.game.arbitrator.processPlayWindDirectionResult(game, diceResult);
-        this.markAsPlayed();
+        this.markAsFinished();
         this.game.changeWindDirection(result.windDirection);
         Memento.clear();
         return result;
@@ -562,7 +560,7 @@ export class InteractivePlayWindDirectionAction extends CBCounterAction {
 
 }
 
-export class InteractivePlayTirednessAction extends CBCounterAction {
+export class InteractivePlayTirednessAction extends CBAction {
 
     constructor(game, counter, event) {
         super(game, counter);
@@ -574,7 +572,7 @@ export class InteractivePlayTirednessAction extends CBCounterAction {
         this.game.closeActuators();
         let swipeResult = new DSwipe();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
-        let tirednessIndicator = new CBWingTirednessIndicator(this.counter.wing);
+        let tirednessIndicator = new CBWingTirednessIndicator(this.playable.wing);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
@@ -610,17 +608,17 @@ export class InteractivePlayTirednessAction extends CBCounterAction {
     }
 
     _processPlayTirednessResult(game, diceResult) {
-        let result = this.game.arbitrator.processPlayTirednessResult(game, this.counter.wing, diceResult);
-        this.markAsPlayed();
+        let result = this.game.arbitrator.processPlayTirednessResult(game, this.playable.wing, diceResult);
+        this.markAsFinished();
         if (result.swipe) {
-            this.counter.wing.changeTiredness(result.tiredness);
+            this.playable.wing.changeTiredness(result.tiredness);
         }
         return result;
     }
 
 }
 
-export class InteractivePlayMoralAction extends CBCounterAction {
+export class InteractivePlayMoralAction extends CBAction {
 
     constructor(game, counter, event) {
         super(game, counter);
@@ -632,7 +630,7 @@ export class InteractivePlayMoralAction extends CBCounterAction {
         this.game.closeActuators();
         let swipeResult = new DSwipe();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
-        let moralIndicator = new CBWingMoralIndicator(this.counter.wing);
+        let moralIndicator = new CBWingMoralIndicator(this.playable.wing);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
@@ -668,10 +666,10 @@ export class InteractivePlayMoralAction extends CBCounterAction {
     }
 
     _processPlayMoralResult(game, diceResult) {
-        let result = this.game.arbitrator.processPlayMoralResult(game, this.counter.wing, diceResult);
-        this.markAsPlayed();
+        let result = this.game.arbitrator.processPlayMoralResult(game, this.playable.wing, diceResult);
+        this.markAsFinished();
         if (result.swipe) {
-            this.counter.wing.changeMoral(result.moral);
+            this.playable.wing.changeMoral(result.moral);
         }
         return result;
     }

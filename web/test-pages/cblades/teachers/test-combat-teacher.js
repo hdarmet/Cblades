@@ -8,7 +8,7 @@ import {
     CBHexSideId, CBMap
 } from "../../../jslib/cblades/map.js";
 import {
-    CBGame, CBAbstractPlayer, CBMoveType
+    CBGame, CBAbstractPlayer, CBStacking
 } from "../../../jslib/cblades/game.js";
 import {
     CBCharge,
@@ -312,16 +312,16 @@ describe("Combat teacher", ()=> {
             assertNotInZone(retreatDirections, 90); // not used
             assertNotInZone(retreatDirections, 120); // adjacent to attacker
             assertNotInZone(retreatDirections, 180); // side
-            assertInRetreatZone(retreatDirections, 240, 2, 5, CBMoveType.BACKWARD);
+            assertInRetreatZone(retreatDirections, 240, 2, 5, CBStacking.TOP);
             assertNotInZone(retreatDirections, 270); // not used
-            assertInRetreatZone(retreatDirections, 300, 2, 3, CBMoveType.BACKWARD);
+            assertInRetreatZone(retreatDirections, 300, 2, 3, CBStacking.TOP);
 
             assertNotInZone(rotateDirections, 0); // side
             assertNotInZone(rotateDirections, 60); // occupied by a foe
             assertNotInZone(rotateDirections, 90); // not used
             assertNotInZone(rotateDirections, 120); // adjacent to attacker
             assertNotInZone(rotateDirections, 180); // side
-            assertInRetreatZone(rotateDirections, 240, 2, 4, CBMoveType.BACKWARD);
+            assertInRetreatZone(rotateDirections, 240, 2, 4, CBStacking.TOP);
             assertNotInZone(rotateDirections, 270); // not used
             assertNotInZone(rotateDirections, 300); // adjacent to attacker
         given:
@@ -334,9 +334,9 @@ describe("Combat teacher", ()=> {
             assertNotInZone(retreatDirections, 90); // not used
             assertNotInZone(retreatDirections, 120); // adjacent to attacker
             assertNotInZone(retreatDirections, 180); // side
-            assertInRetreatZone(retreatDirections, 240, 2, 5, CBMoveType.BACKWARD);
+            assertInRetreatZone(retreatDirections, 240, 2, 5, CBStacking.TOP);
             assertNotInZone(retreatDirections, 270); // not used
-            assertInRetreatZone(retreatDirections, 300, 2, 3, CBMoveType.BACKWARD);
+            assertInRetreatZone(retreatDirections, 300, 2, 3, CBStacking.TOP);
 
             assertNotInZone(rotateDirections, 0); // side
             assertNotInZone(rotateDirections, 60); // occupied by a foe
@@ -345,7 +345,7 @@ describe("Combat teacher", ()=> {
             assertNotInZone(rotateDirections, 180); // side
             assertNotInZone(rotateDirections, 240); // adjacent to attacker
             assertNotInZone(rotateDirections, 270); // not used
-            assertInRetreatZone(rotateDirections, 300, 2, 4, CBMoveType.BACKWARD);
+            assertInRetreatZone(rotateDirections, 300, 2, 4, CBStacking.TOP);
     });
 
     it("Checks if a character is allowed to attack by duel", () => {
@@ -908,7 +908,7 @@ describe("Combat teacher", ()=> {
             ]);
         then:
             assertNotInZone(allowedAdvances, 300); // Not in allowed advance zones
-            assertInAdvanceZone(allowedAdvances, 0, 5, 6, CBMoveType.FORWARD);
+            assertInAdvanceZone(allowedAdvances, 0, 5, 6, CBStacking.BOTTOM);
             assertNotInZone(allowedAdvances, 60); // occupied by foe
             assertNotInZone(allowedAdvances, 120); // not in forward zone
             assertNotInZone(allowedAdvances, 180); // not in forward zone and not in allowed advance zones

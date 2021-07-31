@@ -85,8 +85,12 @@ export class InteractiveAdvanceAction extends CBAction {
         this._continuation = continuation;
     }
 
+    get unit() {
+        return this.playable;
+    }
+
     play() {
-        this.game.setFocusedCounter(this.unit);
+        this.game.setFocusedPlayable(this.unit);
         this._createAdvanceActuator();
     }
 
@@ -125,9 +129,13 @@ export class InteractiveRetreatAction extends CBAction {
         this._continuation = continuation;
     }
 
+    get unit() {
+        return this.playable;
+    }
+
     play() {
         this.unit.markAsCharging(CBCharge.NONE);
-        this.game.setFocusedCounter(this.unit);
+        this.game.setFocusedPlayable(this.unit);
         this._createRetreatActuator();
     }
 
@@ -210,6 +218,10 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         this._event = event;
         this._attackHex = unit.formationNature ? unit.hexLocation.fromHex : unit.hexLocation;
         this._attackHexes = new Set();
+    }
+
+    get unit() {
+        return this.playable;
     }
 
     play() {
@@ -414,6 +426,10 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         this._event = event;
         this._attackHex = unit.formationNature ? unit.hexLocation.fromHex : unit.hexLocation;
         this._attackHexes = new Set();
+    }
+
+    get unit() {
+        return this.playable;
     }
 
     play() {
@@ -654,9 +670,9 @@ export class CBShockHexActuator extends RetractableActuatorMixin(CBActionActuato
     constructor(action) {
         super(action);
         let imageArtifacts = [];
-        for (let hex of this.unit.hexLocation.hexes) {
+        for (let hex of this.playable.hexLocation.hexes) {
             if (hex!==this.action.attackHex && !this.action._attackHexes.has(hex)) {
-                var hexTrigger = new ShockHexTrigger(this, this.unit, hex);
+                var hexTrigger = new ShockHexTrigger(this, this.playable, hex);
                 imageArtifacts.push(hexTrigger);
             }
         }
@@ -691,9 +707,9 @@ export class CBFireHexActuator extends RetractableActuatorMixin(CBActionActuator
     constructor(action) {
         super(action);
         let imageArtifacts = [];
-        for (let hex of this.unit.hexLocation.hexes) {
+        for (let hex of this.playable.hexLocation.hexes) {
             if (hex!==this.action.attackHex && !this.action._attackHexes.has(hex)) {
-                var hexTrigger = new FireHexTrigger(this, this.unit, hex);
+                var hexTrigger = new FireHexTrigger(this, this.playable, hex);
                 imageArtifacts.push(hexTrigger);
             }
         }
@@ -741,14 +757,14 @@ export class CBShockAttackActuator extends RetractableActuatorMixin(CBActionActu
         for (let combat of combats) {
             if (combat.attackHex === action.attackHex) {
                 if (combat.unsupported) {
-                    var unsupportedShock = new ShockAttackTrigger(this, this.unit, false, combat);
+                    var unsupportedShock = new ShockAttackTrigger(this, this.playable, false, combat);
                     if (combat.supported) {
                         unsupportedShock.position = unsupportedShock.position.translate(-40, -40);
                     }
                     imageArtifacts.push(unsupportedShock);
                 }
                 if (combat.supported) {
-                    var supportedShock = new ShockAttackTrigger(this, this.unit, true, combat);
+                    var supportedShock = new ShockAttackTrigger(this, this.playable, true, combat);
                     if (combat.unsupported) {
                         supportedShock.position = supportedShock.position.translate(40, 40);
                     }
@@ -797,7 +813,7 @@ export class CBFireAttackActuator extends RetractableActuatorMixin(CBActionActua
         let imageArtifacts = [];
         for (let fire of fires) {
             if (fire.attackHex === action.attackHex) {
-                let fireTrigger = new FireAttackTrigger(this, this.unit, fire);
+                let fireTrigger = new FireAttackTrigger(this, this.playable, fire);
                 imageArtifacts.push(fireTrigger);
             }
         }
@@ -822,7 +838,7 @@ class ShockHelpTrigger extends CBUnitActuatorTrigger {
             DImage.getImage("./../images/actuators/unsupported-shock-advantage.png");
         super(actuator, foe, "units", image, new Point2D(0, 0), ShockHelpTrigger.DIMENSION);
         this.pangle = 0;
-        this.position = Point2D.position(actuator.unit.location, attackedHex.location, 1);
+        this.position = Point2D.position(actuator.playable.location, attackedHex.location, 1);
         this._foe = foe;
         this._supported = supported;
         this._advantage = advantage;
@@ -904,7 +920,7 @@ class FireHelpTrigger extends CBUnitActuatorTrigger {
         let image = DImage.getImage("./../images/actuators/fire-advantage.png");
         super(actuator, foe, "units", image, new Point2D(0, 0), ShockHelpTrigger.DIMENSION);
         this.pangle = 0;
-        this.position = Point2D.position(actuator.unit.location, foe.location, 1);
+        this.position = Point2D.position(actuator.playable.location, foe.location, 1);
         this._foe = foe;
         this._advantage = advantage;
     }
@@ -969,7 +985,7 @@ export class CBAdvanceActuator extends CBActionActuator {
             let orientation = new CBActuatorImageTrigger(this, "actuators", advanceImage,
                 new Point2D(0, 0), new Dimension2D(80, 130));
             orientation.pangle = parseInt(angle);
-            orientation.position = Point2D.position(this.unit.location, directions[angle].hex.location, 0.9);
+            orientation.position = Point2D.position(this.playable.location, directions[angle].hex.location, 0.9);
             imageArtifacts.push(orientation);
         }
         this.initElement(imageArtifacts);
@@ -980,7 +996,7 @@ export class CBAdvanceActuator extends CBActionActuator {
     }
 
     onMouseClick(trigger, event) {
-        this.action.advanceUnit(this.unit.hexLocation.getNearHex(trigger.angle));
+        this.action.advanceUnit(this.playable.hexLocation.getNearHex(trigger.angle));
     }
 
 }
@@ -1001,7 +1017,7 @@ export class CBRetreatActuator extends CBActionActuator {
             let orientation = new CBActuatorImageTrigger(this, "actuators", retreatImage,
                 new Point2D(0, 0), new Dimension2D(80, 130));
             orientation.pangle = parseInt(angle);
-            orientation.position = Point2D.position(this.unit.location, directions[angle].hex.location, 0.9);
+            orientation.position = Point2D.position(this.playable.location, directions[angle].hex.location, 0.9);
             orientation.moveType = directions[angle].moveType;
             imageArtifacts.push(orientation);
         }
@@ -1021,7 +1037,7 @@ export class CBRetreatActuator extends CBActionActuator {
             this.action.takeALossFromUnit(event);
         }
         else {
-            this.action.retreatUnit(this.unit.hexLocation.getNearHex(trigger.angle), trigger.moveType);
+            this.action.retreatUnit(this.playable.hexLocation.getNearHex(trigger.angle), trigger.moveType);
         }
     }
 
@@ -1040,7 +1056,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
                 orientation.pangle = parseInt(angle);
                 orientation.rotate = false;
                 let unitHex =  moveDirections[angle].hex.getNearHex(invertAngle(angle));
-                let startLocation = Point2D.position(this.unit.location, unitHex.location, 1);
+                let startLocation = Point2D.position(this.playable.location, unitHex.location, 1);
                 let targetPosition = Point2D.position(unitHex.location, moveDirections[angle].hex.location, 0.9);
                 orientation.position = startLocation.plusPoint(targetPosition);
                 orientation.moveType = moveDirections[angle].moveType;
@@ -1057,7 +1073,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
                 orientation.pangle = parseInt(angle);
                 orientation.rotate = true;
                 orientation.hex =  rotateDirections[angle].hex.getNearHex(invertAngle(angle));
-                let startLocation = Point2D.position(this.unit.location, orientation.hex.location, 1.5);
+                let startLocation = Point2D.position(this.playable.location, orientation.hex.location, 1.5);
                 let targetPosition = Point2D.position(orientation.hex.location, rotateDirections[angle].hex.location, 0.9);
                 orientation.position = startLocation.plusPoint(targetPosition);
                 orientation.moveType = rotateDirections[angle].moveType;
@@ -1068,7 +1084,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
         super(action);
         let imageArtifacts = [];
         let bloodImage = DImage.getImage("./../images/actuators/blood.png");
-        let loss = new CBUnitActuatorTrigger(this, this.unit, "actuators", bloodImage,
+        let loss = new CBUnitActuatorTrigger(this, this.playable, "actuators", bloodImage,
             new Point2D(0, 0), new Dimension2D(125, 173));
         loss.loss = true;
         imageArtifacts.push(loss);
@@ -1090,15 +1106,15 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
             this.action.takeALossFromUnit(event);
         }
         else if (trigger.rotate) {
-            let hex1 = this.unit.hexLocation.getOtherHex(trigger.hex);
+            let hex1 = this.playable.hexLocation.getOtherHex(trigger.hex);
             let hex2 = trigger.hex.getNearHex(trigger.angle);
-            let delta = diffAngle(this.unit.angle, trigger.angle)*2;
-            this.action.reorientUnit(sumAngle(this.unit.angle, delta));
+            let delta = diffAngle(this.playable.angle, trigger.angle)*2;
+            this.action.reorientUnit(sumAngle(this.playable.angle, delta));
             this.action.retreatUnit(new CBHexSideId(hex1, hex2), trigger.moveType);
         }
         else {
-            let hex1 = this.unit.hexLocation.fromHex.getNearHex(trigger.angle);
-            let hex2 = this.unit.hexLocation.toHex.getNearHex(trigger.angle);
+            let hex1 = this.playable.hexLocation.fromHex.getNearHex(trigger.angle);
+            let hex2 = this.playable.hexLocation.toHex.getNearHex(trigger.angle);
             this.action.retreatUnit(new CBHexSideId(hex1, hex2), trigger.moveType);
         }
     }

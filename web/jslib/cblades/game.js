@@ -19,9 +19,9 @@ import {
     CBHexLocation
 } from "./map.js";
 
-export let CBMoveType = {
-    FORWARD: 0,
-    BACKWARD: 1
+export let CBStacking = {
+    BOTTOM: 0,
+    TOP: 1
 }
 
 export let CBMoveMode = {
@@ -47,64 +47,64 @@ export class CBAbstractArbitrator {
 
 export class CBAbstractPlayer {
 
-    changeSelection(counter, event) {
-        if (this.game.mayChangeSelection(counter)) {
-            let lastCounter = this.game.selectedCounter;
-            if (lastCounter) {
-                lastCounter.player.afterActivation(lastCounter, () => {
-                    if (lastCounter !== counter && lastCounter === this.game.selectedCounter) {
-                        lastCounter.player.unselectCounter(lastCounter, event);
+    changeSelection(playable, event) {
+        if (this.game.mayChangeSelection(playable)) {
+            let lastPlayable = this.game.selectedPlayable;
+            if (lastPlayable) {
+                lastPlayable.player.afterActivation(lastPlayable, () => {
+                    if (lastPlayable !== playable && lastPlayable === this.game.selectedPlayable) {
+                        lastPlayable.player.unselectPlayable(lastPlayable, event);
                     }
-                    this.selectCounter(counter, event);
+                    this.selectPlayable(playable, event);
                 });
             }
             else {
-                this.selectCounter(counter, event);
+                this.selectPlayable(playable, event);
             }
         }
     }
 
-    selectCounter(counter, event) {
-        let currentSelectedCounter = this.game.selectedCounter;
-        counter.select();
-        if (!counter.hasBeenActivated()) {
+    selectPlayable(playable, event) {
+        let currentSelectedPlayable = this.game.selectedPlayable;
+        playable.select();
+        if (!playable.hasBeenActivated()) {
             this.game.closeWidgets();
-            if (currentSelectedCounter !== counter) {
-                this.startActivation(counter, () => {
-                    this.launchCounterAction(counter, event);
+            if (currentSelectedPlayable !== playable) {
+                this.startActivation(playable, () => {
+                    this.launchPlayableAction(playable, event);
                 });
             } else {
-                this.launchCounterAction(counter, event);
+                this.launchPlayableAction(playable, event);
             }
         }
     }
 
     get units() {
-        return this.game.counters.filter(counter=>counter.unitNature && counter.player === this);
+        return this.game.playables.filter(playable=>playable.unitNature && playable.player === this);
     }
 
-    loseUnit(counter) {
-        counter.deleteFromMap();
+    loseUnit(playable) {
+        playable.deleteFromMap();
     }
 
-    unselectCounter(counter) {
-        if (counter.action) {
-            counter.action.markAsFinished();
+    unselectPlayable(playable) {
+        if (playable.action) {
+            playable.action.markAsFinished();
         }
-        counter.unselect();
+        playable.unselect();
     }
 
-    startActivation(counter, action) {
+    startActivation(playable, action) {
         action();
     }
 
     /*
-    launchCounterAction(counter, event) {
+    launchPlayableAction(playable, event) {
        // launch action process here
     }
      */
 
-    afterActivation(counter, action) {
+    afterActivation(playable, action) {
         action();
     }
 
@@ -112,7 +112,7 @@ export class CBAbstractPlayer {
         this.game.nextTurn(animation);
     }
 
-    canFinishCounter(counter) {
+    canFinishPlayable(playable) {
         return true;
     }
 
@@ -128,8 +128,8 @@ export class CBAbstractPlayer {
 
 export class CBAction {
 
-    constructor(game, unit) {
-        this._unit = unit;
+    constructor(game, playable) {
+        this._playable = playable;
         this._game = game;
         this._status = CBAction.INITIATED;
     }
@@ -169,10 +169,10 @@ export class CBAction {
         if (this._status === CBAction.INITIATED) {
             Memento.register(this);
             this._status = CBAction.STARTED;
-            if (this.unit.isCurrentPlayer()) {
-                this.unit.updatePlayed();
+            if (this.playable.isCurrentPlayer()) {
+                this.playable.markAsPlayed();
             }
-            this.game.setFocusedCounter(null);
+            this.game.setFocusedPlayable(null);
             Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.STARTED);
         }
     }
@@ -181,10 +181,10 @@ export class CBAction {
         if (this._status < CBAction.FINISHED) {
             Memento.register(this);
             this._status = CBAction.FINISHED;
-            if (this.unit.isCurrentPlayer()) {
-                this.unit.updatePlayed();
+            if (this.playable.isCurrentPlayer()) {
+                this.playable.markAsPlayed();
             }
-            this.game.setFocusedCounter(null);
+            this.game.setFocusedPlayable(null);
             Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINISHED);
         }
     }
@@ -194,7 +194,7 @@ export class CBAction {
         Memento.register(this);
         this._status = CBAction.CANCELLED;
         this._game.closeWidgets();
-        this.unit.removeAction();
+        this.playable.removeAction();
         action && action();
         Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.CANCELLED);
     }
@@ -206,8 +206,8 @@ export class CBAction {
             this._status = CBAction.FINALIZED;
             this._game.closeWidgets();
             action && action();
-            if (this.unit.isCurrentPlayer()) {
-                this.unit.updatePlayed();
+            if (this.playable.isCurrentPlayer()) {
+                this.playable.markAsPlayed();
             }
             Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINALIZED);
         }
@@ -215,8 +215,8 @@ export class CBAction {
 
     play() {}
 
-    get unit() {
-        return this._unit;
+    get playable() {
+        return this._playable;
     }
 
     get game() {
@@ -464,11 +464,11 @@ export class CBActionActuator extends CBActuator {
         return this._action;
     }
 
-    get unit() {
-        return this.action.unit;
+    get playable() {
+        return this.action.playable;
     }
 
-    initElement(triggers, position = this.unit.location) {
+    initElement(triggers, position = this.playable.location) {
         super.initElement(triggers, position);
     }
 
@@ -654,7 +654,7 @@ export class CBCounterDisplay {
     addCounter(counter) {
         console.assert(this._counters.indexOf(counter)<0);
         this._counters.push(counter);
-        this._game._registerCounter(counter);
+        this._game._registerPlayable(counter);
         this.setCounterLocations();
         counter._setOnGame(this._game);
     }
@@ -663,7 +663,7 @@ export class CBCounterDisplay {
         let counterIndex = this._counters.indexOf(counter);
         console.assert(counterIndex>=0);
         this._counters.splice(counterIndex, 1);
-        this._game._removeCounter(counter);
+        this._game._removePlayable(counter);
         this.setCounterLocations();
         counter._removeFromGame();
     }
@@ -757,7 +757,7 @@ export class CBGame {
     constructor() {
         this._players = [];
         this._actuators = [];
-        this._counters = new Set();
+        this._playables = new Set();
         this._visibility = 2;
         this._commands = new Set();
         this._counterDisplay = new CBCounterDisplay(this);
@@ -778,8 +778,8 @@ export class CBGame {
         }
 
         function getPlayableArtifactSlot(artifact) {
-            let counter = artifact.counter;
-            return counter.hexLocation ? counter.hexLocation.playables.indexOf(counter) : 0;
+            let playable = artifact.piece;
+            return playable.hexLocation ? playable.hexLocation.playables.indexOf(playable) : 0;
         }
 
         function getPlayableArtifactLayer(artifact, [hexLayer]) {
@@ -839,19 +839,19 @@ export class CBGame {
 
     _memento() {
         return {
-            selectedCounter: this._selectedCounter,
-            focusedCounter: this._focusedCounter,
+            selectedPlayable: this._selectedPlayable,
+            focusedPlayable: this._focusedPlayable,
             actuators: [...this._actuators],
-            counters: new Set(this._counters),
+            playables: new Set(this._playables),
             popup: this._popup,
         };
     }
 
     _revert(memento) {
-        this._selectedCounter = memento.selectedCounter;
-        this._focusedCounter = memento.focusedCounter;
+        this._selectedPlayable = memento.selectedPlayable;
+        this._focusedPlayable = memento.focusedPlayable;
         this._actuators = memento.actuators;
-        this._counters = memento.counters;
+        this._playables = memento.playables;
         if (memento.popup) {
             this._popup = memento.popup;
         } else {
@@ -864,11 +864,11 @@ export class CBGame {
             this._refresfCommands();
         }
         else if (event===CBAbstractUnit.DESTROYED_EVENT) {
-            if (this.focusedCounter === source) {
-                this.setFocusedCounter(null);
+            if (this.focusedPlayable === source) {
+                this.setFocusedPlayable(null);
             }
-            if (this.selectedCounter === source) {
-                this.setSelectedCounter(null);
+            if (this.selectedPlayable === source) {
+                this.setSelectedPlayable(null);
             }
         }
     }
@@ -911,57 +911,57 @@ export class CBGame {
         }
     }
 
-    _registerCounter(unit) {
-        console.assert(!this._counters.has(unit));
-        this._counters.add(unit)
+    _registerPlayable(unit) {
+        console.assert(!this._playables.has(unit));
+        this._playables.add(unit)
     }
 
-    _removeCounter(unit) {
-        console.assert(this._counters.has(unit));
-        this._counters.delete(unit);
+    _removePlayable(unit) {
+        console.assert(this._playables.has(unit));
+        this._playables.delete(unit);
     }
 
-    _appendCounter(unit) {
-        console.assert(!this._counters.has(unit));
+    _appendPlayable(unit) {
+        console.assert(!this._playables.has(unit));
         Memento.register(this);
-        this._counters.add(unit)
+        this._playables.add(unit)
     }
 
-    _deleteCounter(unit) {
-        console.assert(this._counters.has(unit));
+    _deletePlayable(unit) {
+        console.assert(this._playables.has(unit));
         Memento.register(this);
-        this._counters.delete(unit);
+        this._playables.delete(unit);
     }
 
-    _resetCounters(player) {
+    _resetPlayables(player) {
         this.closePopup();
-        if (this._selectedCounter) {
-            this._selectedCounter.unselect();
+        if (this._selectedPlayable) {
+            this._selectedPlayable.unselect();
         }
-        if (this._counters) {
-            for (let counter of this._counters) {
-                counter.reset && counter.reset(player);
+        if (this._playables) {
+            for (let playable of this._playables) {
+                playable.reset && playable.reset(player);
             }
         }
     }
 
-    _initCounters(player) {
-        if (this._counters) {
-            for (let counter of this._counters) {
-                counter.init && counter.init(player);
+    _initPlayables(player) {
+        if (this._playables) {
+            for (let playable of this._playables) {
+                playable.init && playable.init(player);
             }
         }
     }
 
-    get counters() {
-        return [...this._counters];
+    get playables() {
+        return [...this._playables];
     }
 
     turnIsFinishable() {
-        if (!this.canUnselectCounter()) return false;
-        if (this._counters) {
-            for (let counter of this._counters) {
-                if (counter.isFinishable && !counter.isFinishable()) return false;
+        if (!this.canUnselectPlayable()) return false;
+        if (this._playables) {
+            for (let playable of this._playables) {
+                if (playable.isFinishable && !playable.isFinishable()) return false;
             }
         }
         return true;
@@ -1000,49 +1000,49 @@ export class CBGame {
         this.closePopup();
     }
 
-    mayChangeSelection(counter) {
-        if (!this.canSelectCounter(counter)) return false;
-        return !this.selectedCounter || this.selectedCounter===counter || this.canUnselectCounter();
+    mayChangeSelection(playable) {
+        if (!this.canSelectPlayable(playable)) return false;
+        return !this.selectedPlayable || this.selectedPlayable===playable || this.canUnselectPlayable();
     }
 
-    canUnselectCounter() {
-        return !this.focusedCounter && (
-            !this.selectedCounter ||
-            !this.selectedCounter.hasBeenActivated() ||
-            this.selectedCounter.action.isFinished() ||
-            this.selectedCounter.action.isFinishable());
+    canUnselectPlayable() {
+        return !this.focusedPlayable && (
+            !this.selectedPlayable ||
+            !this.selectedPlayable.hasBeenActivated() ||
+            this.selectedPlayable.action.isFinished() ||
+            this.selectedPlayable.action.isFinishable());
     }
 
-    canSelectCounter(counter) {
-        return (!this.focusedCounter || this.focusedCounter===counter) && counter.isCurrentPlayer();
+    canSelectPlayable(playable) {
+        return (!this.focusedPlayable || this.focusedPlayable===playable) && playable.isCurrentPlayer();
     }
 
-    setSelectedCounter(counter) {
+    setSelectedPlayable(playable) {
         Memento.register(this);
-        if (counter) {
-            this._selectedCounter = counter;
+        if (playable) {
+            this._selectedPlayable = playable;
         }
         else {
-            delete this._selectedCounter;
+            delete this._selectedPlayable;
         }
     }
 
-    setFocusedCounter(counter) {
+    setFocusedPlayable(playable) {
         Memento.register(this);
-        if (counter && counter.isOnBoard()) {
-            this._focusedCounter = counter;
+        if (playable && playable.isOnBoard()) {
+            this._focusedPlayable = playable;
         }
         else {
-            delete this._focusedCounter;
+            delete this._focusedPlayable;
         }
     }
 
-    get selectedCounter() {
-        return this._selectedCounter;
+    get selectedPlayable() {
+        return this._selectedPlayable;
     }
 
-    get focusedCounter() {
-        return this._focusedCounter;
+    get focusedPlayable() {
+        return this._focusedPlayable;
     }
 
     get visibility() {
@@ -1171,12 +1171,12 @@ export class CBGame {
     }
 
     nextTurn(animation) {
-        if (!this.selectedCounter || this.canUnselectCounter()) {
+        if (!this.selectedPlayable || this.canUnselectPlayable()) {
             this.closeWidgets();
-            this._resetCounters(this._currentPlayer);
+            this._resetPlayables(this._currentPlayer);
             let indexPlayer = this._players.indexOf(this._currentPlayer);
             this._currentPlayer = this._players[(indexPlayer + 1) % this._players.length];
-            this._initCounters(this._currentPlayer);
+            this._initPlayables(this._currentPlayer);
             animation && animation();
             Memento.clear();
             Mechanisms.fire(this, CBGame.TURN_EVENT);
@@ -1268,25 +1268,25 @@ export class CBGame {
     static edit = function(game) {};
 }
 
-export class CBCounterImageArtifact extends DMultiImagesArtifact {
+export class CBPieceImageArtifact extends DMultiImagesArtifact {
 
-    constructor(counter, ...args) {
+    constructor(piece, ...args) {
         super(...args); // levelName, image, position, dimension, pangle=0
         this.setSettings(this.settings);
-        this._counter = counter;
+        this._piece = piece;
     }
 
     onMouseClick(event) {
-        this._counter.onMouseClick && this._counter.onMouseClick(event);
+        this.piece.onMouseClick && this.piece.onMouseClick(event);
         return true;
     }
 
-    get counter() {
-        return this._counter;
+    get piece() {
+        return this._piece;
     }
 
     get game() {
-        return this.counter.game;
+        return this.piece.game;
     }
 
     get settings() {
@@ -1337,7 +1337,7 @@ function SelectableMixin(clazz) {
 
         onMouseEnter(event) {
             super.onMouseEnter(event);
-            if (this.game.selectedCounter!==this.unit && this.game.canSelectCounter(this.unit)) {
+            if (this.game.selectedPlayable!==this.unit && this.game.canSelectPlayable(this.unit)) {
                 this.setSettings(this.overSettings);
             }
             return true;
@@ -1345,7 +1345,7 @@ function SelectableMixin(clazz) {
 
         onMouseLeave(event) {
             super.onMouseLeave(event);
-            if (this.game.selectedCounter!==this.unit && this.game.canSelectCounter(this.unit)) {
+            if (this.game.selectedPlayable!==this.unit && this.game.canSelectPlayable(this.unit)) {
                 this.setSettings(this.settings);
             }
             return true;
@@ -1364,20 +1364,20 @@ export function RetractableArtifactMixin(clazz) {
 
         onMouseEnter(event) {
             super.onMouseEnter(event);
-            this.counter.retractAbove();
+            this.piece.retractAbove();
             return true;
         }
 
         onMouseLeave(event) {
             super.onMouseLeave(event);
-            this.counter.appearAbove();
+            this.piece.appearAbove();
             return true;
         }
 
     }
 }
 
-export function RetractableCounterMixin(clazz) {
+export function RetractablePlayableMixin(clazz) {
 
     return class extends clazz {
         constructor(...args) {
@@ -1386,12 +1386,16 @@ export function RetractableCounterMixin(clazz) {
 
         retractAbove(event) {
             function retract(hexId, artifacts) {
-                let counters = hexId.counters;
-                let first = counters.indexOf(this);
-                for (let index=first+1; index<counters.length; index++) {
-                    counters[index].collectArtifactsToRetract(artifacts);
+                let playables = [];
+                for (let playable of hexId.playables) {
+                    playables.push(...playable.pieces);
+                }
+                let first = playables.indexOf(this);
+                for (let index=first+1; index<playables.length; index++) {
+                    playables[index].collectArtifactsToRetract(artifacts);
                 }
             }
+
             let artifacts = [];
             for (let hexId of this.hexLocation.hexes) {
                 retract.call(this, hexId, artifacts);
@@ -1424,7 +1428,7 @@ export function RetractableActuatorMixin(clazz) {
     }
 }
 
-export class CBCounter {
+export class CBPiece {
 
     constructor(levelName, paths, dimension) {
         this._levelName = levelName;
@@ -1438,7 +1442,7 @@ export class CBCounter {
     }
 
     createArtifact(levelName, images, position, dimension) {
-        return new CBCounterImageArtifact(this, levelName, images, position, dimension);
+        return new CBPieceImageArtifact(this, levelName, images, position, dimension);
     }
 
     _memento() {
@@ -1527,13 +1531,31 @@ export class CBCounter {
 
 }
 
-export class CBPlayable extends CBCounter {
+export class CBPlayable extends RetractablePlayableMixin(CBPiece) {
 
     constructor(levelName, paths, dimension) {
         super(levelName, paths, dimension);
     }
 
-    get playableNature() {
+    _getPieces() {
+        return [
+            this
+        ];
+    }
+
+    get pieces() {
+        return this._getPieces();
+    }
+
+}
+
+export class CBCounter extends CBPlayable {
+
+    constructor(levelName, paths, dimension) {
+        super(levelName, paths, dimension);
+    }
+
+    get counterNature() {
         return true;
     }
 
@@ -1552,25 +1574,25 @@ export class CBPlayable extends CBCounter {
     }
 
     _addPlayable(hexLocation) {
-        hexLocation.game._registerCounter(this);
-        hexLocation._pushCounter(this);
+        hexLocation.game._registerPlayable(this);
+        hexLocation._pushPlayable(this);
     }
 
     _removePlayable(hexLocation) {
         console.assert(hexLocation.game === this.game);
-        hexLocation.game._removeCounter(this);
-        hexLocation._removeCounter(this);
+        hexLocation.game._removePlayable(this);
+        hexLocation._removePlayable(this);
     }
 
     _appendPlayable(hexLocation) {
-        hexLocation.game._appendCounter(this);
-        hexLocation._appendCounterOnTop(this);
+        hexLocation.game._appendPlayable(this);
+        hexLocation._appendPlayableOnTop(this);
     }
 
     _deletePlayable(hexLocation) {
         console.assert(hexLocation.game === this.game);
-        hexLocation.game._deleteCounter(this);
-        hexLocation._deleteCounter(this);
+        hexLocation.game._deletePlayable(this);
+        hexLocation._deletePlayable(this);
     }
 
     addToMap(hexLocation) {
@@ -1617,20 +1639,20 @@ export class CBPlayable extends CBCounter {
     }
 
 }
-Object.defineProperty(CBHexLocation.prototype, "playables", {
+Object.defineProperty(CBHexLocation.prototype, "counters", {
     get: function() {
-        return this.counters.filter(counter=>counter.playableNature);
+        return this.playables.filter(playable=>playable.counterNature);
     }
 });
 
-export class UnitImageArtifact extends RetractableArtifactMixin(SelectableMixin(CBCounterImageArtifact)) {
+export class UnitImageArtifact extends RetractableArtifactMixin(SelectableMixin(CBPieceImageArtifact)) {
 
     constructor(unit, ...args) {
         super(unit, ...args);
     }
 
     get unit() {
-        return this._counter;
+        return this.piece;
     }
 
     get game() {
@@ -1646,7 +1668,7 @@ export class UnitImageArtifact extends RetractableArtifactMixin(SelectableMixin(
     }
 }
 
-export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
+export class CBAbstractUnit extends CBPlayable {
 
     constructor(paths, dimension) {
         super("units", paths, dimension);
@@ -1716,15 +1738,15 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
     }
 
     unselect() {
-        console.assert(this.game.selectedCounter===this);
-        this.game.setSelectedCounter(null);
+        console.assert(this.game.selectedPlayable===this);
+        this.game.setSelectedPlayable(null);
         this._imageArtifact.unselect();
         this.element.refresh();
         Mechanisms.fire(this, CBAbstractUnit.UNSELECTED_EVENT);
     }
 
     select() {
-        this.game.setSelectedCounter(this);
+        this.game.setSelectedPlayable(this);
         this._imageArtifact.select();
         this.refresh();
         Mechanisms.fire(this, CBAbstractUnit.SELECTED_EVENT);
@@ -1739,18 +1761,8 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
             this.removeFromMap();
         }
         if (hexLocation) {
-            this.addToMap(hexLocation, CBMoveType.BACKWARD);
+            this.addToMap(hexLocation, CBStacking.TOP);
         }
-    }
-
-    _getCounters() {
-        return [
-            this
-        ];
-    }
-
-    get counters() {
-        return this._getCounters();
     }
 
     onMouseClick(event) {
@@ -1763,7 +1775,7 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
 
     isFinishable() {
         if (!this.isCurrentPlayer()) return true;
-        return this.player.canFinishCounter(this);
+        return this.player.canFinishPlayable(this);
     }
 
     isOnBoard() {
@@ -1774,29 +1786,29 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
         return this._action;
     }
 
-    addToMap(hexLocation, moveType=CBMoveType.BACKWARD) {
+    addToMap(hexLocation, moveType=CBStacking.TOP) {
         console.assert(!this._hexLocation);
-        hexLocation.game._registerCounter(this);
+        hexLocation.game._registerPlayable(this);
         this._hexLocation = hexLocation;
-        moveType===CBMoveType.FORWARD ? hexLocation._unshiftCounter(this) : hexLocation._pushCounter(this);
+        moveType===CBStacking.BOTTOM ? hexLocation._unshiftPlayable(this) : hexLocation._pushPlayable(this);
         this._setOnGame(hexLocation.map.game);
         this._setLocation(hexLocation.location);
     }
 
     removeFromMap() {
         console.assert(this._hexLocation);
-        this.game._removeCounter(this);
-        this._hexLocation._removeCounter(this);
+        this.game._removePlayable(this);
+        this._hexLocation._removePlayable(this);
         this._removeFromGame();
         delete this._hexLocation;
     }
 
-    appendToMap(hexLocation, moveType =CBMoveType.BACKWARD) {
+    appendToMap(hexLocation, moveType =CBStacking.TOP) {
         console.assert(!this._hexLocation);
         Memento.register(this);
-        hexLocation.game._appendCounter(this);
+        hexLocation.game._appendPlayable(this);
         this._hexLocation = hexLocation;
-        moveType===CBMoveType.FORWARD ? hexLocation._appendCounterOnBottom(this) : hexLocation._appendCounterOnTop(this);
+        moveType===CBStacking.BOTTOM ? hexLocation._appendPlayableOnBottom(this) : hexLocation._appendPlayableOnTop(this);
         this._show(hexLocation.map.game);
         this._element.move(hexLocation.location);
     }
@@ -1804,8 +1816,8 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
     deleteFromMap() {
         console.assert(this._hexLocation);
         Memento.register(this);
-        this.game._deleteCounter(this);
-        this._hexLocation._deleteCounter(this);
+        this.game._deletePlayable(this);
+        this._hexLocation._deletePlayable(this);
         this._hide();
         delete this._hexLocation;
     }
@@ -1837,7 +1849,7 @@ export class CBAbstractUnit extends RetractableCounterMixin(CBCounter) {
 }
 Object.defineProperty(CBHexLocation.prototype, "units", {
     get: function() {
-        return this.counters.filter(counter=>counter.unitNature);
+        return this.playables.filter(playable=>playable.unitNature);
     }
 });
 Object.defineProperty(CBHexLocation.prototype, "empty", {
@@ -1848,13 +1860,14 @@ Object.defineProperty(CBHexLocation.prototype, "empty", {
 Object.defineProperty(CBGame.prototype, "units", {
     get: function() {
         let units = [];
-        if (this._counters) {
-            for (let counter of this._counters) {
-                if (counter.unitNature) {
-                    units.push(counter);
+        if (this._playables) {
+            for (let playable of this._playables) {
+                if (playable.unitNature) {
+                    units.push(playable);
                 }
             }
         }
         return units;
     }
 });
+

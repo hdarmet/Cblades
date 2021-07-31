@@ -21,7 +21,7 @@ import {
     repaint,
     paint,
     clickOnActionMenu,
-    clickOnCounter,
+    clickOnPiece,
     showTroop,
     zoomAndRotate0,
     showCharacter,
@@ -47,7 +47,7 @@ import {
     unregisterInteractiveMiscellaneous
 } from "../../jslib/cblades/interactive-miscellaneous.js";
 import {
-    CBPlayable
+    CBCounter
 } from "../../jslib/cblades/game.js";
 import {
     CBFireStart, CBStakes
@@ -75,7 +75,7 @@ describe("Interactive Miscellaneous", ()=> {
             loadAllImages();
         when:
             resetDirectives(unitsLayer, widgetsLayer, widgetItemsLayer);
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
         then:
             loadAllImages();
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
@@ -116,7 +116,7 @@ describe("Interactive Miscellaneous", ()=> {
             loadAllImages();
             paint(game); // units1 layer is created here !
             var [unitsLayer, units1Layer, markersLayer] = getLayers(game.board,"units-0", "units-1", "markers-0");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnMergeUnitsAction(game);
             loadAllImages();
         when:
@@ -143,7 +143,7 @@ describe("Interactive Miscellaneous", ()=> {
             loadAllImages();
             paint(game);
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnMiscellaneousAction(game);
@@ -177,7 +177,7 @@ describe("Interactive Miscellaneous", ()=> {
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnMiscellaneousAction(game);
             loadAllImages();
         when:
@@ -206,7 +206,7 @@ describe("Interactive Miscellaneous", ()=> {
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnMiscellaneousAction(game);
             clickOnSetFireMiscAction(game);
             loadAllImages();
@@ -229,7 +229,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBPlayable.getByType(unit1.hexLocation, CBFireStart)).isNotDefined();
+            assert(CBCounter.getByType(unit1.hexLocation, CBFireStart)).isNotDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 
@@ -238,7 +238,7 @@ describe("Interactive Miscellaneous", ()=> {
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnMiscellaneousAction(game);
             clickOnSetFireMiscAction(game);
             loadAllImages();
@@ -261,7 +261,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBPlayable.getByType(unit1.hexLocation, CBFireStart)).isDefined();
+            assert(CBCounter.getByType(unit1.hexLocation, CBFireStart)).isDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 
@@ -276,7 +276,7 @@ describe("Interactive Miscellaneous", ()=> {
             var fireStart = new CBFireStart();
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnMiscellaneousAction(game);
             loadAllImages();
         when:
@@ -307,7 +307,7 @@ describe("Interactive Miscellaneous", ()=> {
             var fireStart = new CBFireStart();
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnMiscellaneousAction(game);
             clickOnExtinguishFireMiscAction(game);
             loadAllImages();
@@ -330,7 +330,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBPlayable.getByType(unit1.hexLocation, CBFireStart)).isDefined();
+            assert(CBCounter.getByType(unit1.hexLocation, CBFireStart)).isDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 
@@ -341,7 +341,7 @@ describe("Interactive Miscellaneous", ()=> {
             var fireStart = new CBFireStart();
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnMiscellaneousAction(game);
             clickOnExtinguishFireMiscAction(game);
             loadAllImages();
@@ -364,7 +364,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBPlayable.getByType(unit1.hexLocation, CBFireStart)).isNotDefined();
+            assert(CBCounter.getByType(unit1.hexLocation, CBFireStart)).isNotDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 
@@ -377,7 +377,7 @@ describe("Interactive Miscellaneous", ()=> {
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnMiscellaneousAction(game);
             loadAllImages();
         when:
@@ -406,7 +406,7 @@ describe("Interactive Miscellaneous", ()=> {
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnMiscellaneousAction(game);
             clickOnSetStakesMiscAction(game);
             loadAllImages();
@@ -429,7 +429,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBPlayable.getByType(unit1.hexLocation, CBStakes)).isNotDefined();
+            assert(CBCounter.getByType(unit1.hexLocation, CBStakes)).isNotDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 
@@ -438,7 +438,7 @@ describe("Interactive Miscellaneous", ()=> {
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnMiscellaneousAction(game);
             clickOnSetStakesMiscAction(game);
             loadAllImages();
@@ -461,7 +461,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBPlayable.getByType(unit1.hexLocation, CBStakes)).isDefined();
+            assert(CBCounter.getByType(unit1.hexLocation, CBStakes)).isDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 
@@ -476,7 +476,7 @@ describe("Interactive Miscellaneous", ()=> {
             var fireStart = new CBStakes();
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnMiscellaneousAction(game);
             loadAllImages();
         when:
@@ -506,7 +506,7 @@ describe("Interactive Miscellaneous", ()=> {
             var fireStart = new CBStakes();
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnMiscellaneousAction(game);
             clickOnRemoveStakesMiscAction(game);
             loadAllImages();
@@ -529,7 +529,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBPlayable.getByType(unit1.hexLocation, CBStakes)).isDefined();
+            assert(CBCounter.getByType(unit1.hexLocation, CBStakes)).isDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 
@@ -540,7 +540,7 @@ describe("Interactive Miscellaneous", ()=> {
             var fireStart = new CBStakes();
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
-            clickOnCounter(game, unit1);
+            clickOnPiece(game, unit1);
             clickOnMiscellaneousAction(game);
             clickOnRemoveStakesMiscAction(game);
             loadAllImages();
@@ -563,7 +563,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBPlayable.getByType(unit1.hexLocation, CBStakes)).isNotDefined();
+            assert(CBCounter.getByType(unit1.hexLocation, CBStakes)).isNotDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 

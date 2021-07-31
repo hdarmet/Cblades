@@ -151,32 +151,32 @@ export class CBHexId extends CBHexLocation{
         return new CBHexVertexId(this, hex1, hex2);
     }
 
-    _pushCounter(counter) {
-        this.hex._pushCounter(counter);
+    _pushPlayable(playable) {
+        this.hex._pushPlayable(playable);
     }
 
-    _unshiftCounter(counter) {
-        this.hex._unshiftCounter(counter);
+    _unshiftPlayable(playable) {
+        this.hex._unshiftPlayable(playable);
     }
 
-    _removeCounter(counter) {
-        this.hex._removeCounter(counter);
+    _removePlayable(playable) {
+        this.hex._removePlayable(playable);
     }
 
-    _appendCounterOnTop(counter) {
-        this.hex._appendCounterOnTop(counter);
+    _appendPlayableOnTop(playable) {
+        this.hex._appendPlayableOnTop(playable);
     }
 
-    _appendCounterOnBottom(counter) {
-        this.hex._appendCounterOnBottom(counter);
+    _appendPlayableOnBottom(playable) {
+        this.hex._appendPlayableOnBottom(playable);
     }
 
-    _deleteCounter(counter) {
-        this.hex._deleteCounter(counter);
+    _deletePlayable(playable) {
+        this.hex._deletePlayable(playable);
     }
 
-    get counters() {
-        return this.hex.counters;
+    get playables() {
+        return this.hex.playables;
     }
 
     // TODO : add map ref
@@ -307,38 +307,38 @@ export class CBHexSideId extends CBHexLocation {
         return this._fromHex === hexId || this._toHex === hexId;
     }
 
-    _pushCounter(counter) {
-        this.toHex._pushCounter(counter);
-        this.fromHex._pushCounter(counter);
+    _pushPlayable(playable) {
+        this.toHex._pushPlayable(playable);
+        this.fromHex._pushPlayable(playable);
     }
 
-    _unshiftCounter(counter) {
-        this.toHex._unshiftCounter(counter);
-        this.fromHex._unshiftCounter(counter);
+    _unshiftPlayable(playable) {
+        this.toHex._unshiftPlayable(playable);
+        this.fromHex._unshiftPlayable(playable);
     }
 
-    _removeCounter(counter) {
-        this.toHex._removeCounter(counter);
-        this.fromHex._removeCounter(counter);
+    _removePlayable(playable) {
+        this.toHex._removePlayable(playable);
+        this.fromHex._removePlayable(playable);
     }
 
-    _appendCounterOnTop(counter) {
-        this.toHex._appendCounterOnTop(counter);
-        this.fromHex._appendCounterOnTop(counter);
+    _appendPlayableOnTop(playable) {
+        this.toHex._appendPlayableOnTop(playable);
+        this.fromHex._appendPlayableOnTop(playable);
     }
 
-    _appendCounterOnBottom(counter) {
-        this.toHex._appendCounterOnBottom(counter);
-        this.fromHex._appendCounterOnBottom(counter);
+    _appendPlayableOnBottom(playable) {
+        this.toHex._appendPlayableOnBottom(playable);
+        this.fromHex._appendPlayableOnBottom(playable);
     }
 
-    _deleteCounter(counter) {
-        this.toHex._deleteCounter(counter);
-        this.fromHex._deleteCounter(counter);
+    _deletePlayable(playable) {
+        this.toHex._deletePlayable(playable);
+        this.fromHex._deletePlayable(playable);
     }
 
-    get counters() {
-        return [...new Set([...this.toHex.counters, ...this.fromHex.counters])];
+    get playables() {
+        return [...new Set([...this.toHex.playables, ...this.fromHex.playables])];
     }
 
     turnTo(angle) {
@@ -440,38 +440,38 @@ export class CBHexVertexId extends CBHexLocation {
         return hexes;
     }
 
-    _pushCounter(counter) {
-        this.toHexSide._pushCounter(counter);
-        this.fromHex._pushCounter(counter);
+    _pushPlayable(playable) {
+        this.toHexSide._pushPlayable(playable);
+        this.fromHex._pushPlayable(playable);
     }
 
-    _unshiftCounter(counter) {
-        this.toHexSide._unshiftCounter(counter);
-        this.fromHex._unshiftCounter(counter);
+    _unshiftPlayable(playable) {
+        this.toHexSide._unshiftPlayable(playable);
+        this.fromHex._unshiftPlayable(playable);
     }
 
-    _removeCounter(counter) {
-        this.toHexSide._removeCounter(counter);
-        this.fromHex._removeCounter(counter);
+    _removePlayable(playable) {
+        this.toHexSide._removePlayable(playable);
+        this.fromHex._removePlayable(playable);
     }
 
-    _appendCounterOnTop(counter) {
-        this.toHexSide._appendCounterOnTop(counter);
-        this.fromHex._appendCounterOnTop(counter);
+    _appendPlayableOnTop(playable) {
+        this.toHexSide._appendPlayableOnTop(playable);
+        this.fromHex._appendPlayableOnTop(playable);
     }
 
-    _appendCounterOnBottom(counter) {
-        this.toHexSide._appendCounterOnBottom(counter);
-        this.fromHex._appendCounterOnBottom(counter);
+    _appendPlayableOnBottom(playable) {
+        this.toHexSide._appendPlayableOnBottom(playable);
+        this.fromHex._appendPlayableOnBottom(playable);
     }
 
-    _deleteCounter(counter) {
-        this.toHexSide._deleteCounter(counter);
-        this.fromHex._deleteCounter(counter);
+    _deletePlayable(playable) {
+        this.toHexSide._deletePlayable(playable);
+        this.fromHex._deletePlayable(playable);
     }
 
-    get counters() {
-        return [...new Set([...this.toHexSide.counters, ...this.fromHex.counters])];
+    get playables() {
+        return [...new Set([...this.toHexSide.playables, ...this.fromHex.playables])];
     }
 }
 
@@ -480,7 +480,7 @@ export class CBHex {
     constructor(map, col, row) {
         console.assert(!isNaN(col+row));
         this._id = new CBHexId(map, col, row);
-        this._counters = [];
+        this._playables = [];
         this._hexType = {
             type: CBHex.HEX_TYPES.OUTDOOR_CLEAR,
             height: 0,
@@ -497,7 +497,7 @@ export class CBHex {
 
     _memento() {
         return {
-            counters: [...this._counters],
+            playables: [...this._playables],
             type: this._hexType.type,
             height: this._hexType.height,
             side120 : this._hexType.side120,
@@ -507,7 +507,7 @@ export class CBHex {
     }
 
     _revert(memento) {
-        this._counters = memento.counters;
+        this._playables = memento.playables;
         this._hexType.type = memento.type;
         this._hexType.height = memento.height;
         this._hexType.side120 = memento.side120;
@@ -575,57 +575,57 @@ export class CBHex {
         }
     }
 
-    static compareCounter(counter1, counter2) {
-        if (counter1.playableNature && counter2.unitNature) return -1;
-        if (counter1.unitNature && counter2.playableNature) return 1;
-        if (counter1.playableNature) {
-            if (counter1.featureNature && !counter2.featureNature) return -1;
-            if (!counter1.featureNature && counter2.featureNature) return 1;
-            if (counter1.spellNature && !counter2.spellNature) return 1;
-            if (!counter1.spellNature && counter2.spellNature) return -1;
+    static comparePlayable(playable1, playable2) {
+        if (playable1.counterNature && playable2.unitNature) return -1;
+        if (playable1.unitNature && playable2.counterNature) return 1;
+        if (playable1.counterNature) {
+            if (playable1.featureNature && !playable2.featureNature) return -1;
+            if (!playable1.featureNature && playable2.featureNature) return 1;
+            if (playable1.spellNature && !playable2.spellNature) return 1;
+            if (!playable1.spellNature && playable2.spellNature) return -1;
             return 0;
         }
         else {
-            if (counter1.characterNature && !counter2.characterNature) return 1;
-            if (!counter1.characterNature && counter2.characterNature) return -1;
+            if (playable1.characterNature && !playable2.characterNature) return 1;
+            if (!playable1.characterNature && playable2.characterNature) return -1;
             return 0;
         }
     }
 
-    _pushCounter(counter) {
-        console.assert(this._counters.indexOf(counter)<0);
-        this._counters.push(counter);
-        this._counters.sort(CBHex.compareCounter);
+    _pushPlayable(playable) {
+        console.assert(this._playables.indexOf(playable)<0);
+        this._playables.push(playable);
+        this._playables.sort(CBHex.comparePlayable);
     }
 
-    _unshiftCounter(counter) {
-        console.assert(this._counters.indexOf(counter)<0);
-        this._counters.unshift(counter);
-        this._counters.sort(CBHex.compareCounter);
+    _unshiftPlayable(playable) {
+        console.assert(this._playables.indexOf(playable)<0);
+        this._playables.unshift(playable);
+        this._playables.sort(CBHex.comparePlayable);
     }
 
-    _removeCounter(counter) {
-        console.assert(this._counters.indexOf(counter)>=0);
-        this._counters.splice(this._counters.indexOf(counter), 1);
+    _removePlayable(playable) {
+        console.assert(this._playables.indexOf(playable)>=0);
+        this._playables.splice(this._playables.indexOf(playable), 1);
     }
 
-    _appendCounterOnTop(counter) {
+    _appendPlayableOnTop(playable) {
         Memento.register(this);
-        this._pushCounter(counter);
+        this._pushPlayable(playable);
     }
 
-    _appendCounterOnBottom(counter) {
+    _appendPlayableOnBottom(playable) {
         Memento.register(this);
-        this._unshiftCounter(counter);
+        this._unshiftPlayable(playable);
     }
 
-    _deleteCounter(counter) {
+    _deletePlayable(playable) {
         Memento.register(this);
-        this._removeCounter(counter);
+        this._removePlayable(playable);
     }
 
-    get counters() {
-        return this._counters;
+    get playables() {
+        return this._playables;
     }
 
 }

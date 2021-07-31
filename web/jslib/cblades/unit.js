@@ -11,8 +11,8 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBCounterImageArtifact, CBAbstractUnit, CBGame, RetractableArtifactMixin, UnitImageArtifact, CBActivableMixin,
-    CBMoveType
+    CBPieceImageArtifact, CBAbstractUnit, CBGame, RetractableArtifactMixin, UnitImageArtifact, CBActivableMixin,
+    CBStacking
 } from "./game.js";
 
 export let CBMovement = {
@@ -436,12 +436,44 @@ export function OptionMixin(clazz) {
             super(...args);
         }
 
-        shift(steps) {
+        _memento() {
+            let memento = super._memento();
+            memento.owner = this._owner;
+            return memento;
+        }
+
+        _revert(memento) {
+            super._revert(memento);
+            if (memento.owner) {
+                this._owner = memento.owner;
+            }
+            else {
+                delete this._owner;
+            }
+        }
+
+        shift(owner, steps) {
+            Memento.register(this);
+            this._owner = owner;
             this.artifact.shift(new Point2D(-steps*20, -steps*20+10));
         }
 
-        setPosition(steps) {
+        setPosition(owner, steps) {
+            this._owner = owner
             this.artifact.position = new Point2D(-steps*20, -steps*20+10);
+        }
+
+        removeAsOption() {
+            delete this._owner;
+        }
+
+        deleteAsOption() {
+            Memento.register(this);
+            delete this._owner;
+        }
+
+        get owner() {
+            return this._owner;
         }
 
         isOption() {
@@ -476,14 +508,14 @@ export function CarriableMixin(clazz) {
 
 }
 
-export class CBMarkerArtifact extends RetractableArtifactMixin(CBCounterImageArtifact) {
+export class CBMarkerArtifact extends RetractableArtifactMixin(CBPieceImageArtifact) {
 
     constructor(unit, images, position, dimension= CBMarkerArtifact.MARKER_DIMENSION) {
         super(unit, "units", images, position, dimension);
     }
 
     get unit() {
-        return this.counter;
+        return this.piece;
     }
 
     get slot() {
@@ -549,6 +581,18 @@ export class CBUnit extends CBAbstractUnit {
         unit.cohesion = this.cohesion;
         unit.lackOfMunitions = this.lackOfMunitions;
         unit.tiredness = this.tiredness;
+    }
+
+    _getPieces() {
+        let counters = [];
+        for (let carried of this._carried) {
+            if (!carried.isOption || !carried.isOption()) {
+                counters.push(carried);
+            }
+        }
+        counters.push(...super._getPieces());
+        counters.push(...this.options);
+        return counters;
     }
 
     setMarkerArtifact(path, positionSlot) {
@@ -653,73 +697,75 @@ export class CBUnit extends CBAbstractUnit {
         }
     }
 
-    addCarried(counter) {
-        console.assert(this._carried.indexOf(counter)===-1);
-        this._carried.push(counter);
-        counter.angle = this.angle;
-        counter.location = this.location;
-        if (this.isShown()) counter.addToMap(this.hexLocation);
+    addCarried(piece) {
+        console.assert(this._carried.indexOf(piece)===-1);
+        this._carried.push(piece);
+        piece.angle = this.angle;
+        piece.location = this.location;
+        if (this.isShown()) piece.addToMap(this.hexLocation);
     }
 
-    removeCarried(counter) {
-        let indexCounter = this._carried.indexOf(counter);
-        this._carried.splice(indexCounter, 1);
-        if (this.isShown()) counter.removeFromMap();
+    removeCarried(piece) {
+        let indexPiece = this._carried.indexOf(piece);
+        this._carried.splice(indexPiece, 1);
+        if (this.isShown()) piece.removeFromMap();
     }
 
-    carry(counter) {
-        console.assert(this._carried.indexOf(counter)===-1);
+    carry(piece) {
+        console.assert(this._carried.indexOf(piece)===-1);
         Memento.register(this);
-        this._carried.push(counter);
-        counter._rotate(this.angle);
+        this._carried.push(piece);
+        piece._rotate(this.angle);
         if (this.isShown()) {
-            counter.appendToMap(this.hexLocation);
+            piece.appendToMap(this.hexLocation);
         }
     }
 
-    drop(counter) {
-        let indexCounter = this._carried.indexOf(counter);
-        console.assert(indexCounter>=0);
+    drop(piece) {
+        let indexPiece = this._carried.indexOf(piece);
+        console.assert(indexPiece>=0);
         Memento.register(this);
-        this._carried.splice(indexCounter, 1);
+        this._carried.splice(indexPiece, 1);
         if (this.isShown()) {
-            counter.deleteFromMap();
+            piece.deleteFromMap();
         }
     }
 
-    addOption(counter) {
-        console.assert(this._options.indexOf(counter)===-1);
-        this.addCarried(counter);
-        this._options.push(counter);
-        counter.setPosition(this._options.length);
+    addOption(piece) {
+        console.assert(this._options.indexOf(piece)===-1);
+        this.addCarried(piece);
+        this._options.push(piece);
+        piece.setPosition(this, this._options.length);
     }
 
-    removeOption(counter) {
-        let indexCounter = this._options.indexOf(counter);
-        this.removeCarried(counter);
-        this._options.splice(indexCounter, 1);
-        for (let index = indexCounter; index<this._options.length; index++) {
-            this._options[index].setPosition(index+1);
+    removeOption(piece) {
+        let indexPiece = this._options.indexOf(piece);
+        this.removeCarried(piece);
+        this._options.splice(indexPiece, 1);
+        for (let index = indexPiece; index<this._options.length; index++) {
+            this._options[index].setPosition(this, index+1);
         }
+        piece.removeAsOption();
     }
 
-    appendOption(counter) {
-        console.assert(this._carried.indexOf(counter)===-1);
+    appendOption(piece) {
+        console.assert(this._carried.indexOf(piece)===-1);
         Memento.register(this);
-        this.carry(counter);
-        this._options.push(counter);
-        counter.shift(this._options.length);
+        this.carry(piece);
+        this._options.push(piece);
+        piece.shift(this, this._options.length);
     }
 
-    deleteOption(counter) {
-        let indexCounter = this._options.indexOf(counter);
-        console.assert(indexCounter>=0);
+    deleteOption(piece) {
+        let indexPiece = this._options.indexOf(piece);
+        console.assert(indexPiece>=0);
         Memento.register(this);
-        this.drop(counter);
-        this._options.splice(indexCounter, 1);
-        for (let index = indexCounter; index<this._options.length; index++) {
-            this._options[index].shift(index+1);
+        this.drop(piece);
+        this._options.splice(indexPiece, 1);
+        for (let index = indexPiece; index<this._options.length; index++) {
+            this._options[index].shift(this, index+1);
         }
+        piece.deleteAsOption();
     }
 
     unselect() {
@@ -781,18 +827,6 @@ export class CBUnit extends CBAbstractUnit {
         return this._options;
     }
 
-    _getCounters() {
-        let counters = [];
-        for (let carried of this._carried) {
-            if (!carried.isOption || !carried.isOption()) {
-                counters.push(carried);
-            }
-        }
-        counters.push(...super._getCounters());
-        counters.push(...this.options);
-        return counters;
-    }
-
     receivesOrder(order) {
         Memento.register(this);
         this._orderGiven = order;
@@ -803,7 +837,7 @@ export class CBUnit extends CBAbstractUnit {
         return this._orderGiven;
     }
 
-    updatePlayed() {
+    markAsPlayed() {
         Memento.register(this);
         this._updatePlayed();
     }
@@ -873,16 +907,16 @@ export class CBUnit extends CBAbstractUnit {
 
     _changeLocation(hexLocation, moveType) {
         Memento.register(this);
-        this._hexLocation._deleteCounter(this);
+        this._hexLocation._deletePlayable(this);
         this._hexLocation = hexLocation;
-        moveType===CBMoveType.FORWARD ? hexLocation._appendCounterOnBottom(this) : hexLocation._appendCounterOnTop(this);
+        moveType===CBStacking.BOTTOM ? hexLocation._appendPlayableOnBottom(this) : hexLocation._appendPlayableOnTop(this);
         this._element.move(hexLocation.location);
         for (let carried of this._carried) {
             carried._move(hexLocation);
         }
     }
 
-    move(hexLocation, cost=null, moveType = CBMoveType.BACKWARD) {
+    move(hexLocation, cost=null, moveType = CBStacking.TOP) {
         if ((hexLocation || this.hexLocation) && (hexLocation !== this.hexLocation)) {
             if (this.hexLocation && !hexLocation) {
                 this.deleteFromMap()
@@ -904,7 +938,7 @@ export class CBUnit extends CBAbstractUnit {
     }
 
     advance(hexLocation) {
-        this._changeLocation(hexLocation, CBMoveType.FORWARD);
+        this._changeLocation(hexLocation, CBStacking.BOTTOM);
     }
 
     reorient(angle) {
@@ -1305,7 +1339,7 @@ export class CBFormation extends CBUnit {
     }
 
 
-    turn(angle, cost=null, moveType = CBMoveType.BACKWARD) {
+    turn(angle, cost=null, moveType = CBStacking.TOP) {
         this.move(this.hexLocation.turnTo(angle), cost, moveType);
         this.reorient(this.getTurnOrientation(angle));
     }
@@ -1326,10 +1360,10 @@ export class CBFormation extends CBUnit {
         this.deleteFromMap();
         this.move(null, 0);
         for (let replacement of replacementOnFromHex) {
-            replacement.appendToMap(hexLocation.fromHex, CBMoveType.BACKWARD);
+            replacement.appendToMap(hexLocation.fromHex, CBStacking.TOP);
         }
         for (let replacement of replacementOnToHex) {
-            replacement.appendToMap(hexLocation.toHex, CBMoveType.BACKWARD);
+            replacement.appendToMap(hexLocation.toHex, CBStacking.TOP);
         }
     }
 

@@ -55,8 +55,8 @@ export function mouseMoveOutOfArtifact(gameOrBoard, artifact) {
     mockPlatform.dispatchEvent(gameOrBoard.root, "mousemove", mouseEvent);
 }
 
-export function clickOnCounter(game, counter) {
-    clickOnArtifact(game, counter.artifact);
+export function clickOnPiece(game, piece) {
+    clickOnArtifact(game, piece.artifact);
 }
 
 export function mouseMoveOnTrigger(game, trigger) {

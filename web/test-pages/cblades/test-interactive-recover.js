@@ -21,7 +21,7 @@ import {
     repaint,
     paint,
     clickOnActionMenu,
-    clickOnCounter,
+    clickOnPiece,
     clickOnMask, rollFor,
     clickOnDice, executeAllAnimations, clickOnResult, showMask, showInsert, showSuccessResult, showPlayedDice,
     showDice, showIndicator, showInsertCommand, showFailureResult, showMenuPanel, showMenuItem, showWingIndicator
@@ -56,7 +56,7 @@ describe("Interactive Recover", ()=> {
             loadAllImages();
         when:
             resetDirectives(unitsLayer, widgetsLayer, itemsLayer);
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
         then:
             loadAllImages();
             skipDirectives(widgetsLayer, 4);
@@ -77,7 +77,7 @@ describe("Interactive Recover", ()=> {
             var {game, unit} = createTinyGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             unit.addOneTirednessLevel();
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             paint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
@@ -108,7 +108,7 @@ describe("Interactive Recover", ()=> {
             var {game, unit} = createTinyGame();
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.addOneTirednessLevel();
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnRestAction(game);
             loadAllImages();
         when:
@@ -139,7 +139,7 @@ describe("Interactive Recover", ()=> {
             var {game, unit} = createTinyGame();
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.addOneTirednessLevel();
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnRestAction(game);
             loadAllImages();
         when:
@@ -174,7 +174,7 @@ describe("Interactive Recover", ()=> {
             var {game, unit} = createTinyGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             unit.addOneLackOfMunitionsLevel();
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             paint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
@@ -202,7 +202,7 @@ describe("Interactive Recover", ()=> {
             var {game, unit} = createTinyGame();
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.addOneLackOfMunitionsLevel();
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnReplenishMunitionsAction(game);
             loadAllImages();
         when:
@@ -233,7 +233,7 @@ describe("Interactive Recover", ()=> {
             var {game, unit} = createTinyGame();
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.addOneLackOfMunitionsLevel();
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnReplenishMunitionsAction(game);
             loadAllImages();
         when:
@@ -268,7 +268,7 @@ describe("Interactive Recover", ()=> {
             var {game, unit} = createTinyGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             unit.disrupt();
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             paint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
@@ -298,7 +298,7 @@ describe("Interactive Recover", ()=> {
             var {game, unit} = createTinyGame();
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.disrupt();
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnReorganizeAction(game);
             loadAllImages();
         when:
@@ -329,7 +329,7 @@ describe("Interactive Recover", ()=> {
             var {game, unit} = createTinyGame();
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.disrupt();
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnReorganizeAction(game);
             loadAllImages();
         when:
@@ -365,7 +365,7 @@ describe("Interactive Recover", ()=> {
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             unit.disrupt();
             unit.addOneCohesionLevel();
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             paint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
@@ -396,7 +396,7 @@ describe("Interactive Recover", ()=> {
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.disrupt();
             unit.addOneCohesionLevel();
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnRallyAction(game);
             loadAllImages();
         when:
@@ -428,7 +428,7 @@ describe("Interactive Recover", ()=> {
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit.disrupt();
             unit.addOneCohesionLevel();
-            clickOnCounter(game, unit);
+            clickOnPiece(game, unit);
             clickOnRallyAction(game);
             loadAllImages();
         when:

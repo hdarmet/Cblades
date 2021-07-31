@@ -69,6 +69,10 @@ export class InteractiveChoseSpellAction extends CBAction {
         this._event = event;
     }
 
+    get unit() {
+        return this.playable;
+    }
+
     play() {
         this.unit.markAsCharging(CBCharge.NONE);
         this.unit.player.openMagicMenu(this.unit,
@@ -83,6 +87,10 @@ export class InteractiveTryToCastSpellAction extends CBAction {
     constructor(game, unit, event) {
         super(game, unit);
         this._event = event;
+    }
+
+    get unit() {
+        return this.playable;
     }
 
     play() {
@@ -132,6 +140,10 @@ export class InteractiveCastSpellAction extends CBAction {
         this._event = event;
         this.markAsFinished();
         this._spell = this.unit.chosenSpell;
+    }
+
+    get unit() {
+        return this.playable;
     }
 
     play() {
@@ -221,7 +233,7 @@ export class CBSpellTargetFoesActuator extends RetractableActuatorMixin(CBAction
         for (let foe of foes) {
             let target = new CBUnitActuatorTrigger(this, foe,"units", image,
                 new Point2D(0, 0), new Dimension2D(100, 111));
-            target.position = Point2D.position(this.unit.location, foe.location, 1);
+            target.position = Point2D.position(this.playable.location, foe.location, 1);
             imageArtifacts.push(target);
         }
         this.initElement(imageArtifacts);
@@ -246,7 +258,7 @@ export class CBSpellTargetFriendsActuator extends RetractableActuatorMixin(CBAct
         for (let friend of friends) {
             let target = new CBUnitActuatorTrigger(this, friend, "units", image,
                 new Point2D(0, 0), new Dimension2D(100, 111));
-            target.position = Point2D.position(this.unit.location, friend.location, 1);
+            target.position = Point2D.position(this.playable.location, friend.location, 1);
             imageArtifacts.push(target);
         }
         this.initElement(imageArtifacts);
@@ -271,7 +283,7 @@ export class CBSpellTargetHexesActuator extends CBActionActuator {
         for (let hex of hexes) {
             let target = new CBActuatorImageTrigger(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(100, 111));
-            target.position = Point2D.position(this.unit.location, hex.location, 1);
+            target.position = Point2D.position(this.playable.location, hex.location, 1);
             target._hex = hex;
             imageArtifacts.push(target);
         }
