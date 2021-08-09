@@ -6,7 +6,7 @@ import {
     DIconMenuItem, DInsert, DMask, DResult, DScene, DSwipe
 } from "../widget.js";
 import {
-    CBAction, CBGame, CBStacking, CBCounter, WidgetLevelMixin
+    CBAction, CBGame, CBStacking, CBHexCounter, WidgetLevelMixin, PlayableMixin
 } from "./game.js";
 import {
     CBActionMenu,
@@ -251,7 +251,7 @@ export class InteractiveExtinguishFireAction extends CBAction {
     _processExtinguishFireResult(unit, diceResult) {
         let result = this.game.arbitrator.processExtinguishFireResult(this.unit, diceResult);
         if (result.success) {
-            let fireStart = CBCounter.getByType(unit.hexLocation, CBFireStart);
+            let fireStart = PlayableMixin.getByType(unit.hexLocation, CBFireStart);
             if (fireStart) {
                 fireStart.removeFromMap(unit.hexLocation);
             }
@@ -366,7 +366,7 @@ export class InteractiveRemoveStakesAction extends CBAction {
     _processRemoveStakesResult(unit, diceResult) {
         let result = this.game.arbitrator.processRemoveStakesResult(this.unit, diceResult);
         if (result.success) {
-            let stakes = CBCounter.getByType(unit.hexLocation, CBStakes);
+            let stakes = PlayableMixin.getByType(unit.hexLocation, CBStakes);
             if (stakes) {
                 stakes.removeFromMap(unit.hexLocation);
             }

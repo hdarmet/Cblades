@@ -47,7 +47,7 @@ import {
     unregisterInteractiveMiscellaneous
 } from "../../jslib/cblades/interactive-miscellaneous.js";
 import {
-    CBCounter
+    CBHexCounter, PlayableMixin
 } from "../../jslib/cblades/game.js";
 import {
     CBFireStart, CBStakes
@@ -229,7 +229,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBCounter.getByType(unit1.hexLocation, CBFireStart)).isNotDefined();
+            assert(PlayableMixin.getByType(unit1.hexLocation, CBFireStart)).isNotDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 
@@ -261,7 +261,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBCounter.getByType(unit1.hexLocation, CBFireStart)).isDefined();
+            assert(PlayableMixin.getByType(unit1.hexLocation, CBFireStart)).isDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 
@@ -330,7 +330,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBCounter.getByType(unit1.hexLocation, CBFireStart)).isDefined();
+            assert(PlayableMixin.getByType(unit1.hexLocation, CBFireStart)).isDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 
@@ -364,7 +364,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBCounter.getByType(unit1.hexLocation, CBFireStart)).isNotDefined();
+            assert(PlayableMixin.getByType(unit1.hexLocation, CBFireStart)).isNotDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 
@@ -429,7 +429,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBCounter.getByType(unit1.hexLocation, CBStakes)).isNotDefined();
+            assert(PlayableMixin.getByType(unit1.hexLocation, CBStakes)).isNotDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 
@@ -461,7 +461,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBCounter.getByType(unit1.hexLocation, CBStakes)).isDefined();
+            assert(PlayableMixin.getByType(unit1.hexLocation, CBStakes)).isDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 
@@ -529,7 +529,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBCounter.getByType(unit1.hexLocation, CBStakes)).isDefined();
+            assert(PlayableMixin.getByType(unit1.hexLocation, CBStakes)).isDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 
@@ -563,7 +563,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(CBCounter.getByType(unit1.hexLocation, CBStakes)).isNotDefined();
+            assert(PlayableMixin.getByType(unit1.hexLocation, CBStakes)).isNotDefined();
             assert(unit1.hasBeenPlayed()).isTrue();
     });
 

@@ -147,10 +147,10 @@ export class InteractiveReleaseTroopsAction extends CBAction {
         }
     }
 
-    releaseTroop(hexId, steps, moveType) {
+    releaseTroop(hexId, steps, stacking) {
         this.game.closeActuators();
         let {stepCount, troop} = this.game.arbitrator.releaseTroop(this.unit, hexId, steps);
-        troop.appendToMap(hexId, moveType);
+        troop.appendToMap(hexId, stacking);
         troop.angle = this.unit.angle;
         troop.markAsBeingPlayed();
         this.unit.fixRemainingLossSteps(stepCount);
@@ -227,7 +227,7 @@ export class CBReleaseTroopActuator extends CBActionActuator {
 
     constructor(action, hexes, stepCount) {
 
-        function _createTrigger(image, hex, angle, factor, stepCount, moveType) {
+        function _createTrigger(image, hex, angle, factor, stepCount, stacking) {
             let trigger = new CBActuatorImageTrigger(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(64, 60));
             let startLocation = Point2D.position(this.playable.location, hex.location, factor);
@@ -235,7 +235,7 @@ export class CBReleaseTroopActuator extends CBActionActuator {
             trigger.position = startLocation.plusPoint(targetPosition);
             trigger.hex = hex;
             trigger.stepCount = stepCount;
-            trigger.moveType = moveType;
+            trigger.stacking = stacking;
             trigger.pangle = angle;
             return trigger;
         }
@@ -255,12 +255,12 @@ export class CBReleaseTroopActuator extends CBActionActuator {
         this.initElement(imageArtifacts);
     }
 
-    getTrigger(hex, stepCount, moveType) {
-        return this.findTrigger(artifact=>artifact.hex === hex && artifact.stepCount === stepCount && artifact.moveType === moveType);
+    getTrigger(hex, stepCount, stacking) {
+        return this.findTrigger(artifact=>artifact.hex === hex && artifact.stepCount === stepCount && artifact.stacking === stacking);
     }
 
     onMouseClick(trigger, event) {
-        this.action.releaseTroop(trigger.hex, trigger.stepCount, trigger.moveType);
+        this.action.releaseTroop(trigger.hex, trigger.stepCount, trigger.stacking);
     }
 
 }

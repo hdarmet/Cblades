@@ -3,8 +3,15 @@
 import {
     CBAbstractUnit,
     CBAction,
-    CBActivableMixin, CBPiece,
-    CBPieceImageArtifact, CBGame, CBCounter, Displayable, RetractableArtifactMixin, RetractablePlayableMixin
+    CBActivableMixin,
+    CBPiece,
+    CBPieceImageArtifact,
+    CBGame,
+    CBHexCounter,
+    DisplayLocatableMixin,
+    RetractableArtifactMixin,
+    RetractablePieceMixin,
+    PlayableMixin
 } from "./game.js";
 import {
     Dimension2D, Point2D
@@ -13,7 +20,7 @@ import {
     DImage
 } from "../draw.js";
 import {
-    Mechanisms
+    Mechanisms, Memento
 } from "../mechanisms.js";
 import {
     DImageArtifact
@@ -30,7 +37,7 @@ class FireStartArtifact extends RetractableArtifactMixin(CBPieceImageArtifact) {
 
 }
 
-export class CBFireStart extends RetractablePlayableMixin(CBCounter) {
+export class CBFireStart extends RetractablePieceMixin(CBHexCounter) {
 
     constructor() {
         super("ground", ["./../images/actions/start-fire.png"], CBFireStart.DIMENSION);
@@ -62,7 +69,7 @@ class StakesArtifact extends RetractableArtifactMixin(CBPieceImageArtifact) {
 
 }
 
-export class CBStakes extends RetractablePlayableMixin(CBCounter) {
+export class CBStakes extends RetractablePieceMixin(CBHexCounter) {
 
     constructor() {
         super("ground", ["./../images/actions/stakes.png"], CBStakes.DIMENSION);
@@ -103,7 +110,7 @@ export class DisplayablePlayableArtifact extends CBActivableMixin(CBPieceImageAr
 
 }
 
-export class CBDisplayablePlayable extends Displayable(CBPiece) {
+export class CBDisplayableCounter extends PlayableMixin(DisplayLocatableMixin(CBPiece)) {
 
     constructor(paths, dimension) {
         super("counters", paths, dimension);
@@ -119,7 +126,11 @@ export class CBDisplayablePlayable extends Displayable(CBPiece) {
     }
 
     markAsPlayed() {
-        super.markAsPlayed();
+        Memento.register(this);
+        this._updatePlayed();
+    }
+
+    _updatePlayed() {
         this._marker = new CBCounterMarkerArtifact(this, "./../images/markers/actiondone.png",
             new Point2D(CBWeather.DIMENSION.w/2, -CBWeather.DIMENSION.h/2));
         this.element.appendArtifact(this._marker);
@@ -154,7 +165,7 @@ export class CBDisplayablePlayable extends Displayable(CBPiece) {
 
 }
 
-export class CBWeather extends CBDisplayablePlayable {
+export class CBWeather extends CBDisplayableCounter {
 
     constructor() {
         super([
@@ -185,7 +196,7 @@ export class CBWeather extends CBDisplayablePlayable {
     static DIMENSION = new Dimension2D(142, 142);
 }
 
-export class CBFog extends CBDisplayablePlayable {
+export class CBFog extends CBDisplayableCounter {
 
     constructor() {
         super( [
@@ -214,7 +225,7 @@ export class CBFog extends CBDisplayablePlayable {
     static DIMENSION = new Dimension2D(142, 142);
 }
 
-export class CBWindDirection extends CBDisplayablePlayable {
+export class CBWindDirection extends CBDisplayableCounter {
 
     constructor() {
         super( [
@@ -240,7 +251,7 @@ export class CBWindDirection extends CBDisplayablePlayable {
     static DIMENSION = new Dimension2D(142, 142);
 }
 
-export class CBWingDisplayablePlayable extends CBDisplayablePlayable {
+export class CBWingDisplayablePlayable extends CBDisplayableCounter {
 
     constructor(wing, paths) {
         super( paths, CBWingTiredness.DIMENSION);

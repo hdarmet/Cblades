@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    CBCounter, CBPieceImageArtifact, RetractableArtifactMixin, RetractablePlayableMixin, CBGame
+    CBHexCounter, CBPieceImageArtifact, RetractableArtifactMixin, RetractablePieceMixin, CBGame
 } from "./game.js";
 import {
     Dimension2D
@@ -43,7 +43,7 @@ class SpellImageArtifact extends OptionArtifactMixin(RetractableArtifactMixin(CB
 
 }
 
-export class CBSpell extends RetractablePlayableMixin(CarriableMixin(CBCounter)) {
+export class CBSpell extends RetractablePieceMixin(CarriableMixin(CBHexCounter)) {
 
     constructor(paths, wizard, spellLevel) {
         super("units", paths, CBSpell.DIMENSION);
@@ -94,9 +94,9 @@ export class CBSpell extends RetractablePlayableMixin(CarriableMixin(CBCounter))
         return false;
     }
 
-    _addPlayable(hexLocation) {
+    _addPlayable(hexLocation, stacking) {
         if (this.activated) {
-            super._addPlayable(hexLocation);
+            super._addPlayable(hexLocation, stacking);
         }
     }
 
@@ -106,9 +106,9 @@ export class CBSpell extends RetractablePlayableMixin(CarriableMixin(CBCounter))
         }
     }
 
-    _appendPlayable(hexLocation) {
+    _appendPlayable(hexLocation, stacking) {
         if (this.activated) {
-            super._appendPlayable(hexLocation);
+            super._appendPlayable(hexLocation, stacking);
         }
     }
 
@@ -259,13 +259,13 @@ export function UnitTargetedMixin(clazz) {
             else delete this._unit;
         }
 
-        _addPlayable(hexLocation) {
+        _addPlayable(hexLocation, stacking) {
         }
 
         _removePlayable(hexLocation) {
         }
 
-        _appendPlayable(hexLocation) {
+        _appendPlayable(hexLocation, stacking) {
         }
 
         _deletePlayable(hexLocation) {

@@ -24,15 +24,6 @@ export let CBStacking = {
     TOP: 1
 }
 
-export let CBMoveMode = {
-    NO_CONSTRAINT: 0,
-    ATTACK: 1,
-    FIRE: 2,
-    DEFEND: 3,
-    REGROUP: 4,
-    RETREAT: 5
-}
-
 export class CBAbstractArbitrator {
 
     get game() {
@@ -232,109 +223,6 @@ export class CBAction {
     static PROGRESSION_EVENT = "action-progression";
 }
 
-export function CBActivableMixin(clazz) {
-
-    return class extends clazz {
-
-        constructor(...args) {
-            super(...args);
-            this._active = true;
-            this.setSettings(this.settings);
-        }
-
-        _memento() {
-            let memento = super._memento();
-            memento.active = this._active;
-            return memento;
-        }
-
-        _revert(memento) {
-            super._revert(memento);
-            this._active = memento.active;
-        }
-
-        activate() {
-            Memento.register(this);
-            this._active = true;
-            this.setSettings(this.settings);
-        }
-
-        desactivate() {
-            Memento.register(this);
-            delete this._active;
-            this.setSettings(this.inactiveSettings);
-        }
-
-        get settings() {
-            return level => {
-                level.setShadowSettings("#00FFFF", 10);
-            }
-        }
-
-        get overSettings() {
-            return level => {
-                level.setShadowSettings("#FF0000", 10);
-            }
-        }
-
-        get inactiveSettings() {
-            return level => {
-                level.setShadowSettings("#000000", 10);
-            }
-        }
-
-        onMouseEnter(event) {
-            if (this._active) {
-                this.setSettings(this.overSettings);
-                this.element.refresh();
-            }
-            return true;
-        }
-
-        onMouseLeave(event) {
-            if (this._active) {
-                this.setSettings(this.settings);
-                this.element.refresh();
-            }
-            return true;
-        }
-
-    }
-}
-
-export function CBActuatorTriggerMixin(clazz) {
-
-    return class extends CBActivableMixin(clazz) {
-
-        constructor(actuator, ...args) {
-            super(...args);
-            this._actuator = actuator;
-        }
-
-        get actuator() {
-            return this._actuator;
-        }
-
-        onMouseClick(event) {
-            this._actuator.onMouseClick(this, event);
-            return true;
-        }
-
-    }
-}
-
-export class CBActuatorImageTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
-    constructor(...args) {
-        super(...args);
-    }
-}
-
-export class CBActuatorMultiImagesTrigger extends CBActuatorTriggerMixin(DMultiImagesArtifact) {
-    constructor(...args) {
-        super(...args);
-    }
-}
-
 export class CBActuator {
 
     constructor() {
@@ -418,191 +306,6 @@ export class CBActuator {
 
     static FULL_VISIBILITY = 2;
     static VISIBILITY_EVENT = "actuator-event";
-}
-
-export class CBUnitActuatorTrigger extends CBActuatorImageTrigger {
-
-    constructor(actuator, unit, ...args) {
-        super(actuator, ...args);
-        this._unit = unit;
-    }
-
-    get unit() {
-        return this._unit;
-    }
-
-    get slot() {
-        return this.unit.slot;
-    }
-
-    get layer() {
-        return CBGame.ULAYERS.ACTUATORS;
-    }
-
-    onMouseEnter(event) {
-        super.onMouseEnter(event);
-        this.unit.retractAbove();
-        return true;
-    }
-
-    onMouseLeave(event) {
-        super.onMouseLeave(event);
-        this.unit.appearAbove();
-        return true;
-    }
-
-}
-
-export class CBActionActuator extends CBActuator {
-
-    constructor(action) {
-        super();
-        this._action = action;
-    }
-
-    get action() {
-        return this._action;
-    }
-
-    get playable() {
-        return this.action.playable;
-    }
-
-    initElement(triggers, position = this.playable.location) {
-        super.initElement(triggers, position);
-    }
-
-}
-
-export function WidgetLevelMixin(clazz) {
-
-    return class extends clazz {
-
-        constructor(game, ...args) {
-            super(...args);
-            this._game = game;
-        }
-
-        _processGlobalEvent(source, event, value) {
-            if (event === WidgetLevelMixin.VISIBILITY_EVENT) {
-                this.setVisibility(value);
-            }
-        }
-
-        _memento() {
-            return {
-                shown: this._shown
-            }
-        }
-
-        _revert(memento) {
-            if (this._shown !== memento.shown) {
-                this._shown = memento.shown;
-                if (this._shown) {
-                    Mechanisms.addListener(this);
-                } else {
-                    Mechanisms.removeListener(this);
-                }
-            }
-        }
-
-        open(board, location) {
-            Memento.register(this);
-            this._shown = true;
-            Mechanisms.addListener(this);
-            this.setVisibility(this._game.visibility);
-            super.open(board, location);
-        }
-
-        close() {
-            Memento.register(this);
-            this._shown = false;
-            Mechanisms.removeListener(this);
-            super.close();
-        }
-
-        setVisibility(level) {
-            this.alpha = level >= 1;
-        }
-
-    }
-
-}
-WidgetLevelMixin.VISIBILITY_EVENT = "widget-visibility";
-WidgetLevelMixin.VISIBILITY_LEVEL = 2;
-
-export class CBMask extends WidgetLevelMixin(DMask) {
-
-    constructor(...args) {
-        super(...args);
-    }
-
-}
-
-export function Displayable(clazz) {
-
-    return class extends clazz {
-
-        _memento() {
-            let memento = super._memento();
-            memento.played = this._played;
-            return memento;
-        }
-
-        _revert(memento) {
-            if (memento.played) {
-                this._played = memento.played;
-            }
-            else {
-                delete this._played;
-            }
-        }
-
-        setOnGame(game) {
-            game.counterDisplay.addCounter(this);
-        }
-
-        removeFromGame(game) {
-            game.counterDisplay.removeCounter(this);
-        }
-
-        show(game) {
-            game.counterDisplay.appendCounter(this);
-        }
-
-        hide(game) {
-            game.counterDisplay.deleteCounter(this);
-        }
-
-        isShown() {
-            return this.element.isShown();
-        }
-
-        onMouseClick(event) {
-            if (!this.played) {
-                this.play(event);
-            }
-        }
-
-        isFinishable() {
-            return this.played;
-        }
-
-        markAsPlayed() {
-            Memento.register(this);
-            this._played = true;
-        }
-
-        reset() {
-            delete this._played;
-        }
-
-        get played() {
-            return !!this._played;
-        }
-
-    }
-
 }
 
 export class CBCounterDisplay {
@@ -1029,7 +732,7 @@ export class CBGame {
 
     setFocusedPlayable(playable) {
         Memento.register(this);
-        if (playable && playable.isOnBoard()) {
+        if (playable && playable.isOnHex()) {
             this._focusedPlayable = playable;
         }
         else {
@@ -1151,7 +854,7 @@ export class CBGame {
             new Point2D(-540, -60), (state, animation)=>{
                 this._visibility = (state+1)%3;
                 Mechanisms.fire(this, CBActuator.VISIBILITY_EVENT, this._visibility);
-                Mechanisms.fire(this, WidgetLevelMixin.VISIBILITY_EVENT, this._visibility>=1);
+                Mechanisms.fire(this, CBGame.VISIBILITY_EVENT, this._visibility>=1);
                 animation();
             })
             .setState(this._visibility)
@@ -1164,7 +867,8 @@ export class CBGame {
                 else
                     getDrawPlatform().exitFullscreen();
                 animation();
-            }).setTurnAnimation(true, ()=>this._fullScreenCommand.setState(this._fullScreenCommand.state?0:1));
+            })
+            .setTurnAnimation(true, ()=>this._fullScreenCommand.setState(this._fullScreenCommand.state?0:1));
         this._settingsCommand.active = false;
         this._saveCommand.active = false;
         this._loadCommand.active = false;
@@ -1267,6 +971,7 @@ export class CBGame {
     }
     static edit = function(game) {};
 }
+CBGame.VISIBILITY_EVENT = "game-visibility";
 
 export class CBPieceImageArtifact extends DMultiImagesArtifact {
 
@@ -1303,129 +1008,6 @@ export class CBPieceImageArtifact extends DMultiImagesArtifact {
         return true;
     }
 
-}
-
-function SelectableMixin(clazz) {
-
-    return class extends clazz {
-
-        constructor(...args) {
-            super(...args);
-        }
-
-        get selectedSettings() {
-            return level=>{
-                level.setShadowSettings("#FF0000", 15);
-            }
-        }
-
-        get overSettings() {
-            return level=>{
-                level.setShadowSettings("#00FFFF", 15);
-            }
-        }
-
-        unselect() {
-            Memento.register(this);
-            this.changeSettings(this.settings);
-        }
-
-        select() {
-            Memento.register(this);
-            this.changeSettings(this.selectedSettings);
-        }
-
-        onMouseEnter(event) {
-            super.onMouseEnter(event);
-            if (this.game.selectedPlayable!==this.unit && this.game.canSelectPlayable(this.unit)) {
-                this.setSettings(this.overSettings);
-            }
-            return true;
-        }
-
-        onMouseLeave(event) {
-            super.onMouseLeave(event);
-            if (this.game.selectedPlayable!==this.unit && this.game.canSelectPlayable(this.unit)) {
-                this.setSettings(this.settings);
-            }
-            return true;
-        }
-
-    }
-
-}
-
-export function RetractableArtifactMixin(clazz) {
-
-    return class extends clazz {
-        constructor(...args) {
-            super(...args);
-        }
-
-        onMouseEnter(event) {
-            super.onMouseEnter(event);
-            this.piece.retractAbove();
-            return true;
-        }
-
-        onMouseLeave(event) {
-            super.onMouseLeave(event);
-            this.piece.appearAbove();
-            return true;
-        }
-
-    }
-}
-
-export function RetractablePlayableMixin(clazz) {
-
-    return class extends clazz {
-        constructor(...args) {
-            super(...args);
-        }
-
-        retractAbove(event) {
-            function retract(hexId, artifacts) {
-                let playables = [];
-                for (let playable of hexId.playables) {
-                    playables.push(...playable.pieces);
-                }
-                let first = playables.indexOf(this);
-                for (let index=first+1; index<playables.length; index++) {
-                    playables[index].collectArtifactsToRetract(artifacts);
-                }
-            }
-
-            let artifacts = [];
-            for (let hexId of this.hexLocation.hexes) {
-                retract.call(this, hexId, artifacts);
-            }
-            this.game.retract(artifacts);
-        }
-
-        appearAbove(event) {
-            this.game.appear();
-        }
-
-    }
-}
-
-export function RetractableActuatorMixin(clazz) {
-
-    return class extends clazz {
-        constructor(...args) {
-            super(...args);
-        }
-
-        collectArtifactsToRetract(unit, artifacts) {
-            for (let trigger of this.triggers) {
-                if (trigger.unit === unit) {
-                    artifacts.push(trigger);
-                }
-            }
-        }
-
-    }
 }
 
 export class CBPiece {
@@ -1502,7 +1084,7 @@ export class CBPiece {
     }
 
     isShown() {
-        return !!this._element.board;
+        return this._element.isShown();
     }
 
     _setOnGame(game) {
@@ -1529,14 +1111,6 @@ export class CBPiece {
         artifacts.push(this._imageArtifact);
     }
 
-}
-
-export class CBPlayable extends RetractablePlayableMixin(CBPiece) {
-
-    constructor(levelName, paths, dimension) {
-        super(levelName, paths, dimension);
-    }
-
     _getPieces() {
         return [
             this
@@ -1549,7 +1123,341 @@ export class CBPlayable extends RetractablePlayableMixin(CBPiece) {
 
 }
 
-export class CBCounter extends CBPlayable {
+export function DisplayLocatableMixin(clazz) {
+
+    return class extends clazz {
+
+        setOnGame(game) {
+            game.counterDisplay.addCounter(this);
+        }
+
+        removeFromGame(game) {
+            game.counterDisplay.removeCounter(this);
+        }
+
+        show(game) {
+            game.counterDisplay.appendCounter(this);
+        }
+
+        hide(game) {
+            game.counterDisplay.deleteCounter(this);
+        }
+
+        onMouseClick(event) {
+            if (!this.played) {
+                this.play(event);
+            }
+        }
+
+    }
+
+}
+
+export function HexLocatableMixin(clazz) {
+
+    return class extends clazz {
+
+        _memento() {
+            let memento = super._memento();
+            memento.hexLocation = this._hexLocation;
+            return memento;
+        }
+
+        _revert(memento) {
+            super._revert(memento);
+            if (memento.hexLocation) {
+                this._hexLocation = memento.hexLocation;
+            }
+            else delete this._hexLocation;
+        }
+
+        _addPlayable(hexLocation, stacking) {
+            console.assert(stacking !== undefined);
+            hexLocation.game._registerPlayable(this);
+            stacking===CBStacking.BOTTOM ? hexLocation._unshiftPlayable(this) : hexLocation._pushPlayable(this);
+        }
+
+        _removePlayable(hexLocation) {
+            console.assert(hexLocation.game === this.game);
+            hexLocation.game._removePlayable(this);
+            hexLocation._removePlayable(this);
+        }
+
+        _appendPlayable(hexLocation, stacking) {
+            console.assert(stacking !== undefined);
+            hexLocation.game._appendPlayable(this);
+            stacking===CBStacking.BOTTOM ? hexLocation._appendPlayableOnBottom(this) : hexLocation._appendPlayableOnTop(this);
+        }
+
+        _deletePlayable(hexLocation) {
+            console.assert(hexLocation.game === this.game);
+            hexLocation.game._deletePlayable(this);
+            hexLocation._deletePlayable(this);
+        }
+
+        addToMap(hexLocation, stacking = CBStacking.TOP) {
+            console.assert(!this._hexLocation);
+            this._hexLocation = hexLocation;
+            this._addPlayable(hexLocation, stacking);
+            this._setOnGame(hexLocation.map.game);
+            this._setLocation(hexLocation.location);
+        }
+
+        removeFromMap() {
+            console.assert(this._hexLocation);
+            this._removePlayable(this._hexLocation);
+            this._removeFromGame();
+            delete this._hexLocation;
+        }
+
+        appendToMap(hexLocation, stacking = CBStacking.TOP) {
+            console.assert(!this._hexLocation);
+            Memento.register(this);
+            this._hexLocation = hexLocation;
+            this._appendPlayable(hexLocation, stacking);
+            this._show(hexLocation.map.game);
+            this._element.move(hexLocation.location);
+        }
+
+        deleteFromMap() {
+            console.assert(this._hexLocation);
+            Memento.register(this);
+            this._deletePlayable(this._hexLocation);
+            this._hide();
+            delete this._hexLocation;
+        }
+
+        get hexLocation() {
+            return this._hexLocation;
+        }
+
+        set hexLocation(hexLocation) {
+            if (this._hexLocation) {
+                this.removeFromMap();
+            }
+            if (hexLocation) {
+                this.addToMap(hexLocation, CBStacking.TOP);
+            }
+        }
+
+        isOnHex() {
+            return !!this._hexLocation;
+        }
+
+    }
+
+}
+
+export function PlayableMixin(clazz) {
+
+    return class extends clazz {
+
+        _memento() {
+            let memento = super._memento();
+            memento.action = this._action;
+            return memento;
+        }
+
+        _revert(memento) {
+            super._revert(memento);
+            if (memento.action) {
+                this._action = memento.action;
+            }
+            else delete this._action;
+        }
+
+        reset(player) {
+            if (player === this.player) {
+                delete this._action;
+            }
+        }
+
+        changeAction(action) {
+            Memento.register(this);
+            this._action = action;
+        }
+
+        launchAction(action) {
+            this.changeAction(action);
+            action.play();
+        }
+
+        removeAction() {
+            Memento.register(this);
+            delete this._action;
+        }
+
+        unselect() {
+            console.assert(this.game.selectedPlayable===this);
+            this.game.setSelectedPlayable(null);
+            this._imageArtifact.unselect();
+            this.element.refresh();
+            Mechanisms.fire(this, CBAbstractUnit.UNSELECTED_EVENT);
+        }
+
+        select() {
+            this.game.setSelectedPlayable(this);
+            this._imageArtifact.select();
+            this.refresh();
+            Mechanisms.fire(this, CBAbstractUnit.SELECTED_EVENT);
+        }
+
+        get action() {
+            return this._action;
+        }
+
+        markAsBeingPlayed() {
+            if (!this.action) {
+                this.launchAction(new CBAction(this.game, this));
+            }
+            this.action.markAsFinished();
+        }
+
+        hasBeenPlayed() {
+            return this._action && this._action.isFinished();
+        }
+
+        hasBeenActivated() {
+            return this._action && this._action.isStarted();
+        }
+
+    }
+
+}
+PlayableMixin.getByType = function(hexLocation, type) {
+    for (let playable of hexLocation.playables) {
+        if (playable instanceof type) return playable;
+    }
+    return null;
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+function SelectableArtifactMixin(clazz) {
+
+    return class extends clazz {
+
+        constructor(...args) {
+            super(...args);
+        }
+
+        get selectedSettings() {
+            return level=>{
+                level.setShadowSettings("#FF0000", 15);
+            }
+        }
+
+        get overSettings() {
+            return level=>{
+                level.setShadowSettings("#00FFFF", 15);
+            }
+        }
+
+        unselect() {
+            Memento.register(this);
+            this.changeSettings(this.settings);
+        }
+
+        select() {
+            Memento.register(this);
+            this.changeSettings(this.selectedSettings);
+        }
+
+        onMouseEnter(event) {
+            super.onMouseEnter(event);
+            if (this.game.selectedPlayable!==this.unit && this.game.canSelectPlayable(this.unit)) {
+                this.setSettings(this.overSettings);
+            }
+            return true;
+        }
+
+        onMouseLeave(event) {
+            super.onMouseLeave(event);
+            if (this.game.selectedPlayable!==this.unit && this.game.canSelectPlayable(this.unit)) {
+                this.setSettings(this.settings);
+            }
+            return true;
+        }
+
+    }
+
+}
+
+export function RetractableArtifactMixin(clazz) {
+
+    return class extends clazz {
+        constructor(...args) {
+            super(...args);
+        }
+
+        onMouseEnter(event) {
+            super.onMouseEnter(event);
+            this.piece.retractAbove();
+            return true;
+        }
+
+        onMouseLeave(event) {
+            super.onMouseLeave(event);
+            this.piece.appearAbove();
+            return true;
+        }
+
+    }
+}
+
+export function RetractablePieceMixin(clazz) {
+
+    return class extends clazz {
+        constructor(...args) {
+            super(...args);
+        }
+
+        retractAbove(event) {
+            function retract(hexId, artifacts) {
+                let playables = [];
+                for (let playable of hexId.playables) {
+                    playables.push(...playable.pieces);
+                }
+                let first = playables.indexOf(this);
+                for (let index=first+1; index<playables.length; index++) {
+                    playables[index].collectArtifactsToRetract(artifacts);
+                }
+            }
+
+            let artifacts = [];
+            for (let hexId of this.hexLocation.hexes) {
+                retract.call(this, hexId, artifacts);
+            }
+            this.game.retract(artifacts);
+        }
+
+        appearAbove(event) {
+            this.game.appear();
+        }
+
+    }
+}
+
+export function RetractableActuatorMixin(clazz) {
+
+    return class extends clazz {
+        constructor(...args) {
+            super(...args);
+        }
+
+        collectArtifactsToRetract(unit, artifacts) {
+            for (let trigger of this.triggers) {
+                if (trigger.unit === unit) {
+                    artifacts.push(trigger);
+                }
+            }
+        }
+
+    }
+
+}
+
+export class CBHexCounter extends RetractablePieceMixin(HexLocatableMixin(PlayableMixin(CBPiece))) {
 
     constructor(levelName, paths, dimension) {
         super(levelName, paths, dimension);
@@ -1559,93 +1467,15 @@ export class CBCounter extends CBPlayable {
         return true;
     }
 
-    _memento() {
-        let memento = super._memento();
-        memento.hexLocation = this._hexLocation;
-        return memento;
-    }
-
-    _revert(memento) {
-        super._revert(memento);
-        if (memento.hexLocation) {
-            this._hexLocation = memento.hexLocation;
-        }
-        else delete this._hexLocation;
-    }
-
-    _addPlayable(hexLocation) {
-        hexLocation.game._registerPlayable(this);
-        hexLocation._pushPlayable(this);
-    }
-
-    _removePlayable(hexLocation) {
-        console.assert(hexLocation.game === this.game);
-        hexLocation.game._removePlayable(this);
-        hexLocation._removePlayable(this);
-    }
-
-    _appendPlayable(hexLocation) {
-        hexLocation.game._appendPlayable(this);
-        hexLocation._appendPlayableOnTop(this);
-    }
-
-    _deletePlayable(hexLocation) {
-        console.assert(hexLocation.game === this.game);
-        hexLocation.game._deletePlayable(this);
-        hexLocation._deletePlayable(this);
-    }
-
-    addToMap(hexLocation) {
-        console.assert(!this._hexLocation);
-        this._hexLocation = hexLocation;
-        this._addPlayable(hexLocation);
-        this._setOnGame(hexLocation.map.game);
-        this._setLocation(hexLocation.location);
-    }
-
-    removeFromMap() {
-        console.assert(this._hexLocation);
-        this._removePlayable(this._hexLocation);
-        this._removeFromGame();
-        delete this._hexLocation;
-    }
-
-    appendToMap(hexLocation) {
-        console.assert(!this._hexLocation);
-        Memento.register(this);
-        this._hexLocation = hexLocation;
-        this._appendPlayable(hexLocation);
-        this._show(hexLocation.map.game);
-        this._element.move(hexLocation.location);
-    }
-
-    deleteFromMap() {
-        console.assert(this._hexLocation);
-        Memento.register(this);
-        this._deletePlayable(this._hexLocation);
-        this._hide();
-        delete this._hexLocation;
-    }
-
-    get hexLocation() {
-        return this._hexLocation;
-    }
-
-    static getByType(hexLocation, type) {
-        for (let playable of hexLocation.playables) {
-            if (playable instanceof type) return playable;
-        }
-        return null;
-    }
-
 }
+
 Object.defineProperty(CBHexLocation.prototype, "counters", {
     get: function() {
         return this.playables.filter(playable=>playable.counterNature);
     }
 });
 
-export class UnitImageArtifact extends RetractableArtifactMixin(SelectableMixin(CBPieceImageArtifact)) {
+export class UnitImageArtifact extends RetractableArtifactMixin(SelectableArtifactMixin(CBPieceImageArtifact)) {
 
     constructor(unit, ...args) {
         super(unit, ...args);
@@ -1668,7 +1498,7 @@ export class UnitImageArtifact extends RetractableArtifactMixin(SelectableMixin(
     }
 }
 
-export class CBAbstractUnit extends CBPlayable {
+export class CBAbstractUnit extends RetractablePieceMixin(HexLocatableMixin(PlayableMixin(CBPiece))) {
 
     constructor(paths, dimension) {
         super("units", paths, dimension);
@@ -1676,25 +1506,6 @@ export class CBAbstractUnit extends CBPlayable {
 
     createArtifact(levelName, images, position, dimension) {
         return new UnitImageArtifact(this, levelName, images, position, dimension);
-    }
-
-    _memento() {
-        let memento = super._memento();
-        memento.hexLocation = this._hexLocation;
-        memento.action = this._action;
-        return memento;
-    }
-
-    _revert(memento) {
-        super._revert(memento);
-        if (memento.hexLocation) {
-            this._hexLocation = memento.hexLocation;
-        }
-        else delete this._hexLocation;
-        if (memento.action) {
-            this._action = memento.action;
-        }
-        else delete this._action;
     }
 
     get unitNature() {
@@ -1716,55 +1527,6 @@ export class CBAbstractUnit extends CBPlayable {
         Mechanisms.fire(this, CBAbstractUnit.DESTROYED_EVENT);
     }
 
-    reset(player) {
-        if (player === this.player) {
-            delete this._action;
-        }
-    }
-
-    changeAction(action) {
-        Memento.register(this);
-        this._action = action;
-    }
-
-    launchAction(action) {
-        this.changeAction(action);
-        action.play();
-    }
-
-    removeAction() {
-        Memento.register(this);
-        delete this._action;
-    }
-
-    unselect() {
-        console.assert(this.game.selectedPlayable===this);
-        this.game.setSelectedPlayable(null);
-        this._imageArtifact.unselect();
-        this.element.refresh();
-        Mechanisms.fire(this, CBAbstractUnit.UNSELECTED_EVENT);
-    }
-
-    select() {
-        this.game.setSelectedPlayable(this);
-        this._imageArtifact.select();
-        this.refresh();
-        Mechanisms.fire(this, CBAbstractUnit.SELECTED_EVENT);
-    }
-
-    get hexLocation() {
-        return this._hexLocation;
-    }
-
-    set hexLocation(hexLocation) {
-        if (this._hexLocation) {
-            this.removeFromMap();
-        }
-        if (hexLocation) {
-            this.addToMap(hexLocation, CBStacking.TOP);
-        }
-    }
-
     onMouseClick(event) {
         this.player.changeSelection(this, event);
     }
@@ -1776,65 +1538,6 @@ export class CBAbstractUnit extends CBPlayable {
     isFinishable() {
         if (!this.isCurrentPlayer()) return true;
         return this.player.canFinishPlayable(this);
-    }
-
-    isOnBoard() {
-        return !!this._hexLocation;
-    }
-
-    get action() {
-        return this._action;
-    }
-
-    addToMap(hexLocation, moveType=CBStacking.TOP) {
-        console.assert(!this._hexLocation);
-        hexLocation.game._registerPlayable(this);
-        this._hexLocation = hexLocation;
-        moveType===CBStacking.BOTTOM ? hexLocation._unshiftPlayable(this) : hexLocation._pushPlayable(this);
-        this._setOnGame(hexLocation.map.game);
-        this._setLocation(hexLocation.location);
-    }
-
-    removeFromMap() {
-        console.assert(this._hexLocation);
-        this.game._removePlayable(this);
-        this._hexLocation._removePlayable(this);
-        this._removeFromGame();
-        delete this._hexLocation;
-    }
-
-    appendToMap(hexLocation, moveType =CBStacking.TOP) {
-        console.assert(!this._hexLocation);
-        Memento.register(this);
-        hexLocation.game._appendPlayable(this);
-        this._hexLocation = hexLocation;
-        moveType===CBStacking.BOTTOM ? hexLocation._appendPlayableOnBottom(this) : hexLocation._appendPlayableOnTop(this);
-        this._show(hexLocation.map.game);
-        this._element.move(hexLocation.location);
-    }
-
-    deleteFromMap() {
-        console.assert(this._hexLocation);
-        Memento.register(this);
-        this.game._deletePlayable(this);
-        this._hexLocation._deletePlayable(this);
-        this._hide();
-        delete this._hexLocation;
-    }
-
-    markAsBeingPlayed() {
-        if (!this.action) {
-            this.launchAction(new CBAction(this.game, this));
-        }
-        this.action.markAsFinished();
-    }
-
-    hasBeenPlayed() {
-        return this._action && this._action.isFinished();
-    }
-
-    hasBeenActivated() {
-        return this._action && this._action.isStarted();
     }
 
     collectArtifactsToRetract(artifacts) {
@@ -1871,3 +1574,232 @@ Object.defineProperty(CBGame.prototype, "units", {
     }
 });
 
+export function WidgetLevelMixin(clazz) {
+
+    return class extends clazz {
+
+        constructor(game, ...args) {
+            super(...args);
+            this._game = game;
+        }
+
+        _processGlobalEvent(source, event, value) {
+            if (event === CBGame.VISIBILITY_EVENT) {
+                this.setVisibility(value);
+            }
+        }
+
+        _memento() {
+            return {
+                shown: this._shown
+            }
+        }
+
+        _revert(memento) {
+            if (this._shown !== memento.shown) {
+                this._shown = memento.shown;
+                if (this._shown) {
+                    Mechanisms.addListener(this);
+                } else {
+                    Mechanisms.removeListener(this);
+                }
+            }
+        }
+
+        open(board, location) {
+            Memento.register(this);
+            this._shown = true;
+            Mechanisms.addListener(this);
+            this.setVisibility(this._game.visibility);
+            super.open(board, location);
+        }
+
+        close() {
+            Memento.register(this);
+            this._shown = false;
+            Mechanisms.removeListener(this);
+            super.close();
+        }
+
+        setVisibility(level) {
+            this.alpha = level >= 1;
+        }
+
+    }
+
+}
+WidgetLevelMixin.VISIBILITY_LEVEL = 2;
+
+export class CBMask extends WidgetLevelMixin(DMask) {
+
+    constructor(...args) {
+        super(...args);
+    }
+
+}
+
+export let CBMoveMode = {
+    NO_CONSTRAINT: 0,
+    ATTACK: 1,
+    FIRE: 2,
+    DEFEND: 3,
+    REGROUP: 4,
+    RETREAT: 5
+}
+
+export function CBActivableMixin(clazz) {
+
+    return class extends clazz {
+
+        constructor(...args) {
+            super(...args);
+            this._active = true;
+            this.setSettings(this.settings);
+        }
+
+        _memento() {
+            let memento = super._memento();
+            memento.active = this._active;
+            return memento;
+        }
+
+        _revert(memento) {
+            super._revert(memento);
+            this._active = memento.active;
+        }
+
+        activate() {
+            Memento.register(this);
+            this._active = true;
+            this.setSettings(this.settings);
+        }
+
+        desactivate() {
+            Memento.register(this);
+            delete this._active;
+            this.setSettings(this.inactiveSettings);
+        }
+
+        get settings() {
+            return level => {
+                level.setShadowSettings("#00FFFF", 10);
+            }
+        }
+
+        get overSettings() {
+            return level => {
+                level.setShadowSettings("#FF0000", 10);
+            }
+        }
+
+        get inactiveSettings() {
+            return level => {
+                level.setShadowSettings("#000000", 10);
+            }
+        }
+
+        onMouseEnter(event) {
+            if (this._active) {
+                this.setSettings(this.overSettings);
+                this.element.refresh();
+            }
+            return true;
+        }
+
+        onMouseLeave(event) {
+            if (this._active) {
+                this.setSettings(this.settings);
+                this.element.refresh();
+            }
+            return true;
+        }
+
+    }
+}
+
+export function CBActuatorTriggerMixin(clazz) {
+
+    return class extends CBActivableMixin(clazz) {
+
+        constructor(actuator, ...args) {
+            super(...args);
+            this._actuator = actuator;
+        }
+
+        get actuator() {
+            return this._actuator;
+        }
+
+        onMouseClick(event) {
+            this._actuator.onMouseClick(this, event);
+            return true;
+        }
+
+    }
+}
+
+export class CBActuatorImageTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+    constructor(...args) {
+        super(...args);
+    }
+}
+
+export class CBActuatorMultiImagesTrigger extends CBActuatorTriggerMixin(DMultiImagesArtifact) {
+    constructor(...args) {
+        super(...args);
+    }
+}
+
+export class CBUnitActuatorTrigger extends CBActuatorImageTrigger {
+
+    constructor(actuator, unit, ...args) {
+        super(actuator, ...args);
+        this._unit = unit;
+    }
+
+    get unit() {
+        return this._unit;
+    }
+
+    get slot() {
+        return this.unit.slot;
+    }
+
+    get layer() {
+        return CBGame.ULAYERS.ACTUATORS;
+    }
+
+    onMouseEnter(event) {
+        super.onMouseEnter(event);
+        this.unit.retractAbove();
+        return true;
+    }
+
+    onMouseLeave(event) {
+        super.onMouseLeave(event);
+        this.unit.appearAbove();
+        return true;
+    }
+
+}
+
+export class CBActionActuator extends CBActuator {
+
+    constructor(action) {
+        super();
+        this._action = action;
+    }
+
+    get action() {
+        return this._action;
+    }
+
+    get playable() {
+        return this.action.playable;
+    }
+
+    initElement(triggers, position = this.playable.location) {
+        super.initElement(triggers, position);
+    }
+
+}

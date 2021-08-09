@@ -90,7 +90,7 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         if (this.game.arbitrator.isUnitEngaged(unit, true)) {
             this.checkDefenderEngagement(unit, unit.viewportLocation, () => {
                 let hexLocation = unit.hexLocation;
-                if (unit.isOnBoard()) {
+                if (unit.isOnHex()) {
                     this._selectAndFocusPlayable(unit);
                     Memento.clear();
                     this._doRoutChecking(unit, processing, false);

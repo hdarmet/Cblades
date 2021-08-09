@@ -495,7 +495,7 @@ export function CarriableMixin(clazz) {
             Memento.register(this);
             this._deletePlayable(this._hexLocation);
             this._hexLocation = hexLocation;
-            this._appendPlayable(hexLocation);
+            this._appendPlayable(hexLocation, CBStacking.TOP);
             this._element.move(hexLocation.location);
         }
 
@@ -669,10 +669,10 @@ export class CBUnit extends CBAbstractUnit {
         this._options = memento.options;
     }
 
-    addToMap(hexId, moveType) {
-        super.addToMap(hexId, moveType);
+    addToMap(hexId, stacking) {
+        super.addToMap(hexId, stacking);
         for (let carried of this._carried) {
-            carried.addToMap(hexId, moveType);
+            carried.addToMap(hexId, stacking);
         }
     }
 
@@ -683,10 +683,10 @@ export class CBUnit extends CBAbstractUnit {
         }
     }
 
-    appendToMap(hexId, moveType) {
-        super.appendToMap(hexId, moveType);
+    appendToMap(hexId, stacking) {
+        super.appendToMap(hexId, stacking);
         for (let carried of this._carried) {
-            carried.appendToMap(hexId, moveType);
+            carried.appendToMap(hexId, stacking);
         }
     }
 
@@ -905,25 +905,25 @@ export class CBUnit extends CBAbstractUnit {
         this.artifact.changeImage(this._lossSteps);
     }
 
-    _changeLocation(hexLocation, moveType) {
+    _changeLocation(hexLocation, stacking) {
         Memento.register(this);
         this._hexLocation._deletePlayable(this);
         this._hexLocation = hexLocation;
-        moveType===CBStacking.BOTTOM ? hexLocation._appendPlayableOnBottom(this) : hexLocation._appendPlayableOnTop(this);
+        stacking===CBStacking.BOTTOM ? hexLocation._appendPlayableOnBottom(this) : hexLocation._appendPlayableOnTop(this);
         this._element.move(hexLocation.location);
         for (let carried of this._carried) {
             carried._move(hexLocation);
         }
     }
 
-    move(hexLocation, cost=null, moveType = CBStacking.TOP) {
+    move(hexLocation, cost=null, stacking = CBStacking.TOP) {
         if ((hexLocation || this.hexLocation) && (hexLocation !== this.hexLocation)) {
             if (this.hexLocation && !hexLocation) {
                 this.deleteFromMap()
             } else if (!this.hexLocation && hexLocation) {
-                this.appendToMap(hexLocation, moveType);
+                this.appendToMap(hexLocation, stacking);
             } else {
-                this._changeLocation(hexLocation, moveType);
+                this._changeLocation(hexLocation, stacking);
             }
         }
         if (cost!=null) {
@@ -931,8 +931,8 @@ export class CBUnit extends CBAbstractUnit {
         }
     }
 
-    retreat(hexLocation, moveType) {
-        this._changeLocation(hexLocation, moveType);
+    retreat(hexLocation, stacking) {
+        this._changeLocation(hexLocation, stacking);
         this.addOneCohesionLevel();
         this.markAsEngaging(false);
     }
@@ -1339,8 +1339,8 @@ export class CBFormation extends CBUnit {
     }
 
 
-    turn(angle, cost=null, moveType = CBStacking.TOP) {
-        this.move(this.hexLocation.turnTo(angle), cost, moveType);
+    turn(angle, cost=null, stacking = CBStacking.TOP) {
+        this.move(this.hexLocation.turnTo(angle), cost, stacking);
         this.reorient(this.getTurnOrientation(angle));
     }
 

@@ -75,13 +75,13 @@ export class CBUnitManagementTeacher {
     }
 
     canPlayUnit(unit) {
-        return unit.isOnBoard() && !unit.hasBeenActivated() && !unit.hasBeenPlayed();
+        return unit.isOnHex() && !unit.hasBeenActivated() && !unit.hasBeenPlayed();
     }
 
     getFoes(unit) {
         let foes = new Set();
         for (let potentialFoe of this.game.units) {
-            if (potentialFoe.isOnBoard() && this.areUnitsFoes(unit, potentialFoe)) {
+            if (potentialFoe.isOnHex() && this.areUnitsFoes(unit, potentialFoe)) {
                 foes.add(potentialFoe);
             }
         }

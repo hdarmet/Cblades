@@ -173,10 +173,10 @@ export class InteractiveRetreatAction extends CBAction {
         }
     }
 
-    retreatUnit(hexLocation, moveType) {
+    retreatUnit(hexLocation, stacking) {
         let actualHex = this.unit.hexLocation;
         this.game.closeActuators();
-        this.unit.retreat(hexLocation, moveType);
+        this.unit.retreat(hexLocation, stacking);
         this.advanceAttacker(actualHex, ()=>{
             this._finalizeAction();
         });
@@ -1018,7 +1018,7 @@ export class CBRetreatActuator extends CBActionActuator {
                 new Point2D(0, 0), new Dimension2D(80, 130));
             orientation.pangle = parseInt(angle);
             orientation.position = Point2D.position(this.playable.location, directions[angle].hex.location, 0.9);
-            orientation.moveType = directions[angle].moveType;
+            orientation.stacking = directions[angle].stacking;
             imageArtifacts.push(orientation);
         }
         this.initElement(imageArtifacts);
@@ -1037,7 +1037,7 @@ export class CBRetreatActuator extends CBActionActuator {
             this.action.takeALossFromUnit(event);
         }
         else {
-            this.action.retreatUnit(this.playable.hexLocation.getNearHex(trigger.angle), trigger.moveType);
+            this.action.retreatUnit(this.playable.hexLocation.getNearHex(trigger.angle), trigger.stacking);
         }
     }
 
@@ -1059,7 +1059,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
                 let startLocation = Point2D.position(this.playable.location, unitHex.location, 1);
                 let targetPosition = Point2D.position(unitHex.location, moveDirections[angle].hex.location, 0.9);
                 orientation.position = startLocation.plusPoint(targetPosition);
-                orientation.moveType = moveDirections[angle].moveType;
+                orientation.stacking = moveDirections[angle].stacking;
                 imageArtifacts.push(orientation);
             }
         }
@@ -1076,7 +1076,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
                 let startLocation = Point2D.position(this.playable.location, orientation.hex.location, 1.5);
                 let targetPosition = Point2D.position(orientation.hex.location, rotateDirections[angle].hex.location, 0.9);
                 orientation.position = startLocation.plusPoint(targetPosition);
-                orientation.moveType = rotateDirections[angle].moveType;
+                orientation.stacking = rotateDirections[angle].stacking;
                 imageArtifacts.push(orientation);
             }
         }
@@ -1110,12 +1110,12 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
             let hex2 = trigger.hex.getNearHex(trigger.angle);
             let delta = diffAngle(this.playable.angle, trigger.angle)*2;
             this.action.reorientUnit(sumAngle(this.playable.angle, delta));
-            this.action.retreatUnit(new CBHexSideId(hex1, hex2), trigger.moveType);
+            this.action.retreatUnit(new CBHexSideId(hex1, hex2), trigger.stacking);
         }
         else {
             let hex1 = this.playable.hexLocation.fromHex.getNearHex(trigger.angle);
             let hex2 = this.playable.hexLocation.toHex.getNearHex(trigger.angle);
-            this.action.retreatUnit(new CBHexSideId(hex1, hex2), trigger.moveType);
+            this.action.retreatUnit(new CBHexSideId(hex1, hex2), trigger.stacking);
         }
     }
 

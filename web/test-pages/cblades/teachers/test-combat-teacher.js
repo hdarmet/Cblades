@@ -150,10 +150,10 @@ describe("Combat teacher", ()=> {
         }
     }
 
-    function assertInRetreatZone(zones, angle, col, row, moveType) {
+    function assertInRetreatZone(zones, angle, col, row, stacking) {
         assert(zones[angle].hex.col).equalsTo(col);
         assert(zones[angle].hex.row).equalsTo(row);
-        assert(zones[angle].moveType).equalsTo(moveType);
+        assert(zones[angle].stacking).equalsTo(stacking);
     }
 
     it("Checks attacker engagement result", () => {
@@ -890,10 +890,10 @@ describe("Combat teacher", ()=> {
     function assertNotInZone(zones, angle) {
         assert(zones[angle]).isNotDefined();
     }
-    function assertInAdvanceZone(zones, angle, col, row, moveType) {
+    function assertInAdvanceZone(zones, angle, col, row, stacking) {
         assert(zones[angle].hex.col).equalsTo(col);
         assert(zones[angle].hex.row).equalsTo(row);
-        assert(zones[angle].moveType).equalsTo(moveType);
+        assert(zones[angle].stacking).equalsTo(stacking);
     }
 
     it("Checks unit allowed advance", () => {

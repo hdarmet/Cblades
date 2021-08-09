@@ -58,17 +58,17 @@ export class CBCombatTeacher {
 
     getRetreatZones(unit, attacker) {
 
-        function processZone(zone, unit, moveType) {
-            zone.moveType = moveType;
+        function processZone(zone, unit, stacking) {
+            zone.stacking = stacking;
             return !this.doesHexLocationContainFoes(unit, zone.hex);
         }
 
-        function processZones(result, zones, moveType, forbiddenZones) {
+        function processZones(result, zones, stacking, forbiddenZones) {
             for (let sangle in zones) {
                 let angle = parseInt(sangle);
                 let zone = zones[angle];
                 if (!forbiddenZones.has(zone.hex)) {
-                    if (processZone.call(this, zone, unit, moveType)) {
+                    if (processZone.call(this, zone, unit, stacking)) {
                         result[angle] = zone;
                     }
                 }
@@ -95,7 +95,7 @@ export class CBCombatTeacher {
             let zone = zones[angle];
             if (allowesZones.has(zone.hex) && zone.hex.empty) {
                 result[angle] = zone;
-                zone.moveType = CBStacking.BOTTOM;
+                zone.stacking = CBStacking.BOTTOM;
             }
         }
         return result;
@@ -103,7 +103,7 @@ export class CBCombatTeacher {
 
     getFormationRetreatZones(unit, attacker) {
 
-        function processZones(zones, retreatDirections, rotateDirections, forbiddenZones, moveType) {
+        function processZones(zones, retreatDirections, rotateDirections, forbiddenZones, stacking) {
             for (let sangle in zones) {
                 let angle = parseInt(sangle);
                 if (angle % 60) {
@@ -112,20 +112,20 @@ export class CBCombatTeacher {
                         let moveHex = unit.hexLocation.toHex;
                         if (!forbiddenZones.has(hex)) {
                             let zangle = moveHex.isNearHex(zones[angle].hex);
-                            rotateDirections[zangle] = { hex:zones[angle].hex, moveType };
+                            rotateDirections[zangle] = { hex:zones[angle].hex, stacking };
                         }
                         hex = unit.hexLocation.toHex;
                         moveHex = unit.hexLocation.fromHex;
                         if (!forbiddenZones.has(hex)) {
                             let zangle = moveHex.isNearHex(zones[angle].hex);
-                            rotateDirections[zangle] = { hex:zones[angle].hex, moveType };
+                            rotateDirections[zangle] = { hex:zones[angle].hex, stacking };
                         }
                     }
                 }
                 else {
                     if (hexes.has(unit.hexLocation.fromHex.getNearHex(angle)) &&
                         hexes.has(unit.hexLocation.toHex.getNearHex(angle)))
-                        retreatDirections[angle] = { hex:zones[angle].hex, moveType };
+                        retreatDirections[angle] = { hex:zones[angle].hex, stacking };
                 }
             }
         }

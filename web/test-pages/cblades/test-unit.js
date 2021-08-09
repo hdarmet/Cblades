@@ -20,7 +20,7 @@ import {
 } from "../../jslib/cblades/map.js";
 import {
     CBGame, CBAbstractPlayer,
-    CBAction, CBCounter,
+    CBAction, CBHexCounter,
     CBPieceImageArtifact, CBPiece,
     CBStacking
 } from "../../jslib/cblades/game.js";
@@ -159,7 +159,7 @@ describe("Unit", ()=> {
         return {game, map, unit1, unit2, wing, player};
     }
 
-    class CBTestCarriable extends CarriableMixin(CBCounter) {
+    class CBTestCarriable extends CarriableMixin(CBHexCounter) {
 
         constructor(unit, paths) {
             super("units", paths, new Dimension2D(142, 142));
@@ -329,7 +329,7 @@ describe("Unit", ()=> {
          }
     }
 
-    class CBTestOption extends OptionMixin(CarriableMixin(CBCounter)) {
+    class CBTestOption extends OptionMixin(CarriableMixin(CBHexCounter)) {
 
         constructor(unit, paths) {
             super("units", paths, new Dimension2D(142, 142));
@@ -679,7 +679,7 @@ describe("Unit", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
             assert(unit.hexLocation).isNotDefined();
-            assert(unit.isOnBoard()).isFalse();
+            assert(unit.isOnHex()).isFalse();
         when:
             Memento.open();
             resetDirectives(unitsLayer);
@@ -690,7 +690,7 @@ describe("Unit", ()=> {
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 255.6635)));
             assertNoMoreDirectives(unitsLayer);
             assert(unit.hexLocation.toString()).equalsTo("Hex(5, 7)");
-            assert(unit.isOnBoard()).isTrue();
+            assert(unit.isOnHex()).isTrue();
         when:
             Memento.undo();
             resetDirectives(unitsLayer);
@@ -698,7 +698,7 @@ describe("Unit", ()=> {
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
             assert(unit.hexLocation).isNotDefined();
-            assert(unit.isOnBoard()).isFalse();
+            assert(unit.isOnHex()).isFalse();
         when:
             Memento.undo();
             resetDirectives(unitsLayer);
@@ -708,7 +708,7 @@ describe("Unit", ()=> {
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
             assertNoMoreDirectives(unitsLayer);
             assert(unit.hexLocation.toString()).equalsTo("Hex(5, 8)");
-            assert(unit.isOnBoard()).isTrue();
+            assert(unit.isOnHex()).isTrue();
     });
 
     it("Checks rotating a unit", () => {
