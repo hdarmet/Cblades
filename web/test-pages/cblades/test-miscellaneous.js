@@ -8,7 +8,7 @@ import {
     DImage, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
-    assertDirectives, getDirectives,
+    getDirectives,
     getLayers, loadAllImages,
     mockPlatform, resetDirectives
 } from "../mocks.js";

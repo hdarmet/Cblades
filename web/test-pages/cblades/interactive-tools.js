@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    createEvent, round, mockPlatform
+    createEvent, round, mockPlatform, resetAllDirectives
 } from "../mocks.js";
 import {
     DAnimator, getDrawPlatform
@@ -14,11 +14,12 @@ import {
 } from "../../jslib/widget.js";
 
 export function paint(game) {
-    game._board.paint();
+    game.board.paint();
 }
 
 export function repaint(game) {
-    game._board.repaint();
+    resetAllDirectives(game.board);
+    game.board.repaint();
 }
 
 export let dummyEvent = {offsetX:0, offsetY:0};

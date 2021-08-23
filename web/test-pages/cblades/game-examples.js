@@ -7,8 +7,11 @@ import {
     CBHexSideId, CBMap
 } from "../../jslib/cblades/map.js";
 import {
-    CBGame, CBMoveMode
+    CBGame
 } from "../../jslib/cblades/game.js";
+import {
+    CBMoveMode
+} from "../../jslib/cblades/playable.js";
 import {
     CBArbitrator
 } from "../../jslib/cblades/arbitrator.js";

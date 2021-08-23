@@ -18,8 +18,11 @@ import {
     CBHexSideId, CBMap
 } from "../../jslib/cblades/map.js";
 import {
-    CBGame, CBAbstractPlayer, CBPiece, CBMoveMode
+    CBGame, CBAbstractPlayer, CBPiece
 } from "../../jslib/cblades/game.js";
+import {
+    CBMoveMode
+} from "../../jslib/cblades/playable.js";
 import {
     CBCharacter, CBCharge, CBCommandProfile, CBFormation, CBLackOfMunitions, CBMoralProfile,
     CBMoveProfile, CBOrderInstruction,

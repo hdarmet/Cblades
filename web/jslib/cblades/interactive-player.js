@@ -8,8 +8,11 @@ import {
     Mechanisms, Memento
 } from "../mechanisms.js";
 import {
-    CBAbstractPlayer, CBGame, WidgetLevelMixin
+    CBAbstractPlayer, CBAbstractGame
 } from "./game.js";
+import {
+    WidgetLevelMixin
+} from "./playable.js";
 import {
     DBoard, DImageArtifact
 } from "../board.js";
@@ -31,10 +34,10 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         }
     }
 
-    loseUnit(unit) {
-        let hexLocation = unit.hexLocation;
-        super.loseUnit(unit);
-        this._doDestroyedChecking(unit, hexLocation);
+    losePlayable(playable) {
+        let hexLocation = playable.hexLocation;
+        super.losePlayable(playable);
+        this._doDestroyedChecking(playable, hexLocation);
     }
 
     _doDisruptChecking(unit, processing, cancellable) {
@@ -126,27 +129,7 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
                     this.game.arbitrator.getAllowedActions(playable));
             }
         }
-    }
-
-    afterActivation(unit, action) {
-        if (unit && unit.action) {
-            if (!unit.action.isStarted()) {
-                unit.action.cancel(() => {
-                    super.afterActivation(unit, action);
-                });
-            }
-            else if (!unit.action.isFinalized()) {
-                unit.action.finalize(() => {
-                    super.afterActivation(unit, action);
-                });
-            }
-            else {
-                super.afterActivation(unit, action);
-            }
-        }
-        else {
-            super.afterActivation(unit, action);
-        }
+        super.launchPlayableAction(playable, event);
     }
 
     canFinishPlayable(playable) {
@@ -260,8 +243,8 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
     openActionMenu(unit, offset, actions) {
         let popup = new CBActionMenu(this.game, unit, actions);
         this.game.openPopup(popup, new Point2D(
-            offset.x - popup.dimension.w/2 + CBGame.POPUP_MARGIN,
-            offset.y - popup.dimension.h/2 + CBGame.POPUP_MARGIN));
+            offset.x - popup.dimension.w/2 + CBAbstractGame.POPUP_MARGIN,
+            offset.y - popup.dimension.h/2 + CBAbstractGame.POPUP_MARGIN));
     }
 
 }

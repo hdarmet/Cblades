@@ -1,18 +1,19 @@
 'use strict'
 
 import {
-    CBAbstractUnit,
     CBAction,
-    CBActivableMixin,
     CBPiece,
     CBPieceImageArtifact,
-    CBGame,
-    CBHexCounter,
     DisplayLocatableMixin,
-    RetractableArtifactMixin,
-    RetractablePieceMixin,
-    PlayableMixin
+    PlayableMixin,
+    CBAbstractGame
 } from "./game.js";
+import {
+    CBActivableMixin,
+    CBHexCounter,
+    RetractableArtifactMixin,
+    RetractablePieceMixin
+} from "./playable.js";
 import {
     Dimension2D, Point2D
 } from "../geometry.js";
@@ -184,7 +185,7 @@ export class CBWeather extends CBDisplayableCounter {
     }
 
     _processGlobalEvent(source, event, value) {
-        if (event===CBGame.SETTINGS_EVENT && value.weather!==undefined) {
+        if (event===CBAbstractGame.SETTINGS_EVENT && value.weather!==undefined) {
             this.artifact.setImage(value.weather);
         }
     }
@@ -213,7 +214,7 @@ export class CBFog extends CBDisplayableCounter {
     }
 
     _processGlobalEvent(source, event, value) {
-        if (event===CBGame.SETTINGS_EVENT && value.fog!==undefined) {
+        if (event===CBAbstractGame.SETTINGS_EVENT && value.fog!==undefined) {
             this.artifact.setImage(value.fog);
         }
     }
@@ -239,7 +240,7 @@ export class CBWindDirection extends CBDisplayableCounter {
     }
 
     _processGlobalEvent(source, event, value) {
-        if (event===CBGame.SETTINGS_EVENT && value.windDirection!==undefined) {
+        if (event===CBAbstractGame.SETTINGS_EVENT && value.windDirection!==undefined) {
             this.artifact.turn(value.windDirection);
         }
     }
@@ -278,13 +279,13 @@ export class CBWingDisplayablePlayable extends CBDisplayableCounter {
     }
 
     _processGlobalEvent(source, event, value) {
-        if (event===CBAbstractUnit.SELECTED_EVENT) {
+        if (event===PlayableMixin.SELECTED_EVENT) {
             console.log(event);
         }
-        if (event===CBAbstractUnit.SELECTED_EVENT
+        if (event===PlayableMixin.SELECTED_EVENT
             && (source.wing && source.wing === this.wing)) {
             !this.isShown() && this.show(this._game);
-        } else if ((event===CBAbstractUnit.UNSELECTED_EVENT || event===CBAbstractUnit.DESTROYED_EVENT)
+        } else if ((event===PlayableMixin.UNSELECTED_EVENT || event===PlayableMixin.DESTROYED_EVENT)
             && (source.wing && source.wing === this.wing)) {
             this.isShown() && this.hide(this._game);
         }

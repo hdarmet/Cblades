@@ -185,7 +185,7 @@ describe("Interactive Command", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(wing.leader).equalsTo(leader);
-            assert(leader.hasBeenPlayed()).isTrue();
+            assert(leader.isPlayed()).isTrue();
     });
 
     it("Checks failed take command action process ", () => {
@@ -215,7 +215,7 @@ describe("Interactive Command", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(wing.leader).isNotDefined();
-            assert(leader.hasBeenPlayed()).isTrue();
+            assert(leader.isPlayed()).isTrue();
     });
 
     function clickOnDismissCommandAction(game) {
@@ -277,7 +277,7 @@ describe("Interactive Command", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(wing.leader).isNotDefined();
-            assert(leader.hasBeenPlayed()).isTrue();
+            assert(leader.isPlayed()).isTrue();
     });
 
     it("Checks failed dismiss command action process ", () => {
@@ -308,7 +308,7 @@ describe("Interactive Command", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(wing.leader).equalsTo(leader);
-            assert(leader.hasBeenPlayed()).isTrue();
+            assert(leader.isPlayed()).isTrue();
     });
 
     function clickOnChangeOrdersCommandAction(game) {
@@ -370,7 +370,7 @@ describe("Interactive Command", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(wing.orderInstruction).equalsTo(CBOrderInstruction.DEFEND);
-            assert(leader.hasBeenPlayed()).isTrue();
+            assert(leader.isPlayed()).isTrue();
     });
 
     it("Checks successfully change order command action process ", () => {

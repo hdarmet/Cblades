@@ -4,20 +4,17 @@ import {
     Point2D, Dimension2D, Matrix2D
 } from "../geometry.js";
 import {
-    DImage, DTranslateLayer, getDrawPlatform
+    DImage, getDrawPlatform
 } from "../draw.js";
 import {
     Mechanisms, Memento
 } from "../mechanisms.js";
 import {
-    DBoard, DElement, DImageArtifact, DSimpleLevel, DStaticLevel, DMultiImagesArtifact, DStackedLevel
+    DBoard, DElement, DMultiImagesArtifact
 } from "../board.js";
 import {
-    DMask, DMultiStatePushButton, DPushButton
+    DMultiStatePushButton, DPushButton
 } from "../widget.js";
-import {
-    CBHexLocation
-} from "./map.js";
 
 export let CBStacking = {
     BOTTOM: 0,
@@ -58,8 +55,8 @@ export class CBAbstractPlayer {
     selectPlayable(playable, event) {
         let currentSelectedPlayable = this.game.selectedPlayable;
         playable.select();
-        if (!playable.hasBeenActivated()) {
-            this.game.closeWidgets();
+        this.game.closeWidgets();
+        if (!playable.isActivated()) {
             if (currentSelectedPlayable !== playable) {
                 this.startActivation(playable, () => {
                     this.launchPlayableAction(playable, event);
@@ -74,14 +71,11 @@ export class CBAbstractPlayer {
         return this.game.playables.filter(playable=>playable.unitNature && playable.player === this);
     }
 
-    loseUnit(playable) {
+    losePlayable(playable) {
         playable.deleteFromMap();
     }
 
     unselectPlayable(playable) {
-        if (playable.action) {
-            playable.action.markAsFinished();
-        }
         playable.unselect();
     }
 
@@ -89,14 +83,28 @@ export class CBAbstractPlayer {
         action();
     }
 
-    /*
     launchPlayableAction(playable, event) {
-       // launch action process here
     }
-     */
 
     afterActivation(playable, action) {
-        action();
+        if (playable && playable.action) {
+            if (!playable.action.isStarted()) {
+                playable.action.cancel(() => {
+                    action();
+                });
+            }
+            else if (!playable.action.isFinalized()) {
+                playable.action.finalize(() => {
+                    action();
+                });
+            }
+            else {
+                action();
+            }
+        }
+        else {
+            action();
+        }
     }
 
     finishTurn(animation) {
@@ -160,7 +168,7 @@ export class CBAction {
         if (this._status === CBAction.INITIATED) {
             Memento.register(this);
             this._status = CBAction.STARTED;
-            if (this.playable.isCurrentPlayer()) {
+            if (!this.playable.isCurrentPlayer || this.playable.isCurrentPlayer()) {
                 this.playable.markAsPlayed();
             }
             this.game.setFocusedPlayable(null);
@@ -172,7 +180,7 @@ export class CBAction {
         if (this._status < CBAction.FINISHED) {
             Memento.register(this);
             this._status = CBAction.FINISHED;
-            if (this.playable.isCurrentPlayer()) {
+            if (!this.playable.isCurrentPlayer || this.playable.isCurrentPlayer()) {
                 this.playable.markAsPlayed();
             }
             this.game.setFocusedPlayable(null);
@@ -216,11 +224,11 @@ export class CBAction {
 
     static INITIATED = 0;
     static STARTED = 1;
-    static FINISHABLE = 1;
     static FINISHED = 3;
     static FINALIZED = 4;
     static CANCELLED = -1;
     static PROGRESSION_EVENT = "action-progression";
+    static FINISHABLE = 1;
 }
 
 export class CBActuator {
@@ -455,14 +463,15 @@ export class CBCounterDisplay {
     static BOTTOM = 1;
 }
 
-export class CBGame {
+export class CBAbstractGame {
 
-    constructor() {
+    constructor(levels) {
         this._players = [];
         this._actuators = [];
         this._playables = new Set();
         this._visibility = 2;
         this._commands = new Set();
+        this._levels = levels;
         this._counterDisplay = new CBCounterDisplay(this);
         Mechanisms.addListener(this);
     }
@@ -472,65 +481,7 @@ export class CBGame {
     }
 
     _buildBoard(map) {
-
-        function createPlayableArtifactSlot(slotIndex) {
-            let delta = Matrix2D.translate(new Point2D(-slotIndex*20, -slotIndex*20+20));
-            return [
-                new DTranslateLayer("hex-"+slotIndex, delta)
-            ]
-        }
-
-        function getPlayableArtifactSlot(artifact) {
-            let playable = artifact.piece;
-            return playable.hexLocation ? playable.hexLocation.playables.indexOf(playable) : 0;
-        }
-
-        function getPlayableArtifactLayer(artifact, [hexLayer]) {
-            return hexLayer;
-        }
-
-        function createUnitArtifactSlot(slotIndex) {
-            let delta = Matrix2D.translate(new Point2D(slotIndex*20, -slotIndex*20));
-            let formationDelta = Matrix2D.translate(new Point2D(slotIndex*20-10, -slotIndex*20+10));
-            return [
-                new DTranslateLayer("spells-"+slotIndex, delta),
-                new DTranslateLayer("formations-"+slotIndex, slotIndex?formationDelta:delta),
-                new DTranslateLayer("fmarkers-"+slotIndex, delta),
-                new DTranslateLayer("foptions-"+slotIndex, delta),
-                new DTranslateLayer("units-"+slotIndex, delta),
-                new DTranslateLayer("markers-"+slotIndex, delta),
-                new DTranslateLayer("options-"+slotIndex, delta),
-                new DTranslateLayer("actuators-"+slotIndex, delta)
-            ]
-        }
-
-        function getUnitArtifactSlot(artifact) {
-            return artifact.slot;
-        }
-
-        function getUnitArtifactLayer(artifact, [spellsLayer, formationsLayer, fmarkersLayer, foptionsLayer, unitsLayer, markersLayer, optionsLayer, actuatorsLayer]) {
-            switch (artifact.layer) {
-                case CBGame.ULAYERS.SPELLS: return spellsLayer;
-                case CBGame.ULAYERS.FORMATIONS: return formationsLayer;
-                case CBGame.ULAYERS.FMARKERS: return fmarkersLayer;
-                case CBGame.ULAYERS.FOPTIONS: return foptionsLayer;
-                case CBGame.ULAYERS.UNITS: return unitsLayer;
-                case CBGame.ULAYERS.MARKERS: return markersLayer;
-                case CBGame.ULAYERS.OPTIONS: return optionsLayer;
-                case CBGame.ULAYERS.ACTUATORS: return actuatorsLayer;
-            }
-        }
-
-        this._board = new DBoard(map.dimension, new Dimension2D(1000, 800),
-            new DSimpleLevel("map"),
-            new DStackedLevel("ground", getPlayableArtifactSlot, getPlayableArtifactLayer, createPlayableArtifactSlot),
-            new DStackedLevel("units", getUnitArtifactSlot, getUnitArtifactLayer, createUnitArtifactSlot),
-            new DSimpleLevel("actuators"),
-            new DStaticLevel("counters"),
-            new DStaticLevel("counter-markers"),
-            new DStaticLevel("widgets"),
-            new DStaticLevel("widget-items"),
-            new DStaticLevel("widget-commands"));
+        this._board = new DBoard(map.dimension, new Dimension2D(1000, 800), ...this._levels);
         this._board.setZoomSettings(1.5, 1);
         this._board.setScrollSettings(20, 10);
         this._board.scrollOnBordersOnMouseMove();
@@ -566,7 +517,7 @@ export class CBGame {
         if (event===DBoard.RESIZE_EVENT) {
             this._refresfCommands();
         }
-        else if (event===CBAbstractUnit.DESTROYED_EVENT) {
+        else if (event===PlayableMixin.DESTROYED_EVENT) {
             if (this.focusedPlayable === source) {
                 this.setFocusedPlayable(null);
             }
@@ -614,26 +565,26 @@ export class CBGame {
         }
     }
 
-    _registerPlayable(unit) {
-        console.assert(!this._playables.has(unit));
-        this._playables.add(unit)
+    _registerPlayable(playable) {
+        console.assert(!this._playables.has(playable));
+        this._playables.add(playable)
     }
 
-    _removePlayable(unit) {
-        console.assert(this._playables.has(unit));
-        this._playables.delete(unit);
+    _removePlayable(playable) {
+        console.assert(this._playables.has(playable));
+        this._playables.delete(playable);
     }
 
-    _appendPlayable(unit) {
-        console.assert(!this._playables.has(unit));
+    _appendPlayable(playable) {
+        console.assert(!this._playables.has(playable));
         Memento.register(this);
-        this._playables.add(unit)
+        this._playables.add(playable)
     }
 
-    _deletePlayable(unit) {
-        console.assert(this._playables.has(unit));
+    _deletePlayable(playable) {
+        console.assert(this._playables.has(playable));
         Memento.register(this);
-        this._playables.delete(unit);
+        this._playables.delete(playable);
     }
 
     _resetPlayables(player) {
@@ -711,7 +662,7 @@ export class CBGame {
     canUnselectPlayable() {
         return !this.focusedPlayable && (
             !this.selectedPlayable ||
-            !this.selectedPlayable.hasBeenActivated() ||
+            !this.selectedPlayable.isActivated() ||
             this.selectedPlayable.action.isFinished() ||
             this.selectedPlayable.action.isFinishable());
     }
@@ -759,9 +710,9 @@ export class CBGame {
             this.currentPlayer.finishTurn(animation);
         }).setTurnAnimation(true);
         this._endOfTurnCommand._processGlobalEvent = (source, event)=>{
-            if (event === CBGame.TURN_EVENT ||
+            if (event === CBAbstractGame.TURN_EVENT ||
                 event === CBAction.PROGRESSION_EVENT ||
-                event === CBAbstractUnit.DESTROYED_EVENT) {
+                event === PlayableMixin.DESTROYED_EVENT) {
                 this._endOfTurnCommand.active = this.turnIsFinishable();
             }
         }
@@ -844,7 +795,7 @@ export class CBGame {
             ["./../images/commands/editor.png", "./../images/commands/field.png"],
             new Point2D(-480, -60), (state, animation)=>{
                 if (!state)
-                    CBGame.edit(this);
+                    CBAbstractGame.edit(this);
                 else
                     this.closeActuators();
                 animation();
@@ -854,7 +805,7 @@ export class CBGame {
             new Point2D(-540, -60), (state, animation)=>{
                 this._visibility = (state+1)%3;
                 Mechanisms.fire(this, CBActuator.VISIBILITY_EVENT, this._visibility);
-                Mechanisms.fire(this, CBGame.VISIBILITY_EVENT, this._visibility>=1);
+                Mechanisms.fire(this, CBAbstractGame.VISIBILITY_EVENT, this._visibility>=1);
                 animation();
             })
             .setState(this._visibility)
@@ -883,7 +834,7 @@ export class CBGame {
             this._initPlayables(this._currentPlayer);
             animation && animation();
             Memento.clear();
-            Mechanisms.fire(this, CBGame.TURN_EVENT);
+            Mechanisms.fire(this, CBAbstractGame.TURN_EVENT);
         }
     }
 
@@ -917,7 +868,7 @@ export class CBGame {
 
     start() {
         Memento.activate();
-        Mechanisms.fire(this, CBGame.STARTED);
+        Mechanisms.fire(this, CBAbstractGame.STARTED);
         this._board.paint();
         return this;
     }
@@ -939,39 +890,12 @@ export class CBGame {
         }
     }
 
-    retract(artifacts) {
-        this.appear();
-        this._retracted = artifacts;
-        for (let artifact of this._retracted) {
-            artifact.alpha = 0;
-        }
-    }
-
-    appear() {
-        if (this._retracted) {
-            for (let artifact of this._retracted) {
-                artifact.alpha = 1;
-            }
-            delete this._retracted;
-        }
-    }
-
     static TURN_EVENT = "game-turn";
     static SETTINGS_EVENT = "settings-turn";
     static POPUP_MARGIN = 10;
-    static ULAYERS = {
-        SPELLS: 0,
-        FORMATIONS: 1,
-        FMARKERS: 2,
-        FOPTIONS: 3,
-        UNITS: 4,
-        MARKERS: 5,
-        OPTIONS: 6,
-        ACTUATORS: 7
-    }
     static edit = function(game) {};
 }
-CBGame.VISIBILITY_EVENT = "game-visibility";
+CBAbstractGame.VISIBILITY_EVENT = "game-visibility";
 
 export class CBPieceImageArtifact extends DMultiImagesArtifact {
 
@@ -1020,7 +944,6 @@ export class CBPiece {
         }
         this._imageArtifact = this.createArtifact(this._levelName, this._images, new Point2D(0, 0), dimension);
         this._element = new DElement(this._imageArtifact);
-        this._element._unit = this;
     }
 
     createArtifact(levelName, images, position, dimension) {
@@ -1107,14 +1030,16 @@ export class CBPiece {
         this._element.hide();
     }
 
-    collectArtifactsToRetract(artifacts) {
-        artifacts.push(this._imageArtifact);
+    _getAllArtifacts() {
+        return [ this.artifact ];
+    }
+
+    get allArtifacts() {
+        return this._getAllArtifacts();
     }
 
     _getPieces() {
-        return [
-            this
-        ];
+        return [ this ];
     }
 
     get pieces() {
@@ -1141,12 +1066,6 @@ export function DisplayLocatableMixin(clazz) {
 
         hide(game) {
             game.counterDisplay.deleteCounter(this);
-        }
-
-        onMouseClick(event) {
-            if (!this.played) {
-                this.play(event);
-            }
         }
 
     }
@@ -1292,14 +1211,14 @@ export function PlayableMixin(clazz) {
             this.game.setSelectedPlayable(null);
             this._imageArtifact.unselect();
             this.element.refresh();
-            Mechanisms.fire(this, CBAbstractUnit.UNSELECTED_EVENT);
+            Mechanisms.fire(this, PlayableMixin.UNSELECTED_EVENT);
         }
 
         select() {
             this.game.setSelectedPlayable(this);
             this._imageArtifact.select();
             this.refresh();
-            Mechanisms.fire(this, CBAbstractUnit.SELECTED_EVENT);
+            Mechanisms.fire(this, PlayableMixin.SELECTED_EVENT);
         }
 
         get action() {
@@ -1313,12 +1232,18 @@ export function PlayableMixin(clazz) {
             this.action.markAsFinished();
         }
 
-        hasBeenPlayed() {
+        isPlayed() {
             return this._action && this._action.isFinished();
         }
 
-        hasBeenActivated() {
+        isActivated() {
             return this._action && this._action.isStarted();
+        }
+
+        onMouseClick(event) {
+            if (!this.played) {
+                this.play(event);
+            }
         }
 
     }
@@ -1330,476 +1255,41 @@ PlayableMixin.getByType = function(hexLocation, type) {
     }
     return null;
 }
+PlayableMixin.SELECTED_EVENT = "playable-selected";
+PlayableMixin.UNSELECTED_EVENT = "playable-unselected";
+PlayableMixin.DESTROYED_EVENT = "playable-destroyed";
 
-//---------------------------------------------------------------------------------------------------------------
-
-function SelectableArtifactMixin(clazz) {
-
-    return class extends clazz {
-
-        constructor(...args) {
-            super(...args);
-        }
-
-        get selectedSettings() {
-            return level=>{
-                level.setShadowSettings("#FF0000", 15);
-            }
-        }
-
-        get overSettings() {
-            return level=>{
-                level.setShadowSettings("#00FFFF", 15);
-            }
-        }
-
-        unselect() {
-            Memento.register(this);
-            this.changeSettings(this.settings);
-        }
-
-        select() {
-            Memento.register(this);
-            this.changeSettings(this.selectedSettings);
-        }
-
-        onMouseEnter(event) {
-            super.onMouseEnter(event);
-            if (this.game.selectedPlayable!==this.unit && this.game.canSelectPlayable(this.unit)) {
-                this.setSettings(this.overSettings);
-            }
-            return true;
-        }
-
-        onMouseLeave(event) {
-            super.onMouseLeave(event);
-            if (this.game.selectedPlayable!==this.unit && this.game.canSelectPlayable(this.unit)) {
-                this.setSettings(this.settings);
-            }
-            return true;
-        }
-
-    }
-
-}
-
-export function RetractableArtifactMixin(clazz) {
-
-    return class extends clazz {
-        constructor(...args) {
-            super(...args);
-        }
-
-        onMouseEnter(event) {
-            super.onMouseEnter(event);
-            this.piece.retractAbove();
-            return true;
-        }
-
-        onMouseLeave(event) {
-            super.onMouseLeave(event);
-            this.piece.appearAbove();
-            return true;
-        }
-
-    }
-}
-
-export function RetractablePieceMixin(clazz) {
-
-    return class extends clazz {
-        constructor(...args) {
-            super(...args);
-        }
-
-        retractAbove(event) {
-            function retract(hexId, artifacts) {
-                let playables = [];
-                for (let playable of hexId.playables) {
-                    playables.push(...playable.pieces);
-                }
-                let first = playables.indexOf(this);
-                for (let index=first+1; index<playables.length; index++) {
-                    playables[index].collectArtifactsToRetract(artifacts);
-                }
-            }
-
-            let artifacts = [];
-            for (let hexId of this.hexLocation.hexes) {
-                retract.call(this, hexId, artifacts);
-            }
-            this.game.retract(artifacts);
-        }
-
-        appearAbove(event) {
-            this.game.appear();
-        }
-
-    }
-}
-
-export function RetractableActuatorMixin(clazz) {
-
-    return class extends clazz {
-        constructor(...args) {
-            super(...args);
-        }
-
-        collectArtifactsToRetract(unit, artifacts) {
-            for (let trigger of this.triggers) {
-                if (trigger.unit === unit) {
-                    artifacts.push(trigger);
-                }
-            }
-        }
-
-    }
-
-}
-
-export class CBHexCounter extends RetractablePieceMixin(HexLocatableMixin(PlayableMixin(CBPiece))) {
-
-    constructor(levelName, paths, dimension) {
-        super(levelName, paths, dimension);
-    }
-
-    get counterNature() {
-        return true;
-    }
-
-}
-
-Object.defineProperty(CBHexLocation.prototype, "counters", {
-    get: function() {
-        return this.playables.filter(playable=>playable.counterNature);
-    }
-});
-
-export class UnitImageArtifact extends RetractableArtifactMixin(SelectableArtifactMixin(CBPieceImageArtifact)) {
-
-    constructor(unit, ...args) {
-        super(unit, ...args);
-    }
-
-    get unit() {
-        return this.piece;
-    }
-
-    get game() {
-        return this.unit.game;
-    }
-
-    get slot() {
-        return this.unit.slot;
-    }
-
-    get layer() {
-        return CBGame.ULAYERS.UNITS;
-    }
-}
-
-export class CBAbstractUnit extends RetractablePieceMixin(HexLocatableMixin(PlayableMixin(CBPiece))) {
-
-    constructor(paths, dimension) {
-        super("units", paths, dimension);
-    }
-
-    createArtifact(levelName, images, position, dimension) {
-        return new UnitImageArtifact(this, levelName, images, position, dimension);
-    }
-
-    get unitNature() {
-        return true;
-    }
-
-    get slot() {
-        return this.hexLocation.units.indexOf(this);
-    }
-
-    init(player) {
-        if (player === this.player) {
-        }
-    }
-
-    destroy() {
-        Memento.register(this);
-        this.player.loseUnit(this);
-        Mechanisms.fire(this, CBAbstractUnit.DESTROYED_EVENT);
-    }
-
-    onMouseClick(event) {
-        this.player.changeSelection(this, event);
-    }
-
-    isCurrentPlayer() {
-        return this.player === this.game.currentPlayer;
-    }
-
-    isFinishable() {
-        if (!this.isCurrentPlayer()) return true;
-        return this.player.canFinishPlayable(this);
-    }
-
-    collectArtifactsToRetract(artifacts) {
-        super.collectArtifactsToRetract(artifacts);
-        for (let actuator of this.game.actuators) {
-            if (actuator.collectArtifactsToRetract) actuator.collectArtifactsToRetract(this, artifacts);
-        }
-    }
-    static SELECTED_EVENT = "unit-selected";
-    static UNSELECTED_EVENT = "unit-unselected";
-    static DESTROYED_EVENT = "unit-destroyed";
-}
-Object.defineProperty(CBHexLocation.prototype, "units", {
-    get: function() {
-        return this.playables.filter(playable=>playable.unitNature);
-    }
-});
-Object.defineProperty(CBHexLocation.prototype, "empty", {
-    get: function() {
-        return this.units.length===0;
-    }
-});
-Object.defineProperty(CBGame.prototype, "units", {
-    get: function() {
-        let units = [];
-        if (this._playables) {
-            for (let playable of this._playables) {
-                if (playable.unitNature) {
-                    units.push(playable);
-                }
-            }
-        }
-        return units;
-    }
-});
-
-export function WidgetLevelMixin(clazz) {
+export function BelongsToPlayerMixin(clazz) {
 
     return class extends clazz {
 
-        constructor(game, ...args) {
-            super(...args);
-            this._game = game;
-        }
-
-        _processGlobalEvent(source, event, value) {
-            if (event === CBGame.VISIBILITY_EVENT) {
-                this.setVisibility(value);
+        init(player) {
+            if (player === this.player) {
+                this._init();
             }
         }
 
-        _memento() {
-            return {
-                shown: this._shown
-            }
-        }
+        _init() {}
 
-        _revert(memento) {
-            if (this._shown !== memento.shown) {
-                this._shown = memento.shown;
-                if (this._shown) {
-                    Mechanisms.addListener(this);
-                } else {
-                    Mechanisms.removeListener(this);
-                }
-            }
-        }
-
-        open(board, location) {
+        destroy() {
             Memento.register(this);
-            this._shown = true;
-            Mechanisms.addListener(this);
-            this.setVisibility(this._game.visibility);
-            super.open(board, location);
-        }
-
-        close() {
-            Memento.register(this);
-            this._shown = false;
-            Mechanisms.removeListener(this);
-            super.close();
-        }
-
-        setVisibility(level) {
-            this.alpha = level >= 1;
-        }
-
-    }
-
-}
-WidgetLevelMixin.VISIBILITY_LEVEL = 2;
-
-export class CBMask extends WidgetLevelMixin(DMask) {
-
-    constructor(...args) {
-        super(...args);
-    }
-
-}
-
-export let CBMoveMode = {
-    NO_CONSTRAINT: 0,
-    ATTACK: 1,
-    FIRE: 2,
-    DEFEND: 3,
-    REGROUP: 4,
-    RETREAT: 5
-}
-
-export function CBActivableMixin(clazz) {
-
-    return class extends clazz {
-
-        constructor(...args) {
-            super(...args);
-            this._active = true;
-            this.setSettings(this.settings);
-        }
-
-        _memento() {
-            let memento = super._memento();
-            memento.active = this._active;
-            return memento;
-        }
-
-        _revert(memento) {
-            super._revert(memento);
-            this._active = memento.active;
-        }
-
-        activate() {
-            Memento.register(this);
-            this._active = true;
-            this.setSettings(this.settings);
-        }
-
-        desactivate() {
-            Memento.register(this);
-            delete this._active;
-            this.setSettings(this.inactiveSettings);
-        }
-
-        get settings() {
-            return level => {
-                level.setShadowSettings("#00FFFF", 10);
-            }
-        }
-
-        get overSettings() {
-            return level => {
-                level.setShadowSettings("#FF0000", 10);
-            }
-        }
-
-        get inactiveSettings() {
-            return level => {
-                level.setShadowSettings("#000000", 10);
-            }
-        }
-
-        onMouseEnter(event) {
-            if (this._active) {
-                this.setSettings(this.overSettings);
-                this.element.refresh();
-            }
-            return true;
-        }
-
-        onMouseLeave(event) {
-            if (this._active) {
-                this.setSettings(this.settings);
-                this.element.refresh();
-            }
-            return true;
-        }
-
-    }
-}
-
-export function CBActuatorTriggerMixin(clazz) {
-
-    return class extends CBActivableMixin(clazz) {
-
-        constructor(actuator, ...args) {
-            super(...args);
-            this._actuator = actuator;
-        }
-
-        get actuator() {
-            return this._actuator;
+            this.player.losePlayable(this);
+            Mechanisms.fire(this, PlayableMixin.DESTROYED_EVENT);
         }
 
         onMouseClick(event) {
-            this._actuator.onMouseClick(this, event);
-            return true;
+            this.player.changeSelection(this, event);
         }
 
-    }
-}
+        isCurrentPlayer() {
+            return this.player === this.game.currentPlayer;
+        }
 
-export class CBActuatorImageTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
-    constructor(...args) {
-        super(...args);
-    }
-}
+        isFinishable() {
+            if (!this.isCurrentPlayer()) return true;
+            return this.player.canFinishPlayable(this);
+        }
 
-export class CBActuatorMultiImagesTrigger extends CBActuatorTriggerMixin(DMultiImagesArtifact) {
-    constructor(...args) {
-        super(...args);
-    }
-}
-
-export class CBUnitActuatorTrigger extends CBActuatorImageTrigger {
-
-    constructor(actuator, unit, ...args) {
-        super(actuator, ...args);
-        this._unit = unit;
-    }
-
-    get unit() {
-        return this._unit;
-    }
-
-    get slot() {
-        return this.unit.slot;
-    }
-
-    get layer() {
-        return CBGame.ULAYERS.ACTUATORS;
-    }
-
-    onMouseEnter(event) {
-        super.onMouseEnter(event);
-        this.unit.retractAbove();
-        return true;
-    }
-
-    onMouseLeave(event) {
-        super.onMouseLeave(event);
-        this.unit.appearAbove();
-        return true;
-    }
-
-}
-
-export class CBActionActuator extends CBActuator {
-
-    constructor(action) {
-        super();
-        this._action = action;
-    }
-
-    get action() {
-        return this._action;
-    }
-
-    get playable() {
-        return this.action.playable;
-    }
-
-    initElement(triggers, position = this.playable.location) {
-        super.initElement(triggers, position);
     }
 
 }

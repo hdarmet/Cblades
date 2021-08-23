@@ -16,9 +16,8 @@ import {
 } from "../../mocks.js";
 import {
     CavalryMoveProfile,
-    CBProfileCapacity, EliteMoralProfile, ExaltedMoralProfile,
+    CBProfileCapacity, EliteMoralProfile,
     HeavyCavalryWeaponProfile,
-    IrregularCommandProfile,
     LanceWeaponProfile,
     PedestrianMoveProfile, RegularCommandProfile
 } from "../../../jslib/cblades/profile.js";

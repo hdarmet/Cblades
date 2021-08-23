@@ -8,14 +8,15 @@ import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
-    CBAction,
+    CBAction, CBAbstractGame
+} from "./game.js";
+import {
     CBActionActuator,
     CBActuatorImageTrigger,
-    CBGame,
     CBUnitActuatorTrigger,
     WidgetLevelMixin,
     RetractableActuatorMixin
-} from "./game.js";
+} from "./playable.js";
 import {
     Dimension2D,
     Point2D
@@ -47,8 +48,8 @@ export function registerInteractiveMagic() {
     CBInteractivePlayer.prototype.openMagicMenu = function(unit, offset, allowedSpells) {
         let popup = new CBSpellsMenu(this.game, unit, allowedSpells);
         this.game.openPopup(popup, new Point2D(
-            offset.x - popup.dimension.w/2 + CBGame.POPUP_MARGIN,
-            offset.y - popup.dimension.h/2 + CBGame.POPUP_MARGIN)
+            offset.x - popup.dimension.w/2 + CBAbstractGame.POPUP_MARGIN,
+            offset.y - popup.dimension.h/2 + CBAbstractGame.POPUP_MARGIN)
         );
     }
     CBActionMenu.menuBuilders.push(

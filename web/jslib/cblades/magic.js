@@ -1,8 +1,11 @@
 'use strict'
 
 import {
-    CBHexCounter, CBPieceImageArtifact, RetractableArtifactMixin, RetractablePieceMixin, CBGame
+    CBPieceImageArtifact
 } from "./game.js";
+import {
+    CBHexCounter, CBLevelBuilder, RetractableArtifactMixin, RetractablePieceMixin
+} from "./playable.js";
 import {
     Dimension2D
 } from "../geometry.js";
@@ -38,7 +41,7 @@ class SpellImageArtifact extends OptionArtifactMixin(RetractableArtifactMixin(CB
     }
 
     get layer() {
-        return this.piece.isOption() ? CBGame.ULAYERS.OPTIONS : CBGame.ULAYERS.SPELLS;
+        return this.piece.isOption() ? CBLevelBuilder.ULAYERS.OPTIONS : CBLevelBuilder.ULAYERS.SPELLS;
     }
 
 }

@@ -4,7 +4,7 @@ import {
     assert, before, describe, it
 } from "../../../jstest/jtest.js";
 import {
-    CBHexSideId, CBMap
+    CBMap
 } from "../../../jslib/cblades/map.js";
 import {
     CBGame, CBAbstractPlayer
@@ -12,7 +12,6 @@ import {
 import {
     CBCharacter,
     CBCommandProfile,
-    CBFormation,
     CBMoralProfile,
     CBMoveProfile,
     CBTroop,

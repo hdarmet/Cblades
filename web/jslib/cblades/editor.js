@@ -1,14 +1,17 @@
 'use strict'
 
 import {
-    CBActuator, CBActuatorMultiImagesTrigger,
-    CBGame
+    CBActuator,
+    CBAbstractGame
 } from "./game.js";
+import {
+    CBActuatorMultiImagesTrigger
+} from "./playable.js";
 import {
     DImage
 } from "../draw.js";
 import {
-    Dimension2D, Point2D
+    Dimension2D
 } from "../geometry.js";
 import {
     Memento
@@ -191,12 +194,12 @@ export class CBMapEditActuator extends CBActuator {
 }
 
 export function registerEditor() {
-    CBGame.edit = function (game) {
+    CBAbstractGame.edit = function (game) {
         game.closeActuators();
         game.openActuator(new CBMapEditActuator(game.map));
     }
 }
 
 export function unregisterEditor() {
-    delete CBGame.edit;
+    delete CBAbstractGame.edit;
 }

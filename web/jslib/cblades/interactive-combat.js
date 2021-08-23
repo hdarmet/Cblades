@@ -11,9 +11,11 @@ import {
     DDice, DIconMenuItem, DInsert, DInsertFrame, DMask, DResult, DScene
 } from "../widget.js";
 import {
-    CBAction, CBActionActuator, CBActuator,
-    CBActuatorImageTrigger, CBMask, CBUnitActuatorTrigger, WidgetLevelMixin, RetractableActuatorMixin
+    CBAction, CBActuator
 } from "./game.js";
+import {
+    CBActionActuator, CBActuatorImageTrigger, CBMask, CBUnitActuatorTrigger, WidgetLevelMixin, RetractableActuatorMixin
+} from "./playable.js";
 import {
     CBHexSideId
 } from "./map.js";

@@ -70,7 +70,6 @@ import {
     create2PlayersFireTinyGame,
     setWeaponBonuses,
     create2Players4UnitsTinyGame,
-    createTroop,
     create2Players4UnitsFireTinyGame
 } from "./game-examples.js";
 import {
@@ -422,7 +421,7 @@ describe("Interactive Combat", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(unit1.hasBeenPlayed()).isFalse();
+            assert(unit1.isPlayed()).isFalse();
             assert(game.focusedPlayable).equalsTo(unit2);
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showLossTrigger(zoomAndRotate0(416.6667, 255.6635)));
@@ -475,7 +474,7 @@ describe("Interactive Combat", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(unit1.isPlayed()).isTrue();
             assert(game.focusedPlayable).isNotDefined();
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
@@ -508,7 +507,7 @@ describe("Interactive Combat", ()=> {
             assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate0(416.6667, 351.8878)));
             assertDirectives(unitsLayer, showTroop("misc/unit2", zoomAndRotate180(416.6667, 159.4391)));
             assertNoMoreDirectives(actuatorsLayer, 4);
-            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(unit1.isPlayed()).isTrue();
     });
 
     it("Checks a charging unit automatic advance", () => {
@@ -540,7 +539,7 @@ describe("Interactive Combat", ()=> {
             assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate0(416.6667, 255.6635)));
             assertDirectives(unitsLayer, showTroop("misc/unit2", zoomAndRotate180(416.6667, 159.4391)));
             assertNoMoreDirectives(actuatorsLayer, 4);
-            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(unit1.isPlayed()).isTrue();
     });
 
     function getShockHelpActuator(game) {
@@ -840,8 +839,8 @@ describe("Interactive Combat", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(formation2.hasBeenActivated()).isTrue();
-            assert(formation2.hasBeenPlayed()).isFalse();
+            assert(formation2.isActivated()).isTrue();
+            assert(formation2.isPlayed()).isFalse();
             assert(game.focusedPlayable).isNotDefined();
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showUnsupportedShock(zoomAndRotate30(397.1163, 236.1131)));
@@ -928,8 +927,8 @@ describe("Interactive Combat", ()=> {
             loadAllImages();
         then:
             assertNoMoreDirectives(actuatorsLayer, 4);
-            assert(formation2.hasBeenActivated()).isTrue();
-            assert(formation2.hasBeenPlayed()).isTrue();
+            assert(formation2.isActivated()).isTrue();
+            assert(formation2.isPlayed()).isTrue();
             assert(game.focusedPlayable).isNotDefined();
     });
 
@@ -1326,7 +1325,7 @@ describe("Interactive Combat", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
-            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(unit1.isPlayed()).isTrue();
             assert(game.focusedPlayable).isNotDefined();
             assert(getDirectives(actuatorsLayer, 4)).arrayEqualsTo([]);
     });
@@ -1632,8 +1631,8 @@ describe("Interactive Combat", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
-            assert(formation2.hasBeenActivated()).isTrue();
-            assert(formation2.hasBeenPlayed()).isFalse();
+            assert(formation2.isActivated()).isTrue();
+            assert(formation2.isPlayed()).isFalse();
             assert(game.focusedPlayable).isNotDefined();
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showFire(zoomAndRotate30(416.6667, 159.4391)));
@@ -1718,8 +1717,8 @@ describe("Interactive Combat", ()=> {
             loadAllImages();
         then:
             assertNoMoreDirectives(actuatorsLayer, 4);
-            assert(formation2.hasBeenActivated()).isTrue();
-            assert(formation2.hasBeenPlayed()).isTrue();
+            assert(formation2.isActivated()).isTrue();
+            assert(formation2.isPlayed()).isTrue();
             assert(game.focusedPlayable).isNotDefined();
     });
 

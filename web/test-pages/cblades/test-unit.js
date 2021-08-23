@@ -19,11 +19,11 @@ import {
     CBMap, CBHexSideId
 } from "../../jslib/cblades/map.js";
 import {
-    CBGame, CBAbstractPlayer,
-    CBAction, CBHexCounter,
-    CBPieceImageArtifact, CBPiece,
-    CBStacking
+    CBGame, CBAbstractPlayer, CBAction, CBPieceImageArtifact, CBPiece, CBStacking
 } from "../../jslib/cblades/game.js";
+import {
+    CBHexCounter, CBLevelBuilder
+} from "../../jslib/cblades/playable.js";
 import {
     CBTroop,
     CBWing,
@@ -135,7 +135,7 @@ describe("Unit", ()=> {
         return {game, player, formation, wing, map};
     }
 
-    function mouseClickOnPiece(game, piece) {
+    function clickOnPiece(game, piece) {
         let pieceLocation = piece.artifact.viewportLocation;
         var mouseEvent = createEvent("click", {offsetX:pieceLocation.x, offsetY:pieceLocation.y});
         mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
@@ -170,7 +170,7 @@ describe("Unit", ()=> {
             });
             Object.defineProperty(this.artifact, "layer", {
                 get: function () {
-                    return CBGame.ULAYERS.SPELLS;
+                    return CBLevelBuilder.ULAYERS.SPELLS;
                 }
             });
         }
@@ -968,7 +968,7 @@ describe("Unit", ()=> {
         when:
             player.changeSelection(unit1, dummyEvent);
             unit1.action.markAsStarted();
-            mouseClickOnPiece(game, unit2);
+            clickOnPiece(game, unit2);
             loadAllImages(); // to load actiondone.png
             resetDirectives(markersLayer);
             repaint(game);

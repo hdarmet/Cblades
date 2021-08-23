@@ -4,7 +4,7 @@ import {
     Mechanisms, Memento
 } from "../mechanisms.js";
 import {
-    CBGame
+    CBAbstractGame
 } from "./game.js";
 
 export let CBWeather = {
@@ -63,7 +63,7 @@ export function WeatherMixin(gameClass) {
         changeWeather(weather) {
             Memento.register(this);
             this._weatherSettings._weather = weather;
-            Mechanisms.fire(this, CBGame.SETTINGS_EVENT, {weather});
+            Mechanisms.fire(this, CBAbstractGame.SETTINGS_EVENT, {weather});
         }
 
         get fog() {
@@ -77,7 +77,7 @@ export function WeatherMixin(gameClass) {
         changeFog(fog) {
             Memento.register(this);
             this._weatherSettings._fog = fog;
-            Mechanisms.fire(this, CBGame.SETTINGS_EVENT, {fog});
+            Mechanisms.fire(this, CBAbstractGame.SETTINGS_EVENT, {fog});
         }
 
         get windDirection() {
@@ -91,7 +91,7 @@ export function WeatherMixin(gameClass) {
         changeWindDirection(windDirection) {
             Memento.register(this);
             this._weatherSettings._windDirection = windDirection;
-            Mechanisms.fire(this, CBGame.SETTINGS_EVENT, {windDirection});
+            Mechanisms.fire(this, CBAbstractGame.SETTINGS_EVENT, {windDirection});
         }
 
     }

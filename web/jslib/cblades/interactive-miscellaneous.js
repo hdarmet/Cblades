@@ -6,8 +6,11 @@ import {
     DIconMenuItem, DInsert, DMask, DResult, DScene, DSwipe
 } from "../widget.js";
 import {
-    CBAction, CBGame, CBStacking, CBHexCounter, WidgetLevelMixin, PlayableMixin
+    CBAction, CBStacking, PlayableMixin, CBAbstractGame
 } from "./game.js";
+import {
+    WidgetLevelMixin
+} from "./playable.js";
 import {
     CBActionMenu,
     CBInteractivePlayer,
@@ -39,8 +42,8 @@ export function registerInteractiveMiscellaneous() {
         let popup = new CBMiscellaneousActionsMenu(this.game, unit, allowedActions);
         let offset = Point2D.getEventPoint(event);
         this.game.openPopup(popup, new Point2D(
-            offset.x - popup.dimension.w/2 + CBGame.POPUP_MARGIN,
-            offset.y - popup.dimension.h/2 + CBGame.POPUP_MARGIN)
+            offset.x - popup.dimension.w/2 + CBAbstractGame.POPUP_MARGIN,
+            offset.y - popup.dimension.h/2 + CBAbstractGame.POPUP_MARGIN)
         );
 
     }

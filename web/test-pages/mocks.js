@@ -279,6 +279,10 @@ export function getLayers(board, ...layerNames) {
     return result;
 }
 
+export function resetAllDirectives(board) {
+    resetDirectives(...board._draw.getLayers());
+}
+
 export function getDirectives(layer, start=0, end =-1) {
     return getContextDirectives(layer._context, start, end);
 }

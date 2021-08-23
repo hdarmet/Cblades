@@ -10,9 +10,11 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBAction, CBActionActuator, CBActuator, CBGame,
-    CBUnitActuatorTrigger, RetractableActuatorMixin, WidgetLevelMixin
+    CBAction, CBActuator, CBAbstractGame
 } from "./game.js";
+import {
+    CBActionActuator, CBUnitActuatorTrigger, RetractableActuatorMixin, WidgetLevelMixin
+} from "./playable.js";
 import {
     DImage
 } from "../draw.js";
@@ -40,8 +42,8 @@ export function registerInteractiveCommand() {
     CBInteractivePlayer.prototype.openOrderInstructionMenu = function(unit, offset, allowedOrderInstructions) {
         let popup = new CBOrderInstructionMenu(this.game, unit, allowedOrderInstructions);
         this.game.openPopup(popup, new Point2D(
-            offset.x - popup.dimension.w/2 + CBGame.POPUP_MARGIN,
-            offset.y - popup.dimension.h/2 + CBGame.POPUP_MARGIN));
+            offset.x - popup.dimension.w/2 + CBAbstractGame.POPUP_MARGIN,
+            offset.y - popup.dimension.h/2 + CBAbstractGame.POPUP_MARGIN));
     }
     CBInteractivePlayer.prototype.changeOrderInstruction = function(unit, orderInstruction, event) {
         unit.wing.changeOrderInstruction(orderInstruction);

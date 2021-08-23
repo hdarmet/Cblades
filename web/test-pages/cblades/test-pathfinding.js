@@ -14,7 +14,7 @@ import {
 } from "../../jslib/mechanisms.js";
 import {
     CBMap,
-    CBHexSideId, CBHexId
+    CBHexSideId
 } from "../../jslib/cblades/map.js";
 import {
     DBoard, DSimpleLevel
@@ -27,7 +27,7 @@ import {
     backwardMixin,
     CBAbstractPathFinding, CBLineOfSight, createArrivalsFromHexes, createArrivalsHexSidesFromHexes,
     forwardMixin, getArrivalAreaCosts,
-    getGoodNextMoves, getHexSidesFromHexes, getInRangeMoves,
+    getGoodNextMoves, getInRangeMoves,
     getPathCost,
     hexPathFindingMixin,
     hexSidePathFindingMixin,

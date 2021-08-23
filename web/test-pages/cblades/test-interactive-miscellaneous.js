@@ -47,7 +47,7 @@ import {
     unregisterInteractiveMiscellaneous
 } from "../../jslib/cblades/interactive-miscellaneous.js";
 import {
-    CBHexCounter, PlayableMixin
+    PlayableMixin
 } from "../../jslib/cblades/game.js";
 import {
     CBFireStart, CBStakes
@@ -230,7 +230,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(PlayableMixin.getByType(unit1.hexLocation, CBFireStart)).isNotDefined();
-            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(unit1.isPlayed()).isTrue();
     });
 
     it("Checks failed set fire misc action process ", () => {
@@ -262,7 +262,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(PlayableMixin.getByType(unit1.hexLocation, CBFireStart)).isDefined();
-            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(unit1.isPlayed()).isTrue();
     });
 
     function clickOnExtinguishFireMiscAction(game) {
@@ -331,7 +331,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(PlayableMixin.getByType(unit1.hexLocation, CBFireStart)).isDefined();
-            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(unit1.isPlayed()).isTrue();
     });
 
     it("Checks failed extinguish fire misc action process ", () => {
@@ -365,7 +365,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(PlayableMixin.getByType(unit1.hexLocation, CBFireStart)).isNotDefined();
-            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(unit1.isPlayed()).isTrue();
     });
 
     function clickOnSetStakesMiscAction(game) {
@@ -430,7 +430,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(PlayableMixin.getByType(unit1.hexLocation, CBStakes)).isNotDefined();
-            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(unit1.isPlayed()).isTrue();
     });
 
     it("Checks failed set stakes misc action process ", () => {
@@ -462,7 +462,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(PlayableMixin.getByType(unit1.hexLocation, CBStakes)).isDefined();
-            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(unit1.isPlayed()).isTrue();
     });
 
     function clickOnRemoveStakesMiscAction(game) {
@@ -530,7 +530,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(PlayableMixin.getByType(unit1.hexLocation, CBStakes)).isDefined();
-            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(unit1.isPlayed()).isTrue();
     });
 
     it("Checks failed remove stakes misc action process ", () => {
@@ -564,7 +564,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(PlayableMixin.getByType(unit1.hexLocation, CBStakes)).isNotDefined();
-            assert(unit1.hasBeenPlayed()).isTrue();
+            assert(unit1.isPlayed()).isTrue();
     });
 
 });

@@ -10,8 +10,11 @@ import {
     CBHexSideId
 } from "./map.js";
 import {
-    CBAction, CBActionActuator, CBActuatorImageTrigger, CBStacking
+    CBAction, CBStacking
 } from "./game.js";
+import {
+    CBActionActuator, CBActuatorImageTrigger
+} from "./playable.js";
 import {
     Dimension2D, Point2D, sumAngle
 } from "../geometry.js";

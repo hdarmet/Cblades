@@ -563,6 +563,10 @@ export class DDraw {
         return this._layers.get(name);
     }
 
+    getLayers() {
+        return [...this._layers.values()];
+    }
+
     setTransform(matrix) {
         this._transform = matrix.clone();
         for (let layer of this._layers.values()) {

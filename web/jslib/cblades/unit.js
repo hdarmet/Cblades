@@ -11,9 +11,14 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBPieceImageArtifact, CBAbstractUnit, CBGame, RetractableArtifactMixin, UnitImageArtifact, CBActivableMixin,
-    CBStacking
+    CBPieceImageArtifact, CBStacking, HexLocatableMixin, BelongsToPlayerMixin, PlayableMixin, CBPiece
 } from "./game.js";
+import {
+    RetractableArtifactMixin, CBActivableMixin, RetractablePieceMixin, SelectableArtifactMixin, CBLevelBuilder, CBGame
+} from "./playable.js";
+import {
+    CBHexLocation
+} from "./map.js";
 
 export let CBMovement = {
     NORMAL : "normal",
@@ -422,7 +427,7 @@ export function OptionArtifactMixin(clazz) {
         }
 
         get layer() {
-            return this.unit.formationNature ? CBGame.ULAYERS.FOPTIONS : CBGame.ULAYERS.OPTIONS;
+            return this.unit.formationNature ? CBLevelBuilder.ULAYERS.FOPTIONS : CBLevelBuilder.ULAYERS.OPTIONS;
         }
 
     }
@@ -523,7 +528,7 @@ export class CBMarkerArtifact extends RetractableArtifactMixin(CBPieceImageArtif
     }
 
     get layer() {
-        return this.unit.formationNature ? CBGame.ULAYERS.FMARKERS : CBGame.ULAYERS.MARKERS;
+        return this.unit.formationNature ? CBLevelBuilder.ULAYERS.FMARKERS : CBLevelBuilder.ULAYERS.MARKERS;
     }
 }
 CBMarkerArtifact.MARKER_DIMENSION = new Dimension2D(64, 64);
@@ -554,10 +559,34 @@ export class CBActivableMarkerArtifact extends CBActivableMixin(CBMarkerArtifact
 
 }
 
-export class CBUnit extends CBAbstractUnit {
+export class UnitImageArtifact extends RetractableArtifactMixin(SelectableArtifactMixin(CBPieceImageArtifact)) {
+
+    constructor(unit, ...args) {
+        super(unit, ...args);
+    }
+
+    get unit() {
+        return this.piece;
+    }
+
+    get game() {
+        return this.unit.game;
+    }
+
+    get slot() {
+        return this.unit.slot;
+    }
+
+    get layer() {
+        return CBLevelBuilder.ULAYERS.UNITS;
+    }
+
+}
+
+export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(CBPiece)))) {
 
     constructor(type, paths, wing, dimension=CBUnit.DIMENSION) {
-        super(paths, dimension);
+        super("units", paths, dimension);
         this._carried = [];
         this._options = [];
         this._type = type;
@@ -572,6 +601,18 @@ export class CBUnit extends CBAbstractUnit {
         this._lossSteps = 0;
         this._orderGiven = false;
         this.artifact.setImage(this._lossSteps);
+    }
+
+    createArtifact(levelName, images, position, dimension) {
+        return new UnitImageArtifact(this, levelName, images, position, dimension);
+    }
+
+    get unitNature() {
+        return true;
+    }
+
+    get slot() {
+        return this.hexLocation.units.indexOf(this);
     }
 
     copy(unit) {
@@ -770,7 +811,7 @@ export class CBUnit extends CBAbstractUnit {
 
     unselect() {
         super.unselect();
-        if (this.hasBeenActivated()) {
+        if (this.isActivated()) {
             this.markAsBeingPlayed();
         }
     }
@@ -845,7 +886,7 @@ export class CBUnit extends CBAbstractUnit {
     _updatePlayed() {
         this._playedArtifact && this._element.deleteArtifact(this._playedArtifact);
         delete this._playedArtifact;
-        if (this.hasBeenPlayed()) {
+        if (this.isPlayed()) {
             this._playedArtifact = this.createMarkerArtifact("./../images/markers/actiondone.png", 0);
         }
         else if (this._orderGiven) {
@@ -1217,13 +1258,14 @@ export class CBUnit extends CBAbstractUnit {
         }
     }
 
-    collectArtifactsToRetract(artifacts) {
-        super.collectArtifactsToRetract(artifacts);
+    _getAllArtifacts() {
+        let artifacts = super._getAllArtifacts();
         this._cohesionArtifact && artifacts.push(this._cohesionArtifact);
         this._engagingArtifact && artifacts.push(this._engagingArtifact);
         this._lackOfMunitionsArtifact && artifacts.push(this._lackOfMunitionsArtifact);
         this._tirednessArtifact && artifacts.push(this._tirednessArtifact);
         this._playedArtifact && artifacts.push(this._playedArtifact);
+        return artifacts;
     }
 
     get moveProfile() {
@@ -1252,6 +1294,29 @@ CBUnit.MARKERS_POSITION = [
     new Point2D(0, CBUnit.DIMENSION.h/2),
     new Point2D(CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2),
     new Point2D(CBUnit.DIMENSION.w/2, 0)];
+Object.defineProperty(CBHexLocation.prototype, "units", {
+    get: function() {
+        return this.playables.filter(playable=>playable.unitNature);
+    }
+});
+Object.defineProperty(CBHexLocation.prototype, "empty", {
+    get: function() {
+        return this.units.length===0;
+    }
+});
+Object.defineProperty(CBGame.prototype, "units", {
+    get: function() {
+        let units = [];
+        if (this._playables) {
+            for (let playable of this._playables) {
+                if (playable.unitNature) {
+                    units.push(playable);
+                }
+            }
+        }
+        return units;
+    }
+});
 
 export class CBTroop extends CBUnit {
 
@@ -1278,7 +1343,7 @@ export class FormationImageArtifact extends UnitImageArtifact {
     }
 
     get layer() {
-        return CBGame.ULAYERS.FORMATIONS;
+        return CBLevelBuilder.ULAYERS.FORMATIONS;
     }
 
 }
@@ -1479,9 +1544,10 @@ export class CBCharacter extends CBUnit {
         }
     }
 
-    collectArtifactsToRetract(artifacts) {
-        super.collectArtifactsToRetract(artifacts);
+    _getAllArtifacts() {
+        let artifacts = super._getAllArtifacts();
         this._orderInstructionArtifact && artifacts.push(this._orderInstructionArtifact);
+        return artifacts;
     }
 }
 CBCharacter.DIMENSION = new Dimension2D(120, 120);

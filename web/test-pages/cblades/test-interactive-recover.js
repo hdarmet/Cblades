@@ -9,9 +9,7 @@ import {
     DImage, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
-    assertDirectives, assertNoMoreDirectives,
-    getDirectives, getLayers,
-    loadAllImages,
+    assertDirectives, assertNoMoreDirectives, getLayers, loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
 } from "../mocks.js";
 import {
@@ -24,7 +22,7 @@ import {
     clickOnPiece,
     clickOnMask, rollFor,
     clickOnDice, executeAllAnimations, clickOnResult, showMask, showInsert, showSuccessResult, showPlayedDice,
-    showDice, showIndicator, showInsertCommand, showFailureResult, showMenuPanel, showMenuItem, showWingIndicator
+    showDice, showIndicator, showFailureResult, showMenuPanel, showMenuItem, showWingIndicator
 } from "./interactive-tools.js";
 import {
     createTinyGame
@@ -99,8 +97,8 @@ describe("Interactive Recover", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assert(unit.tiredness).equalsTo(1);
-            assert(unit.hasBeenActivated()).isFalse();
-            assert(unit.hasBeenPlayed()).isFalse();
+            assert(unit.isActivated()).isFalse();
+            assert(unit.isPlayed()).isFalse();
     });
 
     it("Checks successfully resting action process ", () => {
@@ -130,7 +128,7 @@ describe("Interactive Recover", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.isPlayed()).isTrue();
             assert(unit.tiredness).equalsTo(0);
     });
 
@@ -161,7 +159,7 @@ describe("Interactive Recover", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.isPlayed()).isTrue();
             assert(unit.tiredness).equalsTo(1);
     });
 
@@ -193,8 +191,8 @@ describe("Interactive Recover", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assert(unit.lackOfMunitions).equalsTo(1);
-            assert(unit.hasBeenActivated()).isFalse();
-            assert(unit.hasBeenPlayed()).isFalse();
+            assert(unit.isActivated()).isFalse();
+            assert(unit.isPlayed()).isFalse();
     });
 
     it("Checks successfully replenish munitions action process ", () => {
@@ -224,7 +222,7 @@ describe("Interactive Recover", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.isPlayed()).isTrue();
             assert(unit.lackOfMunitions).equalsTo(0);
     });
 
@@ -255,7 +253,7 @@ describe("Interactive Recover", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.isPlayed()).isTrue();
             assert(unit.lackOfMunitions).equalsTo(1);
     });
 
@@ -289,8 +287,8 @@ describe("Interactive Recover", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assert(unit.isDisrupted()).isTrue();
-            assert(unit.hasBeenActivated()).isFalse();
-            assert(unit.hasBeenPlayed()).isFalse();
+            assert(unit.isActivated()).isFalse();
+            assert(unit.isPlayed()).isFalse();
     });
 
     it("Checks successfully reorganize action process ", () => {
@@ -320,7 +318,7 @@ describe("Interactive Recover", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.isPlayed()).isTrue();
             assert(unit.isDisrupted()).isFalse();
     });
 
@@ -351,7 +349,7 @@ describe("Interactive Recover", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.isPlayed()).isTrue();
             assert(unit.isDisrupted()).isTrue();
     });
 
@@ -386,8 +384,8 @@ describe("Interactive Recover", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assert(unit.isRouted()).isTrue();
-            assert(unit.hasBeenActivated()).isFalse();
-            assert(unit.hasBeenPlayed()).isFalse();
+            assert(unit.isActivated()).isFalse();
+            assert(unit.isPlayed()).isFalse();
     });
 
     it("Checks successfully rally action process ", () => {
@@ -418,7 +416,7 @@ describe("Interactive Recover", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.isPlayed()).isTrue();
             assert(unit.isDisrupted()).isTrue();
     });
 
@@ -450,7 +448,7 @@ describe("Interactive Recover", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.isPlayed()).isTrue();
             assert(unit.isRouted()).isTrue();
     });
 });

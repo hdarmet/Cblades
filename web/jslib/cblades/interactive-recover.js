@@ -7,8 +7,11 @@ import {
     DDice, DIconMenuItem, DInsert, DMask, DResult, DScene
 } from "../widget.js";
 import {
-    CBAction, WidgetLevelMixin
+    CBAction
 } from "./game.js";
+import {
+    WidgetLevelMixin
+} from "./playable.js";
 import {
     CBActionMenu,
     CBInteractivePlayer,

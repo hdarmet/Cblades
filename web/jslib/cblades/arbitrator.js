@@ -1,6 +1,9 @@
 import {
-    CBAbstractArbitrator, CBMoveMode
+    CBAbstractArbitrator
 } from "./game.js";
+import {
+    CBMoveMode
+} from "./playable.js";
 import {
     CBMapTeacher
 } from "./teachers/map-teacher.js";

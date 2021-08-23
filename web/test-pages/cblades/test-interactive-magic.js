@@ -250,7 +250,7 @@ describe("Interactive Magic", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(wizard.hasBeenPlayed()).isTrue();
+            assert(wizard.isPlayed()).isTrue();
             assertNoMoreDirectives(hexLayer, 4);
     });
 
@@ -283,7 +283,7 @@ describe("Interactive Magic", ()=> {
             assertNoMoreDirectives(commandsLayer, 4);
             skipDirectives(hexLayer, 4);
             assertDirectives(hexLayer, showSpell("fire/pentacle1", zoomAndRotate0(416.6667, 457.8873)));
-            assert(wizard.hasBeenPlayed()).isTrue();
+            assert(wizard.isPlayed()).isTrue();
     });
 
     function getTargetHexActuator(game) {

@@ -36,7 +36,7 @@ import {
 } from "../../../jslib/cblades/teachers/combat-teacher.js";
 import {
     createTroop, createCharacter, createFormation
-} from "./../game-examples.js";
+} from "../game-examples.js";
 
 describe("Combat teacher", ()=> {
 

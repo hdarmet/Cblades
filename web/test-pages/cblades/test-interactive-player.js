@@ -33,12 +33,10 @@ import {
     clickOnResult,
     dummyEvent,
     clickOnMask,
-    rollFor, showMask, showInsert, showDice, showPlayedDice, showSuccessResult, showMarker, showInsertMark
+    rollFor, showMask, showInsert, showDice, showPlayedDice, showSuccessResult, showInsertMark
 } from "./interactive-tools.js";
 import {
-    createTinyGame,
-    create2UnitsTinyGame,
-    create2PlayersTinyGame, create2Players4UnitsTinyGame, create2Players2Units2LeadersTinyGame
+    createTinyGame, create2UnitsTinyGame, create2PlayersTinyGame, create2Players2Units2LeadersTinyGame
 } from "./game-examples.js";
 import {
     CBActionMenu, CBWeatherIndicator, CBWingTirednessIndicator

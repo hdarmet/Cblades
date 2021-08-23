@@ -75,7 +75,7 @@ export class CBUnitManagementTeacher {
     }
 
     canPlayUnit(unit) {
-        return unit.isOnHex() && !unit.hasBeenActivated() && !unit.hasBeenPlayed();
+        return unit.isOnHex() && !unit.isActivated() && !unit.isPlayed();
     }
 
     getFoes(unit) {

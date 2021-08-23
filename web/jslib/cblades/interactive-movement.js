@@ -17,9 +17,12 @@ import {
     CBHexSideId
 } from "./map.js";
 import {
-    CBAction, CBActionActuator, CBActuator, CBActuatorImageTrigger, CBActuatorTriggerMixin, CBMask, WidgetLevelMixin,
-    CBMoveMode, CBStacking
+    CBAction, CBActuator, CBStacking
 } from "./game.js";
+import {
+    CBActionActuator, CBActuatorImageTrigger, CBActuatorTriggerMixin, CBMask, WidgetLevelMixin,
+    CBMoveMode
+} from "./playable.js";
 import {
     CBCharge,
     CBMovement, CBMoveProfile

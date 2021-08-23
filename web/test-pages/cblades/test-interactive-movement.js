@@ -45,7 +45,7 @@ import {
 } from "../../jslib/cblades/unit.js";
 import {
     CBMoveMode
-} from "../../jslib/cblades/game.js";
+} from "../../jslib/cblades/playable.js";
 
 describe("Interactive Movement", ()=> {
 
@@ -458,7 +458,7 @@ describe("Interactive Movement", ()=> {
             clickOnTrigger(game, orientationActuator.getTrigger(90));
         then:
             assert(unit.angle).equalsTo(90);
-            assert(unit.hasBeenPlayed()).isTrue();
+            assert(unit.isPlayed()).isTrue();
     });
 
     function getFormationMoveActuator(game) {
@@ -790,7 +790,7 @@ describe("Interactive Movement", ()=> {
             loadAllImages();
         then:
             assert(unit.tiredness).equalsTo(CBTiredness.EXHAUSTED);
-            assert(unit.hasBeenPlayed()).isTrue();   // Unit is played automatically because no further movement/reorientation is possble
+            assert(unit.isPlayed()).isTrue();   // Unit is played automatically because no further movement/reorientation is possble
             skipDirectives(markersLayer, 4);
             assertDirectives(markersLayer, showMarker("exhausted", zoomAndRotate0(381.9648, 159.4391)));
             assertDirectives(markersLayer, showMarker("actiondone", zoomAndRotate0(451.3685, 124.7373)));

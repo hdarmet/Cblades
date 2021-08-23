@@ -47,7 +47,7 @@ export class CBCommandTeacher {
         for (let unit of leader.player.units) {
             let order = this.getOrderGivenCost(leader, unit);
             if (unit !== leader &&
-                !unit.hasBeenActivated() &&
+                !unit.isActivated() &&
                 !unit.hasReceivedOrder() &&
                 order.cost<=commandPoints)
             {
@@ -102,7 +102,7 @@ export class CBCommandTeacher {
         let [unit1, unit2] = units;
         if (!unit1.isInGoodOrder() || !unit2.isInGoodOrder()) return false;
         if (unit1.isExhausted() || unit2.isExhausted()) return false;
-        if (unit1.hasBeenPlayed() || unit2.hasBeenPlayed()) return false;
+        if (unit1.isPlayed() || unit2.isPlayed()) return false;
         if (!this.hasOrderToCombine(unit1) || !this.hasOrderToCombine(unit2)) return false;
         if (unit1.remainingStepCount + unit2.remainingStepCount > unit.maxStepCount) return false;
         return true;
@@ -162,7 +162,7 @@ export class CBCommandTeacher {
         if (!unit.isInGoodOrder()) return false;
         if (unit.isExhausted()) return false;
         if (!this.hasOrderToCombine(unit)) return false;
-        if (unit.hasBeenActivated()) return false;
+        if (unit.isActivated()) return false;
         return true;
     }
 
