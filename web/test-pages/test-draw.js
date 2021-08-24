@@ -117,13 +117,13 @@ describe("Drawing fundamentals", ()=> {
         when:
             resetDirectives(layer);
             layer.setFillSettings("#F0F0F0");
-            layer.setShadowSettings("#0F0F0F", 15);
+            layer.setShadowSettings("#0F0F0F", 10);
             layer.setAlphaSettings(0.3);
             layer.fillRect(new Point2D(15, 10), new Dimension2D(25, 20));
         then:
             assert(getDirectives(layer)[0]).equalsTo('fillStyle = #F0F0F0');
             assert(getDirectives(layer)[1]).equalsTo('shadowColor = #0F0F0F');
-            assert(getDirectives(layer)[2]).equalsTo('shadowBlur = 15');
+            assert(getDirectives(layer)[2]).equalsTo('shadowBlur = 10');
             assert(getDirectives(layer)[3]).equalsTo('globalAlpha = 0.3');
             assert(getDirectives(layer)[4]).equalsTo('fillRect(15, 10, 25, 20)');
     });
@@ -755,7 +755,6 @@ describe("Drawing fundamentals", ()=> {
             var shadowBlurInvoked = false;
             Object.defineProperty(CanvasRenderingContext2D.prototype, "shadowBlur", {
                 set: function(style) {
-                    assert(style).equalsTo(15);
                     shadowBlurInvoked = true;
                 }
             });
@@ -763,7 +762,7 @@ describe("Drawing fundamentals", ()=> {
             var draw = new DDraw(new Dimension2D(500, 300));
             var layer = draw.createLayer("layer1");
         when:
-            layer.setShadowSettings("#0F0F0F", 15);
+            layer.setShadowSettings("#0F0F0F", 10);
         then:
             assert(shadowColorInvoked).isTrue();
             assert(shadowBlurInvoked).isTrue();

@@ -23,9 +23,8 @@ import {
     createTinyGameWithLeader
 } from "./game-examples.js";
 import {
-    CBGame
-} from "../../jslib/cblades/game.js";
-import {CBLevelBuilder} from "../../jslib/cblades/playable";
+    CBLevelBuilder
+} from "../../jslib/cblades/playable.js";
 
 describe("Magic", ()=> {
 

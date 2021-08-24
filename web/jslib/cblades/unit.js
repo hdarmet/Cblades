@@ -14,7 +14,7 @@ import {
     CBPieceImageArtifact, CBStacking, HexLocatableMixin, BelongsToPlayerMixin, PlayableMixin, CBPiece
 } from "./game.js";
 import {
-    RetractableArtifactMixin, CBActivableMixin, RetractablePieceMixin, SelectableArtifactMixin, CBLevelBuilder, CBGame
+    RetractableArtifactMixin, ActivableArtifactMixin, RetractablePieceMixin, SelectableArtifactMixin, CBLevelBuilder, CBGame
 } from "./playable.js";
 import {
     CBHexLocation
@@ -541,7 +541,7 @@ export class CBSimpleMarkerArtifact extends CBMarkerArtifact {
 
 }
 
-export class CBActivableMarkerArtifact extends CBActivableMixin(CBMarkerArtifact) {
+export class ActivableMarkerArtifact extends ActivableArtifactMixin(CBMarkerArtifact) {
 
     constructor(unit, paths, position, action, dimension= CBMarkerArtifact.MARKER_DIMENSION) {
         let images = [];
@@ -649,7 +649,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     createActivableMarkerArtifact(paths, action, positionSlot) {
-        let marker = new CBActivableMarkerArtifact(this, paths, CBUnit.MARKERS_POSITION[positionSlot], action);
+        let marker = new ActivableMarkerArtifact(this, paths, CBUnit.MARKERS_POSITION[positionSlot], action);
         this._element.appendArtifact(marker);
         return marker;
     }

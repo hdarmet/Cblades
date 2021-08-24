@@ -97,7 +97,7 @@ export class DPanel extends AreaArtifact(DArtifact) {
 
     _paint() {
         console.assert(this._level);
-        this._level.setShadowSettings('#000000', 15);
+        this._level.setShadowSettings('#000000', 10);
         this._level.setStrokeSettings('#000000', 1);
         this._level.drawRect(
             new Point2D(-this.dimension.w/2, -this.dimension.h/2),

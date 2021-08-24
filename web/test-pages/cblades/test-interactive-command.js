@@ -103,7 +103,7 @@ describe("Interactive Command", ()=> {
         return [
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-                "shadowColor = #000000", "shadowBlur = 15",
+                "shadowColor = #000000", "shadowBlur = 10",
                 `drawImage(./../images/markers/${marker}.png, -40, -40, 80, 80)`,
             "restore()"
         ];

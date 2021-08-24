@@ -19,8 +19,11 @@ import {
     CBMap, CBHexSideId
 } from "../../jslib/cblades/map.js";
 import {
-    CBGame, CBAbstractPlayer, CBAction, CBPieceImageArtifact, CBPiece, CBStacking
+    CBAbstractPlayer, CBAction, CBPieceImageArtifact, CBPiece, CBStacking
 } from "../../jslib/cblades/game.js";
+import {
+    CBGame
+} from "../../jslib/cblades/playable.js";
 import {
     CBHexCounter, CBLevelBuilder
 } from "../../jslib/cblades/playable.js";
@@ -50,10 +53,7 @@ import {
     showMarker,
     showTroop,
     zoomAndRotate0,
-    zoomAndRotate120,
-    zoomAndRotate150, zoomAndRotate210,
-    zoomAndRotate240, zoomAndRotate30,
-    zoomAndRotate300, zoomAndRotate330,
+    zoomAndRotate150, zoomAndRotate30,
     zoomAndRotate60,
     zoomAndRotate90
 } from "./interactive-tools.js";
@@ -181,7 +181,17 @@ describe("Unit", ()=> {
         return [
             "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            "shadowColor = #000000", "shadowBlur = 15",
+            "shadowColor = #000000", "shadowBlur = 10",
+            `drawImage(./../images/units/${image}.png, -71, -71, 142, 142)`,
+            "restore()"
+        ];
+    }
+
+    function showOption(image, [a, b, c, d, e, f]) {
+        return [
+            "save()",
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #000000", "shadowBlur = 10",
             `drawImage(./../images/units/${image}.png, -71, -71, 142, 142)`,
             "restore()"
         ];
@@ -345,13 +355,26 @@ describe("Unit", ()=> {
         }
     }
 
-    it("Checks that a unit may have option counters (not undoable)", () => {
-        function createOption(unit, path) {
-            var option = new CBTestOption(unit,[path]);
-            unit.addOption(option);
-            return option;
-        }
+    function createOption(unit, path) {
+        var option = new CBTestOption(unit,[path]);
+        unit.addOption(option);
+        return option;
+    }
 
+    function createSpell(unit, path) {
+        var option = new CBTestCarriable(unit,[path]);
+        unit.addCarried(option);
+        return option;
+    }
+
+    it("Checks unit general features", () => {
+        given:
+            var { unit, game } = createTinyGame();
+        then:
+            assert(unit.artifact.game).equalsTo(game);
+    });
+
+    it("Checks that a unit may have option counters (not undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
             var player = new CBAbstractPlayer();
@@ -386,6 +409,26 @@ describe("Unit", ()=> {
             assertDirectives(optionsLayer, showPlayable("misc/option0", zoomAndRotate0(406.8915, 347.0002)));
             assertDirectives(optionsLayer, showPlayable("misc/option2", zoomAndRotate0(397.1163, 337.2251)));
             assertNoMoreDirectives(optionsLayer);
+    });
+
+    it("Checks option features", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            var wing = new CBWing(player, "./../units/banner.png");
+            let unitType1 = new CBTestUnitType("unit1",
+                ["./../images/units/misc/unit1.png"]);
+            var unit = new CBTroop(unitType1, wing);
+            let hexId = map.getHex(5, 8);
+            unit.addToMap(hexId);
+        when:
+            var option = createOption(unit, "./../images/units/misc/option.png");
+            paint(game);
+            loadAllImages();
+        then:
+            assert(option.isOption()).isTrue();
+            assert(option.owner).equalsTo(unit);
     });
 
     it("Checks that a unit may have option counters (undoable)", () => {
@@ -487,7 +530,6 @@ describe("Unit", ()=> {
             var player = new CBAbstractPlayer();
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
-            wing.setRetreatZone(map.getSouthZone());
             let unitType1 = new CBTestUnitType("unit1",
                 ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"],
                 ["./../images/units/misc/formation1.png", "./../images/units/misc/formation1b.png"]);
@@ -497,7 +539,6 @@ describe("Unit", ()=> {
             formation.addToMap(new CBHexSideId(map.getHex(5, 8), map.getHex(5, 9)));
             formation.angle = 90;
         then:
-            assert(wing.retreatZone).unorderedArrayEqualsTo(map.getSouthZone());
             assert(unit.wing).equalsTo(wing);
             assert(unit.player).equalsTo(player);
             assert(unit.maxStepCount).equalsTo(2);
@@ -514,6 +555,37 @@ describe("Unit", ()=> {
             assert(unitType1.getTroopMaxStepCount()).equalsTo(2);
             assert(unitType1.getFormationMaxStepCount()).equalsTo(4);
             assert(unitType1.getFormationMinStepCount()).equalsTo(3);
+    });
+
+    it("Checks wing features", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+        when:
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            var wing = new CBWing(player, "./../units/banner.png");
+            wing.setRetreatZone(map.getSouthZone());
+        then:
+            assert(wing.retreatZone).unorderedArrayEqualsTo(map.getSouthZone());
+            assert(wing.banner).equalsTo("./../units/banner.png");
+        when:
+            wing.setMoral(10);
+            wing.setTiredness(9);
+        then:
+            assert(wing.moral).equalsTo(10);
+            assert(wing.tiredness).equalsTo(9);
+        when:
+            Memento.open();
+            wing.changeMoral(9);
+            wing.changeTiredness(8);
+        then:
+            assert(wing.moral).equalsTo(9);
+            assert(wing.tiredness).equalsTo(8);
+        when:
+            Memento.undo();
+        then:
+            assert(wing.moral).equalsTo(10);
+            assert(wing.tiredness).equalsTo(9);
     });
 
     it("Checks unit move profile", () => {
@@ -1388,6 +1460,20 @@ describe("Unit", ()=> {
             assert(unit._charging).equalsTo(CBCharge.NONE);
     });
 
+    it("Checks unit/hexLocation list of units and hexLocation emptiness", () => {
+        given:
+            var {game, unit1, unit2} = create2UnitsTinyGame();
+            let unit1Hex = unit1.hexLocation;
+            let unit2Hex = unit2.hexLocation;
+            unit2.move(unit1.hexLocation);
+        when:
+            assert(unit2Hex.empty).isTrue();
+            assert(unit1Hex.empty).isFalse();
+            assert(unit2Hex.units).arrayEqualsTo([]);
+            assert(unit1Hex.units).arrayEqualsTo([unit1, unit2]);
+            assert(game.units).arrayEqualsTo([unit1, unit2]);
+    });
+
     it("Checks that when a unit retracts, it also hides markers", () => {
         given:
             var {game, unit1, unit2} = create2UnitsTinyGame();
@@ -1417,6 +1503,34 @@ describe("Unit", ()=> {
             paint(game);
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+            ]);
+    });
+
+    it("Checks that when a unit retracts, it also hides options", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            paint(game);
+            var [spellLayer, optionsLayer] = getLayers(game.board, "spells-0", "options-0");
+        when:
+            resetDirectives(spellLayer, optionsLayer);
+            var spell = createSpell(unit, "./../images/units/misc/spell.png");
+            var option = createOption(unit, "./../images/units/misc/option.png");
+            paint(game);
+            loadAllImages(); // to load charge.png
+        then:
+            assertClearDirectives(spellLayer);
+            assertClearDirectives(optionsLayer);
+            assertDirectives(spellLayer, showOption("misc/spell", zoomAndRotate0(416.6667, 351.8878)));
+            assertDirectives(optionsLayer, showOption("misc/option", zoomAndRotate0(406.8915, 347.0002)));
+            assertNoMoreDirectives(spellLayer, optionsLayer);
+        when:
+            resetDirectives(optionsLayer);
+            option.retractAbove();
+            paint(game);
+        then:
+            assert(getDirectives(spellLayer, 4)).arrayEqualsTo([
+            ]);
+            assert(getDirectives(optionsLayer, 4)).arrayEqualsTo([
             ]);
     });
 

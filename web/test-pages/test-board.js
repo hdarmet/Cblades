@@ -118,7 +118,7 @@ describe("Board", ()=> {
             level.setStrokeSettings("#000000", 2);
             level.drawRect(new Point2D(10, 20), new Dimension2D(50, 60));
             level.setFillSettings("#FFFFFF");
-            level.setShadowSettings("#0F0F0F", 15);
+            level.setShadowSettings("#0F0F0F", 10);
             level.setAlphaSettings(0.3);
             level.fillRect(new Point2D(10, 20), new Dimension2D(50, 60));
         then:
@@ -128,7 +128,7 @@ describe("Board", ()=> {
             assert(getDirectives(layer)[3]).equalsTo("strokeRect(10, 20, 50, 60)");
             assert(getDirectives(layer)[4]).equalsTo("fillStyle = #FFFFFF");
             assert(getDirectives(layer)[5]).equalsTo("shadowColor = #0F0F0F");
-            assert(getDirectives(layer)[6]).equalsTo("shadowBlur = 15");
+            assert(getDirectives(layer)[6]).equalsTo("shadowBlur = 10");
             assert(getDirectives(layer)[7]).equalsTo("globalAlpha = 0.3");
             assert(getDirectives(layer)[8]).equalsTo("fillRect(10, 20, 50, 60)");
     });
@@ -950,7 +950,7 @@ describe("Board", ()=> {
             Memento.open();
         when:
             artifact.setSettings(level=>{
-                level.setShadowSettings("#000000", 15);
+                level.setShadowSettings("#000000", 10);
             });
             resetDirectives(layer);
             board.paint();
@@ -958,7 +958,7 @@ describe("Board", ()=> {
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 240, 135)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(../images/unit1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
@@ -1000,7 +1000,7 @@ describe("Board", ()=> {
             Memento.open();
         when:
             artifact.changeSettings(level=>{
-                level.setShadowSettings("#000000", 15);
+                level.setShadowSettings("#000000", 10);
             });
             resetDirectives(layer);
             board.paint();
@@ -1008,7 +1008,7 @@ describe("Board", ()=> {
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 240, 135)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(../images/unit1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
@@ -1032,7 +1032,7 @@ describe("Board", ()=> {
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 240, 135)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(../images/unit1.png, -25, -25, 50, 50)",
                 "restore()"
             ]);

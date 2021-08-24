@@ -50,7 +50,7 @@ describe("Miscellaneous", ()=> {
             assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/actions/start-fire.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -72,7 +72,7 @@ describe("Miscellaneous", ()=> {
             assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/actions/stakes.png, -71, -71, 142, 142)",
                 "restore()"
             ]);

@@ -9,7 +9,7 @@ import {
     CBAbstractGame
 } from "./game.js";
 import {
-    CBActivableMixin,
+    ActivableArtifactMixin,
     CBHexCounter,
     RetractableArtifactMixin,
     RetractablePieceMixin
@@ -103,7 +103,7 @@ export class CBCounterMarkerArtifact extends CBPieceImageArtifact {
     static MARKER_DIMENSION = new Dimension2D(64, 64);
 }
 
-export class DisplayablePlayableArtifact extends CBActivableMixin(CBPieceImageArtifact) {
+export class DisplayablePlayableArtifact extends ActivableArtifactMixin(CBPieceImageArtifact) {
 
     constructor(fire, ...args) {
         super(fire, ...args);

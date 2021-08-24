@@ -81,7 +81,7 @@ describe("Interactive Miscellaneous", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 301.6667, 190)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "strokeStyle = #000000", "lineWidth = 1",
                     "strokeRect(-125, -185, 250, 370)",
                     "fillStyle = #FFFFFF",

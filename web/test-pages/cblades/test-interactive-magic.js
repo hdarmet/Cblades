@@ -71,7 +71,7 @@ describe("Interactive Magic", ()=> {
         return [
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-                "shadowColor = #000000", "shadowBlur = 15",
+                "shadowColor = #000000", "shadowBlur = 10",
                 `drawImage(./../images/magic/${spell}.png, -71, -71, 142, 142)`,
             "restore()"
         ];

@@ -96,7 +96,7 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 361.6667, 296.8878)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "strokeStyle = #000000", "lineWidth = 1",
                     "strokeRect(-65, -65, 130, 130)",
                     "fillStyle = #FFFFFF",
@@ -356,7 +356,7 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(1, 0, 0, 1, 70, 70)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "strokeStyle = #000000", "lineWidth = 1",
                     "strokeRect(-65, -65, 130, 130)",
                     "fillStyle = #FFFFFF",
@@ -408,7 +408,7 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([ // Action menu opened in modal mode
                 "save()",
                     "setTransform(1, 0, 0, 1, 70, 70)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "strokeStyle = #000000", "lineWidth = 1",
                     "strokeRect(-65, -65, 130, 130)",
                     "fillStyle = #FFFFFF",

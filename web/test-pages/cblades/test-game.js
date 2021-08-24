@@ -100,7 +100,7 @@ function showFakePiece(image, [a, b, c, d, e, f], s=50) {
     return [
         "save()",
         `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-        "shadowColor = #000000", "shadowBlur = 15",
+        "shadowColor = #000000", "shadowBlur = 10",
         `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
         "restore()"
     ];
@@ -110,7 +110,7 @@ function showFakeInsert(x, y, w, h) {
     return [
         "save()",
         `setTransform(1, 0, 0, 1, ${x}, ${y})`,
-        "shadowColor = #000000", "shadowBlur = 15",
+        "shadowColor = #000000", "shadowBlur = 10",
         "strokeStyle = #000000", "lineWidth = 1",
         `strokeRect(-${w/2}, -${h/2}, ${w}, ${h})`,
         "fillStyle = #FFFFFF",
@@ -366,7 +366,7 @@ describe("Game", ()=> {
                 "restore()",
                 "save()",
                     "setTransform(0.7331, 0, 0, 0.7331, 625, 427.8317)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -1433,7 +1433,7 @@ describe("Game", ()=> {
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display1.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -1446,12 +1446,12 @@ describe("Game", ()=> {
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display1.png, -71, -71, 142, 142)",
                 "restore()",
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 158.8465, 61.0948)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display0.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -1464,7 +1464,7 @@ describe("Game", ()=> {
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display1.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -1476,12 +1476,12 @@ describe("Game", ()=> {
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display1.png, -71, -71, 142, 142)",
                 "restore()",
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 158.8465, 61.0948)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display0.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -1502,12 +1502,12 @@ describe("Game", ()=> {
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display0.png, -71, -71, 142, 142)",
                 "restore()",
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 158.8465, 61.0948)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display1.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -1521,12 +1521,12 @@ describe("Game", ()=> {
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 841.1535, 61.0948)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display0.png, -71, -71, 142, 142)",
                 "restore()",
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 938.9052, 61.0948)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display1.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -1540,12 +1540,12 @@ describe("Game", ()=> {
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 841.1535, 738.9052)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display0.png, -71, -71, 142, 142)",
                 "restore()",
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 938.9052, 738.9052)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display1.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -1559,12 +1559,12 @@ describe("Game", ()=> {
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 738.9052)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display0.png, -71, -71, 142, 142)",
                 "restore()",
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 158.8465, 738.9052)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display1.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -1584,12 +1584,12 @@ describe("Game", ()=> {
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 738.9052)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display0.png, -71, -71, 142, 142)",
                 "restore()",
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 158.8465, 738.9052)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display1.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -1603,12 +1603,12 @@ describe("Game", ()=> {
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display0.png, -71, -71, 142, 142)",
                 "restore()",
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 158.8465, 61.0948)",
-                    "shadowColor = #000000", "shadowBlur = 15",
+                    "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/units/misc/display1.png, -71, -71, 142, 142)",
                 "restore()"
             ]);

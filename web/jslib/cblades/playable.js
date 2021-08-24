@@ -33,13 +33,13 @@ export function SelectableArtifactMixin(clazz) {
 
         get selectedSettings() {
             return level=>{
-                level.setShadowSettings("#FF0000", 15);
+                level.setShadowSettings("#FF0000", 10);
             }
         }
 
         get overSettings() {
             return level=>{
-                level.setShadowSettings("#00FFFF", 15);
+                level.setShadowSettings("#00FFFF", 10);
             }
         }
 
@@ -249,7 +249,7 @@ export let CBMoveMode = {
     RETREAT: 5
 }
 
-export function CBActivableMixin(clazz) {
+export function ActivableArtifactMixin(clazz) {
 
     return class extends clazz {
 
@@ -317,11 +317,12 @@ export function CBActivableMixin(clazz) {
         }
 
     }
+
 }
 
 export function CBActuatorTriggerMixin(clazz) {
 
-    return class extends CBActivableMixin(clazz) {
+    return class extends ActivableArtifactMixin(clazz) {
 
         constructor(actuator, ...args) {
             super(...args);

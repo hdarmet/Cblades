@@ -920,7 +920,7 @@ export class CBPieceImageArtifact extends DMultiImagesArtifact {
 
     get settings() {
         return level=>{
-            level.setShadowSettings("#000000", 15);
+            level.setShadowSettings("#000000", 10);
         }
     }
 

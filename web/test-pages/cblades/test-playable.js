@@ -35,7 +35,7 @@ import {
     RetractableActuatorMixin,
     CBUnitActuatorTrigger,
     CBActuatorMultiImagesTrigger,
-    CBHexCounter
+    CBHexCounter, ActivableArtifactMixin
 } from "../../jslib/cblades/playable.js";
 import {
     clickOnTrigger,
@@ -346,17 +346,27 @@ function showOverFakePiece(image, [a, b, c, d, e, f], s=50) {
     return [
         "save()",
         `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-        "shadowColor = #00FFFF", "shadowBlur = 15",
+        "shadowColor = #00FFFF", "shadowBlur = 10",
         `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
         "restore()"
     ];
 }
 
-function showFakePiece(image, [a, b, c, d, e, f], s=50) {
+function showInactiveFakePiece(image, [a, b, c, d, e, f], s=50) {
     return [
         "save()",
         `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-        "shadowColor = #000000", "shadowBlur = 15",
+        "shadowColor = #000000", "shadowBlur = 10",
+        `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
+        "restore()"
+    ];
+}
+
+function showActiveFakePiece(image, [a, b, c, d, e, f], s=50) {
+    return [
+        "save()",
+        `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+        "shadowColor = #00FFFF", "shadowBlur = 10",
         `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
         "restore()"
     ];
@@ -374,9 +384,11 @@ describe("Playable", ()=> {
     });
 
     class TestInsert extends WidgetLevelMixin(DInsert) {
+
         constructor(game) {
             super(game, "./../images/inserts/test-insert.png", new Dimension2D(200, 300));
         }
+
     }
 
     it("Checks mouse move over a trigger of an actuator", () => {
@@ -623,11 +635,11 @@ describe("Playable", ()=> {
             var [unitsLayer0, unitsLayer1, unitsLayer2] = getLayers(game.board, "units-0", "units-1", "units-2");
         then:
             assertClearDirectives(unitsLayer0);
-            assertDirectives(unitsLayer0, showFakePiece("misc/counter1", zoomAndRotate0(333.3333, 111.327), 142));
+            assertDirectives(unitsLayer0, showInactiveFakePiece("misc/counter1", zoomAndRotate0(333.3333, 111.327), 142));
             assertNoMoreDirectives(unitsLayer0);
-            assertDirectives(unitsLayer1, showFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(unitsLayer1, showInactiveFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
             assertNoMoreDirectives(unitsLayer1);
-            assertDirectives(unitsLayer2, showFakePiece("misc/counter3", zoomAndRotate0(352.8837, 91.7766), 142));
+            assertDirectives(unitsLayer2, showInactiveFakePiece("misc/counter3", zoomAndRotate0(352.8837, 91.7766), 142));
             assertNoMoreDirectives(unitsLayer2);
         when:
             resetDirectives(unitsLayer0, unitsLayer1, unitsLayer2);
@@ -635,7 +647,7 @@ describe("Playable", ()=> {
             paint(game);
         then:
             assertClearDirectives(unitsLayer0);
-            assertDirectives(unitsLayer0, showFakePiece("misc/counter1", zoomAndRotate0(333.3333, 111.327), 142));
+            assertDirectives(unitsLayer0, showInactiveFakePiece("misc/counter1", zoomAndRotate0(333.3333, 111.327), 142));
             assertNoMoreDirectives(unitsLayer0);
             assertClearDirectives(unitsLayer1);
             assertDirectives(unitsLayer1, showOverFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
@@ -648,13 +660,13 @@ describe("Playable", ()=> {
             paint(game);
         then:
             assertClearDirectives(unitsLayer0);
-            assertDirectives(unitsLayer0, showFakePiece("misc/counter1", zoomAndRotate0(333.3333, 111.327), 142));
+            assertDirectives(unitsLayer0, showInactiveFakePiece("misc/counter1", zoomAndRotate0(333.3333, 111.327), 142));
             assertNoMoreDirectives(unitsLayer0);
             assertClearDirectives(unitsLayer1);
-            assertDirectives(unitsLayer1, showFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(unitsLayer1, showInactiveFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
             assertNoMoreDirectives(unitsLayer1);
             assertClearDirectives(unitsLayer2);
-            assertDirectives(unitsLayer2, showFakePiece("misc/counter3", zoomAndRotate0(352.8837, 91.7766), 142));
+            assertDirectives(unitsLayer2, showInactiveFakePiece("misc/counter3", zoomAndRotate0(352.8837, 91.7766), 142));
             assertNoMoreDirectives(unitsLayer2);
     });
 
@@ -760,8 +772,8 @@ describe("Playable", ()=> {
             assertClearDirectives(formationsLayer0);
             assertDirectives(formationsLayer0, showFormation("misc/formation1", zoomAndRotate90(333.3333, 159.4391)));
             assertNoMoreDirectives(formationsLayer0);
-            assertDirectives(unitsLayer1, showFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
-            assertDirectives(unitsLayer1, showFakePiece("misc/counter3", zoomAndRotate0(343.1085, 197.7761), 142));
+            assertDirectives(unitsLayer1, showInactiveFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(unitsLayer1, showInactiveFakePiece("misc/counter3", zoomAndRotate0(343.1085, 197.7761), 142));
             assertNoMoreDirectives(unitsLayer1);
         when:
             resetDirectives(formationsLayer0, unitsLayer1);
@@ -783,8 +795,8 @@ describe("Playable", ()=> {
             assertNoMoreDirectives(formationsLayer0);
             assertNoMoreDirectives(formationsLayer0);
             assertClearDirectives(unitsLayer1);
-            assertDirectives(unitsLayer1, showFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
-            assertDirectives(unitsLayer1, showFakePiece("misc/counter3", zoomAndRotate0(343.1085, 197.7761), 142));
+            assertDirectives(unitsLayer1, showInactiveFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(unitsLayer1, showInactiveFakePiece("misc/counter3", zoomAndRotate0(343.1085, 197.7761), 142));
             assertNoMoreDirectives(unitsLayer1);
     });
 
@@ -818,7 +830,7 @@ describe("Playable", ()=> {
         return [
             "save()",
                 `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-                "shadowColor = #000000", "shadowBlur = 15",
+                "shadowColor = #000000", "shadowBlur = 10",
                 `drawImage(./../images/markers/${image}.png, -32, -32, 64, 64)`,
             "restore()"
         ];
@@ -894,10 +906,10 @@ describe("Playable", ()=> {
             assertDirectives(unitsLayer1, showTroop("misc/unit2", zoomAndRotate0(343.1085, 101.5518)));
             assertNoMoreDirectives(unitsLayer1);
             assertClearDirectives(spellsLayer1);
-            assertDirectives(spellsLayer1, showFakePiece("misc/spell", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(spellsLayer1, showInactiveFakePiece("misc/spell", zoomAndRotate0(343.1085, 101.5518), 142));
             assertNoMoreDirectives(spellsLayer1);
             assertClearDirectives(optionsLayer1);
-            assertDirectives(optionsLayer1, showFakePiece("misc/option", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(optionsLayer1, showInactiveFakePiece("misc/option", zoomAndRotate0(343.1085, 101.5518), 142));
             assertNoMoreDirectives(optionsLayer1);
     });
 
@@ -941,7 +953,7 @@ describe("Playable", ()=> {
             assertDirectives(formationsLayer1, showFormation("misc/formation2", zoomAndRotate60(379.8876, 130.4955)));
             assertNoMoreDirectives(formationsLayer1);
             assertClearDirectives(foptionsLayer1);
-            assertDirectives(foptionsLayer1, showFakePiece("misc/option", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertDirectives(foptionsLayer1, showInactiveFakePiece("misc/option", zoomAndRotate0(343.1085, 101.5518), 142));
             assertNoMoreDirectives(foptionsLayer1);
     });
 
@@ -1013,18 +1025,19 @@ describe("Playable", ()=> {
             var blaze = new CBHexCounter("ground", ["./../images/units/misc/blaze.png"], new Dimension2D(50, 50));
             blaze.elementNature = true;
             var [hexLayer0] = getLayers(game.board, "hex-0");
+            var hex = map.getHex(4, 5);
         when:
-            spell.appendToMap(map.getHex(4, 5));
-            blaze.appendToMap(map.getHex(4, 5));
+            spell.appendToMap(hex);
+            blaze.appendToMap(hex);
             loadAllImages();
             resetDirectives(hexLayer0);
             repaint(game);
             var [hexLayer1] = getLayers(game.board, "hex-1");
         then:
             assertClearDirectives(hexLayer0);
-            assertDirectives(hexLayer0, showFakePiece("misc/blaze", zoomAndRotate0(333.3333, 121.1022)));
+            assertDirectives(hexLayer0, showInactiveFakePiece("misc/blaze", zoomAndRotate0(333.3333, 121.1022)));
             assertNoMoreDirectives(hexLayer0);
-            assertDirectives(hexLayer1, showFakePiece("misc/spell", zoomAndRotate0(323.5582, 111.327)));
+            assertDirectives(hexLayer1, showInactiveFakePiece("misc/spell", zoomAndRotate0(323.5582, 111.327)));
             assertNoMoreDirectives(hexLayer1);
         when:
             var trap = new CBHexCounter("ground", ["./../images/units/misc/trap.png"], new Dimension2D(50, 50));
@@ -1035,14 +1048,90 @@ describe("Playable", ()=> {
             repaint(game);
             var [hexLayer2] = getLayers(game.board, "hex-2");
         then:
+            assert(hex.counters).unorderedArrayEqualsTo([spell, blaze, trap]);
             assertClearDirectives(hexLayer0);
-            assertDirectives(hexLayer0, showFakePiece("misc/trap", zoomAndRotate0(333.3333, 121.1022)));
+            assertDirectives(hexLayer0, showInactiveFakePiece("misc/trap", zoomAndRotate0(333.3333, 121.1022)));
             assertNoMoreDirectives(hexLayer0);
             assertClearDirectives(hexLayer1);
-            assertDirectives(hexLayer1, showFakePiece("misc/blaze", zoomAndRotate0(323.5582, 111.327)));
+            assertDirectives(hexLayer1, showInactiveFakePiece("misc/blaze", zoomAndRotate0(323.5582, 111.327)));
             assertNoMoreDirectives(hexLayer1);
-            assertDirectives(hexLayer2, showFakePiece("misc/spell", zoomAndRotate0(313.783, 101.5518)));
+            assertDirectives(hexLayer2, showInactiveFakePiece("misc/spell", zoomAndRotate0(313.783, 101.5518)));
             assertNoMoreDirectives(hexLayer2);
+    });
+
+    class TestActivableCounterImageArtifact extends ActivableArtifactMixin(CBPieceImageArtifact) {
+
+        constructor(playable, ...args) {
+            super(playable, ...args);
+        }
+
+        get game() {
+            return this.piece.game;
+        }
+
+        get slot() {
+            return this.piece.slot;
+        }
+
+    }
+
+    class CBTestActivableCounter extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(CBPiece)))) {
+
+        constructor(layer, paths, dimension) {
+            super(layer, paths, dimension);
+        }
+
+        createArtifact(levelName, images, position, dimension) {
+            return new TestActivableCounterImageArtifact(this, levelName, images, position, dimension);
+        }
+
+    }
+
+    it("Checks activation/desactivation of an artifact", () => {
+        given:
+            var { game, map } = createBasicGame();
+            var blaze = new CBTestActivableCounter("ground", ["./../images/units/misc/blaze.png"], new Dimension2D(50, 50));
+            blaze.elementNature = true;
+            var [groundLayer] = getLayers(game.board, "hex-0");
+            var hex = map.getHex(4, 5);
+        when:
+            blaze.appendToMap(hex);
+            loadAllImages();
+            resetDirectives(groundLayer);
+            repaint(game);
+        then:
+            assertClearDirectives(groundLayer);
+            assertDirectives(groundLayer, showActiveFakePiece("misc/blaze", zoomAndRotate0(333.3333, 121.1022)));
+        when:
+            Memento.open();
+            blaze.artifact.desactivate();
+            resetDirectives(groundLayer);
+            repaint(game);
+        then:
+            assertClearDirectives(groundLayer);
+            assertDirectives(groundLayer, showInactiveFakePiece("misc/blaze", zoomAndRotate0(333.3333, 121.1022)));
+        when:
+            Memento.open();
+            blaze.artifact.activate();
+            resetDirectives(groundLayer);
+            repaint(game);
+        then:
+            assertClearDirectives(groundLayer);
+            assertDirectives(groundLayer, showActiveFakePiece("misc/blaze", zoomAndRotate0(333.3333, 121.1022)));
+        when:
+            Memento.undo();
+            resetDirectives(groundLayer);
+            repaint(game);
+        then:
+            assertClearDirectives(groundLayer);
+            assertDirectives(groundLayer, showInactiveFakePiece("misc/blaze", zoomAndRotate0(333.3333, 121.1022)));
+        when:
+            Memento.undo();
+            resetDirectives(groundLayer);
+            repaint(game);
+        then:
+            assertClearDirectives(groundLayer);
+            assertDirectives(groundLayer, showActiveFakePiece("misc/blaze", zoomAndRotate0(333.3333, 121.1022)));
     });
 
 });

@@ -195,7 +195,7 @@ export function showTroop(image, [a, b, c, d, e, f]) {
     return[
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            "shadowColor = #000000", "shadowBlur = 15",
+            "shadowColor = #000000", "shadowBlur = 10",
             `drawImage(./../images/units/${image}.png, -71, -71, 142, 142)`,
         "restore()"
     ];
@@ -205,7 +205,7 @@ export function showOverTroop(image, [a, b, c, d, e, f]) {
     return[
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            "shadowColor = #00FFFF", "shadowBlur = 15",
+            "shadowColor = #00FFFF", "shadowBlur = 10",
             `drawImage(./../images/units/${image}.png, -71, -71, 142, 142)`,
         "restore()"
     ];
@@ -215,7 +215,7 @@ export function showSelectedTroop(image, [a, b, c, d, e, f]) {
     return[
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            "shadowColor = #FF0000", "shadowBlur = 15",
+            "shadowColor = #FF0000", "shadowBlur = 10",
             `drawImage(./../images/units/${image}.png, -71, -71, 142, 142)`,
         "restore()"
     ];
@@ -225,7 +225,7 @@ export function showCharacter(image, [a, b, c, d, e, f]) {
     return[
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            "shadowColor = #000000", "shadowBlur = 15",
+            "shadowColor = #000000", "shadowBlur = 10",
             `drawImage(./../images/units/${image}.png, -60, -60, 120, 120)`,
         "restore()",
     ];
@@ -235,7 +235,7 @@ export function showSelectedCharacter(image, [a, b, c, d, e, f]) {
     return[
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            "shadowColor = #FF0000", "shadowBlur = 15",
+            "shadowColor = #FF0000", "shadowBlur = 10",
             `drawImage(./../images/units/${image}.png, -60, -60, 120, 120)`,
         "restore()",
     ];
@@ -245,7 +245,7 @@ export function showOverFormation(image, [a, b, c, d, e, f]) {
     return[
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            "shadowColor = #00FFFF", "shadowBlur = 15",
+            "shadowColor = #00FFFF", "shadowBlur = 10",
             `drawImage(./../images/units/${image}.png, -142, -71, 284, 142)`,
         "restore()"
     ];
@@ -255,7 +255,7 @@ export function showSelectedFormation(image, [a, b, c, d, e, f]) {
     return[
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            "shadowColor = #FF0000", "shadowBlur = 15",
+            "shadowColor = #FF0000", "shadowBlur = 10",
             `drawImage(./../images/units/${image}.png, -142, -71, 284, 142)`,
         "restore()"
     ];
@@ -265,7 +265,7 @@ export function showFormation(image, [a, b, c, d, e, f]) {
     return[
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            "shadowColor = #000000", "shadowBlur = 15",
+            "shadowColor = #000000", "shadowBlur = 10",
             `drawImage(./../images/units/${image}.png, -142, -71, 284, 142)`,
         "restore()"
     ];
@@ -275,7 +275,7 @@ export function showMarker(image, [a, b, c, d, e, f]) {
     return [
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            "shadowColor = #000000", "shadowBlur = 15",
+            "shadowColor = #000000", "shadowBlur = 10",
             `drawImage(./../images/markers/${image}.png, -32, -32, 64, 64)`,
         "restore()"
     ];
@@ -295,7 +295,7 @@ export function showCommandMarker(image, [a, b, c, d, e, f]) {
     return [
         "save()",
         `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-        "shadowColor = #000000", "shadowBlur = 15",
+        "shadowColor = #000000", "shadowBlur = 10",
         `drawImage(./../images/markers/${image}.png, -40, -40, 80, 80)`,
         "restore()"
     ];
@@ -478,7 +478,7 @@ export function showMenuPanel(colCount, rowCount, x, y) {
     return [
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
-            "shadowColor = #000000", "shadowBlur = 15",
+            "shadowColor = #000000", "shadowBlur = 10",
             "strokeStyle = #000000", "lineWidth = 1",
             `strokeRect(${-w/2}, ${-h/2}, ${w}, ${h})`,
             "fillStyle = #FFFFFF",
