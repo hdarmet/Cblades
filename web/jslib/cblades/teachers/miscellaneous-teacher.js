@@ -47,7 +47,7 @@ export class CBMiscellaneousTeacher {
         let swipe = 0;
         switch (weather) {
             case CBWeather.HOT:
-                if (diceResult[0]+diceResult[1]<=2) swipe = 1;
+                if (diceResult[0]+diceResult[1]>=12) swipe = 1;
                 break;
             case CBWeather.CLEAR:
             case CBWeather.CLOUDY:
@@ -71,15 +71,15 @@ export class CBMiscellaneousTeacher {
         let swipe = 0;
         switch (fog) {
             case CBFog.MIST:
-                if (diceResult[0]+diceResult[1]<=3) swipe = 1;
+                if (diceResult[0]+diceResult[1]>=12) swipe = 1;
                 break;
             case CBFog.DENSE_MIST:
             case CBFog.FOG:
-                if (diceResult[0]+diceResult[1]<=3) swipe = 1;
-                if (diceResult[0]+diceResult[1]>=12) swipe = -1;
+                if (diceResult[0]+diceResult[1]>=12) swipe = 1;
+                if (diceResult[0]+diceResult[1]<=3) swipe = -1;
                 break;
             case CBFog.DENSE_FOG:
-                if (diceResult[0]+diceResult[1]>=12) swipe = -1;
+                if (diceResult[0]+diceResult[1]<=3) swipe = -1;
                 break;
         }
         return { swipe, fog: fog+swipe };
@@ -92,16 +92,16 @@ export class CBMiscellaneousTeacher {
         return { swipe, windDirection: sumAngle(game.windDirection, swipe*60) };
     }
 
-    processPlayTirednessResult(game, wing, diceResult) {
+    processPlayTirednessResult(wing, diceResult) {
         let swipe = 0;
         if (diceResult[0]+diceResult[1]===2) swipe = -1;
-        return { swipe, tiredness: wing.tiredness+swipe };
+        return { swipe, tiredness: wing.tiredness-swipe };
     }
 
-    processPlayMoralResult(game, wing, diceResult) {
+    processPlayMoralResult(wing, diceResult) {
         let swipe = 0;
         if (diceResult[0]+diceResult[1]===2) swipe = -1;
-        return { swipe, moral: wing.moral+swipe };
+        return { swipe, moral: wing.moral-swipe };
     }
 
 }

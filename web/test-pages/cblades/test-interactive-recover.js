@@ -132,6 +132,39 @@ describe("Interactive Recover", ()=> {
             assert(unit.tiredness).equalsTo(0);
     });
 
+
+    it("Checks that a double in a successfully resting action process lower tiredness", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            unit.addOneTirednessLevel();
+            clickOnPiece(game, unit);
+            clickOnRestAction(game);
+            loadAllImages();
+        when:
+            rollFor(2,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnResult(game);
+        then:
+            assert(unit.wing.tiredness).equalsTo(10);
+    });
+
+    it("Checks that a double in a failed resting action process lower tiredness", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            unit.addOneTirednessLevel();
+            clickOnPiece(game, unit);
+            clickOnRestAction(game);
+            loadAllImages();
+        when:
+            rollFor(5,5);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnResult(game);
+        then:
+            assert(unit.wing.tiredness).equalsTo(10);
+    });
+
     it("Checks failed resting action process ", () => {
         given:
             var {game, unit} = createTinyGame();

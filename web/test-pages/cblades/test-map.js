@@ -670,40 +670,55 @@ describe("Map", ()=> {
     it("Checks counter addition and removing on a Hex", () => {
         given:
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
-            let counter = new CBTestUnit();
+            var counter = new CBTestUnit();
+            var otherCounter = new CBTestUnit();
             var hexId = map.getHex(4, 5);
         when:
             hexId._pushPlayable(counter);
         then:
             assert(hexId.playables).arrayEqualsTo([counter]);
         when:
+            hexId._unshiftPlayable(otherCounter);
+        then:
+            assert(hexId.playables).arrayEqualsTo([otherCounter, counter]);
+        when:
             hexId._removePlayable(counter);
         then:
-            assert(hexId.playables).arrayEqualsTo([]);
+            assert(hexId.playables).arrayEqualsTo([otherCounter]);
         when:
             Memento.open();
             hexId._appendPlayableOnTop(counter);
         then:
-            assert(hexId.playables).arrayEqualsTo([counter]);
+            assert(hexId.playables).arrayEqualsTo([otherCounter, counter]);
         when:
             Memento.open();
             hexId._deletePlayable(counter);
         then:
-            assert(hexId.playables).arrayEqualsTo([]);
+            assert(hexId.playables).arrayEqualsTo([otherCounter]);
+        when:
+            Memento.open();
+            hexId._appendPlayableOnBottom(counter);
+        then:
+            assert(hexId.playables).arrayEqualsTo([counter, otherCounter]);
         when:
             Memento.undo();
         then:
-            assert(hexId.playables).arrayEqualsTo([counter]);
+            assert(hexId.playables).arrayEqualsTo([otherCounter]);
         when:
             Memento.undo();
         then:
-            assert(hexId.playables).arrayEqualsTo([]);
+            assert(hexId.playables).arrayEqualsTo([otherCounter, counter]);
+        when:
+            Memento.undo();
+        then:
+            assert(hexId.playables).arrayEqualsTo([otherCounter]);
     });
 
     it("Checks counter addition and removing on a Hex Side", () => {
         given:
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             let counter = new CBTestUnit();
+            let otherCounter = new CBTestUnit();
             var hexId1 = map.getHex(4, 5);
             var hexId2 = map.getHex(4, 6);
             var hexSideId = new CBHexSideId(hexId1, hexId2);
@@ -713,35 +728,119 @@ describe("Map", ()=> {
             assert(hexId1.playables).arrayEqualsTo([counter]);
             assert(hexId2.playables).arrayEqualsTo([counter]);
         when:
+            hexSideId._unshiftPlayable(otherCounter);
+        then:
+            assert(hexId1.playables).arrayEqualsTo([otherCounter, counter]);
+            assert(hexId2.playables).arrayEqualsTo([otherCounter, counter]);
+        when:
             hexSideId._removePlayable(counter);
         then:
-            assert(hexId1.playables).arrayEqualsTo([]);
-            assert(hexId2.playables).arrayEqualsTo([]);
+            assert(hexId1.playables).arrayEqualsTo([otherCounter]);
+            assert(hexId2.playables).arrayEqualsTo([otherCounter]);
         when:
             Memento.open();
             hexSideId._appendPlayableOnTop(counter);
         then:
-            assert(hexId1.playables).arrayEqualsTo([counter]);
-            assert(hexId2.playables).arrayEqualsTo([counter]);
+            assert(hexId1.playables).arrayEqualsTo([otherCounter, counter]);
+            assert(hexId2.playables).arrayEqualsTo([otherCounter, counter]);
         when:
             Memento.open();
             hexSideId._deletePlayable(counter);
         then:
-            assert(hexId1.playables).arrayEqualsTo([]);
-            assert(hexId2.playables).arrayEqualsTo([]);
+            assert(hexId1.playables).arrayEqualsTo([otherCounter]);
+            assert(hexId2.playables).arrayEqualsTo([otherCounter]);
+        when:
+            Memento.open();
+            hexSideId._appendPlayableOnBottom(counter);
+        then:
+            assert(hexId1.playables).arrayEqualsTo([counter, otherCounter]);
+            assert(hexId2.playables).arrayEqualsTo([counter, otherCounter]);
         when:
             Memento.undo();
+        then:
+            assert(hexId1.playables).arrayEqualsTo([otherCounter]);
+            assert(hexId2.playables).arrayEqualsTo([otherCounter]);
+        when:
+            Memento.undo();
+        then:
+            assert(hexId1.playables).arrayEqualsTo([otherCounter, counter]);
+            assert(hexId2.playables).arrayEqualsTo([otherCounter, counter]);
+        when:
+            Memento.undo();
+        then:
+            assert(hexId1.playables).arrayEqualsTo([otherCounter]);
+            assert(hexId2.playables).arrayEqualsTo([otherCounter]);
+    });
+
+    it("Checks counter addition and removing on a Hex Vertex", () => {
+        given:
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            let counter = new CBTestUnit();
+            let otherCounter = new CBTestUnit();
+            var hexId1 = map.getHex(4, 5);
+            var hexId2 = map.getHex(4, 6);
+            var hexId3 = hexId1.getNearHex(120);
+            var hexVertexId = new CBHexVertexId(hexId1, hexId2, hexId3);
+        when:
+            hexVertexId._pushPlayable(counter);
         then:
             assert(hexId1.playables).arrayEqualsTo([counter]);
             assert(hexId2.playables).arrayEqualsTo([counter]);
+            assert(hexId3.playables).arrayEqualsTo([counter]);
+        when:
+            hexVertexId._unshiftPlayable(otherCounter);
+        then:
+            assert(hexId1.playables).arrayEqualsTo([otherCounter, counter]);
+            assert(hexId2.playables).arrayEqualsTo([otherCounter, counter]);
+            assert(hexId3.playables).arrayEqualsTo([otherCounter, counter]);
+        when:
+            hexVertexId._removePlayable(counter);
+        then:
+            assert(hexId1.playables).arrayEqualsTo([otherCounter]);
+            assert(hexId2.playables).arrayEqualsTo([otherCounter]);
+            assert(hexId3.playables).arrayEqualsTo([otherCounter]);
+        when:
+            Memento.open();
+            hexVertexId._appendPlayableOnTop(counter);
+        then:
+            assert(hexId1.playables).arrayEqualsTo([otherCounter, counter]);
+            assert(hexId2.playables).arrayEqualsTo([otherCounter, counter]);
+            assert(hexId3.playables).arrayEqualsTo([otherCounter, counter]);
+        when:
+            Memento.open();
+            hexVertexId._deletePlayable(counter);
+        then:
+            assert(hexId1.playables).arrayEqualsTo([otherCounter]);
+            assert(hexId2.playables).arrayEqualsTo([otherCounter]);
+            assert(hexId3.playables).arrayEqualsTo([otherCounter]);
+        when:
+            Memento.open();
+            hexVertexId._appendPlayableOnBottom(counter);
+        then:
+            assert(hexId1.playables).arrayEqualsTo([counter, otherCounter]);
+            assert(hexId2.playables).arrayEqualsTo([counter, otherCounter]);
+            assert(hexId3.playables).arrayEqualsTo([counter, otherCounter]);
         when:
             Memento.undo();
         then:
-            assert(hexId1.playables).arrayEqualsTo([]);
-            assert(hexId2.playables).arrayEqualsTo([]);
+            assert(hexId1.playables).arrayEqualsTo([otherCounter]);
+            assert(hexId2.playables).arrayEqualsTo([otherCounter]);
+            assert(hexId3.playables).arrayEqualsTo([otherCounter]);
+        when:
+            Memento.undo();
+        then:
+            assert(hexId1.playables).arrayEqualsTo([otherCounter, counter]);
+            assert(hexId2.playables).arrayEqualsTo([otherCounter, counter]);
+            assert(hexId3.playables).arrayEqualsTo([otherCounter, counter]);
+        when:
+            Memento.undo();
+        then:
+            assert(hexId1.playables).arrayEqualsTo([otherCounter]);
+            assert(hexId2.playables).arrayEqualsTo([otherCounter]);
+            assert(hexId3.playables).arrayEqualsTo([otherCounter]);
     });
 
-    it("Checks playable sorting on Hex", () => {
+    it("Checks playable sorting on Hex when counters are put on top", () => {
         given:
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var spell = new CBTestPlayable();
@@ -758,6 +857,27 @@ describe("Map", ()=> {
             var trap = new CBTestPlayable();
             trap.featureNature = true;
             hexId._appendPlayableOnTop(trap);
+        then:
+            assert(hexId.playables).arrayEqualsTo([trap, blaze, spell]);
+    });
+
+    it("Checks playable sorting on Hex when counters are inserted on bottom", () => {
+        given:
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var spell = new CBTestPlayable();
+            spell.spellNature = true;
+            var blaze = new CBTestPlayable();
+            blaze.elementNature = true;
+            var hexId = map.getHex(4, 5);
+        when:
+            hexId._appendPlayableOnBottom(spell);
+            hexId._appendPlayableOnBottom(blaze);
+        then:
+            assert(hexId.playables).arrayEqualsTo([blaze, spell]);
+        when:
+            var trap = new CBTestPlayable();
+            trap.featureNature = true;
+            hexId._appendPlayableOnBottom(trap);
         then:
             assert(hexId.playables).arrayEqualsTo([trap, blaze, spell]);
     });
@@ -858,4 +978,23 @@ describe("Map", ()=> {
             assert(hexSideId.playables).arrayEqualsTo([playable1, playable2, unit2, unit1]);
     });
 
+    it("Checks units and playables collection on Hex Vertex", () => {
+        given:
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var hexId1 = map.getHex(8, 8);
+            var hexId2 = map.getHex(8, 9);
+            var hexId3 = hexId1.getNearHex(120);
+            var hexVertexId = new CBHexVertexId(hexId1, hexId2, hexId3);
+            var unit1 = new CBTestUnit();
+            var unit2 = new CBTestUnit();
+            var playable1 = new CBTestPlayable();
+            var playable2 = new CBTestPlayable();
+        when:
+            hexId1._appendPlayableOnBottom(unit1);
+            hexVertexId._appendPlayableOnBottom(unit2);
+            hexVertexId._appendPlayableOnTop(playable1);
+            hexId2._appendPlayableOnTop(playable2);
+        then:
+            assert(hexVertexId.playables).unorderedArrayEqualsTo([playable1, playable2, unit2, unit1]);
+    });
 });

@@ -1410,11 +1410,13 @@ describe("Game", ()=> {
             loadAllImages(); // to load actiondone.png
         then:
             assert(display0.isPlayed()).isTrue();
+            assert(display0.isFinishable()).isTrue();
         when:
             Memento.undo();
             paint(game);
         then:
             assert(display0.isPlayed()).isFalse();
+            assert(display0.isFinishable()).isFalse();
         when:
             display0.onMouseClick(dummyEvent);
         then:

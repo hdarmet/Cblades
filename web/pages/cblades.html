@@ -66,7 +66,7 @@
         RoughneckCrossbowman
     } from "../jslib/cblades/armies/roughnecks.js";
     import {
-        CBWeather, CBFog, CBWindDirection, CBWingTiredness, CBWingMoral
+        CBWeatherCounter, CBFogCounter, CBWindDirectionCounter, CBWingTirednessCounter, CBWingMoralCounter
     } from "../jslib/cblades/miscellaneous.js";
 
     registerInteractiveMovement();
@@ -89,13 +89,15 @@
     let arbitrator = new CBArbitrator();
     game.setArbitrator(arbitrator);
     game.setMenu();
-    new CBWeather().setOnGame(game);
-    new CBWindDirection().setOnGame(game);
-    new CBFog().setOnGame(game);
+    new CBWeatherCounter().setOnGame(game);
+    new CBWindDirectionCounter().setOnGame(game);
+    new CBFogCounter().setOnGame(game);
 
     let player1 = new CBInteractivePlayer();
     game.addPlayer(player1);
     let wing1 = new CBWing(player1, GoblinBanner1);
+    wing1.setTiredness(10);
+    wing1.setMoral(10);
     wing1.setRetreatZone(map.getSouthZone());
     let character11 = new CBCharacter(GoblinLeader, wing1);
     wing1.setLeader(character11);
@@ -109,8 +111,8 @@
     counter12.addToMap(map.getHex(6, 10));
     counter13.addToMap(map.getHex(8, 10));
 
-    new CBWingTiredness(wing1).registerOnGame(game);
-    new CBWingMoral(wing1).registerOnGame(game);
+    new CBWingTirednessCounter(wing1).registerOnGame(game);
+    new CBWingMoralCounter(wing1).registerOnGame(game);
 
     let player2 = new CBInteractivePlayer();
     game.addPlayer(player2);
@@ -137,7 +139,7 @@
     counter21.addToMap(map.getHex(7, 7));
     counter22.addToMap(map.getHex(10, 7));
     new CBWingTiredness(wing2).registerOnGame(game);
-    new CBWingMoral(wing2).registerOnGame(game);
+    new CBWingMoralCounter(wing2).registerOnGame(game);
 
     game.start();
 </script>

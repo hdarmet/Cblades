@@ -122,18 +122,22 @@ export class CBDisplayableCounter extends PlayableMixin(DisplayLocatableMixin(CB
         return new DisplayablePlayableArtifact(this, levelName, images, position, dimension);
     }
 
-    isCurrentPlayer() {
-        return true;
-    }
-
     markAsPlayed() {
         Memento.register(this);
         this._updatePlayed();
     }
 
+    isPlayed() {
+        return !!this._marker;
+    }
+
+    isFinishable() {
+        return this.isPlayed();
+    }
+
     _updatePlayed() {
         this._marker = new CBCounterMarkerArtifact(this, "./../images/markers/actiondone.png",
-            new Point2D(CBWeather.DIMENSION.w/2, -CBWeather.DIMENSION.h/2));
+            new Point2D(CBWeatherCounter.DIMENSION.w/2, -CBWeatherCounter.DIMENSION.h/2));
         this.element.appendArtifact(this._marker);
         this.artifact.desactivate();
         Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINISHED);
@@ -166,7 +170,7 @@ export class CBDisplayableCounter extends PlayableMixin(DisplayLocatableMixin(CB
 
 }
 
-export class CBWeather extends CBDisplayableCounter {
+export class CBWeatherCounter extends CBDisplayableCounter {
 
     constructor() {
         super([
@@ -176,7 +180,7 @@ export class CBWeather extends CBDisplayableCounter {
             "./../images/counters/meteo4.png",
             "./../images/counters/meteo5.png",
             "./../images/counters/meteo6.png"
-        ], CBWeather.DIMENSION);
+        ], CBWeatherCounter.DIMENSION);
     }
 
     setOnGame(game) {
@@ -197,7 +201,7 @@ export class CBWeather extends CBDisplayableCounter {
     static DIMENSION = new Dimension2D(142, 142);
 }
 
-export class CBFog extends CBDisplayableCounter {
+export class CBFogCounter extends CBDisplayableCounter {
 
     constructor() {
         super( [
@@ -205,7 +209,7 @@ export class CBFog extends CBDisplayableCounter {
             "./../images/counters/fog1.png",
             "./../images/counters/fog2.png",
             "./../images/counters/fog3.png"
-        ], CBFog.DIMENSION);
+        ], CBFogCounter.DIMENSION);
     }
 
     setOnGame(game) {
@@ -215,7 +219,7 @@ export class CBFog extends CBDisplayableCounter {
 
     _processGlobalEvent(source, event, value) {
         if (event===CBAbstractGame.SETTINGS_EVENT && value.fog!==undefined) {
-            this.artifact.setImage(value.fog);
+            this.artifact.setImage(value.fog-1);
         }
     }
 
@@ -226,12 +230,12 @@ export class CBFog extends CBDisplayableCounter {
     static DIMENSION = new Dimension2D(142, 142);
 }
 
-export class CBWindDirection extends CBDisplayableCounter {
+export class CBWindDirectionCounter extends CBDisplayableCounter {
 
     constructor() {
         super( [
             "./../images/counters/wind-direction.png"
-        ], CBWindDirection.DIMENSION);
+        ], CBWindDirectionCounter.DIMENSION);
     }
 
     setOnGame(game) {
@@ -255,7 +259,7 @@ export class CBWindDirection extends CBDisplayableCounter {
 export class CBWingDisplayablePlayable extends CBDisplayableCounter {
 
     constructor(wing, paths) {
-        super( paths, CBWingTiredness.DIMENSION);
+        super( paths, CBWingTirednessCounter.DIMENSION);
         this._wing = wing;
         this.artifact.changeImage(this.getValue(this._wing));
         this._bannerArtifact = new DImageArtifact("counters",
@@ -264,7 +268,7 @@ export class CBWingDisplayablePlayable extends CBDisplayableCounter {
                 CBWingDisplayablePlayable.DIMENSION.w/2 - CBWingDisplayablePlayable.BANNER_DIMENSION.w/2 - CBWingDisplayablePlayable.MARGIN,
                 0
             ),
-            CBWingTiredness.BANNER_DIMENSION
+            CBWingTirednessCounter.BANNER_DIMENSION
         );
         this.element.addArtifact(this._bannerArtifact);
     }
@@ -279,9 +283,6 @@ export class CBWingDisplayablePlayable extends CBDisplayableCounter {
     }
 
     _processGlobalEvent(source, event, value) {
-        if (event===PlayableMixin.SELECTED_EVENT) {
-            console.log(event);
-        }
         if (event===PlayableMixin.SELECTED_EVENT
             && (source.wing && source.wing === this.wing)) {
             !this.isShown() && this.show(this._game);
@@ -300,7 +301,7 @@ export class CBWingDisplayablePlayable extends CBDisplayableCounter {
     static MARGIN =5;
 }
 
-export class CBWingTiredness extends CBWingDisplayablePlayable {
+export class CBWingTirednessCounter extends CBWingDisplayablePlayable {
 
     constructor(wing) {
         super(wing, [
@@ -340,7 +341,7 @@ export class CBWingTiredness extends CBWingDisplayablePlayable {
     }
 }
 
-export class CBWingMoral extends CBWingDisplayablePlayable {
+export class CBWingMoralCounter extends CBWingDisplayablePlayable {
 
     constructor(wing) {
         super(wing, [

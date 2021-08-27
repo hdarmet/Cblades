@@ -85,10 +85,12 @@ export function WeatherMixin(gameClass) {
         }
 
         set windDirection(windDirection) {
+            console.assert(windDirection%60===0);
             this._weatherSettings._windDirection = windDirection;
         }
 
         changeWindDirection(windDirection) {
+            console.assert(windDirection%60===0);
             Memento.register(this);
             this._weatherSettings._windDirection = windDirection;
             Mechanisms.fire(this, CBAbstractGame.SETTINGS_EVENT, {windDirection});

@@ -596,10 +596,10 @@ export class InteractivePlayTirednessAction extends CBAction {
                 let {swipe, tiredness:nextTiredness} = this._processPlayTirednessResult(this.game, dice.result);
                 if (nextTiredness>0 && swipe === -1) {
                     swipeResult.swipeUp().appear();
+                    tirednessIndicator.changeState(nextTiredness-4);
                 }
                 else {
                     swipeResult.noSwipe().appear();
-                    tirednessIndicator.changeState(nextTiredness-4);
                 }
                 Memento.clear();
             }),
@@ -611,7 +611,7 @@ export class InteractivePlayTirednessAction extends CBAction {
     }
 
     _processPlayTirednessResult(game, diceResult) {
-        let result = this.game.arbitrator.processPlayTirednessResult(game, this.playable.wing, diceResult);
+        let result = this.game.arbitrator.processPlayTirednessResult(this.playable.wing, diceResult);
         this.markAsFinished();
         if (result.swipe) {
             this.playable.wing.changeTiredness(result.tiredness);
@@ -654,10 +654,10 @@ export class InteractivePlayMoralAction extends CBAction {
                 let {swipe, moral:nextMoral} = this._processPlayMoralResult(this.game, dice.result);
                 if (nextMoral>0 && swipe === -1) {
                     swipeResult.swipeUp().appear();
+                    moralIndicator.changeState(nextMoral-4);
                 }
                 else {
                     swipeResult.noSwipe().appear();
-                    moralIndicator.changeState(nextMoral-4);
                 }
                 Memento.clear();
             }),
@@ -669,7 +669,7 @@ export class InteractivePlayMoralAction extends CBAction {
     }
 
     _processPlayMoralResult(game, diceResult) {
-        let result = this.game.arbitrator.processPlayMoralResult(game, this.playable.wing, diceResult);
+        let result = this.game.arbitrator.processPlayMoralResult(this.playable.wing, diceResult);
         this.markAsFinished();
         if (result.swipe) {
             this.playable.wing.changeMoral(result.moral);

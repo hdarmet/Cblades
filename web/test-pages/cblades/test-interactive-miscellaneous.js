@@ -36,7 +36,19 @@ import {
     showIndicator,
     rollFor,
     clickOnDice,
-    executeAllAnimations, showFailureResult, showPlayedDice, clickOnResult, showSuccessResult
+    executeAllAnimations,
+    showFailureResult,
+    showPlayedDice,
+    clickOnResult,
+    showSuccessResult,
+    showInsertCommand,
+    showSwipeUpResult,
+    clickOnSwipe,
+    showSwipeDownResult,
+    showNoSwipeResult,
+    showDie,
+    showPlayedDie,
+    showOrientedIndicator, showBanneredIndicator,
 } from "./interactive-tools.js";
 import {
     createTinyGame,
@@ -50,8 +62,20 @@ import {
     PlayableMixin
 } from "../../jslib/cblades/game.js";
 import {
-    CBFireStart, CBStakes
+    CBFireStart,
+    CBFogCounter,
+    CBStakes,
+    CBWeatherCounter,
+    CBWindDirectionCounter,
+    CBWingMoralCounter,
+    CBWingTirednessCounter
 } from "../../jslib/cblades/miscellaneous.js";
+import {
+    CBWeather, CBFog
+} from "../../jslib/cblades/weather.js";
+import {
+    CBWingMoralIndicator
+} from "../../jslib/cblades/interactive-player.js";
 
 describe("Interactive Miscellaneous", ()=> {
 
@@ -533,7 +557,7 @@ describe("Interactive Miscellaneous", ()=> {
             assert(unit1.isPlayed()).isTrue();
     });
 
-    it("Checks failed remove stakes misc action process ", () => {
+    it("Checks successful remove stakes misc action process ", () => {
         given:
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
@@ -565,6 +589,627 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(commandsLayer, 4);
             assert(PlayableMixin.getByType(unit1.hexLocation, CBStakes)).isNotDefined();
             assert(unit1.isPlayed()).isTrue();
+    });
+
+    it("Checks weather action opening and cancelling", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
+            var counter = new CBWeatherCounter();
+            counter.setOnGame(game);
+            repaint(game);
+        when:
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("meteo", 227, 305, 444, 600));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 227, 570));
+            assertDirectives(widgetsLayer, showIndicator("meteo2", 500, 405));
+            assertNoMoreDirectives(widgetsLayer, 4);
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 539, 175));
+        when:       // Clicking on the mask cancel the action
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnMask(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assert(counter.markAsBeingPlayed()).isFalse();
+    });
+
+    it("Checks weather action process that swipes up", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
+            var counter = new CBWeatherCounter();
+            counter.setOnGame(game);
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            assert(game.weather).equalsTo(CBWeather.CLEAR);
+        when:
+            rollFor(1, 1);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
+            repaint(game);
+        then:
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSwipeUpResult(449, 305));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 1, 539, 175));
+        when:
+            clickOnSwipe(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(game.weather).equalsTo(CBWeather.HOT);
+            assert(counter.isPlayed()).isTrue();
+    });
+
+    it("Checks weather action process that does not swipe", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
+            var counter = new CBWeatherCounter();
+            counter.setOnGame(game);
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            assert(game.weather).equalsTo(CBWeather.CLEAR);
+        when:
+            rollFor(3, 4);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
+            repaint(game);
+        then:
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showNoSwipeResult(449, 305));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(3, 4, 539, 175));
+        when:
+            clickOnSwipe(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(game.weather).equalsTo(1);
+            assert(counter.isPlayed()).isTrue();
+    });
+
+    it("Checks weather action process that swipes down", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
+            var counter = new CBWeatherCounter();
+            counter.setOnGame(game);
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            assert(game.weather).equalsTo(CBWeather.CLEAR);
+        when:
+            rollFor(6, 6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
+            repaint(game);
+        then:
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSwipeDownResult(449, 305));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(6, 6, 539, 175));
+        when:
+            clickOnSwipe(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(game.weather).equalsTo(CBWeather.CLOUDY);
+            assert(counter.isPlayed()).isTrue();
+    });
+
+    it("Checks fog action opening and cancelling", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
+            var counter = new CBFogCounter();
+            counter.setOnGame(game);
+            repaint(game);
+        when:
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("fog", 227, 305, 444, 600));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 227, 570));
+            assertDirectives(widgetsLayer, showIndicator("fog1", 500, 405));
+            assertNoMoreDirectives(widgetsLayer, 4);
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 539, 175));
+        when:       // Clicking on the mask cancel the action
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnMask(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assert(counter.markAsBeingPlayed()).isFalse();
+    });
+
+    it("Checks fog action process that swipes up", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
+            game.fog = CBFog.DENSE_MIST;
+            var counter = new CBFogCounter();
+            counter.setOnGame(game);
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            assert(game.fog).equalsTo(CBFog.DENSE_MIST);
+        when:
+            rollFor(1, 1);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
+            repaint(game);
+        then:
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSwipeUpResult(449, 305));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 1, 539, 175));
+        when:
+            clickOnSwipe(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(game.fog).equalsTo(CBFog.MIST);
+            assert(counter.isPlayed()).isTrue();
+    });
+
+    it("Checks fog action process that it does not swipes", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
+            game.fog = CBFog.DENSE_MIST;
+            var counter = new CBFogCounter();
+            counter.setOnGame(game);
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            assert(game.fog).equalsTo(CBFog.DENSE_MIST);
+        when:
+            rollFor(3, 4);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
+            repaint(game);
+        then:
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showNoSwipeResult(449, 305));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(3, 4, 539, 175));
+        when:
+            clickOnSwipe(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(game.fog).equalsTo(CBFog.DENSE_MIST);
+            assert(counter.isPlayed()).isTrue();
+    });
+
+    it("Checks fog action process that swipes up", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
+            game.fog = CBFog.DENSE_MIST;
+            var counter = new CBFogCounter();
+            counter.setOnGame(game);
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            assert(game.fog).equalsTo(CBFog.DENSE_MIST);
+        when:
+            rollFor(6, 6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
+            repaint(game);
+        then:
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSwipeDownResult(449, 305));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(6, 6, 539, 175));
+        when:
+            clickOnSwipe(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(game.fog).equalsTo(CBFog.FOG);
+            assert(counter.isPlayed()).isTrue();
+    });
+
+    it("Checks fog action opening and cancelling", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
+            var counter = new CBWindDirectionCounter();
+            counter.setOnGame(game);
+            repaint(game);
+        when:
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("wind-direction", 227, 93.5, 444, 177));
+            assertDirectives(widgetsLayer, showIndicator("wind-direction", 500, 218.5));
+            assertNoMoreDirectives(widgetsLayer, 4);
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDie(1, 509, 93.5));
+        when:       // Clicking on the mask cancel the action
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnMask(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assert(counter.markAsBeingPlayed()).isFalse();
+    });
+
+    it("Checks fog action process when it swipes up", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
+            var counter = new CBWindDirectionCounter();
+            counter.setOnGame(game);
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            assert(game.windDirection).equalsTo(0);
+        when:
+            rollFor(1);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("wind-direction", 227, 93.5, 444, 177));
+            assertDirectives(widgetsLayer, showOrientedIndicator("wind-direction", [0.5, -0.866, 0.866, 0.5, 500, 218.5]));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSwipeUpResult(449, 143.5));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDie(1, 509, 93.5));
+        when:
+            clickOnSwipe(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(game.windDirection).equalsTo(300);
+            assert(counter.isPlayed()).isTrue();
+    });
+
+    it("Checks fog action process when it does not swipe", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
+            var counter = new CBWindDirectionCounter();
+            counter.setOnGame(game);
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            assert(game.windDirection).equalsTo(0);
+        when:
+            rollFor(3);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("wind-direction", 227, 93.5, 444, 177));
+            assertDirectives(widgetsLayer, showOrientedIndicator("wind-direction", [1, 0, 0, 1, 500, 218.5]));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showNoSwipeResult(449, 143.5));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDie(3, 509, 93.5));
+        when:
+            clickOnSwipe(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(game.windDirection).equalsTo(0);
+            assert(counter.isPlayed()).isTrue();
+    });
+
+    it("Checks fog action process when it swipes down", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
+            var counter = new CBWindDirectionCounter();
+            counter.setOnGame(game);
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            assert(game.windDirection).equalsTo(0);
+        when:
+            rollFor(6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("wind-direction", 227, 93.5, 444, 177));
+            assertDirectives(widgetsLayer, showOrientedIndicator("wind-direction", [0.5, 0.866, -0.866, 0.5, 500, 218.5]));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSwipeDownResult(449, 143.5));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDie(6, 509, 93.5));
+        when:
+            clickOnSwipe(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(game.windDirection).equalsTo(60);
+            assert(counter.isPlayed()).isTrue();
+    });
+
+    it("Checks tiredness action opening and cancelling", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
+            unit.wing.setTiredness(10);
+            var counter = new CBWingTirednessCounter(unit.wing);
+            counter.setOnGame(game);
+            repaint(game);
+        when:
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("wing-rest", 227, 179.5, 444, 118));
+            assertDirectives(widgetsLayer, showBanneredIndicator("tiredness10", "units/banner", 500, 279.5));
+            assertNoMoreDirectives(widgetsLayer, 4);
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 539, 49.5));
+        when:       // Clicking on the mask cancel the action
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnMask(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assert(counter.markAsBeingPlayed()).isFalse();
+    });
+
+    it("Checks tiredness action process when it swipes", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
+            unit.wing.setTiredness(10);
+            var counter = new CBWingTirednessCounter(unit.wing);
+            counter.setOnGame(game);
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            assert(unit.wing.tiredness).equalsTo(10);
+        when:
+            rollFor(1, 1);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("wing-rest", 227, 179.5, 444, 118));
+            assertDirectives(widgetsLayer, showBanneredIndicator("tiredness11", "units/banner", 500, 279.5));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSwipeUpResult(449, 179.5));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 1,539, 49.5));
+        when:
+            clickOnSwipe(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(unit.wing.tiredness).equalsTo(11);
+            assert(counter.isPlayed()).isTrue();
+    });
+
+    it("Checks tiredness action process when it does not swipes", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
+            unit.wing.setTiredness(10);
+            var counter = new CBWingTirednessCounter(unit.wing);
+            counter.setOnGame(game);
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            assert(unit.wing.tiredness).equalsTo(10);
+        when:
+            rollFor(3, 4);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("wing-rest", 227, 179.5, 444, 118));
+            assertDirectives(widgetsLayer, showBanneredIndicator("tiredness10", "units/banner", 500, 279.5));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showNoSwipeResult(449, 179.5));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(3, 4,539, 49.5));
+        when:
+            clickOnSwipe(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(unit.wing.tiredness).equalsTo(10);
+            assert(counter.isPlayed()).isTrue();
+    });
+
+    it("Checks moral action opening and cancelling", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
+            unit.wing.setMoral(10);
+            var counter = new CBWingMoralCounter(unit.wing);
+            counter.setOnGame(game);
+            repaint(game);
+        when:
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("wing-moral", 227, 179.5, 444, 119));
+            assertDirectives(widgetsLayer, showBanneredIndicator("moral10", "units/banner", 500, 279.5));
+            assertNoMoreDirectives(widgetsLayer, 4);
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 539, 49.5));
+        when:       // Clicking on the mask cancel the action
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnMask(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assert(counter.markAsBeingPlayed()).isFalse();
+    });
+
+    it("Checks moral action process when it swipes", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
+            unit.wing.setMoral(10);
+            var counter = new CBWingMoralCounter(unit.wing);
+            counter.setOnGame(game);
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            assert(unit.wing.moral).equalsTo(10);
+        when:
+            rollFor(1, 1);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("wing-moral", 227, 179.5, 444, 119));
+            assertDirectives(widgetsLayer, showBanneredIndicator("moral11", "units/banner", 500, 279.5));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSwipeUpResult(449, 179.5));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 1,539, 49.5));
+        when:
+            clickOnSwipe(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(unit.wing.moral).equalsTo(11);
+            assert(counter.isPlayed()).isTrue();
+    });
+
+    it("Checks moral action process when it swipes", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
+            unit.wing.setMoral(10);
+            var counter = new CBWingMoralCounter(unit.wing);
+            counter.setOnGame(game);
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            assert(unit.wing.moral).equalsTo(10);
+        when:
+            rollFor(3, 4);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("wing-moral", 227, 179.5, 444, 119));
+            assertDirectives(widgetsLayer, showBanneredIndicator("moral10", "units/banner", 500, 279.5));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showNoSwipeResult(449, 179.5));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(3, 4,539, 49.5));
+        when:
+            clickOnSwipe(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(unit.wing.moral).equalsTo(10);
+            assert(counter.isPlayed()).isTrue();
     });
 
 });

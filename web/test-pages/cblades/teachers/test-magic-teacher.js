@@ -7,8 +7,11 @@ import {
     CBMap
 } from "../../../jslib/cblades/map.js";
 import {
-    CBGame, CBAbstractPlayer, CBPiece
+    CBAbstractPlayer, CBPiece
 } from "../../../jslib/cblades/game.js";
+import {
+    CBGame
+} from "../../../jslib/cblades/playable.js";
 import {
     CBCharacter, CBCommandProfile,
     CBMoralProfile,

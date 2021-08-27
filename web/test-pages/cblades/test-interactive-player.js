@@ -9,7 +9,7 @@ import {
     DImage, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
-    assertDirectives,
+    assertDirectives, assertNoMoreDirectives,
     getDirectives, getLayers,
     loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
@@ -33,13 +33,22 @@ import {
     clickOnResult,
     dummyEvent,
     clickOnMask,
-    rollFor, showMask, showInsert, showDice, showPlayedDice, showSuccessResult, showInsertMark
+    rollFor, showMask, showInsert, showDice, showPlayedDice, showSuccessResult, showInsertMark, showFailureResult
 } from "./interactive-tools.js";
 import {
-    createTinyGame, create2UnitsTinyGame, create2PlayersTinyGame, create2Players2Units2LeadersTinyGame
+    createTinyGame,
+    create2UnitsTinyGame,
+    create2PlayersTinyGame,
+    create2Players2Units2LeadersTinyGame,
+    create2Players4UnitsTinyGame
 } from "./game-examples.js";
 import {
-    CBActionMenu, CBWeatherIndicator, CBWingTirednessIndicator
+    CBActionMenu,
+    CBFogIndicator,
+    CBWeatherIndicator,
+    CBWindDirectionIndicator,
+    CBWingMoralIndicator,
+    CBWingTirednessIndicator
 } from "../../jslib/cblades/interactive-player.js";
 import {
     DIconMenuItem
@@ -81,6 +90,19 @@ describe("Interactive Player", ()=> {
 
     function clickOnDoThisAction(game) {
         return clickOnActionMenu(game, 0, 0);
+    }
+
+    function showMenu() {
+        return [
+            "save()",
+                "setTransform(1, 0, 0, 1, 70, 70)",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "strokeStyle = #000000", "lineWidth = 1",
+                "strokeRect(-65, -65, 130, 130)",
+                "fillStyle = #FFFFFF",
+                "fillRect(-65, -65, 130, 130)",
+            "restore()"
+        ];
     }
 
     it("Checks that clicking on a unit select the unit and opens the action menu", () => {
@@ -353,16 +375,7 @@ describe("Interactive Player", ()=> {
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 70, 70)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-65, -65, 130, 130)",
-                    "fillStyle = #FFFFFF",
-                    "fillRect(-65, -65, 130, 130)",
-                "restore()"
-            ]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo(showMenu());
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit1.isDisrupted()).isFalse();
     });
@@ -381,43 +394,274 @@ describe("Interactive Player", ()=> {
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 549, 426.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(./../images/dice/d5.png, -50, -44.5, 100, 89)",
-                "restore()",
-                "save()",
-                    "setTransform(1, 0, 0, 1, 489, 486.5)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(./../images/dice/d6.png, -50, -44.5, 100, 89)",
-                "restore()"
-            ]);
-            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([
-                "save()",
-                    "setTransform(1, 0, 0, 1, 449, 386.5)",
-                    "shadowColor = #A00000", "shadowBlur = 100",
-                    "drawImage(./../images/dice/failure.png, -75, -75, 150, 150)",
-                "restore()"
-            ]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo(showPlayedDice(5, 6, 549, 426.5));
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo(showFailureResult(449, 386.5));
         when:
             clickOnResult(game);
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
-            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([ // Action menu opened in modal mode
-                "save()",
-                    "setTransform(1, 0, 0, 1, 70, 70)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "strokeStyle = #000000", "lineWidth = 1",
-                    "strokeRect(-65, -65, 130, 130)",
-                    "fillStyle = #FFFFFF",
-                    "fillRect(-65, -65, 130, 130)",
-                "restore()"
-            ]);
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo(showMenu());
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
             assert(unit1.isDisrupted()).isTrue();
     });
+
+    function routedUnit1IsNearGoodOrderedUnit2(map, unit1, unit2) {
+        unit1.move(map.getHex(2, 4), 0);
+        unit1.rout();
+        unit2.move(map.getHex(2, 3), 0);
+        loadAllImages();
+    }
+
+    it("Checks appearance (and cancelling selection) of the cohesion test of an unrouted unit near a selected routed unit", () => {
+        given:
+            var {game, map, player1, unit11, unit12} = create2Players4UnitsTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            routedUnit1IsNearGoodOrderedUnit2(map, unit11, unit12);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            player1.selectPlayable(unit11, dummyEvent)
+            loadAllImages();
+            paint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("lose-cohesion", 227, 384, 444, 330));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 199.5, 444, 389));
+            assertDirectives(widgetsLayer, showInsertMark( 459, 122));
+            assertNoMoreDirectives(widgetsLayer);
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 424));
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
+    });
+
+    it("Checks that an unrouted unit near a selected routed unit, sucessfully pass the cohesion test", () => {
+        given:
+            var {game, map, player1, unit11, unit12} = create2Players4UnitsTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            routedUnit1IsNearGoodOrderedUnit2(map, unit11, unit12);
+            player1.selectPlayable(unit11, dummyEvent)
+            loadAllImages();
+        when:
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 2, 549, 424));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(449, 384));
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo(showMenu());
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assert(unit12.isDisrupted()).isFalse();
+    });
+
+    it("Checks that an unrouted unit near a selected routed unit, unsucessfully pass the cohesion test", () => {
+        given:
+            var {game, map, player1, unit11, unit12} = create2Players4UnitsTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            routedUnit1IsNearGoodOrderedUnit2(map, unit11, unit12);
+            player1.selectPlayable(unit11, dummyEvent)
+            loadAllImages();
+        when:
+            rollFor(5, 6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 424));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(449, 384));
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo(showMenu());
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assert(unit12.isDisrupted()).isTrue();
+    });
+
+    function routedUnit1IsNotNearAnyUnroutedUnit(map, unit1, unit2) {
+        unit1.hexLocation = map.getHex(2, 4);
+        unit1.rout();
+        unit2.hexLocation = null;
+        loadAllImages();
+    }
+
+    it("Checks that the selection of a routed unit not near any unrouted unit, does not trigger test cohesion", () => {
+        given:
+            var {game, map, player1, unit11, unit12} = create2Players4UnitsTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            routedUnit1IsNotNearAnyUnroutedUnit(map, unit11, unit12);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            player1.selectPlayable(unit11, dummyEvent);
+            loadAllImages();
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo(showMenu());
+    });
+
+    it("Checks appearance (and cancelling selection) of the cohesion test of a selected unrouted unit near a routed unit", () => {
+        given:
+            var {game, map, player1, unit11, unit12} = create2Players4UnitsTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            routedUnit1IsNearGoodOrderedUnit2(map, unit11, unit12);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            player1.selectPlayable(unit12, dummyEvent)
+            loadAllImages();
+            paint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("lose-cohesion", 227, 384, 444, 330));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 199.5, 444, 389));
+            assertDirectives(widgetsLayer, showInsertMark( 459, 122));
+            assertNoMoreDirectives(widgetsLayer);
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 424));
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
+    });
+
+    it("Checks that a selected unrouted unit near a routed unit, sucessfully pass the cohesion test", () => {
+        given:
+            var {game, map, player1, unit11, unit12} = create2Players4UnitsTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            routedUnit1IsNearGoodOrderedUnit2(map, unit11, unit12);
+            player1.selectPlayable(unit12, dummyEvent)
+            loadAllImages();
+        when:
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 2, 549, 424));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(449, 384));
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo(showMenu());
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assert(unit12.isDisrupted()).isFalse();
+    });
+
+    it("Checks that a selected unrouted unit near a routed unit, unsucessfully pass the cohesion test", () => {
+        given:
+            var {game, map, player1, unit11, unit12} = create2Players4UnitsTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            routedUnit1IsNearGoodOrderedUnit2(map, unit11, unit12);
+            player1.selectPlayable(unit12, dummyEvent)
+            loadAllImages();
+        when:
+            rollFor(5, 6);
+            clickOnDice(game);
+            executeAllAnimations();
+            resetDirectives(commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 424));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(449, 384));
+        when:
+            clickOnResult(game);
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo(showMenu());
+            assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
+            assert(unit12.isDisrupted()).isTrue();
+    });
+
+    it("Checks cohesion test of a unit near a destroyed unit", () => {
+        given:
+            var {game, map, player1, unit11, unit12} = create2Players4UnitsTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            routedUnit1IsNearGoodOrderedUnit2(map, unit11, unit12);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            player1.losePlayable(unit11)
+            loadAllImages();
+            paint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("lose-cohesion", 227, 384, 444, 330));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 199.5, 444, 389));
+            assertDirectives(widgetsLayer, showInsertMark( 459, 122));
+            assertNoMoreDirectives(widgetsLayer);
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 424));
+            assert(getDirectives(commandsLayer)).arrayEqualsTo([]);
+        when:
+            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
+            clickOnMask(game);
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+        when:
+            rollFor(1,2);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnMask(game);
+            resetDirectives(commandsLayer, itemsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+    });
+
+
+
+
+    it("Checks that the destruction of a unit not near any unrouted unit, does not trigger test cohesion", () => {
+        given:
+            var {game, map, player1, unit11, unit12} = create2Players4UnitsTinyGame();
+            var [widgetsLayer] = getLayers(game.board,"widgets");
+            routedUnit1IsNotNearAnyUnroutedUnit(map, unit11, unit12);
+        when:
+            player1.losePlayable(unit11);
+            loadAllImages();
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+    });
+
+
+
 
     it("Checks weather indicator appearance", () => {
         given:
@@ -440,6 +684,48 @@ describe("Interactive Player", ()=> {
             ]);
     });
 
+    it("Checks fog indicator appearance", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer] = getLayers(game.board,"widgets");
+            let fog = game.arbitrator.getFog(game);
+            var fogIndicator = new CBFogIndicator(fog);
+            loadAllImages();
+        when:
+            fogIndicator.open(game.board, new Point2D(0, 0));
+            resetDirectives(widgetsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(./../images/inserts/fog1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks wind direction indicator appearance", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLayer] = getLayers(game.board,"widgets");
+            let windDirection = game.arbitrator.getWindDirection(game);
+            var windDirectionIndicator = new CBWindDirectionIndicator(windDirection);
+            loadAllImages();
+        when:
+            windDirectionIndicator.open(game.board, new Point2D(0, 0));
+            resetDirectives(widgetsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(./../images/inserts/wind-direction.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+    });
+
     it("Checks tiredness indicator appearance", () => {
         given:
             var {game, wing} = createTinyGame();
@@ -456,6 +742,30 @@ describe("Interactive Player", ()=> {
                     "setTransform(1, 0, 0, 1, 0, 0)",
                     "shadowColor = #000000", "shadowBlur = 10",
                     "drawImage(./../images/inserts/tiredness11.png, -71, -71, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(1, 0, 0, 1, 41, 0)",
+                    "drawImage(./../units/banner.png, -25, -60, 50, 120)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks moral indicator appearance", () => {
+        given:
+            var {game, wing} = createTinyGame();
+            var [widgetsLayer] = getLayers(game.board,"widgets");
+            var moralIndicator = new CBWingMoralIndicator(wing);
+            loadAllImages();
+        when:
+            moralIndicator.open(game.board, new Point2D(0, 0));
+            resetDirectives(widgetsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 0, 0)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(./../images/inserts/moral11.png, -71, -71, 142, 142)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, 41, 0)",

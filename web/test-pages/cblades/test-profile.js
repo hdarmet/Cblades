@@ -5,7 +5,7 @@ import {
 } from "../../jslib/draw.js";
 import {
     CBGame
-} from "../../jslib/cblades/game.js";
+} from "../../jslib/cblades/playable.js";
 import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";

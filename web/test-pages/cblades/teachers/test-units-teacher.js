@@ -7,8 +7,11 @@ import {
     CBHexSideId, CBMap
 } from "../../../jslib/cblades/map.js";
 import {
-    CBGame, CBAbstractPlayer, CBAction
+    CBAbstractPlayer, CBAction
 } from "../../../jslib/cblades/game.js";
+import {
+    CBGame
+} from "../../../jslib/cblades/playable.js";
 import {
     CBWeather, WeatherMixin
 } from "../../../jslib/cblades/weather.js";
@@ -302,6 +305,107 @@ describe("Units teacher", ()=> {
             result = arbitrator.processDisengagementResult(unit12, [6, 6]);
         then:
             assert(result.success).isFalse();
+    });
+
+    it("Checks lost of cohesion result", () => {
+        given:
+            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+        when:
+            var result = arbitrator.processCohesionLostResult(unit12, [1, 2]);
+        then:
+            assert(result.success).isTrue();
+        when:
+            result = arbitrator.processCohesionLostResult(unit12, [6, 6]);
+        then:
+            assert(result.success).isFalse();
+    });
+
+    it("Checks lost of cohesion result", () => {
+        given:
+            var {arbitrator, unit11, unit12} = create2Players4UnitsTinyGame();
+        when:
+            unit11.hexLocation = unit12.hexLocation.getNearHex(0);
+            var units = arbitrator.getFriendNonRoutedNeighbors(unit12, unit12.hexLocation);
+        then:
+            assert(units).equalsTo[unit11];
+    });
+
+    it("Checks if a non routed unit is near a routed friend", () => {
+        given:
+            var {arbitrator, unit11, unit12} = create2Players4UnitsTinyGame();
+        when:
+            unit11.hexLocation = unit12.hexLocation.getNearHex(0);
+        then:
+            assert(arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit12)).isFalse();
+        when:
+            unit11.rout();
+        then:
+            assert(arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit12)).isTrue();
+        when:
+            unit11.hexLocation = unit11.hexLocation.getNearHex(0);
+        then:
+            assert(arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit12)).isFalse();
+        when:
+            unit11.hexLocation = unit12.hexLocation.getNearHex(0);
+        then:
+            assert(arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit12)).isTrue();
+        when:
+            unit12.rout();
+        then:
+            assert(arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit12)).isFalse();
+    });
+
+    it("Checks if a routed unit is near a non routed friend", () => {
+        given:
+            var {arbitrator, leader11, unit11, unit12} = create2Players4UnitsTinyGame();
+        when:
+            unit11.hexLocation = unit12.hexLocation.getNearHex(0);
+            leader11.hexLocation = null;
+        then:
+            assert(arbitrator.doesARoutedUnitHaveNonRoutedNeighbors(unit12)).isFalse();
+        when:
+            unit12.rout();
+        then:
+            assert(arbitrator.doesARoutedUnitHaveNonRoutedNeighbors(unit12)).isTrue();
+        when:
+            unit11.hexLocation = unit11.hexLocation.getNearHex(0);
+        then:
+            assert(arbitrator.doesARoutedUnitHaveNonRoutedNeighbors(unit12)).isFalse();
+        when:
+            unit11.hexLocation = unit12.hexLocation.getNearHex(0);
+            unit11.rout();
+        then:
+            assert(arbitrator.doesARoutedUnitHaveNonRoutedNeighbors(unit12)).isFalse();
+    });
+
+    it("Checks if a routed unit is near a non routed friend", () => {
+        given:
+            var {arbitrator, leader11, unit11, unit12} = create2Players4UnitsTinyGame();
+        when:
+            var hex2 = unit12.hexLocation;
+            unit11.hexLocation = hex2.getNearHex(0);
+            unit12.destroy();
+            leader11.hexLocation = null;
+        then:
+            assert(arbitrator.doesADestroyedUnitHaveNonRoutedNeighbors(unit12, hex2)).isTrue();
+        when:
+            unit11.hexLocation = unit11.hexLocation.getNearHex(0);
+        then:
+            assert(arbitrator.doesADestroyedUnitHaveNonRoutedNeighbors(unit12, hex2)).isFalse();
+        when:
+            unit11.hexLocation = hex2.getNearHex(0);
+            unit11.rout();
+        then:
+            assert(arbitrator.doesADestroyedUnitHaveNonRoutedNeighbors(unit12, hex2)).isFalse();
+    });
+
+    it("Checks if a routed unit is near a non routed friend", () => {
+        given:
+            var {arbitrator, leader11, unit11, unit12} = create2Players4UnitsTinyGame();
+        when:
+            var conditions = arbitrator.getUnitCohesionLostCondition(unit12);
+        then:
+            assert(conditions.modifier).equalsTo(0);
     });
 
     it("Check get wingTiredness", () => {

@@ -81,12 +81,7 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
 
     _checkIfNeighborsLoseCohesion(unit, hexLocation, processing, cancellable) {
         let neighbors = this.game.arbitrator.getFriendNonRoutedNeighbors(unit, hexLocation);
-        if (neighbors.length) {
-            this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable);
-        }
-        else {
-            processing();
-        }
+        this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable);
     }
 
     _doEngagementChecking(unit, processing) {
@@ -357,7 +352,6 @@ export class CBWeatherIndicator extends DMultiImagesIndicator {
     static DIMENSION = new Dimension2D(142, 142);
 }
 
-
 export class CBFogIndicator extends DMultiImagesIndicator {
 
     constructor(fog) {
@@ -372,7 +366,6 @@ export class CBFogIndicator extends DMultiImagesIndicator {
     static DIMENSION = new Dimension2D(142, 142);
 }
 
-
 export class CBWindDirectionIndicator extends DRotatableIndicator {
 
     constructor(angle) {
@@ -383,7 +376,6 @@ export class CBWindDirectionIndicator extends DRotatableIndicator {
 
     static DIMENSION = new Dimension2D(142, 142);
 }
-
 
 export class CBCheckEngagementInsert extends WidgetLevelMixin(DInsert) {
 

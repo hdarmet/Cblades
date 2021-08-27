@@ -205,7 +205,7 @@ export class CBAction {
             this._status = CBAction.FINALIZED;
             this._game.closeWidgets();
             action && action();
-            if (this.playable.isCurrentPlayer()) {
+            if (!this.playable.isCurrentPlayer || this.playable.isCurrentPlayer()) {
                 this.playable.markAsPlayed();
             }
             Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINALIZED);
@@ -668,7 +668,8 @@ export class CBAbstractGame {
     }
 
     canSelectPlayable(playable) {
-        return (!this.focusedPlayable || this.focusedPlayable===playable) && playable.isCurrentPlayer();
+        return (!this.focusedPlayable || this.focusedPlayable===playable) &&
+            (!playable.isCurrentPlayer || playable.isCurrentPlayer());
     }
 
     setSelectedPlayable(playable) {
@@ -1240,6 +1241,10 @@ export function PlayableMixin(clazz) {
             return this._action && this._action.isStarted();
         }
 
+        isFinishable() {
+            return this._action && this._action.isFinishable();
+        }
+
         onMouseClick(event) {
             if (!this.played) {
                 this.play(event);
@@ -1286,7 +1291,7 @@ export function BelongsToPlayerMixin(clazz) {
         }
 
         isFinishable() {
-            if (!this.isCurrentPlayer()) return true;
+            if (!this.isCurrentPlayer || !this.isCurrentPlayer()) return true;
             return this.player.canFinishPlayable(this);
         }
 

@@ -7,8 +7,11 @@ import {
     CBMap
 } from "../../../jslib/cblades/map.js";
 import {
-    CBGame, CBAbstractPlayer
+    CBAbstractPlayer
 } from "../../../jslib/cblades/game.js";
+import {
+    CBGame
+} from "../../../jslib/cblades/playable.js";
 import {
     CBCharacter,
     CBCommandProfile,
@@ -25,7 +28,6 @@ import {
     setDrawPlatform
 } from "../../../jslib/draw.js";
 import {
-    loadAllImages,
     mergeClasses,
     mockPlatform
 } from "../../mocks.js";
@@ -35,6 +37,9 @@ import {
 import {
     CBMiscellaneousTeacher
 } from "../../../jslib/cblades/teachers/miscellaneous-teacher.js";
+import {
+    CBWeather, CBFog
+} from "../../../jslib/cblades/weather.js";
 
 describe("Miscellaneous teacher", ()=> {
 
@@ -54,6 +59,31 @@ describe("Miscellaneous teacher", ()=> {
                 this.setMoralProfile(index, new CBMoralProfile());
             }
         }
+    }
+
+    function createBasicGame() {
+        let game = new CBGame();
+        let arbitrator = new Arbitrator();
+        game.setArbitrator(arbitrator);
+        var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        game.setMap(map);
+        game.start();
+        return {game, arbitrator, map};
+    }
+
+    function createTinyGame() {
+        let game = new CBGame();
+        var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        game.setMap(map);
+        let arbitrator = new Arbitrator();
+        game.setArbitrator(arbitrator);
+        let player = new CBAbstractPlayer();
+        game.addPlayer(player);
+        let wing = new CBWing(player, "./../units/banner.png");
+        let unitType = new CBTestUnitType("unit", ["./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"])
+        let unit = new CBTroop(unitType, wing);
+        game.start();
+        return {game, arbitrator, map, player, wing, unit};
     }
 
     function create2Players4UnitsTinyGame() {
@@ -159,6 +189,142 @@ describe("Miscellaneous teacher", ()=> {
             result = arbitrator.processRemoveStakesResult(unit11, [5, 6]);
         then:
             assert(result.success).isFalse();
+    });
+
+    it("Checks weather swiping", () => {
+        given:
+            var {arbitrator, game} = createBasicGame();
+        when:
+            game.weather = CBWeather.HOT;
+            var result2 = arbitrator.processPlayWeatherResult(game, [1, 1]);
+            var result3 = arbitrator.processPlayWeatherResult(game, [1, 2]);
+            var result7 = arbitrator.processPlayWeatherResult(game, [3, 4]);
+            var result12 = arbitrator.processPlayWeatherResult(game, [6, 6]);
+        then:
+            assert(result2).objectEqualsTo({weather:CBWeather.HOT, swipe:0});
+            assert(result3).objectEqualsTo({weather:CBWeather.HOT, swipe:0});
+            assert(result7).objectEqualsTo({weather:CBWeather.HOT, swipe:0});
+            assert(result12).objectEqualsTo({weather:CBWeather.CLEAR, swipe:1});
+        when:
+            game.weather = CBWeather.CLEAR;
+            result2 = arbitrator.processPlayWeatherResult(game, [1, 1]);
+            result3 = arbitrator.processPlayWeatherResult(game, [1, 2]);
+            result7 = arbitrator.processPlayWeatherResult(game, [3, 4]);
+            result12 = arbitrator.processPlayWeatherResult(game, [6, 6]);
+        then:
+            assert(result2).objectEqualsTo({weather:CBWeather.HOT, swipe:-1});
+            assert(result3).objectEqualsTo({weather:CBWeather.CLEAR, swipe:0});
+            assert(result7).objectEqualsTo({weather:CBWeather.CLEAR, swipe:0});
+            assert(result12).objectEqualsTo({weather:CBWeather.CLOUDY, swipe:1});
+        when:
+            game.weather = CBWeather.RAIN;
+            result2 = arbitrator.processPlayWeatherResult(game, [1, 1]);
+            result3 = arbitrator.processPlayWeatherResult(game, [1, 2]);
+            result7 = arbitrator.processPlayWeatherResult(game, [3, 4]);
+            result12 = arbitrator.processPlayWeatherResult(game, [6, 6]);
+        then:
+            assert(result2).objectEqualsTo({weather:CBWeather.OVERCAST, swipe:-1});
+            assert(result3).objectEqualsTo({weather:CBWeather.OVERCAST, swipe:-1});
+            assert(result7).objectEqualsTo({weather:CBWeather.RAIN, swipe:0});
+            assert(result12).objectEqualsTo({weather:CBWeather.STORM, swipe:1});
+        when:
+            game.weather = CBWeather.STORM;
+            result2 = arbitrator.processPlayWeatherResult(game, [1, 1]);
+            result3 = arbitrator.processPlayWeatherResult(game, [1, 2]);
+            result7 = arbitrator.processPlayWeatherResult(game, [3, 4]);
+            result12 = arbitrator.processPlayWeatherResult(game, [6, 6]);
+        then:
+            assert(result2).objectEqualsTo({weather:CBWeather.RAIN, swipe:-1});
+            assert(result3).objectEqualsTo({weather:CBWeather.STORM, swipe:0});
+            assert(result7).objectEqualsTo({weather:CBWeather.STORM, swipe:0});
+            assert(result12).objectEqualsTo({weather:CBWeather.STORM, swipe:0});
+    });
+
+    it("Checks fog swiping", () => {
+        given:
+            var {arbitrator, game} = createBasicGame();
+        when:
+            game.fog = CBFog.MIST;
+            var result2 = arbitrator.processPlayFogResult(game, [1, 1]);
+            var result3 = arbitrator.processPlayFogResult(game, [1, 2]);
+            var result7 = arbitrator.processPlayFogResult(game, [3, 4]);
+            var result12 = arbitrator.processPlayFogResult(game, [6, 6]);
+        then:
+            assert(result2).objectEqualsTo({fog:CBFog.MIST, swipe:0});
+            assert(result3).objectEqualsTo({fog:CBFog.MIST, swipe:0});
+            assert(result7).objectEqualsTo({fog:CBFog.MIST, swipe:0});
+            assert(result12).objectEqualsTo({fog:CBFog.DENSE_MIST, swipe:1});
+        when:
+            game.fog = CBFog.DENSE_MIST;
+            result2 = arbitrator.processPlayFogResult(game, [1, 1]);
+            result3 = arbitrator.processPlayFogResult(game, [1, 2]);
+            result7 = arbitrator.processPlayFogResult(game, [3, 4]);
+            result12 = arbitrator.processPlayFogResult(game, [6, 6]);
+        then:
+            assert(result2).objectEqualsTo({fog:CBFog.MIST, swipe:-1});
+            assert(result3).objectEqualsTo({fog:CBFog.MIST, swipe:-1});
+            assert(result7).objectEqualsTo({fog:CBFog.DENSE_MIST, swipe:0});
+            assert(result12).objectEqualsTo({fog:CBFog.FOG, swipe:1});
+        when:
+            game.fog = CBFog.FOG;
+            result2 = arbitrator.processPlayFogResult(game, [1, 1]);
+            result3 = arbitrator.processPlayFogResult(game, [1, 2]);
+            result7 = arbitrator.processPlayFogResult(game, [3, 4]);
+            result12 = arbitrator.processPlayFogResult(game, [6, 6]);
+        then:
+            assert(result2).objectEqualsTo({fog:CBFog.DENSE_MIST, swipe:-1});
+            assert(result3).objectEqualsTo({fog:CBFog.DENSE_MIST, swipe:-1});
+            assert(result7).objectEqualsTo({fog:CBFog.FOG, swipe:0});
+            assert(result12).objectEqualsTo({fog:CBFog.DENSE_FOG, swipe:1});
+        when:
+            game.fog = CBFog.DENSE_FOG;
+            result2 = arbitrator.processPlayFogResult(game, [1, 1]);
+            result3 = arbitrator.processPlayFogResult(game, [1, 2]);
+            result7 = arbitrator.processPlayFogResult(game, [3, 4]);
+            result12 = arbitrator.processPlayFogResult(game, [6, 6]);
+        then:
+            assert(result2).objectEqualsTo({fog:CBFog.FOG, swipe:-1});
+            assert(result3).objectEqualsTo({fog:CBFog.FOG, swipe:-1});
+            assert(result7).objectEqualsTo({fog:CBFog.DENSE_FOG, swipe:0});
+            assert(result12).objectEqualsTo({fog:CBFog.DENSE_FOG, swipe:0});
+    });
+
+    it("Checks wind direction swiping", () => {
+        given:
+            var {arbitrator, game} = createBasicGame();
+        when:
+            game.windDirection = 180;
+            var result1 = arbitrator.processPlayWindDirectionResult(game, [1]);
+            var result3 = arbitrator.processPlayWindDirectionResult(game, [3]);
+            var result6 = arbitrator.processPlayWindDirectionResult(game, [6]);
+        then:
+            assert(result1).objectEqualsTo({windDirection: 120, swipe: -1});
+            assert(result3).objectEqualsTo({windDirection: 180, swipe: 0});
+            assert(result6).objectEqualsTo({windDirection: 240, swipe: 1});
+    });
+
+    it("Checks tiredness swiping", () => {
+        given:
+            var {arbitrator, wing} = createTinyGame();
+        when:
+            wing.setTiredness(10);
+            var result2 = arbitrator.processPlayTirednessResult(wing, [1, 1]);
+            var result3 = arbitrator.processPlayTirednessResult(wing, [1, 2]);
+        then:
+            assert(result2).objectEqualsTo({tiredness: 11, swipe: -1});
+            assert(result3).objectEqualsTo({tiredness: 10, swipe: 0});
+    });
+
+    it("Checks moral swiping", () => {
+        given:
+            var {arbitrator, wing} = createTinyGame();
+        when:
+            wing.setMoral(10);
+            var result2 = arbitrator.processPlayMoralResult(wing, [1, 1]);
+            var result3 = arbitrator.processPlayMoralResult(wing, [1, 2]);
+        then:
+            assert(result2).objectEqualsTo({moral: 11, swipe: -1});
+            assert(result3).objectEqualsTo({moral: 10, swipe: 0});
     });
 
 });

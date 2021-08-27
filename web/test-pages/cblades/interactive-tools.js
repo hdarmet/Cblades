@@ -10,7 +10,7 @@ import {
     executeTimeouts
 } from "../../jstest/jtest.js";
 import {
-    DDice, DMessage, DResult
+    DDice, DMessage, DResult, DSwipe
 } from "../../jslib/widget.js";
 
 export function paint(game) {
@@ -138,8 +138,22 @@ export function getResult(game) {
     return null;
 }
 
+export function getSwipe(game) {
+    var commandsLevel = game.board.getLevel("widget-commands");
+    for (let item of commandsLevel.artifacts) {
+        if (item.element instanceof DSwipe) {
+            return item;
+        }
+    }
+    return null;
+}
+
 export function clickOnResult(game) {
     clickOnArtifact(game, getResult(game));
+}
+
+export function clickOnSwipe(game) {
+    clickOnArtifact(game, getSwipe(game));
 }
 
 export function showMap(image, [a, b, c, d, e, f]) {
@@ -388,6 +402,30 @@ export function showIndicator(image, x, y) {
     ];
 }
 
+export function showBanneredIndicator(image, banner,  x, y) {
+    return [
+        "save()",
+            `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+            "shadowColor = #000000", "shadowBlur = 10",
+            `drawImage(./../images/inserts/${image}.png, -71, -71, 142, 142)`,
+        "restore()",
+        "save()",
+            `setTransform(1, 0, 0, 1, ${x+41}, ${y})`,
+            `drawImage(./../${banner}.png, -25, -60, 50, 120)`,
+        "restore()"
+    ];
+}
+
+export function showOrientedIndicator(image, [a, b, c, d, e, f]) {
+    return [
+        "save()",
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #000000", "shadowBlur = 10",
+            `drawImage(./../images/inserts/${image}.png, -71, -71, 142, 142)`,
+        "restore()"
+    ];
+}
+
 export function showWingIndicator(image, banner, x, y) {
     return [
         "save()",
@@ -468,6 +506,36 @@ export function showFailureResult(x, y) {
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #A00000", "shadowBlur = 100",
             "drawImage(./../images/dice/failure.png, -75, -75, 150, 150)",
+        "restore()"
+    ];
+}
+
+export function showSwipeUpResult(x, y) {
+    return [
+        "save()",
+            `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+            "shadowColor = #00A000", "shadowBlur = 100",
+            "drawImage(./../images/dice/swipe-up.png, -75, -75, 150, 150)",
+        "restore()"
+    ];
+}
+
+export function showNoSwipeResult(x, y) {
+    return [
+        "save()",
+        `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+        "shadowColor = #00A000", "shadowBlur = 100",
+        "drawImage(./../images/dice/no-swipe.png, -75, -75, 150, 150)",
+        "restore()"
+    ];
+}
+
+export function showSwipeDownResult(x, y) {
+    return [
+        "save()",
+        `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+        "shadowColor = #00A000", "shadowBlur = 100",
+        "drawImage(./../images/dice/swipe-down.png, -75, -75, 150, 150)",
         "restore()"
     ];
 }

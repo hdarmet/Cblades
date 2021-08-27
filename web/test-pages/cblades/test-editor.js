@@ -15,7 +15,7 @@ import {
 } from "../../jslib/mechanisms.js";
 import {
     CBGame
-} from "../../jslib/cblades/game.js";
+} from "../../jslib/cblades/playable.js";
 import {
     CBMap
 } from "../../jslib/cblades/map.js";

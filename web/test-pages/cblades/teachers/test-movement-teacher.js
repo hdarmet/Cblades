@@ -8,8 +8,11 @@ import {
     CBHexSideId, CBMap
 } from "../../../jslib/cblades/map.js";
 import {
-    CBGame, CBAbstractPlayer
+    CBAbstractPlayer
 } from "../../../jslib/cblades/game.js";
+import {
+    CBGame
+} from "../../../jslib/cblades/playable.js";
 import {
     CBCharacter,
     CBCommandProfile,
