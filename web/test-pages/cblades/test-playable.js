@@ -33,9 +33,8 @@ import {
     CBActionActuator,
     CBActuatorImageTrigger,
     RetractableActuatorMixin,
-    CBUnitActuatorTrigger,
     CBActuatorMultiImagesTrigger,
-    CBHexCounter, ActivableArtifactMixin
+    CBHexCounter, ActivableArtifactMixin, CBPlayableActuatorTrigger
 } from "../../jslib/cblades/playable.js";
 import {
     clickOnTrigger,
@@ -91,13 +90,25 @@ class CBTestMultiImagesActuator extends CBActionActuator {
     }
 }
 
+export class CBTestActuatorTrigger extends CBPlayableActuatorTrigger {
+
+    constructor(actuator, unit, ...args) {
+        super(actuator, unit, ...args);
+    }
+
+    get layer() {
+        return CBLevelBuilder.ULAYERS.ACTUATORS;
+    }
+
+}
+
 class CBTestUnitActuator extends RetractableActuatorMixin(CBActionActuator) {
 
     constructor(action, unit) {
         super(action);
         let image = DImage.getImage("./../images/actuators/test.png");
         let imageArtifacts = [];
-        this.trigger = new CBUnitActuatorTrigger(this, unit, "units", image,
+        this.trigger = new CBTestActuatorTrigger(this, unit, "units", image,
             new Point2D(0, 0), new Dimension2D(142, 142));
         this.trigger.position = Point2D.position(action.playable.location, unit.location, 1);
         imageArtifacts.push(this.trigger);
@@ -109,7 +120,7 @@ class CBTestUnitActuator extends RetractableActuatorMixin(CBActionActuator) {
     }
 
     onMouseClick(trigger, event) {
-        this.unitProcessed = trigger.unit;
+        this.unitProcessed = trigger.playable;
     }
 
 }
@@ -143,17 +154,6 @@ class CBTestPlayable extends RetractablePieceMixin(HexLocatableMixin(BelongsToPl
 
     createArtifact(levelName, images, position, dimension) {
         return new TestPlayableImageArtifact(this, levelName, images, position, dimension);
-    }
-
-    markAsPlayed() {
-        this.status = "played";
-    }
-
-    reset(player) {
-        super.reset(player);
-        if (player === this.player) {
-            delete this.status;
-        }
     }
 
     get slot() {
@@ -734,12 +734,10 @@ describe("Playable", ()=> {
         when:
             resetDirectives(unitsLayer1, actuatorsLayer1);
             mouseMove(game, 417-71/2+5, 159-71/2+5); // On counter1 but not counter2
-            paint(game);
+            repaint(game);
         then:
-            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([
-                ]);
-            assert(getDirectives(actuatorsLayer1, 4)).arrayEqualsTo([
-            ]);
+            assert(getDirectives(unitsLayer1, 4)).arrayEqualsTo([]);
+            assert(getDirectives(actuatorsLayer1, 4)).arrayEqualsTo([]);
         when:
             resetDirectives(unitsLayer1, actuatorsLayer1);
             mouseMove(game, 100, 100); // not on any counter
@@ -985,7 +983,7 @@ describe("Playable", ()=> {
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
-            unit.markAsBeingPlayed();
+            unit.markAsPlayed();
         then:
             assert(unit.isActivated()).isTrue();
             assert(unit.isPlayed()).isTrue();
@@ -1071,6 +1069,10 @@ describe("Playable", ()=> {
 
         get slot() {
             return this.piece.slot;
+        }
+
+        get layer() {
+            return CBLevelBuilder.GLAYERS.COUNTERS;
         }
 
     }

@@ -14,7 +14,13 @@ import {
     CBPieceImageArtifact, CBStacking, HexLocatableMixin, BelongsToPlayerMixin, PlayableMixin, CBPiece
 } from "./game.js";
 import {
-    RetractableArtifactMixin, ActivableArtifactMixin, RetractablePieceMixin, SelectableArtifactMixin, CBLevelBuilder, CBGame
+    RetractableArtifactMixin,
+    ActivableArtifactMixin,
+    RetractablePieceMixin,
+    SelectableArtifactMixin,
+    CBLevelBuilder,
+    CBGame,
+    CBPlayableActuatorTrigger
 } from "./playable.js";
 import {
     CBHexLocation
@@ -64,6 +70,26 @@ export let CBOrderInstruction = {
     DEFEND: 1,
     REGROUP: 2,
     RETREAT: 3
+}
+
+export class CBUnitActuatorTrigger extends CBPlayableActuatorTrigger {
+
+    constructor(actuator, unit, ...args) {
+        super(actuator, unit, ...args);
+    }
+
+    get unit() {
+        return this.playable;
+    }
+
+    get slot() {
+        return this.unit.slot;
+    }
+
+    get layer() {
+        return CBLevelBuilder.ULAYERS.ACTUATORS;
+    }
+
 }
 
 export class CBProfile {
@@ -812,7 +838,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     unselect() {
         super.unselect();
         if (this.isActivated()) {
-            this.markAsBeingPlayed();
+            this.markAsPlayed();
         }
     }
 
@@ -828,7 +854,6 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         super.reset(player);
         if (player === this.player) {
             this._orderGiven = false;
-            this._updatePlayed();
         }
     }
 
@@ -876,11 +901,6 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     hasReceivedOrder() {
         return this._orderGiven;
-    }
-
-    markAsPlayed() {
-        Memento.register(this);
-        this._updatePlayed();
     }
 
     _updatePlayed() {

@@ -13,7 +13,7 @@ import {
     CBAction, CBActuator, CBAbstractGame
 } from "./game.js";
 import {
-    CBActionActuator, CBUnitActuatorTrigger, RetractableActuatorMixin, WidgetLevelMixin
+    CBActionActuator, RetractableActuatorMixin, WidgetLevelMixin
 } from "./playable.js";
 import {
     DImage
@@ -22,7 +22,7 @@ import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
-    CBCharge,
+    CBUnitActuatorTrigger, CBCharge,
     CBOrderInstruction
 } from "./unit.js";
 
@@ -469,11 +469,11 @@ export class CBOrderGivenActuator extends RetractableActuatorMixin(CBActionActua
     }
 
     getTrigger(unit) {
-        return this.findTrigger(artifact=>artifact._unit === unit);
+        return this.findTrigger(artifact=>artifact.playable === unit);
     }
 
     onMouseClick(trigger, event) {
-        this.action.giveOrder(this.playable, trigger._unit, event);
+        this.action.giveOrder(this.playable, trigger.playable, event);
     }
 
 }

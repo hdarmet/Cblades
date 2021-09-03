@@ -14,13 +14,13 @@ import {
     CBAction, CBActuator
 } from "./game.js";
 import {
-    CBActionActuator, CBActuatorImageTrigger, CBMask, CBUnitActuatorTrigger, WidgetLevelMixin, RetractableActuatorMixin
+    CBActionActuator, CBActuatorImageTrigger, CBMask, WidgetLevelMixin, RetractableActuatorMixin
 } from "./playable.js";
 import {
     CBHexSideId
 } from "./map.js";
 import {
-    CBCharge
+    CBCharge, CBUnitActuatorTrigger
 } from "./unit.js";
 import {
     CBActionMenu,

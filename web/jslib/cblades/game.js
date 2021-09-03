@@ -151,6 +151,10 @@ export class CBAction {
         return this._status === CBAction.CANCELLED;
     }
 
+    isPlayed() {
+        return this.isFinished();
+    }
+
     isFinished() {
         return this._status >= CBAction.FINISHED;
     }
@@ -168,10 +172,6 @@ export class CBAction {
         if (this._status === CBAction.INITIATED) {
             Memento.register(this);
             this._status = CBAction.STARTED;
-            if (!this.playable.isCurrentPlayer || this.playable.isCurrentPlayer()) {
-                this.playable.markAsPlayed();
-            }
-            this.game.setFocusedPlayable(null);
             Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.STARTED);
         }
     }
@@ -181,9 +181,11 @@ export class CBAction {
             Memento.register(this);
             this._status = CBAction.FINISHED;
             if (!this.playable.isCurrentPlayer || this.playable.isCurrentPlayer()) {
-                this.playable.markAsPlayed();
+                this.playable._updatePlayed();
             }
-            this.game.setFocusedPlayable(null);
+            if (this.playable === this.game.focusedPlayable) {
+                this.game.setFocusedPlayable(null);
+            }
             Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINISHED);
         }
     }
@@ -206,7 +208,7 @@ export class CBAction {
             this._game.closeWidgets();
             action && action();
             if (!this.playable.isCurrentPlayer || this.playable.isCurrentPlayer()) {
-                this.playable.markAsPlayed();
+                this.playable._updatePlayed();
             }
             Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINALIZED);
         }
@@ -498,6 +500,7 @@ export class CBAbstractGame {
             actuators: [...this._actuators],
             playables: new Set(this._playables),
             popup: this._popup,
+            firePlayed: this._firePlayed
         };
     }
 
@@ -511,6 +514,20 @@ export class CBAbstractGame {
         } else {
             delete this._popup;
         }
+        if (memento.firePlayed) {
+            this._firePlayed = memento.firePlayed;
+        } else {
+            delete this._firePlayed;
+        }
+    }
+
+    changeFirePlayed() {
+        Memento.register(this);
+        this._firePlayed = true;
+    }
+
+    get firePlayed() {
+        return this._firePlayed;
     }
 
     _processGlobalEvent(source, event, value) {
@@ -830,6 +847,7 @@ export class CBAbstractGame {
         if (!this.selectedPlayable || this.canUnselectPlayable()) {
             this.closeWidgets();
             this._resetPlayables(this._currentPlayer);
+            delete this._firePlayed;
             let indexPlayer = this._players.indexOf(this._currentPlayer);
             this._currentPlayer = this._players[(indexPlayer + 1) % this._players.length];
             this._initPlayables(this._currentPlayer);
@@ -1047,6 +1065,8 @@ export class CBPiece {
         return this._getPieces();
     }
 
+    _processGlobalEvent(source, event, value) {
+    }
 }
 
 export function DisplayLocatableMixin(clazz) {
@@ -1187,9 +1207,8 @@ export function PlayableMixin(clazz) {
         }
 
         reset(player) {
-            if (player === this.player) {
-                delete this._action;
-            }
+            delete this._action;
+            this._updatePlayed();
         }
 
         changeAction(action) {
@@ -1226,15 +1245,19 @@ export function PlayableMixin(clazz) {
             return this._action;
         }
 
-        markAsBeingPlayed() {
+        markAsPlayed() {
+            Memento.register(this);
             if (!this.action) {
                 this.launchAction(new CBAction(this.game, this));
             }
             this.action.markAsFinished();
         }
 
+        _updatePlayed() {
+        }
+
         isPlayed() {
-            return this._action && this._action.isFinished();
+            return this._action && this._action.isPlayed();
         }
 
         isActivated() {
@@ -1254,11 +1277,18 @@ export function PlayableMixin(clazz) {
     }
 
 }
-PlayableMixin.getByType = function(hexLocation, type) {
-    for (let playable of hexLocation.playables) {
+PlayableMixin.getOneByType = function(container, type) {
+    for (let playable of container.playables) {
         if (playable instanceof type) return playable;
     }
     return null;
+}
+PlayableMixin.getAllByType = function(container, type) {
+    let result = [];
+    for (let playable of container.playables) {
+        if (playable instanceof type) result.push(playable);
+    }
+    return result;
 }
 PlayableMixin.SELECTED_EVENT = "playable-selected";
 PlayableMixin.UNSELECTED_EVENT = "playable-unselected";
@@ -1293,6 +1323,12 @@ export function BelongsToPlayerMixin(clazz) {
         isFinishable() {
             if (!this.isCurrentPlayer || !this.isCurrentPlayer()) return true;
             return this.player.canFinishPlayable(this);
+        }
+
+        reset(player) {
+            if (this.player === player) {
+                super.reset(player);
+            }
         }
 
     }

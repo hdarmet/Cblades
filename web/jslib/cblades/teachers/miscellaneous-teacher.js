@@ -104,4 +104,10 @@ export class CBMiscellaneousTeacher {
         return { swipe, moral: wing.moral-swipe };
     }
 
+    processPlayFireResult(wing, diceResult) {
+        let playFire = false;
+        if (diceResult[0]===6) playFire = true;
+        return { playFire };
+    }
+
 }

@@ -48,9 +48,12 @@ import {
     Dimension2D
 } from "../../jslib/geometry.js";
 import {
-    showActiveMarker, showCharacter,
+    clickOnTrigger,
+    mouseMoveOnTrigger, mouseMoveOutOfTrigger, paint,
+    repaint,
+    showActiveMarker, showActuatorTrigger, showCharacter,
     showCommandMarker, showFormation,
-    showMarker,
+    showMarker, showSelectedActuatorTrigger,
     showTroop,
     zoomAndRotate0,
     zoomAndRotate150, zoomAndRotate30,
@@ -974,7 +977,7 @@ describe("Unit", ()=> {
         when:
             resetDirectives(markersLayer);
             unit.launchAction(new CBAction(game, unit));
-            unit.markAsBeingPlayed();
+            unit.markAsPlayed();
             paint(game);
             loadAllImages(); // to load actiondone.png
         then:
@@ -1021,7 +1024,7 @@ describe("Unit", ()=> {
         when:
             resetDirectives(markersLayer);
             unit.launchAction(new CBAction(game, unit));
-            unit.markAsBeingPlayed();
+            unit.markAsPlayed();
             paint(game);
             loadAllImages(); // to load actiondone.png
         then:
@@ -1482,7 +1485,7 @@ describe("Unit", ()=> {
             var [markersLayer] = getLayers(game.board, "markers-1");
         when:
             resetDirectives(markersLayer);
-            unit2.markAsBeingPlayed(true);
+            unit2.markAsPlayed(true);
             unit2.markAsEngaging(true);
             unit2.addOneCohesionLevel();
             unit2.addOneTirednessLevel();

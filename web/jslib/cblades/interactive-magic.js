@@ -13,7 +13,6 @@ import {
 import {
     CBActionActuator,
     CBActuatorImageTrigger,
-    CBUnitActuatorTrigger,
     WidgetLevelMixin,
     RetractableActuatorMixin
 } from "./playable.js";
@@ -32,7 +31,7 @@ import {
     CBCombatResultTableInsert
 } from "./interactive-combat.js";
 import {
-    CBCharge
+    CBUnitActuatorTrigger, CBCharge
 } from "./unit.js";
 
 export function registerInteractiveMagic() {
@@ -245,7 +244,7 @@ export class CBSpellTargetFoesActuator extends RetractableActuatorMixin(CBAction
     }
 
     onMouseClick(trigger, event) {
-        this.action.unitTargeted(trigger._unit, event);
+        this.action.unitTargeted(trigger.playable, event);
     }
 
 }
@@ -330,7 +329,7 @@ export class CBSpellsMenu extends DIconMenu {
                         col, row, event => {
                             console.assert(unit.characterNature);
                             unit.choseSpell(spellDefinition);
-                            unit.markAsBeingPlayed();
+                            unit.markAsPlayed();
                             return true;
                         }, spellDefinition.label).setActive(true)
                 )

@@ -196,6 +196,7 @@ class CBTestPlayable extends BelongsToPlayerMixin(HexLocatableMixin(PlayableMixi
         return this._nature = "unit";
     }
 
+    /*
     markAsPlayed() {
         this.status = "played";
     }
@@ -206,6 +207,7 @@ class CBTestPlayable extends BelongsToPlayerMixin(HexLocatableMixin(PlayableMixi
             delete this.status;
         }
     }
+     */
 
     get slot() {
         return this.hexLocation.playables.indexOf(this);
@@ -221,10 +223,6 @@ class CBTestDisplayPlayable extends DisplayLocatableMixin(PlayableMixin(CBPiece)
 
     createArtifact(levelName, images, position, dimension) {
         return new TestPlayableArtifact(this, levelName, images, position, dimension);
-    }
-
-    markAsPlayed() {
-        this.status = "played";
     }
 
     play() {
@@ -1032,7 +1030,7 @@ describe("Game", ()=> {
             ]);
     });
 
-    it("Checks getByType method", () => {
+    it("Checks getOneByType method", () => {
         given:
             var { game, map, player } = createTinyGame();
             class PlayableOne extends CBTestPlayable {};
@@ -1045,8 +1043,8 @@ describe("Game", ()=> {
             playable1.addToMap(hexId);
             playable2.addToMap(hexId);
         then:
-            assert(PlayableMixin.getByType(hexId, PlayableOne)).equalsTo(playable1);
-            assert(PlayableMixin.getByType(hexId, PlayableThree)).isNotDefined();
+            assert(PlayableMixin.getOneByType(hexId, PlayableOne)).equalsTo(playable1);
+            assert(PlayableMixin.getOneByType(hexId, PlayableThree)).isNotDefined();
     });
 
     it("Checks playable addition and removing on a Hex Side (not undoable)", () => {
@@ -1318,16 +1316,16 @@ describe("Game", ()=> {
             assert(unit1.isCurrentPlayer()).isTrue();
         when:
             unit1.select();
-            unit1.launchAction(new CBAction(unit1, dummyEvent));
+            unit1.launchAction(new CBAction(game, unit1, dummyEvent));
         then:
             assert(game.selectedPlayable).equalsTo(unit1);
         when:
             unit1.markAsPlayed();
-            assert(unit1.status).equalsTo("played");
+            assert(unit1.isPlayed()).isTrue();
             game.nextTurn();
         then:
             assert(game.currentPlayer).equalsTo(player2);
-            assert(unit1.status).isNotDefined();
+            assert(unit1.isPlayed()).isFalse();
             assert(unit1.isCurrentPlayer()).isFalse();
     });
 
@@ -1387,7 +1385,7 @@ describe("Game", ()=> {
             var {game, unit} = createTinyGame();
         when:
             unit.launchAction(new CBAction(game, unit));
-            unit.markAsBeingPlayed();
+            unit.markAsPlayed();
             paint(game);
             loadAllImages(); // to load actiondone.png
         then:
@@ -1405,7 +1403,7 @@ describe("Game", ()=> {
         given:
             var {game, display0} = createDisplayTinyGame();
         when:
-            display0.markAsBeingPlayed();
+            display0.markAsPlayed();
             paint(game);
             loadAllImages(); // to load actiondone.png
         then:

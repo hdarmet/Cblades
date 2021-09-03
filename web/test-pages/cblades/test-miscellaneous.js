@@ -16,13 +16,12 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
-    create2Players2Units2LeadersTinyGame,
     createTinyGame
 } from "./game-examples.js";
 import {
-    CBFireStart,
+    CBFireCounter,
     CBFogCounter,
-    CBStakes,
+    CBStakesCounter,
     CBWeatherCounter,
     CBWindDirectionCounter,
     CBWingMoralCounter,
@@ -52,7 +51,7 @@ describe("Miscellaneous", ()=> {
             var [groundLayer] = getLayers(game.board,"hex-0");
             var hexId = map.getHex(7,8);
         when:
-            var fireStart = new CBFireStart();
+            var fireStart = new CBFireCounter();
             resetDirectives(groundLayer);
             fireStart.addToMap(hexId);
             paint(game);
@@ -62,8 +61,8 @@ describe("Miscellaneous", ()=> {
             assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
-                    "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(./../images/actions/start-fire.png, -71, -71, 142, 142)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(./../images/counters/start-fire.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
     });
@@ -74,7 +73,7 @@ describe("Miscellaneous", ()=> {
             var [groundLayer] = getLayers(game.board,"hex-0");
             var hexId = map.getHex(7,8);
         when:
-            var fireStart = new CBStakes();
+            var fireStart = new CBStakesCounter();
             resetDirectives(groundLayer);
             fireStart.addToMap(hexId);
             paint(game);
@@ -85,7 +84,7 @@ describe("Miscellaneous", ()=> {
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(./../images/actions/stakes.png, -71, -71, 142, 142)",
+                    "drawImage(./../images/counters/stakes.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
     });

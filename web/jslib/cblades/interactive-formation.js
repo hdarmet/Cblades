@@ -70,10 +70,10 @@ export class InteractiveBreakFormationAction extends CBAction {
         let {fromHex, toHex} = this.game.arbitrator.getTroopsAfterFormationBreak(this.unit);
         this.unit.breakFormation(fromHex, toHex);
         for (let replacement of fromHex) {
-            replacement.markAsBeingPlayed();
+            replacement.markAsPlayed();
         }
         for (let replacement of toHex) {
-            replacement.markAsBeingPlayed();
+            replacement.markAsPlayed();
         }
         this.markAsFinished();
     }
@@ -111,7 +111,7 @@ export class InteractiveCreateFormationAction extends CBAction {
         let hexLocation = this.unit.hexLocation;
         replacement.appendToMap(new CBHexSideId(hexLocation, hexId), CBStacking.TOP);
         replacement.rotate(replaced[0].angle);
-        replacement.markAsBeingPlayed();
+        replacement.markAsPlayed();
         for (let troop of replaced) {
             troop.deleteFromMap();
             troop.move(null, 0);
@@ -155,7 +155,7 @@ export class InteractiveReleaseTroopsAction extends CBAction {
         let {stepCount, troop} = this.game.arbitrator.releaseTroop(this.unit, hexId, steps);
         troop.appendToMap(hexId, stacking);
         troop.angle = this.unit.angle;
-        troop.markAsBeingPlayed();
+        troop.markAsPlayed();
         this.unit.fixRemainingLossSteps(stepCount);
         if (this.game.arbitrator.isAllowedToReleaseTroops(this.unit)) {
             this.markAsStarted();
@@ -190,7 +190,7 @@ export class InteractiveIncludeTroopsAction extends CBAction {
         this.unit.fixRemainingLossSteps(stepCount);
         this.unit.fixTirednessLevel(tired);
         this.unit.fixLackOfMunitionsLevel(lackOfMunitions);
-        this.unit.markAsBeingPlayed();
+        this.unit.markAsPlayed();
         for (let removedUnit of removed) {
             removedUnit.deleteFromMap();
         }

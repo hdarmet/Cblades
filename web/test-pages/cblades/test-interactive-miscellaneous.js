@@ -62,9 +62,9 @@ import {
     PlayableMixin
 } from "../../jslib/cblades/game.js";
 import {
-    CBFireStart,
+    CBFireCounter,
     CBFogCounter,
-    CBStakes,
+    CBStakesCounter,
     CBWeatherCounter,
     CBWindDirectionCounter,
     CBWingMoralCounter,
@@ -222,7 +222,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(unit1.markAsBeingPlayed()).isFalse();
+            assert(unit1.markAsPlayed()).isFalse();
     });
 
     it("Checks failed set fire misc action process ", () => {
@@ -253,7 +253,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(PlayableMixin.getByType(unit1.hexLocation, CBFireStart)).isNotDefined();
+            assert(PlayableMixin.getOneByType(unit1.hexLocation, CBFireCounter)).isNotDefined();
             assert(unit1.isPlayed()).isTrue();
     });
 
@@ -285,7 +285,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(PlayableMixin.getByType(unit1.hexLocation, CBFireStart)).isDefined();
+            assert(PlayableMixin.getOneByType(unit1.hexLocation, CBFireCounter)).isDefined();
             assert(unit1.isPlayed()).isTrue();
     });
 
@@ -297,7 +297,7 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
-            var fireStart = new CBFireStart();
+            var fireStart = new CBFireCounter();
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             clickOnPiece(game, unit1);
@@ -321,14 +321,14 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(unit1.markAsBeingPlayed()).isFalse();
+            assert(unit1.markAsPlayed()).isFalse();
     });
 
     it("Checks failed extinguish fire misc action process ", () => {
         given:
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
-            var fireStart = new CBFireStart();
+            var fireStart = new CBFireCounter();
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             clickOnPiece(game, unit1);
@@ -354,7 +354,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(PlayableMixin.getByType(unit1.hexLocation, CBFireStart)).isDefined();
+            assert(PlayableMixin.getOneByType(unit1.hexLocation, CBFireCounter)).isDefined();
             assert(unit1.isPlayed()).isTrue();
     });
 
@@ -362,7 +362,7 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
-            var fireStart = new CBFireStart();
+            var fireStart = new CBFireCounter();
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             clickOnPiece(game, unit1);
@@ -388,7 +388,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(PlayableMixin.getByType(unit1.hexLocation, CBFireStart)).isNotDefined();
+            assert(PlayableMixin.getOneByType(unit1.hexLocation, CBFireCounter)).isNotDefined();
             assert(unit1.isPlayed()).isTrue();
     });
 
@@ -422,7 +422,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(unit1.markAsBeingPlayed()).isFalse();
+            assert(unit1.markAsPlayed()).isFalse();
     });
 
     it("Checks failed set stakes misc action process ", () => {
@@ -453,7 +453,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(PlayableMixin.getByType(unit1.hexLocation, CBStakes)).isNotDefined();
+            assert(PlayableMixin.getOneByType(unit1.hexLocation, CBStakesCounter)).isNotDefined();
             assert(unit1.isPlayed()).isTrue();
     });
 
@@ -485,7 +485,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(PlayableMixin.getByType(unit1.hexLocation, CBStakes)).isDefined();
+            assert(PlayableMixin.getOneByType(unit1.hexLocation, CBStakesCounter)).isDefined();
             assert(unit1.isPlayed()).isTrue();
     });
 
@@ -497,7 +497,7 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
-            var fireStart = new CBStakes();
+            var fireStart = new CBStakesCounter();
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             clickOnPiece(game, unit1);
@@ -520,14 +520,14 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(unit1.markAsBeingPlayed()).isFalse();
+            assert(unit1.markAsPlayed()).isFalse();
     });
 
     it("Checks failed remove stakes misc action process ", () => {
         given:
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
-            var fireStart = new CBStakes();
+            var fireStart = new CBStakesCounter();
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             clickOnPiece(game, unit1);
@@ -553,7 +553,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(PlayableMixin.getByType(unit1.hexLocation, CBStakes)).isDefined();
+            assert(PlayableMixin.getOneByType(unit1.hexLocation, CBStakesCounter)).isDefined();
             assert(unit1.isPlayed()).isTrue();
     });
 
@@ -561,7 +561,7 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
-            var fireStart = new CBStakes();
+            var fireStart = new CBStakesCounter();
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             clickOnPiece(game, unit1);
@@ -587,7 +587,7 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
-            assert(PlayableMixin.getByType(unit1.hexLocation, CBStakes)).isNotDefined();
+            assert(PlayableMixin.getOneByType(unit1.hexLocation, CBStakesCounter)).isNotDefined();
             assert(unit1.isPlayed()).isTrue();
     });
 
@@ -617,7 +617,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(counter.markAsBeingPlayed()).isFalse();
+            assert(counter.markAsPlayed()).isFalse();
     });
 
     it("Checks weather action process that swipes up", () => {
@@ -748,7 +748,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(counter.markAsBeingPlayed()).isFalse();
+            assert(counter.markAsPlayed()).isFalse();
     });
 
     it("Checks fog action process that swipes up", () => {
@@ -881,7 +881,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(counter.markAsBeingPlayed()).isFalse();
+            assert(counter.markAsPlayed()).isFalse();
     });
 
     it("Checks fog action process when it swipes up", () => {
@@ -1024,7 +1024,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(counter.markAsBeingPlayed()).isFalse();
+            assert(counter.markAsPlayed()).isFalse();
     });
 
     it("Checks tiredness action process when it swipes", () => {
@@ -1131,7 +1131,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(counter.markAsBeingPlayed()).isFalse();
+            assert(counter.markAsPlayed()).isFalse();
     });
 
     it("Checks moral action process when it swipes", () => {

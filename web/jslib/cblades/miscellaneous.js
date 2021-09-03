@@ -10,7 +10,7 @@ import {
 } from "./game.js";
 import {
     ActivableArtifactMixin,
-    CBHexCounter,
+    CBHexCounter, CBHexCounterArtifact, CBLevelBuilder,
     RetractableArtifactMixin,
     RetractablePieceMixin
 } from "./playable.js";
@@ -30,22 +30,32 @@ import {
     CBWing
 } from "./unit.js";
 
-class FireStartArtifact extends RetractableArtifactMixin(CBPieceImageArtifact) {
+export class CBGroundMarkerArtifact extends CBPieceImageArtifact {
 
-    constructor(fire, ...args) {
-        super(fire, ...args);
+    constructor(counter, path, position, dimension= CBCounterMarkerArtifact.MARKER_DIMENSION) {
+        super(counter, "ground", [DImage.getImage(path)], position, dimension);
     }
+
+    get layer() {
+        return CBLevelBuilder.GLAYERS.MARKERS;
+    }
+
+    static MARKER_DIMENSION = new Dimension2D(64, 64);
+}
+
+class BurningArtifact extends ActivableArtifactMixin(CBHexCounterArtifact) {
 
 }
 
-export class CBFireStart extends RetractablePieceMixin(CBHexCounter) {
+export class CBBurningCounter extends RetractablePieceMixin(CBHexCounter) {
 
-    constructor() {
-        super("ground", ["./../images/actions/start-fire.png"], CBFireStart.DIMENSION);
+    constructor(images) {
+        super("ground", images, CBBurningCounter.DIMENSION);
+        Mechanisms.addListener(this);
     }
 
     createArtifact(levelName, images, position, dimension) {
-        return new FireStartArtifact(this, levelName, images, position/*.plus(-15, 15)*/, dimension);
+        return new BurningArtifact(this, levelName, images, position/*.plus(-15, 15)*/, dimension);
     }
 
     /*
@@ -59,21 +69,107 @@ export class CBFireStart extends RetractablePieceMixin(CBHexCounter) {
     }
     */
 
+    _updatePlayed() {
+        if (this.isPlayed() && !this._playedArtifact) {
+            this._playedArtifact = new CBGroundMarkerArtifact(this, "./../images/markers/actiondone.png",
+                new Point2D(CBBurningCounter.DIMENSION.w / 2, -CBBurningCounter.DIMENSION.h / 2));
+            this.element.appendArtifact(this._playedArtifact);
+        }
+        else if (!this.isPlayed() && this._playedArtifact) {
+            this.element.deleteArtifact(this._playedArtifact);
+            delete this._playedArtifact;
+        }
+    }
+
+    onMouseClick(event) {
+        this.play(event);
+    }
+
+
+    play(event) {
+        if (!this.isPlayed()) {
+            this._play(event);
+        }
+    }
+
+    _play(event) {
+        this.game.currentPlayer.playSmokeAndFire(this, event);
+    }
+
+    _processGlobalEvent(source, event, value) {
+        if (event === CBBurningCounter.PLAYED_EVENT) {
+            this.markAsPlayed();
+        }
+        else super._processGlobalEvent(source, event, value);
+    }
+
+    markAsPlayed() {
+        Memento.register(this);
+        if (!this.action) {
+            this.launchAction(new CBAction(this.game, this));
+            this.action.markAsFinished();
+        }
+        else {
+            this._updatePlayed();
+        }
+    }
+
     static DIMENSION = new Dimension2D(142, 142);
+    static PLAYED_EVENT = "burning-played";
 }
 
-class StakesArtifact extends RetractableArtifactMixin(CBPieceImageArtifact) {
+export class CBSmokeCounter extends CBBurningCounter {
 
-    constructor(fire, ...args) {
-        super(fire, ...args);
+    constructor() {
+        super([
+            "./../images/counters/light-smoke.png",
+            "./../images/counters/heavy-smoke.png"
+        ]);
+    }
+
+    isDense() {
+        return this.artifact.imageIndex>0;
+    }
+
+    densify() {
+        this.artifact.changeImage(1);
+        return this;
+    }
+
+    disperse() {
+        this.artifact.changeImage(0);
+        return this;
     }
 
 }
 
-export class CBStakes extends RetractablePieceMixin(CBHexCounter) {
+export class CBFireCounter extends CBBurningCounter {
 
     constructor() {
-        super("ground", ["./../images/actions/stakes.png"], CBStakes.DIMENSION);
+        super([
+            "./../images/counters/start-fire.png",
+            "./../images/counters/fire.png"
+        ]);
+    }
+
+    setFire() {
+        this.artifact.changeImage(1);
+    }
+
+    isFire() {
+        return this.artifact.imageIndex>0;
+    }
+
+}
+
+class StakesArtifact extends CBHexCounterArtifact {
+
+}
+
+export class CBStakesCounter extends RetractablePieceMixin(CBHexCounter) {
+
+    constructor() {
+        super("ground", ["./../images/counters/stakes.png"], CBStakesCounter.DIMENSION);
     }
 
     createArtifact(levelName, images, position, dimension) {
@@ -113,8 +209,8 @@ export class DisplayablePlayableArtifact extends ActivableArtifactMixin(CBPieceI
 
 export class CBDisplayableCounter extends PlayableMixin(DisplayLocatableMixin(CBPiece)) {
 
-    constructor(paths, dimension) {
-        super("counters", paths, dimension);
+    constructor(paths) {
+        super("counters", paths, CBDisplayableCounter.DIMENSION);
         Mechanisms.addListener(this);
     }
 
@@ -122,52 +218,27 @@ export class CBDisplayableCounter extends PlayableMixin(DisplayLocatableMixin(CB
         return new DisplayablePlayableArtifact(this, levelName, images, position, dimension);
     }
 
-    markAsPlayed() {
-        Memento.register(this);
-        this._updatePlayed();
-    }
-
-    isPlayed() {
-        return !!this._marker;
-    }
-
-    isFinishable() {
-        return this.isPlayed();
-    }
-
     _updatePlayed() {
-        this._marker = new CBCounterMarkerArtifact(this, "./../images/markers/actiondone.png",
-            new Point2D(CBWeatherCounter.DIMENSION.w/2, -CBWeatherCounter.DIMENSION.h/2));
-        this.element.appendArtifact(this._marker);
-        this.artifact.desactivate();
-        Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINISHED);
-    }
-
-    reset() {
-        super.reset();
-        this.artifact.activate();
-        if (this._marker) {
-            this.element.deleteArtifact(this._marker);
-            delete this._marker;
+        if (this.isPlayed() && !this._playedArtifact) {
+            this._playedArtifact = new CBCounterMarkerArtifact(this, "./../images/markers/actiondone.png",
+                new Point2D(CBDisplayableCounter.DIMENSION.w / 2, -CBDisplayableCounter.DIMENSION.h / 2));
+            this.element.appendArtifact(this._playedArtifact);
+            this.artifact.desactivate();
+        }
+        else if (!this.isPlayed() && this._playedArtifact) {
+            this.element.deleteArtifact(this._playedArtifact);
+            delete this._playedArtifact;
+            this.artifact.activate();
         }
     }
 
-    _memento() {
-        let memento = super._memento();
-        memento.marker = this._marker;
-        return memento;
-    }
-
-    _revert(memento) {
-        super._revert(memento);
-        if (memento.marker) {
-            this._marker = memento.marker;
-        }
-        else {
-            delete this._marker;
+    play(event) {
+        if (!this.isPlayed()) {
+            this._play(event);
         }
     }
 
+    static DIMENSION = new Dimension2D(142, 142);
 }
 
 export class CBWeatherCounter extends CBDisplayableCounter {
@@ -180,7 +251,7 @@ export class CBWeatherCounter extends CBDisplayableCounter {
             "./../images/counters/meteo4.png",
             "./../images/counters/meteo5.png",
             "./../images/counters/meteo6.png"
-        ], CBWeatherCounter.DIMENSION);
+        ]);
     }
 
     setOnGame(game) {
@@ -194,11 +265,10 @@ export class CBWeatherCounter extends CBDisplayableCounter {
         }
     }
 
-    play(event) {
+    _play(event) {
         this.game.currentPlayer.playWeather(this, event);
     }
 
-    static DIMENSION = new Dimension2D(142, 142);
 }
 
 export class CBFogCounter extends CBDisplayableCounter {
@@ -209,7 +279,7 @@ export class CBFogCounter extends CBDisplayableCounter {
             "./../images/counters/fog1.png",
             "./../images/counters/fog2.png",
             "./../images/counters/fog3.png"
-        ], CBFogCounter.DIMENSION);
+        ]);
     }
 
     setOnGame(game) {
@@ -223,11 +293,10 @@ export class CBFogCounter extends CBDisplayableCounter {
         }
     }
 
-    play(event) {
+    _play(event) {
         this.game.currentPlayer.playFog(this, event);
     }
 
-    static DIMENSION = new Dimension2D(142, 142);
 }
 
 export class CBWindDirectionCounter extends CBDisplayableCounter {
@@ -235,7 +304,7 @@ export class CBWindDirectionCounter extends CBDisplayableCounter {
     constructor() {
         super( [
             "./../images/counters/wind-direction.png"
-        ], CBWindDirectionCounter.DIMENSION);
+        ]);
     }
 
     setOnGame(game) {
@@ -249,17 +318,16 @@ export class CBWindDirectionCounter extends CBDisplayableCounter {
         }
     }
 
-    play(event) {
+    _play(event) {
         this.game.currentPlayer.playWindDirection(this, event);
     }
 
-    static DIMENSION = new Dimension2D(142, 142);
 }
 
 export class CBWingDisplayablePlayable extends CBDisplayableCounter {
 
     constructor(wing, paths) {
-        super( paths, CBWingTirednessCounter.DIMENSION);
+        super( paths);
         this._wing = wing;
         this.artifact.changeImage(this.getValue(this._wing));
         this._bannerArtifact = new DImageArtifact("counters",
@@ -296,7 +364,12 @@ export class CBWingDisplayablePlayable extends CBDisplayableCounter {
         return this.wing.player!==this.game.currentPlayer || super.isFinishable();
     }
 
-    static DIMENSION = new Dimension2D(142, 142);
+    play(event) {
+        if (!this.isPlayed()) {
+            this._play(event);
+        }
+    }
+
     static BANNER_DIMENSION = new Dimension2D(50, 120);
     static MARGIN =5;
 }
@@ -320,7 +393,7 @@ export class CBWingTirednessCounter extends CBWingDisplayablePlayable {
         return wing.tiredness-4
     }
 
-    play(event) {
+    _play(event) {
         if (this.wing.tiredness===11) {
             this.markAsPlayed();
         }
@@ -360,7 +433,7 @@ export class CBWingMoralCounter extends CBWingDisplayablePlayable {
         return wing.moral-4
     }
 
-    play(event) {
+    _play(event) {
         if (this.wing.moral===11) {
             this.markAsPlayed();
         }

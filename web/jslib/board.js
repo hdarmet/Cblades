@@ -316,6 +316,18 @@ export class DArtifact extends LocalisationAware(Object) {
         this.level.forArtifact(this);
         return this.level.transform.point(this.location);
     }
+
+    onMouseClick(event) {
+        return false;
+    }
+
+    onMouseEnter(event) {
+        return false;
+    }
+
+    onMouseLeave(event) {
+        return false;
+    }
 }
 
 /**
@@ -459,6 +471,7 @@ export function TextArtifact(clazz) {
         }
 
     }
+
 }
 
 export class DTextArtifact extends TextArtifact(AreaArtifact(DArtifact)) {

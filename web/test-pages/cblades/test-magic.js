@@ -119,7 +119,7 @@ describe("Magic", ()=> {
         then:
             assert(hexId.playables.indexOf(spell)).notEqualsTo(-1);
         when:
-            assert(spell.removeFromMap(hexId));
+            assert(spell.removeFromMap());
         then:
             assert(hexId.playables.indexOf(spell)).equalsTo(-1);
     });

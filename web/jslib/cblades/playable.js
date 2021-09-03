@@ -14,7 +14,7 @@ import {
     DImageArtifact, DMultiImagesArtifact, DSimpleLevel, DStackedLevel, DStaticLevel
 } from "../board.js";
 import {
-    CBAbstractGame, CBActuator, CBPiece, HexLocatableMixin, PlayableMixin
+    CBAbstractGame, CBActuator, CBPiece, CBPieceImageArtifact, HexLocatableMixin, PlayableMixin
 } from "./game.js";
 import {
     Matrix2D, Point2D
@@ -147,7 +147,7 @@ export function RetractableActuatorMixin(clazz) {
         _getAllArtifacts(playable) {
             let artifacts = [];
             for (let trigger of this.triggers) {
-                if (trigger.unit === playable) {
+                if (trigger.playable === playable) {
                     artifacts.push(trigger);
                 }
             }
@@ -158,10 +158,18 @@ export function RetractableActuatorMixin(clazz) {
 
 }
 
+export class CBHexCounterArtifact extends RetractableArtifactMixin(CBPieceImageArtifact) {
+
+    get layer() {
+        return CBLevelBuilder.GLAYERS.COUNTERS;
+    }
+
+}
+
 export class CBHexCounter extends RetractablePieceMixin(HexLocatableMixin(PlayableMixin(CBPiece))) {
 
-    constructor(levelName, paths, dimension) {
-        super(levelName, paths, dimension);
+    createArtifact(levelName, images, position, dimension) {
+        return new CBHexCounterArtifact(this, levelName, images, position, dimension);
     }
 
     get counterNature() {
@@ -301,6 +309,7 @@ export function ActivableArtifactMixin(clazz) {
         }
 
         onMouseEnter(event) {
+            super.onMouseEnter(event);
             if (this._active) {
                 this.setSettings(this.overSettings);
                 this.element.refresh();
@@ -309,6 +318,7 @@ export function ActivableArtifactMixin(clazz) {
         }
 
         onMouseLeave(event) {
+            super.onMouseLeave(event);
             if (this._active) {
                 this.setSettings(this.settings);
                 this.element.refresh();
@@ -342,45 +352,41 @@ export function CBActuatorTriggerMixin(clazz) {
 }
 
 export class CBActuatorImageTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
-    constructor(...args) {
-        super(...args);
-    }
+
 }
 
 export class CBActuatorMultiImagesTrigger extends CBActuatorTriggerMixin(DMultiImagesArtifact) {
-    constructor(...args) {
-        super(...args);
-    }
+
 }
 
-export class CBUnitActuatorTrigger extends CBActuatorImageTrigger {
+export class CBPlayableActuatorTrigger extends CBActuatorImageTrigger {
 
-    constructor(actuator, unit, ...args) {
+    constructor(actuator, playable, ...args) {
         super(actuator, ...args);
-        this._unit = unit;
+        this._playable = playable;
     }
 
-    get unit() {
-        return this._unit;
+    get piece() {
+        return this._playable;
+    }
+
+    get playable() {
+        return this.piece;
     }
 
     get slot() {
-        return this.unit.slot;
-    }
-
-    get layer() {
-        return CBLevelBuilder.ULAYERS.ACTUATORS;
+        return this.playable.slot;
     }
 
     onMouseEnter(event) {
         super.onMouseEnter(event);
-        this.unit.retractAbove();
+        this.playable.retractAbove();
         return true;
     }
 
     onMouseLeave(event) {
         super.onMouseLeave(event);
-        this.unit.appearAbove();
+        this.playable.appearAbove();
         return true;
     }
 
@@ -414,7 +420,8 @@ export class CBLevelBuilder {
         function createPlayableArtifactSlot(slotIndex) {
             let delta = Matrix2D.translate(new Point2D(-slotIndex*20, -slotIndex*20+20));
             return [
-                new DTranslateLayer("hex-"+slotIndex, delta)
+                new DTranslateLayer("hex-"+slotIndex, delta),
+                new DTranslateLayer("hmarkers-"+slotIndex, delta)
             ]
         }
 
@@ -423,8 +430,11 @@ export class CBLevelBuilder {
             return playable.hexLocation ? playable.hexLocation.playables.indexOf(playable) : 0;
         }
 
-        function getPlayableArtifactLayer(artifact, [hexLayer]) {
-            return hexLayer;
+        function getPlayableArtifactLayer(artifact, [countersLayer, markersLayer, actuatorsLayer]) {
+            switch (artifact.layer) {
+                case CBLevelBuilder.GLAYERS.COUNTERS: return countersLayer;
+                case CBLevelBuilder.GLAYERS.MARKERS: return markersLayer;
+            }
         }
 
         function createUnitArtifactSlot(slotIndex) {
@@ -483,6 +493,10 @@ export class CBLevelBuilder {
         ACTUATORS: 7
     }
 
+    static GLAYERS = {
+        COUNTERS: 0,
+        MARKERS: 1
+    }
 }
 
 export class CBGame extends CBAbstractGame {

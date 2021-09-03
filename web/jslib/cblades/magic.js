@@ -4,7 +4,7 @@ import {
     CBPieceImageArtifact
 } from "./game.js";
 import {
-    CBHexCounter, CBLevelBuilder, RetractableArtifactMixin, RetractablePieceMixin
+    CBHexCounter, CBHexCounterArtifact, CBLevelBuilder, RetractableArtifactMixin, RetractablePieceMixin
 } from "./playable.js";
 import {
     Dimension2D
@@ -18,11 +18,7 @@ import {
     OptionMixin
 } from "./unit.js";
 
-class SpellImageArtifact extends OptionArtifactMixin(RetractableArtifactMixin(CBPieceImageArtifact)) {
-
-    constructor(spell, ...args) {
-        super(spell, ...args);
-    }
+class SpellImageArtifact extends OptionArtifactMixin(CBHexCounterArtifact) {
 
     get spell() {
         return this.piece;
@@ -224,7 +220,7 @@ export function HexTargetedMixin(clazz) {
         }
 
         discard() {
-            this.removeFromMap(this.hex);
+            this.removeFromMap();
             delete this._hex;
         }
 
