@@ -9,7 +9,7 @@ import {
     CBAction, CBStacking, PlayableMixin, CBAbstractGame, CBActuator
 } from "./game.js";
 import {
-    CBActionActuator, CBLevelBuilder, CBPlayableActuatorTrigger,
+    CBActionActuator, CBPlayableActuatorTrigger,
     RetractableActuatorMixin,
     WidgetLevelMixin
 } from "./playable.js";
@@ -191,9 +191,11 @@ export class InteractiveSetFireAction extends CBAction {
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
-        let close = ()=>{mask.close(); scene.close();};
+        let close = ()=>{
+            this.game.closePopup();
+        };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBMiscActionsInsert(this.game),
             new Point2D(-CBMiscActionsInsert.DIMENSION.w/2, 0)
@@ -218,7 +220,8 @@ export class InteractiveSetFireAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processSetFireResult(unit, diceResult) {
@@ -250,9 +253,11 @@ export class InteractiveExtinguishFireAction extends CBAction {
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
-        let close = ()=>{mask.close(); scene.close();};
+        let close = ()=>{
+            this.game.closePopup();
+        };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBMiscActionsInsert(this.game),
             new Point2D(-CBMiscActionsInsert.DIMENSION.w/2, 0)
@@ -277,7 +282,8 @@ export class InteractiveExtinguishFireAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processExtinguishFireResult(unit, diceResult) {
@@ -308,9 +314,11 @@ export class InteractiveSetStakesAction extends CBAction {
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
-        let close = ()=>{mask.close(); scene.close();};
+        let close = ()=>{
+            this.game.closePopup();
+        };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBMiscActionsInsert(this.game),
             new Point2D(-CBMiscActionsInsert.DIMENSION.w/2, 0)
@@ -332,7 +340,8 @@ export class InteractiveSetStakesAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processSetStakesResult(unit, diceResult) {
@@ -365,9 +374,11 @@ export class InteractiveRemoveStakesAction extends CBAction {
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
-        let close = ()=>{mask.close(); scene.close();};
+        let close = ()=>{
+            this.game.closePopup();
+        };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBMiscActionsInsert(this.game),
             new Point2D(-CBMiscActionsInsert.DIMENSION.w/2, 0)
@@ -389,7 +400,8 @@ export class InteractiveRemoveStakesAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processRemoveStakesResult(unit, diceResult) {
@@ -423,11 +435,10 @@ export class InteractivePlayWeatherAction extends CBAction {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBPlayWeatherInsert(this.game),
             new Point2D(-CBPlayWeatherInsert.DIMENSION.w/2, 0)
@@ -455,7 +466,8 @@ export class InteractivePlayWeatherAction extends CBAction {
         ).addWidget(
             swipeResult.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processPlayWeatherResult(game, diceResult) {
@@ -484,11 +496,10 @@ export class InteractivePlayFogAction extends CBAction {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBPlayFogInsert(this.game),
             new Point2D(-CBPlayFogInsert.DIMENSION.w/2, 0)
@@ -516,7 +527,8 @@ export class InteractivePlayFogAction extends CBAction {
         ).addWidget(
             swipeResult.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processPlayFogResult(game, diceResult) {
@@ -545,11 +557,10 @@ export class InteractivePlayWindDirectionAction extends CBAction {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBPlayWindDirectionInsert(this.game),
             new Point2D(-CBPlayWindDirectionInsert.DIMENSION.w/2, -50)
@@ -576,7 +587,8 @@ export class InteractivePlayWindDirectionAction extends CBAction {
         ).addWidget(
             swipeResult.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processPlayWindDirectionResult(game, diceResult) {
@@ -605,11 +617,10 @@ export class InteractivePlayTirednessAction extends CBAction {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBPlayTirednessInsert(this.game),
             new Point2D(-CBPlayTirednessInsert.DIMENSION.w/2, 0)
@@ -633,7 +644,8 @@ export class InteractivePlayTirednessAction extends CBAction {
         ).addWidget(
             swipeResult.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processPlayTirednessResult(game, diceResult) {
@@ -663,11 +675,10 @@ export class InteractivePlayMoralAction extends CBAction {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBPlayMoralInsert(this.game),
             new Point2D(-CBPlayMoralInsert.DIMENSION.w/2, 0)
@@ -691,7 +702,8 @@ export class InteractivePlayMoralAction extends CBAction {
         ).addWidget(
             swipeResult.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processPlayMoralResult(game, diceResult) {
@@ -720,11 +732,10 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBPlayFireInsert(this.game),
             new Point2D(-CBPlayFireInsert.DIMENSION.w/2, -50)
@@ -746,7 +757,8 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     isPlayed() {
@@ -914,10 +926,6 @@ class PlayFireTrigger extends CBPlayableActuatorTrigger {
         super(actuator, option.fireCounter, "actuators", image, option.hexLocation.location,
             option.revealed ? PlayFireTrigger.HEAD_DIMENSION : PlayFireTrigger.TAIL_DIMENSION);
         this._option = option;
-    }
-
-    get layer() {
-        return CBLevelBuilder.GLAYERS.ACTUATORS;
     }
 
     get counter() {

@@ -90,11 +90,7 @@ class CBTestMultiImagesActuator extends CBActionActuator {
     }
 }
 
-export class CBTestActuatorTrigger extends CBPlayableActuatorTrigger {
-
-    constructor(actuator, unit, ...args) {
-        super(actuator, unit, ...args);
-    }
+class CBTestActuatorTrigger extends CBPlayableActuatorTrigger {
 
     get layer() {
         return CBLevelBuilder.ULAYERS.ACTUATORS;
@@ -102,30 +98,26 @@ export class CBTestActuatorTrigger extends CBPlayableActuatorTrigger {
 
 }
 
-class CBTestUnitActuator extends RetractableActuatorMixin(CBActionActuator) {
+class CBTestPlayableActuator extends RetractableActuatorMixin(CBActionActuator) {
 
-    constructor(action, unit) {
+    constructor(action, playable) {
         super(action);
         let image = DImage.getImage("./../images/actuators/test.png");
         let imageArtifacts = [];
-        this.trigger = new CBTestActuatorTrigger(this, unit, "units", image,
+        this.trigger = new CBTestActuatorTrigger(this, playable, "units", image,
             new Point2D(0, 0), new Dimension2D(142, 142));
-        this.trigger.position = Point2D.position(action.playable.location, unit.location, 1);
+        this.trigger.position = Point2D.position(action.playable.location, playable.location, 1);
         imageArtifacts.push(this.trigger);
         this.initElement(imageArtifacts);
     }
 
-    get unit() {
-        return this.playable;
-    }
-
     onMouseClick(trigger, event) {
-        this.unitProcessed = trigger.playable;
+        this.playableProcessed = trigger.playable;
     }
 
 }
 
-export class TestPlayableImageArtifact extends RetractableArtifactMixin(SelectableArtifactMixin(CBPieceImageArtifact)) {
+class TestPlayableImageArtifact extends RetractableArtifactMixin(SelectableArtifactMixin(CBPieceImageArtifact)) {
 
     constructor(playable, ...args) {
         super(playable, ...args);
@@ -162,7 +154,7 @@ class CBTestPlayable extends RetractablePieceMixin(HexLocatableMixin(BelongsToPl
 
 }
 
-export class TestCounterImageArtifact extends RetractableArtifactMixin(SelectableArtifactMixin(CBPieceImageArtifact)) {
+class TestCounterImageArtifact extends RetractableArtifactMixin(SelectableArtifactMixin(CBPieceImageArtifact)) {
 
     constructor(playable, ...args) {
         super(playable, ...args);
@@ -322,32 +314,32 @@ function createTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
     var player = new CBAbstractPlayer();
     game.addPlayer(player);
-    let unit = new CBTestPlayable(player, ["./../images/units/misc/unit.png"]);
-    unit.addToMap(map.getHex(5, 8));
+    let playable = new CBTestPlayable(player, ["./../images/units/misc/unit.png"]);
+    playable.addToMap(map.getHex(5, 8));
     repaint(game);
     loadAllImages();
-    return { game, arbitrator, player, map, unit };
+    return { game, arbitrator, player, map, playable };
 }
 
 function create2PlayablesTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
     var player = new CBAbstractPlayer();
     game.addPlayer(player);
-    let unit1 = new CBTestPlayable(player,["./../images/units/misc/unit1.png"]);
-    unit1.addToMap(map.getHex(5, 6));
-    let unit2 = new CBTestPlayable(player,["./../images/units/misc/unit2.png"]);
-    unit2.addToMap(map.getHex(5, 7));
+    let playable1 = new CBTestPlayable(player,["./../images/units/misc/unit1.png"]);
+    playable1.addToMap(map.getHex(5, 6));
+    let playable2 = new CBTestPlayable(player,["./../images/units/misc/unit2.png"]);
+    playable2.addToMap(map.getHex(5, 7));
     repaint(game);
     loadAllImages();
-    return {game, map, arbitrator, unit1, unit2, player};
+    return {game, map, arbitrator, playable1, playable2, player};
 }
 
 function showOverFakePiece(image, [a, b, c, d, e, f], s=50) {
     return [
         "save()",
-        `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-        "shadowColor = #00FFFF", "shadowBlur = 10",
-        `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #00FFFF", "shadowBlur = 10",
+            `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
         "restore()"
     ];
 }
@@ -355,9 +347,9 @@ function showOverFakePiece(image, [a, b, c, d, e, f], s=50) {
 function showInactiveFakePiece(image, [a, b, c, d, e, f], s=50) {
     return [
         "save()",
-        `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-        "shadowColor = #000000", "shadowBlur = 10",
-        `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #000000", "shadowBlur = 10",
+            `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
         "restore()"
     ];
 }
@@ -365,9 +357,9 @@ function showInactiveFakePiece(image, [a, b, c, d, e, f], s=50) {
 function showActiveFakePiece(image, [a, b, c, d, e, f], s=50) {
     return [
         "save()",
-        `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-        "shadowColor = #00FFFF", "shadowBlur = 10",
-        `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #00FFFF", "shadowBlur = 10",
+            `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
         "restore()"
     ];
 }
@@ -393,9 +385,9 @@ describe("Playable", ()=> {
 
     it("Checks mouse move over a trigger of an actuator", () => {
         given:
-            var { game, unit } = createTinyGame();
+            var { game, playable } = createTinyGame();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
-            var action = new CBAction(game, unit);
+            var action = new CBAction(game, playable);
             var actuator = new CBTestActuator(action);
             game.openActuator(actuator);
             loadAllImages();
@@ -429,13 +421,13 @@ describe("Playable", ()=> {
             assert(actuator.clicked).equalsTo(actuator.getTrigger());
     });
 
-    it("Checks actuators trigger on unit", () => {
+    it("Checks actuators trigger on playable", () => {
         given:
-            var {game, unit1, unit2} = create2PlayablesTinyGame();
+            var {game, playable1, playable2} = create2PlayablesTinyGame();
             var [actuatorsLayer] = getLayers(game.board, "actuators-0");
         when:
-            var action = new CBAction(game, unit1);
-            var actuator = new CBTestUnitActuator(action, unit2);
+            var action = new CBAction(game, playable1);
+            var actuator = new CBTestPlayableActuator(action, playable2);
             resetDirectives(actuatorsLayer);
             game.openActuator(actuator);
             paint(game);
@@ -447,15 +439,15 @@ describe("Playable", ()=> {
         when:
             clickOnTrigger(game, actuator.trigger);
         then:
-            assert(actuator.unitProcessed).equalsTo(unit2);
+            assert(actuator.playableProcessed).equalsTo(playable2);
     });
 
     it("Checks multi images trigger of an actuators", () => {
         given:
-            var {game, unit} = createTinyGame();
+            var {game, playable} = createTinyGame();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
         when:
-            var action = new CBAction(game, unit);
+            var action = new CBAction(game, playable);
             var actuator = new CBTestMultiImagesActuator(action);
             resetDirectives(actuatorsLayer);
             game.openActuator(actuator);
@@ -572,20 +564,50 @@ describe("Playable", ()=> {
     }
 
     function mouseMoveOnPlayable(game, counter) {
-        let unitLocation = counter.artifact.viewportLocation;
-        var mouseEvent = createEvent("mousemove", {offsetX:unitLocation.x, offsetY:unitLocation.y});
+        let playableLocation = counter.artifact.viewportLocation;
+        var mouseEvent = createEvent("mousemove", {offsetX:playableLocation.x, offsetY:playableLocation.y});
         mockPlatform.dispatchEvent(game.root, "mousemove", mouseEvent);
     }
 
     function mouseMoveOutOfPlayable(game, counter) {
-        let unitArea = counter.artifact.viewportBoundingArea;
-        var mouseEvent = createEvent("mousemove", {offsetX:unitArea.left-5, offsetY:unitArea.top});
+        let playableArea = counter.artifact.viewportBoundingArea;
+        var mouseEvent = createEvent("mousemove", {offsetX:playableArea.left-5, offsetY:playableArea.top});
         mockPlatform.dispatchEvent(game.root, "mousemove", mouseEvent);
     }
 
+    it("Checks appearance of ground playable", () => {
+        given:
+            var { game, map } = createBasicGame();
+            var blaze = new CBTestActivableCounter("ground", ["./../images/units/misc/blaze.png"], new Dimension2D(50, 50));
+            class BlazeMarker extends CBPieceImageArtifact {
+                get layer() {
+                    return CBLevelBuilder.GLAYERS.MARKERS;
+                }
+            }
+            var blazeMarker = new BlazeMarker(blaze, "ground", [DImage.getImage("./../images/units/misc/blazeMarker.png")],
+                new Point2D(10, 10), new Dimension2D(25, 25));
+            blaze.element.addArtifact(blazeMarker);
+            var [groundLayer, groundMarkerLayer] = getLayers(game.board, "hex-0", "hmarkers-0");
+            var hex = map.getHex(4, 5);
+        when:
+            blaze.appendToMap(hex);
+            repaint(game);
+        then:
+            assertClearDirectives(groundLayer);
+            assertDirectives(groundLayer, showActiveFakePiece("misc/blaze", zoomAndRotate0(333.3333, 121.1022)));
+            assertClearDirectives(groundMarkerLayer)
+            assert(getDirectives(groundMarkerLayer)).arrayEqualsTo([
+                'save()',
+                    'setTransform(0.4888, 0, 0, 0.4888, 338.2209, 125.9897)',
+                    'shadowColor = #000000', 'shadowBlur = 10',
+                    'drawImage(./../images/units/misc/blazeMarker.png, -12.5, -12.5, 25, 25)',
+                'restore()'
+            ]);
+    });
+
     it("Checks playable appearance when mouse is over it", () => {
         given:
-            var { game, unit } = createTinyGame();
+            var { game, playable } = createTinyGame();
             var [unitsLayer] = getLayers(game.board, "units-0");
         then:
             assertClearDirectives(unitsLayer);
@@ -593,28 +615,28 @@ describe("Playable", ()=> {
             assertNoMoreDirectives(unitsLayer);
         when:
             resetDirectives(unitsLayer);
-            mouseMoveOnPlayable(game, unit);
+            mouseMoveOnPlayable(game, playable);
         then:
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showOverTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
             assertNoMoreDirectives(unitsLayer);
         when:
             resetDirectives(unitsLayer);
-            mouseMoveOutOfPlayable(game, unit);
+            mouseMoveOutOfPlayable(game, playable);
         then:
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
             assertNoMoreDirectives(unitsLayer);
         when:
-            unit.select();
+            playable.select();
             paint(game);
             resetDirectives(unitsLayer);
-            mouseMoveOnPlayable(game, unit);
+            mouseMoveOnPlayable(game, playable);
         then:
             assert(getDirectives(unitsLayer)).arrayEqualsTo([]);
         when:
             resetDirectives(unitsLayer);
-            mouseMoveOutOfPlayable(game, unit);
+            mouseMoveOutOfPlayable(game, playable);
         then:
             assert(getDirectives(unitsLayer)).arrayEqualsTo([]);
     });
@@ -631,7 +653,6 @@ describe("Playable", ()=> {
             counter2.addToMap(map.getHex(4, 5));
             counter3.addToMap(map.getHex(4, 5));
             repaint(game);
-            loadAllImages();
             var [unitsLayer0, unitsLayer1, unitsLayer2] = getLayers(game.board, "units-0", "units-1", "units-2");
         then:
             assertClearDirectives(unitsLayer0);
@@ -670,17 +691,16 @@ describe("Playable", ()=> {
             assertNoMoreDirectives(unitsLayer2);
     });
 
-    it("Checks that when the mouse is over a actuator's (unit) trigger, the units above are retracted", () => {
+    it("Checks that when the mouse is over a actuator's (playable) trigger, the playables above are retracted", () => {
         given:
-            var { game, unit1, unit2 } = create2PlayablesTinyGame();
-            unit2.hexLocation = unit1.hexLocation;
-            var action = new CBAction(game, unit1);
-            var actuator = new CBTestUnitActuator(action, unit1);
+            var { game, playable1, playable2 } = create2PlayablesTinyGame();
+            playable2.hexLocation = playable1.hexLocation;
+            var action = new CBAction(game, playable1);
+            var actuator = new CBTestPlayableActuator(action, playable1);
             game.openActuator(actuator);
             game.start();
             loadAllImages();
             var [unitsLayer0, actuatorsLayer0, unitsLayer1] = getLayers(game.board, "units-0", "actuators-0", "units-1");
-            resetDirectives(unitsLayer0, actuatorsLayer0, unitsLayer1);
             repaint(game);
         then:
             assertClearDirectives(actuatorsLayer0);
@@ -711,15 +731,14 @@ describe("Playable", ()=> {
 
     it("Checks that when a playable is retracted, its actuator is retracted too", () => {
         given:
-            var { game, unit1, unit2 } = create2PlayablesTinyGame();
-            unit2.hexLocation = unit1.hexLocation;
-            var action = new CBAction(game, unit1);
-            var actuator = new CBTestUnitActuator(action, unit2);
+            var { game, playable1, playable2 } = create2PlayablesTinyGame();
+            playable2.hexLocation = playable1.hexLocation;
+            var action = new CBAction(game, playable1);
+            var actuator = new CBTestPlayableActuator(action, playable2);
             game.openActuator(actuator);
             game.start();
             loadAllImages();
             var [unitsLayer0, actuatorsLayer1, unitsLayer1] = getLayers(game.board, "units-0", "actuators-1", "units-1");
-            resetDirectives(unitsLayer0, actuatorsLayer1, unitsLayer1);
             repaint(game);
         then:
             assertClearDirectives(actuatorsLayer1);
@@ -732,7 +751,6 @@ describe("Playable", ()=> {
             assertDirectives(unitsLayer1, showTroop("misc/unit2", zoomAndRotate0(426.4418, 149.664)));
             assertNoMoreDirectives(unitsLayer1);
         when:
-            resetDirectives(unitsLayer1, actuatorsLayer1);
             mouseMove(game, 417-71/2+5, 159-71/2+5); // On counter1 but not counter2
             repaint(game);
         then:
@@ -764,7 +782,6 @@ describe("Playable", ()=> {
             counter2.addToMap(map.getHex(4, 5));
             counter3.addToMap(map.getHex(4, 6));
             repaint(game);
-            loadAllImages();
             var [formationsLayer0, unitsLayer1] = getLayers(game.board, "formations-0", "units-1");
         then:
             assertClearDirectives(formationsLayer0);
@@ -798,29 +815,29 @@ describe("Playable", ()=> {
             assertNoMoreDirectives(unitsLayer1);
     });
 
-    it("Checks that clicking on a unit select the unit ", () => {
+    it("Checks that clicking on a playable select the playable ", () => {
         given:
-            var { game, player, unit } = createTinyGame();
+            var { game, player, playable } = createTinyGame();
             var [unitsLayer] = getLayers(game.board, "units-0");
             var actionLaunched = false;
-            player.launchPlayableAction = function(unit, event) {
+            player.launchPlayableAction = function(playable, event) {
                 actionLaunched = true;
             }
         when:
             resetDirectives(unitsLayer);
-            clickOnPiece(game, unit)
+            clickOnPiece(game, playable)
         then:
-            assert(game.selectedPlayable).equalsTo(unit);
+            assert(game.selectedPlayable).equalsTo(playable);
             assert(actionLaunched).isTrue();
             loadAllImages();
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showSelectedTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
             assertNoMoreDirectives(unitsLayer);
-        when:   // Check that "reselecting" an already selected unit relaunch action
+        when:   // Check that "reselecting" an already selected playable relaunch action
             actionLaunched = false;
-            clickOnPiece(game, unit);
+            clickOnPiece(game, playable);
         then:
-            assert(game.selectedPlayable).equalsTo(unit);
+            assert(game.selectedPlayable).equalsTo(playable);
             assert(actionLaunched).isTrue();
     });
 
@@ -866,32 +883,31 @@ describe("Playable", ()=> {
         }
     }
 
-    it("Checks unit and option counters registration on layers", () => {
+    it("Checks playable and option counters registration on layers", () => {
         given:
             var { game, map } = createBasicGame();
             var player = new CBAbstractPlayer();
             game.addPlayer(player);
-            let unit1 = new CBTestPlayable(player, ["./../images/units/misc/unit1.png"]);
+            let playable1 = new CBTestPlayable(player, ["./../images/units/misc/unit1.png"]);
             let markerImage = DImage.getImage("./../images/markers/misc/markers1.png");
-            let marker = new CBTestMarker(unit1, "units", [markerImage],
+            let marker = new CBTestMarker(playable1, "units", [markerImage],
                 new Point2D(0, 0), new Dimension2D(64, 64));
-            unit1._element.addArtifact(marker);
-            let unit2 = new CBTestPlayable(player, ["./../images/units/misc/unit2.png"]);
-            let spell = new CBTestCounter(unit2, ["./../images/units/misc/spell.png"]);
-            let option = new CBTestOption(unit2, "units",  ["./../images/units/misc/option.png"], new Dimension2D(142, 142));
+            playable1._element.addArtifact(marker);
+            let playable2 = new CBTestPlayable(player, ["./../images/units/misc/unit2.png"]);
+            let spell = new CBTestCounter(playable2, ["./../images/units/misc/spell.png"]);
+            let option = new CBTestOption(playable2, "units",  ["./../images/units/misc/option.png"], new Dimension2D(142, 142));
             option.artifact.option = option;
-            option.unit = unit2;
+            option.playable = playable2;
             loadAllImages();
             var hexId = map.getHex(4, 5);
-            unit1.addToMap(hexId, CBStacking.TOP);
-            unit2.addToMap(hexId, CBStacking.TOP);
+            playable1.addToMap(hexId, CBStacking.TOP);
+            playable2.addToMap(hexId, CBStacking.TOP);
             spell.addToMap(hexId);
             option.addToMap(hexId);
             paint(game);
         when:
             var [unitsLayer0, markersLayer0, unitsLayer1, spellsLayer1, optionsLayer1] = getLayers(game.board,
                 "units-0", "markers-0", "units-1", "spells-1", "options-1");
-            resetDirectives(unitsLayer0, markersLayer0, unitsLayer1, spellsLayer1, optionsLayer1);
             repaint(game);
         then:
             assertClearDirectives(unitsLayer0);
@@ -927,7 +943,7 @@ describe("Playable", ()=> {
             let option = new CBTestOption(formation2, "units",  ["./../images/units/misc/option.png"],
                 new Dimension2D(142, 142));
             option.artifact.option = option;
-            option.unit = formation2;
+            option.playable = formation2;
             loadAllImages();
             var hexId = map.getHex(4, 5);
             var hexSideId = new CBHexSideId(hexId, hexId.getNearHex(120))
@@ -938,7 +954,6 @@ describe("Playable", ()=> {
         when:
             var [formationsLayer0, fmarkersLayer0, formationsLayer1, foptionsLayer1] = getLayers(game.board,
                 "formations-0", "fmarkers-0", "formations-1", "foptions-1");
-            resetDirectives(formationsLayer0, fmarkersLayer0, formationsLayer1, foptionsLayer1);
             repaint(game);
         then:
             assertClearDirectives(formationsLayer0);
@@ -955,13 +970,13 @@ describe("Playable", ()=> {
             assertNoMoreDirectives(foptionsLayer1);
     });
 
-    it("Checks unit selection/deselection appearance", () => {
+    it("Checks playable selection/deselection appearance", () => {
         given:
-            var { game, unit } = createTinyGame();
+            var { game, playable } = createTinyGame();
             var [unitsLayer] = getLayers(game.board, "units-0");
         when:
             resetDirectives(unitsLayer);
-            unit.select();
+            playable.select();
             paint(game);
         then:
             assertClearDirectives(unitsLayer);
@@ -969,7 +984,7 @@ describe("Playable", ()=> {
             assertNoMoreDirectives(unitsLayer);
         when:
             resetDirectives(unitsLayer);
-            unit.unselect();
+            playable.unselect();
             paint(game);
         then:
             assertClearDirectives(unitsLayer);
@@ -977,42 +992,42 @@ describe("Playable", ()=> {
             assertNoMoreDirectives(unitsLayer);
     });
 
-    it("Checks mark a unit as played without effectively playing it (useful for unit created on the fly)", () => {
+    it("Checks mark a playable as played without effectively playing it (useful for playable created on the fly)", () => {
         given:
-            var {game, unit} = createTinyGame();
+            var {game, playable} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
-            unit.markAsPlayed();
+            playable.markAsPlayed();
         then:
-            assert(unit.isActivated()).isTrue();
-            assert(unit.isPlayed()).isTrue();
+            assert(playable.isActivated()).isTrue();
+            assert(playable.isPlayed()).isTrue();
     });
 
-    it("Checks played status of a unit when selection is changed or turn is changed", () => {
+    it("Checks played status of a playable when selection is changed or turn is changed", () => {
         given:
-            var {game, player, unit1, unit2} = create2PlayablesTinyGame();
-            player.launchPlayableAction = function(unit, event) {
-                unit.launchAction(new CBAction(game, unit));
+            var {game, player, playable1, playable2} = create2PlayablesTinyGame();
+            player.launchPlayableAction = function(playable, event) {
+                playable.launchAction(new CBAction(game, playable));
             }
         when:
-            player.changeSelection(unit1, dummyEvent);
-            unit1.action.markAsStarted();
+            player.changeSelection(playable1, dummyEvent);
+            playable1.action.markAsStarted();
         then:
-            assert(unit1.isActivated()).isTrue();
-            assert(unit1.isPlayed()).isFalse();
+            assert(playable1.isActivated()).isTrue();
+            assert(playable1.isPlayed()).isFalse();
         when:
-            clickOnPiece(game, unit2);
+            clickOnPiece(game, playable2);
         then:
-            assert(unit1.action).isDefined();
-            assert(unit1.isActivated()).isTrue();
-            assert(unit1.isPlayed()).isTrue();
+            assert(playable1.action).isDefined();
+            assert(playable1.isActivated()).isTrue();
+            assert(playable1.isPlayed()).isTrue();
         when:   // changing turn reset played status
             game.nextTurn();
         then:
-            assert(unit1.action).isNotDefined();
-            assert(unit1.isActivated()).isFalse();
-            assert(unit1.isPlayed()).isFalse();
+            assert(playable1.action).isNotDefined();
+            assert(playable1.isActivated()).isFalse();
+            assert(playable1.isPlayed()).isFalse();
     });
 
     it("Checks playable sorting on Hex", () => {
@@ -1027,8 +1042,6 @@ describe("Playable", ()=> {
         when:
             spell.appendToMap(hex);
             blaze.appendToMap(hex);
-            loadAllImages();
-            resetDirectives(hexLayer0);
             repaint(game);
             var [hexLayer1] = getLayers(game.board, "hex-1");
         then:
@@ -1041,8 +1054,6 @@ describe("Playable", ()=> {
             var trap = new CBHexCounter("ground", ["./../images/units/misc/trap.png"], new Dimension2D(50, 50));
             trap.featureNature = true;
             trap.appendToMap(map.getHex(4, 5));
-            loadAllImages();
-            resetDirectives(hexLayer0, hexLayer1);
             repaint(game);
             var [hexLayer2] = getLayers(game.board, "hex-2");
         then:
@@ -1098,8 +1109,6 @@ describe("Playable", ()=> {
             var hex = map.getHex(4, 5);
         when:
             blaze.appendToMap(hex);
-            loadAllImages();
-            resetDirectives(groundLayer);
             repaint(game);
         then:
             assertClearDirectives(groundLayer);
@@ -1107,7 +1116,6 @@ describe("Playable", ()=> {
         when:
             Memento.open();
             blaze.artifact.desactivate();
-            resetDirectives(groundLayer);
             repaint(game);
         then:
             assertClearDirectives(groundLayer);
@@ -1115,21 +1123,18 @@ describe("Playable", ()=> {
         when:
             Memento.open();
             blaze.artifact.activate();
-            resetDirectives(groundLayer);
             repaint(game);
         then:
             assertClearDirectives(groundLayer);
             assertDirectives(groundLayer, showActiveFakePiece("misc/blaze", zoomAndRotate0(333.3333, 121.1022)));
         when:
             Memento.undo();
-            resetDirectives(groundLayer);
             repaint(game);
         then:
             assertClearDirectives(groundLayer);
             assertDirectives(groundLayer, showInactiveFakePiece("misc/blaze", zoomAndRotate0(333.3333, 121.1022)));
         when:
             Memento.undo();
-            resetDirectives(groundLayer);
             repaint(game);
         then:
             assertClearDirectives(groundLayer);

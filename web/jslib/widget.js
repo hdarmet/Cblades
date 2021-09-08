@@ -220,9 +220,8 @@ export class DIconMenuItem extends DImageArtifact {
 
     onMouseClick(event) {
         if (this._active) {
-            if (this.action(event)) {
-                this.element.closeMenu();
-            }
+            this.element.closeMenu();
+            this.action(event);
         }
         return true;
     }
@@ -589,7 +588,7 @@ export class DDice extends DElement {
         if (keyValue) {
             return parseInt(keyValue);
         }
-         */
+        */
         return Math.floor(value*6)+1;
     }
 

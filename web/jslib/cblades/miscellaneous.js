@@ -162,8 +162,44 @@ export class CBFireCounter extends CBBurningCounter {
 
 }
 
-class StakesArtifact extends CBHexCounterArtifact {
+export function BurningMixin(gameClass) {
 
+    return class extends gameClass {
+
+        _memento() {
+            let memento = super._memento();
+            memento.firePlayed = this._firePlayed
+            return memento;
+        }
+
+        _revert(memento) {
+            super._revert(memento);
+            if (memento.firePlayed) {
+                this._firePlayed = memento.firePlayed;
+            } else {
+                delete this._firePlayed;
+            }
+        }
+
+        changeFirePlayed() {
+            Memento.register(this);
+            this._firePlayed = true;
+        }
+
+        get firePlayed() {
+            return this._firePlayed;
+        }
+
+        _reset(animation) {
+            delete this._firePlayed;
+            super._reset(animation);
+        }
+
+    }
+
+}
+
+class StakesArtifact extends CBHexCounterArtifact {
 }
 
 export class CBStakesCounter extends RetractablePieceMixin(CBHexCounter) {

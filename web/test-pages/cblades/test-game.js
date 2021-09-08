@@ -40,6 +40,7 @@ import {
     Point2D
 } from "../../jslib/geometry.js";
 import {
+    DMask,
     DPopup
 } from "../../jslib/widget.js";
 import {
@@ -50,7 +51,7 @@ import {
     repaint,
     showTroop,
     zoomAndRotate0,
-    showMap
+    showMap, showMask
 } from "./interactive-tools.js";
 import {
     CBLevelBuilder
@@ -457,9 +458,9 @@ describe("Game", ()=> {
             assert(game.selectedPlayable).isNotDefined();
     });
 
-    it("Checks unit selection/deselection regarding actions", () => {
+    it("Checks playable selection/deselection regarding actions", () => {
         given:
-            var { game, unit1, unit2 } = create2PiecesTinyGame();
+            var { game, unit1 } = create2PiecesTinyGame();
             var action = new CBAction(game, unit1);
             action.isFinishable = function() { return false;};
         when:
@@ -469,6 +470,22 @@ describe("Game", ()=> {
             assert(game.canUnselectPlayable(unit1)).isTrue();
         when:
             action.markAsStarted();
+        then:
+            assert(game.canUnselectPlayable(unit1)).isFalse();
+        when:
+            action.markAsFinished();
+        then:
+            assert(game.canUnselectPlayable(unit1)).isTrue();
+    });
+
+    it("Checks focus on playable prevents other playable selection", () => {
+        given:
+            var { game, unit1, unit2 } = create2PiecesTinyGame();
+            var action = new CBAction(game, unit1);
+            game.setFocusedPlayable(unit1);
+        when:
+            unit1.select();
+            unit1.launchAction(action);
         then:
             assert(game.canUnselectPlayable(unit1)).isFalse();
         when:
@@ -663,6 +680,46 @@ describe("Game", ()=> {
         then:
             assertClearDirectives(widgetsLevel);
             assertDirectives(widgetsLevel, showFakeInsert(80, 130, 150, 250));
+            assertNoMoreDirectives(widgetsLevel);
+    });
+
+    it("Checks mak management", () => {
+        given:
+            var {game} = createTinyGame();
+            var [widgetsLevel] = getLayers(game.board, "widgets");
+            resetDirectives(widgetsLevel);
+        when:
+            var mask1 = new DMask("#000000", 0.3);
+            game.openMask(mask1);
+            paint(game);
+        then:
+            assert(game.mask).equalsTo(mask1);
+            assertClearDirectives(widgetsLevel);
+            assertDirectives(widgetsLevel, showMask());
+            assertNoMoreDirectives(widgetsLevel);
+        when:
+            resetDirectives(widgetsLevel);
+            var mask2 = new DMask("#000000", 0.3);
+            game.openMask(mask2);
+            paint(game);
+        then:
+            assert(game.mask).equalsTo(mask2);
+        when:
+            Memento.open();
+            resetDirectives(widgetsLevel);
+            game.closePopup();
+            paint(game);
+        then:
+            assert(game.mask).isNotDefined();
+            assertClearDirectives(widgetsLevel);
+            assertNoMoreDirectives(widgetsLevel);
+        when:
+            resetDirectives(widgetsLevel);
+            Memento.undo();
+            paint(game);
+        then:
+            assertClearDirectives(widgetsLevel);
+            assertDirectives(widgetsLevel, showMask());
             assertNoMoreDirectives(widgetsLevel);
     });
 
@@ -900,6 +957,7 @@ describe("Game", ()=> {
             assert(piece.viewportLocation.toString()).equalsTo("point(548.8759, 497.7517)");
             assert(piece.pieces).arrayEqualsTo([piece]);
             assert(piece.allArtifacts).arrayEqualsTo([piece.artifact]);
+            assert(piece._processGlobalEvent());
             assertClearDirectives(hexLayer);
             assertDirectives(hexLayer, showFakePiece("misc/piece", [0.3456, 0.3456, -0.3456, 0.3456, 548.8759, 497.7517]));
             assertNoMoreDirectives(hexLayer);
@@ -1032,7 +1090,7 @@ describe("Game", ()=> {
 
     it("Checks getOneByType method", () => {
         given:
-            var { game, map, player } = createTinyGame();
+            var { map, player } = createTinyGame();
             class PlayableOne extends CBTestPlayable {};
             class PlayableTwo extends CBTestPlayable {};
             class PlayableThree extends CBTestPlayable {};
@@ -1045,6 +1103,26 @@ describe("Game", ()=> {
         then:
             assert(PlayableMixin.getOneByType(hexId, PlayableOne)).equalsTo(playable1);
             assert(PlayableMixin.getOneByType(hexId, PlayableThree)).isNotDefined();
+    });
+
+    it("Checks getAllByType method", () => {
+        given:
+            var { game, map, player } = createTinyGame();
+            class PlayableOne extends CBTestPlayable {};
+            class PlayableTwo extends CBTestPlayable {};
+            class PlayableThree extends CBTestPlayable {};
+            var playable1 = new PlayableOne("grounds", player,["./../images/units/misc/one.png"], new Dimension2D(50, 50));
+            var playable2 = new PlayableOne("grounds", player,["./../images/units/misc/two.png"], new Dimension2D(50, 50));
+            var playable3 = new PlayableTwo("grounds", player,["./../images/units/misc/three.png"], new Dimension2D(50, 50));
+            var hexId = map.getHex(4, 5);
+        when:
+            playable1.addToMap(hexId);
+            playable2.addToMap(hexId);
+            playable3.addToMap(hexId);
+        then:
+            assert(PlayableMixin.getAllByType(hexId, PlayableOne)).unorderedArrayEqualsTo([playable1, playable2]);
+            assert(PlayableMixin.getAllByType(hexId, PlayableTwo)).arrayEqualsTo([playable3]);
+            assert(PlayableMixin.getAllByType(hexId, PlayableThree)).arrayEqualsTo([]);
     });
 
     it("Checks playable addition and removing on a Hex Side (not undoable)", () => {

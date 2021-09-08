@@ -6,9 +6,10 @@ import {
 } from "../../jstest/jtest.js";
 import {
     DAnimator,
-    DImage, setDrawPlatform
+    DImage, getDrawPlatform, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
+    assertClearDirectives,
     assertDirectives, assertNoMoreDirectives,
     getDirectives, getLayers,
     loadAllImages,
@@ -48,13 +49,14 @@ import {
     showNoSwipeResult,
     showDie,
     showPlayedDie,
-    showOrientedIndicator, showBanneredIndicator,
+    showOrientedIndicator, showBanneredIndicator, rollFor1Die, clickOnTrigger, getDice,
 } from "./interactive-tools.js";
 import {
     createTinyGame,
     create2UnitsTinyGame
 } from "./game-examples.js";
 import {
+    CBPlayFireActuator,
     registerInteractiveMiscellaneous,
     unregisterInteractiveMiscellaneous
 } from "../../jslib/cblades/interactive-miscellaneous.js";
@@ -63,7 +65,7 @@ import {
 } from "../../jslib/cblades/game.js";
 import {
     CBFireCounter,
-    CBFogCounter,
+    CBFogCounter, CBSmokeCounter,
     CBStakesCounter,
     CBWeatherCounter,
     CBWindDirectionCounter,
@@ -74,10 +76,51 @@ import {
     CBWeather, CBFog
 } from "../../jslib/cblades/weather.js";
 import {
-    CBWingMoralIndicator
-} from "../../jslib/cblades/interactive-player.js";
+    DDice
+} from "../../jslib/widget.js";
 
 describe("Interactive Miscellaneous", ()=> {
+
+    function showPlayIsFireTrigger([a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                'drawImage(./../images/actuators/isburning.png, -64, -64, 128, 128)',
+            "restore()",
+        ];
+    }
+
+    function showPlayFireTrigger([a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                'drawImage(./../images/actuators/burn.png, -71, -71, 142, 142)',
+            "restore()",
+        ];
+    }
+
+    function showPlayNoFireTrigger([a, b, c, d, e, f]) {
+        return [
+            "save()",
+                `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                'drawImage(./../images/actuators/nofire.png, -71, -71, 142, 142)',
+            "restore()",
+        ];
+    }
+
+    function pickFireTrigger(...triggerTypes) {
+        let values = [];
+        for (let type of triggerTypes) {
+            if (type === 'fire')
+                values.push(0.1);
+            else
+                values.push(0.8);
+        }
+        getDrawPlatform().resetRandoms(...values);
+    }
 
     before(() => {
         registerInteractiveMiscellaneous();
@@ -896,7 +939,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assert(game.windDirection).equalsTo(0);
         when:
-            rollFor(1);
+            rollFor1Die(1);
             clickOnDice(game);
             executeAllAnimations();
             resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
@@ -934,7 +977,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assert(game.windDirection).equalsTo(0);
         when:
-            rollFor(3);
+            rollFor1Die(3);
             clickOnDice(game);
             executeAllAnimations();
             resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
@@ -972,7 +1015,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assert(game.windDirection).equalsTo(0);
         when:
-            rollFor(6);
+            rollFor1Die(6);
             clickOnDice(game);
             executeAllAnimations();
             resetDirectives(widgetsLayer, itemsLayer, commandsLayer);
@@ -1173,7 +1216,7 @@ describe("Interactive Miscellaneous", ()=> {
             assert(counter.isPlayed()).isTrue();
     });
 
-    it("Checks moral action process when it swipes", () => {
+    it("Checks moral action process when it does not swipe", () => {
         given:
             var {game, unit} = createTinyGame();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
@@ -1210,6 +1253,359 @@ describe("Interactive Miscellaneous", ()=> {
             assertNoMoreDirectives(commandsLayer, 4);
             assert(unit.wing.moral).equalsTo(10);
             assert(counter.isPlayed()).isTrue();
+    });
+
+    it("Checks fire and smoke action opening and cancelling", () => {
+        given:
+            var {game, map} = createTinyGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
+            var counter = new CBFireCounter();
+            counter.addToMap(map.getHex(5, 5));
+            repaint(game);
+        when:
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("fire", 227, 374, 444, 600));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 227, 639));
+            assertDirectives(widgetsLayer, showInsert("smoke", 651, 214.5, 444, 419));
+            assertNoMoreDirectives(widgetsLayer, 4);
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDie(1, 479, 454));
+        when:       // Clicking on the mask cancel the action
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnMask(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assert(counter.markAsPlayed()).isFalse();
+    });
+
+    it("Checks fire and smoke action process when it fails", () => {
+        given:
+            var {game, map} = createTinyGame();
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
+            var counter = new CBFireCounter();
+            counter.addToMap(map.getHex(5, 5));
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        when:
+            rollFor1Die(1);
+            clickOnDice(game);
+            executeAllAnimations();
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("fire", 227, 374, 444, 600));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 227, 639));
+            assertDirectives(widgetsLayer, showInsert("smoke", 651, 214.5, 444, 419));
+            assertNoMoreDirectives(widgetsLayer, 4);
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(449, 424));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDie(1,479, 454));
+        when:
+            clickOnResult(game);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(counter.isPlayed()).isTrue();
+    });
+
+    it("Checks fire and smoke action process when it successes", () => {
+        given:
+            var {game, map} = createTinyGame();
+            var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
+            var counter = new CBFireCounter();
+            counter.addToMap(map.getHex(5, 5));
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnPiece(game, counter);
+            loadAllImages();
+        when:
+            rollFor1Die(6);
+            clickOnDice(game);
+            executeAllAnimations();
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("fire", 227, 374, 444, 600));
+            assertDirectives(widgetsLayer, showInsertCommand("down", 227, 639));
+            assertDirectives(widgetsLayer, showInsert("smoke", 651, 214.5, 444, 419));
+            assertNoMoreDirectives(widgetsLayer, 4);
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(449, 424));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDie(6,479, 454));
+        when:
+            clickOnResult(game);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(counter.isPlayed()).isTrue();
+    });
+
+    function getPlayFireActuator(game) {
+        for (let actuator of game.actuators) {
+            if (actuator instanceof CBPlayFireActuator) return actuator;
+        }
+        return null;
+    }
+
+    it("Checks fire and smoke action process when it successes", () => {
+        given:
+            var {game, map} = createTinyGame();
+            game.windDirection = 0;
+            var [actuatorLayer] = getLayers(game.board,"actuators");
+            var fireStartCounter = new CBFireCounter();
+            fireStartCounter.addToMap(map.getHex(5, 5));
+            var fireCounterWithFireCounterInWindDirection = new CBFireCounter();
+            fireCounterWithFireCounterInWindDirection.setFire();
+            fireCounterWithFireCounterInWindDirection.addToMap(map.getHex(5, 6));
+            var fireCounterWithNoFireCounterInWindDirection = new CBFireCounter();
+            fireCounterWithNoFireCounterInWindDirection.setFire();
+            fireCounterWithNoFireCounterInWindDirection.addToMap(map.getHex(6, 6));
+            clickOnPiece(game, fireStartCounter);
+            rollFor1Die(6);
+            clickOnDice(game);
+            let dice = getDice(game).element;
+            let finalAction = dice._finalAction;
+            dice.setFinalAction(()=>{
+                pickFireTrigger('fire', 'noFire');
+                finalAction && finalAction();
+            })
+            executeAllAnimations();
+            clickOnResult(game);
+            repaint(game);
+        then:
+            assertClearDirectives(actuatorLayer);
+            assertDirectives(actuatorLayer, showPlayIsFireTrigger(zoomAndRotate0(416.6667, 63.2148)));
+            assertDirectives(actuatorLayer, showPlayIsFireTrigger(zoomAndRotate0(500, 111.327)));
+            assertNoMoreDirectives(actuatorLayer);
+        when:
+            var playFireActuator = getPlayFireActuator(game);
+            var fireTrigger = playFireActuator.getTrigger(fireStartCounter);
+            clickOnTrigger(game, fireTrigger);
+            repaint(game);
+        then:
+            assertClearDirectives(actuatorLayer);
+            assertDirectives(actuatorLayer, showPlayFireTrigger(zoomAndRotate0(416.6667, 63.2148)));
+            assertDirectives(actuatorLayer, showPlayIsFireTrigger(zoomAndRotate0(500, 111.327)));
+            assertNoMoreDirectives(actuatorLayer);
+        when:
+            playFireActuator = getPlayFireActuator(game);
+            var noFireTrigger = playFireActuator.getTrigger(fireCounterWithNoFireCounterInWindDirection);
+            clickOnTrigger(game, noFireTrigger);
+            repaint(game);
+        then:
+            assertClearDirectives(actuatorLayer);
+            assertDirectives(actuatorLayer, showPlayFireTrigger(zoomAndRotate0(416.6667, 63.2148)));
+            assertDirectives(actuatorLayer, showPlayNoFireTrigger(zoomAndRotate0(500, 111.327)));
+            assertNoMoreDirectives(actuatorLayer);
+        when:
+            playFireActuator = getPlayFireActuator(game);
+            fireTrigger = playFireActuator.getTrigger(fireStartCounter);
+            clickOnTrigger(game, fireTrigger);
+            repaint(game);
+        then:
+            assertClearDirectives(actuatorLayer);
+            assertDirectives(actuatorLayer, showPlayNoFireTrigger(zoomAndRotate0(500, 111.327)));
+            assertNoMoreDirectives(actuatorLayer);
+        when:
+            playFireActuator = getPlayFireActuator(game);
+            noFireTrigger = playFireActuator.getTrigger(fireCounterWithNoFireCounterInWindDirection);
+            clickOnTrigger(game, noFireTrigger);
+            repaint(game);
+        then:
+            assertClearDirectives(actuatorLayer);
+            assertNoMoreDirectives(actuatorLayer);
+    });
+
+    it("Checks start fire creation in the wind direction of a fire counter", () => {
+        given:
+            var {game, map} = createTinyGame();
+            game.windDirection = 0;
+            var fireCounter = new CBFireCounter();
+            fireCounter.setFire();
+            fireCounter.addToMap(map.getHex(6, 6));
+            clickOnPiece(game, fireCounter);
+            rollFor1Die(6);
+            clickOnDice(game);
+            let dice = getDice(game).element;
+            let finalAction = dice._finalAction;
+            dice.setFinalAction(()=>{
+                pickFireTrigger('fire');
+                finalAction && finalAction();
+            })
+            executeAllAnimations();
+            clickOnResult(game);
+            var playFireActuator = getPlayFireActuator(game);
+            var fireTrigger = playFireActuator.getTrigger(fireCounter);
+            clickOnTrigger(game, fireTrigger);
+            playFireActuator = getPlayFireActuator(game);
+            fireTrigger = playFireActuator.getTrigger(fireCounter);
+            clickOnTrigger(game, fireTrigger);
+        then:
+            var startFireCounter = PlayableMixin.getOneByType(map.getHex(6, 5), CBFireCounter);
+            assert(startFireCounter).isDefined();
+            assert(startFireCounter.isFire()).isFalse();
+            var denseSmokeCounter = PlayableMixin.getOneByType(map.getHex(6, 5), CBSmokeCounter);
+            assert(denseSmokeCounter).isDefined();
+            assert(denseSmokeCounter.isDense()).isTrue();
+    });
+
+    it("Checks no start fire creation in the wind direction of a fire counter", () => {
+        given:
+            var {game, map} = createTinyGame();
+            game.windDirection = 0;
+            var fireCounter = new CBFireCounter();
+            fireCounter.setFire();
+            fireCounter.addToMap(map.getHex(6, 6));
+            clickOnPiece(game, fireCounter);
+            rollFor1Die(6);
+            clickOnDice(game);
+            let dice = getDice(game).element;
+            let finalAction = dice._finalAction;
+            dice.setFinalAction(()=>{
+                pickFireTrigger('no-fire');
+                finalAction && finalAction();
+            })
+            executeAllAnimations();
+            clickOnResult(game);
+            var playFireActuator = getPlayFireActuator(game);
+            var fireTrigger = playFireActuator.getTrigger(fireCounter);
+            clickOnTrigger(game, fireTrigger);
+            playFireActuator = getPlayFireActuator(game);
+            fireTrigger = playFireActuator.getTrigger(fireCounter);
+            clickOnTrigger(game, fireTrigger);
+        then:
+            var startFireCounter = PlayableMixin.getOneByType(map.getHex(6, 5), CBFireCounter);
+            assert(startFireCounter).isNotDefined();
+            var denseSmokeCounter = PlayableMixin.getOneByType(map.getHex(6, 5), CBSmokeCounter);
+            assert(denseSmokeCounter).isDefined();
+            assert(denseSmokeCounter.isDense()).isTrue();
+    });
+
+    it("Checks when start fire counter become a fire counter", () => {
+        given:
+            var {game, map} = createTinyGame();
+            var fireCounter = new CBFireCounter();
+            fireCounter.addToMap(map.getHex(6, 6));
+            clickOnPiece(game, fireCounter);
+            rollFor1Die(6);
+            clickOnDice(game);
+            let dice = getDice(game).element;
+            let finalAction = dice._finalAction;
+            dice.setFinalAction(()=>{
+                pickFireTrigger('fire');
+                finalAction && finalAction();
+            })
+            executeAllAnimations();
+            clickOnResult(game);
+            var playFireActuator = getPlayFireActuator(game);
+            var fireTrigger = playFireActuator.getTrigger(fireCounter);
+            clickOnTrigger(game, fireTrigger);
+            playFireActuator = getPlayFireActuator(game);
+            fireTrigger = playFireActuator.getTrigger(fireCounter);
+            clickOnTrigger(game, fireTrigger);
+        then:
+            fireCounter = PlayableMixin.getOneByType(map.getHex(6, 6), CBFireCounter);
+            assert(fireCounter).isDefined();
+            assert(fireCounter.isFire()).isTrue();
+            var smokeCounter = PlayableMixin.getOneByType(map.getHex(6, 5), CBSmokeCounter);
+            assert(smokeCounter).isNotDefined();
+    });
+
+    it("Checks no start fire creation in the wind direction of a fire counter", () => {
+        given:
+            var {game, map} = createTinyGame();
+            var fireCounter = new CBFireCounter();
+            fireCounter.addToMap(map.getHex(6, 6));
+            clickOnPiece(game, fireCounter);
+            rollFor1Die(6);
+            clickOnDice(game);
+            let dice = getDice(game).element;
+            let finalAction = dice._finalAction;
+            dice.setFinalAction(()=>{
+                pickFireTrigger('no-fire');
+                finalAction && finalAction();
+            })
+            executeAllAnimations();
+            clickOnResult(game);
+            var playFireActuator = getPlayFireActuator(game);
+            var fireTrigger = playFireActuator.getTrigger(fireCounter);
+            clickOnTrigger(game, fireTrigger);
+            playFireActuator = getPlayFireActuator(game);
+            fireTrigger = playFireActuator.getTrigger(fireCounter);
+            clickOnTrigger(game, fireTrigger);
+        then:
+            fireCounter = PlayableMixin.getOneByType(map.getHex(6, 6), CBFireCounter);
+            assert(fireCounter).isNotDefined();
+            var smokeCounter = PlayableMixin.getOneByType(map.getHex(6, 5), CBSmokeCounter);
+            assert(smokeCounter).isNotDefined();
+    });
+
+    it("Checks smoke processing", () => {
+        given:
+            var {game, map} = createTinyGame();
+            game.windDirection = 0;
+            var fireStartCounter = new CBFireCounter();
+            fireStartCounter.addToMap(map.getHex(5, 5));
+            var fireCounter = new CBFireCounter();
+            fireCounter.setFire();
+            fireCounter.addToMap(map.getHex(6, 5));
+            var lightSmokeCounter = new CBSmokeCounter();
+            lightSmokeCounter.addToMap(map.getHex(7, 5));
+            var denseSmokeCounter = new CBSmokeCounter();
+            denseSmokeCounter.densify();
+            denseSmokeCounter.addToMap(map.getHex(8, 5));
+            clickOnPiece(game, fireStartCounter);
+            rollFor1Die(1);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnResult(game);
+        then:
+            var smokeCounter = PlayableMixin.getOneByType(map.getHex(5, 4), CBSmokeCounter);
+            assert(smokeCounter).isNotDefined();
+            smokeCounter = PlayableMixin.getOneByType(map.getHex(6, 4), CBSmokeCounter);
+            assert(smokeCounter).isDefined();
+            assert(smokeCounter.isDense()).isTrue();
+            smokeCounter = PlayableMixin.getOneByType(map.getHex(7, 4), CBSmokeCounter);
+            assert(smokeCounter).isNotDefined();
+            smokeCounter = PlayableMixin.getOneByType(map.getHex(8, 4), CBSmokeCounter);
+            assert(smokeCounter).isDefined();
+            assert(smokeCounter.isDense()).isFalse();
+    });
+
+    it("Checks that a smoke counter is replaced if necessary", () => {
+        given:
+            var {game, map} = createTinyGame();
+            game.windDirection = 0;
+            var fireCounter = new CBFireCounter();
+            fireCounter.setFire();
+            fireCounter.addToMap(map.getHex(6, 7));
+            var denseSmokeCounter = new CBSmokeCounter();
+            denseSmokeCounter.densify();
+            denseSmokeCounter.addToMap(map.getHex(6, 6));
+            clickOnPiece(game, fireCounter);
+            rollFor1Die(1);
+            clickOnDice(game);
+            executeAllAnimations();
+            clickOnResult(game);
+        then:
+            var smokeCounter = PlayableMixin.getOneByType(map.getHex(6, 6), CBSmokeCounter);
+            assert(smokeCounter).isDefined();
+            assert(smokeCounter.isDense()).isTrue();
+            assert(smokeCounter).notEqualsTo(denseSmokeCounter);
     });
 
 });

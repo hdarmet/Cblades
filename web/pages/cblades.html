@@ -68,6 +68,9 @@
     import {
         CBWeatherCounter, CBFogCounter, CBWindDirectionCounter, CBWingTirednessCounter, CBWingMoralCounter
     } from "../jslib/cblades/miscellaneous.js";
+    import {
+        BurningMixin
+    } from "../jslib/cblades/miscellaneous.js";
 
     registerInteractiveMovement();
     registerInteractiveCombat();
@@ -78,7 +81,7 @@
     registerInteractiveMiscellaneous();
     registerEditor();
 
-    let game = new (WeatherMixin(CBGame))();
+    let game = new (BurningMixin(WeatherMixin(CBGame)))();
     let map = new CBMap([
         {path:"./../images/maps/map1.png", col:0, row:0, invert:true},
         {path:"./../images/maps/map4.png", col:1, row:0}

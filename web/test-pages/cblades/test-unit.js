@@ -22,7 +22,8 @@ import {
     CBAbstractPlayer, CBAction, CBPieceImageArtifact, CBPiece, CBStacking
 } from "../../jslib/cblades/game.js";
 import {
-    CBGame
+    CBActionActuator,
+    CBGame, CBPlayableActuatorTrigger, RetractableActuatorMixin
 } from "../../jslib/cblades/playable.js";
 import {
     CBHexCounter, CBLevelBuilder
@@ -42,10 +43,10 @@ import {
     OptionMixin,
     CBMoveProfile,
     CBWeaponProfile,
-    CBCharge, CBCommandProfile, CBMoralProfile
+    CBCharge, CBCommandProfile, CBMoralProfile, CBUnitActuatorTrigger
 } from "../../jslib/cblades/unit.js";
 import {
-    Dimension2D
+    Dimension2D, Point2D
 } from "../../jslib/geometry.js";
 import {
     clickOnTrigger,
@@ -199,6 +200,62 @@ describe("Unit", ()=> {
             "restore()"
         ];
     }
+
+    class CBTestActuatorTrigger extends CBUnitActuatorTrigger {
+    }
+
+    class CBTestUnitActuator extends RetractableActuatorMixin(CBActionActuator) {
+
+        constructor(action, unit) {
+            super(action);
+            let image = DImage.getImage("./../images/actuators/test.png");
+            let imageArtifacts = [];
+            this.trigger = new CBTestActuatorTrigger(this, unit, "units", image,
+                new Point2D(0, 0), new Dimension2D(142, 142));
+            this.trigger.position = Point2D.position(action.playable.location, unit.location, 1);
+            imageArtifacts.push(this.trigger);
+            this.initElement(imageArtifacts);
+        }
+
+        get unit() {
+            return this.playable;
+        }
+
+        onMouseClick(trigger, event) {
+            this.unitProcessed = trigger.playable;
+        }
+
+    }
+
+    it("Checks actuators trigger on playable", () => {
+        given:
+            var {game, unit1, unit2} = create2UnitsTinyGame();
+            var [actuatorsLayer] = getLayers(game.board, "actuators-0");
+        when:
+            var action = new CBAction(game, unit1);
+            var actuator = new CBTestUnitActuator(action, unit2);
+            resetDirectives(actuatorsLayer);
+            game.openActuator(actuator);
+            paint(game);
+            loadAllImages();
+        then:
+            assertClearDirectives(actuatorsLayer);
+            assertDirectives(actuatorsLayer, showActuatorTrigger("test", 142, 142, zoomAndRotate0(416.6667, 255.6635)))
+            assertNoMoreDirectives(actuatorsLayer);
+        when:
+            clickOnTrigger(game, actuator.trigger);
+        then:
+            assert(actuator.unitProcessed).equalsTo(unit2);
+    });
+
+
+
+
+
+
+
+
+
 
     it("Checks that a unit may carry other counters (not undoable)", () => {
         given:

@@ -99,9 +99,11 @@ export class InteractiveTryToCastSpellAction extends CBAction {
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
-        let close = ()=>{mask.close(); scene.close();};
+        let close = ()=>{
+            this.game.closePopup();
+        };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBCastSpellInsert(this.game), new Point2D(0, 0)
         ).addWidget(
@@ -119,7 +121,8 @@ export class InteractiveTryToCastSpellAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processCastSpellResult(wizard, diceResult) {
@@ -372,10 +375,9 @@ CBFireballSpell.resolver = function(action) {
     let scene = new DScene();
     let mask = new DMask("#000000", 0.3);
     let close = ()=>{
-        mask.close();
-        scene.close();
+        this.game.closePopup();
     };
-    mask.open(this.game.board, this.location);
+    this.game.openMask(mask);
     scene.addWidget(
         new CBCombatResultTableInsert(this.game), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
     ).addWidget(
@@ -395,7 +397,8 @@ CBFireballSpell.resolver = function(action) {
     ).addWidget(
         result.setFinalAction(close),
         new Point2D(0, 0)
-    ).open(this.game.board, this.location);
+    );
+    this.game.openPopup(scene, this.location);
 }
 
 export class CBFireballInsert extends WidgetLevelMixin(DInsert) {

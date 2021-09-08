@@ -145,19 +145,17 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
             if (cancellable) {
-                mask.close();
-                scene.close();
+                this.game.closePopup();
             }
             if (result.finished) {
                 if (!cancellable) {
-                    mask.close();
-                    scene.close();
+                    this.game.closePopup();
                 }
                 action();
             }
         }
         mask.setAction(close);
-        mask.open(this.game.board, unit.viewportLocation);
+        this.game.openMask(mask);
         let condition = this.game.arbitrator.getUnitCohesionLostCondition(unit);
         scene.addWidget(
             new CBLoseCohesionInsert(this.game, condition), new Point2D(-CBLoseCohesionInsert.DIMENSION.w/2, 0)
@@ -178,7 +176,8 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, unit.viewportLocation);
+        );
+        this.game.openPopup(scene, unit.viewportLocation);
     }
 
     checkDefenderEngagement(unit, point, action) {
@@ -187,14 +186,13 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
             if (result.finished) {
                 action();
             }
         }
         mask.setAction(close);
-        mask.open(this.game.board, point);
+        this.game.openMask(mask);
         let condition = this.game.arbitrator.getDefenderEngagementCondition(unit);
         scene.addWidget(
             new CBCheckDefenderEngagementInsert(this.game, condition), new Point2D(-CBCheckDefenderEngagementInsert.DIMENSION.w/2, 0)
@@ -215,8 +213,8 @@ export class CBInteractivePlayer extends CBAbstractPlayer {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, point);
-
+        );
+        this.game.openPopup(scene, point);
     }
 
     _processCohesionLostResult(unit, diceResult) {

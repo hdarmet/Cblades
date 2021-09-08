@@ -29,9 +29,12 @@ import {
 import {
     WeatherMixin
 } from "../../jslib/cblades/weather.js";
+import {
+    BurningMixin
+} from "../../jslib/cblades/miscellaneous.js";
 
 export function createBaseGame() {
-    let game = new (WeatherMixin(CBGame))();
+    let game = new (BurningMixin(WeatherMixin(CBGame)))();
     let arbitrator = new CBTestArbitrator();
     game.setArbitrator(arbitrator);
     var map = new CBMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);

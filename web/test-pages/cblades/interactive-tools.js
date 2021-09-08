@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    createEvent, round, mockPlatform, resetAllDirectives
+    createEvent, round, mockPlatform, resetAllDirectives, loadAllImages
 } from "../mocks.js";
 import {
     DAnimator, getDrawPlatform
@@ -20,6 +20,7 @@ export function paint(game) {
 export function repaint(game) {
     resetAllDirectives(game.board);
     game.board.repaint();
+    loadAllImages();
 }
 
 export let dummyEvent = {offsetX:0, offsetY:0};
@@ -32,7 +33,14 @@ export function rollFor1Die(d1) {
     getDrawPlatform().resetRandoms((d1-0.5)/6, 0);
 }
 
-export function executeAllAnimations() {
+export function executeAllAnimations(finalization) {
+    if (finalization) {
+        let finalizer = DAnimator.getFinalizer();
+        DAnimator.setFinalizer(()=>{
+            finalization();
+            finalizer && finalizer();
+        });
+    }
     while(DAnimator.isActive()) {
         executeTimeouts();
     }
@@ -523,9 +531,9 @@ export function showSwipeUpResult(x, y) {
 export function showNoSwipeResult(x, y) {
     return [
         "save()",
-        `setTransform(1, 0, 0, 1, ${x}, ${y})`,
-        "shadowColor = #00A000", "shadowBlur = 100",
-        "drawImage(./../images/dice/no-swipe.png, -75, -75, 150, 150)",
+            `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+            "shadowColor = #00A000", "shadowBlur = 100",
+            "drawImage(./../images/dice/no-swipe.png, -75, -75, 150, 150)",
         "restore()"
     ];
 }
@@ -533,9 +541,9 @@ export function showNoSwipeResult(x, y) {
 export function showSwipeDownResult(x, y) {
     return [
         "save()",
-        `setTransform(1, 0, 0, 1, ${x}, ${y})`,
-        "shadowColor = #00A000", "shadowBlur = 100",
-        "drawImage(./../images/dice/swipe-down.png, -75, -75, 150, 150)",
+            `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+            "shadowColor = #00A000", "shadowBlur = 100",
+            "drawImage(./../images/dice/swipe-down.png, -75, -75, 150, 150)",
         "restore()"
     ];
 }

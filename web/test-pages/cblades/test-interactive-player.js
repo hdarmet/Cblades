@@ -644,9 +644,6 @@ describe("Interactive Player", ()=> {
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
     });
 
-
-
-
     it("Checks that the destruction of a unit not near any unrouted unit, does not trigger test cohesion", () => {
         given:
             var {game, map, player1, unit11, unit12} = create2Players4UnitsTinyGame();
@@ -659,9 +656,6 @@ describe("Interactive Player", ()=> {
         then:
             assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
     });
-
-
-
 
     it("Checks weather indicator appearance", () => {
         given:

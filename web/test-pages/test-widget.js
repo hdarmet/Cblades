@@ -257,13 +257,6 @@ describe("Widget", ()=> {
             mockPlatform.dispatchEvent(board.root, "click", event);
         then:
             assert(clicked).equalsTo(1);
-            assert(getDirectives(itemsLayer, 0)).arrayEqualsTo([]); // no repainting
-        when: // click icon twice: icon action returns true => menu is closed
-            resetDirectives(itemsLayer);
-            event = createEvent("click", {offsetX:iconVPLocation.x, offsetY:iconVPLocation.y});
-            mockPlatform.dispatchEvent(board.root, "click", event);
-        then:
-            assert(clicked).equalsTo(2);
             assert(getDirectives(itemsLayer, 0)).arrayEqualsTo([
                 "save()",
                     "resetTransform()",

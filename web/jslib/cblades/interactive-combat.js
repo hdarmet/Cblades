@@ -302,8 +302,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
             if (result.finished) {
                 let continuation = ()=>{
                     this.unit.changeAction(this);   // In case, attack action is replaced by advance action...
@@ -321,7 +320,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
             }
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(event.offsetX, event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBCombatResultTableInsert(this.game), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
         ).addWidget(
@@ -341,7 +340,8 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(event.offsetX, event.offsetY));
     }
 
     _processShockAttackResult(attackerHex, defender, defenderHex, supported, diceResult) { // LA
@@ -369,18 +369,18 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         let scene = new DScene();
         let mask = new CBMask(this.game, "#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(event.offsetX, event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBShockAttackInsert(this.game, advantage), new Point2D(-250, CBShockAttackInsert.DIMENSION.h/2-40)
         ).addWidget(
             new CBWeaponTableInsert(this.game).focus(
                 advantageCell.col, advantageCell.row),
             new Point2D(CBWeaponTableInsert.DIMENSION.w/2-20, CBWeaponTableInsert.DIMENSION.h/2)
-        ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(event.offsetX, event.offsetY));
     }
 
     createShockHexActuator() {
@@ -512,8 +512,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
             if (result.finished) {
                 let continuation = () => {
                     if (this._hasPlayed() || !this._createFireAttackActuator(this.unit)) {
@@ -528,7 +527,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
             }
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(event.offsetX, event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBCombatResultTableInsert(this.game), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
         ).addWidget(
@@ -548,7 +547,8 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(event.offsetX, event.offsetY));
     }
 
     _processFireAttackResult(firerHex, target, targetHex, diceResult) {
@@ -576,11 +576,10 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         let scene = new DScene();
         let mask = new CBMask(this.game, "#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(event.offsetX, event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBFireAttackInsert(this.game, advantage), new Point2D(-250, CBFireAttackInsert.DIMENSION.h/2-40)
         ).addWidget(
@@ -588,7 +587,8 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
                 advantageCell.col, advantageCell.row),
                 new Point2D(CBWeaponTableInsert.DIMENSION.w/2-20, CBWeaponTableInsert.DIMENSION.h/2
             )
-        ).open(this.game.board, new Point2D(event.offsetX, event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(event.offsetX, event.offsetY));
     }
 
     createFireHexActuator() {

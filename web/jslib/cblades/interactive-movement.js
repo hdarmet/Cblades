@@ -697,14 +697,13 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
             if (result.finished) {
                 action();
             }
         }
         mask.setAction(close);
-        mask.open(this.game.board, point);
+        this.game.openMask(mask);
         let condition = this.game.arbitrator.getAttackerEngagementCondition(this.unit);
         scene.addWidget(
             new CBCheckAttackerEngagementInsert(this.game, condition), new Point2D(-CBCheckAttackerEngagementInsert.DIMENSION.w/2, 0)
@@ -725,23 +724,24 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, point);
+        );
+        this.game.openPopup(scene, point);
     }
 
     showRules(point) {
         let scene = new DScene();
         let mask = new CBMask(this.game, "#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
         }
         mask.setAction(close);
-        mask.open(this.game.board, point);
+        this.game.openMask(mask);
         scene.addWidget(
             new CBMovementTableInsert(this.game), new Point2D(0, -CBMovementTableInsert.DIMENSION.h/2)
         ).addWidget(
             new CBMovementInsert(this.game), new Point2D(-CBMovementInsert.DIMENSION.w/2, CBMovementInsert.DIMENSION.h/2)
-        ).open(this.game.board, point);
+        );
+        this.game.openPopup(scene, point);
     }
 
     _processAttackerEngagementResult(diceResult) {
@@ -794,16 +794,16 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
         let scene = new DScene();
         let mask = new CBMask(this.game, "#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
         }
         mask.setAction(close);
-        mask.open(this.game.board, point);
+        this.game.openMask(mask);
         scene.addWidget(
             new CBMovementTableInsert(this.game), new Point2D(0, -CBMovementTableInsert.DIMENSION.h/2)
         ).addWidget(
             new CBRoutInsert(this.game), new Point2D(-CBRoutInsert.DIMENSION.w/2, CBRoutInsert.DIMENSION.h/2)
-        ).open(this.game.board, point);
+        );
+        this.game.openPopup(scene, point);
     }
 
     _createMovementActuators(start) {
@@ -851,14 +851,13 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
             if (result.finished) {
                 action();
             }
         }
         mask.setAction(close);
-        mask.open(this.game.board, point);
+        this.game.openMask(mask);
         scene.addWidget(
             new CBCheckDisengagementInsert(this.game), new Point2D(-CBCheckDisengagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
@@ -878,8 +877,8 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, point);
-
+        );
+        this.game.openPopup(scene, point);
     }
 
     _processDisengagementResult(diceResult) {
@@ -932,14 +931,13 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
             if (result.finished) {
                 action();
             }
         }
         mask.setAction(close);
-        mask.open(this.game.board, point);
+        this.game.openMask(mask);
         scene.addWidget(
             new CBCheckDisengagementInsert(this.game), new Point2D(-CBCheckDisengagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
@@ -959,8 +957,8 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, point);
-
+        );
+        this.game.openPopup(scene, point);
     }
 
     showRules(point) {
@@ -968,7 +966,7 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
             mask.close();
-            scene.close();
+            this.game.closePopup();
         }
         mask.setAction(close);
         mask.open(this.game.board, point);
@@ -976,7 +974,8 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
             new CBMovementTableInsert(this.game), new Point2D(0, -CBMovementTableInsert.DIMENSION.h/2)
         ).addWidget(
             new CBMoveBackInsert(this.game), new Point2D(-CBMoveBackInsert.DIMENSION.w/2, CBMoveBackInsert.DIMENSION.h/2)
-        ).open(this.game.board, point);
+        );
+        this.game.openPopup(scene, point);
     }
 
     _processDisengagementResult(diceResult) {
@@ -1038,7 +1037,7 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
             mask.close();
-            scene.close();
+            this.game.closePopup();
             if (result.finished) {
                 action();
             }
@@ -1065,8 +1064,8 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, point);
-
+        );
+        this.game.openPopup(scene, point);
     }
 
     showRules(point) {
@@ -1074,13 +1073,14 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
             mask.close();
-            scene.close();
+            this.game.closePopup();
         }
         mask.setAction(close);
         mask.open(this.game.board, point);
         scene.addWidget(
             new CBToFaceInsert(this.game), new Point2D(-CBToFaceInsert.DIMENSION.w/2, 0)
-        ).open(this.game.board, point);
+        );
+        this.game.openPopup(scene, point);
     }
 
     _processConfrontEngagementResult(diceResult) {

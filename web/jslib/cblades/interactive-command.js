@@ -84,13 +84,13 @@ export class InteractiveTakeCommandAction extends CBAction {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = success=>{
-            mask.close(); scene.close();
+            this.game.closePopup();
             if (success) {
                 this.unit.takeCommand();
             }
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBTakeCommandInsert(this.game),
             new Point2D(CBTakeCommandInsert.DIMENSION.w/2, -CBTakeCommandInsert.DIMENSION.h/2-40)
@@ -111,7 +111,8 @@ export class InteractiveTakeCommandAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processTakeCommandResult(diceResult) {
@@ -141,13 +142,13 @@ export class InteractiveDismissCommandAction extends CBAction {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = success=>{
-            mask.close(); scene.close();
+            this.game.closePopup();
             if (success) {
                 this.unit.dismissCommand();
             }
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBDismissCommandInsert(this.game),
             new Point2D(CBDismissCommandInsert.DIMENSION.w/2, -CBDismissCommandInsert.DIMENSION.h/2-40)
@@ -168,7 +169,8 @@ export class InteractiveDismissCommandAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processDismissCommandResult(diceResult) {
@@ -198,7 +200,7 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = success=>{
-            mask.close(); scene.close();
+            this.game.closePopup();
             if (success) {
                 this.unit.player.openOrderInstructionMenu(this.unit,
                     this.unit.viewportLocation,
@@ -207,7 +209,7 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
             }
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBChangeOrderInstructionInsert(this.game),
             new Point2D(CBChangeOrderInstructionInsert.DIMENSION.w/2, -CBChangeOrderInstructionInsert.DIMENSION.h/2-40)
@@ -228,7 +230,8 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processChangeOderInstructionResult(diceResult) {
@@ -258,15 +261,14 @@ export class InteractiveGiveOrdersAction extends CBAction {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
             if (this.unit.commandPoints) {
                 this._selectUnitsToGiveOrders();
             }
             Memento.clear();
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D.getEventPoint(this._event));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBGiveOrdersInsert(this.game, {}),
             new Point2D(-CBGiveOrdersInsert.DIMENSION.w/4, 0)
@@ -280,22 +282,23 @@ export class InteractiveGiveOrdersAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close, this.unit.commandPoints),
             new Point2D(CBGiveOrdersInsert.DIMENSION.w/4, 0)
-        ).open(this.game.board, new Point2D.getEventPoint(this._event));
+        );
+        this.game.openPopup(scene, new Point2D.getEventPoint(this._event));
     }
 
     showRules(order, event) {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D.getEventPoint(event));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBGiveOrdersInsert(this.game, order.detail),
             new Point2D(-CBGiveOrdersInsert.DIMENSION.w/4, 0)
-        ).open(this.game.board, new Point2D.getEventPoint(event));
+        );
+        this.game.openPopup(scene, new Point2D.getEventPoint(event));
     }
 
     _processGiveOrdersResult(diceResult) {

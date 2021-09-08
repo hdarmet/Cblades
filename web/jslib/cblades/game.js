@@ -500,7 +500,7 @@ export class CBAbstractGame {
             actuators: [...this._actuators],
             playables: new Set(this._playables),
             popup: this._popup,
-            firePlayed: this._firePlayed
+            mask: this._mask
         };
     }
 
@@ -514,20 +514,11 @@ export class CBAbstractGame {
         } else {
             delete this._popup;
         }
-        if (memento.firePlayed) {
-            this._firePlayed = memento.firePlayed;
+        if (memento.mask) {
+            this._mask = memento.mask;
         } else {
-            delete this._firePlayed;
+            delete this._mask;
         }
-    }
-
-    changeFirePlayed() {
-        Memento.register(this);
-        this._firePlayed = true;
-    }
-
-    get firePlayed() {
-        return this._firePlayed;
     }
 
     _processGlobalEvent(source, event, value) {
@@ -843,22 +834,29 @@ export class CBAbstractGame {
         this._loadCommand.active = false;
     }
 
+    _reset(animation) {
+        this.closeWidgets();
+        this._resetPlayables(this._currentPlayer);
+        let indexPlayer = this._players.indexOf(this._currentPlayer);
+        this._currentPlayer = this._players[(indexPlayer + 1) % this._players.length];
+        this._initPlayables(this._currentPlayer);
+        animation && animation();
+        Memento.clear();
+        Mechanisms.fire(this, CBAbstractGame.TURN_EVENT);
+    }
+
     nextTurn(animation) {
         if (!this.selectedPlayable || this.canUnselectPlayable()) {
-            this.closeWidgets();
-            this._resetPlayables(this._currentPlayer);
-            delete this._firePlayed;
-            let indexPlayer = this._players.indexOf(this._currentPlayer);
-            this._currentPlayer = this._players[(indexPlayer + 1) % this._players.length];
-            this._initPlayables(this._currentPlayer);
-            animation && animation();
-            Memento.clear();
-            Mechanisms.fire(this, CBAbstractGame.TURN_EVENT);
+            this._reset(animation);
         }
     }
 
     get arbitrator() {
         return this._arbitrator;
+    }
+
+    get mask() {
+        return this._mask;
     }
 
     get popup() {
@@ -892,10 +890,24 @@ export class CBAbstractGame {
         return this;
     }
 
+    _closePopup() {
+        if (this._popup) {
+            this._popup.close();
+            delete this._popup;
+        }
+    }
+
+    _closeMask() {
+        if (this._mask) {
+            this._mask.close();
+            delete this._mask;
+        }
+    }
+
     openPopup(popup, location) {
         Memento.register(this);
         if (this._popup) {
-            this.closePopup();
+            this._closePopup();
         }
         this._popup = popup;
         this._popup.open(this._board, location);
@@ -903,10 +915,17 @@ export class CBAbstractGame {
 
     closePopup() {
         Memento.register(this);
-        if (this._popup) {
-            this._popup.close();
-            delete this._popup;
+        this._closePopup();
+        this._closeMask();
+    }
+
+    openMask(mask) {
+        Memento.register(this);
+        if (this._mask) {
+            this._closeMask();
         }
+        this._mask = mask;
+        this._mask.open(this._board);
     }
 
     static TURN_EVENT = "game-turn";

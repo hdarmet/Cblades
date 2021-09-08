@@ -721,6 +721,10 @@ export class DAnimator {
         return this._token!==undefined;
     }
 
+    getFinalizer() {
+        return this._finalizer;
+    }
+
     setFinalizer(finalizer) {
         this._finalizer = finalizer;
     }
@@ -766,6 +770,9 @@ export class DAnimator {
     }
 }
 DAnimator._instance = new DAnimator();
+DAnimator.getFinalizer = function() {
+    return DAnimator._instance.getFinalizer();
+}
 DAnimator.setFinalizer = function(finalizer) {
     DAnimator._instance.setFinalizer(finalizer);
 }

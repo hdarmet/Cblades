@@ -749,7 +749,7 @@ describe("Movement teacher", ()=> {
             ])
     });
 
-    it("Checks move away moves when the unit can escape some enemies only but can avoid to approch to others", () => {
+    it("Checks move away moves when the unit can escape some enemies only but can avoid to approach to others", () => {
         given:
             var {arbitrator, map, unit11, unit21, unit22, leader21} = create2Players4UnitsTinyGame();
             unit11.hexLocation = map.getHex(8, 9);
@@ -769,7 +769,7 @@ describe("Movement teacher", ()=> {
             ])
     });
 
-    it("Checks move away moves when the unit can escape some enemies but cannot avoid to approch to others", () => {
+    it("Checks move away moves when the unit can escape some enemies but cannot avoid to approach to others", () => {
         given:
             var {arbitrator, map, unit11, unit21, unit22, leader21} = create2Players4UnitsTinyGame();
             unit11.hexLocation = map.getHex(8, 9);

@@ -72,9 +72,11 @@ export class InteractiveRestingAction extends CBAction {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let tirednessIndicator = new CBWingTirednessIndicator(this.unit.wing);
-        let close = ()=>{mask.close(); scene.close();};
+        let close = ()=>{
+            this.game.closePopup();
+        };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBRestInsert(this.game), new Point2D(0, -CBRestInsert.DIMENSION.h/2+10)
         ).addWidget(
@@ -103,7 +105,8 @@ export class InteractiveRestingAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processRestResult(unit, diceResult) {
@@ -139,11 +142,10 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
-            mask.close();
-            scene.close();
+            this.game.closePopup();
         };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBReplenishMunitionsInsert(this.game), new Point2D(0, -CBReplenishMunitionsInsert.DIMENSION.h/2+10)
         ).addWidget(
@@ -161,7 +163,8 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processReplenishMunitionsResult(unit, diceResult) {
@@ -193,9 +196,11 @@ export class InteractiveReorganizeAction extends CBAction {
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
-        let close = ()=>{mask.close(); scene.close();};
+        let close = ()=>{
+            this.game.closePopup();
+        };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBReorganizeInsert(this.game), new Point2D(CBReorganizeInsert.DIMENSION.w/2, -CBReorganizeInsert.DIMENSION.h/2+-60)
         ).addWidget(
@@ -218,7 +223,8 @@ export class InteractiveReorganizeAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processReorganizeResult(unit, diceResult) {
@@ -250,9 +256,11 @@ export class InteractiveRallyAction extends CBAction {
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
-        let close = ()=>{mask.close(); scene.close();};
+        let close = ()=>{
+            this.game.closePopup();
+        };
         mask.setAction(close);
-        mask.open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openMask(mask);
         scene.addWidget(
             new CBRallyInsert(this.game), new Point2D(CBRallyInsert.DIMENSION.w/2, -CBRallyInsert.DIMENSION.h/2+-60)
         ).addWidget(
@@ -275,7 +283,8 @@ export class InteractiveRallyAction extends CBAction {
         ).addWidget(
             result.setFinalAction(close),
             new Point2D(0, 0)
-        ).open(this.game.board, new Point2D(this._event.offsetX, this._event.offsetY));
+        );
+        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     _processRallyResult(unit, diceResult) {

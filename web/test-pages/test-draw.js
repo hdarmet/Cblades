@@ -79,6 +79,7 @@ describe("Drawing fundamentals", ()=> {
             var layer2 = draw.addLayer(new DTranslateLayer("layer2", Matrix2D.translate(new Point2D(10, 15))));
             draw.setTransform(new Matrix2D(2, 0, 0, 2, 10, 30));
         then:
+            assert(draw.getLayers()).arrayEqualsTo([layer1, layer2]);
             assert(layer1.transform.toString()).equalsTo("matrix(2, 0, 0, 2, 10, 30)");
             assert(layer2.transform.toString()).equalsTo("matrix(2, 0, 0, 2, 30, 60)");
     });
@@ -1033,10 +1034,12 @@ describe("Drawing fundamentals", ()=> {
             var directives = [];
         when:
             var animation = new DummyAnimation(directives);
-            DAnimator.setFinalizer(()=>{directives.push("refresh")});
+            let finalizer = ()=>{directives.push("refresh");};
+            DAnimator.setFinalizer(finalizer);
             animation.play(1);
             executeTimeouts();
         then:
+            assert(DAnimator.getFinalizer()).equalsTo(finalizer);
             assert(directives).arrayEqualsTo([
                 "draw on count 0 for tick 0", "refresh"
             ]);

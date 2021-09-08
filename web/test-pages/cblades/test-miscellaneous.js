@@ -19,8 +19,9 @@ import {
     createTinyGame
 } from "./game-examples.js";
 import {
+    CBBurningCounter,
     CBFireCounter,
-    CBFogCounter,
+    CBFogCounter, CBSmokeCounter,
     CBStakesCounter,
     CBWeatherCounter,
     CBWindDirectionCounter,
@@ -35,6 +36,9 @@ import {
     CBFog,
     CBWeather
 } from "../../jslib/cblades/weather.js";
+import {
+    CBAction
+} from "../../jslib/cblades/game.js";
 
 describe("Miscellaneous", ()=> {
 
@@ -45,19 +49,18 @@ describe("Miscellaneous", ()=> {
         Memento.clear();
     });
 
-    it("Checks start fire counter", () => {
+    it("Checks fire counter", () => {
         given:
             var {game, map} = createTinyGame();
             var [groundLayer] = getLayers(game.board,"hex-0");
             var hexId = map.getHex(7,8);
         when:
-            var fireStart = new CBFireCounter();
-            resetDirectives(groundLayer);
-            fireStart.addToMap(hexId);
-            paint(game);
-            loadAllImages();
+            var fire = new CBFireCounter();
+            fire.addToMap(hexId);
+            repaint(game);
         then:
-            assert(hexId.playables[0]).equalsTo(fireStart);
+            assert(fire.isFire()).isFalse();
+            assert(hexId.playables[0]).equalsTo(fire);
             assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
@@ -65,6 +68,155 @@ describe("Miscellaneous", ()=> {
                     "drawImage(./../images/counters/start-fire.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
+        when:
+            Memento.open();
+            fire.setFire();
+            repaint(game);
+        then:
+            assert(fire.isFire()).isTrue();
+            assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(./../images/counters/fire.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            Memento.undo();
+            repaint(game);
+        then:
+            assert(fire.isFire()).isFalse();
+            assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(./../images/counters/start-fire.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks smoke counter", () => {
+        given:
+            var {game, map} = createTinyGame();
+            var [groundLayer] = getLayers(game.board,"hex-0");
+            var hexId = map.getHex(7,8);
+        when:
+            var smoke = new CBSmokeCounter();
+            smoke.addToMap(hexId);
+            repaint(game);
+        then:
+            assert(smoke.isDense()).isFalse();
+            assert(hexId.playables[0]).equalsTo(smoke);
+            assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(./../images/counters/light-smoke.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            Memento.open();
+            smoke.densify();
+            repaint(game);
+        then:
+            assert(smoke.isDense()).isTrue();
+            assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(./../images/counters/heavy-smoke.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            Memento.open();
+            smoke.disperse();
+            repaint(game);
+        then:
+            assert(smoke.isDense()).isFalse();
+            assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
+                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "drawImage(./../images/counters/light-smoke.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            Memento.undo();
+        then:
+            assert(smoke.isDense()).isTrue();
+        when:
+            Memento.undo();
+        then:
+            assert(smoke.isDense()).isFalse();
+    });
+
+    it("Checks playing burning counter", () => {
+        given:
+            var {game, player, map} = createTinyGame();
+            var [groundMarkerLayer] = getLayers(game.board,"hmarkers-0");
+        when:
+            var burning1 = new CBFireCounter();
+            var burning2 = new CBSmokeCounter();
+            burning1.addToMap(map.getHex(7,8));
+            burning1.launchAction(new CBAction(game, burning1));
+            burning2.addToMap(map.getHex(8,8));
+            player.playSmokeAndFire = function(burning, event) {
+                Mechanisms.fire(burning, CBBurningCounter.PLAYED_EVENT);
+                game.changeFirePlayed();
+            }
+            burning1.onMouseClick({});
+            repaint(game);
+        then:
+            assert(burning1.isPlayed()).isFalse();
+            assert(burning2.isPlayed()).isTrue();
+            assert(getDirectives(groundMarkerLayer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(0.4888, 0, 0, 0.4888, 701.3685, 375.0733)',
+                    'shadowColor = #000000', 'shadowBlur = 10',
+                    'drawImage(./../images/markers/actiondone.png, -32, -32, 64, 64)',
+                'restore()'
+            ]);
+        when:
+            Memento.undo();
+            repaint(game);
+        then:
+            assert(burning1.isPlayed()).isFalse();
+            assert(burning2.isPlayed()).isFalse();
+        when:
+            Memento.redo();
+            repaint(game);
+        then:
+            assert(burning1.isPlayed()).isFalse();
+            assert(burning2.isPlayed()).isTrue();
+        when:
+            game.nextTurn();
+            repaint(game);
+        then:
+            assert(burning1.isPlayed()).isFalse();
+            assert(burning2.isPlayed()).isFalse();
+            assert(getDirectives(groundMarkerLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks burning playing management on game level", () => {
+        given:
+            var {game} = createTinyGame();
+        when:
+            Memento.open();
+            game.changeFirePlayed();
+        then:
+            assert(game.firePlayed).isTrue();
+        when:
+            Memento.undo();
+        then:
+            assert(game.firePlayed).isFalse();
+        when:
+            Memento.redo();
+        then:
+            assert(game.firePlayed).isTrue();
+        when:
+            game.nextTurn();
+        then:
+            assert(game.firePlayed).isFalse();
     });
 
     it("Checks stakes counter", () => {
@@ -100,13 +252,12 @@ describe("Miscellaneous", ()=> {
             loadAllImages();
         then:
             assert(getDirectives(counterMarkersLayer, 4)).arrayEqualsTo([
-
             ]);
         when:
-            Memento.open();
             player.playWeather= function(weather, event) {
                 weather.markAsPlayed();
             }
+            Memento.open();
             weather.play(dummyEvent);
             repaint(game);
             loadAllImages();

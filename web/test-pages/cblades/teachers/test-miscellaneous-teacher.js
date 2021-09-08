@@ -327,4 +327,15 @@ describe("Miscellaneous teacher", ()=> {
             assert(result3).objectEqualsTo({moral: 10, swipe: 0});
     });
 
+    it("Checks play fire allowance", () => {
+        given:
+            var {arbitrator, wing} = createTinyGame();
+        when:
+            wing.setMoral(10);
+            var result2 = arbitrator.processPlayFireResult(wing, [3]);
+            var result3 = arbitrator.processPlayFireResult(wing, [6]);
+        then:
+            assert(result2).objectEqualsTo({playFire: false});
+            assert(result3).objectEqualsTo({playFire: true});
+    });
 });

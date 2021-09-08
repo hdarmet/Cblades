@@ -445,6 +445,9 @@ describe("Board", ()=> {
         then:
             assert(artifact.getViewportPoint(new Point2D(10, 5)).toString()).equalsTo("point(260, 155)");
             assert(artifact.getPoint(new Point2D(260, 155)).toString()).equalsTo("point(10, 5)");
+            assert(artifact.onMouseClick({})).isFalse();
+            assert(artifact.onMouseEnter({})).isFalse();
+            assert(artifact.onMouseLeave({})).isFalse();
     });
 
     it("Checks change artifact position and relative orientation (not undoable)", () => {
