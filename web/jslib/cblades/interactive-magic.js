@@ -21,7 +21,7 @@ import {
     Point2D
 } from "../geometry.js";
 import {
-    CBFireballSpell,
+    CBFireballSpell, CBMagicArrowSpell,
     CBSpell
 } from "./magic.js";
 import {
@@ -407,5 +407,48 @@ export class CBFireballInsert extends WidgetLevelMixin(DInsert) {
         super(game, "./../images/inserts/fireball-insert.png", CBFireballInsert.DIMENSION);
     }
 
+    static DIMENSION = new Dimension2D(444, 257);
 }
-CBFireballInsert.DIMENSION = new Dimension2D(444, 257);
+
+CBMagicArrowSpell.resolver = function(action) {
+    this.game.closeActuators();
+    let result = new DResult();
+    let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+    let scene = new DScene();
+    let mask = new DMask("#000000", 0.3);
+    let close = ()=>{
+        this.game.closePopup();
+    };
+    this.game.openMask(mask);
+    scene.addWidget(
+        new CBCombatResultTableInsert(this.game), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
+    ).addWidget(
+        new CBMagicArrowInsert(this.game), new Point2D(-160, CBMagicArrowInsert.DIMENSION.h/2)
+    ).addWidget(
+        dice.setFinalAction(()=>{
+            dice.active = false;
+            let report = this.resolve(dice.result);
+            if (report.success) {
+                result.success().appear();
+            }
+            else {
+                result.failure().appear();
+            }
+        }),
+        new Point2D(120, 80)
+    ).addWidget(
+        result.setFinalAction(close),
+        new Point2D(0, 0)
+    );
+    this.game.openPopup(scene, this.location);
+}
+
+export class CBMagicArrowInsert extends WidgetLevelMixin(DInsert) {
+
+    constructor(game) {
+        super(game, "./../images/inserts/fireball-insert.png", CBMagicArrowInsert.DIMENSION);
+    }
+
+    static DIMENSION = new Dimension2D(444, 257);
+
+}

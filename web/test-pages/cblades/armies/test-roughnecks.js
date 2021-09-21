@@ -3,7 +3,6 @@
 import {
     DImage, setDrawPlatform
 } from "../../../jslib/draw.js";
-
 import {
     Mechanisms, Memento
 } from "../../../jslib/mechanisms.js";
@@ -16,13 +15,13 @@ import {
 } from "../../mocks.js";
 import {
     CavalryMoveProfile,
-    CBProfileCapacity, EliteMoralProfile,
-    HeavyCavalryWeaponProfile,
+    CBProfileCapacity, EliteMoralProfile, ArcaneMagicProfile,
+    HeavyCavalryWeaponProfile, HordeWeaponProfile,
     LanceWeaponProfile,
     PedestrianMoveProfile, RegularCommandProfile
 } from "../../../jslib/cblades/profile.js";
 import {
-    RoughneckKnight, RoughneckLance, RoughneckLeader
+    RoughneckKnight, RoughneckLance, RoughneckLeader, RoughneckSorceressCharacter
 } from "../../../jslib/cblades/armies/roughnecks.js";
 
 describe("Roughnecks Army", ()=> {
@@ -82,6 +81,75 @@ describe("Roughnecks Army", ()=> {
             profile = unit.getMoralProfile(2);
         then:
             assert(profile).is(EliteMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getMagicProfile(1);
+        then:
+            assert(profile).isNotDefined();
+        when:
+            profile = unit.getMagicProfile(2);
+        then:
+            assert(profile).isNotDefined();
+    });
+
+    it("Checks Sorceress Leader", () => {
+        given:
+            var unit = RoughneckSorceressCharacter;
+        then:
+            assert(unit.getTroopPaths()).arrayEqualsTo([
+                "./../images/units/mercenaries/character2L.png",
+                "./../images/units/mercenaries/character2Lb.png"
+            ]);
+            assert(unit.getFormationPaths()).isNotDefined();
+        when:
+            var profile = unit.getMoveProfile(1);
+        then:
+            assert(profile).is(PedestrianMoveProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.NORMAL);
+        when:
+            profile = unit.getMoveProfile(2);
+        then:
+            assert(profile).is(PedestrianMoveProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getWeaponProfile(1);
+        then:
+            assert(profile).is(HordeWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.INFERIOR);
+        when:
+            profile = unit.getWeaponProfile(2);
+        then:
+            assert(profile).is(HordeWeaponProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
+        when:
+            profile = unit.getCommandProfile(1);
+        then:
+            assert(profile).is(RegularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.INFERIOR);
+        when:
+            profile = unit.getCommandProfile(2);
+        then:
+            assert(profile).is(RegularCommandProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.DISADVANTAGED);
+        when:
+            profile = unit.getMoralProfile(1);
+        then:
+            assert(profile).is(EliteMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.NORMAL);
+        when:
+            profile = unit.getMoralProfile(2);
+        then:
+            assert(profile).is(EliteMoralProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
+        when:
+            profile = unit.getMagicProfile(1);
+        then:
+            assert(profile).is(ArcaneMagicProfile);
+            assert(profile.capacity).equalsTo(CBProfileCapacity.NORMAL);
+        when:
+            profile = unit.getMagicProfile(2);
+        then:
+            assert(profile).is(ArcaneMagicProfile);
             assert(profile.capacity).equalsTo(CBProfileCapacity.ADVANTAGED);
     });
 

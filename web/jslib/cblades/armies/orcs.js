@@ -1,9 +1,17 @@
 'use strict'
 
 import {
-    AnimalMoveProfile, PedestrianMoveProfile,
+    AnimalMoveProfile,
+    PedestrianMoveProfile,
     CBProfileCapacity,
-    MediumCavalryWeaponProfile, LightInfantryWeaponProfile, IrregularCommandProfile, ExaltedMoralProfile
+    HordeWeaponProfile,
+    MediumCavalryWeaponProfile,
+    LightInfantryWeaponProfile,
+    IrregularCommandProfile,
+    ExaltedMoralProfile,
+    EliteMoralProfile,
+    CavalryMoveProfile,
+    FireMagicProfile
 } from "../profile.js";
 
 import {
@@ -30,6 +38,26 @@ export let GoblinLeader = new CBUnitType("Goblin Leader",
 
 ).setMoralProfile(1, new ExaltedMoralProfile(CBProfileCapacity.DISADVANTAGED)
 ).setMoralProfile(2, new ExaltedMoralProfile(CBProfileCapacity.NORMAL));
+
+export let WizardLeader = new CBUnitType("Wizard Leader",
+    [
+        "./../images/units/orcs/character2C.png",
+        "./../images/units/orcs/character2Cb.png"
+    ]
+).setMoveProfile(1, new CavalryMoveProfile(CBProfileCapacity.NORMAL)
+).setMoveProfile(2, new CavalryMoveProfile(CBProfileCapacity.ADVANTAGED)
+
+).setWeaponProfile(1, new HordeWeaponProfile(CBProfileCapacity.INFERIOR)
+).setWeaponProfile(2, new HordeWeaponProfile(CBProfileCapacity.DISADVANTAGED)
+
+).setCommandProfile(1, new IrregularCommandProfile(CBProfileCapacity.NORMAL)
+).setCommandProfile(2, new IrregularCommandProfile(CBProfileCapacity.ADVANTAGED)
+
+).setMoralProfile(1, new EliteMoralProfile(CBProfileCapacity.NORMAL)
+).setMoralProfile(2, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED)
+
+).setMagicProfile(1, new FireMagicProfile(CBProfileCapacity.NORMAL)
+).setMagicProfile(2, new FireMagicProfile(CBProfileCapacity.ADVANTAGED));
 
 export let GoblinWolfRider = new CBUnitType("Goblin Wolf Rider",
     [

@@ -24,7 +24,7 @@ import {
     CBGame, CBMoveMode
 } from "../../jslib/cblades/playable.js";
 import {
-    CBCharacter, CBCharge, CBCommandProfile, CBFormation, CBLackOfMunitions, CBMoralProfile,
+    CBCharacter, CBCharge, CBCommandProfile, CBFormation, CBLackOfMunitions, CBMagicProfile, CBMoralProfile,
     CBMoveProfile, CBOrderInstruction,
     CBTiredness,
     CBTroop,
@@ -72,6 +72,19 @@ describe("Arbitrator", ()=> {
         }
     }
 
+    class CBTestLeaderType extends CBUnitType {
+        constructor(name, troopPaths, formationPaths=[]) {
+            super(name, troopPaths, formationPaths);
+            for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
+                this.setMoveProfile(index, new CBMoveProfile());
+                this.setWeaponProfile(index, new FireWeaponProfile());
+                this.setCommandProfile(index, new CBCommandProfile());
+                this.setMoralProfile(index, new CBMoralProfile());
+                this.setMagicProfile(index, new CBMagicProfile("fire"));
+            }
+        }
+    }
+
     function createTinyGame() {
         let game = new CBGame();
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -87,7 +100,7 @@ describe("Arbitrator", ()=> {
         unit11.addToMap(map.getHex(5, 8));
         let unit12 = new CBTroop(unitType1, wing1);
         unit12.addToMap(map.getHex(5, 7));
-        let leaderType1 = new CBTestUnitType("leader1", ["./../images/units/misc/leader1.png", "./../images/units/misc/leader1b.png"])
+        let leaderType1 = new CBTestLeaderType("leader1", ["./../images/units/misc/leader1.png", "./../images/units/misc/leader1b.png"])
         let leader11 = new CBCharacter(leaderType1, wing1);
         leader11.addToMap(map.getHex(6, 7));
         game.start();

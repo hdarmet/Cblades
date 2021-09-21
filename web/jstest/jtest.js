@@ -507,7 +507,7 @@ export class TestSuite {
                     return token;
                 };
                 clearTimeout = (token)=> {
-                    this._timeouts = this._timeouts.filter(timeout=> timeout._token != token);
+                    this._timeouts = this._timeouts.filter(timeout=> timeout._token !== token);
                 }
                 for (let before of this._befores) {
                     before();
@@ -560,10 +560,24 @@ export class TestSuite {
         //console.log(`- ${this._its[this._index]._caseTitle} -> OK (${time})`);
     }
 
-    _executeTimeouts() {
-        this._timeouts.sort((timeout1, timeout2)=>timeout1.delay-timeout2.delay);
-        let timeouts = [...this._timeouts];
-        this._timeouts = [];
+    _executeTimeouts(delay) {
+        let timeouts;
+        if (delay>=0) {
+            timeouts = this._timeouts.filter(timeout=>timeout._delay <= delay);
+        }
+        else {
+            timeouts = [...this._timeouts];
+        }
+        timeouts.sort((timeout1, timeout2)=>timeout1._delay-timeout2._delay);
+        if (delay>=0) {
+            this._timeouts = this._timeouts.filter(timeout =>
+                timeout._delay > delay
+            ).map(timeout => {
+                timeout._delay -= delay;
+                return timeout;
+            });
+        }
+        else this._timeouts = [];
         for (let timeout of timeouts) {
             timeout._action(...timeout._args);
         }
@@ -609,7 +623,7 @@ export function result() {
     executeNextSuite();
 }
 
-export function executeTimeouts() {
-    _testSuite._executeTimeouts();
+export function executeTimeouts(delay = -1) {
+    _testSuite._executeTimeouts(delay);
 }
 

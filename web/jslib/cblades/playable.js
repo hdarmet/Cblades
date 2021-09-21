@@ -20,7 +20,7 @@ import {
     Matrix2D, Point2D
 } from "../geometry.js";
 import {
-    DTranslateLayer
+    DTranslateLayer, getDrawPlatform
 } from "../draw.js";
 
 export function SelectableArtifactMixin(clazz) {
@@ -80,15 +80,30 @@ export function RetractableArtifactMixin(clazz) {
             super(...args);
         }
 
-        onMouseEnter(event) {
-            super.onMouseEnter(event);
-            this.piece.retractAbove();
-            return true;
+        onMouseMove(event) {
+            if (this._retractMouseEvent !== event) {
+                this._retractMouseEvent = event;
+                if (this._retractToken !== undefined) {
+                    getDrawPlatform().clearTimeout(this._retractToken);
+                }
+                else {
+                    this.piece.retractAbove();
+                }
+                this._retractToken = getDrawPlatform().setTimeout(()=>{
+                    this.piece.appearAbove();
+                    delete this._retractToken;
+                }, 1000);
+            }
+            return super.onMouseMove ? super.onMouseMove(event) : true;
         }
 
         onMouseLeave(event) {
-            super.onMouseLeave(event);
+            super.onMouseLeave && super.onMouseLeave(event);
             this.piece.appearAbove();
+            if (this._retractToken) {
+                getDrawPlatform().clearTimeout(this._retractToken);
+                delete this._retractToken;
+            }
             return true;
         }
 

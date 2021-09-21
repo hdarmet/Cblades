@@ -23,7 +23,7 @@ import {
 } from "../../jslib/cblades/game.js";
 import {
     CBActionActuator,
-    CBGame, CBPlayableActuatorTrigger, RetractableActuatorMixin
+    CBGame, RetractableActuatorMixin
 } from "../../jslib/cblades/playable.js";
 import {
     CBHexCounter, CBLevelBuilder
@@ -43,18 +43,16 @@ import {
     OptionMixin,
     CBMoveProfile,
     CBWeaponProfile,
-    CBCharge, CBCommandProfile, CBMoralProfile, CBUnitActuatorTrigger
+    CBCharge, CBCommandProfile, CBMoralProfile, CBMagicProfile, CBUnitActuatorTrigger
 } from "../../jslib/cblades/unit.js";
 import {
     Dimension2D, Point2D
 } from "../../jslib/geometry.js";
 import {
     clickOnTrigger,
-    mouseMoveOnTrigger, mouseMoveOutOfTrigger, paint,
-    repaint,
     showActiveMarker, showActuatorTrigger, showCharacter,
     showCommandMarker, showFormation,
-    showMarker, showSelectedActuatorTrigger,
+    showMarker,
     showTroop,
     zoomAndRotate0,
     zoomAndRotate150, zoomAndRotate30,
@@ -99,6 +97,22 @@ describe("Unit", ()=> {
             this.setCommandProfile(2, new CBCommandProfile(0));
             this.setMoralProfile(1, new CBMoralProfile(-1));
             this.setMoralProfile(2, new CBMoralProfile(0));
+        }
+    }
+
+    class CBTestLeaderType extends CBUnitType {
+        constructor(...args) {
+            super(...args);
+            this.setMoveProfile(1, new CBMoveProfile(-1));
+            this.setMoveProfile(2, new CBMoveProfile(0));
+            this.setWeaponProfile(1, new CBWeaponProfile(-1, 1, 2, 3));
+            this.setWeaponProfile(2, new CBWeaponProfile(0, 1, 2, 3));
+            this.setCommandProfile(1, new CBCommandProfile(-1));
+            this.setCommandProfile(2, new CBCommandProfile(0));
+            this.setMoralProfile(1, new CBMoralProfile(-1));
+            this.setMoralProfile(2, new CBMoralProfile(0));
+            this.setMagicProfile(1, new CBMagicProfile( "Fire", -1));
+            this.setMagicProfile(2, new CBMagicProfile("Fire", 0));
         }
     }
 
@@ -247,15 +261,6 @@ describe("Unit", ()=> {
         then:
             assert(actuator.unitProcessed).equalsTo(unit2);
     });
-
-
-
-
-
-
-
-
-
 
     it("Checks that a unit may carry other counters (not undoable)", () => {
         given:
@@ -702,6 +707,15 @@ describe("Unit", ()=> {
             assert(unit.moralProfile.autoRally).isFalse();
             assert(unit.type.getMoral(1)).equalsTo(7);
             assert(unit.moral).equalsTo(8);
+    });
+
+    it("Checks unit magic profile", () => {
+        given:
+            var {leader} = createTinyCommandGame();
+        then:
+            assert(leader.magicProfile.capacity).equalsTo(0);
+            assert(leader.magicProfile.art).equalsTo("Fire");
+            assert(leader.magicArt).equalsTo("Fire");
     });
 
     it("Checks unit move on the on map", () => {
@@ -1604,7 +1618,7 @@ describe("Unit", ()=> {
         ]);
         let unit = new CBTroop(unitType, wing);
         unit.addToMap(map.getHex(5, 8));
-        let leaderType = new CBTestUnitType("leader", [
+        let leaderType = new CBTestLeaderType("leader", [
             "./../images/units/misc/leader.png", "./../images/units/misc/leaderb.png"
         ]);
         let leader = new CBCharacter(leaderType, wing);

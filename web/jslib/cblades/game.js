@@ -1288,7 +1288,7 @@ export function PlayableMixin(clazz) {
         }
 
         onMouseClick(event) {
-            if (!this.played) {
+            if (!this.played && this.play) {
                 this.play(event);
             }
         }

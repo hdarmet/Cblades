@@ -133,6 +133,10 @@ export class CBSpell extends RetractablePieceMixin(CarriableMixin(CBHexCounter))
         this._activate();
     }
 
+    isFinishable() {
+        return true;
+    }
+
 }
 CBSpell.DIMENSION = new Dimension2D(142, 142);
 CBSpell.CINEMATIC = {
@@ -296,6 +300,153 @@ export function UnitTargetedMixin(clazz) {
 
 }
 
+export class CBArcanePentacleSpell extends HexTargetedMixin(CBSpell) {
+
+    constructor(wizard, level) {
+        super([
+            "./../images/magic/arcane/arcaneb.png",
+            "./../images/magic/arcane/pentacle1.png",
+            "./../images/magic/arcane/pentacle2.png",
+            "./../images/magic/arcane/pentacle3.png"
+        ], wizard, level);
+    }
+
+    getNextCinematic() {
+        return {cinematic: CBSpell.CINEMATIC.APPLY};
+    }
+
+    apply() {
+        this.selectHex(this._wizard.hexLocation);
+        super.apply();
+    }
+
+}
+
+export class CBArcaneCircleSpell extends HexTargetedMixin(CBSpell) {
+
+    constructor(wizard, level) {
+        super([
+            "./../images/magic/arcane/arcaneb.png",
+            "./../images/magic/arcane/circle1.png",
+            "./../images/magic/arcane/circle2.png",
+            "./../images/magic/arcane/circle3.png"
+        ], wizard, level);
+    }
+
+    getNextCinematic() {
+        return {cinematic: CBSpell.CINEMATIC.APPLY};
+    }
+
+    apply() {
+        this.selectHex(this._wizard.hexLocation);
+        super.apply();
+    }
+
+}
+
+export class CBMagicArrowSpell extends UnitTargetedMixin(CBSpell) {
+
+    constructor(wizard, level) {
+        super([
+            "./../images/magic/arcane/arcaneb.png",
+            "./../images/magic/arcane/missile1.png",
+            "./../images/magic/arcane/missile2.png",
+            "./../images/magic/arcane/missile3.png"
+        ], wizard, level);
+    }
+
+    getNextCinematic() {
+        if (!this._unit) {
+            return {cinematic: CBSpell.CINEMATIC.SELECT_FOE};
+        }
+        else if (!this._applied) {
+            return {cinematic: CBSpell.CINEMATIC.CONTINUE};
+        }
+        else {
+            return {cinematic: CBSpell.CINEMATIC.RESOLVE, resolver:CBMagicArrowSpell.resolver};
+        }
+    }
+
+    apply() {
+        super.apply();
+        this._applied = true;
+    }
+
+    resolve(diceResult) {
+        this._result = this.game.arbitrator.resolveMagicArrow(this, diceResult);
+        if (this._result.losses) this.unit.takeALoss();
+        this.unit.deleteOption(this);
+        return this._result;
+    }
+
+}
+
+export class CBArcaneSwordSpell extends UnitTargetedMixin(CBSpell) {
+
+    constructor(wizard, level) {
+        super([
+            "./../images/magic/arcane/arcaneb.png",
+            "./../images/magic/arcane/sword1.png",
+            "./../images/magic/arcane/sword2.png",
+            "./../images/magic/arcane/sword3.png"
+        ], wizard, level);
+    }
+
+    getNextCinematic() {
+        if (!this._unit) {
+            return {cinematic: CBSpell.CINEMATIC.SELECT_FRIEND};
+        }
+        else {
+            return {cinematic: CBSpell.CINEMATIC.APPLY};
+        }
+    }
+
+}
+
+export class CBArcaneShieldSpell extends UnitTargetedMixin(CBSpell) {
+
+    constructor(wizard, level) {
+        super([
+            "./../images/magic/arcane/arcaneb.png",
+            "./../images/magic/arcane/shield1.png",
+            "./../images/magic/arcane/shield2.png",
+            "./../images/magic/arcane/shield3.png"
+        ], wizard, level);
+    }
+
+    getNextCinematic() {
+        if (!this._unit) {
+            return {cinematic: CBSpell.CINEMATIC.SELECT_FRIEND};
+        }
+        else {
+            return {cinematic: CBSpell.CINEMATIC.APPLY};
+        }
+    }
+
+}
+
+export class CBProtectionFromMagicSpell extends HexTargetedMixin(CBSpell) {
+
+    constructor(wizard, level) {
+        super([
+            "./../images/magic/arcane/arcaneb.png",
+            "./../images/magic/arcane/protection1.png",
+            "./../images/magic/arcane/protection2.png",
+            "./../images/magic/arcane/protection3.png"
+        ], wizard, level);
+    }
+
+    getNextCinematic() {
+        if (!this._hex) {
+            return {cinematic: CBSpell.CINEMATIC.SELECT_HEX};
+        }
+        else {
+            return {cinematic: CBSpell.CINEMATIC.APPLY};
+        }
+    }
+
+}
+
 export class CBFirePentacleSpell extends HexTargetedMixin(CBSpell) {
 
     constructor(wizard, level) {
@@ -444,6 +595,79 @@ export class CBRainFireSpell extends HexTargetedMixin(CBSpell) {
 }
 
 CBSpell.laboratory = new Map([
+    ["arcanePentacle1",
+        new CBSpellDefinition("./../images/magic/arcane/pentacle1.png", CBArcanePentacleSpell,1,
+            "Pentacle niveau 1")
+    ],
+    ["arcanePentacle2",
+        new CBSpellDefinition("./../images/magic/arcane/pentacle2.png", CBArcanePentacleSpell,2,
+            "Pentacle niveau 2")
+    ],
+    ["arcanePentacle3",
+        new CBSpellDefinition("./../images/magic/arcane/pentacle3.png", CBArcanePentacleSpell,3,
+            "Pentacle niveau 3")
+    ],
+    ["arcaneCircle1",
+        new CBSpellDefinition("./../images/magic/arcane/circle1.png", CBArcaneCircleSpell,1,
+            "Cercle arcanqiue niveau 1")
+    ],
+    ["arcaneCircle2",
+        new CBSpellDefinition("./../images/magic/arcane/circle2.png", CBArcaneCircleSpell,2,
+            "Cercle arcanique niveau 2")
+    ],
+    ["arcaneCircle3",
+        new CBSpellDefinition("./../images/magic/arcane/circle3.png", CBArcaneCircleSpell,3,
+            "Cercle arcanique niveau 3")
+    ],
+    ["magicArrow1",
+        new CBSpellDefinition("./../images/magic/arcane/missile1.png", CBMagicArrowSpell,1,
+            "Projectile magique niveau 1")
+    ],
+    ["magicArrow2",
+        new CBSpellDefinition("./../images/magic/arcane/missile2.png", CBMagicArrowSpell,2,
+            "Projectile magique niveau 2")
+    ],
+    ["magicArrow3",
+        new CBSpellDefinition("./../images/magic/arcane/missile3.png", CBMagicArrowSpell,3,
+            "Projectile magique niveau 3")
+    ],
+    ["arcaneSword1",
+        new CBSpellDefinition("./../images/magic/arcane/sword1.png", CBArcaneSwordSpell,1,
+            "Epées arcaniques niveau 1")
+    ],
+    ["arcaneSword2",
+        new CBSpellDefinition("./../images/magic/arcane/sword2.png", CBArcaneSwordSpell,2,
+            "Epées arcaniques niveau 2")
+    ],
+    ["arcaneSword3",
+        new CBSpellDefinition("./../images/magic/arcane/sword3.png", CBArcaneSwordSpell,3,
+            "Epées arcaniques niveau 3")
+    ],
+    ["arcaneShield1",
+        new CBSpellDefinition("./../images/magic/arcane/shield1.png", CBArcaneShieldSpell,1,
+            "Boucliers arcaniques niveau 1")
+    ],
+    ["arcaneShield2",
+        new CBSpellDefinition("./../images/magic/arcane/shield2.png", CBArcaneShieldSpell,2,
+            "Boucliers arcaniques niveau 2")
+    ],
+    ["arcaneShield3",
+        new CBSpellDefinition("./../images/magic/arcane/shield3.png", CBArcaneShieldSpell,3,
+            "Boucliers arcaniques niveau 3")
+    ],
+    ["protectionFromMagic1",
+        new CBSpellDefinition("./../images/magic/arcane/protection1.png", CBProtectionFromMagicSpell,1,
+            "Protection contre la magie niveau 1")
+    ],
+    ["protectionFromMagic2",
+        new CBSpellDefinition("./../images/magic/arcane/protection2.png", CBProtectionFromMagicSpell,2,
+            "Protection contre la magie niveau 2")
+    ],
+    ["protectionFromMagic3",
+        new CBSpellDefinition("./../images/magic/arcane/protection3.png", CBProtectionFromMagicSpell,3,
+            "Protection contre la magie niveau 3")
+    ],
+
     ["firePentacle1",
         new CBSpellDefinition("./../images/magic/fire/pentacle1.png", CBFirePentacleSpell,1,
         "Pentacle niveau 1")

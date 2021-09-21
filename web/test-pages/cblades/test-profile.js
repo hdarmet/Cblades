@@ -25,11 +25,22 @@ import {
 } from "../../jslib/cblades/unit.js";
 import {
     AnimalMoveProfile,
-    CavalryMoveProfile, ChaoticCommandProfile, CrossbowWeaponProfile, EliteMoralProfile, ExaltedMoralProfile,
-    HeavyCavalryWeaponProfile, IrregularCommandProfile, LanceWeaponProfile,
+    ArcaneMagicProfile,
+    CavalryMoveProfile,
+    ChaoticCommandProfile,
+    CrossbowWeaponProfile,
+    EliteMoralProfile,
+    ExaltedMoralProfile,
+    FireMagicProfile,
+    HeavyCavalryWeaponProfile,
+    HordeWeaponProfile,
+    IrregularCommandProfile,
+    LanceWeaponProfile,
     LightInfantryWeaponProfile,
     MediumCavalryWeaponProfile,
-    PedestrianMoveProfile, RegularCommandProfile, StandardMoralProfile
+    PedestrianMoveProfile,
+    RegularCommandProfile,
+    StandardMoralProfile
 } from "../../jslib/cblades/profile.js";
 
 describe("Profile", ()=> {
@@ -383,6 +394,16 @@ describe("Profile", ()=> {
             assert(profile.getFireMalusSegmentSize()).equalsTo(1);
     });
 
+    it("Checks Horde Weapon Profile", () => {
+        given:
+            var profile = new HordeWeaponProfile(2);
+        then:
+            assert(profile.getShockAttackCode()).equalsTo("Hrd");
+            assert(profile.getShockDefendCode()).equalsTo("Hrd");
+            assert(profile.getFireAttackCode()).isNotDefined();
+            assert(profile.getFireDefendCode()).equalsTo("Hrd");
+    });
+
     it("Checks Regular Command Profile", () => {
         given:
             var profile = new RegularCommandProfile(2);
@@ -426,6 +447,20 @@ describe("Profile", ()=> {
         then:
             assert(profile.moral).equalsTo(9);
             assert(profile.getAutoRally()).isFalse();
+    });
+
+    it("Checks Arcane Magic Profile", () => {
+        given:
+            var profile = new ArcaneMagicProfile(2);
+        then:
+            assert(profile.art).equalsTo("arcane");
+    });
+
+    it("Checks Fire Magic Profile", () => {
+        given:
+            var profile = new FireMagicProfile(2);
+        then:
+            assert(profile.art).equalsTo("fire");
     });
 
 });

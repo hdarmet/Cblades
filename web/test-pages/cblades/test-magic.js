@@ -13,13 +13,17 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
+    CBArcaneCircleSpell,
+    CBArcanePentacleSpell, CBArcaneShieldSpell, CBArcaneSwordSpell,
     CBBlazeSpell, CBFireballSpell,
     CBFireCircleSpell,
-    CBFirePentacleSpell, CBFireswordSpell,
+    CBFirePentacleSpell, CBFireswordSpell, CBMagicArrowSpell, CBProtectionFromMagicSpell,
     CBRainFireSpell, CBSpell, CBSpellDefinition, HexTargetedMixin, UnitTargetedMixin
 } from "../../jslib/cblades/magic.js";
 import {
     create2Players2Units2LeadersTinyGame,
+    create2Players2UnitsALeaderAnArcaneWizardTinyGame,
+    createTinyGameWithArcaneWizard,
     createTinyGameWithLeader
 } from "./game-examples.js";
 import {
@@ -65,6 +69,7 @@ describe("Magic", ()=> {
             assert(definition.path).equalsTo("./../images/magic/test/spell2.png");
             assert(definition.label).equalsTo("spell two");
             assert(spell).is(CBTestSpell);
+            assert(spell.isFinishable()).equalsTo(true);
     });
 
     it("Checks when a wizard chose a spell and cast it", () => {
@@ -449,6 +454,205 @@ describe("Magic", ()=> {
             spell.apply();
         then:
             assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/rainfire1.png");
+            assert(wizard.carried.indexOf(spell)).equalsTo(-1);
+            assert(hexId.playables.indexOf(spell)).notEqualsTo(-1);
+            assert(spell.isOption()).isFalse();
+    });
+
+    it("Checks when arcane spell laboratory", () => {
+        given:
+            var {leader:wizard} = createTinyGameWithArcaneWizard();
+        then:
+            checkSpellInLaboratory(wizard, "arcanePentacle1", CBArcanePentacleSpell, 1, "./../images/magic/arcane/pentacle1.png");
+            checkSpellInLaboratory(wizard, "arcanePentacle2", CBArcanePentacleSpell, 2, "./../images/magic/arcane/pentacle2.png");
+            checkSpellInLaboratory(wizard, "arcanePentacle3", CBArcanePentacleSpell, 3, "./../images/magic/arcane/pentacle3.png");
+            checkSpellInLaboratory(wizard, "arcaneCircle1", CBArcaneCircleSpell, 1, "./../images/magic/arcane/circle1.png");
+            checkSpellInLaboratory(wizard, "arcaneCircle2", CBArcaneCircleSpell, 2, "./../images/magic/arcane/circle2.png");
+            checkSpellInLaboratory(wizard, "arcaneCircle3", CBArcaneCircleSpell, 3, "./../images/magic/arcane/circle3.png");
+            checkSpellInLaboratory(wizard, "arcaneShield1", CBArcaneShieldSpell, 1, "./../images/magic/arcane/shield1.png");
+            checkSpellInLaboratory(wizard, "arcaneShield2", CBArcaneShieldSpell, 2, "./../images/magic/arcane/shield2.png");
+            checkSpellInLaboratory(wizard, "arcaneShield3", CBArcaneShieldSpell, 3, "./../images/magic/arcane/shield3.png");
+            checkSpellInLaboratory(wizard, "arcaneSword1", CBArcaneSwordSpell, 1, "./../images/magic/arcane/sword1.png");
+            checkSpellInLaboratory(wizard, "arcaneSword2", CBArcaneSwordSpell, 2, "./../images/magic/arcane/sword2.png");
+            checkSpellInLaboratory(wizard, "arcaneSword3", CBArcaneSwordSpell, 3, "./../images/magic/arcane/sword3.png");
+            checkSpellInLaboratory(wizard, "magicArrow1", CBMagicArrowSpell, 1, "./../images/magic/arcane/missile1.png");
+            checkSpellInLaboratory(wizard, "magicArrow2", CBMagicArrowSpell, 2, "./../images/magic/arcane/missile2.png");
+            checkSpellInLaboratory(wizard, "magicArrow3", CBMagicArrowSpell, 3, "./../images/magic/arcane/missile3.png");
+            checkSpellInLaboratory(wizard, "protectionFromMagic1", CBProtectionFromMagicSpell, 1, "./../images/magic/arcane/protection1.png");
+            checkSpellInLaboratory(wizard, "protectionFromMagic2", CBProtectionFromMagicSpell, 2, "./../images/magic/arcane/protection2.png");
+            checkSpellInLaboratory(wizard, "protectionFromMagic3", CBProtectionFromMagicSpell, 3, "./../images/magic/arcane/protection3.png");
+    });
+
+    it("Checks arcane pentacle spell", () => {
+        given:
+            var {leader:wizard} = createTinyGameWithArcaneWizard();
+            wizard.choseSpell(CBSpell.laboratory.get("arcanePentacle1"));
+            var spell = wizard.chosenSpell;
+        when:
+            var cinematic = spell.getNextCinematic();
+        then:
+            assert(spell).is(CBArcanePentacleSpell);
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/arcaneb.png");
+            assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.APPLY);
+        when:
+            spell.apply();
+        then:
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/pentacle1.png");
+            assert(wizard.carried.indexOf(spell)).equalsTo(-1);
+            assert(wizard.hexLocation.playables.indexOf(spell)).notEqualsTo(-1);
+            assert(spell.isOption()).isFalse();
+    });
+
+    it("Checks arcane circle spell", () => {
+        given:
+            var {leader:wizard} = createTinyGameWithArcaneWizard();
+            wizard.choseSpell(CBSpell.laboratory.get("arcaneCircle1"));
+            var spell = wizard.chosenSpell;
+        when:
+            var cinematic = spell.getNextCinematic();
+        then:
+            assert(spell).is(CBArcaneCircleSpell);
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/arcaneb.png");
+            assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.APPLY);
+        when:
+            spell.apply();
+        then:
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/circle1.png");
+            assert(wizard.carried.indexOf(spell)).equalsTo(-1);
+            assert(wizard.hexLocation.playables.indexOf(spell)).notEqualsTo(-1);
+            assert(spell.isOption()).isFalse();
+    });
+
+    it("Checks successful magic arrow spell", () => {
+        given:
+            var {map, leader2:foe, leader1:wizard} = create2Players2UnitsALeaderAnArcaneWizardTinyGame();
+            wizard.hexLocation = map.getHex(5, 9);
+            foe.hexLocation = map.getHex(7, 8);
+            wizard.choseSpell(CBSpell.laboratory.get("magicArrow1"));
+            var spell = wizard.chosenSpell;
+        when:
+            var cinematic = spell.getNextCinematic();
+        then:
+            assert(spell).is(CBMagicArrowSpell);
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/arcaneb.png");
+            assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.SELECT_FOE);
+        when:
+            spell.selectUnit(foe);
+            cinematic = spell.getNextCinematic();
+        then:
+            assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.CONTINUE);
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/arcaneb.png");
+            assert(spell.unit).equalsTo(foe);
+        when:
+            spell.apply();
+            cinematic = spell.getNextCinematic();
+        then:
+            assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.RESOLVE);
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/missile1.png");
+            assert(wizard.carried.indexOf(spell)).equalsTo(-1);
+            assert(foe.options.indexOf(spell)).notEqualsTo(-1);
+            assert(spell.isOption()).isTrue();
+        when:
+            spell.resolve([1, 2]);
+        then:
+            assert(foe.options.indexOf(spell)).equalsTo(-1);
+            assert(foe.remainingStepCount).equalsTo(1);
+            assert(spell.isOption()).isTrue();
+    });
+
+    it("Checks failed magic arrow spell", () => {
+        given:
+            var {map, leader2:foe, leader1:wizard} = create2Players2UnitsALeaderAnArcaneWizardTinyGame();
+            wizard.hexLocation = map.getHex(5, 9);
+            foe.hexLocation = map.getHex(7, 8);
+            wizard.choseSpell(CBSpell.laboratory.get("magicArrow1"));
+            var spell = wizard.chosenSpell;
+            spell.selectUnit(foe);
+            spell.apply();
+            spell.resolve([5, 6]);
+        then:
+            assert(foe.options.indexOf(spell)).equalsTo(-1);
+            assert(foe.remainingStepCount).equalsTo(2);
+            assert(spell.isOption()).isTrue();
+    });
+
+    it("Checks arcane sword spell", () => {
+        given:
+            var {unit, leader:wizard} = createTinyGameWithArcaneWizard();
+            wizard.choseSpell(CBSpell.laboratory.get("arcaneSword1"));
+            var spell = wizard.chosenSpell;
+        when:
+            var cinematic = spell.getNextCinematic();
+        then:
+            assert(spell).is(CBArcaneSwordSpell);
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/arcaneb.png");
+            assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.SELECT_FRIEND);
+        when:
+            spell.selectUnit(unit);
+            cinematic = spell.getNextCinematic();
+        then:
+            assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.APPLY);
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/arcaneb.png");
+            assert(spell.unit).equalsTo(unit);
+        when:
+            spell.apply();
+        then:
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/sword1.png");
+            assert(wizard.carried.indexOf(spell)).equalsTo(-1);
+            assert(unit.options.indexOf(spell)).notEqualsTo(-1);
+            assert(spell.isOption()).isTrue();
+    });
+
+    it("Checks arcane shield spell", () => {
+        given:
+            var {unit, leader:wizard} = createTinyGameWithArcaneWizard();
+            wizard.choseSpell(CBSpell.laboratory.get("arcaneShield1"));
+            var spell = wizard.chosenSpell;
+        when:
+            var cinematic = spell.getNextCinematic();
+        then:
+            assert(spell).is(CBArcaneShieldSpell);
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/arcaneb.png");
+            assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.SELECT_FRIEND);
+        when:
+            spell.selectUnit(unit);
+            cinematic = spell.getNextCinematic();
+        then:
+            assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.APPLY);
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/arcaneb.png");
+            assert(spell.unit).equalsTo(unit);
+        when:
+            spell.apply();
+        then:
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/shield1.png");
+            assert(wizard.carried.indexOf(spell)).equalsTo(-1);
+            assert(unit.options.indexOf(spell)).notEqualsTo(-1);
+            assert(spell.isOption()).isTrue();
+    });
+
+    it("Checks protection from magic spell", () => {
+        given:
+            var {map, leader:wizard} = createTinyGameWithArcaneWizard();
+            wizard.choseSpell(CBSpell.laboratory.get("protectionFromMagic1"));
+            var spell = wizard.chosenSpell;
+        when:
+            var cinematic = spell.getNextCinematic();
+        then:
+            assert(spell).is(CBProtectionFromMagicSpell);
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/arcaneb.png");
+            assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.SELECT_HEX);
+        when:
+            var hexId = map.getHex(5, 6);
+            spell.selectHex(hexId);
+            cinematic = spell.getNextCinematic();
+        then:
+            assert(cinematic.cinematic).equalsTo(CBSpell.CINEMATIC.APPLY);
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/arcaneb.png");
+            assert(spell.hex).equalsTo(hexId);
+        when:
+            spell.apply();
+        then:
+            assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/protection1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(hexId.playables.indexOf(spell)).notEqualsTo(-1);
             assert(spell.isOption()).isFalse();

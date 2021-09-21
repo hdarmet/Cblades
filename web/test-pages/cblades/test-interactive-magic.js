@@ -38,7 +38,7 @@ import {
     zoomAndRotate0
 } from "./interactive-tools.js";
 import {
-    create2Players2Units2LeadersTinyGame,
+    create2Players2Units2LeadersTinyGame, create2Players2UnitsALeaderAnArcaneWizardTinyGame,
     createTinyGame, createTinyGameWithLeader
 } from "./game-examples.js";
 import {
@@ -432,14 +432,12 @@ describe("Interactive Magic", ()=> {
             rollFor(1, 2);
             clickOnDice(game); // roll dices for fireball resolution
             executeAllAnimations();
-            resetDirectives(commandsLayer);
             repaint(game);
         then:
             skipDirectives(commandsLayer, 4);
             assertDirectives(commandsLayer, showSuccessResult(407, 169));
         when:
             clickOnResult(game); // click on success trigger
-            resetDirectives(widgetsLayer, itemsLayer, commandsLayer, optionsLayer, unitsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -468,14 +466,12 @@ describe("Interactive Magic", ()=> {
             clickOnDice(game); // roll dices for fireball resolution
             executeAllAnimations();
             loadAllImages();
-            resetDirectives(commandsLayer);
             repaint(game);
         then:
             skipDirectives(commandsLayer, 4);
             assertDirectives(commandsLayer, showFailureResult(407, 169));
         when:
             clickOnResult(game); // click on success trigger
-            resetDirectives(widgetsLayer, itemsLayer, commandsLayer, optionsLayer, unitsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -484,4 +480,99 @@ describe("Interactive Magic", ()=> {
             assertNoMoreDirectives(optionsLayer, 4);
             assert(findInDirectives(unitsLayer, "drawImage(./../images/units/misc/unit2b.png, -71, -71, 142, 142)")).isFalse();
     });
+
+    it("Checks a magic arrow successful resolution action process ", () => {
+        given:
+            var {game, leader2:foe, leader1:wizard} = create2Players2UnitsALeaderAnArcaneWizardTinyGame();
+            wizard.choseSpell(CBSpell.laboratory.get("magicArrow1"));
+            paint(game);
+            var [widgetsLayer, itemsLayer, commandsLayer, leaderLayer, optionsLayer] =
+                getLayers(game.board,"widgets", "widget-items", "widget-commands", "units-1", "options-0");
+            clickOnPiece(game, wizard);   // show action menu
+            clickOnTryToCastSpellAction(game); // select cast action
+            rollFor(1, 2);
+            clickOnDice(game); // roll dices
+            executeAllAnimations();
+            clickOnResult(game); // click on success trigger
+            var actuator = getTargetFoeActuator(game); // a foe selection actuator appears
+            var trigger = actuator.getTrigger(foe);
+            clickOnTrigger(game, trigger); // select a target
+            loadAllImages();
+            resetDirectives(widgetsLayer, itemsLayer, commandsLayer, optionsLayer);
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("combat-result-table", 407, 92, 804, 174));
+            assertDirectives(widgetsLayer, showInsert("fireball", 247, 297.5, 444, 257));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 557, 219));
+            assertNoMoreDirectives(commandsLayer, 4);
+        when:
+            rollFor(1, 2);
+            clickOnDice(game); // roll dices for magic arrow resolution
+            executeAllAnimations();
+            resetDirectives(commandsLayer);
+            repaint(game);
+        then:
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(407, 169));
+        when:
+            clickOnResult(game); // click on success trigger
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assertNoMoreDirectives(optionsLayer, 4);
+            assert(findInDirectives(leaderLayer, "drawImage(./../images/units/misc/leader2b.png, -60, -60, 120, 120)")).isTrue();
+    });
+
+    it("Checks a magic arrow failed resolution action process ", () => {
+        given:
+            var {game, leader2:foe, leader1:wizard} = create2Players2UnitsALeaderAnArcaneWizardTinyGame();
+            wizard.choseSpell(CBSpell.laboratory.get("magicArrow1"));
+            paint(game);
+            var [widgetsLayer, itemsLayer, commandsLayer, leaderLayer, optionsLayer] =
+                getLayers(game.board,"widgets", "widget-items", "widget-commands", "units-1", "options-0");
+            clickOnPiece(game, wizard);   // show action menu
+            clickOnTryToCastSpellAction(game); // select cast action
+            rollFor(1, 2);
+            clickOnDice(game); // roll dices
+            executeAllAnimations();
+            clickOnResult(game); // click on success trigger
+            var actuator = getTargetFoeActuator(game); // a foe selection actuator appears
+            var trigger = actuator.getTrigger(foe);
+            clickOnTrigger(game, trigger); // select a target
+            rollFor(5, 6);
+            clickOnDice(game); // roll dices for fireball resolution
+            executeAllAnimations();
+            loadAllImages();
+            repaint(game);
+        then:
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(407, 169));
+        when:
+            clickOnResult(game); // click on success trigger
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assertNoMoreDirectives(optionsLayer, 4);
+            assert(findInDirectives(leaderLayer, "drawImage(./../images/units/misc/unit2b.png, -60, -60, 120, 120)")).isFalse();
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
 });

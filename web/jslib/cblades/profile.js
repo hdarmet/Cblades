@@ -4,7 +4,7 @@ import {
     CBHex
 } from "./map.js";
 import {
-    CBCommandProfile, CBMoralProfile,
+    CBCommandProfile, CBMagicProfile, CBMoralProfile,
     CBMoveProfile, CBWeaponProfile
 } from "./unit.js";
 
@@ -181,6 +181,14 @@ export class HeavyCavalryWeaponProfile extends CBWeaponProfile {
 
 }
 
+export class HordeWeaponProfile extends CBWeaponProfile {
+
+    getShockAttackCode() {
+        return "Hrd";
+    }
+
+}
+
 export class LightInfantryWeaponProfile extends CBWeaponProfile {
 
     getShockAttackCode() {
@@ -249,4 +257,22 @@ export class EliteMoralProfile extends CBMoralProfile {
 
 export class ExaltedMoralProfile extends CBMoralProfile {
 
+}
+
+export class ArcaneMagicProfile extends CBMagicProfile {
+
+    constructor(capacity) {
+        super(ArcaneMagicProfile.ART, capacity);
+    }
+
+    static ART = "arcane";
+}
+
+export class FireMagicProfile extends CBMagicProfile {
+
+    constructor(capacity) {
+        super(FireMagicProfile.ART, capacity);
+    }
+
+    static ART = "fire";
 }

@@ -18,7 +18,7 @@ import {
 import {
     CBCharacter,
     CBCommandProfile,
-    CBFormation,
+    CBFormation, CBMagicProfile,
     CBMoralProfile,
     CBMoveProfile,
     CBTroop,
@@ -196,6 +196,32 @@ export class CBTestUnitType extends CBUnitType {
     }
 }
 
+export class CBTestLeaderType extends CBUnitType {
+    constructor(name, troopPaths, formationPaths=[]) {
+        super(name, troopPaths, formationPaths);
+        for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
+            this.setMoveProfile(index, new CBMoveProfile());
+            this.setWeaponProfile(index, new LanceWeaponProfile(1));
+            this.setCommandProfile(index, new CBCommandProfile());
+            this.setMoralProfile(index, new CBMoralProfile());
+            this.setMagicProfile(index, new CBMagicProfile("fire"));
+        }
+    }
+}
+
+export class CBTestArcaneWizardType extends CBUnitType {
+    constructor(name, troopPaths, formationPaths=[]) {
+        super(name, troopPaths, formationPaths);
+        for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
+            this.setMoveProfile(index, new CBMoveProfile());
+            this.setWeaponProfile(index, new LanceWeaponProfile(1));
+            this.setCommandProfile(index, new CBCommandProfile());
+            this.setMoralProfile(index, new CBMoralProfile());
+            this.setMagicProfile(index, new CBMagicProfile("arcane"));
+        }
+    }
+}
+
 export class CBTestOtherUnitType extends CBUnitType {
     constructor(name, troopPaths, formationPaths=[]) {
         super(name, troopPaths, formationPaths);
@@ -311,7 +337,21 @@ export function create2PlayersFireTinyGame() {
 export function create2Players2Units2LeadersTinyGame() {
     let tinyGame = create2PlayersTinyGame();
     let {game, map, wing1, wing2} = tinyGame;
-    let leaderType1 = createUnitType(CBTestUnitType, "leader", 1, 1);
+    let leaderType1 = createUnitType(CBTestLeaderType, "leader", 1, 1);
+    let leader1 = createCharacter(game, map, leaderType1, wing1, 0, 5, 8);
+    let leaderType2 = createUnitType(CBTestFireUnitType,"leader", 2, 1);
+    let leader2 = createCharacter(game, map, leaderType2, wing2, 0, 6, 8);
+    return {
+        ...tinyGame,
+        leaderType1, leader1,
+        leaderType2, leader2
+    };
+}
+
+export function create2Players2UnitsALeaderAnArcaneWizardTinyGame() {
+    let tinyGame = create2PlayersTinyGame();
+    let {game, map, wing1, wing2} = tinyGame;
+    let leaderType1 = createUnitType(CBTestArcaneWizardType, "leader", 1, 1);
     let leader1 = createCharacter(game, map, leaderType1, wing1, 0, 5, 8);
     let leaderType2 = createUnitType(CBTestFireUnitType,"leader", 2, 1);
     let leader2 = createCharacter(game, map, leaderType2, wing2, 0, 6, 8);
@@ -382,7 +422,19 @@ export function create2UnitsAndAFormationTinyGame() {
 export function createTinyGameWithLeader() {
     let tinyGame = createTinyGame();
     let {game, map, wing} = tinyGame;
-    let leaderType = createUnitType(CBTestUnitType, "leader", 1, 1);
+    let leaderType = createUnitType(CBTestLeaderType, "leader", 1, 1);
+    let leader = createCharacter(game, map, leaderType, wing, 0, 5, 9);
+    loadAllImages();
+    return {
+        ...tinyGame,
+        leaderType, leader
+    };
+}
+
+export function createTinyGameWithArcaneWizard() {
+    let tinyGame = createTinyGame();
+    let {game, map, wing} = tinyGame;
+    let leaderType = createUnitType(CBTestArcaneWizardType, "leader", 1, 1);
     let leader = createCharacter(game, map, leaderType, wing, 0, 5, 9);
     loadAllImages();
     return {

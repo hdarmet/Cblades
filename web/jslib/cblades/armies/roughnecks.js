@@ -8,7 +8,7 @@ import {
     LanceWeaponProfile,
     CrossbowWeaponProfile,
     EliteMoralProfile,
-    RegularCommandProfile
+    RegularCommandProfile, HordeWeaponProfile, IrregularCommandProfile, ArcaneMagicProfile
 } from "../profile.js";
 
 import {
@@ -35,6 +35,26 @@ export let RoughneckLeader = new CBUnitType("Company Leader",
 
 ).setMoralProfile(1, new EliteMoralProfile(CBProfileCapacity.NORMAL)
 ).setMoralProfile(2, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED));
+
+export let RoughneckSorceressCharacter = new CBUnitType("Sorceress Character",
+    [
+        "./../images/units/mercenaries/character2L.png",
+        "./../images/units/mercenaries/character2Lb.png"
+    ]
+).setMoveProfile(1, new PedestrianMoveProfile(CBProfileCapacity.NORMAL)
+).setMoveProfile(2, new PedestrianMoveProfile(CBProfileCapacity.ADVANTAGED)
+
+).setWeaponProfile(1, new HordeWeaponProfile(CBProfileCapacity.INFERIOR)
+).setWeaponProfile(2, new HordeWeaponProfile(CBProfileCapacity.DISADVANTAGED)
+
+).setCommandProfile(1, new RegularCommandProfile(CBProfileCapacity.INFERIOR)
+).setCommandProfile(2, new RegularCommandProfile(CBProfileCapacity.DISADVANTAGED)
+
+).setMoralProfile(1, new EliteMoralProfile(CBProfileCapacity.NORMAL)
+).setMoralProfile(2, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED)
+
+).setMagicProfile(1, new ArcaneMagicProfile(CBProfileCapacity.NORMAL)
+).setMagicProfile(2, new ArcaneMagicProfile(CBProfileCapacity.ADVANTAGED));
 
 export let RoughneckKnight = new CBUnitType("Company Knight",
     [

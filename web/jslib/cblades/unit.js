@@ -222,6 +222,20 @@ export class CBMoralProfile extends CBProfile {
 
 }
 
+export class CBMagicProfile extends CBProfile {
+
+    constructor(art, capacity = 0) {
+        super(capacity);
+        this._art = art;
+    }
+
+    get art() {
+        return this._art;
+    }
+
+}
+
+
 export class CBUnitType {
 
     constructor(name, troopPaths, formationPaths) {
@@ -233,6 +247,7 @@ export class CBUnitType {
         this._weaponProfiles = [];
         this._commandProfiles = [];
         this._moralProfiles = [];
+        this._magicProfiles = [];
     }
 
     getMoveProfile(steps) {
@@ -268,6 +283,15 @@ export class CBUnitType {
 
     setMoralProfile(steps, moralProfile) {
         this._moralProfiles[steps] = moralProfile;
+        return this;
+    }
+
+    getMagicProfile(steps) {
+        return this._magicProfiles[steps];
+    }
+
+    setMagicProfile(steps, magicProfile) {
+        this._magicProfiles[steps] = magicProfile;
         return this;
     }
 
@@ -851,10 +875,10 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     reset(player) {
-        super.reset(player);
         if (player === this.player) {
             this._orderGiven = false;
         }
+        super.reset(player);
     }
 
     get carried() {
@@ -1562,6 +1586,14 @@ export class CBCharacter extends CBUnit {
         if (player === this.player) {
             this._commandPoints = 0;
         }
+    }
+
+    get magicProfile() {
+        return this.type.getMagicProfile(this.remainingStepCount);
+    }
+
+    get magicArt() {
+        return this.magicProfile ? this.magicProfile.art : null;
     }
 
     _getAllArtifacts() {

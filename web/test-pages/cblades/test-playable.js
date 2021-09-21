@@ -2,7 +2,7 @@
 
 import {
     assert,
-    before, describe, it
+    before, describe, executeTimeouts, it
 } from "../../jstest/jtest.js";
 import {
     DImage, setDrawPlatform
@@ -689,6 +689,68 @@ describe("Playable", ()=> {
             assertClearDirectives(unitsLayer2);
             assertDirectives(unitsLayer2, showInactiveFakePiece("misc/counter3", zoomAndRotate0(352.8837, 91.7766), 142));
             assertNoMoreDirectives(unitsLayer2);
+    });
+
+    it("Checks that a retracted counter reappears after a period of time", () => {
+        given:
+            var { game, map } = createBasicGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            let counter1 = new CBTestPlayable(player, ["./../images/units/misc/counter1.png"]);
+            let counter2 = new CBTestPlayable(player, ["./../images/units/misc/counter2.png"]);
+            counter1.addToMap(map.getHex(4, 5));
+            counter2.addToMap(map.getHex(4, 5));
+            repaint(game);
+            var [unitsLayer1] = getLayers(game.board, "units-1");
+        then:
+            assertDirectives(unitsLayer1, showInactiveFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertNoMoreDirectives(unitsLayer1);
+        when:
+            resetDirectives(unitsLayer1);
+            mouseMove(game, 333-71/2+5, 111-71/2+5); // On counter0 but not counter1
+            paint(game);
+        then:
+            assertClearDirectives(unitsLayer1);
+            assertNoMoreDirectives(unitsLayer1);
+        when:
+            executeTimeouts();
+            repaint(game);
+        then:
+            assertClearDirectives(unitsLayer1);
+            assertDirectives(unitsLayer1, showInactiveFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertNoMoreDirectives(unitsLayer1);
+    });
+
+    it("Checks that moving on a retracted counter reinit the reappearance delay", () => {
+        given:
+            var { game, map } = createBasicGame();
+            var player = new CBAbstractPlayer();
+            game.addPlayer(player);
+            let counter1 = new CBTestPlayable(player, ["./../images/units/misc/counter1.png"]);
+            let counter2 = new CBTestPlayable(player, ["./../images/units/misc/counter2.png"]);
+            counter1.addToMap(map.getHex(4, 5));
+            counter2.addToMap(map.getHex(4, 5));
+            mouseMove(game, 333-71/2+5, 111-71/2+5); // On counter0 but not counter1
+            executeTimeouts(500);
+            repaint(game);
+            var [unitsLayer1] = getLayers(game.board, "units-1");
+        then:
+            assertClearDirectives(unitsLayer1);
+            assertNoMoreDirectives(unitsLayer1);
+        when:
+            mouseMove(game, 333-71/2+4, 111-71/2+4); // On counter0 but not counter1
+            executeTimeouts(600);
+            repaint(game);
+        then:
+            assertClearDirectives(unitsLayer1);
+            assertNoMoreDirectives(unitsLayer1);
+        when:
+            executeTimeouts(600);
+            repaint(game);
+        then:
+            assertClearDirectives(unitsLayer1);
+            assertDirectives(unitsLayer1, showInactiveFakePiece("misc/counter2", zoomAndRotate0(343.1085, 101.5518), 142));
+            assertNoMoreDirectives(unitsLayer1);
     });
 
     it("Checks that when the mouse is over a actuator's (playable) trigger, the playables above are retracted", () => {
