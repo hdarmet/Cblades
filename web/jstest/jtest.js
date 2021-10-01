@@ -1,5 +1,17 @@
 'use strict';
 
+export function stringify(element) {
+    return element.toString();
+}
+
+export function stringifyArray(array) {
+    let result = [];
+    for (let element of array) {
+        result.push(stringify(element));
+    }
+    return result;
+}
+
 /**
  * Assertion Exception when a test failed
  */

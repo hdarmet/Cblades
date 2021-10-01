@@ -20,19 +20,48 @@ import {
     DBoard, DSimpleLevel
 } from "../../jslib/board.js";
 import {
+    atan2,
     diffAngle,
-    Dimension2D
+    Dimension2D, invertAngle, sumAngle
 } from "../../jslib/geometry.js";
 import {
     backwardMixin,
-    CBAbstractPathFinding, CBLineOfSight, createArrivalsFromHexes, createArrivalsHexSidesFromHexes,
+    CBAbstractPathFinding, CBLineOfSight,
     forwardMixin, getArrivalAreaCosts,
-    getGoodNextMoves, getInRangeMoves,
+    getPreferredNextMoves, getHexSidesFromHexes, getInRangeMoves,
     getPathCost,
     hexPathFindingMixin,
     hexSidePathFindingMixin,
     stopWhenTargetVicinityIsCompleted, stringifyHexLocations,
 } from "../../jslib/cblades/pathfinding.js";
+
+function createArrivalsFromHexes(start, hexes) {
+    let result = [];
+    for (let hex of hexes) {
+        let diff = hex.location.minusPoint(start.location);
+        let angle = Math.round(atan2(diff.x, diff.y) / 30) * 30;
+        result.push(
+            {hexLocation: hex, angle: sumAngle(angle, -30)},
+            {hexLocation: hex, angle},
+            {hexLocation: hex, angle: sumAngle(angle, 30)}
+        )
+    }
+    return result;
+}
+function createArrivalsFromHexSides(start, hexSides) {
+    let result = [];
+    for (let hexSide of hexSides) {
+        let diff = hexSide.location.minusPoint(start.location);
+        let hangle = Math.round(atan2(diff.x, diff.y) / 30) * 30;
+        let rangle = sumAngle(hexSide.angle, 90);
+        let dangle = diffAngle(hangle, rangle);
+        result.push({hexLocation:hexSide, angle:(dangle < -90 || dangle > 90) ? invertAngle(rangle) : rangle})
+    }
+    return result;
+}
+export function createArrivalsHexSidesFromHexes(start, hexes) {
+    return createArrivalsFromHexSides(start,[...getHexSidesFromHexes(hexes)]);
+}
 
 class CBTestGame {
     constructor() {
@@ -231,12 +260,16 @@ describe("Pathfinding", ()=> {
             let config = {
                 start:map.getHex(10, 2),
                 startAngle:180,
-                arrivals:[map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
+                arrivals:[
+                    {hexLocation:map.getHex(9, -1), angle:180},
+                    {hexLocation:map.getHex(10, 0), angle:180},
+                    {hexLocation:map.getHex(11, -1), angle:180}
+                ],
                 costMove:(fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
                 costRotate:(fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5,
                 minimalCost:1
             };
-            var nextMoves = getGoodNextMoves(config);
+            var nextMoves = getPreferredNextMoves(config);
         then:
             //printHexPathFindingResult(pathfinding);
             assert(nextMoves).unorderedArrayEqualsTo([
@@ -253,10 +286,14 @@ describe("Pathfinding", ()=> {
         when:
             game.setMap(map);
             var expensiveHexes = new Set([map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)]);
-            var nextMoves = getGoodNextMoves({
+            var nextMoves = getPreferredNextMoves({
                 start:map.getHex(10, 2),
                 startAngle:120,
-                arrivals:[map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
+                arrivals:[
+                    {hexLocation:map.getHex(9, -1), angle:180},
+                    {hexLocation:map.getHex(10, 0), angle:180},
+                    {hexLocation:map.getHex(11, -1), angle:180}
+                ],
                 costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
                 costRotate: (fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5,
                 minimalCost: 1,
@@ -276,14 +313,14 @@ describe("Pathfinding", ()=> {
                 let config = {
                     start: map.getHex(10, 2),
                     startAngle: 120,
-                    arrivals: [map.getHex(10, 0)],
+                    arrival: map.getHex(10, 0),
                     costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
                     costRotate: (fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5,
                     minimalCost: 1
                 }
                 var pathCost = getPathCost(config);
         then:
-            assert(pathCost).equalsTo(3);
+            assert(pathCost).equalsTo(2);
     });
 
     it("Checks hex path cost when there is no solution because of max distance exceeded", () => {
@@ -292,16 +329,17 @@ describe("Pathfinding", ()=> {
             var game = new CBTestGame();
         when:
             game.setMap(map);
-            var expensiveHexes = new Set([map.getHex(9, 0), map.getHex(10, 1), map.getHex(11, 0)]);
-            var pathCost = getPathCost({
+            var expensiveHexes = new Set([map.getHex(9, 1), map.getHex(10, 1), map.getHex(11, 1)]);
+            let config = {
                 start: map.getHex(10, 2),
                 startAngle: 120,
-                arrivals: [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)],
+                arrival: map.getHex(10, 0),
                 costMove: (fromHex, toHex) => expensiveHexes.has(toHex) ? 2 : 1,
-                costRotate: (fromHex, fromAngle, toAngle) => Math.abs(diffAngle(fromAngle, toAngle)) <= 60 ? 0 : 0.5,
+                costRotate: (fromHex, fromAngle, toAngle) => Math.abs(diffAngle(fromAngle, toAngle)) < 60 ? 0 : 0.5,
                 minimalCost: 1,
                 maxCost: 2
-            });
+            };
+            var pathCost = getPathCost(config);
         then:
             assert(pathCost).equalsTo(null);
     });
@@ -320,7 +358,7 @@ describe("Pathfinding", ()=> {
             var pathCost = getPathCost({
                 start: map.getHex(10, 4),
                 startAngle: 120,
-                arrivals: [map.getHex(9, 1), map.getHex(10, 0), map.getHex(11, 1)],
+                arrival: map.getHex(10, 0),
                 costMove: (fromHex, toHex) => forbiddenHexes.has(toHex) ? null : 1,
                 costRotate: (fromHex, fromAngle, toAngle) => 0,
                 minimalCost: 1,
@@ -401,10 +439,13 @@ describe("Pathfinding", ()=> {
         when:
             game.setMap(map);
             var expensiveHexes = new Set([]);
-            var nextMoves = getGoodNextMoves({
+            var nextMoves = getPreferredNextMoves({
                 start: new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
                 startAngle: 90,
-                arrivals: [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+                arrivals: [
+                    {hexLocation: new CBHexSideId(map.getHex(9, 1), map.getHex(10, 1)), angle:30},
+                    {hexLocation: new CBHexSideId(map.getHex(10, 1), map.getHex(11, 1)), angle:330}
+                ],
                 costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
                 costRotate: (fromHex, fromAngle, toAngle)=>1,
                 minimalCost: 1,
@@ -415,10 +456,13 @@ describe("Pathfinding", ()=> {
                 new CBHexSideId(map.getHex(10, 2), map.getHex(11, 3))
             ]);
         when:
-            nextMoves = getGoodNextMoves({
+            nextMoves = getPreferredNextMoves({
                 start: new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
                 startAngle: 90,
-                arrivals: [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+                arrivals: [
+                    {hexLocation: new CBHexSideId(map.getHex(9, 1), map.getHex(10, 1)), angle:30},
+                    {hexLocation: new CBHexSideId(map.getHex(10, 1), map.getHex(11, 1)), angle:330}
+                ],
                 costMove: (fromHex, toHex) => expensiveHexes.has(toHex) ? 1.5 : 1,
                 costRotate: (fromHex, fromAngle, toAngle) => 1,
                 minimalCost: 1,
@@ -441,13 +485,16 @@ describe("Pathfinding", ()=> {
             let config = {
                 start: new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
                 startAngle: 90,
-                arrivals: [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+                arrivals: [
+                    {hexLocation: new CBHexSideId(map.getHex(9, 1), map.getHex(10, 1)), angle:30},
+                    {hexLocation: new CBHexSideId(map.getHex(10, 1), map.getHex(11, 1)), angle:330}
+                ],
                 costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
                 costRotate: (fromHex, fromAngle, toAngle)=>1,
                 minimalCost: 1,
                 maxCost: 2
             };
-            var nextMoves = getGoodNextMoves(config);
+            var nextMoves = getPreferredNextMoves(config);
         then:
             assert(nextMoves).arrayEqualsTo([]);
     });
@@ -462,14 +509,14 @@ describe("Pathfinding", ()=> {
             let config = {
                 start: new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
                 startAngle: 90,
-                arrivals: [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+                arrival: map.getHex(10, 0),
                 costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
                 costRotate: (fromHex, fromAngle, toAngle)=>1,
                 minimalCost: 1
             };
             var pathCost = getPathCost(config);
         then:
-            assert(pathCost).equalsTo(4.5);
+            assert(pathCost).equalsTo(2.5);
     });
 
     it("Checks hexside path cost when some hexes are forbidden", () => {
@@ -482,14 +529,14 @@ describe("Pathfinding", ()=> {
             let config = {
                 start: new CBHexSideId(map.getHex(8, 5), map.getHex(8, 4)),
                 startAngle: 90,
-                arrivals: [map.getHex(7, 2), map.getHex(8, 2), map.getHex(9, 2)],
+                arrival: map.getHex(8, 2),
                 costMove: (fromHex, toHex)=>forbiddenHexes.has(toHex)?null:1,
                 costRotate: (fromHex, fromAngle, toAngle)=>1,
                 minimalCost: 1
             };
             var pathCost = getPathCost(config);
         then:
-            assert(pathCost).equalsTo(10);
+            assert(pathCost).equalsTo(7);
     });
 
     it("Checks hexside path cost when there is no solution because of max distance exceeded", () => {
@@ -502,7 +549,7 @@ describe("Pathfinding", ()=> {
             let config = {
                 start: new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
                 startAngle: 90,
-                arrivals: [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
+                arrival: map.getHex(10, 0),
                 costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
                 costRotate: (fromHex, fromAngle, toAngle)=>1,
                 minimalCost: 1,
@@ -564,11 +611,16 @@ describe("Pathfinding", ()=> {
                 [map.getHex(10, 1), 3.5],
                 [map.getHex(11, 1), 3.5],
                 [map.getHex(10, 0), 4],
-                [map.getHex(11, 0), 4.5],
                 [map.getHex(9, 1), 4.5],
-                [map.getHex(9, 0), 5.5],
+                [map.getHex(11, 0), 4.5],
                 [map.getHex(12, 0), 4.5],
-                [map.getHex(8, 0), 5.5]
+                [map.getHex(10, -1), 5],
+                [map.getHex(8, 0), 5.5],
+                [map.getHex(9, 0), 5.5],
+                [map.getHex(11, -1), 5.5],
+                [map.getHex(12, -1), 5.5],
+                [map.getHex(8, -1), 6.5],
+                [map.getHex(9, -1), 6.5]
             ]);
     });
 

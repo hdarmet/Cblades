@@ -12,7 +12,13 @@ import {
     CBHexSideId, distanceFromHexLocationToHexLocation
 } from "../map.js";
 import {
-    getArrivalAreaCosts, getPathCost, getGoodNextMoves, getInRangeMoves, collectHexOptions, collectHexSideOptions
+    getArrivalAreaCosts,
+    getPathCost,
+    getImprovingNextMoves,
+    getInRangeMoves,
+    collectHexOptions,
+    collectHexSideOptions,
+    getHexSidesFromHexes, getToBorderPreferredNextMoves
 } from "../pathfinding.js";
 
 export class CBMovementTeacher {
@@ -43,7 +49,7 @@ export class CBMovementTeacher {
         return this.isUnitEngaged(unit) && !this.doesUnitEngage(unit);
     }
 
-    _checkOpportunityAdjacentFoes(unit, unitHexLocation, unitAngle, checkEngagement) {
+    _checkIfFoesProhibitMoveOrTurn(unit, unitHexLocation, unitAngle, checkEngagement) {
         if (this.doesHexLocationContainFoes(unit, unitHexLocation)) {
             return false;
         }
@@ -89,7 +95,7 @@ export class CBMovementTeacher {
         for (let sangle in opportunities) {
             let angle = parseInt(sangle);
             let opportunity = opportunities[angle];
-            let cost = this.getMovementCost(unit, angle);
+            let cost = this._getMovementCost(unit, angle);
             if (predicate(opportunity) &&
                 this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, first)) {
                 result[angle] = opportunity;
@@ -100,7 +106,7 @@ export class CBMovementTeacher {
 
     getAllowedFirstMoves(unit) {
         return this._getAllowedMoves(unit,
-            opportunity=>this._checkOpportunityAdjacentFoes(
+            opportunity=>this._checkIfFoesProhibitMoveOrTurn(
                 unit, opportunity.hex, unit.angle, true),
             true
         );
@@ -108,7 +114,7 @@ export class CBMovementTeacher {
 
     getAllowedSubsequentMoves(unit) {
         return this._getAllowedMoves(unit,
-            opportunity=>this._checkOpportunityAdjacentFoes(
+            opportunity=>this._checkIfFoesProhibitMoveOrTurn(
                 unit, opportunity.hex, unit.angle, true),
             false
         );
@@ -121,7 +127,7 @@ export class CBMovementTeacher {
             let angle = parseInt(sangle);
             if (!(angle % 60)) {
                 let opportunity = opportunities[angle];
-                let cost = this.getFormationMovementCost(unit, angle);
+                let cost = this._getFormationMovementCost(unit, angle);
                 if (predicate(angle) &&
                     this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, first)) {
                     result[angle] = opportunity;
@@ -133,7 +139,7 @@ export class CBMovementTeacher {
 
     getFormationAllowedFirstMoves(unit) {
         return this._getFormationAllowedMoves(unit,
-            angle=>this._checkOpportunityAdjacentFoes(
+            angle=>this._checkIfFoesProhibitMoveOrTurn(
                 unit, unit.hexLocation.moveTo(angle), unit.angle, true),
             true
         );
@@ -141,7 +147,7 @@ export class CBMovementTeacher {
 
     getFormationAllowedSubsequentMoves(unit) {
         return this._getFormationAllowedMoves(unit,
-            angle=>this._checkOpportunityAdjacentFoes(
+            angle=>this._checkIfFoesProhibitMoveOrTurn(
                 unit, unit.hexLocation.moveTo(angle), unit.angle, true),
             false
         );
@@ -155,7 +161,7 @@ export class CBMovementTeacher {
             if (!(angle % 60)) {
                 let opportunity = opportunities[angle];
                 opportunity.hex = unit.hexLocation.getFaceHex(unit.angle);
-                let cost = this.getFormationTurnCost(unit, angle);
+                let cost = this._getFormationTurnCost(unit, angle);
                 if (predicate(angle) &&
                     this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, first)) {
                     result[angle] = opportunity;
@@ -167,7 +173,7 @@ export class CBMovementTeacher {
 
     getFormationAllowedFirstTurns(unit) {
         return this._getFormationAllowedTurns(unit,
-            angle=>this._checkOpportunityAdjacentFoes(
+            angle=>this._checkIfFoesProhibitMoveOrTurn(
                 unit, unit.hexLocation.turnTo(angle), unit.getTurnOrientation(angle), true),
             true
         );
@@ -175,7 +181,7 @@ export class CBMovementTeacher {
 
     getFormationAllowedSubsequentTurns(unit) {
         return this._getFormationAllowedTurns(unit,
-            angle=>this._checkOpportunityAdjacentFoes(
+            angle=>this._checkIfFoesProhibitMoveOrTurn(
                 unit, unit.hexLocation.turnTo(angle), unit.getTurnOrientation(angle),
                 true),
             false
@@ -188,7 +194,7 @@ export class CBMovementTeacher {
         for (let sangle in opportunities) {
             let angle = parseInt(sangle);
             let opportunity = opportunities[angle];
-            let cost = this.getMovementCost(unit, angle);
+            let cost = this._getMovementCost(unit, angle);
             if (predicate(opportunity) &&
                 this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, true)) {
                 result[angle] = opportunity;
@@ -199,7 +205,7 @@ export class CBMovementTeacher {
 
     getAllowedMovesBack(unit) {
         return this._getAllowedMovesBack(unit,
-            opportunity=>this._checkOpportunityAdjacentFoes(
+            opportunity=>this._checkIfFoesProhibitMoveOrTurn(
                 unit, opportunity.hex, unit.angle, true)
         )
     }
@@ -211,7 +217,7 @@ export class CBMovementTeacher {
             let angle = parseInt(sangle);
             if (!(angle % 60)) {
                 let opportunity = opportunities[angle];
-                let cost = this.getFormationMovementCost(unit, angle);
+                let cost = this._getFormationMovementCost(unit, angle);
                 if (predicate(angle) &&
                     this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, true)) {
                     result[angle] = opportunity;
@@ -223,7 +229,7 @@ export class CBMovementTeacher {
 
     getFormationAllowedMovesBack(unit) {
         return this._getFormationAllowedMovesBack(unit,
-            angle=>this._checkOpportunityAdjacentFoes(
+            angle=>this._checkIfFoesProhibitMoveOrTurn(
                 unit, unit.hexLocation.moveTo(angle), unit.angle, true)
         );
     }
@@ -236,7 +242,7 @@ export class CBMovementTeacher {
             if (!(angle % 60)) {
                 let opportunity = opportunities[angle];
                 opportunity.hex = unit.hexLocation.getFaceHex(invertAngle(unit.angle));
-                let cost = this.getFormationTurnCost(unit, angle);
+                let cost = this._getFormationTurnCost(unit, angle);
                 if (predicate(angle) &&
                     this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, true)) {
                     result[angle] = opportunity;
@@ -248,7 +254,7 @@ export class CBMovementTeacher {
 
     getFormationAllowedMovesBackTurns(unit) {
         return this._getFormationAllowedMovesBackTurns(unit,
-            angle=>this._checkOpportunityAdjacentFoes(
+            angle=>this._checkIfFoesProhibitMoveOrTurn(
                 unit, unit.hexLocation.turnTo(angle), unit.getTurnOrientation(angle), true)
         );
     }
@@ -304,25 +310,25 @@ export class CBMovementTeacher {
 
     getAllowedFirstRotations(unit) {
         return this._getAllowedRotations(unit,
-            angle=>this._checkOpportunityAdjacentFoes(unit, unit.hexLocation, angle),
+            angle=>this._checkIfFoesProhibitMoveOrTurn(unit, unit.hexLocation, angle),
             true);
     }
 
     getAllowedSubsequentRotations(unit) {
         return this._getAllowedRotations(unit,
-            angle=>this._checkOpportunityAdjacentFoes(unit, unit.hexLocation, angle),
+            angle=>this._checkIfFoesProhibitMoveOrTurn(unit, unit.hexLocation, angle),
             false);
     }
 
     getAllowedFormationFirstRotations(unit) {
         return this._getAllowedFormationRotations(unit,
-            angle=>this._checkOpportunityAdjacentFoes(unit, unit.hexLocation, angle),
+            angle=>this._checkIfFoesProhibitMoveOrTurn(unit, unit.hexLocation, angle),
             true);
     }
 
     getAllowedFormationSubsequentRotations(unit) {
         return this._getAllowedFormationRotations(unit,
-            angle=>this._checkOpportunityAdjacentFoes(unit, unit.hexLocation, angle),
+            angle=>this._checkIfFoesProhibitMoveOrTurn(unit, unit.hexLocation, angle),
             false);
     }
 
@@ -393,29 +399,91 @@ export class CBMovementTeacher {
         return this.getControlledHexes(this.getFoes(unit));
     }
 
-    getHexesAdjacentToUnits(unit, units) {
-        let unitsHexes = this.getOccupiedHexes(units);
-        let hexes = new Set();
-        for (let unitHexId of unitsHexes) {
-            for (let hexId of unitHexId.nearHexes.keys()) {
-                if (!hexes.has(hexId) && this.canCross(unit, hexId, unitHexId)) {
-                    hexes.add(hexId);
-                }
+    getFoesHexLocations(unit) {
+        let result = [];
+        let foes = this.getFoes(unit);
+        for (let foe of foes) {
+            result.push(foe.hexLocation);
+        }
+        return result;
+    }
+
+    getStackingCost(unit, maxCount, hexLocation) {
+        for (let hex of hexLocation.hexes) {
+            if (this.countTroops(hex, unit)>=maxCount) {
+                return {type: CBMoveProfile.COST_TYPE.IMPASSABLE};
             }
         }
-        return hexes;
+        return null;
     }
 
-    getHexesAdjacentToFoes(unit) {
-        return this.getHexesAdjacentToUnits(unit, this.getFoes(unit));
+    _getMovementCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
+        if (this.doesHexLocationContainFoes(unit, hex)) return {type: CBMoveProfile.COST_TYPE.IMPASSABLE};
+        let cost = this.getStackingCost(unit, 2, hex.getNearHex(angle));
+        if (cost) return cost;
+        return this.getMovementCost(unit, angle, hex, orientation);
     }
 
-    getMoveCostMethod(unit, freeHexes, forbiddenHexes) {
+    _getFormationMovementCost(unit, angle, hexSide=unit.hexLocation) {
+        if (this.doesHexLocationContainFoes(unit, hexSide)) return {type: CBMoveProfile.COST_TYPE.IMPASSABLE};
+        let cost = this.getStackingCost(unit, 1, hexSide.moveTo(angle));
+        if (cost) return cost;
+        return this.getFormationMovementCost(unit, angle, hexSide);
+    }
+
+    _getCrossCostForPathFinding(unit, angle, hex) {
+        return this.getCrossCost(unit, angle, hex);
+    }
+
+    _getMovementCostForPathFinding(unit, angle, hex, target) {
+        let targetHex = hex.getNearHex(angle);
+        if (!target || !target.hasHex(targetHex)) {
+            if (this.doesHexLocationContainFoes(unit, targetHex)) return {type: CBMoveProfile.COST_TYPE.IMPASSABLE};
+            let cost = this.getStackingCost(unit, 2, targetHex);
+            if (cost) return cost;
+        }
+        return this.getMovementCost(unit, angle, hex);
+    }
+
+    _getFormationMovementCostForPathFinding(unit, angle, hex, target) {
+        let targetHex = hex.getNearHex(angle);
+        if (!target || !target.hasHex(targetHex)) {
+            if (this.doesHexLocationContainFoes(unit, targetHex)) return {type: CBMoveProfile.COST_TYPE.IMPASSABLE};
+            let cost = this.getStackingCost(unit, 1, targetHex);
+            if (cost) return cost;
+        }
+        return this.getMovementCost(unit, angle, hex, angle);
+    }
+
+    _getFormationTurnCost(unit, angle, hexSide=unit.hexLocation) {
+        let cost = this.getStackingCost(unit, 1, hexSide.turnTo(angle));
+        if (cost) return cost;
+        return this.getFormationTurnCost(unit, angle, hexSide);
+    }
+
+    getCrossCostMethod(unit) {
+        return (from, to)=> {
+            let angle = from.getAngle(to);
+            let cost =  this._getCrossCostForPathFinding(unit, angle, from);
+            switch (cost.type) {
+                case CBMoveProfile.COST_TYPE.IMPASSABLE:
+                    return null;
+                case CBMoveProfile.COST_TYPE.MINIMAL_MOVE:
+                    return unit.type.getExtendedMovementPoints(unit.remainingStepCount);
+                default:
+                    return cost.value;
+            }
+        }
+    }
+
+    getMoveCostMethod(unit, freeHexes, forbiddenHexes, target) {
         return (from, to)=> {
             if (freeHexes && freeHexes.has(to)) return 0;
             if (forbiddenHexes && forbiddenHexes.has(to)) return null;
             let angle = from.getAngle(to);
-            let cost = this.getMovementCost(unit, angle, from, angle);
+            let cost = unit.formationNature ?
+                this._getFormationMovementCostForPathFinding(unit, angle, from, target):
+                this._getMovementCostForPathFinding(unit, angle, from, target);
             switch (cost.type) {
                 case CBMoveProfile.COST_TYPE.IMPASSABLE:
                     return null;
@@ -432,9 +500,9 @@ export class CBMovementTeacher {
         return this.getMoveCostMethod(unit, freeHexes, forbiddenHexes);
     }
 
-    getAttackMoveCostMethod(unit) {
+    getAttackMoveCostMethod(unit, freeHexes) {
         let forbiddenHexes = this.getFoesOccupiedHexes(unit);
-        return this.getMoveCostMethod(unit, null, forbiddenHexes);
+        return this.getMoveCostMethod(unit, freeHexes, forbiddenHexes);
     }
 
     getTurnCostMethod(unit, freeHexes) {
@@ -456,14 +524,15 @@ export class CBMovementTeacher {
 
     getAllowedRoutMoves(unit) {
         if (!unit.wing.retreatZone.length) return null;
+        let retreatZone = unit.wing.retreatZone;
         let config = {
             start:unit.hexLocation, startAngle:unit.angle,
-            arrivals:unit.wing.retreatZone,
+            arrivals:unit.formationNature ? [...getHexSidesFromHexes(retreatZone)] : retreatZone,
             costMove:this.getStandardMoveCostMethod(unit, new Set(unit.hexLocation.hexes)),
             costRotate:this.getTurnCostMethod(unit, new Set(unit.hexLocation.hexes)),
             minimalCost:unit.moveProfile.getMinimalMoveCost()
         };
-        return new Set(getGoodNextMoves(config));
+        return new Set(getImprovingNextMoves(config));
     }
 
     hasRoutPath(unit) {
@@ -474,12 +543,13 @@ export class CBMovementTeacher {
     getAllowedAttackMoves(unit) {
         let config = {
             start:unit.hexLocation, startAngle:unit.angle,
-            arrivals:[...this.getHexesAdjacentToFoes(unit)],
-            costMove:this.getAttackMoveCostMethod(unit),
+            arrivals: this.getFoesHexLocations(unit),
+            costCross:this.getCrossCostMethod(unit),
+            costMove:this.getAttackMoveCostMethod(unit, new Set(unit.hexLocation.hexes)),
             costRotate:this.getTurnCostMethod(unit, new Set(unit.hexLocation.hexes)),
             minimalCost:unit.moveProfile.getMinimalMoveCost()
         };
-        return new Set(getGoodNextMoves(config));
+        return new Set(getToBorderPreferredNextMoves(config));
     }
 
     getAllowedFireMoves(unit) {
@@ -487,7 +557,7 @@ export class CBMovementTeacher {
             start:unit.hexLocation, startAngle:unit.angle,
             range: unit.weaponProfile.getFireRange(),
             arrivals:[...this.getFoesOccupiedHexes(unit)],
-            costMove:this.getAttackMoveCostMethod(unit),
+            costMove:this.getAttackMoveCostMethod(unit, new Set(unit.hexLocation.hexes)),
             costRotate:this.getTurnCostMethod(unit, new Set(unit.hexLocation.hexes)),
             minimalCost:unit.moveProfile.getMinimalMoveCost(),
             maxCost:this.getMaxMovementPoints(unit)
@@ -497,20 +567,21 @@ export class CBMovementTeacher {
 
     getAllowedRetreatMoves(unit) {
         if (!unit.wing.retreatZone.length) return null;
+        let retreatZone = unit.wing.retreatZone;
         let config = {
             start:unit.hexLocation, startAngle:unit.angle,
-            arrivals:unit.wing.retreatZone,
+            arrivals:unit.formationNature ? [...getHexSidesFromHexes(retreatZone)] : retreatZone,
             costMove:this.getStandardMoveCostMethod(unit, new Set(unit.hexLocation.hexes)),
             costRotate:this.getTurnCostMethod(unit, new Set(unit.hexLocation.hexes)),
             minimalCost:unit.moveProfile.getMinimalMoveCost()
         };
-        return new Set(getGoodNextMoves(config));
+        return new Set(getImprovingNextMoves(config));
     }
 
     getCostToEngage(unit, foe) {
         let config = {
             start:unit.hexLocation, startAngle:unit.angle,
-            arrivals:foe.hexLocation.hexes,
+            arrival:foe.hexLocation,
             costMove:this.getMoveCostMethod(unit, new Set(foe.hexLocation.hexes)),
             costRotate:this.getTurnCostMethod(unit, new Set(foe.hexLocation.hexes)),
             minimalCost: unit.moveProfile.getMinimalMoveCost()
@@ -638,13 +709,17 @@ export class CBMovementTeacher {
         let foeRecords = [];
         let minCost = Number.MAX_VALUE;
         for (let foe of this._getReachableFoes(unit)) {
+            let start = foe.hexLocation;
+            let startAngle = foe.angle;
+            let arrivals = unit.hexLocation.hexes;
+            let costMove = this.getMoveCostMethod(foe, null, null, unit.hexLocation);
+            let costRotate = this.getTurnCostMethod(foe, new Set(foe.hexLocation.hexes));
+            let minimalCost = foe.moveProfile.getMinimalMoveCost();
+            let costGetter = record=>record.previous ? record.previous.cost : 0;
             let locations = getArrivalAreaCosts({
-                start: foe.hexLocation, startAngle:foe.angle,
-                arrivals:[unit.hexLocation],
-                costMove:this.getMoveCostMethod(foe),
-                costRotate:this.getTurnCostMethod(foe, new Set(foe.hexLocation.hexes)),
-                minimalCost:foe.moveProfile.getMinimalMoveCost(),
-                costGetter:record=>record.previous ? record.previous.cost : 0
+                start, startAngle, arrivals,
+                costMove, costRotate, minimalCost,
+                costGetter
             });
 
             let options = unit.hexLocation instanceof CBHexId ?

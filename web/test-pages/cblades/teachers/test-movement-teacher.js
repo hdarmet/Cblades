@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    assert, before, describe, it
+    assert, before, describe, it, stringifyArray
 } from "../../../jstest/jtest.js";
 import {
     CBHex,
@@ -705,28 +705,31 @@ describe("Movement teacher", ()=> {
 
     it("Checks cost to engage computation", () => {
         given:
-            var {arbitrator, map, unit11, unit21, leader21} = create2Players4UnitsTinyGame();
+            var {arbitrator, map, unit11, unit12, leader11, unit21, unit22, leader21} = create2Players4UnitsTinyGame();
         when:
             leader21.angle = 270;
+            unit12.hexLocation = null;
+            unit22.hexLocation = null;
+            leader11.hexLocation = null;
             var costToEngage = arbitrator.getCostToEngage(unit21, unit11);
             var whoJoined = arbitrator.getNearestFoesThatCanJoinAndEngage(unit11).foes;
         then:
-            assert(costToEngage).equalsTo(1.5);
+            assert(costToEngage).equalsTo(1);
             assert(whoJoined).unorderedArrayEqualsTo([unit21]);
         when:
             unit21.angle = 270;
             unit21.hexLocation = leader21.hexLocation.getNearHex(0);
-            costToEngage = arbitrator.getCostToEngage(unit11, unit21);
+            costToEngage = arbitrator.getCostToEngage(unit21, unit11);
             whoJoined = arbitrator.getNearestFoesThatCanJoinAndEngage(unit11).foes;
         then:
-            assert(costToEngage).equalsTo(2.5);
+            assert(costToEngage).equalsTo(2);
             assert(whoJoined).unorderedArrayEqualsTo([unit21, leader21]);
         when:
             unit11.move(map.getHex(0, 5));
             costToEngage = arbitrator.getCostToEngage(unit21, unit11);
             whoJoined = arbitrator.getNearestFoesThatCanJoinAndEngage(unit11).foes;
         then:
-            assert(costToEngage).equalsTo(7.5);
+            assert(costToEngage).equalsTo(7);
             assert(whoJoined).arrayEqualsTo([]);
     });
 
@@ -841,10 +844,11 @@ describe("Movement teacher", ()=> {
         when:
             var moves = arbitrator.getAllowedAttackMoves(formation1);
         then:
-            assert(moves.size).equalsTo(1);
-            assert([...moves][0].location.toString()).equalsTo(
-                new CBHexSideId(map.getHex(9, 10), map.getHex(8, 9)).location.toString()
-            );
+            assert(stringifyArray([...moves])).unorderedArrayEqualsTo([
+                new CBHexSideId(map.getHex(10, 10), map.getHex(9, 10)).toString(),
+                new CBHexSideId(map.getHex(8, 10), map.getHex(9, 10)).toString(),
+                new CBHexSideId(map.getHex(9, 10), map.getHex(8, 9)).toString()
+            ]);
     });
 
     it("Checks fire moves", () => {

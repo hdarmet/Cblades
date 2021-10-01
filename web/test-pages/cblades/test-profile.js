@@ -176,9 +176,9 @@ describe("Profile", ()=> {
         then:
             assert(profile.movementPoints).equalsTo(5);
             assert(profile.extendedMovementPoints).equalsTo(7.5);
-            assert(profile.getMinimalMoveCost()).equalsTo(1);
+            assert(profile.getMinimalMoveCost()).equalsTo(0.5);
             assert(profile.getMovementCostOnHex(map.getHex(1, 1))).objectEqualsTo(
-                {type:CBMoveProfile.COST_TYPE.ADD, value:1}
+                {type:CBMoveProfile.COST_TYPE.ADD, value:0.5}
             );
             assert(profile.getMovementCostOnHex(map.getHex(1, 2))).objectEqualsTo(
                 {type:CBMoveProfile.COST_TYPE.ADD, value:1.5}
@@ -187,7 +187,7 @@ describe("Profile", ()=> {
                 {type:CBMoveProfile.COST_TYPE.ADD, value:2}
             );
             assert(profile.getMovementCostOnHex(map.getHex(1, 4))).objectEqualsTo(
-                {type:CBMoveProfile.COST_TYPE.ADD, value:1}
+                {type:CBMoveProfile.COST_TYPE.ADD, value:0.5}
             );
             assert(profile.getMovementCostOnHex(map.getHex(1, 5))).objectEqualsTo(
                 {type:CBMoveProfile.COST_TYPE.ADD, value:1.5}

@@ -504,7 +504,7 @@ describe("Interactive Magic", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("combat-result-table", 407, 92, 804, 174));
-            assertDirectives(widgetsLayer, showInsert("fireball", 247, 297.5, 444, 257));
+            assertDirectives(widgetsLayer, showInsert("magic-arrow", 247, 289.5, 444, 241));
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showDice(1, 1, 557, 219));
             assertNoMoreDirectives(commandsLayer, 4);

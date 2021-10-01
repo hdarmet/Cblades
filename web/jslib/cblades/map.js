@@ -937,6 +937,7 @@ export class CBMap {
             row+=inc;
             inc = -inc;
         }
+        zone.angle = 0;
         return zone;
     }
 
@@ -948,6 +949,7 @@ export class CBMap {
             zone.push(this.getHex(col, row));
             col++;
         }
+        zone.angle = 180;
         return zone;
     }
 
@@ -958,6 +960,7 @@ export class CBMap {
             zone.push(this.getHex(-1, row));
             row++;
         }
+        zone.angle = 270;
         return zone;
     }
 
@@ -968,6 +971,7 @@ export class CBMap {
             zone.push(this.getHex(this.colCount+1, row));
             row++;
         }
+        zone.angle = 90;
         return zone;
     }
 

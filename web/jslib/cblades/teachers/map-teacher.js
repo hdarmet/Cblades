@@ -148,6 +148,11 @@ export class CBMapTeacher {
         );
     }
 
+    getCrossCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
+        let targetHex = hex.getNearHex(angle);
+        return unit.moveProfile.getMovementCostOnHexSide(hex.to(targetHex));
+    }
+
     getFormationRotationCost(unit, angle, orientation=unit.angle) {
         return unit.moveProfile.getFormationRotationCost(diffAngle(orientation, angle));
     }

@@ -71,10 +71,10 @@ export class AnimalMoveProfile extends CBMoveProfile {
 
     getMovementCostOnHex(hex) {
         switch (hex.type) {
-            case CBHex.HEX_TYPES.OUTDOOR_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+            case CBHex.HEX_TYPES.OUTDOOR_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
             case CBHex.HEX_TYPES.OUTDOOR_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
             case CBHex.HEX_TYPES.OUTDOOR_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
-            case CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+            case CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
             case CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
             case CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
             case CBHex.HEX_TYPES.WATER : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
@@ -109,7 +109,7 @@ export class AnimalMoveProfile extends CBMoveProfile {
     }
 
     getMinimalMoveCost() {
-        return 1;
+        return 0.5;
     }
 
 }

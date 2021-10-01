@@ -446,9 +446,9 @@ CBMagicArrowSpell.resolver = function(action) {
 export class CBMagicArrowInsert extends WidgetLevelMixin(DInsert) {
 
     constructor(game) {
-        super(game, "./../images/inserts/fireball-insert.png", CBMagicArrowInsert.DIMENSION);
+        super(game, "./../images/inserts/magic-arrow-insert.png", CBMagicArrowInsert.DIMENSION);
     }
 
-    static DIMENSION = new Dimension2D(444, 257);
+    static DIMENSION = new Dimension2D(444, 241);
 
 }

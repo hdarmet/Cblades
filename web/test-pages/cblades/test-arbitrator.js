@@ -147,10 +147,10 @@ describe("Arbitrator", ()=> {
         formation11.addToMap(new CBHexSideId(map.getHex(5, 8), map.getHex(6, 8)));
         formation11.angle = 30;
         let unit11 = new CBTroop(unitType1, wing1);
-        unit11.addToMap(map.getHex(5, 9));
+        unit11.addToMap(map.getHex(5, 10));
         unit11.angle = 30;
         let unit12 = new CBTroop(unitType1, wing1);
-        unit12.addToMap(map.getHex(6, 9));
+        unit12.addToMap(map.getHex(6, 10));
         unit12.angle = 30;
         let leaderType1 = new CBTestUnitType("leader1", [
             "./../images/units/misc/leader1.png", "./../images/units/misc/leader1b.png"])

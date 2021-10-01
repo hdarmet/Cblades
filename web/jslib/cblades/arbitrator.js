@@ -232,6 +232,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
                 if (this.isAllowedToFireAttack(unit)) allowedActions.fireAttack = true;
                 return true;
             } else {
+                let result = false;
                 if (this.isAllowedToFireAttack(unit)) {
                     allowedActions.fireAttack = true;
                     if (this.isAllowedToMove(unit)) {
@@ -239,7 +240,8 @@ export class CBArbitrator extends CBAbstractArbitrator{
                         allowedActions.moveMode = CBMoveMode.FIRE;
                     }
                     return true;
-                } else if (this.isAllowedToMove(unit)) {
+                }
+                else if (this.isAllowedToMove(unit)) {
                     allowedActions.moveForward = true;
                     allowedActions.moveMode = CBMoveMode.ATTACK;
                     return true;

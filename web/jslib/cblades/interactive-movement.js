@@ -625,6 +625,17 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         this._moveMode = moveMode;
     }
 
+    _memento() {
+        let memento = super._memento();
+        memento.moveMode = this._moveMode;
+        return memento;
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        this._moveMode = memento.moveMode;
+    }
+
     isFinishable() {
         return super.isFinishable() || this.game.arbitrator.doesUnitEngage(this.unit);
     }
@@ -634,7 +645,14 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
             this._constraint = new MovementConstraint(this);
         }
         else if (this._moveMode === CBMoveMode.ATTACK) {
-            this._constraint = new AttackMovementConstraint(this);
+            if (this.game.arbitrator.isAllowedToFireAttack(this.unit)) {
+                Memento.register(this);
+                this._moveMode = CBMoveMode.FIRE;
+                this._constraint = new FireMovementConstraint(this);
+            }
+            else {
+                this._constraint = new AttackMovementConstraint(this);
+            }
         }
         else if (this._moveMode === CBMoveMode.FIRE) {
             this._constraint = new FireMovementConstraint(this);

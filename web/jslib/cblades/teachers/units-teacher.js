@@ -147,6 +147,15 @@ export class CBUnitManagementTeacher {
         return unit.hexLocation.units.length === 1;
     }
 
+    countTroops(hex, exclude) {
+        let playables = hex.playables;
+        let troopCounts = 0;
+        for (let playable of playables) {
+            if (playable!== exclude && playable.troopNature) troopCounts++;
+        }
+        return troopCounts;
+    }
+
     isStackedTroop(unit) {
         if (!unit.troopNature) return false;
         let units = unit.hexLocation.units;
