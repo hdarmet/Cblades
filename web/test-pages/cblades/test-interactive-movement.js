@@ -969,9 +969,9 @@ describe("Interactive Movement", ()=> {
             skipDirectives(unitsLayer, 4);
             assertDirectives(unitsLayer, showSelectedTroop("misc/unit1", zoomAndRotate0(416.6667, 351.8878)));
             skipDirectives(actuatorsLayer, 4);
-            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate180(416.6667, 476.9795)));
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("2", zoomAndRotate180(416.6667, 476.9795)));
             assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate180(416.6667, 438.4897)));
-            assertDirectives(actuatorsLayer, showMoveCostTrigger("1", zoomAndRotate240(308.3333, 414.4337)));
+            assertDirectives(actuatorsLayer, showMoveCostTrigger("2", zoomAndRotate240(308.3333, 414.4337)));
             assertDirectives(actuatorsLayer, showMoveTrigger(zoomAndRotate240(341.6667, 395.1888)));
             assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate0(431.3294, 366.5506)));
         when:

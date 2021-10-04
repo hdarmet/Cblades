@@ -156,6 +156,15 @@ export class CBUnitManagementTeacher {
         return troopCounts;
     }
 
+    getTroopsStackedWith(unit) {
+        let playables = unit.hexLocation.playables;
+        let units = [];
+        for (let playable of playables) {
+            if (playable!== unit && playable.troopNature) units.push(playable);
+        }
+        return units;
+    }
+
     isStackedTroop(unit) {
         if (!unit.troopNature) return false;
         let units = unit.hexLocation.units;
@@ -163,6 +172,28 @@ export class CBUnitManagementTeacher {
             if (aUnit !== unit && aUnit.troopNature) return true;
         }
         return false;
+    }
+
+    getTroopsToCrossOnBackwardMovement(unit) {
+        let playables = unit.hexLocation.playables;
+        let unitsToCross = [];
+        for (let index=0; index<playables.length; index++) {
+            let playable = playables[index];
+            if (playable === unit) return unitsToCross;
+            if (playable.troopNature) unitsToCross.push(playable);
+        }
+        return [];
+    }
+
+    getTroopsToCrossOnForwardMovement(unit) {
+        let playables = unit.hexLocation.playables;
+        let unitsToCross = [];
+        for (let index=playables.length-1; index>=0; index--) {
+            let playable = playables[index];
+            if (playable === unit) return unitsToCross;
+            if (playable.troopNature) unitsToCross.push(playable);
+        }
+        return [];
     }
 
     wouldUnitEngage(attacker, attackerHexLocation, angle, predicate=foe=>true) {

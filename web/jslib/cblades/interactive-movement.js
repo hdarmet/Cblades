@@ -31,7 +31,7 @@ import {
     DImage
 } from "../draw.js";
 import {
-    CBActionMenu, CBCheckEngagementInsert, CBInteractivePlayer, CBMoralInsert
+    CBActionMenu, CBCheckEngagementInsert, CBInteractivePlayer, CBLoseCohesionInsert, CBMoralInsert
 } from "./interactive-player.js";
 import {
     DImageArtifact
@@ -87,6 +87,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         memento.movementCost = this._movementCost;
         memento.moves = this._moves;
         memento.isFinishable = this._isFinishable;
+        memento.unitsToCross = this._unitsToCross;
         return memento;
     }
 
@@ -95,6 +96,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this._movementCost = memento.movementCost;
         this._moves = memento.moves;
         this._isFinishable = memento.isFinishable;
+        this._unitsToCross = memento.unitsToCross;
     }
 
     get movementCost() {
@@ -280,8 +282,87 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this._markUnitActivationAfterMovement(played);
     }
 
+    _checkIfANonRoutedCrossedUnitLoseCohesion(crossedUnits, processing, cancellable) {
+        if (crossedUnits.length) {
+            let crossedUnit = crossedUnits.pop();
+            this.checkIfACrossedUnitLoseCohesion(crossedUnit, () => {
+                Memento.clear();
+                this._checkIfANonRoutedCrossedUnitLoseCohesion(crossedUnits, processing, false);
+            }, cancellable);
+        }
+        else {
+            processing();
+        }
+    }
+
+    _doCrossChecking(processing, cancellable) {
+        if (this._unitsToCross && this._unitsToCross.length) {
+            this._checkIfANonRoutedCrossedUnitLoseCohesion([this.unit, ...this._unitsToCross], processing, cancellable);
+        }
+        else {
+            processing();
+        }
+    }
+
+    checkIfACrossedUnitLoseCohesion(unit, action, cancellable) {
+        let result = new DResult();
+        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let scene = new DScene();
+        let mask = new DMask("#000000", 0.3);
+        let close = ()=>{
+            if (cancellable) {
+                this.game.closePopup();
+            }
+            if (result.finished) {
+                if (!cancellable) {
+                    this.game.closePopup();
+                }
+                action();
+            }
+        }
+        mask.setAction(close);
+        this.game.openMask(mask);
+        let condition = this.game.arbitrator.getUnitCheckCrossCondition(unit);
+        scene.addWidget(
+            new CBCrossCheckCohesionInsert(this.game, condition), new Point2D(-CBCrossCheckCohesionInsert.DIMENSION.w/2, 0)
+        ).addWidget(
+            new CBMoralInsert(this.game, unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+        ).addWidget(
+            dice.setFinalAction(()=>{
+                dice.active = false;
+                let {success} = this._processCohesionLostResult(unit, dice.result);
+                if (success) {
+                    result.success().appear();
+                }
+                else {
+                    result.failure().appear();
+                }
+            }),
+            new Point2D(70, 70)
+        ).addWidget(
+            result.setFinalAction(close),
+            new Point2D(0, 0)
+        );
+        this.game.openPopup(scene, unit.viewportLocation);
+    }
+
+    _processCohesionLostResult(unit, diceResult) {
+        let result = this.game.arbitrator.processCohesionLostResult(unit, diceResult);
+        if (!result.success) {
+            unit.addOneCohesionLevel();
+        }
+        return result;
+    }
+
+    _finishMove() {
+    }
+
     _continueAfterMove() {
-        return false
+        this._doCrossChecking(
+            ()=>{
+                this._finishMove();
+            }
+        );
     }
 
     _displaceUnit(hexLocation, start, cost) {
@@ -289,8 +370,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         cost = this._updateTirednessForMovement(cost, start);
         this._checkActionProgession(cost.value);
         this.unit.move(hexLocation, cost, CBStacking.BOTTOM);
-        let played = !this._continueAfterMove();
-        this._markUnitActivationAfterMovement(played);
+        this._continueAfterMove();
     }
 
     _turnUnit(angle, start, cost) {
@@ -298,11 +378,18 @@ export class InteractiveAbstractMovementAction extends CBAction {
         cost = this._updateTirednessForMovement(cost, start);
         this._checkActionProgession(cost.value);
         this.unit.turn(angle, cost, CBStacking.BOTTOM);
-        let played = !this._continueAfterMove();
-        this._markUnitActivationAfterMovement(played);
+        this._continueAfterMove();
+    }
+
+    _collectUnitsToCross() {
+        if (this.unit.troopNature) {
+            Memento.register(this);
+            this._unitsToCross = this.game.arbitrator.getTroopsToCrossOnForwardMovement(this.unit);
+        }
     }
 
     moveUnit(hexId, angle, start) {
+        this._collectUnitsToCross();
         this.setMoves(this.moves+1);
         this._displaceUnit(hexId, start, this.game.arbitrator.getMovementCost(this.unit, angle));
     }
@@ -688,24 +775,53 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         return this._constraint.filterForFormationTurns(zones);
     }
 
+    _checkChargingStatus(engaging) {
+        if (this.moves>=2 || (this.moves===1 && engaging)) {
+            this.unit.acknowledgeCharge(true);
+        }
+        else {
+            this.unit.markAsCharging(CBCharge.NONE);
+        }
+    }
+
+    _checkOrientationInStack() {
+        let friends = this.game.arbitrator.getTroopsStackedWith(this.unit);
+        if (friends.length && friends[0].angle !== this.unit.angle) {
+            this.unit.reorient(friends[0].angle);
+            if (this.unit.troopNature && !this.unit.isRouted()) {
+                this.unit.addOneCohesionLevel();
+            }
+        }
+        else for (let playable of this.unit.hexLocation.playables) {
+            if (playable.characterNature && playable !== this.unit && playable.angle !== this.unit.angle) {
+                playable.reorient(this.unit.angle);
+            }
+        }
+    }
+
+    _checkAttackerEngagement(engaging, action) {
+        if (engaging && this.game.arbitrator.isUnitEngaged(this.unit, false)) {
+            this.checkAttackerEngagement(this.unit.viewportLocation, () => {
+                super.finalize(action);
+                Memento.clear();
+            });
+            return true;
+        }
+        return false;
+    }
+
+    _finalize(action) {
+        let engaging = this.unit.isEngaging();
+        this._checkOrientationInStack();
+        this._checkChargingStatus(engaging);
+        if (!this._checkAttackerEngagement(engaging, action)) {
+            super.finalize(action);
+        }
+    }
+
     finalize(action) {
         if (!this.isFinalized()) {
-            let engaging = this.unit.isEngaging();
-            if (this.moves>=2 || (this.moves===1 && engaging)) {
-                this.unit.acknowledgeCharge(true);
-            }
-            else {
-                this.unit.markAsCharging(CBCharge.NONE);
-            }
-            if (engaging && this.game.arbitrator.isUnitEngaged(this.unit, false)) {
-                this.checkAttackerEngagement(this.unit.viewportLocation, () => {
-                    super.finalize(action);
-                    Memento.clear();
-                });
-            }
-            else {
-                super.finalize(action);
-            }
+            this._finalize(action);
         }
     }
 
@@ -786,11 +902,11 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         return super._continueAfterRotation(start);
     }
 
-    _continueAfterMove() {
-        super._continueAfterMove();
+    _finishMove() {
         let mayCharge = this.game.arbitrator.mayUnitCharge(this.unit);
         this.unit.checkEngagement(this.game.arbitrator.doesUnitEngage(this.unit), mayCharge);
-        return this._createMovementActuators(false);
+        let played = !this._createMovementActuators(false);
+        this._markUnitActivationAfterMovement(played);
     }
 
 }
@@ -911,9 +1027,9 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
         return first ? {type:CBMoveProfile.COST_TYPE.SET, value:0} : super._updateTirednessForRotation(cost, first);
     }
 
-    _continueAfterMove() {
-        super._continueAfterMove();
-        return this._createMovementActuators(false);
+    _finishMove() {
+        let played = !this._createMovementActuators(false);
+        this._markUnitActivationAfterMovement(played);
     }
 }
 
@@ -927,6 +1043,25 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
     play() {
         this.unit.markAsCharging(CBCharge.NONE);
         super.play();
+    }
+
+    _collectUnitsToCross() {
+        if (this.unit.troopNature) {
+            Memento.register(this);
+            this._unitsToCross = this.game.arbitrator.getTroopsToCrossOnBackwardMovement(this.unit);
+        }
+    }
+
+    _displaceUnit(hexLocation, start, cost) {
+        this.game.closeActuators();
+        cost = this._updateTirednessForMovement(cost, start);
+        this._checkActionProgession(cost.value);
+        this.unit.move(hexLocation, cost, CBStacking.TOP);
+        this._continueAfterMove();
+    }
+
+    _finishMove() {
+        this._markUnitActivationAfterMovement(true);
     }
 
     finalize(action) {
@@ -1642,3 +1777,13 @@ export class CBToFaceInsert extends WidgetLevelMixin(DInsert) {
 
 }
 CBToFaceInsert.DIMENSION = new Dimension2D(444, 298);
+
+export class CBCrossCheckCohesionInsert extends WidgetLevelMixin(DInsert) {
+
+    constructor(game, condition) {
+        super(game, "./../images/inserts/check-cross-insert.png", CBCrossCheckCohesionInsert.DIMENSION);
+        this._condition = condition;
+    }
+
+    static DIMENSION = new Dimension2D(444, 249);
+}

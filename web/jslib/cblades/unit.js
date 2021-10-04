@@ -897,6 +897,10 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         return this._wing.player;
     }
 
+    get nominalMovementPoints() {
+        return this._type.getMovementPoints(this.remainingStepCount);
+    }
+
     get movementPoints() {
         return this._movementPoints;
     }
@@ -1446,7 +1450,6 @@ export class CBFormation extends CBUnit {
         let delta = diffAngle(this.angle, angle)*2;
         return sumAngle(this.angle, delta);
     }
-
 
     turn(angle, cost=null, stacking = CBStacking.TOP) {
         this.move(this.hexLocation.turnTo(angle), cost, stacking);

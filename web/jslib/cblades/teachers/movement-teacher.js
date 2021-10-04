@@ -195,6 +195,10 @@ export class CBMovementTeacher {
             let angle = parseInt(sangle);
             let opportunity = opportunities[angle];
             let cost = this._getMovementCost(unit, angle);
+            if (cost.type === CBMoveProfile.COST_TYPE.ADD || cost.type === CBMoveProfile.COST_TYPE.SET &&
+                cost.value < unit.nominalMovementPoints) {
+                cost.value = unit.nominalMovementPoints;
+            }
             if (predicate(opportunity) &&
                 this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, true)) {
                 result[angle] = opportunity;
@@ -406,6 +410,12 @@ export class CBMovementTeacher {
             result.push(foe.hexLocation);
         }
         return result;
+    }
+
+    getUnitCheckCrossCondition(unit) {
+        return {
+            modifier: 0
+        }
     }
 
     getStackingCost(unit, maxCount, hexLocation) {
