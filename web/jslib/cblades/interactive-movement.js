@@ -274,7 +274,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
     rotateUnit(angle, start) {
         this.game.closeActuators();
         angle = canonizeAngle(angle);
-        let cost = this.game.arbitrator.getRotationCost(this.unit, angle);
+        let cost = this.game.arbitrator.getTerrainRotationCost(this.unit, angle);
         cost = this._updateTirednessForRotation(cost, start);
         this._checkActionProgession(cost.value);
         this.unit.rotate(angle, cost);
@@ -295,9 +295,9 @@ export class InteractiveAbstractMovementAction extends CBAction {
         }
     }
 
-    _doCrossChecking(processing, cancellable) {
+    _doCrossChecking(processing) {
         if (this._unitsToCross && this._unitsToCross.length) {
-            this._checkIfANonRoutedCrossedUnitLoseCohesion([this.unit, ...this._unitsToCross], processing, cancellable);
+            this._checkIfANonRoutedCrossedUnitLoseCohesion([this.unit, ...this._unitsToCross], processing, true);
         }
         else {
             processing();
@@ -311,7 +311,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
             if (cancellable) {
-                this.game.closePopup();
+                Memento.undo();
             }
             if (result.finished) {
                 if (!cancellable) {
@@ -391,16 +391,16 @@ export class InteractiveAbstractMovementAction extends CBAction {
     moveUnit(hexId, angle, start) {
         this._collectUnitsToCross();
         this.setMoves(this.moves+1);
-        this._displaceUnit(hexId, start, this.game.arbitrator.getMovementCost(this.unit, angle));
+        this._displaceUnit(hexId, start, this.game.arbitrator.getTerrainMoveCost(this.unit, angle));
     }
 
     moveFormation(hexSideId, angle, start) {
         this.setMoves(this.moves+1);
-        this._displaceUnit(hexSideId, start, this.game.arbitrator.getFormationMovementCost(this.unit, angle));
+        this._displaceUnit(hexSideId, start, this.game.arbitrator.getFormationTerrainMoveCost(this.unit, angle));
     }
 
     turnFormation(angle, start) {
-        this._turnUnit(angle, start, this.game.arbitrator.getFormationTurnCost(this.unit, angle));
+        this._turnUnit(angle, start, this.game.arbitrator.getFormationTerrainTurnCost(this.unit, angle));
     }
 
     _updateTirednessForMovement(cost) {

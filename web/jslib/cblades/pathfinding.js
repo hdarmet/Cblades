@@ -436,7 +436,7 @@ function createHexSideArrivalsOnHex(hexId, costMove) {
     return arrivals;
 }
 
-function createHexArrivals(hexLocation, costMove) {
+export function createHexArrivals(hexLocation, costMove) {
     return hexLocation instanceof CBHexId ?
         createHexArrivalsOnHex(hexLocation, costMove) :
         createHexArrivalsOnHexSide(hexLocation, costMove);
@@ -460,13 +460,15 @@ function createHexArrivalsOnHexSide(hexSideId, costMove) {
             pushHexArrivals(arrivals, targetHex, targetAngle);
         }
     }
-    for (let angle =60; angle<=300; angle+=240) {
-        let targetAngle = sumAngle(hexSideId.angle, 60);
-        let targetHex = hexSideId.fromHex.getNearHex(targetAngle);
+    for (let angle =90; angle<=270; angle+=180) {
+        let targetAngle = sumAngle(hexSideId.angle, angle);
+        let targetHex = hexSideId.getFaceHex(targetAngle);
         let cost1 = costMove(targetHex, hexSideId.fromHex);
         let cost2 = costMove(targetHex, hexSideId.toHex);
         if (cost1!==null || cost2!==null) {
-            pushHexArrivals(arrivals, targetHex, targetAngle);
+            arrivals.push({hexLocation:targetHex, angle: sumAngle(angle, 180-30)});
+            arrivals.push({hexLocation:targetHex, angle: sumAngle(angle, 180)});
+            arrivals.push({hexLocation:targetHex, angle: sumAngle(angle, 180+30)});
         }
     }
     return arrivals;
@@ -496,15 +498,15 @@ function createHexSideArrivalsOnHexSide(hexSideId, costMove) {
         let cost1 = costMove(targetHex, hexSideId.fromHex);
         let cost2 = costMove(targetHex, hexSideId.toHex);
         if (cost1!==null || cost2!==null) {
-            arrivals.push({hexLocation:targetHex.toward(sumAngle(angle,30))}, sumAngle(angle, 300));
-            arrivals.push({hexLocation:targetHex.toward(sumAngle(angle,90))}, sumAngle(angle, 180));
-            arrivals.push({hexLocation:targetHex.toward(sumAngle(angle,150))}, sumAngle(angle, 240));
+            arrivals.push({hexLocation:targetHex.toward(sumAngle(angle,30)), angle:sumAngle(angle, 300)});
+            arrivals.push({hexLocation:targetHex.toward(sumAngle(angle,90)), angle:sumAngle(angle, 180)});
+            arrivals.push({hexLocation:targetHex.toward(sumAngle(angle,150)), angle:sumAngle(angle, 240)});
         }
     }
     return arrivals;
 }
 
-function createHexSideArrivals(hexLocation, costMove) {
+export function createHexSideArrivals(hexLocation, costMove) {
     return hexLocation instanceof CBHexId ?
         createHexSideArrivalsOnHex(hexLocation, costMove) :
         createHexSideArrivalsOnHexSide(hexLocation, costMove);

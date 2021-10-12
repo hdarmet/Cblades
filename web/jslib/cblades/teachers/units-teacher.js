@@ -182,7 +182,6 @@ export class CBUnitManagementTeacher {
             if (playable === unit) return unitsToCross;
             if (playable.troopNature) unitsToCross.push(playable);
         }
-        return [];
     }
 
     getTroopsToCrossOnForwardMovement(unit) {
@@ -193,7 +192,6 @@ export class CBUnitManagementTeacher {
             if (playable === unit) return unitsToCross;
             if (playable.troopNature) unitsToCross.push(playable);
         }
-        return [];
     }
 
     wouldUnitEngage(attacker, attackerHexLocation, angle, predicate=foe=>true) {

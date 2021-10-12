@@ -125,6 +125,26 @@ describe("Movement teacher", ()=> {
         return {game, arbitrator, map, player1, wing1, wing2, unit11, unit12, leader11, player2, unit21, unit22, leader21};
     }
 
+    function create2Players5UnitsTinyGame() {
+        let {game, arbitrator, map, player1, wing1, unit11, unit12, leader11} = createTinyGame();
+        let player2 = new CBAbstractPlayer();
+        game.addPlayer(player2);
+        let wing2 = new CBWing(player2, "./../units/banner2.png");
+        let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
+        let unit21 = new CBTroop(unitType2, wing2);
+        unit21.addToMap(map.getHex(7, 8));
+        let unit22 = new CBTroop(unitType2, wing2);
+        unit22.addToMap(map.getHex(7, 7));
+        let unit23 = new CBTroop(unitType2, wing2);
+        unit23.addToMap(map.getHex(7, 6));
+        let leaderType2 = new CBTestUnitType("leader2", ["./../images/units/misc/leader2.png", "./../images/units/misc/leader2b.png"])
+        let leader21 = new CBCharacter(leaderType2, wing2);
+        leader21.addToMap(map.getHex(8, 7));
+        game.start();
+        loadAllImages();
+        return {game, arbitrator, map, player1, wing1, wing2, unit11, unit12, leader11, player2, unit21, unit22, unit23, leader21};
+    }
+
     function create2Players1Formation2TroopsTinyGame() {
         let game = new CBGame();
         let arbitrator = new Arbitrator();
@@ -161,6 +181,46 @@ describe("Movement teacher", ()=> {
         game.start();
         loadAllImages();
         return {game, arbitrator, map, player1, wing1, formation1, leader11, player2, wing2, unit21, unit22, leader21};
+    }
+
+    function create2Players1Formation3TroopsTinyGame() {
+        let game = new CBGame();
+        let arbitrator = new Arbitrator();
+        game.setArbitrator(arbitrator);
+        let player1 = new CBAbstractPlayer();
+        game.addPlayer(player1);
+        let wing1 = new CBWing(player1, "./../units/banner1.png");
+        let player2 = new CBAbstractPlayer();
+        game.addPlayer(player2);
+        let wing2 = new CBWing(player2, "./../units/banner2.png");
+        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        game.setMap(map);
+        let unitType1 = new CBTestUnitType("unit1",
+            ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"],
+            [
+                "./../images/units/misc/formation1.png", "./../images/units/misc/formation1b.png",
+                "./../images/units/misc/formation2.png", "./../images/units/misc/formation2b.png",
+                "./../images/units/misc/formation3.png", "./../images/units/misc/formation3b.png"
+            ])
+        let unit11 = new CBTroop(unitType1, wing1);
+        unit11.addToMap(map.getHex(5, 6));
+        let formation1 = new CBFormation(unitType1, wing1);
+        formation1.addToMap(new CBHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
+        formation1.angle = 90;
+        let leaderType1 = new CBTestUnitType("leader1", ["./../images/units/misc/leader1.png", "./../images/units/misc/leader1b.png"])
+        let leader11 = new CBCharacter(leaderType1, wing1);
+        leader11.addToMap(map.getHex(6, 7));
+        let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
+        let unit21 = new CBTroop(unitType2, wing2);
+        unit21.addToMap(map.getHex(7, 8));
+        let unit22 = new CBTroop(unitType2, wing2);
+        unit22.addToMap(map.getHex(7, 7));
+        let leaderType2 = new CBTestUnitType("leader2", ["./../images/units/misc/leader2.png", "./../images/units/misc/leader2b.png"])
+        let leader21 = new CBCharacter(leaderType2, wing2);
+        leader21.addToMap(map.getHex(8, 7));
+        game.start();
+        loadAllImages();
+        return {game, arbitrator, map, player1, wing1, formation1, unit11, leader11, player2, wing2, unit21, unit22, leader21};
     }
 
     function assertNoMove(moves, angle) {
@@ -238,37 +298,37 @@ describe("Movement teacher", ()=> {
             // unit11 on Hex(5, 8)
             unit11.type.setMoveProfile(2, new MoveProfile())
         when:
-            var cost = arbitrator.getMovementCost(unit11, 0);
+            var cost = arbitrator.getTerrainMoveCost(unit11, 0);
         then:
             assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1})
         when:
             unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.IMPASSABLE;
             unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.NORMAL;
-            cost = arbitrator.getMovementCost(unit11, 0);
+            cost = arbitrator.getTerrainMoveCost(unit11, 0);
         then:
             assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE})
         when:
             unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.IMPASSABLE;
             unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.EASY;
-            cost = arbitrator.getMovementCost(unit11, 0);
+            cost = arbitrator.getTerrainMoveCost(unit11, 0);
         then:
             assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.SET, value:0.5})
         when:
             unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
             unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.CLIMB;
-            cost = arbitrator.getMovementCost(unit11, 0);
+            cost = arbitrator.getTerrainMoveCost(unit11, 0);
         then:
             assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE})
         when:
             unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
             unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.WALL;
-            cost = arbitrator.getMovementCost(unit11, 0);
+            cost = arbitrator.getTerrainMoveCost(unit11, 0);
         then:
             assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE})
         when:
             unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
             unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
-            cost = arbitrator.getMovementCost(unit11, 0);
+            cost = arbitrator.getTerrainMoveCost(unit11, 0);
         then:
             assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:3})
     });
@@ -675,6 +735,202 @@ describe("Movement teacher", ()=> {
             unit12.movementPoints = 1;
             assert(arbitrator.doesMovementInflictTiredness(unit12, {type:CBMoveProfile.COST_TYPE.ADD, value:1})).isFalse();
             assert(arbitrator.doesMovementInflictTiredness(unit12, {type:CBMoveProfile.COST_TYPE.ADD, value:2})).isTrue();
+    });
+
+    it("Checks collection of hexes occupied by a list of units", () => {
+        given:
+            var {arbitrator, map, unit11, unit12} = create2Players4UnitsTinyGame();
+        then:
+            var hexes = arbitrator.getOccupiedHexes([unit11, unit12]);
+            assert(hexes).setContentEqualsTo([map.getHex(5, 7), map.getHex(5, 8)]);
+    });
+
+    it("Checks collection of hexes controlled by a list of units", () => {
+        given:
+            var {arbitrator, map, unit11, unit12} = create2Players4UnitsTinyGame();
+            unit12.rout();
+        then:
+            var hexes = arbitrator.getControlledHexes([unit11, unit12]);
+            assert(hexes).setContentEqualsTo([
+                map.getHex(5, 7), map.getHex(5, 8),
+                map.getHex(6, 7), map.getHex(4, 7)
+            ]);
+    });
+
+    it("Checks collection of hex locations (all types) controlled foes of an unit", () => {
+        given:
+            var {arbitrator, map, formation1, leader11, unit21, unit22, leader21} = create2Players1Formation2TroopsTinyGame();
+            leader11.hexLocation = formation1.hexLocation.toHex;
+            leader21.hexLocation = unit21.hexLocation;
+        then:
+            var locations = arbitrator.getFoesHexLocations(formation1);
+            assert(locations).unorderedArrayEqualsTo([
+                unit21.hexLocation, unit22.hexLocation
+            ]);
+            locations = arbitrator.getFoesHexLocations(leader21);
+            assert(locations).unorderedArrayEqualsTo([
+                formation1.hexLocation, leader11.hexLocation
+            ]);
+    });
+
+    it("Checks cross condition for a unit", () => {
+        given:
+            var {arbitrator, unit11} = create2Players4UnitsTinyGame();
+        then:
+            var conditions = arbitrator.getUnitCheckCrossCondition(unit11);
+            assert(conditions).objectEqualsTo({
+                modifier: 0
+            });
+    });
+
+    it("Checks troop and character move cost", () => {
+        given:
+            var {arbitrator, unit11, unit21, unit22, unit23} = create2Players5UnitsTinyGame();
+        when:
+            var cost = arbitrator.getMovementCost(unit21, 60);
+        then:
+            assert(cost).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.ADD,
+                value: 1
+            });
+        when:
+            unit11.hexLocation = unit21.hexLocation.getNearHex(60);
+            cost = arbitrator.getMovementCost(unit21, 60);
+        then:
+            assert(cost).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.IMPASSABLE
+            });
+        when:
+            unit22.hexLocation = unit21.hexLocation.getNearHex(0);
+            cost = arbitrator.getMovementCost(unit21, 0);
+        then:
+            assert(cost).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.ADD,
+                value: 1
+            });
+        when:
+            unit23.hexLocation = unit21.hexLocation.getNearHex(0);
+            cost = arbitrator.getMovementCost(unit21, 0);
+        then:
+            assert(cost).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.IMPASSABLE
+            });
+    });
+
+    it("Checks formation move cost", () => {
+        given:
+            var {arbitrator, formation1, unit11, unit21} = create2Players1Formation3TroopsTinyGame();
+        when:
+            var cost = arbitrator.getFormationMovementCost(formation1, 60);
+        then:
+            assert(cost).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.ADD,
+                value: 1
+            });
+        when:
+            unit21.hexLocation = formation1.hexLocation.fromHex.getNearHex(60);
+            cost = arbitrator.getFormationMovementCost(formation1, 60);
+        then:
+            assert(cost).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.IMPASSABLE
+            });
+        when:
+            unit21.hexLocation = null;
+            unit11.hexLocation = formation1.hexLocation.fromHex.getNearHex(60);
+            cost = arbitrator.getFormationMovementCost(formation1, 60);
+        then:
+            assert(cost).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.IMPASSABLE
+            });
+    });
+
+    it("Checks troop and character move cost method for pathfinding", () => {
+        given:
+            var {arbitrator, map, unit11, unit12, unit21, unit22, unit23} = create2Players5UnitsTinyGame();
+        when:
+            var checkedHex = map.getHex(10, 5);
+            var cost = arbitrator.getMovementCostForPathFinding(unit21, 60, checkedHex, unit11.hexLocation);
+        then:
+            assert(cost).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.ADD,
+                value: 1
+            });
+        when:
+            unit12.hexLocation = checkedHex.getNearHex(60);
+            cost = arbitrator.getMovementCostForPathFinding(unit21, 60, checkedHex, unit11.hexLocation);
+        then:
+            assert(cost).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.IMPASSABLE
+            });
+        when:
+            unit22.hexLocation = checkedHex.getNearHex(0);
+            cost = arbitrator.getMovementCostForPathFinding(unit21, 0, checkedHex, unit11.hexLocation);
+        then:
+            assert(cost).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.ADD,
+                value: 1
+            });
+        when:
+            unit23.hexLocation = checkedHex.getNearHex(0);
+            cost = arbitrator.getMovementCostForPathFinding(unit21, 0, checkedHex, unit11.hexLocation);
+        then:
+            assert(cost).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.IMPASSABLE
+            });
+    });
+
+    it("Checks formation move cost for pathfinding", () => {
+        given:
+            var {arbitrator, formation1, unit11, unit21, unit22} = create2Players1Formation3TroopsTinyGame();
+        when:
+            var cost = arbitrator.getFormationMovementCostForPathFinding(
+                formation1, 60, formation1.hexLocation.fromHex, unit22.hexLocation
+            );
+        then:
+            assert(cost).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.ADD,
+                value: 1
+            });
+        when:
+            unit21.hexLocation = formation1.hexLocation.fromHex.getNearHex(60);
+            cost = arbitrator.getFormationMovementCostForPathFinding(
+                formation1, 60, formation1.hexLocation.fromHex, unit22.hexLocation
+            );
+        then:
+            assert(cost).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.IMPASSABLE
+            });
+        when:
+            unit21.hexLocation = null;
+            unit11.hexLocation = formation1.hexLocation.fromHex.getNearHex(60);
+            cost = arbitrator.getFormationMovementCostForPathFinding(
+                formation1, 60, formation1.hexLocation.fromHex, unit22.hexLocation
+            );
+        then:
+            assert(cost).objectEqualsTo({
+                type:CBMoveProfile.COST_TYPE.IMPASSABLE
+            });
+    });
+
+    it("Checks cross cost generation and execution", () => {
+        given:
+            var {arbitrator, map, unit11, unit12, unit21, unit22, unit23} = create2Players5UnitsTinyGame();
+            unit11.type.setMoveProfile(2, new MoveProfile())
+        when:
+            var costMethod = arbitrator.getCrossCostMethod(unit11);
+            var cost = costMethod(unit11.hexLocation, unit11.hexLocation.getNearHex(0));
+        then:
+            assert(cost).equalsTo(0);
+        when:
+            unit11.hexLocation.toward(0).changeType(CBHex.HEXSIDE_TYPES.CLIMB);
+            cost = costMethod(unit11.hexLocation, unit11.hexLocation.getNearHex(0));
+        then:
+            assert(cost).equalsTo(3);
+        when:
+            unit11.hexLocation.toward(0).changeType(CBHex.HEXSIDE_TYPES.WALL);
+            cost = costMethod(unit11.hexLocation, unit11.hexLocation.getNearHex(0));
+        then:
+            assert(cost).isNotDefined();
     });
 
     it("Checks rout path finding result", () => {

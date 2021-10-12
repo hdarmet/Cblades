@@ -140,6 +140,15 @@ export class LightInfantryWeaponProfile extends CBWeaponProfile {
     getShockAttackCode() {
         return "LIf";
     }
+    getFireAttackCode() {
+        return "LIf";
+    }
+    getFireRange() {
+        return 2;
+    }
+    getFireMalusSegmentSize() {
+        return 2;
+    }
 }
 
 export class CBTestArbitrator extends CBArbitrator {
@@ -282,6 +291,32 @@ export function create2PlayersTinyGame() {
         ...tinyGame,
         unitType1, unit1,
         unitType2, unit2
+    };
+}
+
+export function create1Player2UnitsTinyGame() {
+    let tinyGame = create2PlayersBaseGame();
+    let {game, map, wing1} = tinyGame;
+    let unitType1 = createUnitType(CBTestUnitType,"unit", 1, 1);
+    let unit11 = createTroop(game, map, unitType1, wing1, 0, 5, 8);
+    let unit12 = createTroop(game, map, unitType1, wing1, 0, 6, 8);
+    loadAllImages();
+    return {
+        ...tinyGame,
+        unitType1, unit11, unit12
+    };
+}
+
+export function create1Player2Units2LeadersTinyGame() {
+    let tinyGame = create1Player2UnitsTinyGame();
+    let {game, map, wing1} = tinyGame;
+    let unitType1 = createUnitType(CBTestUnitType,"unit", 1, 1);
+    let leader11 = createCharacter(game, map, unitType1, wing1, 0, 5, 10);
+    let leader12 = createCharacter(game, map, unitType1, wing1, 0, 6, 10);
+    loadAllImages();
+    return {
+        ...tinyGame,
+        unitType1, leader11, leader12
     };
 }
 

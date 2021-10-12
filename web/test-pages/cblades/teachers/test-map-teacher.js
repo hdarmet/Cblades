@@ -420,59 +420,74 @@ describe("Map teacher", ()=> {
             assertInZone(zones, 300, 2, 3);
     });
 
+    it("Checks unit cross cost", () => {
+        given:
+            var {arbitrator, unit12} = create2Players4UnitsTinyGame();
+        then:
+            assert(arbitrator.getTerrainCrossCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:0});
+        when:
+            unit12.hexLocation.toward(60).type = CBHex.HEXSIDE_TYPES.CLIMB;
+        then:
+            assert(arbitrator.getTerrainCrossCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE});
+        when:
+            unit12.hexLocation.toward(60).type = CBHex.HEXSIDE_TYPES.WALL;
+        then:
+            assert(arbitrator.getTerrainCrossCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE});
+    });
+
     it("Checks unit move cost", () => {
         given:
             var {arbitrator, unit12} = create2Players4UnitsTinyGame();
         then:
-            assert(arbitrator.getMovementCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
+            assert(arbitrator.getTerrainMoveCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
         when:
             unit12.hexLocation.toward(60).type = CBHex.HEXSIDE_TYPES.EASY;
         then:
-            assert(arbitrator.getMovementCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.SET, value:0.5});
+            assert(arbitrator.getTerrainMoveCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.SET, value:0.5});
         when:
             unit12.hexLocation.toward(60).type = CBHex.HEXSIDE_TYPES.CLIMB;
         then:
-            assert(arbitrator.getMovementCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE});
+            assert(arbitrator.getTerrainMoveCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE});
         when:
             unit12.hexLocation.toward(60).type = CBHex.HEXSIDE_TYPES.WALL;
         then:
-            assert(arbitrator.getMovementCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE});
+            assert(arbitrator.getTerrainMoveCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE});
     });
 
     it("Checks unit rotation cost", () => {
         given:
             var {arbitrator, unit12} = create2Players4UnitsTinyGame();
         then:
-            assert(arbitrator.getRotationCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:0.5});
+            assert(arbitrator.getTerrainRotationCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:0.5});
     });
 
     it("Checks formation move cost", () => {
         given:
             var {arbitrator, formation1} = create2Players1Formation2TroopsTinyGame();
         then:
-            assert(arbitrator.getFormationMovementCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
+            assert(arbitrator.getFormationTerrainMoveCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
         when:
             formation1.hexLocation.fromHex.getNearHex(60).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
         then:
-            assert(arbitrator.getFormationMovementCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE});
+            assert(arbitrator.getFormationTerrainMoveCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE});
         when:
             formation1.hexLocation.fromHex.getNearHex(60).type = CBHex.HEX_TYPES.IMPASSABLE;
         then:
-            assert(arbitrator.getFormationMovementCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE});
+            assert(arbitrator.getFormationTerrainMoveCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE});
     });
 
     it("Checks formation turn cost", () => {
         given:
             var {arbitrator, formation1} = create2Players1Formation2TroopsTinyGame();
         then:
-            assert(arbitrator.getFormationTurnCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
+            assert(arbitrator.getFormationTerrainTurnCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
     });
 
     it("Checks formation rotation cost", () => {
         given:
             var {arbitrator, formation1} = create2Players1Formation2TroopsTinyGame();
         then:
-            assert(arbitrator.getFormationRotationCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
+            assert(arbitrator.getFormationTerrainRotationCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
     });
 
     it("Checks if a hex is clear", () => {

@@ -26,13 +26,21 @@ import {
 } from "../../jslib/geometry.js";
 import {
     backwardMixin,
-    CBAbstractPathFinding, CBLineOfSight,
-    forwardMixin, getArrivalAreaCosts,
-    getPreferredNextMoves, getHexSidesFromHexes, getInRangeMoves,
+    CBAbstractPathFinding,
+    CBLineOfSight,
+    forwardMixin,
+    getArrivalAreaCosts,
+    getPreferredNextMoves,
+    getHexSidesFromHexes,
+    getInRangeMoves,
     getPathCost,
     hexPathFindingMixin,
     hexSidePathFindingMixin,
-    stopWhenTargetVicinityIsCompleted, stringifyHexLocations,
+    stopWhenTargetVicinityIsCompleted,
+    stringifyHexLocations,
+    createHexArrivals,
+    createHexSideArrivals,
+    getImprovingNextMoves, getToBorderPreferredNextMoves,
 } from "../../jslib/cblades/pathfinding.js";
 
 function createArrivalsFromHexes(start, hexes) {
@@ -94,6 +102,14 @@ describe("Pathfinding", ()=> {
         assert(record.cost).equalsTo(cost);
         assert(record.angle).equalsTo(angle);
         assert(record.distance).equalsTo(distance);
+    }
+
+    function locationsStringifier(locations) {
+        let result = [];
+        for (let location of locations) {
+            result.push(location.toString());
+        }
+        return result;
     }
 
     function printHexPathFindingResult(pathfinding) {
@@ -250,6 +266,197 @@ describe("Pathfinding", ()=> {
             checkHexRecord(pathfinding, map, 10, 2, 3.5, 120, 0);
     });
 
+    function arrivalsStringifier(arrivals) {
+        let result = [];
+        for (let arrival of arrivals) {
+            result.push(`hexLocation:${arrival.hexLocation}, angle:${arrival.angle}`);
+        }
+        return result;
+    }
+
+    it("Checks arrivals definition for a hex path, to target a hex", () => {
+        given:
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var arrivals = arrivalsStringifier(createHexArrivals(map.getHex(3, 4), (from, to)=>1));
+        then:
+            assert(arrivals).unorderedArrayEqualsTo([
+                'hexLocation:Hex(3, 3), angle:120',
+                'hexLocation:Hex(3, 3), angle:150',
+                'hexLocation:Hex(3, 3), angle:180',
+                'hexLocation:Hex(3, 3), angle:210',
+                'hexLocation:Hex(3, 3), angle:240',
+
+                'hexLocation:Hex(4, 3), angle:180',
+                'hexLocation:Hex(4, 3), angle:210',
+                'hexLocation:Hex(4, 3), angle:240',
+                'hexLocation:Hex(4, 3), angle:270',
+                'hexLocation:Hex(4, 3), angle:300',
+
+                'hexLocation:Hex(4, 4), angle:240',
+                'hexLocation:Hex(4, 4), angle:270',
+                'hexLocation:Hex(4, 4), angle:300',
+                'hexLocation:Hex(4, 4), angle:330',
+                'hexLocation:Hex(4, 4), angle:0',
+
+                'hexLocation:Hex(3, 5), angle:300',
+                'hexLocation:Hex(3, 5), angle:330',
+                'hexLocation:Hex(3, 5), angle:0',
+                'hexLocation:Hex(3, 5), angle:30',
+                'hexLocation:Hex(3, 5), angle:60',
+
+                'hexLocation:Hex(2, 4), angle:0',
+                'hexLocation:Hex(2, 4), angle:30',
+                'hexLocation:Hex(2, 4), angle:60',
+                'hexLocation:Hex(2, 4), angle:90',
+                'hexLocation:Hex(2, 4), angle:120',
+
+                'hexLocation:Hex(2, 3), angle:60',
+                'hexLocation:Hex(2, 3), angle:90',
+                'hexLocation:Hex(2, 3), angle:120',
+                'hexLocation:Hex(2, 3), angle:150',
+                'hexLocation:Hex(2, 3), angle:180'
+            ]);
+    });
+
+    it("Checks arrivals definition for a hex path, to target a hex side", () => {
+        given:
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var arrivals = arrivalsStringifier(createHexArrivals(
+                new CBHexSideId(map.getHex(3, 4), map.getHex(3, 3)), (from, to)=>1));
+        then:
+            assert(arrivals).unorderedArrayEqualsTo([
+                'hexLocation:Hex(4, 4), angle:240',
+                'hexLocation:Hex(4, 4), angle:270',
+                'hexLocation:Hex(4, 4), angle:300',
+                'hexLocation:Hex(4, 4), angle:330',
+                'hexLocation:Hex(4, 4), angle:0',
+
+                'hexLocation:Hex(3, 5), angle:300',
+                'hexLocation:Hex(3, 5), angle:330',
+                'hexLocation:Hex(3, 5), angle:0',
+                'hexLocation:Hex(3, 5), angle:30',
+                'hexLocation:Hex(3, 5), angle:60',
+
+                'hexLocation:Hex(2, 4), angle:0',
+                'hexLocation:Hex(2, 4), angle:30',
+                'hexLocation:Hex(2, 4), angle:60',
+                'hexLocation:Hex(2, 4), angle:90',
+                'hexLocation:Hex(2, 4), angle:120',
+
+                'hexLocation:Hex(2, 2), angle:60',
+                'hexLocation:Hex(2, 2), angle:90',
+                'hexLocation:Hex(2, 2), angle:120',
+                'hexLocation:Hex(2, 2), angle:150',
+                'hexLocation:Hex(2, 2), angle:180',
+
+                'hexLocation:Hex(3, 2), angle:120',
+                'hexLocation:Hex(3, 2), angle:150',
+                'hexLocation:Hex(3, 2), angle:180',
+                'hexLocation:Hex(3, 2), angle:210',
+                'hexLocation:Hex(3, 2), angle:240',
+
+                'hexLocation:Hex(4, 2), angle:180',
+                'hexLocation:Hex(4, 2), angle:210',
+                'hexLocation:Hex(4, 2), angle:240',
+                'hexLocation:Hex(4, 2), angle:270',
+                'hexLocation:Hex(4, 2), angle:300',
+
+                'hexLocation:Hex(4, 3), angle:240',
+                'hexLocation:Hex(4, 3), angle:270',
+                'hexLocation:Hex(4, 3), angle:300',
+
+                'hexLocation:Hex(2, 3), angle:60',
+                'hexLocation:Hex(2, 3), angle:90',
+                'hexLocation:Hex(2, 3), angle:120'
+            ]);
+    });
+
+    it("Checks arrivals definition for a hex side path, to target a hex", () => {
+        given:
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var arrivals = arrivalsStringifier(createHexSideArrivals(map.getHex(3, 4), (from, to)=>1));
+        then:
+            assert(arrivals).unorderedArrayEqualsTo([
+                'hexLocation:Hexside(Hex(3, 3), Hex(4, 2)), angle:150',
+                'hexLocation:Hexside(Hex(3, 3), Hex(4, 3)), angle:210',
+                'hexLocation:Hexside(Hex(3, 3), Hex(2, 2)), angle:210',
+
+                'hexLocation:Hexside(Hex(4, 3), Hex(5, 4)), angle:210',
+                'hexLocation:Hexside(Hex(4, 3), Hex(4, 4)), angle:270',
+                'hexLocation:Hexside(Hex(4, 3), Hex(4, 2)), angle:270',
+
+                'hexLocation:Hexside(Hex(4, 4), Hex(4, 5)), angle:270',
+                'hexLocation:Hexside(Hex(4, 4), Hex(3, 5)), angle:330',
+                'hexLocation:Hexside(Hex(4, 4), Hex(5, 4)), angle:330',
+
+                'hexLocation:Hexside(Hex(3, 5), Hex(2, 5)), angle:330',
+                'hexLocation:Hexside(Hex(3, 5), Hex(2, 4)), angle:30',
+                'hexLocation:Hexside(Hex(3, 5), Hex(4, 5)), angle:30',
+
+                'hexLocation:Hexside(Hex(2, 4), Hex(1, 4)), angle:30',
+                'hexLocation:Hexside(Hex(2, 4), Hex(2, 3)), angle:90',
+                'hexLocation:Hexside(Hex(2, 4), Hex(2, 5)), angle:90',
+
+                'hexLocation:Hexside(Hex(2, 3), Hex(2, 2)), angle:90',
+                'hexLocation:Hexside(Hex(2, 3), Hex(3, 3)), angle:150',
+                'hexLocation:Hexside(Hex(2, 3), Hex(1, 4)), angle:150'
+            ]);
+    });
+
+    it("Checks arrivals definition for a hex side path, to target a hex side", () => {
+        given:
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var arrivals = arrivalsStringifier(createHexSideArrivals(
+                new CBHexSideId(map.getHex(3, 4), map.getHex(3, 3)),
+                (from, to)=>1));
+        then:
+            assert(arrivals).unorderedArrayEqualsTo([
+                'hexLocation:Hexside(Hex(4, 4), Hex(4, 5)), angle:270',
+                'hexLocation:Hexside(Hex(4, 4), Hex(3, 5)), angle:330',
+                'hexLocation:Hexside(Hex(4, 4), Hex(5, 4)), angle:330',
+
+                'hexLocation:Hexside(Hex(3, 5), Hex(2, 5)), angle:330',
+                'hexLocation:Hexside(Hex(3, 5), Hex(2, 4)), angle:30',
+                'hexLocation:Hexside(Hex(3, 5), Hex(4, 5)), angle:30',
+
+                'hexLocation:Hexside(Hex(2, 4), Hex(1, 4)), angle:30',
+                'hexLocation:Hexside(Hex(2, 4), Hex(2, 3)), angle:90',
+                'hexLocation:Hexside(Hex(2, 4), Hex(2, 5)), angle:90',
+
+                'hexLocation:Hexside(Hex(2, 2), Hex(2, 1)), angle:90',
+                'hexLocation:Hexside(Hex(2, 2), Hex(3, 2)), angle:150',
+                'hexLocation:Hexside(Hex(2, 2), Hex(1, 3)), angle:150',
+
+                'hexLocation:Hexside(Hex(3, 2), Hex(4, 1)), angle:150',
+                'hexLocation:Hexside(Hex(3, 2), Hex(4, 2)), angle:210',
+                'hexLocation:Hexside(Hex(3, 2), Hex(2, 1)), angle:210',
+
+                'hexLocation:Hexside(Hex(4, 2), Hex(5, 3)), angle:210',
+                'hexLocation:Hexside(Hex(4, 2), Hex(4, 3)), angle:270',
+                'hexLocation:Hexside(Hex(4, 2), Hex(4, 1)), angle:270',
+
+                'hexLocation:Hexside(Hex(2, 3), Hex(1, 3)), angle:210',
+                'hexLocation:Hexside(Hex(2, 3), Hex(2, 2)), angle:90',
+                'hexLocation:Hexside(Hex(2, 3), Hex(3, 3)), angle:150',
+
+                'hexLocation:Hexside(Hex(4, 3), Hex(5, 4)), angle:30',
+                'hexLocation:Hexside(Hex(4, 3), Hex(4, 4)), angle:270',
+                'hexLocation:Hexside(Hex(4, 3), Hex(3, 4)), angle:330'
+            ]);
+    });
+
     it("Checks best hex next moves", () => {
         given:
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -303,7 +510,56 @@ describe("Pathfinding", ()=> {
             assert(nextMoves).arrayEqualsTo([]);
     });
 
-    it("Checks hex path cost moves", () => {
+    it("Checks hex next moves to reach a target", () => {
+        given:
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            let config = {
+                start:map.getHex(9, 5),
+                startAngle:180,
+                arrivals:[
+                    map.getHex(9, 2), map.getHex(10, 3), map.getHex(11, 2)
+                ],
+                costMove:(fromHex, toHex)=>1,
+                costRotate:(fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5,
+                minimalCost:1
+            };
+            var nextMoves = getImprovingNextMoves(config);
+        then:
+            assert(nextMoves).unorderedArrayEqualsTo([
+                map.getHex(9, 4),
+                map.getHex(10, 4)
+            ]);
+    });
+
+    it("Checks hex next moves to border a target", () => {
+        given:
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            let config = {
+                start:map.getHex(9, 5),
+                startAngle:180,
+                arrivals:[
+                    map.getHex(9, 2), map.getHex(10, 3), map.getHex(11, 2)
+                ],
+                costCross:(fromHex, toHex)=>1,
+                costMove:(fromHex, toHex)=>1,
+                costRotate:(fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5,
+                minimalCost:1
+            };
+            var nextMoves = getToBorderPreferredNextMoves(config);
+        then:
+            assert(nextMoves).unorderedArrayEqualsTo([
+                map.getHex(9, 4),
+                map.getHex(10, 4)
+            ]);
+    });
+
+    it("Checks hex path cost moves when the target is a hex", () => {
         given:
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
@@ -319,6 +575,26 @@ describe("Pathfinding", ()=> {
                     minimalCost: 1
                 }
                 var pathCost = getPathCost(config);
+        then:
+            assert(pathCost).equalsTo(2);
+    });
+
+    it("Checks hex path cost moves when the target is a hex side", () => {
+        given:
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(10, 2)]);
+            let config = {
+                start: map.getHex(10, 3),
+                startAngle: 120,
+                arrival: new CBHexSideId(map.getHex(10,1), map.getHex(10,0)),
+                costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
+                costRotate: (fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5,
+                minimalCost: 1
+            }
+            var pathCost = getPathCost(config);
         then:
             assert(pathCost).equalsTo(2);
     });
@@ -383,6 +659,36 @@ describe("Pathfinding", ()=> {
         }
         console.log(result);
     }
+
+    it("Checks computing the distance from two locations", () => {
+        given:
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            let start = new CBHexSideId(map.getHex(9, 4), map.getHex(10, 4));
+            var pathfinding = new (hexSidePathFindingMixin(forwardMixin(CBAbstractPathFinding)))(
+                start, 210,
+                createArrivalsHexSidesFromHexes(start, [
+                    map.getHex(9, 1), map.getHex(10, 1), map.getHex(11, 1)
+                ]),
+                (fromHex, toHex)=>1,
+                (fromHex, fromAngle, toAngle)=>1, 1
+            );
+        then:
+            assert(pathfinding._distanceBetweenLocations(
+                map.getHex(1, 1),
+                new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)))
+            ).equalsTo(4);
+            assert(pathfinding._distanceBetweenLocations(
+                new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)),
+                map.getHex(1, 1))
+            ).equalsTo(4);
+            assert(pathfinding._distanceBetweenLocations(
+                new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)),
+                new CBHexSideId(map.getHex(1, 1), map.getHex(1, 2))),
+            ).equalsTo(4);
+    });
 
     it("Checks hexside forward path finding", () => {
         given:
@@ -499,7 +805,58 @@ describe("Pathfinding", ()=> {
             assert(nextMoves).arrayEqualsTo([]);
     });
 
-    it("Checks hexside path cost", () => {
+    it("Checks hex side next moves to reach a target", () => {
+        given:
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            let config = {
+                start:new CBHexSideId(map.getHex(9, 5), map.getHex(9, 6)),
+                startAngle:90,
+                arrivals:[
+                    new CBHexSideId(map.getHex(9, 2), map.getHex(10, 2)),
+                    new CBHexSideId(map.getHex(10, 2), map.getHex(11, 2))
+                ],
+                costMove:(fromHex, toHex)=>1,
+                costRotate:(fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5,
+                minimalCost:1
+            };
+            var nextMoves = locationsStringifier(getImprovingNextMoves(config));
+        then:
+            assert(nextMoves).unorderedArrayEqualsTo([
+                'Hexside(Hex(9, 5), Hex(10, 5))'
+            ]);
+    });
+
+    it("Checks hex side next moves to border a target", () => {
+        given:
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            let config = {
+                start:new CBHexSideId(map.getHex(9, 5), map.getHex(9, 6)),
+                startAngle:90,
+                arrivals:[
+                    new CBHexSideId(map.getHex(9, 2), map.getHex(10, 2)),
+                    new CBHexSideId(map.getHex(10, 2), map.getHex(11, 2))
+                ],
+                costCross:(fromHex, toHex)=>1,
+                costMove:(fromHex, toHex)=>1,
+                costRotate:(fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5,
+                minimalCost:1
+            };
+            var nextMoves = locationsStringifier(getToBorderPreferredNextMoves(config));
+        then:
+            assert(nextMoves).unorderedArrayEqualsTo([
+                'Hexside(Hex(9, 5), Hex(10, 5))',
+                'Hexside(Hex(10, 4), Hex(10, 5))',
+                'Hexside(Hex(9, 5), Hex(8, 5))'
+            ]);
+    });
+
+    it("Checks hexside path cost when the target is an hex", () => {
         given:
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
@@ -517,6 +874,26 @@ describe("Pathfinding", ()=> {
             var pathCost = getPathCost(config);
         then:
             assert(pathCost).equalsTo(2.5);
+    });
+
+    it("Checks hexside path cost when the target is an hex side", () => {
+        given:
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new CBTestGame();
+        when:
+            game.setMap(map);
+            var expensiveHexes = new Set([map.getHex(9,1), map.getHex(10,1), map.getHex(11,1)]);
+            let config = {
+                start: new CBHexSideId(map.getHex(10, 3), map.getHex(10, 4)),
+                startAngle: 90,
+                arrival: new CBHexSideId(map.getHex(10, 0), map.getHex(10, 1)),
+                costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
+                costRotate: (fromHex, fromAngle, toAngle)=>1,
+                minimalCost: 1
+            };
+            var pathCost = getPathCost(config);
+        then:
+            assert(pathCost).equalsTo(2);
     });
 
     it("Checks hexside path cost when some hexes are forbidden", () => {

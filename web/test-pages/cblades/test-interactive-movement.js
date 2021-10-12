@@ -37,10 +37,12 @@ import {
 import {
     createTinyGame,
     create2PlayersTinyGame,
-    createTinyFormationGame, create2PlayersTinyFormationGame
+    createTinyFormationGame,
+    create2PlayersTinyFormationGame,
+    create2Players4UnitsTinyGame,
+    create2Players2Units2LeadersTinyGame, create1Player2Units2LeadersTinyGame
 } from "./game-examples.js";
 import {
-    CBOrderInstruction,
     CBTiredness
 } from "../../jslib/cblades/unit.js";
 import {
@@ -931,7 +933,6 @@ describe("Interactive Movement", ()=> {
             rollFor(5,6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(itemsLayer, 4);
@@ -940,7 +941,6 @@ describe("Interactive Movement", ()=> {
             assertDirectives(commandsLayer, showFailureResult(449, 386.5));
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -948,6 +948,132 @@ describe("Interactive Movement", ()=> {
             assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.isDisrupted()).isTrue();
             assert(finished).isTrue();
+    });
+
+    it("Checks when a unit try to cross (forwardly) another unit, moral check is requested but the player cancel it by clicking on the mask", () => {
+        given:
+            var {game, unit11, unit12} = create2Players4UnitsTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            unit12.hexLocation = unit11.hexLocation;
+            loadAllImages();
+        when:
+            clickOnPiece(game, unit11);
+            clickOnMoveAction(game);
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(0));
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("check-cross", 227, 384, 444, 249));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 199.5, 444, 389));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 424));
+        when:
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks when both units fail the (forward) cross moral check", () => {
+        given:
+            var {game, unit11, unit12} = create2Players4UnitsTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            unit12.hexLocation = unit11.hexLocation;
+            clickOnPiece(game, unit11);
+            clickOnMoveAction(game);
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(0));
+            rollFor(5,6);
+            clickOnDice(game);
+            executeAllAnimations();
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 424));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(449, 384));
+        when:
+            clickOnResult(game);
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("check-cross", 227, 384, 444, 249));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 199.5, 444, 389));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 424));
+        when:
+            rollFor(5,6);
+            clickOnDice(game);
+            executeAllAnimations();
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 424));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(449, 384));
+        when:
+            clickOnResult(game);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(unit11.isDisrupted()).isTrue();
+            assert(unit12.isDisrupted()).isTrue();
+    });
+
+    it("Checks when both units succeed the (forward) cross moral check", () => {
+        given:
+            var {game, unit11, unit12} = create2Players4UnitsTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            unit12.hexLocation = unit11.hexLocation;
+            clickOnPiece(game, unit11);
+            clickOnMoveAction(game);
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(0));
+            rollFor(1, 1);
+            clickOnDice(game);
+            executeAllAnimations();
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 1, 549, 424));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(449, 384));
+        when:
+            clickOnResult(game);
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("check-cross", 227, 384, 444, 249));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 199.5, 444, 389));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 424));
+        when:
+            rollFor(1, 1);
+            clickOnDice(game);
+            executeAllAnimations();
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 1, 549, 424));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(449, 384));
+        when:
+            clickOnResult(game);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(unit11.isDisrupted()).isFalse();
+            assert(unit12.isDisrupted()).isFalse();
     });
 
     function clickOnMoveBackAction(game) {
@@ -1156,6 +1282,211 @@ describe("Interactive Movement", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.isDisrupted()).isTrue();
+    });
+
+    it("Checks when a unit try to cross (backwardly) another unit, moral check is requested but the player cancel it by clicking on the mask", () => {
+        given:
+            var {game, unit11, unit12} = create2Players4UnitsTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            unit12.hexLocation = unit11.hexLocation;
+            loadAllImages();
+        when:
+            clickOnPiece(game, unit12);
+            clickOnMoveBackAction(game);
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("check-cross", 227, 384, 444, 249));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 199.5, 444, 389));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 424));
+        when:
+            resetDirectives(widgetsLayer, itemsLayer);
+            clickOnMask(game);
+            paint(game);
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks when both units fail the (backward) cross moral check", () => {
+        given:
+            var {game, unit11, unit12} = create2Players4UnitsTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            unit12.hexLocation = unit11.hexLocation;
+            clickOnPiece(game, unit12);
+            clickOnMoveBackAction(game);
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+            rollFor(5,6);
+            clickOnDice(game);
+            executeAllAnimations();
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 424));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(449, 384));
+        when:
+            clickOnResult(game);
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("check-cross", 227, 400, 444, 249));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 215.5, 444, 389));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 440));
+        when:
+            rollFor(5,6);
+            clickOnDice(game);
+            executeAllAnimations();
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 440));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showFailureResult(449, 400));
+        when:
+            clickOnResult(game);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(unit11.isDisrupted()).isTrue();
+            assert(unit12.isDisrupted()).isTrue();
+    });
+
+    it("Checks when both units succeed the (backward) cross moral check", () => {
+        given:
+            var {game, unit11, unit12} = create2Players4UnitsTinyGame();
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            unit12.hexLocation = unit11.hexLocation;
+            clickOnPiece(game, unit12);
+            clickOnMoveBackAction(game);
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(240));
+            rollFor(1, 1);
+            clickOnDice(game);
+            executeAllAnimations();
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 1, 549, 424));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(449, 384));
+        when:
+            clickOnResult(game);
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showInsert("check-cross", 227, 400, 444, 249));
+            assertDirectives(widgetsLayer, showInsert("moral", 661, 215.5, 444, 389));
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showDice(1, 1, 549, 440));
+        when:
+            rollFor(1, 1);
+            clickOnDice(game);
+            executeAllAnimations();
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showPlayedDice(1, 1, 549, 440));
+            skipDirectives(commandsLayer, 4);
+            assertDirectives(commandsLayer, showSuccessResult(449, 400));
+        when:
+            clickOnResult(game);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(itemsLayer, 4);
+            assertNoMoreDirectives(commandsLayer, 4);
+            assert(unit11.isDisrupted()).isFalse();
+            assert(unit12.isDisrupted()).isFalse();
+    });
+
+    it("Checks automatic reorientation of a coming troop at the end of movement if stacked", () => {
+        given:
+            var {game, unit11, unit12} = create1Player2Units2LeadersTinyGame();
+            unit12.hexLocation = unit11.hexLocation.getNearHex(0);
+            unit12.angle = 60;
+        when:
+            clickOnPiece(game, unit11);
+            clickOnMoveAction(game);
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(0));
+            clickOnPiece(game, unit12);
+        then:
+            assert(unit11.angle).equalsTo(60);
+            assert(unit11.isDisrupted()).equalsTo(true);
+        when:
+            Memento.undo();
+        then:
+            assert(unit11.angle).equalsTo(0);
+            assert(unit11.isDisrupted()).equalsTo(false);
+    });
+
+    it("Checks automatic reorientation of a coming character at the end of movement if stacked", () => {
+        given:
+            var {game, leader11, unit11} = create1Player2Units2LeadersTinyGame();
+            unit11.hexLocation = leader11.hexLocation.getNearHex(0);
+            unit11.angle = 60;
+        when:
+            clickOnPiece(game, leader11);
+            clickOnMoveAction(game);
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(0));
+            clickOnPiece(game, unit11);
+        then:
+            assert(leader11.angle).equalsTo(60);
+            assert(leader11.isDisrupted()).equalsTo(false);
+        when:
+            Memento.undo();
+        then:
+            assert(leader11.angle).equalsTo(0);
+    });
+
+    it("Checks automatic reorientation of a character if a troop finishes to move on it", () => {
+        given:
+            var {game, leader11, unit11} = create1Player2Units2LeadersTinyGame();
+            leader11.hexLocation = unit11.hexLocation.getNearHex(0);
+            leader11.angle = 60;
+        when:
+            clickOnPiece(game, unit11);
+            clickOnMoveAction(game);
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(0));
+            clickOnPiece(game, unit11);
+        then:
+            assert(leader11.angle).equalsTo(0);
+        when:
+            Memento.undo();
+        then:
+            assert(leader11.angle).equalsTo(60);
+    });
+
+    it("Checks automatic reorientation of a character if a character finishes to move on it", () => {
+        given:
+            var {game, leader11, leader12} = create1Player2Units2LeadersTinyGame();
+            leader11.hexLocation = leader12.hexLocation.getNearHex(0);
+            leader11.angle = 60;
+        when:
+            clickOnPiece(game, leader12);
+            clickOnMoveAction(game);
+            var moveActuator = getMoveActuator(game);
+            clickOnTrigger(game, moveActuator.getTrigger(0));
+            clickOnPiece(game, leader12);
+        then:
+            assert(leader11.angle).equalsTo(0);
+        when:
+            Memento.undo();
+        then:
+            assert(leader11.angle).equalsTo(60);
     });
 
     function clickOnRoutAction(game) {
@@ -1687,9 +2018,31 @@ describe("Interactive Movement", ()=> {
             assert(orientationActuator.getTrigger(270)).isDefined();
     });
 
+    it("Checks a fire capable Troop in attack mode when it just reach a target", () => {
+        given:
+            var {game, map, arbitrator, unit1, unit2} = create2PlayersTinyGame();
+            game.nextTurn();
+            unit1.hexLocation = map.getHex(8, 3);
+            unit2.hexLocation = map.getHex(8, 5);
+            arbitrator.updateAllowedActions(actions=>{
+                actions.moveMode = CBMoveMode.ATTACK;
+                return actions;
+            });
+            var [actuatorLayer] = getLayers(game.board,"actuators");
+        when:
+            clickOnPiece(game, unit2);
+            resetDirectives(actuatorLayer);
+            clickOnMoveAction(game);
+            var moveActuator = getMoveActuator(game);
+        then:
+            assert(moveActuator.getTrigger(300)).isDefined();
+            assert(moveActuator.getTrigger(0)).isDefined();
+            assert(moveActuator.getTrigger(60)).isDefined();
+    });
+
     it("Checks Troop when it fire moves", () => {
         given:
-            var {game, map, arbitrator, wing1, unit1} = create2PlayersTinyGame();
+            var {game, map, arbitrator, unit1} = create2PlayersTinyGame();
             unit1.hexLocation = map.getHex(5, 8);
             arbitrator.updateAllowedActions(actions=>{
                 actions.moveMode = CBMoveMode.FIRE;

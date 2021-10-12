@@ -95,7 +95,7 @@ export class CBMovementTeacher {
         for (let sangle in opportunities) {
             let angle = parseInt(sangle);
             let opportunity = opportunities[angle];
-            let cost = this._getMovementCost(unit, angle);
+            let cost = this.getMovementCost(unit, angle);
             if (predicate(opportunity) &&
                 this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, first)) {
                 result[angle] = opportunity;
@@ -127,7 +127,7 @@ export class CBMovementTeacher {
             let angle = parseInt(sangle);
             if (!(angle % 60)) {
                 let opportunity = opportunities[angle];
-                let cost = this._getFormationMovementCost(unit, angle);
+                let cost = this.getFormationMovementCost(unit, angle);
                 if (predicate(angle) &&
                     this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, first)) {
                     result[angle] = opportunity;
@@ -161,7 +161,7 @@ export class CBMovementTeacher {
             if (!(angle % 60)) {
                 let opportunity = opportunities[angle];
                 opportunity.hex = unit.hexLocation.getFaceHex(unit.angle);
-                let cost = this._getFormationTurnCost(unit, angle);
+                let cost = this.getFormationTurnCost(unit, angle);
                 if (predicate(angle) &&
                     this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, first)) {
                     result[angle] = opportunity;
@@ -194,7 +194,7 @@ export class CBMovementTeacher {
         for (let sangle in opportunities) {
             let angle = parseInt(sangle);
             let opportunity = opportunities[angle];
-            let cost = this._getMovementCost(unit, angle);
+            let cost = this.getMovementCost(unit, angle);
             if (cost.type === CBMoveProfile.COST_TYPE.ADD || cost.type === CBMoveProfile.COST_TYPE.SET &&
                 cost.value < unit.nominalMovementPoints) {
                 cost.value = unit.nominalMovementPoints;
@@ -221,7 +221,7 @@ export class CBMovementTeacher {
             let angle = parseInt(sangle);
             if (!(angle % 60)) {
                 let opportunity = opportunities[angle];
-                let cost = this._getFormationMovementCost(unit, angle);
+                let cost = this.getFormationMovementCost(unit, angle);
                 if (predicate(angle) &&
                     this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, true)) {
                     result[angle] = opportunity;
@@ -246,7 +246,7 @@ export class CBMovementTeacher {
             if (!(angle % 60)) {
                 let opportunity = opportunities[angle];
                 opportunity.hex = unit.hexLocation.getFaceHex(invertAngle(unit.angle));
-                let cost = this._getFormationTurnCost(unit, angle);
+                let cost = this.getFormationTurnCost(unit, angle);
                 if (predicate(angle) &&
                     this._checkAndReportOpportunityMoveCost(opportunity, unit, cost, true)) {
                     result[angle] = opportunity;
@@ -286,7 +286,7 @@ export class CBMovementTeacher {
         let hexes = this.getUnitAdjacentZone(unit);
         let opportunities = [];
         for (let angle = 0; angle < 360; angle += 30) {
-            let cost = this.getRotationCost(unit, angle);
+            let cost = this.getTerrainRotationCost(unit, angle);
             if (predicate(angle)) {
                 let opportunity = this._checkAndReportOpportunityRotationCost(hexes, angle, unit, cost, first);
                 if (opportunity) {
@@ -302,7 +302,7 @@ export class CBMovementTeacher {
         let hexes = this.getUnitAdjacentZone(unit);
         let opportunities = [];
         let angle = invertAngle(unit.angle);
-        let cost = this.getFormationRotationCost(unit, angle);
+        let cost = this.getFormationTerrainRotationCost(unit, angle);
         if (predicate(angle)) {
             let opportunity = this._checkAndReportOpportunityRotationCost(hexes, angle, unit, cost, first);
             if (opportunity) {
@@ -405,9 +405,14 @@ export class CBMovementTeacher {
 
     getFoesHexLocations(unit) {
         let result = [];
+        let locationSet = new Set();
         let foes = this.getFoes(unit);
         for (let foe of foes) {
-            result.push(foe.hexLocation);
+            let locationId = foe.hexLocation.location.toString();
+            if (!locationSet.has(locationId)) {
+                locationSet.add(locationId);
+                result.push(foe.hexLocation);
+            }
         }
         return result;
     }
@@ -427,54 +432,60 @@ export class CBMovementTeacher {
         return null;
     }
 
-    _getMovementCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
-        if (this.doesHexLocationContainFoes(unit, hex)) return {type: CBMoveProfile.COST_TYPE.IMPASSABLE};
-        let cost = this.getStackingCost(unit, 2, hex.getNearHex(angle));
+    getMovementCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
+        let targetHex = hex.getNearHex(angle);
+        if (this.doesHexLocationContainFoes(unit, targetHex)) {
+            return {type: CBMoveProfile.COST_TYPE.IMPASSABLE};
+        }
+        let cost = this.getStackingCost(unit, 2, targetHex);
         if (cost) return cost;
-        return this.getMovementCost(unit, angle, hex, orientation);
+        return this.getTerrainMoveCost(unit, angle, hex, orientation);
     }
 
-    _getFormationMovementCost(unit, angle, hexSide=unit.hexLocation) {
-        if (this.doesHexLocationContainFoes(unit, hexSide)) return {type: CBMoveProfile.COST_TYPE.IMPASSABLE};
-        let cost = this.getStackingCost(unit, 1, hexSide.moveTo(angle));
+    getFormationMovementCost(unit, angle, hexSide=unit.hexLocation) {
+        let targetHexSide = hexSide.moveTo(angle);
+        if (this.doesHexLocationContainFoes(unit, targetHexSide)) {
+            return {type: CBMoveProfile.COST_TYPE.IMPASSABLE};
+        }
+        let cost = this.getStackingCost(unit, 1, targetHexSide);
         if (cost) return cost;
-        return this.getFormationMovementCost(unit, angle, hexSide);
+        return this.getFormationTerrainMoveCost(unit, angle, hexSide);
     }
 
-    _getCrossCostForPathFinding(unit, angle, hex) {
-        return this.getCrossCost(unit, angle, hex);
+    getCrossCostForPathFinding(unit, angle, hex) {
+        return this.getTerrainCrossCost(unit, angle, hex);
     }
 
-    _getMovementCostForPathFinding(unit, angle, hex, target) {
+    getMovementCostForPathFinding(unit, angle, hex, target) {
         let targetHex = hex.getNearHex(angle);
         if (!target || !target.hasHex(targetHex)) {
             if (this.doesHexLocationContainFoes(unit, targetHex)) return {type: CBMoveProfile.COST_TYPE.IMPASSABLE};
             let cost = this.getStackingCost(unit, 2, targetHex);
             if (cost) return cost;
         }
-        return this.getMovementCost(unit, angle, hex);
+        return this.getTerrainMoveCost(unit, angle, hex);
     }
 
-    _getFormationMovementCostForPathFinding(unit, angle, hex, target) {
+    getFormationMovementCostForPathFinding(unit, angle, hex, target) {
         let targetHex = hex.getNearHex(angle);
         if (!target || !target.hasHex(targetHex)) {
             if (this.doesHexLocationContainFoes(unit, targetHex)) return {type: CBMoveProfile.COST_TYPE.IMPASSABLE};
             let cost = this.getStackingCost(unit, 1, targetHex);
             if (cost) return cost;
         }
-        return this.getMovementCost(unit, angle, hex, angle);
+        return this.getTerrainMoveCost(unit, angle, hex, angle);
     }
 
-    _getFormationTurnCost(unit, angle, hexSide=unit.hexLocation) {
+    getFormationTurnCost(unit, angle, hexSide=unit.hexLocation) {
         let cost = this.getStackingCost(unit, 1, hexSide.turnTo(angle));
         if (cost) return cost;
-        return this.getFormationTurnCost(unit, angle, hexSide);
+        return this.getFormationTerrainTurnCost(unit, angle, hexSide);
     }
 
     getCrossCostMethod(unit) {
         return (from, to)=> {
             let angle = from.getAngle(to);
-            let cost =  this._getCrossCostForPathFinding(unit, angle, from);
+            let cost =  this.getCrossCostForPathFinding(unit, angle, from);
             switch (cost.type) {
                 case CBMoveProfile.COST_TYPE.IMPASSABLE:
                     return null;
@@ -492,8 +503,8 @@ export class CBMovementTeacher {
             if (forbiddenHexes && forbiddenHexes.has(to)) return null;
             let angle = from.getAngle(to);
             let cost = unit.formationNature ?
-                this._getFormationMovementCostForPathFinding(unit, angle, from, target):
-                this._getMovementCostForPathFinding(unit, angle, from, target);
+                this.getFormationMovementCostForPathFinding(unit, angle, from, target):
+                this.getMovementCostForPathFinding(unit, angle, from, target);
             switch (cost.type) {
                 case CBMoveProfile.COST_TYPE.IMPASSABLE:
                     return null;
@@ -519,8 +530,8 @@ export class CBMovementTeacher {
         return (hex, fromAngle, toAngle)=> {
             if (freeHexes && freeHexes.has(hex)) return 0;
             let cost = unit.formationNature ?
-                this.getFormationRotationCost(unit, toAngle, hex, fromAngle):
-                this.getRotationCost(unit, toAngle, hex, fromAngle);
+                this.getFormationTerrainRotationCost(unit, toAngle, hex, fromAngle):
+                this.getTerrainRotationCost(unit, toAngle, hex, fromAngle);
             switch (cost.type) {
                 case CBMoveProfile.COST_TYPE.IMPASSABLE:
                     return null;

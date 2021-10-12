@@ -730,6 +730,7 @@ describe("Unit", ()=> {
                 type:CBMoveProfile.COST_TYPE.ADD, value:1
             });
         then:
+            assert(unit.nominalMovementPoints).equalsTo(2);
             assert(unit.movementPoints).equalsTo(1);
             assert(unit.extendedMovementPoints).equalsTo(2);
             assert(hexId.units).arrayEqualsTo([]);

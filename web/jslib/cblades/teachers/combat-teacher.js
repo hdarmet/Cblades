@@ -486,7 +486,7 @@ export class CBCombatTeacher {
         return this.getUnitForwardAreaFromHex(unit, hexId, range);
     }
 
-    _getFoesForShock(unit, hexes) {
+    _getFoesForCombat(unit, hexes) {
         let foes = [];
         let foesSet = new Set();
         for (let hex of hexes) {
@@ -497,12 +497,12 @@ export class CBCombatTeacher {
 
     getFoesThatMayBeFireAttackedFromHex(unit, hexId) {
         let hexes = this._getForwardZoneThatMayBeFireAttackedFromHex(unit, hexId, unit.weaponProfile.getFireRange());
-        return this._getFoesForShock(unit, hexes);
+        return this._getFoesForCombat(unit, hexes);
     }
 
     getFoesThatMayBeFireAttacked(unit) {
         let hexes = this._getForwardZoneThatMayBeFireAttacked(unit, unit.weaponProfile.getFireRange());
-        return this._getFoesForShock(unit, hexes);
+        return this._getFoesForCombat(unit, hexes);
     }
 
     _getFoesForDuel(unit, hexes) {

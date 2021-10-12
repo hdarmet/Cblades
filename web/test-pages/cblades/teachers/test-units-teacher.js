@@ -207,6 +207,49 @@ describe("Units teacher", ()=> {
             assert(arbitrator.isAloneInHex(leader11)).isTrue();
     });
 
+    it("Checks troop counter", () => {
+        given:
+            var {arbitrator, unit11, unit12, leader11} = create2Players4UnitsTinyGame();
+        when:
+            leader11.hexLocation = unit11.hexLocation;
+            unit12.hexLocation = unit11.hexLocation;
+        then:
+            assert(arbitrator.countTroops(unit12.hexLocation)).equalsTo(2);
+    });
+
+    it("Checks which troop is stacked with", () => {
+        given:
+            var {arbitrator, unit11, unit12, leader11} = create2Players4UnitsTinyGame();
+        when:
+            leader11.hexLocation = unit11.hexLocation;
+            unit12.hexLocation = unit11.hexLocation;
+        then:
+            assert(arbitrator.getTroopsStackedWith(unit12)).arrayEqualsTo([unit11]);
+            assert(arbitrator.getTroopsStackedWith(leader11)).unorderedArrayEqualsTo([unit11, unit12]);
+    });
+
+    it("Checks which troop is crossed when another troop moves forward", () => {
+        given:
+            var {arbitrator, unit11, unit12, leader11} = create2Players4UnitsTinyGame();
+        when:
+            leader11.hexLocation = unit11.hexLocation;
+            unit12.hexLocation = unit11.hexLocation;
+        then:
+            assert(arbitrator.getTroopsToCrossOnForwardMovement(unit11)).arrayEqualsTo([unit12]);
+            assert(arbitrator.getTroopsToCrossOnForwardMovement(unit12)).arrayEqualsTo([]);
+    });
+
+    it("Checks which troop is crossed when another troop moves backward", () => {
+        given:
+            var {arbitrator, unit11, unit12, leader11} = create2Players4UnitsTinyGame();
+        when:
+            leader11.hexLocation = unit11.hexLocation;
+            unit12.hexLocation = unit11.hexLocation;
+        then:
+            assert(arbitrator.getTroopsToCrossOnBackwardMovement(unit12)).arrayEqualsTo([unit11]);
+            assert(arbitrator.getTroopsToCrossOnBackwardMovement(unit11)).arrayEqualsTo([]);
+    });
+
     it("Checks if a unit contact a foe", () => {
         given:
             var {arbitrator, map, unit11, unit12, unit21} = create2Players4UnitsTinyGame();

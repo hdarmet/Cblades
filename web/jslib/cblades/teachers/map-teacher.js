@@ -123,12 +123,7 @@ export class CBMapTeacher {
     }
 
     getUnitForwardArea(unit, range) {
-        let border = (unit.formationNature) ? [unit.hexLocation.fromHex, unit.hexLocation.toHex] : [unit.hexLocation];
-        return this._getUnitForwardAreaFromBorder(unit, border, range);
-    }
-
-    getRotationCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
-        return unit.moveProfile.getRotationCost(diffAngle(orientation, angle));
+        return this._getUnitForwardAreaFromBorder(unit, unit.hexLocation.hexes, range);
     }
 
     _mergeCosts(cost1, cost2) {
@@ -140,7 +135,7 @@ export class CBMapTeacher {
         return {type:CBMoveProfile.COST_TYPE.ADD, value:cost1.value+cost2.value};
     }
 
-    getMovementCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
+    getTerrainMoveCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
         let targetHex = hex.getNearHex(angle);
         return this._mergeCosts(
             unit.moveProfile.getMovementCostOnHexSide(hex.to(targetHex)),
@@ -148,16 +143,20 @@ export class CBMapTeacher {
         );
     }
 
-    getCrossCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
+    getTerrainRotationCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
+        return unit.moveProfile.getRotationCost(diffAngle(orientation, angle));
+    }
+
+    getTerrainCrossCost(unit, angle, hex=unit.hexLocation, orientation=unit.angle) {
         let targetHex = hex.getNearHex(angle);
         return unit.moveProfile.getMovementCostOnHexSide(hex.to(targetHex));
     }
 
-    getFormationRotationCost(unit, angle, orientation=unit.angle) {
+    getFormationTerrainRotationCost(unit, angle, orientation=unit.angle) {
         return unit.moveProfile.getFormationRotationCost(diffAngle(orientation, angle));
     }
 
-    getFormationMovementCost(unit, angle, hexSide=unit.hexLocation) {
+    getFormationTerrainMoveCost(unit, angle, hexSide=unit.hexLocation) {
         let fromHexTarget = hexSide.fromHex.getNearHex(angle);
         let fromHexCost = this._mergeCosts(
             unit.moveProfile.getMovementCostOnHexSide(hexSide.fromHex.to(fromHexTarget)),
@@ -171,7 +170,7 @@ export class CBMapTeacher {
         return fromHexCost.type>toHexCost.type ? fromHexCost : toHexCost;
     }
 
-    getFormationTurnCost(unit, angle, hexSide=unit.hexLocation) {
+    getFormationTerrainTurnCost(unit, angle, hexSide=unit.hexLocation) {
         let turnMove = hexSide.turnMove(angle);
         return this._mergeCosts(
             unit.moveProfile.getMovementCostOnHexSide(turnMove),
