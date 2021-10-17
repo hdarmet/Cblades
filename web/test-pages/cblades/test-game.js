@@ -800,9 +800,9 @@ describe("Game", ()=> {
     it("Checks edit push menu button", () => {
         try {
             given:
-                var cbgameEdit = CBAbstractGame.edit;
+                var cbgameEdit = CBAbstractGame.editMap;
                 var editMode = false;
-                CBAbstractGame.edit = function() {
+                CBAbstractGame.editMap = function() {
                     editMode = !editMode;
                 }
                 var game = new CBTestGame();
@@ -815,7 +815,7 @@ describe("Game", ()=> {
                 game._showCommand.action();
                 executeAllAnimations();
             when:
-                game._editorCommand.action();
+                game._editMapCommand.action();
                 executeAllAnimations();
                 resetDirectives(commandsLayer);
                 repaint(game);
@@ -835,7 +835,7 @@ describe("Game", ()=> {
                 assertNoMoreDirectives(commandsLayer);
             when:
                 editMode = false;
-                game._editorCommand.action();
+                game._editMapCommand.action();
                 executeAllAnimations();
                 resetDirectives(commandsLayer);
                 repaint(game);
@@ -854,7 +854,7 @@ describe("Game", ()=> {
                 assertDirectives(commandsLayer, showGameCommand("full-screen-on", 400, 740));
                 assertNoMoreDirectives(commandsLayer);
         } finally {
-            CBAbstractGame.edit = cbgameEdit;
+            CBAbstractGame.editMap = cbgameEdit;
         }
     });
 

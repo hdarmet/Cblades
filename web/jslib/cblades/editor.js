@@ -5,19 +5,39 @@ import {
     CBAbstractGame
 } from "./game.js";
 import {
-    CBActuatorMultiImagesTrigger
+    CBActuatorMultiImagesTrigger,
+    NeighborRawActuatorArtifactMixin,
+    NeighborActuatorArtifactMixin,
+    NeighborActuatorMixin,
+    ActivableArtifactMixin, CBActuatorImageTrigger, GhostArtifactMixin
 } from "./playable.js";
 import {
     DImage
 } from "../draw.js";
 import {
-    Dimension2D
+    atan2, diffAngle,
+    Dimension2D, inside, Point2D, sumAngle
 } from "../geometry.js";
 import {
     Memento
 } from "../mechanisms.js";
+import {
+    DLeftNavigation, DNextNavigation,
+    DPopup, DPrevNavigation, DRightNavigation
+} from "../widget.js";
+import {
+    DImageArtifact, DPedestalArtifact, DRectArtifact
+} from "../board.js";
+import {GoblinLeader, GoblinSkirmisher, GoblinWolfRider, WizardLeader} from "./armies/orcs.js";
+import {
+    RoughneckCrossbowman,
+    RoughneckKnight,
+    RoughneckLance,
+    RoughneckLeader,
+    RoughneckSorceressCharacter
+} from "./armies/roughnecks.js";
 
-export class CBMapEditorHexHeightTrigger extends CBActuatorMultiImagesTrigger {
+export class CBMapEditorHexHeightTrigger extends NeighborRawActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
 
     constructor(actuator, hex) {
         let images = [
@@ -33,8 +53,7 @@ export class CBMapEditorHexHeightTrigger extends CBActuatorMultiImagesTrigger {
             DImage.getImage("./../images/actuators/ground/level-up-4.png"),
             DImage.getImage("./../images/actuators/ground/level-up-5.png")
         ];
-        super(actuator, "actuators", images,  hex.location.plus(40, 0), new Dimension2D(70, 70));
-        this._hex = hex;
+        super(hex, actuator, "actuators", images,  hex.location.plus(40, 0), new Dimension2D(70, 70));
         this._height = hex.height;
         this.setImage(this._height+5);
     }
@@ -50,21 +69,17 @@ export class CBMapEditorHexHeightTrigger extends CBActuatorMultiImagesTrigger {
         this._height = memento.height;
     }
 
-    get hexLocation() {
-        return this._hex;
-    }
-
     onMouseClick(event) {
         Memento.register(this);
         this._height = event.altKey ? (this._height+15)%11-5 : (this._height+6)%11-5;
-        this._hex.changeHeight(this._height);
+        this.hexLocation.changeHeight(this._height);
         this.changeImage(this._height+5);
         return true;
     }
 
 }
 
-export class CBMapEditorHexTypeTrigger extends CBActuatorMultiImagesTrigger {
+export class CBMapEditorHexTypeTrigger extends NeighborActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
 
     constructor(actuator, hex) {
         let images = [
@@ -84,8 +99,7 @@ export class CBMapEditorHexTypeTrigger extends CBActuatorMultiImagesTrigger {
             DImage.getImage("./../images/actuators/ground/cave-rough-flammable.png"),
             DImage.getImage("./../images/actuators/ground/cave-difficult-flammable.png")
         ];
-        super(actuator, "actuators", images,  hex.location.minus(40, 0), new Dimension2D(60, 60));
-        this._hex = hex;
+        super(hex, actuator, "actuators", images,  hex.location.minus(40, 0), new Dimension2D(60, 60));
         this._type = hex.type;
         this.setImage(this._type);
     }
@@ -101,21 +115,17 @@ export class CBMapEditorHexTypeTrigger extends CBActuatorMultiImagesTrigger {
         this._type = memento.type;
     }
 
-    get hexLocation() {
-        return this._hex;
-    }
-
     onMouseClick(event) {
         Memento.register(this);
         this._type = event.altKey ? (this._type+14)%15 : (this._type+1)%15;
-        this._hex.changeType(this._type);
+        this.hexLocation.changeType(this._type);
         this.changeImage(this._type);
         return true;
     }
 
 }
 
-export class CBMapEditorHexSideTypeTrigger extends CBActuatorMultiImagesTrigger {
+export class CBMapEditorHexSideTypeTrigger extends NeighborRawActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
 
     constructor(actuator, hexSide) {
         let images = [
@@ -125,8 +135,7 @@ export class CBMapEditorHexSideTypeTrigger extends CBActuatorMultiImagesTrigger 
             DImage.getImage("./../images/actuators/ground/climb.png"),
             DImage.getImage("./../images/actuators/ground/wall.png")
         ];
-        super(actuator, "actuators", images,  hexSide.location, new Dimension2D(46, 20));
-        this._hexSide = hexSide;
+        super(hexSide, actuator, "actuators", images,  hexSide.location, new Dimension2D(46, 20));
         this.pangle = hexSide.angle;
         this._type = hexSide.type;
         this.setImage(this._type);
@@ -143,21 +152,17 @@ export class CBMapEditorHexSideTypeTrigger extends CBActuatorMultiImagesTrigger 
         this._type = memento.type;
     }
 
-    get hexLocation() {
-        return this._hexSide;
-    }
-
     onMouseClick(event) {
         Memento.register(this);
         this._type = event.altKey ? (this._type+4)%5 : (this._type+1)%5;
-        this._hexSide.changeType(this._type);
+        this.hexLocation.changeType(this._type);
         this.changeImage(this._type);
         return true;
     }
 
 }
 
-export class CBMapEditActuator extends CBActuator {
+export class CBMapEditActuator extends NeighborActuatorMixin(CBActuator) {
 
     constructor(map) {
         super();
@@ -193,13 +198,404 @@ export class CBMapEditActuator extends CBActuator {
 
 }
 
+export class CBUnitPlacementTrigger extends GhostArtifactMixin(CBActuatorImageTrigger) {
+
+    constructor(actuator, hex) {
+        let image= DImage.getImage("./../images/actuators/unit-t.png");
+        super(actuator, "actuators", image,  hex.location, new Dimension2D(100, 200));
+        this._hexLocation = hex;
+        this.pangle = 0;
+    }
+
+    containsPoint(point) {
+        return inside(point, this._hexLocation.borders);
+    }
+
+    mayCaptureEvent(event) {
+        return true;
+    }
+
+    onMouseMove(event) {
+        let offset = this.level.getPoint(new Point2D(event.offsetX, event.offsetY));
+        let location = this.location;
+        let angle = Math.round(atan2(offset.x-location.x, offset.y-location.y)/30)*30;
+        if (angle === 360) angle = 0;
+        if (this.pangle !== angle) {
+            this.pangle = angle;
+        }
+        return true;
+    }
+
+    onMouseClick(event) {
+        Memento.register(this);
+        return true;
+    }
+
+}
+
+export class CBUnitPlacementActuator extends CBActuator {
+
+    constructor(map) {
+        super();
+
+        let artifacts = [];
+        for (let hex of map.hexes) {
+            let triggerUnit = new CBUnitPlacementTrigger(this, hex);
+            artifacts.push(triggerUnit);
+        }
+        this.initElement(artifacts);
+    }
+
+    getTrigger(hexLocation) {
+        return this.findTrigger(trigger=>trigger instanceof CBUnitPlacementTrigger &&
+            trigger.hexLocation.similar(hexLocation));
+    }
+
+}
+
+export class CBFormationPlacementTrigger extends GhostArtifactMixin(CBActuatorImageTrigger) {
+
+    constructor(actuator, hexSide) {
+        let image= DImage.getImage("./../images/actuators/unit-f.png");
+        super(actuator, "actuators", image,  hexSide.location, new Dimension2D(200, 200));
+        this._hexLocation = hexSide;
+        this.pangle = sumAngle(this._hexLocation.angle, 90);
+    }
+
+    containsPoint(point) {
+        return inside(point, this._hexLocation.borders);
+    }
+
+    mayCaptureEvent(event) {
+        return true;
+    }
+
+    onMouseMove(event) {
+        let offset = this.level.getPoint(new Point2D(event.offsetX, event.offsetY));
+        let location = this.location;
+        let angle = Math.round(atan2(offset.x-location.x, offset.y-location.y));
+        if (diffAngle(angle, this._hexLocation.angle)>=0) {
+            angle = sumAngle(this._hexLocation.angle, -90);
+        }
+        else {
+            angle = sumAngle(this._hexLocation.angle, 90);
+        }
+        if (this.pangle !== angle) {
+            this.pangle = angle;
+        }
+        return true;
+    }
+
+    onMouseClick(event) {
+        Memento.register(this);
+        return true;
+    }
+
+}
+
+export class CBFormationPlacementActuator extends CBActuator {
+
+    constructor(map) {
+        super();
+        let artifacts = [];
+        for (let hexSide of map.hexSides) {
+            let triggerUnit = new CBFormationPlacementTrigger(this, hexSide);
+            artifacts.push(triggerUnit);
+        }
+        this.initElement(artifacts);
+    }
+
+    getTrigger(hexLocation) {
+        return this.findTrigger(trigger=>trigger instanceof CBUnitPlacementTrigger &&
+            trigger.hexLocation.similar(hexLocation));
+    }
+
+}
+
+export class CBPartyArtifact extends ActivableArtifactMixin(DImageArtifact) {
+
+    constructor(index, emblem) {
+        super("widgets", DImage.getImage(emblem),
+            new Point2D((CBPartyArtifact.DIMENSION.w+10)*(index-2), CBUnitsRoster.HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            CBPartyArtifact.DIMENSION);
+        this._index = index;
+    }
+
+    get settings() {
+        return level => {
+            level.setShadowSettings("#000000", 5);
+        }
+    }
+
+    onMouseClick(event) {
+        this.element.changeRosterContent(this._index);
+        return true;
+    }
+
+    static DIMENSION = new Dimension2D(60, 60);
+}
+
+export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact) {
+
+    constructor(type, x, y) {
+        super(null, "widgets", new Point2D(x, y));
+        this._type = type;
+        this._step = 1;
+        this.artifact = this._buildUnitArtifact(this._type, this._step);
+    }
+
+    _buildUnitArtifact(type, index) {
+        let troopPathLength = type.getTroopPaths().length;
+        if (index<troopPathLength) {
+            return new DImageArtifact("-", DImage.getImage(
+                    type.getTroopPaths()[troopPathLength-index-1]
+                ),
+                new Point2D(0, 0),
+                new Dimension2D(CBUnitTypeArtifact.DIMENSION.w, CBUnitTypeArtifact.DIMENSION.h));
+        }
+        else {
+            let formationPathLength = type.getFormationPaths().length;
+            return new DImageArtifact("-", DImage.getImage(
+                    type.getFormationPaths()[formationPathLength-index+troopPathLength-1]
+                ),
+                new Point2D(0, 0),
+                new Dimension2D(CBUnitTypeArtifact.DIMENSION.w * 2, CBUnitTypeArtifact.DIMENSION.h));
+        }
+    }
+
+    isFormation() {
+        return this._step>=this._type.getTroopPaths().length;
+    }
+
+    get settings() {
+        return level => {
+            level.setShadowSettings("#000000", 5);
+        }
+    }
+
+    get step() {
+        return this._step;
+    }
+
+    get maxStep() {
+        let troopPathLength = this._type.getTroopPaths().length;
+        let formationPathLength = this._type.getFormationPaths() ? this._type.getFormationPaths().length : 0;
+        return troopPathLength + formationPathLength -1;
+    }
+
+    shiftStep(stepShift) {
+        this._step += stepShift;
+        if (this._step < 0) this._step = 0;
+        if (this._step >= this.maxStep) this._step = this.maxStep;
+        this.artifact = this._buildUnitArtifact(this._type, this._step);
+    }
+
+    onMouseClick(event) {
+        console.log("chose");
+        this.element.placeUnit(this);
+        return true;
+    }
+
+    static DIMENSION = new Dimension2D(60, 60);
+}
+
+export class CBUnitsRoster extends DPopup {
+
+    constructor(game) {
+        super(CBUnitsRoster.DIMENSION);
+        this._game = game;
+        this.addArtifact(new DRectArtifact("widgets",
+            new Point2D(0, CBUnitsRoster.HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            CBUnitsRoster.HEADER_DIMENSION, 1, "#000000", "#C0C0C0")
+        );
+        this._buildRosterCommands();
+        this._buildRosters();
+        this._changeRosterContent(CBUnitsRoster.rosterIndex);
+    }
+
+    _update() {
+        if (this._rosterArtifacts) {
+            for (let rosterArtifact of this._rosterArtifacts) {
+                this.removeArtifact(rosterArtifact);
+            }
+        }
+        this._rosterArtifacts = [];
+        for (let index=CBUnitsRoster.rosterStart; index<CBUnitsRoster.rosters.length && index<CBUnitsRoster.rosterStart+5; index++) {
+            let roster = CBUnitsRoster.rosters[index];
+            let rosterArtifact = new CBPartyArtifact(index-CBUnitsRoster.rosterStart, roster.emblem);
+            this._rosterArtifacts.push(rosterArtifact);
+            this.addArtifact(rosterArtifact);
+        }
+    }
+
+    _buildRosterCommands() {
+        this._leftRoster = new DLeftNavigation(
+            new Point2D(-CBUnitsRoster.DIMENSION.w/2+35, CBUnitsRoster.HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            ()=>{
+                CBUnitsRoster.rosterStart--;
+                this._rightRoster.setActive(true);
+                if (CBUnitsRoster.rosterStart===0) this._leftRoster.setActive(false);
+                this._update();
+            }
+        );
+        this.addArtifact(this._leftRoster);
+        this._rightRoster = new DRightNavigation(
+            new Point2D(CBUnitsRoster.DIMENSION.w/2-35, CBUnitsRoster.HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            ()=>{
+                CBUnitsRoster.rosterStart++;
+                this._leftRoster.setActive(true);
+                if (CBUnitsRoster.rosterStart===CBUnitsRoster.rosters.length-5) this._rightRoster.setActive(false);
+                this._update();
+            }
+        );
+        this.addArtifact(this._rightRoster);
+    }
+
+    _changeRosterContent(index) {
+        if (this._unitArtifacts) {
+            for (let unitType of this._unitArtifacts) {
+                this.removeArtifact(unitType);
+            }
+        }
+        let roster = CBUnitsRoster.rosters[index];
+        this._unitArtifacts = CBUnitsRoster.rosterMap.get(roster);
+        if (this._unitArtifacts) {
+            for (let unitType of this._unitArtifacts) {
+                this.addArtifact(unitType);
+            }
+        }
+        else {
+            this.buildRosterContent(roster);
+            CBUnitsRoster.rosterMap.set(roster, this._unitArtifacts);
+        }
+    }
+
+    changeRosterContent(index) {
+        CBUnitsRoster.rosterIndex = CBUnitsRoster.rosterStart+index;
+        this._changeRosterContent(CBUnitsRoster.rosterIndex);
+    }
+
+    buildRosterContent(roster) {
+        this._unitArtifacts = [];
+        for (let index = 0; index<roster.unitTypes.length; index++) {
+            let col = index % 2;
+            let row = Math.floor(index / 2);
+            let x = col % 2 ? CBUnitsRoster.DIMENSION.w / 4 : -CBUnitsRoster.DIMENSION.w / 4;
+            let y = CBUnitsRoster.HEADER_DIMENSION.h - CBUnitsRoster.DIMENSION.h / 2 +
+                (CBUnitTypeArtifact.DIMENSION.h + 10) * (row + 0.5) + 20;
+            let unitTypeArtifact = this._buildUnitTypeArtifact(roster.unitTypes[index], x, y);
+            this._buildUnitTypeEnhancers(x, y, unitTypeArtifact);
+        }
+    }
+
+    _buildUnitTypeArtifact(unitType, x, y) {
+        let unitTypeArtifact = new CBUnitTypeArtifact(unitType, x, y);
+        this._unitArtifacts.push(unitTypeArtifact);
+        this.addArtifact(unitTypeArtifact);
+        return unitTypeArtifact;
+    }
+
+    _buildUnitTypeEnhancers(x, y, unitTypeArtifact) {
+        let prevEnhancer;
+        let nextEnhancer;
+        function activateEnhancers() {
+            prevEnhancer.setActive(unitTypeArtifact.step > 0) ;
+            nextEnhancer.setActive(unitTypeArtifact.step < unitTypeArtifact.maxStep);
+        }
+        prevEnhancer = new DPrevNavigation(new Point2D(x-CBUnitTypeArtifact.DIMENSION.w*1.5, y),
+            ()=>{
+                unitTypeArtifact.shiftStep(-1);
+                activateEnhancers();
+            }
+        );
+        this._unitArtifacts.push(prevEnhancer);
+        this.addArtifact(prevEnhancer);
+        nextEnhancer = new DNextNavigation(new Point2D(x+CBUnitTypeArtifact.DIMENSION.w*1.5, y),
+            ()=>{
+                unitTypeArtifact.shiftStep(1);
+                activateEnhancers();
+            }
+        );
+        this._unitArtifacts.push(nextEnhancer);
+        this.addArtifact(nextEnhancer);
+        activateEnhancers();
+    }
+
+    _buildRosters() {
+        this._update();
+        this._leftRoster.setActive(CBUnitsRoster.rosterStart>0);
+        this._rightRoster.setActive(CBUnitsRoster.rosterStart<CBUnitsRoster.rosters.length-5);
+    }
+
+    static rosters = [{
+        emblem:"./../images/units/orcs/unit1L.png",
+        unitTypes: [
+            GoblinLeader, WizardLeader, GoblinWolfRider, GoblinSkirmisher
+        ]
+    }, {
+        emblem:"./../images/units/mercenaries/unit1L.png",
+        unitTypes: [
+            RoughneckLeader, RoughneckSorceressCharacter, RoughneckKnight,
+            RoughneckLance, RoughneckCrossbowman
+        ]
+    }, {
+        emblem:"./../images/units/orcs/unit1L.png",
+        unitTypes: [
+            GoblinWolfRider, GoblinSkirmisher
+        ]
+    }, {
+        emblem:"./../images/units/mercenaries/unit1L.png",
+        unitTypes: [
+            RoughneckLeader, RoughneckSorceressCharacter, RoughneckKnight
+        ]
+    }, {
+        emblem:"./../images/units/orcs/unit1L.png",
+        unitTypes: [
+            GoblinLeader, WizardLeader
+        ]
+    }, {
+        emblem:"./../images/units/mercenaries/unit1L.png",
+        unitTypes: [
+            RoughneckLance, RoughneckCrossbowman
+        ]
+    }, {
+        emblem:"./../images/units/orcs/unit1L.png",
+        unitTypes: [
+            GoblinLeader, WizardLeader, GoblinWolfRider, GoblinSkirmisher
+        ]
+    }];
+
+    placeUnit(trigger) {
+        this._game.closeActuators();
+        this._game.closePopup();
+        if (trigger.isFormation()) {
+            this._game.openActuator(new CBFormationPlacementActuator(this._game.map));
+        }
+        else {
+            this._game.openActuator(new CBUnitPlacementActuator(this._game.map));
+        }
+    }
+
+    static rosterIndex = 0;
+    static rosterStart = 0;
+    static rosterMap = new Map();
+    static DIMENSION = new Dimension2D(500, 600);
+    static HEADER_DIMENSION = new Dimension2D(500, 80);
+}
+
 export function registerEditor() {
-    CBAbstractGame.edit = function (game) {
+    CBAbstractGame.editMap = function (game) {
         game.closeActuators();
+        game.closePopup();
         game.openActuator(new CBMapEditActuator(game.map));
+    }
+    CBAbstractGame.editUnits = function (game) {
+        game.closeActuators();
+        game.closePopup();
+        game.openPopup(new CBUnitsRoster(game), game.viewportCenter);
     }
 }
 
 export function unregisterEditor() {
-    delete CBAbstractGame.edit;
+    delete CBAbstractGame.editMap;
 }

@@ -10,14 +10,13 @@ import {
     DMask
 } from "../widget.js";
 import {
-    DBoard,
     DImageArtifact, DMultiImagesArtifact, DSimpleLevel, DStackedLevel, DStaticLevel
 } from "../board.js";
 import {
     CBAbstractGame, CBActuator, CBPiece, CBPieceImageArtifact, HexLocatableMixin, PlayableMixin
 } from "./game.js";
 import {
-    Matrix2D, Point2D
+    inside, Matrix2D, Point2D
 } from "../geometry.js";
 import {
     DTranslateLayer, getDrawPlatform
@@ -73,6 +72,36 @@ export function SelectableArtifactMixin(clazz) {
 
 }
 
+export function GhostArtifactMixin(clazz) {
+
+    return class extends clazz {
+
+        constructor(...args) {
+            super(...args);
+            this.alpha = 0.001;
+        }
+
+        mayCaptureEvent(event) {
+            return true;
+        }
+
+        onMouseEnter(event) {
+            super.onMouseEnter(event);
+            this.alpha = 1;
+            this.element.refresh();
+            return true;
+        }
+
+        onMouseLeave(event) {
+            super.onMouseLeave(event);
+            this.alpha = 0.001;
+            this.element.refresh();
+            return true;
+        }
+    }
+
+}
+
 export function RetractableArtifactMixin(clazz) {
 
     return class extends clazz {
@@ -108,6 +137,7 @@ export function RetractableArtifactMixin(clazz) {
         }
 
     }
+
 }
 
 export function RetractablePieceMixin(clazz) {
@@ -167,6 +197,89 @@ export function RetractableActuatorMixin(clazz) {
                 }
             }
             return artifacts;
+        }
+
+    }
+
+}
+
+
+export function NeighborRawActuatorArtifactMixin(clazz) {
+
+    return class extends clazz {
+
+        constructor(hexLocation, ...args) {
+            super(...args);
+            this._hexLocation = hexLocation;
+            this.alpha = 0.001;
+        }
+
+        get hexLocation() {
+            return this._hexLocation;
+        }
+
+        appear() {
+            this.alpha = 1;
+        }
+
+        disappear() {
+            this.alpha = 0.001;
+        }
+
+    }
+
+}
+
+export function NeighborActuatorArtifactMixin(clazz) {
+
+    return class extends NeighborRawActuatorArtifactMixin(clazz) {
+
+        containsPoint(point) {
+            for (let hex of this._hexLocation.hexes) {
+                if (inside(point, hex.borders)) return true;
+            }
+            return false;
+        }
+
+        mayCaptureEvent(event) {
+            return true;
+        }
+
+        onMouseMove(event) {
+            this.actuator.highlight(this._hexLocation);
+            return true;
+        }
+
+    }
+
+}
+
+export function NeighborActuatorMixin(clazz) {
+
+    return class extends clazz {
+
+        highlight(hexLocation) {
+            if (this._moveHexLocation !== hexLocation) {
+                this._moveHexLocation = hexLocation;
+                let hexes = new Set();
+                for (let hex of hexLocation.hexes) {
+                    hexes.add(hex);
+                    for (let angle=0; angle<=300; angle+=60) {
+                        hexes.add(hex.getNearHex(angle));
+                    }
+                }
+                for (let trigger of this.triggers) {
+                    let visible = false;
+                    for (let hex of trigger.hexLocation.hexes) {
+                        if (hexes.has(hex)) visible = true;
+                    }
+                    if (visible) {
+                        trigger.appear && trigger.appear();
+                    } else {
+                        trigger.disappear && trigger.disappear();
+                    }
+                }
+            }
         }
 
     }

@@ -97,7 +97,7 @@ describe("Editor", ()=> {
             var [actuatorsLayer] = getLayers(game.board, "actuators");
         when:
             resetDirectives(actuatorsLayer);
-            CBGame.edit(game);
+            CBGame.editMap(game);
             paint(game);
             loadAllImages();
         then:
@@ -121,7 +121,7 @@ describe("Editor", ()=> {
             game.setMap(map);
             game.start();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
-            CBGame.edit(game);
+            CBGame.editMap(game);
             paint(game);
             loadAllImages();
             let mapEditActuator = getMapEditorActuator(game);
@@ -250,7 +250,7 @@ describe("Editor", ()=> {
             game.setMap(map);
             game.start();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
-            CBGame.edit(game);
+            CBGame.editMap(game);
             paint(game);
             loadAllImages();
             let mapEditActuator = getMapEditorActuator(game);
@@ -309,7 +309,7 @@ describe("Editor", ()=> {
             game.setMap(map);
             game.start();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
-            CBGame.edit(game);
+            CBGame.editMap(game);
             paint(game);
             loadAllImages();
             let mapEditActuator = getMapEditorActuator(game);

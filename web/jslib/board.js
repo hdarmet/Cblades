@@ -225,18 +225,13 @@ export class DArtifact extends LocalisationAware(Object) {
         return this.containsLocalPoint(this.getPosition(point));
     }
 
-    mayCaptureEvent() {
-        return this.alpha>0;
+    mayCaptureEvent(event) {
+        return this.alpha>0 && this.level.getPixel(this, new Point2D(event.offsetX, event.offsetY))[3]>127
     }
 
     isShown() {
         return !!this._level;
     }
-    /*
-    get visible() {
-        return !!this._level;
-    }
-     */
 
     get level() {
         return this._level;
@@ -283,6 +278,12 @@ export class DArtifact extends LocalisationAware(Object) {
         return (this.element?this.element.alpha:1)*this._alpha;
     }
 
+    changeAlpha(alpha) {
+        Memento.register(this);
+        this._alpha = alpha;
+        this.refresh();
+    }
+
     setSettings(settings) {
         if (settings) {
             this._settings = settings;
@@ -309,7 +310,7 @@ export class DArtifact extends LocalisationAware(Object) {
     get viewportTransform() {
         this.level.forArtifact(this);
         let transform = this.transform;
-        return transform ? this.level.transform.concat(transform) : this.level.transform;
+        return transform ? transform.concat(this.level.transform) : this.level.transform;
     }
 
     get viewportLocation() {
@@ -327,6 +328,54 @@ export class DArtifact extends LocalisationAware(Object) {
 
     onMouseLeave(event) {
         return false;
+    }
+}
+
+export class DPedestalArtifact extends DArtifact {
+
+    constructor(artifact, levelName, position = new Point2D(0, 0), pangle=0) {
+        super(levelName, position, pangle);
+        this._artifact = artifact;
+    }
+
+    _memento() {
+        let memento = super._memento();
+        memento.artifact = this._artifact;
+        return memento;
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        this._artifact = memento.artifact;
+    }
+
+    _paint() {
+        this._artifact._level = this._level;
+        this._artifact._element = this._element;
+        this._artifact._paint();
+    }
+
+    get artifact() {
+        return this._artifact;
+    }
+
+    set artifact(artifact) {
+        this._artifact = artifact;
+        this.refresh();
+    }
+
+    changeArtifact(artifact) {
+        Memento.register(this);
+        this._artifact = artifact;
+        this.refresh();
+    }
+
+    get boundingArea() {
+        return this.artifact ? this.artifact.boundingArea : null;
+    }
+
+    get area() {
+        return this.artifact ? this.artifact.area : null;
     }
 }
 
@@ -929,7 +978,8 @@ export class DLevel {
     addArtifact(artifact) {
         console.assert(!this._artifacts.has(artifact));
         this._artifacts.add(artifact);
-        if (this._visibleArtifacts && artifact.boundingArea.intersect(this.visibleArea)) {
+        if (this._visibleArtifacts && artifact.boundingArea &&
+            artifact.boundingArea.intersect(this.visibleArea)) {
             this._visibleArtifacts.add(artifact);
         }
         this._dirty = true;
@@ -957,7 +1007,7 @@ export class DLevel {
     refreshArtifact(artifact) {
         console.assert(this._artifacts.has(artifact));
         if (this._visibleArtifacts) {
-            let intersect = artifact.boundingArea.intersect(this.visibleArea);
+            let intersect = artifact.boundingArea && artifact.boundingArea.intersect(this.visibleArea);
             let visible = this._visibleArtifacts.has(artifact);
             if (!intersect && visible) {
                 this._visibleArtifacts.delete(artifact);
@@ -983,7 +1033,8 @@ export class DLevel {
             let levelArea = this.visibleArea;
             this._visibleArtifacts = new Set();
             for (let artifact of this._artifacts) {
-                if (artifact.boundingArea.intersect(levelArea)) {
+                let boundingArea = artifact.boundingArea;
+                if (boundingArea && boundingArea.intersect(levelArea)) {
                     this._visibleArtifacts.add(artifact);
                 }
             }
@@ -1111,23 +1162,23 @@ export class DBasicLevel extends DLevel {
         return this.layer.transform.point(point);
     }
 
-    getAllArtifactsOnPoint(viewportPoint) {
+    getAllArtifactsOnPoint(viewportPoint, predicate) {
         let artifacts = [];
         let visibleArtifacts = [...this.visibleArtifacts];
         for (let i = visibleArtifacts.length-1; i>=0; i--) {
             let artifact = visibleArtifacts[i];
-            if (this.isPointOnArtifact(artifact, viewportPoint)) {
+            if ((!predicate || predicate(artifact)) && this.isPointOnArtifact(artifact, viewportPoint)) {
                 artifacts.push(artifact);
             }
         }
         return artifacts;
     }
 
-    getArtifactOnPoint(viewportPoint) {
+    getArtifactOnPoint(viewportPoint, predicate) {
         let visibleArtifacts = [...this.visibleArtifacts];
         for (let i = visibleArtifacts.length-1; i>=0; i--) {
             let artifact = visibleArtifacts[i];
-            if (this.isPointOnArtifact(artifact, viewportPoint)) {
+            if ((!predicate || predicate(artifact)) && this.isPointOnArtifact(artifact, viewportPoint)) {
                 return artifact;
             }
         }
@@ -1137,8 +1188,7 @@ export class DBasicLevel extends DLevel {
     isPointOnArtifact(artifact, viewportPoint) {
         console.assert(artifact.level === this);
         let point = this.getPoint(viewportPoint);
-        return artifact.mayCaptureEvent() && artifact.containsPoint(point, viewportPoint)
-            && (artifact.capture || artifact.level.getPixel(artifact, viewportPoint)[3]>127);
+        return artifact.containsPoint(point);
     }
 
     getOriginalPoint(artifact) {
@@ -1217,28 +1267,27 @@ export class DLayeredLevel extends DLevel {
         return layer.transform.point(point);
     }
 
-    getAllArtifactsOnPoint(viewportPoint) {
+    getAllArtifactsOnPoint(viewportPoint, predicate) {
         let artifacts = [];
         let visibleArtifacts = [...this.visibleArtifacts];
         for (let i = visibleArtifacts.length-1; i>=0; i--) {
             let artifact = visibleArtifacts[i];
-            if (this.isPointOnArtifact(artifact, viewportPoint)) {
+            if ((!predicate || predicate(artifact)) && this.isPointOnArtifact(artifact, viewportPoint)) {
                 artifacts.push(artifact);
             }
         }
         return artifacts.sort((artifact1, artifact2)=>artifact2.__layer.index-artifact1.__layer.index);
     }
 
-    getArtifactOnPoint(viewportPoint) {
-        let artifacts = this.getAllArtifactsOnPoint(viewportPoint);
+    getArtifactOnPoint(viewportPoint, predicate) {
+        let artifacts = this.getAllArtifactsOnPoint(viewportPoint, predicate);
         return artifacts.length ? artifacts[0] : null;
     }
 
     isPointOnArtifact(artifact, viewportPoint) {
         console.assert(artifact.level === this);
         let point = this.getPoint(viewportPoint, artifact);
-        return artifact.containsPoint(point)
-            && (artifact.capture || artifact.level.getPixel(artifact, viewportPoint)[3]>127);
+        return artifact.containsPoint(point);
     }
 
     getOriginalPoint(artifact) {
@@ -1368,7 +1417,9 @@ export class DBoard {
             let ignored = new Set();
             while (!processed) {
                 let offset = new Point2D(event.offsetX, event.offsetY);
-                let artifact = event.artifact!==undefined ? event.artifact : this.getArtifactOnPoint(offset, ignored);
+                let artifact = event.artifact!==undefined ? event.artifact : this.getArtifactOnPoint(offset,
+                    artifact => artifact.mayCaptureEvent(event) && (!ignored || !ignored.has(artifact))
+                );
                 if (!artifact) {
                     processed = true;
                 } else {
@@ -1398,7 +1449,9 @@ export class DBoard {
             let ignored = new Set();
             while (!processed) {
                 let offset = new Point2D(event.offsetX, event.offsetY);
-                let artifact = event.artifact!==undefined ? event.artifact : this.getArtifactOnPoint(offset, ignored);
+                let artifact = event.artifact!==undefined ? event.artifact : this.getArtifactOnPoint(offset,
+                    artifact => artifact.mayCaptureEvent(event) && (!ignored || !ignored.has(artifact))
+                );
                 if (artifact) ignored.add(artifact);
                 if (artifact !== this._mouseOverArtifact) {
                     if (this._mouseOverArtifact) {
@@ -1783,19 +1836,19 @@ export class DBoard {
         });
     }
 
-    getAllArtifactsOnPoint(viewportPoint) {
+    getAllArtifactsOnPoint(viewportPoint, predicate) {
         let artifacts = [];
         for (let i = this._levelsArray.length-1; i>=0; i--) {
-            let artifact = this._levelsArray[i].getAllArtifactsOnPoint(viewportPoint);
+            let artifact = this._levelsArray[i].getAllArtifactsOnPoint(viewportPoint, predicate);
             artifacts.push(...artifact);
         }
         return artifacts;
     }
 
-    getArtifactOnPoint(viewportPoint, ignored) {
+    getArtifactOnPoint(viewportPoint, predicate) {
         for (let i = this._levelsArray.length-1; i>=0; i--) {
-            let artifact = this._levelsArray[i].getArtifactOnPoint(viewportPoint);
-            if (artifact && (!ignored || !ignored.has(artifact))) return artifact;
+            let artifact = this._levelsArray[i].getArtifactOnPoint(viewportPoint, predicate);
+            if (artifact) return artifact;
         }
         return null;
     }

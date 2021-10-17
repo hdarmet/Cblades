@@ -155,10 +155,18 @@ let _targetPlatform = {
 
     save(context) {
         context.save();
+        context.saved = context.saved !== undefined ? context.saved+1 : 1;
     },
 
     restore(context) {
         context.restore();
+        context.saved--;
+    },
+
+    reset(context) {
+        while(context.saved) {
+            this.restore(context);
+        }
     },
 
     resetTransform(context) {
@@ -442,6 +450,7 @@ export class DLayer {
 
     clear() {
         // DONT include in a execute() method !
+        _platform.reset(this._context);
         _platform.save(this._context);
         _platform.resetTransform(this._context);
         _platform.clearRect(this._context, 0, 0, this._draw.dimension.w, this._draw.dimension.h);

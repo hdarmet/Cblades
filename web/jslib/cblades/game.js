@@ -482,6 +482,10 @@ export class CBAbstractGame {
         this._board.fitWindow();
     }
 
+    get viewportCenter() {
+        return new Point2D(this._board.viewportDimension.w/2, this._board.viewportDimension.h/2);
+    }
+
     _buildBoard(map) {
         this._board = new DBoard(map.dimension, new Dimension2D(1000, 800), ...this._levels);
         this._board.setZoomSettings(1.5, 1);
@@ -758,7 +762,8 @@ export class CBAbstractGame {
             this.showCommand(this._settingsCommand);
             this.showCommand(this._saveCommand);
             this.showCommand(this._loadCommand);
-            this.showCommand(this._editorCommand);
+            this.showCommand(this._editMapCommand);
+            this.showCommand(this._editUnitsCommand);
             this.showCommand(this._insertLevelCommand);
             this.showCommand(this._fullScreenCommand);
             animation();
@@ -774,7 +779,8 @@ export class CBAbstractGame {
             this.hideCommand(this._settingsCommand);
             this.hideCommand(this._saveCommand);
             this.hideCommand(this._loadCommand);
-            this.hideCommand(this._editorCommand);
+            this.hideCommand(this._editMapCommand);
+            this.hideCommand(this._editUnitsCommand);
             this.hideCommand(this._insertLevelCommand);
             this.hideCommand(this._fullScreenCommand);
             animation();
@@ -800,18 +806,29 @@ export class CBAbstractGame {
         this._loadCommand = new DPushButton(
             "./../images/commands/load.png", "./../images/commands/load-inactive.png",
             new Point2D(-420, -60), animation=>{});
-        this._editorCommand = new DMultiStatePushButton(
-            ["./../images/commands/editor.png", "./../images/commands/field.png"],
+        this._editMapCommand = new DMultiStatePushButton(
+            ["./../images/commands/edit-map.png", "./../images/commands/field.png"],
             new Point2D(-480, -60), (state, animation)=>{
                 if (!state)
-                    CBAbstractGame.edit(this);
+                    CBAbstractGame.editMap(this);
                 else
                     this.closeActuators();
                 animation();
-        }).setTurnAnimation(true, ()=>this._editorCommand.setState(this._editorCommand.state?0:1));
+        }).setTurnAnimation(true, ()=>this._editMapCommand.setState(this._editMapCommand.state?0:1));
+
+        this._editUnitsCommand = new DMultiStatePushButton(
+            ["./../images/commands/edit-units.png", "./../images/commands/edit-units-inactive.png"],
+            new Point2D(-540, -60), (state, animation)=>{
+                if (!state)
+                    CBAbstractGame.editUnits(this);
+                else
+                    this.closeActuators();
+                animation();
+            }).setTurnAnimation(true, ()=>{});
+
         this._insertLevelCommand = new DMultiStatePushButton(
             ["./../images/commands/insert0.png", "./../images/commands/insert1.png", "./../images/commands/insert2.png"],
-            new Point2D(-540, -60), (state, animation)=>{
+            new Point2D(-600, -60), (state, animation)=>{
                 this._visibility = (state+1)%3;
                 Mechanisms.fire(this, CBActuator.VISIBILITY_EVENT, this._visibility);
                 Mechanisms.fire(this, CBAbstractGame.VISIBILITY_EVENT, this._visibility>=1);
@@ -821,7 +838,7 @@ export class CBAbstractGame {
             .setTurnAnimation(true, ()=>this._insertLevelCommand.setState(this._visibility));
         this._fullScreenCommand = new DMultiStatePushButton(
             ["./../images/commands/full-screen-on.png", "./../images/commands/full-screen-off.png"],
-            new Point2D(-600, -60), (state, animation)=>{
+            new Point2D(-660, -60), (state, animation)=>{
                 if (!state)
                     getDrawPlatform().requestFullscreen();
                 else
@@ -931,7 +948,8 @@ export class CBAbstractGame {
     static TURN_EVENT = "game-turn";
     static SETTINGS_EVENT = "settings-turn";
     static POPUP_MARGIN = 10;
-    static edit = function(game) {};
+    static editMap = function(game) {};
+    static editUnits = function(game) {};
 }
 CBAbstractGame.VISIBILITY_EVENT = "game-visibility";
 

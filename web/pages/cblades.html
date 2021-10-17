@@ -94,9 +94,11 @@
     let arbitrator = new CBArbitrator();
     game.setArbitrator(arbitrator);
     game.setMenu();
+    /*
     new CBWeatherCounter().setOnGame(game);
     new CBWindDirectionCounter().setOnGame(game);
     new CBFogCounter().setOnGame(game);
+     */
 
     let player1 = new CBInteractivePlayer();
     game.addPlayer(player1);
@@ -112,15 +114,16 @@
     let counter12 = new CBTroop(GoblinWolfRider, wing1);
     counter12.lossSteps = 1;
     let counter13 = new CBTroop(GoblinSkirmisher, wing1);
-    character11.addToMap(map.getHex(4, 11));
+    //character11.addToMap(map.getHex(4, 11));
     character12.addToMap(map.getHex(5, 11));
+    /*
     counter11.addToMap(map.getHex(3, 10));
     counter12.addToMap(map.getHex(3, 10));
     counter13.addToMap(map.getHex(8, 10));
 
     new CBWingTirednessCounter(wing1).registerOnGame(game);
     new CBWingMoralCounter(wing1).registerOnGame(game);
-
+*/
     let player2 = new CBInteractivePlayer();
     game.addPlayer(player2);
     let wing2 = new CBWing(player2, RoughneckBanner1);
@@ -130,6 +133,7 @@
     character21.angle = 180;
     let character22 = new CBCharacter(RoughneckSorceressCharacter, wing2);
     character22.angle = 180;
+    /*
     let counter21 = new CBTroop(RoughneckKnight, wing2);
     counter21.angle = 180;
     let counter22 = new CBTroop(RoughneckKnight, wing2);
@@ -145,11 +149,14 @@
     counter24.addToMap(new CBHexSideId( map.getHex(9, 5),  map.getHex(10, 5)));
     counter23.addToMap(new CBHexSideId( map.getHex(11, 7),  map.getHex(12, 7)));
     character21.addToMap(map.getHex(8, 6));
+    */
     character22.addToMap(map.getHex(7, 6));
+    /*
     counter21.addToMap(map.getHex(7, 7));
     counter22.addToMap(map.getHex(10, 7));
     new CBWingTirednessCounter(wing2).registerOnGame(game);
     new CBWingMoralCounter(wing2).registerOnGame(game);
+     */
 
     game.start();
 </script>

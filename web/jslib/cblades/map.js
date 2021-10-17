@@ -91,6 +91,14 @@ export class CBHexId extends CBHexLocation{
         return this.map.getLocation(position);
     }
 
+    get borders() {
+        let [p1, p2, p3, p4, p5, p6] = this.map.findHexBorders(this);
+        return [
+            this.map.getLocation(p1), this.map.getLocation(p2), this.map.getLocation(p3),
+            this.map.getLocation(p4), this.map.getLocation(p5), this.map.getLocation(p6)
+        ]
+    }
+
     get hex() {
         return this._map._hex(this._col, this._row);
     }
@@ -279,6 +287,13 @@ export class CBHexSideId extends CBHexLocation {
             }
         }
         return hexes;
+    }
+
+    get borders() {
+        let [p1, p2, p3, p4] = this.map.findHexSideBorders(this);
+        return [
+            this.map.getLocation(p1), this.map.getLocation(p2), this.map.getLocation(p3), this.map.getLocation(p4)
+        ]
     }
 
     changeType(type) {
@@ -720,6 +735,35 @@ export class CBMap {
         let y = this.height/this.rowCount * hexId.row-this.height/2;
         if (hexId.col%2) y-= this.height/this.rowCount/2;
         return new Point2D(x, y);
+    }
+
+    findHexBorders(hexId) {
+        let dw = this.width/this.colCount;
+        let dy = this.height/this.rowCount;
+        let x = dw * hexId.col-this.width/2;
+        let y = dy * hexId.row-this.height/2;
+        if (hexId.col%2) y-= this.height/this.rowCount/2;
+        return [
+            new Point2D(x - dw/3, y-dy/2),
+            new Point2D(x + dw/3, y-dy/2),
+            new Point2D(x + dw*2/3, y),
+            new Point2D(x + dw/3, y+dy/2),
+            new Point2D(x - dw/3, y+dy/2),
+            new Point2D(x - dw*2/3, y)
+        ];
+    }
+
+    findHexSideBorders(hexSideId) {
+        let fromPoint = this.findPosition(hexSideId.fromHex);
+        let toPoint = this.findPosition(hexSideId.toHex);
+        let fromBorder = this.findHexBorders(hexSideId.fromHex);
+        let angleIndex = Math.round(sumAngle(hexSideId.angle, -30)/60);
+        return [
+            fromPoint,
+            fromBorder[angleIndex],
+            toPoint,
+            fromBorder[(angleIndex+1)%6]
+        ];
     }
 
     onMap(hexId) {

@@ -334,7 +334,7 @@ export class DIconMenu extends DPopup {
 /**
  * Mixin containing methods for Artifact that can be activated in a standard way
  */
-export function ActivableArtifact(clazz) {
+export function ActivableArtifactMixin(clazz) {
 
     return class extends clazz {
 
@@ -392,6 +392,36 @@ export function ActivableArtifact(clazz) {
         }
 
         _dispatch() {
+            if (!this.active) {
+                this.setSettings(this.inactiveSettings);
+            } else if (this._over) {
+                this.setSettings(this.overSettings);
+            } else {
+                this.setSettings(this.settings);
+            }
+        }
+
+        get active() {
+            return this._active;
+        }
+
+        setActive(active) {
+            this._active = active;
+            this._dispatch();
+        }
+
+        set active(active) {
+            this.setActive(active);
+        }
+
+    }
+}
+
+export function CoupledActivableArtifactMixin(clazz) {
+
+    return class extends ActivableArtifactMixin(clazz) {
+
+        _dispatch() {
             if (this.element) {
                 let over = this._isOver()
                 for (let artifact of this.element._artifacts) {
@@ -409,20 +439,11 @@ export function ActivableArtifact(clazz) {
             }
         }
 
-        get active() {
-            return this._active;
-        }
-
-        set active(active) {
-            this._active = active;
-            this._dispatch();
-        }
-
     }
+
 }
 
-
-export class DPushButtonImageArtifact extends ActivableArtifact(DMultiImagesArtifact) {
+export class DPushButtonImageArtifact extends ActivableArtifactMixin(DMultiImagesArtifact) {
 
     constructor(images) {
         super("widget-commands", images,
@@ -547,7 +568,7 @@ export class DMultiStatePushButton extends DAbstractPushButton {
 
 }
 
-class DiceArtifact extends ActivableArtifact(DMultiImagesArtifact) {
+class DiceArtifact extends CoupledActivableArtifactMixin(DMultiImagesArtifact) {
 
     constructor(images, point) {
         super("widget-items", images, point, new Dimension2D(100, 89), 0);
@@ -771,38 +792,90 @@ class InsertImageArtifact extends DComposedImageArtifact {
 
 }
 
-export class DInsertCommand extends ActivableArtifact(DImageArtifact) {
+export class DCommand extends ActivableArtifactMixin(DMultiImagesArtifact) {
 
-    constructor(image, position, action) {
-        super("widgets", image, position, DInsertCommand.DIMENSION);
+    constructor(image, inactiveImage, position, dimension, action) {
+        super("widgets", [image, inactiveImage], position, dimension);
         this._action = action;
     }
 
     onMouseClick(event) {
-        this._action.call(this.element);
+        if (this.active) this._action.call(this.element);
         return true;
     }
 
-    get overSettings() {
-        return level => {
-            level.setShadowSettings("#FF0000", 10);
-        }
-    }
-
-    onMouseEnter(event) {
-        this.setSettings(this.overSettings);
-        this.element && this.element.refresh();
-        return true;
-    }
-
-    onMouseLeave(event) {
-        this.setSettings(this.settings);
-        this.element && this.element.refresh();
-        return true;
+    setActive(active) {
+        super.setActive(active);
+        this.setImage(active ? 0 : 1);
     }
 
 }
-DInsertCommand.DIMENSION = new Dimension2D(50, 50);
+
+export class DLeftNavigation extends DCommand {
+
+    constructor(position, action) {
+        let image = DImage.getImage("./../images/commands/left.png");
+        let inactiveImage = DImage.getImage("./../images/commands/left-inactive.png");
+        super(image, inactiveImage, position, DLeftNavigation.DIMENSION, action);
+    }
+
+    static DIMENSION = new Dimension2D(50, 50);
+}
+
+export class DRightNavigation extends DCommand {
+
+    constructor(position, action) {
+        let image = DImage.getImage("./../images/commands/right.png");
+        let inactiveImage = DImage.getImage("./../images/commands/right-inactive.png");
+        super(image, inactiveImage, position, DRightNavigation.DIMENSION, action);
+    }
+
+    static DIMENSION = new Dimension2D(50, 50);
+}
+
+export class DUpNavigation extends DCommand {
+
+    constructor(position, action) {
+        let image = DImage.getImage("./../images/commands/up.png");
+        let inactiveImage = DImage.getImage("./../images/commands/up-inactive.png");
+        super(image, inactiveImage, position, DUpNavigation.DIMENSION, action);
+    }
+
+    static DIMENSION = new Dimension2D(50, 50);
+}
+
+export class DDownNavigation extends DCommand {
+
+    constructor(position, action) {
+        let image = DImage.getImage("./../images/commands/down.png");
+        let inactiveImage = DImage.getImage("./../images/commands/down-inactive.png");
+        super(image, inactiveImage, position, DDownNavigation.DIMENSION, action);
+    }
+
+    static DIMENSION = new Dimension2D(50, 50);
+}
+
+export class DPrevNavigation extends DCommand {
+
+    constructor(position, action) {
+        let image = DImage.getImage("./../images/commands/prev.png");
+        let inactiveImage = DImage.getImage("./../images/commands/prev-inactive.png");
+        super(image, inactiveImage, position, DPrevNavigation.DIMENSION, action);
+    }
+
+    static DIMENSION = new Dimension2D(36, 36);
+}
+
+export class DNextNavigation extends DCommand {
+
+    constructor(position, action) {
+        let image = DImage.getImage("./../images/commands/next.png");
+        let inactiveImage = DImage.getImage("./../images/commands/next-inactive.png");
+        super(image, inactiveImage, position, DNextNavigation.DIMENSION, action);
+    }
+
+    static DIMENSION = new Dimension2D(36, 36);
+}
 
 export class DInsertFrame {
 
@@ -850,11 +923,10 @@ export class DInsertFrame {
             _manageButton.call(this,
                 composition.sourceArea.left>this._pageArea.left, "_leftButton",
                 ()=>{
-                    let leftImage = DImage.getImage("./../images/commands/left.png");
                     let position = new Point2D(
-                        this._area.left+DInsertCommand.DIMENSION.w/2+10-this._insert.dimension.w/2,
+                        this._area.left+DLeftNavigation.DIMENSION.w/2+10-this._insert.dimension.w/2,
                         this._area.y-this._insert.dimension.h/2);
-                    return new DInsertCommand(leftImage, position, this._insert.leftPage);
+                    return new DLeftNavigation(position, this._insert.leftPage);
                 }
             );
         }
@@ -863,11 +935,10 @@ export class DInsertFrame {
             _manageButton.call(this,
                 composition.sourceArea.right<this._pageArea.right, "_rightButton",
                 ()=>{
-                    let rightImage = DImage.getImage("./../images/commands/right.png");
                     let position = new Point2D(
-                        this._area.right-this._insert.dimension.w/2-DInsertCommand.DIMENSION.w/2-10,
+                        this._area.right-this._insert.dimension.w/2-DRightNavigation.DIMENSION.w/2-10,
                         this._area.y-this._insert.dimension.h/2);
-                    return new DInsertCommand(rightImage, position, this._insert.rightPage);
+                    return new DRightNavigation(position, this._insert.rightPage);
                 }
             );
         }
@@ -876,11 +947,10 @@ export class DInsertFrame {
             _manageButton.call(this,
                 composition.sourceArea.top>this._pageArea.top, "_upButton",
                 ()=>{
-                    let upImage = DImage.getImage("./../images/commands/up.png");
                     let position = new Point2D(
                         this._area.x-this._insert.dimension.w/2,
-                        this._area.top+DInsertCommand.DIMENSION.w/2+10-this._insert.dimension.h/2);
-                    return new DInsertCommand(upImage, position, this._insert.previousPage);
+                        this._area.top+DUpNavigation.DIMENSION.w/2+10-this._insert.dimension.h/2);
+                    return new DUpNavigation(position, this._insert.previousPage);
                 }
             );
         }
@@ -889,11 +959,10 @@ export class DInsertFrame {
             _manageButton.call(this,
                 composition.sourceArea.bottom<this._pageArea.bottom, "_downButton",
                 ()=>{
-                    let downImage = DImage.getImage("./../images/commands/down.png");
                     let position = new Point2D(
                         this._area.x-this._insert.dimension.w/2,
-                        this._area.bottom-DInsertCommand.DIMENSION.w/2-10-this._insert.dimension.h/2);
-                    return new DInsertCommand(downImage, position, this._insert.nextPage);
+                        this._area.bottom-DDownNavigation.DIMENSION.w/2-10-this._insert.dimension.h/2);
+                    return new DDownNavigation(position, this._insert.nextPage);
                 }
             );
         }
@@ -1516,10 +1585,6 @@ class DMaskArtifact extends DArtifact {
         this._level.fillRect(new Point2D(0, 0), this._level.viewportDimension);
     }
 
-    get capture() {
-        return true;
-    }
-
     get area() {
         return this._level.visibleArea;
     }
@@ -1532,7 +1597,7 @@ class DMaskArtifact extends DArtifact {
         return Matrix2D.IDENTITY;
     }
 
-    mayCaptureEvent() {
+    mayCaptureEvent(event) {
         return true;
     }
 

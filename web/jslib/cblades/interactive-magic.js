@@ -14,10 +14,10 @@ import {
     CBActionActuator,
     CBActuatorImageTrigger,
     WidgetLevelMixin,
-    RetractableActuatorMixin
+    RetractableActuatorMixin, NeighborActuatorMixin, NeighborActuatorArtifactMixin
 } from "./playable.js";
 import {
-    Dimension2D,
+    Dimension2D, inside,
     Point2D
 } from "../geometry.js";
 import {
@@ -77,7 +77,8 @@ export class InteractiveChoseSpellAction extends CBAction {
         this.unit.markAsCharging(CBCharge.NONE);
         this.unit.player.openMagicMenu(this.unit,
             this.unit.viewportLocation,
-            this.game.arbitrator.getAllowedSpells(this.unit));
+            this.game.arbitrator.getAllowedSpells(this.unit)
+        );
     }
 
 }
@@ -277,28 +278,35 @@ export class CBSpellTargetFriendsActuator extends RetractableActuatorMixin(CBAct
 
 }
 
-export class CBSpellTargetHexesActuator extends CBActionActuator {
+class SpellTargetHexTrigger extends NeighborActuatorArtifactMixin(CBActuatorImageTrigger) {
+
+    constructor(actuator, hex) {
+        let image = DImage.getImage("./../images/actuators/spell-target-hex.png");
+        super(hex, actuator, "actuators", image, new Point2D(0, 0), new Dimension2D(100, 111));
+    }
+
+}
+
+export class CBSpellTargetHexesActuator extends NeighborActuatorMixin(CBActionActuator) {
 
     constructor(action, hexes) {
         super(action);
-        let image = DImage.getImage("./../images/actuators/spell-target-hex.png");
+
         let imageArtifacts = [];
         for (let hex of hexes) {
-            let target = new CBActuatorImageTrigger(this, "actuators", image,
-                new Point2D(0, 0), new Dimension2D(100, 111));
+            let target = new SpellTargetHexTrigger(this, hex);
             target.position = Point2D.position(this.playable.location, hex.location, 1);
-            target._hex = hex;
             imageArtifacts.push(target);
         }
         this.initElement(imageArtifacts);
     }
 
     getTrigger(hex) {
-        return this.findTrigger(artifact=>artifact._hex === hex);
+        return this.findTrigger(artifact=>artifact.hexLocation === hex);
     }
 
     onMouseClick(trigger, event) {
-        this.action.hexTargeted(trigger._hex, event);
+        this.action.hexTargeted(trigger.hexLocation, event);
     }
 
 }
