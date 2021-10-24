@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cursed Blades</title>
+</head>
+<body>
+
+<script type="module">
+
+    import {
+        CBEditorGame, CBEditorPlayer
+    } from "../jslib/cblades/editor.js";
+    import {
+        CBMap, CBHexSideId
+    } from "../jslib/cblades/map.js";
+    import {
+        CBTroop, CBWing, CBCharacter, CBFormation
+    } from "../jslib/cblades/unit.js";
+    import {
+        CBArbitrator
+    } from "../jslib/cblades/arbitrator.js";
+    import {
+        registerEditor
+    } from "../jslib/cblades/editor.js";
+    import {
+        GoblinBanner1
+    } from "../jslib/cblades/armies/orcs.js";
+    import {
+        RoughneckBanner1
+    } from "../jslib/cblades/armies/roughnecks.js";
+
+    registerEditor();
+
+    let game = new CBEditorGame();
+    let map = new CBMap([
+        {path:"./../images/maps/map1.png", col:0, row:0, invert:true},
+        {path:"./../images/maps/map4.png", col:1, row:0}
+    ]);
+    game.setMap(map);
+    game.fitWindow();
+    document.body.appendChild(game.root);
+    let arbitrator = new CBArbitrator();
+    game.setArbitrator(arbitrator);
+    game.setMenu();
+
+    let player1 = new CBEditorPlayer();
+    game.addPlayer(player1);
+    let wing1 = new CBWing(player1, GoblinBanner1);
+    wing1.setRetreatZone(map.getSouthZone());
+    let player2 = new CBEditorPlayer();
+    game.addPlayer(player2);
+    let wing2 = new CBWing(player2, RoughneckBanner1);
+    wing2.setRetreatZone(map.getNorthZone());
+    game.start();
+
+</script>
+</body>
+</html>

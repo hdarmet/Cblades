@@ -92,11 +92,14 @@ export class CBHexId extends CBHexLocation{
     }
 
     get borders() {
-        let [p1, p2, p3, p4, p5, p6] = this.map.findHexBorders(this);
-        return [
-            this.map.getLocation(p1), this.map.getLocation(p2), this.map.getLocation(p3),
-            this.map.getLocation(p4), this.map.getLocation(p5), this.map.getLocation(p6)
-        ]
+        if (!this._borders) {
+            let [p1, p2, p3, p4, p5, p6] = this.map.findHexBorders(this);
+            this._borders = [
+                this.map.getLocation(p1), this.map.getLocation(p2), this.map.getLocation(p3),
+                this.map.getLocation(p4), this.map.getLocation(p5), this.map.getLocation(p6)
+            ];
+        }
+        return this._borders;
     }
 
     get hex() {
@@ -290,10 +293,17 @@ export class CBHexSideId extends CBHexLocation {
     }
 
     get borders() {
-        let [p1, p2, p3, p4] = this.map.findHexSideBorders(this);
-        return [
-            this.map.getLocation(p1), this.map.getLocation(p2), this.map.getLocation(p3), this.map.getLocation(p4)
-        ]
+        if (!this._fromHex._sideBorders) {
+            this._fromHex._sideBorders = [];
+        }
+        let angle = this.angle/60;
+        if (!this._fromHex._sideBorders[angle]) {
+            let [p1, p2, p3, p4] = this.map.findHexSideBorders(this);
+            this._fromHex._sideBorders[angle] = [
+                this.map.getLocation(p1), this.map.getLocation(p2), this.map.getLocation(p3), this.map.getLocation(p4)
+            ];
+        }
+        return this._fromHex._sideBorders[angle];
     }
 
     changeType(type) {

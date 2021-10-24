@@ -448,7 +448,7 @@ describe("Interactive Movement", ()=> {
     it("Checks that a unit is automatically played when its movement points are exhausted", () => {
         given:
             var {game, unit} = createTinyGame();
-            unit.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit.setTiredness(CBTiredness.EXHAUSTED);
             clickOnPiece(game, unit);
             clickOnMoveAction(game);
         when:

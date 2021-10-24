@@ -480,7 +480,7 @@ describe("Units teacher", ()=> {
             assert(arbitrator.getMinCostForAttackMove(unit12)).equalsTo(1);
             assert(arbitrator.getMinCostForRoutMove(unit12)).equalsTo(3);
         when:
-            unit12.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit12.setTiredness(CBTiredness.EXHAUSTED);
         then:
             assert(arbitrator.getMaxMovementPoints(unit12)).equalsTo(2);
             assert(arbitrator.getMinCostForAttackMove(unit12)).equalsTo(1);
@@ -493,11 +493,11 @@ describe("Units teacher", ()=> {
         then:
             assert(arbitrator.canGetTired(unit12)).isTrue();
         when:
-            unit12.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit12.setTiredness(CBTiredness.EXHAUSTED);
         then:
             assert(arbitrator.canGetTired(unit12)).isFalse();
         when:
-            unit12.fixTirednessLevel(CBTiredness.TIRED);
+            unit12.setTiredness(CBTiredness.TIRED);
         then:
             assert(arbitrator.canGetTired(unit12)).isTrue();
         when:
@@ -505,7 +505,7 @@ describe("Units teacher", ()=> {
         then:
             assert(arbitrator.canGetTired(unit12)).isFalse();
         when:
-            unit12.fixTirednessLevel(CBTiredness.NONE);
+            unit12.setTiredness(CBTiredness.NONE);
         then:
             assert(arbitrator.canGetTired(unit12)).isTrue();
     });

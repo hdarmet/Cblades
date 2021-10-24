@@ -11,7 +11,7 @@ export class CBRecoveringTeacher {
     }
 
     isAllowedToReplenishMunitions(unit) {
-        return unit.lackOfMunitions > 0;
+        return unit.munitions > 0;
     }
 
     isAllowedToReorganize(unit) {

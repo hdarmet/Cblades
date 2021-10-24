@@ -15,7 +15,7 @@ import {
 import {
     CBCharacter, CBCohesion,
     CBCommandProfile,
-    CBFormation, CBLackOfMunitions,
+    CBFormation, CBMunitions,
     CBMoralProfile,
     CBMoveProfile, CBTiredness,
     CBTroop,
@@ -235,7 +235,7 @@ describe("Command teacher", ()=> {
         then:
             assert(arbitrator.getOrderGivenCost(leader11, unit11)).objectEqualsTo({cost:4, detail:{base:1, distance:1, routed:2}});
         when:
-            unit11.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit11.setTiredness(CBTiredness.EXHAUSTED);
         then:
             assert(arbitrator.getOrderGivenCost(leader11, unit11)).objectEqualsTo({cost:5, detail:{base:1, distance:1, routed:2, exhausted:1}});
     });
@@ -316,15 +316,15 @@ describe("Command teacher", ()=> {
             unit11.receivesOrder(true);
             unit12.receivesOrder(true);
             unit12.addOneTirednessLevel();
-            unit12.addOneLackOfMunitionsLevel();
+            unit12.addOneMunitionsLevel();
         when:
             var result = arbitrator.mergedUnit(unit11);
         then:
             assert(result.replaced).arrayEqualsTo([unit11, unit12]);
             let newUnit = result.replacement;
             assert(newUnit.type).equalsTo(unit11.type);
-            assert(newUnit.remainingStepCount).equalsTo(2);
-            assert(newUnit.lackOfMunitions).equalsTo(CBLackOfMunitions.SCARCE);
+            assert(newUnit.steps).equalsTo(2);
+            assert(newUnit.munitions).equalsTo(CBMunitions.SCARCE);
             assert(newUnit.tiredness).equalsTo(CBTiredness.TIRED);
     });
 
@@ -381,11 +381,11 @@ describe("Command teacher", ()=> {
             assert(arbitrator.isAllowedToBreakFormation(formation)).isFalse();
         when:
             formation.receivesOrder(true);
-            formation.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            formation.setTiredness(CBTiredness.EXHAUSTED);
         then:
             assert(arbitrator.isAllowedToBreakFormation(formation)).isFalse();
         when:
-            formation.fixTirednessLevel(CBTiredness.NONE);
+            formation.setTiredness(CBTiredness.NONE);
             formation.disrupt();
         then:
             assert(arbitrator.isAllowedToBreakFormation(formation)).isFalse();
@@ -400,24 +400,24 @@ describe("Command teacher", ()=> {
             assert(result.fromHex.length).equalsTo(2);
             assert(result.fromHex[0]).is(CBTroop);
             assert(result.fromHex[0].type).equalsTo(formation.type);
-            assert(result.fromHex[0].remainingStepCount).equalsTo(2);
+            assert(result.fromHex[0].steps).equalsTo(2);
             assert(result.fromHex[0].cohesion).equalsTo(CBCohesion.GOOD_ORDER);
             assert(result.fromHex[0].tiredness).equalsTo(CBTiredness.NONE);
-            assert(result.fromHex[0].lackOfMunitions).equalsTo(CBLackOfMunitions.NONE);
-            assert(result.fromHex[1].remainingStepCount).equalsTo(1);
+            assert(result.fromHex[0].munitions).equalsTo(CBMunitions.NONE);
+            assert(result.fromHex[1].steps).equalsTo(1);
             assert(result.toHex.length).equalsTo(2);
         when:
             formation.fixRemainingLossSteps(5);
             formation.disrupt();
-            formation.fixTirednessLevel(CBTiredness.TIRED);
-            formation.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            formation.setTiredness(CBTiredness.TIRED);
+            formation.setMunitions(CBMunitions.SCARCE);
             result = arbitrator.getTroopsAfterFormationBreak(formation);
             assert(result.fromHex.length).equalsTo(2);
-            assert(result.fromHex[0].remainingStepCount).equalsTo(2);
+            assert(result.fromHex[0].steps).equalsTo(2);
             assert(result.fromHex[0].cohesion).equalsTo(CBCohesion.DISRUPTED);
             assert(result.fromHex[0].tiredness).equalsTo(CBTiredness.TIRED);
-            assert(result.fromHex[0].lackOfMunitions).equalsTo(CBLackOfMunitions.SCARCE);
-            assert(result.fromHex[1].remainingStepCount).equalsTo(1);
+            assert(result.fromHex[0].munitions).equalsTo(CBMunitions.SCARCE);
+            assert(result.fromHex[1].steps).equalsTo(1);
             assert(result.toHex.length).equalsTo(1);
     });
 
@@ -435,11 +435,11 @@ describe("Command teacher", ()=> {
             assert(arbitrator.isAllowedToReleaseTroops(formation)).isFalse();
         when:
             formation.receivesOrder(true);
-            formation.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            formation.setTiredness(CBTiredness.EXHAUSTED);
         then:
             assert(arbitrator.isAllowedToReleaseTroops(formation)).isFalse();
         when:
-            formation.fixTirednessLevel(CBTiredness.NONE);
+            formation.setTiredness(CBTiredness.NONE);
             formation.disrupt();
         then:
             assert(arbitrator.isAllowedToReleaseTroops(formation)).isFalse();
@@ -476,19 +476,19 @@ describe("Command teacher", ()=> {
             assert(result.stepCount).equalsTo(4);
             assert(result.troop).is(CBTroop);
             assert(result.troop.type).equalsTo(formation.type);
-            assert(result.troop.remainingStepCount).equalsTo(2);
+            assert(result.troop.steps).equalsTo(2);
             assert(result.troop.tiredness).equalsTo(CBTiredness.NONE);
-            assert(result.troop.lackOfMunitions).equalsTo(CBLackOfMunitions.NONE);
+            assert(result.troop.munitions).equalsTo(CBMunitions.NONE);
         when:
             formation.fixRemainingLossSteps(5);
             formation.disrupt();
-            formation.fixTirednessLevel(CBTiredness.TIRED);
-            formation.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            formation.setTiredness(CBTiredness.TIRED);
+            formation.setMunitions(CBMunitions.SCARCE);
             result = arbitrator.releaseTroop(formation, formation.fromHex, 1);
             assert(result.stepCount).equalsTo(4);
-            assert(result.troop.remainingStepCount).equalsTo(1);
+            assert(result.troop.steps).equalsTo(1);
             assert(result.troop.tiredness).equalsTo(CBTiredness.TIRED);
-            assert(result.troop.lackOfMunitions).equalsTo(CBLackOfMunitions.SCARCE);
+            assert(result.troop.munitions).equalsTo(CBMunitions.SCARCE);
     });
 
     it("Checks hexes where a formation may release troops", () => {
@@ -534,11 +534,11 @@ describe("Command teacher", ()=> {
             assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
         when:
             formation.receivesOrder(true);
-            formation.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            formation.setTiredness(CBTiredness.EXHAUSTED);
         then:
             assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
         when:
-            formation.fixTirednessLevel(CBTiredness.NONE);
+            formation.setTiredness(CBTiredness.NONE);
             formation.disrupt();
         then:
             assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
@@ -549,11 +549,11 @@ describe("Command teacher", ()=> {
             assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
         when:
             unit1.receivesOrder(true);
-            unit1.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit1.setTiredness(CBTiredness.EXHAUSTED);
         then:
             assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
         when:
-            unit1.fixTirednessLevel(CBTiredness.NONE);
+            unit1.setTiredness(CBTiredness.NONE);
             unit1.disrupt();
         then:
             assert(arbitrator.isAllowedToIncludeTroops(formation)).isFalse();
@@ -583,19 +583,19 @@ describe("Command teacher", ()=> {
             var result = arbitrator.includeTroops(formation);
         then:
             assert(result.stepCount).equalsTo(6);
-            assert(result.lackOfMunitions).equalsTo(CBLackOfMunitions.NONE);
+            assert(result.munitions).equalsTo(CBMunitions.NONE);
             assert(result.tired).equalsTo(CBTiredness.NONE);
             assert(result.removed).arrayEqualsTo([unit1]);
         when:
             unit2.angle = 90;
             unit2.move(formation.hexLocation.toHex, 0);
-            unit2.fixTirednessLevel(CBTiredness.TIRED);
-            unit2.fixLackOfMunitionsLevel(CBLackOfMunitions.EXHAUSTED);
+            unit2.setTiredness(CBTiredness.TIRED);
+            unit2.setMunitions(CBMunitions.EXHAUSTED);
         when:
             var result = arbitrator.includeTroops(formation);
         then:
             assert(result.stepCount).equalsTo(8);
-            assert(result.lackOfMunitions).equalsTo(CBLackOfMunitions.EXHAUSTED);
+            assert(result.munitions).equalsTo(CBMunitions.EXHAUSTED);
             assert(result.tired).equalsTo(CBTiredness.TIRED);
             assert(result.removed).arrayEqualsTo([unit1, unit2]);
     });
@@ -619,12 +619,12 @@ describe("Command teacher", ()=> {
             assert(arbitrator.isAllowedToCreateFormation(unit2)).isFalse();
         when:
             unit1.receivesOrder(true);
-            unit1.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit1.setTiredness(CBTiredness.EXHAUSTED);
         then:
             assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
             assert(arbitrator.isAllowedToCreateFormation(unit2)).isFalse();
         when:
-            unit1.fixTirednessLevel(CBTiredness.NONE);
+            unit1.setTiredness(CBTiredness.NONE);
             unit1.disrupt();
         then:
             assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
@@ -681,16 +681,16 @@ describe("Command teacher", ()=> {
             assert(result.replaced).unorderedArrayEqualsTo([unit1, unit2]);
             assert(result.replacement).is(CBFormation);
             assert(result.replacement.type).equalsTo(unit1.type);
-            assert(result.replacement.remainingStepCount).equalsTo(4);
+            assert(result.replacement.steps).equalsTo(4);
             assert(result.replacement.tiredness).equalsTo(CBTiredness.NONE);
-            assert(result.replacement.lackOfMunitions).equalsTo(CBLackOfMunitions.NONE);
+            assert(result.replacement.munitions).equalsTo(CBMunitions.NONE);
         when:
-            unit1.fixTirednessLevel(CBTiredness.TIRED);
-            unit2.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            unit1.setTiredness(CBTiredness.TIRED);
+            unit2.setMunitions(CBMunitions.SCARCE);
             result = arbitrator.createFormation(unit1, unit2.hexLocation);
         then:
             assert(result.replacement.tiredness).equalsTo(CBTiredness.TIRED);
-            assert(result.replacement.lackOfMunitions).equalsTo(CBLackOfMunitions.SCARCE);
+            assert(result.replacement.munitions).equalsTo(CBMunitions.SCARCE);
     });
 
 });

@@ -2,30 +2,34 @@
 
 import {
     CBActuator,
-    CBAbstractGame
+    CBAbstractGame, CBAction, PlayableMixin, CBAbstractPlayer
 } from "./game.js";
 import {
     CBActuatorMultiImagesTrigger,
     NeighborRawActuatorArtifactMixin,
     NeighborActuatorArtifactMixin,
     NeighborActuatorMixin,
-    ActivableArtifactMixin, CBActuatorImageTrigger, GhostArtifactMixin
+    ActivableArtifactMixin, CBActuatorImageTrigger, GhostArtifactMixin, CBLevelBuilder, RetractableGameMixin
 } from "./playable.js";
 import {
-    DImage
+    DImage, getDrawPlatform
 } from "../draw.js";
 import {
     atan2, diffAngle,
     Dimension2D, inside, Point2D, sumAngle
 } from "../geometry.js";
 import {
+    Mechanisms,
     Memento
 } from "../mechanisms.js";
 import {
-    DLeftNavigation, DNextNavigation,
-    DPopup, DPrevNavigation, DRightNavigation
+    D2StatesIconMenuItem,
+    DIconMenu, DIconMenuItem,
+    DLeftNavigation, DMultiStatePushButton, DNextNavigation,
+    DPopup, DPrevNavigation, DPushButton, DRightNavigation
 } from "../widget.js";
 import {
+    DBoard,
     DImageArtifact, DPedestalArtifact, DRectArtifact
 } from "../board.js";
 import {GoblinLeader, GoblinSkirmisher, GoblinWolfRider, WizardLeader} from "./armies/orcs.js";
@@ -36,6 +40,10 @@ import {
     RoughneckLeader,
     RoughneckSorceressCharacter
 } from "./armies/roughnecks.js";
+import {
+    CBCharge,
+    CBCohesion, CBMunitions, CBOrderInstruction, CBTiredness
+} from "./unit.js";
 
 export class CBMapEditorHexHeightTrigger extends NeighborRawActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
 
@@ -227,7 +235,7 @@ export class CBUnitPlacementTrigger extends GhostArtifactMixin(CBActuatorImageTr
     }
 
     onMouseClick(event) {
-        Memento.register(this);
+        this.actuator.action(this._hexLocation, this.pangle);
         return true;
     }
 
@@ -237,7 +245,6 @@ export class CBUnitPlacementActuator extends CBActuator {
 
     constructor(map) {
         super();
-
         let artifacts = [];
         for (let hex of map.hexes) {
             let triggerUnit = new CBUnitPlacementTrigger(this, hex);
@@ -249,6 +256,35 @@ export class CBUnitPlacementActuator extends CBActuator {
     getTrigger(hexLocation) {
         return this.findTrigger(trigger=>trigger instanceof CBUnitPlacementTrigger &&
             trigger.hexLocation.similar(hexLocation));
+    }
+
+}
+
+export class CBUnitCreationActuator extends CBUnitPlacementActuator {
+
+    constructor(map, wing, type, steps) {
+        super(map);
+        this._wing = wing;
+        this._type = type;
+        this._steps = steps;
+    }
+
+    action(hex, angle) {
+        let counter = this._type.createUnit(this._wing, this._steps);
+        counter.appendToMap(hex);
+        counter.angle = angle;
+    }
+
+}
+
+export class CBUnitMoveActuator extends CBUnitPlacementActuator {
+
+    action(hex, angle) {
+        let counter = hex.map.game.selectedPlayable;
+        counter.deleteFromMap();
+        counter.appendToMap(hex);
+        counter.angle = angle;
+        hex.map.game.closeActuators();
     }
 
 }
@@ -287,7 +323,7 @@ export class CBFormationPlacementTrigger extends GhostArtifactMixin(CBActuatorIm
     }
 
     onMouseClick(event) {
-        Memento.register(this);
+        this.actuator.action(this._hexLocation, this.pangle);
         return true;
     }
 
@@ -312,11 +348,53 @@ export class CBFormationPlacementActuator extends CBActuator {
 
 }
 
+export class CBFormationCreationActuator extends CBFormationPlacementActuator {
+
+    constructor(map, wing, type, steps) {
+        super(map);
+        this._wing = wing;
+        this._type = type;
+        this._steps = steps;
+    }
+
+    action(hexSide, angle) {
+        let counter = this._type.createUnit(this._wing, this._steps);
+        counter.appendToMap(hexSide);
+        counter.angle = angle;
+    }
+
+}
+
+export class CBFormationMoveActuator extends CBFormationPlacementActuator {
+
+    action(hexSide, angle) {
+        let counter = hexSide.map.game.selectedPlayable;
+        counter.deleteFromMap();
+        counter.appendToMap(hexSide);
+        counter.angle = angle;
+        hexSide.map.game.closeActuators();
+    }
+
+}
+
+export class CBWingArtifact extends DPedestalArtifact {
+
+    constructor() {
+        super(null, "widget-items", new Point2D(0, CBUnitsRoster.WING_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2));
+    }
+
+    setWing(wing) {
+        this.artifact = new DImageArtifact("-", DImage.getImage(wing.banner), new Point2D(0, 0), CBWingArtifact.DIMENSION);
+    }
+
+    static DIMENSION = new Dimension2D(50, 120);
+}
+
 export class CBPartyArtifact extends ActivableArtifactMixin(DImageArtifact) {
 
     constructor(index, emblem) {
         super("widgets", DImage.getImage(emblem),
-            new Point2D((CBPartyArtifact.DIMENSION.w+10)*(index-2), CBUnitsRoster.HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            new Point2D((CBPartyArtifact.DIMENSION.w+10)*(index-2), CBUnitsRoster.WING_HEADER_DIMENSION.h + CBUnitsRoster.ROSTER_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
             CBPartyArtifact.DIMENSION);
         this._index = index;
     }
@@ -340,15 +418,15 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
     constructor(type, x, y) {
         super(null, "widgets", new Point2D(x, y));
         this._type = type;
-        this._step = 1;
-        this.artifact = this._buildUnitArtifact(this._type, this._step);
+        this._steps = 2;
+        this.artifact = this._buildUnitArtifact(this._type, this._steps);
     }
 
     _buildUnitArtifact(type, index) {
         let troopPathLength = type.getTroopPaths().length;
-        if (index<troopPathLength) {
+        if (index<=troopPathLength) {
             return new DImageArtifact("-", DImage.getImage(
-                    type.getTroopPaths()[troopPathLength-index-1]
+                    type.getTroopPaths()[troopPathLength-index]
                 ),
                 new Point2D(0, 0),
                 new Dimension2D(CBUnitTypeArtifact.DIMENSION.w, CBUnitTypeArtifact.DIMENSION.h));
@@ -356,7 +434,7 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
         else {
             let formationPathLength = type.getFormationPaths().length;
             return new DImageArtifact("-", DImage.getImage(
-                    type.getFormationPaths()[formationPathLength-index+troopPathLength-1]
+                    type.getFormationPaths()[formationPathLength-index+troopPathLength]
                 ),
                 new Point2D(0, 0),
                 new Dimension2D(CBUnitTypeArtifact.DIMENSION.w * 2, CBUnitTypeArtifact.DIMENSION.h));
@@ -364,7 +442,7 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
     }
 
     isFormation() {
-        return this._step>=this._type.getTroopPaths().length;
+        return this._steps>this._type.getTroopPaths().length;
     }
 
     get settings() {
@@ -373,44 +451,54 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
         }
     }
 
-    get step() {
-        return this._step;
+    get steps() {
+        return this._steps;
     }
 
-    get maxStep() {
-        let troopPathLength = this._type.getTroopPaths().length;
-        let formationPathLength = this._type.getFormationPaths() ? this._type.getFormationPaths().length : 0;
-        return troopPathLength + formationPathLength -1;
+    get type() {
+        return this._type;
     }
 
-    shiftStep(stepShift) {
-        this._step += stepShift;
-        if (this._step < 0) this._step = 0;
-        if (this._step >= this.maxStep) this._step = this.maxStep;
-        this.artifact = this._buildUnitArtifact(this._type, this._step);
+    get maxSteps() {
+        return this._type.getMaxStepCount();
+    }
+
+    shiftSteps(stepShift) {
+        this._steps += stepShift;
+        if (this._steps < 1) this._steps = 1;
+        if (this._steps >= this.maxSteps) this._steps = this.maxSteps;
+        this.artifact = this._buildUnitArtifact(this._type, this._steps);
     }
 
     onMouseClick(event) {
-        console.log("chose");
         this.element.placeUnit(this);
         return true;
     }
 
     static DIMENSION = new Dimension2D(60, 60);
-}
+    }
 
-export class CBUnitsRoster extends DPopup {
+    export class CBUnitsRoster extends DPopup {
 
     constructor(game) {
         super(CBUnitsRoster.DIMENSION);
         this._game = game;
-        this.addArtifact(new DRectArtifact("widgets",
-            new Point2D(0, CBUnitsRoster.HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
-            CBUnitsRoster.HEADER_DIMENSION, 1, "#000000", "#C0C0C0")
+        this.addArtifact(new DImageArtifact("widgets", DImage.getImage("./../images/units/misc/unit-wing-back.png"),
+            new Point2D(0, CBUnitsRoster.WING_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            CBUnitsRoster.WING_HEADER_DIMENSION)
         );
+        this.addArtifact(new DRectArtifact("widgets",
+            new Point2D(0, CBUnitsRoster.WING_HEADER_DIMENSION.h + CBUnitsRoster.ROSTER_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            CBUnitsRoster.ROSTER_HEADER_DIMENSION, 1, "#000000", "#C0C0C0")
+        );
+        this._buildWingArtifacts();
         this._buildRosterCommands();
         this._buildRosters();
         this._changeRosterContent(CBUnitsRoster.rosterIndex);
+    }
+
+    get wing() {
+        return this._wings[CBUnitsRoster.wingIndex];
     }
 
     _update() {
@@ -428,9 +516,44 @@ export class CBUnitsRoster extends DPopup {
         }
     }
 
+    _wingUpdate() {
+        this._wingArtifact.setWing(this.wing);
+        this._leftWing.setActive(CBUnitsRoster.wingIndex>0);
+        this._rightWing.setActive(CBUnitsRoster.wingIndex<this._wings.length-1);
+    }
+
+    _buildWingArtifacts() {
+        this._wings = [];
+        for (let player of this._game.players) {
+            this._wings.push(...player.wings);
+        }
+        this._leftWing = new DLeftNavigation(
+            new Point2D(-CBUnitsRoster.DIMENSION.w/2+35,
+                CBUnitsRoster.WING_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            ()=>{
+                CBUnitsRoster.wingIndex--;
+                this._wingUpdate();
+            }
+        );
+        this.addArtifact(this._leftWing);
+        this._wingArtifact = new CBWingArtifact();
+        this.addArtifact(this._wingArtifact);
+        this._rightWing = new DRightNavigation(
+            new Point2D(CBUnitsRoster.DIMENSION.w/2-35,
+                CBUnitsRoster.WING_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            ()=>{
+                CBUnitsRoster.wingIndex++;
+                this._wingUpdate();
+            }
+        );
+        this.addArtifact(this._rightWing);
+        this._wingUpdate();
+    }
+
     _buildRosterCommands() {
         this._leftRoster = new DLeftNavigation(
-            new Point2D(-CBUnitsRoster.DIMENSION.w/2+35, CBUnitsRoster.HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            new Point2D(-CBUnitsRoster.DIMENSION.w/2+35,
+                CBUnitsRoster.WING_HEADER_DIMENSION.h + CBUnitsRoster.ROSTER_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
             ()=>{
                 CBUnitsRoster.rosterStart--;
                 this._rightRoster.setActive(true);
@@ -440,7 +563,8 @@ export class CBUnitsRoster extends DPopup {
         );
         this.addArtifact(this._leftRoster);
         this._rightRoster = new DRightNavigation(
-            new Point2D(CBUnitsRoster.DIMENSION.w/2-35, CBUnitsRoster.HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            new Point2D(CBUnitsRoster.DIMENSION.w/2-35,
+                CBUnitsRoster.WING_HEADER_DIMENSION.h + CBUnitsRoster.ROSTER_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
             ()=>{
                 CBUnitsRoster.rosterStart++;
                 this._leftRoster.setActive(true);
@@ -481,7 +605,7 @@ export class CBUnitsRoster extends DPopup {
             let col = index % 2;
             let row = Math.floor(index / 2);
             let x = col % 2 ? CBUnitsRoster.DIMENSION.w / 4 : -CBUnitsRoster.DIMENSION.w / 4;
-            let y = CBUnitsRoster.HEADER_DIMENSION.h - CBUnitsRoster.DIMENSION.h / 2 +
+            let y = CBUnitsRoster.WING_HEADER_DIMENSION.h + CBUnitsRoster.ROSTER_HEADER_DIMENSION.h - CBUnitsRoster.DIMENSION.h / 2 +
                 (CBUnitTypeArtifact.DIMENSION.h + 10) * (row + 0.5) + 20;
             let unitTypeArtifact = this._buildUnitTypeArtifact(roster.unitTypes[index], x, y);
             this._buildUnitTypeEnhancers(x, y, unitTypeArtifact);
@@ -499,12 +623,12 @@ export class CBUnitsRoster extends DPopup {
         let prevEnhancer;
         let nextEnhancer;
         function activateEnhancers() {
-            prevEnhancer.setActive(unitTypeArtifact.step > 0) ;
-            nextEnhancer.setActive(unitTypeArtifact.step < unitTypeArtifact.maxStep);
+            prevEnhancer.setActive(unitTypeArtifact.steps > 1) ;
+            nextEnhancer.setActive(unitTypeArtifact.steps < unitTypeArtifact.maxSteps);
         }
         prevEnhancer = new DPrevNavigation(new Point2D(x-CBUnitTypeArtifact.DIMENSION.w*1.5, y),
             ()=>{
-                unitTypeArtifact.shiftStep(-1);
+                unitTypeArtifact.shiftSteps(-1);
                 activateEnhancers();
             }
         );
@@ -512,7 +636,7 @@ export class CBUnitsRoster extends DPopup {
         this.addArtifact(prevEnhancer);
         nextEnhancer = new DNextNavigation(new Point2D(x+CBUnitTypeArtifact.DIMENSION.w*1.5, y),
             ()=>{
-                unitTypeArtifact.shiftStep(1);
+                unitTypeArtifact.shiftSteps(1);
                 activateEnhancers();
             }
         );
@@ -569,18 +693,20 @@ export class CBUnitsRoster extends DPopup {
         this._game.closeActuators();
         this._game.closePopup();
         if (trigger.isFormation()) {
-            this._game.openActuator(new CBFormationPlacementActuator(this._game.map));
+            this._game.openActuator(new CBFormationCreationActuator(this._game.map, this.wing, trigger.type, trigger.steps));
         }
         else {
-            this._game.openActuator(new CBUnitPlacementActuator(this._game.map));
+            this._game.openActuator(new CBUnitCreationActuator(this._game.map, this.wing, trigger.type, trigger.steps));
         }
     }
 
+    static wingIndex = 0;
     static rosterIndex = 0;
     static rosterStart = 0;
     static rosterMap = new Map();
-    static DIMENSION = new Dimension2D(500, 600);
-    static HEADER_DIMENSION = new Dimension2D(500, 80);
+    static DIMENSION = new Dimension2D(500, 650);
+    static WING_HEADER_DIMENSION = new Dimension2D(500, 120);
+    static ROSTER_HEADER_DIMENSION = new Dimension2D(500, 80);
 }
 
 export function registerEditor() {
@@ -598,4 +724,285 @@ export function registerEditor() {
 
 export function unregisterEditor() {
     delete CBAbstractGame.editMap;
+}
+
+export class CBEditUnitMenu extends DIconMenu {
+
+    constructor(game, unit) {
+        function createUnitStatusItems(unit) {
+            let tired = new D2StatesIconMenuItem("./../images/edit-actions/tired.png", "./../images/edit-actions/cancel-tired.png", "./../images/edit-actions/tired-gray.png",
+                0, 0, (event, state) => {
+                    unit.setTiredness(state ? CBTiredness.NONE : CBTiredness.TIRED);
+                }
+            ).setSecondState(unit.tiredness === CBTiredness.TIRED);
+            let exhausted = new D2StatesIconMenuItem("./../images/edit-actions/exhausted.png", "./../images/edit-actions/cancel-exhausted.png", "./../images/edit-actions/exhausted-gray.png",
+                1, 0, (event, state) => {
+                    unit.setTiredness(state ? CBTiredness.NONE : CBTiredness.EXHAUSTED);
+                }
+            ).setSecondState(unit.tiredness === CBTiredness.EXHAUSTED).setActive(!unit.isCharging());
+            let disrupted = new D2StatesIconMenuItem("./../images/edit-actions/disrupted.png", "./../images/edit-actions/cancel-disrupted.png", "./../images/edit-actions/disrupted-gray.png",
+                2, 0, (event, state) => {
+                    unit.setCohesion(state ? CBCohesion.GOOD_ORDER : CBCohesion.DISRUPTED);
+                }
+            ).setSecondState(unit.cohesion === CBCohesion.DISRUPTED).setActive(!unit.isCharging());
+            let routed = new D2StatesIconMenuItem("./../images/edit-actions/routed.png", "./../images/edit-actions/cancel-routed.png", "./../images/edit-actions/routed-gray.png",
+                3, 0, (event, state) => {
+                    unit.setCohesion(state ? CBCohesion.GOOD_ORDER : CBCohesion.ROUTED);
+                }
+            ).setSecondState(unit.cohesion === CBCohesion.ROUTED).setActive(!unit.isEngaging() && !unit.isCharging());
+            let scarceAmmunition = new D2StatesIconMenuItem("./../images/edit-actions/scarce-ammunition.png", "./../images/edit-actions/cancel-scarce-ammunition.png", "./../images/edit-actions/scarce-ammunition-gray.png",
+                0, 1, (event, state) => {
+                    unit.setMunitions(state ? CBMunitions.NONE : CBMunitions.SCARCE);
+                }
+            ).setSecondState(unit.munitions === CBMunitions.SCARCE);
+            let noAmmunition = new D2StatesIconMenuItem("./../images/edit-actions/no-ammunition.png", "./../images/edit-actions/cancel-no-ammunition.png", "./../images/edit-actions/no-ammunition-gray.png",
+                1, 1, (event, state) => {
+                    unit.setMunitions(state ? CBMunitions.NONE : CBMunitions.EXHAUSTED);
+                }
+            ).setSecondState(unit.munitions === CBMunitions.EXHAUSTED);
+            let contact = new D2StatesIconMenuItem("./../images/edit-actions/contact.png", "./../images/edit-actions/cancel-contact.png", "./../images/edit-actions/contact-gray.png",
+                2, 1, (event, state) => {
+                    unit.setEngaging(!state);
+                }
+            ).setSecondState(unit.isEngaging()).setActive(unit.cohesion !== CBCohesion.ROUTED);
+            let charge = new D2StatesIconMenuItem("./../images/edit-actions/charge.png", "./../images/edit-actions/cancel-charge.png", "./../images/edit-actions/charge-gray.png",
+                3, 1, (event, state) => {
+                    unit.setCharging(state ? CBCharge.NONE : CBCharge.CHARGING);
+                }
+            ).setSecondState(unit.isCharging()).setActive(unit.cohesion === CBCohesion.GOOD_ORDER && unit.tiredness !== CBTiredness.EXHAUSTED);
+            let orderGiven = new D2StatesIconMenuItem("./../images/edit-actions/order-given.png", "./../images/edit-actions/cancel-order-given.png", "./../images/edit-actions/order-given-gray.png",
+                0, 2, (event, state) => {
+                    if (!state) unit.reactivate();
+                    unit.receivesOrder(!state);
+                }
+            ).setSecondState(unit.hasReceivedOrder());
+            let played = new D2StatesIconMenuItem("./../images/edit-actions/played.png", "./../images/edit-actions/cancel-played.png", "./../images/edit-actions/played-gray.png",
+                1, 2, (event, state) => {
+                    if (state) unit.reactivate(); else unit.markAsPlayed();
+                    if (!state) unit.receivesOrder(false)
+                }
+            ).setSecondState(unit.isPlayed());
+            let move = new DIconMenuItem("./../images/edit-actions/move.png", "./../images/edit-actions/move-gray.png",
+                2, 2, (event, state) => {
+                    if (unit.formationNature) {
+                        game.openActuator(new CBFormationMoveActuator(game.map));
+                    }
+                    else {
+                        game.openActuator(new CBUnitMoveActuator(game.map));
+                    }
+                }
+            );
+            let remove = new DIconMenuItem("./../images/edit-actions/delete.png", "./../images/edit-actions/delete-gray.png",
+                3, 2, (event, state) => {
+                    unit.destroy();
+                }
+            );
+            function orderInstructionIconMenuItem(image, col, order) {
+                return new D2StatesIconMenuItem(`./../images/edit-actions/${image}.png`, `./../images/edit-actions/cancel-${image}.png`, `./../images/edit-actions/${image}-gray.png`,
+                    col, 3, (event, state) => {
+                        if (state) {
+                            unit.wing.dismissLeader();
+                        }
+                        else {
+                            unit.wing.changeOrderInstruction(order);
+                            unit.wing.dismissLeader();
+                            unit.wing.setLeader(unit);
+                        }
+                    }
+                ).setSecondState(unit.wing.leader === unit && unit.wing.orderInstruction === order).setActive(unit.characterNature);
+            }
+            let attack = orderInstructionIconMenuItem("attack", 0, CBOrderInstruction.ATTACK);
+            let defense = orderInstructionIconMenuItem("defend", 1, CBOrderInstruction.DEFEND);
+            let regroup = orderInstructionIconMenuItem("regroup", 2, CBOrderInstruction.REGROUP);
+            let retreat = orderInstructionIconMenuItem("retreat", 3, CBOrderInstruction.RETREAT);
+            return [
+                tired, exhausted, disrupted, routed,
+                scarceAmmunition, noAmmunition, contact, charge,
+                orderGiven, played, move, remove,
+                attack, defense, regroup, retreat
+            ];
+        }
+
+        let menuItems = [
+            ...createUnitStatusItems(unit)
+        ];
+        super(false, ...menuItems);
+        this._game = game;
+        Mechanisms.addListener(this);
+    }
+
+    _processGlobalEvent(source, event, value) {
+        if (event===DBoard.ZOOM_EVENT || event===DBoard.SCROLL_EVENT) {
+            this._game.closePopup();
+        }
+    }
+
+    close() {
+        super.close();
+        Mechanisms.removeListener(this);
+    }
+
+    closeMenu() {
+        if (this._game.popup === this) {
+            this._game.closePopup();
+        }
+    }
+
+}
+
+export class CBEditorPlayer extends CBAbstractPlayer {
+
+    constructor() {
+        super();
+        this._wings = [];
+    }
+
+    acceptActivation(playable) {
+        return true;
+    }
+
+    _registerWing(wing) {
+        this._wings.push(wing);
+    }
+
+    _memento() {
+        let memento = super._memento();
+        memento.wings = [...this._wings];
+        return memento;
+    }
+
+    _revert(memento) {
+        this._wings = memento.wings;
+    }
+
+    get wings() {
+        return this._wings;
+    }
+
+    openEditUnitMenu(unit, offset) {
+        let popup = new CBEditUnitMenu(this.game, unit);
+        this.game.openPopup(popup, new Point2D(
+            offset.x - popup.dimension.w/2 + CBAbstractGame.POPUP_MARGIN,
+            offset.y - popup.dimension.h/2 + CBAbstractGame.POPUP_MARGIN));
+    }
+
+    launchPlayableAction(playable, event) {
+        this.openEditUnitMenu(playable,
+            new Point2D(event.offsetX, event.offsetY)/*,
+            this.game.arbitrator.getAllowedActions(playable)*/);
+        super.launchPlayableAction(playable, event);
+    }
+
+}
+
+export class CBEditorGame extends RetractableGameMixin(CBAbstractGame) {
+
+    constructor() {
+        super(new CBLevelBuilder().buildLevels());
+    }
+
+    _buildBoard(map) {
+        super._buildBoard(map);
+        this._board.escapeOnKeyDown();
+        this._board.delOnKeyDown();
+    }
+
+    _processGlobalEvent(source, event, value) {
+        if (event===DBoard.DELETE_EVENT) {
+        }
+        else if (event===DBoard.ESCAPE_EVENT) {
+            this.closePopup();
+            this.closeActuators();
+        }
+        else {
+            super._processGlobalEvent(source, event, value);
+        }
+    }
+
+    setMenu() {
+        this._showCommand = new DPushButton(
+            "./../images/commands/show.png", "./../images/commands/show-inactive.png",
+            new Point2D(-60, -60), animation=>{
+                this.hideCommand(this._showCommand);
+                this.showCommand(this._hideCommand);
+                this.showCommand(this._undoCommand);
+                this.showCommand(this._redoCommand);
+                this.showCommand(this._settingsCommand);
+                this.showCommand(this._saveCommand);
+                this.showCommand(this._loadCommand);
+                this.showCommand(this._editMapCommand);
+                this.showCommand(this._editUnitsCommand);
+                this.showCommand(this._fullScreenCommand);
+                animation();
+            });
+        this.showCommand(this._showCommand);
+        this._hideCommand = new DPushButton(
+            "./../images/commands/hide.png", "./../images/commands/hide-inactive.png",
+            new Point2D(-60, -60), animation=>{
+                this.showCommand(this._showCommand);
+                this.hideCommand(this._hideCommand);
+                this.hideCommand(this._undoCommand);
+                this.hideCommand(this._redoCommand);
+                this.hideCommand(this._settingsCommand);
+                this.hideCommand(this._saveCommand);
+                this.hideCommand(this._loadCommand);
+                this.hideCommand(this._editMapCommand);
+                this.hideCommand(this._editUnitsCommand);
+                this.hideCommand(this._fullScreenCommand);
+                animation();
+            });
+        this._undoCommand = new DPushButton(
+            "./../images/commands/undo.png", "./../images/commands/undo-inactive.png",
+            new Point2D(-120, -60), animation=>{
+                Memento.undo();
+                animation();
+            }).setTurnAnimation(false);
+        this._redoCommand = new DPushButton(
+            "./../images/commands/redo.png", "./../images/commands/redo-inactive.png",
+            new Point2D(-180, -60), animation=>{
+                Memento.redo();
+                animation();
+            }).setTurnAnimation(true);
+        this._settingsCommand = new DPushButton(
+            "./../images/commands/settings.png","./../images/commands/settings-inactive.png",
+            new Point2D(-240, -60), animation=>{});
+        this._saveCommand = new DPushButton(
+            "./../images/commands/save.png", "./../images/commands/save-inactive.png",
+            new Point2D(-300, -60), animation=>{});
+        this._loadCommand = new DPushButton(
+            "./../images/commands/load.png", "./../images/commands/load-inactive.png",
+            new Point2D(-360, -60), animation=>{});
+        this._editMapCommand = new DMultiStatePushButton(
+            ["./../images/commands/edit-map.png", "./../images/commands/field.png"],
+            new Point2D(-420, -60), (state, animation)=>{
+                if (!state)
+                    CBAbstractGame.editMap(this);
+                else
+                    this.closeActuators();
+                animation();
+            }).setTurnAnimation(true, ()=>this._editMapCommand.setState(this._editMapCommand.state?0:1));
+        this._editUnitsCommand = new DMultiStatePushButton(
+            ["./../images/commands/edit-units.png", "./../images/commands/edit-units-inactive.png"],
+            new Point2D(-480, -60), (state, animation)=>{
+                if (!state)
+                    CBAbstractGame.editUnits(this);
+                else
+                    this.closeActuators();
+                animation();
+            }).setTurnAnimation(true, ()=>{});
+        this._fullScreenCommand = new DMultiStatePushButton(
+            ["./../images/commands/full-screen-on.png", "./../images/commands/full-screen-off.png"],
+            new Point2D(-540, -60), (state, animation)=>{
+                if (!state)
+                    getDrawPlatform().requestFullscreen();
+                else
+                    getDrawPlatform().exitFullscreen();
+                animation();
+            })
+            .setTurnAnimation(true, ()=>this._fullScreenCommand.setState(this._fullScreenCommand.state?0:1));
+        this._settingsCommand.active = false;
+        this._saveCommand.active = false;
+        this._loadCommand.active = false;
+    }
+
 }

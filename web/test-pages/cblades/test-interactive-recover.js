@@ -204,7 +204,7 @@ describe("Interactive Recover", ()=> {
         given:
             var {game, unit} = createTinyGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
-            unit.addOneLackOfMunitionsLevel();
+            unit.addOneMunitionsLevel();
             clickOnPiece(game, unit);
             paint(game);
         when:
@@ -223,7 +223,7 @@ describe("Interactive Recover", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(unit.lackOfMunitions).equalsTo(1);
+            assert(unit.munitions).equalsTo(1);
             assert(unit.isActivated()).isFalse();
             assert(unit.isPlayed()).isFalse();
     });
@@ -232,7 +232,7 @@ describe("Interactive Recover", ()=> {
         given:
             var {game, unit} = createTinyGame();
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
-            unit.addOneLackOfMunitionsLevel();
+            unit.addOneMunitionsLevel();
             clickOnPiece(game, unit);
             clickOnReplenishMunitionsAction(game);
             loadAllImages();
@@ -256,14 +256,14 @@ describe("Interactive Recover", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(unit.isPlayed()).isTrue();
-            assert(unit.lackOfMunitions).equalsTo(0);
+            assert(unit.munitions).equalsTo(0);
     });
 
     it("Checks failed replenish munitions action process ", () => {
         given:
             var {game, unit} = createTinyGame();
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
-            unit.addOneLackOfMunitionsLevel();
+            unit.addOneMunitionsLevel();
             clickOnPiece(game, unit);
             clickOnReplenishMunitionsAction(game);
             loadAllImages();
@@ -287,7 +287,7 @@ describe("Interactive Recover", ()=> {
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(unit.isPlayed()).isTrue();
-            assert(unit.lackOfMunitions).equalsTo(1);
+            assert(unit.munitions).equalsTo(1);
     });
 
     function clickOnReorganizeAction(game) {

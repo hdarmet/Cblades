@@ -12,14 +12,14 @@ import {
 } from "../profile.js";
 
 import {
-    CBUnitType
+    CBTroopType, CBCharacterType
 } from "../unit.js";
 
 export let RoughneckBanner0 = "./../images/units/mercenaries/banners/banner0.png";
 export let RoughneckBanner1 = "./../images/units/mercenaries/banners/banner1.png";
 export let RoughneckBanner2 = "./../images/units/mercenaries/banners/banner2.png";
 
-export let RoughneckLeader = new CBUnitType("Company Leader",
+export let RoughneckLeader = new CBCharacterType("Company Leader",
     [
         "./../images/units/mercenaries/character1L.png",
         "./../images/units/mercenaries/character1Lb.png"
@@ -36,7 +36,7 @@ export let RoughneckLeader = new CBUnitType("Company Leader",
 ).setMoralProfile(1, new EliteMoralProfile(CBProfileCapacity.NORMAL)
 ).setMoralProfile(2, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED));
 
-export let RoughneckSorceressCharacter = new CBUnitType("Sorceress Character",
+export let RoughneckSorceressCharacter = new CBCharacterType("Sorceress Character",
     [
         "./../images/units/mercenaries/character2L.png",
         "./../images/units/mercenaries/character2Lb.png"
@@ -56,7 +56,7 @@ export let RoughneckSorceressCharacter = new CBUnitType("Sorceress Character",
 ).setMagicProfile(1, new ArcaneMagicProfile(CBProfileCapacity.NORMAL)
 ).setMagicProfile(2, new ArcaneMagicProfile(CBProfileCapacity.ADVANTAGED));
 
-export let RoughneckKnight = new CBUnitType("Company Knight",
+export let RoughneckKnight = new CBTroopType("Company Knight",
     [
         "./../images/units/mercenaries/unit1L.png",
         "./../images/units/mercenaries/unit1Lb.png"
@@ -73,7 +73,7 @@ export let RoughneckKnight = new CBUnitType("Company Knight",
 ).setMoralProfile(1, new EliteMoralProfile(CBProfileCapacity.NORMAL)
 ).setMoralProfile(2, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED));
 
-export let RoughneckLance = new CBUnitType("Company Lancet",
+export let RoughneckLance = new CBTroopType("Company Lancet",
     [
         "./../images/units/mercenaries/unit2L1.png",
         "./../images/units/mercenaries/unit2L1b.png"
@@ -122,7 +122,7 @@ export let RoughneckLance = new CBUnitType("Company Lancet",
 ).setMoralProfile(7, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED)
 ).setMoralProfile(8, new EliteMoralProfile(CBProfileCapacity.ADVANTAGED));
 
-export let RoughneckCrossbowman = new CBUnitType("Company Crossbowman",
+export let RoughneckCrossbowman = new CBTroopType("Company Crossbowman",
     [
         "./../images/units/mercenaries/unit3L1.png",
         "./../images/units/mercenaries/unit3L1b.png"

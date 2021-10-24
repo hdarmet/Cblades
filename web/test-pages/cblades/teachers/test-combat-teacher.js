@@ -15,7 +15,7 @@ import {
 } from "../../../jslib/cblades/playable.js";
 import {
     CBCharge,
-    CBCommandProfile, CBLackOfMunitions,
+    CBCommandProfile, CBMunitions,
     CBMoralProfile,
     CBMoveProfile, CBTiredness,
     CBUnitType, CBWeaponProfile,
@@ -613,10 +613,10 @@ describe("Combat teacher", ()=> {
         given:
             var {arbitrator, map, unit12, leader21} = create2Players4UnitsTinyGame();
             leader21.hexLocation = unit12.hexLocation.getNearHex(0);
-            unit12.fixTirednessLevel(CBTiredness.TIRED);
+            unit12.setTiredness(CBTiredness.TIRED);
             unit12.markAsCharging(CBCharge.CHARGING);
             unit12.hexLocation.height = 1;
-            leader21.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            leader21.setTiredness(CBTiredness.EXHAUSTED);
             leader21.disrupt();
         when:
             var advantage = arbitrator.getShockAttackAdvantage(unit12, unit12.hexLocation, leader21, leader21.hexLocation, true);
@@ -645,11 +645,11 @@ describe("Combat teacher", ()=> {
             var {arbitrator, unit11, unit12, leader21} = create2Players4UnitsTinyGame();
             leader21.hexLocation = unit12.hexLocation.getNearHex(0);
             leader21.angle = 180;
-            unit12.fixTirednessLevel(CBTiredness.TIRED);
+            unit12.setTiredness(CBTiredness.TIRED);
             unit12.hexLocation.height = 1;
             unit12.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
             unit11.hexLocation = unit12.hexLocation;
-            leader21.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            leader21.setTiredness(CBTiredness.EXHAUSTED);
             leader21.disrupt();
             leader21.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
         when:
@@ -683,11 +683,11 @@ describe("Combat teacher", ()=> {
             unit22.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
             unit21.angle = 90;
             unit22.angle = 90;
-            unit12.fixTirednessLevel(CBTiredness.TIRED);
+            unit12.setTiredness(CBTiredness.TIRED);
             unit12.hexLocation.height = 1;
             unit12.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
             unit11.hexLocation = unit12.hexLocation;
-            unit21.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit21.setTiredness(CBTiredness.EXHAUSTED);
             unit21.rout();
             unit12.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
         when:
@@ -816,14 +816,14 @@ describe("Combat teacher", ()=> {
         given:
             var {arbitrator, map, unit11, unit12, leader21} = create2Players4UnitsTinyGame();
             leader21.hexLocation = unit12.hexLocation.getNearHex(0).getNearHex(0).getNearHex(0);
-            unit12.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit12.setTiredness(CBTiredness.EXHAUSTED);
             unit12.disrupt();
             unit12.markAsCharging(CBCharge.CHARGING);
             unit12.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
             unit12.hexLocation.height = 1;
-            unit12.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            unit12.setMunitions(CBMunitions.SCARCE);
             unit11.hexLocation = unit12.hexLocation;
-            leader21.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            leader21.setTiredness(CBTiredness.EXHAUSTED);
             leader21.disrupt();
             leader21.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
         when:
@@ -856,14 +856,14 @@ describe("Combat teacher", ()=> {
         given:
             var {arbitrator, map, unit11, unit12, leader21} = create2Players4UnitsTinyGame();
             leader21.hexLocation = unit12.hexLocation.getNearHex(0).getNearHex(0).getNearHex(0);
-            unit12.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit12.setTiredness(CBTiredness.EXHAUSTED);
             unit12.rout();
             unit12.angle = 90;
             unit12.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
             unit12.hexLocation.height = 1;
             unit12.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
             unit11.hexLocation = unit12.hexLocation;
-            leader21.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            leader21.setTiredness(CBTiredness.EXHAUSTED);
             leader21.disrupt();
             leader21.angle = 180;
         when:

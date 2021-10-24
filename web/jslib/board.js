@@ -1046,7 +1046,7 @@ export class DLevel {
         if (this._dirty) {
             this.clear();
             for (let artifact of this.visibleArtifacts) {
-                if (artifact.alpha>0) {
+                if (artifact.alpha>=0.01) {
                     this.forArtifact(artifact);
                     this.layer.withSettings(() => {
                         artifact.paint();
@@ -1836,6 +1836,26 @@ export class DBoard {
         });
     }
 
+    delOnKeyDown() {
+        this.onKeyDown(event => {
+            if (event.key === 'Backspace' || event.key === 'Delete') {
+                Mechanisms.fire(this, DBoard.DELETE_EVENT);
+                return true;
+            }
+            return false;
+        });
+    }
+
+    escapeOnKeyDown() {
+        this.onKeyDown(event => {
+            if (event.key === 'Escape') {
+                Mechanisms.fire(this, DBoard.ESCAPE_EVENT);
+                return true;
+            }
+            return false;
+        });
+    }
+
     getAllArtifactsOnPoint(viewportPoint, predicate) {
         let artifacts = [];
         for (let i = this._levelsArray.length-1; i>=0; i--) {
@@ -1858,21 +1878,24 @@ export class DBoard {
         return artifact.level.isPointOnArtifact(artifact, viewportPoint);
     }
 
+    static DEFAULT_MAX_ZOOM_FACTOR = 10;
+    static DEFAULT_ZOOM_INCREMENT = 1.5;
+    static DEFAULT_BORDER_WIDTH = 10;
+    static DEFAULT_SCROLL_INCREMENT = 10;
+    static SCROLL_EVENT = "board-scroll";
+    static ZOOM_EVENT = "board-zoom";
+    static RESIZE_EVENT = "board-resize";
+    static BORDER_EVENT = "board-border";
+    static DELETE_EVENT = "board-delete";
+    static ESCAPE_EVENT = "board-escape";
+    static BORDER = {
+        LEFT: 0,
+        RIGHT: 1,
+        TOP: 2,
+        BOTTOM: 3
+    };
 }
-DBoard.DEFAULT_MAX_ZOOM_FACTOR = 10;
-DBoard.DEFAULT_ZOOM_INCREMENT = 1.5;
-DBoard.DEFAULT_BORDER_WIDTH = 10;
-DBoard.DEFAULT_SCROLL_INCREMENT = 10;
-DBoard.SCROLL_EVENT = "board-scroll";
-DBoard.ZOOM_EVENT = "board-zoom";
-DBoard.RESIZE_EVENT = "board-resize";
-DBoard.BORDER_EVENT = "board-border";
-DBoard.BORDER = {
-    LEFT: 0,
-    RIGHT: 1,
-    TOP: 2,
-    BOTTOM: 3
-};
+
 
 
 export class DArtifactAnimation extends DAnimation {

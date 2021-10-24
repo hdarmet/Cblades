@@ -260,10 +260,57 @@ export class DIconMenuItem extends DImageArtifact {
         }
         return true;
     }
+
+    static MARGIN = 10;
+    static ICON_SIZE = 50;
+    static ICON_DIMENSION = new Dimension2D(DIconMenuItem.ICON_SIZE, DIconMenuItem.ICON_SIZE)
 }
-DIconMenuItem.MARGIN = 10;
-DIconMenuItem.ICON_SIZE = 50;
-DIconMenuItem.ICON_DIMENSION = new Dimension2D(DIconMenuItem.ICON_SIZE, DIconMenuItem.ICON_SIZE)
+
+export class D2StatesIconMenuItem extends DIconMenuItem {
+
+    constructor(path, secondPath, pathInactive, col, row, action, tooltipMessage = null) {
+        super(path, pathInactive, col, row, action, tooltipMessage);
+        this._secondImage = DImage.getImage(secondPath);
+        this._secondState = false;
+    }
+
+    get image() {
+        if (this._active && this._secondState) {
+            return this._secondImage;
+        }
+        else {
+            return super.image;
+        }
+    }
+
+    setSecondState(state) {
+        this._secondState = state;
+        return this;
+    }
+
+    get action() {
+        return event=>this._action(event, this._secondState);
+    }
+
+    get secondState() {
+        return this._secondState;
+    }
+
+    onMouseClick(event) {
+        if (this._active) {
+            this.element.closeMenu();
+            this.action(event);
+        }
+        return true;
+    }
+
+    get mouseOverSettings() {
+        return level=>{
+            level.setShadowSettings("#FF0000", 10);
+        }
+    }
+
+}
 
 export class DIconMenu extends DPopup {
 

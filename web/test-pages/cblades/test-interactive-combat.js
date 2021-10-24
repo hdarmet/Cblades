@@ -76,7 +76,7 @@ import {
     CBHexSideId, CBHex
 } from "../../jslib/cblades/map.js";
 import {
-    CBCharge, CBLackOfMunitions, CBTiredness
+    CBCharge, CBMunitions, CBTiredness
 } from "../../jslib/cblades/unit.js";
 
 describe("Interactive Combat", ()=> {
@@ -602,8 +602,8 @@ describe("Interactive Combat", ()=> {
             unit11.hexLocation.height = 1;
             unit21.move(map.getHex(5, 7));
             unit21.disrupt();
-            unit11.fixTirednessLevel(CBTiredness.TIRED);
-            unit21.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit11.setTiredness(CBTiredness.TIRED);
+            unit21.setTiredness(CBTiredness.EXHAUSTED);
             unit21.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
             setWeaponBonuses(unitType1, 2, 1, 0, 0);
             setWeaponBonuses(unitType2, 2, 0, 2, 0);
@@ -649,7 +649,7 @@ describe("Interactive Combat", ()=> {
             unit21.move(map.getHex(5, 7));
             unit21.rout();
             unit21.angle = 90;
-            unit11.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit11.setTiredness(CBTiredness.EXHAUSTED);
             unit21.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
             clickOnPiece(game, unit11);
             clickOnShockAttackAction(game);
@@ -1464,7 +1464,7 @@ describe("Interactive Combat", ()=> {
             var { game, map, unit1, unitType1, unit2, unitType2 } = create2PlayersFireTinyGame();
             var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
             unit1.move(map.getHex(5, 8));
-            unit1.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit1.setTiredness(CBTiredness.EXHAUSTED);
             unit1.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
             unit1.hexLocation.height = -1;
             unit2.move(map.getHex(5, 6));
@@ -1505,7 +1505,7 @@ describe("Interactive Combat", ()=> {
         given:
             var { game, map, unit11, unit12, unit21, unit22 } = create2Players4UnitsFireTinyGame();
             var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
-            unit11.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            unit11.setMunitions(CBMunitions.SCARCE);
             unit11.move(map.getHex(5, 8));
             unit12.move(map.getHex(5, 8));
             unit21.move(map.getHex(5, 6));

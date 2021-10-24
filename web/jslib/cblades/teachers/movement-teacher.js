@@ -490,7 +490,7 @@ export class CBMovementTeacher {
                 case CBMoveProfile.COST_TYPE.IMPASSABLE:
                     return null;
                 case CBMoveProfile.COST_TYPE.MINIMAL_MOVE:
-                    return unit.type.getExtendedMovementPoints(unit.remainingStepCount);
+                    return unit.type.getExtendedMovementPoints(unit.steps);
                 default:
                     return cost.value;
             }
@@ -509,7 +509,7 @@ export class CBMovementTeacher {
                 case CBMoveProfile.COST_TYPE.IMPASSABLE:
                     return null;
                 case CBMoveProfile.COST_TYPE.MINIMAL_MOVE:
-                    return unit.type.getExtendedMovementPoints(unit.remainingStepCount);
+                    return unit.type.getExtendedMovementPoints(unit.steps);
                 default:
                     return cost.value;
             }
@@ -536,7 +536,7 @@ export class CBMovementTeacher {
                 case CBMoveProfile.COST_TYPE.IMPASSABLE:
                     return null;
                 case CBMoveProfile.COST_TYPE.MINIMAL_MOVE:
-                    return unit.type.getExtendedMovementPoints(unit.remainingStepCount);
+                    return unit.type.getExtendedMovementPoints(unit.steps);
                 default:
                     return cost.value;
             }

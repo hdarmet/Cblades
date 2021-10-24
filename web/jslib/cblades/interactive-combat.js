@@ -561,7 +561,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
             }
         }
         if (result.lowerFirerMunitions) {
-            this.unit.addOneLackOfMunitionsLevel();
+            this.unit.addOneMunitionsLevel();
         }
         this.markAsStarted();
         return result;

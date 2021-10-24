@@ -620,7 +620,7 @@ describe("Interactive Command", ()=> {
             var {game, map, wing, unit1, leader} = create2UnitsTinyGame();
             var [widgetsLayer] = getLayers(game.board,"widgets");
             unit1.disrupt();
-            unit1.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit1.setTiredness(CBTiredness.EXHAUSTED);
             unit1.move(map.getHex(10, 10));
             wing.setLeader(leader);
             clickOnPiece(game, leader);

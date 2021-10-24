@@ -356,7 +356,7 @@ describe("Magic", ()=> {
             spell.resolve([1, 2]);
         then:
             assert(foe.options.indexOf(spell)).equalsTo(-1);
-            assert(foe.remainingStepCount).equalsTo(1);
+            assert(foe.steps).equalsTo(1);
             assert(spell.isOption()).isTrue();
     });
 
@@ -372,7 +372,7 @@ describe("Magic", ()=> {
             spell.resolve([5, 6]);
         then:
             assert(foe.options.indexOf(spell)).equalsTo(-1);
-            assert(foe.remainingStepCount).equalsTo(2);
+            assert(foe.steps).equalsTo(2);
             assert(spell.isOption()).isTrue();
     });
 
@@ -556,7 +556,7 @@ describe("Magic", ()=> {
             spell.resolve([1, 2]);
         then:
             assert(foe.options.indexOf(spell)).equalsTo(-1);
-            assert(foe.remainingStepCount).equalsTo(1);
+            assert(foe.steps).equalsTo(1);
             assert(spell.isOption()).isTrue();
     });
 
@@ -572,7 +572,7 @@ describe("Magic", ()=> {
             spell.resolve([5, 6]);
         then:
             assert(foe.options.indexOf(spell)).equalsTo(-1);
-            assert(foe.remainingStepCount).equalsTo(2);
+            assert(foe.steps).equalsTo(2);
             assert(spell.isOption()).isTrue();
     });
 

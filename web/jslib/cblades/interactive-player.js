@@ -8,7 +8,7 @@ import {
     Mechanisms, Memento
 } from "../mechanisms.js";
 import {
-    CBAbstractPlayer, CBAbstractGame
+    CBAbstractGame
 } from "./game.js";
 import {
     WidgetLevelMixin
@@ -19,8 +19,11 @@ import {
 import {
     DImage
 } from "../draw.js";
+import {
+    CBPlayer
+} from "./unit.js";
 
-export class CBInteractivePlayer extends CBAbstractPlayer {
+export class CBInteractivePlayer extends CBPlayer {
 
     constructor() {
         super();
@@ -270,8 +273,9 @@ export class CBActionMenu extends DIconMenu {
             this._game.closePopup();
         }
     }
+
+    static menuBuilders = []
 }
-CBActionMenu.menuBuilders = [];
 
 export class CBWingIndicator extends DMultiImagesIndicator {
 

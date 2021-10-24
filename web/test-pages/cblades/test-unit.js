@@ -33,7 +33,7 @@ import {
     CBWing,
     CBCharacter,
     CBUnitType,
-    CBLackOfMunitions,
+    CBMunitions,
     CBTiredness,
     CBCohesion,
     CBOrderInstruction,
@@ -617,7 +617,7 @@ describe("Unit", ()=> {
             assert(unitType1.getFormationPaths()).arrayEqualsTo([
                 "./../images/units/misc/formation1.png", "./../images/units/misc/formation1b.png"
             ]);
-            assert(unitType1.getTroopMaxStepCount()).equalsTo(2);
+            assert(unitType1.getFigureStepCount()).equalsTo(2);
             assert(unitType1.getFormationMaxStepCount()).equalsTo(4);
             assert(unitType1.getFormationMinStepCount()).equalsTo(3);
     });
@@ -973,27 +973,27 @@ describe("Unit", ()=> {
             assert(unit.areMunitionsExhausted()).isFalse();
         when:
             resetDirectives(markersLayer);
-            unit.addOneLackOfMunitionsLevel();
+            unit.addOneMunitionsLevel();
             paint(game);
             loadAllImages(); // to load scraceamno.png
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("scarceamno", zoomAndRotate0(416.6667, 386.5897)));
             assertNoMoreDirectives(markersLayer);
-            assert(unit.lackOfMunitions).equalsTo(1);
+            assert(unit.munitions).equalsTo(1);
             assert(unit.areMunitionsScarce()).isTrue();
             assert(unit.areMunitionsExhausted()).isFalse();
         when:
             Memento.open();
             resetDirectives(markersLayer);
-            unit.addOneLackOfMunitionsLevel();
+            unit.addOneMunitionsLevel();
             paint(game);
             loadAllImages(); // to load lowamno.png
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("lowamno", zoomAndRotate0(416.6667, 386.5897)));
             assertNoMoreDirectives(markersLayer);
-            assert(unit.lackOfMunitions).equalsTo(2);
+            assert(unit.munitions).equalsTo(2);
             assert(unit.areMunitionsScarce()).isFalse();
             assert(unit.areMunitionsExhausted()).isTrue();
         when:
@@ -1004,7 +1004,7 @@ describe("Unit", ()=> {
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("scarceamno", zoomAndRotate0(416.6667, 386.5897)));
             assertNoMoreDirectives(markersLayer);
-            assert(unit.lackOfMunitions).equalsTo(1);
+            assert(unit.munitions).equalsTo(1);
     });
 
     it("Checks removing a lack of munitions level to a unit", () => {
@@ -1013,15 +1013,15 @@ describe("Unit", ()=> {
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
-            unit.addOneLackOfMunitionsLevel();
-            unit.addOneLackOfMunitionsLevel();
+            unit.addOneMunitionsLevel();
+            unit.addOneMunitionsLevel();
             paint(game);
             loadAllImages(); // to load lowamno.png
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("lowamno", zoomAndRotate0(416.6667, 386.5897)));
             assertNoMoreDirectives(markersLayer);
-            assert(unit.lackOfMunitions).equalsTo(2);
+            assert(unit.munitions).equalsTo(2);
         when:
             Memento.open();
             resetDirectives(markersLayer);
@@ -1030,7 +1030,7 @@ describe("Unit", ()=> {
             loadAllImages(); // to load scarceamno.png
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
-            assert(unit.lackOfMunitions).equalsTo(0);
+            assert(unit.munitions).equalsTo(0);
         when:
             resetDirectives(markersLayer);
             Memento.undo();
@@ -1039,7 +1039,7 @@ describe("Unit", ()=> {
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("lowamno", zoomAndRotate0(416.6667, 386.5897)));
             assertNoMoreDirectives(markersLayer);
-            assert(unit.lackOfMunitions).equalsTo(2);
+            assert(unit.munitions).equalsTo(2);
     });
 
     it("Checks playing a unit", () => {
@@ -1561,7 +1561,7 @@ describe("Unit", ()=> {
             unit2.markAsEngaging(true);
             unit2.addOneCohesionLevel();
             unit2.addOneTirednessLevel();
-            unit2.addOneLackOfMunitionsLevel();
+            unit2.addOneMunitionsLevel();
             paint(game);
             loadAllImages(); // to load charge.png
         then:
@@ -1819,9 +1819,9 @@ describe("Unit", ()=> {
             unit.movementPoints = 3;
             unit.extendedMovementPoints = 5;
             unit.cohesion = CBCohesion.ROUTED;
-            unit.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            unit.setMunitionsLevel(CBMunitions.SCARCE);
             unit.fixRemainingLossSteps(1);
-            unit.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit.setTiredness(CBTiredness.EXHAUSTED);
             var cloneUnit = unit.clone();
         then:
             assert(cloneUnit).is(CBTroop);
@@ -1829,16 +1829,16 @@ describe("Unit", ()=> {
             assert(cloneUnit.movementPoints).equalsTo(3);
             assert(cloneUnit.extendedMovementPoints).equalsTo(5);
             assert(cloneUnit.cohesion).equalsTo(CBCohesion.ROUTED);
-            assert(cloneUnit.lackOfMunitions).equalsTo(CBLackOfMunitions.SCARCE);
-            assert(cloneUnit.remainingStepCount).equalsTo(1);
+            assert(cloneUnit.munitions).equalsTo(CBMunitions.SCARCE);
+            assert(cloneUnit.steps).equalsTo(1);
             assert(cloneUnit.tiredness).equalsTo(CBTiredness.EXHAUSTED);
         when:
             leader.movementPoints = 1;
             leader.extendedMovementPoints = 2;
             leader.cohesion = CBCohesion.DISRUPTED;
-            leader.fixLackOfMunitionsLevel(CBLackOfMunitions.EXHAUSTED);
+            leader.setMunitionsLevel(CBMunitions.EXHAUSTED);
             leader.fixRemainingLossSteps(2);
-            leader.fixTirednessLevel(CBTiredness.TIRED);
+            leader.setTiredness(CBTiredness.TIRED);
             var cloneLeader = leader.clone();
         then:
             assert(cloneLeader).is(CBCharacter);
@@ -1846,8 +1846,8 @@ describe("Unit", ()=> {
             assert(cloneLeader.movementPoints).equalsTo(1);
             assert(cloneLeader.extendedMovementPoints).equalsTo(2);
             assert(cloneLeader.cohesion).equalsTo(CBCohesion.DISRUPTED);
-            assert(cloneLeader.lackOfMunitions).equalsTo(CBLackOfMunitions.EXHAUSTED);
-            assert(cloneLeader.remainingStepCount).equalsTo(2);
+            assert(cloneLeader.munitions).equalsTo(CBMunitions.EXHAUSTED);
+            assert(cloneLeader.steps).equalsTo(2);
             assert(cloneLeader.tiredness).equalsTo(CBTiredness.TIRED);
     });
 
@@ -1881,7 +1881,7 @@ describe("Unit", ()=> {
         when:
             resetDirectives(fmarkersLayer, formationsLayer);
             formation.disrupt();
-            formation.addOneLackOfMunitionsLevel();
+            formation.addOneMunitionsLevel();
             formation.addOneTirednessLevel();
             formation.addOneCohesionLevel();
             formation.receivesOrder(true);
@@ -2003,7 +2003,7 @@ describe("Unit", ()=> {
             var {formation} = prepareTinyGameWithFormation();
         when:
             formation.movementPoints = 3;
-            formation.fixTirednessLevel(CBTiredness.TIRED);
+            formation.setTiredness(CBTiredness.TIRED);
             var cloneFormation = formation.clone();
         then:
             assert(cloneFormation).is(CBFormation);

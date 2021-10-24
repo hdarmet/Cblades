@@ -186,10 +186,10 @@ export class InteractiveIncludeTroopsAction extends CBAction {
     play() {
         this.unit.markAsCharging(CBCharge.NONE);
         this.game.closeActuators();
-        let {removed, stepCount, tired, lackOfMunitions} = this.game.arbitrator.includeTroops(this.unit);
+        let {removed, stepCount, tired, munitions} = this.game.arbitrator.includeTroops(this.unit);
         this.unit.fixRemainingLossSteps(stepCount);
-        this.unit.fixTirednessLevel(tired);
-        this.unit.fixLackOfMunitionsLevel(lackOfMunitions);
+        this.unit.setTiredness(tired);
+        this.unit.setMunitions(munitions);
         this.unit.markAsPlayed();
         for (let removedUnit of removed) {
             removedUnit.deleteFromMap();

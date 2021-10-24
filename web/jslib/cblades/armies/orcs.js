@@ -15,14 +15,14 @@ import {
 } from "../profile.js";
 
 import {
-    CBUnitType
+    CBTroopType, CBCharacterType
 } from "../unit.js";
 
 export let GoblinBanner0 = "./../images/units/orcs/banners/banner0.png";
 export let GoblinBanner1 = "./../images/units/orcs/banners/banner1.png";
 export let GoblinBanner2 = "./../images/units/orcs/banners/banner2.png";
 
-export let GoblinLeader = new CBUnitType("Goblin Leader",
+export let GoblinLeader = new CBCharacterType("Goblin Leader",
     [
         "./../images/units/orcs/character1L.png",
         "./../images/units/orcs/character1Lb.png"
@@ -39,7 +39,7 @@ export let GoblinLeader = new CBUnitType("Goblin Leader",
 ).setMoralProfile(1, new ExaltedMoralProfile(CBProfileCapacity.DISADVANTAGED)
 ).setMoralProfile(2, new ExaltedMoralProfile(CBProfileCapacity.NORMAL));
 
-export let WizardLeader = new CBUnitType("Wizard Leader",
+export let WizardLeader = new CBCharacterType("Wizard Leader",
     [
         "./../images/units/orcs/character2C.png",
         "./../images/units/orcs/character2Cb.png"
@@ -59,7 +59,7 @@ export let WizardLeader = new CBUnitType("Wizard Leader",
 ).setMagicProfile(1, new FireMagicProfile(CBProfileCapacity.NORMAL)
 ).setMagicProfile(2, new FireMagicProfile(CBProfileCapacity.ADVANTAGED));
 
-export let GoblinWolfRider = new CBUnitType("Goblin Wolf Rider",
+export let GoblinWolfRider = new CBTroopType("Goblin Wolf Rider",
     [
         "./../images/units/orcs/unit1L.png",
         "./../images/units/orcs/unit1Lb.png"
@@ -76,7 +76,7 @@ export let GoblinWolfRider = new CBUnitType("Goblin Wolf Rider",
 ).setMoralProfile(1, new ExaltedMoralProfile(CBProfileCapacity.DISADVANTAGED)
 ).setMoralProfile(2, new ExaltedMoralProfile(CBProfileCapacity.NORMAL));
 
-export let GoblinSkirmisher = new CBUnitType("Goblin Skirmisher",
+export let GoblinSkirmisher = new CBTroopType("Goblin Skirmisher",
     [
         "./../images/units/orcs/unit2L.png",
         "./../images/units/orcs/unit2Lb.png"

@@ -11,7 +11,7 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBPieceImageArtifact, CBStacking, HexLocatableMixin, BelongsToPlayerMixin, PlayableMixin, CBPiece
+    CBPieceImageArtifact, CBStacking, HexLocatableMixin, BelongsToPlayerMixin, PlayableMixin, CBPiece, CBAbstractPlayer
 } from "./game.js";
 import {
     RetractableArtifactMixin,
@@ -52,7 +52,7 @@ export let CBTiredness = {
     EXHAUSTED: 2
 }
 
-export let CBLackOfMunitions = {
+export let CBMunitions = {
     NONE: 0,
     SCARCE: 1,
     EXHAUSTED: 2
@@ -70,6 +70,27 @@ export let CBOrderInstruction = {
     DEFEND: 1,
     REGROUP: 2,
     RETREAT: 3
+}
+
+export class CBPlayer extends CBAbstractPlayer {
+
+    constructor() {
+        super();
+        this._wings = [];
+    }
+
+    _registerWing(wing) {
+        this._wings.push(wing);
+    }
+
+    get wings() {
+        return this._wings;
+    }
+
+    finishTurn(animation) {
+        this.game.nextTurn(animation);
+    }
+
 }
 
 export class CBUnitActuatorTrigger extends CBPlayableActuatorTrigger {
@@ -235,19 +256,16 @@ export class CBMagicProfile extends CBProfile {
 
 }
 
-
 export class CBUnitType {
 
-    constructor(name, troopPaths, formationPaths) {
+    constructor(name, troopPaths) {
         this._name = name;
         this._troopPaths = troopPaths;
-        this._formationPaths = formationPaths;
-        this._maxStepCount = 2;
+        this._stepsByFigure = 2;
         this._moveProfiles = [];
         this._weaponProfiles = [];
         this._commandProfiles = [];
         this._moralProfiles = [];
-        this._magicProfiles = [];
     }
 
     getMoveProfile(steps) {
@@ -286,15 +304,6 @@ export class CBUnitType {
         return this;
     }
 
-    getMagicProfile(steps) {
-        return this._magicProfiles[steps];
-    }
-
-    setMagicProfile(steps, magicProfile) {
-        this._magicProfiles[steps] = magicProfile;
-        return this;
-    }
-
     get name() {
         return this._name;
     }
@@ -303,24 +312,16 @@ export class CBUnitType {
         return this._troopPaths;
     }
 
-    getFormationPaths() {
-        return this._formationPaths;
+    getMaxStepCount() {
+        return this.getMaxFiguresCount() * this.getFigureStepCount();
     }
 
-    getTroopMaxStepCount() {
-        return this._maxStepCount;
-    }
-
-    getFormationMinStepCount() {
-        return 3;
-    }
-
-    getFormationMaxStepCount() {
-        return this._maxStepCount*this.getMaxFiguresCount();
+    getFigureStepCount() {
+        return this._stepsByFigure;
     }
 
     getMaxFiguresCount() {
-        return (this._formationPaths.length/this._maxStepCount)+1;
+        return 1;
     }
 
     getMovementPoints(steps) {
@@ -340,10 +341,66 @@ export class CBUnitType {
     }
 }
 
+export class CBCharacterType extends CBUnitType {
+
+    constructor(name, troopPaths) {
+        super(name, troopPaths);
+        this._magicProfiles = [];
+    }
+
+    getMagicProfile(steps) {
+        return this._magicProfiles[steps];
+    }
+
+    setMagicProfile(steps, magicProfile) {
+        this._magicProfiles[steps] = magicProfile;
+        return this;
+    }
+
+    createUnit(wing, steps= 2) {
+        let unit = new CBCharacter(this, wing);
+        unit.steps = steps;
+        return unit;
+    }
+
+}
+
+export class CBTroopType extends CBUnitType {
+
+    constructor(name, troopPaths, formationPaths = []) {
+        super(name, troopPaths);
+        this._formationPaths = formationPaths;
+    }
+
+    getFormationPaths() {
+        return this._formationPaths;
+    }
+
+    getFormationMinStepCount() {
+        return 3;
+    }
+
+    getFormationMaxStepCount() {
+        return this._stepsByFigure*this.getMaxFiguresCount();
+    }
+
+    getMaxFiguresCount() {
+        return (this._formationPaths.length/this._stepsByFigure)+1;
+    }
+
+    createUnit(wing, steps = 2) {
+        let unit = steps<=this.getFigureStepCount() ? new CBTroop(this, wing) : new CBFormation(this, wing);
+        unit.steps = steps;
+        return unit;
+    }
+
+}
+
 export class CBWing {
 
     constructor(player, banner) {
         this._player = player;
+        this._player._registerWing(this);
         this._orderInstruction = CBOrderInstruction.DEFEND;
         this._retreatZone = [];
         this._moral = 11;
@@ -644,7 +701,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._movementPoints=type.getMovementPoints(2);
         this._extendedMovementPoints=type.getExtendedMovementPoints(2);
         this._tiredness=0;
-        this._lackOfMunitions=0;
+        this._munitions=0;
         this._cohesion=0;
         this._engaging=false;
         this._charging=CBCharge.NONE;
@@ -670,7 +727,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         unit._extendedMovementPoints = this._extendedMovementPoints;
         unit.lossSteps = this.lossSteps;
         unit.cohesion = this.cohesion;
-        unit.lackOfMunitions = this.lackOfMunitions;
+        unit.munitions = this.munitions;
         unit.tiredness = this.tiredness;
     }
 
@@ -725,8 +782,8 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
             extendedMovementPoints: this._extendedMovementPoints,
             tiredness: this._tiredness,
             tirednessArtifact: this._tirednessArtifact,
-            lackOfMunitions: this._lackOfMunitions,
-            lackOfMunitionsArtifact: this._lackOfMunitionsArtifact,
+            munitions: this._munitions,
+            munitionsArtifact: this._munitionsArtifact,
             cohesion: this._cohesion,
             cohesionArtifact: this._cohesionArtifact,
             playedArtifact: this._playedArtifact,
@@ -746,8 +803,8 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._extendedMovementPoints = memento.extendedMovementPoints;
         this._tiredness = memento.tiredness;
         this._tirednessArtifact = memento.tirednessArtifact;
-        this._lackOfMunitions = memento.lackOfMunitions;
-        this._lackOfMunitionsArtifact = memento.lackOfMunitionsArtifact;
+        this._munitions = memento.munitions;
+        this._munitionsArtifact = memento.munitionsArtifact;
         this._cohesion = memento.cohesion;
         this._cohesionArtifact = memento.cohesionArtifact;
         this._playedArtifact = memento.playedArtifact;
@@ -869,16 +926,14 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     init(player) {
         super.init(player);
         if (player === this.player) {
-            this._movementPoints=this._type.getMovementPoints(this.remainingStepCount);
-            this._extendedMovementPoints=this._type.getExtendedMovementPoints(this.remainingStepCount);
+            this._movementPoints=this._type.getMovementPoints(this.steps);
+            this._extendedMovementPoints=this._type.getExtendedMovementPoints(this.steps);
         }
     }
 
-    reset(player) {
-        if (player === this.player) {
-            this._orderGiven = false;
-        }
-        super.reset(player);
+    reactivate() {
+        this._orderGiven = false;
+        super.reactivate();
     }
 
     get carried() {
@@ -898,7 +953,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     get nominalMovementPoints() {
-        return this._type.getMovementPoints(this.remainingStepCount);
+        return this._type.getMovementPoints(this.steps);
     }
 
     get movementPoints() {
@@ -954,15 +1009,19 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     get maxStepCount() {
-        return this._type.getTroopMaxStepCount();
+        return this._type.getFigureStepCount();
     }
 
     get lossSteps() {
         return this._lossSteps;
     }
 
-    get remainingStepCount() {
+    get steps() {
         return this.maxStepCount - this.lossSteps;
+    }
+
+    set steps(steps) {
+        this.lossSteps = this.maxStepCount - steps;
     }
 
     set lossSteps(lossSteps) {
@@ -1094,63 +1153,63 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._updateTiredness(this._tiredness-1);
     }
 
-    fixTirednessLevel(tirednessLevel) {
+    setTiredness(tirednessLevel) {
         Memento.register(this);
         this._updateTiredness(tirednessLevel);
     }
 
-    _updateLackOfMunitions(lackOfMunitions) {
-        console.assert(lackOfMunitions===CBLackOfMunitions.NONE
-            || lackOfMunitions===CBLackOfMunitions.SCARCE
-            || lackOfMunitions===CBLackOfMunitions.EXHAUSTED);
-        this._lackOfMunitions = lackOfMunitions;
-        this._lackOfMunitionsArtifact && this._element.deleteArtifact(this._lackOfMunitionsArtifact);
-        delete this._lackOfMunitionsArtifact;
-        if (this._lackOfMunitions === CBLackOfMunitions.SCARCE) {
-            this._lackOfMunitionsArtifact = this.createMarkerArtifact("./../images/markers/scarceamno.png", 4);
+    _updateMunitions(munitions) {
+        console.assert(munitions===CBMunitions.NONE
+            || munitions===CBMunitions.SCARCE
+            || munitions===CBMunitions.EXHAUSTED);
+        this._munitions = munitions;
+        this._munitionsArtifact && this._element.deleteArtifact(this._munitionsArtifact);
+        delete this._munitionsArtifact;
+        if (this._munitions === CBMunitions.SCARCE) {
+            this._munitionsArtifact = this.createMarkerArtifact("./../images/markers/scarceamno.png", 4);
         }
-        else if (this._lackOfMunitions === CBLackOfMunitions.EXHAUSTED) {
-            this._lackOfMunitionsArtifact = this.createMarkerArtifact("./../images/markers/lowamno.png", 4);
-        }
-    }
-
-    set lackOfMunitions(lackOfMunitions) {
-        this._lackOfMunitions = lackOfMunitions;
-        this._lackOfMunitionsArtifact && this._element.removeArtifact(this._lackOfMunitionsArtifact);
-        delete this._lackOfMunitionsArtifact;
-        if (this._lackOfMunitions === CBLackOfMunitions.SCARCE) {
-            this._lackOfMunitionsArtifact = this.setMarkerArtifact("./../images/markers/scarceamno.png", 4);
-        }
-        else if (this._lackOfMunitions === CBLackOfMunitions.EXHAUSTED) {
-            this._lackOfMunitionsArtifact = this.setMarkerArtifact("./../images/markers/lowamno.png", 4);
+        else if (this._munitions === CBMunitions.EXHAUSTED) {
+            this._munitionsArtifact = this.createMarkerArtifact("./../images/markers/lowamno.png", 4);
         }
     }
 
-    get lackOfMunitions() {
-        return this._lackOfMunitions;
+    set munitions(munitions) {
+        this._munitions = munitions;
+        this._munitionsArtifact && this._element.removeArtifact(this._munitionsArtifact);
+        delete this._munitionsArtifact;
+        if (this._munitions === CBMunitions.SCARCE) {
+            this._munitionsArtifact = this.setMarkerArtifact("./../images/markers/scarceamno.png", 4);
+        }
+        else if (this._munitions === CBMunitions.EXHAUSTED) {
+            this._munitionsArtifact = this.setMarkerArtifact("./../images/markers/lowamno.png", 4);
+        }
+    }
+
+    get munitions() {
+        return this._munitions;
     }
 
     areMunitionsScarce() {
-        return this._lackOfMunitions === CBLackOfMunitions.SCARCE;
+        return this._munitions === CBMunitions.SCARCE;
     }
 
     areMunitionsExhausted() {
-        return this._lackOfMunitions === CBLackOfMunitions.EXHAUSTED;
+        return this._munitions === CBMunitions.EXHAUSTED;
     }
 
-    addOneLackOfMunitionsLevel() {
+    addOneMunitionsLevel() {
         Memento.register(this);
-        this._updateLackOfMunitions(this._lackOfMunitions+1);
+        this._updateMunitions(this._munitions+1);
     }
 
     replenishMunitions() {
         Memento.register(this);
-        this._updateLackOfMunitions(0);
+        this._updateMunitions(0);
     }
 
-    fixLackOfMunitionsLevel(lackOfMunitionsLevel) {
+    setMunitions(munitions) {
         Memento.register(this);
-        this._updateLackOfMunitions(lackOfMunitionsLevel);
+        this._updateMunitions(munitions);
     }
 
     get commandLevel() {
@@ -1207,13 +1266,32 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     addOneCohesionLevel() {
+        this.markCohesion(this._cohesion + 1);
+    }
+
+    markCohesion(cohesion) {
         Memento.register(this);
-        if (this._cohesion === CBCohesion.ROUTED) {
+        if (cohesion === CBCohesion.DESTROYED) {
             this.destroy();
         }
         else {
-            this._updateCohesion(this._cohesion + 1);
+            this._updateCohesion(cohesion);
+        }
+        if (cohesion !== CBCohesion.GOOD_ORDER) {
             this.markAsCharging(CBCharge.NONE);
+        }
+    }
+
+    setCohesion(cohesion) {
+        Memento.register(this);
+        if (cohesion === CBCohesion.DESTROYED) {
+            this.destroy();
+        }
+        else {
+            this._updateCohesion(cohesion);
+        }
+        if (cohesion !== CBCohesion.GOOD_ORDER) {
+            this.setCharging(CBCharge.NONE);
         }
     }
 
@@ -1244,9 +1322,6 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     _updateEngagement(engaged, charging) {
         if(this._engaging !== engaged || this._charging !== charging) {
             this._engaging = engaged;
-            if (this._charging === CBCharge.CHARGING && charging === CBCharge.NONE) {
-                this.addOneTirednessLevel();
-            }
             this._charging = charging;
             this._engagingArtifact && this._element.deleteArtifact(this._engagingArtifact);
             delete this._engagingArtifact;
@@ -1266,6 +1341,13 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         }
     }
 
+    _setEngagement(engaged, charging) {
+        if (this._charging === CBCharge.CHARGING && charging === CBCharge.NONE) {
+            this.addOneTirednessLevel();
+        }
+        this._updateEngagement(engaged, charging);
+    }
+
     isEngaging() {
         return this._engaging;
     }
@@ -1282,17 +1364,17 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
             else if (charging === CBCharge.BEGIN_CHARGE) charging = CBCharge.CAN_CHARGE;
         }
         else charging = CBCharge.NONE;
-        this._updateEngagement(engaging, charging);
+        this._setEngagement(engaging, charging);
     }
 
     markAsEngaging(engaging) {
         Memento.register(this);
-        this._updateEngagement(engaging, this._charging);
+        this._setEngagement(engaging, this._charging);
     }
 
     markAsCharging(charging) {
         Memento.register(this);
-        this._updateEngagement(this._engaging, charging);
+        this._setEngagement(this._engaging, charging);
     }
 
     acknowledgeCharge(moveEnd = false) {
@@ -1306,42 +1388,54 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         }
     }
 
+    setEngaging(engaging) {
+        Memento.register(this);
+        this._updateEngagement(engaging, CBCharge.NONE);
+    }
+
+    setCharging(charging) {
+        Memento.register(this);
+        this._updateEngagement(false, charging);
+    }
+
     _getAllArtifacts() {
         let artifacts = super._getAllArtifacts();
         this._cohesionArtifact && artifacts.push(this._cohesionArtifact);
         this._engagingArtifact && artifacts.push(this._engagingArtifact);
-        this._lackOfMunitionsArtifact && artifacts.push(this._lackOfMunitionsArtifact);
+        this._munitionsArtifact && artifacts.push(this._munitionsArtifact);
         this._tirednessArtifact && artifacts.push(this._tirednessArtifact);
         this._playedArtifact && artifacts.push(this._playedArtifact);
         return artifacts;
     }
 
     get moveProfile() {
-        return this._type.getMoveProfile(this.remainingStepCount);
+        return this._type.getMoveProfile(this.steps);
     }
 
     get weaponProfile() {
-        return this._type.getWeaponProfile(this.remainingStepCount);
+        return this._type.getWeaponProfile(this.steps);
     }
 
     get commandProfile() {
-        return this._type.getCommandProfile(this.remainingStepCount);
+        return this._type.getCommandProfile(this.steps);
     }
 
     get moralProfile() {
-        return this._type.getMoralProfile(this.remainingStepCount);
+        return this._type.getMoralProfile(this.steps);
     }
 
+    static DIMENSION = new Dimension2D(142, 142);
+    static MARKERS_POSITION = [
+        new Point2D(CBUnit.DIMENSION.w/2, -CBUnit.DIMENSION.h/2),
+        new Point2D(-CBUnit.DIMENSION.w/2, -CBUnit.DIMENSION.h/2),
+        new Point2D(-CBUnit.DIMENSION.w/2, 0),
+        new Point2D(-CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2),
+        new Point2D(0, CBUnit.DIMENSION.h/2),
+        new Point2D(CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2),
+        new Point2D(CBUnit.DIMENSION.w/2, 0)
+    ];
 }
-CBUnit.DIMENSION = new Dimension2D(142, 142);
-CBUnit.MARKERS_POSITION = [
-    new Point2D(CBUnit.DIMENSION.w/2, -CBUnit.DIMENSION.h/2),
-    new Point2D(-CBUnit.DIMENSION.w/2, -CBUnit.DIMENSION.h/2),
-    new Point2D(-CBUnit.DIMENSION.w/2, 0),
-    new Point2D(-CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2),
-    new Point2D(0, CBUnit.DIMENSION.h/2),
-    new Point2D(CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2),
-    new Point2D(CBUnit.DIMENSION.w/2, 0)];
+
 Object.defineProperty(CBHexLocation.prototype, "units", {
     get: function() {
         return this.playables.filter(playable=>playable.unitNature);
@@ -1457,7 +1551,7 @@ export class CBFormation extends CBUnit {
     }
 
     takeALoss() {
-        if (this.remainingStepCount <= this.minStepCount) {
+        if (this.steps <= this.minStepCount) {
             let {fromHex, toHex} = this.game.arbitrator.getTroopsAfterFormationBreak(this);
             this.breakFormation(fromHex, toHex)
         }
@@ -1592,7 +1686,7 @@ export class CBCharacter extends CBUnit {
     }
 
     get magicProfile() {
-        return this.type.getMagicProfile(this.remainingStepCount);
+        return this.type.getMagicProfile(this.steps);
     }
 
     get magicArt() {

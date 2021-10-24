@@ -112,7 +112,7 @@ describe("Recover teacher", ()=> {
         then:
             assert(arbitrator.isAllowedToReplenishMunitions(unit12)).isFalse();
         when:
-            unit12.addOneLackOfMunitionsLevel();
+            unit12.addOneLevelOfMunitionsLevel();
         then:
             assert(arbitrator.isAllowedToReplenishMunitions(unit12)).isTrue();
     });

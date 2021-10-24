@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    CBFormation, CBLackOfMunitions, CBOrderInstruction, CBTiredness, CBTroop
+    CBFormation, CBMunitions, CBOrderInstruction, CBTiredness, CBTroop
 } from "../unit.js";
 import {
     distanceFromHexToHex
@@ -89,7 +89,7 @@ export class CBCommandTeacher {
     isAllowedToBreakFormation(unit) {
         if (!unit.formationNature) return false;
         if (!this.hasOrderToCombine(unit)) return false;
-        if (unit.remainingStepCount>8) return false;
+        if (unit.steps>8) return false;
         if (unit.isExhausted()) return false;
         if (!unit.isInGoodOrder()) return false;
         return true;
@@ -104,7 +104,7 @@ export class CBCommandTeacher {
         if (unit1.isExhausted() || unit2.isExhausted()) return false;
         if (unit1.isPlayed() || unit2.isPlayed()) return false;
         if (!this.hasOrderToCombine(unit1) || !this.hasOrderToCombine(unit2)) return false;
-        if (unit1.remainingStepCount + unit2.remainingStepCount > unit.maxStepCount) return false;
+        if (unit1.steps + unit2.steps > unit.maxStepCount) return false;
         return true;
     }
 
@@ -125,9 +125,9 @@ export class CBCommandTeacher {
         let [unit1, unit2] = units;
         let removedUnit = unit1 === unit ? unit2 : unit1;
         let mergedUnit = unit.clone();
-        mergedUnit.fixRemainingLossSteps(unit1.remainingStepCount + unit2.remainingStepCount);
-        if (!mergedUnit.isTired() && removedUnit.isTired()) mergedUnit.fixTirednessLevel(CBTiredness.TIRED);
-        if (mergedUnit.lackOfMunitions < removedUnit.lackOfMunitions) mergedUnit.fixLackOfMunitionsLevel(removedUnit.lackOfMunitions);
+        mergedUnit.fixRemainingLossSteps(unit1.steps + unit2.steps);
+        if (!mergedUnit.isTired() && removedUnit.isTired()) mergedUnit.setTiredness(CBTiredness.TIRED);
+        if (mergedUnit.munitions < removedUnit.munitions) mergedUnit.setMunitions(removedUnit.munitions);
         return { replacement:mergedUnit, replaced:units };
     }
 
@@ -138,19 +138,19 @@ export class CBCommandTeacher {
             while (steps) {
                 let troop = new CBTroop(formation.type, formation.wing);
                 troop.angle = formation.angle;
-                let maxSteps = formation.type.getTroopMaxStepCount();
+                let maxSteps = formation.type.getFigureStepCount();
                 let unitSteps = steps>=maxSteps?maxSteps:steps;
                 troop.fixRemainingLossSteps(unitSteps);
                 steps -= unitSteps;
                 if (formation.isDisrupted()) troop.disrupt();
-                if (formation.isTired()) troop.fixTirednessLevel(CBTiredness.TIRED);
-                if (formation.lackOfMunitions) troop.fixLackOfMunitionsLevel(formation.lackOfMunitions);
+                if (formation.isTired()) troop.setTiredness(CBTiredness.TIRED);
+                if (formation.munitions) troop.setMunitions(formation.munitions);
                 troops.push(troop);
             }
             return troops;
         }
 
-        let steps = formation.remainingStepCount;
+        let steps = formation.steps;
         let fromHexUnits = createTroops(Math.ceil(steps/2));
         let toHexUnits = createTroops(Math.floor(steps/2));
         return { fromHex:fromHexUnits, toHex:toHexUnits };
@@ -203,12 +203,12 @@ export class CBCommandTeacher {
         let replaced = [...unit.hexLocation.units, ...hex.units];
         let stepCount = 0;
         for (let troop of replaced) {
-            stepCount += troop.remainingStepCount;
+            stepCount += troop.steps;
         }
         let replacement = new CBFormation(unit.type, unit.wing, Math.ceil(stepCount/2));
         for (let troop of replaced) {
-            if (troop.isTired()&& !replacement.isTired()) replacement.fixTirednessLevel(CBTiredness.TIRED);
-            if (troop.lackOfMunitions > replacement.lackOfMunitions) replacement.fixLackOfMunitionsLevel(troop.lackOfMunitions);
+            if (troop.isTired()&& !replacement.isTired()) replacement.setTiredness(CBTiredness.TIRED);
+            if (troop.munitions > replacement.munitions) replacement.setMunitions(troop.munitions);
         }
         replacement.fixRemainingLossSteps(stepCount);
         return { replacement, replaced };
@@ -225,30 +225,30 @@ export class CBCommandTeacher {
         let removed = new Set([...formation.hexLocation.fromHex.units, ...formation.hexLocation.toHex.units]);
         let stepCount = 0;
         for (let unit of removed) {
-            stepCount += unit.remainingStepCount;
+            stepCount += unit.steps;
         }
         var tired = CBTiredness.NONE;
-        var lackOfMunitions = CBLackOfMunitions.NONE;
+        var munitions = CBMunitions.NONE;
         for (let unit of removed) {
             if (unit.isTired() && !formation.isTired()) tired = CBTiredness.TIRED;
-            if (unit.lackOfMunitions > formation.lackOfMunitions) lackOfMunitions = unit.lackOfMunitions;
+            if (unit.munitions > formation.munitions) munitions = unit.munitions;
         }
         removed.delete(formation);
-        return { stepCount, tired, lackOfMunitions, removed:[...removed] };
+        return { stepCount, tired, munitions, removed:[...removed] };
     }
 
     getHexesToReleaseFormation(formation) {
         let hexes = [];
         if (formation.hexLocation.fromHex.units.length===1) hexes.push(formation.hexLocation.fromHex);
         if (formation.hexLocation.toHex.units.length===1) hexes.push(formation.hexLocation.toHex);
-        let stepCount = formation.remainingStepCount - 3;
+        let stepCount = formation.steps - 3;
         if (stepCount>2) stepCount=2;
         return { hexes, stepCount }
     }
 
     isAllowedToReleaseTroops(formation) {
         if (!formation.formationNature || !this._isUnitJoinable(formation, formation)) return false;
-        if (formation.remainingStepCount<4) return false;
+        if (formation.steps<4) return false;
         if (formation.hexLocation.fromHex.units.length===1) return true;
         if (formation.hexLocation.toHex.units.length===1) return true;
         return false;
@@ -257,9 +257,9 @@ export class CBCommandTeacher {
     releaseTroop(formation, hex, steps) {
         let troop = new CBTroop(formation.type, formation.wing);
         troop.fixRemainingLossSteps(steps);
-        let stepCount = formation.remainingStepCount - steps;
-        if (formation.isTired()) troop.fixTirednessLevel(CBTiredness.TIRED);
-        if (formation.lackOfMunitions) troop.fixLackOfMunitionsLevel(formation.lackOfMunitions);
+        let stepCount = formation.steps - steps;
+        if (formation.isTired()) troop.setTiredness(CBTiredness.TIRED);
+        if (formation.munitions) troop.setMunitions(formation.munitions);
         return { stepCount, troop };
     }
 }

@@ -24,7 +24,7 @@ import {
     CBGame, CBMoveMode
 } from "../../jslib/cblades/playable.js";
 import {
-    CBCharacter, CBCharge, CBCommandProfile, CBFormation, CBLackOfMunitions, CBMagicProfile, CBMoralProfile,
+    CBCharacter, CBCharge, CBCommandProfile, CBFormation, CBMunitions, CBMagicProfile, CBMoralProfile,
     CBMoveProfile, CBOrderInstruction,
     CBTiredness,
     CBTroop,
@@ -443,7 +443,7 @@ describe("Arbitrator", ()=> {
             var {arbitrator, wing1, unit12, unit21} = create2Players4UnitsTinyGame();
         when:
             wing1.setOrderInstruction(CBOrderInstruction.ATTACK);
-            unit12.fixTirednessLevel(CBTiredness.EXHAUSTED);
+            unit12.setTiredness(CBTiredness.EXHAUSTED);
             var allowedActions = arbitrator.getAllowedActions(unit12);
         then:
             assertActions(allowedActions,{
@@ -494,8 +494,8 @@ describe("Arbitrator", ()=> {
             });
         when:
             unit12.disrupt();
-            unit12.fixTirednessLevel(CBTiredness.TIRED);
-            unit12.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            unit12.setTiredness(CBTiredness.TIRED);
+            unit12.setMunitions(CBMunitions.SCARCE);
             unit21.hexLocation = map.getHex(10, 1);
             unit22.hexLocation = map.getHex(11, 1);
             leader21.hexLocation = map.getHex(10, 1);
@@ -589,7 +589,7 @@ describe("Arbitrator", ()=> {
             var {arbitrator, wing1, unit12, unit21} = create2Players4UnitsTinyGame();
             wing1.setOrderInstruction(CBOrderInstruction.DEFEND);
         when:
-            unit12.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            unit12.setMunitions(CBMunitions.SCARCE);
             unit21.hexLocation = unit12.hexLocation.getNearHex(0).getNearHex(0);
             var allowedActions = arbitrator.getAllowedActions(unit12);
         then:
@@ -621,7 +621,7 @@ describe("Arbitrator", ()=> {
             wing1.setOrderInstruction(CBOrderInstruction.ATTACK);
             unit12.receivesOrder(true);
         when:
-            unit12.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            unit12.setMunitions(CBMunitions.SCARCE);
             unit12.disrupt();
             unit21.hexLocation = unit12.hexLocation.getNearHex(0).getNearHex(0);
             var allowedActions = arbitrator.getAllowedActions(unit12);
@@ -638,7 +638,7 @@ describe("Arbitrator", ()=> {
                 noAction: true
             });
         when:
-            unit12.fixTirednessLevel(CBTiredness.TIRED);
+            unit12.setTiredness(CBTiredness.TIRED);
             allowedActions = arbitrator.getAllowedActions(unit12);
         then:
             assertActions(allowedActions, {
@@ -749,7 +749,7 @@ describe("Arbitrator", ()=> {
             var {arbitrator, map, leader11} = create2Players4UnitsTinyGame();
         when:
             leader11.hexLocation = map.getHex(1, 5);
-            leader11.fixLackOfMunitionsLevel(CBLackOfMunitions.SCARCE);
+            leader11.setMunitions(CBMunitions.SCARCE);
             leader11.disrupt();
             var allowedActions = arbitrator.getAllowedActions(leader11);
         then:
@@ -766,7 +766,7 @@ describe("Arbitrator", ()=> {
                 noAction: true
             });
         when:
-            leader11.fixTirednessLevel(CBTiredness.TIRED);
+            leader11.setTiredness(CBTiredness.TIRED);
             leader11.choseSpell(new TestSpellDefinition());
             allowedActions = arbitrator.getAllowedActions(leader11);
         then:

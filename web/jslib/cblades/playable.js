@@ -7,13 +7,13 @@ import {
     CBHexLocation
 } from "./map.js";
 import {
-    DMask
+    DMask, DMultiStatePushButton, DPushButton
 } from "../widget.js";
 import {
     DImageArtifact, DMultiImagesArtifact, DSimpleLevel, DStackedLevel, DStaticLevel
 } from "../board.js";
 import {
-    CBAbstractGame, CBActuator, CBPiece, CBPieceImageArtifact, HexLocatableMixin, PlayableMixin
+    CBAbstractGame, CBAction, CBActuator, CBPiece, CBPieceImageArtifact, HexLocatableMixin, PlayableMixin
 } from "./game.js";
 import {
     inside, Matrix2D, Point2D
@@ -627,27 +627,148 @@ export class CBLevelBuilder {
     }
 }
 
-export class CBGame extends CBAbstractGame {
+export function RetractableGameMixin(gameClass) {
+
+    return class extends gameClass {
+
+        retract(artifacts) {
+            this.appear();
+            this._retracted = artifacts;
+            for (let artifact of this._retracted) {
+                artifact.alpha = 0;
+            }
+        }
+
+        appear() {
+            if (this._retracted) {
+                for (let artifact of this._retracted) {
+                    artifact.alpha = 1;
+                }
+                delete this._retracted;
+            }
+        }
+
+    }
+
+}
+
+export class CBGame extends RetractableGameMixin(CBAbstractGame) {
 
     constructor() {
         super(new CBLevelBuilder().buildLevels());
     }
 
-    retract(artifacts) {
-        this.appear();
-        this._retracted = artifacts;
-        for (let artifact of this._retracted) {
-            artifact.alpha = 0;
+    _createEndOfTurnCommand() {
+        this._endOfTurnCommand = new DPushButton(
+            "./../images/commands/turn.png", "./../images/commands/turn-inactive.png",
+            new Point2D(-60, -60), animation=>{
+                this.currentPlayer.finishTurn(animation);
+            }).setTurnAnimation(true);
+        this._endOfTurnCommand._processGlobalEvent = (source, event)=>{
+            if (event === CBAbstractGame.TURN_EVENT ||
+                event === CBAction.PROGRESSION_EVENT ||
+                event === PlayableMixin.DESTROYED_EVENT) {
+                this._endOfTurnCommand.active = this.turnIsFinishable();
+            }
+        }
+        Mechanisms.addListener(this._endOfTurnCommand);
+    }
+
+    setMenu() {
+        this._createEndOfTurnCommand();
+        this.showCommand(this._endOfTurnCommand);
+        this._showCommand = new DPushButton(
+            "./../images/commands/show.png", "./../images/commands/show-inactive.png",
+            new Point2D(-120, -60), animation=>{
+                this.hideCommand(this._showCommand);
+                this.showCommand(this._hideCommand);
+                this.showCommand(this._undoCommand);
+                this.showCommand(this._redoCommand);
+                this.showCommand(this._settingsCommand);
+                this.showCommand(this._saveCommand);
+                this.showCommand(this._loadCommand);
+                this.showCommand(this._insertLevelCommand);
+                this.showCommand(this._fullScreenCommand);
+                animation();
+            });
+        this.showCommand(this._showCommand);
+        this._hideCommand = new DPushButton(
+            "./../images/commands/hide.png", "./../images/commands/hide-inactive.png",
+            new Point2D(-120, -60), animation=>{
+                this.showCommand(this._showCommand);
+                this.hideCommand(this._hideCommand);
+                this.hideCommand(this._undoCommand);
+                this.hideCommand(this._redoCommand);
+                this.hideCommand(this._settingsCommand);
+                this.hideCommand(this._saveCommand);
+                this.hideCommand(this._loadCommand);
+                this.hideCommand(this._insertLevelCommand);
+                this.hideCommand(this._fullScreenCommand);
+                animation();
+            });
+        this._undoCommand = new DPushButton(
+            "./../images/commands/undo.png", "./../images/commands/undo-inactive.png",
+            new Point2D(-180, -60), animation=>{
+                Memento.undo();
+                animation();
+            }).setTurnAnimation(false);
+        this._redoCommand = new DPushButton(
+            "./../images/commands/redo.png", "./../images/commands/redo-inactive.png",
+            new Point2D(-240, -60), animation=>{
+                Memento.redo();
+                animation();
+            }).setTurnAnimation(true);
+        this._settingsCommand = new DPushButton(
+            "./../images/commands/settings.png","./../images/commands/settings-inactive.png",
+            new Point2D(-300, -60), animation=>{});
+        this._saveCommand = new DPushButton(
+            "./../images/commands/save.png", "./../images/commands/save-inactive.png",
+            new Point2D(-360, -60), animation=>{});
+        this._loadCommand = new DPushButton(
+            "./../images/commands/load.png", "./../images/commands/load-inactive.png",
+            new Point2D(-420, -60), animation=>{});
+        this._insertLevelCommand = new DMultiStatePushButton(
+            ["./../images/commands/insert0.png", "./../images/commands/insert1.png", "./../images/commands/insert2.png"],
+            new Point2D(-480, -60), (state, animation)=>{
+                this._visibility = (state+1)%3;
+                Mechanisms.fire(this, CBActuator.VISIBILITY_EVENT, this._visibility);
+                Mechanisms.fire(this, CBAbstractGame.VISIBILITY_EVENT, this._visibility>=1);
+                animation();
+            })
+            .setState(this._visibility)
+            .setTurnAnimation(true, ()=>this._insertLevelCommand.setState(this._visibility));
+        this._fullScreenCommand = new DMultiStatePushButton(
+            ["./../images/commands/full-screen-on.png", "./../images/commands/full-screen-off.png"],
+            new Point2D(-540, -60), (state, animation)=>{
+                if (!state)
+                    getDrawPlatform().requestFullscreen();
+                else
+                    getDrawPlatform().exitFullscreen();
+                animation();
+            })
+            .setTurnAnimation(true, ()=>this._fullScreenCommand.setState(this._fullScreenCommand.state?0:1));
+        this._settingsCommand.active = false;
+        this._saveCommand.active = false;
+        this._loadCommand.active = false;
+    }
+
+    _reset(animation) {
+        this.closeWidgets();
+        this._resetPlayables(this._currentPlayer);
+        let indexPlayer = this._players.indexOf(this._currentPlayer);
+        this._currentPlayer = this._players[(indexPlayer + 1) % this._players.length];
+        this._initPlayables(this._currentPlayer);
+        animation && animation();
+        Memento.clear();
+        Mechanisms.fire(this, CBAbstractGame.TURN_EVENT);
+    }
+
+    nextTurn(animation) {
+        if (!this.selectedPlayable || this.canUnselectPlayable()) {
+            this._reset(animation);
         }
     }
 
-    appear() {
-        if (this._retracted) {
-            for (let artifact of this._retracted) {
-                artifact.alpha = 1;
-            }
-            delete this._retracted;
-        }
-    }
+    static TURN_EVENT = "game-turn";
 
 }
