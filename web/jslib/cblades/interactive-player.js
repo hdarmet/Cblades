@@ -20,10 +20,10 @@ import {
     DImage
 } from "../draw.js";
 import {
-    CBPlayer
+    CBUnitPlayer
 } from "./unit.js";
 
-export class CBInteractivePlayer extends CBPlayer {
+export class CBInteractivePlayer extends CBUnitPlayer {
 
     constructor() {
         super();

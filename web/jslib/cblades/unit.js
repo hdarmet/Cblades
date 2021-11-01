@@ -20,7 +20,7 @@ import {
     SelectableArtifactMixin,
     CBLevelBuilder,
     CBGame,
-    CBPlayableActuatorTrigger
+    CBPlayableActuatorTrigger, CBBasicPlayer
 } from "./playable.js";
 import {
     CBHexLocation
@@ -72,7 +72,7 @@ export let CBOrderInstruction = {
     RETREAT: 3
 }
 
-export class CBPlayer extends CBAbstractPlayer {
+export class CBUnitPlayer extends CBBasicPlayer {
 
     constructor() {
         super();
@@ -85,6 +85,10 @@ export class CBPlayer extends CBAbstractPlayer {
 
     get wings() {
         return this._wings;
+    }
+
+    get units() {
+        return this.game.playables.filter(playable=>playable.unitNature && playable.player === this);
     }
 
     finishTurn(animation) {

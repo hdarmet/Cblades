@@ -78,8 +78,8 @@ export class CBAbstractPlayer {
         return !playable.isActivated();
     }
 
-    get units() {
-        return this.game.playables.filter(playable=>playable.unitNature && playable.player === this);
+    get playables() {
+        return this.game.playables.filter(playable=>playable.player === this);
     }
 
     losePlayable(playable) {
@@ -244,7 +244,7 @@ export class CBActuator {
 
     constructor() {
         this._shown = false;
-        this._hideAllowed = true;
+        this._closeAllowed = true;
     }
 
     get triggers() {
@@ -296,7 +296,7 @@ export class CBActuator {
         }
     }
 
-    show(game) {
+    open(game) {
         Memento.register(this);
         this._shown = true;
         Mechanisms.addListener(this);
@@ -304,19 +304,19 @@ export class CBActuator {
         this.element.show(game.board);
     }
 
-    hide(game) {
+    close(game) {
         Memento.register(this);
         this._shown = false;
         Mechanisms.removeListener(this);
         this.element.hide(game.board);
     }
 
-    canBeHidden() {
-        return this._hideAllowed;
+    canBeClosed() {
+        return this._closeAllowed;
     }
 
-    enableHide(closeAllowed) {
-        this._hideAllowed = closeAllowed;
+    enableClosing(closeAllowed) {
+        this._closeAllowed = closeAllowed;
     }
 
     setVisibility(level) {}
@@ -650,13 +650,13 @@ export class CBAbstractGame {
         Memento.register(this);
         actuator.game = this;
         actuator.visibility = this._visibility;
-        actuator.show(this);
+        actuator.open(this);
         this._actuators.push(actuator);
     }
 
     enableActuatorsClosing(allowed) {
         for (let actuator of this._actuators) {
-            actuator.enableHide(allowed);
+            actuator.enableClosing(allowed);
         }
     }
 
@@ -665,8 +665,8 @@ export class CBAbstractGame {
         let actuators = this._actuators;
         this._actuators = [];
         for (let actuator of actuators) {
-            if (actuator.canBeHidden()) {
-                actuator.hide(this);
+            if (actuator.canBeClosed()) {
+                actuator.close(this);
             }
             else {
                 this._actuators.push(actuator);

@@ -17,6 +17,7 @@ import {
     CBHexSideId
 } from "./map.js";
 import {
+    CBAbstractGame,
     CBAction, CBActuator, CBStacking
 } from "./game.js";
 import {
@@ -193,7 +194,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
             let  {moveDirections, turnDirections} = this.getFormationAllowedMoves(start);
             if (moveDirections.length || turnDirections.length) {
                 let moveFormationActuator = this.createFormationMoveActuator(moveDirections, turnDirections, start);
-                moveFormationActuator.enableHide(finishable);
+                moveFormationActuator.enableClosing(finishable);
                 this.game.openActuator(moveFormationActuator);
             }
             return moveDirections.length + turnDirections.length;
@@ -202,7 +203,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
             let moveDirections = this.getAllowedMoves(start);
             if (moveDirections.length) {
                 let moveActuator = this.createMoveActuator(moveDirections, start);
-                moveActuator.enableHide(finishable);
+                moveActuator.enableClosing(finishable);
                 this.game.openActuator(moveActuator);
             }
             return moveDirections.length;
@@ -211,7 +212,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
 
     _buildMovementHelpActuator(finishable) {
         let helpActuator = this.createMovementHelpActuator(this.game.arbitrator.canGetTired(this.unit));
-        helpActuator.enableHide(finishable);
+        helpActuator.enableClosing(finishable);
         this.game.openActuator(helpActuator);
     }
 
@@ -221,7 +222,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
             this.getAllowedRotations(start);
         if (orientationDirections.length) {
             let orientationActuator = this.createRotationActuator(orientationDirections, start);
-            orientationActuator.enableHide(finishable);
+            orientationActuator.enableClosing(finishable);
             this.game.openActuator(orientationActuator);
         }
         return orientationDirections.length;
@@ -1336,7 +1337,7 @@ export class CBMovementHelpActuator extends CBActionActuator {
 
     setVisibility(level) {
         super.setVisibility(level);
-        this._trigger.setVisibility && this._trigger.setVisibility(level === CBActuator.FULL_VISIBILITY ? 1 : 0);
+        this._trigger.setVisibility && this._trigger.setVisibility(level === CBAbstractGame.FULL_VISIBILITY ? 1 : 0);
     }
 }
 
@@ -1418,7 +1419,7 @@ export class CBRotationActuator extends CBActionActuator {
     setVisibility(level) {
         super.setVisibility(level);
         for (let artifact of this.triggers) {
-            artifact.setVisibility && artifact.setVisibility(level===CBActuator.FULL_VISIBILITY ? 1:0);
+            artifact.setVisibility && artifact.setVisibility(level===CBAbstractGame.FULL_VISIBILITY ? 1:0);
         }
     }
 
@@ -1502,7 +1503,7 @@ export class CBMoveActuator extends CBActionActuator {
     setVisibility(level) {
         super.setVisibility(level);
         for (let artifact of this.triggers) {
-            artifact.setVisibility && artifact.setVisibility(level===CBActuator.FULL_VISIBILITY ? 1:0);
+            artifact.setVisibility && artifact.setVisibility(level===CBAbstractGame.FULL_VISIBILITY ? 1:0);
         }
     }
 }
@@ -1662,7 +1663,7 @@ export class CBFormationMoveActuator extends CBActionActuator {
     setVisibility(level) {
         super.setVisibility(level);
         for (let artifact of this.triggers) {
-            artifact.setVisibility && artifact.setVisibility(level===CBActuator.FULL_VISIBILITY ? 1:0);
+            artifact.setVisibility && artifact.setVisibility(level===CBAbstractGame.FULL_VISIBILITY ? 1:0);
         }
     }
 

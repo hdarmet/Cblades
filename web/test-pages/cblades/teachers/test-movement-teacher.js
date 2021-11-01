@@ -8,19 +8,17 @@ import {
     CBHexSideId, CBMap
 } from "../../../jslib/cblades/map.js";
 import {
-    CBAbstractPlayer
-} from "../../../jslib/cblades/game.js";
-import {
     CBGame
 } from "../../../jslib/cblades/playable.js";
 import {
+    CBUnitPlayer,
     CBCharacter,
     CBCommandProfile,
     CBFormation, CBMoralProfile, CBMovement,
     CBMoveProfile,
     CBTroop,
-    CBUnitType, CBWeaponProfile,
-    CBWing
+    CBWeaponProfile,
+    CBWing, CBTroopType
 } from "../../../jslib/cblades/unit.js";
 import {
     CBMapTeacher
@@ -73,7 +71,7 @@ describe("Movement teacher", ()=> {
         }
     }
 
-    class CBTestUnitType extends CBUnitType {
+    class CBTestUnitType extends CBTroopType {
         constructor(name, troopPaths, formationPaths=[]) {
             super(name, troopPaths, formationPaths);
             for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
@@ -91,7 +89,7 @@ describe("Movement teacher", ()=> {
         game.setMap(map);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBAbstractPlayer();
+        let player1 = new CBUnitPlayer();
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
@@ -109,7 +107,7 @@ describe("Movement teacher", ()=> {
 
     function create2Players4UnitsTinyGame() {
         let {game, arbitrator, map, player1, wing1, unit11, unit12, leader11} = createTinyGame();
-        let player2 = new CBAbstractPlayer();
+        let player2 = new CBUnitPlayer();
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
@@ -127,7 +125,7 @@ describe("Movement teacher", ()=> {
 
     function create2Players5UnitsTinyGame() {
         let {game, arbitrator, map, player1, wing1, unit11, unit12, leader11} = createTinyGame();
-        let player2 = new CBAbstractPlayer();
+        let player2 = new CBUnitPlayer();
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
@@ -149,10 +147,10 @@ describe("Movement teacher", ()=> {
         let game = new CBGame();
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBAbstractPlayer();
+        let player1 = new CBUnitPlayer();
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBAbstractPlayer();
+        let player2 = new CBUnitPlayer();
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -187,10 +185,10 @@ describe("Movement teacher", ()=> {
         let game = new CBGame();
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBAbstractPlayer();
+        let player1 = new CBUnitPlayer();
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBAbstractPlayer();
+        let player2 = new CBUnitPlayer();
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);

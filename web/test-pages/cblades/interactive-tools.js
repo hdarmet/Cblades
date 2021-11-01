@@ -18,6 +18,7 @@ export function paint(game) {
 }
 
 export function repaint(game) {
+    loadAllImages();
     resetAllDirectives(game.board);
     game.board.repaint();
     loadAllImages();
@@ -52,9 +53,16 @@ export function clickOnArtifact(boardOrGame, artifact) {
     mockPlatform.dispatchEvent(boardOrGame.root, "click", mouseEvent);
 }
 
-export function mouseMoveOnArtifact(gameOrBoard, artifact) {
+export function mouseMoveOnArtifactPoint(gameOrBoard, artifact, x, y) {
+    var mouseEvent = createEvent("mousemove", {offsetX:x, offsetY:y, artifact});
+    mockPlatform.dispatchEvent(gameOrBoard.root, "mousemove", mouseEvent);
+}
+
+export function mouseMoveOnArtifact(gameOrBoard, artifact, x, y) {
     let artifactLocation = artifact.viewportLocation;
-    var mouseEvent = createEvent("mousemove", {offsetX:artifactLocation.x, offsetY:artifactLocation.y, artifact});
+    if (x === undefined) x = artifactLocation.x;
+    if (y === undefined) y = artifactLocation.y;
+    var mouseEvent = createEvent("mousemove", {offsetX:x, offsetY:y, artifact});
     mockPlatform.dispatchEvent(gameOrBoard.root, "mousemove", mouseEvent);
 }
 

@@ -41,7 +41,7 @@ describe("Roughnecks Army", ()=> {
                 "./../images/units/mercenaries/character1L.png",
                 "./../images/units/mercenaries/character1Lb.png"
             ]);
-            assert(unit.getFormationPaths()).isNotDefined();
+            assert(unit.getFormationPaths).isNotDefined();
         when:
             var profile = unit.getMoveProfile(1);
         then:
@@ -100,7 +100,7 @@ describe("Roughnecks Army", ()=> {
                 "./../images/units/mercenaries/character2L.png",
                 "./../images/units/mercenaries/character2Lb.png"
             ]);
-            assert(unit.getFormationPaths()).isNotDefined();
+            assert(unit.getFormationPaths).isNotDefined();
         when:
             var profile = unit.getMoveProfile(1);
         then:
@@ -161,7 +161,7 @@ describe("Roughnecks Army", ()=> {
                 "./../images/units/mercenaries/unit1L.png",
                 "./../images/units/mercenaries/unit1Lb.png"
             ]);
-            assert(unit.getFormationPaths()).isNotDefined();
+            assert(unit.getFormationPaths()).arrayEqualsTo([]);
         when:
             var profile = unit.getMoveProfile(1);
         then:

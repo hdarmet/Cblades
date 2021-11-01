@@ -137,7 +137,7 @@ describe("Interactive Command", ()=> {
             var {game, wing, leader} = createTinyGameWithLeader();
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             clickOnPiece(game, leader);
-            paint(game);
+            repaint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnTakeCommandAction(game);
@@ -169,7 +169,6 @@ describe("Interactive Command", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(commandsLayer, 4);
@@ -178,7 +177,6 @@ describe("Interactive Command", ()=> {
             assertDirectives(itemsLayer, showPlayedDice(1,2, 549, 453.1122));
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -199,7 +197,6 @@ describe("Interactive Command", ()=> {
             rollFor(5,6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(commandsLayer, 4);
@@ -208,7 +205,6 @@ describe("Interactive Command", ()=> {
             assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 453.1122));
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -228,7 +224,7 @@ describe("Interactive Command", ()=> {
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             wing.setLeader(leader);
             clickOnPiece(game, leader);
-            paint(game);
+            repaint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnDismissCommandAction(game);
@@ -261,7 +257,6 @@ describe("Interactive Command", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(commandsLayer, 4);
@@ -270,7 +265,6 @@ describe("Interactive Command", ()=> {
             assertDirectives(itemsLayer, showPlayedDice(1,2, 549, 453.1122));
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -292,7 +286,6 @@ describe("Interactive Command", ()=> {
             rollFor(5,6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(commandsLayer, 4);
@@ -301,7 +294,6 @@ describe("Interactive Command", ()=> {
             assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 453.1122));
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -321,11 +313,9 @@ describe("Interactive Command", ()=> {
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             wing.setLeader(leader);
             clickOnPiece(game, leader);
-            paint(game);
         when:
-            resetDirectives(widgetsLayer, itemsLayer);
             clickOnChangeOrdersCommandAction(game);
-            loadAllImages();
+            repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
@@ -334,7 +324,6 @@ describe("Interactive Command", ()=> {
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showDice(1, 1, 549, 453.1122));
         when:       // Clicking on the mask cancel the action
-            resetDirectives(widgetsLayer, itemsLayer);
             clickOnMask(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -354,7 +343,6 @@ describe("Interactive Command", ()=> {
             rollFor(5,6);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(commandsLayer, 4);
@@ -363,7 +351,6 @@ describe("Interactive Command", ()=> {
             assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 453.1122));
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -385,7 +372,6 @@ describe("Interactive Command", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(commandsLayer, 4);
@@ -395,7 +381,6 @@ describe("Interactive Command", ()=> {
         when:
             clickOnResult(game);
             loadAllImages();
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
@@ -409,8 +394,6 @@ describe("Interactive Command", ()=> {
             assert(getDirectives(commandsLayer, 4)).arrayEqualsTo([]);
         when: // click mask is ignored
             clickOnMask(game);
-            resetDirectives(widgetsLayer);
-            loadAllImages();
             repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
@@ -442,8 +425,6 @@ describe("Interactive Command", ()=> {
             executeAllAnimations();
             clickOnResult(game);
             clickOnChangeOrderMenu(game, 0, 0);
-            loadAllImages();
-            resetDirectives(widgetsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -451,8 +432,6 @@ describe("Interactive Command", ()=> {
         when:
             Memento.undo();
             clickOnChangeOrderMenu(game, 0, 1);
-            loadAllImages();
-            resetDirectives(widgetsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -460,8 +439,6 @@ describe("Interactive Command", ()=> {
         when:
             Memento.undo();
             clickOnChangeOrderMenu(game, 1, 0);
-            loadAllImages();
-            resetDirectives(widgetsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -469,8 +446,6 @@ describe("Interactive Command", ()=> {
         when:
             Memento.undo();
             clickOnChangeOrderMenu(game, 1, 1);
-            loadAllImages();
-            resetDirectives(widgetsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -487,7 +462,7 @@ describe("Interactive Command", ()=> {
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             wing.setLeader(leader);
             clickOnPiece(game, leader);
-            paint(game);
+            repaint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnGiveOrdersCommandAction(game);
@@ -528,8 +503,6 @@ describe("Interactive Command", ()=> {
             rollFor1Die(4);
             clickOnDice(game);
             executeAllAnimations();
-            loadAllImages();
-            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(itemsLayer, 4);
@@ -538,8 +511,6 @@ describe("Interactive Command", ()=> {
             assertDirectives(commandsLayer, showMessage("9", 586, 471.2243));
         when:
             clickOnMessage(game);
-            loadAllImages();
-            resetDirectives(markersLayer, widgetsLayer, commandsLayer, itemsLayer, actuatorsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(itemsLayer, 4);
@@ -556,10 +527,8 @@ describe("Interactive Command", ()=> {
         when:
             var giveOrdersActuator = getGiveOrdersActuator(game);
             var trigger = giveOrdersActuator.getTrigger(unit1);
-            resetDirectives(markersLayer, actuatorsLayer);
             clickOnTrigger(game, trigger);
-            loadAllImages();
-            paint(game);
+            repaint(game);
         then:
             skipDirectives(actuatorsLayer, 4);
             assertDirectives(actuatorsLayer, showOrderTrigger(zoomAndRotate0(666.6667, 264.675)));
@@ -597,10 +566,8 @@ describe("Interactive Command", ()=> {
         when:
             var giveOrdersHelpActuator = getGiveOrdersHelpActuator(game);
             var trigger = giveOrdersHelpActuator.getTrigger(unit1);
-            resetDirectives(widgetsLayer);
             clickOnTrigger(game, trigger);
-            loadAllImages();
-            paint(game);
+            repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
@@ -633,10 +600,9 @@ describe("Interactive Command", ()=> {
         when:
             var giveOrdersHelpActuator = getGiveOrdersHelpActuator(game);
             var trigger = giveOrdersHelpActuator.getTrigger(unit1);
-            resetDirectives(widgetsLayer);
             clickOnTrigger(game, trigger);
             loadAllImages();
-            paint(game);
+            repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
@@ -666,10 +632,9 @@ describe("Interactive Command", ()=> {
         when:
             var giveOrdersHelpActuator = getGiveOrdersHelpActuator(game);
             var trigger = giveOrdersHelpActuator.getTrigger(unit1);
-            resetDirectives(widgetsLayer);
             clickOnTrigger(game, trigger);
             loadAllImages();
-            paint(game);
+            repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());

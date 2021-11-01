@@ -24,8 +24,8 @@ import {
     registerEditor, unregisterEditor
 } from "../../jslib/cblades/editor.js";
 import {
-    clickOnTrigger,
-    paint, zoomAndRotate0, zoomAndRotate240
+    clickOnTrigger, mouseMoveOnTrigger,
+    paint, repaint, zoomAndRotate0, zoomAndRotate240
 } from "./interactive-tools.js";
 
 describe("Editor", ()=> {
@@ -41,6 +41,16 @@ describe("Editor", ()=> {
     after(() => {
         unregisterEditor();
     });
+
+    function showMouseOverHexTypeTrigger(type, [a, b, c, d, e, f]) {
+        return [
+            "save()",
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #FF0000", "shadowBlur = 10",
+            `drawImage(./../images/actuators/ground/${type}.png, -30, -30, 60, 60)`,
+            "restore()"
+        ]
+    }
 
     function showHexTypeTrigger(type, [a, b, c, d, e, f]) {
         return [
@@ -90,27 +100,28 @@ describe("Editor", ()=> {
     it("Checks switch to map editor mode", () => {
         given:
             var game = new CBGame();
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
             loadAllImages();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
         when:
-            resetDirectives(actuatorsLayer);
             CBGame.editMap(game);
-            paint(game);
-            loadAllImages();
+            let mapEditActuator = getMapEditorActuator(game);
+            let hexTrigger = mapEditActuator.getHexTypeTrigger(map.getHex(4, 5));
+            mouseMoveOnTrigger(game, hexTrigger);
+            repaint(game);
         then:
             skipDirectives(actuatorsLayer, 4);
-            assert(getDirectives(actuatorsLayer).length).equalsTo(3180);
-            assert(getDirectives(actuatorsLayer, 54, 54+6)).arrayEqualsTo(
-                showHexTypeTrigger("outdoor-clear", zoomAndRotate0(63.783, 63.2148))
+            assert(getDirectives(actuatorsLayer).length).equalsTo(258);
+            assert(getDirectives(actuatorsLayer, 0, 6)).arrayEqualsTo(
+                showHexTypeTrigger("outdoor-clear", zoomAndRotate0(230.4497, 63.2148))
             );
-            assert(getDirectives(actuatorsLayer, 54+6, 54+12)).arrayEqualsTo(
-                showHexHeightTrigger(0, zoomAndRotate0(102.8837, 63.2148))
+            assert(getDirectives(actuatorsLayer, 6, 12)).arrayEqualsTo(
+                showHexHeightTrigger(0, zoomAndRotate0(269.5503, 63.2148))
             );
-            assert(getDirectives(actuatorsLayer, 3180-6, 3180)).arrayEqualsTo(
-                showHexSideTypeTrigger("normal", zoomAndRotate240(958.3333, 808.9534))
+            assert(getDirectives(actuatorsLayer, 258-6, 258)).arrayEqualsTo(
+                showHexSideTypeTrigger("normal", zoomAndRotate240(458.3333, 135.3831))
             );
     });
 
@@ -124,114 +135,115 @@ describe("Editor", ()=> {
             CBGame.editMap(game);
             paint(game);
             loadAllImages();
-            let mapEditActuator = getMapEditorActuator(game);
-            let hexTrigger = mapEditActuator.getHexTypeTrigger(map.getHex(4, 5));
+            var mapEditActuator = getMapEditorActuator(game);
+            var hexTrigger = mapEditActuator.getHexTypeTrigger(map.getHex(4, 5));
         when:
             filterPainting(hexTrigger);
             stopRegister(actuatorsLayer);
+            mouseMoveOnTrigger(game, hexTrigger);
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("outdoor-rough", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("outdoor-rough", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("outdoor-difficult", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("outdoor-difficult", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("outdoor-clear-flammable", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("outdoor-clear-flammable", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("outdoor-rough-flammable", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("outdoor-rough-flammable", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("outdoor-difficult-flammable", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("outdoor-difficult-flammable", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("water", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("water", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("lava", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("lava", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("impassable", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("impassable", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("cave-clear", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("cave-clear", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("cave-rough", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("cave-rough", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("cave-difficult", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("cave-difficult", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("cave-clear-flammable", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("cave-clear-flammable", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("cave-rough-flammable", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("cave-rough-flammable", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("cave-difficult-flammable", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("cave-difficult-flammable", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexTrigger);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("outdoor-clear", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("outdoor-clear", zoomAndRotate0(313.783, 111.327))
             );
         when:
             resetDirectives(actuatorsLayer);
@@ -239,7 +251,7 @@ describe("Editor", ()=> {
             paint(game);
         then:
             assert(getTriggerDirectives(actuatorsLayer)).arrayEqualsTo(
-                showHexTypeTrigger("cave-difficult-flammable", zoomAndRotate0(313.783, 111.327))
+                showMouseOverHexTypeTrigger("cave-difficult-flammable", zoomAndRotate0(313.783, 111.327))
             );
     });
 
@@ -253,11 +265,13 @@ describe("Editor", ()=> {
             CBGame.editMap(game);
             paint(game);
             loadAllImages();
-            let mapEditActuator = getMapEditorActuator(game);
-            let hexSideTrigger = mapEditActuator.getHexSideTypeTrigger(map.getHex(4, 5).toward(240));
+            var mapEditActuator = getMapEditorActuator(game);
+            var hexTrigger = mapEditActuator.getHexTypeTrigger(map.getHex(4, 5));
+            var hexSideTrigger = mapEditActuator.getHexSideTypeTrigger(map.getHex(4, 5).toward(240));
         when:
             filterPainting(hexSideTrigger);
             stopRegister(actuatorsLayer);
+            mouseMoveOnTrigger(game, hexTrigger);
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexSideTrigger);
         then:
@@ -312,11 +326,13 @@ describe("Editor", ()=> {
             CBGame.editMap(game);
             paint(game);
             loadAllImages();
-            let mapEditActuator = getMapEditorActuator(game);
-            let hexHeightTrigger = mapEditActuator.getHexHeightTrigger(map.getHex(4, 5));
+            var mapEditActuator = getMapEditorActuator(game);
+            var hexTrigger = mapEditActuator.getHexTypeTrigger(map.getHex(4, 5));
+            var hexHeightTrigger = mapEditActuator.getHexHeightTrigger(map.getHex(4, 5));
         when:
             filterPainting(hexHeightTrigger);
             stopRegister(actuatorsLayer);
+            mouseMoveOnTrigger(game, hexTrigger);
             resetDirectives(actuatorsLayer);
             clickOnTrigger(game, hexHeightTrigger);
         then:

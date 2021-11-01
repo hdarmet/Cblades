@@ -901,6 +901,10 @@ export class CBEditorGame extends RetractableGameMixin(CBAbstractGame) {
         super(new CBLevelBuilder().buildLevels());
     }
 
+    canSelectPlayable(playable) {
+        return true;
+    }
+
     _buildBoard(map) {
         super._buildBoard(map);
         this._board.escapeOnKeyDown();

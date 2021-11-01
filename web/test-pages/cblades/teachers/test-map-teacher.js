@@ -8,20 +8,17 @@ import {
     CBHexSideId, CBMap
 } from "../../../jslib/cblades/map.js";
 import {
-    CBAbstractPlayer
-} from "../../../jslib/cblades/game.js";
-import {
     CBGame
 } from "../../../jslib/cblades/playable.js";
 import {
+    CBUnitPlayer,
     CBCharacter,
     CBCommandProfile,
     CBFormation,
     CBMoralProfile,
     CBMoveProfile,
-    CBTroop,
-    CBUnitType, CBWeaponProfile,
-    CBWing
+    CBTroop, CBWeaponProfile,
+    CBWing, CBTroopType
 } from "../../../jslib/cblades/unit.js";
 import {
     CBMapTeacher
@@ -110,7 +107,7 @@ describe("Map teacher", ()=> {
 
     }
 
-    class CBTestUnitType extends CBUnitType {
+    class CBTestUnitType extends CBTroopType {
         constructor(name, troopPaths, formationPaths=[]) {
             super(name, troopPaths, formationPaths);
             for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
@@ -126,10 +123,10 @@ describe("Map teacher", ()=> {
         let game = new CBGame();
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBAbstractPlayer();
+        let player1 = new CBUnitPlayer();
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBAbstractPlayer();
+        let player2 = new CBUnitPlayer();
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -158,9 +155,9 @@ describe("Map teacher", ()=> {
         let game = new CBGame();
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBAbstractPlayer();
+        let player1 = new CBUnitPlayer();
         game.addPlayer(player1);
-        let player2 = new CBAbstractPlayer();
+        let player2 = new CBUnitPlayer();
         game.addPlayer(player2);
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
@@ -336,10 +333,10 @@ describe("Map teacher", ()=> {
         let game = new CBGame();
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBAbstractPlayer();
+        let player1 = new CBUnitPlayer();
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBAbstractPlayer();
+        let player2 = new CBUnitPlayer();
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);

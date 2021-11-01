@@ -43,7 +43,7 @@ describe("Orcs Army", ()=> {
                 "./../images/units/orcs/character1L.png",
                 "./../images/units/orcs/character1Lb.png"
             ]);
-            assert(unit.getFormationPaths()).isNotDefined();
+            assert(unit.getFormationPaths).isNotDefined();
         when:
             var profile = unit.getMoveProfile(1);
         then:
@@ -102,7 +102,7 @@ describe("Orcs Army", ()=> {
                 "./../images/units/orcs/character2C.png",
                 "./../images/units/orcs/character2Cb.png"
             ]);
-            assert(unit.getFormationPaths()).isNotDefined();
+            assert(unit.getFormationPaths).isNotDefined();
         when:
             var profile = unit.getMoveProfile(1);
         then:
@@ -163,7 +163,7 @@ describe("Orcs Army", ()=> {
                 "./../images/units/orcs/unit1L.png",
                 "./../images/units/orcs/unit1Lb.png"
             ]);
-            assert(unit.getFormationPaths()).isNotDefined();
+            assert(unit.getFormationPaths()).arrayEqualsTo([]);
         when:
             var profile = unit.getMoveProfile(1);
         then:
@@ -210,7 +210,7 @@ describe("Orcs Army", ()=> {
                 "./../images/units/orcs/unit2L.png",
                 "./../images/units/orcs/unit2Lb.png"
             ]);
-            assert(unit.getFormationPaths()).isNotDefined();
+            assert(unit.getFormationPaths()).arrayEqualsTo([]);
         when:
             var profile = unit.getMoveProfile(1);
         then:

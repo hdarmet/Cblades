@@ -76,7 +76,7 @@ describe("Interactive Recover", ()=> {
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             unit.addOneTirednessLevel();
             clickOnPiece(game, unit);
-            paint(game);
+            repaint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnRestAction(game);
@@ -206,7 +206,7 @@ describe("Interactive Recover", ()=> {
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             unit.addOneMunitionsLevel();
             clickOnPiece(game, unit);
-            paint(game);
+            repaint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnReplenishMunitionsAction(game);
@@ -300,7 +300,7 @@ describe("Interactive Recover", ()=> {
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             unit.disrupt();
             clickOnPiece(game, unit);
-            paint(game);
+            repaint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnReorganizeAction(game);
@@ -397,7 +397,7 @@ describe("Interactive Recover", ()=> {
             unit.disrupt();
             unit.addOneCohesionLevel();
             clickOnPiece(game, unit);
-            paint(game);
+            repaint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnRallyAction(game);

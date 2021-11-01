@@ -972,6 +972,10 @@ export class CBMap {
         return this._element;
     }
 
+    get artifact() {
+        return this.element.artifacts[0];
+    }
+
     set game(game) {
         this._game = game;
     }

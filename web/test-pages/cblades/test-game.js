@@ -44,18 +44,12 @@ import {
     DPopup
 } from "../../jslib/widget.js";
 import {
-    showGameCommand,
-    showGameInactiveCommand,
-    executeAllAnimations,
     paint,
     repaint,
     showTroop,
     zoomAndRotate0,
     showMap, showMask
 } from "./interactive-tools.js";
-import {
-    CBLevelBuilder
-} from "../../jslib/cblades/playable.js";
 
 class CBTestGame extends CBAbstractGame {
 
@@ -156,7 +150,7 @@ class CBTestActuator extends CBActuator {
 
     setVisibility(level) {
         super.setVisibility(level);
-        this.trigger.alpha = (level===CBActuator.FULL_VISIBILITY ? 1:0);
+        this.trigger.alpha = (level===CBAbstractGame.FULL_VISIBILITY ? 1:0);
     }
 
 }
@@ -534,70 +528,6 @@ describe("Game", ()=> {
             assert(game.actuators).arrayEqualsTo([actuator1, actuator2]);
     });
 
-    it("Checks that actuator closing may be preempted", () => {
-        given:
-            var {game, unit} = createTinyGame();
-            var [actuatorsLayer] = getLayers(game.board, "actuators");
-            game.setMenu();
-            game._showCommand.action();
-        when:
-            var actuator = new CBTestActuator();
-            actuator.enableHide(false);
-            resetDirectives(actuatorsLayer);
-            game.openActuator(actuator);
-            paint(game);
-            loadAllImages();
-        then:
-            assertClearDirectives(actuatorsLayer);
-            assertDirectives(actuatorsLayer, showActuatorTrigger("test", 50, 50, zoomAndRotate0(500, 400)))
-            assertNoMoreDirectives(actuatorsLayer);
-        when:
-            game.closeActuators();
-            resetDirectives(actuatorsLayer);
-            repaint(game);
-        then:
-            assertClearDirectives(actuatorsLayer);
-            assertDirectives(actuatorsLayer, showActuatorTrigger("test", 50, 50, zoomAndRotate0(500, 400)))
-            assertNoMoreDirectives(actuatorsLayer);
-            assert(game._actuators).arrayEqualsTo([actuator]);
-        when:
-            game.enableActuatorsClosing(true);
-            game.closeActuators();
-            resetDirectives(actuatorsLayer);
-            repaint(game);
-        then:
-            assertClearDirectives(actuatorsLayer);
-            assertNoMoreDirectives(actuatorsLayer);
-            assert(game._actuators).arrayEqualsTo([]);
-    });
-
-    it("Checks that actuator is hidden if the game visibility level is lowered", () => {
-        given:
-            var {game, unit} = createTinyGame();
-            var [actuatorsLayer] = getLayers(game.board, "actuators");
-            game.setMenu();
-            game._showCommand.action();
-        when:
-            var action = new CBAction(game, unit);
-            var actuator = new CBTestActuator(action);
-            resetDirectives(actuatorsLayer);
-            game.openActuator(actuator);
-            paint(game);
-            loadAllImages();
-        then:
-            assert([...Mechanisms.manager._listeners]).contains(actuator);
-            assertClearDirectives(actuatorsLayer);
-            assertDirectives(actuatorsLayer, showActuatorTrigger("test", 50, 50, zoomAndRotate0(500, 400)))
-            assertNoMoreDirectives(actuatorsLayer);
-        when:
-            game._insertLevelCommand.action();
-            resetDirectives(actuatorsLayer);
-            repaint(game);
-        then:
-            assertClearDirectives(actuatorsLayer);
-            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([]);
-    });
-
     it("Checks that clicking on the map re-centers the viewport ", () => {
         given:
             var game = new CBTestGame();
@@ -723,211 +653,6 @@ describe("Game", ()=> {
             assertNoMoreDirectives(widgetsLevel);
     });
 
-    it("Checks global push menu button", () => {
-        given:
-            var game = new CBTestGame();
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
-            game.setMap(map);
-            var [commandsLayer] = getLayers(game.board, "widget-commands");
-        when:
-            game.setMenu();
-            game.start();
-            loadAllImages();
-        then:
-            assertClearDirectives(commandsLayer);
-            assertDirectives(commandsLayer, showGameCommand("turn", 940, 740));
-            assertDirectives(commandsLayer, showGameCommand("show", 880, 740));
-            assertNoMoreDirectives(commandsLayer);
-        when:
-            resetDirectives(commandsLayer);
-            game._showCommand.action();
-            paint(game);
-        then:
-            assertClearDirectives(commandsLayer);
-            assertDirectives(commandsLayer, showGameCommand("turn", 940, 740));
-            assertDirectives(commandsLayer, showGameCommand("hide", 880, 740));
-            assertDirectives(commandsLayer, showGameCommand("undo", 820, 740));
-            assertDirectives(commandsLayer, showGameCommand("redo", 760, 740));
-            assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 700, 740));
-            assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 640, 740));
-            assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 580, 740));
-            assertDirectives(commandsLayer, showGameCommand("editor", 520, 740));
-            assertDirectives(commandsLayer, showGameCommand("insert2", 460, 740));
-            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 400, 740));
-            assertNoMoreDirectives(commandsLayer);
-        when:
-            resetDirectives(commandsLayer);
-            game._hideCommand.action();
-            paint(game);
-        then:
-            assertClearDirectives(commandsLayer);
-            assertDirectives(commandsLayer, showGameCommand("turn", 940, 740));
-            assertDirectives(commandsLayer, showGameCommand("show", 880, 740));
-            assertNoMoreDirectives(commandsLayer);
-    });
-
-    it("Checks undo/redo push menu button", () => {
-        given:
-            var game = new CBTestGame();
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
-            game.setMap(map);
-            game.setMenu();
-            game.start();
-            loadAllImages();
-            game._showCommand.action();
-            paint(game);
-            var something = {
-                value : true,
-                _memento() {
-                    return {value:this.value};
-                },
-                _revert(memento) {
-                    this.value = memento.value;
-                }
-            }
-            Memento.register(something);
-            something.value = false;
-        when:
-            game._undoCommand.action();
-        then:
-            assert(something.value).isTrue();
-        when:
-            game._redoCommand.action();
-        then:
-            assert(something.value).isFalse();
-    });
-
-    it("Checks edit push menu button", () => {
-        try {
-            given:
-                var cbgameEdit = CBAbstractGame.editMap;
-                var editMode = false;
-                CBAbstractGame.editMap = function() {
-                    editMode = !editMode;
-                }
-                var game = new CBTestGame();
-                var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
-                game.setMap(map);
-                game.setMenu();
-                game.start();
-                var [commandsLayer] = getLayers(game.board, "widget-commands");
-                loadAllImages();
-                game._showCommand.action();
-                executeAllAnimations();
-            when:
-                game._editMapCommand.action();
-                executeAllAnimations();
-                resetDirectives(commandsLayer);
-                repaint(game);
-            then:
-                assert(editMode).isTrue();
-                assertClearDirectives(commandsLayer);
-                assertDirectives(commandsLayer, showGameCommand("turn", 940, 740));
-                assertDirectives(commandsLayer, showGameCommand("hide", 880, 740));
-                assertDirectives(commandsLayer, showGameCommand("undo", 820, 740));
-                assertDirectives(commandsLayer, showGameCommand("redo", 760, 740));
-                assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 700, 740));
-                assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 640, 740));
-                assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 580, 740));
-                assertDirectives(commandsLayer, showGameCommand("field", 520, 740));
-                assertDirectives(commandsLayer, showGameCommand("insert2", 460, 740));
-                assertDirectives(commandsLayer, showGameCommand("full-screen-on", 400, 740));
-                assertNoMoreDirectives(commandsLayer);
-            when:
-                editMode = false;
-                game._editMapCommand.action();
-                executeAllAnimations();
-                resetDirectives(commandsLayer);
-                repaint(game);
-            then:
-                assert(editMode).isFalse();
-                assertClearDirectives(commandsLayer);
-                assertDirectives(commandsLayer, showGameCommand("turn", 940, 740));
-                assertDirectives(commandsLayer, showGameCommand("hide", 880, 740));
-                assertDirectives(commandsLayer, showGameCommand("undo", 820, 740));
-                assertDirectives(commandsLayer, showGameCommand("redo", 760, 740));
-                assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 700, 740));
-                assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 640, 740));
-                assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 580, 740));
-                assertDirectives(commandsLayer, showGameCommand("editor", 520, 740));
-                assertDirectives(commandsLayer, showGameCommand("insert2", 460, 740));
-                assertDirectives(commandsLayer, showGameCommand("full-screen-on", 400, 740));
-                assertNoMoreDirectives(commandsLayer);
-        } finally {
-            CBAbstractGame.editMap = cbgameEdit;
-        }
-    });
-
-    it("Checks full screen push menu button", () => {
-        given:
-            var game = new CBTestGame();
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
-            game.setMap(map);
-            game.setMenu();
-            game.start();
-            game.fitWindow();
-            var [mapLayer, commandsLayer] = getLayers(game.board,"map", "widget-commands");
-            loadAllImages();
-        when:
-            game._showCommand.action();
-            executeAllAnimations();
-            game._fullScreenCommand.action();
-            executeAllAnimations();
-            resetDirectives(mapLayer, commandsLayer);
-            repaint(game);
-        then:
-            assert(getDirectives(mapLayer)).arrayEqualsTo([
-                "save()",
-                    "resetTransform()",
-                    "clearRect(0, 0, 2000, 1500)",
-                "restore()",
-                "save()",
-                    "setTransform(0.9775, 0, 0, 0.9775, 1000, 750)",
-                    "drawImage(./../images/maps/map.png, -1023, -1575, 2046, 3150)",
-                "restore()"
-            ]);
-            assertClearDirectives(commandsLayer, 2000, 1500);
-            assertDirectives(commandsLayer, showGameCommand("turn", 1940, 1440));
-            assertDirectives(commandsLayer, showGameCommand("hide", 1880, 1440));
-            assertDirectives(commandsLayer, showGameCommand("undo", 1820, 1440));
-            assertDirectives(commandsLayer, showGameCommand("redo", 1760, 1440));
-            assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 1700, 1440));
-            assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 1640, 1440));
-            assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 1580, 1440));
-            assertDirectives(commandsLayer, showGameCommand("editor", 1520, 1440));
-            assertDirectives(commandsLayer, showGameCommand("insert2", 1460, 1440));
-            assertDirectives(commandsLayer, showGameCommand("full-screen-off", 1400, 1440));
-            assertNoMoreDirectives(commandsLayer);
-        when:
-            game._fullScreenCommand.action();
-            executeAllAnimations();
-            resetDirectives(mapLayer, commandsLayer);
-            repaint(game);
-        then:
-            assert(getDirectives(mapLayer)).arrayEqualsTo([
-                "save()",
-                    "resetTransform()",
-                    "clearRect(0, 0, 1500, 1000)",
-                "restore()",
-                "save()",
-                    "setTransform(0.9775, 0, 0, 0.9775, 750, 500)",
-                    "drawImage(./../images/maps/map.png, -1023, -1575, 2046, 3150)",
-                "restore()"
-            ]);
-            assertClearDirectives(commandsLayer, 1500, 1000);
-            assertDirectives(commandsLayer, showGameCommand("turn", 1440, 940));
-            assertDirectives(commandsLayer, showGameCommand("hide", 1380, 940));
-            assertDirectives(commandsLayer, showGameCommand("undo", 1320, 940));
-            assertDirectives(commandsLayer, showGameCommand("redo", 1260, 940));
-            assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 1200, 940));
-            assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 1140, 940));
-            assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 1080, 940));
-            assertDirectives(commandsLayer, showGameCommand("editor", 1020, 940));
-            assertDirectives(commandsLayer, showGameCommand("insert2", 960, 940));
-            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 900, 940));
-            assertNoMoreDirectives(commandsLayer);
-    });
-
     function clickOnPiece(game, piece) {
         let pieceLocation = piece.artifact.viewportLocation;
         var mouseEvent = createEvent("click", {offsetX:pieceLocation.x, offsetY:pieceLocation.y});
@@ -993,7 +718,7 @@ describe("Game", ()=> {
             super(...args);
         }
         get layer() {
-            return this.piece.formationNature ? CBLevelBuilder.ULAYERS.FMARKERS : CBLevelBuilder.ULAYERS.MARKERS;
+            return "markers";
         }
         get slot() {
             return this.piece.slot;
@@ -1007,8 +732,7 @@ describe("Game", ()=> {
             game.addPlayer(player);
             let unit = new CBTestPlayable("units", player, ["./../images/units/misc/unit1.png"]);
             let markerImage = DImage.getImage("./../images/markers/misc/markers1.png");
-            let marker = new CBTestMarker(unit, "units", [markerImage],
-                new Point2D(0, 0), new Dimension2D(64, 64));
+            let marker = new CBTestMarker(unit, "units", [markerImage], new Point2D(0, 0), new Dimension2D(64, 64));
             unit._element.addArtifact(marker);
             var hexId = map.getHex(4, 5);
             unit.addToMap(hexId, CBStacking.TOP);
@@ -1385,63 +1109,6 @@ describe("Game", ()=> {
             assert(game.currentPlayer).equalsTo(player2);
     });
 
-    it("Checks that when changing turn, current player changes too and counters are reset", () => {
-        given:
-            var {game, player1, player2, unit0, unit1, unit2} = create2PlayersTinyGame();
-        then:
-            assert(player1.units).arrayEqualsTo([unit0, unit1]);
-            assert(game.currentPlayer).equalsTo(player1);
-            assert(unit1.isCurrentPlayer()).isTrue();
-        when:
-            unit1.select();
-            unit1.launchAction(new CBAction(game, unit1, dummyEvent));
-        then:
-            assert(game.selectedPlayable).equalsTo(unit1);
-        when:
-            unit1.markAsPlayed();
-            assert(unit1.isPlayed()).isTrue();
-            game.nextTurn();
-        then:
-            assert(game.currentPlayer).equalsTo(player2);
-            assert(unit1.isPlayed()).isFalse();
-            assert(unit1.isCurrentPlayer()).isFalse();
-    });
-
-    it("Checks next turn push buttons menu", () => {
-        given:
-            var {game, player1, player2} = create2PlayersTinyGame();
-            game.setMenu();
-        then:
-            assert(game.currentPlayer).equalsTo(player1);
-        when:
-            game._endOfTurnCommand.action();
-        then:
-            assert(game.currentPlayer).equalsTo(player2);
-    });
-
-    it("Checks that when a unit cannot be unselected, turn cannot change", () => {
-        given:
-            var {game, unit1} = create2PlayersTinyGame();
-            game.setMenu();
-            game.setSelectedPlayable(unit1);
-            let action = new CBAction(game, unit1);
-            action.isFinishable = ()=>false;
-            unit1.launchAction(action);
-            action.markAsStarted();
-        then:
-            assert(game._endOfTurnCommand.active).isFalse();
-    });
-
-    it("Checks that when a unit is not finishable, turn cannot change", () => {
-        given:
-            var {game, unit1} = create2PlayersTinyGame();
-            game.setMenu();
-            unit1.isFinishable = ()=>false;
-            Mechanisms.fire(game, CBAbstractGame.TURN_EVENT);
-        then:
-            assert(game._endOfTurnCommand.active).isFalse();
-    });
-
     it("Checks activating a unit", () => {
         given:
             var {game, unit, map} = createTinyGame();
@@ -1692,4 +1359,35 @@ describe("Game", ()=> {
             ]);
     });
 
+    it("Checks that actuator closing may be preempted", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [actuatorsLayer] = getLayers(game.board, "actuators");
+        when:
+            var actuator = new CBTestActuator();
+            actuator.enableClosing(false);
+            game.openActuator(actuator);
+            repaint(game);
+            loadAllImages();
+        then:
+            assertClearDirectives(actuatorsLayer);
+            assertDirectives(actuatorsLayer, showActuatorTrigger("test", 50, 50, zoomAndRotate0(500, 400)))
+            assertNoMoreDirectives(actuatorsLayer);
+        when:
+            game.closeActuators();
+            repaint(game);
+        then:
+            assertClearDirectives(actuatorsLayer);
+            assertDirectives(actuatorsLayer, showActuatorTrigger("test", 50, 50, zoomAndRotate0(500, 400)))
+            assertNoMoreDirectives(actuatorsLayer);
+            assert(game._actuators).arrayEqualsTo([actuator]);
+        when:
+            game.enableActuatorsClosing(true);
+            game.closeActuators();
+            repaint(game);
+        then:
+            assertClearDirectives(actuatorsLayer);
+            assertNoMoreDirectives(actuatorsLayer);
+            assert(game._actuators).arrayEqualsTo([]);
+    });
 });

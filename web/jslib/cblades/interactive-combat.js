@@ -11,6 +11,7 @@ import {
     DDice, DIconMenuItem, DInsert, DInsertFrame, DMask, DResult, DScene
 } from "../widget.js";
 import {
+    CBAbstractGame,
     CBAction, CBActuator
 } from "./game.js";
 import {
@@ -910,7 +911,7 @@ export class CBShockHelpActuator extends RetractableActuatorMixin(CBActionActuat
     setVisibility(level) {
         super.setVisibility(level);
         for (let artifact of this.triggers) {
-            artifact.setVisibility && artifact.setVisibility(level===CBActuator.FULL_VISIBILITY ? 1:0);
+            artifact.setVisibility && artifact.setVisibility(level===CBAbstractGame.FULL_VISIBILITY ? 1:0);
         }
     }
 
@@ -971,7 +972,7 @@ export class CBFireHelpActuator extends RetractableActuatorMixin(CBActionActuato
     setVisibility(level) {
         super.setVisibility(level);
         for (let artifact of this.triggers) {
-            artifact.setVisibility && artifact.setVisibility(level===CBActuator.FULL_VISIBILITY ? 1:0);
+            artifact.setVisibility && artifact.setVisibility(level===CBAbstractGame.FULL_VISIBILITY ? 1:0);
         }
     }
 }

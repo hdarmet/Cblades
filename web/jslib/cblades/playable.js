@@ -13,7 +13,14 @@ import {
     DImageArtifact, DMultiImagesArtifact, DSimpleLevel, DStackedLevel, DStaticLevel
 } from "../board.js";
 import {
-    CBAbstractGame, CBAction, CBActuator, CBPiece, CBPieceImageArtifact, HexLocatableMixin, PlayableMixin
+    CBAbstractGame,
+    CBAbstractPlayer,
+    CBAction,
+    CBActuator,
+    CBPiece,
+    CBPieceImageArtifact,
+    HexLocatableMixin,
+    PlayableMixin
 } from "./game.js";
 import {
     inside, Matrix2D, Point2D
@@ -202,7 +209,6 @@ export function RetractableActuatorMixin(clazz) {
     }
 
 }
-
 
 export function NeighborRawActuatorArtifactMixin(clazz) {
 
@@ -648,6 +654,14 @@ export function RetractableGameMixin(gameClass) {
             }
         }
 
+    }
+
+}
+
+export class CBBasicPlayer extends CBAbstractPlayer {
+
+    finishTurn(animation) {
+        this.game.nextTurn(animation);
     }
 
 }

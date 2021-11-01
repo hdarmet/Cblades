@@ -292,10 +292,10 @@ describe("Board", ()=> {
             assert(artifact1.viewportBoundingArea.toString()).equalsTo("area(237.5, 137.5, 262.5, 162.5)");
             assert(artifact2.transform.toString()).equalsTo("matrix(0.5, 0.866, -0.866, 0.5, 0, 0)");
             assert(artifact2.boundingArea.toString()).equalsTo("area(-34.1506, -34.1506, 34.1506, 34.1506)");
-            assert(artifact2.viewportBoundingArea.toString()).equalsTo("area(-21.9791, 274.431, 12.1715, 308.5817)");
+            assert(artifact2.viewportBoundingArea.toString()).equalsTo("area(232.9247, 132.9247, 267.0753, 167.0753)");
             assert(artifact3.transform.toString()).equalsTo("matrix(1, 0, 0, 1, 10, 15)");
-            assert(artifact3.boundingArea.toString()).equalsTo("area(-15, -10, 35, 40)");;
-            assert(artifact3.viewportBoundingArea.toString()).equalsTo("area(247.5, 152.5, 272.5, 177.5)");
+            assert(artifact3.boundingArea.toString()).equalsTo("area(-15, -10, 35, 40)");
+            assert(artifact3.viewportBoundingArea.toString()).equalsTo("area(242.5, 145, 267.5, 170)");
     });
 
     it("Checks static level", () => {

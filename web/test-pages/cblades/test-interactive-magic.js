@@ -35,7 +35,7 @@ import {
     showInsert,
     showMask, showMenuItem, showMenuPanel, showPlayedDice,
     showSuccessResult,
-    zoomAndRotate0
+    zoomAndRotate0, mouseMoveOnTrigger, mouseMoveOnArtifact
 } from "./interactive-tools.js";
 import {
     create2Players2Units2LeadersTinyGame, create2Players2UnitsALeaderAnArcaneWizardTinyGame,
@@ -104,7 +104,15 @@ describe("Interactive Magic", ()=> {
             "restore()"
         ];
     }
-
+    function mouseOverSpellTargetHex([a, b, c, d, e, f]) {
+        return [
+            "save()",
+            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+            "shadowColor = #FF0000", "shadowBlur = 10",
+            "drawImage(./../images/actuators/spell-target-hex.png, -50, -55.5, 100, 111)",
+            "restore()"
+        ];
+    }
     it("Checks that the unit menu contains menu items for magic", () => {
         given:
             var {game, unit} = createTinyGame();
@@ -131,7 +139,7 @@ describe("Interactive Magic", ()=> {
             var {game, wing, leader:wizard} = createTinyGameWithLeader();
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             clickOnPiece(game, wizard);
-            paint(game);
+            repaint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnChoseSpellAction(game);
@@ -180,7 +188,7 @@ describe("Interactive Magic", ()=> {
             var [widgetsLayer, itemsLayer, spellsLayer0] = getLayers(game.board,"widgets", "widget-items", "spells-0");
             clickOnPiece(game, wizard);
             clickOnChoseSpellAction(game);
-            paint(game);
+            repaint(game);
             loadAllImages();
             resetDirectives(widgetsLayer, itemsLayer, spellsLayer0);
         when:
@@ -203,7 +211,7 @@ describe("Interactive Magic", ()=> {
             wizard.choseSpell(CBSpell.laboratory.get("firePentacle1"));
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             clickOnPiece(game, wizard);
-            paint(game);
+            repaint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnTryToCastSpellAction(game);
@@ -304,16 +312,16 @@ describe("Interactive Magic", ()=> {
             clickOnDice(game);
             executeAllAnimations();
             clickOnResult(game);
-            resetDirectives(actuatorsLayer, hexLayer);
-            repaint(game);
-            loadAllImages();
-        then:
-            skipDirectives(actuatorsLayer, 4);
-            assertDirectives(actuatorsLayer, spellTargetHex(zoomAndRotate0(416.6667, 448.1122)));
-            assertDirectives(actuatorsLayer, spellTargetHex(zoomAndRotate0(416.6667, 351.8878)));
-        when:
             var actuator = getTargetHexActuator(game);
             var trigger = actuator.getTrigger(map.getHex(5, 6));
+        when:
+            mouseMoveOnTrigger(game, trigger);
+            repaint(game);
+        then:
+            skipDirectives(actuatorsLayer, 4);
+            assertDirectives(actuatorsLayer, spellTargetHex(zoomAndRotate0(416.6667, 255.6635)));
+            assertDirectives(actuatorsLayer, mouseOverSpellTargetHex(zoomAndRotate0(416.6667, 159.4391)));
+        when:
             clickOnTrigger(game, trigger);
             loadAllImages();
             resetDirectives(actuatorsLayer, hexLayer);
@@ -485,7 +493,7 @@ describe("Interactive Magic", ()=> {
         given:
             var {game, leader2:foe, leader1:wizard} = create2Players2UnitsALeaderAnArcaneWizardTinyGame();
             wizard.choseSpell(CBSpell.laboratory.get("magicArrow1"));
-            paint(game);
+            repaint(game);
             var [widgetsLayer, itemsLayer, commandsLayer, leaderLayer, optionsLayer] =
                 getLayers(game.board,"widgets", "widget-items", "widget-commands", "units-1", "options-0");
             clickOnPiece(game, wizard);   // show action menu
@@ -532,7 +540,7 @@ describe("Interactive Magic", ()=> {
         given:
             var {game, leader2:foe, leader1:wizard} = create2Players2UnitsALeaderAnArcaneWizardTinyGame();
             wizard.choseSpell(CBSpell.laboratory.get("magicArrow1"));
-            paint(game);
+            repaint(game);
             var [widgetsLayer, itemsLayer, commandsLayer, leaderLayer, optionsLayer] =
                 getLayers(game.board,"widgets", "widget-items", "widget-commands", "units-1", "options-0");
             clickOnPiece(game, wizard);   // show action menu

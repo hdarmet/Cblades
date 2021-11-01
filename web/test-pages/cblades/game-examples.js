@@ -16,13 +16,12 @@ import {
     CBInteractivePlayer
 } from "../../jslib/cblades/interactive-player.js";
 import {
-    CBCharacter,
+    CBCharacter, CBCharacterType,
     CBCommandProfile,
     CBFormation, CBMagicProfile,
     CBMoralProfile,
     CBMoveProfile,
-    CBTroop,
-    CBUnitType,
+    CBTroop, CBTroopType,
     CBWeaponProfile,
     CBWing
 } from "../../jslib/cblades/unit.js";
@@ -193,7 +192,7 @@ export class CBTestArbitrator extends CBArbitrator {
     }
 }
 
-export class CBTestUnitType extends CBUnitType {
+export class CBTestUnitType extends CBTroopType {
     constructor(name, troopPaths, formationPaths=[]) {
         super(name, troopPaths, formationPaths);
         for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
@@ -205,7 +204,7 @@ export class CBTestUnitType extends CBUnitType {
     }
 }
 
-export class CBTestLeaderType extends CBUnitType {
+export class CBTestLeaderType extends CBCharacterType {
     constructor(name, troopPaths, formationPaths=[]) {
         super(name, troopPaths, formationPaths);
         for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
@@ -218,7 +217,7 @@ export class CBTestLeaderType extends CBUnitType {
     }
 }
 
-export class CBTestArcaneWizardType extends CBUnitType {
+export class CBTestArcaneWizardType extends CBCharacterType {
     constructor(name, troopPaths, formationPaths=[]) {
         super(name, troopPaths, formationPaths);
         for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
@@ -231,7 +230,7 @@ export class CBTestArcaneWizardType extends CBUnitType {
     }
 }
 
-export class CBTestOtherUnitType extends CBUnitType {
+export class CBTestOtherUnitType extends CBTroopType {
     constructor(name, troopPaths, formationPaths=[]) {
         super(name, troopPaths, formationPaths);
         for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
@@ -243,7 +242,7 @@ export class CBTestOtherUnitType extends CBUnitType {
     }
 }
 
-export class CBTestFireUnitType extends CBUnitType {
+export class CBTestFireUnitType extends CBTroopType {
     constructor(name, troopPaths, formationPaths=[]) {
         super(name, troopPaths, formationPaths);
         for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {

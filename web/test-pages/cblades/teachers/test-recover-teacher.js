@@ -7,22 +7,20 @@ import {
     CBMap
 } from "../../../jslib/cblades/map.js";
 import {
-    CBAbstractPlayer
-} from "../../../jslib/cblades/game.js";
-import {
     CBGame
 } from "../../../jslib/cblades/playable.js";
 import {
     CBWeather, WeatherMixin
 } from "../../../jslib/cblades/weather.js";
 import {
+    CBUnitPlayer,
     CBCharacter,
     CBCommandProfile,
     CBMoralProfile,
     CBMoveProfile,
     CBTroop,
-    CBUnitType, CBWeaponProfile,
-    CBWing
+    CBWeaponProfile,
+    CBWing, CBTroopType
 } from "../../../jslib/cblades/unit.js";
 import {
     CBMapTeacher
@@ -50,7 +48,7 @@ describe("Recover teacher", ()=> {
 
     let Arbitrator = mergeClasses(CBMapTeacher, CBUnitManagementTeacher, CBRecoveringTeacher);
 
-    class CBTestUnitType extends CBUnitType {
+    class CBTestUnitType extends CBTroopType {
         constructor(name, troopPaths, formationPaths=[]) {
             super(name, troopPaths, formationPaths);
             for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
@@ -66,10 +64,10 @@ describe("Recover teacher", ()=> {
         let game = new (WeatherMixin(CBGame))();
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBAbstractPlayer();
+        let player1 = new CBUnitPlayer();
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBAbstractPlayer();
+        let player2 = new CBUnitPlayer();
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -112,7 +110,7 @@ describe("Recover teacher", ()=> {
         then:
             assert(arbitrator.isAllowedToReplenishMunitions(unit12)).isFalse();
         when:
-            unit12.addOneLevelOfMunitionsLevel();
+            unit12.addOneMunitionsLevel();
         then:
             assert(arbitrator.isAllowedToReplenishMunitions(unit12)).isTrue();
     });

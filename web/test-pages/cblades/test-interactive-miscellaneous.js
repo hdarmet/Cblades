@@ -180,14 +180,11 @@ describe("Interactive Miscellaneous", ()=> {
             unit2.move(map.getHex(8, 8), 0);
             unit1.receivesOrder(true);
             unit2.receivesOrder(true);
-            loadAllImages();
-            paint(game); // units1 layer is created here !
+            repaint(game); // units1 layer is created here !
             var [unitsLayer, units1Layer, markersLayer] = getLayers(game.board,"units-0", "units-1", "markers-0");
             clickOnPiece(game, unit1);
             clickOnMergeUnitsAction(game);
-            loadAllImages();
         when:
-            resetDirectives(unitsLayer, units1Layer, markersLayer);
             repaint(game);
         then:
             skipDirectives(unitsLayer, 4);
@@ -207,22 +204,21 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
-            loadAllImages();
-            paint(game);
+            repaint(game);
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             clickOnPiece(game, unit1);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnMiscellaneousAction(game);
-            loadAllImages();
+            repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMenuPanel(2, 2, 586.6667, 320));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showMenuItem(1, 1, "actions/remove-stakes", 2, 2, 586.6667, 320));
             assertDirectives(itemsLayer, showMenuItem(0, 0, "actions/start-fire", 2, 2, 586.6667, 320));
             assertDirectives(itemsLayer, showMenuItem(1, 0, "actions/extinguish-fire", 2, 2, 586.6667, 320));
             assertDirectives(itemsLayer, showMenuItem(0, 1, "actions/set-stakes", 2, 2, 586.6667, 320));
+            assertDirectives(itemsLayer, showMenuItem(1, 1, "actions/remove-stakes", 2, 2, 586.6667, 320));
         when:
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnMap(game);

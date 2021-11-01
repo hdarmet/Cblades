@@ -19,7 +19,7 @@ import {
     CBMap, CBHexSideId
 } from "../../jslib/cblades/map.js";
 import {
-    CBAbstractPlayer, CBAction, CBPieceImageArtifact, CBPiece, CBStacking
+    CBAction, CBPieceImageArtifact, CBPiece, CBStacking
 } from "../../jslib/cblades/game.js";
 import {
     CBActionActuator,
@@ -29,10 +29,10 @@ import {
     CBHexCounter, CBLevelBuilder
 } from "../../jslib/cblades/playable.js";
 import {
+    CBUnitPlayer,
     CBTroop,
     CBWing,
     CBCharacter,
-    CBUnitType,
     CBMunitions,
     CBTiredness,
     CBCohesion,
@@ -43,13 +43,13 @@ import {
     OptionMixin,
     CBMoveProfile,
     CBWeaponProfile,
-    CBCharge, CBCommandProfile, CBMoralProfile, CBMagicProfile, CBUnitActuatorTrigger
+    CBCharge, CBCommandProfile, CBMoralProfile, CBMagicProfile, CBUnitActuatorTrigger, CBTroopType, CBCharacterType
 } from "../../jslib/cblades/unit.js";
 import {
     Dimension2D, Point2D
 } from "../../jslib/geometry.js";
 import {
-    clickOnTrigger,
+    clickOnTrigger, repaint,
     showActiveMarker, showActuatorTrigger, showCharacter,
     showCommandMarker, showFormation,
     showMarker,
@@ -71,14 +71,6 @@ describe("Unit", ()=> {
 
     let dummyEvent = {offsetX:0, offsetY:0};
 
-    function paint(game) {
-        game._board.paint();
-    }
-
-    function repaint(game) {
-        game._board.repaint();
-    }
-
     function prepareTinyGame() {
         var game = new CBGame();
         var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -86,13 +78,13 @@ describe("Unit", ()=> {
         return {game, map};
     }
 
-    class CBTestUnitType extends CBUnitType {
+    class CBTestUnitType extends CBTroopType {
         constructor(...args) {
             super(...args);
             this.setMoveProfile(1, new CBMoveProfile(-1));
             this.setMoveProfile(2, new CBMoveProfile(0));
             this.setWeaponProfile(1, new CBWeaponProfile(-1, 1, 2, 3));
-            this.setWeaponProfile(2, new CBWeaponProfile(0, 1, 2, 3));
+            this.setWeaponProfile(2, new CBWeaponProfile(0,1, 2, 3));
             this.setCommandProfile(1, new CBCommandProfile(-1));
             this.setCommandProfile(2, new CBCommandProfile(0));
             this.setMoralProfile(1, new CBMoralProfile(-1));
@@ -100,7 +92,7 @@ describe("Unit", ()=> {
         }
     }
 
-    class CBTestLeaderType extends CBUnitType {
+    class CBTestLeaderType extends CBCharacterType {
         constructor(...args) {
             super(...args);
             this.setMoveProfile(1, new CBMoveProfile(-1));
@@ -118,7 +110,7 @@ describe("Unit", ()=> {
 
     function createTinyGame() {
         var { game, map } = prepareTinyGame();
-        var player = new CBAbstractPlayer();
+        var player = new CBUnitPlayer();
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
         let unitType = new CBTestUnitType("unit", [
@@ -133,7 +125,7 @@ describe("Unit", ()=> {
 
     function createTinyFormationGame() {
         var { game, map } = prepareTinyGame();
-        var player = new CBAbstractPlayer();
+        var player = new CBUnitPlayer();
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
         let unitType = new CBTestUnitType("unit", [
@@ -161,7 +153,7 @@ describe("Unit", ()=> {
 
     function create2UnitsTinyGame(start = true) {
         var { game, map } = prepareTinyGame();
-        let player = new CBAbstractPlayer();
+        let player = new CBUnitPlayer();
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png"]);
@@ -248,9 +240,8 @@ describe("Unit", ()=> {
         when:
             var action = new CBAction(game, unit1);
             var actuator = new CBTestUnitActuator(action, unit2);
-            resetDirectives(actuatorsLayer);
             game.openActuator(actuator);
-            paint(game);
+            repaint(game);
             loadAllImages();
         then:
             assertClearDirectives(actuatorsLayer);
@@ -265,7 +256,7 @@ describe("Unit", ()=> {
     it("Checks that a unit may carry other counters (not undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
-            var player = new CBAbstractPlayer();
+            var player = new CBUnitPlayer();
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
             let unitType1 = new CBTestUnitType("unit1",
@@ -278,7 +269,7 @@ describe("Unit", ()=> {
         when:
             var playable1 = new CBTestCarriable(unit,["./../images/units/misc/playable1.png"]);
             unit.addCarried(playable1);
-            paint(game);
+            repaint(game);
             loadAllImages();
         then:
             assert(unit.carried).arrayEqualsTo([playable1])
@@ -286,35 +277,31 @@ describe("Unit", ()=> {
             assertDirectives(spellsLayer, showPlayable("misc/playable1", zoomAndRotate0(416.6667, 351.8878)));
             assertNoMoreDirectives(spellsLayer);
         when:
-            resetDirectives(spellsLayer);
             unit.angle = 60;
             unit.hexLocation = nextHexId;
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(spellsLayer);
             assertDirectives(spellsLayer, showPlayable("misc/playable1", zoomAndRotate60(500, 400)));
             assertNoMoreDirectives(spellsLayer);
         when:
-            resetDirectives(spellsLayer);
             unit.removeCarried(playable1);
-            paint(game);
+            repaint(game);
         then:
             assert(unit.carried).arrayEqualsTo([])
             assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
             ]);
         when:
-            resetDirectives(spellsLayer);
             unit.addCarried(playable1);
             unit.removeFromMap();
-            paint(game);
+            repaint(game);
         then:
             assert(unit.carried).arrayEqualsTo([playable1])
             assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
             ]);
         when:
-            resetDirectives(spellsLayer);
             unit.addToMap(hexId, CBStacking.TOP);
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(spellsLayer);
             assertDirectives(spellsLayer, showPlayable("misc/playable1", zoomAndRotate60(416.6667, 351.8878)));
@@ -329,10 +316,9 @@ describe("Unit", ()=> {
             let nextHexId = hexId.getNearHex(0);
             var [spellsLayer] = getLayers(game.board, "spells-0");
         when:
-            resetDirectives(spellsLayer);
             var playable1 = new CBTestCarriable(unit,["./../images/units/misc/playable1.png"]);
             unit.carry(playable1);
-            paint(game);
+            repaint(game);
             loadAllImages();
         then:
             assert(unit.carried).arrayEqualsTo([playable1])
@@ -340,53 +326,47 @@ describe("Unit", ()=> {
             assertDirectives(spellsLayer, showPlayable("misc/playable1", zoomAndRotate0(416.6667, 351.8878)));
             assertNoMoreDirectives(spellsLayer);
         when:
-            resetDirectives(spellsLayer);
             unit.rotate(60);
             unit.move(nextHexId, CBStacking.TOP);
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(spellsLayer);
             assertDirectives(spellsLayer, showPlayable("misc/playable1", zoomAndRotate60(416.6667, 255.6635)));
             assertNoMoreDirectives(spellsLayer);
         when:
             Memento.open();
-            resetDirectives(spellsLayer);
             unit.drop(playable1);
-            paint(game);
+            repaint(game);
         then:
             assert(unit.carried).arrayEqualsTo([])
             assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
             ]);
         when:
             Memento.open();
-            resetDirectives(spellsLayer);
             unit.carry(playable1);
             unit.deleteFromMap();
-            paint(game);
+            repaint(game);
         then:
             assert(unit.carried).arrayEqualsTo([playable1])
             assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
             ]);
         when:
-            resetDirectives(spellsLayer);
             unit.appendToMap(hexId, CBStacking.TOP);
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(spellsLayer);
             assertDirectives(spellsLayer, showPlayable("misc/playable1", zoomAndRotate60(416.6667, 351.8878)));
             assertNoMoreDirectives(spellsLayer);
         when:
-            resetDirectives(spellsLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assert(unit.carried).arrayEqualsTo([])
             assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
             ]);
         when:
-            resetDirectives(spellsLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assert(unit.carried).arrayEqualsTo([playable1]);
             assertClearDirectives(spellsLayer);
@@ -442,7 +422,7 @@ describe("Unit", ()=> {
     it("Checks that a unit may have option counters (not undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
-            var player = new CBAbstractPlayer();
+            var player = new CBUnitPlayer();
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
             let unitType1 = new CBTestUnitType("unit1",
@@ -455,8 +435,7 @@ describe("Unit", ()=> {
             var option0 = createOption(unit, "./../images/units/misc/option0.png");
             var option1 = createOption(unit, "./../images/units/misc/option1.png");
             var option2 = createOption(unit, "./../images/units/misc/option2.png");
-            paint(game);
-            loadAllImages();
+            repaint(game);
         then:
             assert(unit.options).arrayEqualsTo([option0, option1, option2])
             assertClearDirectives(optionsLayer);
@@ -467,7 +446,7 @@ describe("Unit", ()=> {
         when:
             resetDirectives(optionsLayer);
             unit.removeOption(option1);
-            paint(game);
+            repaint(game);
         then:
             assert(unit.options).arrayEqualsTo([option0, option2])
             assertClearDirectives(optionsLayer);
@@ -479,7 +458,7 @@ describe("Unit", ()=> {
     it("Checks option features", () => {
         given:
             var { game, map } = prepareTinyGame();
-            var player = new CBAbstractPlayer();
+            var player = new CBUnitPlayer();
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
             let unitType1 = new CBTestUnitType("unit1",
@@ -489,8 +468,7 @@ describe("Unit", ()=> {
             unit.addToMap(hexId);
         when:
             var option = createOption(unit, "./../images/units/misc/option.png");
-            paint(game);
-            loadAllImages();
+            repaint(game);
         then:
             assert(option.isOption()).isTrue();
             assert(option.owner).equalsTo(unit);
@@ -505,7 +483,7 @@ describe("Unit", ()=> {
 
         given:
             var { game, map } = prepareTinyGame();
-            var player = new CBAbstractPlayer();
+            var player = new CBUnitPlayer();
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
             let unitType1 = new CBTestUnitType("unit1",
@@ -518,8 +496,7 @@ describe("Unit", ()=> {
             var option0 = createOption(unit, "./../images/units/misc/option0.png");
             var option1 = createOption(unit, "./../images/units/misc/option1.png");
             var option2 = createOption(unit, "./../images/units/misc/option2.png");
-            paint(game);
-            loadAllImages();
+            repaint(game);
         then:
             assert(unit.options).arrayEqualsTo([option0, option1, option2]);
             assertClearDirectives(optionsLayer);
@@ -529,9 +506,8 @@ describe("Unit", ()=> {
             assertNoMoreDirectives(optionsLayer);
         when:
             Memento.open();
-            resetDirectives(optionsLayer);
             unit.deleteOption(option1);
-            paint(game);
+            repaint(game);
         then:
             assert(unit.options).arrayEqualsTo([option0, option2])
             assertClearDirectives(optionsLayer);
@@ -539,9 +515,8 @@ describe("Unit", ()=> {
             assertDirectives(optionsLayer, showPlayable("misc/option2", zoomAndRotate0(397.1163, 337.2251)));
             assertNoMoreDirectives(optionsLayer);
         when:
-            resetDirectives(optionsLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assert(unit.options).arrayEqualsTo([option0, option1, option2])
             assertClearDirectives(optionsLayer);
@@ -550,9 +525,8 @@ describe("Unit", ()=> {
             assertDirectives(optionsLayer, showPlayable("misc/option2", zoomAndRotate0(387.3412, 327.4499)));
             assertNoMoreDirectives(optionsLayer);
         when:
-            resetDirectives(optionsLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assert(unit.options).arrayEqualsTo([])
             assert(getDirectives(optionsLayer, 4)).arrayEqualsTo([
@@ -563,7 +537,7 @@ describe("Unit", ()=> {
         given:
             var { game, map } = prepareTinyGame();
         when:
-            var player = new CBAbstractPlayer();
+            var player = new CBUnitPlayer();
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
             wing.setRetreatZone(map.getSouthZone());
@@ -592,7 +566,7 @@ describe("Unit", ()=> {
         given:
             var { game, map } = prepareTinyGame();
         when:
-            var player = new CBAbstractPlayer();
+            var player = new CBUnitPlayer();
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
             let unitType1 = new CBTestUnitType("unit1",
@@ -626,7 +600,7 @@ describe("Unit", ()=> {
         given:
             var { game, map } = prepareTinyGame();
         when:
-            var player = new CBAbstractPlayer();
+            var player = new CBUnitPlayer();
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
             wing.setRetreatZone(map.getSouthZone());
@@ -792,9 +766,8 @@ describe("Unit", ()=> {
             var {game, unit, map} = createTinyGame();
             var [unitsLayer, markersLayer] = getLayers(game.board, "units-0", "markers-0");
         when:
-            resetDirectives(unitsLayer, markersLayer);
             unit.move(map.getHex(5, 7), 1);
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 255.6635)));
@@ -803,9 +776,8 @@ describe("Unit", ()=> {
             assert(unit.movementPoints).equalsTo(1);
             assert(unit.extendedMovementPoints).equalsTo(2);
         when:
-            resetDirectives(unitsLayer, markersLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
@@ -820,18 +792,16 @@ describe("Unit", ()=> {
             var {game, unit, map} = createTinyGame();
             var [unitsLayer] = getLayers(game.board, "units-0");
         when:
-            resetDirectives(unitsLayer);
             unit.move(null, 0);
-            paint(game);
+            repaint(game);
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
             assert(unit.hexLocation).isNotDefined();
             assert(unit.isOnHex()).isFalse();
         when:
             Memento.open();
-            resetDirectives(unitsLayer);
             unit.move(map.getHex(5, 7), 0);
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 255.6635)));
@@ -840,16 +810,14 @@ describe("Unit", ()=> {
             assert(unit.isOnHex()).isTrue();
         when:
             Memento.undo();
-            resetDirectives(unitsLayer);
-            paint(game);
+            repaint(game);
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
             assert(unit.hexLocation).isNotDefined();
             assert(unit.isOnHex()).isFalse();
         when:
             Memento.undo();
-            resetDirectives(unitsLayer);
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
@@ -863,9 +831,8 @@ describe("Unit", ()=> {
             var {game, unit, map} = createTinyGame();
             var [unitsLayer, markersLayer] = getLayers(game.board, "units-0", "markers-0");
         when:
-            resetDirectives(unitsLayer, markersLayer);
             unit.rotate(90, 0.5);
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate90(416.6667, 351.8878)));
@@ -873,9 +840,8 @@ describe("Unit", ()=> {
             assert(unit.movementPoints).equalsTo(1.5);
             assert(unit.extendedMovementPoints).equalsTo(2.5);
         when:
-            resetDirectives(unitsLayer, markersLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
@@ -892,9 +858,8 @@ describe("Unit", ()=> {
             assert(unit.isTired()).isFalse();
             assert(unit.isExhausted()).isFalse();
         when:
-            resetDirectives(markersLayer);
             unit.addOneTirednessLevel();
-            paint(game);
+            repaint(game);
             loadAllImages(); // to load tired.png
         then:
             assertClearDirectives(markersLayer);
@@ -905,9 +870,8 @@ describe("Unit", ()=> {
             assert(unit.isExhausted()).isFalse();
         when:
             Memento.open();
-            resetDirectives(markersLayer);
             unit.addOneTirednessLevel();
-            paint(game);
+            repaint(game);
             loadAllImages(); // to load exhausted.png
         then:
             assertClearDirectives(markersLayer);
@@ -917,9 +881,8 @@ describe("Unit", ()=> {
             assert(unit.isTired()).isFalse();
             assert(unit.isExhausted()).isTrue();
         when:
-            resetDirectives(markersLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("tired", zoomAndRotate0(381.9648, 351.8878)));
@@ -932,10 +895,9 @@ describe("Unit", ()=> {
             var {game, unit, map} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
-            resetDirectives(markersLayer);
             unit.addOneTirednessLevel();
             unit.addOneTirednessLevel();
-            paint(game);
+            repaint(game);
             loadAllImages(); // to load tired.png
         then:
             assertClearDirectives(markersLayer);
@@ -944,9 +906,8 @@ describe("Unit", ()=> {
             assert(unit.tiredness).equalsTo(2);
         when:
             Memento.open();
-            resetDirectives(markersLayer);
             unit.removeOneTirednessLevel();
-            paint(game);
+            repaint(game);
             loadAllImages(); // to load tired.png
         then:
             assertClearDirectives(markersLayer);
@@ -954,9 +915,8 @@ describe("Unit", ()=> {
             assertNoMoreDirectives(markersLayer);
             assert(unit.tiredness).equalsTo(1);
         when:
-            resetDirectives(markersLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("exhausted", zoomAndRotate0(381.9648, 351.8878)));
@@ -972,9 +932,8 @@ describe("Unit", ()=> {
             assert(unit.areMunitionsScarce()).isFalse();
             assert(unit.areMunitionsExhausted()).isFalse();
         when:
-            resetDirectives(markersLayer);
             unit.addOneMunitionsLevel();
-            paint(game);
+            repaint(game);
             loadAllImages(); // to load scraceamno.png
         then:
             assertClearDirectives(markersLayer);
@@ -985,9 +944,8 @@ describe("Unit", ()=> {
             assert(unit.areMunitionsExhausted()).isFalse();
         when:
             Memento.open();
-            resetDirectives(markersLayer);
             unit.addOneMunitionsLevel();
-            paint(game);
+            repaint(game);
             loadAllImages(); // to load lowamno.png
         then:
             assertClearDirectives(markersLayer);
@@ -997,9 +955,8 @@ describe("Unit", ()=> {
             assert(unit.areMunitionsScarce()).isFalse();
             assert(unit.areMunitionsExhausted()).isTrue();
         when:
-            resetDirectives(markersLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("scarceamno", zoomAndRotate0(416.6667, 386.5897)));
@@ -1012,11 +969,9 @@ describe("Unit", ()=> {
             var {game, unit, map} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
-            resetDirectives(markersLayer);
             unit.addOneMunitionsLevel();
             unit.addOneMunitionsLevel();
-            paint(game);
-            loadAllImages(); // to load lowamno.png
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("lowamno", zoomAndRotate0(416.6667, 386.5897)));
@@ -1024,17 +979,14 @@ describe("Unit", ()=> {
             assert(unit.munitions).equalsTo(2);
         when:
             Memento.open();
-            resetDirectives(markersLayer);
             unit.replenishMunitions();
-            paint(game);
-            loadAllImages(); // to load scarceamno.png
+            repaint(game);
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.munitions).equalsTo(0);
         when:
-            resetDirectives(markersLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("lowamno", zoomAndRotate0(416.6667, 386.5897)));
@@ -1047,19 +999,16 @@ describe("Unit", ()=> {
             var {game, unit} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
-            resetDirectives(markersLayer);
             unit.launchAction(new CBAction(game, unit));
             unit.markAsPlayed();
-            paint(game);
-            loadAllImages(); // to load actiondone.png
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("actiondone", zoomAndRotate0(451.3685, 317.186)));
             assertNoMoreDirectives(markersLayer);
         when:
-            resetDirectives(markersLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
     });
@@ -1069,19 +1018,16 @@ describe("Unit", ()=> {
             var {game, unit, map} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
-            resetDirectives(markersLayer);
             unit.receivesOrder(true);
-            paint(game);
-            loadAllImages(); // to load ordegiven.png
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("ordergiven", zoomAndRotate0(451.3685, 317.186)));
             assertNoMoreDirectives(markersLayer);
             assert(unit.hasReceivedOrder()).isTrue();
         when:
-            resetDirectives(markersLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.hasReceivedOrder()).isFalse();
@@ -1092,13 +1038,11 @@ describe("Unit", ()=> {
             var {game, unit, map} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
             unit.receivesOrder(true);
-            paint(game);
+            repaint(game);
         when:
-            resetDirectives(markersLayer);
             unit.launchAction(new CBAction(game, unit));
             unit.markAsPlayed();
-            paint(game);
-            loadAllImages(); // to load actiondone.png
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("actiondone", zoomAndRotate0(451.3685, 317.186)));
@@ -1140,10 +1084,8 @@ describe("Unit", ()=> {
             assert(unit.isDisrupted()).isFalse();
             assert(unit.isRouted()).isFalse();
         when:
-            resetDirectives(markersLayer);
             unit.disrupt();
-            paint(game);
-            loadAllImages(); // to load disrupted.png
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("disrupted", zoomAndRotate0(381.9648, 386.5897)));
@@ -1153,10 +1095,8 @@ describe("Unit", ()=> {
             assert(unit.isRouted()).isFalse();
         when:
             Memento.open();
-            resetDirectives(markersLayer);
             unit.rout();
-            paint(game);
-            loadAllImages(); // to load fleeing.png
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("fleeing", zoomAndRotate0(381.9648, 386.5897)));
@@ -1165,9 +1105,8 @@ describe("Unit", ()=> {
             assert(unit.isDisrupted()).isFalse();
             assert(unit.isRouted()).isTrue();
         when:
-            resetDirectives(markersLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("disrupted", zoomAndRotate0(381.9648, 386.5897)));
@@ -1180,10 +1119,9 @@ describe("Unit", ()=> {
             var {game, unit, map} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
-            resetDirectives(markersLayer);
             unit.addOneCohesionLevel();
             unit.addOneCohesionLevel();
-            paint(game);
+            repaint(game);
             loadAllImages(); // to load fleeing.png
         then:
             assertClearDirectives(markersLayer);
@@ -1192,10 +1130,8 @@ describe("Unit", ()=> {
             assert(unit.cohesion).equalsTo(2);
         when:
             Memento.open();
-            resetDirectives(markersLayer);
             unit.rally();
-            paint(game);
-            loadAllImages(); // to load disrupted.png
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("disrupted", zoomAndRotate0(381.9648, 386.5897)));
@@ -1203,16 +1139,14 @@ describe("Unit", ()=> {
             assert(unit.cohesion).equalsTo(1);
         when:
             Memento.open();
-            resetDirectives(markersLayer);
             unit.reorganize();
-            paint(game);
+            repaint(game);
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.cohesion).equalsTo(0);
         when:
-            resetDirectives(markersLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("disrupted", zoomAndRotate0(381.9648, 386.5897)));
@@ -1229,19 +1163,16 @@ describe("Unit", ()=> {
             assert(unit.isDestroyed()).isFalse();
         when:
             Memento.open();
-            resetDirectives(unitsLayer, markersLayer);
             unit.addOneCohesionLevel(); // Rout the unit
             unit.addOneCohesionLevel(); // Destroy the unit
-            paint(game);
-            loadAllImages();
+            repaint(game);
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.isDestroyed()).isTrue();
         when:
-            resetDirectives(unitsLayer, markersLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
@@ -1258,33 +1189,28 @@ describe("Unit", ()=> {
             var {game, unit} = createTinyGame();
             var [unitsLayer] = getLayers(game.board, "units-0");
         when:
-            resetDirectives(unitsLayer);
             unit.takeALoss();
-            paint(game);
-            loadAllImages(); // to load back side image
+            repaint(game);
         then:
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unitb", zoomAndRotate0(416.6667, 351.8878)));
             assertNoMoreDirectives(unitsLayer);
         when:
             Memento.open();
-            resetDirectives(unitsLayer);
             unit.takeALoss();
-            paint(game);
+            repaint(game);
         then:
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
         when:
-            resetDirectives(unitsLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unitb", zoomAndRotate0(416.6667, 351.8878)));
             assertNoMoreDirectives(unitsLayer);
         when:
-            resetDirectives(unitsLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate0(416.6667, 351.8878)));
@@ -1318,10 +1244,8 @@ describe("Unit", ()=> {
             assertNoMoreDirectives(formationsLayer);
             assert(game.playables).contains(formation);
         when: // formation breaks automatically
-            resetDirectives(unitsLayer, formationsLayer);
             formation.takeALoss();
-            paint(game);
-            loadAllImages();
+            repaint(game);
         then:
             assertClearDirectives(unitsLayer);
             assertDirectives(unitsLayer, showTroop("misc/unit", zoomAndRotate90(416.6667, 351.8878)));
@@ -1337,10 +1261,8 @@ describe("Unit", ()=> {
             var {game, unit, map} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
-            resetDirectives(markersLayer);
             unit.markAsEngaging(true);
-            paint(game);
-            loadAllImages(); // to load fleeing.png
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("contact", zoomAndRotate0(381.9648, 317.186)));
@@ -1348,9 +1270,8 @@ describe("Unit", ()=> {
             assert(unit.isEngaging()).isTrue();
             assert(unit.isCharging()).isFalse();
         when:
-            resetDirectives(markersLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.isEngaging()).isFalse();
@@ -1362,9 +1283,8 @@ describe("Unit", ()=> {
             var {game, unit, map} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
-            resetDirectives(markersLayer);
             unit.markAsCharging(CBCharge.CHARGING);
-            paint(game);
+            repaint(game);
             loadAllImages(); // to load fleeing.png
         then:
             assertClearDirectives(markersLayer);
@@ -1373,9 +1293,8 @@ describe("Unit", ()=> {
             assert(unit.isEngaging()).isFalse();
             assert(unit.isCharging()).isTrue();
         when:
-            resetDirectives(markersLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.isEngaging()).isFalse();
@@ -1402,11 +1321,9 @@ describe("Unit", ()=> {
             var {game, unit, map} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
-            resetDirectives(markersLayer);
             unit.markAsEngaging(true);
             unit.markAsCharging(CBCharge.CHARGING);
-            paint(game);
-            loadAllImages(); // to load charge.png
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("charge", zoomAndRotate0(381.9648, 317.186)));
@@ -1414,10 +1331,8 @@ describe("Unit", ()=> {
             assert(unit.isEngaging()).isTrue();
             assert(unit.isCharging()).isTrue();
         when:
-            resetDirectives(markersLayer);
             unit.markAsCharging(false);
-            loadAllImages();  // to load contact.png
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("contact", zoomAndRotate0(381.9648, 317.186)));
@@ -1425,9 +1340,8 @@ describe("Unit", ()=> {
             assert(unit.isEngaging()).isTrue();
             assert(unit.isCharging()).isFalse();
         when:
-            resetDirectives(markersLayer);
             unit.markAsEngaging(false);
-            paint(game);
+            repaint(game);
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.isEngaging()).isFalse();
@@ -1439,33 +1353,27 @@ describe("Unit", ()=> {
             var {game, unit, map} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
-            resetDirectives(markersLayer);
-            paint(game);
-            loadAllImages();
+            repaint(game);
         then:
-            assertNoMoreDirectives(markersLayer);
+            assertClearDirectives(markersLayer);
             assert(unit._charging).equalsTo(CBCharge.NONE);
         when:
             unit.checkEngagement(false, true);
-            paint(game);
-            loadAllImages();
+            repaint(game);
         then:
-            assertNoMoreDirectives(markersLayer);
+            assertClearDirectives(markersLayer);
             assert(unit._charging).equalsTo(CBCharge.BEGIN_CHARGE);
         when:
             unit.checkEngagement(false, true);
-            paint(game);
-            loadAllImages();
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showActiveMarker("possible-charge", zoomAndRotate0(381.9648, 317.186)));
             assertNoMoreDirectives(markersLayer);
             assert(unit._charging).equalsTo(CBCharge.CAN_CHARGE);
         when:
-            resetDirectives(markersLayer);
             unit.checkEngagement(false, true);
             repaint(game);
-            loadAllImages();
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showActiveMarker("possible-charge", zoomAndRotate0(381.9648, 317.186)));
@@ -1475,9 +1383,8 @@ describe("Unit", ()=> {
             resetDirectives(markersLayer);
             unit.checkEngagement(false, false);
             repaint(game);
-            loadAllImages();
         then:
-            assertNoMoreDirectives(markersLayer, 4);
+            assertClearDirectives(markersLayer);
             assert(unit._charging).equalsTo(CBCharge.NONE);
     });
 
@@ -1488,30 +1395,24 @@ describe("Unit", ()=> {
             unit.checkEngagement(false, true);
             unit.checkEngagement(false, true); // Here, unit can charge
         when:
-            resetDirectives(markersLayer);
-            paint(game);
-            loadAllImages();
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showActiveMarker("possible-charge", zoomAndRotate0(381.9648, 317.186)));
             assertNoMoreDirectives(markersLayer);
             assert(unit._charging).equalsTo(CBCharge.CAN_CHARGE);
         when: // Charge is not requested
-            resetDirectives(markersLayer);
             unit.acknowledgeCharge(false);
             repaint(game);
-            loadAllImages();
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showActiveMarker("possible-charge", zoomAndRotate0(381.9648, 317.186)));
             assertNoMoreDirectives(markersLayer);
             assert(unit._charging).equalsTo(CBCharge.CAN_CHARGE);
         when: // Charge is requested
-            resetDirectives(markersLayer);
             unit._engagingArtifact.onMouseClick();
             unit.acknowledgeCharge(false);
             repaint(game);
-            loadAllImages();
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("charge", zoomAndRotate0(381.9648, 317.186)));
@@ -1526,10 +1427,8 @@ describe("Unit", ()=> {
             unit.checkEngagement(false, true);
             unit.checkEngagement(false, true); // Here, unit can charge
         when: // Charge is not requested
-            resetDirectives(markersLayer);
             unit.acknowledgeCharge(true);
             repaint(game);
-            loadAllImages();
         then:
             assertNoMoreDirectives(markersLayer, 4);
             assert(unit._charging).equalsTo(CBCharge.NONE);
@@ -1553,7 +1452,7 @@ describe("Unit", ()=> {
         given:
             var {game, unit1, unit2} = create2UnitsTinyGame();
             unit2.move(unit1.hexLocation);
-            paint(game);
+            repaint(game);
             var [markersLayer] = getLayers(game.board, "markers-1");
         when:
             resetDirectives(markersLayer);
@@ -1562,8 +1461,7 @@ describe("Unit", ()=> {
             unit2.addOneCohesionLevel();
             unit2.addOneTirednessLevel();
             unit2.addOneMunitionsLevel();
-            paint(game);
-            loadAllImages(); // to load charge.png
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("actiondone", zoomAndRotate0(461.1437, 307.4108)));
@@ -1573,9 +1471,8 @@ describe("Unit", ()=> {
             assertDirectives(markersLayer, showMarker("scarceamno", zoomAndRotate0(426.4418, 376.8145)));
             assertNoMoreDirectives(markersLayer);
         when:
-            resetDirectives(markersLayer);
             unit1.retractAbove();
-            paint(game);
+            repaint(game);
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
             ]);
@@ -1584,14 +1481,12 @@ describe("Unit", ()=> {
     it("Checks that when a unit retracts, it also hides options", () => {
         given:
             var {game, unit} = createTinyGame();
-            paint(game);
+            repaint(game);
             var [spellLayer, optionsLayer] = getLayers(game.board, "spells-0", "options-0");
         when:
-            resetDirectives(spellLayer, optionsLayer);
             var spell = createSpell(unit, "./../images/units/misc/spell.png");
             var option = createOption(unit, "./../images/units/misc/option.png");
-            paint(game);
-            loadAllImages(); // to load charge.png
+            repaint(game);
         then:
             assertClearDirectives(spellLayer);
             assertClearDirectives(optionsLayer);
@@ -1599,9 +1494,8 @@ describe("Unit", ()=> {
             assertDirectives(optionsLayer, showOption("misc/option", zoomAndRotate0(406.8915, 347.0002)));
             assertNoMoreDirectives(spellLayer, optionsLayer);
         when:
-            resetDirectives(optionsLayer);
             option.retractAbove();
-            paint(game);
+            repaint(game);
         then:
             assert(getDirectives(spellLayer, 4)).arrayEqualsTo([
             ]);
@@ -1611,7 +1505,7 @@ describe("Unit", ()=> {
 
     function createTinyCommandGame() {
         var { game, map } = prepareTinyGame();
-        var player = new CBAbstractPlayer();
+        var player = new CBUnitPlayer();
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
         let unitType = new CBTestUnitType("unit", [
@@ -1651,28 +1545,22 @@ describe("Unit", ()=> {
             assertDirectives(unitsLayer, showCharacter("misc/leader", zoomAndRotate0(416.6667, 448.1122)));
             assertNoMoreDirectives(unitsLayer);
         when:
-            resetDirectives(markersLayer);
             leader.takeCommand();
-            loadAllImages();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showCommandMarker("defend", zoomAndRotate0(451.3685, 448.1122)));
             assertNoMoreDirectives(markersLayer);
         when:
-            resetDirectives(markersLayer);
             wing.changeOrderInstruction(CBOrderInstruction.ATTACK);
-            loadAllImages();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showCommandMarker("attack", zoomAndRotate0(451.3685, 448.1122)));
             assertNoMoreDirectives(markersLayer);
         when:
-            resetDirectives(markersLayer);
             leader.dismissCommand();
-            loadAllImages();
-            paint(game);
+            repaint(game);
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
     });
@@ -1682,21 +1570,18 @@ describe("Unit", ()=> {
             var {game, wing, unit, leader} = createTinyCommandGame();
             wing.setLeader(leader);
             leader.move(unit.hexLocation);
-            paint(game);
+            repaint(game);
             var [markersLayer] = getLayers(game.board, "markers-1");
         when:
-            resetDirectives(markersLayer);
             wing.changeOrderInstruction(CBOrderInstruction.ATTACK);
-            paint(game);
-            loadAllImages();
+            repaint(game);
         then:
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showCommandMarker("attack", zoomAndRotate0(461.1437, 342.1127)));
             assertNoMoreDirectives(markersLayer);
         when:
-            resetDirectives(markersLayer);
             unit.retractAbove();
-            paint(game);
+            repaint(game);
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
             ]);
@@ -1819,7 +1704,7 @@ describe("Unit", ()=> {
             unit.movementPoints = 3;
             unit.extendedMovementPoints = 5;
             unit.cohesion = CBCohesion.ROUTED;
-            unit.setMunitionsLevel(CBMunitions.SCARCE);
+            unit.setMunitions(CBMunitions.SCARCE);
             unit.fixRemainingLossSteps(1);
             unit.setTiredness(CBTiredness.EXHAUSTED);
             var cloneUnit = unit.clone();
@@ -1836,7 +1721,7 @@ describe("Unit", ()=> {
             leader.movementPoints = 1;
             leader.extendedMovementPoints = 2;
             leader.cohesion = CBCohesion.DISRUPTED;
-            leader.setMunitionsLevel(CBMunitions.EXHAUSTED);
+            leader.setMunitions(CBMunitions.EXHAUSTED);
             leader.fixRemainingLossSteps(2);
             leader.setTiredness(CBTiredness.TIRED);
             var cloneLeader = leader.clone();
@@ -1853,7 +1738,7 @@ describe("Unit", ()=> {
 
     function prepareTinyGameWithFormation() {
         var { game, map } = prepareTinyGame();
-        var player = new CBAbstractPlayer();
+        var player = new CBUnitPlayer();
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
         let unitType = new CBTestUnitType("unit", [], [
@@ -1885,8 +1770,7 @@ describe("Unit", ()=> {
             formation.addOneTirednessLevel();
             formation.addOneCohesionLevel();
             formation.receivesOrder(true);
-            loadAllImages();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(fmarkersLayer);
             assertDirectives(fmarkersLayer, showMarker("scarceamno", zoomAndRotate150(440.9824, 297.7791)));
@@ -1907,7 +1791,7 @@ describe("Unit", ()=> {
             var sHexId1 = map.getHex(7, 8);
             var sHexId2 = map.getHex(8, 7);
             formation.hexLocation = new CBHexSideId(sHexId1, sHexId2);
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(formationsLayer);
             assertDirectives(formationsLayer, showFormation("misc/formation", zoomAndRotate150(625, 327.8317)));
@@ -1921,7 +1805,7 @@ describe("Unit", ()=> {
             var mHexId1 = map.getHex(7, 9);
             var mHexId2 = map.getHex(8, 8);
             formation.move(new CBHexSideId(mHexId1, mHexId2), 0);
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(formationsLayer);
             assertDirectives(formationsLayer, showFormation("misc/formation", zoomAndRotate150(625, 424.0561)));
@@ -1931,9 +1815,8 @@ describe("Unit", ()=> {
             assert(mHexId1.units).arrayEqualsTo([formation]);
             assert(mHexId2.units).arrayEqualsTo([formation]);
         when: // undo formation move
-            resetDirectives(formationsLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(formationsLayer);
             assertDirectives(formationsLayer, showFormation("misc/formation", zoomAndRotate150(625, 327.8317)));
@@ -1943,17 +1826,15 @@ describe("Unit", ()=> {
             assert(sHexId1.units).arrayEqualsTo([formation]);
             assert(sHexId2.units).arrayEqualsTo([formation]);
         when:
-            resetDirectives(formationsLayer);
             formation.move(null, 0);
-            paint(game);
+            repaint(game);
         then:
             assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([]);
             assert(sHexId1.units).arrayEqualsTo([]);
             assert(sHexId2.units).arrayEqualsTo([]);
         when:
-            resetDirectives(formationsLayer);
             formation.move(new CBHexSideId(mHexId1, mHexId2), 0);
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(formationsLayer);
             assertDirectives(formationsLayer, showFormation("misc/formation", zoomAndRotate150(625, 424.0561)));
@@ -1972,12 +1853,11 @@ describe("Unit", ()=> {
             var sHexId2 = map.getHex(7, 9);
             formation.hexLocation = new CBHexSideId(sHexId1, sHexId2);
             formation.angle = 90;
-            paint(game);
+            repaint(game);
         when:
             Memento.open();
-            resetDirectives(formationsLayer);
             formation.turn(60);
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(formationsLayer);
             assertDirectives(formationsLayer, showFormation("misc/formation", zoomAndRotate30(625, 375.9439)));
@@ -1987,9 +1867,8 @@ describe("Unit", ()=> {
             assert(sHexId2.getNearHex(60).units).arrayEqualsTo([formation]);
             assert(formation.angle).equalsTo(30);
         when: // undo formation move
-            resetDirectives(formationsLayer);
             Memento.undo();
-            paint(game);
+            repaint(game);
         then:
             assertClearDirectives(formationsLayer);
             assertDirectives(formationsLayer, showFormation("misc/formation", zoomAndRotate90(583.3333, 400)));

@@ -7,18 +7,19 @@ import {
     CBMap
 } from "../../../jslib/cblades/map.js";
 import {
-    CBAbstractPlayer, CBPiece
+    CBPiece
 } from "../../../jslib/cblades/game.js";
 import {
     CBGame
 } from "../../../jslib/cblades/playable.js";
 import {
+    CBUnitPlayer,
     CBCharacter, CBCommandProfile, CBMagicProfile,
     CBMoralProfile,
     CBMoveProfile,
     CBTroop,
-    CBUnitType, CBWeaponProfile,
-    CBWing
+    CBWeaponProfile,
+    CBWing, CBTroopType, CBCharacterType
 } from "../../../jslib/cblades/unit.js";
 import {
     CBMapTeacher
@@ -49,7 +50,7 @@ describe("Magic teacher", ()=> {
 
     let Arbitrator = mergeClasses(CBMapTeacher, CBUnitManagementTeacher, CBWizardryTeacher);
 
-    class CBTestUnitType extends CBUnitType {
+    class CBTestUnitType extends CBTroopType {
         constructor(name, troopPaths, formationPaths=[]) {
             super(name, troopPaths, formationPaths);
             for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
@@ -61,7 +62,7 @@ describe("Magic teacher", ()=> {
         }
     }
 
-    class CBTestLeaderType extends CBUnitType {
+    class CBTestLeaderType extends CBCharacterType {
         constructor(name, troopPaths, formationPaths=[]) {
             super(name, troopPaths, formationPaths);
             for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
@@ -73,7 +74,7 @@ describe("Magic teacher", ()=> {
         }
     }
 
-    class CBTestFireWizardType extends CBUnitType {
+    class CBTestFireWizardType extends CBCharacterType {
         constructor(name, troopPaths, formationPaths=[]) {
             super(name, troopPaths, formationPaths);
             for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
@@ -86,7 +87,7 @@ describe("Magic teacher", ()=> {
         }
     }
 
-    class CBTestArcaneWizardType extends CBUnitType {
+    class CBTestArcaneWizardType extends CBCharacterType {
         constructor(name, troopPaths, formationPaths=[]) {
             super(name, troopPaths, formationPaths);
             for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
@@ -103,10 +104,10 @@ describe("Magic teacher", ()=> {
         let game = new CBGame();
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBAbstractPlayer();
+        let player1 = new CBUnitPlayer();
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBAbstractPlayer();
+        let player2 = new CBUnitPlayer();
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -136,7 +137,7 @@ describe("Magic teacher", ()=> {
         let game = new CBGame();
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBAbstractPlayer();
+        let player1 = new CBUnitPlayer();
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -153,7 +154,7 @@ describe("Magic teacher", ()=> {
         let game = new CBGame();
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBAbstractPlayer();
+        let player1 = new CBUnitPlayer();
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);

@@ -18,7 +18,7 @@ import {
     CBHexSideId, CBMap
 } from "../../jslib/cblades/map.js";
 import {
-    CBAbstractPlayer, CBPiece
+    CBPiece
 } from "../../jslib/cblades/game.js";
 import {
     CBGame, CBMoveMode
@@ -28,8 +28,8 @@ import {
     CBMoveProfile, CBOrderInstruction,
     CBTiredness,
     CBTroop,
-    CBUnitType, CBWeaponProfile,
-    CBWing
+    CBWeaponProfile,
+    CBWing, CBTroopType, CBCharacterType, CBUnitPlayer
 } from "../../jslib/cblades/unit.js";
 import {
     CBArbitrator
@@ -60,7 +60,7 @@ describe("Arbitrator", ()=> {
         }
     }
 
-    class CBTestUnitType extends CBUnitType {
+    class CBTestUnitType extends CBTroopType {
         constructor(name, troopPaths, formationPaths=[]) {
             super(name, troopPaths, formationPaths);
             for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
@@ -72,7 +72,7 @@ describe("Arbitrator", ()=> {
         }
     }
 
-    class CBTestLeaderType extends CBUnitType {
+    class CBTestLeaderType extends CBCharacterType {
         constructor(name, troopPaths, formationPaths=[]) {
             super(name, troopPaths, formationPaths);
             for (let index=1; index<=troopPaths.length+formationPaths.length; index++) {
@@ -91,7 +91,7 @@ describe("Arbitrator", ()=> {
         game.setMap(map);
         let arbitrator = new CBArbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBAbstractPlayer();
+        let player1 = new CBUnitPlayer();
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
         wing1.setRetreatZone(map.getWestZone());
@@ -110,7 +110,7 @@ describe("Arbitrator", ()=> {
 
     function create2Players4UnitsTinyGame() {
         let {game, arbitrator, map, player1, wing1, unit11, unit12, leader11} = createTinyGame();
-        let player2 = new CBAbstractPlayer();
+        let player2 = new CBUnitPlayer();
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         //wing2.setRetreatZone(map.getEastZone());
@@ -132,7 +132,7 @@ describe("Arbitrator", ()=> {
         game.setMap(map);
         let arbitrator = new CBArbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBAbstractPlayer();
+        let player1 = new CBUnitPlayer();
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
         wing1.setRetreatZone(map.getWestZone());
@@ -163,7 +163,7 @@ describe("Arbitrator", ()=> {
 
     function create2Players1Formation2UnitsTinyGame() {
         let {game, arbitrator, map, player1, wing1, formation11, unit11, unit12, leader11} = createTinyFormationGame();
-        let player2 = new CBAbstractPlayer();
+        let player2 = new CBUnitPlayer();
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         //wing2.setRetreatZone(map.getEastZone());
