@@ -82,7 +82,7 @@ export class Assertor {
         }
     }
 
-    _notContains(model, value) {
+    _doesNotContain(model, value) {
         if (value && value.indexOf(model)!==-1) {
             throw new AssertionFailed(value, " contains ", model);
         }
@@ -374,8 +374,8 @@ export class Assertor {
         return this;
     }
 
-    notContains(model) {
-        this._notContains(model, this._value);
+    doesNotContain(model) {
+        this._doesNotContain(model, this._value);
         return this;
     }
 

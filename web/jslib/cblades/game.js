@@ -4,7 +4,7 @@ import {
     Point2D, Dimension2D, Matrix2D
 } from "../geometry.js";
 import {
-    DImage, getDrawPlatform
+    DImage
 } from "../draw.js";
 import {
     Mechanisms, Memento
@@ -12,9 +12,6 @@ import {
 import {
     DBoard, DElement, DMultiImagesArtifact
 } from "../board.js";
-import {
-    DMultiStatePushButton, DPushButton
-} from "../widget.js";
 
 export let CBStacking = {
     BOTTOM: 0,
@@ -187,9 +184,7 @@ export class CBAction {
         if (this._status < CBAction.FINISHED) {
             Memento.register(this);
             this._status = CBAction.FINISHED;
-            if (!this.playable.isCurrentPlayer || this.playable.isCurrentPlayer()) {
-                this.playable._updatePlayed();
-            }
+            this.playable.finish();
             if (this.playable === this.game.focusedPlayable) {
                 this.game.setFocusedPlayable(null);
             }
@@ -214,9 +209,7 @@ export class CBAction {
             this._status = CBAction.FINALIZED;
             this._game.closeWidgets();
             action && action();
-            if (!this.playable.isCurrentPlayer || this.playable.isCurrentPlayer()) {
-                this.playable._updatePlayed();
-            }
+            this.playable.finish();
             Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINALIZED);
         }
     }
@@ -273,42 +266,12 @@ export class CBActuator {
         return this._element.getPosition(location);
     }
 
-    _processGlobalEvent(source, event, value) {
-        if (event===CBActuator.VISIBILITY_EVENT) {
-            this.setVisibility(value);
-        }
-    }
-
-    _memento() {
-        return {
-            shown: this._shown
-        }
-    }
-
-    _revert(memento) {
-        if (this._shown !== memento.shown) {
-            this._shown = memento.shown;
-            if (this._shown) {
-                Mechanisms.addListener(this);
-            } else {
-                Mechanisms.removeListener(this);
-            }
-        }
-    }
-
     open(game) {
-        Memento.register(this);
-        this._shown = true;
-        Mechanisms.addListener(this);
-        this.setVisibility(game.visibility);
         this.element.show(game.board);
     }
 
-    close(game) {
-        Memento.register(this);
-        this._shown = false;
-        Mechanisms.removeListener(this);
-        this.element.hide(game.board);
+    close() {
+        this.element.hide();
     }
 
     canBeClosed() {
@@ -318,8 +281,6 @@ export class CBActuator {
     enableClosing(closeAllowed) {
         this._closeAllowed = closeAllowed;
     }
-
-    setVisibility(level) {}
 
 }
 
@@ -479,7 +440,6 @@ export class CBAbstractGame {
         this._commands = new Set();
         this._levels = levels;
         this._counterDisplay = new CBCounterDisplay(this);
-        this._visibility = 2;
         Mechanisms.addListener(this);
     }
 
@@ -493,6 +453,7 @@ export class CBAbstractGame {
 
     _buildBoard(map) {
         this._board = new DBoard(map.dimension, new Dimension2D(1000, 800), ...this._levels);
+        this._board.game = this;
         this._board.setZoomSettings(1.5, 1);
         this._board.setScrollSettings(20, 10);
         this._board.scrollOnBordersOnMouseMove();
@@ -608,48 +569,13 @@ export class CBAbstractGame {
         this._playables.delete(playable);
     }
 
-    _resetPlayables(player) {
-        this.closePopup();
-        if (this._selectedPlayable) {
-            this._selectedPlayable.unselect();
-        }
-        if (this._playables) {
-            for (let playable of this._playables) {
-                playable.reset && playable.reset(player);
-            }
-        }
-    }
-
-    _initPlayables(player) {
-        if (this._playables) {
-            for (let playable of this._playables) {
-                playable.init && playable.init(player);
-            }
-        }
-    }
-
     get playables() {
         return [...this._playables];
-    }
-
-    turnIsFinishable() {
-        if (!this.canUnselectPlayable()) return false;
-        if (this._playables) {
-            for (let playable of this._playables) {
-                if (playable.isFinishable && !playable.isFinishable()) return false;
-            }
-        }
-        return true;
-    }
-
-    get visibility() {
-        return this._visibility;
     }
 
     openActuator(actuator) {
         Memento.register(this);
         actuator.game = this;
-        actuator.visibility = this._visibility;
         actuator.open(this);
         this._actuators.push(actuator);
     }
@@ -819,8 +745,6 @@ export class CBAbstractGame {
         this._mask.open(this._board);
     }
 
-    static FULL_VISIBILITY = 2;
-    static VISIBILITY_EVENT = "game-visibility";
     static SETTINGS_EVENT = "settings-turn";
     static POPUP_MARGIN = 10;
     static editMap = function(game) {};
@@ -1117,15 +1041,6 @@ export function PlayableMixin(clazz) {
             else delete this._action;
         }
 
-        reactivate() {
-            delete this._action;
-            this._updatePlayed();
-        }
-
-        reset(player) {
-           this.reactivate()
-        }
-
         changeAction(action) {
             Memento.register(this);
             this._action = action;
@@ -1168,7 +1083,13 @@ export function PlayableMixin(clazz) {
             this.action.markAsFinished();
         }
 
-        _updatePlayed() {
+        reactivate() {
+            delete this._action;
+            this._updatePlayed && this._updatePlayed();
+        }
+
+        reset(player) {
+            this.reactivate()
         }
 
         isPlayed() {
@@ -1189,6 +1110,9 @@ export function PlayableMixin(clazz) {
             }
         }
 
+        finish() {
+            this._updatePlayed && this._updatePlayed();
+        }
     }
 
 }
@@ -1215,11 +1139,9 @@ export function BelongsToPlayerMixin(clazz) {
 
         init(player) {
             if (player === this.player) {
-                this._init();
+                this._init && this._init();
             }
         }
-
-        _init() {}
 
         destroy() {
             Memento.register(this);
@@ -1236,13 +1158,19 @@ export function BelongsToPlayerMixin(clazz) {
         }
 
         isFinishable() {
-            if (!this.isCurrentPlayer || !this.isCurrentPlayer()) return true;
+            if (!this.isCurrentPlayer()) return true;
             return this.player.canFinishPlayable(this);
         }
 
         reset(player) {
             if (this.player === player) {
                 super.reset(player);
+            }
+        }
+
+        finish() {
+            if (this.isCurrentPlayer()) {
+                super.finish && super.finish();
             }
         }
 

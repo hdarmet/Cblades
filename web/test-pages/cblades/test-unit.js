@@ -9,7 +9,6 @@ import {
 import {
     assertClearDirectives, assertDirectives,
     assertNoMoreDirectives,
-    createEvent,
     getDirectives, getLayers, loadAllImages, mockPlatform, resetDirectives
 } from "../mocks.js";
 import {
@@ -49,6 +48,7 @@ import {
     Dimension2D, Point2D
 } from "../../jslib/geometry.js";
 import {
+    clickOnPiece,
     clickOnTrigger, repaint,
     showActiveMarker, showActuatorTrigger, showCharacter,
     showCommandMarker, showFormation,
@@ -145,12 +145,6 @@ describe("Unit", ()=> {
         return {game, player, formation, wing, map};
     }
 
-    function clickOnPiece(game, piece) {
-        let pieceLocation = piece.artifact.viewportLocation;
-        var mouseEvent = createEvent("click", {offsetX:pieceLocation.x, offsetY:pieceLocation.y});
-        mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
-    }
-
     function create2UnitsTinyGame(start = true) {
         var { game, map } = prepareTinyGame();
         let player = new CBUnitPlayer();
@@ -232,6 +226,31 @@ describe("Unit", ()=> {
         }
 
     }
+
+    it("Checks unit player", () => {
+        given:
+            var { game, map } = prepareTinyGame();
+            let player1 = new CBUnitPlayer();
+            game.addPlayer(player1);
+            let player2 = new CBUnitPlayer();
+            game.addPlayer(player2);
+            let unitType = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png"]);
+            var wing1 = new CBWing(player1, "./../units/banner1.png");
+            var wing2 = new CBWing(player1, "./../units/banner2.png");
+            var wing3 = new CBWing(player1, "./../units/banner3.png");
+            let unit1 = new CBTroop(unitType, wing1);
+            unit1.addToMap(map.getHex(5, 8));
+            let unit2 = new CBTroop(unitType, wing1);
+            unit2.addToMap(map.getHex(6, 8));
+        then:
+            assert(game.currentPlayer).equalsTo(player1);
+            assert(player1.wings).arrayEqualsTo([wing1, wing2, wing3]);
+            assert(player1.units).arrayEqualsTo([unit1, unit2]);
+        when:
+            player1.finishTurn(()=>{});
+        then:
+            assert(game.currentPlayer).equalsTo(player2);
+    });
 
     it("Checks actuators trigger on playable", () => {
         given:
@@ -414,9 +433,65 @@ describe("Unit", ()=> {
 
     it("Checks unit general features", () => {
         given:
-            var { unit, game } = createTinyGame();
+            var { unit, wing, game } = createTinyGame();
+            var [unitsLayer, markersLayer] = getLayers(game.board, "units-0", "markers-0");
         then:
             assert(unit.artifact.game).equalsTo(game);
+        when:
+            var otherUnit = unit.type.createUnit(wing, 2);
+        then:
+            assert(otherUnit.unitNature).isTrue();
+            assert(otherUnit.formationNature).isFalse();
+            assert(otherUnit.steps).equalsTo(2);
+            assert(otherUnit.wing).equalsTo(wing);
+        when:
+            Memento.open();
+            unit.setCohesion(CBCohesion.DISRUPTED);
+            repaint(game);
+        then:
+            assert(unit.cohesion).equalsTo(CBCohesion.DISRUPTED);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(0.4888, 0, 0, 0.4888, 381.9648, 386.5897)',
+                    'shadowColor = #000000', 'shadowBlur = 10',
+                    'drawImage(./../images/markers/disrupted.png, -32, -32, 64, 64)',
+                'restore()'
+            ]);
+        when:
+            Memento.undo();
+            unit.setCharging(CBCharge.CHARGING);
+            repaint(game);
+        then:
+            assert(unit.cohesion).equalsTo(CBCohesion.GOOD_ORDER);
+            assert(unit.isCharging()).isTrue();
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)',
+                    'shadowColor = #000000', 'shadowBlur = 10',
+                    'drawImage(./../images/markers/charge.png, -32, -32, 64, 64)',
+                'restore()'
+            ]);
+        when:
+            Memento.undo();
+            unit.setEngaging(true);
+            repaint(game);
+        then:
+            assert(unit.isCharging()).isFalse();
+            assert(unit.isEngaging()).isTrue();
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(0.4888, 0, 0, 0.4888, 381.9648, 317.186)',
+                    'shadowColor = #000000', 'shadowBlur = 10',
+                    'drawImage(./../images/markers/contact.png, -32, -32, 64, 64)',
+                'restore()'
+            ]);
+        when:
+            Memento.undo();
+            unit.setCohesion(CBCohesion.DESTROYED);
+            repaint(game);
+        then:
+            assert(unit.cohesion).equalsTo(CBCohesion.DESTROYED);
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
     });
 
     it("Checks that a unit may have option counters (not undoable)", () => {
@@ -548,6 +623,8 @@ describe("Unit", ()=> {
             var formation = new CBFormation(unitType1, wing);
             var character = new CBCharacter(unitType1, wing);
         then:
+            assert(unitType1.getMaxStepCount()).equalsTo(4);
+            assert(unitType1.getMaxFiguresCount()).equalsTo(2);
             assert(unit.unitNature).isTrue();
             assert(formation.unitNature).isTrue();
             assert(character.unitNature).isTrue();
@@ -725,7 +802,7 @@ describe("Unit", ()=> {
 
     it("Checks unit advance", () => {
         given:
-            var { game, map, unit } = createTinyGame();
+            var { map, unit } = createTinyGame();
             var hexId = map.getHex(5, 8);
             unit.markAsEngaging(true);
         then:
@@ -1031,6 +1108,14 @@ describe("Unit", ()=> {
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
             assert(unit.hasReceivedOrder()).isFalse();
+        when:
+            unit.receivesOrder(true);
+        then:
+            assert(unit.hasReceivedOrder()).isTrue();
+        when:
+            unit.reactivate();
+        then:
+            assert(unit.hasReceivedOrder()).isFalse();
     });
 
     it("Checks that playing an order replace (hide) 'order given' marker", () => {
@@ -1252,7 +1337,7 @@ describe("Unit", ()=> {
             assertDirectives(unitsLayer, showTroop("misc/unitb", zoomAndRotate90(416.6667, 255.6635)));
             assertNoMoreDirectives(unitsLayer);
             assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([]);
-            assert(game.playables).notContains(formation);
+            assert(game.playables).doesNotContain(formation);
             assert(game.playables.length).equalsTo(2);
     });
 
@@ -1525,10 +1610,17 @@ describe("Unit", ()=> {
 
     it("Checks leader specificities", () => {
         given:
-            var {leader} = createTinyCommandGame();
+            var {leader, wing} = createTinyCommandGame();
         then:
             assert(leader.unitNature).isTrue();
             assert(leader.characterNature).isTrue();
+        when:
+            var otherLeader = leader.type.createUnit(wing, 2);
+        then:
+            assert(otherLeader.unitNature).isTrue();
+            assert(otherLeader.characterNature).isTrue();
+            assert(otherLeader.steps).equalsTo(2);
+            assert(otherLeader.wing).equalsTo(wing);
     });
 
     it("Checks leader appearance", () => {

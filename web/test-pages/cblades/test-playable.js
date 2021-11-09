@@ -21,10 +21,10 @@ import {
     BelongsToPlayerMixin,
     CBAbstractArbitrator,
     CBAbstractPlayer,
-    CBAction, CBPiece, CBPieceImageArtifact, HexLocatableMixin, PlayableMixin, CBAbstractGame
+    CBAction, CBPiece, CBPieceImageArtifact, HexLocatableMixin, PlayableMixin, CBAbstractGame, CBActuator
 } from "../../jslib/cblades/game.js";
 import {
-    WidgetLevelMixin,
+    CBInsert,
     CBMask,
     CBGame,
     RetractablePieceMixin,
@@ -35,10 +35,15 @@ import {
     CBActuatorImageTrigger,
     RetractableActuatorMixin,
     CBActuatorMultiImagesTrigger,
-    CBHexCounter, ActivableArtifactMixin, CBPlayableActuatorTrigger, CBBasicPlayer
+    CBHexCounter,
+    ActivableArtifactMixin,
+    CBPlayableActuatorTrigger,
+    CBBasicPlayer,
+    CBAbstractInsert,
+    NeighborRawActuatorArtifactMixin, NeighborActuatorMixin, NeighborActuatorArtifactMixin, GhostArtifactMixin
 } from "../../jslib/cblades/playable.js";
 import {
-    clickOnTrigger,
+    clickOnTrigger, clickOnPiece,
     executeAllAnimations, mouseMoveOnTrigger, mouseMoveOutOfTrigger,
     paint,
     repaint,
@@ -52,11 +57,13 @@ import {
     CBHexSideId, CBMap
 } from "../../jslib/cblades/map.js";
 import {
-    DInsert
-} from "../../jslib/widget.js";
-import {
+    Area2D,
     Dimension2D, Point2D
 } from "../../jslib/geometry.js";
+import {
+    DInsertFrame
+} from "../../jslib/widget.js";
+
 
 class CBTestPlayer extends CBBasicPlayer {
 
@@ -311,15 +318,9 @@ class CBTestActionActuator extends CBActionActuator {
 
     setVisibility(level) {
         super.setVisibility(level);
-        this.trigger.alpha = (level===CBAbstractGame.FULL_VISIBILITY ? 1:0);
+        this.trigger.alpha = (level===CBGame.FULL_VISIBILITY ? 1:0);
     }
 
-}
-
-function clickOnPiece(game, piece) {
-    let pieceLocation = piece.artifact.viewportLocation;
-    var mouseEvent = createEvent("click", {offsetX:pieceLocation.x, offsetY:pieceLocation.y});
-    mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
 }
 
 function createBasicGame() {
@@ -404,6 +405,61 @@ function showActiveFakePiece(image, [a, b, c, d, e, f], s=50) {
     ];
 }
 
+export class CBTestHexNeighborTrigger extends NeighborActuatorArtifactMixin(CBActuatorImageTrigger) {
+
+    constructor(actuator, hex) {
+        super(hex, actuator, "actuators", DImage.getImage("./../images/actuators/hex.png"),
+            hex.location, new Dimension2D(50, 50));
+    }
+
+}
+
+export class CBTestHexNeighborActuator extends NeighborActuatorMixin(CBActuator) {
+
+    constructor(map) {
+        super();
+        let imageArtifacts = [];
+        for (let hex of map.hexes) {
+            let triggerType = new CBTestHexNeighborTrigger(this, hex);
+            imageArtifacts.push(triggerType);
+        }
+        this.initElement(imageArtifacts);
+    }
+
+    getHexTrigger(hexLocation) {
+        return this.findTrigger(trigger=>trigger.hexLocation.similar(hexLocation));
+    }
+
+}
+
+export class CBTestHexGhostTrigger extends GhostArtifactMixin(CBActuatorImageTrigger) {
+
+    constructor(actuator, hex) {
+        super(actuator, "actuators", DImage.getImage("./../images/actuators/hex.png"),
+            hex.location, new Dimension2D(50, 50));
+        this.hexLocation = hex;
+    }
+
+}
+
+export class CBTestHexGhostActuator extends CBActuator {
+
+    constructor(map) {
+        super();
+        let imageArtifacts = [];
+        for (let hex of map.hexes) {
+            let triggerType = new CBTestHexGhostTrigger(this, hex);
+            imageArtifacts.push(triggerType);
+        }
+        this.initElement(imageArtifacts);
+    }
+
+    getHexTrigger(hexLocation) {
+        return this.findTrigger(trigger=>trigger.hexLocation.similar(hexLocation));
+    }
+
+}
+
 let dummyEvent = {offsetX:0, offsetY:0};
 
 describe("Playable", ()=> {
@@ -437,8 +493,14 @@ describe("Playable", ()=> {
             resetDirectives(actuatorsLayer);
             repaint(game);
         then:
+            assert([...Mechanisms.manager._listeners]).contains(actuator);
             assertClearDirectives(actuatorsLayer);
             assert(getDirectives(actuatorsLayer)).arrayEqualsTo([]);
+        when:
+            actuator.close();
+            repaint(game);
+        then:
+            assert([...Mechanisms.manager._listeners]).doesNotContain(actuator);
     });
 
     it("Checks global push menu button", () => {
@@ -514,69 +576,6 @@ describe("Playable", ()=> {
             assert(something.value).isFalse();
     });
 
-    /*
-    it("Checks edit push menu button", () => {
-        try {
-            given:
-                var cbgameEdit = CBAbstractGame.editMap;
-                var editMode = false;
-                CBAbstractGame.editMap = function() {
-                    editMode = !editMode;
-                }
-                var game = new CBGame();
-                var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
-                game.setMap(map);
-                game.setMenu();
-                game.start();
-                var [commandsLayer] = getLayers(game.board, "widget-commands");
-                loadAllImages();
-                game._showCommand.action();
-                executeAllAnimations();
-            when:
-                game._editMapCommand.action();
-                executeAllAnimations();
-                resetDirectives(commandsLayer);
-                repaint(game);
-            then:
-                assert(editMode).isTrue();
-                assertClearDirectives(commandsLayer);
-                assertDirectives(commandsLayer, showGameCommand("turn", 940, 740));
-                assertDirectives(commandsLayer, showGameCommand("hide", 880, 740));
-                assertDirectives(commandsLayer, showGameCommand("undo", 820, 740));
-                assertDirectives(commandsLayer, showGameCommand("redo", 760, 740));
-                assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 700, 740));
-                assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 640, 740));
-                assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 580, 740));
-                assertDirectives(commandsLayer, showGameCommand("field", 520, 740));
-                assertDirectives(commandsLayer, showGameCommand("insert2", 460, 740));
-                assertDirectives(commandsLayer, showGameCommand("full-screen-on", 400, 740));
-                assertNoMoreDirectives(commandsLayer);
-            when:
-                editMode = false;
-                game._editMapCommand.action();
-                executeAllAnimations();
-                resetDirectives(commandsLayer);
-                repaint(game);
-            then:
-                assert(editMode).isFalse();
-                assertClearDirectives(commandsLayer);
-                assertDirectives(commandsLayer, showGameCommand("turn", 940, 740));
-                assertDirectives(commandsLayer, showGameCommand("hide", 880, 740));
-                assertDirectives(commandsLayer, showGameCommand("undo", 820, 740));
-                assertDirectives(commandsLayer, showGameCommand("redo", 760, 740));
-                assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 700, 740));
-                assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 640, 740));
-                assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 580, 740));
-                assertDirectives(commandsLayer, showGameCommand("editor", 520, 740));
-                assertDirectives(commandsLayer, showGameCommand("insert2", 460, 740));
-                assertDirectives(commandsLayer, showGameCommand("full-screen-on", 400, 740));
-                assertNoMoreDirectives(commandsLayer);
-        } finally {
-            CBAbstractGame.editMap = cbgameEdit;
-        }
-    });
-*/
-
     it("Checks full screen push menu button", () => {
         given:
             var game = new CBGame();
@@ -597,12 +596,12 @@ describe("Playable", ()=> {
         then:
             assert(getDirectives(mapLayer)).arrayEqualsTo([
                 "save()",
-                "resetTransform()",
-                "clearRect(0, 0, 2000, 1500)",
+                    "resetTransform()",
+                    "clearRect(0, 0, 2000, 1500)",
                 "restore()",
                 "save()",
-                "setTransform(0.9775, 0, 0, 0.9775, 1000, 750)",
-                "drawImage(./../images/maps/map.png, -1023, -1575, 2046, 3150)",
+                    "setTransform(0.9775, 0, 0, 0.9775, 1000, 750)",
+                    "drawImage(./../images/maps/map.png, -1023, -1575, 2046, 3150)",
                 "restore()"
             ]);
             assertClearDirectives(commandsLayer, 2000, 1500);
@@ -624,12 +623,12 @@ describe("Playable", ()=> {
         then:
             assert(getDirectives(mapLayer)).arrayEqualsTo([
                 "save()",
-                "resetTransform()",
-                "clearRect(0, 0, 1500, 1000)",
+                    "resetTransform()",
+                    "clearRect(0, 0, 1500, 1000)",
                 "restore()",
                 "save()",
-                "setTransform(0.9775, 0, 0, 0.9775, 750, 500)",
-                "drawImage(./../images/maps/map.png, -1023, -1575, 2046, 3150)",
+                    "setTransform(0.9775, 0, 0, 0.9775, 750, 500)",
+                    "drawImage(./../images/maps/map.png, -1023, -1575, 2046, 3150)",
                 "restore()"
             ]);
             assertClearDirectives(commandsLayer, 1500, 1000);
@@ -702,14 +701,6 @@ describe("Playable", ()=> {
             assert(unit1.isCurrentPlayer()).isFalse();
     });
 
-    class TestInsert extends WidgetLevelMixin(DInsert) {
-
-        constructor(game) {
-            super(game, "./../images/inserts/test-insert.png", new Dimension2D(200, 300));
-        }
-
-    }
-
     it("Checks mouse move over a trigger of an actuator", () => {
         given:
             var { game, playable } = createTinyGame();
@@ -717,9 +708,7 @@ describe("Playable", ()=> {
             var action = new CBAction(game, playable);
             var actuator = new CBTestActionActuator(action);
             game.openActuator(actuator);
-            loadAllImages();
         when:
-            resetDirectives(actuatorsLayer);
             repaint(game);
         then:
             assert(actuator.getTrigger()).isDefined();
@@ -730,7 +719,6 @@ describe("Playable", ()=> {
         when:
             resetDirectives(actuatorsLayer);
             mouseMoveOnTrigger(game, actuator.getTrigger());
-            paint(game);
         then:
             assertClearDirectives(actuatorsLayer);
             assertDirectives(actuatorsLayer, showSelectedActuatorTrigger("test", 50, 50, zoomAndRotate0(416.6667, 351.8878)))
@@ -738,7 +726,6 @@ describe("Playable", ()=> {
         when:
             resetDirectives(actuatorsLayer);
             mouseMoveOutOfTrigger(game, actuator.getTrigger());
-            paint(game);
         then:
             assertClearDirectives(actuatorsLayer);
             assertDirectives(actuatorsLayer, showActuatorTrigger("test", 50, 50, zoomAndRotate0(416.6667, 351.8878)))
@@ -755,10 +742,8 @@ describe("Playable", ()=> {
         when:
             var action = new CBAction(game, playable1);
             var actuator = new CBTestPlayableActuator(action, playable2);
-            resetDirectives(actuatorsLayer);
             game.openActuator(actuator);
-            paint(game);
-            loadAllImages();
+            repaint(game);
         then:
             assertClearDirectives(actuatorsLayer);
             assertDirectives(actuatorsLayer, showActuatorTrigger("test", 142, 142, zoomAndRotate0(416.6667, 255.6635)))
@@ -795,25 +780,95 @@ describe("Playable", ()=> {
             assertNoMoreDirectives(actuatorsLayer);
     });
 
-    it("Checks visibility level management (on insert as example)", () => {
+    it("Checks mouse move over a trigger of an neighbor actuator", () => {
+        given:
+            var { game, map } = createTinyGame();
+            var [actuatorsLayer] = getLayers(game.board, "actuators");
+            var actuator = new CBTestHexNeighborActuator(map);
+            game.openActuator(actuator);
+            loadAllImages();
+        when:
+            repaint(game);
+        then:
+            assertClearDirectives(actuatorsLayer);
+            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([]);
+        when:
+            resetDirectives(actuatorsLayer);
+            var trigger = actuator.getHexTrigger(map.getHex(5, 5));
+        then:
+            assert(trigger.mayCaptureEvent({})).isTrue();
+            assert(trigger.containsPoint(map.getHex(5, 5).location)).isTrue();
+            assert(trigger.containsPoint(map.getHex(5, 6).location)).isFalse();
+        when:
+            mouseMoveOnTrigger(game, trigger);
+        then:
+            assert(trigger.mayCaptureEvent({})).isTrue();
+            assertClearDirectives(actuatorsLayer);
+            assertDirectives(actuatorsLayer, showActuatorTrigger("hex", 50, 50, zoomAndRotate0(333.3333, 15.1026)));
+            assertDirectives(actuatorsLayer, showActuatorTrigger("hex", 50, 50, zoomAndRotate0(333.3333, 111.327)));
+            assertDirectives(actuatorsLayer, showSelectedActuatorTrigger("hex", 50, 50, zoomAndRotate0(416.6667, 63.2148)));
+            assertDirectives(actuatorsLayer, showActuatorTrigger("hex", 50, 50, zoomAndRotate0(416.6667, 159.4391)));
+            assertDirectives(actuatorsLayer, showActuatorTrigger("hex", 50, 50, zoomAndRotate0(500, 15.1026)));
+            assertDirectives(actuatorsLayer, showActuatorTrigger("hex", 50, 50, zoomAndRotate0(500, 111.327)));
+            assertNoMoreDirectives(actuatorsLayer);
+    });
+
+    it("Checks mouse move over a trigger of an ghost actuator", () => {
+        given:
+            var { game, map } = createTinyGame();
+            var [actuatorsLayer] = getLayers(game.board, "actuators");
+            var actuator = new CBTestHexGhostActuator(map);
+            game.openActuator(actuator);
+            loadAllImages();
+        when:
+            repaint(game);
+        then:
+            assertClearDirectives(actuatorsLayer);
+            assert(getDirectives(actuatorsLayer)).arrayEqualsTo([]);
+        when:
+            resetDirectives(actuatorsLayer);
+            var trigger = actuator.getHexTrigger(map.getHex(5, 5));
+        then:
+            assert(trigger.mayCaptureEvent({})).isTrue();
+        when:
+            mouseMoveOnTrigger(game, trigger);
+        then:
+            assert(trigger.mayCaptureEvent({})).isTrue();
+            assertClearDirectives(actuatorsLayer);
+            assertDirectives(actuatorsLayer, showSelectedActuatorTrigger("hex", 50, 50, zoomAndRotate0(416.6667, 63.2148)));
+            assertNoMoreDirectives(actuatorsLayer);
+        when:
+            var otherTrigger = actuator.getHexTrigger(map.getHex(5, 6));
+            resetDirectives(actuatorsLayer);
+            mouseMoveOnTrigger(game, otherTrigger);
+        then:
+            assertClearDirectives(actuatorsLayer);
+            assertDirectives(actuatorsLayer, showSelectedActuatorTrigger("hex", 50, 50, zoomAndRotate0(416.6667, 159.4391)));
+            assertNoMoreDirectives(actuatorsLayer);
+    });
+
+    class TestInsert extends CBInsert {
+
+        constructor() {
+            super("./../images/inserts/test-insert.png", new Dimension2D(200, 300));
+        }
+
+    }
+
+    it("Checks visibility level management on insert", () => {
         given:
             var game = new CBGame();
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [widgetsLevel] = getLayers(game.board, "widgets");
             game.setMenu();
-            game.start();
-            game._showCommand.action();
-            executeAllAnimations();
         when:
-            var insert = new TestInsert(game);
+            var insert = new TestInsert();
         then:
-            assert([...Mechanisms.manager._listeners]).notContains(insert);
+            assert([...Mechanisms.manager._listeners]).doesNotContain(insert);
         when:
             insert.open(game.board, new Point2D(150, 200));
-            resetDirectives(widgetsLevel);
             repaint(game);
-            loadAllImages();
         then:
             assert([...Mechanisms.manager._listeners]).contains(insert);
             assertClearDirectives(widgetsLevel);
@@ -822,7 +877,6 @@ describe("Playable", ()=> {
         when:
             game._insertLevelCommand.action();
             executeAllAnimations();
-            resetDirectives(widgetsLevel);
             repaint(game);
         then:
             assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
@@ -831,7 +885,7 @@ describe("Playable", ()=> {
             Memento.open();
             insert.close();
         then:
-            assert([...Mechanisms.manager._listeners]).notContains(insert);
+            assert([...Mechanisms.manager._listeners]).doesNotContain(insert);
         when:
             Memento.undo();
         then:
@@ -839,7 +893,60 @@ describe("Playable", ()=> {
         when:
             Memento.undo();
         then:
-            assert([...Mechanisms.manager._listeners]).notContains(insert);
+            assert([...Mechanisms.manager._listeners]).doesNotContain(insert);
+    });
+
+    class TestAbstractInsert extends CBAbstractInsert {
+
+        constructor() {
+            super("./../images/inserts/test-insert.png", new Dimension2D(200, 300));
+            this.addFrame(new DInsertFrame(this, 0,
+                Area2D.create(new Point2D(0, 0), new Dimension2D(200, 300)),
+                Area2D.create(new Point2D(0, 0), new Dimension2D(400, 300))
+            ));
+        }
+
+    }
+
+    it("Checks visibility level management on abstract insert", () => {
+        given:
+            var game = new CBGame();
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            game.setMap(map);
+            var [widgetsLevel] = getLayers(game.board, "widgets");
+            game.setMenu();
+        when:
+            var insert = new TestAbstractInsert();
+        then:
+            assert([...Mechanisms.manager._listeners]).doesNotContain(insert);
+        when:
+            insert.open(game.board, new Point2D(150, 200));
+            repaint(game);
+        then:
+            assert([...Mechanisms.manager._listeners]).contains(insert);
+            assertClearDirectives(widgetsLevel);
+            assertDirectives(widgetsLevel, showInsert("test", 150, 200, 200, 300));
+            assertNoMoreDirectives(widgetsLevel);
+        when:
+            game._insertLevelCommand.action();
+            executeAllAnimations();
+            repaint(game);
+        then:
+            assert(getDirectives(widgetsLevel, 4)).arrayEqualsTo([
+            ]);
+        when:
+            Memento.open();
+            insert.close();
+        then:
+            assert([...Mechanisms.manager._listeners]).doesNotContain(insert);
+        when:
+            Memento.undo();
+        then:
+            assert([...Mechanisms.manager._listeners]).contains(insert);
+        when:
+            Memento.undo();
+        then:
+            assert([...Mechanisms.manager._listeners]).doesNotContain(insert);
     });
 
     it("Checks mask that depends on the visibility level", () => {
@@ -853,7 +960,7 @@ describe("Playable", ()=> {
             game._showCommand.action();
             executeAllAnimations();
         when:
-            var mask = new CBMask(game);
+            var mask = new CBMask();
             resetDirectives(widgetsLevel);
             mask.open(game.board);
             paint(game);
@@ -874,7 +981,7 @@ describe("Playable", ()=> {
             Memento.open();
             mask.close();
         then:
-            assert([...Mechanisms.manager._listeners]).notContains(mask);
+            assert([...Mechanisms.manager._listeners]).doesNotContain(mask);
         when:
             Memento.undo();
         then:
@@ -882,7 +989,7 @@ describe("Playable", ()=> {
         when:
             Memento.undo();
         then:
-            assert([...Mechanisms.manager._listeners]).notContains(mask);
+            assert([...Mechanisms.manager._listeners]).doesNotContain(mask);
     });
 
     function mouseMove(game, x, y) {

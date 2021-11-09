@@ -278,12 +278,6 @@ export class DArtifact extends LocalisationAware(Object) {
         return (this.element?this.element.alpha:1)*this._alpha;
     }
 
-    changeAlpha(alpha) {
-        Memento.register(this);
-        this._alpha = alpha;
-        this.refresh();
-    }
-
     setSettings(settings) {
         if (settings) {
             this._settings = settings;
@@ -1895,8 +1889,6 @@ export class DBoard {
         BOTTOM: 3
     };
 }
-
-
 
 export class DArtifactAnimation extends DAnimation {
 

@@ -204,18 +204,10 @@ export let mockPlatform = {
 
     save(context) {
         write(context, `save()`);
-        context.saved = context.saved !== undefined ? context.saved+1 : 1;
     },
 
     restore(context) {
         write(context, `restore()`);
-        context.saved--;
-    },
-
-    reset(context) {
-        while(context.saved) {
-            this.restore(context);
-        }
     },
 
     resetTransform(context) {

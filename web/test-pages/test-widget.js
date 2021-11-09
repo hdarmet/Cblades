@@ -32,7 +32,7 @@ import {
     DMask,
     DScene,
     DMessage,
-    DMultiStatePushButton, DRotatableIndicator, DSwipe
+    DMultiStatePushButton, DRotatableIndicator, DSwipe, DPrevNavigation, DNextNavigation, D2StatesIconMenuItem
 } from "../jslib/widget.js";
 import {
     clickOnArtifact, mouseMoveOnArtifact, mouseMoveOutOfArtifact
@@ -531,6 +531,53 @@ describe("Widget", ()=> {
             assert(clicked).isFalse();
     });
 
+    it("Checks 2 states icon menu item behavior", () => {
+        given:
+            var { board, itemsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            resetDirectives(itemsLayer);
+            let clicked = -1;
+            var icon1 = new D2StatesIconMenuItem(
+                "./../images/icons/menu1.png",
+                "./../images/icons/menu1b.png",
+                "./../images/icons/menu1-grayed.png",
+                0, 0,
+                (event, state)=>{
+                    clicked=state;
+                    return true;
+                });
+            var icon2 = new D2StatesIconMenuItem(
+                "./../images/icons/menu2.png",
+                "./../images/icons/menu2b.png",
+                "./../images/icons/menu2-grayed.png",
+                1, 0,
+                (event, state)=>{
+                    clicked=state;
+                    return true;
+                }).setSecondState(true);
+            let menu = new DIconMenu(false, icon1, icon2);
+            menu.open(board, new Point2D(5, 5));
+            loadAllImages();
+            board.paint();
+        then:
+            assert(icon1.secondState).isFalse();
+            assert(icon2.secondState).isTrue();
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 100, 40)',
+                    'drawImage(./../images/icons/menu2b.png, -25, -25, 50, 50)',
+                'restore()',
+                'save()',
+                    'setTransform(1, 0, 0, 1, 40, 40)',
+                    'drawImage(./../images/icons/menu1.png, -25, -25, 50, 50)',
+                'restore()'
+            ]);
+        when:
+            clickOnArtifact(board, icon2);
+        then:
+            assert(clicked).isTrue();
+    });
+
     it("Checks icon menu modal mode", () => {
         given:
             var { board, widgetsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
@@ -874,7 +921,7 @@ describe("Widget", ()=> {
                 "restore()"
             ]);
             assert(dice.result).arrayEqualsTo([1, 2]);
-        when: // Dice still active : images have red shadow
+        when: // Dice still active : images have red shadow when mouseover
             resetDirectives(itemsLayer);
             event = createEvent("mousemove", {offsetX:diceVPLocation.x, offsetY:diceVPLocation.y});
             mockPlatform.dispatchEvent(board.root, "mousemove", event);
@@ -891,9 +938,28 @@ describe("Widget", ()=> {
                     "drawImage(./../images/dice/d2.png, -50, -44.5, 100, 89)",
                 "restore()"
             ]);
+        when: // Dice still active : images have blue shadow when mouse out of
+            resetDirectives(itemsLayer);
+            event = createEvent("mousemove", {offsetX:diceVPLocation.x+200, offsetY:diceVPLocation.y+200});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
+        then:
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 40, -10)',
+                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)',
+                'restore()',
+                'save()',
+                    'setTransform(1, 0, 0, 1, -20, 50)',
+                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'drawImage(./../images/dice/d2.png, -50, -44.5, 100, 89)',
+                'restore()'
+            ]);
         when: // Inactivation : shadows become black
             resetDirectives(itemsLayer);
             dice.active = false;
+            event = createEvent("mousemove", {offsetX:diceVPLocation.x, offsetY:diceVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "mousemove", event);
             board.paint();
         then:
             assert(dice.active).isFalse();
@@ -1290,6 +1356,75 @@ describe("Widget", ()=> {
                     "drawImage(./../images/commands/down.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
+    });
+
+    it("Checks navigation buttons", () => {
+        given:
+            var { board, widgetsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var counter = 1;
+            var popup = new DPopup(new Dimension2D(500, 200));
+            var prevButton = new DPrevNavigation(new Point2D(-50, 0), event=>counter--);
+            var nextButton = new DNextNavigation(new Point2D(50, 0), event=>counter++);
+            popup.addArtifact(prevButton);
+            popup.addArtifact(nextButton);
+            loadAllImages();
+            popup.open(board, new Point2D(500, 300));
+        when:
+            resetDirectives(widgetsLayer);
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 245, 195)',
+                    'shadowColor = #000000', 'shadowBlur = 10',
+                    'strokeStyle = #000000', 'lineWidth = 1',
+                    'strokeRect(-250, -100, 500, 200)',
+                    'fillStyle = #FFFFFF', 'fillRect(-250, -100, 500, 200)',
+                'restore()',
+                'save()',
+                    'setTransform(1, 0, 0, 1, 195, 195)',
+                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'drawImage(./../images/commands/prev.png, -18, -18, 36, 36)',
+                'restore()',
+                'save()',
+                    'setTransform(1, 0, 0, 1, 295, 195)',
+                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'drawImage(./../images/commands/next.png, -18, -18, 36, 36)',
+                'restore()'
+            ]);
+        when:
+            clickOnArtifact(board, prevButton);
+        then:
+            assert(counter).equalsTo(0);
+        when:
+            resetDirectives(widgetsLayer);
+            prevButton.setActive(false);
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 245, 195)',
+                    'shadowColor = #000000', 'shadowBlur = 10',
+                    'strokeStyle = #000000', 'lineWidth = 1',
+                    'strokeRect(-250, -100, 500, 200)',
+                    'fillStyle = #FFFFFF',
+                    'fillRect(-250, -100, 500, 200)',
+                'restore()',
+                'save()',
+                    'setTransform(1, 0, 0, 1, 195, 195)',
+                    'shadowColor = #000000', 'shadowBlur = 10',
+                    'drawImage(./../images/commands/prev-inactive.png, -18, -18, 36, 36)',
+                'restore()',
+                'save()',
+                    'setTransform(1, 0, 0, 1, 295, 195)',
+                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'drawImage(./../images/commands/next.png, -18, -18, 36, 36)',
+                'restore()'
+            ]);
+        when:
+            clickOnArtifact(board, prevButton);
+        then:
+            assert(counter).equalsTo(0);
     });
 
     it("Checks ok markers on an insert", () => {

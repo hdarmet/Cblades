@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    assert, before, describe, it
+    assert, before, describe, it, stringifyArray
 } from "../../jstest/jtest.js";
 import {
     DImage, setDrawPlatform
@@ -15,7 +15,7 @@ import {
 import {
     CBMap,
     CBHexSideId,
-    CBHexVertexId, CBHex, CBHexId, distanceFromHexToHex, distanceFromHexLocationToHexLocation
+    CBHexVertexId, CBHex, CBHexId, distanceFromHexToHex, distanceFromHexLocationToHexLocation, MapImageArtifact
 } from "../../jslib/cblades/map.js";
 import {
     DBoard, DSimpleLevel
@@ -98,6 +98,7 @@ describe("Map", ()=> {
             assert(map.game).equalsTo(game);
             assert(hexId.game).equalsTo(game);
             assert(hexSideId.game).equalsTo(game);
+            assert(map.artifact).is(MapImageArtifact);
         when:
             var mouseEvent = createEvent("click", {offsetX:500, offsetY:410});
             mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
@@ -251,6 +252,11 @@ describe("Map", ()=> {
                 [map.getHex(3, 3), 0], [map.getHex(4, 3), 60],
                 [map.getHex(4, 4), 120], [map.getHex(3, 5), 180],
                 [map.getHex(2, 4), 240], [map.getHex(2, 3), 300]
+            ]);
+            assert(stringifyArray(hexId.borders)).arrayEqualsTo([
+                'point(-568.3333, -984.375)', 'point(-454.6667, -984.375)',
+                'point(-397.8333, -885.9375)', 'point(-454.6667, -787.5)',
+                'point(-568.3333, -787.5)', 'point(-625.1667, -885.9375)'
             ]);
     });
 
@@ -429,6 +435,10 @@ describe("Map", ()=> {
                 [map.getHex(5, 4), 150], [map.getHex(4, 4), 180],
                 [map.getHex(3, 4), 240], [map.getHex(3, 3), 300]
         ]);
+            assert(stringifyArray(hexSide.borders)).arrayEqualsTo([
+                'point(-341, -984.375)', 'point(-284.1667, -1082.8125)',
+                'point(-170.5, -1082.8125)', 'point(-227.3333, -984.375)'
+            ]);
         when:
             var hexSide11 = hexId1.toward(60);
             var hexId4 = map.getHex(-1, 4);

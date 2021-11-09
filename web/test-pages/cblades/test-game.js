@@ -41,15 +41,18 @@ import {
 } from "../../jslib/geometry.js";
 import {
     DMask,
-    DPopup
+    DPopup, DPushButton
 } from "../../jslib/widget.js";
 import {
     paint,
     repaint,
     showTroop,
     zoomAndRotate0,
-    showMap, showMask
+    showMap, showMask, executeAllAnimations
 } from "./interactive-tools.js";
+import {
+    CBGame
+} from "../../jslib/cblades/playable.js";
 
 class CBTestGame extends CBAbstractGame {
 
@@ -62,7 +65,6 @@ class CBTestGame extends CBAbstractGame {
             new DStaticLevel("counters"),
             new DStaticLevel("counter-markers"),
             new DStaticLevel("widgets"),
-            new DStaticLevel("widget-items"),
             new DStaticLevel("widget-commands")
         ]);
     }
@@ -150,7 +152,7 @@ class CBTestActuator extends CBActuator {
 
     setVisibility(level) {
         super.setVisibility(level);
-        this.trigger.alpha = (level===CBAbstractGame.FULL_VISIBILITY ? 1:0);
+        this.trigger.alpha = (level===CBGame.FULL_VISIBILITY ? 1:0);
     }
 
 }
@@ -183,26 +185,17 @@ class CBTestPlayable extends BelongsToPlayerMixin(HexLocatableMixin(PlayableMixi
         this.player = player;
     }
 
+    _init() {
+        this.initialized = true;
+    }
+
+    _updatePlayed() {
+        this.updated = true;
+    }
+
     createArtifact(levelName, images, position, dimension) {
         return new TestPlayableArtifact(this, levelName, images, position, dimension);
     }
-
-    get unitNature() {
-        return this._nature = "unit";
-    }
-
-    /*
-    markAsPlayed() {
-        this.status = "played";
-    }
-
-    reset(player) {
-        super.reset(player);
-        if (player === this.player) {
-            delete this.status;
-        }
-    }
-     */
 
     get slot() {
         return this.hexLocation.playables.indexOf(this);
@@ -241,11 +234,11 @@ function createTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
     var player = new CBTestPlayer();
     game.addPlayer(player);
-    let unit = new CBTestPlayable("units", player, ["./../images/units/misc/unit.png"]);
-    unit.addToMap(map.getHex(5, 8));
+    let playable = new CBTestPlayable("units", player, ["./../images/units/misc/unit.png"]);
+    playable.addToMap(map.getHex(5, 8));
     repaint(game);
     loadAllImages();
-    return { game, arbitrator, player, map, unit };
+    return { game, arbitrator, player, map, playable };
 }
 
 function create2PlayersTinyGame() {
@@ -254,28 +247,28 @@ function create2PlayersTinyGame() {
     game.addPlayer(player1);
     let player2 = new CBTestPlayer();
     game.addPlayer(player2);
-    let unit0 = new CBTestPlayable("units", player1, ["./../images/units/misc/unit0.png"]);
-    unit0.addToMap(map.getHex(5, 8));
-    let unit1 = new CBTestPlayable("units", player1, ["./../images/units/misc/unit1.png"]);
-    unit1.addToMap(map.getHex(5, 8));
-    let unit2 = new CBTestPlayable("units", player2, ["./../images/units/misc/unit2.png"]);
-    unit2.addToMap(map.getHex(5, 7));
+    let playable0 = new CBTestPlayable("units", player1, ["./../images/units/misc/unit0.png"]);
+    playable0.addToMap(map.getHex(5, 8));
+    let playable1 = new CBTestPlayable("units", player1, ["./../images/units/misc/unit1.png"]);
+    playable1.addToMap(map.getHex(5, 8));
+    let playable2 = new CBTestPlayable("units", player2, ["./../images/units/misc/unit2.png"]);
+    playable2.addToMap(map.getHex(5, 7));
     game.start();
     loadAllImages();
-    return {game, map, unit0, unit1, unit2, player1, player2};
+    return {game, map, playable0, playable1, playable2, player1, player2};
 }
 
 function create2PiecesTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
     var player = new CBTestPlayer();
     game.addPlayer(player);
-    let unit1 = new CBTestPlayable("units", player,["./../images/units/misc/unit1.png"]);
-    unit1.addToMap(map.getHex(5, 6));
-    let unit2 = new CBTestPlayable("units", player,["./../images/units/misc/unit2.png"]);
-    unit2.addToMap(map.getHex(5, 7));
+    let playable1 = new CBTestPlayable("units", player,["./../images/units/misc/unit1.png"]);
+    playable1.addToMap(map.getHex(5, 6));
+    let playable2 = new CBTestPlayable("units", player,["./../images/units/misc/unit2.png"]);
+    playable2.addToMap(map.getHex(5, 7));
     repaint(game);
     loadAllImages();
-    return {game, map, arbitrator, unit1, unit2, player};
+    return {game, map, arbitrator, playable1, playable2, player};
 }
 
 function createDisplayTinyGame() {
@@ -320,11 +313,13 @@ describe("Game", ()=> {
             loadAllImages();
         then:
             assert(game.board).is(DBoard);
+            assert(game.board.game).equalsTo(game);
             assert(arbitrator.game).equalsTo(game);
             assert(game.arbitrator).equalsTo(arbitrator);
             assert(game.map).equalsTo(map);
             assert(player.game).equalsTo(game);
             assert(game.currentPlayer).equalsTo(player);
+            assert(game.viewportCenter.toString()).equalsTo("point(500, 400)");
             assertClearDirectives(mapLayer);
             assertDirectives(mapLayer, showMap("map", zoomAndRotate0(500, 400)));
             assertNoMoreDirectives(mapLayer);
@@ -365,134 +360,197 @@ describe("Game", ()=> {
             ]);
     });
 
+    it("Checks player basic features", () => {
+        given:
+            var {game, player1, player2} = create2PlayersTinyGame();
+        then:
+            assert(game.players).unorderedArrayEqualsTo([player1, player2]);
+            assert(player1._memento()).isDefined();
+            assert(player1._revert({}));
+            assert(player1.canFinishPlayable({})).isTrue();
+    });
+
+    it("Checks game commands", () => {
+        given:
+            var {game} = createTinyGame();
+            var [commandsLevel] = getLayers(game.board, "widget-commands");
+            var flip = true;
+            game._flipCommand = new DPushButton(
+                "./../images/commands/flip-command.png", "./../images/commands/flip-command-inactive.png",
+                new Point2D(-60, -60), animation=>{
+                    flip = false;
+                    game.hideCommand(game._flipCommand);
+                    game.showCommand(game._flopCommand);
+                    animation();
+                });
+            game._flopCommand = new DPushButton(
+                "./../images/commands/flop-command.png", "./../images/commands/flop-command-inactive.png",
+                new Point2D(-60, -60), animation=>{});
+            game.showCommand(game._flipCommand);
+            repaint(game);
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 940, 740)',
+                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'drawImage(./../images/commands/flip-command.png, -25, -25, 50, 50)',
+                'restore()'
+            ]);
+            assert(flip).isTrue();
+        when:
+            game._flipCommand.action();
+            executeAllAnimations();
+            repaint(game);
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 940, 740)',
+                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'drawImage(./../images/commands/flop-command.png, -25, -25, 50, 50)',
+                'restore()'
+            ]);
+            assert(flip).isFalse();
+        when:
+            resetDirectives(commandsLevel);
+            game.board._draw.setSize(new Dimension2D(1000, 1000));
+        then:
+            assert(getDirectives(commandsLevel, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 940, 940)',
+                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'drawImage(./../images/commands/flop-command.png, -25, -25, 50, 50)',
+                'restore()'
+            ]);
+    });
+
     it("Checks action launch during selection (and automatic finalization when a started playable is unselected)", () => {
         given:
-            var {game, unit1, unit2, player} = create2PiecesTinyGame();
+            var {game, playable1, playable2, player} = create2PiecesTinyGame();
         when:
-            clickOnPiece(game, unit1);
+            clickOnPiece(game, playable1);
         then:
             assert(player.launched).equalsTo(1);
-            assert(unit1.isPlayed()).isFalse();
+            assert(playable1.isPlayed()).isFalse();
         when:
-            clickOnPiece(game, unit1);
+            clickOnPiece(game, playable1);
         then:
             assert(player.launched).equalsTo(2);
-            assert(unit1.isPlayed()).isFalse();
+            assert(playable1.isPlayed()).isFalse();
         when:
-            clickOnPiece(game, unit2);
-        then: // unit1 is not "played" because the action was not started
+            clickOnPiece(game, playable2);
+        then: // playable1 is not "played" because the action was not started
             assert(player.launched).equalsTo(3);
-            assert(unit1.isPlayed()).isFalse();
+            assert(playable1.isPlayed()).isFalse();
         when:
-            unit2.action.markAsStarted();
-            clickOnPiece(game, unit1);
-        then: // unit2 has not played because the action was not started
+            playable2.action.markAsStarted();
+            clickOnPiece(game, playable1);
+        then: // playable2 has not played because the action was not started
             assert(player.launched).equalsTo(4);
-            assert(unit2.isPlayed()).isTrue();
+            assert(playable2.isPlayed()).isTrue();
         when:
-            clickOnPiece(game, unit2);
-            clickOnPiece(game, unit1);
-        then: // unit2 has already played, nothing happened
+            clickOnPiece(game, playable2);
+            clickOnPiece(game, playable1);
+        then: // playable2 has already played, nothing happened
             assert(player.launched).equalsTo(5);
-            assert(unit2.isPlayed()).isTrue();
+            assert(playable2.isPlayed()).isTrue();
     });
 
     it("Checks that it is possible to not set an action to a playable when it is selected", () => {
         given:
-            var {game, unit1, unit2, player} = create2PiecesTinyGame();
+            var {game, playable1, playable2, player} = create2PiecesTinyGame();
         when:
             player.setAction(null);
-            clickOnPiece(game, unit1);
+            clickOnPiece(game, playable1);
         then:
             assert(player.launched).equalsTo(1);
-            assert(unit1.action).isNotDefined();
+            assert(playable1.action).isNotDefined();
         when:
             player.setAction(null);
-            clickOnPiece(game, unit1);
+            clickOnPiece(game, playable1);
         then:
             assert(player.launched).equalsTo(2);
     });
 
     it("Checks if a piece selection/deselection is allowed when focusing", () => {
         given:
-            var { game, unit1, unit2 } = create2PiecesTinyGame();
+            var { game, playable1, playable2 } = create2PiecesTinyGame();
         then:
-            assert(game.canSelectPlayable(unit1)).isTrue();
-            assert(game.mayChangeSelection(unit1)).isTrue();
+            assert(game.canSelectPlayable(playable1)).isTrue();
+            assert(game.mayChangeSelection(playable1)).isTrue();
         when:
-            unit1.select();
+            playable1.select();
         then:
-            assert(game.selectedPlayable).equalsTo(unit1);
+            assert(game.selectedPlayable).equalsTo(playable1);
             assert(game.focusedPlayable).isNotDefined();
         when: // if an item is "focused", selection of another item is not possible
-            game.setFocusedPlayable(unit1);
+            game.setFocusedPlayable(playable1);
         then:
-            assert(game.canUnselectPlayable(unit1)).isFalse();
-            assert(game.canSelectPlayable(unit2)).isFalse();
-            assert(game.mayChangeSelection(unit2)).isFalse();
-        when: // can select focused unit
-            game.setFocusedPlayable(unit2);
+            assert(game.canUnselectPlayable(playable1)).isFalse();
+            assert(game.canSelectPlayable(playable2)).isFalse();
+            assert(game.mayChangeSelection(playable2)).isFalse();
+        when: // can select focused playable
+            game.setFocusedPlayable(playable2);
         then:
-            assert(game.canUnselectPlayable(unit1)).isFalse();
-            assert(game.canSelectPlayable(unit2)).isTrue();
-            assert(game.mayChangeSelection(unit2)).isFalse();
-        when: // No focused unit : selection is possible
+            assert(game.canUnselectPlayable(playable1)).isFalse();
+            assert(game.canSelectPlayable(playable2)).isTrue();
+            assert(game.mayChangeSelection(playable2)).isFalse();
+        when: // No focused playable : selection is possible
             game.setFocusedPlayable();
         then:
-            assert(game.canUnselectPlayable(unit1)).isTrue();
-            assert(game.canSelectPlayable(unit2)).isTrue();
-            assert(game.mayChangeSelection(unit2)).isTrue();
+            assert(game.canUnselectPlayable(playable1)).isTrue();
+            assert(game.canSelectPlayable(playable2)).isTrue();
+            assert(game.mayChangeSelection(playable2)).isTrue();
         when:
-            unit2.select();
+            playable2.select();
         then:
-            assert(game.selectedPlayable).equalsTo(unit2);
+            assert(game.selectedPlayable).equalsTo(playable2);
         when:
-            unit2.unselect();
+            playable2.unselect();
         then:
             assert(game.selectedPlayable).isNotDefined();
     });
 
     it("Checks playable selection/deselection regarding actions", () => {
         given:
-            var { game, unit1 } = create2PiecesTinyGame();
-            var action = new CBAction(game, unit1);
+            var { game, playable1 } = create2PiecesTinyGame();
+            var action = new CBAction(game, playable1);
             action.isFinishable = function() { return false;};
         when:
-            unit1.select();
-            unit1.launchAction(action);
+            playable1.select();
+            playable1.launchAction(action);
         then:
-            assert(game.canUnselectPlayable(unit1)).isTrue();
+            assert(game.canUnselectPlayable(playable1)).isTrue();
         when:
             action.markAsStarted();
         then:
-            assert(game.canUnselectPlayable(unit1)).isFalse();
+            assert(game.canUnselectPlayable(playable1)).isFalse();
         when:
             action.markAsFinished();
         then:
-            assert(game.canUnselectPlayable(unit1)).isTrue();
+            assert(game.canUnselectPlayable(playable1)).isTrue();
     });
 
     it("Checks focus on playable prevents other playable selection", () => {
         given:
-            var { game, unit1, unit2 } = create2PiecesTinyGame();
-            var action = new CBAction(game, unit1);
-            game.setFocusedPlayable(unit1);
+            var { game, playable1, playable2 } = create2PiecesTinyGame();
+            var action = new CBAction(game, playable1);
+            game.setFocusedPlayable(playable1);
         when:
-            unit1.select();
-            unit1.launchAction(action);
+            playable1.select();
+            playable1.launchAction(action);
         then:
-            assert(game.canUnselectPlayable(unit1)).isFalse();
+            assert(game.canUnselectPlayable(playable1)).isFalse();
         when:
             action.markAsFinished();
         then:
-            assert(game.canUnselectPlayable(unit1)).isTrue();
+            assert(game.canUnselectPlayable(playable1)).isTrue();
     });
 
     it("Checks actuators management", () => {
         given:
-            var {game, unit} = createTinyGame();
+            var {game, playable} = createTinyGame();
         when:
-            var action = new CBAction(game, unit);
+            var action = new CBAction(game, playable);
             var actuator1 = new CBTestActuator(action);
             var actuator2 = new CBTestActuator(action);
             game.openActuator(actuator1);
@@ -555,19 +613,19 @@ describe("Game", ()=> {
 
     it("Checks that a playable selection closes the actuators", () => {
         given:
-            var { game, unit1, unit2, player } = create2PiecesTinyGame();
-            clickOnPiece(game, unit1);
-            var action = new CBAction(game, unit1);
+            var { game, playable1, playable2, player } = create2PiecesTinyGame();
+            clickOnPiece(game, playable1);
+            var action = new CBAction(game, playable1);
             var actuator = new CBTestActuator(action);
             game.openActuator(actuator);
             loadAllImages();
         then:
-            assert(game.selectedPlayable).equalsTo(unit1);
+            assert(game.selectedPlayable).equalsTo(playable1);
             assert(getTestActuator(game)).isDefined();
         when:
-            clickOnPiece(game, unit2);
+            clickOnPiece(game, playable2);
         then:
-            assert(game.selectedPlayable).equalsTo(unit2);
+            assert(game.selectedPlayable).equalsTo(playable2);
             assert(getTestActuator(game)).isNotDefined();
     });
 
@@ -730,16 +788,16 @@ describe("Game", ()=> {
             var { game, map } = createBasicGame();
             var player = new CBTestPlayer();
             game.addPlayer(player);
-            let unit = new CBTestPlayable("units", player, ["./../images/units/misc/unit1.png"]);
+            let playable = new CBTestPlayable("units", player, ["./../images/units/misc/unit1.png"]);
             let markerImage = DImage.getImage("./../images/markers/misc/markers1.png");
-            let marker = new CBTestMarker(unit, "units", [markerImage], new Point2D(0, 0), new Dimension2D(64, 64));
-            unit._element.addArtifact(marker);
+            let marker = new CBTestMarker(playable, "units", [markerImage], new Point2D(0, 0), new Dimension2D(64, 64));
+            playable._element.addArtifact(marker);
             var hexId = map.getHex(4, 5);
-            unit.addToMap(hexId, CBStacking.TOP);
+            playable.addToMap(hexId, CBStacking.TOP);
         then:
             assert(marker.game).equalsTo(game);
-            assert(unit.artifact.onMouseEnter(dummyEvent)).isTrue();
-            assert(unit.artifact.onMouseLeave(dummyEvent)).isTrue();
+            assert(playable.artifact.onMouseEnter(dummyEvent)).isTrue();
+            assert(playable.artifact.onMouseLeave(dummyEvent)).isTrue();
     });
 
     it("Checks playable addition and removing on a Hex (not undoable)", () => {
@@ -814,7 +872,7 @@ describe("Game", ()=> {
 
     it("Checks getOneByType method", () => {
         given:
-            var { map, player } = createTinyGame();
+            var { map, player, playable } = createTinyGame();
             class PlayableOne extends CBTestPlayable {};
             class PlayableTwo extends CBTestPlayable {};
             class PlayableThree extends CBTestPlayable {};
@@ -827,11 +885,12 @@ describe("Game", ()=> {
         then:
             assert(PlayableMixin.getOneByType(hexId, PlayableOne)).equalsTo(playable1);
             assert(PlayableMixin.getOneByType(hexId, PlayableThree)).isNotDefined();
+            assert(player.playables).unorderedArrayEqualsTo([playable, playable1, playable2]);
     });
 
     it("Checks getAllByType method", () => {
         given:
-            var { game, map, player } = createTinyGame();
+            var { game, map, player, playable } = createTinyGame();
             class PlayableOne extends CBTestPlayable {};
             class PlayableTwo extends CBTestPlayable {};
             class PlayableThree extends CBTestPlayable {};
@@ -847,6 +906,7 @@ describe("Game", ()=> {
             assert(PlayableMixin.getAllByType(hexId, PlayableOne)).unorderedArrayEqualsTo([playable1, playable2]);
             assert(PlayableMixin.getAllByType(hexId, PlayableTwo)).arrayEqualsTo([playable3]);
             assert(PlayableMixin.getAllByType(hexId, PlayableThree)).arrayEqualsTo([]);
+            assert(player.playables).unorderedArrayEqualsTo([playable, playable1, playable2, playable3]);
     });
 
     it("Checks playable addition and removing on a Hex Side (not undoable)", () => {
@@ -931,64 +991,64 @@ describe("Game", ()=> {
 
     it("Checks that selected/focused playable destruction release selection/focus", () => {
         given:
-            var { game, unit1, unit2 } = create2PiecesTinyGame();
-        unit1.select();
-        game.setFocusedPlayable(unit1);
+            var { game, playable1, playable2 } = create2PiecesTinyGame();
+        playable1.select();
+        game.setFocusedPlayable(playable1);
         then:
-            assert(unit1.isOnHex()).isTrue();
-        assert(game.focusedPlayable).equalsTo(unit1);
-        assert(game.selectedPlayable).equalsTo(unit1);
+            assert(playable1.isOnHex()).isTrue();
+        assert(game.focusedPlayable).equalsTo(playable1);
+        assert(game.selectedPlayable).equalsTo(playable1);
         when:
-            unit1.destroy();
+            playable1.destroy();
         then:
-            assert(unit1.isOnHex()).isFalse();
+            assert(playable1.isOnHex()).isFalse();
         assert(game.focusedPlayable).isNotDefined();
         assert(game.selectedPlayable).isNotDefined();
     });
 
     it("Checks the displacement of a hex located playable", () => {
         given:
-            var {game, unit} = createTinyGame();
-        var unitHex = unit.hexLocation;
-        var nearHex = unitHex.getNearHex(0);
+            var {game, playable} = createTinyGame();
+        var playableHex = playable.hexLocation;
+        var nearHex = playableHex.getNearHex(0);
         then:
-            assert(unitHex.playables).contains(unit);
+            assert(playableHex.playables).contains(playable);
         when:
-            unit.hexLocation = nearHex;
+            playable.hexLocation = nearHex;
         then:
-            assert(unit.hexLocation).equalsTo(nearHex);
-        assert(unitHex.playables).notContains(unit);
-        assert(nearHex.playables).contains(unit);
+            assert(playable.hexLocation).equalsTo(nearHex);
+        assert(playableHex.playables).doesNotContain(playable);
+        assert(nearHex.playables).contains(playable);
         when:
-            unit.hexLocation = null;
+            playable.hexLocation = null;
         then:
-            assert(unit.hexLocation).isNotDefined();
-        assert(nearHex.playables).notContains(unit);
+            assert(playable.hexLocation).isNotDefined();
+        assert(nearHex.playables).doesNotContain(playable);
     });
 
     it("Checks the removing of a playable belonging to a player", () => {
         given:
-            var {game, unit} = createTinyGame();
-        var unitHex = unit.hexLocation;
+            var {game, playable} = createTinyGame();
+            var playableHex = playable.hexLocation;
         then:
-            assert(unitHex.playables).contains(unit);
-        assert(game.playables).contains(unit);
+            assert(playableHex.playables).contains(playable);
+            assert(game.playables).contains(playable);
         when:
             Memento.open();
-        unit.destroy();
+            playable.destroy();
         then:
-            assert(unitHex.playables).notContains(unit);
-        assert(game.playables).notContains(unit);
+            assert(playableHex.playables).doesNotContain(playable);
+            assert(game.playables).doesNotContain(playable);
         when:
             Memento.undo();
         then:
-            assert(unitHex.playables).contains(unit);
-        assert(game.playables).contains(unit);
+            assert(playableHex.playables).contains(playable);
+            assert(game.playables).contains(playable);
     });
 
     it("Checks basic processing of an action", () => {
         given:
-            var { game, unit } = createTinyGame();
+            var { game, playable } = createTinyGame();
             var call = 0;
             Mechanisms.addListener({
                 _processGlobalEvent(source, event, value) {
@@ -996,29 +1056,29 @@ describe("Game", ()=> {
                 }
             });
         when:
-            var action = new CBAction(game, unit);
-            unit.launchAction(action);
+            var action = new CBAction(game, playable);
+            playable.launchAction(action);
         then:
-            assert(unit.action).equalsTo(action);
+            assert(playable.action).equalsTo(action);
             assert(action.isStarted()).isFalse();
-            assert(unit.isActivated()).isFalse();
+            assert(playable.isActivated()).isFalse();
         when:
             Memento.open();
             action.markAsStarted();
         then:
             assert(action.isStarted()).isTrue();
-            assert(unit.isActivated()).isTrue();
+            assert(playable.isActivated()).isTrue();
             assert(action.isFinished()).isFalse();
-            assert(unit.isPlayed()).isFalse();
+            assert(playable.isPlayed()).isFalse();
             assert(call).equalsTo(1);
         when:
             Memento.open();
             action.markAsFinished();
         then:
             assert(action.isStarted()).isTrue();
-            assert(unit.isActivated()).isTrue();
+            assert(playable.isActivated()).isTrue();
             assert(action.isFinished()).isTrue();
-            assert(unit.isPlayed()).isTrue();
+            assert(playable.isPlayed()).isTrue();
             assert(action.isFinalized()).isFalse();
             assert(call).equalsTo(2);
         when:
@@ -1027,7 +1087,7 @@ describe("Game", ()=> {
             action.finalize(()=>{finalized = true;});
         then:
             assert(action.isFinished()).isTrue();
-            assert(unit.isPlayed()).isTrue();
+            assert(playable.isPlayed()).isTrue();
             assert(action.isFinalized()).isTrue();
             assert(finalized).isTrue();
             assert(call).equalsTo(3);
@@ -1046,25 +1106,25 @@ describe("Game", ()=> {
             Memento.undo();
         then:
             assert(action.isStarted()).isTrue();
-            assert(unit.isActivated()).isTrue();
+            assert(playable.isActivated()).isTrue();
             assert(action.isFinished()).isFalse();
-            assert(unit.isPlayed()).isFalse();
+            assert(playable.isPlayed()).isFalse();
         when:
             Memento.undo();
         then:
-            assert(unit.action).equalsTo(action);
+            assert(playable.action).equalsTo(action);
             assert(action.isStarted()).isFalse();
-            assert(unit.isActivated()).isFalse();
+            assert(playable.isActivated()).isFalse();
             assert(call).equalsTo(3);
         when:
-            unit.removeAction();
+            playable.removeAction();
         then:
-            assert(unit.action).isNotDefined();
+            assert(playable.action).isNotDefined();
     });
 
     it("Checks action cancellation", () => {
         given:
-            var { game, unit } = createTinyGame();
+            var { game, playable } = createTinyGame();
             var call = 0;
             Mechanisms.addListener({
                 _processGlobalEvent(source, event, value) {
@@ -1072,29 +1132,29 @@ describe("Game", ()=> {
                 }
             });
         when:
-            var action = new CBAction(game, unit);
-            unit.launchAction(action);
+            var action = new CBAction(game, playable);
+            playable.launchAction(action);
         then:
-            assert(unit.action).equalsTo(action);
+            assert(playable.action).equalsTo(action);
             assert(action.isStarted()).isFalse();
             assert(action.isCancelled()).isFalse();
-            assert(unit.isActivated()).isFalse();
+            assert(playable.isActivated()).isFalse();
             assert(call).equalsTo(0);
         when:
             Memento.open();
             action.cancel();
         then:
-            assert(unit.action).isNotDefined();
+            assert(playable.action).isNotDefined();
             assert(action.isStarted()).isFalse();
             assert(action.isCancelled()).isTrue();
             assert(call).equalsTo(1);
         when:
             Memento.undo();
         then:
-            assert(unit.action).equalsTo(action);
+            assert(playable.action).equalsTo(action);
             assert(action.isStarted()).isFalse();
             assert(action.isCancelled()).isFalse();
-            assert(unit.isActivated()).isFalse();
+            assert(playable.isActivated()).isFalse();
             assert(call).equalsTo(1);
     });
 
@@ -1109,42 +1169,71 @@ describe("Game", ()=> {
             assert(game.currentPlayer).equalsTo(player2);
     });
 
-    it("Checks activating a unit", () => {
+    it("Checks activating a playable", () => {
         given:
-            var {game, unit, map} = createTinyGame();
+            var {game, playable, map} = createTinyGame();
         when:
-            unit.launchAction(new CBAction(game, unit))
-            unit.action.markAsStarted();
+            playable.launchAction(new CBAction(game, playable))
+            playable.action.markAsStarted();
         then:
-            assert(unit.isActivated()).isTrue();
-            assert(unit.isPlayed()).isFalse();
+            assert(playable.isActivated()).isTrue();
+            assert(playable.isPlayed()).isFalse();
         when:
             Memento.undo();
         then:
-            assert(unit.isActivated()).isFalse();
-            assert(unit.isPlayed()).isFalse();
+            assert(playable.isActivated()).isFalse();
+            assert(playable.isPlayed()).isFalse();
     });
 
-    it("Checks playing a unit belonging to a player", () => {
+    it("Checks playing a playable belonging to a player", () => {
         given:
-            var {game, unit} = createTinyGame();
+            var {game, player, playable} = createTinyGame();
         when:
-            unit.launchAction(new CBAction(game, unit));
-            unit.markAsPlayed();
+            playable.launchAction(new CBAction(game, playable));
+            playable.markAsPlayed();
             paint(game);
             loadAllImages(); // to load actiondone.png
         then:
-            assert(unit.isActivated()).isTrue();
-            assert(unit.isPlayed()).isTrue();
+            assert(playable.isActivated()).isTrue();
+            assert(playable.isPlayed()).isTrue();
         when:
             Memento.undo();
             paint(game);
         then:
-            assert(unit.isActivated()).isFalse();
-            assert(unit.isPlayed()).isFalse();
+            assert(playable.isActivated()).isFalse();
+            assert(playable.isPlayed()).isFalse();
+        when:
+            playable.init(player);
+        then:
+            assert(playable.initialized).isTrue();
+        when:
+            playable.launchAction(new CBAction(game, playable));
+            playable.markAsPlayed();
+        then:
+            assert(playable.isActivated()).isTrue();
+            assert(playable.isPlayed()).isTrue();
+        when:
+            playable.reset(player);
+        then:
+            assert(playable.isPlayed()).isFalse();
+            assert(playable.updated).isTrue();
+        when:
+            game.currentPlayer = new CBTestPlayer();
+        then:
+            assert(playable.isFinishable()).isTrue();
+        when:
+            game.currentPlayer = playable.player;
+        then:
+            assert(playable.isFinishable()).isTrue();
+        when:
+            playable.player.canFinishPlayable = function(playable) {
+                return false;
+            }
+        then:
+            assert(playable.isFinishable()).isFalse();
     });
 
-    it("Checks playing a unit not belonging to a player", () => {
+    it("Checks playing a playable not belonging to a player", () => {
         given:
             var {game, display0} = createDisplayTinyGame();
         when:
@@ -1361,7 +1450,7 @@ describe("Game", ()=> {
 
     it("Checks that actuator closing may be preempted", () => {
         given:
-            var {game, unit} = createTinyGame();
+            var {game} = createTinyGame();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
         when:
             var actuator = new CBTestActuator();

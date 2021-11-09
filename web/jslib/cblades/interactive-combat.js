@@ -15,7 +15,7 @@ import {
     CBAction, CBActuator
 } from "./game.js";
 import {
-    CBActionActuator, CBActuatorImageTrigger, CBMask, WidgetLevelMixin, RetractableActuatorMixin
+    CBActionActuator, CBActuatorImageTrigger, CBMask, CBInsert, RetractableActuatorMixin, CBAbstractInsert, CBGame
 } from "./playable.js";
 import {
     CBHexSideId
@@ -323,9 +323,9 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBCombatResultTableInsert(this.game), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
+            new CBCombatResultTableInsert(), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
         ).addWidget(
-            new CBShockAttackInsert(this.game, advantage), new Point2D(-250, CBShockAttackInsert.DIMENSION.h/2-40)
+            new CBShockAttackInsert(advantage), new Point2D(-250, CBShockAttackInsert.DIMENSION.h/2-40)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -368,16 +368,16 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
     showRules(foe, supported, advantage, event) {
         let advantageCell = this._getAdvantageCell(foe);
         let scene = new DScene();
-        let mask = new CBMask(this.game, "#000000", 0.3);
+        let mask = new CBMask("#000000", 0.3);
         let close = ()=>{
             this.game.closePopup();
         };
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBShockAttackInsert(this.game, advantage), new Point2D(-250, CBShockAttackInsert.DIMENSION.h/2-40)
+            new CBShockAttackInsert(advantage), new Point2D(-250, CBShockAttackInsert.DIMENSION.h/2-40)
         ).addWidget(
-            new CBWeaponTableInsert(this.game).focus(
+            new CBWeaponTableInsert().focus(
                 advantageCell.col, advantageCell.row),
             new Point2D(CBWeaponTableInsert.DIMENSION.w/2-20, CBWeaponTableInsert.DIMENSION.h/2)
         );
@@ -530,9 +530,9 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBCombatResultTableInsert(this.game), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
+            new CBCombatResultTableInsert(), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
         ).addWidget(
-            new CBFireAttackInsert(this.game, advantage), new Point2D(-250, CBFireAttackInsert.DIMENSION.h/2-40)
+            new CBFireAttackInsert(advantage), new Point2D(-250, CBFireAttackInsert.DIMENSION.h/2-40)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -575,16 +575,16 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
     showRules(foe, advantage, event) {
         let advantageCell = this._getAdvantageCell(foe);
         let scene = new DScene();
-        let mask = new CBMask(this.game, "#000000", 0.3);
+        let mask = new CBMask("#000000", 0.3);
         let close = ()=>{
             this.game.closePopup();
         };
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBFireAttackInsert(this.game, advantage), new Point2D(-250, CBFireAttackInsert.DIMENSION.h/2-40)
+            new CBFireAttackInsert(advantage), new Point2D(-250, CBFireAttackInsert.DIMENSION.h/2-40)
         ).addWidget(
-            new CBWeaponTableInsert(this.game).focus(
+            new CBWeaponTableInsert().focus(
                 advantageCell.col, advantageCell.row),
                 new Point2D(CBWeaponTableInsert.DIMENSION.w/2-20, CBWeaponTableInsert.DIMENSION.h/2
             )
@@ -911,7 +911,7 @@ export class CBShockHelpActuator extends RetractableActuatorMixin(CBActionActuat
     setVisibility(level) {
         super.setVisibility(level);
         for (let artifact of this.triggers) {
-            artifact.setVisibility && artifact.setVisibility(level===CBAbstractGame.FULL_VISIBILITY ? 1:0);
+            artifact.setVisibility && artifact.setVisibility(level===CBGame.FULL_VISIBILITY ? 1:0);
         }
     }
 
@@ -972,7 +972,7 @@ export class CBFireHelpActuator extends RetractableActuatorMixin(CBActionActuato
     setVisibility(level) {
         super.setVisibility(level);
         for (let artifact of this.triggers) {
-            artifact.setVisibility && artifact.setVisibility(level===CBAbstractGame.FULL_VISIBILITY ? 1:0);
+            artifact.setVisibility && artifact.setVisibility(level===CBGame.FULL_VISIBILITY ? 1:0);
         }
     }
 }
@@ -1124,10 +1124,10 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
 
 }
 
-export class CBShockAttackInsert extends WidgetLevelMixin(DInsert) {
+export class CBShockAttackInsert extends CBInsert {
 
-    constructor(game, advantage) {
-        super(game, "./../images/inserts/shock-attack-insert.png", CBShockAttackInsert.DIMENSION,  CBShockAttackInsert.PAGE_DIMENSION);
+    constructor(advantage) {
+        super("./../images/inserts/shock-attack-insert.png", CBShockAttackInsert.DIMENSION,  CBShockAttackInsert.PAGE_DIMENSION);
         this.setMark(new Point2D(70, 248-advantage.attackerCapacity*35));
         this.setMark(new Point2D(285, 248+advantage.defenderCapacity*35));
         if (advantage.attackBonus) {
@@ -1199,14 +1199,14 @@ export class CBShockAttackInsert extends WidgetLevelMixin(DInsert) {
 
     }
 
+    static DIMENSION = new Dimension2D(544, 658);
+    static PAGE_DIMENSION = new Dimension2D(544, 850);
 }
-CBShockAttackInsert.DIMENSION = new Dimension2D(544, 658);
-CBShockAttackInsert.PAGE_DIMENSION = new Dimension2D(544, 850);
 
-export class CBFireAttackInsert extends WidgetLevelMixin(DInsert) {
+export class CBFireAttackInsert extends CBInsert {
 
-    constructor(game, advantage) {
-        super(game, "./../images/inserts/fire-attack-insert.png", CBFireAttackInsert.DIMENSION,  CBFireAttackInsert.PAGE_DIMENSION);
+    constructor(advantage) {
+        super("./../images/inserts/fire-attack-insert.png", CBFireAttackInsert.DIMENSION,  CBFireAttackInsert.PAGE_DIMENSION);
         this.setMark(new Point2D(70, 218-advantage.firerCapacity*35));
         this.setMark(new Point2D(285, 218+advantage.firerCapacity*35));
         if (advantage.fireBonus) {
@@ -1271,23 +1271,23 @@ export class CBFireAttackInsert extends WidgetLevelMixin(DInsert) {
         }
     }
 
+    static DIMENSION = new Dimension2D(544, 658);
+    static PAGE_DIMENSION = new Dimension2D(544, 850);
 }
-CBFireAttackInsert.DIMENSION = new Dimension2D(544, 658);
-CBFireAttackInsert.PAGE_DIMENSION = new Dimension2D(544, 850);
 
-export class CBCombatResultTableInsert extends WidgetLevelMixin(DInsert) {
+export class CBCombatResultTableInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/combat-result-table-insert.png", CBCombatResultTableInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/combat-result-table-insert.png", CBCombatResultTableInsert.DIMENSION);
     }
 
 }
 CBCombatResultTableInsert.DIMENSION = new Dimension2D(804, 174);
 
-export class CBWeaponTableInsert extends WidgetLevelMixin(DAbstractInsert) {
+export class CBWeaponTableInsert extends CBAbstractInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/weapon-table-insert.png", CBWeaponTableInsert.DIMENSION, CBWeaponTableInsert.PAGE_DIMENSION);
+    constructor() {
+        super("./../images/inserts/weapon-table-insert.png", CBWeaponTableInsert.DIMENSION, CBWeaponTableInsert.PAGE_DIMENSION);
         this._margin = new DInsertFrame(this, 0,
             Area2D.create(new Point2D(0, 0), CBWeaponTableInsert.MARGIN_DIMENSION),
             Area2D.create(new Point2D(0, 0), CBWeaponTableInsert.MARGIN_PAGE_DIMENSION)
@@ -1310,11 +1310,12 @@ export class CBWeaponTableInsert extends WidgetLevelMixin(DAbstractInsert) {
         return this;
     }
 
+    static MARGIN = 86;
+    static DIMENSION = new Dimension2D(500, 500);
+    static PAGE_DIMENSION = new Dimension2D(978, 1146);
+    static MARGIN_DIMENSION = new Dimension2D(CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.DIMENSION.h);
+    static MARGIN_PAGE_DIMENSION = new Dimension2D(CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.PAGE_DIMENSION.h);
+    static CONTENT_DIMENSION = new Dimension2D(CBWeaponTableInsert.DIMENSION.w-CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.DIMENSION.h);
+    static CONTENT_PAGE_DIMENSION = new Dimension2D(CBWeaponTableInsert.PAGE_DIMENSION.w-CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.PAGE_DIMENSION.h);
+
 }
-CBWeaponTableInsert.MARGIN = 86;
-CBWeaponTableInsert.DIMENSION = new Dimension2D(500, 500);
-CBWeaponTableInsert.PAGE_DIMENSION = new Dimension2D(978, 1146);
-CBWeaponTableInsert.MARGIN_DIMENSION = new Dimension2D(CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.DIMENSION.h);
-CBWeaponTableInsert.MARGIN_PAGE_DIMENSION = new Dimension2D(CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.PAGE_DIMENSION.h);
-CBWeaponTableInsert.CONTENT_DIMENSION = new Dimension2D(CBWeaponTableInsert.DIMENSION.w-CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.DIMENSION.h);
-CBWeaponTableInsert.CONTENT_PAGE_DIMENSION = new Dimension2D(CBWeaponTableInsert.PAGE_DIMENSION.w-CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.PAGE_DIMENSION.h);

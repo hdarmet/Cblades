@@ -391,4 +391,66 @@ describe("Editor", ()=> {
             );
     });
 
+    /*
+        it("Checks edit push menu button", () => {
+        try {
+            given:
+                var cbgameEdit = CBAbstractGame.editMap;
+                var editMode = false;
+                CBAbstractGame.editMap = function() {
+                    editMode = !editMode;
+                }
+                var game = new CBGame();
+                var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+                game.setMap(map);
+                game.setMenu();
+                game.start();
+                var [commandsLayer] = getLayers(game.board, "widget-commands");
+                loadAllImages();
+                game._showCommand.action();
+                executeAllAnimations();
+            when:
+                game._editMapCommand.action();
+                executeAllAnimations();
+                resetDirectives(commandsLayer);
+                repaint(game);
+            then:
+                assert(editMode).isTrue();
+                assertClearDirectives(commandsLayer);
+                assertDirectives(commandsLayer, showGameCommand("turn", 940, 740));
+                assertDirectives(commandsLayer, showGameCommand("hide", 880, 740));
+                assertDirectives(commandsLayer, showGameCommand("undo", 820, 740));
+                assertDirectives(commandsLayer, showGameCommand("redo", 760, 740));
+                assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 700, 740));
+                assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 640, 740));
+                assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 580, 740));
+                assertDirectives(commandsLayer, showGameCommand("field", 520, 740));
+                assertDirectives(commandsLayer, showGameCommand("insert2", 460, 740));
+                assertDirectives(commandsLayer, showGameCommand("full-screen-on", 400, 740));
+                assertNoMoreDirectives(commandsLayer);
+            when:
+                editMode = false;
+                game._editMapCommand.action();
+                executeAllAnimations();
+                resetDirectives(commandsLayer);
+                repaint(game);
+            then:
+                assert(editMode).isFalse();
+                assertClearDirectives(commandsLayer);
+                assertDirectives(commandsLayer, showGameCommand("turn", 940, 740));
+                assertDirectives(commandsLayer, showGameCommand("hide", 880, 740));
+                assertDirectives(commandsLayer, showGameCommand("undo", 820, 740));
+                assertDirectives(commandsLayer, showGameCommand("redo", 760, 740));
+                assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 700, 740));
+                assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 640, 740));
+                assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 580, 740));
+                assertDirectives(commandsLayer, showGameCommand("editor", 520, 740));
+                assertDirectives(commandsLayer, showGameCommand("insert2", 460, 740));
+                assertDirectives(commandsLayer, showGameCommand("full-screen-on", 400, 740));
+                assertNoMoreDirectives(commandsLayer);
+        } finally {
+            CBAbstractGame.editMap = cbgameEdit;
+        }
+    });
+     */
 });

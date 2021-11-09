@@ -155,18 +155,10 @@ let _targetPlatform = {
 
     save(context) {
         context.save();
-        context.saved = context.saved !== undefined ? context.saved+1 : 1;
     },
 
     restore(context) {
         context.restore();
-        context.saved--;
-    },
-
-    reset(context) {
-        while(context.saved) {
-            this.restore(context);
-        }
     },
 
     resetTransform(context) {
@@ -188,6 +180,22 @@ export function targetPlatform() {
     return _targetPlatform;
 }
 
+export function saveContext(context) {
+    _platform.save(context);
+    context.saved = context.saved !== undefined ? context.saved+1 : 1;
+}
+
+export function restoreContext(context) {
+    _platform.restore(context);
+    context.saved--;
+}
+
+export function resetContext(context) {
+    while(context.saved) {
+        restoreContext(context);
+    }
+}
+
 /**
  * Manually get/set platform (used to set a testing platform :) )
  */
@@ -202,10 +210,10 @@ export function setDrawPlatform(platform) {
 
 export function measureText(text, font) {
     let context = _platform.getDefaultContext();
-    _platform.save(context);
+    saveContext(context);
     _platform.font(context, font);
     let measure = _platform.measureText(context, text);
-    _platform.restore(context);
+    restoreContext(context);
     return measure;
 }
 
@@ -333,11 +341,11 @@ export class DLayer {
 
     withSettings(action) {
         this._execute(()=>{
-            _platform.save(this._context);
+            saveContext(this._context);
         });
         action();
         this._execute(()=>{
-            _platform.restore(this._context);
+            restoreContext(this._context);
         });
     }
 
@@ -450,11 +458,11 @@ export class DLayer {
 
     clear() {
         // DONT include in a execute() method !
-        _platform.reset(this._context);
-        _platform.save(this._context);
+        resetContext(this._context);
+        saveContext(this._context);
         _platform.resetTransform(this._context);
         _platform.clearRect(this._context, 0, 0, this._draw.dimension.w, this._draw.dimension.h);
-        _platform.restore(this._context);
+        restoreContext(this._context);
         delete this._todos;
     }
 

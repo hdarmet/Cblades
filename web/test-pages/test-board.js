@@ -13,9 +13,21 @@ import {
     Mechanisms, Memento
 } from "../jslib/mechanisms.js";
 import {
-    DArtifactAlphaAnimation, DArtifactRotateAnimation,
-    DBoard, DElement, DImageArtifact, DSimpleLevel, DMultiImagesArtifact,
-    DTextArtifact, DStaticLevel, DLayeredLevel, DStackedLevel, DRectArtifact, DComposedImageArtifact
+    DArtifactAlphaAnimation,
+    DArtifactRotateAnimation,
+    DBoard,
+    DElement,
+    DImageArtifact,
+    DSimpleLevel,
+    DMultiImagesArtifact,
+    DTextArtifact,
+    DStaticLevel,
+    DLayeredLevel,
+    DStackedLevel,
+    DRectArtifact,
+    DComposedImageArtifact,
+    DArtifact,
+    DPedestalArtifact
 } from "../jslib/board.js";
 import {
     mockPlatform, getDirectives, resetDirectives, createEvent, loadAllImages, getLayers, assertDirectives
@@ -1486,6 +1498,72 @@ describe("Board", ()=> {
             ]);
     });
 
+    it("Checks pedestal artifact", () => {
+        given:
+            var {board, unitsLevel: level, unitsLayer: layer} = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+        when:
+            var image1 = DImage.getImage("../images/unit.png");
+            loadAllImages();
+            var artifact1 = new DImageArtifact("-", image1,
+                new Point2D(25, 25), new Dimension2D(60, 60)
+            );
+            var pedestalArtifact = new DPedestalArtifact(artifact1, "units", new Point2D(10, 20), 60);
+            var element = new DElement(pedestalArtifact);
+            element.setOnBoard(board);
+            resetDirectives(layer);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(0.5, 0.866, -0.866, 0.5, 260, 170)',
+                    'drawImage(../images/unit.png, -30, -30, 60, 60)',
+                'restore()'
+            ]);
+        when:
+            var image2 = DImage.getImage("../images/unit2.png");
+            loadAllImages();
+            pedestalArtifact.artifact = new DImageArtifact("-", image2,
+                new Point2D(0, 0), new Dimension2D(120, 120)
+            );
+            resetDirectives(layer);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(0.5, 0.866, -0.866, 0.5, 260, 170)',
+                    'drawImage(../images/unit2.png, -60, -60, 120, 120)',
+                'restore()'
+            ]);
+        when:
+            Memento.activate();
+            Memento.open();
+            pedestalArtifact.changeArtifact(artifact1);
+            resetDirectives(layer);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(0.5, 0.866, -0.866, 0.5, 260, 170)',
+                    'drawImage(../images/unit.png, -30, -30, 60, 60)',
+                'restore()'
+            ]);
+            assert(pedestalArtifact.boundingArea.toString()).equalsTo("area(-5, -5, 55, 55)");
+            assert(pedestalArtifact.area.toString()).equalsTo("area(-30, -30, 30, 30)");
+        when:
+            Memento.undo();
+            resetDirectives(layer);
+            board.repaint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(0.5, 0.866, -0.866, 0.5, 260, 170)',
+                    'drawImage(../images/unit2.png, -60, -60, 120, 120)',
+                'restore()'
+            ]);
+            assert(pedestalArtifact.boundingArea.toString()).equalsTo("area(-60, -60, 60, 60)");
+            assert(pedestalArtifact.area.toString()).equalsTo("area(-60, -60, 60, 60)");
+    });
+
     it("Checks zooming", () => {
         given:
             var { board, unitsLevel:level, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(1000, 600, 500, 300);
@@ -2050,6 +2128,54 @@ describe("Board", ()=> {
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
             assert(nothingDone).isTrue();
+    });
+
+    it("Checks escape/onKeyDown reflex", () => {
+        given:
+            var { board } = createBoardWithOneCounter();
+            board.escapeOnKeyDown();
+            var escape = false;
+            Mechanisms.addListener({
+                _processGlobalEvent(source, event, value) {
+                    if (event === DBoard.ESCAPE_EVENT) {
+                        escape = true;
+                    }
+                }
+            });
+        when:
+            var event = createEvent("keydown", {key: "A", ctrlKey:true});
+            mockPlatform.dispatchEvent(board.root, "keydown", event);
+        then:
+            assert(escape).isFalse();
+        when:
+            event = createEvent("keydown", {key: "Escape", ctrlKey:true});
+            mockPlatform.dispatchEvent(board.root, "keydown", event);
+        then:
+            assert(escape).isTrue();
+    });
+
+    it("Checks del/onKeyDown reflex", () => {
+        given:
+            var { board } = createBoardWithOneCounter();
+            board.delOnKeyDown();
+            var deleted = false;
+            Mechanisms.addListener({
+                _processGlobalEvent(source, event, value) {
+                    if (event === DBoard.DELETE_EVENT) {
+                        deleted = true;
+                    }
+                }
+            });
+        when:
+            var event = createEvent("keydown", {key: "A", ctrlKey:true});
+            mockPlatform.dispatchEvent(board.root, "keydown", event);
+        then:
+            assert(deleted).isFalse();
+        when:
+            event = createEvent("keydown", {key: "Delete", ctrlKey:true});
+            mockPlatform.dispatchEvent(board.root, "keydown", event);
+        then:
+            assert(deleted).isTrue();
     });
 
     it("Checks onMouseClick artifact reflex", () => {

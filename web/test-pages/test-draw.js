@@ -13,7 +13,7 @@ import {
     DAnimation,
     DAnimator,
     DLayer,
-    DTranslateLayer, measureText
+    DTranslateLayer, measureText, saveContext, restoreContext, resetContext
 } from "../jslib/draw.js";
 import {
     Point2D, Matrix2D, Dimension2D
@@ -40,6 +40,29 @@ describe("Drawing fundamentals", ()=> {
     function resetDirectives(layer) {
         resetContextDirectives(layer._context);
     }
+
+    it("Checks save/restore/reset context", () => {
+        given:
+            var canvas = getDrawPlatform().createElement('canvas');
+            var context = getDrawPlatform().getContext(canvas, '2D');
+        when:
+            saveContext(context);
+        then:
+            assert(context.saved).equalsTo(1);
+        when:
+            restoreContext(context);
+        then:
+            assert(context.directives).arrayEqualsTo(['save()', 'restore()']);
+            assert(context.saved).equalsTo(0);
+        when:
+            resetContextDirectives(context);
+            saveContext(context);
+            saveContext(context);
+            resetContext(context)
+        then:
+            assert(context.directives).arrayEqualsTo(['save()', 'save()', 'restore()', 'restore()']);
+            assert(context.saved).equalsTo(0);
+    });
 
     it("Checks DDraw creation", () => {
         when:

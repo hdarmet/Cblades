@@ -324,10 +324,6 @@ export class CBUnitType {
         return this._stepsByFigure;
     }
 
-    getMaxFiguresCount() {
-        return 1;
-    }
-
     getMovementPoints(steps) {
         return this.getMoveProfile(steps).movementPoints;
     }
@@ -935,11 +931,6 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         }
     }
 
-    reactivate() {
-        this._orderGiven = false;
-        super.reactivate();
-    }
-
     get carried() {
         return this._carried;
     }
@@ -988,6 +979,12 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     hasReceivedOrder() {
         return this._orderGiven;
+    }
+
+    reactivate() {
+        this._orderGiven = false;
+        super.reactivate();
+        this._updatePlayed();
     }
 
     _updatePlayed() {
@@ -1577,16 +1574,16 @@ export class CBFormation extends CBUnit {
         }
     }
 
+    static DIMENSION = new Dimension2D(CBUnit.DIMENSION.w*2, CBUnit.DIMENSION.h);
+    static MARKERS_POSITION = [
+        new Point2D(CBFormation.DIMENSION.w/2, -CBFormation.DIMENSION.h/2),
+        new Point2D(-CBFormation.DIMENSION.w/2, -CBFormation.DIMENSION.h/2),
+        new Point2D(-CBFormation.DIMENSION.w/2, 0),
+        new Point2D(-CBFormation.DIMENSION.w/2, CBFormation.DIMENSION.h/2),
+        new Point2D(0, CBFormation.DIMENSION.h/2),
+        new Point2D(CBFormation.DIMENSION.w/2, CBFormation.DIMENSION.h/2),
+        new Point2D(CBFormation.DIMENSION.w/2, 0)];
 }
-CBFormation.DIMENSION = new Dimension2D(CBUnit.DIMENSION.w*2, CBUnit.DIMENSION.h);
-CBFormation.MARKERS_POSITION = [
-    new Point2D(CBFormation.DIMENSION.w/2, -CBFormation.DIMENSION.h/2),
-    new Point2D(-CBFormation.DIMENSION.w/2, -CBFormation.DIMENSION.h/2),
-    new Point2D(-CBFormation.DIMENSION.w/2, 0),
-    new Point2D(-CBFormation.DIMENSION.w/2, CBFormation.DIMENSION.h/2),
-    new Point2D(0, CBFormation.DIMENSION.h/2),
-    new Point2D(CBFormation.DIMENSION.w/2, CBFormation.DIMENSION.h/2),
-    new Point2D(CBFormation.DIMENSION.w/2, 0)];
 
 export class CBCharacter extends CBUnit {
 
@@ -1702,12 +1699,13 @@ export class CBCharacter extends CBUnit {
         this._orderInstructionArtifact && artifacts.push(this._orderInstructionArtifact);
         return artifacts;
     }
+
+    static DIMENSION = new Dimension2D(120, 120);
+    static ORDER_INSTRUCTION_DIMENSION = new Dimension2D(80, 80);
+    static ORDER_INSTRUCTION_PATHS = [
+        "./../images/markers/attack.png",
+        "./../images/markers/defend.png",
+        "./../images/markers/regroup.png",
+        "./../images/markers/retreat.png"
+    ];
 }
-CBCharacter.DIMENSION = new Dimension2D(120, 120);
-CBCharacter.ORDER_INSTRUCTION_DIMENSION = new Dimension2D(80, 80);
-CBCharacter.ORDER_INSTRUCTION_PATHS = [
-    "./../images/markers/attack.png",
-    "./../images/markers/defend.png",
-    "./../images/markers/regroup.png",
-    "./../images/markers/retreat.png"
-];

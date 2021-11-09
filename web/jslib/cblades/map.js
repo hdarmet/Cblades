@@ -679,7 +679,7 @@ CBHex.HEXSIDE_TYPES = {
     WALL : 4
 };
 
-class MapImageArtifact extends DImageArtifact {
+export class MapImageArtifact extends DImageArtifact {
 
     constructor(map, ...args) {
         super(...args);

@@ -13,7 +13,7 @@ import {
     CBAction, CBActuator, CBAbstractGame
 } from "./game.js";
 import {
-    CBActionActuator, RetractableActuatorMixin, WidgetLevelMixin
+    CBActionActuator, RetractableActuatorMixin, CBInsert, CBGame
 } from "./playable.js";
 import {
     DImage
@@ -92,10 +92,10 @@ export class InteractiveTakeCommandAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBTakeCommandInsert(this.game),
+            new CBTakeCommandInsert(),
             new Point2D(CBTakeCommandInsert.DIMENSION.w/2, -CBTakeCommandInsert.DIMENSION.h/2-40)
         ).addWidget(
-            new CBCommandInsert(this.game), new Point2D(-CBCommandInsert.DIMENSION.w/2, 0)
+            new CBCommandInsert(), new Point2D(-CBCommandInsert.DIMENSION.w/2, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -150,10 +150,10 @@ export class InteractiveDismissCommandAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBDismissCommandInsert(this.game),
+            new CBDismissCommandInsert(),
             new Point2D(CBDismissCommandInsert.DIMENSION.w/2, -CBDismissCommandInsert.DIMENSION.h/2-40)
         ).addWidget(
-            new CBCommandInsert(this.game), new Point2D(-CBCommandInsert.DIMENSION.w/2, 0)
+            new CBCommandInsert(), new Point2D(-CBCommandInsert.DIMENSION.w/2, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -211,10 +211,10 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBChangeOrderInstructionInsert(this.game),
+            new CBChangeOrderInstructionInsert(),
             new Point2D(CBChangeOrderInstructionInsert.DIMENSION.w/2, -CBChangeOrderInstructionInsert.DIMENSION.h/2-40)
         ).addWidget(
-            new CBCommandInsert(this.game), new Point2D(-CBCommandInsert.DIMENSION.w/2, 0)
+            new CBCommandInsert(), new Point2D(-CBCommandInsert.DIMENSION.w/2, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -270,7 +270,7 @@ export class InteractiveGiveOrdersAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBGiveOrdersInsert(this.game, {}),
+            new CBGiveOrdersInsert({}),
             new Point2D(-CBGiveOrdersInsert.DIMENSION.w/4, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
@@ -295,7 +295,7 @@ export class InteractiveGiveOrdersAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBGiveOrdersInsert(this.game, order.detail),
+            new CBGiveOrdersInsert(order.detail),
             new Point2D(-CBGiveOrdersInsert.DIMENSION.w/4, 0)
         );
         this.game.openPopup(scene, new Point2D.getEventPoint(event));
@@ -451,7 +451,7 @@ export class CBOrderGivenHelpActuator extends RetractableActuatorMixin(CBActionA
     setVisibility(level) {
         super.setVisibility(level);
         for (let artifact of this.triggers) {
-            artifact.setVisibility && artifact.setVisibility(level===CBAbstractGame.FULL_VISIBILITY ? 1:0);
+            artifact.setVisibility && artifact.setVisibility(level===CBGame.FULL_VISIBILITY ? 1:0);
         }
     }
 
@@ -481,28 +481,28 @@ export class CBOrderGivenActuator extends RetractableActuatorMixin(CBActionActua
 
 }
 
-export class CBCommandInsert extends WidgetLevelMixin(DInsert) {
+export class CBCommandInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/command-insert.png", CBCommandInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/command-insert.png", CBCommandInsert.DIMENSION);
     }
 
 }
 CBCommandInsert.DIMENSION = new Dimension2D(444, 680);
 
-export class CBChangeOrderInstructionInsert extends WidgetLevelMixin(DInsert) {
+export class CBChangeOrderInstructionInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/change-order-instruction-insert.png", CBChangeOrderInstructionInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/change-order-instruction-insert.png", CBChangeOrderInstructionInsert.DIMENSION);
     }
 
 }
 CBChangeOrderInstructionInsert.DIMENSION = new Dimension2D(444, 254);
 
-export class CBGiveOrdersInsert extends WidgetLevelMixin(DInsert) {
+export class CBGiveOrdersInsert extends CBInsert {
 
-    constructor(game, detail) {
-        super(game, "./../images/inserts/orders-given-insert.png", CBGiveOrdersInsert.DIMENSION, CBGiveOrdersInsert.PAGE_DIMENSION);
+    constructor(detail) {
+        super("./../images/inserts/orders-given-insert.png", CBGiveOrdersInsert.DIMENSION, CBGiveOrdersInsert.PAGE_DIMENSION);
         if (detail.base) {
             this.setMark(new Point2D(20, 427));
         }
@@ -524,19 +524,19 @@ export class CBGiveOrdersInsert extends WidgetLevelMixin(DInsert) {
 CBGiveOrdersInsert.PAGE_DIMENSION = new Dimension2D(444, 872);
 CBGiveOrdersInsert.DIMENSION = new Dimension2D(444, 600);
 
-export class CBTakeCommandInsert extends WidgetLevelMixin(DInsert) {
+export class CBTakeCommandInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/take-command-insert.png", CBTakeCommandInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/take-command-insert.png", CBTakeCommandInsert.DIMENSION);
     }
 
 }
 CBTakeCommandInsert.DIMENSION = new Dimension2D(444, 298);
 
-export class CBDismissCommandInsert extends WidgetLevelMixin(DInsert) {
+export class CBDismissCommandInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/dismiss-command-insert.png", CBDismissCommandInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/dismiss-command-insert.png", CBDismissCommandInsert.DIMENSION);
     }
 
 }

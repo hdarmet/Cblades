@@ -10,7 +10,7 @@ import {
     CBAction
 } from "./game.js";
 import {
-    WidgetLevelMixin
+    CBInsert
 } from "./playable.js";
 import {
     CBActionMenu,
@@ -78,9 +78,9 @@ export class InteractiveRestingAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBRestInsert(this.game), new Point2D(0, -CBRestInsert.DIMENSION.h/2+10)
+            new CBRestInsert(), new Point2D(0, -CBRestInsert.DIMENSION.h/2+10)
         ).addWidget(
-            new CBCheckRestInsert(this.game), new Point2D(-20, CBCheckRestInsert.DIMENSION.h/2)
+            new CBCheckRestInsert(), new Point2D(-20, CBCheckRestInsert.DIMENSION.h/2)
         ).addWidget(
             tirednessIndicator,
             new Point2D(-CBRestInsert.DIMENSION.w/2-CBWingTirednessIndicator.DIMENSION.w/2-10, 0)
@@ -147,7 +147,7 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBReplenishMunitionsInsert(this.game), new Point2D(0, -CBReplenishMunitionsInsert.DIMENSION.h/2+10)
+            new CBReplenishMunitionsInsert(), new Point2D(0, -CBReplenishMunitionsInsert.DIMENSION.h/2+10)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -202,11 +202,11 @@ export class InteractiveReorganizeAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBReorganizeInsert(this.game), new Point2D(CBReorganizeInsert.DIMENSION.w/2, -CBReorganizeInsert.DIMENSION.h/2+-60)
+            new CBReorganizeInsert(), new Point2D(CBReorganizeInsert.DIMENSION.w/2, -CBReorganizeInsert.DIMENSION.h/2+-60)
         ).addWidget(
-            new CBCheckReorganizeInsert(this.game), new Point2D(CBCheckReorganizeInsert.DIMENSION.w/2, CBCheckReorganizeInsert.DIMENSION.h/2+70)
+            new CBCheckReorganizeInsert(), new Point2D(CBCheckReorganizeInsert.DIMENSION.w/2, CBCheckReorganizeInsert.DIMENSION.h/2+70)
         ).addWidget(
-            new CBMoralInsert(this.game, this.unit),
+            new CBMoralInsert(this.unit),
             new Point2D(-CBMoralInsert.DIMENSION.w/2, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
@@ -262,11 +262,11 @@ export class InteractiveRallyAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBRallyInsert(this.game), new Point2D(CBRallyInsert.DIMENSION.w/2, -CBRallyInsert.DIMENSION.h/2+-60)
+            new CBRallyInsert(), new Point2D(CBRallyInsert.DIMENSION.w/2, -CBRallyInsert.DIMENSION.h/2+-60)
         ).addWidget(
-            new CBCheckRallyInsert(this.game), new Point2D(CBCheckRallyInsert.DIMENSION.w/2, CBCheckRallyInsert.DIMENSION.h/2+70)
+            new CBCheckRallyInsert(), new Point2D(CBCheckRallyInsert.DIMENSION.w/2, CBCheckRallyInsert.DIMENSION.h/2+70)
         ).addWidget(
-            new CBMoralInsert(this.game, this.unit),
+            new CBMoralInsert(this.unit),
             new Point2D(-CBMoralInsert.DIMENSION.w/2, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
@@ -323,64 +323,64 @@ function createRecoverMenuItems(unit, actions) {
     ];
 }
 
-export class CBRestInsert extends WidgetLevelMixin(DInsert) {
+export class CBRestInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/rest-insert.png", CBRestInsert.DIMENSION);
+    constructor() {
+        super( "./../images/inserts/rest-insert.png", CBRestInsert.DIMENSION);
     }
 
 }
 CBRestInsert.DIMENSION = new Dimension2D(444, 195);
 
-export class CBCheckRestInsert extends WidgetLevelMixin(DInsert) {
+export class CBCheckRestInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/check-rest-insert.png", CBCheckRestInsert.DIMENSION);
+    constructor() {
+        super( "./../images/inserts/check-rest-insert.png", CBCheckRestInsert.DIMENSION);
     }
 
 }
 CBCheckRestInsert.DIMENSION = new Dimension2D(444, 451);
 
-export class CBReplenishMunitionsInsert extends WidgetLevelMixin(DInsert) {
+export class CBReplenishMunitionsInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/check-replenish-munitions-insert.png", CBReplenishMunitionsInsert.DIMENSION);
+    constructor() {
+        super( "./../images/inserts/check-replenish-munitions-insert.png", CBReplenishMunitionsInsert.DIMENSION);
     }
 
 }
 CBReplenishMunitionsInsert.DIMENSION = new Dimension2D(444, 383);
 
-export class CBReorganizeInsert extends WidgetLevelMixin(DInsert) {
+export class CBReorganizeInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/reorganize-insert.png", CBReorganizeInsert.DIMENSION);
+    constructor() {
+        super( "./../images/inserts/reorganize-insert.png", CBReorganizeInsert.DIMENSION);
     }
 
 }
 CBReorganizeInsert.DIMENSION = new Dimension2D(444, 263);
 
-export class CBCheckReorganizeInsert extends WidgetLevelMixin(DInsert) {
+export class CBCheckReorganizeInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/check-reorganize-insert.png", CBCheckReorganizeInsert.DIMENSION);
+    constructor() {
+        super( "./../images/inserts/check-reorganize-insert.png", CBCheckReorganizeInsert.DIMENSION);
     }
 
 }
 CBCheckReorganizeInsert.DIMENSION = new Dimension2D(444, 245);
 
-export class CBRallyInsert extends WidgetLevelMixin(DInsert) {
+export class CBRallyInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/rally-insert.png", CBRallyInsert.DIMENSION);
+    constructor() {
+        super( "./../images/inserts/rally-insert.png", CBRallyInsert.DIMENSION);
     }
 
 }
 CBRallyInsert.DIMENSION = new Dimension2D(444, 279);
 
-export class CBCheckRallyInsert extends WidgetLevelMixin(DInsert) {
+export class CBCheckRallyInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/check-rally-insert.png", CBCheckRallyInsert.DIMENSION);
+    constructor() {
+        super( "./../images/inserts/check-rally-insert.png", CBCheckRallyInsert.DIMENSION);
     }
 
 }

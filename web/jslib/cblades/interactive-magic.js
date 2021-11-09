@@ -12,8 +12,7 @@ import {
 } from "./game.js";
 import {
     CBActionActuator,
-    CBActuatorImageTrigger,
-    WidgetLevelMixin,
+    CBActuatorImageTrigger, CBInsert,
     RetractableActuatorMixin, NeighborActuatorMixin, NeighborActuatorArtifactMixin
 } from "./playable.js";
 import {
@@ -106,7 +105,7 @@ export class InteractiveTryToCastSpellAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBCastSpellInsert(this.game), new Point2D(0, 0)
+            new CBCastSpellInsert(), new Point2D(0, 0)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -387,9 +386,9 @@ CBFireballSpell.resolver = function(action) {
     };
     this.game.openMask(mask);
     scene.addWidget(
-        new CBCombatResultTableInsert(this.game), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
+        new CBCombatResultTableInsert(), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
     ).addWidget(
-        new CBFireballInsert(this.game), new Point2D(-160, CBFireballInsert.DIMENSION.h/2)
+        new CBFireballInsert(), new Point2D(-160, CBFireballInsert.DIMENSION.h/2)
     ).addWidget(
         dice.setFinalAction(()=>{
             dice.active = false;
@@ -409,10 +408,10 @@ CBFireballSpell.resolver = function(action) {
     this.game.openPopup(scene, this.location);
 }
 
-export class CBFireballInsert extends WidgetLevelMixin(DInsert) {
+export class CBFireballInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/fireball-insert.png", CBFireballInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/fireball-insert.png", CBFireballInsert.DIMENSION);
     }
 
     static DIMENSION = new Dimension2D(444, 257);
@@ -429,9 +428,9 @@ CBMagicArrowSpell.resolver = function(action) {
     };
     this.game.openMask(mask);
     scene.addWidget(
-        new CBCombatResultTableInsert(this.game), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
+        new CBCombatResultTableInsert(), new Point2D(0, -CBCombatResultTableInsert.DIMENSION.h/2+10)
     ).addWidget(
-        new CBMagicArrowInsert(this.game), new Point2D(-160, CBMagicArrowInsert.DIMENSION.h/2)
+        new CBMagicArrowInsert(), new Point2D(-160, CBMagicArrowInsert.DIMENSION.h/2)
     ).addWidget(
         dice.setFinalAction(()=>{
             dice.active = false;
@@ -451,10 +450,10 @@ CBMagicArrowSpell.resolver = function(action) {
     this.game.openPopup(scene, this.location);
 }
 
-export class CBMagicArrowInsert extends WidgetLevelMixin(DInsert) {
+export class CBMagicArrowInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/magic-arrow-insert.png", CBMagicArrowInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/magic-arrow-insert.png", CBMagicArrowInsert.DIMENSION);
     }
 
     static DIMENSION = new Dimension2D(444, 241);

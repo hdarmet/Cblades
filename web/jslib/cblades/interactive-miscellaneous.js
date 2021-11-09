@@ -10,8 +10,7 @@ import {
 } from "./game.js";
 import {
     CBActionActuator, CBPlayableActuatorTrigger,
-    RetractableActuatorMixin,
-    WidgetLevelMixin
+    RetractableActuatorMixin, CBInsert
 } from "./playable.js";
 import {
     CBActionMenu,
@@ -197,10 +196,10 @@ export class InteractiveSetFireAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBMiscActionsInsert(this.game),
+            new CBMiscActionsInsert(),
             new Point2D(-CBMiscActionsInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBSetFireInsert(this.game),
+            new CBSetFireInsert(),
             new Point2D(CBSetFireInsert.DIMENSION.w/2, -CBSetFireInsert.DIMENSION.h/2)
         ).addWidget(
             new CBWeatherIndicator(weather),
@@ -259,10 +258,10 @@ export class InteractiveExtinguishFireAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBMiscActionsInsert(this.game),
+            new CBMiscActionsInsert(),
             new Point2D(-CBMiscActionsInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBExtinguishFireInsert(this.game),
+            new CBExtinguishFireInsert(),
             new Point2D(CBExtinguishFireInsert.DIMENSION.w/2, -CBExtinguishFireInsert.DIMENSION.h/2)
         ).addWidget(
             new CBWeatherIndicator(weather),
@@ -320,10 +319,10 @@ export class InteractiveSetStakesAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBMiscActionsInsert(this.game),
+            new CBMiscActionsInsert(),
             new Point2D(-CBMiscActionsInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBSetStakesInsert(this.game),
+            new CBSetStakesInsert(),
             new Point2D(CBSetStakesInsert.DIMENSION.w/2, -CBSetStakesInsert.DIMENSION.h/2)
         ).addWidget(
             dice.setFinalAction(()=>{
@@ -380,10 +379,10 @@ export class InteractiveRemoveStakesAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBMiscActionsInsert(this.game),
+            new CBMiscActionsInsert(),
             new Point2D(-CBMiscActionsInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBRemoveStakesInsert(this.game),
+            new CBRemoveStakesInsert(),
             new Point2D(CBRemoveStakesInsert.DIMENSION.w/2, -CBRemoveStakesInsert.DIMENSION.h/2)
         ).addWidget(
             dice.setFinalAction(()=>{
@@ -440,7 +439,7 @@ export class InteractivePlayWeatherAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBPlayWeatherInsert(this.game),
+            new CBPlayWeatherInsert(),
             new Point2D(-CBPlayWeatherInsert.DIMENSION.w/2, 0)
         ).addWidget(
             weatherIndicator,
@@ -501,7 +500,7 @@ export class InteractivePlayFogAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBPlayFogInsert(this.game),
+            new CBPlayFogInsert(),
             new Point2D(-CBPlayFogInsert.DIMENSION.w/2, 0)
         ).addWidget(
             weatherIndicator,
@@ -562,7 +561,7 @@ export class InteractivePlayWindDirectionAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBPlayWindDirectionInsert(this.game),
+            new CBPlayWindDirectionInsert(),
             new Point2D(-CBPlayWindDirectionInsert.DIMENSION.w/2, -50)
         ).addWidget(
             windDirectionIndicator,
@@ -622,7 +621,7 @@ export class InteractivePlayTirednessAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBPlayTirednessInsert(this.game),
+            new CBPlayTirednessInsert(),
             new Point2D(-CBPlayTirednessInsert.DIMENSION.w/2, 0)
         ).addWidget(
             tirednessIndicator,
@@ -680,7 +679,7 @@ export class InteractivePlayMoralAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBPlayMoralInsert(this.game),
+            new CBPlayMoralInsert(),
             new Point2D(-CBPlayMoralInsert.DIMENSION.w/2, 0)
         ).addWidget(
             moralIndicator,
@@ -737,10 +736,10 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
         mask.setAction(close);
         this.game.openMask(mask);
         scene.addWidget(
-            new CBPlayFireInsert(this.game),
+            new CBPlayFireInsert(),
             new Point2D(-CBPlayFireInsert.DIMENSION.w/2, -50)
         ).addWidget(
-            new CBPlaySmokeInsert(this.game),
+            new CBPlaySmokeInsert(),
             new Point2D(CBPlaySmokeInsert.DIMENSION.w/2 -20, -CBPlaySmokeInsert.DIMENSION.h/2)
         ).addWidget(
             dice.setFinalAction(()=>{
@@ -1019,112 +1018,112 @@ export class CBMiscellaneousActionsMenu extends DIconMenu {
 
 }
 
-export class CBMiscActionsInsert extends WidgetLevelMixin(DInsert) {
+export class CBMiscActionsInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/misc-actions-insert.png", CBMiscActionsInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/misc-actions-insert.png", CBMiscActionsInsert.DIMENSION);
     }
 
     static DIMENSION = new Dimension2D(444, 641);
 }
 
-export class CBSetFireInsert extends WidgetLevelMixin(DInsert) {
+export class CBSetFireInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/set-fire-insert.png", CBSetFireInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/set-fire-insert.png", CBSetFireInsert.DIMENSION);
     }
 
     static DIMENSION = new Dimension2D(444, 385);
 }
 
-export class CBExtinguishFireInsert extends WidgetLevelMixin(DInsert) {
+export class CBExtinguishFireInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/extinguish-fire-insert.png", CBExtinguishFireInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/extinguish-fire-insert.png", CBExtinguishFireInsert.DIMENSION);
     }
 
     static DIMENSION = new Dimension2D(444, 397);
 }
 
-export class CBSetStakesInsert extends WidgetLevelMixin(DInsert) {
+export class CBSetStakesInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/set-stakes-insert.png", CBSetStakesInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/set-stakes-insert.png", CBSetStakesInsert.DIMENSION);
     }
 
     static DIMENSION = new Dimension2D(444, 334);
 }
 
-export class CBRemoveStakesInsert extends WidgetLevelMixin(DInsert) {
+export class CBRemoveStakesInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/remove-stakes-insert.png", CBRemoveStakesInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/remove-stakes-insert.png", CBRemoveStakesInsert.DIMENSION);
     }
 
     static DIMENSION = new Dimension2D(444, 306);
 }
 
-export class CBPlayWeatherInsert extends WidgetLevelMixin(DInsert) {
+export class CBPlayWeatherInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/meteo-insert.png", CBPlayWeatherInsert.DIMENSION, CBPlayWeatherInsert.PAGE_DIMENSION);
+    constructor() {
+        super("./../images/inserts/meteo-insert.png", CBPlayWeatherInsert.DIMENSION, CBPlayWeatherInsert.PAGE_DIMENSION);
     }
 
     static DIMENSION = new Dimension2D(444, 600);
     static PAGE_DIMENSION = new Dimension2D(444, 1124);
 }
 
-export class CBPlayFogInsert extends WidgetLevelMixin(DInsert) {
+export class CBPlayFogInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/fog-insert.png", CBPlayFogInsert.DIMENSION, CBPlayFogInsert.PAGE_DIMENSION);
+    constructor() {
+        super("./../images/inserts/fog-insert.png", CBPlayFogInsert.DIMENSION, CBPlayFogInsert.PAGE_DIMENSION);
     }
 
     static DIMENSION = new Dimension2D(444, 600);
     static PAGE_DIMENSION = new Dimension2D(444, 686);
 }
 
-export class CBPlayWindDirectionInsert extends WidgetLevelMixin(DInsert) {
+export class CBPlayWindDirectionInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/wind-direction-insert.png", CBPlayWindDirectionInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/wind-direction-insert.png", CBPlayWindDirectionInsert.DIMENSION);
     }
 
     static DIMENSION = new Dimension2D(444, 177);
 }
 
-export class CBPlayTirednessInsert extends WidgetLevelMixin(DInsert) {
+export class CBPlayTirednessInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/wing-rest-insert.png", CBPlayTirednessInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/wing-rest-insert.png", CBPlayTirednessInsert.DIMENSION);
     }
 
     static DIMENSION = new Dimension2D(444, 118);
 }
 
-export class CBPlayMoralInsert extends WidgetLevelMixin(DInsert) {
+export class CBPlayMoralInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/wing-moral-insert.png", CBPlayMoralInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/wing-moral-insert.png", CBPlayMoralInsert.DIMENSION);
     }
 
     static DIMENSION = new Dimension2D(444, 119);
 }
 
-export class CBPlayFireInsert extends WidgetLevelMixin(DInsert) {
+export class CBPlayFireInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/fire-insert.png", CBPlayFireInsert.DIMENSION, CBPlayFireInsert.PAGE_DIMENSION);
+    constructor() {
+        super("./../images/inserts/fire-insert.png", CBPlayFireInsert.DIMENSION, CBPlayFireInsert.PAGE_DIMENSION);
     }
 
     static DIMENSION = new Dimension2D(444, 600);
     static PAGE_DIMENSION = new Dimension2D(444, 1074);
 }
 
-export class CBPlaySmokeInsert extends WidgetLevelMixin(DInsert) {
+export class CBPlaySmokeInsert extends CBInsert {
 
-    constructor(game) {
-        super(game, "./../images/inserts/smoke-insert.png", CBPlaySmokeInsert.DIMENSION);
+    constructor() {
+        super("./../images/inserts/smoke-insert.png", CBPlaySmokeInsert.DIMENSION);
     }
 
     static DIMENSION = new Dimension2D(444, 419);

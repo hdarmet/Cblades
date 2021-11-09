@@ -7,6 +7,8 @@ import {
     CBHexLocation
 } from "./map.js";
 import {
+    DAbstractInsert,
+    DInsert,
     DMask, DMultiStatePushButton, DPushButton
 } from "../widget.js";
 import {
@@ -318,17 +320,12 @@ Object.defineProperty(CBHexLocation.prototype, "counters", {
     }
 });
 
-export function WidgetLevelMixin(clazz) {
+export function VisibilityMixin(clazz) {
 
     return class extends clazz {
 
-        constructor(game, ...args) {
-            super(...args);
-            this._game = game;
-        }
-
         _processGlobalEvent(source, event, value) {
-            if (event === CBAbstractGame.VISIBILITY_EVENT) {
+            if (event === CBGame.VISIBILITY_EVENT) {
                 this.setVisibility(value);
             }
         }
@@ -350,19 +347,17 @@ export function WidgetLevelMixin(clazz) {
             }
         }
 
-        open(board, location) {
+        _registerForVisibility(visibility) {
             Memento.register(this);
             this._shown = true;
             Mechanisms.addListener(this);
-            this.setVisibility(this._game.visibility);
-            super.open(board, location);
+            this.setVisibility(visibility);
         }
 
-        close() {
+        _unregisterForVisibility() {
             Memento.register(this);
             this._shown = false;
             Mechanisms.removeListener(this);
-            super.close();
         }
 
         setVisibility(level) {
@@ -372,12 +367,44 @@ export function WidgetLevelMixin(clazz) {
     }
 
 }
-WidgetLevelMixin.VISIBILITY_LEVEL = 2;
+VisibilityMixin.VISIBILITY_LEVEL = 2;
 
-export class CBMask extends WidgetLevelMixin(DMask) {
+export class CBAbstractInsert extends VisibilityMixin(DAbstractInsert) {
 
-    constructor(...args) {
-        super(...args);
+    open(board, location) {
+        this._registerForVisibility(board.game.visibility);
+        super.open(board, location);
+    }
+
+    close() {
+        this._unregisterForVisibility();
+        super.close();
+    }
+}
+
+export class CBInsert extends VisibilityMixin(DInsert) {
+
+    open(board, location) {
+        this._registerForVisibility(board.game.visibility);
+        super.open(board, location);
+    }
+
+    close() {
+        this._unregisterForVisibility();
+        super.close();
+    }
+}
+
+export class CBMask extends VisibilityMixin(DMask) {
+
+    open(board, location) {
+        this._registerForVisibility(board.game.visibility);
+        super.open(board, location);
+    }
+
+    close() {
+        this._unregisterForVisibility();
+        super.close();
     }
 
 }
@@ -526,7 +553,7 @@ export class CBPlayableActuatorTrigger extends CBActuatorImageTrigger {
 
 }
 
-export class CBActionActuator extends CBActuator {
+export class CBActionActuator extends VisibilityMixin(CBActuator) {
 
     constructor(action) {
         super();
@@ -541,10 +568,22 @@ export class CBActionActuator extends CBActuator {
         return this.action.playable;
     }
 
+    open(game) {
+        this._registerForVisibility(game.visibility);
+        super.open(game);
+    }
+
+    close() {
+        this._unregisterForVisibility();
+        super.close();
+    }
+
     initElement(triggers, position = this.playable.location) {
         super.initElement(triggers, position);
     }
 
+    setVisibility(level) {
+    }
 }
 
 export class CBLevelBuilder {
@@ -670,6 +709,31 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
 
     constructor() {
         super(new CBLevelBuilder().buildLevels());
+        this._visibility = CBGame.FULL_VISIBILITY;
+    }
+
+    _resetPlayables(player) {
+        this.closePopup();
+        if (this._selectedPlayable) {
+            this._selectedPlayable.unselect();
+        }
+        if (this._playables) {
+            for (let playable of this._playables) {
+                playable.reset && playable.reset(player);
+            }
+        }
+    }
+
+    get visibility() {
+        return this._visibility;
+    }
+
+    _initPlayables(player) {
+        if (this._playables) {
+            for (let playable of this._playables) {
+                playable.init && playable.init(player);
+            }
+        }
     }
 
     _createEndOfTurnCommand() {
@@ -745,8 +809,7 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
             ["./../images/commands/insert0.png", "./../images/commands/insert1.png", "./../images/commands/insert2.png"],
             new Point2D(-480, -60), (state, animation)=>{
                 this._visibility = (state+1)%3;
-                Mechanisms.fire(this, CBActuator.VISIBILITY_EVENT, this._visibility);
-                Mechanisms.fire(this, CBAbstractGame.VISIBILITY_EVENT, this._visibility>=1);
+                Mechanisms.fire(this, CBGame.VISIBILITY_EVENT, this._visibility>=1);
                 animation();
             })
             .setState(this._visibility)
@@ -777,6 +840,16 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
         Mechanisms.fire(this, CBAbstractGame.TURN_EVENT);
     }
 
+    turnIsFinishable() {
+        if (!this.canUnselectPlayable()) return false;
+        if (this.playables) {
+            for (let playable of this.playables) {
+                if (playable.isFinishable && !playable.isFinishable()) return false;
+            }
+        }
+        return true;
+    }
+
     nextTurn(animation) {
         if (!this.selectedPlayable || this.canUnselectPlayable()) {
             this._reset(animation);
@@ -784,5 +857,6 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
     }
 
     static TURN_EVENT = "game-turn";
-
+    static FULL_VISIBILITY = 2;
+    static VISIBILITY_EVENT = "game-visibility";
 }

@@ -304,12 +304,6 @@ export class D2StatesIconMenuItem extends DIconMenuItem {
         return true;
     }
 
-    get mouseOverSettings() {
-        return level=>{
-            level.setShadowSettings("#FF0000", 10);
-        }
-    }
-
 }
 
 export class DIconMenu extends DPopup {
@@ -931,7 +925,6 @@ export class DInsertFrame {
         this._index = index;
         this._area = area;
         this._pageArea = pageArea;
-        this._deltaDimension = pageArea.dimension.minusDim(area.dimension).half;
     }
 
     get area() {

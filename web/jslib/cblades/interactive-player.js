@@ -2,7 +2,7 @@ import {
     Dimension2D, Point2D
 } from "../geometry.js";
 import {
-    DDice, DIconMenu, DMultiImagesIndicator, DInsert, DMask, DResult, DScene, DRotatableIndicator
+    DDice, DIconMenu, DMultiImagesIndicator, DMask, DResult, DScene, DRotatableIndicator
 } from "../widget.js";
 import {
     Mechanisms, Memento
@@ -11,14 +11,14 @@ import {
     CBAbstractGame
 } from "./game.js";
 import {
-    WidgetLevelMixin
-} from "./playable.js";
-import {
     DBoard, DImageArtifact
 } from "../board.js";
 import {
     DImage
 } from "../draw.js";
+import {
+    CBInsert
+} from "./playable.js";
 import {
     CBUnitPlayer
 } from "./unit.js";
@@ -161,9 +161,9 @@ export class CBInteractivePlayer extends CBUnitPlayer {
         this.game.openMask(mask);
         let condition = this.game.arbitrator.getUnitCohesionLostCondition(unit);
         scene.addWidget(
-            new CBLoseCohesionInsert(this.game, condition), new Point2D(-CBLoseCohesionInsert.DIMENSION.w/2, 0)
+            new CBLoseCohesionInsert(condition), new Point2D(-CBLoseCohesionInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBMoralInsert(this.game, unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+            new CBMoralInsert(unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -198,9 +198,9 @@ export class CBInteractivePlayer extends CBUnitPlayer {
         this.game.openMask(mask);
         let condition = this.game.arbitrator.getDefenderEngagementCondition(unit);
         scene.addWidget(
-            new CBCheckDefenderEngagementInsert(this.game, condition), new Point2D(-CBCheckDefenderEngagementInsert.DIMENSION.w/2, 0)
+            new CBCheckDefenderEngagementInsert(condition), new Point2D(-CBCheckDefenderEngagementInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            new CBMoralInsert(this.game, unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+            new CBMoralInsert(unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
         ).addWidget(
             dice.setFinalAction(()=>{
                 dice.active = false;
@@ -379,10 +379,10 @@ export class CBWindDirectionIndicator extends DRotatableIndicator {
     static DIMENSION = new Dimension2D(142, 142);
 }
 
-export class CBCheckEngagementInsert extends WidgetLevelMixin(DInsert) {
+export class CBCheckEngagementInsert extends CBInsert {
 
-    constructor(game, url, dimension, condition) {
-        super(game, url, dimension);
+    constructor(url, dimension, condition) {
+        super(url, dimension);
         if (condition.weapons) {
             this.setMark(new Point2D(15, 367));
         }
@@ -413,27 +413,27 @@ export class CBCheckEngagementInsert extends WidgetLevelMixin(DInsert) {
 
 export class CBCheckDefenderEngagementInsert extends CBCheckEngagementInsert {
 
-    constructor(game, condition) {
-        super(game, "./../images/inserts/check-defender-engagement-insert.png", CBCheckDefenderEngagementInsert.DIMENSION, condition);
+    constructor(condition) {
+        super("./../images/inserts/check-defender-engagement-insert.png", CBCheckDefenderEngagementInsert.DIMENSION, condition);
     }
 
     static DIMENSION = new Dimension2D(444, 763);
 }
 
-export class CBLoseCohesionInsert extends WidgetLevelMixin(DInsert) {
+export class CBLoseCohesionInsert extends CBInsert {
 
-    constructor(game, condition) {
-        super(game, "./../images/inserts/lose-cohesion-insert.png", CBLoseCohesionInsert.DIMENSION);
+    constructor(condition) {
+        super("./../images/inserts/lose-cohesion-insert.png", CBLoseCohesionInsert.DIMENSION);
         this._condition = condition;
     }
 
     static DIMENSION = new Dimension2D(444, 330);
 }
 
-export class CBMoralInsert extends WidgetLevelMixin(DInsert) {
+export class CBMoralInsert extends CBInsert {
 
-    constructor(game, unit) {
-        super(game, "./../images/inserts/moral-insert.png", CBMoralInsert.DIMENSION);
+    constructor(unit) {
+        super("./../images/inserts/moral-insert.png", CBMoralInsert.DIMENSION);
         let delta = (177-57)/4;
         this.setMark(new Point2D(20, 177-(unit.moralProfile.capacity+2)*delta));
         if (unit.isDisrupted() || unit.isRouted()) {
