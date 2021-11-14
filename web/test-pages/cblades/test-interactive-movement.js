@@ -32,7 +32,7 @@ import {
     zoomAndRotate0, zoomAndRotate30, zoomAndRotate60, zoomAndRotate90, zoomAndRotate120, zoomAndRotate150,
     zoomAndRotate180, zoomAndRotate210, zoomAndRotate240, zoomAndRotate270, zoomAndRotate300, zoomAndRotate330,
     showFailureResult, showSuccessResult, showInsert, showMask, showDice, showPlayedDice, showMarker, showSelectedTroop,
-    showSelectedFormation, showMenuPanel, showMenuItem, showMultiInsert, showInsertCommand, showInsertMark
+    showSelectedFormation, showMenuPanel, showMenuItem, showMultiInsert, showPopupCommand, showInsertMark
 } from "./interactive-tools.js";
 import {
     createTinyGame,
@@ -340,7 +340,7 @@ describe("Interactive Movement", ()=> {
                 {xs:67, ys:0, xd:-383, yd:-183, w:833, h:256},
                 {xs:0, ys:256, xd:-450, yd:73, w:900, h:110}
             ]));
-            assertDirectives(widgetsLayer, showInsertCommand("right", 870, 133));
+            assertDirectives(widgetsLayer, showPopupCommand("right", 870, 133));
             assertDirectives(widgetsLayer, showInsert("movement", 233, 571, 444, 400));
         when:
             resetDirectives(widgetsLayer);
@@ -1130,7 +1130,7 @@ describe("Interactive Movement", ()=> {
                 {xs:67, ys:0, xd:-383, yd:-183, w:833, h:256},
                 {xs:0, ys:256, xd:-450, yd:73, w:900, h:110}
             ]));
-            assertDirectives(widgetsLayer, showInsertCommand("right", 870, 133));
+            assertDirectives(widgetsLayer, showPopupCommand("right", 870, 133));
             assertDirectives(widgetsLayer, showInsert("move-back", 233, 571, 444, 400));
         when:
             resetDirectives(widgetsLayer);
@@ -1574,7 +1574,7 @@ describe("Interactive Movement", ()=> {
                 {xs:67, ys:0, xd:-383, yd:-183, w:833, h:256},
                 {xs:0, ys:256, xd:-450, yd:73, w:900, h:110}
             ]));
-            assertDirectives(widgetsLayer, showInsertCommand("right", 870, 133));
+            assertDirectives(widgetsLayer, showPopupCommand("right", 870, 133));
             assertDirectives(widgetsLayer, showInsert("rout", 233, 571, 444, 400));
         when:
             resetDirectives(widgetsLayer);

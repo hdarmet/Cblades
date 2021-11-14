@@ -42,7 +42,7 @@ import {
     showPlayedDice,
     clickOnResult,
     showSuccessResult,
-    showInsertCommand,
+    showPopupCommand,
     showSwipeUpResult,
     clickOnSwipe,
     showSwipeDownResult,
@@ -645,7 +645,7 @@ describe("Interactive Miscellaneous", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("meteo", 227, 305, 444, 600));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 227, 570));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 227, 570));
             assertDirectives(widgetsLayer, showIndicator("meteo2", 500, 405));
             assertNoMoreDirectives(widgetsLayer, 4);
             skipDirectives(itemsLayer, 4);
@@ -776,7 +776,7 @@ describe("Interactive Miscellaneous", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("fog", 227, 305, 444, 600));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 227, 570));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 227, 570));
             assertDirectives(widgetsLayer, showIndicator("fog1", 500, 405));
             assertNoMoreDirectives(widgetsLayer, 4);
             skipDirectives(itemsLayer, 4);
@@ -1266,7 +1266,7 @@ describe("Interactive Miscellaneous", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("fire", 227, 374, 444, 600));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 227, 639));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 227, 639));
             assertDirectives(widgetsLayer, showInsert("smoke", 651, 214.5, 444, 419));
             assertNoMoreDirectives(widgetsLayer, 4);
             skipDirectives(itemsLayer, 4);
@@ -1298,7 +1298,7 @@ describe("Interactive Miscellaneous", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("fire", 227, 374, 444, 600));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 227, 639));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 227, 639));
             assertDirectives(widgetsLayer, showInsert("smoke", 651, 214.5, 444, 419));
             assertNoMoreDirectives(widgetsLayer, 4);
             skipDirectives(commandsLayer, 4);
@@ -1333,7 +1333,7 @@ describe("Interactive Miscellaneous", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("fire", 227, 374, 444, 600));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 227, 639));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 227, 639));
             assertDirectives(widgetsLayer, showInsert("smoke", 651, 214.5, 444, 419));
             assertNoMoreDirectives(widgetsLayer, 4);
             skipDirectives(commandsLayer, 4);

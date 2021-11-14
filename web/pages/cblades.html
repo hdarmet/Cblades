@@ -50,9 +50,6 @@
         registerInteractiveMagic
     } from "../jslib/cblades/interactive-magic.js";
     import {
-        registerEditor
-    } from "../jslib/cblades/editor.js";
-    import {
         GoblinBanner1,
         GoblinLeader,
         WizardLeader,
@@ -81,7 +78,6 @@
     registerInteractiveFormation();
     registerInteractiveMagic();
     registerInteractiveMiscellaneous();
-    registerEditor();
 
     let game = new (BurningMixin(WeatherMixin(CBGame)))();
     let map = new CBMap([

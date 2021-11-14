@@ -12,25 +12,20 @@
         CBEditorGame, CBEditorPlayer
     } from "../jslib/cblades/editor.js";
     import {
-        CBMap, CBHexSideId
+        CBMap
     } from "../jslib/cblades/map.js";
     import {
-        CBTroop, CBWing, CBCharacter, CBFormation
+        CBWing
     } from "../jslib/cblades/unit.js";
     import {
         CBArbitrator
     } from "../jslib/cblades/arbitrator.js";
-    import {
-        registerEditor
-    } from "../jslib/cblades/editor.js";
     import {
         GoblinBanner1
     } from "../jslib/cblades/armies/orcs.js";
     import {
         RoughneckBanner1
     } from "../jslib/cblades/armies/roughnecks.js";
-
-    registerEditor();
 
     let game = new CBEditorGame();
     let map = new CBMap([

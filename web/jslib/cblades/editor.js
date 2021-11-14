@@ -215,6 +215,10 @@ export class CBUnitPlacementTrigger extends GhostArtifactMixin(CBActuatorImageTr
         this.pangle = 0;
     }
 
+    get hexLocation() {
+        return this._hexLocation;
+    }
+
     containsPoint(point) {
         return inside(point, this._hexLocation.borders);
     }
@@ -224,12 +228,13 @@ export class CBUnitPlacementTrigger extends GhostArtifactMixin(CBActuatorImageTr
     }
 
     onMouseMove(event) {
-        let offset = this.level.getPoint(new Point2D(event.offsetX, event.offsetY));
-        let location = this.location;
-        let angle = Math.round(atan2(offset.x-location.x, offset.y-location.y)/30)*30;
-        if (angle === 360) angle = 0;
-        if (this.pangle !== angle) {
-            this.pangle = angle;
+        if (this.level) {
+            let offset = this.level.getPoint(new Point2D(event.offsetX, event.offsetY));
+            let location = this.location;
+            let angle = Math.round(atan2(offset.x - location.x, offset.y - location.y) / 30) * 30;
+            if (this.pangle !== angle) {
+                this.pangle = angle;
+            }
         }
         return true;
     }
@@ -298,6 +303,10 @@ export class CBFormationPlacementTrigger extends GhostArtifactMixin(CBActuatorIm
         this.pangle = sumAngle(this._hexLocation.angle, 90);
     }
 
+    get hexLocation() {
+        return this._hexLocation;
+    }
+
     containsPoint(point) {
         return inside(point, this._hexLocation.borders);
     }
@@ -307,17 +316,18 @@ export class CBFormationPlacementTrigger extends GhostArtifactMixin(CBActuatorIm
     }
 
     onMouseMove(event) {
-        let offset = this.level.getPoint(new Point2D(event.offsetX, event.offsetY));
-        let location = this.location;
-        let angle = Math.round(atan2(offset.x-location.x, offset.y-location.y));
-        if (diffAngle(angle, this._hexLocation.angle)>=0) {
-            angle = sumAngle(this._hexLocation.angle, -90);
-        }
-        else {
-            angle = sumAngle(this._hexLocation.angle, 90);
-        }
-        if (this.pangle !== angle) {
-            this.pangle = angle;
+        if (this.level) {
+            let offset = this.level.getPoint(new Point2D(event.offsetX, event.offsetY));
+            let location = this.location;
+            let angle = Math.round(atan2(offset.x - location.x, offset.y - location.y));
+            if (diffAngle(angle, this._hexLocation.angle) >= 0) {
+                angle = sumAngle(this._hexLocation.angle, -90);
+            } else {
+                angle = sumAngle(this._hexLocation.angle, 90);
+            }
+            if (this.pangle !== angle) {
+                this.pangle = angle;
+            }
         }
         return true;
     }
@@ -342,7 +352,7 @@ export class CBFormationPlacementActuator extends CBActuator {
     }
 
     getTrigger(hexLocation) {
-        return this.findTrigger(trigger=>trigger instanceof CBUnitPlacementTrigger &&
+        return this.findTrigger(trigger=>trigger instanceof CBFormationPlacementTrigger &&
             trigger.hexLocation.similar(hexLocation));
     }
 
@@ -393,7 +403,7 @@ export class CBWingArtifact extends DPedestalArtifact {
 export class CBPartyArtifact extends ActivableArtifactMixin(DImageArtifact) {
 
     constructor(index, emblem) {
-        super("widgets", DImage.getImage(emblem),
+        super("widget-items", DImage.getImage(emblem),
             new Point2D((CBPartyArtifact.DIMENSION.w+10)*(index-2), CBUnitsRoster.WING_HEADER_DIMENSION.h + CBUnitsRoster.ROSTER_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
             CBPartyArtifact.DIMENSION);
         this._index = index;
@@ -465,7 +475,7 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
 
     shiftSteps(stepShift) {
         this._steps += stepShift;
-        if (this._steps < 1) this._steps = 1;
+        if (this._steps <= 1) this._steps = 1;
         if (this._steps >= this.maxSteps) this._steps = this.maxSteps;
         this.artifact = this._buildUnitArtifact(this._type, this._steps);
     }
@@ -476,13 +486,19 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
     }
 
     static DIMENSION = new Dimension2D(60, 60);
-    }
+}
 
-    export class CBUnitsRoster extends DPopup {
+export class CBUnitsRoster extends DPopup {
 
     constructor(game) {
         super(CBUnitsRoster.DIMENSION);
         this._game = game;
+        if (!this._game.rosterMap) {
+            this._game.wingIndex = 0;
+            this._game.rosterIndex = 0;
+            this._game.rosterStart = 0;
+            this._game.rosterMap = new Map();
+        }
         this.addArtifact(new DImageArtifact("widgets", DImage.getImage("./../images/units/misc/unit-wing-back.png"),
             new Point2D(0, CBUnitsRoster.WING_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
             CBUnitsRoster.WING_HEADER_DIMENSION)
@@ -494,11 +510,11 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
         this._buildWingArtifacts();
         this._buildRosterCommands();
         this._buildRosters();
-        this._changeRosterContent(CBUnitsRoster.rosterIndex);
+        this._changeRosterContent(this._game.rosterIndex);
     }
 
     get wing() {
-        return this._wings[CBUnitsRoster.wingIndex];
+        return this._wings[this._game.wingIndex];
     }
 
     _update() {
@@ -508,9 +524,9 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
             }
         }
         this._rosterArtifacts = [];
-        for (let index=CBUnitsRoster.rosterStart; index<CBUnitsRoster.rosters.length && index<CBUnitsRoster.rosterStart+5; index++) {
+        for (let index=this._game.rosterStart; index<CBUnitsRoster.rosters.length && index<this._game.rosterStart+5; index++) {
             let roster = CBUnitsRoster.rosters[index];
-            let rosterArtifact = new CBPartyArtifact(index-CBUnitsRoster.rosterStart, roster.emblem);
+            let rosterArtifact = new CBPartyArtifact(index-this._game.rosterStart, roster.emblem);
             this._rosterArtifacts.push(rosterArtifact);
             this.addArtifact(rosterArtifact);
         }
@@ -518,8 +534,8 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
 
     _wingUpdate() {
         this._wingArtifact.setWing(this.wing);
-        this._leftWing.setActive(CBUnitsRoster.wingIndex>0);
-        this._rightWing.setActive(CBUnitsRoster.wingIndex<this._wings.length-1);
+        this._leftWing.setActive(this._game.wingIndex>0);
+        this._rightWing.setActive(this._game.wingIndex<this._wings.length-1);
     }
 
     _buildWingArtifacts() {
@@ -531,7 +547,7 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
             new Point2D(-CBUnitsRoster.DIMENSION.w/2+35,
                 CBUnitsRoster.WING_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
             ()=>{
-                CBUnitsRoster.wingIndex--;
+                this._game.wingIndex--;
                 this._wingUpdate();
             }
         );
@@ -542,7 +558,7 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
             new Point2D(CBUnitsRoster.DIMENSION.w/2-35,
                 CBUnitsRoster.WING_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
             ()=>{
-                CBUnitsRoster.wingIndex++;
+                this._game.wingIndex++;
                 this._wingUpdate();
             }
         );
@@ -555,9 +571,9 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
             new Point2D(-CBUnitsRoster.DIMENSION.w/2+35,
                 CBUnitsRoster.WING_HEADER_DIMENSION.h + CBUnitsRoster.ROSTER_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
             ()=>{
-                CBUnitsRoster.rosterStart--;
+                this._game.rosterStart--;
                 this._rightRoster.setActive(true);
-                if (CBUnitsRoster.rosterStart===0) this._leftRoster.setActive(false);
+                if (this._game.rosterStart===0) this._leftRoster.setActive(false);
                 this._update();
             }
         );
@@ -566,9 +582,9 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
             new Point2D(CBUnitsRoster.DIMENSION.w/2-35,
                 CBUnitsRoster.WING_HEADER_DIMENSION.h + CBUnitsRoster.ROSTER_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
             ()=>{
-                CBUnitsRoster.rosterStart++;
+                this._game.rosterStart++;
                 this._leftRoster.setActive(true);
-                if (CBUnitsRoster.rosterStart===CBUnitsRoster.rosters.length-5) this._rightRoster.setActive(false);
+                if (this._game.rosterStart===CBUnitsRoster.rosters.length-5) this._rightRoster.setActive(false);
                 this._update();
             }
         );
@@ -582,7 +598,7 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
             }
         }
         let roster = CBUnitsRoster.rosters[index];
-        this._unitArtifacts = CBUnitsRoster.rosterMap.get(roster);
+        this._unitArtifacts = this._game.rosterMap.get(roster);
         if (this._unitArtifacts) {
             for (let unitType of this._unitArtifacts) {
                 this.addArtifact(unitType);
@@ -590,13 +606,13 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
         }
         else {
             this.buildRosterContent(roster);
-            CBUnitsRoster.rosterMap.set(roster, this._unitArtifacts);
+            this._game.rosterMap.set(roster, this._unitArtifacts);
         }
     }
 
     changeRosterContent(index) {
-        CBUnitsRoster.rosterIndex = CBUnitsRoster.rosterStart+index;
-        this._changeRosterContent(CBUnitsRoster.rosterIndex);
+        this._game.rosterIndex = this._game.rosterStart+index;
+        this._changeRosterContent(this._game.rosterIndex);
     }
 
     buildRosterContent(roster) {
@@ -647,8 +663,8 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
 
     _buildRosters() {
         this._update();
-        this._leftRoster.setActive(CBUnitsRoster.rosterStart>0);
-        this._rightRoster.setActive(CBUnitsRoster.rosterStart<CBUnitsRoster.rosters.length-5);
+        this._leftRoster.setActive(this._game.rosterStart>0);
+        this._rightRoster.setActive(this._game.rosterStart<CBUnitsRoster.rosters.length-5);
     }
 
     static rosters = [{
@@ -700,30 +716,9 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
         }
     }
 
-    static wingIndex = 0;
-    static rosterIndex = 0;
-    static rosterStart = 0;
-    static rosterMap = new Map();
     static DIMENSION = new Dimension2D(500, 650);
     static WING_HEADER_DIMENSION = new Dimension2D(500, 120);
     static ROSTER_HEADER_DIMENSION = new Dimension2D(500, 80);
-}
-
-export function registerEditor() {
-    CBAbstractGame.editMap = function (game) {
-        game.closeActuators();
-        game.closePopup();
-        game.openActuator(new CBMapEditActuator(game.map));
-    }
-    CBAbstractGame.editUnits = function (game) {
-        game.closeActuators();
-        game.closePopup();
-        game.openPopup(new CBUnitsRoster(game), game.viewportCenter);
-    }
-}
-
-export function unregisterEditor() {
-    delete CBAbstractGame.editMap;
 }
 
 export class CBEditUnitMenu extends DIconMenu {
@@ -865,6 +860,7 @@ export class CBEditorPlayer extends CBAbstractPlayer {
         this._wings.push(wing);
     }
 
+    /*
     _memento() {
         let memento = super._memento();
         memento.wings = [...this._wings];
@@ -874,6 +870,7 @@ export class CBEditorPlayer extends CBAbstractPlayer {
     _revert(memento) {
         this._wings = memento.wings;
     }
+     */
 
     get wings() {
         return this._wings;
@@ -888,8 +885,7 @@ export class CBEditorPlayer extends CBAbstractPlayer {
 
     launchPlayableAction(playable, event) {
         this.openEditUnitMenu(playable,
-            new Point2D(event.offsetX, event.offsetY)/*,
-            this.game.arbitrator.getAllowedActions(playable)*/);
+            new Point2D(event.offsetX, event.offsetY));
         super.launchPlayableAction(playable, event);
     }
 
@@ -913,6 +909,7 @@ export class CBEditorGame extends RetractableGameMixin(CBAbstractGame) {
 
     _processGlobalEvent(source, event, value) {
         if (event===DBoard.DELETE_EVENT) {
+            this.selectedPlayable && this.selectedPlayable.destroy();
         }
         else if (event===DBoard.ESCAPE_EVENT) {
             this.closePopup();
@@ -921,6 +918,18 @@ export class CBEditorGame extends RetractableGameMixin(CBAbstractGame) {
         else {
             super._processGlobalEvent(source, event, value);
         }
+    }
+
+    editMap() {
+        this.closeActuators();
+        this.closePopup();
+        this.openActuator(new CBMapEditActuator(this.map));
+    }
+
+    editUnits() {
+        this.closeActuators();
+        this.closePopup();
+        this.openPopup(new CBUnitsRoster(this), this.viewportCenter);
     }
 
     setMenu() {
@@ -980,20 +989,30 @@ export class CBEditorGame extends RetractableGameMixin(CBAbstractGame) {
             ["./../images/commands/edit-map.png", "./../images/commands/field.png"],
             new Point2D(-420, -60), (state, animation)=>{
                 if (!state)
-                    CBAbstractGame.editMap(this);
-                else
+                    this.editMap();
+                else {
+                    this.closePopup();
                     this.closeActuators();
+                }
                 animation();
-            }).setTurnAnimation(true, ()=>this._editMapCommand.setState(this._editMapCommand.state?0:1));
+            }).setTurnAnimation(true, ()=>{
+                this._editMapCommand.setState(this._editMapCommand.state?0:1)
+            }
+        );
         this._editUnitsCommand = new DMultiStatePushButton(
             ["./../images/commands/edit-units.png", "./../images/commands/edit-units-inactive.png"],
             new Point2D(-480, -60), (state, animation)=>{
                 if (!state)
-                    CBAbstractGame.editUnits(this);
-                else
+                    this.editUnits();
+                else {
+                    this.closePopup();
                     this.closeActuators();
+                }
                 animation();
-            }).setTurnAnimation(true, ()=>{});
+            }).setTurnAnimation(true, ()=>{
+                this._editUnitsCommand.setState(this._editUnitsCommand.state?0:1)
+            }
+        );
         this._fullScreenCommand = new DMultiStatePushButton(
             ["./../images/commands/full-screen-on.png", "./../images/commands/full-screen-off.png"],
             new Point2D(-540, -60), (state, animation)=>{

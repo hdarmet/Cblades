@@ -357,6 +357,10 @@ export class CBCharacterType extends CBUnitType {
         return this;
     }
 
+    getMaxFiguresCount() {
+        return 1;
+    }
+
     createUnit(wing, steps= 2) {
         let unit = new CBCharacter(this, wing);
         unit.steps = steps;

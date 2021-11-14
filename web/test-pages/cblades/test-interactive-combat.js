@@ -45,7 +45,7 @@ import {
     zoomAndRotate300,
     zoomAndRotate30,
     showDice,
-    showInsertCommand,
+    showPopupCommand,
     showMarker,
     zoomAndRotate0,
     zoomAndRotate60,
@@ -370,7 +370,7 @@ describe("Interactive Combat", ()=> {
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("combat-result-table", 527, 100, 804, 174));
             assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 277, 760));
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showDice(1, 1, 627, 207));
         when:
@@ -407,7 +407,7 @@ describe("Interactive Combat", ()=> {
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("combat-result-table", 527, 100, 804, 174));
             assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 277, 760));
             skipDirectives(commandsLayer, 4);
             assertDirectives(commandsLayer, showSuccessResult(527, 177));
             skipDirectives(itemsLayer, 4);
@@ -460,7 +460,7 @@ describe("Interactive Combat", ()=> {
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("combat-result-table", 527, 100, 804, 174));
             assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 277, 760));
             skipDirectives(commandsLayer, 4);
             assertDirectives(commandsLayer, showFailureResult(527, 177));
             skipDirectives(itemsLayer, 4);
@@ -575,7 +575,7 @@ describe("Interactive Combat", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 277, 760));
             assertDirectives(widgetsLayer, showInsertMark(75, 350));
             assertDirectives(widgetsLayer, showInsertMark(290, 315));
             assertDirectives(widgetsLayer, showInsertMark(20, 700));
@@ -616,7 +616,7 @@ describe("Interactive Combat", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 277, 760));
             assertDirectives(widgetsLayer, showInsertMark(75, 350));
             assertDirectives(widgetsLayer, showInsertMark(290, 350));
             assertDirectives(widgetsLayer, showInsertMark(20, 483));
@@ -659,7 +659,7 @@ describe("Interactive Combat", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 277, 760));
             assertDirectives(widgetsLayer, showInsertMark(75, 350));
             assertDirectives(widgetsLayer, showInsertMark(290, 350));
             assertDirectives(widgetsLayer, showInsertMark(20, 593));
@@ -696,7 +696,7 @@ describe("Interactive Combat", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 277, 760));
             assertDirectives(widgetsLayer, showInsertMark(75, 350));
             assertDirectives(widgetsLayer, showInsertMark(290, 350));
             assertDirectives(widgetsLayer, showInsertMark(20, 519));
@@ -738,15 +738,15 @@ describe("Interactive Combat", ()=> {
                 {xs:115.1176, ys:7.85, xd:-164, yd:-250, w:414, h:500}
             ]));
             assertDirectives(widgetsLayer, showInsertMark(790, 437));
-            assertDirectives(widgetsLayer, showInsertCommand("left", 628, 427));
-            assertDirectives(widgetsLayer, showInsertCommand("right", 972, 427));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 800, 642));
-            assertDirectives(widgetsLayer, showInsertCommand("up", 800, 212));
+            assertDirectives(widgetsLayer, showPopupCommand("left", 628, 427));
+            assertDirectives(widgetsLayer, showPopupCommand("right", 972, 427));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 800, 642));
+            assertDirectives(widgetsLayer, showPopupCommand("up", 800, 212));
             assertDirectives(widgetsLayer, showInsertMark(20, 598));
             assertDirectives(widgetsLayer, showInsertMark(20, 652));
             assertDirectives(widgetsLayer, showInsertMark(20, 670));
             assertDirectives(widgetsLayer, showInsertMark(20, 760));
-            assertDirectives(widgetsLayer, showInsertCommand("up", 277, 172));
+            assertDirectives(widgetsLayer, showPopupCommand("up", 277, 172));
     });
 
     it("Checks combat inset markers - fifth case", () => {
@@ -776,13 +776,13 @@ describe("Interactive Combat", ()=> {
                 {xs:272.5294, ys:7.85, xd:-164, yd:-250, w:414, h:500}
             ]));
             assertDirectives(widgetsLayer, showInsertMark(790, 437));
-            assertDirectives(widgetsLayer, showInsertCommand("left", 628, 427));
-            assertDirectives(widgetsLayer, showInsertCommand("right", 972, 427));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 800, 642));
-            assertDirectives(widgetsLayer, showInsertCommand("up", 800, 212));
+            assertDirectives(widgetsLayer, showPopupCommand("left", 628, 427));
+            assertDirectives(widgetsLayer, showPopupCommand("right", 972, 427));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 800, 642));
+            assertDirectives(widgetsLayer, showPopupCommand("up", 800, 212));
             assertDirectives(widgetsLayer, showInsertMark(20, 616));
             assertDirectives(widgetsLayer, showInsertMark(20, 634));
-            assertDirectives(widgetsLayer, showInsertCommand("up", 277, 172));
+            assertDirectives(widgetsLayer, showPopupCommand("up", 277, 172));
     });
 
     it("Checks that a formation may shock attack twice", () => {
@@ -1220,7 +1220,7 @@ describe("Interactive Combat", ()=> {
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("combat-result-table", 527, 92, 804, 174));
             assertDirectives(widgetsLayer, showInsert("fire-attack", 277, 458, 544, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 752));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 277, 752));
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showDice(1, 1, 627, 199));
         when:
@@ -1382,7 +1382,7 @@ describe("Interactive Combat", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("fire-attack", 277, 466, 544, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 277, 760));
             assertDirectives(widgetsLayer, showInsertMark(75, 355));
             assertDirectives(widgetsLayer, showInsertMark(290, 355));
             assertDirectives(widgetsLayer, showInsertMark(20, 590));
@@ -1425,7 +1425,7 @@ describe("Interactive Combat", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("fire-attack", 277, 466, 544, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 277, 760));
             assertDirectives(widgetsLayer, showInsertMark(75, 355));
             assertDirectives(widgetsLayer, showInsertMark(290, 355));
             assertDirectives(widgetsLayer, showInsertMark(20, 464));
@@ -1469,7 +1469,7 @@ describe("Interactive Combat", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("fire-attack", 277, 466, 544, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 277, 760));
             assertDirectives(widgetsLayer, showInsertMark(75, 355));
             assertDirectives(widgetsLayer, showInsertMark(290, 355));
             assertDirectives(widgetsLayer, showInsertMark(20, 500));
@@ -1518,14 +1518,14 @@ describe("Interactive Combat", ()=> {
                 {xs:272.5294, ys:237.05, xd:-164, yd:-250, w:414, h:500}
             ]));
             assertDirectives(widgetsLayer, showInsertMark(790, 437));
-            assertDirectives(widgetsLayer, showInsertCommand("left", 628, 427));
-            assertDirectives(widgetsLayer, showInsertCommand("right", 972, 427));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 800, 642));
-            assertDirectives(widgetsLayer, showInsertCommand("up", 800, 212));
+            assertDirectives(widgetsLayer, showPopupCommand("left", 628, 427));
+            assertDirectives(widgetsLayer, showPopupCommand("right", 972, 427));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 800, 642));
+            assertDirectives(widgetsLayer, showPopupCommand("up", 800, 212));
             assertDirectives(widgetsLayer, showInsertMark(20, 598));
             assertDirectives(widgetsLayer, showInsertMark(20, 650));
             assertDirectives(widgetsLayer, showInsertMark(20, 668));
-            assertDirectives(widgetsLayer, showInsertCommand("up", 277, 172));
+            assertDirectives(widgetsLayer, showPopupCommand("up", 277, 172));
     });
 
     it("Checks fire insert markers - fourth case", () => {
@@ -1558,13 +1558,13 @@ describe("Interactive Combat", ()=> {
                 {xs:115.1176, ys:237.05, xd:-164, yd:-250, w:414, h:500}
             ]));
             assertDirectives(widgetsLayer, showInsertMark(790, 437));
-            assertDirectives(widgetsLayer, showInsertCommand("left", 628, 427));
-            assertDirectives(widgetsLayer, showInsertCommand("right", 972, 427));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 800, 642));
-            assertDirectives(widgetsLayer, showInsertCommand("up", 800, 212));
+            assertDirectives(widgetsLayer, showPopupCommand("left", 628, 427));
+            assertDirectives(widgetsLayer, showPopupCommand("right", 972, 427));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 800, 642));
+            assertDirectives(widgetsLayer, showPopupCommand("up", 800, 212));
             assertDirectives(widgetsLayer, showInsertMark(20, 613));
             assertDirectives(widgetsLayer, showInsertMark(20, 631));
-            assertDirectives(widgetsLayer, showInsertCommand("up", 277, 172));
+            assertDirectives(widgetsLayer, showPopupCommand("up", 277, 172));
     });
 
     it("Checks that a formation may fire attack twice", () => {
@@ -1731,7 +1731,7 @@ describe("Interactive Combat", ()=> {
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("combat-result-table", 527, 100, 804, 174));
             assertDirectives(widgetsLayer, showInsert("shock-attack", 277, 466, 544, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 760));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 277, 760));
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showDice(1, 1, 627, 207));
         when:
@@ -1770,7 +1770,7 @@ describe("Interactive Combat", ()=> {
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("combat-result-table", 527, 92, 804, 174));
             assertDirectives(widgetsLayer, showInsert("fire-attack", 277, 458, 544, 658));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 277, 752));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 277, 752));
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showDice(1, 1, 627, 199));
          when:

@@ -42,7 +42,7 @@ import {
     showMenuItem,
     showDie,
     showPlayedDie,
-    showInsertCommand,
+    showPopupCommand,
     showMessage,
     zoomAndRotate0, showMarker, showInsertMark
 } from "./interactive-tools.js";
@@ -471,7 +471,7 @@ describe("Interactive Command", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("orders-given", 280.6667, 423.1122, 444, 600));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 280.6667, 688.1122));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 280.6667, 688.1122));
             skipDirectives(itemsLayer, 4);
             assertDirectives(itemsLayer, showDie(1, 542.6667, 423.1122));
         when:       // Clicking on the mask cancel the action
@@ -572,7 +572,7 @@ describe("Interactive Command", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("orders-given",305.6667, 305,444, 600));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 305.6667, 570));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 305.6667, 570));
             assertDirectives(widgetsLayer, showInsertMark(103.6667, 432));
             assertNoMoreDirectives(widgetsLayer);
         when:       // Clicking on the mask cancel the action
@@ -607,7 +607,7 @@ describe("Interactive Command", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("orders-given",722.3333, 495,444, 600));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 722.3333, 760));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 722.3333, 760));
             assertDirectives(widgetsLayer, showInsertMark(520.3333, 622)); // Mark for base
             assertDirectives(widgetsLayer, showInsertMark(525.3333, 705)); // Mark for disrupted
             assertDirectives(widgetsLayer, showInsertMark(525.3333, 725)); // Mark for exhausted
@@ -639,7 +639,7 @@ describe("Interactive Command", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
             assertDirectives(widgetsLayer, showInsert("orders-given",722.3333, 495,444, 600));
-            assertDirectives(widgetsLayer, showInsertCommand("down", 722.3333, 760));
+            assertDirectives(widgetsLayer, showPopupCommand("down", 722.3333, 760));
             assertDirectives(widgetsLayer, showInsertMark(520.3333, 622)); // Mark for base
             assertDirectives(widgetsLayer, showInsertMark(525.3333, 740)); // Mark for routed
             assertDirectives(widgetsLayer, showInsertMark(525.3333, 760)); // Mark for distance

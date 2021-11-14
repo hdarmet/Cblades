@@ -12,6 +12,9 @@ import {
 import {
     DDice, DMessage, DResult, DSwipe
 } from "../../jslib/widget.js";
+import {
+    Point2D
+} from "../../jslib/geometry.js";
 
 export function paint(game) {
     game.board.paint();
@@ -58,10 +61,20 @@ export function mouseMoveOnArtifactPoint(gameOrBoard, artifact, x, y) {
     mockPlatform.dispatchEvent(gameOrBoard.root, "mousemove", mouseEvent);
 }
 
-export function mouseMoveOnArtifact(gameOrBoard, artifact, x, y) {
+export function getArtifactPoint(artifact, x=0, y=0) {
     let artifactLocation = artifact.viewportLocation;
-    if (x === undefined) x = artifactLocation.x;
-    if (y === undefined) y = artifactLocation.y;
+    x += artifactLocation.x;
+    y += artifactLocation.y;
+    return new Point2D(x, y);
+}
+
+export function mouseMoveOnPoint(gameOrBoard, point) {
+    var mouseEvent = createEvent("mousemove", {offsetX:point.x, offsetY:point.y});
+    mockPlatform.dispatchEvent(gameOrBoard.root, "mousemove", mouseEvent);
+}
+
+export function mouseMoveOnArtifact(gameOrBoard, artifact, x=0, y=0) {
+    ({x, y} = getArtifactPoint(artifact, x, y));
     var mouseEvent = createEvent("mousemove", {offsetX:x, offsetY:y, artifact});
     mockPlatform.dispatchEvent(gameOrBoard.root, "mousemove", mouseEvent);
 }
@@ -70,6 +83,11 @@ export function mouseMoveOutOfArtifact(gameOrBoard, artifact) {
     let artifactLocation = artifact.viewportBoundingArea;
     var mouseEvent = createEvent("mousemove", {offsetX:artifactLocation.left-5, offsetY:artifactLocation.top, artifact:null});
     mockPlatform.dispatchEvent(gameOrBoard.root, "mousemove", mouseEvent);
+}
+
+export function keydown(gameOrBoard, key) {
+    var keyboardEvent = createEvent("keydown", {key});
+    mockPlatform.dispatchEvent(gameOrBoard.root, "keydown", keyboardEvent);
 }
 
 export function clickOnPiece(game, piece) {
@@ -389,12 +407,22 @@ export function showMultiInsert(insert, x, y, w, h, frames) {
     return model;
 }
 
-export function showInsertCommand(command, x, y) {
+export function showPopupCommand(command, x, y, size=50) {
     return [
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #00FFFF", "shadowBlur = 10",
-            `drawImage(./../images/commands/${command}.png, -25, -25, 50, 50)`,
+            `drawImage(./../images/commands/${command}.png, -${size/2}, -${size/2}, ${size}, ${size})`,
+        "restore()"
+    ];
+}
+
+export function showInactivePopupCommand(command, x, y, size=50) {
+    return [
+        "save()",
+            `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+            "shadowColor = #000000", "shadowBlur = 10",
+            `drawImage(./../images/commands/${command}-inactive.png, -${size/2}, -${size/2}, ${size}, ${size})`,
         "restore()"
     ];
 }
@@ -598,6 +626,40 @@ export function showMessage(message, x, y) {
             "fillStyle = #8080FF",
             `fillText(${message}, 0, 0)`,
         "restore()"
+    ];
+}
+
+export function showPopup(x, y, w, h) {
+    return [
+        "save()",
+            `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+            "shadowColor = #000000", "shadowBlur = 10",
+            "strokeStyle = #000000", "lineWidth = 1",
+            `strokeRect(-${w/2}, -${h/2}, ${w}, ${h})`,
+            "fillStyle = #FFFFFF",
+            `fillRect(-${w/2}, -${h/2}, ${w}, ${h})`,
+        "restore()"
+    ];
+}
+
+export function showColoredRect(x, y, color, w, h) {
+    return [
+        "save()",
+            `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+            `fillStyle = ${color}`,
+            `fillRect(-${w/2}, -${h/2}, ${w}, ${h})`,
+            "strokeStyle = #000000", "lineWidth = 1",
+            `strokeRect(-${w/2}, -${h/2}, ${w}, ${h})`,
+        "restore()"
+    ];
+}
+
+export function showImage(x, y, image, w, h) {
+    return [
+        "save()",
+            `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+            `drawImage(${image}, -${w/2}, -${h/2}, ${w}, ${h})`,
+        'restore()',
     ];
 }
 

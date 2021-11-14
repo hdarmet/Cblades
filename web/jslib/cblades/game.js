@@ -747,8 +747,6 @@ export class CBAbstractGame {
 
     static SETTINGS_EVENT = "settings-turn";
     static POPUP_MARGIN = 10;
-    static editMap = function(game) {};
-    static editUnits = function(game) {};
 }
 
 export class CBPieceImageArtifact extends DMultiImagesArtifact {
