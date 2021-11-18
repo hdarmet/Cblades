@@ -1701,8 +1701,8 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("undo", 880, 740));
             assertDirectives(commandsLayer, showGameCommand("redo", 820, 740));
             assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 760, 740));
-            assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 700, 740));
-            assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 640, 740));
+            assertDirectives(commandsLayer, showGameCommand("save", 700, 740));
+            assertDirectives(commandsLayer, showGameCommand("load", 640, 740));
             assertDirectives(commandsLayer, showGameCommand("field", 580, 740));
             assertDirectives(commandsLayer, showGameCommand("edit-units", 520, 740));
             assertDirectives(commandsLayer, showGameCommand("full-screen-on", 460, 740));
@@ -1720,8 +1720,8 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("undo", 880, 740));
             assertDirectives(commandsLayer, showGameCommand("redo", 820, 740));
             assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 760, 740));
-            assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 700, 740));
-            assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 640, 740));
+            assertDirectives(commandsLayer, showGameCommand("save", 700, 740));
+            assertDirectives(commandsLayer, showGameCommand("load", 640, 740));
             assertDirectives(commandsLayer, showGameCommand("edit-map", 580, 740));
             assertDirectives(commandsLayer, showGameCommand("edit-units", 520, 740));
             assertDirectives(commandsLayer, showGameCommand("full-screen-on", 460, 740));
@@ -1794,8 +1794,8 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("undo", 880, 740));
             assertDirectives(commandsLayer, showGameCommand("redo", 820, 740));
             assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 760, 740));
-            assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 700, 740));
-            assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 640, 740));
+            assertDirectives(commandsLayer, showGameCommand("save", 700, 740));
+            assertDirectives(commandsLayer, showGameCommand("load", 640, 740));
             assertDirectives(commandsLayer, showGameCommand("edit-map", 580, 740));
             assertDirectives(commandsLayer, showGameCommand("edit-units", 520, 740));
             assertDirectives(commandsLayer, showGameCommand("full-screen-on", 460, 740));
@@ -1871,8 +1871,8 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("undo", 1880, 1440));
             assertDirectives(commandsLayer, showGameCommand("redo", 1820, 1440));
             assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 1760, 1440));
-            assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 1700, 1440));
-            assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 1640, 1440));
+            assertDirectives(commandsLayer, showGameCommand("save", 1700, 1440));
+            assertDirectives(commandsLayer, showGameCommand("load", 1640, 1440));
             assertDirectives(commandsLayer, showGameCommand("edit-map", 1580, 1440));
             assertDirectives(commandsLayer, showGameCommand("edit-units", 1520, 1440));
             assertDirectives(commandsLayer, showGameCommand("full-screen-off", 1460, 1440));
@@ -1897,8 +1897,8 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("undo", 1380, 940));
             assertDirectives(commandsLayer, showGameCommand("redo", 1320, 940));
             assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 1260, 940));
-            assertDirectives(commandsLayer, showGameInactiveCommand("save-inactive", 1200, 940));
-            assertDirectives(commandsLayer, showGameInactiveCommand("load-inactive", 1140, 940));
+            assertDirectives(commandsLayer, showGameCommand("save", 1200, 940));
+            assertDirectives(commandsLayer, showGameCommand("load", 1140, 940));
             assertDirectives(commandsLayer, showGameCommand("edit-map", 1080, 940));
             assertDirectives(commandsLayer, showGameCommand("edit-units", 1020, 940));
             assertDirectives(commandsLayer, showGameCommand("full-screen-on", 960, 940));

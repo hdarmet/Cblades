@@ -6,6 +6,9 @@ import {
 import {
     Mechanisms
 } from "./mechanisms.js";
+import {
+    requestServer
+} from "./request.js";
 
 /**
  * _platform is a facade used to abstract the real (DOM) platform. Useful when this platform has to be replaced by a
@@ -167,8 +170,11 @@ let _targetPlatform = {
 
     random() {
         return Math.random();
-    }
+    },
 
+    requestServer(uri, requestContent, success, failure, files, method='POST') {
+        requestServer(uri, requestContent, success, failure, files, method);
+    }
 }
 
 let _platform = _targetPlatform;
@@ -215,6 +221,14 @@ export function measureText(text, font) {
     let measure = _platform.measureText(context, text);
     restoreContext(context);
     return measure;
+}
+
+export function sendGet(uri, requestContent, success, failure, files) {
+    getDrawPlatform().requestServer(uri, requestContent, success, failure, files, 'GET');
+}
+
+export function sendPost(uri, requestContent, success, failure, files) {
+    getDrawPlatform().requestServer(uri, requestContent, success, failure, files, 'POST');
 }
 
 /**

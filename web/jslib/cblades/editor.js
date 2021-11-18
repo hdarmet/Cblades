@@ -12,7 +12,7 @@ import {
     ActivableArtifactMixin, CBActuatorImageTrigger, GhostArtifactMixin, CBLevelBuilder, RetractableGameMixin
 } from "./playable.js";
 import {
-    DImage, getDrawPlatform
+    DImage, getDrawPlatform, sendPost
 } from "../draw.js";
 import {
     atan2, diffAngle,
@@ -44,6 +44,9 @@ import {
     CBCharge,
     CBCohesion, CBMunitions, CBOrderInstruction, CBTiredness
 } from "./unit.js";
+import {
+    requestServer
+} from "../request.js";
 
 export class CBMapEditorHexHeightTrigger extends NeighborRawActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
 
@@ -981,10 +984,24 @@ export class CBEditorGame extends RetractableGameMixin(CBAbstractGame) {
             new Point2D(-240, -60), animation=>{});
         this._saveCommand = new DPushButton(
             "./../images/commands/save.png", "./../images/commands/save-inactive.png",
-            new Point2D(-300, -60), animation=>{});
+            new Point2D(-300, -60), animation=>{
+                sendPost("/api/ping-login",
+                    null,
+                    (text, status)=>console.log("SUCCESS! "+text+": "+status),
+                    (text, status)=>console.log("FAILURE! "+text+": "+status)
+                );
+                animation();
+            }).setTurnAnimation(true);
         this._loadCommand = new DPushButton(
             "./../images/commands/load.png", "./../images/commands/load-inactive.png",
-            new Point2D(-360, -60), animation=>{});
+            new Point2D(-360, -60), animation=>{
+                sendPost("/api/ping-protected",
+                    null,
+                    (text, status)=>console.log("SUCCESS! "+text+": "+status),
+                    (text, status)=>console.log("FAILURE! "+text+": "+status)
+                );
+                animation();
+            }).setTurnAnimation(true);
         this._editMapCommand = new DMultiStatePushButton(
             ["./../images/commands/edit-map.png", "./../images/commands/field.png"],
             new Point2D(-420, -60), (state, animation)=>{
@@ -1024,8 +1041,6 @@ export class CBEditorGame extends RetractableGameMixin(CBAbstractGame) {
             })
             .setTurnAnimation(true, ()=>this._fullScreenCommand.setState(this._fullScreenCommand.state?0:1));
         this._settingsCommand.active = false;
-        this._saveCommand.active = false;
-        this._loadCommand.active = false;
     }
 
 }
