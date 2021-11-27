@@ -9,7 +9,7 @@
 <script type="module">
 
     import {
-        CBEditorGame, CBEditorPlayer
+        CBScenarioEditorGame, CBEditorPlayer
     } from "../jslib/cblades/editor.js";
     import {
         CBMap
@@ -18,16 +18,13 @@
         CBWing
     } from "../jslib/cblades/unit.js";
     import {
-        CBArbitrator
-    } from "../jslib/cblades/arbitrator.js";
-    import {
         GoblinBanner1
     } from "../jslib/cblades/armies/orcs.js";
     import {
         RoughneckBanner1
     } from "../jslib/cblades/armies/roughnecks.js";
 
-    let game = new CBEditorGame();
+    let game = new CBScenarioEditorGame("scenario");
     let map = new CBMap([
         {path:"./../images/maps/map1.png", col:0, row:0, invert:true},
         {path:"./../images/maps/map4.png", col:1, row:0}
@@ -35,15 +32,13 @@
     game.setMap(map);
     game.fitWindow();
     document.body.appendChild(game.root);
-    let arbitrator = new CBArbitrator();
-    game.setArbitrator(arbitrator);
     game.setMenu();
 
-    let player1 = new CBEditorPlayer();
+    let player1 = new CBEditorPlayer("player1");
     game.addPlayer(player1);
     let wing1 = new CBWing(player1, GoblinBanner1);
     wing1.setRetreatZone(map.getSouthZone());
-    let player2 = new CBEditorPlayer();
+    let player2 = new CBEditorPlayer("player2");
     game.addPlayer(player2);
     let wing2 = new CBWing(player2, RoughneckBanner1);
     wing2.setRetreatZone(map.getNorthZone());

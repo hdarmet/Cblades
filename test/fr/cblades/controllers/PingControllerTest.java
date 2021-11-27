@@ -1,5 +1,6 @@
-package fr.cblades;
+package fr.cblades.controllers;
 
+import fr.cblades.StandardUsers;
 import fr.cblades.controller.PingController;
 import org.junit.Assert;
 import org.junit.Before;
@@ -19,7 +20,7 @@ public class PingControllerTest implements TestSeawave {
         ApplicationManager.set(new ApplicationManagerForTestImpl());
         pingController = new PingController();
         securityManager = (MockSecurityManagerImpl)ApplicationManager.get().getSecurityManager();
-        securityManager.register(new MockSecurityManagerImpl.Credential("test", "test", StandardUsers.TEST));
+        securityManager.register(new MockSecurityManagerImpl.Credential("admin", "admin", StandardUsers.ADMIN));
     }
 
     @Test
@@ -32,7 +33,7 @@ public class PingControllerTest implements TestSeawave {
     public void testLogin() {
         Json result = pingController.pingLogin(params(), Json.createJsonFromString("{}"));
         Assert.assertEquals("Connect to Secure World !", result.get("message"));
-        Assert.assertEquals(securityManager.getConnection().getId(), "test");
+        Assert.assertEquals(securityManager.getConnection().getId(), "admin");
     }
 
     @Test
@@ -46,7 +47,7 @@ public class PingControllerTest implements TestSeawave {
             Assert.assertEquals("Not connected", sce.getMessage());
         }
         pingController.pingLogin(params(), Json.createJsonFromString("{}"));
-        Assert.assertEquals(securityManager.getConnection().getId(), "test");
+        Assert.assertEquals(securityManager.getConnection().getId(), "admin");
         Json result = pingController.pingProtected(params(), Json.createJsonFromString("{}"));
         Assert.assertEquals("Hello Secure World !", result.get("message"));
     }

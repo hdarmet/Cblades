@@ -17,7 +17,7 @@ public class MockSecurityManagerImpl implements SecurityManager {
 			this.password = password;
 			this.roles = new HashSet<String>(Arrays.asList(roles));
 		}
-		
+
 		String id;
 		String password;
 		Set<String> roles;
@@ -38,7 +38,10 @@ public class MockSecurityManagerImpl implements SecurityManager {
 	
 	Map<String, Credential> credentials = new HashMap<>();
 	Credential connection = null;
-	
+	public Finder rolesFinder;
+	public boolean xsrfProtect;
+	public boolean secureHTTP;
+
 	public MockSecurityManagerImpl register(Credential credential) {
 		credentials.put(credential.id, credential);
 		return this;
@@ -88,20 +91,17 @@ public class MockSecurityManagerImpl implements SecurityManager {
 
 	@Override
 	public void doSetRolesFinder(Finder rolesFinder) {
-		// TODO Auto-generated method stub
-		
+		this.rolesFinder = rolesFinder;
 	}
 
 	@Override
 	public void doSetXsrfProtect(boolean xsrfProtect) {
-		// TODO Auto-generated method stub
-		
+		this.xsrfProtect = xsrfProtect;
 	}
 
 	@Override
 	public void doSetSecureHTTP(boolean secureHTTP) {
-		// TODO Auto-generated method stub
-		
+		this.secureHTTP = secureHTTP;
 	}
 
 }

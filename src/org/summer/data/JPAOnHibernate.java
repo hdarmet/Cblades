@@ -30,7 +30,6 @@ public class JPAOnHibernate {
 	    		jdbcUrl, user, password, 
 	    		properties, 
 	    		entityClasses);
-
 	}
 
 	public static void openPostgresPersistenceUnit(
@@ -68,7 +67,7 @@ public class JPAOnHibernate {
 				DataManager.DEFAULT_PERSISTENCE_UNIT,
 				dataBasePath, user, password,
 				dataBaseSetup, showSql, 
-				DataManager.getEntityClasses());
+				DataManager.get().getEntityClasses());
 	}
 
 	public static void openPostgresDevPersistenceUnit(

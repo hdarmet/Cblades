@@ -60,7 +60,7 @@ describe("Miscellaneous teacher", ()=> {
     }
 
     function createBasicGame() {
-        let game = new CBGame();
+        let game = new CBGame("Test");
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -70,12 +70,12 @@ describe("Miscellaneous teacher", ()=> {
     }
 
     function createTinyGame() {
-        let game = new CBGame();
+        let game = new CBGame("Test");
         var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player = new CBUnitPlayer();
+        let player = new CBUnitPlayer("player1");
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
         let unitType = new CBTestUnitType("unit", ["./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"])
@@ -85,13 +85,13 @@ describe("Miscellaneous teacher", ()=> {
     }
 
     function create2Players4UnitsTinyGame() {
-        let game = new CBGame();
+        let game = new CBGame("Test");
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer();
+        let player1 = new CBUnitPlayer("player1");
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBUnitPlayer();
+        let player2 = new CBUnitPlayer("player2");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);

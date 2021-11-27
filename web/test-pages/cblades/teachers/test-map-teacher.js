@@ -40,7 +40,7 @@ describe("Map teacher", ()=> {
     let Arbitrator = mergeClasses(CBMapTeacher);
 
     function createTinyGame() {
-        let game = new CBGame();
+        let game = new CBGame("Test");
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -120,13 +120,13 @@ describe("Map teacher", ()=> {
     }
 
     function create2Players4UnitsTinyGame() {
-        let game = new CBGame();
+        let game = new CBGame("Test");
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer();
+        let player1 = new CBUnitPlayer("player1");
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBUnitPlayer();
+        let player2 = new CBUnitPlayer("player2");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -152,12 +152,12 @@ describe("Map teacher", ()=> {
     }
 
     function create2PlayersTinyFormationGame() {
-        let game = new CBGame();
+        let game = new CBGame("Test");
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer();
+        let player1 = new CBUnitPlayer("player1");
         game.addPlayer(player1);
-        let player2 = new CBUnitPlayer();
+        let player2 = new CBUnitPlayer("player2");
         game.addPlayer(player2);
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
@@ -330,13 +330,13 @@ describe("Map teacher", ()=> {
     });
 
     function create2Players1Formation2TroopsTinyGame() {
-        let game = new CBGame();
+        let game = new CBGame("Test");
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer();
+        let player1 = new CBUnitPlayer("player1");
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBUnitPlayer();
+        let player2 = new CBUnitPlayer("player2");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);

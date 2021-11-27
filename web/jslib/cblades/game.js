@@ -32,6 +32,25 @@ export class CBAbstractArbitrator {
 
 export class CBAbstractPlayer {
 
+    constructor(name) {
+        this._name = name;
+        this._init();
+    }
+
+    _init() {}
+
+    clean() {
+        this._init();
+    }
+
+    cancel() {
+        this._init();
+    }
+
+    get name() {
+        return this._name;
+    }
+
     changeSelection(playable, event) {
         if (this.game.mayChangeSelection(playable)) {
             let lastPlayable = this.game.selectedPlayable;
@@ -288,10 +307,19 @@ export class CBCounterDisplay {
 
     constructor(game) {
         this._game = game;
+        this._init();
+        Mechanisms.addListener(this);
+    }
+
+    _init() {
         this._counters = [];
         this._vertical = CBCounterDisplay.TOP;
         this._horizontal = CBCounterDisplay.LEFT;
-        Mechanisms.addListener(this);
+    }
+
+    clean() {
+        this._init();
+        Mechanisms.removeListener(this);
     }
 
     _memento() {
@@ -433,14 +461,31 @@ export class CBCounterDisplay {
 
 export class CBAbstractGame {
 
-    constructor(levels) {
+    constructor(name, levels) {
+        this._init();
+        this._name = name;
+        this._levels = levels;
         this._players = [];
+        this._counterDisplay = new CBCounterDisplay(this);
+        Mechanisms.addListener(this);
+    }
+
+    _init() {
         this._actuators = [];
         this._playables = new Set();
         this._commands = new Set();
-        this._levels = levels;
-        this._counterDisplay = new CBCounterDisplay(this);
-        Mechanisms.addListener(this);
+    }
+
+    clean() {
+        for (let player of this._players) {
+            player.cancel();
+        }
+        for (let playable of this._playables) {
+            playable.cancel();
+        }
+        this.map.clean();
+        this._counterDisplay.clean();
+        this._init();
     }
 
     fitWindow() {
@@ -515,6 +560,10 @@ export class CBAbstractGame {
         this._arbitrator.game = this;
     }
 
+    get name() {
+        return this._name;
+    }
+
     get counterDisplay() {
         return this._counterDisplay;
     }
@@ -545,6 +594,13 @@ export class CBAbstractGame {
         if (!this._currentPlayer) {
             this._currentPlayer = player;
         }
+    }
+
+    getPlayer(name) {
+        for (let player of this._players) {
+            if (player.name === name) return player;
+        }
+        return null;
     }
 
     _registerPlayable(playable) {
@@ -818,7 +874,7 @@ export class CBPiece {
     }
 
     _setAngle(angle) {
-        this._element.setAngle(angle);
+        this._element.setAngle(angle%360);
     }
 
     set angle(angle) {
@@ -1039,6 +1095,12 @@ export function PlayableMixin(clazz) {
             else delete this._action;
         }
 
+        cancel() {
+            if (this.element.isShown()) {
+                this.element.removeFromBoard();
+            }
+        }
+
         changeAction(action) {
             Memento.register(this);
             this._action = action;
@@ -1091,15 +1153,15 @@ export function PlayableMixin(clazz) {
         }
 
         isPlayed() {
-            return this._action && this._action.isPlayed();
+            return this._action ? this._action.isPlayed() : false;
         }
 
         isActivated() {
-            return this._action && this._action.isStarted();
+            return this._action ? this._action.isStarted() : false;
         }
 
         isFinishable() {
-            return this._action && this._action.isFinishable();
+            return this._action ? this._action.isFinishable() : false;
         }
 
         onMouseClick(event) {

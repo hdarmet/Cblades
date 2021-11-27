@@ -84,14 +84,14 @@ describe("Combat teacher", ()=> {
     }
 
     function createTinyGame() {
-        let game = new CBGame();
+        let game = new CBGame("Test");
         var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer();
+        let player1 = new CBUnitPlayer("player1");
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBUnitPlayer();
+        let player2 = new CBUnitPlayer("player2");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         game.setMap(map);

@@ -1,5 +1,6 @@
-package fr.cblades;
+package fr.cblades.controllers;
 
+import fr.cblades.StandardUsers;
 import fr.cblades.controller.LoginController;
 import fr.cblades.domain.Login;
 import org.junit.Assert;

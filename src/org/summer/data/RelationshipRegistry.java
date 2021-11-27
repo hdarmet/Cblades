@@ -21,7 +21,7 @@ public class RelationshipRegistry {
 	@Setup
 	static void setupRelationships() {
 		log.info("Inspect entity relationships...");
-		DataManager.getEntityClasses().stream().forEach(
+		DataManager.get().getEntityClasses().stream().forEach(
 			entityClass->{
 				Scanner.get().getComponentFieldsAnnotatedBy(entityClass, OneToOne.class).stream().forEach(
 					oneToOneRelationship->registerRelationship(oneToOneRelationship,

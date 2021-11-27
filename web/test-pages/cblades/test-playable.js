@@ -324,7 +324,7 @@ class CBTestActionActuator extends CBActionActuator {
 }
 
 function createBasicGame() {
-    var game = new CBGame();
+    var game = new CBGame("Test");
     var arbitrator = new CBAbstractArbitrator();
     game.setArbitrator(arbitrator);
     var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -336,7 +336,7 @@ function createBasicGame() {
 
 function createTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
-    var player = new CBAbstractPlayer();
+    var player = new CBAbstractPlayer("player1");
     game.addPlayer(player);
     let playable = new CBTestPlayable(player, ["./../images/units/misc/unit.png"]);
     playable.addToMap(map.getHex(5, 8));
@@ -347,7 +347,7 @@ function createTinyGame() {
 
 function create2PlayablesTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
-    var player = new CBAbstractPlayer();
+    var player = new CBAbstractPlayer("player1");
     game.addPlayer(player);
     let playable1 = new CBTestPlayable(player,["./../images/units/misc/unit1.png"]);
     playable1.addToMap(map.getHex(5, 6));
@@ -505,7 +505,7 @@ describe("Playable", ()=> {
 
     it("Checks global push menu button", () => {
         given:
-            var game = new CBGame();
+            var game = new CBGame("Test");
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [commandsLayer] = getLayers(game.board, "widget-commands");
@@ -547,7 +547,7 @@ describe("Playable", ()=> {
 
     it("Checks undo/redo push menu button", () => {
         given:
-            var game = new CBGame();
+            var game = new CBGame("Test");
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();
@@ -578,7 +578,7 @@ describe("Playable", ()=> {
 
     it("Checks full screen push menu button", () => {
         given:
-            var game = new CBGame();
+            var game = new CBGame("Test");
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();
@@ -857,7 +857,7 @@ describe("Playable", ()=> {
 
     it("Checks visibility level management on insert", () => {
         given:
-            var game = new CBGame();
+            var game = new CBGame("Test");
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [widgetsLevel] = getLayers(game.board, "widgets");
@@ -910,7 +910,7 @@ describe("Playable", ()=> {
 
     it("Checks visibility level management on abstract insert", () => {
         given:
-            var game = new CBGame();
+            var game = new CBGame("Test");
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [widgetsLevel] = getLayers(game.board, "widgets");
@@ -951,7 +951,7 @@ describe("Playable", ()=> {
 
     it("Checks mask that depends on the visibility level", () => {
         given:
-            var game = new CBGame();
+            var game = new CBGame("Test");
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [widgetsLevel] = getLayers(game.board, "widgets");
@@ -1078,7 +1078,7 @@ describe("Playable", ()=> {
     it("Checks that when the mouse is over a (one hex) counter, the ones above are retracted", () => {
         given:
             var { game, map } = createBasicGame();
-            var player = new CBAbstractPlayer();
+            var player = new CBAbstractPlayer("player1");
             game.addPlayer(player);
             let counter1 = new CBTestPlayable(player, ["./../images/units/misc/counter1.png"]);
             let counter2 = new CBTestPlayable(player, ["./../images/units/misc/counter2.png"]);
@@ -1128,7 +1128,7 @@ describe("Playable", ()=> {
     it("Checks that a retracted counter reappears after a period of time", () => {
         given:
             var { game, map } = createBasicGame();
-            var player = new CBAbstractPlayer();
+            var player = new CBAbstractPlayer("player1");
             game.addPlayer(player);
             let counter1 = new CBTestPlayable(player, ["./../images/units/misc/counter1.png"]);
             let counter2 = new CBTestPlayable(player, ["./../images/units/misc/counter2.png"]);
@@ -1158,7 +1158,7 @@ describe("Playable", ()=> {
     it("Checks that moving on a retracted counter reinit the reappearance delay", () => {
         given:
             var { game, map } = createBasicGame();
-            var player = new CBAbstractPlayer();
+            var player = new CBAbstractPlayer("player1");
             game.addPlayer(player);
             let counter1 = new CBTestPlayable(player, ["./../images/units/misc/counter1.png"]);
             let counter2 = new CBTestPlayable(player, ["./../images/units/misc/counter2.png"]);
@@ -1268,7 +1268,7 @@ describe("Playable", ()=> {
     it("Checks that when the mouse is over a formation, the above counters are retracted", () => {
         given:
             var { game, map } = createBasicGame();
-            var player = new CBAbstractPlayer();
+            var player = new CBAbstractPlayer("player1");
             game.addPlayer(player);
             let formation1 = new CBTestFormation(player, ["./../images/units/misc/formation1.png"]);
             formation1.angle = 90;
@@ -1382,7 +1382,7 @@ describe("Playable", ()=> {
     it("Checks playable and option counters registration on layers", () => {
         given:
             var { game, map } = createBasicGame();
-            var player = new CBAbstractPlayer();
+            var player = new CBAbstractPlayer("player1");
             game.addPlayer(player);
             let playable1 = new CBTestPlayable(player, ["./../images/units/misc/unit1.png"]);
             let markerImage = DImage.getImage("./../images/markers/misc/markers1.png");
@@ -1426,7 +1426,7 @@ describe("Playable", ()=> {
     it("Checks formations and formation's marker and options registration on layers", () => {
         given:
             var { game, map } = createBasicGame();
-            var player = new CBAbstractPlayer();
+            var player = new CBAbstractPlayer("player1");
             game.addPlayer(player);
             let formation1 = new CBTestFormation(player, ["./../images/units/misc/formation1.png"]);
             formation1.angle = 60;

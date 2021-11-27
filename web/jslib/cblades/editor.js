@@ -2,7 +2,7 @@
 
 import {
     CBActuator,
-    CBAbstractGame, CBAction, PlayableMixin, CBAbstractPlayer
+    CBAbstractGame, CBAbstractPlayer
 } from "./game.js";
 import {
     CBActuatorMultiImagesTrigger,
@@ -45,8 +45,8 @@ import {
     CBCohesion, CBMunitions, CBOrderInstruction, CBTiredness
 } from "./unit.js";
 import {
-    requestServer
-} from "../request.js";
+    BoardLoader, GameLoader
+} from "./loader.js";
 
 export class CBMapEditorHexHeightTrigger extends NeighborRawActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
 
@@ -850,8 +850,8 @@ export class CBEditUnitMenu extends DIconMenu {
 
 export class CBEditorPlayer extends CBAbstractPlayer {
 
-    constructor() {
-        super();
+    _init() {
+        super._init();
         this._wings = [];
     }
 
@@ -894,10 +894,10 @@ export class CBEditorPlayer extends CBAbstractPlayer {
 
 }
 
-export class CBEditorGame extends RetractableGameMixin(CBAbstractGame) {
+export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
 
-    constructor() {
-        super(new CBLevelBuilder().buildLevels());
+    constructor(name) {
+        super(name, new CBLevelBuilder().buildLevels());
     }
 
     canSelectPlayable(playable) {
@@ -947,7 +947,6 @@ export class CBEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 this.showCommand(this._saveCommand);
                 this.showCommand(this._loadCommand);
                 this.showCommand(this._editMapCommand);
-                this.showCommand(this._editUnitsCommand);
                 this.showCommand(this._fullScreenCommand);
                 animation();
             });
@@ -963,6 +962,136 @@ export class CBEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 this.hideCommand(this._saveCommand);
                 this.hideCommand(this._loadCommand);
                 this.hideCommand(this._editMapCommand);
+                this.hideCommand(this._fullScreenCommand);
+                animation();
+            });
+        this._undoCommand = new DPushButton(
+            "./../images/commands/undo.png", "./../images/commands/undo-inactive.png",
+            new Point2D(-120, -60), animation=>{
+                Memento.undo();
+                animation();
+            }).setTurnAnimation(false);
+        this._redoCommand = new DPushButton(
+            "./../images/commands/redo.png", "./../images/commands/redo-inactive.png",
+            new Point2D(-180, -60), animation=>{
+                Memento.redo();
+                animation();
+            }).setTurnAnimation(true);
+        this._settingsCommand = new DPushButton(
+            "./../images/commands/settings.png","./../images/commands/settings-inactive.png",
+            new Point2D(-240, -60), animation=>{
+                sendPost("/api/ping-login",
+                    null,
+                    (text, status)=>console.log("SUCCESS! "+text+": "+status),
+                    (text, status)=>console.log("FAILURE! "+text+": "+status)
+                );
+                animation();
+            }).setTurnAnimation(true);
+        this._saveCommand = new DPushButton(
+            "./../images/commands/save.png", "./../images/commands/save-inactive.png",
+            new Point2D(-300, -60), animation=>{
+                new BoardLoader(this.map).save();
+                animation();
+            }).setTurnAnimation(true);
+        this._loadCommand = new DPushButton(
+            "./../images/commands/load.png", "./../images/commands/load-inactive.png",
+            new Point2D(-360, -60), animation=>{
+                new BoardLoader(this.map).load();
+                animation();
+            }).setTurnAnimation(true);
+        this._editMapCommand = new DMultiStatePushButton(
+            ["./../images/commands/edit-map.png", "./../images/commands/field.png"],
+            new Point2D(-420, -60), (state, animation)=>{
+                if (!state)
+                    this.editMap();
+                else {
+                    this.closePopup();
+                    this.closeActuators();
+                }
+                animation();
+            }).setTurnAnimation(true, ()=>{}
+        );
+        this._fullScreenCommand = new DMultiStatePushButton(
+            ["./../images/commands/full-screen-on.png", "./../images/commands/full-screen-off.png"],
+            new Point2D(-480, -60), (state, animation)=>{
+                if (!state)
+                    getDrawPlatform().requestFullscreen();
+                else
+                    getDrawPlatform().exitFullscreen();
+                animation();
+            })
+            .setTurnAnimation(true, ()=>this._fullScreenCommand.setState(this._fullScreenCommand.state?0:1));
+    }
+
+}
+
+export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
+
+    constructor(name) {
+        super(name, new CBLevelBuilder().buildLevels());
+    }
+
+    canSelectPlayable(playable) {
+        return true;
+    }
+
+    _buildBoard(map) {
+        super._buildBoard(map);
+        this._board.escapeOnKeyDown();
+        this._board.delOnKeyDown();
+    }
+
+    _processGlobalEvent(source, event, value) {
+        if (event===DBoard.DELETE_EVENT) {
+            this.selectedPlayable && this.selectedPlayable.destroy();
+        }
+        else if (event===DBoard.ESCAPE_EVENT) {
+            this.closePopup();
+            this.closeActuators();
+        }
+        else {
+            super._processGlobalEvent(source, event, value);
+        }
+    }
+
+    editMap() {
+        this.closeActuators();
+        this.closePopup();
+        this.openActuator(new CBMapEditActuator(this.map));
+    }
+
+    editUnits() {
+        this.closeActuators();
+        this.closePopup();
+        this.openPopup(new CBUnitsRoster(this), this.viewportCenter);
+    }
+
+    setMenu() {
+        this._showCommand = new DPushButton(
+            "./../images/commands/show.png", "./../images/commands/show-inactive.png",
+            new Point2D(-60, -60), animation=>{
+                this.hideCommand(this._showCommand);
+                this.showCommand(this._hideCommand);
+                this.showCommand(this._undoCommand);
+                this.showCommand(this._redoCommand);
+                this.showCommand(this._settingsCommand);
+                this.showCommand(this._saveCommand);
+                this.showCommand(this._loadCommand);
+                this.showCommand(this._editUnitsCommand);
+                this.showCommand(this._fullScreenCommand);
+                animation();
+            });
+        this.showCommand(this._showCommand);
+        this._hideCommand = new DPushButton(
+            "./../images/commands/hide.png", "./../images/commands/hide-inactive.png",
+            new Point2D(-60, -60), animation=>{
+                this.showCommand(this._showCommand);
+                this.hideCommand(this._hideCommand);
+                this.hideCommand(this._undoCommand);
+                this.hideCommand(this._redoCommand);
+                this.hideCommand(this._settingsCommand);
+                this.hideCommand(this._saveCommand);
+                this.hideCommand(this._loadCommand);
                 this.hideCommand(this._editUnitsCommand);
                 this.hideCommand(this._fullScreenCommand);
                 animation();
@@ -981,10 +1110,7 @@ export class CBEditorGame extends RetractableGameMixin(CBAbstractGame) {
             }).setTurnAnimation(true);
         this._settingsCommand = new DPushButton(
             "./../images/commands/settings.png","./../images/commands/settings-inactive.png",
-            new Point2D(-240, -60), animation=>{});
-        this._saveCommand = new DPushButton(
-            "./../images/commands/save.png", "./../images/commands/save-inactive.png",
-            new Point2D(-300, -60), animation=>{
+            new Point2D(-240, -60), animation=>{
                 sendPost("/api/ping-login",
                     null,
                     (text, status)=>console.log("SUCCESS! "+text+": "+status),
@@ -992,33 +1118,22 @@ export class CBEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 );
                 animation();
             }).setTurnAnimation(true);
+        this._saveCommand = new DPushButton(
+            "./../images/commands/save.png", "./../images/commands/save-inactive.png",
+            new Point2D(-300, -60), animation=>{
+                new GameLoader(this).save();
+                animation();
+            }).setTurnAnimation(true);
         this._loadCommand = new DPushButton(
             "./../images/commands/load.png", "./../images/commands/load-inactive.png",
             new Point2D(-360, -60), animation=>{
-                sendPost("/api/ping-protected",
-                    null,
-                    (text, status)=>console.log("SUCCESS! "+text+": "+status),
-                    (text, status)=>console.log("FAILURE! "+text+": "+status)
-                );
+                new GameLoader(this).load();
                 animation();
-            }).setTurnAnimation(true);
-        this._editMapCommand = new DMultiStatePushButton(
-            ["./../images/commands/edit-map.png", "./../images/commands/field.png"],
-            new Point2D(-420, -60), (state, animation)=>{
-                if (!state)
-                    this.editMap();
-                else {
-                    this.closePopup();
-                    this.closeActuators();
-                }
-                animation();
-            }).setTurnAnimation(true, ()=>{
-                this._editMapCommand.setState(this._editMapCommand.state?0:1)
             }
-        );
+        ).setTurnAnimation(true);
         this._editUnitsCommand = new DMultiStatePushButton(
             ["./../images/commands/edit-units.png", "./../images/commands/edit-units-inactive.png"],
-            new Point2D(-480, -60), (state, animation)=>{
+            new Point2D(-420, -60), (state, animation)=>{
                 if (!state)
                     this.editUnits();
                 else {
@@ -1026,13 +1141,11 @@ export class CBEditorGame extends RetractableGameMixin(CBAbstractGame) {
                     this.closeActuators();
                 }
                 animation();
-            }).setTurnAnimation(true, ()=>{
-                this._editUnitsCommand.setState(this._editUnitsCommand.state?0:1)
-            }
+            }).setTurnAnimation(true, ()=>{}
         );
         this._fullScreenCommand = new DMultiStatePushButton(
             ["./../images/commands/full-screen-on.png", "./../images/commands/full-screen-off.png"],
-            new Point2D(-540, -60), (state, animation)=>{
+            new Point2D(-480, -60), (state, animation)=>{
                 if (!state)
                     getDrawPlatform().requestFullscreen();
                 else
@@ -1040,7 +1153,6 @@ export class CBEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 animation();
             })
             .setTurnAnimation(true, ()=>this._fullScreenCommand.setState(this._fullScreenCommand.state?0:1));
-        this._settingsCommand.active = false;
     }
 
 }

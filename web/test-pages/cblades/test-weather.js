@@ -33,7 +33,7 @@ describe("Weather", ()=> {
     it("Checks weather management on game", () => {
         when:
             var GameClass = WeatherMixin(CBAbstractGame);
-            var game = new GameClass();
+            var game = new GameClass("Test");
             var received = null;
             Mechanisms.addListener({
                _processGlobalEvent(source, event, value) {
@@ -63,7 +63,7 @@ describe("Weather", ()=> {
     it("Checks fog management on game", () => {
         when:
             var GameClass = WeatherMixin(CBAbstractGame);
-            var game = new GameClass();
+            var game = new GameClass("Test");
             var received = null;
             Mechanisms.addListener({
                 _processGlobalEvent(source, event, value) {
@@ -93,7 +93,7 @@ describe("Weather", ()=> {
     it("Checks wind direction management on game", () => {
         when:
             var GameClass = WeatherMixin(CBAbstractGame);
-            var game = new GameClass();
+            var game = new GameClass("Test");
             var received = null;
             Mechanisms.addListener({
                 _processGlobalEvent(source, event, value) {

@@ -54,12 +54,12 @@ public interface DataManager {
 			String password,
 			Properties properties,
 			Collection<Class<?>> entityClasses);
-	
+
 	public static DataManager get() {
 		return ApplicationManager.get().getDataManager();
 	}
 	
-	public static Collection<Class<?>> getEntityClasses() {
+	default Collection<Class<?>> getEntityClasses() {
 		return Scanner.get().getClassesAnnotatedBy(Entity.class, Profile.class);
 	}
 }

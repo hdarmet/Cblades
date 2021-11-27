@@ -33,27 +33,37 @@ export function loadFile(object, field, file) {
 
 export function requestServer(uri, requestContent, success, failure, files, method='POST') {
     let cookie = getCookie("xsrfToken");
-    let formData;
-    if (requestContent) {
-        formData = new FormData();
-        formData.append('request-part', requestContent);
-    }
+    let body;
+    let headers;
     if (files) {
-        formData = formData || new FormData();
+        body = new FormData();
+        if (requestContent) {
+            body.append('request-part', JSON.stringify(requestContent));
+        }
         for (let file in files) {
-            formData.append(file.name, file.file, file.file.name);
+            body.append(file.name, file.file, file.file.name);
+        }
+        headers = {
+            'Accept': '*/*',
+            'Content-Type': 'multipart/form-data'
+        };
+    }
+    else {
+        headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        };
+        if (requestContent) {
+            body = JSON.stringify(requestContent);
         }
     }
-    let headers = {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-    };
+
     if (cookie) headers['XSRF-TOKEN'] = cookie;
     let init = {
         headers,
-        method: method
+        method
     };
-    if (formData) init.body = formData;
+    if (body) init.body = body;
     fetch(document.defaultView.location.origin+uri, init)
     .then(function(response) {
         response.text()

@@ -27,14 +27,13 @@ import {
     CBWing
 } from "../../jslib/cblades/unit.js";
 import {
-    CBEditorGame, CBEditorPlayer, CBEditUnitMenu, CBFormationPlacementActuator,
+    CBMapEditorGame, CBScenarioEditorGame, CBEditorPlayer, CBEditUnitMenu, CBFormationPlacementActuator,
     CBMapEditActuator, CBUnitPlacementActuator, CBUnitsRoster
 } from "../../jslib/cblades/editor.js";
 import {
     clickOnTrigger,
     mouseMoveOnTrigger,
     showGameCommand,
-    showGameInactiveCommand,
     executeAllAnimations,
     paint,
     repaint,
@@ -134,7 +133,7 @@ describe("Editor", ()=> {
 
     it("Checks switch to map editor mode", () => {
         given:
-            var game = new CBEditorGame();
+            var game = new CBMapEditorGame();
             let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
@@ -162,7 +161,7 @@ describe("Editor", ()=> {
 
     it("Checks edit a hex type", () => {
         given:
-            var game = new CBEditorGame();
+            var game = new CBMapEditorGame();
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
@@ -292,7 +291,7 @@ describe("Editor", ()=> {
 
     it("Checks edit a hex side type", () => {
         given:
-            var game = new CBEditorGame();
+            var game = new CBMapEditorGame();
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
@@ -353,7 +352,7 @@ describe("Editor", ()=> {
 
     it("Checks edit a hex side height", () => {
         given:
-            var game = new CBEditorGame();
+            var game = new CBMapEditorGame();
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
@@ -426,18 +425,29 @@ describe("Editor", ()=> {
             );
     });
 
-    function buildEditorGame() {
+    function buildMapEditorGame() {
         let BlueBanner0 = "./../images/units/blue/banners/banner0.png";
         let RedBanner0 = "./../images/units/red/banners/banner0.png";
 
-        var game = new CBEditorGame();
+        var game = new CBMapEditorGame();
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
-        let player1 = new CBEditorPlayer();
+        game.start();
+        return { game, map};
+    }
+
+    function buildScenarioEditorGame() {
+        let BlueBanner0 = "./../images/units/blue/banners/banner0.png";
+        let RedBanner0 = "./../images/units/red/banners/banner0.png";
+
+        var game = new CBScenarioEditorGame();
+        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        game.setMap(map);
+        let player1 = new CBEditorPlayer("player1");
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, BlueBanner0);
         wing1.setRetreatZone(map.getSouthZone());
-        let player2 = new CBEditorPlayer();
+        let player2 = new CBEditorPlayer("player2");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, RedBanner0);
         wing2.setRetreatZone(map.getNorthZone());
@@ -471,7 +481,7 @@ describe("Editor", ()=> {
 
     it("Checks open units editor popup", () => {
         given:
-            var { game } = buildEditorGame();
+            var { game } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
         when:
             game.editUnits();
@@ -513,7 +523,7 @@ describe("Editor", ()=> {
 
     it("Checks wing switching in editor popup", () => {
         given:
-            var { game } = buildEditorGame();
+            var { game } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             game.editUnits();
         when:
@@ -545,7 +555,7 @@ describe("Editor", ()=> {
 
     it("Checks change rosters in editor popup", () => {
         given:
-            var { game } = buildEditorGame();
+            var { game } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             game.editUnits();
         when:
@@ -612,7 +622,7 @@ describe("Editor", ()=> {
 
     it("Checks select rosters in editor popup", () => {
         given:
-            var { game } = buildEditorGame();
+            var { game } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             game.editUnits();
         when:
@@ -651,7 +661,7 @@ describe("Editor", ()=> {
 
     it("Checks change character/troop type steps", () => {
         given:
-            var { game } = buildEditorGame();
+            var { game } = buildScenarioEditorGame();
             var [widgetsLayer] = getLayers(game.board, "widgets");
             game.editUnits();
         when:
@@ -675,7 +685,7 @@ describe("Editor", ()=> {
 
     it("Checks that unit steps are memorized", () => {
         given:
-            var { game } = buildEditorGame();
+            var { game } = buildScenarioEditorGame();
             var [widgetsLayer] = getLayers(game.board, "widgets");
             game.editUnits();
         when:
@@ -693,7 +703,7 @@ describe("Editor", ()=> {
 
     it("Checks change formation type steps", () => {
         given:
-            var { game } = buildEditorGame();
+            var { game } = buildScenarioEditorGame();
             var [widgetsLayer] = getLayers(game.board, "widgets", "widget-items");
             game.editUnits();
         when:
@@ -754,7 +764,7 @@ describe("Editor", ()=> {
 
     it("Checks unit placement", () => {
         given:
-            var { game, map } = buildEditorGame();
+            var { game, map } = buildScenarioEditorGame();
             var [actuatorsLayer, widgetsLayer, units0Layer] = getLayers(game.board, "actuators", "widgets", "units-0");
             game.editUnits();
         when:
@@ -800,7 +810,7 @@ describe("Editor", ()=> {
 
     it("Checks formation placement", () => {
         given:
-            var { game, map } = buildEditorGame();
+            var { game, map } = buildScenarioEditorGame();
             var [actuatorsLayer, widgetsLayer, formations0Layer] = getLayers(game.board, "actuators", "widgets", "formations-0");
             game.editUnits();
         when:
@@ -860,7 +870,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             let unit1 = new CBTroop(GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -898,7 +908,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: tired", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             let unit1 = new CBTroop(GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -946,7 +956,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: exhausted", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             let unit1 = new CBTroop(GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -994,7 +1004,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: disrupted", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             let unit1 = new CBTroop(GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -1042,7 +1052,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: routed", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             let unit1 = new CBTroop(GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -1090,7 +1100,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: scarce ammunitions", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             let unit1 = new CBTroop(GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -1138,7 +1148,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: no ammunition", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             let unit1 = new CBTroop(GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -1186,7 +1196,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: contact", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             let unit1 = new CBTroop(GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -1234,7 +1244,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: charge", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             let unit1 = new CBTroop(GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -1282,7 +1292,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: order given", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             let unit1 = new CBTroop(GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -1330,7 +1340,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: played", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             let unit1 = new CBTroop(GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -1378,7 +1388,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: move troop", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer, actuatorsLayer, units0Layer] = getLayers(game.board, "widgets", "widget-items", "actuators", "units-0");
             let unit1 = new CBTroop(GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -1409,7 +1419,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: move formation", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer, actuatorsLayer, formations0Layer] = getLayers(game.board, "widgets", "widget-items", "actuators", "formations-0");
             let formation1 = new CBFormation(RoughneckLance, wing1);
             formation1.addToMap(map.getHex(5, 6).toward(0));
@@ -1440,7 +1450,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: delete", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer, actuatorsLayer, units0Layer] = getLayers(game.board, "widgets", "widget-items", "actuators", "units-0");
             let unit1 = new CBTroop(GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -1459,7 +1469,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: attack order instruction", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             let unit1 = new CBCharacter(GoblinLeader, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -1508,7 +1518,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: defend order instruction", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             let unit1 = new CBCharacter(GoblinLeader, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -1557,7 +1567,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: regroup order instruction", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             let unit1 = new CBCharacter(GoblinLeader, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -1606,7 +1616,7 @@ describe("Editor", ()=> {
 
     it("Checks unit menu item: retreat order instruction", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             let unit1 = new CBCharacter(GoblinLeader, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -1655,7 +1665,7 @@ describe("Editor", ()=> {
 
     it("Checks delete unit using keyboard", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             var [unitsLayer] = getLayers(game.board, "units-0");
             let unit1 = new CBTroop(GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
@@ -1677,20 +1687,17 @@ describe("Editor", ()=> {
     it("Checks edit push menu button", () => {
         given:
             var editMode = false;
-            var game = new CBEditorGame();
-            game.editMap = function() {
+            var { game } = buildScenarioEditorGame();
+            game.editUnits = function() {
                 editMode = !editMode;
             }
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
-            game.setMap(map);
             game.setMenu();
-            game.start();
             var [commandsLayer] = getLayers(game.board, "widget-commands");
             loadAllImages();
             game._showCommand.action();
             executeAllAnimations();
         when:
-            game._editMapCommand.action();
+            game._editUnitsCommand.action();
             executeAllAnimations();
             resetDirectives(commandsLayer);
             repaint(game);
@@ -1700,41 +1707,21 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("hide", 940, 740));
             assertDirectives(commandsLayer, showGameCommand("undo", 880, 740));
             assertDirectives(commandsLayer, showGameCommand("redo", 820, 740));
-            assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 760, 740));
+            assertDirectives(commandsLayer, showGameCommand("settings", 760, 740));
             assertDirectives(commandsLayer, showGameCommand("save", 700, 740));
             assertDirectives(commandsLayer, showGameCommand("load", 640, 740));
-            assertDirectives(commandsLayer, showGameCommand("field", 580, 740));
-            assertDirectives(commandsLayer, showGameCommand("edit-units", 520, 740));
-            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 460, 740));
-            assertNoMoreDirectives(commandsLayer);
-        when:
-            editMode = false;
-            game._editMapCommand.action();
-            executeAllAnimations();
-            resetDirectives(commandsLayer);
-            repaint(game);
-        then:
-            assert(editMode).isFalse();
-            assertClearDirectives(commandsLayer);
-            assertDirectives(commandsLayer, showGameCommand("hide", 940, 740));
-            assertDirectives(commandsLayer, showGameCommand("undo", 880, 740));
-            assertDirectives(commandsLayer, showGameCommand("redo", 820, 740));
-            assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 760, 740));
-            assertDirectives(commandsLayer, showGameCommand("save", 700, 740));
-            assertDirectives(commandsLayer, showGameCommand("load", 640, 740));
-            assertDirectives(commandsLayer, showGameCommand("edit-map", 580, 740));
-            assertDirectives(commandsLayer, showGameCommand("edit-units", 520, 740));
-            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 460, 740));
+            assertDirectives(commandsLayer, showGameCommand("edit-units", 580, 740));
+            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 520, 740));
             assertNoMoreDirectives(commandsLayer);
     });
 
     it("Checks edit map button", () => {
         given:
-            var { game } = buildEditorGame();
+            var { game } = buildMapEditorGame();
             game.setMenu();
             loadAllImages();
             game._showCommand.action();
-            game._editUnitsCommand.action();
+            game._editMapCommand.action();
             executeAllAnimations();
         when:
             clickOnArtifact(game, game._editMapCommand.artifacts[0]);
@@ -1742,20 +1729,15 @@ describe("Editor", ()=> {
         then:
             assert(getMapEditorActuator(game)).isDefined();
             assert(getEditUnitPopup(game)).isNotDefined();
-        when:
-            clickOnArtifact(game, game._editMapCommand.artifacts[0]);
-            executeAllAnimations();
-        then:
-            assert(getMapEditorActuator(game)).isNotDefined();
     });
 
     it("Checks edit units button", () => {
         given:
-            var { game } = buildEditorGame();
+            var { game } = buildScenarioEditorGame();
             game.setMenu();
             loadAllImages();
             game._showCommand.action();
-            game._editMapCommand.action();
+            game._editUnitsCommand.action();
             executeAllAnimations();
         when:
             clickOnArtifact(game, game._editUnitsCommand.artifacts[0]);
@@ -1763,16 +1745,11 @@ describe("Editor", ()=> {
         then:
             assert(getEditUnitPopup(game)).isDefined();
             assert(getMapEditorActuator(game)).isNotDefined();
-        when:
-            clickOnArtifact(game, game._editUnitsCommand.artifacts[0]);
-            executeAllAnimations();
-        then:
-            assert(getEditUnitPopup(game)).isNotDefined();
     });
 
-    it("Checks global push menu button", () => {
+    it("Checks global push menu button for Map Editor", () => {
         given:
-            var game = new CBEditorGame();
+            var game = new CBMapEditorGame();
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [commandsLayer] = getLayers(game.board, "widget-commands");
@@ -1793,12 +1770,48 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("hide", 940, 740));
             assertDirectives(commandsLayer, showGameCommand("undo", 880, 740));
             assertDirectives(commandsLayer, showGameCommand("redo", 820, 740));
-            assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 760, 740));
+            assertDirectives(commandsLayer, showGameCommand("settings", 760, 740));
             assertDirectives(commandsLayer, showGameCommand("save", 700, 740));
             assertDirectives(commandsLayer, showGameCommand("load", 640, 740));
             assertDirectives(commandsLayer, showGameCommand("edit-map", 580, 740));
-            assertDirectives(commandsLayer, showGameCommand("edit-units", 520, 740));
-            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 460, 740));
+            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 520, 740));
+        when:
+            game._hideCommand.action();
+        repaint(game);
+        then:
+            assertClearDirectives(commandsLayer);
+            assertDirectives(commandsLayer, showGameCommand("show", 940, 740));
+            assertNoMoreDirectives(commandsLayer);
+    });
+
+    it("Checks global push menu button for Scenario Editor", () => {
+        given:
+            var game = new CBScenarioEditorGame();
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            game.setMap(map);
+            var [commandsLayer] = getLayers(game.board, "widget-commands");
+        when:
+            game.setMenu();
+            game.start();
+            loadAllImages();
+        then:
+            assertClearDirectives(commandsLayer);
+            assertDirectives(commandsLayer, showGameCommand("show", 940, 740));
+            assertNoMoreDirectives(commandsLayer);
+        when:
+            resetDirectives(commandsLayer);
+            game._showCommand.action();
+            paint(game);
+        then:
+            assertClearDirectives(commandsLayer);
+            assertDirectives(commandsLayer, showGameCommand("hide", 940, 740));
+            assertDirectives(commandsLayer, showGameCommand("undo", 880, 740));
+            assertDirectives(commandsLayer, showGameCommand("redo", 820, 740));
+            assertDirectives(commandsLayer, showGameCommand("settings", 760, 740));
+            assertDirectives(commandsLayer, showGameCommand("save", 700, 740));
+            assertDirectives(commandsLayer, showGameCommand("load", 640, 740));
+            assertDirectives(commandsLayer, showGameCommand("edit-units", 580, 740));
+            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 520, 740));
         when:
             game._hideCommand.action();
             repaint(game);
@@ -1810,7 +1823,7 @@ describe("Editor", ()=> {
 
     it("Checks undo/redo push menu button", () => {
         given:
-            var game = new CBEditorGame();
+            var game = new CBMapEditorGame();
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();
@@ -1841,7 +1854,7 @@ describe("Editor", ()=> {
 
     it("Checks full screen push menu button", () => {
         given:
-            var game = new CBEditorGame();
+            var game = new CBMapEditorGame();
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();
@@ -1870,12 +1883,11 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("hide", 1940, 1440));
             assertDirectives(commandsLayer, showGameCommand("undo", 1880, 1440));
             assertDirectives(commandsLayer, showGameCommand("redo", 1820, 1440));
-            assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 1760, 1440));
+            assertDirectives(commandsLayer, showGameCommand("settings", 1760, 1440));
             assertDirectives(commandsLayer, showGameCommand("save", 1700, 1440));
             assertDirectives(commandsLayer, showGameCommand("load", 1640, 1440));
             assertDirectives(commandsLayer, showGameCommand("edit-map", 1580, 1440));
-            assertDirectives(commandsLayer, showGameCommand("edit-units", 1520, 1440));
-            assertDirectives(commandsLayer, showGameCommand("full-screen-off", 1460, 1440));
+            assertDirectives(commandsLayer, showGameCommand("full-screen-off", 1520, 1440));
             assertNoMoreDirectives(commandsLayer);
         when:
             game._fullScreenCommand.action();
@@ -1896,12 +1908,11 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("hide", 1440, 940));
             assertDirectives(commandsLayer, showGameCommand("undo", 1380, 940));
             assertDirectives(commandsLayer, showGameCommand("redo", 1320, 940));
-            assertDirectives(commandsLayer, showGameInactiveCommand("settings-inactive", 1260, 940));
+            assertDirectives(commandsLayer, showGameCommand("settings", 1260, 940));
             assertDirectives(commandsLayer, showGameCommand("save", 1200, 940));
             assertDirectives(commandsLayer, showGameCommand("load", 1140, 940));
             assertDirectives(commandsLayer, showGameCommand("edit-map", 1080, 940));
-            assertDirectives(commandsLayer, showGameCommand("edit-units", 1020, 940));
-            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 960, 940));
+            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 1020, 940));
             assertNoMoreDirectives(commandsLayer);
     });
 
@@ -1911,7 +1922,7 @@ describe("Editor", ()=> {
 
     it("Checks edit units button", () => {
         given:
-            var { game, map, wing1 } = buildEditorGame();
+            var { game, map, wing1 } = buildScenarioEditorGame();
             let unit1 = new CBCharacter(GoblinLeader, wing1);
             unit1.addToMap(map.getHex(5, 6));
         when:

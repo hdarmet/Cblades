@@ -25,10 +25,6 @@ import {
 
 export class CBInteractivePlayer extends CBUnitPlayer {
 
-    constructor() {
-        super();
-    }
-
     _doDestroyedChecking(unit, hexLocation) {
         if (this.game.arbitrator.doesADestroyedUnitHaveNonRoutedNeighbors(unit, hexLocation)) {
             this._checkIfNeighborsLoseCohesion(unit, hexLocation, () => {

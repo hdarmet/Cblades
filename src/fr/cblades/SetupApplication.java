@@ -13,9 +13,10 @@ import org.summer.security.SecurityManager;
 
 public class SetupApplication {
     static final Logger log = Logger.getLogger("cblades");
+    static String gae = System.getenv("GAE_INSTANCE");
 
     static boolean isGae() {
-        return System.getenv("GAE_INSTANCE")!=null;
+        return SetupApplication.gae!=null;
     }
 
     @Setup
@@ -23,12 +24,12 @@ public class SetupApplication {
         String url;
         String user = null;
         String password = null;
-        if (!isGae()) {
+        if (isGae()) {
+            url = "//google/cblades?useSSL=false&socketFactoryArg=cblades:europe-west3:cblades&socketFactory=com.google.cloud.sql.postgres.SocketFactory&user=cblades&password=maudite";
+        } else {
             url = "//localhost/cblades";
             user = "cblades";
             password = "cblades";
-        } else {
-            url = "//google/cblades?useSSL=false&socketFactoryArg=cblades:europe-west3:cblades&socketFactory=com.google.cloud.sql.postgres.SocketFactory&user=cblades&password=maudite";
         }
         JPAOnHibernate.openPostgresDevPersistenceUnit(url, user, password);
         log.info("setup dev database !");
@@ -36,13 +37,13 @@ public class SetupApplication {
 
     @Setup
     public static void setSecurityManager() {
-        if (!isGae()) {
+        if (isGae()) {
             SecurityManager.setXsrfProtect(true);
-            SecurityManager.setSecureHTTP(false);
+            SecurityManager.setSecureHTTP(true);
         }
         else {
             SecurityManager.setXsrfProtect(true);
-            SecurityManager.setSecureHTTP(true);
+            SecurityManager.setSecureHTTP(false);
         }
         SecurityManager.setRolesFinder(user->{
             DataSunbeam data = new DataSunbeam() {};
@@ -58,7 +59,7 @@ public class SetupApplication {
     }
 
     @Launch
-    public static void declareAdministrator() {
+    public static void declareStandardUsers() {
         DataSunbeam data = new DataSunbeam() {};
         data.inTransaction(em->{
             if (data.getResultList(em, "select l from Login l where l.login=:login", "login", "admin").isEmpty()) {

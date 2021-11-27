@@ -18,7 +18,7 @@ import org.json.JSONTokener;
 import org.summer.ReflectUtil;
 import org.summer.SummerException;
 
-public class Json implements Iterable<Json> {
+public class Json implements Iterable {
 
 	static final String JSON_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 	

@@ -86,12 +86,12 @@ describe("Arbitrator", ()=> {
     }
 
     function createTinyGame() {
-        let game = new CBGame();
+        let game = new CBGame("Test");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let arbitrator = new CBArbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer();
+        let player1 = new CBUnitPlayer("player1");
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
         wing1.setRetreatZone(map.getWestZone());
@@ -110,7 +110,7 @@ describe("Arbitrator", ()=> {
 
     function create2Players4UnitsTinyGame() {
         let {game, arbitrator, map, player1, wing1, unit11, unit12, leader11} = createTinyGame();
-        let player2 = new CBUnitPlayer();
+        let player2 = new CBUnitPlayer("player2");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         //wing2.setRetreatZone(map.getEastZone());
@@ -127,12 +127,12 @@ describe("Arbitrator", ()=> {
     }
 
     function createTinyFormationGame() {
-        let game = new CBGame();
+        let game = new CBGame("Test");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let arbitrator = new CBArbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer();
+        let player1 = new CBUnitPlayer("player1");
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
         wing1.setRetreatZone(map.getWestZone());
@@ -163,7 +163,7 @@ describe("Arbitrator", ()=> {
 
     function create2Players1Formation2UnitsTinyGame() {
         let {game, arbitrator, map, player1, wing1, formation11, unit11, unit12, leader11} = createTinyFormationGame();
-        let player2 = new CBUnitPlayer();
+        let player2 = new CBUnitPlayer("player2");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         //wing2.setRetreatZone(map.getEastZone());

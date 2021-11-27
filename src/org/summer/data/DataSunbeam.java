@@ -1,9 +1,6 @@
 package org.summer.data;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -82,6 +79,23 @@ public interface DataSunbeam {
 
 	default void flush(EntityManager em) {
 		em.flush();
+	}
+
+	default <E extends BaseEntity, D> void syncPersistentCollection(
+			Supplier<Collection<E>> entityCollectionGetter,
+			Supplier<Collection<E>> targetCollectionGetter,
+			Consumer<E> entityAdder,
+			Consumer<E> entityRemover)
+	{
+		Set<E> currentEntities = new HashSet<>(entityCollectionGetter.get());
+		for (E targetEntity : targetCollectionGetter.get()) {
+			if (!currentEntities.remove(targetEntity)) {
+				entityAdder.accept(targetEntity);
+			}
+		}
+		for (E removedEntity : currentEntities) {
+			entityRemover.accept(removedEntity);
+		}
 	}
 
 	default <E extends BaseEntity, D> void syncPersistentCollection(

@@ -74,8 +74,8 @@ export let CBOrderInstruction = {
 
 export class CBUnitPlayer extends CBBasicPlayer {
 
-    constructor() {
-        super();
+    _init() {
+        super._init();
         this._wings = [];
     }
 
@@ -270,6 +270,7 @@ export class CBUnitType {
         this._weaponProfiles = [];
         this._commandProfiles = [];
         this._moralProfiles = [];
+        CBUnitType._catalog.set(name, this);
     }
 
     getMoveProfile(steps) {
@@ -338,6 +339,12 @@ export class CBUnitType {
 
     getMoral(steps) {
         return this.getMoralProfile(steps).moral;
+    }
+
+    static _catalog = new Map();
+
+    static getType(name) {
+        return CBUnitType._catalog.get(name);
     }
 }
 
@@ -520,6 +527,24 @@ export class CBWing {
         console.assert(tiredness>=4 || tiredness<=11);
         this._tiredness = tiredness;
         Mechanisms.fire(this, CBWing.TIREDNESS_EVENT, {wing:this, tiredness});
+    }
+
+    get playables() {
+        let playables = [];
+        for (let playable of this._player.playables) {
+            if (playable.wing === this) playables.push(playable);
+        }
+        return playables;
+    }
+
+    getNextUnitName() {
+        let number = 0;
+        var unitNames = new Set(this.playables.map(unit=>unit.name));
+        while(true) {
+            let name = this._banner+"-"+number;
+            if (unitNames.has(name)) number+=1;
+            else return name;
+        }
     }
 
     static MORAL_EVENT = "moral-event";
@@ -823,6 +848,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     addToMap(hexId, stacking) {
         super.addToMap(hexId, stacking);
+        if (!this._name) this._name = this._wing.getNextUnitName();
         for (let carried of this._carried) {
             carried.addToMap(hexId, stacking);
         }
@@ -830,6 +856,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     removeFromMap() {
         super.removeFromMap();
+        delete this._name;
         for (let carried of this._carried) {
             carried.removeFromMap();
         }
@@ -837,6 +864,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     appendToMap(hexId, stacking) {
         super.appendToMap(hexId, stacking);
+        this._name = this._wing.getNextUnitName();
         for (let carried of this._carried) {
             carried.appendToMap(hexId, stacking);
         }
@@ -844,6 +872,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     deleteFromMap() {
         super.deleteFromMap();
+        delete this._name;
         for (let carried of this._carried) {
             carried.deleteFromMap();
         }
@@ -939,6 +968,10 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         return this._carried;
     }
 
+    get name() {
+        return this._name;
+    }
+
     get type() {
         return this._type;
     }
@@ -976,6 +1009,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     receivesOrder(order) {
+        console.assert(order===true || order===false);
         Memento.register(this);
         this._orderGiven = order;
         this._updatePlayed();
@@ -1226,7 +1260,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     _updateCohesion(cohesion) {
-        console.assert(cohesion===0 || cohesion===1 || cohesion===2);
+        console.assert(cohesion>=CBCohesion.GOOD_ORDER && cohesion<=CBCohesion.ROUTED);
         this._cohesion = cohesion;
         this._cohesionArtifact && this._element.deleteArtifact(this._cohesionArtifact);
         delete this._cohesionArtifact;

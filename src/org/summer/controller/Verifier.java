@@ -1,8 +1,14 @@
 package org.summer.controller;
 
+import org.summer.data.Synchronizer;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class Verifier {
 
@@ -41,7 +47,8 @@ public class Verifier {
 	public Verifier each(String field, Function<Json, Verifier> verifyBuilder) {
 		Json jarray = (Json)this.json.get(field);
 		if (jarray!=null) {
-			jarray.forEach(json->{
+			jarray.forEach(value->{
+				Json json = value instanceof Json ? (Json)value : Json.createJsonObject().put("_", value);
 				Verifier verifier = verifyBuilder.apply(json);
 				if (verifier.result!=null) {
 					if (this.result==null) {
@@ -86,7 +93,16 @@ public class Verifier {
 	public Verifier checkPattern(String field, String pattern) {
 		return checkPattern(field, pattern, "must matches '"+pattern+"'");
 	}
-	
+
+	public <T> Verifier check(String field, Set<T>values) {
+		return check(
+				json->json.get(field)==null || values.contains(json.get(field)),
+				field,
+				json.get(field)+" must matches one of ["+
+				String.join(", ", values.stream().map(item->item.toString()).collect(Collectors.toList())
+		)+"]");
+	}
+
 	public Verifier checkMinSize(String field, int size) {
 		return checkMinSize(field, size, "must be greater of equals to "+size);
 	}
@@ -122,7 +138,6 @@ public class Verifier {
 	}
 	
 	public Verifier checkMax(String field, Number max, String message) {
-		System.out.println(""+json.get(field));
 		return check(json->json.get(field)==null||
 				(json.get(field) instanceof Number) &&
 				(((Number)json.get(field)).doubleValue()<=max.doubleValue()), field, message);

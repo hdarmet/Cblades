@@ -516,6 +516,10 @@ export class CBHex {
 
     }
 
+    clean() {
+        this._playables = [];
+    }
+
     get id() {
         return this._id;
     }
@@ -692,27 +696,18 @@ export class MapImageArtifact extends DImageArtifact {
     }
 }
 
-export class CBMap {
+export class CBAbstractMap {
 
-    constructor(mapBoards) {
+    constructor(boardCols, boardRows, imageSpecs) {
+        this._boardCols = boardCols;
+        this._boardRows = boardRows;
         let imageArtifacts = [];
-        this._boardCols = 1;
-        this._boardRows = 1;
-        for (let mapBoard of mapBoards) {
-            if (mapBoard.col>=this._boardCols) this._boardCols=mapBoard.col+1;
-            if (mapBoard.row>=this._boardRows) this._boardRows=mapBoard.row+1;
-        }
-        for (let mapBoard of mapBoards) {
-            let image = DImage.getImage(mapBoard.path);
-            let imageArtifact = new MapImageArtifact(this, "map", image,
-                new Point2D(
-                    (mapBoard.col-(this._boardCols-1)/2)*CBMap.WIDTH,
-                    (mapBoard.row-(this._boardRows-1)/2)*CBMap.HEIGHT
-                ),
-                CBMap.DIMENSION);
-            if (mapBoard.invert) {
-                imageArtifact.pangle = 180;
-            }
+        for (let imageSpec of imageSpecs) {
+            let imageArtifact = new MapImageArtifact(this, "map",
+                imageSpec.image,
+                imageSpec.location,
+                CBAbstractMap.DIMENSION);
+            imageArtifact.pangle = imageSpec.angle;
             imageArtifacts.push(imageArtifact);
         }
         this._element = new DElement(...imageArtifacts);
@@ -720,12 +715,20 @@ export class CBMap {
         this._hexes = [];
     }
 
+    clean() {
+        for (let hexRow of this._hexes) {
+            for (let hex of hexRow) {
+                if (hex) hex.clean();
+            }
+        }
+    }
+
     get width() {
-        return CBMap.WIDTH*this._boardCols;
+        return CBAbstractMap.WIDTH*this._boardCols;
     }
 
     get height() {
-        return CBMap.HEIGHT*this._boardRows;
+        return CBAbstractMap.HEIGHT*this._boardRows;
     }
 
     get dimension() {
@@ -733,11 +736,11 @@ export class CBMap {
     }
 
     get colCount() {
-        return CBMap.COL_COUNT*this._boardCols;
+        return CBAbstractMap.COL_COUNT*this._boardCols;
     }
 
     get rowCount() {
-        return CBMap.ROW_COUNT*this._boardRows;
+        return CBAbstractMap.ROW_COUNT*this._boardRows;
     }
 
     findPosition(hexId) {
@@ -1037,9 +1040,56 @@ export class CBMap {
         this.game.recenter(new Point2D(event.offsetX, event.offsetY));
     }
 
+    static WIDTH = 2046;
+    static HEIGHT = 3150;
+    static DIMENSION = new Dimension2D(CBAbstractMap.WIDTH, CBAbstractMap.HEIGHT);
+    static COL_COUNT = 12;
+    static ROW_COUNT = 16;
 }
-CBMap.WIDTH = 2046;
-CBMap.HEIGHT = 3150;
-CBMap.DIMENSION = new Dimension2D(CBMap.WIDTH, CBMap.HEIGHT);
-CBMap.COL_COUNT = 12;
-CBMap.ROW_COUNT = 16;
+
+export class CBBoard extends CBAbstractMap {
+
+    constructor(name, path) {
+        super(1, 1, [{
+            image: DImage.getImage(path),
+            location: new Point2D(0, 0),
+            angle:0
+        }]);
+        this._name = name;
+        this._path = path;
+    }
+
+    get name() {
+        return this._name;
+    }
+
+    get path() {
+        return this._path;
+    }
+}
+
+export class CBMap extends CBAbstractMap {
+
+    constructor(mapBoards) {
+        let imageSpecs = [];
+        let boardCols = 1;
+        let boardRows = 1;
+        for (let mapBoard of mapBoards) {
+            if (mapBoard.col>=boardCols) boardCols=mapBoard.col+1;
+            if (mapBoard.row>=boardRows) boardRows=mapBoard.row+1;
+        }
+        for (let mapBoard of mapBoards) {
+            imageSpecs.push({
+                image: DImage.getImage(mapBoard.path),
+                location: new Point2D(
+                    (mapBoard.col-(boardCols-1)/2)*CBAbstractMap.WIDTH,
+                    (mapBoard.row-(boardRows-1)/2)*CBAbstractMap.HEIGHT
+                ),
+                angle : mapBoard.invert ? 180 : 0
+            });
+        }
+        super(boardCols, boardRows, imageSpecs);
+    }
+
+}
+

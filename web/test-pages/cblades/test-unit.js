@@ -72,7 +72,7 @@ describe("Unit", ()=> {
     let dummyEvent = {offsetX:0, offsetY:0};
 
     function prepareTinyGame() {
-        var game = new CBGame();
+        var game = new CBGame("Test");
         var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         return {game, map};
@@ -110,7 +110,7 @@ describe("Unit", ()=> {
 
     function createTinyGame() {
         var { game, map } = prepareTinyGame();
-        var player = new CBUnitPlayer();
+        var player = new CBUnitPlayer("player1");
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
         let unitType = new CBTestUnitType("unit", [
@@ -125,7 +125,7 @@ describe("Unit", ()=> {
 
     function createTinyFormationGame() {
         var { game, map } = prepareTinyGame();
-        var player = new CBUnitPlayer();
+        var player = new CBUnitPlayer("player1");
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
         let unitType = new CBTestUnitType("unit", [
@@ -147,7 +147,7 @@ describe("Unit", ()=> {
 
     function create2UnitsTinyGame(start = true) {
         var { game, map } = prepareTinyGame();
-        let player = new CBUnitPlayer();
+        let player = new CBUnitPlayer("player");
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png"]);
@@ -230,9 +230,9 @@ describe("Unit", ()=> {
     it("Checks unit player", () => {
         given:
             var { game, map } = prepareTinyGame();
-            let player1 = new CBUnitPlayer();
+            let player1 = new CBUnitPlayer("player1");
             game.addPlayer(player1);
-            let player2 = new CBUnitPlayer();
+            let player2 = new CBUnitPlayer("player2");
             game.addPlayer(player2);
             let unitType = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png"]);
             var wing1 = new CBWing(player1, "./../units/banner1.png");
@@ -275,7 +275,7 @@ describe("Unit", ()=> {
     it("Checks that a unit may carry other counters (not undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
-            var player = new CBUnitPlayer();
+            var player = new CBUnitPlayer("player1");
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
             let unitType1 = new CBTestUnitType("unit1",
@@ -497,7 +497,7 @@ describe("Unit", ()=> {
     it("Checks that a unit may have option counters (not undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
-            var player = new CBUnitPlayer();
+            var player = new CBUnitPlayer("player1");
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
             let unitType1 = new CBTestUnitType("unit1",
@@ -533,7 +533,7 @@ describe("Unit", ()=> {
     it("Checks option features", () => {
         given:
             var { game, map } = prepareTinyGame();
-            var player = new CBUnitPlayer();
+            var player = new CBUnitPlayer("player1");
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
             let unitType1 = new CBTestUnitType("unit1",
@@ -558,7 +558,7 @@ describe("Unit", ()=> {
 
         given:
             var { game, map } = prepareTinyGame();
-            var player = new CBUnitPlayer();
+            var player = new CBUnitPlayer("player1");
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
             let unitType1 = new CBTestUnitType("unit1",
@@ -612,7 +612,7 @@ describe("Unit", ()=> {
         given:
             var { game, map } = prepareTinyGame();
         when:
-            var player = new CBUnitPlayer();
+            var player = new CBUnitPlayer("player1");
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
             wing.setRetreatZone(map.getSouthZone());
@@ -643,7 +643,7 @@ describe("Unit", ()=> {
         given:
             var { game, map } = prepareTinyGame();
         when:
-            var player = new CBUnitPlayer();
+            var player = new CBUnitPlayer("player1");
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
             let unitType1 = new CBTestUnitType("unit1",
@@ -677,7 +677,7 @@ describe("Unit", ()=> {
         given:
             var { game, map } = prepareTinyGame();
         when:
-            var player = new CBUnitPlayer();
+            var player = new CBUnitPlayer("player1");
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
             wing.setRetreatZone(map.getSouthZone());
@@ -1590,7 +1590,7 @@ describe("Unit", ()=> {
 
     function createTinyCommandGame() {
         var { game, map } = prepareTinyGame();
-        var player = new CBUnitPlayer();
+        var player = new CBUnitPlayer("player1");
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
         let unitType = new CBTestUnitType("unit", [
@@ -1830,7 +1830,7 @@ describe("Unit", ()=> {
 
     function prepareTinyGameWithFormation() {
         var { game, map } = prepareTinyGame();
-        var player = new CBUnitPlayer();
+        var player = new CBUnitPlayer("player1");
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
         let unitType = new CBTestUnitType("unit", [], [

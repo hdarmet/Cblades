@@ -33,7 +33,7 @@ import {
 } from "../../jslib/cblades/miscellaneous.js";
 
 export function createBaseGame() {
-    let game = new (BurningMixin(WeatherMixin(CBGame)))();
+    let game = new (BurningMixin(WeatherMixin(CBGame)))("Edit map");
     let arbitrator = new CBTestArbitrator();
     game.setArbitrator(arbitrator);
     var map = new CBMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
@@ -45,7 +45,7 @@ export function createBaseGame() {
 export function create1PlayerBaseGame() {
     let baseGame = createBaseGame();
     let {game, map} = baseGame;
-    let player = new CBInteractivePlayer();
+    let player = new CBInteractivePlayer("player1");
     game.addPlayer(player);
     let wing = new CBWing(player, "./../units/banner.png");
     wing.setRetreatZone(map.getWestZone());
@@ -59,9 +59,9 @@ export function create1PlayerBaseGame() {
 export function create2PlayersBaseGame() {
     let baseGame = createBaseGame();
     let {game, map} = baseGame;
-    let player1 = new CBInteractivePlayer();
+    let player1 = new CBInteractivePlayer("player1");
     game.addPlayer(player1);
-    let player2 = new CBInteractivePlayer();
+    let player2 = new CBInteractivePlayer("player2");
     game.addPlayer(player2);
     let wing1 = new CBWing(player1, "./../units/banner1.png");
     wing1.setRetreatZone(map.getWestZone());

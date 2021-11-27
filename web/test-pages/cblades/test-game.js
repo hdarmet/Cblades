@@ -17,6 +17,7 @@ import {
 } from "../../jslib/mechanisms.js";
 import {
     CBMap,
+    CBAbstractMap,
     CBHexSideId
 } from "../../jslib/cblades/map.js";
 import {
@@ -57,7 +58,7 @@ import {
 class CBTestGame extends CBAbstractGame {
 
     constructor() {
-        super([
+        super("Test", [
             new DSimpleLevel("map"),
             new DSimpleLevel("grounds"),
             new DSimpleLevel("units"),
@@ -1429,7 +1430,7 @@ describe("Game", ()=> {
             ]);
         when:
             resetDirectives(countersLayer);
-            game.board.recenter(new Point2D(CBMap.WIDTH-1, CBMap.HEIGHT-1));
+            game.board.recenter(new Point2D(CBAbstractMap.WIDTH-1, CBAbstractMap.HEIGHT-1));
             paint(game);
         then:
             game.counterDisplay.setHorizontal(CBCounterDisplay.RIGHT);

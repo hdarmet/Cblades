@@ -36,9 +36,7 @@ public class TestUtils {
 				} else if (isLambda(arrayOne[index])) {
 					@SuppressWarnings("unchecked")
 					Predicate<Object> handler = (Predicate<Object>)arrayOne[index];
-					Assert.assertTrue(
-						handler.test(arrayTwo[index])
-					);
+					Assert.assertTrue(handler.test(arrayTwo[index]));
 				} else {
 					Assert.assertEquals(arrayOne[index], arrayTwo[index]);
 				}

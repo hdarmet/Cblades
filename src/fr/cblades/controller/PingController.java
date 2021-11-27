@@ -23,7 +23,7 @@ public class PingController implements SecuritySunbeam, StandardUsers {
     @REST(url="/api/ping-login", method= REST.Method.POST)
     public Json pingLogin(Map<String, String> params, Json request) {
         log.warning("call /api/ping-login");
-        connect("test", 30*60*1000);
+        connect("admin", 30*60*1000);
         Json response = Json.createJsonObject()
             .put("message", "Connect to Secure World !");
         return response;
@@ -36,7 +36,7 @@ public class PingController implements SecuritySunbeam, StandardUsers {
             Json response = Json.createJsonObject()
                 .put("message", "Hello Secure World !");
             return response;
-        }, TEST);
+        }, ADMIN);
     }
 
 }

@@ -78,7 +78,7 @@ describe("Profile", ()=> {
 
     it("Checks Pedestrian Profile", () => {
         given:
-            var game = new CBGame();
+            var game = new CBGame("Test");
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
@@ -166,7 +166,7 @@ describe("Profile", ()=> {
 
     it("Checks Animal Profile", () => {
         given:
-            var game = new CBGame();
+            var game = new CBGame("Test");
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
@@ -254,7 +254,7 @@ describe("Profile", ()=> {
 
     it("Checks cavalry Profile", () => {
         given:
-            var game = new CBGame();
+            var game = new CBGame("Test");
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();

@@ -1,5 +1,6 @@
 package org.summer.data;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -54,29 +55,54 @@ public class Synchronizer implements DataSunbeam {
 		return write(fieldName, fieldName, functions);
 	}
 
+	public <E extends BaseEntity, P> Synchronizer writeRef(
+		String jsonFieldName, String targetFieldName,
+		Function<P, E> entityGetter)
+	{
+		assert(jsonFieldName!=null && !jsonFieldName.isEmpty() && targetFieldName!=null && !targetFieldName.isEmpty());
+		P value = this.json.get(jsonFieldName);
+		E targetEntity = entityGetter.apply(value);
+		if (targetEntity==null) {
+			relationshipWave.set(this.target, targetFieldName, null);
+		}
+		else {
+			E entity = ReflectUtil.get(this.target, targetFieldName);
+			if (entity!=targetEntity) {
+				relationshipWave.set(this.target, targetFieldName, targetEntity);
+			}
+		}
+		return this;
+	}
+
+	public <E extends BaseEntity, P> Synchronizer writeRef(
+			String fieldName,
+			Function<P, E> entityGetter)
+	{
+		return this.writeRef(fieldName, fieldName, entityGetter);
+	}
+
 	public <E extends BaseEntity> Synchronizer writeLink(
 			String jsonFieldName, String targetFieldName,
 			Function<Json, Long> idGetter,
 			Function<Json, E> creator, 
 			BiConsumer<Json, E> updater) 
 	{
-		Json json = (jsonFieldName==null || jsonFieldName.isEmpty()) ? this.json : this.json.get(jsonFieldName);
-		if (json==null && targetFieldName!=null && !targetFieldName.isEmpty()) {
+		assert(jsonFieldName!=null && !jsonFieldName.isEmpty() && targetFieldName!=null && !targetFieldName.isEmpty());
+		Json json = this.json.get(jsonFieldName);
+		if (json==null) {
 			relationshipWave.set(this.target, targetFieldName, null);
 		}
 		else {
 			Long id = idGetter.apply(json);
-			@SuppressWarnings("unchecked")
-			E entity = (targetFieldName==null || targetFieldName.isEmpty()) ? (E)this.target : ReflectUtil.get(this.target, targetFieldName);
+			E entity = ReflectUtil.get(this.target, targetFieldName);
 			if (entity==null || id==null || entity.getId()!=id) {
-				entity = creator.apply(json);
-				relationshipWave.set(this.target, targetFieldName, entity);
+				E targetEntity = creator.apply(json);
+				relationshipWave.set(this.target, targetFieldName, targetEntity);
 			}
 			updater.accept(json, entity);
 		}
 		return this;
 	}
-
 
 	public <E extends BaseEntity> Synchronizer writeLink(
 			String fieldName,
@@ -111,8 +137,9 @@ public class Synchronizer implements DataSunbeam {
 	
 	@SuppressWarnings("unchecked")
 	public <E extends BaseEntity> Synchronizer writeLink(
-			String jsonFieldName, String targetFieldName, 
-			EntityManager em) 
+		String jsonFieldName,
+		String targetFieldName,
+		EntityManager em)
 	{
 		Class<E> entityClass = (Class<E>)ReflectUtil.getType(this.target, targetFieldName);
 		Function<Json, E> finder = new EntityFinder<>(em, entityClass);
@@ -123,17 +150,17 @@ public class Synchronizer implements DataSunbeam {
 	}
 
 	public <E extends BaseEntity> Synchronizer writeLink(
-			String collectionName, 
-			EntityManager em) 
+		String collectionName,
+		EntityManager em)
 	{
 		return writeLink(collectionName, collectionName, em); 
 	}
 	
 	public <E extends BaseEntity> Synchronizer syncEach(
-			String jsonCollName, String targetCollName,
-			Function<Json, Long> idGetter,
-			Function<Json, E> creator,
-			BiConsumer<Json, E> updater) 
+		String jsonCollName, String targetCollName,
+		Function<Json, Long> idGetter,
+		Function<Json, E> creator,
+		BiConsumer<Json, E> updater)
 	{
 		Json dtos = this.json.get(jsonCollName);
 		Collection<E> entities = ReflectUtil.get(this.target, targetCollName);
@@ -147,17 +174,44 @@ public class Synchronizer implements DataSunbeam {
 	}
 
 	public <E extends BaseEntity> Synchronizer syncEach(
-			String collectionName, 
-			Function<Json, E> creator, 
-			BiConsumer<Json, E> updater) 
+		String collectionName,
+		Function<Json, E> creator,
+		BiConsumer<Json, E> updater)
 	{
 		return syncEach(collectionName, collectionName, 
-				json->json.getLong("id"), 
-				creator, 
-				updater);
+			json->json.getLong("id"),
+			creator,
+			updater);
 	}
-	
-	public <E extends BaseEntity> Synchronizer syncEach(String collectionName, BiConsumer<Json, E> updater) {
+
+	public <E extends BaseEntity, J> Synchronizer syncEach(
+		String jsonCollName, String targetCollName,
+		Function<J, E> entityGetter)
+	{
+		Json dtos = this.json.get(jsonCollName);
+		Collection<E> targetEntities = new ArrayList<>();
+		for (Object value : dtos) {
+			targetEntities.add(entityGetter.apply((J)value));
+		}
+		Collection<E> entities = ReflectUtil.get(this.target, targetCollName);
+		syncPersistentCollection(
+			()->entities, ()->targetEntities,
+			entity->relationshipWave.add(this.target, targetCollName, entity),
+			entity->relationshipWave.remove(this.target, targetCollName, entity));
+		return this;
+	}
+
+	public <E extends BaseEntity, J> Synchronizer syncEach(
+			String collName,
+			Function<J, E> entityGetter)
+	{
+		return syncEach(collName, collName, entityGetter);
+	}
+
+	public <E extends BaseEntity> Synchronizer syncEach(
+		String collectionName,
+		BiConsumer<Json, E> updater)
+	{
 		@SuppressWarnings("unchecked")
 		Class<E> entityClass = (Class<E>)ReflectUtil.getCollectionType(ReflectUtil.getField(this.target.getClass(), collectionName));		
 		Function<Json, E> creator = new EntityCreator<>(entityClass);
@@ -178,15 +232,18 @@ public class Synchronizer implements DataSunbeam {
 	}
 
 	public <E extends BaseEntity> Synchronizer writeEach(
-		String jsonCollName, String targetCollName, Function<Json, E> creator, BiConsumer<Json, E> updater) 
+		String jsonCollName,
+		String targetCollName,
+		Function<Json, E> creator,
+		BiConsumer<Json, E> updater)
 	{
 		Json dtos = this.json.get(jsonCollName);
 		if (dtos!=null) {
-			for (Json cJson : dtos) {
-				E entity = creator.apply(cJson);
+			for (Object cJson : dtos) {
+				E entity = creator.apply((Json)cJson);
 				relationshipWave.add(this.target, targetCollName, entity);
 				if (updater!=null) {
-					updater.accept(cJson, entity);
+					updater.accept((Json)cJson, entity);
 				}
 			}
 		}
@@ -202,7 +259,10 @@ public class Synchronizer implements DataSunbeam {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <E extends BaseEntity> Synchronizer writeEach(String collectionName, BiConsumer<Json, E> updater) {
+	public <E extends BaseEntity> Synchronizer writeEach(
+			String collectionName,
+			BiConsumer<Json, E> updater)
+	{
 		Class<E> entityClass = (Class<E>)ReflectUtil.getCollectionType(
 				ReflectUtil.getField(this.target.getClass(), collectionName));	
 		Function<Json, E> creator = new EntityCreator<>(entityClass);
@@ -210,7 +270,10 @@ public class Synchronizer implements DataSunbeam {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <E extends BaseEntity> Synchronizer writeEach(String collectionName, EntityManager em) {
+	public <E extends BaseEntity> Synchronizer writeEach(
+			String collectionName,
+			EntityManager em)
+	{
 		Class<E> entityClass = (Class<E>)ReflectUtil.getCollectionType(
 				ReflectUtil.getField(this.target.getClass(), collectionName));	
 		Function<Json, E> creator = new EntityFinder<>(em, entityClass);
@@ -251,17 +314,35 @@ public class Synchronizer implements DataSunbeam {
 	public <E extends BaseEntity> Synchronizer readLink(String collectionName, BiConsumer<Json, E> reader) {
 		return readLink(collectionName, collectionName, reader);
 	}
-	
-	public <E extends BaseEntity> Synchronizer readEach(String jsonCollName, String targetCollName, BiConsumer<Json, E> reader) {
+
+	public <E extends BaseEntity, J> Synchronizer readEachRef(String jsonCollName, String targetCollName, Function<E, J> reader) {
 		Json dtos = this.json.get(jsonCollName);
 		if (dtos==null) {
-			this.json.put(jsonCollName, Json.createJsonArray());
-			dtos=this.json.get(jsonCollName);
+			dtos = Json.createJsonArray();
+			this.json.put(jsonCollName, dtos);
 		}
 		Collection<E> entities = ReflectUtil.get(this.target, targetCollName);
 		for (E entity : entities) {
-			dtos.push(Json.createJsonObject());
-			Json cJson = (Json)dtos.get(dtos.size()-1);
+			J value = reader.apply(entity);
+			dtos.push(value);
+		}
+		return this;
+	}
+
+	public <E extends BaseEntity, J> Synchronizer readEachRef(String collName, Function<E, J> reader) {
+		return readEachRef(collName, collName, reader);
+	}
+
+	public <E extends BaseEntity> Synchronizer readEach(String jsonCollName, String targetCollName, BiConsumer<Json, E> reader) {
+		Json dtos = this.json.get(jsonCollName);
+		if (dtos==null) {
+			dtos = Json.createJsonArray();
+			this.json.put(jsonCollName, dtos);
+		}
+		Collection<E> entities = ReflectUtil.get(this.target, targetCollName);
+		for (E entity : entities) {
+			Json cJson = Json.createJsonObject();
+			dtos.push(cJson);
 			reader.accept(cJson, entity);
 		}
 		return this;

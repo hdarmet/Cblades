@@ -62,13 +62,13 @@ describe("Units teacher", ()=> {
     }
 
     function create2Players4UnitsTinyGame() {
-        let game = new (WeatherMixin(CBGame))();
+        let game = new (WeatherMixin(CBGame))("Test");
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer();
+        let player1 = new CBUnitPlayer("player1");
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBUnitPlayer();
+        let player2 = new CBUnitPlayer("player2");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, "./../units/banner2.png");
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -95,12 +95,12 @@ describe("Units teacher", ()=> {
     }
 
     function create2PlayersTinyFormationGame() {
-        let game = new CBGame();
+        let game = new CBGame("Test");
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer();
+        let player1 = new CBUnitPlayer("player1");
         game.addPlayer(player1);
-        let player2 = new CBUnitPlayer();
+        let player2 = new CBUnitPlayer("player2");
         game.addPlayer(player2);
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
@@ -464,7 +464,7 @@ describe("Units teacher", ()=> {
             var arbitrator = new Arbitrator();
             var type1 = new CBTestUnitType("red", ["red/unit1", "red/unit1b"]);
             var type2 = new CBTestUnitType("blue", ["blue/unit1", "blue/unit1b"]);
-            var wing1 = new CBWing(new CBUnitPlayer(), "./../units/banner.png");
+            var wing1 = new CBWing(new CBUnitPlayer("player1"), "./../units/banner.png");
             var unit1 = new CBTroop(type1, wing1);
             var unit2 = new CBTroop(type2, wing1);
             var unit3 = new CBTroop(type1, wing1);

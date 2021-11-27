@@ -54,6 +54,11 @@ export class CBBurningCounter extends RetractablePieceMixin(CBHexCounter) {
         Mechanisms.addListener(this);
     }
 
+    cancel() {
+        super.cancel();
+        Mechanisms.removeListener(this);
+    }
+
     createArtifact(levelName, images, position, dimension) {
         return new BurningArtifact(this, levelName, images, position/*.plus(-15, 15)*/, dimension);
     }
@@ -248,6 +253,11 @@ export class CBDisplayableCounter extends PlayableMixin(DisplayLocatableMixin(CB
     constructor(paths) {
         super("counters", paths, CBDisplayableCounter.DIMENSION);
         Mechanisms.addListener(this);
+    }
+
+    cancel() {
+        super.cancel();
+        Mechanisms.removeListener(this);
     }
 
     createArtifact(levelName, images, position, dimension) {
