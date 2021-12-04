@@ -42,7 +42,14 @@ import {
     OptionMixin,
     CBMoveProfile,
     CBWeaponProfile,
-    CBCharge, CBCommandProfile, CBMoralProfile, CBMagicProfile, CBUnitActuatorTrigger, CBTroopType, CBCharacterType
+    CBCharge,
+    CBCommandProfile,
+    CBMoralProfile,
+    CBMagicProfile,
+    CBUnitActuatorTrigger,
+    CBTroopType,
+    CBCharacterType,
+    CBUnitType
 } from "../../jslib/cblades/unit.js";
 import {
     Dimension2D, Point2D
@@ -78,7 +85,21 @@ describe("Unit", ()=> {
         return {game, map};
     }
 
-    class CBTestUnitType extends CBTroopType {
+    class CBTestTroopType extends CBTroopType {
+        constructor(...args) {
+            super(...args);
+            this.setMoveProfile(1, new CBMoveProfile(-1));
+            this.setMoveProfile(2, new CBMoveProfile(0));
+            this.setWeaponProfile(1, new CBWeaponProfile(-1, 1, 2, 3));
+            this.setWeaponProfile(2, new CBWeaponProfile(0,1, 2, 3));
+            this.setCommandProfile(1, new CBCommandProfile(-1));
+            this.setCommandProfile(2, new CBCommandProfile(0));
+            this.setMoralProfile(1, new CBMoralProfile(-1));
+            this.setMoralProfile(2, new CBMoralProfile(0));
+        }
+    }
+
+    class CBTestCharacterType extends CBCharacterType {
         constructor(...args) {
             super(...args);
             this.setMoveProfile(1, new CBMoveProfile(-1));
@@ -113,7 +134,7 @@ describe("Unit", ()=> {
         var player = new CBUnitPlayer("player1");
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
-        let unitType = new CBTestUnitType("unit", [
+        let unitType = new CBTestTroopType("unit", [
             "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
         ]);
         let unit = new CBTroop(unitType, wing);
@@ -128,7 +149,7 @@ describe("Unit", ()=> {
         var player = new CBUnitPlayer("player1");
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
-        let unitType = new CBTestUnitType("unit", [
+        let unitType = new CBTestTroopType("unit", [
             "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
             ],
             [
@@ -150,10 +171,10 @@ describe("Unit", ()=> {
         let player = new CBUnitPlayer("player");
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
-        let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png"]);
+        let unitType1 = new CBTestTroopType("unit1", ["./../images/units/misc/unit1.png"]);
         let unit1 = new CBTroop(unitType1, wing);
         unit1.addToMap(map.getHex(5, 8));
-        let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png"]);
+        let unitType2 = new CBTestTroopType("unit2", ["./../images/units/misc/unit2.png"]);
         let unit2 = new CBTroop(unitType2, wing);
         unit2.addToMap(map.getHex(5, 7));
         if (start) {
@@ -234,7 +255,7 @@ describe("Unit", ()=> {
             game.addPlayer(player1);
             let player2 = new CBUnitPlayer("player2");
             game.addPlayer(player2);
-            let unitType = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png"]);
+            let unitType = new CBTestTroopType("unit1", ["./../images/units/misc/unit1.png"]);
             var wing1 = new CBWing(player1, "./../units/banner1.png");
             var wing2 = new CBWing(player1, "./../units/banner2.png");
             var wing3 = new CBWing(player1, "./../units/banner3.png");
@@ -278,7 +299,7 @@ describe("Unit", ()=> {
             var player = new CBUnitPlayer("player1");
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
-            let unitType1 = new CBTestUnitType("unit1",
+            let unitType1 = new CBTestTroopType("unit1",
                 ["./../images/units/misc/unit1.png"]);
             var unit = new CBTroop(unitType1, wing);
             let hexId = map.getHex(5, 8);
@@ -500,7 +521,7 @@ describe("Unit", ()=> {
             var player = new CBUnitPlayer("player1");
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
-            let unitType1 = new CBTestUnitType("unit1",
+            let unitType1 = new CBTestTroopType("unit1",
                 ["./../images/units/misc/unit1.png"]);
             var unit = new CBTroop(unitType1, wing);
             let hexId = map.getHex(5, 8);
@@ -536,7 +557,7 @@ describe("Unit", ()=> {
             var player = new CBUnitPlayer("player1");
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
-            let unitType1 = new CBTestUnitType("unit1",
+            let unitType1 = new CBTestTroopType("unit1",
                 ["./../images/units/misc/unit1.png"]);
             var unit = new CBTroop(unitType1, wing);
             let hexId = map.getHex(5, 8);
@@ -561,7 +582,7 @@ describe("Unit", ()=> {
             var player = new CBUnitPlayer("player1");
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
-            let unitType1 = new CBTestUnitType("unit1",
+            let unitType1 = new CBTestTroopType("unit1",
                 ["./../images/units/misc/unit1.png"]);
             var unit = new CBTroop(unitType1, wing);
             let hexId = map.getHex(5, 8);
@@ -616,15 +637,17 @@ describe("Unit", ()=> {
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
             wing.setRetreatZone(map.getSouthZone());
-            let unitType1 = new CBTestUnitType("unit1",
+            let troopType = new CBTestTroopType("troop",
                 ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"],
                 ["./../images/units/misc/formation1.png", "./../images/units/misc/formation1b.png"]);
-            var unit = new CBTroop(unitType1, wing);
-            var formation = new CBFormation(unitType1, wing);
-            var character = new CBCharacter(unitType1, wing);
+            let characterType = new CBTestCharacterType("character",
+                ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"]);
+            var unit = new CBTroop(troopType, wing);
+            var formation = new CBFormation(troopType, wing);
+            var character = new CBCharacter(characterType, wing);
         then:
-            assert(unitType1.getMaxStepCount()).equalsTo(4);
-            assert(unitType1.getMaxFiguresCount()).equalsTo(2);
+            assert(troopType.getMaxStepCount()).equalsTo(4);
+            assert(troopType.getMaxFiguresCount()).equalsTo(2);
             assert(unit.unitNature).isTrue();
             assert(formation.unitNature).isTrue();
             assert(character.unitNature).isTrue();
@@ -637,6 +660,8 @@ describe("Unit", ()=> {
             assert(unit.characterNature).isNotDefined();
             assert(formation.characterNature).isNotDefined();
             assert(character.characterNature).isTrue();
+            assert(CBUnitType.getType("troop")).equalsTo(troopType);
+            assert(characterType.getMaxFiguresCount()).equalsTo(1);
     });
 
     it("Checks unit/wing/player structure", () => {
@@ -646,7 +671,7 @@ describe("Unit", ()=> {
             var player = new CBUnitPlayer("player1");
             game.addPlayer(player);
             var wing = new CBWing(player, "./../units/banner.png");
-            let unitType1 = new CBTestUnitType("unit1",
+            let unitType1 = new CBTestTroopType("unit1",
                 ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"],
                 ["./../images/units/misc/formation1.png", "./../images/units/misc/formation1b.png"]);
             var unit = new CBTroop(unitType1, wing);
@@ -1593,7 +1618,7 @@ describe("Unit", ()=> {
         var player = new CBUnitPlayer("player1");
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
-        let unitType = new CBTestUnitType("unit", [
+        let unitType = new CBTestTroopType("unit", [
             "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
         ]);
         let unit = new CBTroop(unitType, wing);
@@ -1833,7 +1858,7 @@ describe("Unit", ()=> {
         var player = new CBUnitPlayer("player1");
         game.addPlayer(player);
         let wing = new CBWing(player, "./../units/banner.png");
-        let unitType = new CBTestUnitType("unit", [], [
+        let unitType = new CBTestTroopType("unit", [], [
             "./../images/units/misc/formation.png", "./../images/units/misc/formationb.png"
         ]);
         let formation = new CBFormation(unitType, wing);

@@ -8,7 +8,7 @@ import {
 } from "../../jslib/geometry.js";
 import {
     DAnimator,
-    DImage, setDrawPlatform
+    DImage, getDrawPlatform, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
     filterPainting, assertClearDirectives, assertDirectives, assertNoMoreDirectives,
@@ -18,6 +18,7 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
+    CBBoard,
     CBMap
 } from "../../jslib/cblades/map.js";
 import {
@@ -65,6 +66,9 @@ import {
 import {
     RoughneckLance
 } from "../../jslib/cblades/armies/roughnecks.js";
+import {
+    requester
+} from "../../jslib/request.js";
 
 describe("Editor", ()=> {
 
@@ -1821,7 +1825,7 @@ describe("Editor", ()=> {
             assertNoMoreDirectives(commandsLayer);
     });
 
-    it("Checks undo/redo push menu button", () => {
+    it("Checks undo/redo push menu button on map editor", () => {
         given:
             var game = new CBMapEditorGame();
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -1852,7 +1856,7 @@ describe("Editor", ()=> {
             assert(something.value).isFalse();
     });
 
-    it("Checks full screen push menu button", () => {
+    it("Checks full screen push menu button on map editor", () => {
         given:
             var game = new CBMapEditorGame();
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -1916,6 +1920,101 @@ describe("Editor", ()=> {
             assertNoMoreDirectives(commandsLayer);
     });
 
+    it("Checks undo/redo push menu button on Scenario editor", () => {
+        given:
+            var game = new CBScenarioEditorGame("Scenario");
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            game.setMap(map);
+            game.setMenu();
+            game.start();
+            loadAllImages();
+            game._showCommand.action();
+            paint(game);
+            var something = {
+                value : true,
+                _memento() {
+                    return {value:this.value};
+                },
+                _revert(memento) {
+                    this.value = memento.value;
+                }
+            }
+            Memento.register(something);
+            something.value = false;
+        when:
+            game._undoCommand.action();
+        then:
+            assert(something.value).isTrue();
+        when:
+            game._redoCommand.action();
+        then:
+            assert(something.value).isFalse();
+    });
+
+    it("Checks full screen push menu button on Scenario editor", () => {
+        given:
+            var game = new CBScenarioEditorGame("Scenario");
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            game.setMap(map);
+            game.setMenu();
+            game.start();
+            game.fitWindow();
+            var [mapLayer, commandsLayer] = getLayers(game.board,"map", "widget-commands");
+            loadAllImages();
+        when:
+            game._showCommand.action();
+            game._fullScreenCommand.action();
+            executeAllAnimations();
+            resetDirectives(mapLayer, commandsLayer);
+            repaint(game);
+        then:
+            assert(getDirectives(mapLayer)).arrayEqualsTo([
+                "save()",
+                "resetTransform()",
+                "clearRect(0, 0, 2000, 1500)",
+                "restore()",
+                "save()",
+                "setTransform(0.9775, 0, 0, 0.9775, 1000, 750)",
+                "drawImage(./../images/maps/map.png, -1023, -1575, 2046, 3150)",
+                "restore()"
+            ]);
+            assertClearDirectives(commandsLayer, 2000, 1500);
+            assertDirectives(commandsLayer, showGameCommand("hide", 1940, 1440));
+            assertDirectives(commandsLayer, showGameCommand("undo", 1880, 1440));
+            assertDirectives(commandsLayer, showGameCommand("redo", 1820, 1440));
+            assertDirectives(commandsLayer, showGameCommand("settings", 1760, 1440));
+            assertDirectives(commandsLayer, showGameCommand("save", 1700, 1440));
+            assertDirectives(commandsLayer, showGameCommand("load", 1640, 1440));
+            assertDirectives(commandsLayer, showGameCommand("edit-units", 1580, 1440));
+            assertDirectives(commandsLayer, showGameCommand("full-screen-off", 1520, 1440));
+            assertNoMoreDirectives(commandsLayer);
+        when:
+            game._fullScreenCommand.action();
+            executeAllAnimations();
+            repaint(game);
+        then:
+            assert(getDirectives(mapLayer)).arrayEqualsTo([
+                "save()",
+                "resetTransform()",
+                "clearRect(0, 0, 1500, 1000)",
+                "restore()",
+                "save()",
+                "setTransform(0.9775, 0, 0, 0.9775, 750, 500)",
+                "drawImage(./../images/maps/map.png, -1023, -1575, 2046, 3150)",
+                "restore()"
+            ]);
+            assertClearDirectives(commandsLayer, 1500, 1000);
+            assertDirectives(commandsLayer, showGameCommand("hide", 1440, 940));
+            assertDirectives(commandsLayer, showGameCommand("undo", 1380, 940));
+            assertDirectives(commandsLayer, showGameCommand("redo", 1320, 940));
+            assertDirectives(commandsLayer, showGameCommand("settings", 1260, 940));
+            assertDirectives(commandsLayer, showGameCommand("save", 1200, 940));
+            assertDirectives(commandsLayer, showGameCommand("load", 1140, 940));
+            assertDirectives(commandsLayer, showGameCommand("edit-units", 1080, 940));
+            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 1020, 940));
+            assertNoMoreDirectives(commandsLayer);
+    });
+
     function getUnitMenuPopup(game) {
         return game._popup && game._popup instanceof CBEditUnitMenu ? game._popup : null;
     }
@@ -1934,4 +2033,49 @@ describe("Editor", ()=> {
         then:
             assert(getUnitMenuPopup(game)).isNotDefined();
     });
+
+    it("Checks connect/save/load from the Map editor", () => {
+        given:
+            var game = new CBMapEditorGame();
+            var board = new CBBoard("board", "./../images/maps/map.png");
+            game.setMap(board);
+            game.setMenu();
+            game.start();
+        when:
+            game._showCommand.action();
+            game._settingsCommand.action();
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/ping-login");
+        when:
+            game._saveCommand.action();
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/board/create");
+        when:
+            game._loadCommand.action();
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/board/by-name/board");
+    });
+
+    it("Checks connect/save/load from the Scenario editor", () => {
+        given:
+            var game = new CBScenarioEditorGame("Scenario");
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            game.setMap(map);
+            game.setMenu();
+            game.start();
+        when:
+            game._showCommand.action();
+            game._settingsCommand.action();
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/ping-login");
+        when:
+            game._saveCommand.action();
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/game/create");
+        when:
+            game._loadCommand.action();
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/game/by-name/Scenario");
+    });
+
 });

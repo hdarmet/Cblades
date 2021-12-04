@@ -233,7 +233,7 @@ function createBasicGame() {
 
 function createTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
-    var player = new CBTestPlayer();
+    var player = new CBTestPlayer("player1");
     game.addPlayer(player);
     let playable = new CBTestPlayable("units", player, ["./../images/units/misc/unit.png"]);
     playable.addToMap(map.getHex(5, 8));
@@ -244,9 +244,9 @@ function createTinyGame() {
 
 function create2PlayersTinyGame() {
     var { game, map } = createBasicGame();
-    let player1 = new CBTestPlayer();
+    let player1 = new CBTestPlayer("player1");
     game.addPlayer(player1);
-    let player2 = new CBTestPlayer();
+    let player2 = new CBTestPlayer("player2");
     game.addPlayer(player2);
     let playable0 = new CBTestPlayable("units", player1, ["./../images/units/misc/unit0.png"]);
     playable0.addToMap(map.getHex(5, 8));
@@ -261,7 +261,7 @@ function create2PlayersTinyGame() {
 
 function create2PiecesTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
-    var player = new CBTestPlayer();
+    var player = new CBTestPlayer("player1");
     game.addPlayer(player);
     let playable1 = new CBTestPlayable("units", player,["./../images/units/misc/unit1.png"]);
     playable1.addToMap(map.getHex(5, 6));
@@ -274,7 +274,7 @@ function create2PiecesTinyGame() {
 
 function createDisplayTinyGame() {
     var { game, map } = createBasicGame();
-    let player = new CBTestPlayer();
+    let player = new CBTestPlayer("player1");
     game.addPlayer(player);
     let display0 = new CBTestDisplayPlayable("counters", ["./../images/units/misc/display0.png"]);
     display0.setOnGame(game);
@@ -309,16 +309,19 @@ describe("Game", ()=> {
     it("Checks game building", () => {
         given:
             var {game, map, player, arbitrator} = createTinyGame();
-            var [mapLayer, unitsLayer] = getLayers(game.board, "map","units");
+            var [mapLayer, unitsLayer] = getLayers(game.board, "map", "units");
         when:
             loadAllImages();
         then:
+            assert(game.name).equalsTo("Test");
             assert(game.board).is(DBoard);
             assert(game.board.game).equalsTo(game);
             assert(arbitrator.game).equalsTo(game);
             assert(game.arbitrator).equalsTo(arbitrator);
             assert(game.map).equalsTo(map);
             assert(player.game).equalsTo(game);
+            assert(game.getPlayer("player1")).equalsTo(player);
+            assert(game.getPlayer("unknown")).isNotDefined();
             assert(game.currentPlayer).equalsTo(player);
             assert(game.viewportCenter.toString()).equalsTo("point(500, 400)");
             assertClearDirectives(mapLayer);
@@ -366,9 +369,21 @@ describe("Game", ()=> {
             var {game, player1, player2} = create2PlayersTinyGame();
         then:
             assert(game.players).unorderedArrayEqualsTo([player1, player2]);
+            assert(player1.name).equalsTo("player1");
             assert(player1._memento()).isDefined();
             assert(player1._revert({}));
             assert(player1.canFinishPlayable({})).isTrue();
+        when:
+            var init = false;
+            player1._init = function() { init = true;};
+            player1.clean();
+        then:
+            assert(player1).isTrue();
+        when:
+            init = false;
+            player1.cancel();
+        then:
+            assert(player1).isTrue();
     });
 
     it("Checks game commands", () => {
@@ -672,7 +687,7 @@ describe("Game", ()=> {
             assertNoMoreDirectives(widgetsLevel);
     });
 
-    it("Checks mak management", () => {
+    it("Checks mask management", () => {
         given:
             var {game} = createTinyGame();
             var [widgetsLevel] = getLayers(game.board, "widgets");
@@ -787,7 +802,7 @@ describe("Game", ()=> {
     it("Checks miscellaneous playable methods ", () => {
         given:
             var { game, map } = createBasicGame();
-            var player = new CBTestPlayer();
+            var player = new CBTestPlayer("player1");
             game.addPlayer(player);
             let playable = new CBTestPlayable("units", player, ["./../images/units/misc/unit1.png"]);
             let markerImage = DImage.getImage("./../images/markers/misc/markers1.png");
@@ -1219,7 +1234,7 @@ describe("Game", ()=> {
             assert(playable.isPlayed()).isFalse();
             assert(playable.updated).isTrue();
         when:
-            game.currentPlayer = new CBTestPlayer();
+            game.currentPlayer = new CBTestPlayer("player2");
         then:
             assert(playable.isFinishable()).isTrue();
         when:
@@ -1320,6 +1335,44 @@ describe("Game", ()=> {
                     "drawImage(./../images/units/misc/display0.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
+    });
+
+    it("Checks cleanup", () => {
+        given:
+            var {game, player, map} = createDisplayTinyGame();
+            let playable1 = new CBTestPlayable("units", player,["./../images/units/misc/unit1.png"]);
+            playable1.addToMap(map.getHex(5, 6));
+            var [countersLayer, unitsLayer] = getLayers(game.board, "counters", "units");
+        when:
+            repaint(game);
+        then:
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(0.4888, 0, 0, 0.4888, 416.6667, 159.4391)',
+                    'shadowColor = #000000', 'shadowBlur = 10',
+                    'drawImage(./../images/units/misc/unit1.png, -71, -71, 142, 142)',
+                'restore()'
+            ]);
+            assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(./../images/units/misc/display0.png, -71, -71, 142, 142)",
+                "restore()",
+                "save()",
+                    "setTransform(0.4888, 0, 0, 0.4888, 158.8465, 61.0948)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "drawImage(./../images/units/misc/display1.png, -71, -71, 142, 142)",
+                "restore()"
+            ]);
+        when:
+            game.clean();
+            repaint(game);
+        then:
+            assert(game.playables).arrayEqualsTo([]);
+            assert(game.counterDisplay.counters).arrayEqualsTo([])
+            assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(countersLayer, 4)).arrayEqualsTo([]);
     });
 
     it("Checks pieces display placement on the four corners of the screen", () => {

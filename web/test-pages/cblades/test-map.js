@@ -15,7 +15,7 @@ import {
 import {
     CBMap,
     CBHexSideId,
-    CBHexVertexId, CBHex, CBHexId, distanceFromHexToHex, distanceFromHexLocationToHexLocation, MapImageArtifact
+    CBHexVertexId, CBHex, CBHexId, distanceFromHexToHex, distanceFromHexLocationToHexLocation, MapImageArtifact, CBBoard
 } from "../../jslib/cblades/map.js";
 import {
     DBoard, DSimpleLevel
@@ -104,6 +104,19 @@ describe("Map", ()=> {
             mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
         then:
             assert(game.centeredOn.toString()).equalsTo("point(500, 410)");
+    });
+
+    it("Checks board general features", () => {
+        given:
+            var board = new CBBoard("board1", "./../images/maps/map.png");
+            var game = new CBTestGame();
+        when:
+            game.setMap(board);
+        then:
+            assert(board.game).equalsTo(game);
+            assert(board.artifact).is(MapImageArtifact);
+            assert(board.name).equalsTo("board1");
+            assert(board.path).equalsTo("./../images/maps/map.png");
     });
 
     it("Checks a map with several mapboard", () => {
@@ -1007,4 +1020,20 @@ describe("Map", ()=> {
         then:
             assert(hexVertexId.playables).unorderedArrayEqualsTo([playable1, playable2, unit2, unit1]);
     });
+
+    it("Checks Hex and Map cleaning", () => {
+        given:
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var counter = new CBTestUnit();
+            var hexId = map.getHex(4, 5);
+        when:
+            hexId._pushPlayable(counter);
+        then:
+            assert(hexId.playables).arrayEqualsTo([counter]);
+        when:
+            map.clean();
+        then:
+            assert(hexId.playables).arrayEqualsTo([]);
+    });
+
 });

@@ -358,6 +358,10 @@ export class CBCounterDisplay {
         }
     }
 
+    get counters() {
+        return this._counters;
+    }
+
     addCounter(counter) {
         console.assert(this._counters.indexOf(counter)<0);
         this._counters.push(counter);

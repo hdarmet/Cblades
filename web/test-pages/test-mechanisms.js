@@ -61,6 +61,7 @@ describe("Mechansism", ()=> {
         then:
             assert(recorder.logs.length).equalsTo(1);
             assert(recorder.logs[0]).equalsTo("fire-one");
+            assert(Mechanisms.manager.listeners).setEqualsTo(new Set([recorder]));
         when:
             Mechanisms.removeListener(recorder);
             Mechanisms.fire(null, "fire-two")

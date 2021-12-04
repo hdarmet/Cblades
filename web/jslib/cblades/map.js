@@ -717,8 +717,10 @@ export class CBAbstractMap {
 
     clean() {
         for (let hexRow of this._hexes) {
-            for (let hex of hexRow) {
-                if (hex) hex.clean();
+            if (hexRow) {
+                for (let hex of hexRow) {
+                    if (hex) hex.clean();
+                }
             }
         }
     }

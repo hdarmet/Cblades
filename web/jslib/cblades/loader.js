@@ -12,6 +12,18 @@ import {
     CBWing
 } from "./unit.js";
 
+export class Connector {
+
+    connect() {
+        sendPost("/api/ping-login",
+            null,
+            (text, status)=>console.log("SUCCESS! "+text+": "+status),
+            (text, status)=>console.log("FAILURE! "+text+": "+status)
+        );
+    }
+
+}
+
 export class BoardLoader {
 
     constructor(board) {
@@ -31,7 +43,7 @@ export class BoardLoader {
             );
         }
         else {
-            sendPost("/api/board/update/"+this._board._id,
+            sendPost("/api/board/update/"+this._board._oid,
                 json,
                 (text, status) => {
                     console.log("SUCCESS! " + text + ": " + status);
@@ -56,15 +68,15 @@ export class BoardLoader {
 
     toSpecs() {
         let mapSpecs = {
-            version: this._board._version || 0,
+            version: this._board._oversion || 0,
             name: this._board._name,
             path: this._board._path,
             hexes: []
         };
-        if (this._board._id) mapSpecs.id = this._board._id;
+        if (this._board._oid) mapSpecs.id = this._board._oid;
         for (let hexId of this._board.hexes) {
             mapSpecs.hexes.push({
-                version: hexId.hex._version || 0,
+                version: hexId.hex._oversion || 0,
                 col: hexId.col,
                 row: hexId.row,
                 type: this.getHexTypeLabel(hexId.type),
@@ -78,14 +90,15 @@ export class BoardLoader {
     }
 
     fromSpecs(specs) {
-        this._board._id = specs.id || 0;
-        this._board._version = specs.version || 0;
+        this._board._oid = specs.id || 0;
+        this._board._oversion = specs.version || 0;
         this._board._name = specs.name;
         this._board._path = specs.path;
-        if (specs.id) this._board._id = specs.id;
+        if (specs.id) this._board._oid = specs.id;
         for (let hexSpec of specs.hexes) {
             let hexId = this._board.getHex(hexSpec.col, hexSpec.row);
-            hexId.hex._version = hexSpec.version;
+            hexId.hex._oid = hexSpec.id;
+            hexId.hex._oversion = hexSpec.version;
             hexId.type = this.getHexType(hexSpec.type);
             hexId.height = hexSpec.height;
             hexId.toward(120).type=this.getHexSideType(hexSpec.side120Type);
@@ -175,7 +188,7 @@ export class GameLoader {
             );
         }
         else {
-            sendPost("/api/game/update/"+this._game._id,
+            sendPost("/api/game/update/"+this._game._oid,
                 json,
                 (text, status) => {
                     console.log("SUCCESS! " + text + ": " + status);
@@ -200,40 +213,42 @@ export class GameLoader {
 
     toSpecs() {
         let gameSpecs = {
-            version: this._game._version || 0,
+            version: this._game._oversion || 0,
             name: this._game._name,
             players: []
         };
-        if (this._game._id) gameSpecs.id = this._game._id;
+        if (this._game._oid) gameSpecs.id = this._game._oid;
         for (let player of this._game.players) {
             let playerSpecs = {
-                version: player._version || 0,
+                version: player._oversion || 0,
                 name: player.name,
                 wings: [],
                 locations: []
             }
-            if (player._id) playerSpecs.id = player._id;
+            if (player._oid) playerSpecs.id = player._oid;
             let locations = new Set();
             for (let wing of player.wings) {
                 let wingSpecs = {
-                    version: wing._version || 0,
+                    version: wing._oversion || 0,
                     banner: wing.banner,
                     units: [],
                     retreatZone: []
                 }
+                if (wing._oid) wingSpecs.id = wing._oid;
                 for (let retreatHex of wing.retreatZone) {
                     let retreatHexSpecs = {
                         version: 0,
                         col: retreatHex.col,
                         row: retreatHex.row
                     }
+                    if (retreatHex._oid) retreatHexSpecs.id = retreatHex._oid;
                     wingSpecs.retreatZone.push(retreatHexSpecs);
                 }
                 for (let unit of wing.playables) {
                     let position = unit instanceof CBFormation ? unit.hexLocation.fromHex : unit.hexLocation;
                     let positionAngle = unit instanceof CBFormation ? unit.hexLocation.angle : 0;
                     let unitSpecs = {
-                        version: unit._version || 0,
+                        version: unit._oversion || 0,
                         name: unit.name,
                         category: this.getUnitCategoryCode(unit),
                         type: this.getUnitTypeCode(unit),
@@ -250,6 +265,7 @@ export class GameLoader {
                         orderGiven: unit.hasReceivedOrder(),
                         played: unit.isPlayed()
                     }
+                    if (unit._oid) unitSpecs.id = unit._oid;
                     wingSpecs.units.push(unitSpecs);
                     for (let hexId of unit.hexLocation.hexes) {
                         locations.add(hexId);
@@ -278,19 +294,21 @@ export class GameLoader {
     fromSpecs(specs) {
         console.log(JSON.stringify(specs));
         this._game.clean();
-        this._game._id = specs.id || 0;
-        this._game._version = specs.version || 0;
+        this._game._oid = specs.id || 0;
+        this._game._oversion = specs.version || 0;
         this._game._name = specs.name;
-        if (specs.id) this._game._id = specs.id;
+        if (specs.id) this._game._oid = specs.id;
         for (let playerSpec of specs.players) {
             let player = this._game.getPlayer(playerSpec.name);
             console.assert(player);
-            player._id = playerSpec.id;
-            player._version = playerSpec.version;
+            player._oid = playerSpec.id;
+            player._oversion = playerSpec.version;
             player._name = playerSpec.name;
             let unitsMap = new Map();
             for (let wingSpec of playerSpec.wings) {
                 let wing = new CBWing(player, wingSpec.banner);
+                wing._oid = wingSpec.id;
+                wing._oversion = wingSpec.version;
                 let retreatZone = [];
                 for (let retreatHexSpec of wingSpec.retreatZone) {
                     let hexId = this._game.map.getHex(retreatHexSpec.col, retreatHexSpec.row);
@@ -300,8 +318,8 @@ export class GameLoader {
                 for (let unitSpec of wingSpec.units) {
                     let unitType = this.getUnitType(unitSpec.type);
                     let unit = unitType.createUnit(wing, unitSpec.steps);
-                    unit._id = unitSpec.id;
-                    unit._version = unitSpec.version;
+                    unit._oid = unitSpec.id;
+                    unit._oversion = unitSpec.version;
                     unit._name = unitSpec.name;
                     unit._game = this._game;
                     unit.angle = unitSpec.angle;

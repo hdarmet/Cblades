@@ -45,7 +45,7 @@ import {
     CBCohesion, CBMunitions, CBOrderInstruction, CBTiredness
 } from "./unit.js";
 import {
-    BoardLoader, GameLoader
+    BoardLoader, Connector, GameLoader
 } from "./loader.js";
 
 export class CBMapEditorHexHeightTrigger extends NeighborRawActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
@@ -900,39 +900,16 @@ export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
         super(name, new CBLevelBuilder().buildLevels());
     }
 
-    canSelectPlayable(playable) {
-        return true;
-    }
-
     _buildBoard(map) {
         super._buildBoard(map);
         this._board.escapeOnKeyDown();
         this._board.delOnKeyDown();
     }
 
-    _processGlobalEvent(source, event, value) {
-        if (event===DBoard.DELETE_EVENT) {
-            this.selectedPlayable && this.selectedPlayable.destroy();
-        }
-        else if (event===DBoard.ESCAPE_EVENT) {
-            this.closePopup();
-            this.closeActuators();
-        }
-        else {
-            super._processGlobalEvent(source, event, value);
-        }
-    }
-
     editMap() {
         this.closeActuators();
         this.closePopup();
         this.openActuator(new CBMapEditActuator(this.map));
-    }
-
-    editUnits() {
-        this.closeActuators();
-        this.closePopup();
-        this.openPopup(new CBUnitsRoster(this), this.viewportCenter);
     }
 
     setMenu() {
@@ -980,11 +957,7 @@ export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
         this._settingsCommand = new DPushButton(
             "./../images/commands/settings.png","./../images/commands/settings-inactive.png",
             new Point2D(-240, -60), animation=>{
-                sendPost("/api/ping-login",
-                    null,
-                    (text, status)=>console.log("SUCCESS! "+text+": "+status),
-                    (text, status)=>console.log("FAILURE! "+text+": "+status)
-                );
+                new Connector().connect();
                 animation();
             }).setTurnAnimation(true);
         this._saveCommand = new DPushButton(
@@ -1002,12 +975,7 @@ export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
         this._editMapCommand = new DMultiStatePushButton(
             ["./../images/commands/edit-map.png", "./../images/commands/field.png"],
             new Point2D(-420, -60), (state, animation)=>{
-                if (!state)
-                    this.editMap();
-                else {
-                    this.closePopup();
-                    this.closeActuators();
-                }
+                this.editMap();
                 animation();
             }).setTurnAnimation(true, ()=>{}
         );
@@ -1052,12 +1020,6 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
         else {
             super._processGlobalEvent(source, event, value);
         }
-    }
-
-    editMap() {
-        this.closeActuators();
-        this.closePopup();
-        this.openActuator(new CBMapEditActuator(this.map));
     }
 
     editUnits() {
@@ -1111,11 +1073,7 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
         this._settingsCommand = new DPushButton(
             "./../images/commands/settings.png","./../images/commands/settings-inactive.png",
             new Point2D(-240, -60), animation=>{
-                sendPost("/api/ping-login",
-                    null,
-                    (text, status)=>console.log("SUCCESS! "+text+": "+status),
-                    (text, status)=>console.log("FAILURE! "+text+": "+status)
-                );
+                new Connector().connect();
                 animation();
             }).setTurnAnimation(true);
         this._saveCommand = new DPushButton(
@@ -1134,12 +1092,7 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
         this._editUnitsCommand = new DMultiStatePushButton(
             ["./../images/commands/edit-units.png", "./../images/commands/edit-units-inactive.png"],
             new Point2D(-420, -60), (state, animation)=>{
-                if (!state)
-                    this.editUnits();
-                else {
-                    this.closePopup();
-                    this.closeActuators();
-                }
+                this.editUnits();
                 animation();
             }).setTurnAnimation(true, ()=>{}
         );

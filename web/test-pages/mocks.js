@@ -256,8 +256,25 @@ export let mockPlatform = {
     random() {
         console.assert(this._randoms);
         return this._randoms.length ===1 ? this._randoms[0] : this._randoms.shift();
-    }
+    },
 
+    requestServer(uri, requestContent, success, failure, files, method) {
+        this._request = {
+            uri, requestContent, files, method, success, failure
+        }
+    },
+
+    getRequest() {
+        return this._request;
+    },
+
+    requestSucceeds(text, status) {
+        this._request.success(text, status);
+    },
+
+    requestFails(text, status) {
+        this._request.failure(text, status);
+    }
 }
 
 export function getContextDirectives(context, start=0, end=-1) {
@@ -392,4 +409,95 @@ export function mergeClasses(...classes) {
         })
     }
     return merged;
+}
+
+export class MockPromise {
+
+    then(success, failure) {
+        this._success = success;
+        this._failure = failure;
+        this._next = new MockPromise();
+        return this._next;
+    }
+
+    catch(failure) {
+        return this.then(undefined, failure);
+    }
+
+    succeeds(result) {
+        this._status = true;
+        if (this._success) {
+            let newResult = this._success(result);
+            if (newResult instanceof MockPromise) {
+                this._resolve(newResult);
+            }
+            else {
+                this.continueOnSuccess(newResult);
+            }
+        }
+        else {
+            this.continueOnSuccess(result);
+        }
+    }
+
+    fails(result) {
+        this._status = false;
+        if (this._failure) {
+            let newResult = this._failure(result);
+            if (newResult instanceof MockPromise) {
+                this._resolve(newResult);
+            }
+            else {
+                this.continueOnFailure(newResult);
+            }
+        }
+        else {
+            this.continueOnFailure(result);
+        }
+    }
+
+    _resolve(result) {
+        if (result._status === true) {
+            this.continueOnSuccess(result);
+        } else if (result._status === false) {
+            this.continueOnFailure(result);
+        } else {
+            result.succeeds = (newResult) => {
+                result._status = true;
+                this.continueOnSuccess(newResult);
+            }
+            result.fails = (newResult) => {
+                result._status = false;
+                this.continueOnFailure(newResult);
+            }
+        }
+    }
+
+    continueOnSuccess(result) {
+        if (this._next) {
+            this._next.succeeds(result);
+        }
+    }
+
+    continueOnFailure(result) {
+        if (this._next) {
+            this._next.fails(result);
+        }
+    }
+
+}
+
+export class ResponsePromise extends MockPromise {
+
+    constructor(message) {
+        super();
+        this._message = message;
+    }
+
+    then(success, failure) {
+        let nextPromise = super.then(success, failure);
+        this.succeeds(this._message);
+        return nextPromise;
+    }
+
 }

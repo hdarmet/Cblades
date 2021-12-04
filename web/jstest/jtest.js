@@ -77,8 +77,18 @@ export class Assertor {
     }
 
     _contains(model, value) {
-        if (!value || value.indexOf(model)===-1) {
+        if (!value) {
             throw new AssertionFailed(value, " does not contain ", model);
+        }
+        else if (value.indexOf) {
+            if (value.indexOf(model)===-1) {
+                throw new AssertionFailed(value, " does not contain ", model);
+            }
+        }
+        else if (value.has) {
+            if (value.has(model)===-1) {
+                throw new AssertionFailed(value, " does not contain ", model);
+            }
         }
     }
 
@@ -167,6 +177,26 @@ export class Assertor {
         }
     }
 
+    _arrayForObjectsEquals(model, value) {
+        if (!model || !(model instanceof Array)) {
+            throw new AssertionError(model, " is not an array.");
+        }
+        if (!value || !(value instanceof Array)) {
+            throw new AssertionError(value, " is not an array.");
+        }
+        if (value.length!=model.length) {
+            throw new AssertionFailed(value, " is not equal to ", model);
+        }
+        for (let index=0; index<model.length; index++) {
+            if (model[index] && (model[index] instanceof Array)) {
+                this._arrayForObjectsEquals(model[index], value[index]);
+            }
+            else {
+                this._objectEquals(model[index], value[index]);
+            }
+        }
+    }
+
     _unorderedArrayEquals(model, value) {
         if (!model || !(model instanceof Array)) {
             throw new AssertionError(model, " is not an array.");
@@ -211,7 +241,7 @@ export class Assertor {
     _objectEquals(model, value) {
         for (let key in model) {
             if (model[key] && (model[key] instanceof Array)) {
-                this._arrayEquals(model[index], value[index]);
+                this._arrayForObjectsEquals(model[key], value[key]);
             }
             else if (model[key] && (model[key].constructor === Object)) {
                 this._objectEquals(model[key], value[key]);

@@ -219,6 +219,31 @@ describe("Miscellaneous", ()=> {
             assert(game.firePlayed).isFalse();
     });
 
+    it("Checks burning counter cancellation (useful for game edition)", () => {
+        given:
+            var {game, player, map} = createTinyGame();
+            var [groundLayer] = getLayers(game.board,"hex-0");
+        when:
+            var burning1 = new CBFireCounter();
+            burning1.addToMap(map.getHex(7,8));
+            repaint(game);
+        then:
+            assert(Mechanisms.manager.listeners).contains(burning1);
+            assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)',
+                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'drawImage(./../images/counters/start-fire.png, -71, -71, 142, 142)',
+                'restore()'
+            ]);
+        when:
+            burning1.cancel();
+            repaint(game);
+        then:
+            assert(Mechanisms.manager.listeners).contains(burning1);
+            assert(getDirectives(groundLayer, 4)).arrayEqualsTo([]);
+    });
+
     it("Checks stakes counter", () => {
         given:
             var {game, map} = createTinyGame();
@@ -651,6 +676,35 @@ describe("Miscellaneous", ()=> {
                 "restore()"
             ]);
             assert(wingTiredness.isPlayed()).isTrue();
+    });
+
+    it("Checks burning counter cancellation (useful for game edition)", () => {
+        given:
+            var {game, wing} = createTinyGame();
+            var [countersLayer] = getLayers(game.board,"counters");
+        when:
+            var wingTiredness = new CBWingTirednessCounter(wing);
+            wingTiredness.setOnGame(game);
+            repaint(game);
+        then:
+            assert(Mechanisms.manager.listeners).contains(wingTiredness);
+            assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)',
+                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'drawImage(./../images/counters/tiredness11.png, -71, -71, 142, 142)',
+                'restore()',
+                'save()',
+                    'setTransform(0.4888, 0, 0, 0.4888, 81.1339, 61.0948)',
+                    'drawImage(./../units/banner.png, -25, -60, 50, 120)',
+                'restore()'
+            ]);
+        when:
+            wingTiredness.cancel();
+            repaint(game);
+        then:
+            assert(Mechanisms.manager.listeners).contains(wingTiredness);
+            assert(getDirectives(countersLayer, 4)).arrayEqualsTo([]);
     });
 
 });

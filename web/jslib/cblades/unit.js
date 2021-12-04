@@ -677,7 +677,7 @@ export class CBSimpleMarkerArtifact extends CBMarkerArtifact {
 
 }
 
-export class ActivableMarkerArtifact extends ActivableArtifactMixin(CBMarkerArtifact) {
+export class CBActivableMarkerArtifact extends ActivableArtifactMixin(CBMarkerArtifact) {
 
     constructor(unit, paths, position, action, dimension= CBMarkerArtifact.MARKER_DIMENSION) {
         let images = [];
@@ -785,7 +785,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     createActivableMarkerArtifact(paths, action, positionSlot) {
-        let marker = new ActivableMarkerArtifact(this, paths, CBUnit.MARKERS_POSITION[positionSlot], action);
+        let marker = new CBActivableMarkerArtifact(this, paths, CBUnit.MARKERS_POSITION[positionSlot], action);
         this._element.appendArtifact(marker);
         return marker;
     }

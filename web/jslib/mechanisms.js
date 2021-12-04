@@ -18,6 +18,10 @@ export class Mechanisms {
         this._listeners.delete(listener);
     }
 
+    get listeners() {
+        return this._listeners;
+    }
+
     fire(source, event, value) {
         for (let listener of this._listeners.values()) {
             listener._processGlobalEvent(source, event, value);

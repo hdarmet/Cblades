@@ -1,14 +1,23 @@
 
+export let requester = {
+    decodeURIComponent,
+    fetch,
+    cookie: document.cookie,
+    locationOrigin: document.defaultView.location.origin
+}
+
+/*
 export function setCookie(cname, cvalue, exdays) {
     let date = new Date();
     date.setTime(date.getTime() + (exdays*24*60*60*1000));
     let expires = "expires="+ date.toUTCString();
     document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
 }
+*/
 
 export function getCookie(cname) {
     let name = cname + "=";
-    let decodedCookie = decodeURIComponent(document.cookie);
+    let decodedCookie = requester.decodeURIComponent(requester.cookie);
     let ca = decodedCookie.split(';');
     for(let index = 0; index <ca.length; index++) {
         let c = ca[index];
@@ -22,6 +31,7 @@ export function getCookie(cname) {
     return "";
 }
 
+/*
 export function loadFile(object, field, file) {
     let reader  = new FileReader();
     reader.addEventListener("loadend", function () {
@@ -30,11 +40,13 @@ export function loadFile(object, field, file) {
     reader.readAsDataURL(file);
     object[field] = reader.result;
 }
+*/
 
 export function requestServer(uri, requestContent, success, failure, files, method='POST') {
     let cookie = getCookie("xsrfToken");
     let body;
     let headers;
+/*
     if (files) {
         body = new FormData();
         if (requestContent) {
@@ -44,11 +56,12 @@ export function requestServer(uri, requestContent, success, failure, files, meth
             body.append(file.name, file.file, file.file.name);
         }
         headers = {
-            'Accept': '*/*',
+            'Accept': '*\/*',
             'Content-Type': 'multipart/form-data'
         };
     }
     else {
+ */
         headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
@@ -56,7 +69,7 @@ export function requestServer(uri, requestContent, success, failure, files, meth
         if (requestContent) {
             body = JSON.stringify(requestContent);
         }
-    }
+//    }
 
     if (cookie) headers['XSRF-TOKEN'] = cookie;
     let init = {
@@ -64,7 +77,7 @@ export function requestServer(uri, requestContent, success, failure, files, meth
         method
     };
     if (body) init.body = body;
-    fetch(document.defaultView.location.origin+uri, init)
+    return requester.fetch(requester.locationOrigin+uri, init)
     .then(function(response) {
         response.text()
         .then(function(text) {
@@ -79,7 +92,7 @@ export function requestServer(uri, requestContent, success, failure, files, meth
     .catch(function(response) {
         response.text()
         .then(function(text) {
-            failure(text);
+            failure(text, response.status);
         })
     });
 }

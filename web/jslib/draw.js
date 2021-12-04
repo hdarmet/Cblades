@@ -173,7 +173,7 @@ let _targetPlatform = {
     },
 
     requestServer(uri, requestContent, success, failure, files, method='POST') {
-        requestServer(uri, requestContent, success, failure, files, method);
+        return requestServer(uri, requestContent, success, failure, files, method);
     }
 }
 

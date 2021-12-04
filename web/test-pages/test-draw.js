@@ -13,17 +13,20 @@ import {
     DAnimation,
     DAnimator,
     DLayer,
-    DTranslateLayer, measureText, saveContext, restoreContext, resetContext
+    DTranslateLayer, measureText, saveContext, restoreContext, resetContext, sendGet, sendPost
 } from "../jslib/draw.js";
 import {
     Point2D, Matrix2D, Dimension2D
 } from "../jslib/geometry.js";
 import {
-    mockPlatform, getContextDirectives, resetContextDirectives, assertDirectives
+    mockPlatform, getContextDirectives, resetContextDirectives, assertDirectives, ResponsePromise, MockPromise
 } from "./mocks.js";
 import {
     Mechanisms
 } from "../jslib/mechanisms.js";
+import {
+    requester
+} from "../jslib/request.js";
 
 describe("Drawing fundamentals", ()=> {
 
@@ -437,6 +440,66 @@ describe("Drawing fundamentals", ()=> {
             mockPlatform.dispatchEvent(draw.root, "keydown", keyEvent);
             assert(keyDown).isTrue();
     });
+
+    it("Checks sendGet", () => {
+        given:
+            var answerStatus;
+            var answerText;
+        when:
+            sendGet("/api/uri", "{\"message\":\"Request Content\"}",
+                (text, status)=>{answerStatus=status; answerText=text;},
+                ()=>{}
+            );
+            getDrawPlatform().requestSucceeds("{\"message\":\"Response Content\"}", 200);
+        then:
+            assert(getDrawPlatform().getRequest()).objectEqualsTo({
+                uri: "/api/uri",
+                requestContent:"{\"message\":\"Request Content\"}",
+                method:'GET'
+            });
+            assert(answerStatus).equalsTo(200);
+            assert(answerText).equalsTo("{\"message\":\"Response Content\"}");
+        when:
+            sendGet("/api/uri", "{\"message\":\"Request Content\"}",
+                ()=>{},
+                (text, status)=>{answerStatus=status; answerText=text;},
+            );
+            getDrawPlatform().requestFails("{\"message\":\"Failure Content\"}", 500);
+        then:
+            assert(answerStatus).equalsTo(500);
+            assert(answerText).equalsTo("{\"message\":\"Failure Content\"}");
+    });
+
+    it("Checks sendPost", () => {
+        given:
+            var answerStatus;
+            var answerText;
+        when:
+            sendPost("/api/uri", "{\"message\":\"Request Content\"}",
+                (text, status)=>{answerStatus=status; answerText=text;},
+                ()=>{}
+            );
+            getDrawPlatform().requestSucceeds("{\"message\":\"Response Content\"}", 200);
+        then:
+            assert(getDrawPlatform().getRequest()).objectEqualsTo({
+                uri: "/api/uri",
+                requestContent:"{\"message\":\"Request Content\"}",
+                method:'POST'
+            });
+            assert(answerStatus).equalsTo(200);
+            assert(answerText).equalsTo("{\"message\":\"Response Content\"}");
+        when:
+            sendPost("/api/uri", "{\"message\":\"Request Content\"}",
+                ()=>{},
+                (text, status)=>{answerStatus=status; answerText=text;},
+            );
+            getDrawPlatform().requestFails("{\"message\":\"Failure Content\"}", 500);
+        then:
+            assert(answerStatus).equalsTo(500);
+            assert(answerText).equalsTo("{\"message\":\"Failure Content\"}");
+    });
+
+
 
     it("Checks requestFullscreen function call on the target platform", () => {
         given:
@@ -931,6 +994,57 @@ describe("Drawing fundamentals", ()=> {
         then:
             assert(value>=0 && value<1).isTrue();
     });
+
+    function expectRequester(uri, body, method) {
+        requester.expected = {
+            uri:"https://myserver"+uri,
+            config:{
+                method,
+                headers:{
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    "XSRF-TOKEN": "xsrf-token-content"
+                },
+                body
+            }
+        };
+    }
+
+    it("Checks requestServer function call on the target platform", () => {
+        given:
+            requester.decodeURIComponent = function(cookie) { return cookie; };
+            requester.locationOrigin = "https://myserver";
+            requester.fetch = function(uri, config) {
+                assert(requester.expected.uri).equalsTo(uri);
+                assert(requester.expected.config).objectEqualsTo(config);
+                requester.request = new MockPromise();
+                return requester.request;
+            }
+            requester.cookie=' first-cookie=my first cookie content;  xsrfToken=xsrf-token-content;'
+            setDrawPlatform(targetPlatform());
+            var answerType;
+            var answerText;
+            var answerStatus;
+        when:
+            expectRequester("/app/api/hello", "{\"message\":\"Hello Server\"}", "POST");
+            getDrawPlatform().requestServer(
+                "/app/api/hello", {message:"Hello Server"},
+                (text, status)=>{answerType="S"; answerText=text; answerStatus=status;},
+                (text, status)=>{answerType="F"; answerText=text; answerStatus=status;},
+                null, 'POST'
+            );
+            requester.request.succeeds({
+                status:201,
+                text() {
+                    return new ResponsePromise("{\"message\":\"Hello Client\"}");
+                }
+            });
+        then:
+            assert(answerType).equalsTo('S');
+            assert(answerStatus).equalsTo(201);
+            assert(answerText).equalsTo("{\"message\":\"Hello Client\"}");
+    });
+
 
     class DummyAnimation extends DAnimation {
 
