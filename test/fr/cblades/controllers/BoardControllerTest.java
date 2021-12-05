@@ -2,7 +2,6 @@ package fr.cblades.controllers;
 
 import fr.cblades.StandardUsers;
 import fr.cblades.controller.BoardController;
-import fr.cblades.controller.LoginController;
 import fr.cblades.domain.*;
 import org.junit.Assert;
 import org.junit.Before;
@@ -96,7 +95,7 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 	}
 
 	@Test
-	public void tryToCreateANewLoginWithBadCredentials() {
+	public void tryToCreateANewBoardWithBadCredentials() {
 		securityManager.doConnect("someone", 0);
 		try {
 			boardController.create(params(), Json.createJsonFromString(
@@ -362,7 +361,7 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 	}
 
 	@Test
-	public void tryToUpdateALoginAndFailsForAnUnknownReason() {
+	public void tryToUpdateABoardAndFailsForAnUnknownReason() {
 		dataManager.register("find",
 				null,
 				new PersistenceException("Some Reason"), Board.class, 1L);
@@ -384,7 +383,7 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 	}
 
 	@Test
-	public void tryToUpdateALoginWithBadCredentials() {
+	public void tryToUpdateABoardWithBadCredentials() {
 		securityManager.doConnect("someone", 0);
 		try {
 			boardController.update(params("id", "1"), Json.createJsonFromString(

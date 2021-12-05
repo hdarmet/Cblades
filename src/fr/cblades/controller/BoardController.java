@@ -4,7 +4,6 @@ import fr.cblades.StandardUsers;
 import fr.cblades.domain.Board;
 import fr.cblades.domain.HexSideType;
 import fr.cblades.domain.HexType;
-import fr.cblades.domain.Login;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
 import org.summer.annotation.Controller;

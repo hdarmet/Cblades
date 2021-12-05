@@ -106,7 +106,7 @@ public interface RelationshipOwnerSeawave {
 
 	default <T,E> void addManyToMany(T thisEntity, Field thisField, E entity, Field reverseField) {
 		Collection<E> thisCollection = ReflectUtil.get(thisEntity, thisField);
-		if (thisCollection.contains(entity)) {
+		if (!thisCollection.contains(entity)) {
 			thisCollection.add(entity);
 			if (reverseField!=null) {
 				Collection<T> thatCollection = ReflectUtil.get(entity, reverseField);
@@ -117,7 +117,7 @@ public interface RelationshipOwnerSeawave {
 
 	default <T,E> void removeManyToMany(T thisEntity, Field thisField, E entity, Field reverseField) {
 		Collection<E> thisCollection = ReflectUtil.get(thisEntity, thisField);
-		if (!thisCollection.contains(entity)) {
+		if (thisCollection.contains(entity)) {
 			thisCollection.remove(entity);
 			if (reverseField!=null) {
 				Collection<T> thatCollection = ReflectUtil.get(entity, reverseField);

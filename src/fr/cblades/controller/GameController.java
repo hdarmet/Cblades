@@ -134,7 +134,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 				.each("wings", wJson->verify(wJson)
 					.checkRequired("version")
 					.checkRequired("banner").checkMinSize("banner", 2).checkMaxSize("banner", 80)
-					.each("locations", lJson->verify(lJson)
+					.each("retreatZone", lJson->verify(lJson)
 						.checkRequired("version")
 						.checkRequired("col").checkMin("col", -1).checkMax("col", 200)
 						.checkRequired("row").checkMin("row", -1).checkMax("row", 200)
@@ -294,7 +294,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 		else if (games.size()==1) {
 			return findGame(em, games.get(0).getId());
 		}
-		else throw new SummerException(new NonUniqueResultException(games.size()));
+		else throw new SummerControllerException(409, "query did not return a unique result: "+games.size());
 	}
 
 	Json readFromGames(Collection<Game> games) {

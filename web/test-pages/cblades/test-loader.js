@@ -19,9 +19,10 @@ import {
     CBBoard, CBHex, CBMap,
 } from "../../jslib/cblades/map.js";
 import {
-    BoardLoader, GameLoader
+    BoardLoader, Connector, GameLoader
 } from "../../jslib/cblades/loader.js";
 import {
+    CBCharacterType,
     CBCharge,
     CBCohesion,
     CBCommandProfile, CBMoralProfile,
@@ -37,6 +38,26 @@ describe("Loader", ()=> {
         DImage.resetCache();
         Mechanisms.reset();
         Memento.clear();
+    });
+
+    it("Connects", () => {
+        when:
+            new Connector().connect();
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/ping-login");
+            assert(getDrawPlatform().getRequest().method).equalsTo("POST");
+        when:
+            getDrawPlatform().requestSucceeds("{}", 200);
+    });
+
+    it("Fails to connects", () => {
+        when:
+            new Connector().connect();
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/ping-login");
+        assert(getDrawPlatform().getRequest().method).equalsTo("POST");
+        when:
+            getDrawPlatform().requestFails("Error", 500);
     });
 
     it("Create board", () => {
@@ -273,6 +294,20 @@ describe("Loader", ()=> {
         }
     }
 
+    class CBTestCharacterType extends CBCharacterType {
+        constructor(...args) {
+            super(...args);
+            this.setMoveProfile(1, new CBMoveProfile(-1));
+            this.setMoveProfile(2, new CBMoveProfile(0));
+            this.setWeaponProfile(1, new CBWeaponProfile(-1, 1, 2, 3));
+            this.setWeaponProfile(2, new CBWeaponProfile(0,1, 2, 3));
+            this.setCommandProfile(1, new CBCommandProfile(0));
+            this.setCommandProfile(2, new CBCommandProfile(0));
+            this.setMoralProfile(1, new CBMoralProfile(-1));
+            this.setMoralProfile(2, new CBMoralProfile(0));
+        }
+    }
+
     it("Create game", () => {
         given:
             var game = new CBGame("Test");
@@ -294,7 +329,6 @@ describe("Loader", ()=> {
         when:
             new GameLoader(game).save();
         then:
-            console.log(getDrawPlatform().getRequest());
             assert(getDrawPlatform().getRequest().uri).equalsTo("/api/game/create");
             assert(getDrawPlatform().getRequest().method).equalsTo("POST");
             let requestContent = getDrawPlatform().getRequest().requestContent;
@@ -418,7 +452,6 @@ describe("Loader", ()=> {
         when:
             new GameLoader(game).save();
         then:
-            console.log(getDrawPlatform().getRequest());
             assert(getDrawPlatform().getRequest().uri).equalsTo("/api/game/create");
             assert(getDrawPlatform().getRequest().method).equalsTo("POST");
         when:
@@ -428,7 +461,7 @@ describe("Loader", ()=> {
             assert(game._oversion).isNotDefined();
     });
 
-    it("Upadte game", () => {
+    it("Update game", () => {
         given:
             var game = new CBGame("Test");
             game._oid = 101;
@@ -436,10 +469,12 @@ describe("Loader", ()=> {
             var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
+            new CBTestTroopType("unit", [
+                "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
+            ]);
         when:
             new GameLoader(game).save();
         then:
-            console.log(getDrawPlatform().getRequest());
             assert(getDrawPlatform().getRequest().uri).equalsTo("/api/game/update/101");
             assert(getDrawPlatform().getRequest().method).equalsTo("POST");
             let requestContent = getDrawPlatform().getRequest().requestContent;
@@ -454,5 +489,183 @@ describe("Loader", ()=> {
             assert(game._oversion).equalsTo(2);
     });
 
+    it("Failed to update game", () => {
+        given:
+            var game = new CBGame("Test");
+            game._oid = 101;
+            game._oversion = 1;
+            var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
+            game.setMap(map);
+            game.start();
+        when:
+            new GameLoader(game).save();
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/game/update/101");
+            assert(getDrawPlatform().getRequest().method).equalsTo("POST");
+        when:
+            getDrawPlatform().requestFails("Test Error", 200);
+        then:
+            assert(game._oid).equalsTo(101);
+            assert(game._oversion).equalsTo(1);
+    });
 
+    it("Load game", () => {
+        given:
+            var game = new CBGame("Test");
+            var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
+            var player = new CBUnitPlayer("Hector");
+            game.addPlayer(player);
+            game.setMap(map);
+            game.start();
+            new CBTestTroopType("unit", [
+                "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
+            ]);
+        when:
+            game._oid = 101;
+            game._oversion = 1;
+            new GameLoader(game).load();
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/game/by-name/Test");
+            assert(getDrawPlatform().getRequest().method).equalsTo("POST");
+        when:
+            var requestContent =  {
+                id:101,
+                version:2, name:"Test",
+                players:[
+                    {
+                        id:102,
+                        version:2, name:"Hector",
+                        wings:[
+                            {
+                                id:103,
+                                version:2, banner:"/red/redbanner.png",
+                                units:[{
+                                    id:201, version:0, name:"/red/redbanner.png-0", category:"T", type:"unit",
+                                    angle:0, positionCol:0, positionRow:0, positionAngle:0, steps:2,
+                                    tiredness:"F", ammunition:"P", cohesion:"GO", charging:false,
+                                    contact:false, orderGiven:false, played:true
+                                }, {
+                                    id:202, version:0, name:"/red/redbanner.png-1", category:"T", type:"unit",
+                                    angle:0, positionCol:0, positionRow:1, positionAngle:0, steps:2,
+                                    tiredness:"T", ammunition:"S", cohesion:"D", charging:true,
+                                    contact:false, orderGiven:true, played:false
+                                }, {
+                                    id:203, version:0, name:"/red/redbanner.png-2", category:"T", type:"unit",
+                                    angle:0, positionCol:0, positionRow:1, positionAngle:0, steps:2,
+                                    tiredness:"E", ammunition:"E", cohesion:"R", charging:false,
+                                    contact:true, orderGiven:false, played:false
+                                }],
+                                retreatZone:[
+                                    {version:0, col:0, row:0},
+                                    {version:0, col:0, row:1}
+                                ]
+                            }],
+                        locations:[
+                            {version:0,col:0,row:0,units:["/red/redbanner.png-0"]},
+                            {version:0,col:0,row:1,units:["/red/redbanner.png-1", "/red/redbanner.png-2"]}
+                        ]
+                    }]
+            };
+            getDrawPlatform().requestSucceeds(JSON.stringify(requestContent), 200);
+        then:
+            assert(game._oid).equalsTo(101);
+            assert(game._oversion).equalsTo(2);
+            let specs = new GameLoader(game).toSpecs();
+            specs.players[0].wings[0].units.sort((unit1, unit2)=>unit1.id-unit2.id);
+            assert(specs).objectEqualsTo(requestContent);
+    });
+
+    it("Load game with formation and characters", () => {
+        given:
+            var game = new CBGame("Test");
+            var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
+            var player = new CBUnitPlayer("Hector");
+            game.addPlayer(player);
+            game.setMap(map);
+            game.start();
+            new CBTestTroopType("unit", [
+                "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
+            ], [
+                "./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"
+            ]);
+            new CBTestCharacterType("character", [
+                "./../images/units/misc/leader.png", "./../images/units/misc/leaderb.png"
+            ]);
+        when:
+            game._oid = 101;
+            game._oversion = 1;
+            new GameLoader(game).load();
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/game/by-name/Test");
+            assert(getDrawPlatform().getRequest().method).equalsTo("POST");
+        when:
+            var requestContent =  {
+                id:101,
+                version:2, name:"Test",
+                players:[
+                    {
+                        id:102,
+                        version:2, name:"Hector",
+                        wings:[
+                            {
+                                id:103,
+                                version:2, banner:"/red/redbanner.png",
+                                units:[{
+                                    id:201, version:0, name:"/red/redbanner.png-0", category:"C", type:"character",
+                                    angle:0, positionCol:1, positionRow:1, positionAngle:0, steps:2,
+                                    tiredness:"F", ammunition:"P", cohesion:"GO", charging:false,
+                                    contact:false, orderGiven:false, played:true
+                                }, {
+                                    id:202, version:0, name:"/red/redbanner.png-1", category:"T", type:"unit",
+                                    angle:0, positionCol:1, positionRow:1, positionAngle:0, steps:2,
+                                    tiredness:"T", ammunition:"S", cohesion:"D", charging:true,
+                                    contact:false, orderGiven:true, played:false
+                                }, {
+                                    id:203, version:0, name:"/red/redbanner.png-2", category:"F", type:"unit",
+                                    angle:0, positionCol:1, positionRow:1, positionAngle:0, steps:4,
+                                    tiredness:"E", ammunition:"E", cohesion:"R", charging:false,
+                                    contact:true, orderGiven:false, played:false
+                                }],
+                                retreatZone:[
+                                    {version:0, col:0, row:0},
+                                    {version:0, col:0, row:1}
+                                ]
+                            }],
+                        locations:[
+                            {version:0,col:1,row:0,units:["/red/redbanner.png-2"]},
+                            {version:0,col:1,row:1,units:["/red/redbanner.png-2", "/red/redbanner.png-1", "/red/redbanner.png-0"]}
+                        ]
+                    }]
+            };
+            getDrawPlatform().requestSucceeds(JSON.stringify(requestContent), 200);
+        then:
+            assert(game._oid).equalsTo(101);
+            assert(game._oversion).equalsTo(2);
+            let specs = new GameLoader(game).toSpecs();
+            specs.players[0].wings[0].units.sort((unit1, unit2)=>unit1.id-unit2.id);
+            specs.players[0].locations.sort((loc1, loc2)=>loc1.row-loc2.row);
+            assert(specs).objectEqualsTo(requestContent);
+    });
+
+    it("Fails toad game", () => {
+        given:
+            var game = new CBGame("Test");
+            var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
+            var player = new CBUnitPlayer("Hector");
+            game.addPlayer(player);
+            game.setMap(map);
+            game.start();
+        when:
+            game._oid = 101;
+            game._oversion = 1;
+            new GameLoader(game).load();
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/game/by-name/Test");
+            assert(getDrawPlatform().getRequest().method).equalsTo("POST");
+        when:
+            getDrawPlatform().requestFails("Test Error", 500);
+        then:
+            assert(game._oid).equalsTo(101);
+            assert(game._oversion).equalsTo(1);
+    });
 });

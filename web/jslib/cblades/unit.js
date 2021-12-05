@@ -537,6 +537,10 @@ export class CBWing {
         return playables;
     }
 
+    hasUnitName(name) {
+        return this.playables.find(unit=>unit.name===name)!==undefined;
+    }
+
     getNextUnitName() {
         let number = 0;
         var unitNames = new Set(this.playables.map(unit=>unit.name));
@@ -847,8 +851,9 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     addToMap(hexId, stacking) {
+        let nameMustBeDefined = !this._name || this._wing.hasUnitName(this._name);
         super.addToMap(hexId, stacking);
-        if (!this._name) this._name = this._wing.getNextUnitName();
+        if (nameMustBeDefined) this._name = this._wing.getNextUnitName();
         for (let carried of this._carried) {
             carried.addToMap(hexId, stacking);
         }
@@ -863,8 +868,9 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     appendToMap(hexId, stacking) {
+        let nameMustBeDefined = !this._name || this._wing.hasUnitName(this._name);
         super.appendToMap(hexId, stacking);
-        this._name = this._wing.getNextUnitName();
+        if (nameMustBeDefined) this._name = this._wing.getNextUnitName();
         for (let carried of this._carried) {
             carried.appendToMap(hexId, stacking);
         }
@@ -1429,12 +1435,12 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     setEngaging(engaging) {
         Memento.register(this);
-        this._updateEngagement(engaging, CBCharge.NONE);
+        this._updateEngagement(engaging, this._charging);
     }
 
     setCharging(charging) {
         Memento.register(this);
-        this._updateEngagement(false, charging);
+        this._updateEngagement(this._engaging, charging);
     }
 
     _getAllArtifacts() {

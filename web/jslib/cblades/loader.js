@@ -241,7 +241,6 @@ export class GameLoader {
                         col: retreatHex.col,
                         row: retreatHex.row
                     }
-                    if (retreatHex._oid) retreatHexSpecs.id = retreatHex._oid;
                     wingSpecs.retreatZone.push(retreatHexSpecs);
                 }
                 for (let unit of wing.playables) {
@@ -326,7 +325,7 @@ export class GameLoader {
                     unit.setTiredness(this.getUnitTiredness(unitSpec.tiredness));
                     unit.setMunitions(this.getUnitAmmunition(unitSpec.ammunition));
                     unit.setCohesion(this.getUnitCohesion(unitSpec.cohesion));
-                    unit.setCharging(unitSpec.cohesion?CBCharge.CHARGING:CBCharge.NONE);
+                    unit.setCharging(unitSpec.charging?CBCharge.CHARGING:CBCharge.NONE);
                     unit.setEngaging(unitSpec.contact);
                     unit.receivesOrder(unitSpec.orderGiven);
                     if (unitSpec.played) unit.markAsPlayed();
