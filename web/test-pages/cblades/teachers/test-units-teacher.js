@@ -267,7 +267,7 @@ describe("Units teacher", ()=> {
             assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit21, true)).isFalse();
             assert(arbitrator.isUnitEngaged(unit21, true)).isFalse();
         when:
-            unit12.markAsEngaging(true);
+            unit12.setEngaging(true);
         then:
             assert(arbitrator.isAUnitEngageAnotherUnit(unit12, unit21, true)).isTrue();
             assert(arbitrator.isUnitEngaged(unit21, true)).isTrue();
@@ -502,7 +502,7 @@ describe("Units teacher", ()=> {
         then:
             assert(arbitrator.canGetTired(unit12)).isTrue();
         when:
-            unit12.markAsCharging(CBCharge.CHARGING);
+            unit12.setCharging(CBCharge.CHARGING);
         then:
             assert(arbitrator.canGetTired(unit12)).isFalse();
         when:

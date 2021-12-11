@@ -3,26 +3,26 @@
 import {
     after,
     assert, before, describe, it
-} from "../../jstest/jtest.js";
+} from "../../../jstest/jtest.js";
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../../jslib/draw.js";
 import {
     assertDirectives, assertNoMoreDirectives,
     getDirectives, getLayers,
     loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
-} from "../mocks.js";
+} from "../../mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../../jslib/mechanisms.js";
 import {
     CBAction
-} from "../../jslib/cblades/game.js";
+} from "../../../jslib/cblades/game.js";
 import {
     DBoard
-} from "../../jslib/board.js";
+} from "../../../jslib/board.js";
 import {
     repaint,
     paint,
@@ -34,14 +34,14 @@ import {
     dummyEvent,
     clickOnMask,
     rollFor, showMask, showInsert, showDice, showPlayedDice, showSuccessResult, showInsertMark, showFailureResult
-} from "./interactive-tools.js";
+} from "../interactive-tools.js";
 import {
     createTinyGame,
     create2UnitsTinyGame,
     create2PlayersTinyGame,
     create2Players2Units2LeadersTinyGame,
     create2Players4UnitsTinyGame
-} from "./game-examples.js";
+} from "../game-examples.js";
 import {
     CBActionMenu,
     CBFogIndicator,
@@ -49,16 +49,16 @@ import {
     CBWindDirectionIndicator,
     CBWingMoralIndicator,
     CBWingTirednessIndicator
-} from "../../jslib/cblades/interactive-player.js";
+} from "../../../jslib/cblades/interactive/interactive-player.js";
 import {
     DIconMenuItem
-} from "../../jslib/widget.js";
+} from "../../../jslib/widget.js";
 import {
     Point2D
-} from "../../jslib/geometry.js";
+} from "../../../jslib/geometry.js";
 import {
     CBCharge
-} from "../../jslib/cblades/unit.js";
+} from "../../../jslib/cblades/unit.js";
 
 describe("Interactive Player", ()=> {
 
@@ -249,7 +249,7 @@ describe("Interactive Player", ()=> {
         given:
             var {game, map, player1, unit1} = create2PlayersTinyGame();
             unit1.hexLocation = map.getHex(5, 5);
-            unit1.markAsEngaging(true);
+            unit1.setEngaging(true);
         when:
             player1.selectPlayable(unit1, dummyEvent);
         then:
@@ -260,7 +260,7 @@ describe("Interactive Player", ()=> {
         unit1.move(map.getHex(2, 4), 0);
         unit2.move(map.getHex(2, 3), 0);
         unit2.rotate(180);
-        unit2.markAsEngaging(true);
+        unit2.setEngaging(true);
         loadAllImages();
     }
 
@@ -301,7 +301,7 @@ describe("Interactive Player", ()=> {
             unit1.disrupt();
             unit1.angle = 90;
             unit1IsEngagedByUnit2(map, unit1, unit2);
-            unit2.markAsCharging(CBCharge.CHARGING);
+            unit2.setCharging(CBCharge.CHARGING);
         when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             player1.selectPlayable(unit1, dummyEvent)
@@ -329,7 +329,7 @@ describe("Interactive Player", ()=> {
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit1IsEngagedByUnit2(map, leader1, leader2);
             leader1.angle = 180;
-            leader1.markAsCharging(CBCharge.CHARGING);
+            leader1.setCharging(CBCharge.CHARGING);
         when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             player1.selectPlayable(leader1, dummyEvent)

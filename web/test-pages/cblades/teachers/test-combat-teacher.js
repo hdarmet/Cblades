@@ -221,11 +221,11 @@ describe("Combat teacher", ()=> {
     it("Checks engagement condition (first case)", () => {
         given:
             var {arbitrator, unit12, unit21} = create2Players4UnitsTinyGame();
-            unit12.markAsCharging(CBCharge.CHARGING);
+            unit12.setCharging(CBCharge.CHARGING);
             unit12.angle = 90;
             unit21.hexLocation = unit12.hexLocation.getNearHex(0);
             unit21.angle = 180;
-            unit21.markAsCharging(CBCharge.CHARGING);
+            unit21.setCharging(CBCharge.CHARGING);
         when:
             var condition = arbitrator.getEngagementCondition(unit12);
         then:
@@ -262,13 +262,13 @@ describe("Combat teacher", ()=> {
     it("Checks that for an engagement the worst foe is selected", () => {
         given:
             var {arbitrator, unit12, unit21, unit22} = create2Players4UnitsTinyGame();
-            unit12.markAsCharging(CBCharge.CHARGING);
+            unit12.setCharging(CBCharge.CHARGING);
             unit12.angle = 30;
             unit21.hexLocation = unit12.hexLocation.getNearHex(0);
             unit21.angle = 180;
             unit22.hexLocation = unit12.hexLocation.getNearHex(60);
             unit22.angle = 240;
-            unit22.markAsCharging(CBCharge.CHARGING);
+            unit22.setCharging(CBCharge.CHARGING);
         when:
             var condition = arbitrator.getEngagementCondition(unit12);
         then:
@@ -615,7 +615,7 @@ describe("Combat teacher", ()=> {
             var {arbitrator, map, unit12, leader21} = create2Players4UnitsTinyGame();
             leader21.hexLocation = unit12.hexLocation.getNearHex(0);
             unit12.setTiredness(CBTiredness.TIRED);
-            unit12.markAsCharging(CBCharge.CHARGING);
+            unit12.setCharging(CBCharge.CHARGING);
             unit12.hexLocation.height = 1;
             leader21.setTiredness(CBTiredness.EXHAUSTED);
             leader21.disrupt();
@@ -721,7 +721,7 @@ describe("Combat teacher", ()=> {
             var {arbitrator, unit12, unit21} = create2Players4UnitsTinyGame();
             unit21.hexLocation = unit12.hexLocation.getNearHex(0);
             unit21.angle = 90;
-            unit21.markAsCharging(CBCharge.CHARGING);
+            unit21.setCharging(CBCharge.CHARGING);
         when:
             var advantage = arbitrator.getShockAttackAdvantage(unit12, unit12.hexLocation, unit21, unit21.hexLocation, true);
         then:
@@ -819,7 +819,7 @@ describe("Combat teacher", ()=> {
             leader21.hexLocation = unit12.hexLocation.getNearHex(0).getNearHex(0).getNearHex(0);
             unit12.setTiredness(CBTiredness.EXHAUSTED);
             unit12.disrupt();
-            unit12.markAsCharging(CBCharge.CHARGING);
+            unit12.setCharging(CBCharge.CHARGING);
             unit12.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
             unit12.hexLocation.height = 1;
             unit12.setMunitions(CBMunitions.SCARCE);

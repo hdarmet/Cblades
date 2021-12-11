@@ -3,20 +3,20 @@
 import {
     after,
     assert, before, describe, it
-} from "../../jstest/jtest.js";
+} from "../../../jstest/jtest.js";
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../../jslib/draw.js";
 import {
     assertDirectives, assertNoMoreDirectives,
     getLayers,
     loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
-} from "../mocks.js";
+} from "../../mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../../jslib/mechanisms.js";
 import {
     clickOnActionMenu,
     clickOnPiece,
@@ -28,23 +28,23 @@ import {
     showSelectedFormation, showSelectedTroop, showTroop, zoomAndRotate180,
     zoomAndRotate270,
     zoomAndRotate90
-} from "./interactive-tools.js";
+} from "../interactive-tools.js";
 import {
     create2UnitsTinyGame,
     createTinyGame,
     createTinyFormationGame, create2UnitsAndAFormationTinyGame
-} from "./game-examples.js";
+} from "../game-examples.js";
 import {
     CBCreateFormationActuator, CBReleaseTroopActuator,
     registerInteractiveFormation,
     unregisterInteractiveFormation
-} from "../../jslib/cblades/interactive-formation.js";
+} from "../../../jslib/cblades/interactive/interactive-formation.js";
 import {
     CBHexSideId
-} from "../../jslib/cblades/map.js";
+} from "../../../jslib/cblades/map.js";
 import {
     CBStacking
-} from "../../jslib/cblades/game.js";
+} from "../../../jslib/cblades/game.js";
 
 describe("Interactive Formation", ()=> {
 

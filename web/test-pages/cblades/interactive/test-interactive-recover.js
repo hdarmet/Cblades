@@ -3,18 +3,18 @@
 import {
     after,
     assert, before, describe, it
-} from "../../jstest/jtest.js";
+} from "../../../jstest/jtest.js";
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../../jslib/draw.js";
 import {
     assertDirectives, assertNoMoreDirectives, getLayers, loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
-} from "../mocks.js";
+} from "../../mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../../jslib/mechanisms.js";
 import {
     repaint,
     paint,
@@ -23,14 +23,14 @@ import {
     clickOnMask, rollFor,
     clickOnDice, executeAllAnimations, clickOnResult, showMask, showInsert, showSuccessResult, showPlayedDice,
     showDice, showIndicator, showFailureResult, showMenuPanel, showMenuItem, showWingIndicator
-} from "./interactive-tools.js";
+} from "../interactive-tools.js";
 import {
     createTinyGame
-} from "./game-examples.js";
+} from "../game-examples.js";
 import {
     registerInteractiveRecover,
     unregisterInteractiveRecover
-} from "../../jslib/cblades/interactive-recover.js";
+} from "../../../jslib/cblades/interactive/interactive-recover.js";
 
 describe("Interactive Recover", ()=> {
 

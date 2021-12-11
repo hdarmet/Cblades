@@ -776,7 +776,7 @@ export class CBEditUnitMenu extends DIconMenu {
             ).setSecondState(unit.hasReceivedOrder());
             let played = new D2StatesIconMenuItem("./../images/edit-actions/played.png", "./../images/edit-actions/cancel-played.png", "./../images/edit-actions/played-gray.png",
                 1, 2, (event, state) => {
-                    if (state) unit.reactivate(); else unit.markAsPlayed();
+                    if (state) unit.reactivate(); else unit.setPlayed();
                     if (!state) unit.receivesOrder(false)
                 }
             ).setSecondState(unit.isPlayed());

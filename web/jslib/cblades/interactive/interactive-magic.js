@@ -3,35 +3,35 @@
 import {
     DDice, DIconMenu,
     DIconMenuItem, DInsert, DMask, DResult, DScene
-} from "../widget.js";
+} from "../../widget.js";
 import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
     CBAction, CBAbstractGame
-} from "./game.js";
+} from "../game.js";
 import {
     CBActionActuator,
     CBActuatorImageTrigger, CBInsert,
     RetractableActuatorMixin, NeighborActuatorMixin, NeighborActuatorArtifactMixin
-} from "./playable.js";
+} from "../playable.js";
 import {
     Dimension2D, inside,
     Point2D
-} from "../geometry.js";
+} from "../../geometry.js";
 import {
     CBFireballSpell, CBMagicArrowSpell,
     CBSpell
-} from "./magic.js";
+} from "../magic.js";
 import {
     DImage
-} from "../draw.js";
+} from "../../draw.js";
 import {
     CBCombatResultTableInsert
 } from "./interactive-combat.js";
 import {
     CBUnitActuatorTrigger, CBCharge
-} from "./unit.js";
+} from "../unit.js";
 
 export function registerInteractiveMagic() {
     CBInteractivePlayer.prototype.choseSpell = function(unit, event) {
@@ -73,7 +73,7 @@ export class InteractiveChoseSpellAction extends CBAction {
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         this.unit.player.openMagicMenu(this.unit,
             this.unit.viewportLocation,
             this.game.arbitrator.getAllowedSpells(this.unit)
@@ -94,7 +94,7 @@ export class InteractiveTryToCastSpellAction extends CBAction {
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
@@ -116,6 +116,7 @@ export class InteractiveTryToCastSpellAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(CBCastSpellInsert.DIMENSION.w/2+40, 0)
         ).addWidget(
@@ -150,7 +151,7 @@ export class InteractiveCastSpellAction extends CBAction {
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         this.game.closeActuators();
         let result = this._spell.getNextCinematic();
         switch (result.cinematic) {
@@ -339,7 +340,7 @@ export class CBSpellsMenu extends DIconMenu {
                         col, row, event => {
                             console.assert(unit.characterNature);
                             unit.choseSpell(spellDefinition);
-                            unit.markAsPlayed();
+                            unit.setPlayed();
                             return true;
                         }, spellDefinition.label).setActive(true)
                 )
@@ -399,6 +400,7 @@ CBFireballSpell.resolver = function(action) {
             else {
                 result.failure().appear();
             }
+            this.game.validate();
         }),
         new Point2D(120, 80)
     ).addWidget(
@@ -441,6 +443,7 @@ CBMagicArrowSpell.resolver = function(action) {
             else {
                 result.failure().appear();
             }
+            this.game.validate();
         }),
         new Point2D(120, 80)
     ).addWidget(

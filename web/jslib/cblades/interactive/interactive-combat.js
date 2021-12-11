@@ -5,37 +5,37 @@ import {
     canonizeAngle,
     diffAngle,
     Dimension2D, invertAngle, Point2D, sumAngle
-} from "../geometry.js";
+} from "../../geometry.js";
 import {
     DAbstractInsert,
     DDice, DIconMenuItem, DInsert, DInsertFrame, DMask, DResult, DScene
-} from "../widget.js";
+} from "../../widget.js";
 import {
     CBAbstractGame,
     CBAction, CBActuator
-} from "./game.js";
+} from "../game.js";
 import {
     CBActionActuator, CBActuatorImageTrigger, CBMask, CBInsert, RetractableActuatorMixin, CBAbstractInsert, CBGame
-} from "./playable.js";
+} from "../playable.js";
 import {
     CBHexSideId
-} from "./map.js";
+} from "../map.js";
 import {
     CBCharge, CBUnitActuatorTrigger
-} from "./unit.js";
+} from "../unit.js";
 import {
     CBActionMenu,
     CBInteractivePlayer
 } from "./interactive-player.js";
 import {
     DImage
-} from "../draw.js";
+} from "../../draw.js";
 import {
     CBCombatTeacher
-} from "./teachers/combat-teacher.js";
+} from "../teachers/combat-teacher.js";
 import {
     Memento
-} from "../mechanisms.js";
+} from "../../mechanisms.js";
 
 export function registerInteractiveCombat() {
     CBInteractivePlayer.prototype.unitShockAttack = function (unit, event) {
@@ -137,7 +137,7 @@ export class InteractiveRetreatAction extends CBAction {
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         this.game.setFocusedPlayable(this.unit);
         this._createRetreatActuator();
     }
@@ -171,7 +171,7 @@ export class InteractiveRetreatAction extends CBAction {
             }
         }
         else {
-            this._attacker.markAsCharging(CBCharge.NONE);
+            this._attacker.setCharging(CBCharge.NONE);
             continuation();
         }
     }
@@ -315,7 +315,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
                     defender.player.applyLossesToUnit(defender, result.report.lossesForDefender, this.unit, true, continuation);
                 }
                 else {
-                    this.unit.markAsCharging(CBCharge.NONE);
+                    this.unit.setCharging(CBCharge.NONE);
                     continuation();
                 }
             }
@@ -336,6 +336,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(70, 60)
         ).addWidget(
@@ -436,7 +437,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         this._createFireAttackActuator(this.unit);
     }
 
@@ -543,6 +544,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(70, 60)
         ).addWidget(

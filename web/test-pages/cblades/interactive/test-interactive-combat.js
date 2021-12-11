@@ -3,20 +3,20 @@
 import {
     after,
     assert, before, describe, it
-} from "../../jstest/jtest.js";
+} from "../../../jstest/jtest.js";
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../../jslib/draw.js";
 import {
     assertDirectives, assertNoMoreDirectives,
     getDirectives, getLayers,
     loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
-} from "../mocks.js";
+} from "../../mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../../jslib/mechanisms.js";
 import {
     CBAdvanceActuator,
     CBFireAttackActuator, CBFireHelpActuator, CBFireHexActuator, CBFormationRetreatActuator,
@@ -24,7 +24,7 @@ import {
     CBShockAttackActuator, CBShockAttackInsert, CBFireAttackInsert, CBShockHelpActuator, CBShockHexActuator,
     registerInteractiveCombat,
     unregisterInteractiveCombat
-} from "../../jslib/cblades/interactive-combat.js";
+} from "../../../jslib/cblades/interactive/interactive-combat.js";
 import {
     repaint,
     paint,
@@ -61,7 +61,7 @@ import {
     showMenuItem,
     showMultiInsert,
     showInsertMark, zoomAndRotate330, clickOnArtifact, getInsert, showScrolledInsert
-} from "./interactive-tools.js";
+} from "../interactive-tools.js";
 import {
     createTinyGame,
     create2PlayersTinyGame,
@@ -71,13 +71,13 @@ import {
     setWeaponBonuses,
     create2Players4UnitsTinyGame,
     create2Players4UnitsFireTinyGame
-} from "./game-examples.js";
+} from "../game-examples.js";
 import {
     CBHexSideId, CBHex
-} from "../../jslib/cblades/map.js";
+} from "../../../jslib/cblades/map.js";
 import {
     CBCharge, CBMunitions, CBTiredness
-} from "../../jslib/cblades/unit.js";
+} from "../../../jslib/cblades/unit.js";
 
 describe("Interactive Combat", ()=> {
 
@@ -219,7 +219,7 @@ describe("Interactive Combat", ()=> {
         unit1.move(map.getHex(2, 4), 0);
         unit2.move(map.getHex(2, 3), 0);
         unit2.rotate(180);
-        unit2.markAsEngaging(true);
+        unit2.setEngaging(true);
         loadAllImages();
     }
 
@@ -516,7 +516,7 @@ describe("Interactive Combat", ()=> {
                 "actuators", "units-0"
             );
             unit1.move(map.getHex(5, 8));
-            unit1.markAsCharging(CBCharge.CHARGING);
+            unit1.setCharging(CBCharge.CHARGING);
             unit2.move(map.getHex(5, 7));
             unit2.angle = 180;
             clickOnPiece(game, unit1);
@@ -680,9 +680,9 @@ describe("Interactive Combat", ()=> {
             var { game, map, unit11, unit21} = create2Players4UnitsTinyGame();
             var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
             unit11.move(map.getHex(5, 8));
-            unit11.markAsCharging(CBCharge.CHARGING);
+            unit11.setCharging(CBCharge.CHARGING);
             unit21.move(map.getHex(5, 7));
-            unit21.markAsCharging(CBCharge.CHARGING);
+            unit21.setCharging(CBCharge.CHARGING);
             unit21.angle = 90;
             clickOnPiece(game, unit11);
             clickOnShockAttackAction(game);
@@ -1072,7 +1072,7 @@ describe("Interactive Combat", ()=> {
                 "actuators", "units-0"
             );
             unit1.move(map.getHex(5, 8));
-            unit1.markAsCharging(CBCharge.CHARGING);
+            unit1.setCharging(CBCharge.CHARGING);
             formation2.move(new CBHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
             formation2.angle = 210;
             clickOnPiece(game, unit1);

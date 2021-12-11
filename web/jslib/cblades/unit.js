@@ -91,8 +91,20 @@ export class CBUnitPlayer extends CBBasicPlayer {
         return this.game.playables.filter(playable=>playable.unitNature && playable.player === this);
     }
 
-    finishTurn(animation) {
-        this.game.nextTurn(animation);
+    get playables() {
+        return this.game.playables.filter(playable=>playable.player === this);
+    }
+
+    beginTurn() {
+        for (let playable of this.playables) {
+            playable.init && playable.init(this);
+        }
+    }
+
+    endTurn() {
+        for (let playable of this.playables) {
+            playable.reset && playable.reset(this);
+        }
     }
 
 }
@@ -776,6 +788,14 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         return counters;
     }
 
+    removeMarkerArtifact(marker) {
+        this._element.removeArtifact(marker);
+    }
+
+    deleteMarkerArtifact(marker) {
+        this._element.deleteArtifact(marker);
+    }
+
     setMarkerArtifact(path, positionSlot) {
         let marker = new CBSimpleMarkerArtifact(this, path, CBUnit.MARKERS_POSITION[positionSlot]);
         this._element.addArtifact(marker);
@@ -785,6 +805,12 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     createMarkerArtifact(path, positionSlot) {
         let marker = new CBSimpleMarkerArtifact(this, path, CBUnit.MARKERS_POSITION[positionSlot]);
         this._element.appendArtifact(marker);
+        return marker;
+    }
+
+    setActivableMarkerArtifact(paths, action, positionSlot) {
+        let marker = new CBActivableMarkerArtifact(this, paths, CBUnit.MARKERS_POSITION[positionSlot], action);
+        this._element.addArtifact(marker);
         return marker;
     }
 
@@ -958,7 +984,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     unselect() {
         super.unselect();
         if (this.isActivated()) {
-            this.markAsPlayed();
+            this.setPlayed();
         }
     }
 
@@ -1018,7 +1044,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         console.assert(order===true || order===false);
         Memento.register(this);
         this._orderGiven = order;
-        this._updatePlayed();
+        this._updatePlayedArtifact(this.createMarkerArtifact, this.deleteMarkerArtifact);
     }
 
     hasReceivedOrder() {
@@ -1026,20 +1052,13 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     reactivate() {
-        this._orderGiven = false;
         super.reactivate();
-        this._updatePlayed();
+        this._orderGiven = false;
+        this._updatePlayedArtifact(this.deleteMarkerArtifact, this.removeMarkerArtifact);
     }
 
     _updatePlayed() {
-        this._playedArtifact && this._element.deleteArtifact(this._playedArtifact);
-        delete this._playedArtifact;
-        if (this.isPlayed()) {
-            this._playedArtifact = this.createMarkerArtifact("./../images/markers/actiondone.png", 0);
-        }
-        else if (this._orderGiven) {
-            this._playedArtifact = this.createMarkerArtifact("./../images/markers/ordergiven.png", 0);
-        }
+        this._updatePlayedArtifact(this.createMarkerArtifact, this.deleteMarkerArtifact);
     }
 
     _updateMovementPoints(cost) {
@@ -1109,7 +1128,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         }
     }
 
-    move(hexLocation, cost=null, stacking = CBStacking.TOP) {
+    _move(hexLocation, stacking) {
         if ((hexLocation || this.hexLocation) && (hexLocation !== this.hexLocation)) {
             if (this.hexLocation && !hexLocation) {
                 this.deleteFromMap()
@@ -1119,6 +1138,10 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
                 this._changeLocation(hexLocation, stacking);
             }
         }
+    }
+
+    move(hexLocation, cost=null, stacking = CBStacking.TOP) {
+        this._move(hexLocation, stacking);
         if (cost!=null) {
             this._updateMovementPoints(cost);
         }
@@ -1127,19 +1150,23 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     retreat(hexLocation, stacking) {
         this._changeLocation(hexLocation, stacking);
         this.addOneCohesionLevel();
-        this.markAsEngaging(false);
+        this.setEngaging(false);
     }
 
     advance(hexLocation) {
         this._changeLocation(hexLocation, CBStacking.BOTTOM);
     }
 
-    reorient(angle) {
-        Memento.register(this);
+    _rotate(angle) {
         this._element.rotate(angle);
         for (let carried of this._carried) {
             carried._rotate(angle);
         }
+    }
+
+    reorient(angle) {
+        Memento.register(this);
+        this._rotate(angle);
     }
 
     rotate(angle, cost=null) {
@@ -1150,30 +1177,17 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     _updateTiredness(tiredness) {
+        Memento.register(this);
         console.assert(tiredness===CBTiredness.NONE
             || tiredness===CBTiredness.TIRED
             || tiredness===CBTiredness.EXHAUSTED);
         this._tiredness = tiredness;
-        this._tirednessArtifact && this._element.deleteArtifact(this._tirednessArtifact);
-        delete this._tirednessArtifact;
-        if (this._tiredness === CBTiredness.TIRED) {
-            this._tirednessArtifact = this.createMarkerArtifact("./../images/markers/tired.png", 2);
-        }
-        else if (this._tiredness === CBTiredness.EXHAUSTED) {
-            this._tirednessArtifact = this.createMarkerArtifact("./../images/markers/exhausted.png", 2);
-        }
+        this._updateTirednessArtifact(this.createMarkerArtifact, this.deleteMarkerArtifact);
     }
 
     set tiredness(tiredness) {
         this._tiredness = tiredness;
-        this._tirednessArtifact && this._element.removeArtifact(this._tirednessArtifact);
-        delete this._tirednessArtifact;
-        if (this._tiredness === CBTiredness.TIRED) {
-            this._tirednessArtifact = this.setMarkerArtifact("./../images/markers/tired.png", 2);
-        }
-        else if (this._tiredness === CBTiredness.EXHAUSTED) {
-            this._tirednessArtifact = this.setMarkerArtifact("./../images/markers/exhausted.png", 2);
-        }
+        this._updateTirednessArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
     }
 
     get tiredness() {
@@ -1189,12 +1203,10 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     addOneTirednessLevel() {
-        Memento.register(this);
         this._updateTiredness(this._tiredness+1);
     }
 
     removeOneTirednessLevel() {
-        Memento.register(this);
         this._updateTiredness(this._tiredness-1);
     }
 
@@ -1204,30 +1216,17 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     _updateMunitions(munitions) {
+        Memento.register(this);
         console.assert(munitions===CBMunitions.NONE
             || munitions===CBMunitions.SCARCE
             || munitions===CBMunitions.EXHAUSTED);
         this._munitions = munitions;
-        this._munitionsArtifact && this._element.deleteArtifact(this._munitionsArtifact);
-        delete this._munitionsArtifact;
-        if (this._munitions === CBMunitions.SCARCE) {
-            this._munitionsArtifact = this.createMarkerArtifact("./../images/markers/scarceamno.png", 4);
-        }
-        else if (this._munitions === CBMunitions.EXHAUSTED) {
-            this._munitionsArtifact = this.createMarkerArtifact("./../images/markers/lowamno.png", 4);
-        }
+        this._updateMunitionsArtifact(this.createMarkerArtifact, this.deleteMarkerArtifact);
     }
 
     set munitions(munitions) {
         this._munitions = munitions;
-        this._munitionsArtifact && this._element.removeArtifact(this._munitionsArtifact);
-        delete this._munitionsArtifact;
-        if (this._munitions === CBMunitions.SCARCE) {
-            this._munitionsArtifact = this.setMarkerArtifact("./../images/markers/scarceamno.png", 4);
-        }
-        else if (this._munitions === CBMunitions.EXHAUSTED) {
-            this._munitionsArtifact = this.setMarkerArtifact("./../images/markers/lowamno.png", 4);
-        }
+        this._updateMunitionsArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
     }
 
     get munitions() {
@@ -1243,17 +1242,14 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     addOneMunitionsLevel() {
-        Memento.register(this);
         this._updateMunitions(this._munitions+1);
     }
 
     replenishMunitions() {
-        Memento.register(this);
         this._updateMunitions(0);
     }
 
     setMunitions(munitions) {
-        Memento.register(this);
         this._updateMunitions(munitions);
     }
 
@@ -1266,28 +1262,18 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     _updateCohesion(cohesion) {
-        console.assert(cohesion>=CBCohesion.GOOD_ORDER && cohesion<=CBCohesion.ROUTED);
+        Memento.register(this);
+        console.assert(cohesion===CBCohesion.ROUTED
+            || cohesion===CBCohesion.DISRUPTED
+            || cohesion===CBCohesion.GOOD_ORDER
+            || cohesion===CBCohesion.DESTROYED);
         this._cohesion = cohesion;
-        this._cohesionArtifact && this._element.deleteArtifact(this._cohesionArtifact);
-        delete this._cohesionArtifact;
-        if (this._cohesion === CBCohesion.DISRUPTED) {
-            this._cohesionArtifact = this.createMarkerArtifact("./../images/markers/disrupted.png", 3);
-        }
-        else if (this._cohesion === CBCohesion.ROUTED) {
-            this._cohesionArtifact = this.createMarkerArtifact("./../images/markers/fleeing.png", 3);
-        }
+        this._updateCohesionArtifact(this.createMarkerArtifact, this.deleteMarkerArtifact);
     }
 
     set cohesion(cohesion) {
         this._cohesion = cohesion;
-        this._cohesionArtifact && this._element.removeArtifact(this._cohesionArtifact);
-        delete this._cohesionArtifact;
-        if (this._cohesion === CBCohesion.DISRUPTED) {
-            this._cohesionArtifact = this.setMarkerArtifact("./../images/markers/disrupted.png", 3);
-        }
-        else if (this._cohesion === CBCohesion.ROUTED) {
-            this._cohesionArtifact = this.setMarkerArtifact("./../images/markers/fleeing.png", 3);
-        }
+        this._updateCohesionArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
     }
 
     get cohesion() {
@@ -1311,20 +1297,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     addOneCohesionLevel() {
-        this.markCohesion(this._cohesion + 1);
-    }
-
-    markCohesion(cohesion) {
-        Memento.register(this);
-        if (cohesion === CBCohesion.DESTROYED) {
-            this.destroy();
-        }
-        else {
-            this._updateCohesion(cohesion);
-        }
-        if (cohesion !== CBCohesion.GOOD_ORDER) {
-            this.markAsCharging(CBCharge.NONE);
-        }
+        this.setCohesion(this._cohesion + 1);
     }
 
     setCohesion(cohesion) {
@@ -1365,32 +1338,23 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     _updateEngagement(engaged, charging) {
+        Memento.register(this);
         if(this._engaging !== engaged || this._charging !== charging) {
+            if (this._charging === CBCharge.CHARGING && charging === CBCharge.NONE) {
+                this.addOneTirednessLevel();
+            }
             this._engaging = engaged;
             this._charging = charging;
-            this._engagingArtifact && this._element.deleteArtifact(this._engagingArtifact);
-            delete this._engagingArtifact;
-            if (this._charging === CBCharge.CHARGING) {
-                this._engagingArtifact = this.createMarkerArtifact("./../images/markers/charge.png", 1);
-            }
-            else if (this._charging === CBCharge.CAN_CHARGE) {
-                this._engagingArtifact = this.createActivableMarkerArtifact([
-                    "./../images/markers/possible-charge.png", "./../images/markers/charge.png"
-                ], marker=>{
-                    marker.setImage((marker.imageIndex+1)%2);
-                }, 1);
-            }
-            else if (this._engaging) {
-                this._engagingArtifact = this.createMarkerArtifact("./../images/markers/contact.png", 1);
-            }
+            this._updateEngagementArtifact(this.createMarkerArtifact, this.createActivableMarkerArtifact, this.deleteMarkerArtifact);
         }
     }
 
     _setEngagement(engaged, charging) {
-        if (this._charging === CBCharge.CHARGING && charging === CBCharge.NONE) {
-            this.addOneTirednessLevel();
+        if(this._engaging !== engaged || this._charging !== charging) {
+            this._engaging = engaged;
+            this._charging = charging;
+            this._updateEngagementArtifact(this.setMarkerArtifact, this.setActivableMarkerArtifact, this.removeMarkerArtifact);
         }
-        this._updateEngagement(engaged, charging);
     }
 
     isEngaging() {
@@ -1409,38 +1373,26 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
             else if (charging === CBCharge.BEGIN_CHARGE) charging = CBCharge.CAN_CHARGE;
         }
         else charging = CBCharge.NONE;
-        this._setEngagement(engaging, charging);
+        this._updateEngagement(engaging, charging);
     }
 
-    markAsEngaging(engaging) {
-        Memento.register(this);
-        this._setEngagement(engaging, this._charging);
+    setEngaging(engaging) {
+        this._updateEngagement(engaging, this._charging);
     }
 
-    markAsCharging(charging) {
-        Memento.register(this);
-        this._setEngagement(this._engaging, charging);
+    setCharging(charging) {
+        this._updateEngagement(this._engaging, charging);
     }
 
     acknowledgeCharge(moveEnd = false) {
         if (this._charging === CBCharge.CAN_CHARGE) {
             if (this._engagingArtifact.imageIndex === 1) {
-                this.markAsCharging(CBCharge.CHARGING);
+                this.setCharging(CBCharge.CHARGING);
             }
             else if (moveEnd) {
-                this.markAsCharging(CBCharge.NONE);
+                this.setCharging(CBCharge.NONE);
             }
         }
-    }
-
-    setEngaging(engaging) {
-        Memento.register(this);
-        this._updateEngagement(engaging, this._charging);
-    }
-
-    setCharging(charging) {
-        Memento.register(this);
-        this._updateEngagement(this._engaging, charging);
     }
 
     _getAllArtifacts() {
@@ -1479,6 +1431,84 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         new Point2D(CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2),
         new Point2D(CBUnit.DIMENSION.w/2, 0)
     ];
+
+    setState(state) {
+        this._cohesion = state.cohesion;
+        this._tiredness = state.tiredness;
+        this._munitions = state.munitions;
+        this._charging = state.charging;
+        this._engaging = state.engaging;
+        this._orderGiven = state.orderGiven;
+        this._played = state.played;
+        this._updateTirednessArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
+        this._updateMunitionsArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
+        this._updatePlayedArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
+        this._updateEngagementArtifact(this.setMarkerArtifact, this.setActivalbleMarkerArtifact, this.removeMarkerArtifact);
+        this._updateCohesionArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
+    }
+
+    _updateTirednessArtifact(setMarkerArtifact, removeMarkerArtifact) {
+        this._tirednessArtifact && removeMarkerArtifact.call(this, this._tirednessArtifact);
+        delete this._tirednessArtifact;
+        if (this._tiredness === CBTiredness.TIRED) {
+            this._tirednessArtifact = setMarkerArtifact.call(this, "./../images/markers/tired.png", 2);
+        }
+        else if (this._tiredness === CBTiredness.EXHAUSTED) {
+            this._tirednessArtifact = setMarkerArtifact.call(this, "./../images/markers/exhausted.png", 2);
+        }
+    }
+
+    _updateMunitionsArtifact(setMarkerArtifact, removeMarkerArtifact) {
+        this._munitionsArtifact && removeMarkerArtifact.call(this, this._munitionsArtifact);
+        delete this._munitionsArtifact;
+        if (this._munitions === CBMunitions.SCARCE) {
+            this._munitionsArtifact = setMarkerArtifact.call(this, "./../images/markers/scarceamno.png", 4);
+        }
+        else if (this._munitions === CBMunitions.EXHAUSTED) {
+            this._munitionsArtifact = setMarkerArtifact.call(this, "./../images/markers/lowamno.png", 4);
+        }
+    }
+
+    _updatePlayedArtifact(setMarkerArtifact, removeMarkerArtifact) {
+        this._playedArtifact && removeMarkerArtifact.call(this, this._playedArtifact);
+        delete this._playedArtifact;
+        if (this.isPlayed()) {
+            this._playedArtifact = setMarkerArtifact.call(this, "./../images/markers/actiondone.png", 0);
+        }
+        else if (this._orderGiven) {
+            this._playedArtifact = setMarkerArtifact.call(this, "./../images/markers/ordergiven.png", 0);
+        }
+    }
+
+    _updateEngagementArtifact(setMarkerArtifact, setActivableMarkerArtifact, removeMarkerArtifact) {
+        this._engagingArtifact && removeMarkerArtifact.call(this, this._engagingArtifact);
+        delete this._engagingArtifact;
+        if (this._charging === CBCharge.CHARGING) {
+            this._engagingArtifact = setMarkerArtifact.call(this, "./../images/markers/charge.png", 1);
+        }
+        else if (this._charging === CBCharge.CAN_CHARGE) {
+            this._engagingArtifact = setActivableMarkerArtifact.call(this, [
+                "./../images/markers/possible-charge.png", "./../images/markers/charge.png"
+            ], marker=>{
+                marker.setImage((marker.imageIndex+1)%2);
+            }, 1);
+        }
+        else if (this._engaging) {
+            this._engagingArtifact = setMarkerArtifact.call(this, "./../images/markers/contact.png", 1);
+        }
+    }
+
+    _updateCohesionArtifact(setMarkerArtifact, removeMarkerArtifact) {
+        this._cohesionArtifact && removeMarkerArtifact.call(this, this._cohesionArtifact);
+        delete this._cohesionArtifact;
+        if (this._cohesion === CBCohesion.DISRUPTED) {
+            this._cohesionArtifact = setMarkerArtifact.call(this, "./../images/markers/disrupted.png", 3);
+        }
+        else if (this._cohesion === CBCohesion.ROUTED) {
+            this._cohesionArtifact = setMarkerArtifact.call(this, "./../images/markers/fleeing.png", 3);
+        }
+    }
+
 }
 
 Object.defineProperty(CBHexLocation.prototype, "units", {

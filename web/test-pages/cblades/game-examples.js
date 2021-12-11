@@ -14,7 +14,7 @@ import {
 } from "../../jslib/cblades/arbitrator.js";
 import {
     CBInteractivePlayer
-} from "../../jslib/cblades/interactive-player.js";
+} from "../../jslib/cblades/interactive/interactive-player.js";
 import {
     CBCharacter, CBCharacterType,
     CBCommandProfile,

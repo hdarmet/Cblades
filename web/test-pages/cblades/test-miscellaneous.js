@@ -280,7 +280,7 @@ describe("Miscellaneous", ()=> {
             ]);
         when:
             player.playWeather= function(weather, event) {
-                weather.markAsPlayed();
+                weather.setPlayed();
             }
             Memento.open();
             weather.play(dummyEvent);
@@ -336,7 +336,7 @@ describe("Miscellaneous", ()=> {
             ]);
         when:
             player.playWeather= function(weather, event) {
-                weather.markAsPlayed();
+                weather.setPlayed();
             }
             weather.play(dummyEvent);
             repaint(game);
@@ -389,7 +389,7 @@ describe("Miscellaneous", ()=> {
             ]);
         when:
             player.playFog= function(fog, event) {
-                fog.markAsPlayed();
+                fog.setPlayed();
             }
             fog.play(dummyEvent);
             repaint(game);
@@ -442,7 +442,7 @@ describe("Miscellaneous", ()=> {
             ]);
         when:
             player.playWindDirection= function(windDirection, event) {
-                windDirection.markAsPlayed();
+                windDirection.setPlayed();
             }
             windDirection.play(dummyEvent);
             repaint(game);
@@ -538,7 +538,7 @@ describe("Miscellaneous", ()=> {
         when:
             player.playMoral = function(moral, event) {
                 moralPlayer = true;
-                moral.markAsPlayed();
+                moral.setPlayed();
             }
             wingMoral.play(dummyEvent);
             repaint(game);
@@ -621,7 +621,7 @@ describe("Miscellaneous", ()=> {
         when:
             player.playTiredness = function(tiredness, event) {
                 tirednessPlayer = true;
-                tiredness.markAsPlayed();
+                tiredness.setPlayed();
             }
             wingTiredness.play(dummyEvent);
             repaint(game);

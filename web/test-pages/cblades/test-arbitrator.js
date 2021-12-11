@@ -255,7 +255,7 @@ describe("Arbitrator", ()=> {
         given:
             var {arbitrator, unit12, unit21} = create2Players4UnitsTinyGame();
         when:
-            unit12.markAsCharging(CBCharge.CHARGING);
+            unit12.setCharging(CBCharge.CHARGING);
             var allowedActions = arbitrator.getAllowedActions(unit12);
         then:
             assertActions(allowedActions,{
@@ -288,7 +288,7 @@ describe("Arbitrator", ()=> {
             var {arbitrator, leader11, unit12, leader21, unit21} = create2Players4UnitsTinyGame();
         when:
             leader11.hexLocation = unit12.hexLocation;
-            leader11.markAsCharging(CBCharge.CHARGING);
+            leader11.setCharging(CBCharge.CHARGING);
             var allowedActions = arbitrator.getAllowedActions(leader11);
         then:
             assertActions(allowedActions,{

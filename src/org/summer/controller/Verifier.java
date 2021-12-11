@@ -75,7 +75,14 @@ public class Verifier {
 		}
 		return this;
 	}
-	
+
+	public Verifier checkWhen(Predicate<Json> predicate, Function<Json, Verifier> verifyBuilder) {
+		if (predicate.test(this.json)) {
+			verifyBuilder.apply(this.json);
+		}
+		return this;
+	}
+
 	public Verifier checkRequired(String field) {
 		return checkRequired(field, "required");
 	}
@@ -147,8 +154,16 @@ public class Verifier {
 		return checkPattern(field, "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$", 
 				message);
 	}
-	
+
 	public Verifier checkEmail(String field) {
 		return checkEmail(field, "not a valid email");
+	}
+
+	public Verifier checkBoolean(String field, String message) {
+		return check(json->json.get(field)==null||(json.get(field) instanceof Boolean), field, message);
+	}
+
+	public Verifier checkBoolean(String field) {
+		return checkBoolean(field, "not a valid boolean");
 	}
 }

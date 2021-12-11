@@ -2,15 +2,14 @@ package org.summer.data;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.Map;
+import java.util.function.*;
 
 import javax.persistence.EntityManager;
 
 import org.summer.ReflectUtil;
 import org.summer.controller.Json;
+import org.summer.controller.Verifier;
 
 public class Synchronizer implements DataSunbeam {
 
@@ -37,7 +36,14 @@ public class Synchronizer implements DataSunbeam {
 		}
 		return this;
 	}
-	
+
+	public <E extends BaseEntity> Synchronizer syncWhen(BiPredicate<Json, E> predicate, BiConsumer<Json, E> updater) {
+		if (predicate.test(this.json, (E)this.target)) {
+			updater.accept(this.json, (E)this.target);
+		}
+		return this;
+	}
+
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Synchronizer write(String jsonFieldName, String targetFieldName, Function ... functions) {
 		Object readValue = this.json.get(jsonFieldName);
@@ -268,8 +274,8 @@ public class Synchronizer implements DataSunbeam {
 		Function<Json, E> creator = new EntityCreator<>(entityClass);
 		return writeEach(collectionName, collectionName, creator, updater);
 	}
-	
-	@SuppressWarnings("unchecked")
+
+	@SuppressWarnings({ "unchecked" })
 	public <E extends BaseEntity> Synchronizer writeEach(
 			String collectionName,
 			EntityManager em)
@@ -279,7 +285,12 @@ public class Synchronizer implements DataSunbeam {
 		Function<Json, E> creator = new EntityFinder<>(em, entityClass);
 		return writeEach(collectionName, collectionName, creator, null);
 	}
-	
+
+	public <V>Synchronizer setInJson(String jsonFieldName, V value) {
+		this.json.put(jsonFieldName, value);
+		return this;
+	}
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Synchronizer read(String jsonFieldName, String targetFieldName, Function ... functions) {
 		Object readValue = ReflectUtil.get(this.target, targetFieldName);
@@ -389,6 +400,23 @@ public class Synchronizer implements DataSunbeam {
 			return ReflectUtil.newInstance(this.klass);
 		}
 		
+	}
+
+	public static class EntityFactory<E extends BaseEntity> implements Function<Json, E> {
+
+		Map<String, Class<? extends E>> classes;
+		String type;
+
+		public EntityFactory(Map<String, Class<? extends E>> classes, String type) {
+			this.classes = classes;
+			this.type = type;
+		}
+
+		@Override
+		public E apply(Json json) {
+			return ReflectUtil.newInstance(classes.get(json.get(this.type)));
+		}
+
 	}
 
 	public static class EntityCreatorOrFinder<E extends BaseEntity> implements Function<Json, E> {

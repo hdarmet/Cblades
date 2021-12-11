@@ -394,7 +394,7 @@ describe("Loader", ()=> {
             ]);
             var troop1 = new CBTroop(unitType, wing);
             troop1.addToMap(map.getHex(0, 0));
-            troop1.markAsPlayed();
+            troop1.setPlayed();
             var troop2 = new CBTroop(unitType, wing);
             troop2.addToMap(map.getHex(0, 1));
             troop2.setTiredness(CBTiredness.TIRED);

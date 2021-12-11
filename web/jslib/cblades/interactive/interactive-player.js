@@ -1,34 +1,34 @@
 import {
     Dimension2D, Point2D
-} from "../geometry.js";
+} from "../../geometry.js";
 import {
     DDice, DIconMenu, DMultiImagesIndicator, DMask, DResult, DScene, DRotatableIndicator
-} from "../widget.js";
+} from "../../widget.js";
 import {
     Mechanisms, Memento
-} from "../mechanisms.js";
+} from "../../mechanisms.js";
 import {
     CBAbstractGame
-} from "./game.js";
+} from "../game.js";
 import {
     DBoard, DImageArtifact
-} from "../board.js";
+} from "../../board.js";
 import {
     DImage
-} from "../draw.js";
+} from "../../draw.js";
 import {
     CBInsert
-} from "./playable.js";
+} from "../playable.js";
 import {
     CBUnitPlayer
-} from "./unit.js";
+} from "../unit.js";
 
 export class CBInteractivePlayer extends CBUnitPlayer {
 
     _doDestroyedChecking(unit, hexLocation) {
         if (this.game.arbitrator.doesADestroyedUnitHaveNonRoutedNeighbors(unit, hexLocation)) {
             this._checkIfNeighborsLoseCohesion(unit, hexLocation, () => {
-                Memento.clear();
+                this.game.validate();
             }, false);
         }
     }
@@ -43,7 +43,7 @@ export class CBInteractivePlayer extends CBUnitPlayer {
         if (this.game.arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit)) {
             this.checkIfAUnitLoseCohesion(unit, () => {
                 this._selectAndFocusPlayable(unit);
-                Memento.clear();
+                this.game.validate();
                 processing();
             }, cancellable);
         }
@@ -56,7 +56,7 @@ export class CBInteractivePlayer extends CBUnitPlayer {
         if (this.game.arbitrator.doesARoutedUnitHaveNonRoutedNeighbors(unit)) {
             this._checkIfNeighborsLoseCohesion(unit, unit.hexLocation, () => {
                 this._selectAndFocusPlayable(unit);
-                Memento.clear();
+                this.game.validate();
                 this._doDisruptChecking(unit, processing, false);
             }, cancellable);
         }
@@ -69,7 +69,7 @@ export class CBInteractivePlayer extends CBUnitPlayer {
         if (neighbors.length) {
             let neighbor = neighbors.pop();
             this.checkIfAUnitLoseCohesion(neighbor, () => {
-                Memento.clear();
+                this.game.validate();
                 this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, false);
             }, cancellable);
         }
@@ -89,7 +89,7 @@ export class CBInteractivePlayer extends CBUnitPlayer {
                 let hexLocation = unit.hexLocation;
                 if (unit.isOnHex()) {
                     this._selectAndFocusPlayable(unit);
-                    Memento.clear();
+                    this.game.validate();
                     this._doRoutChecking(unit, processing, false);
                 }
             });
@@ -110,7 +110,7 @@ export class CBInteractivePlayer extends CBUnitPlayer {
 
     startActivation(unit, action) {
         if (unit.isEngaging()) {
-            unit.markAsEngaging(false);
+            unit.setEngaging(false);
         }
         this._doPreliminaryActions(unit, ()=> super.startActivation(unit, action));
     }
@@ -170,6 +170,7 @@ export class CBInteractivePlayer extends CBUnitPlayer {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(70, 70)
         ).addWidget(
@@ -207,6 +208,7 @@ export class CBInteractivePlayer extends CBUnitPlayer {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(70, 70)
         ).addWidget(

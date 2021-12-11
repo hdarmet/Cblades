@@ -2,16 +2,16 @@
 
 import {
     Dimension2D, Point2D
-} from "../geometry.js";
+} from "../../geometry.js";
 import {
     DDice, DIconMenuItem, DInsert, DMask, DResult, DScene
-} from "../widget.js";
+} from "../../widget.js";
 import {
     CBAction
-} from "./game.js";
+} from "../game.js";
 import {
     CBInsert
-} from "./playable.js";
+} from "../playable.js";
 import {
     CBActionMenu,
     CBInteractivePlayer,
@@ -21,7 +21,7 @@ import {
 } from "./interactive-player.js";
 import {
     CBCharge
-} from "./unit.js";
+} from "../unit.js";
 
 export function registerInteractiveRecover() {
     CBInteractivePlayer.prototype.restUnit = function(unit, event) {
@@ -64,7 +64,7 @@ export class InteractiveRestingAction extends CBAction {
 
     play() {
         this.game.closeActuators();
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         let wingTiredness = this.game.arbitrator.getWingTiredness(this.unit);
         let weather = this.game.arbitrator.getWeather(this.game);
         let result = new DResult();
@@ -100,6 +100,7 @@ export class InteractiveRestingAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(CBRestInsert.DIMENSION.w/2+40, 0)
         ).addWidget(
@@ -136,7 +137,7 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
 
     play() {
         this.game.closeActuators();
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
@@ -158,6 +159,7 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(CBReplenishMunitionsInsert.DIMENSION.w/2+40, 0)
         ).addWidget(
@@ -191,7 +193,7 @@ export class InteractiveReorganizeAction extends CBAction {
 
     play() {
         this.game.closeActuators();
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
@@ -218,6 +220,7 @@ export class InteractiveReorganizeAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(50, 0)
         ).addWidget(
@@ -251,7 +254,7 @@ export class InteractiveRallyAction extends CBAction {
 
     play() {
         this.game.closeActuators();
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
@@ -278,6 +281,7 @@ export class InteractiveRallyAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(50, 0)
         ).addWidget(

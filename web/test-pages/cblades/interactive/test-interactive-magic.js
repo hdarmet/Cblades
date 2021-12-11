@@ -3,21 +3,21 @@
 import {
     after,
     assert, before, describe, it
-} from "../../jstest/jtest.js";
+} from "../../../jstest/jtest.js";
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../../jslib/draw.js";
 import {
     assertDirectives, assertNoMoreDirectives,
     createEvent, findInDirectives,
     getLayers,
     loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
-} from "../mocks.js";
+} from "../../mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../../jslib/mechanisms.js";
 import {
     clickOnActionMenu,
     clickOnPiece,
@@ -36,21 +36,21 @@ import {
     showMask, showMenuItem, showMenuPanel, showPlayedDice,
     showSuccessResult,
     zoomAndRotate0, mouseMoveOnTrigger, mouseMoveOnArtifact
-} from "./interactive-tools.js";
+} from "../interactive-tools.js";
 import {
     create2Players2Units2LeadersTinyGame, create2Players2UnitsALeaderAnArcaneWizardTinyGame,
     createTinyGame, createTinyGameWithLeader
-} from "./game-examples.js";
+} from "../game-examples.js";
 import {
     CBSpellTargetFoesActuator,
     CBSpellTargetFriendsActuator,
     CBSpellTargetHexesActuator,
     registerInteractiveMagic,
     unregisterInteractiveMagic
-} from "../../jslib/cblades/interactive-magic.js";
+} from "../../../jslib/cblades/interactive/interactive-magic.js";
 import {
     CBSpell
-} from "../../jslib/cblades/magic.js";
+} from "../../../jslib/cblades/magic.js";
 
 describe("Interactive Magic", ()=> {
 

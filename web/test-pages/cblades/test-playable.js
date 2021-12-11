@@ -215,7 +215,7 @@ class CBTestCounter extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         return new TestCounterImageArtifact(this, levelName, images, position, dimension);
     }
 
-    markAsPlayed() {
+    setPlayed() {
         this.status = "played";
     }
 
@@ -270,7 +270,7 @@ class CBTestFormation extends RetractablePieceMixin(HexLocatableMixin(BelongsToP
         return true;
     }
 
-    markAsPlayed() {
+    setPlayed() {
         this.status = "played";
     }
 
@@ -692,7 +692,7 @@ describe("Playable", ()=> {
         then:
             assert(game.selectedPlayable).equalsTo(unit1);
         when:
-            unit1.markAsPlayed();
+            unit1.setPlayed();
             assert(unit1.isPlayed()).isTrue();
             game.nextTurn();
         then:
@@ -1494,7 +1494,7 @@ describe("Playable", ()=> {
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             resetDirectives(markersLayer);
-            playable.markAsPlayed();
+            playable.setPlayed();
         then:
             assert(playable.isActivated()).isTrue();
             assert(playable.isPlayed()).isTrue();

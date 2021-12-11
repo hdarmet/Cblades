@@ -1,10 +1,12 @@
 
 export let requester = {
     decodeURIComponent,
-    fetch,
-    cookie: document.cookie,
+    fetch: fetch.bind(window),
     locationOrigin: document.defaultView.location.origin
 }
+Object.defineProperty(requester, "cookie", {
+    get: function() { return document.cookie; }
+})
 
 /*
 export function setCookie(cname, cvalue, exdays) {

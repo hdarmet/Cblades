@@ -712,28 +712,20 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
         this._visibility = CBGame.FULL_VISIBILITY;
     }
 
+    start() {
+        super.start();
+        this._currentPlayer.beginTurn();
+    }
+
     _resetPlayables(player) {
         this.closePopup();
         if (this._selectedPlayable) {
             this._selectedPlayable.unselect();
         }
-        if (this._playables) {
-            for (let playable of this._playables) {
-                playable.reset && playable.reset(player);
-            }
-        }
     }
 
     get visibility() {
         return this._visibility;
-    }
-
-    _initPlayables(player) {
-        if (this._playables) {
-            for (let playable of this._playables) {
-                playable.init && playable.init(player);
-            }
-        }
     }
 
     _createEndOfTurnCommand() {
@@ -829,17 +821,6 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
         this._loadCommand.active = false;
     }
 
-    _reset(animation) {
-        this.closeWidgets();
-        this._resetPlayables(this._currentPlayer);
-        let indexPlayer = this._players.indexOf(this._currentPlayer);
-        this._currentPlayer = this._players[(indexPlayer + 1) % this._players.length];
-        this._initPlayables(this._currentPlayer);
-        animation && animation();
-        Memento.clear();
-        Mechanisms.fire(this, CBAbstractGame.TURN_EVENT);
-    }
-
     turnIsFinishable() {
         if (!this.canUnselectPlayable()) return false;
         if (this.playables) {
@@ -850,13 +831,27 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
         return true;
     }
 
+    validate() {
+        Memento.clear();
+        Mechanisms.fire(this, CBGame.VALIDATION_EVENT);
+    }
+
     nextTurn(animation) {
         if (!this.selectedPlayable || this.canUnselectPlayable()) {
-            this._reset(animation);
+            this.closeWidgets();
+            this._currentPlayer.endTurn();
+            this._resetPlayables(this._currentPlayer);
+            let indexPlayer = this._players.indexOf(this._currentPlayer);
+            this._currentPlayer = this._players[(indexPlayer + 1) % this._players.length];
+            this._currentPlayer.beginTurn();
+            animation && animation();
+            this.validate();
+            Mechanisms.fire(this, CBAbstractGame.TURN_EVENT);
         }
     }
 
     static TURN_EVENT = "game-turn";
     static FULL_VISIBILITY = 2;
     static VISIBILITY_EVENT = "game-visibility";
+    static VALIDATION_EVENT = "game-validation";
 }

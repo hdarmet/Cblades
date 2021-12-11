@@ -829,7 +829,7 @@ describe("Unit", ()=> {
         given:
             var { map, unit } = createTinyGame();
             var hexId = map.getHex(5, 8);
-            unit.markAsEngaging(true);
+            unit.setEngaging(true);
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
         when:
@@ -848,7 +848,7 @@ describe("Unit", ()=> {
         given:
             var { game, map, unit } = createTinyGame();
             var hexId = map.getHex(5, 8);
-            unit.markAsEngaging(true);
+            unit.setEngaging(true);
         then:
             assert(hexId.units).arrayEqualsTo([unit]);
         when:
@@ -1102,7 +1102,7 @@ describe("Unit", ()=> {
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             unit.launchAction(new CBAction(game, unit));
-            unit.markAsPlayed();
+            unit.setPlayed();
             repaint(game);
         then:
             assertClearDirectives(markersLayer);
@@ -1151,7 +1151,7 @@ describe("Unit", ()=> {
             repaint(game);
         when:
             unit.launchAction(new CBAction(game, unit));
-            unit.markAsPlayed();
+            unit.setPlayed();
             repaint(game);
         then:
             assertClearDirectives(markersLayer);
@@ -1371,7 +1371,7 @@ describe("Unit", ()=> {
             var {game, unit, map} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
-            unit.markAsEngaging(true);
+            unit.setEngaging(true);
             repaint(game);
         then:
             assertClearDirectives(markersLayer);
@@ -1393,7 +1393,7 @@ describe("Unit", ()=> {
             var {game, unit, map} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
-            unit.markAsCharging(CBCharge.CHARGING);
+            unit.setCharging(CBCharge.CHARGING);
             repaint(game);
             loadAllImages(); // to load fleeing.png
         then:
@@ -1415,12 +1415,12 @@ describe("Unit", ()=> {
         given:
             var {game, unit, map} = createTinyGame();
         when:
-            unit.markAsCharging(CBCharge.CHARGING);
+            unit.setCharging(CBCharge.CHARGING);
         then:
             assert(unit.tiredness).equalsTo(CBTiredness.NONE);
             assert(unit.isCharging()).isTrue();
         when:
-            unit.markAsCharging(CBCharge.NONE);
+            unit.setCharging(CBCharge.NONE);
         then:
             assert(unit.tiredness).equalsTo(CBTiredness.TIRED);
             assert(unit.isCharging()).isFalse();
@@ -1431,8 +1431,8 @@ describe("Unit", ()=> {
             var {game, unit, map} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
-            unit.markAsEngaging(true);
-            unit.markAsCharging(CBCharge.CHARGING);
+            unit.setEngaging(true);
+            unit.setCharging(CBCharge.CHARGING);
             repaint(game);
         then:
             assertClearDirectives(markersLayer);
@@ -1441,7 +1441,7 @@ describe("Unit", ()=> {
             assert(unit.isEngaging()).isTrue();
             assert(unit.isCharging()).isTrue();
         when:
-            unit.markAsCharging(false);
+            unit.setCharging(false);
             repaint(game);
         then:
             assertClearDirectives(markersLayer);
@@ -1450,7 +1450,7 @@ describe("Unit", ()=> {
             assert(unit.isEngaging()).isTrue();
             assert(unit.isCharging()).isFalse();
         when:
-            unit.markAsEngaging(false);
+            unit.setEngaging(false);
             repaint(game);
         then:
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
@@ -1566,8 +1566,8 @@ describe("Unit", ()=> {
             var [markersLayer] = getLayers(game.board, "markers-1");
         when:
             resetDirectives(markersLayer);
-            unit2.markAsPlayed(true);
-            unit2.markAsEngaging(true);
+            unit2.setPlayed(true);
+            unit2.setEngaging(true);
             unit2.addOneCohesionLevel();
             unit2.addOneTirednessLevel();
             unit2.addOneMunitionsLevel();

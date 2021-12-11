@@ -3,21 +3,21 @@
 import {
     after,
     assert, before, describe, it
-} from "../../jstest/jtest.js";
+} from "../../../jstest/jtest.js";
 import {
     DAnimator,
     DImage, getDrawPlatform, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../../jslib/draw.js";
 import {
     assertClearDirectives,
     assertDirectives, assertNoMoreDirectives,
     getDirectives, getLayers,
     loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
-} from "../mocks.js";
+} from "../../mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../../jslib/mechanisms.js";
 import {
     repaint,
     paint,
@@ -50,19 +50,19 @@ import {
     showDie,
     showPlayedDie,
     showOrientedIndicator, showBanneredIndicator, rollFor1Die, clickOnTrigger, getDice,
-} from "./interactive-tools.js";
+} from "../interactive-tools.js";
 import {
     createTinyGame,
     create2UnitsTinyGame
-} from "./game-examples.js";
+} from "../game-examples.js";
 import {
     CBPlayFireActuator,
     registerInteractiveMiscellaneous,
     unregisterInteractiveMiscellaneous
-} from "../../jslib/cblades/interactive-miscellaneous.js";
+} from "../../../jslib/cblades/interactive/interactive-miscellaneous.js";
 import {
     PlayableMixin
-} from "../../jslib/cblades/game.js";
+} from "../../../jslib/cblades/game.js";
 import {
     CBFireCounter,
     CBFogCounter, CBSmokeCounter,
@@ -71,13 +71,13 @@ import {
     CBWindDirectionCounter,
     CBWingMoralCounter,
     CBWingTirednessCounter
-} from "../../jslib/cblades/miscellaneous.js";
+} from "../../../jslib/cblades/miscellaneous.js";
 import {
     CBWeather, CBFog
-} from "../../jslib/cblades/weather.js";
+} from "../../../jslib/cblades/weather.js";
 import {
     DDice
-} from "../../jslib/widget.js";
+} from "../../../jslib/widget.js";
 
 describe("Interactive Miscellaneous", ()=> {
 
@@ -261,7 +261,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(unit1.markAsPlayed()).isFalse();
+            assert(unit1.setPlayed()).isFalse();
     });
 
     it("Checks failed set fire misc action process ", () => {
@@ -360,7 +360,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(unit1.markAsPlayed()).isFalse();
+            assert(unit1.setPlayed()).isFalse();
     });
 
     it("Checks failed extinguish fire misc action process ", () => {
@@ -461,7 +461,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(unit1.markAsPlayed()).isFalse();
+            assert(unit1.setPlayed()).isFalse();
     });
 
     it("Checks failed set stakes misc action process ", () => {
@@ -559,7 +559,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(unit1.markAsPlayed()).isFalse();
+            assert(unit1.setPlayed()).isFalse();
     });
 
     it("Checks failed remove stakes misc action process ", () => {
@@ -656,7 +656,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(counter.markAsPlayed()).isFalse();
+            assert(counter.setPlayed()).isFalse();
     });
 
     it("Checks weather action process that swipes up", () => {
@@ -787,7 +787,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(counter.markAsPlayed()).isFalse();
+            assert(counter.setPlayed()).isFalse();
     });
 
     it("Checks fog action process that swipes up", () => {
@@ -920,7 +920,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(counter.markAsPlayed()).isFalse();
+            assert(counter.setPlayed()).isFalse();
     });
 
     it("Checks fog action process when it swipes up", () => {
@@ -1063,7 +1063,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(counter.markAsPlayed()).isFalse();
+            assert(counter.setPlayed()).isFalse();
     });
 
     it("Checks tiredness action process when it swipes", () => {
@@ -1170,7 +1170,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(counter.markAsPlayed()).isFalse();
+            assert(counter.setPlayed()).isFalse();
     });
 
     it("Checks moral action process when it swipes", () => {
@@ -1277,7 +1277,7 @@ describe("Interactive Miscellaneous", ()=> {
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
-            assert(counter.markAsPlayed()).isFalse();
+            assert(counter.setPlayed()).isFalse();
     });
 
     it("Checks fire and smoke action process when it fails", () => {

@@ -287,7 +287,7 @@ describe("Command teacher", ()=> {
             assert(arbitrator.isAllowedToMerge(unit11)).isFalse();
         when:
             unit12.removeOneTirednessLevel();
-            unit11.markAsPlayed();
+            unit11.setPlayed();
         then:
             assert(arbitrator.isAllowedToMerge(unit12)).isFalse();
     });
@@ -649,7 +649,7 @@ describe("Command teacher", ()=> {
         when:
             unit1.angle = 90;
             unit2.angle = 90;
-            unit2.markAsPlayed();
+            unit2.setPlayed();
         then:
             assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
         when:

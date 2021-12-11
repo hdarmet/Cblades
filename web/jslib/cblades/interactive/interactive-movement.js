@@ -4,42 +4,45 @@ import {
     Area2D,
     canonizeAngle,
     Dimension2D, invertAngle, Point2D, sumAngle
-} from "../geometry.js";
+} from "../../geometry.js";
 import {
-    DAbstractInsert,
-    DDice, DIconMenuItem, DInsert, DInsertFrame, DMask, DResult, DScene
-} from "../widget.js";
+    DDice, DIconMenuItem, DInsertFrame, DMask, DResult, DScene
+} from "../../widget.js";
 import {
     Mechanisms,
     Memento
-} from "../mechanisms.js";
+} from "../../mechanisms.js";
 import {
     CBHexSideId
-} from "./map.js";
+} from "../map.js";
 import {
-    CBAbstractGame,
-    CBAction, CBActuator, CBStacking
-} from "./game.js";
+    CBAction, CBStacking
+} from "../game.js";
 import {
     CBActionActuator, CBActuatorImageTrigger, CBActuatorTriggerMixin, CBMask, CBInsert,
     CBMoveMode, CBAbstractInsert, CBGame
-} from "./playable.js";
+} from "../playable.js";
 import {
     CBCharge,
     CBMovement, CBMoveProfile
-} from "./unit.js";
+} from "../unit.js";
 import {
     DImage
-} from "../draw.js";
+} from "../../draw.js";
 import {
-    CBActionMenu, CBCheckEngagementInsert, CBInteractivePlayer, CBLoseCohesionInsert, CBMoralInsert
+    CBActionMenu, CBCheckEngagementInsert, CBInteractivePlayer, CBMoralInsert
 } from "./interactive-player.js";
 import {
     DImageArtifact
-} from "../board.js";
+} from "../../board.js";
 import {
     stringifyHexLocations
-} from "./pathfinding.js";
+} from "../pathfinding.js";
+import {
+    CBMoveSequenceElement, CBReorientSequenceElement,
+    CBRotateSequenceElement,
+    CBSequence, CBTurnSequenceElement, CBStateSequenceElement
+} from "../sequences.js";
 
 export function registerInteractiveMovement() {
     CBInteractivePlayer.prototype.startMoveUnit = function (unit, moveMode, event) {
@@ -279,6 +282,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         cost = this._updateTirednessForRotation(cost, start);
         this._checkActionProgession(cost.value);
         this.unit.rotate(angle, cost);
+        CBSequence.appendElement(this.game, new CBRotateSequenceElement(this.unit, angle));
         let played = !this._continueAfterRotation();
         this._markUnitActivationAfterMovement(played);
     }
@@ -287,7 +291,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         if (crossedUnits.length) {
             let crossedUnit = crossedUnits.pop();
             this.checkIfACrossedUnitLoseCohesion(crossedUnit, () => {
-                Memento.clear();
+                this.game.validate();
                 this._checkIfANonRoutedCrossedUnitLoseCohesion(crossedUnits, processing, false);
             }, cancellable);
         }
@@ -338,6 +342,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(70, 70)
         ).addWidget(
@@ -371,6 +376,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         cost = this._updateTirednessForMovement(cost, start);
         this._checkActionProgession(cost.value);
         this.unit.move(hexLocation, cost, CBStacking.BOTTOM);
+        CBSequence.appendElement(this.game, new CBMoveSequenceElement(this.unit, hexLocation, CBStacking.BOTTOM));
         this._continueAfterMove();
     }
 
@@ -379,6 +385,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         cost = this._updateTirednessForMovement(cost, start);
         this._checkActionProgession(cost.value);
         this.unit.turn(angle, cost, CBStacking.BOTTOM);
+        CBSequence.appendElement(this.game, new CBTurnSequenceElement(this.unit, angle, CBStacking.BOTTOM));
         this._continueAfterMove();
     }
 
@@ -407,6 +414,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
     _updateTirednessForMovement(cost) {
         if (this.game.arbitrator.doesMovementInflictTiredness(this.unit, cost)) {
             this.unit.addOneTirednessLevel();
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
         }
         return cost;
     }
@@ -414,6 +422,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
     _updateTirednessForRotation(cost, first) {
         if (this.game.arbitrator.doesMovementInflictTiredness(this.unit, cost)) {
             this.unit.addOneTirednessLevel();
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
         }
         return cost;
     }
@@ -779,9 +788,11 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
     _checkChargingStatus(engaging) {
         if (this.moves>=2 || (this.moves===1 && engaging)) {
             this.unit.acknowledgeCharge(true);
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
         }
         else {
-            this.unit.markAsCharging(CBCharge.NONE);
+            this.unit.setCharging(CBCharge.NONE);
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
         }
     }
 
@@ -789,8 +800,10 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         let friends = this.game.arbitrator.getTroopsStackedWith(this.unit);
         if (friends.length && friends[0].angle !== this.unit.angle) {
             this.unit.reorient(friends[0].angle);
+            CBSequence.appendElement(this.game, new CBReorientSequenceElement(this.unit, friends[0].angle));
             if (this.unit.troopNature && !this.unit.isRouted()) {
                 this.unit.addOneCohesionLevel();
+                CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
             }
         }
         else for (let playable of this.unit.hexLocation.playables) {
@@ -804,7 +817,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         if (engaging && this.game.arbitrator.isUnitEngaged(this.unit, false)) {
             this.checkAttackerEngagement(this.unit.viewportLocation, () => {
                 super.finalize(action);
-                Memento.clear();
+                this.game.validate();
             });
             return true;
         }
@@ -854,6 +867,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(70, 70)
         ).addWidget(
@@ -883,6 +897,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         let result = this.game.arbitrator.processAttackerEngagementResult(this.unit, diceResult);
         if (!result.success) {
             this.unit.addOneCohesionLevel();
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
         }
         return result;
     }
@@ -921,7 +936,8 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
+        CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
         super.play();
     }
 
@@ -970,7 +986,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
             if (this._unitMustCheckDisengagement) {
                 this.checkDisengagement(this.unit.viewportLocation, () => {
                     super.finalize(action);
-                    Memento.clear();
+                    this.game.validate();
                 });
             }
             else {
@@ -1007,6 +1023,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(70, 70)
         ).addWidget(
@@ -1020,6 +1037,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
         let result = this.game.arbitrator.processDisengagementResult(this.unit, diceResult);
         if (!result.success) {
             this.unit.addOneCohesionLevel();
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
         }
         return result;
     }
@@ -1042,7 +1060,8 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
+        CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
         super.play();
     }
 
@@ -1058,6 +1077,7 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
         cost = this._updateTirednessForMovement(cost, start);
         this._checkActionProgession(cost.value);
         this.unit.move(hexLocation, cost, CBStacking.TOP);
+        CBSequence.appendElement(this.game, new CBMoveSequenceElement(this.unit, hexLocation, CBStacking.TOP));
         this._continueAfterMove();
     }
 
@@ -1070,7 +1090,7 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
             if (this._unitMustCheckDisengagement) {
                 this.checkDisengagement(this.unit.viewportLocation, () => {
                     super.finalize(action);
-                    Memento.clear();
+                    this.game.validate();
                 });
             }
             else {
@@ -1106,6 +1126,7 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(70, 70)
         ).addWidget(
@@ -1136,6 +1157,7 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
         let result = this.game.arbitrator.processDisengagementResult(this.unit, diceResult);
         if (!result.success) {
             this.unit.addOneCohesionLevel();
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
         }
         return result;
     }
@@ -1167,7 +1189,8 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
+        CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
         super.play();
     }
 
@@ -1175,7 +1198,7 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
         if (!this.isFinalized()) {
             this.checkConfrontEngagement(this.unit.viewportLocation, () => {
                 super.finalize(action);
-                Memento.clear();
+                this.game.validate();
             });
         }
     }
@@ -1213,6 +1236,7 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(70, 70)
         ).addWidget(
@@ -1241,6 +1265,7 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
         let result = this.game.arbitrator.processConfrontEngagementResult(this.unit, diceResult);
         if (!result.success) {
             this.unit.addOneCohesionLevel();
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
         }
         return result;
     }

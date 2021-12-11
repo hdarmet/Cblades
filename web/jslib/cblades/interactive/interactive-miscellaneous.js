@@ -4,14 +4,14 @@ import {
     DDice,
     DIconMenu,
     DIconMenuItem, DInsert, DMask, DResult, DScene, DSwipe
-} from "../widget.js";
+} from "../../widget.js";
 import {
     CBAction, CBStacking, PlayableMixin, CBAbstractGame, CBActuator
-} from "./game.js";
+} from "../game.js";
 import {
     CBActionActuator, CBPlayableActuatorTrigger,
     RetractableActuatorMixin, CBInsert
-} from "./playable.js";
+} from "../playable.js";
 import {
     CBActionMenu,
     CBInteractivePlayer,
@@ -23,21 +23,20 @@ import {
 } from "./interactive-player.js";
 import {
     CBCharge
-} from "./unit.js";
+} from "../unit.js";
 import {
     Dimension2D, Point2D
-} from "../geometry.js";
+} from "../../geometry.js";
 import {
     CBBurningCounter,
     CBFireCounter, CBSmokeCounter, CBStakesCounter
-} from "./miscellaneous.js";
+} from "../miscellaneous.js";
 import {
-    Mechanisms,
-    Memento
-} from "../mechanisms.js";
+    Mechanisms
+} from "../../mechanisms.js";
 import {
     DImage, getDrawPlatform
-} from "../draw.js";
+} from "../../draw.js";
 
 export function registerInteractiveMiscellaneous() {
     CBInteractivePlayer.prototype.mergeUnits = function(unit, event) {
@@ -143,12 +142,12 @@ export class InteractiveMergeUnitAction extends CBAction {
 
     play() {
         this.game.closeActuators();
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         let {replacement, replaced} = this.game.arbitrator.mergedUnit(this.unit);
         let hexLocation = this.unit.hexLocation;
         replacement.appendToMap(hexLocation, CBStacking.TOP);
         replacement.rotate(this.unit.angle);
-        replacement.markAsPlayed();
+        replacement.setPlayed();
         for (let replacedUnit of replaced) {
             replacedUnit.deleteFromMap();
         }
@@ -161,7 +160,7 @@ function createStartFireCounter(game, hexLocation) {
     let fireStart = new CBFireCounter();
     fireStart.appendToMap(hexLocation);
     if (game.firePlayed) {
-        fireStart.markAsPlayed();
+        fireStart.setPlayed();
     }
 }
 
@@ -214,6 +213,7 @@ export class InteractiveSetFireAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(50, 70)
         ).addWidget(
@@ -276,6 +276,7 @@ export class InteractiveExtinguishFireAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(50, 70)
         ).addWidget(
@@ -334,6 +335,7 @@ export class InteractiveSetStakesAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(50, 70)
         ).addWidget(
@@ -394,6 +396,7 @@ export class InteractiveRemoveStakesAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(50, 70)
         ).addWidget(
@@ -459,7 +462,7 @@ export class InteractivePlayWeatherAction extends CBAction {
                 else {
                     swipeResult.noSwipe().appear();
                 }
-                Memento.clear();
+                this.game.validate();
             }),
             new Point2D(60, -100)
         ).addWidget(
@@ -520,7 +523,7 @@ export class InteractivePlayFogAction extends CBAction {
                     swipeResult.noSwipe().appear();
                     weatherIndicator.changeState(nextFog);
                 }
-                Memento.clear();
+                this.game.validate();
             }),
             new Point2D(60, -100)
         ).addWidget(
@@ -581,6 +584,7 @@ export class InteractivePlayWindDirectionAction extends CBAction {
                 else {
                     swipeResult.noSwipe().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(60, -50)
         ).addWidget(
@@ -594,7 +598,7 @@ export class InteractivePlayWindDirectionAction extends CBAction {
         let result = this.game.arbitrator.processPlayWindDirectionResult(game, diceResult);
         this.markAsFinished();
         this.game.changeWindDirection(result.windDirection);
-        Memento.clear();
+        this.game.validate();
         return result;
     }
 
@@ -637,7 +641,7 @@ export class InteractivePlayTirednessAction extends CBAction {
                 else {
                     swipeResult.noSwipe().appear();
                 }
-                Memento.clear();
+                this.game.validate();
             }),
             new Point2D(60, -100)
         ).addWidget(
@@ -695,7 +699,8 @@ export class InteractivePlayMoralAction extends CBAction {
                 else {
                     swipeResult.noSwipe().appear();
                 }
-                Memento.clear();
+
+                this.game.validate();
             }),
             new Point2D(60, -100)
         ).addWidget(
@@ -751,6 +756,7 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(30, 30)
         ).addWidget(
@@ -769,7 +775,6 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
         this.updateSmokes();
         this.putDenseSmoke();
         this.markBurningAsFinished();
-        Memento.clear();
         let result = this.game.arbitrator.processPlayFireResult(game, diceResult);
         if (result.playFire) {
             this._options = this.createOptions(PlayableMixin.getAllByType(this.game, CBFireCounter));
@@ -778,6 +783,7 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
         else {
             this.markAsFinished();
         }
+        this.game.validate();
         return result;
     }
 

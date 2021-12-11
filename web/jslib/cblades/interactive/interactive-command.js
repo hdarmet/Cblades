@@ -2,29 +2,29 @@
 
 import {
     Dimension2D, Point2D
-} from "../geometry.js";
+} from "../../geometry.js";
 import {
     DDice, DIconMenuItem, DInsert, DMask, DResult, DScene, DIconMenu, DMessage
-} from "../widget.js";
+} from "../../widget.js";
 import {
     Memento
-} from "../mechanisms.js";
+} from "../../mechanisms.js";
 import {
     CBAction, CBActuator, CBAbstractGame
-} from "./game.js";
+} from "../game.js";
 import {
     CBActionActuator, RetractableActuatorMixin, CBInsert, CBGame
-} from "./playable.js";
+} from "../playable.js";
 import {
     DImage
-} from "../draw.js";
+} from "../../draw.js";
 import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
     CBUnitActuatorTrigger, CBCharge,
     CBOrderInstruction
-} from "./unit.js";
+} from "../unit.js";
 
 export function registerInteractiveCommand() {
     CBInteractivePlayer.prototype.tryToTakeCommand = function(unit, event) {
@@ -77,7 +77,7 @@ export class InteractiveTakeCommandAction extends CBAction {
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         this.game.closeActuators();
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
@@ -106,6 +106,7 @@ export class InteractiveTakeCommandAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(70, 60)
         ).addWidget(
@@ -135,7 +136,7 @@ export class InteractiveDismissCommandAction extends CBAction {
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         this.game.closeActuators();
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
@@ -164,6 +165,7 @@ export class InteractiveDismissCommandAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(70, 60)
         ).addWidget(
@@ -193,7 +195,7 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         this.game.closeActuators();
         let result = new DResult();
         let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
@@ -205,7 +207,7 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
                 this.unit.player.openOrderInstructionMenu(this.unit,
                     this.unit.viewportLocation,
                     this.game.arbitrator.getAllowedOrderInstructions(this.unit));
-                Memento.clear();
+                this.game.validate();
             }
         };
         mask.setAction(close);
@@ -225,6 +227,7 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
                 else {
                     result.failure().appear();
                 }
+                this.game.validate();
             }),
             new Point2D(70, 60)
         ).addWidget(
@@ -254,7 +257,7 @@ export class InteractiveGiveOrdersAction extends CBAction {
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         this.game.closeActuators();
         let result = new DMessage();
         let dice = new DDice([new Point2D(0, 0)]);
@@ -265,7 +268,7 @@ export class InteractiveGiveOrdersAction extends CBAction {
             if (this.unit.commandPoints) {
                 this._selectUnitsToGiveOrders();
             }
-            Memento.clear();
+            this.game.validate();
         };
         mask.setAction(close);
         this.game.openMask(mask);
@@ -277,6 +280,7 @@ export class InteractiveGiveOrdersAction extends CBAction {
                 dice.active = false;
                 this.unit.receiveCommandPoints(this._processGiveOrdersResult(dice.result));
                 result.appear(""+this.unit.commandPoints);
+                this.game.validate();
             }),
             new Point2D(CBGiveOrdersInsert.DIMENSION.w/4+40, 0)
         ).addWidget(

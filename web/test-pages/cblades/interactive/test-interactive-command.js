@@ -3,21 +3,21 @@
 import {
     after,
     assert, before, describe, it
-} from "../../jstest/jtest.js";
+} from "../../../jstest/jtest.js";
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../../jslib/draw.js";
 import {
     assertDirectives, assertNoMoreDirectives,
     createEvent,
     getDirectives, getLayers,
     loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
-} from "../mocks.js";
+} from "../../mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../../jslib/mechanisms.js";
 
 import {
     repaint,
@@ -45,21 +45,21 @@ import {
     showPopupCommand,
     showMessage,
     zoomAndRotate0, showMarker, showInsertMark
-} from "./interactive-tools.js";
+} from "../interactive-tools.js";
 import {
     createTinyGame,
     create2UnitsTinyGame,
     createTinyGameWithLeader
-} from "./game-examples.js";
+} from "../game-examples.js";
 import {
     CBOrderGivenActuator, CBOrderGivenHelpActuator,
     registerInteractiveCommand,
     unregisterInteractiveCommand
-} from "../../jslib/cblades/interactive-command.js";
+} from "../../../jslib/cblades/interactive/interactive-command.js";
 import {
     CBCohesion,
     CBOrderInstruction, CBTiredness
-} from "../../jslib/cblades/unit.js";
+} from "../../../jslib/cblades/unit.js";
 
 describe("Interactive Command", ()=> {
 

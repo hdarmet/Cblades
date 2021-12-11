@@ -1206,7 +1206,7 @@ describe("Game", ()=> {
             var {game, player, playable} = createTinyGame();
         when:
             playable.launchAction(new CBAction(game, playable));
-            playable.markAsPlayed();
+            playable.setPlayed();
             paint(game);
             loadAllImages(); // to load actiondone.png
         then:
@@ -1224,7 +1224,7 @@ describe("Game", ()=> {
             assert(playable.initialized).isTrue();
         when:
             playable.launchAction(new CBAction(game, playable));
-            playable.markAsPlayed();
+            playable.setPlayed();
         then:
             assert(playable.isActivated()).isTrue();
             assert(playable.isPlayed()).isTrue();
@@ -1253,7 +1253,7 @@ describe("Game", ()=> {
         given:
             var {game, display0} = createDisplayTinyGame();
         when:
-            display0.markAsPlayed();
+            display0.setPlayed();
             paint(game);
             loadAllImages(); // to load actiondone.png
         then:

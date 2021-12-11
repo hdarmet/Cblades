@@ -2,28 +2,28 @@
 
 import {
     DIconMenuItem
-} from "../widget.js";
+} from "../../widget.js";
 import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
     CBHexSideId
-} from "./map.js";
+} from "../map.js";
 import {
     CBAction, CBStacking
-} from "./game.js";
+} from "../game.js";
 import {
     CBActionActuator, CBActuatorImageTrigger
-} from "./playable.js";
+} from "../playable.js";
 import {
     Dimension2D, Point2D, sumAngle
-} from "../geometry.js";
+} from "../../geometry.js";
 import {
     DImage
-} from "../draw.js";
+} from "../../draw.js";
 import {
     CBCharge
-} from "./unit.js";
+} from "../unit.js";
 
 export function registerInteractiveFormation() {
     CBInteractivePlayer.prototype.createFormation = function (unit, event) {
@@ -65,15 +65,15 @@ export class InteractiveBreakFormationAction extends CBAction {
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         this.game.closeActuators();
         let {fromHex, toHex} = this.game.arbitrator.getTroopsAfterFormationBreak(this.unit);
         this.unit.breakFormation(fromHex, toHex);
         for (let replacement of fromHex) {
-            replacement.markAsPlayed();
+            replacement.setPlayed();
         }
         for (let replacement of toHex) {
-            replacement.markAsPlayed();
+            replacement.setPlayed();
         }
         this.markAsFinished();
     }
@@ -92,7 +92,7 @@ export class InteractiveCreateFormationAction extends CBAction {
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         this._createCreateFormationActuator();
     }
 
@@ -111,7 +111,7 @@ export class InteractiveCreateFormationAction extends CBAction {
         let hexLocation = this.unit.hexLocation;
         replacement.appendToMap(new CBHexSideId(hexLocation, hexId), CBStacking.TOP);
         replacement.rotate(replaced[0].angle);
-        replacement.markAsPlayed();
+        replacement.setPlayed();
         for (let troop of replaced) {
             troop.deleteFromMap();
             troop.move(null, 0);
@@ -137,7 +137,7 @@ export class InteractiveReleaseTroopsAction extends CBAction {
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         this._createReleaseTroopActuator();
     }
 
@@ -155,7 +155,7 @@ export class InteractiveReleaseTroopsAction extends CBAction {
         let {stepCount, troop} = this.game.arbitrator.releaseTroop(this.unit, hexId, steps);
         troop.appendToMap(hexId, stacking);
         troop.angle = this.unit.angle;
-        troop.markAsPlayed();
+        troop.setPlayed();
         this.unit.fixRemainingLossSteps(stepCount);
         if (this.game.arbitrator.isAllowedToReleaseTroops(this.unit)) {
             this.markAsStarted();
@@ -184,13 +184,13 @@ export class InteractiveIncludeTroopsAction extends CBAction {
     }
 
     play() {
-        this.unit.markAsCharging(CBCharge.NONE);
+        this.unit.setCharging(CBCharge.NONE);
         this.game.closeActuators();
         let {removed, stepCount, tired, munitions} = this.game.arbitrator.includeTroops(this.unit);
         this.unit.fixRemainingLossSteps(stepCount);
         this.unit.setTiredness(tired);
         this.unit.setMunitions(munitions);
-        this.unit.markAsPlayed();
+        this.unit.setPlayed();
         for (let removedUnit of removed) {
             removedUnit.deleteFromMap();
         }

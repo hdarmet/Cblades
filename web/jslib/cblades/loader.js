@@ -1,16 +1,26 @@
 'use strict'
 
 import {
-    CBHex
+    CBHex, CBHexSideId
 } from "./map.js";
 import {
     sendPost
 } from "../draw.js";
 import {
     CBCharge, CBCohesion, CBFormation,
-    CBMunitions, CBTiredness, CBUnitType,
+    CBMunitions, CBTiredness, CBUnit, CBUnitType,
     CBWing
 } from "./unit.js";
+import {
+    CBStacking
+} from "./game.js";
+import {
+    CBMoveSequenceElement,
+    CBReorientSequenceElement,
+    CBRotateSequenceElement,
+    CBSequence,
+    CBStateSequenceElement, CBTurnSequenceElement
+} from "./sequences.js";
 
 export class Connector {
 
@@ -186,9 +196,8 @@ export class GameLoader {
                 },
                 (text, status) => console.log("FAILURE! " + text + ": " + status)
             );
-        }
-        else {
-            sendPost("/api/game/update/"+this._game._oid,
+        } else {
+            sendPost("/api/game/update/" + this._game._oid,
                 json,
                 (text, status) => {
                     console.log("SUCCESS! " + text + ": " + status);
@@ -200,7 +209,7 @@ export class GameLoader {
     }
 
     load() {
-        sendPost("/api/game/by-name/"+this._game.name,
+        sendPost("/api/game/by-name/" + this._game.name,
             {},
             (text, status) => {
                 let json = JSON.parse(text);
@@ -322,14 +331,16 @@ export class GameLoader {
                     unit._name = unitSpec.name;
                     unit._game = this._game;
                     unit.angle = unitSpec.angle;
-                    unit.setTiredness(this.getUnitTiredness(unitSpec.tiredness));
-                    unit.setMunitions(this.getUnitAmmunition(unitSpec.ammunition));
-                    unit.setCohesion(this.getUnitCohesion(unitSpec.cohesion));
-                    unit.setCharging(unitSpec.charging?CBCharge.CHARGING:CBCharge.NONE);
-                    unit.setEngaging(unitSpec.contact);
-                    unit.receivesOrder(unitSpec.orderGiven);
-                    if (unitSpec.played) unit.markAsPlayed();
-                    unitsMap.set(unit.name, { unit, unitSpec });
+                    unit.setState({
+                        tiredness: this.getUnitTiredness(unitSpec.tiredness),
+                        munitions: this.getUnitAmmunition(unitSpec.ammunition),
+                        cohesion: this.getUnitCohesion(unitSpec.cohesion),
+                        charging: unitSpec.charging ? CBCharge.CHARGING : CBCharge.NONE,
+                        engaging: unitSpec.contact,
+                        orderGiven: unitSpec.orderGiven,
+                        played: unitSpec.played ? unit.setPlayed() : undefined
+                    });
+                    unitsMap.set(unit.name, {unit, unitSpec});
                 }
             }
             this.showEntities(unitsMap, playerSpec);
@@ -404,25 +415,251 @@ export class GameLoader {
 
     getUnitTiredness(code) {
         switch (code) {
-            case "F": return CBTiredness.NONE;
-            case "T": return CBTiredness.TIRED;
-            case "E":  return CBTiredness.EXHAUSTED;
+            case "F":
+                return CBTiredness.NONE;
+            case "T":
+                return CBTiredness.TIRED;
+            case "E":
+                return CBTiredness.EXHAUSTED;
         }
     }
 
     getUnitAmmunition(code) {
         switch (code) {
-            case "P": return CBMunitions.NONE;
-            case "S": return CBMunitions.SCARCE;
-            case "E":  return CBMunitions.EXHAUSTED;
+            case "P":
+                return CBMunitions.NONE;
+            case "S":
+                return CBMunitions.SCARCE;
+            case "E":
+                return CBMunitions.EXHAUSTED;
         }
     }
 
     getUnitCohesion(code) {
         switch (code) {
-            case "GO": return CBCohesion.GOOD_ORDER;
-            case "D": return CBCohesion.DISRUPTED;
-            case "R":  return CBCohesion.ROUTED;
+            case "GO":
+                return CBCohesion.GOOD_ORDER;
+            case "D":
+                return CBCohesion.DISRUPTED;
+            case "R":
+                return CBCohesion.ROUTED;
+        }
+    }
+}
+
+export class SequenceLoader {
+
+    constructor() {
+    }
+
+    save(game, sequence) {
+        let json = this.toSpecs(game, sequence);
+        sendPost("/api/sequence/create",
+            json,
+            (text, status) => {
+                console.log("SUCCESS! " + text + ": " + status);
+            },
+            (text, status) => console.log("FAILURE! " + text + ": " + status)
+        );
+    }
+
+    load(game, action) {
+        sendPost("/api/sequence/by-game/"+game.name,
+            {},
+            (text, status) => {
+                let json = JSON.parse(text);
+                action(this.fromSpecs(json, game));
+                console.log(`Sequence of ${game.name} loaded : ${status}`)
+            },
+            (text, status) => {
+                action();
+                console.log(`Unable to load sequence for game: ${game.name} : ${status}`);
+            }
+        );
+    }
+
+    toSpecs(game, sequence) {
+        let sequenceSpecs = {
+            version: sequence._oversion || 0,
+            game: sequence._game.name,
+            elements: []
+        };
+        for (let element of sequence.elements) {
+            let elementSpecs = {
+                version: element._oversion || 0,
+                type: element.type,
+            }
+            if ("State|Move|Rotate|Reorient|Turn".indexOf(element.type)>=0) {
+                elementSpecs.unit = element.unit.name;
+                elementSpecs.cohesion = this.getCohesionCode(element.cohesion);
+                elementSpecs.tiredness = this.getTirednessCode(element.tiredness);
+                elementSpecs.ammunition = this.getMunitionsCode(element.ammunition);
+                elementSpecs.charging = this.getChargingCode(element.charging);
+                elementSpecs.engaging = element.engaging;
+                elementSpecs.orderGiven = element.orderGiven;
+                elementSpecs.played = element.played;
+            }
+            if ("Move|Turn".indexOf(element.type)>=0) {
+                if (sequence.hexLocation instanceof CBHexSideId) {
+                    elementSpecs.hexCol = element.hexLocation.fromHex.col;
+                    elementSpecs.hexRow = element.hexLocation.fromHex.row;
+                    elementSpecs.hexAngle = element.hexLocation.angle;
+                }
+                else {
+                    elementSpecs.hexCol = element.hexLocation.col;
+                    elementSpecs.hexRow = element.hexLocation.row;
+                }
+                elementSpecs.stacking = this.getStackingCode(element.stacking);
+            }
+            if ("Rotate|Reorient|Turn".indexOf(element.type)>=0) {
+                elementSpecs.angle = element.angle;
+            }
+            sequenceSpecs.elements.push(elementSpecs);
+        }
+        console.log(JSON.stringify(sequenceSpecs));
+        return sequenceSpecs;
+    }
+
+    fromSpecs(specs, game) {
+        console.log(JSON.stringify(specs));
+        let sequence = new CBSequence(game);
+        let units = new Map();
+        for (let playable of game.playables) {
+            if (playable instanceof CBUnit) {
+                units.set(playable.name, playable);
+            }
+        }
+        for (let elementSpec of specs.elements) {
+            let unit;
+            if (elementSpec.unit) {
+                unit = units.get(elementSpec.unit);
+            }
+            let hexLocation;
+            if (elementSpec.hexCol!==undefined) {
+                hexLocation = game.map.getHex(elementSpec.hexCol, elementSpec.hexRow);
+                if (elementSpec.hexAngle) hexLocation = hexLocation.toward(elementSpec.hexAngle);
+            }
+            let stacking;
+            if (elementSpec.stacking!==undefined) {
+                stacking = this.getStacking(elementSpec.stacking)
+            }
+            let element;
+            let angle = elementSpec.angle;
+            switch (elementSpec.type) {
+                case "State": element = new CBStateSequenceElement(unit); break;
+                case "Move": element = new CBMoveSequenceElement(unit, hexLocation, stacking); break;
+                case "Rotate": element = new CBRotateSequenceElement(unit, angle); break;
+                case "Reorient": element = new CBReorientSequenceElement(unit, angle); break;
+                case "Turn": element = new CBTurnSequenceElement(unit, hexLocation, angle); break;
+            }
+            if (elementSpec.tiredness!==undefined) {
+                element.tiredness = this.getTiredness(elementSpec.tiredness);
+            }
+            if (elementSpec.cohesion!==undefined) {
+                element.cohesion = this.getCohesion(elementSpec.cohesion);
+            }
+            if (elementSpec.ammunition!==undefined) {
+                element.ammunition = this.getMunitions(elementSpec.ammunition);
+            }
+            if (elementSpec.charging!==undefined) {
+                element.charging = this.getCharging(elementSpec.charging);
+            }
+            if (elementSpec.engaging!==undefined) {
+                element.engaging = elementSpec.engaging;
+            }
+            if (elementSpec.orderGiven!==undefined) {
+                element.orderGiven = elementSpec.orderGiven;
+            }
+            if (elementSpec.played!==undefined) {
+                element.played = elementSpec.played;
+            }
+            sequence.addElement(element);
+        }
+        return sequence;
+    }
+
+    getTirednessCode(tiredness) {
+        if (tiredness===CBTiredness.TIRED) return "T";
+        else if (tiredness===CBTiredness.EXHAUSTED) return "E";
+        else return "F";
+    }
+
+    getMunitionsCode(munitions) {
+        if (munitions===CBMunitions.SCARCE) return "S";
+        else if (munitions===CBMunitions.EXHAUSTED) return "E";
+        else return "P";
+    }
+
+    getCohesionCode(cohesion) {
+        if (cohesion===CBCohesion.DISRUPTED) return "D";
+        else if (cohesion===CBCohesion.ROUTED) return "R";
+        else if (cohesion===CBCohesion.DESTROYED) return "X";
+        else return "GO";
+    }
+
+    getChargingCode(charging) {
+        if (charging===CBCharge.CHARGING) return "C";
+        else if (charging===CBCharge.BEGIN_CHARGE) return "BC";
+        else return "N";
+    }
+
+    getStackingCode(stacking) {
+        if (stacking===CBStacking.TOP) return "T";
+        else return "B";
+    }
+
+    getTiredness(code) {
+        switch (code) {
+            case "F":
+                return CBTiredness.NONE;
+            case "T":
+                return CBTiredness.TIRED;
+            case "E":
+                return CBTiredness.EXHAUSTED;
+        }
+    }
+
+    getMunitions(code) {
+        switch (code) {
+            case "P":
+                return CBMunitions.NONE;
+            case "S":
+                return CBMunitions.SCARCE;
+            case "E":
+                return CBMunitions.EXHAUSTED;
+        }
+    }
+
+    getCohesion(code) {
+        switch (code) {
+            case "GO":
+                return CBCohesion.GOOD_ORDER;
+            case "D":
+                return CBCohesion.DISRUPTED;
+            case "R":
+                return CBCohesion.ROUTED;
+            case "X":
+                return CBCohesion.DESTROYED;
+        }
+    }
+
+    getCharging(code) {
+        switch (code) {
+            case "BC":
+                return CBCharge.BEGIN_CHARGE;
+            case "C":
+                return CBCharge.CHARGING;
+            case "N":
+                return CBCharge.NONE;
+        }
+    }
+
+    getStacking(code) {
+        switch (code) {
+            case "T":
+                return CBStacking.TOP;
+            case "B":
+                return CBCohesion.BOTTOM;
         }
     }
 

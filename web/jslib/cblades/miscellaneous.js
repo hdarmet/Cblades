@@ -103,12 +103,12 @@ export class CBBurningCounter extends RetractablePieceMixin(CBHexCounter) {
 
     _processGlobalEvent(source, event, value) {
         if (event === CBBurningCounter.PLAYED_EVENT) {
-            this.markAsPlayed();
+            this.setPlayed();
         }
         else super._processGlobalEvent(source, event, value);
     }
 
-    markAsPlayed() {
+    setPlayed() {
         Memento.register(this);
         if (!this.action) {
             this.launchAction(new CBAction(this.game, this));
@@ -441,7 +441,7 @@ export class CBWingTirednessCounter extends CBWingDisplayablePlayable {
 
     _play(event) {
         if (this.wing.tiredness===11) {
-            this.markAsPlayed();
+            this.setPlayed();
         }
         else {
             this.game.currentPlayer.playTiredness(this, event);
@@ -481,7 +481,7 @@ export class CBWingMoralCounter extends CBWingDisplayablePlayable {
 
     _play(event) {
         if (this.wing.moral===11) {
-            this.markAsPlayed();
+            this.setPlayed();
         }
         else {
             this.game.currentPlayer.playMoral(this, event);

@@ -1139,7 +1139,7 @@ export function PlayableMixin(clazz) {
             return this._action;
         }
 
-        markAsPlayed() {
+        setPlayed() {
             Memento.register(this);
             if (!this.action) {
                 this.launchAction(new CBAction(this.game, this));

@@ -73,6 +73,9 @@
     import {
         Connector
     } from "../jslib/cblades/loader.js";
+    import {
+        CBRemoteUnitPlayer
+    } from "../jslib/cblades/remote.js";
 
     registerInteractiveMovement();
     registerInteractiveCombat();
@@ -82,7 +85,7 @@
     registerInteractiveMagic();
     registerInteractiveMiscellaneous();
 
-    let game = new (BurningMixin(WeatherMixin(CBGame)))("Play");
+    let game = new (BurningMixin(WeatherMixin(CBGame)))("play");
     let map = new CBMap([
         {path:"./../images/maps/map1.png", col:0, row:0, invert:true},
         {path:"./../images/maps/map4.png", col:1, row:0}
@@ -93,13 +96,15 @@
     let arbitrator = new CBArbitrator();
     game.setArbitrator(arbitrator);
     game.setMenu();
+    let player1 = new CBRemoteUnitPlayer("player1");
+    let player2 = new CBInteractivePlayer("player2");
+    game.addPlayer(player1);
+    game.addPlayer(player2);
     /*
     new CBWeatherCounter().setOnGame(game);
     new CBWindDirectionCounter().setOnGame(game);
     new CBFogCounter().setOnGame(game);
 */
-    let player1 = new CBInteractivePlayer("player1");
-    game.addPlayer(player1);
     let wing1 = new CBWing(player1, GoblinBanner1);
     wing1.setTiredness(10);
     wing1.setMoral(10);
@@ -123,8 +128,6 @@
 */
     //new CBWingTirednessCounter(wing1).registerOnGame(game);
     //new CBWingMoralCounter(wing1).registerOnGame(game);
-    let player2 = new CBInteractivePlayer("player2");
-    game.addPlayer(player2);
     let wing2 = new CBWing(player2, RoughneckBanner1);
     wing2.setRetreatZone(map.getNorthZone());
     let character21 = new CBCharacter(RoughneckLeader, wing2);

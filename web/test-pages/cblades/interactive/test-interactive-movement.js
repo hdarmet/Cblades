@@ -3,29 +3,29 @@
 import {
     after,
     assert, before, describe, executeTimeouts, it
-} from "../../jstest/jtest.js";
+} from "../../../jstest/jtest.js";
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../../jslib/draw.js";
 import {
     assertDirectives, assertHex, assertHexSide, assertNoMoreDirectives,
     createEvent,
     filterPainting, getDirectives, getLayers,
     loadAllImages,
     mockPlatform, removeFilterPainting, resetDirectives, skipDirectives, stopRegister
-} from "../mocks.js";
+} from "../../mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../../jslib/mechanisms.js";
 import {
     DDice, DResult
-} from "../../jslib/widget.js";
+} from "../../../jslib/widget.js";
 import {
     CBFormationMoveActuator, CBMovementHelpActuator,
     CBMoveActuator, CBRotationActuator,
     registerInteractiveMovement, unregisterInteractiveMovement
-} from "../../jslib/cblades/interactive-movement.js";
+} from "../../../jslib/cblades/interactive/interactive-movement.js";
 import {
     repaint, paint, clickOnActionMenu, clickOnPiece, clickOnTrigger,
     dummyEvent, clickOnMask, rollFor,
@@ -33,7 +33,7 @@ import {
     zoomAndRotate180, zoomAndRotate210, zoomAndRotate240, zoomAndRotate270, zoomAndRotate300, zoomAndRotate330,
     showFailureResult, showSuccessResult, showInsert, showMask, showDice, showPlayedDice, showMarker, showSelectedTroop,
     showSelectedFormation, showMenuPanel, showMenuItem, showMultiInsert, showPopupCommand, showInsertMark
-} from "./interactive-tools.js";
+} from "../interactive-tools.js";
 import {
     createTinyGame,
     create2PlayersTinyGame,
@@ -41,13 +41,13 @@ import {
     create2PlayersTinyFormationGame,
     create2Players4UnitsTinyGame,
     create2Players2Units2LeadersTinyGame, create1Player2Units2LeadersTinyGame
-} from "./game-examples.js";
+} from "../game-examples.js";
 import {
     CBTiredness
-} from "../../jslib/cblades/unit.js";
+} from "../../../jslib/cblades/unit.js";
 import {
     CBMoveMode
-} from "../../jslib/cblades/playable.js";
+} from "../../../jslib/cblades/playable.js";
 
 describe("Interactive Movement", ()=> {
 
@@ -1182,7 +1182,7 @@ describe("Interactive Movement", ()=> {
             unit2.move(unit1.hexLocation.getNearHex(0));
             unit2.rotate(180, 0);
             clickOnPiece(game, unit1);
-            unit2.markAsEngaging(true); // AFTER clickOnPiece to avoid engagement test
+            unit2.setEngaging(true); // AFTER clickOnPiece to avoid engagement test
             clickOnMoveBackAction(game);
             paint(game);
             loadAllImages();
@@ -1215,7 +1215,7 @@ describe("Interactive Movement", ()=> {
             unit2.move(unit1.hexLocation.getNearHex(0));
             unit2.rotate(180, 0);
             clickOnPiece(game, unit1);
-            unit2.markAsEngaging(true); // AFTER clickOnPiece to avoid engagement test
+            unit2.setEngaging(true); // AFTER clickOnPiece to avoid engagement test
             clickOnMoveBackAction(game);
             let moveActuator = getMoveActuator(game);
         when:
@@ -1253,7 +1253,7 @@ describe("Interactive Movement", ()=> {
             unit2.move(unit1.hexLocation.getNearHex(0));
             unit2.rotate(180, 0);
             clickOnPiece(game, unit1);
-            unit2.markAsEngaging(true); // AFTER clickOnPiece to avoid engagement test
+            unit2.setEngaging(true); // AFTER clickOnPiece to avoid engagement test
             clickOnMoveBackAction(game);
             let moveActuator = getMoveActuator(game);
         when:
@@ -1591,7 +1591,7 @@ describe("Interactive Movement", ()=> {
             unit2.move(unit1.hexLocation.getNearHex(0));
             unit2.rotate(180, 0);
             clickOnPiece(game, unit1);
-            unit2.markAsEngaging(true); // AFTER clickOnPiece to avoid engagement test
+            unit2.setEngaging(true); // AFTER clickOnPiece to avoid engagement test
             clickOnRoutAction(game);
             paint(game);
             loadAllImages();
@@ -1631,7 +1631,7 @@ describe("Interactive Movement", ()=> {
             unit2.move(unit1.hexLocation.getNearHex(0));
             unit2.rotate(180, 0);
             clickOnPiece(game, unit1);
-            unit2.markAsEngaging(true); // AFTER clickOnPiece to avoid engagement test
+            unit2.setEngaging(true); // AFTER clickOnPiece to avoid engagement test
             clickOnRoutAction(game);
             let orientationActuator = getOrientationActuator(game);
         when:
@@ -1676,7 +1676,7 @@ describe("Interactive Movement", ()=> {
             unit2.move(unit1.hexLocation.getNearHex(0));
             unit2.rotate(180, 0);
             clickOnPiece(game, unit1);
-            unit2.markAsEngaging(true); // AFTER clickOnPiece to avoid engagement test
+            unit2.setEngaging(true); // AFTER clickOnPiece to avoid engagement test
             clickOnRoutAction(game);
             let orientationActuator = getOrientationActuator(game);
         when:

@@ -13,6 +13,7 @@ public class Location extends BaseEntity {
     int col;
     int row;
     @ManyToMany(cascade = CascadeType.ALL)
+    @OrderColumn(name="unitIndex")
     List<Unit> units = new ArrayList<>();
 
     public int getCol() {
