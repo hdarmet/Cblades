@@ -26,10 +26,42 @@ export class CBSequence {
         game._sequence.appendElement(sequence);
     }
 
-    constructor(game) {
+    static getCount(game) {
+        return game._sequence===undefined ? 0 : game._sequence.count;
+    }
+
+    constructor(game, count=0) {
         this._game = game;
         this._elements = [];
+        this._count = count;
         Mechanisms.addListener(this);
+    }
+
+    get count() {
+        return this._count;
+    }
+
+    commit() {
+        if (!this._validated) {
+            this._validated = this._elements;
+            this._validatedCount = this._count;
+            this._count++;
+            this._elements = [];
+        }
+        return this;
+    }
+
+    get validated() {
+        return this._validated;
+    }
+
+    get validatedCount() {
+        return this._validatedCount;
+    }
+
+    acknowledge() {
+        delete this._validated;
+        delete this._validatedCount;
     }
 
     addElement(element) {
@@ -38,9 +70,11 @@ export class CBSequence {
     }
 
     appendElement(element) {
-        Memento.register(this);
-        this._elements.push(element);
-        element.game = this._game;
+        if (!this._replayMode) {
+            Memento.register(this);
+            this._elements.push(element);
+            element.game = this._game;
+        }
     }
 
     _memento() {
@@ -58,22 +92,29 @@ export class CBSequence {
     }
 
     _processGlobalEvent(source, event, value) {
-        if (event===CBGame.VALIDATION_EVENT) {
-            new SequenceLoader().save(this._game, this);
-            Mechanisms.removeListener(this._game._sequence);
-            delete this._game._sequence;
+        if (!this._replayMode) {
+            if (event === CBGame.VALIDATION_EVENT) {
+                this.appendElement(new CBNextTurnSequenceElement(this._game));
+                new SequenceLoader().save(this._game, this);
+                Mechanisms.removeListener(this._game._sequence);
+            }
         }
     }
 
     replay(action) {
+        this._replayMode = true;
         let tick = 0;
         let animation;
-        for (let element of this.elements) {
+        for (let element of this._elements) {
             animation = element.apply(tick);
-            tick += element.delay/20 +2;
+            tick += element.delay / 20 + 2;
         }
+        this._elements = [];
         if (action && animation) {
-            animation.setFinalAction(action);
+            animation.setFinalAction(()=>{
+                action();
+                delete this._replayMode;
+            });
         }
     }
 
@@ -228,7 +269,6 @@ export class CBUnitAnimation extends DAnimation {
 
     draw(count, ticks) {
         let factor = this._factor(count);
-        console.log(factor);
         if (this._startAngle) {
             this._unit.element.setAngle(this._startAngle + factor*diffAngle(this._startAngle, this._stopAngle));
         }
@@ -239,6 +279,39 @@ export class CBUnitAnimation extends DAnimation {
                 ));
         }
         return count * 20 >= this._duration ? 0 : 1;
+    }
+
+}
+
+export class CBNextTurnSequenceElement {
+
+    constructor(game) {
+        this.type = "NextTurn";
+        this.game = game;
+    }
+
+    apply(startTick) {
+        return new CBNextTurnAnimation(this.game, startTick, this.delay);
+    }
+
+    get delay() { return 500; }
+
+}
+
+export class CBNextTurnAnimation extends DAnimation {
+
+    constructor(game, startTick, duration) {
+        super();
+        this._game = game;
+        this._duration = duration;
+        this.play(startTick+1);
+    }
+
+    _draw(count, ticks) {
+        if (count===0) {
+            this._game.nextTurn(this._game._endOfTurnCommand.animation);
+        }
+        return false;
     }
 
 }

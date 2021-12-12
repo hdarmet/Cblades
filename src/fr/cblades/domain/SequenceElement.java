@@ -212,4 +212,11 @@ public class SequenceElement extends BaseEntity {
         }
 
     }
+
+    @Entity
+    @DiscriminatorValue("NextTurn")
+    public static class NextTurnSequenceElement extends SequenceElement {
+
+    }
+
 }

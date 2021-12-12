@@ -12,6 +12,9 @@ import {
 
 export class CBRemoteUnitPlayer extends CBUnitPlayer {
 
+    finishTurn(animation) {
+    }
+
     beginTurn() {
         super.beginTurn();
         this._activeMode = true;
@@ -28,6 +31,7 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
             getDrawPlatform().setTimeout(() => {
                 new SequenceLoader().load(this.game, sequence => {
                     if (sequence) {
+                        this.game._sequence = sequence;
                         sequence.replay(() => {
                             this.tryToLoadNewSequence();
                         });
@@ -35,7 +39,7 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
                         this.tryToLoadNewSequence();
                     }
                 });
-            }, 1000);
+            }, 4000);
         }
     }
 

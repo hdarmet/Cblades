@@ -710,7 +710,7 @@ export class DAnimation {
 
     finalize() {
         if (!this._canceled) {
-            this._finalize();
+            this._finalize && this._finalize();
             this._finalAction && this._finalAction();
         }
     }

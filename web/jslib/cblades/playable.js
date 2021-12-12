@@ -703,6 +703,9 @@ export class CBBasicPlayer extends CBAbstractPlayer {
         this.game.nextTurn(animation);
     }
 
+    canPlay() {
+        return false;
+    }
 }
 
 export class CBGame extends RetractableGameMixin(CBAbstractGame) {
@@ -735,7 +738,8 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
                 this.currentPlayer.finishTurn(animation);
             }).setTurnAnimation(true);
         this._endOfTurnCommand._processGlobalEvent = (source, event)=>{
-            if (event === CBAbstractGame.TURN_EVENT ||
+            if (event === CBAbstractGame.STARTED_EVENT ||
+                event === CBGame.TURN_EVENT ||
                 event === CBAction.PROGRESSION_EVENT ||
                 event === PlayableMixin.DESTROYED_EVENT) {
                 this._endOfTurnCommand.active = this.turnIsFinishable();
@@ -822,6 +826,7 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
     }
 
     turnIsFinishable() {
+        if (!this._currentPlayer.canPlay()) return false;
         if (!this.canUnselectPlayable()) return false;
         if (this.playables) {
             for (let playable of this.playables) {
@@ -846,10 +851,11 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
             this._currentPlayer.beginTurn();
             animation && animation();
             this.validate();
-            Mechanisms.fire(this, CBAbstractGame.TURN_EVENT);
+            Mechanisms.fire(this, CBGame.TURN_EVENT);
         }
     }
 
+    static START_EVENT = "game-start";
     static TURN_EVENT = "game-turn";
     static FULL_VISIBILITY = 2;
     static VISIBILITY_EVENT = "game-visibility";

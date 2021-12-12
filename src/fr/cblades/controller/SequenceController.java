@@ -47,15 +47,16 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 		}, ADMIN);
 	}
 
-	@REST(url="/api/sequence/by-game/:game", method=Method.POST)
+	@REST(url="/api/sequence/by-game/:game/:count", method=Method.POST)
 	public Json getByGame(Map<String, String> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
 				String game = params.get("game");
+				long count = Long.parseLong(params.get("count"));
 				Sequence sequence = getSingleResult(em,
-						"select s from Sequence s left outer join fetch s.elements where s.game = :game",
-						"game", game);
+						"select s from Sequence s left outer join fetch s.elements where s.game = :game and s.count = :count",
+						"game", game, "count", count);
 				if (sequence==null) {
 					throw new SummerControllerException(404,
 							"Unknown sequence of game %s", game
@@ -100,9 +101,10 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 		verify(json)
 			.checkRequired("game").checkMinSize("game", 2).checkMaxSize("game", 20)
 			.checkPattern("game", "[a-zA-Z0-9_\\-]+")
+			.checkRequired("count").checkMin("count", 0)
 			.each("elements", cJson->verify(cJson)
 				.checkRequired("version")
-				.checkWhen(eJson-> "State|Move|Turn|Rotate|Reorient".contains((String)eJson.get("type")), eJson->verify(eJson)
+				.checkWhen(eJson-> "|State|Move|Turn|Rotate|Reorient|".contains("|"+(String)eJson.get("type")+"|"), eJson->verify(eJson)
 					.checkRequired("unit").checkMinSize("unit", 2).checkMaxSize("unit", 80)
 					.check("tiredness", Tiredness.byLabels().keySet())
 					.check("cohesion", Cohesion.byLabels().keySet())
@@ -136,17 +138,19 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 		sync(json, sequence)
 			.write("version")
 			.write("game")
+			.write("count")
 			.syncEach("elements",
 				new Synchronizer.EntityFactory<>(hashMap(
 					pair("State", SequenceElement.StateSequenceElement.class),
 					pair("Move", SequenceElement.MoveSequenceElement.class),
 					pair("Rotate", SequenceElement.RotateSequenceElement.class),
 					pair("Turn", SequenceElement.TurnSequenceElement.class),
-					pair("Reorient", SequenceElement.ReorientSequenceElement.class)
+					pair("Reorient", SequenceElement.ReorientSequenceElement.class),
+					pair("NextTurn", SequenceElement.NextTurnSequenceElement.class)
 				), "type"),
 				(cJson, celem)->sync(cJson, celem)
 				.write("version")
-				.syncWhen((eJson, eelem)-> "State|Move|Turn|Rotate|Reorient".contains((String)eJson.get("type")), (eJson, eelem)->sync(eJson, eelem)
+				.syncWhen((eJson, eelem)-> "|State|Move|Turn|Rotate|Reorient|".contains("|"+(String)eJson.get("type")+"|"), (eJson, eelem)->sync(eJson, eelem)
 					.write("unit")
 					.write("tiredness", label->Tiredness.byLabels().get(label))
 					.write("cohesion", label->Cohesion.byLabels().get(label))
@@ -185,6 +189,7 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			.read("id")
 			.read("version")
 			.read("game")
+			.read("count")
 			.readEach("elements", (cJson, celem)->sync(cJson, celem)
 				.read("id")
 				.read("version")
@@ -223,6 +228,9 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					.read("hexAngle")
 					.read("angle")
 					.read("stacking", Stacking::getLabel)
+				)
+				.syncWhen((eJson, eelem)->eelem instanceof SequenceElement.NextTurnSequenceElement, (eJson, eelem)->sync(eJson, eelem)
+						.setInJson("type", "NextTurn")
 				)
 		);
 		return json;

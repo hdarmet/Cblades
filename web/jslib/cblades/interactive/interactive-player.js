@@ -241,6 +241,9 @@ export class CBInteractivePlayer extends CBUnitPlayer {
             offset.y - popup.dimension.h/2 + CBAbstractGame.POPUP_MARGIN));
     }
 
+    canPlay() {
+        return true;
+    }
 }
 
 export class CBActionMenu extends DIconMenu {

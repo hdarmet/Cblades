@@ -762,7 +762,7 @@ export class CBAbstractGame {
 
     start() {
         Memento.activate();
-        Mechanisms.fire(this, CBAbstractGame.STARTED);
+        Mechanisms.fire(this, CBAbstractGame.STARTED_EVENT);
         this._board.paint();
         return this;
     }
@@ -805,7 +805,8 @@ export class CBAbstractGame {
         this._mask.open(this._board);
     }
 
-    static SETTINGS_EVENT = "settings-turn";
+    static STARTED_EVENT = "started-event";
+    static SETTINGS_EVENT = "settings-event";
     static POPUP_MARGIN = 10;
 }
 

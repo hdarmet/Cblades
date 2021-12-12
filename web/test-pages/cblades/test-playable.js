@@ -674,7 +674,7 @@ describe("Playable", ()=> {
             var {game, unit1} = create2PlayersTinyGame();
             game.setMenu();
             unit1.isFinishable = ()=>false;
-            Mechanisms.fire(game, CBAbstractGame.TURN_EVENT);
+            Mechanisms.fire(game, CBGame.TURN_EVENT);
         then:
             assert(game._endOfTurnCommand.active).isFalse();
     });

@@ -15,7 +15,7 @@ import {
     CBStacking
 } from "./game.js";
 import {
-    CBMoveSequenceElement,
+    CBMoveSequenceElement, CBNextTurnSequenceElement,
     CBReorientSequenceElement,
     CBRotateSequenceElement,
     CBSequence,
@@ -453,18 +453,19 @@ export class SequenceLoader {
     }
 
     save(game, sequence) {
-        let json = this.toSpecs(game, sequence);
+        let json = this.toSpecs(game, sequence.commit());
         sendPost("/api/sequence/create",
             json,
             (text, status) => {
                 console.log("SUCCESS! " + text + ": " + status);
+                sequence.acknowledge();
             },
             (text, status) => console.log("FAILURE! " + text + ": " + status)
         );
     }
 
     load(game, action) {
-        sendPost("/api/sequence/by-game/"+game.name,
+        sendPost("/api/sequence/by-game/"+game.name+"/"+CBSequence.getCount(game),
             {},
             (text, status) => {
                 let json = JSON.parse(text);
@@ -482,14 +483,15 @@ export class SequenceLoader {
         let sequenceSpecs = {
             version: sequence._oversion || 0,
             game: sequence._game.name,
+            count: sequence._validatedCount,
             elements: []
         };
-        for (let element of sequence.elements) {
+        for (let element of sequence.validated) {
             let elementSpecs = {
                 version: element._oversion || 0,
                 type: element.type,
             }
-            if ("State|Move|Rotate|Reorient|Turn".indexOf(element.type)>=0) {
+            if ("|State|Move|Rotate|Reorient|Turn|".indexOf("|"+element.type+"|")>=0) {
                 elementSpecs.unit = element.unit.name;
                 elementSpecs.cohesion = this.getCohesionCode(element.cohesion);
                 elementSpecs.tiredness = this.getTirednessCode(element.tiredness);
@@ -499,7 +501,7 @@ export class SequenceLoader {
                 elementSpecs.orderGiven = element.orderGiven;
                 elementSpecs.played = element.played;
             }
-            if ("Move|Turn".indexOf(element.type)>=0) {
+            if ("|Move|Turn|".indexOf("|"+element.type+"|")>=0) {
                 if (sequence.hexLocation instanceof CBHexSideId) {
                     elementSpecs.hexCol = element.hexLocation.fromHex.col;
                     elementSpecs.hexRow = element.hexLocation.fromHex.row;
@@ -522,7 +524,7 @@ export class SequenceLoader {
 
     fromSpecs(specs, game) {
         console.log(JSON.stringify(specs));
-        let sequence = new CBSequence(game);
+        let sequence = new CBSequence(game, specs.count+1);
         let units = new Map();
         for (let playable of game.playables) {
             if (playable instanceof CBUnit) {
@@ -551,6 +553,7 @@ export class SequenceLoader {
                 case "Rotate": element = new CBRotateSequenceElement(unit, angle); break;
                 case "Reorient": element = new CBReorientSequenceElement(unit, angle); break;
                 case "Turn": element = new CBTurnSequenceElement(unit, hexLocation, angle); break;
+                case "NextTurn": element = new CBNextTurnSequenceElement(game); break;
             }
             if (elementSpec.tiredness!==undefined) {
                 element.tiredness = this.getTiredness(elementSpec.tiredness);

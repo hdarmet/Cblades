@@ -6,10 +6,11 @@ import javax.persistence.*;
 import java.util.*;
 
 @Entity
-@Table(indexes=@Index(name="idx_sequence", columnList="game"))
+@Table(indexes=@Index(name="idx_sequence", columnList="game, count"))
 public class Sequence extends BaseEntity {
 
     String game="";
+    long count;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "sequence_id")
     @OrderColumn(name="sequenceIndex")
@@ -20,6 +21,14 @@ public class Sequence extends BaseEntity {
     }
     public Sequence setGame(String game) {
         this.game = game;
+        return this;
+    }
+
+    public long getCount() {
+        return this.count;
+    }
+    public Sequence setCount(long count) {
+        this.count = count;
         return this;
     }
 
