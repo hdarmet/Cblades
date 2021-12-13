@@ -88,14 +88,22 @@ describe("Unit", ()=> {
     class CBTestTroopType extends CBTroopType {
         constructor(...args) {
             super(...args);
-            this.setMoveProfile(1, new CBMoveProfile(-1));
+            this.setMoveProfile(1, new CBMoveProfile(0));
             this.setMoveProfile(2, new CBMoveProfile(0));
+            this.setMoveProfile(3, new CBMoveProfile(-1));
+            this.setMoveProfile(4, new CBMoveProfile(-1));
             this.setWeaponProfile(1, new CBWeaponProfile(-1, 1, 2, 3));
             this.setWeaponProfile(2, new CBWeaponProfile(0,1, 2, 3));
+            this.setWeaponProfile(3, new CBWeaponProfile(1, 2, 2, 3));
+            this.setWeaponProfile(4, new CBWeaponProfile(1,3, 3, 3));
             this.setCommandProfile(1, new CBCommandProfile(-1));
             this.setCommandProfile(2, new CBCommandProfile(0));
+            this.setCommandProfile(3, new CBCommandProfile(0));
+            this.setCommandProfile(4, new CBCommandProfile(0));
             this.setMoralProfile(1, new CBMoralProfile(-1));
             this.setMoralProfile(2, new CBMoralProfile(0));
+            this.setMoralProfile(3, new CBMoralProfile(1));
+            this.setMoralProfile(4, new CBMoralProfile(1));
         }
     }
 
@@ -1760,7 +1768,7 @@ describe("Unit", ()=> {
         then:
             assert(leader.commandPoints).equalsTo(10);
         when:
-            game._resetPlayables(player);
+            player.endTurn();
         then:
             assert(leader.commandPoints).equalsTo(0);
     });

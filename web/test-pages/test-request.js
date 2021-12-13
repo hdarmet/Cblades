@@ -22,7 +22,10 @@ describe("Request", ()=> {
             requester.request = new MockPromise();
             return requester.request;
         }
-        requester.cookie=' first-cookie=my first cookie content;  xsrfToken=xsrf-token-content;'
+        Object.defineProperty(requester, "cookie", {
+            get: function() { return ' first-cookie=my first cookie content;  xsrfToken=xsrf-token-content;';},
+            configurable: true
+        });
     });
 
     function expectRequester(uri, body, method) {

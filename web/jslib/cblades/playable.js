@@ -703,6 +703,22 @@ export class CBBasicPlayer extends CBAbstractPlayer {
         this.game.nextTurn(animation);
     }
 
+    get playables() {
+        return this.game.playables.filter(playable=>playable.player === this);
+    }
+
+    beginTurn() {
+        for (let playable of this.playables) {
+            playable.init && playable.init(this);
+        }
+    }
+
+    endTurn() {
+        for (let playable of this.playables) {
+            playable.reset && playable.reset(this);
+        }
+    }
+
     canPlay() {
         return false;
     }
@@ -717,14 +733,19 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
 
     start() {
         super.start();
-        this._currentPlayer.beginTurn();
+        this._currentPlayer && this._currentPlayer.beginTurn();
     }
 
-    _resetPlayables(player) {
-        this.closePopup();
+    _reset(animation) {
         if (this._selectedPlayable) {
             this._selectedPlayable.unselect();
         }
+        for (let playable of this.playables) {
+            if (!playable._player) {
+                playable.reset && playable.reset(this);
+            }
+        }
+        animation && animation();
     }
 
     get visibility() {
@@ -826,7 +847,7 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
     }
 
     turnIsFinishable() {
-        if (!this._currentPlayer.canPlay()) return false;
+        if (this._currentPlayer && !this._currentPlayer.canPlay()) return false;
         if (!this.canUnselectPlayable()) return false;
         if (this.playables) {
             for (let playable of this.playables) {
@@ -845,11 +866,10 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
         if (!this.selectedPlayable || this.canUnselectPlayable()) {
             this.closeWidgets();
             this._currentPlayer.endTurn();
-            this._resetPlayables(this._currentPlayer);
+            this._reset(animation);
             let indexPlayer = this._players.indexOf(this._currentPlayer);
             this._currentPlayer = this._players[(indexPlayer + 1) % this._players.length];
             this._currentPlayer.beginTurn();
-            animation && animation();
             this.validate();
             Mechanisms.fire(this, CBGame.TURN_EVENT);
         }

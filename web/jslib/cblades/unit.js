@@ -91,22 +91,6 @@ export class CBUnitPlayer extends CBBasicPlayer {
         return this.game.playables.filter(playable=>playable.unitNature && playable.player === this);
     }
 
-    get playables() {
-        return this.game.playables.filter(playable=>playable.player === this);
-    }
-
-    beginTurn() {
-        for (let playable of this.playables) {
-            playable.init && playable.init(this);
-        }
-    }
-
-    endTurn() {
-        for (let playable of this.playables) {
-            playable.reset && playable.reset(this);
-        }
-    }
-
 }
 
 export class CBUnitActuatorTrigger extends CBPlayableActuatorTrigger {

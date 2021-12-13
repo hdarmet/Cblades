@@ -756,7 +756,6 @@ describe("Game", ()=> {
             assert(piece.viewportLocation.toString()).equalsTo("point(548.8759, 497.7517)");
             assert(piece.pieces).arrayEqualsTo([piece]);
             assert(piece.allArtifacts).arrayEqualsTo([piece.artifact]);
-            assert(piece._processGlobalEvent());
             assertClearDirectives(hexLayer);
             assertDirectives(hexLayer, showFakePiece("misc/piece", [0.3456, 0.3456, -0.3456, 0.3456, 548.8759, 497.7517]));
             assertNoMoreDirectives(hexLayer);

@@ -959,8 +959,6 @@ export class CBPiece {
         return this._getPieces();
     }
 
-    _processGlobalEvent(source, event, value) {
-    }
 }
 
 export function DisplayLocatableMixin(clazz) {

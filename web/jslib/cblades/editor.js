@@ -1018,7 +1018,7 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
             this.closeActuators();
         }
         else {
-            super._processGlobalEvent(source, event, value);
+            super._processGlobalEvent && super._processGlobalEvent(source, event, value);
         }
     }
 

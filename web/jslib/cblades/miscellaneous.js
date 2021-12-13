@@ -105,7 +105,7 @@ export class CBBurningCounter extends RetractablePieceMixin(CBHexCounter) {
         if (event === CBBurningCounter.PLAYED_EVENT) {
             this.setPlayed();
         }
-        else super._processGlobalEvent(source, event, value);
+        else super._processGlobalEvent && super._processGlobalEvent(source, event, value);
     }
 
     setPlayed() {
@@ -449,7 +449,7 @@ export class CBWingTirednessCounter extends CBWingDisplayablePlayable {
     }
 
     _processGlobalEvent(source, event, value) {
-        super._processGlobalEvent(source, event, value);
+        super._processGlobalEvent && super._processGlobalEvent(source, event, value);
         if (event===CBWing.TIREDNESS_EVENT) {
             this.artifact.changeImage(this.getValue(this._wing));
         }
@@ -489,7 +489,7 @@ export class CBWingMoralCounter extends CBWingDisplayablePlayable {
     }
 
     _processGlobalEvent(source, event, value) {
-        super._processGlobalEvent(source, event, value);
+        super._processGlobalEvent && super._processGlobalEvent(source, event, value);
         if (event===CBWing.MORAL_EVENT) {
             this.artifact.changeImage(this.getValue(this._wing));
         }

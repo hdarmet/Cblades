@@ -5,8 +5,9 @@ export let requester = {
     locationOrigin: document.defaultView.location.origin
 }
 Object.defineProperty(requester, "cookie", {
-    get: function() { return document.cookie; }
-})
+    get: function() { return document.cookie; },
+    configurable: true
+});
 
 /*
 export function setCookie(cname, cvalue, exdays) {

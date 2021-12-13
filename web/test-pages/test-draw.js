@@ -1020,7 +1020,10 @@ describe("Drawing fundamentals", ()=> {
                 requester.request = new MockPromise();
                 return requester.request;
             }
-            requester.cookie=' first-cookie=my first cookie content;  xsrfToken=xsrf-token-content;'
+            Object.defineProperty(requester, "cookie", {
+                get: function() { return ' first-cookie=my first cookie content;  xsrfToken=xsrf-token-content;'; },
+                configurable: true
+            });
             setDrawPlatform(targetPlatform());
             var answerType;
             var answerText;
