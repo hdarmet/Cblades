@@ -35,9 +35,7 @@ import {
     createTinyFormationGame, create2UnitsAndAFormationTinyGame
 } from "../game-examples.js";
 import {
-    CBCreateFormationActuator, CBReleaseTroopActuator,
-    registerInteractiveFormation,
-    unregisterInteractiveFormation
+    CBCreateFormationActuator, CBReleaseTroopActuator
 } from "../../../jslib/cblades/interactive/interactive-formation.js";
 import {
     CBHexSideId
@@ -45,8 +43,17 @@ import {
 import {
     CBStacking
 } from "../../../jslib/cblades/game.js";
+import {
+    CBSequence
+} from "../../../jslib/cblades/sequences.js";
+import {
+    registerInteractiveFormation,
+    unregisterInteractiveFormation
+} from "../../../jslib/cblades/interactive/interactive-formation.js";
 
 describe("Interactive Formation", ()=> {
+
+    var appendElement = CBSequence.appendElement;
 
     before(() => {
         registerInteractiveFormation();
@@ -55,10 +62,16 @@ describe("Interactive Formation", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
+        CBSequence.awaitedElements = [];
+        CBSequence.appendElement = function(game, element) {
+            let awaited = CBSequence.awaitedElements.pop();
+            assert(element).equalsTo(awaited);
+        }
     });
 
     after(() => {
         unregisterInteractiveFormation();
+        CBSequence.appendElement = appendElement;
     });
 
     function showQuitFullTrigger([a, b, c, d, e, f]) {

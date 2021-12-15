@@ -186,10 +186,6 @@ class CBTestPlayable extends BelongsToPlayerMixin(HexLocatableMixin(PlayableMixi
         this.player = player;
     }
 
-    _init() {
-        this.initialized = true;
-    }
-
     _updatePlayed() {
         this.updated = true;
     }
@@ -384,6 +380,25 @@ describe("Game", ()=> {
             player1.cancel();
         then:
             assert(player1).isTrue();
+    });
+
+    it("Checks that playing a playable is finishing its action", () => {
+        given:
+            var {game, playable} = createTinyGame();
+        when:
+            playable.action = new CBAction(game, playable);
+            playable.action.status = CBAction.FINISHED;
+        then:
+            assert(playable.isPlayed()).isTrue();
+        when:
+            playable.action = new CBAction(game, playable);
+            playable.played = true;
+        then:
+            assert(playable.action.status).equalsTo(CBAction.FINISHED);
+        when:
+            delete playable._action;
+        then:
+            assert(playable.isPlayed()).isFalse();
     });
 
     it("Checks game commands", () => {
@@ -1217,10 +1232,6 @@ describe("Game", ()=> {
         then:
             assert(playable.isActivated()).isFalse();
             assert(playable.isPlayed()).isFalse();
-        when:
-            playable.init(player);
-        then:
-            assert(playable.initialized).isTrue();
         when:
             playable.launchAction(new CBAction(game, playable));
             playable.setPlayed();

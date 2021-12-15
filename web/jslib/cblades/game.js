@@ -190,6 +190,14 @@ export class CBAction {
         return true;
     }
 
+    get status() {
+        return this._status;
+    }
+
+    set status(status) {
+        this._status = status;
+    }
+
     markAsStarted() {
         console.assert(this._status <= CBAction.STARTED);
         if (this._status === CBAction.INITIATED) {
@@ -1138,6 +1146,10 @@ export function PlayableMixin(clazz) {
             return this._action;
         }
 
+        set action(action) {
+            this._action = action;
+        }
+
         setPlayed() {
             Memento.register(this);
             if (!this.action) {
@@ -1146,12 +1158,24 @@ export function PlayableMixin(clazz) {
             this.action.markAsFinished();
         }
 
+        set played(played) {
+            if (played) {
+                if (!this._action) {
+                    this._action = new CBAction(this.game, this);
+                }
+                this._action.status = CBAction.FINISHED;
+            }
+            else {
+                delete this._action;
+            }
+        }
+
         reactivate() {
             delete this._action;
             this._updatePlayed && this._updatePlayed();
         }
 
-        reset(player) {
+        reset() {
             this.reactivate()
         }
 
@@ -1200,12 +1224,6 @@ export function BelongsToPlayerMixin(clazz) {
 
     return class extends clazz {
 
-        init(player) {
-            if (player === this.player) {
-                this._init && this._init();
-            }
-        }
-
         destroy() {
             Memento.register(this);
             this.player.losePlayable(this);
@@ -1223,12 +1241,6 @@ export function BelongsToPlayerMixin(clazz) {
         isFinishable() {
             if (!this.isCurrentPlayer()) return true;
             return this.player.canFinishPlayable(this);
-        }
-
-        reset(player) {
-            if (this.player === player) {
-                super.reset(player);
-            }
         }
 
         finish() {

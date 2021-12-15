@@ -729,9 +729,9 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._wing = wing;
         this._movementPoints=type.getMovementPoints(2);
         this._extendedMovementPoints=type.getExtendedMovementPoints(2);
-        this._tiredness=0;
-        this._munitions=0;
-        this._cohesion=0;
+        this._tiredness=CBTiredness.NONE;
+        this._munitions=CBMunitions.NONE;
+        this._cohesion=CBCohesion.GOOD_ORDER;
         this._engaging=false;
         this._charging=CBCharge.NONE;
         this._lossSteps = 0;
@@ -972,12 +972,9 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         }
     }
 
-    init(player) {
-        super.init(player);
-        if (player === this.player) {
-            this._movementPoints=this._type.getMovementPoints(this.steps);
-            this._extendedMovementPoints=this._type.getExtendedMovementPoints(this.steps);
-        }
+    init() {
+        this._movementPoints=this._type.getMovementPoints(this.steps);
+        this._extendedMovementPoints=this._type.getExtendedMovementPoints(this.steps);
     }
 
     get carried() {
@@ -1333,16 +1330,12 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         }
     }
 
-    _setEngagement(engaged, charging) {
-        if(this._engaging !== engaged || this._charging !== charging) {
-            this._engaging = engaged;
-            this._charging = charging;
-            this._updateEngagementArtifact(this.setMarkerArtifact, this.setActivableMarkerArtifact, this.removeMarkerArtifact);
-        }
-    }
-
     isEngaging() {
         return this._engaging;
+    }
+
+    get charge() {
+        return this._charging;
     }
 
     isCharging() {
@@ -1423,11 +1416,11 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._charging = state.charging;
         this._engaging = state.engaging;
         this._orderGiven = state.orderGiven;
-        this._played = state.played;
+        this.played = state.played;
         this._updateTirednessArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
         this._updateMunitionsArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
         this._updatePlayedArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
-        this._updateEngagementArtifact(this.setMarkerArtifact, this.setActivalbleMarkerArtifact, this.removeMarkerArtifact);
+        this._updateEngagementArtifact(this.setMarkerArtifact, this.setActivableMarkerArtifact, this.removeMarkerArtifact);
         this._updateCohesionArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
     }
 
@@ -1737,11 +1730,9 @@ export class CBCharacter extends CBUnit {
         this.wing.dismissLeader();
     }
 
-    reset(player) {
-        super.reset(player);
-        if (player === this.player) {
-            this._commandPoints = 0;
-        }
+    reset() {
+        super.reset();
+        this._commandPoints = 0;
     }
 
     get magicProfile() {

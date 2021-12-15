@@ -366,6 +366,10 @@ export class CBHexSideId extends CBHexLocation {
         return [...new Set([...this.toHex.playables, ...this.fromHex.playables])];
     }
 
+    moveTo(angle) {
+        return new CBHexSideId(this.fromHex.getNearHex(angle), this.toHex.getNearHex(angle));
+    }
+
     turnTo(angle) {
         let hsAngle = this.angle;
         let fhAngle1 = sumAngle(hsAngle, 60);
@@ -374,10 +378,6 @@ export class CBHexSideId extends CBHexLocation {
         let hex = (angle===fhAngle1 || angle===fhAngle2) ? this._fromHex : this._toHex;
         let newHex = hex.getNearHex(angle);
         return new CBHexSideId(pivot, newHex);
-    }
-
-    moveTo(angle) {
-        return new CBHexSideId(this.fromHex.getNearHex(angle), this.toHex.getNearHex(angle));
     }
 
     turnMove(angle) {

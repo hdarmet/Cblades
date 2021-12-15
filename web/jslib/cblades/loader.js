@@ -338,7 +338,7 @@ export class GameLoader {
                         charging: unitSpec.charging ? CBCharge.CHARGING : CBCharge.NONE,
                         engaging: unitSpec.contact,
                         orderGiven: unitSpec.orderGiven,
-                        played: unitSpec.played ? unit.setPlayed() : undefined
+                        played: unitSpec.played
                     });
                     unitsMap.set(unit.name, {unit, unitSpec});
                 }
@@ -552,7 +552,7 @@ export class SequenceLoader {
                 case "Move": element = new CBMoveSequenceElement(unit, hexLocation, stacking); break;
                 case "Rotate": element = new CBRotateSequenceElement(unit, angle); break;
                 case "Reorient": element = new CBReorientSequenceElement(unit, angle); break;
-                case "Turn": element = new CBTurnSequenceElement(unit, hexLocation, angle); break;
+                case "Turn": element = new CBTurnSequenceElement(unit, angle, hexLocation, stacking); break;
                 case "NextTurn": element = new CBNextTurnSequenceElement(game); break;
             }
             if (elementSpec.tiredness!==undefined) {

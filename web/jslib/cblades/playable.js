@@ -709,13 +709,13 @@ export class CBBasicPlayer extends CBAbstractPlayer {
 
     beginTurn() {
         for (let playable of this.playables) {
-            playable.init && playable.init(this);
+            playable.init && playable.init();
         }
     }
 
     endTurn() {
         for (let playable of this.playables) {
-            playable.reset && playable.reset(this);
+            playable.reset && playable.reset();
         }
     }
 
@@ -742,7 +742,7 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
         }
         for (let playable of this.playables) {
             if (!playable._player) {
-                playable.reset && playable.reset(this);
+                playable.reset && playable.reset();
             }
         }
         animation && animation();
@@ -863,7 +863,7 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
     }
 
     nextTurn(animation) {
-        if (!this.selectedPlayable || this.canUnselectPlayable()) {
+        if (this.turnIsFinishable()) {
             this.closeWidgets();
             this._currentPlayer.endTurn();
             this._reset(animation);

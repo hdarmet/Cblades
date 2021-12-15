@@ -368,6 +368,20 @@ export function create2PlayersFireTinyGame() {
     };
 }
 
+export function create2Players2LeadersTinyGame() {
+    let tinyGame = create2PlayersBaseGame();
+    let {game, map, wing1, wing2} = tinyGame;
+    let leaderType1 = createUnitType(CBTestLeaderType, "leader", 1, 1);
+    let leader1 = createCharacter(game, map, leaderType1, wing1, 0, 5, 8);
+    let leaderType2 = createUnitType(CBTestFireUnitType,"leader", 2, 1);
+    let leader2 = createCharacter(game, map, leaderType2, wing2, 0, 6, 8);
+    return {
+        ...tinyGame,
+        leaderType1, leader1,
+        leaderType2, leader2
+    };
+}
+
 export function create2Players2Units2LeadersTinyGame() {
     let tinyGame = create2PlayersTinyGame();
     let {game, map, wing1, wing2} = tinyGame;

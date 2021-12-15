@@ -239,15 +239,22 @@ export class Assertor {
     }
 
     _objectEquals(model, value) {
-        for (let key in model) {
-            if (model[key] && (model[key] instanceof Array)) {
-                this._arrayForObjectsEquals(model[key], value[key]);
+        if (model.equalsTo) {
+            if (!model.equalsTo(value)) {
+                throw new AssertionError(`${value} is not equals to ${model}`);
             }
-            else if (model[key] && (model[key].constructor === Object)) {
-                this._objectEquals(model[key], value[key]);
-            }
-            else {
-                this._equals(model[key], value[key]);
+        }
+        else {
+            for (let key in model) {
+                if (key) {
+                    if (model[key] && (model[key] instanceof Array)) {
+                        this._arrayForObjectsEquals(model[key], value[key]);
+                    } else if (model[key] && (model.constructor === Object)) {
+                        this._objectEquals(model[key], value[key]);
+                    } else {
+                        this._equals(model[key], value[key]);
+                    }
+                }
             }
         }
     }

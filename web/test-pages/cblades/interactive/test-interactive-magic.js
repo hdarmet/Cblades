@@ -27,7 +27,6 @@ import {
     clickOnResult,
     clickOnTrigger,
     executeAllAnimations,
-    paint,
     repaint,
     rollFor,
     showDice,
@@ -35,7 +34,7 @@ import {
     showInsert,
     showMask, showMenuItem, showMenuPanel, showPlayedDice,
     showSuccessResult,
-    zoomAndRotate0, mouseMoveOnTrigger, mouseMoveOnArtifact
+    zoomAndRotate0, mouseMoveOnTrigger
 } from "../interactive-tools.js";
 import {
     create2Players2Units2LeadersTinyGame, create2Players2UnitsALeaderAnArcaneWizardTinyGame,
@@ -44,15 +43,22 @@ import {
 import {
     CBSpellTargetFoesActuator,
     CBSpellTargetFriendsActuator,
-    CBSpellTargetHexesActuator,
-    registerInteractiveMagic,
-    unregisterInteractiveMagic
+    CBSpellTargetHexesActuator
 } from "../../../jslib/cblades/interactive/interactive-magic.js";
 import {
     CBSpell
 } from "../../../jslib/cblades/magic.js";
+import {
+    CBSequence
+} from "../../../jslib/cblades/sequences.js";
+import {
+    registerInteractiveMagic,
+    unregisterInteractiveMagic
+} from "../../../jslib/cblades/interactive/interactive-magic.js";
 
 describe("Interactive Magic", ()=> {
+
+    var appendElement = CBSequence.appendElement;
 
     before(() => {
         registerInteractiveMagic();
@@ -61,10 +67,16 @@ describe("Interactive Magic", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
+        CBSequence.awaitedElements = [];
+        CBSequence.appendElement = function(game, element) {
+            let awaited = CBSequence.awaitedElements.pop();
+            assert(element).equalsTo(awaited);
+        }
     });
 
     after(() => {
         unregisterInteractiveMagic();
+        CBSequence.appendElement = appendElement;
     });
 
     function showSpell(spell, [a, b, c, d, e, f]) {

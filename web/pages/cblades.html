@@ -112,15 +112,12 @@
     let counter12 = new CBTroop(GoblinWolfRider, wing1);
     counter12.lossSteps = 1;
     let counter13 = new CBTroop(GoblinSkirmisher, wing1);
-    /*
     character11.addToMap(map.getHex(4, 11));
     character12.addToMap(map.getHex(5, 11));
-     */
     counter11.addToMap(map.getHex(3, 10));
-    /*
     counter12.addToMap(map.getHex(3, 10));
     counter13.addToMap(map.getHex(8, 10));
-*/
+
     //new CBWingTirednessCounter(wing1).registerOnGame(game);
     //new CBWingMoralCounter(wing1).registerOnGame(game);
     let player2 = new CBInteractivePlayer("player2");
@@ -143,14 +140,12 @@
     counter24.angle = 210;
     let counter25 = new CBFormation(RoughneckCrossbowman, wing2, 2);
     counter25.angle = 210;
-    /*
     counter25.addToMap(new CBHexSideId( map.getHex(9, 6),  map.getHex(10, 6)));
     counter24.addToMap(new CBHexSideId( map.getHex(9, 5),  map.getHex(10, 5)));
     counter23.addToMap(new CBHexSideId( map.getHex(11, 7),  map.getHex(12, 7)));
     character21.addToMap(map.getHex(8, 6));
     character22.addToMap(map.getHex(7, 6));
     counter21.addToMap(map.getHex(7, 7));
-    */
     counter22.addToMap(map.getHex(10, 7));
     //new CBWingTirednessCounter(wing2).registerOnGame(game);
     //new CBWingMoralCounter(wing2).registerOnGame(game);

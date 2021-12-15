@@ -149,7 +149,7 @@ describe("Unit", ()=> {
         unit.addToMap(map.getHex(5, 8));
         game.start();
         loadAllImages();
-        return {game, player, unit, wing, map};
+        return {game, unitType, player, unit, wing, map};
     }
 
     function createTinyFormationGame() {
@@ -260,6 +260,7 @@ describe("Unit", ()=> {
         given:
             var { game, map } = prepareTinyGame();
             let player1 = new CBUnitPlayer("player1");
+            player1.canPlay = function() { return true; };
             game.addPlayer(player1);
             let player2 = new CBUnitPlayer("player2");
             game.addPlayer(player2);
@@ -737,6 +738,30 @@ describe("Unit", ()=> {
             assert(wing.tiredness).equalsTo(9);
     });
 
+    it("Checks unit naming by wings", () => {
+        given:
+            var { wing, unit, map, unitType } = createTinyGame();
+        then:
+            assert(unit.name).equalsTo("./../units/banner.png-0");
+        when:
+            var unit2 = new CBTroop(unitType, wing);
+            unit2.addToMap(map.getHex(3, 4));
+        then:
+            assert(unit2.name).equalsTo("./../units/banner.png-1");
+        when:
+            unit.removeFromMap();
+            var unit3 = new CBTroop(unitType, wing);
+            unit3.addToMap(map.getHex(4, 4));
+        then:
+            assert(unit3.name).equalsTo("./../units/banner.png-0");
+        when:
+            unit._name = "./../units/banner.png-0";
+            unit.addToMap(map.getHex(4, 5));
+        then:
+            assert(unit.name).equalsTo("./../units/banner.png-2");
+
+    });
+
     it("Checks unit move profile", () => {
         given:
             var { unit } = createTinyGame();
@@ -1171,6 +1196,7 @@ describe("Unit", ()=> {
         given:
             var {game, player, unit1, unit2} = create2UnitsTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
+            player.canPlay = function() { return true; };
             player.launchPlayableAction = function(unit, event) {
                 unit.launchAction(new CBAction(game, unit));
             }
@@ -1372,6 +1398,63 @@ describe("Unit", ()=> {
             assert(getDirectives(formationsLayer, 4)).arrayEqualsTo([]);
             assert(game.playables).doesNotContain(formation);
             assert(game.playables.length).equalsTo(2);
+    });
+
+    it("Checks set state on a unit", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var [markersLayer] = getLayers(game.board, "markers-0");
+        when:
+            unit.setState({
+                cohesion : CBCohesion.GOOD_ORDER,
+                tiredness : CBTiredness.TIRED,
+                munitions : CBMunitions.SCARCE,
+                charging : CBCharge.CAN_CHARGE,
+                engaging : false,
+                orderGiven : true,
+                played : false
+            });
+            repaint(game);
+        then:
+            assertClearDirectives(markersLayer);
+            assertDirectives(markersLayer, showMarker("tired", zoomAndRotate0(381.9648, 351.8878)));
+            assertDirectives(markersLayer, showMarker("scarceamno", zoomAndRotate0(416.6667, 386.5897)));
+            assertDirectives(markersLayer, showMarker("ordergiven", zoomAndRotate0(451.3685, 317.186)));
+            assertDirectives(markersLayer, showActiveMarker("possible-charge", zoomAndRotate0(381.9648, 317.186)));
+            assertNoMoreDirectives(markersLayer);
+            assert(unit.cohesion).equalsTo(CBCohesion.GOOD_ORDER);
+            assert(unit.tiredness).equalsTo(CBTiredness.TIRED);
+            assert(unit.munitions).equalsTo(CBMunitions.SCARCE);
+            assert(unit.charge).equalsTo(CBCharge.CAN_CHARGE);
+            assert(unit.isEngaging()).isFalse();
+            assert(unit.isCharging()).isFalse();
+            assert(unit.hasReceivedOrder()).isTrue();
+            assert(unit.isPlayed()).isFalse();
+        when:
+            unit.setState({
+                cohesion : CBCohesion.DISRUPTED,
+                tiredness : CBTiredness.NONE,
+                munitions : CBMunitions.NONE,
+                charging : CBCharge.NONE,
+                engaging : true,
+                orderGiven : false,
+                played : true
+            });
+            repaint(game);
+        then:
+            assertClearDirectives(markersLayer);
+            assertDirectives(markersLayer, showMarker("actiondone", zoomAndRotate0(451.3685, 317.186)));
+            assertDirectives(markersLayer, showMarker("contact", zoomAndRotate0(381.9648, 317.186)));
+            assertDirectives(markersLayer, showMarker("disrupted", zoomAndRotate0(381.9648, 386.5897)));
+            assertNoMoreDirectives(markersLayer);
+            assert(unit.cohesion).equalsTo(CBCohesion.DISRUPTED);
+            assert(unit.tiredness).equalsTo(CBTiredness.NONE);
+            assert(unit.munitions).equalsTo(CBMunitions.NONE);
+            assert(unit.charge).equalsTo(CBCharge.NONE);
+            assert(unit.isEngaging()).isTrue();
+            assert(unit.isCharging()).isFalse();
+            assert(unit.hasReceivedOrder()).isFalse();
+            assert(unit.isPlayed()).isTrue();
     });
 
     it("Checks mark unit as on contact", () => {

@@ -20,7 +20,6 @@ import {
 } from "../../../jslib/mechanisms.js";
 import {
     repaint,
-    paint,
     clickOnActionMenu,
     clickOnPiece,
     showTroop,
@@ -56,9 +55,7 @@ import {
     create2UnitsTinyGame
 } from "../game-examples.js";
 import {
-    CBPlayFireActuator,
-    registerInteractiveMiscellaneous,
-    unregisterInteractiveMiscellaneous
+    CBPlayFireActuator
 } from "../../../jslib/cblades/interactive/interactive-miscellaneous.js";
 import {
     PlayableMixin
@@ -76,10 +73,35 @@ import {
     CBWeather, CBFog
 } from "../../../jslib/cblades/weather.js";
 import {
-    DDice
-} from "../../../jslib/widget.js";
+    CBSequence
+} from "../../../jslib/cblades/sequences.js";
+import {
+    registerInteractiveMiscellaneous,
+    unregisterInteractiveMiscellaneous
+} from "../../../jslib/cblades/interactive/interactive-miscellaneous.js";
 
 describe("Interactive Miscellaneous", ()=> {
+
+    var appendElement = CBSequence.appendElement;
+
+    before(() => {
+        registerInteractiveMiscellaneous();
+        setDrawPlatform(mockPlatform);
+        DImage.resetCache();
+        Mechanisms.reset();
+        DAnimator.clear();
+        Memento.clear();
+        CBSequence.awaitedElements = [];
+        CBSequence.appendElement = function(game, element) {
+            let awaited = CBSequence.awaitedElements.pop();
+            assert(element).equalsTo(awaited);
+        }
+    });
+
+    after(() => {
+        unregisterInteractiveMiscellaneous();
+        CBSequence.appendElement = appendElement;
+    });
 
     function showPlayIsFireTrigger([a, b, c, d, e, f]) {
         return [
@@ -121,19 +143,6 @@ describe("Interactive Miscellaneous", ()=> {
         }
         getDrawPlatform().resetRandoms(...values);
     }
-
-    before(() => {
-        registerInteractiveMiscellaneous();
-        setDrawPlatform(mockPlatform);
-        DImage.resetCache();
-        Mechanisms.reset();
-        DAnimator.clear();
-        Memento.clear();
-    });
-
-    after(() => {
-        unregisterInteractiveMiscellaneous();
-    });
 
     it("Checks that the unit menu contains menu items for miscellaneous actions", () => {
         given:

@@ -16,6 +16,7 @@ import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
 import {
+    create1PlayerBaseGame,
     createTinyGame
 } from "./game-examples.js";
 import {
@@ -51,7 +52,7 @@ describe("Miscellaneous", ()=> {
 
     it("Checks fire counter", () => {
         given:
-            var {game, map} = createTinyGame();
+            var {game, map} = create1PlayerBaseGame();
             var [groundLayer] = getLayers(game.board,"hex-0");
             var hexId = map.getHex(7,8);
         when:
@@ -152,7 +153,7 @@ describe("Miscellaneous", ()=> {
 
     it("Checks playing burning counter", () => {
         given:
-            var {game, player, map} = createTinyGame();
+            var {game, player, map} = create1PlayerBaseGame();
             var [groundMarkerLayer] = getLayers(game.board,"hmarkers-0");
         when:
             var burning1 = new CBFireCounter();
@@ -199,7 +200,7 @@ describe("Miscellaneous", ()=> {
 
     it("Checks burning playing management on game level", () => {
         given:
-            var {game} = createTinyGame();
+            var {game} = create1PlayerBaseGame();
         when:
             Memento.open();
             game.changeFirePlayed();
@@ -319,7 +320,7 @@ describe("Miscellaneous", ()=> {
 
     it("Checks weather counter", () => {
         given:
-            var {game, player} = createTinyGame();
+            var {game, player} = create1PlayerBaseGame();
             var [countersLayer, counterMarkersLayer] = getLayers(game.board,"counters", "counter-markers");
         when:
             var weather = new CBWeatherCounter();
@@ -372,7 +373,7 @@ describe("Miscellaneous", ()=> {
 
     it("Checks fog counter", () => {
         given:
-            var {game, player} = createTinyGame();
+            var {game, player} = create1PlayerBaseGame();
             var [countersLayer, counterMarkersLayer] = getLayers(game.board,"counters", "counter-markers");
         when:
             var fog = new CBFogCounter();
@@ -425,7 +426,7 @@ describe("Miscellaneous", ()=> {
 
     it("Checks wind direction counter", () => {
         given:
-            var {game, player} = createTinyGame();
+            var {game, player} = create1PlayerBaseGame();
             var [countersLayer, counterMarkersLayer] = getLayers(game.board,"counters", "counter-markers");
         when:
             var windDirection = new CBWindDirectionCounter();
@@ -514,7 +515,7 @@ describe("Miscellaneous", ()=> {
 
     it("Checks wing moral counter", () => {
         given:
-            var {game, wing, player} = createTinyGame();
+            var {game, wing, player} = create1PlayerBaseGame();
             var [countersLayer, counterMarkersLayer] = getLayers(game.board,"counters", "counter-markers");
         when:
             var wingMoral = new CBWingMoralCounter(wing);
@@ -597,7 +598,7 @@ describe("Miscellaneous", ()=> {
 
     it("Checks wing tiredness counter", () => {
         given:
-            var {game, wing, player} = createTinyGame();
+            var {game, wing, player} = create1PlayerBaseGame();
             var [countersLayer, counterMarkersLayer] = getLayers(game.board,"counters", "counter-markers");
         when:
             var wingTiredness = new CBWingTirednessCounter(wing);

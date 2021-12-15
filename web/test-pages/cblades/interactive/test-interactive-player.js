@@ -59,8 +59,13 @@ import {
 import {
     CBCharge
 } from "../../../jslib/cblades/unit.js";
+import {
+    CBSequence
+} from "../../../jslib/cblades/sequences.js";
 
 describe("Interactive Player", ()=> {
+
+    var appendElement = CBSequence.appendElement;
 
     before(() => {
         setDrawPlatform(mockPlatform);
@@ -68,6 +73,11 @@ describe("Interactive Player", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
+        CBSequence.awaitedElements = [];
+        CBSequence.appendElement = function(game, element) {
+            let awaited = CBSequence.awaitedElements.pop();
+            assert(element).equalsTo(awaited);
+        }
         CBActionMenu.menuBuilders = [
             function createTestActionMenuItems(unit, actions) {
                 return [
@@ -86,6 +96,7 @@ describe("Interactive Player", ()=> {
 
     after(() => {
         CBActionMenu.menuBuilders = [];
+        CBSequence.appendElement = appendElement;
     });
 
     function clickOnDoThisAction(game) {
@@ -181,22 +192,6 @@ describe("Interactive Player", ()=> {
             assert(game.selectedPlayable).equalsTo(unit1);
     });
 
-    it("Checks that a selected unit's action is finalized when there is an end of turn", () => {
-        given:
-            var {game, unit, player} = createTinyGame();
-            player.changeSelection(unit, dummyEvent);
-            var action = new CBAction(game, unit);
-            unit.launchAction(action);
-            action.markAsFinished();
-        then:
-            assert(game.turnIsFinishable()).isTrue();
-        when:
-            var finished = false;
-            player.finishTurn(()=>{})
-        then:
-            assert(action.isFinalized()).isTrue();
-    });
-
     it("Checks that a selected unit's started/finished action is finalized when a new unit is selected", () => {
         given:
             var {game, unit1, unit2, player} = create2UnitsTinyGame();
@@ -234,15 +229,6 @@ describe("Interactive Player", ()=> {
             player.finishTurn(()=>{finished=true;})
         then:
             assert(finished).isTrue();
-    });
-
-    it("Checks that a player cannot finish their turn if a unit is not finishable", () => {
-        given:
-            var {game, unit1, player} = create2UnitsTinyGame();
-            var finished = false;
-        then:
-            assert(player.canFinishPlayable(unit1)).isFalse();
-            assert(game.turnIsFinishable()).isFalse();
     });
 
     it("Checks that activation remove own contact marker ", () => {
@@ -766,6 +752,30 @@ describe("Interactive Player", ()=> {
                     "drawImage(./../units/banner.png, -25, -60, 50, 120)",
                 "restore()"
             ]);
+    });
+
+    it("Checks that a selected unit's action is finalized when there is an end of turn", () => {
+        given:
+            var {game, unit, player} = createTinyGame();
+            player.changeSelection(unit, dummyEvent);
+            var action = new CBAction(game, unit);
+            unit.launchAction(action);
+            action.markAsFinished();
+        then:
+            assert(game.turnIsFinishable()).isTrue();
+        when:
+            var finished = false;
+            player.finishTurn(()=>{})
+        then:
+            assert(action.isFinalized()).isTrue();
+    });
+
+    it("Checks that a player cannot finish their turn if a unit is not finishable", () => {
+        given:
+            var {game, unit1, player} = create2UnitsTinyGame();
+        then:
+            assert(player.canFinishPlayable(unit1)).isFalse();
+            assert(game.turnIsFinishable()).isFalse();
     });
 
 });

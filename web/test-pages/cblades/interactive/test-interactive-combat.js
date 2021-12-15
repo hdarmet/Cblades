@@ -21,13 +21,10 @@ import {
     CBAdvanceActuator,
     CBFireAttackActuator, CBFireHelpActuator, CBFireHexActuator, CBFormationRetreatActuator,
     CBRetreatActuator,
-    CBShockAttackActuator, CBShockAttackInsert, CBFireAttackInsert, CBShockHelpActuator, CBShockHexActuator,
-    registerInteractiveCombat,
-    unregisterInteractiveCombat
+    CBShockAttackActuator, CBShockAttackInsert, CBFireAttackInsert, CBShockHelpActuator, CBShockHexActuator
 } from "../../../jslib/cblades/interactive/interactive-combat.js";
 import {
     repaint,
-    paint,
     clickOnActionMenu,
     clickOnPiece,
     clickOnTrigger,
@@ -70,7 +67,7 @@ import {
     create2PlayersFireTinyGame,
     setWeaponBonuses,
     create2Players4UnitsTinyGame,
-    create2Players4UnitsFireTinyGame
+    create2Players4UnitsFireTinyGame, create2Players2LeadersTinyGame
 } from "../game-examples.js";
 import {
     CBHexSideId, CBHex
@@ -78,8 +75,17 @@ import {
 import {
     CBCharge, CBMunitions, CBTiredness
 } from "../../../jslib/cblades/unit.js";
+import {
+    CBSequence
+} from "../../../jslib/cblades/sequences.js";
+import {
+    registerInteractiveCombat,
+    unregisterInteractiveCombat
+} from "../../../jslib/cblades/interactive/interactive-combat.js";
 
 describe("Interactive Combat", ()=> {
+
+    var appendElement = CBSequence.appendElement;
 
     before(() => {
         registerInteractiveCombat();
@@ -88,10 +94,16 @@ describe("Interactive Combat", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
+        CBSequence.awaitedElements = [];
+        CBSequence.appendElement = function(game, element) {
+            let awaited = CBSequence.awaitedElements.pop();
+            assert(element).equalsTo(awaited);
+        }
     });
 
     after(() => {
         unregisterInteractiveCombat();
+        CBSequence.appendElement = appendElement;
     });
 
     function showUnsupportedShock([a, b, c, d, e, f]) {
@@ -1530,10 +1542,11 @@ describe("Interactive Combat", ()=> {
 
     it("Checks fire insert markers - fourth case", () => {
         given:
-            var { game, map, leader1, leader2 } = create2Players2Units2LeadersTinyGame();
+            var { game, map, leader1, leader2 } = create2Players2LeadersTinyGame();
             var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
             leader1.move(map.getHex(5, 6));
             leader2.move(map.getHex(5, 8));
+            leader1.played = true;
             game.nextTurn();
             clickOnPiece(game, leader2);
             clickOnFireAttackAction(game);

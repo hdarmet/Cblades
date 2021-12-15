@@ -31,8 +31,13 @@ import {
     registerInteractiveRecover,
     unregisterInteractiveRecover
 } from "../../../jslib/cblades/interactive/interactive-recover.js";
+import {
+    CBSequence
+} from "../../../jslib/cblades/sequences.js";
 
 describe("Interactive Recover", ()=> {
+
+    var appendElement = CBSequence.appendElement;
 
     before(() => {
         registerInteractiveRecover();
@@ -41,10 +46,16 @@ describe("Interactive Recover", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
+        CBSequence.awaitedElements = [];
+        CBSequence.appendElement = function(game, element) {
+            let awaited = CBSequence.awaitedElements.pop();
+            assert(element).equalsTo(awaited);
+        }
     });
 
     after(() => {
         unregisterInteractiveRecover();
+        CBSequence.appendElement = appendElement;
     });
 
     it("Checks that the unit menu contains menu items for recovering", () => {

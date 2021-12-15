@@ -63,7 +63,6 @@ import {
     DInsertFrame
 } from "../../jslib/widget.js";
 
-
 class CBTestPlayer extends CBBasicPlayer {
 
     constructor(...args) {
@@ -222,11 +221,9 @@ class CBTestCounter extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         return this.owner.player;
     }
 
-    reset(player) {
-        super.reset(player);
-        if (player === this.player) {
-            delete this.status;
-        }
+    reset() {
+        super.reset();
+        delete this.status;
     }
 
     get slot() {
@@ -273,11 +270,9 @@ class CBTestFormation extends RetractablePieceMixin(HexLocatableMixin(BelongsToP
         this.status = "played";
     }
 
-    reset(player) {
-        super.reset(player);
-        if (player === this.player) {
-            delete this.status;
-        }
+    reset() {
+        super.reset();
+        delete this.status;
     }
 
     get slot() {
@@ -647,6 +642,7 @@ describe("Playable", ()=> {
         given:
             var {game, player1, player2} = create2PlayersTinyGame();
             game.setMenu();
+            player1.canPlay = function() { return true; };
         then:
             assert(game.currentPlayer).equalsTo(player1);
         when:
@@ -681,6 +677,7 @@ describe("Playable", ()=> {
     it("Checks that when changing turn, current player changes too and counters are reset", () => {
         given:
             var {game, player1, player2, unit0, unit1, unit2} = create2PlayersTinyGame();
+            player1.canPlay = function() { return true; };
         then:
             assert(player1.playables).arrayEqualsTo([unit0, unit1]);
             assert(game.currentPlayer).equalsTo(player1);
@@ -1505,6 +1502,7 @@ describe("Playable", ()=> {
             player.launchPlayableAction = function(playable, event) {
                 playable.launchAction(new CBAction(game, playable));
             }
+            player.canPlay = function() { return true; };
         when:
             player.changeSelection(playable1, dummyEvent);
             playable1.action.markAsStarted();
@@ -1524,6 +1522,35 @@ describe("Playable", ()=> {
             assert(playable1.isActivated()).isFalse();
             assert(playable1.isPlayed()).isFalse();
     });
+
+    it("Checks conditions when turn is finishable", () => {
+        given:
+            var {game, player, playable1} = create2PlayablesTinyGame();
+        when:
+            player.canPlay = function() { return false; }
+        then:
+            assert(game.turnIsFinishable()).isFalse();
+        when:
+            player.canPlay = function() { return true; }
+        then:
+            assert(game.turnIsFinishable()).isTrue();
+        when:
+            game.canUnselectPlayable = function() { return false; }
+        then:
+            assert(game.turnIsFinishable()).isFalse();
+        when:
+            game.canUnselectPlayable = function() { return true; }
+        then:
+            assert(game.turnIsFinishable()).isTrue();
+        when:
+            playable1.isFinishable = function() { return false; }
+        then:
+            assert(game.turnIsFinishable()).isFalse();
+        when:
+            playable1.isFinishable = function() { return true; }
+        then:
+            assert(game.turnIsFinishable()).isTrue();
+     });
 
     it("Checks playable sorting on Hex", () => {
         given:

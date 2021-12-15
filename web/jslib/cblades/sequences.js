@@ -120,18 +120,77 @@ export class CBSequence {
 
 }
 
-export class CBStateSequenceElement {
+export class CBSequenceElement {
 
-    constructor(unit) {
-        this.type = "State";
+    constructor(type) {
+        this.type = type;
+    }
+
+    equalsTo(element) {
+        if (this.type !== element.type) return false;
+        return true;
+    }
+
+    toString() {
+        return "{ "+this._toString()+" }";
+    }
+
+    _toString() {
+        let result = "Type: "+this.type;
+        return result;
+    }
+
+}
+
+export class CBStateSequenceElement extends CBSequenceElement {
+
+    constructor(unit, type="State") {
+        super(type);
         this.unit = unit;
         this.cohesion = unit.cohesion;
         this.tiredness = unit.tiredness;
         this.munitions = unit.munitions;
-        this.charging = unit.charging;
-        this.engaging = unit.engaging;
-        this.orderGiven = unit.orderGiven;
-        this.played = unit.played;
+        this.charging = unit.charge;
+        this.engaging = unit.isEngaging();
+        this.orderGiven = unit.hasReceivedOrder();
+        this.played = unit.isPlayed();
+    }
+
+    setState(state) {
+        if (state.cohesion !== undefined) this.cohesion = state.cohesion;
+        if (state.tiredness !== undefined) this.tiredness = state.tiredness;
+        if (state.munitions !== undefined) this.munitions = state.munitions;
+        if (state.charging !== undefined) this.charging = state.charging;
+        if (state.engaging !== undefined) this.engaging = state.engaging;
+        if (state.orderGiven !== undefined) this.orderGiven = state.orderGiven;
+        if (state.played !== undefined) this.played = state.played;
+        return this;
+    }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        if (this.unit !== element.unit) return false;
+        if (this.cohesion !== element.cohesion) return false;
+        if (this.tiredness !== element.tiredness) return false;
+        if (this.munitions !== element.munitions) return false;
+        if (this.charging !== element.charging) return false;
+        if (this.engaging !== element.engaging) return false;
+        if (this.orderGiven !== element.orderGiven) return false;
+        if (this.played !== element.played) return false;
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        if (this.unit !== undefined) result+=", Unit: "+this.unit.name;
+        if (this.cohesion !== undefined) result+=", Cohesion: "+this.cohesion;
+        if (this.tiredness !== undefined) result+=", Tiredness: "+this.tiredness;
+        if (this.munitions !== undefined) result+=", Munitions: "+this.munitions;
+        if (this.charging !== undefined) result+=", Charging: "+this.charging;
+        if (this.engaging !== undefined) result+=", Engaging: "+this.engaging;
+        if (this.orderGiven !== undefined) result+=", OrderGiven: "+this.orderGiven;
+        if (this.played !== undefined) result+=", Played: "+this.played;
+        return result;
     }
 
     apply(startTick) {
@@ -149,8 +208,7 @@ export class CBStateSequenceElement {
 export class CBMoveSequenceElement extends CBStateSequenceElement {
 
     constructor(unit, hexLocation, stacking) {
-        super(unit);
-        this.type = "Move";
+        super(unit, "Move");
         this.hexLocation = hexLocation;
         this.stacking = stacking;
     }
@@ -161,13 +219,26 @@ export class CBMoveSequenceElement extends CBStateSequenceElement {
 
     get delay() { return 500; }
 
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        if (this.hexLocation.location.toString() !== element.hexLocation.location.toString()) return false;
+        if (this.stacking !== element.stacking) return false;
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        if (this.stacking !== undefined) result+=", HexLocation: "+this.hexLocation.location.toString();
+        if (this.stacking !== undefined) result+=", Stacking: "+this.stacking;
+        return result;
+    }
+
 }
 
 export class CBRotateSequenceElement extends CBStateSequenceElement {
 
     constructor(unit, angle) {
-        super(unit);
-        this.type = "Rotate";
+        super(unit, "Rotate");
         this.angle = angle;
     }
 
@@ -176,14 +247,25 @@ export class CBRotateSequenceElement extends CBStateSequenceElement {
     }
 
     get delay() { return 500; }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        if (this.angle !== element.angle) return false;
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        if (this.angle !== undefined) result+=" Angle: "+this.angle;
+        return result;
+    }
 
 }
 
 export class CBReorientSequenceElement extends CBStateSequenceElement {
 
     constructor(unit, angle) {
-        super(unit);
-        this.type = "Reorient";
+        super(unit, "Reorient");
         this.angle = angle;
     }
 
@@ -193,15 +275,26 @@ export class CBReorientSequenceElement extends CBStateSequenceElement {
 
     get delay() { return 500; }
 
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        if (this.angle !== element.angle) return false;
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        if (this.angle !== undefined) result+=", Angle: "+this.angle;
+        return result;
+    }
 }
 
 export class CBTurnSequenceElement extends CBStateSequenceElement {
 
-    constructor(unit, angle, stacking) {
+    constructor(unit, angle, hexLocation, stacking) {
         super(unit);
         this.type = "Turn";
         this.angle = angle;
-        this.hexLocation = unit.hexLocation;
+        this.hexLocation = hexLocation;
         this.stacking = stacking;
     }
 
@@ -210,6 +303,22 @@ export class CBTurnSequenceElement extends CBStateSequenceElement {
     }
 
     get delay() { return 500; }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        if (this.hexLocation.location.toString() !== element.hexLocation.location.toString()) return false;
+        if (this.stacking !== element.stacking) return false;
+        if (this.angle !== element.angle) return false;
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        if (this.stacking !== undefined) result+=", HexLocation: "+this.hexLocation.location.toString();
+        if (this.stacking !== undefined) result+=", Stacking: "+this.stacking;
+        if (this.angle !== undefined) result+=", Angle: "+this.angle;
+        return result;
+    }
 
 }
 
@@ -283,10 +392,10 @@ export class CBUnitAnimation extends DAnimation {
 
 }
 
-export class CBNextTurnSequenceElement {
+export class CBNextTurnSequenceElement extends CBSequenceElement {
 
     constructor(game) {
-        this.type = "NextTurn";
+        super("NextTurn");
         this.game = game;
     }
 
@@ -296,6 +405,17 @@ export class CBNextTurnSequenceElement {
 
     get delay() { return 500; }
 
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        if (this.game !== element.game) return false;
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        if (this.game !== undefined) result+=", Game: "+this.game.name;
+        return result;
+    }
 }
 
 export class CBNextTurnAnimation extends DAnimation {

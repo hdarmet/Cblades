@@ -282,9 +282,9 @@ export class InteractiveAbstractMovementAction extends CBAction {
         cost = this._updateTirednessForRotation(cost, start);
         this._checkActionProgession(cost.value);
         this.unit.rotate(angle, cost);
-        CBSequence.appendElement(this.game, new CBRotateSequenceElement(this.unit, angle));
         let played = !this._continueAfterRotation();
         this._markUnitActivationAfterMovement(played);
+        CBSequence.appendElement(this.game, new CBRotateSequenceElement(this.unit, angle));
     }
 
     _checkIfANonRoutedCrossedUnitLoseCohesion(crossedUnits, processing, cancellable) {
@@ -376,8 +376,8 @@ export class InteractiveAbstractMovementAction extends CBAction {
         cost = this._updateTirednessForMovement(cost, start);
         this._checkActionProgession(cost.value);
         this.unit.move(hexLocation, cost, CBStacking.BOTTOM);
-        CBSequence.appendElement(this.game, new CBMoveSequenceElement(this.unit, hexLocation, CBStacking.BOTTOM));
         this._continueAfterMove();
+        CBSequence.appendElement(this.game, new CBMoveSequenceElement(this.unit, hexLocation, CBStacking.BOTTOM));
     }
 
     _turnUnit(angle, start, cost) {
@@ -385,8 +385,8 @@ export class InteractiveAbstractMovementAction extends CBAction {
         cost = this._updateTirednessForMovement(cost, start);
         this._checkActionProgession(cost.value);
         this.unit.turn(angle, cost, CBStacking.BOTTOM);
-        CBSequence.appendElement(this.game, new CBTurnSequenceElement(this.unit, angle, CBStacking.BOTTOM));
         this._continueAfterMove();
+        CBSequence.appendElement(this.game, new CBTurnSequenceElement(this.unit, angle, this.unit.hexLocation,  CBStacking.BOTTOM));
     }
 
     _collectUnitsToCross() {
@@ -414,7 +414,6 @@ export class InteractiveAbstractMovementAction extends CBAction {
     _updateTirednessForMovement(cost) {
         if (this.game.arbitrator.doesMovementInflictTiredness(this.unit, cost)) {
             this.unit.addOneTirednessLevel();
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
         }
         return cost;
     }
@@ -422,7 +421,6 @@ export class InteractiveAbstractMovementAction extends CBAction {
     _updateTirednessForRotation(cost, first) {
         if (this.game.arbitrator.doesMovementInflictTiredness(this.unit, cost)) {
             this.unit.addOneTirednessLevel();
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
         }
         return cost;
     }
@@ -788,11 +786,11 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
     _checkChargingStatus(engaging) {
         if (this.moves>=2 || (this.moves===1 && engaging)) {
             this.unit.acknowledgeCharge(true);
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
         }
         else {
-            this.unit.setCharging(CBCharge.NONE);
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+            if (this.unit.charge !== CBCharge.NONE) {
+                this.unit.setCharging(CBCharge.NONE);
+            }
         }
     }
 
@@ -809,6 +807,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         else for (let playable of this.unit.hexLocation.playables) {
             if (playable.characterNature && playable !== this.unit && playable.angle !== this.unit.angle) {
                 playable.reorient(this.unit.angle);
+                CBSequence.appendElement(this.game, new CBReorientSequenceElement(this.playable, this.unit.angle));
             }
         }
     }
@@ -936,8 +935,10 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     }
 
     play() {
-        this.unit.setCharging(CBCharge.NONE);
-        CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+        if (this.unit.charge !== CBCharge.NONE) {
+            this.unit.setCharging(CBCharge.NONE);
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+        }
         super.play();
     }
 
@@ -1060,8 +1061,10 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
     }
 
     play() {
-        this.unit.setCharging(CBCharge.NONE);
-        CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+        if (this.unit.charge !== CBCharge.NONE) {
+            this.unit.setCharging(CBCharge.NONE);
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+        }
         super.play();
     }
 
@@ -1077,8 +1080,8 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
         cost = this._updateTirednessForMovement(cost, start);
         this._checkActionProgession(cost.value);
         this.unit.move(hexLocation, cost, CBStacking.TOP);
-        CBSequence.appendElement(this.game, new CBMoveSequenceElement(this.unit, hexLocation, CBStacking.TOP));
         this._continueAfterMove();
+        CBSequence.appendElement(this.game, new CBMoveSequenceElement(this.unit, hexLocation, CBStacking.TOP));
     }
 
     _finishMove() {
@@ -1189,8 +1192,10 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
     }
 
     play() {
-        this.unit.setCharging(CBCharge.NONE);
-        CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+        if (this.unit.charge !== CBCharge.NONE) {
+            this.unit.setCharging(CBCharge.NONE);
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+        }
         super.play();
     }
 

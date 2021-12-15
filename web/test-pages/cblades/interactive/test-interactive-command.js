@@ -18,10 +18,8 @@ import {
 import {
     Mechanisms, Memento
 } from "../../../jslib/mechanisms.js";
-
 import {
     repaint,
-    paint,
     clickOnActionMenu,
     clickOnPiece,
     clickOnDice,
@@ -52,16 +50,22 @@ import {
     createTinyGameWithLeader
 } from "../game-examples.js";
 import {
-    CBOrderGivenActuator, CBOrderGivenHelpActuator,
+    CBOrderGivenActuator, CBOrderGivenHelpActuator
+} from "../../../jslib/cblades/interactive/interactive-command.js";
+import {
+    CBOrderInstruction, CBTiredness
+} from "../../../jslib/cblades/unit.js";
+import {
+    CBSequence
+} from "../../../jslib/cblades/sequences.js";
+import {
     registerInteractiveCommand,
     unregisterInteractiveCommand
 } from "../../../jslib/cblades/interactive/interactive-command.js";
-import {
-    CBCohesion,
-    CBOrderInstruction, CBTiredness
-} from "../../../jslib/cblades/unit.js";
 
 describe("Interactive Command", ()=> {
+
+    var appendElement = CBSequence.appendElement;
 
     before(() => {
         registerInteractiveCommand();
@@ -70,10 +74,16 @@ describe("Interactive Command", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
+        CBSequence.awaitedElements = [];
+        CBSequence.appendElement = function(game, element) {
+            let awaited = CBSequence.awaitedElements.pop();
+            assert(element).equalsTo(awaited);
+        }
     });
 
     after(() => {
         unregisterInteractiveCommand();
+        CBSequence.appendElement = appendElement;
     });
 
     function showOrderTrigger([a, b, c, d, e, f]) {
