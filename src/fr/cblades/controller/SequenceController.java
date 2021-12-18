@@ -48,7 +48,7 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 	}
 
 	@REST(url="/api/sequence/by-game/:game/:count", method=Method.POST)
-	public Json getByGame(Map<String, String> params, Json request) {
+	public Json getByGameAndCount(Map<String, String> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
@@ -59,7 +59,7 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 						"game", game, "count", count);
 				if (sequence==null) {
 					throw new SummerControllerException(404,
-							"Unknown sequence of game %s", game
+							"Unknown sequence of game %s and count %d", game, count
 					);
 				}
 				result.set(readFromSequence(sequence));

@@ -5,6 +5,7 @@ import java.util.Map;
 
 public enum Cohesion {
     GOOD_ORDER("GO"),
+    DELETED("X"),
     DISRUPTED("D"),
     ROOTED("R");
 

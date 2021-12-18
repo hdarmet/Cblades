@@ -22,13 +22,16 @@ import {
     CBStateSequenceElement, CBTurnSequenceElement
 } from "./sequences.js";
 
+//let consoleLog = console.log;
+let consoleLog = ()=>{};
+
 export class Connector {
 
     connect() {
         sendPost("/api/ping-login",
             null,
-            (text, status)=>console.log("SUCCESS! "+text+": "+status),
-            (text, status)=>console.log("FAILURE! "+text+": "+status)
+            (text, status)=>consoleLog("SUCCESS! "+text+": "+status),
+            (text, status)=>consoleLog("FAILURE! "+text+": "+status)
         );
     }
 
@@ -46,20 +49,20 @@ export class BoardLoader {
             sendPost("/api/board/create",
                 json,
                 (text, status) => {
-                    console.log("SUCCESS! " + text + ": " + status);
+                    consoleLog("SUCCESS! " + text + ": " + status);
                     this.fromSpecs(JSON.parse(text));
                 },
-                (text, status) => console.log("FAILURE! " + text + ": " + status)
+                (text, status) => consoleLog("FAILURE! " + text + ": " + status)
             );
         }
         else {
             sendPost("/api/board/update/"+this._board._oid,
                 json,
                 (text, status) => {
-                    console.log("SUCCESS! " + text + ": " + status);
+                    consoleLog("SUCCESS! " + text + ": " + status);
                     this.fromSpecs(JSON.parse(text));
                 },
-                (text, status) => console.log("FAILURE! " + text + ": " + status)
+                (text, status) => consoleLog("FAILURE! " + text + ": " + status)
             );
         }
     }
@@ -70,9 +73,9 @@ export class BoardLoader {
             (text, status) => {
                 let json = JSON.parse(text);
                 this.fromSpecs(json);
-                console.log(`Board ${this._board.name} loaded : ${status}`)
+                consoleLog(`Board ${this._board.name} loaded : ${status}`)
             },
-            (text, status) => console.log(`Unable to load ${this._board.name} : ${status}`)
+            (text, status) => consoleLog(`Unable to load ${this._board.name} : ${status}`)
         );
     }
 
@@ -191,19 +194,19 @@ export class GameLoader {
             sendPost("/api/game/create",
                 json,
                 (text, status) => {
-                    console.log("SUCCESS! " + text + ": " + status);
+                    consoleLog("SUCCESS! " + text + ": " + status);
                     this.fromSpecs(JSON.parse(text));
                 },
-                (text, status) => console.log("FAILURE! " + text + ": " + status)
+                (text, status) => consoleLog("FAILURE! " + text + ": " + status)
             );
         } else {
             sendPost("/api/game/update/" + this._game._oid,
                 json,
                 (text, status) => {
-                    console.log("SUCCESS! " + text + ": " + status);
+                    consoleLog("SUCCESS! " + text + ": " + status);
                     this.fromSpecs(JSON.parse(text));
                 },
-                (text, status) => console.log("FAILURE! " + text + ": " + status)
+                (text, status) => consoleLog("FAILURE! " + text + ": " + status)
             );
         }
     }
@@ -214,9 +217,9 @@ export class GameLoader {
             (text, status) => {
                 let json = JSON.parse(text);
                 this.fromSpecs(json);
-                console.log(`Game ${this._game.name} loaded : ${status}`)
+                consoleLog(`Game ${this._game.name} loaded : ${status}`)
             },
-            (text, status) => console.log(`Unable to load ${this._game.name} : ${status}`)
+            (text, status) => consoleLog(`Unable to load ${this._game.name} : ${status}`)
         );
     }
 
@@ -295,12 +298,12 @@ export class GameLoader {
             }
             gameSpecs.players.push(playerSpecs);
         }
-        console.log(JSON.stringify(gameSpecs));
+        consoleLog(JSON.stringify(gameSpecs));
         return gameSpecs;
     }
 
     fromSpecs(specs) {
-        console.log(JSON.stringify(specs));
+        consoleLog(JSON.stringify(specs));
         this._game.clean();
         this._game._oid = specs.id || 0;
         this._game._oversion = specs.version || 0;
@@ -457,10 +460,10 @@ export class SequenceLoader {
         sendPost("/api/sequence/create",
             json,
             (text, status) => {
-                console.log("SUCCESS! " + text + ": " + status);
+                consoleLog("SUCCESS! " + text + ": " + status);
                 sequence.acknowledge();
             },
-            (text, status) => console.log("FAILURE! " + text + ": " + status)
+            (text, status) => consoleLog("FAILURE! " + text + ": " + status)
         );
     }
 
@@ -470,11 +473,11 @@ export class SequenceLoader {
             (text, status) => {
                 let json = JSON.parse(text);
                 action(this.fromSpecs(json, game));
-                console.log(`Sequence of ${game.name} loaded : ${status}`)
+                consoleLog(`Sequence of ${game.name} loaded : ${status}`)
             },
             (text, status) => {
                 action();
-                console.log(`Unable to load sequence for game: ${game.name} : ${status}`);
+                consoleLog(`Unable to load sequence for game: ${game.name} : ${status}`);
             }
         );
     }
@@ -518,12 +521,12 @@ export class SequenceLoader {
             }
             sequenceSpecs.elements.push(elementSpecs);
         }
-        console.log(JSON.stringify(sequenceSpecs));
+        consoleLog(JSON.stringify(sequenceSpecs));
         return sequenceSpecs;
     }
 
     fromSpecs(specs, game) {
-        console.log(JSON.stringify(specs));
+        consoleLog(JSON.stringify(specs));
         let sequence = new CBSequence(game, specs.count+1);
         let units = new Map();
         for (let playable of game.playables) {
