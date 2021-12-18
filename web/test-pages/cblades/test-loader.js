@@ -19,7 +19,7 @@ import {
     CBBoard, CBHex, CBMap,
 } from "../../jslib/cblades/map.js";
 import {
-    BoardLoader, Connector, GameLoader
+    BoardLoader, Connector, GameLoader, SequenceLoader
 } from "../../jslib/cblades/loader.js";
 import {
     CBCharacterType,
@@ -30,6 +30,16 @@ import {
     CBTroop, CBTroopType,
     CBUnitPlayer, CBWeaponProfile, CBWing
 } from "../../jslib/cblades/unit.js";
+import {
+    create1Player1Unit1FormationTinyGame
+} from "./game-examples.js";
+import {
+    CBMoveSequenceElement, CBNextTurnSequenceElement, CBReorientSequenceElement, CBRotateSequenceElement,
+    CBSequence, CBStateSequenceElement, CBTurnSequenceElement
+} from "../../jslib/cblades/sequences.js";
+import {
+    CBStacking
+} from "../../jslib/cblades/game.js";
 
 describe("Loader", ()=> {
 
@@ -55,7 +65,7 @@ describe("Loader", ()=> {
             new Connector().connect();
         then:
             assert(getDrawPlatform().getRequest().uri).equalsTo("/api/ping-login");
-        assert(getDrawPlatform().getRequest().method).equalsTo("POST");
+            assert(getDrawPlatform().getRequest().method).equalsTo("POST");
         when:
             getDrawPlatform().requestFails("Error", 500);
     });
@@ -668,4 +678,179 @@ describe("Loader", ()=> {
             assert(game._oid).equalsTo(101);
             assert(game._oversion).equalsTo(1);
     });
+
+    it("Save sequence", () => {
+        given:
+            var {game, unit11, formation1} = create1Player1Unit1FormationTinyGame();
+        when:
+            CBSequence.appendElement(game, new CBStateSequenceElement(unit11));
+            CBSequence.appendElement(game, new CBMoveSequenceElement(unit11, unit11.hexLocation, CBStacking.BOTTOM)
+                .setState({
+                    cohesion:CBCohesion.DISRUPTED, tiredness:CBTiredness.TIRED,
+                    munitions:CBMunitions.SCARCE, charging:CBCharge.BEGIN_CHARGE
+                })
+            );
+            CBSequence.appendElement(game, new CBRotateSequenceElement(unit11, 60)
+                .setState({
+                    cohesion:CBCohesion.ROUTED, tiredness:CBTiredness.EXHAUSTED,
+                    munitions:CBMunitions.EXHAUSTED, charging:CBCharge.CAN_CHARGE
+                })
+            );
+            CBSequence.appendElement(game, new CBReorientSequenceElement(unit11, 60)
+                .setState({
+                    cohesion:CBCohesion.DESTROYED, charging:CBCharge.CHARGING,
+                    engaging: true, orderGiven:true, played:true
+                })
+            );
+            CBSequence.appendElement(game, new CBTurnSequenceElement(formation1, 60, formation1.hexLocation, CBStacking.TOP));
+            CBSequence.appendElement(game, new CBNextTurnSequenceElement(game));
+            var sequence = CBSequence.getSequence(game);
+            new SequenceLoader().save(game, sequence);
+        then:
+            var requestContent = getDrawPlatform().getRequest().requestContent;
+            assert(requestContent).objectEqualsTo(
+                {
+                    version:0, game:"Game", count:0,
+                    elements:[
+                        {
+                            version:0,type:"State", unit:"./../units/banner1.png-0",
+                            cohesion:"GO", tiredness:"F", ammunition:"P", charging:"N",
+                            engaging:false, orderGiven:false, played:false
+                        },
+                        {
+                            version:0, type:"Move", unit:"./../units/banner1.png-0",
+                            cohesion:"D", tiredness:"T", ammunition:"S", charging:"BC",
+                            engaging:false, orderGiven:false, played:false,
+                            hexCol:5, hexRow:8, stacking:"B"
+                        },
+                        {
+                            version:0, type:"Rotate", unit:"./../units/banner1.png-0",
+                            cohesion:"R", tiredness:"E", ammunition:"E", charging:"CC",
+                            engaging:false, orderGiven:false, played:false,angle:60
+                        },
+                        {
+                            version:0, type:"Reorient", unit:"./../units/banner1.png-0",
+                            cohesion:"X", tiredness:"F", ammunition:"P", charging:"C",
+                            engaging:true, orderGiven:true, played:true, angle:60
+                        },
+                        {
+                            version:0, type:"Turn", unit:"./../units/banner1.png-1",
+                            cohesion:"GO", tiredness:"F", ammunition:"P", charging:"N",
+                            engaging:false, orderGiven:false, played:false,
+                            hexCol:6, hexRow:8, hexAngle:0, stacking:"T", angle:60
+                        },
+                        {
+                            version:0, type:"NextTurn"
+                        }
+                    ]
+                }
+            );
+        when:
+            getDrawPlatform().requestSucceeds(JSON.stringify(requestContent), 200);
+        then:
+            assert(sequence.validated).isNotDefined();
+    });
+
+    it("Save sequence that fails", () => {
+        given:
+            var {game, unit11} = create1Player1Unit1FormationTinyGame();
+        when:
+            var element = new CBStateSequenceElement(unit11);
+            CBSequence.appendElement(game, element);
+            var sequence = CBSequence.getSequence(game);
+            new SequenceLoader().save(game, sequence);
+            getDrawPlatform().requestFails("Test Error", 500);
+        then:
+            assert(sequence.validated).arrayEqualsTo([element]);
+    });
+
+    it("Load sequence", () => {
+        given:
+            var {game, unit11, formation1} = create1Player1Unit1FormationTinyGame();
+        when:
+            var sequence;
+            new SequenceLoader().load(game, requestContent => {
+                sequence = requestContent;
+            });
+            var requestContent = {
+                version: 0, game: "Game", count: 0,
+                elements: [
+                    {
+                        version: 0, type: "State", unit: "./../units/banner1.png-0",
+                        cohesion: "GO", tiredness: "F", ammunition: "P", charging: "N",
+                        engaging: false, orderGiven: false, played: false
+                    },
+                    {
+                        version: 0, type: "Move", unit: "./../units/banner1.png-0",
+                        cohesion: "D", tiredness: "T", ammunition: "S", charging: "BC",
+                        engaging: false, orderGiven: false, played: false,
+                        hexCol: 5, hexRow: 8, stacking: "B"
+                    },
+                    {
+                        version: 0, type: "Rotate", unit: "./../units/banner1.png-0",
+                        cohesion: "R", tiredness: "E", ammunition: "E", charging: "CC",
+                        engaging: false, orderGiven: false, played: false, angle: 60
+                    },
+                    {
+                        version: 0, type: "Reorient", unit: "./../units/banner1.png-0",
+                        cohesion: "X", tiredness: "F", ammunition: "P", charging: "C",
+                        engaging: true, orderGiven: true, played: true, angle: 60
+                    },
+                    {
+                        version: 0, type: "Turn", unit: "./../units/banner1.png-1",
+                        cohesion: "GO", tiredness: "F", ammunition: "P", charging: "N",
+                        engaging: false, orderGiven: false, played: false,
+                        hexCol: 6, hexRow: 8, hexAngle: 0, stacking: "T", angle: 60
+                    },
+                    {
+                        version:0, type:"NextTurn"
+                    }
+                ]
+            };
+            getDrawPlatform().requestSucceeds(JSON.stringify(requestContent), 200);
+        then:
+            assert(sequence.count).equalsTo(1);
+            assert(sequence._game).equalsTo(game);
+            assert(sequence.elements[0]).equalsTo(new CBStateSequenceElement(unit11));
+            assert(sequence.elements[1]).equalsTo(new CBMoveSequenceElement(unit11, unit11.hexLocation, CBStacking.BOTTOM)
+                .setState({
+                    cohesion:CBCohesion.DISRUPTED, tiredness:CBTiredness.TIRED,
+                    munitions:CBMunitions.SCARCE, charging:CBCharge.BEGIN_CHARGE
+                })
+            );
+            assert(sequence.elements[2]).equalsTo(new CBRotateSequenceElement(unit11, 60)
+                .setState({
+                    cohesion:CBCohesion.ROUTED, tiredness:CBTiredness.EXHAUSTED,
+                    munitions:CBMunitions.EXHAUSTED, charging:CBCharge.CAN_CHARGE
+                })
+            );
+            assert(sequence.elements[3]).equalsTo(new CBReorientSequenceElement(unit11, 60)
+                .setState({
+                    cohesion:CBCohesion.DESTROYED, charging:CBCharge.CHARGING,
+                    engaging: true, orderGiven:true, played:true
+                })
+            );
+            assert(sequence.elements[4]).equalsTo(
+                new CBTurnSequenceElement(formation1, 60, formation1.hexLocation, CBStacking.TOP)
+            );
+            assert(sequence.elements[5]).equalsTo(new CBNextTurnSequenceElement(game));
+    });
+
+    it("Load sequence fails", () => {
+        given:
+            var {game, unit11, formation1} = create1Player1Unit1FormationTinyGame();
+        when:
+            var sequence;
+            new SequenceLoader().load(game, requestContent => {
+                sequence = requestContent;
+            });
+            var requestContent = {
+                version: 0, game: "Game", count: 0,
+                elements: [{ version:0, type:"NextTurn" }]
+            };
+            getDrawPlatform().requestFails("Test Error", 500);
+        then:
+            assert(sequence).isNotDefined();
+    });
+
 });

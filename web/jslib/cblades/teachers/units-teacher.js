@@ -126,6 +126,7 @@ export class CBUnitManagementTeacher {
     mayUnitCharge(unit) {
         if (unit.formationNature) return false;
         if (unit.isExhausted()) return false;
+        if (unit.isCharging()) return true;
         if (!unit.isInGoodOrder()) return false;
         if (!unit.hasReceivedOrder() && unit.wing.orderInstruction !== CBOrderInstruction.ATTACK) return false;
         return true;

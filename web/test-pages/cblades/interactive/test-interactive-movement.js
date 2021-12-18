@@ -496,6 +496,27 @@ describe("Interactive Movement", ()=> {
             assert(unit.isPlayed()).isTrue();
     });
 
+    it("Checks that a charging unit loses the charging status if it finishes action without filling the charging conditions", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            unit._charging = CBCharge.CHARGING;
+            clickOnPiece(game, unit);
+            clickOnMoveAction(game);
+        when:
+            var moveActuator = getMoveActuator(game);
+            CBSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), CBStacking.BOTTOM)
+            );
+            clickOnTrigger(game, moveActuator.getTrigger(60));
+            CBSequence.awaitedElements.push(
+                new CBStateSequenceElement(unit).setState({ tiredness:CBTiredness.TIRED, charging:CBCharge.NONE })
+            );
+            unit.action.finalize();
+        then:
+            assert(unit.isPlayed()).isTrue();
+            assert(unit.isCharging()).isFalse();
+    });
+
     function getFormationMoveActuator(game) {
         for (let actuator of game.actuators) {
             if (actuator instanceof CBFormationMoveActuator) return actuator;
@@ -656,20 +677,16 @@ describe("Interactive Movement", ()=> {
             loadAllImages();
             resetAllDirectives(game);
             clickOnMoveAction(game);
-            loadAllImages();
-            resetAllDirectives(game);
             repaint(game);
             var picture1 = registerAllDirectives(game);
             CBSequence.awaitedElements.push(
                 new CBMoveSequenceElement(unit,unit.hexLocation.getNearHex(0), CBStacking.BOTTOM));
             clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
-            resetAllDirectives(game);
             repaint(game);
             var picture2 = registerAllDirectives(game);
             CBSequence.awaitedElements.push(
                 new CBMoveSequenceElement(unit,unit.hexLocation.getNearHex(0), CBStacking.BOTTOM));
             clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
-            resetAllDirectives(game);
             repaint(game);
             var picture3 = registerAllDirectives(game);
             CBSequence.awaitedElements.push(
@@ -678,19 +695,16 @@ describe("Interactive Movement", ()=> {
             clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
             Memento.undo();
         then:
-            resetAllDirectives(game);
             repaint(game);
             assertAllDirectives(game, picture3);
         when:
             Memento.undo();
         then:
-            resetAllDirectives(game);
             repaint(game);
             assertAllDirectives(game, picture2);
         when:
             Memento.undo();
         then:
-            resetAllDirectives(game);
             repaint(game);
             assertAllDirectives(game, picture1);
         when:
@@ -978,7 +992,6 @@ describe("Interactive Movement", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(itemsLayer, 4);
@@ -987,7 +1000,6 @@ describe("Interactive Movement", ()=> {
             assertDirectives(commandsLayer, showSuccessResult(449, 386.5));
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -1171,7 +1183,6 @@ describe("Interactive Movement", ()=> {
             loadAllImages();
             let moveActuator = getMoveActuator(game);
         when:
-            resetDirectives(unitsLayer, actuatorsLayer);
             repaint(game);
         then:
             skipDirectives(unitsLayer, 4);
@@ -1321,8 +1332,6 @@ describe("Interactive Movement", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            loadAllImages();
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
@@ -1335,7 +1344,6 @@ describe("Interactive Movement", ()=> {
             assertDirectives(itemsLayer, showPlayedDice(1, 2, 549, 436.5));
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -1367,8 +1375,6 @@ describe("Interactive Movement", ()=> {
                     .setState({cohesion:CBCohesion.DISRUPTED, played:true})
             );
             executeAllAnimations();
-            loadAllImages();
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
@@ -1381,13 +1387,32 @@ describe("Interactive Movement", ()=> {
             assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 436.5));
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.isDisrupted()).isTrue();
+    });
+
+    it("Checks that move back action cancels charge", () => {
+        given:
+            var { game, unit1 } = create2PlayersTinyGame();
+            unit1._charging = CBCharge.CHARGING;
+            clickOnPiece(game, unit1);
+            CBSequence.awaitedElements.push(
+                new CBStateSequenceElement(unit1).setState({ tiredness: CBTiredness.TIRED, charging: CBCharge.NONE })
+            );
+            clickOnMoveBackAction(game);
+            let moveActuator = getMoveActuator(game);
+        when:
+            CBSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(180), CBStacking.TOP)
+                    .setState({played:true})
+            );
+            clickOnTrigger(game, moveActuator.getTrigger(180));
+        then:
+            assert(unit1.charge).equalsTo(CBCharge.NONE)
     });
 
     it("Checks when a unit try to cross (backwardly) another unit, moral check is requested but the player cancel it by clicking on the mask", () => {
@@ -1636,7 +1661,6 @@ describe("Interactive Movement", ()=> {
             loadAllImages();
             let orientationActuator = getOrientationActuator(game);
         when:
-            resetDirectives(unitsLayer, actuatorsLayer);
             repaint(game);
         then:
             skipDirectives(unitsLayer, 4);
@@ -1819,8 +1843,6 @@ describe("Interactive Movement", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            loadAllImages();
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
@@ -1833,7 +1855,6 @@ describe("Interactive Movement", ()=> {
             assertDirectives(itemsLayer, showPlayedDice(1, 2, 549, 436.5));
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -1880,8 +1901,6 @@ describe("Interactive Movement", ()=> {
                 new CBStateSequenceElement(unit1).setState({cohesion:CBCohesion.DISRUPTED})
             );
             executeAllAnimations();
-            loadAllImages();
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
@@ -1894,13 +1913,31 @@ describe("Interactive Movement", ()=> {
             assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 436.5));
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.isDisrupted()).isTrue();
+    });
+
+    it("Checks rout action actuators appearance for a troop", () => {
+        given:
+            var { game, unit1 } = create2PlayersTinyGame();
+            unit1._charging = CBCharge.CHARGING;
+            clickOnPiece(game, unit1);
+            CBSequence.awaitedElements.push(
+                new CBStateSequenceElement(unit1).setState({ tiredness: CBTiredness.TIRED, charging: CBCharge.NONE })
+            );
+            clickOnRoutAction(game);
+            let orientationActuator = getOrientationActuator(game);
+        when:
+            CBSequence.awaitedElements.push(
+                new CBRotateSequenceElement(unit1,240)
+            );
+            clickOnTrigger(game, orientationActuator.getTrigger(240));
+        then:
+            assert(unit1.charge).equalsTo(CBCharge.NONE);
     });
 
     function clickOnConfrontAction(game) {
@@ -1914,10 +1951,8 @@ describe("Interactive Movement", ()=> {
             unit2.move(unit1.hexLocation.getNearHex(120));
             clickOnPiece(game, unit1);
             clickOnConfrontAction(game);
-            loadAllImages();
             let orientationActuator = getOrientationActuator(game);
         when:
-            resetDirectives(unitsLayer, actuatorsLayer);
             repaint(game);
         then:
             skipDirectives(unitsLayer, 4);
@@ -1980,10 +2015,8 @@ describe("Interactive Movement", ()=> {
             game.nextTurn();
             clickOnPiece(game, formation2);
             clickOnConfrontAction(game);
-            loadAllImages();
             let moveActuator = getFormationMoveActuator(game);
         when:
-            resetDirectives(formationsLayer, actuatorsLayer);
             repaint(game);
         then:
             skipDirectives(formationsLayer, 4);
@@ -2058,8 +2091,6 @@ describe("Interactive Movement", ()=> {
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
-            loadAllImages();
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
@@ -2074,7 +2105,6 @@ describe("Interactive Movement", ()=> {
             assertDirectives(itemsLayer, showPlayedDice(1, 2, 549, 426.5));
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
@@ -2103,8 +2133,6 @@ describe("Interactive Movement", ()=> {
                 new CBStateSequenceElement(unit1).setState({cohesion:CBCohesion.DISRUPTED})
             );
             executeAllAnimations();
-            loadAllImages();
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
@@ -2119,13 +2147,33 @@ describe("Interactive Movement", ()=> {
             assertDirectives(itemsLayer, showPlayedDice(5, 6, 549, 426.5));
         when:
             clickOnResult(game);
-            resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
             repaint(game);
         then:
             assertNoMoreDirectives(widgetsLayer, 4);
             assertNoMoreDirectives(itemsLayer, 4);
             assertNoMoreDirectives(commandsLayer, 4);
             assert(unit1.isDisrupted()).isTrue();
+    });
+
+    it("Checks that confront action cancels charge", () => {
+        given:
+            var { game, unit1, unit2 } = create2PlayersTinyGame();
+            var [unitsLayer, actuatorsLayer] = getLayers(game.board, "units-0", "actuators");
+            unit1._charging = CBCharge.CHARGING;
+            unit2.move(unit1.hexLocation.getNearHex(120));
+            clickOnPiece(game, unit1);
+            CBSequence.awaitedElements.push(
+                new CBStateSequenceElement(unit1).setState({ tiredness: CBTiredness.TIRED, charging: CBCharge.NONE })
+            );
+            clickOnConfrontAction(game);
+            let orientationActuator = getOrientationActuator(game);
+        when:
+            CBSequence.awaitedElements.push(
+                new CBRotateSequenceElement(unit1, 120).setState({ played:true })
+            );
+            clickOnTrigger(game, orientationActuator.getTrigger(120));
+        then:
+            assert(unit1.charge).equalsTo(CBCharge.NONE);
     });
 
     it("Checks Troop when it attack moves", () => {

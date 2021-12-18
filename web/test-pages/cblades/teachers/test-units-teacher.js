@@ -336,6 +336,15 @@ describe("Units teacher", ()=> {
             unit2.disrupt();
         then:
             assert(arbitrator.mayUnitCharge(unit2)).isFalse();
+        when:
+            wing1.setOrderInstruction(CBOrderInstruction.DEFEND);
+            unit1.tiredness = CBTiredness.NONE;
+        then:
+            assert(arbitrator.mayUnitCharge(unit1)).isFalse();
+        when:
+            unit1.setCharging(CBCharge.CHARGING);
+        then:
+            assert(arbitrator.mayUnitCharge(unit1)).isTrue();
     });
 
     it("Checks disengagement result", () => {

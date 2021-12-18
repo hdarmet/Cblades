@@ -495,14 +495,14 @@ export class SequenceLoader {
                 elementSpecs.unit = element.unit.name;
                 elementSpecs.cohesion = this.getCohesionCode(element.cohesion);
                 elementSpecs.tiredness = this.getTirednessCode(element.tiredness);
-                elementSpecs.ammunition = this.getMunitionsCode(element.ammunition);
+                elementSpecs.ammunition = this.getMunitionsCode(element.munitions);
                 elementSpecs.charging = this.getChargingCode(element.charging);
                 elementSpecs.engaging = element.engaging;
                 elementSpecs.orderGiven = element.orderGiven;
                 elementSpecs.played = element.played;
             }
             if ("|Move|Turn|".indexOf("|"+element.type+"|")>=0) {
-                if (sequence.hexLocation instanceof CBHexSideId) {
+                if (element.hexLocation instanceof CBHexSideId) {
                     elementSpecs.hexCol = element.hexLocation.fromHex.col;
                     elementSpecs.hexRow = element.hexLocation.fromHex.row;
                     elementSpecs.hexAngle = element.hexLocation.angle;
@@ -539,7 +539,7 @@ export class SequenceLoader {
             let hexLocation;
             if (elementSpec.hexCol!==undefined) {
                 hexLocation = game.map.getHex(elementSpec.hexCol, elementSpec.hexRow);
-                if (elementSpec.hexAngle) hexLocation = hexLocation.toward(elementSpec.hexAngle);
+                if (elementSpec.hexAngle!==undefined) hexLocation = hexLocation.toward(elementSpec.hexAngle);
             }
             let stacking;
             if (elementSpec.stacking!==undefined) {
@@ -562,7 +562,7 @@ export class SequenceLoader {
                 element.cohesion = this.getCohesion(elementSpec.cohesion);
             }
             if (elementSpec.ammunition!==undefined) {
-                element.ammunition = this.getMunitions(elementSpec.ammunition);
+                element.munitions = this.getMunitions(elementSpec.ammunition);
             }
             if (elementSpec.charging!==undefined) {
                 element.charging = this.getCharging(elementSpec.charging);
@@ -603,6 +603,7 @@ export class SequenceLoader {
     getChargingCode(charging) {
         if (charging===CBCharge.CHARGING) return "C";
         else if (charging===CBCharge.BEGIN_CHARGE) return "BC";
+        else if (charging===CBCharge.CAN_CHARGE) return "CC";
         else return "N";
     }
 
@@ -650,6 +651,8 @@ export class SequenceLoader {
         switch (code) {
             case "BC":
                 return CBCharge.BEGIN_CHARGE;
+            case "CC":
+                return CBCharge.CAN_CHARGE;
             case "C":
                 return CBCharge.CHARGING;
             case "N":
@@ -662,7 +665,7 @@ export class SequenceLoader {
             case "T":
                 return CBStacking.TOP;
             case "B":
-                return CBCohesion.BOTTOM;
+                return CBStacking.BOTTOM;
         }
     }
 

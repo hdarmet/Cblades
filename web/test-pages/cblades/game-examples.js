@@ -33,7 +33,7 @@ import {
 } from "../../jslib/cblades/miscellaneous.js";
 
 export function createBaseGame() {
-    let game = new (BurningMixin(WeatherMixin(CBGame)))("Edit map");
+    let game = new (BurningMixin(WeatherMixin(CBGame)))("Game");
     let arbitrator = new CBTestArbitrator();
     game.setArbitrator(arbitrator);
     var map = new CBMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
@@ -303,6 +303,19 @@ export function create1Player2UnitsTinyGame() {
     return {
         ...tinyGame,
         unitType1, unit11, unit12
+    };
+}
+
+export function create1Player1Unit1FormationTinyGame() {
+    let tinyGame = create2PlayersBaseGame();
+    let {game, map, wing1} = tinyGame;
+    let unitType1 = createUnitType(CBTestUnitType,"unit", 1, 2);
+    let unit11 = createTroop(game, map, unitType1, wing1, 0, 5, 8);
+    let formation1 = createFormation(game, map, unitType1, wing1, 90, 6, 8, 6, 7);
+    loadAllImages();
+    return {
+        ...tinyGame,
+        unitType1, unit11, formation1
     };
 }
 

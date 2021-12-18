@@ -26,8 +26,27 @@ export class CBSequence {
         game._sequence.appendElement(sequence);
     }
 
+    static addElement(game, sequence) {
+        if (!game._sequence) {
+            game._sequence = new CBSequence(game);
+        }
+        game._sequence.addElement(sequence);
+    }
+
     static getCount(game) {
         return game._sequence===undefined ? 0 : game._sequence.count;
+    }
+
+    static getValidatedCount(game) {
+        return game._sequence===undefined ? 0 : game._sequence.validatedCount;
+    }
+
+    static getElements(game) {
+        return game._sequence===undefined ? [] : game._sequence.elements;
+    }
+
+    static getSequence(game) {
+        return game._sequence;
     }
 
     constructor(game, count=0) {
@@ -200,7 +219,7 @@ export class CBStateSequenceElement extends CBSequenceElement {
     get delay() { return 0; }
 
     getUnit() {
-        this.game.getUnit(this.unit);
+        return this.unit;
     }
 
 }
@@ -256,7 +275,7 @@ export class CBRotateSequenceElement extends CBStateSequenceElement {
 
     _toString() {
         let result = super._toString();
-        if (this.angle !== undefined) result+=" Angle: "+this.angle;
+        if (this.angle !== undefined) result+=", Angle: "+this.angle;
         return result;
     }
 

@@ -790,6 +790,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         else {
             if (this.unit.charge !== CBCharge.NONE) {
                 this.unit.setCharging(CBCharge.NONE);
+                CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
             }
         }
     }
