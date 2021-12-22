@@ -58,6 +58,11 @@ export class DWidget extends DElement {
         return this;
     }
 
+    resize(dimension) {
+        this._dimension = dimension;
+        this._panel.dimension = this._dimension;
+    }
+
     setOnBoard(board) {
         console.assert(this._panel);
         return super.setOnBoard(board);
@@ -848,6 +853,7 @@ export class DCommand extends ActivableArtifactMixin(DMultiImagesArtifact) {
     setActive(active) {
         super.setActive(active);
         this.setImage(active ? 0 : 1);
+        return this;
     }
 
 }
@@ -917,6 +923,29 @@ export class DNextNavigation extends DCommand {
 
     static DIMENSION = new Dimension2D(36, 36);
 }
+
+export class DOk extends DCommand {
+
+    constructor(position, action) {
+        let image = DImage.getImage("./../images/commands/ok.png");
+        let inactiveImage = DImage.getImage("./../images/commands/ok-inactive.png");
+        super(image, inactiveImage, position, DOk.DIMENSION, action);
+    }
+
+    static DIMENSION = new Dimension2D(50, 50);
+}
+
+export class DKo extends DCommand {
+
+    constructor(position, action) {
+        let image = DImage.getImage("./../images/commands/ko.png");
+        let inactiveImage = DImage.getImage("./../images/commands/ko-inactive.png");
+        super(image, inactiveImage, position, DKo.DIMENSION, action);
+    }
+
+    static DIMENSION = new Dimension2D(50, 50);
+}
+
 
 export class DInsertFrame {
 

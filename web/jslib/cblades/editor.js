@@ -9,7 +9,11 @@ import {
     NeighborRawActuatorArtifactMixin,
     NeighborActuatorArtifactMixin,
     NeighborActuatorMixin,
-    ActivableArtifactMixin, CBActuatorImageTrigger, GhostArtifactMixin, CBLevelBuilder, RetractableGameMixin
+    ActivableArtifactMixin,
+    CBActuatorImageTrigger,
+    GhostArtifactMixin,
+    CBLevelBuilder,
+    RetractableGameMixin
 } from "./playable.js";
 import {
     DImage, getDrawPlatform, sendPost
@@ -23,14 +27,14 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    D2StatesIconMenuItem,
-    DIconMenu, DIconMenuItem,
-    DLeftNavigation, DMultiStatePushButton, DNextNavigation,
-    DPopup, DPrevNavigation, DPushButton, DRightNavigation
+    D2StatesIconMenuItem, DDownNavigation,
+    DIconMenu, DIconMenuItem, DKo,
+    DLeftNavigation, DMultiStatePushButton, DNextNavigation, DOk,
+    DPopup, DPrevNavigation, DPushButton, DRightNavigation, DUpNavigation
 } from "../widget.js";
 import {
     DBoard,
-    DImageArtifact, DPedestalArtifact, DRectArtifact
+    DImageArtifact, DMultiImagesArtifact, DPedestalArtifact, DRectArtifact
 } from "../board.js";
 import {GoblinLeader, GoblinSkirmisher, GoblinWolfRider, WizardLeader} from "./armies/orcs.js";
 import {
@@ -724,6 +728,560 @@ export class CBUnitsRoster extends DPopup {
     static ROSTER_HEADER_DIMENSION = new Dimension2D(500, 80);
 }
 
+export class CBMapCommand extends DImageArtifact {
+
+    constructor(pedestal, path, position, action) {
+        super("widget-items", DImage.getImage(path), position, CBMapCommand.DIMENSION);
+        this._pedestal = pedestal;
+        this._action = action;
+        this.setSettings(level => {
+            level.setShadowSettings("#00FFFF", 10);
+        });
+    }
+
+    onMouseEnter(event, fromArtifact) {
+        this.setSettings(level => {
+            level.setShadowSettings("#FF0000", 10);
+        });
+        return true;
+    }
+
+    onMouseLeave(event, toArtifact) {
+        if (toArtifact !== this._pedestal) {
+            this._pedestal.onMouseLeave(event, toArtifact);
+        }
+        else {
+            this.setSettings(level => {
+                level.setShadowSettings("#00FFFF", 0);
+            });
+        }
+        return true;
+    }
+
+    onMouseClick(event) {
+        this._action(this._pedestal);
+        return true;
+    }
+
+    static DIMENSION = new Dimension2D(36, 36);
+}
+
+export class CBMapPedestalArtifact extends DPedestalArtifact {
+
+    constructor(mapSetter, col, row, position) {
+        super(null, "widget-items", position);
+        this._mapSetter = mapSetter;
+        this._col = col;
+        this._row = row;
+        this.colorize("#E0E0E0");
+    }
+
+    colorize(color) {
+        this.artifact = new DRectArtifact("widget-items",
+            new Point2D(0, 0), CBMapPedestalArtifact.DIMENSION,
+            1,  "#000000", color);
+    }
+
+    copyMap(pedestal) {
+        this.setMap(pedestal._map);
+        this._mapAngle = pedestal._mapAngle
+        this.turn(this._mapAngle);
+    }
+
+    setMap(map) {
+        this._mapAngle = 0;
+        this.turn(0);
+        this._map = map;
+        this.artifact = new DImageArtifact("-",
+            DImage.getImage(map.path),
+            new Point2D(0, 0), CBMapSelectorArtifact.DIMENSION
+        );
+    }
+
+    turnMap() {
+        this._mapAngle = sumAngle(this._mapAngle, 180);
+        this.turn(this._mapAngle);
+    }
+
+    unsetMap() {
+        delete this._mapAngle;
+        delete this._map;
+        this.unsetCommands();
+    }
+
+    onMouseEnter(event, fromArtifact) {
+        if (fromArtifact !== this._turnCommand && fromArtifact !== this._deleteCommand) {
+            this._mapSetter.enterCell(this);
+            this.setSettings(level => {
+                level.setShadowSettings("#FF0000", 10);
+            });
+        }
+        return true;
+    }
+
+    onMouseLeave(event, toArtifact) {
+        if (toArtifact !== this._turnCommand && toArtifact !== this._deleteCommand) {
+            this._mapSetter.leaveCell(this);
+            this.setSettings(level => {
+                level.setShadowSettings("#000000", 0);
+            });
+        }
+        return true;
+    }
+
+    onMouseClick(event) {
+        this._mapSetter.setMapOnComposerCell(this);
+        return true;
+    }
+
+    setCommands() {
+        this._turnCommand = new CBMapCommand(this,
+            "./../images/edit-actions/flip.png",
+            this.position.minus(0, 30),
+            pedestal=>pedestal.turnMap());
+        this._mapSetter.addArtifact(this._turnCommand);
+        this._deleteCommand = new CBMapCommand(this,
+            "./../images/edit-actions/remove.png",
+            this.position.plus(0, 30),
+            pedestal=>{
+                pedestal.unsetMap();
+                this._mapSetter.updateCommands();
+            }
+        );
+        this._mapSetter.addArtifact(this._deleteCommand);
+    }
+
+    unsetCommands() {
+        if (this._turnCommand) {
+            this._mapSetter.removeArtifact(this._turnCommand);
+            delete this._turnCommand;
+        }
+        if (this._deleteCommand) {
+            this._mapSetter.removeArtifact(this._deleteCommand);
+            delete this._deleteCommand;
+        }
+    }
+
+    static DIMENSION = new Dimension2D(80, 125);
+}
+
+export class CBMapTranslatorCommand extends DMultiImagesArtifact {
+
+    constructor(mapSetter, path, inactivePath, position, direction) {
+        super("widget-items", [DImage.getImage(path), DImage.getImage(inactivePath)], position, CBMapTranslatorCommand.DIMENSION);
+        this._mapSetter = mapSetter;
+        this._direction = direction;
+        this._active = true;
+        this.setSettings(level => {
+            level.setShadowSettings("#00FFFF", 10);
+        });
+    }
+
+    setActive(active) {
+        this._active = active;
+        if (active) {
+            this.setSettings(level => {
+                level.setShadowSettings("#00FFFF", 5);
+            });
+            this.setImage(0);
+        }
+        else {
+            this.setSettings(level => {
+                level.setShadowSettings("#000000", 5);
+            });
+            this.setImage(1);
+        }
+    }
+
+    onMouseEnter(event, fromArtifact) {
+        if (this._active) {
+            this.setSettings(level => {
+                level.setShadowSettings("#FF0000", 10);
+            });
+        }
+        return true;
+    }
+
+    onMouseLeave(event, toArtifact) {
+        if (this._active) {
+            this.setSettings(level => {
+                level.setShadowSettings("#00FFFF", 5);
+            });
+        }
+        return true;
+    }
+
+    onMouseClick(event) {
+        if (this._active) {
+            this._mapSetter.translateMap(this._direction);
+        }
+        return true;
+    }
+
+    get direction() {
+        return this._direction;
+    }
+
+    static DIMENSION = new Dimension2D(36, 36);
+
+}
+
+export class CBMapSelectorArtifact extends DPedestalArtifact {
+
+    constructor(mapSetter, index, location) {
+        super(null, "widget-items", location);
+        this._mapSetter = mapSetter;
+        this._index = index;
+        this.setSettings(
+            level=>{
+                level.setShadowSettings("#000000", 10);
+            }
+        );
+    }
+
+    get index() {
+        return this._index;
+    }
+
+    setMap(map) {
+        this.artifact = new DImageArtifact("-",
+            DImage.getImage(map.path),
+            new Point2D(0, 0), CBMapSelectorArtifact.DIMENSION
+        );
+    }
+
+    onMouseClick(event) {
+        this._mapSetter.select(this.index);
+        return true;
+    }
+
+    select() {
+        this._selected = true;
+        this.setSettings(level => {
+            level.setShadowSettings("#FF0000", 10);
+        });
+    }
+
+    unselect() {
+        delete this._selected;
+        this.setSettings(level => {
+            level.setShadowSettings("#000000", 10);
+        });
+    }
+
+    onMouseEnter(event) {
+        if (!this._selected) {
+            this.setSettings(level => {
+                level.setShadowSettings("#00FFFF", 10);
+            });
+        }
+        return true;
+    }
+
+    onMouseLeave(event) {
+        if (!this._selected) {
+            this.setSettings(level => {
+                level.setShadowSettings("#000000", 10);
+            });
+        }
+        return true;
+    }
+
+    static DIMENSION = new Dimension2D(80, 125);
+}
+
+export class CBMapSetter extends DPopup {
+
+    constructor(game, models) {
+        super(new Dimension2D(10, 10), true);
+        this._models = models;
+        this._firstModel = 0;
+        this._game = game;
+        this.resize(new Dimension2D(this.width, this.height));
+        this._buildSelector();
+        this._buildComposer();
+        this._buildCommands();
+    }
+
+    _buildCommands() {
+        this._translateToTop = new CBMapTranslatorCommand(this,
+            "./../images/commands/top.png","./../images/commands/top-inactive.png",
+            new Point2D(this.width/2-CBMapSetter.SELECTOR_WIDTH, 0)
+                .plusPoint(CBMapSetter.TRANSLATER_COMMANDS_MARGIN),
+            {col:0, row:-1});
+        this.addArtifact(this._translateToTop);
+        this._translateToLeft = new CBMapTranslatorCommand(this,
+            "./../images/commands/prev.png", "./../images/commands/prev-inactive.png",
+            new Point2D(this.width/2-CBMapSetter.SELECTOR_WIDTH, 0)
+                .plusPoint(CBMapSetter.TRANSLATER_COMMANDS_MARGIN).plus(0, CBMapSetter.TRANSLATOR_COMMANDS_SHIFT),
+            {col:-1, row:0});
+        this.addArtifact(this._translateToLeft);
+        this._translateToRight = new CBMapTranslatorCommand(this,
+            "./../images/commands/next.png", "./../images/commands/next-inactive.png",
+            new Point2D(this.width/2-CBMapSetter.SELECTOR_WIDTH, 0)
+                .plusPoint(CBMapSetter.TRANSLATER_COMMANDS_MARGIN).plus(0, CBMapSetter.TRANSLATOR_COMMANDS_SHIFT*2),
+            {col:1, row:0});
+        this.addArtifact(this._translateToRight);
+        this._translateToBottom = new CBMapTranslatorCommand(this,
+            "./../images/commands/bottom.png", "./../images/commands/bottom-inactive.png",
+            new Point2D(this.width/2-CBMapSetter.SELECTOR_WIDTH, 0)
+                .plusPoint(CBMapSetter.TRANSLATER_COMMANDS_MARGIN).plus(0, CBMapSetter.TRANSLATOR_COMMANDS_SHIFT*3),
+            {col:0, row:1});
+        this.addArtifact(this._translateToBottom);
+        this._ko = new DKo(new Point2D(this.width/2-CBMapSetter.SELECTOR_WIDTH, 0)
+            .plusPoint(CBMapSetter.OKKO_COMMANDS_MARGIN).minus(0, CBMapSetter.OKKO_COMMANDS_SHIFT),()=>{
+            this._game.closePopup();
+        });
+        this.addArtifact(this._ko);
+        this._ok = new DOk(new Point2D(this.width/2-CBMapSetter.SELECTOR_WIDTH, 0)
+            .plusPoint(CBMapSetter.OKKO_COMMANDS_MARGIN),()=>{});
+        this.addArtifact(this._ok.setActive(false));
+    }
+
+    _buildSelector() {
+        let selectorX = this.width / 2 - CBMapSetter.SELECTOR_WIDTH / 2;
+        this._selector = new DRectArtifact("widgets",
+            new Point2D(this.width / 2 - CBMapSetter.SELECTOR_WIDTH / 2, 0),
+            new Dimension2D(CBMapSetter.SELECTOR_WIDTH, this.height), 1, "#000000", "#C0C0C0");
+        this.addArtifact(this._selector);
+        this._selectorTop = new DUpNavigation(
+            new Point2D(selectorX, 35 - this.height / 2),
+            () => {
+                this._fillSelectors(this._firstModel - 1);
+                this._updateSelection(this._getSelectedSelector());
+            }
+        );
+        this.addArtifact(this._selectorTop);
+        this._selectorBottom = new DDownNavigation(
+            new Point2D(selectorX, -35 + this.height / 2),
+            () => {
+                this._fillSelectors(this._firstModel + 1);
+                this._updateSelection(this._getSelectedSelector());
+            }
+        );
+        this.addArtifact(this._selectorBottom);
+        this._mapSelectors = [];
+        this._mapSelectors.push(new CBMapSelectorArtifact(this, 0, new Point2D(selectorX, -CBMapSetter.MAP_SELECTION_HEIGHT)));
+        this._mapSelectors.push(new CBMapSelectorArtifact(this, 1, new Point2D(selectorX, 0)));
+        this._mapSelectors.push(new CBMapSelectorArtifact(this, 2, new Point2D(selectorX, CBMapSetter.MAP_SELECTION_HEIGHT)));
+        for (let mapSelector of this._mapSelectors) {
+            this.addArtifact(mapSelector);
+        }
+        this._fillSelectors(this._firstModel);
+    }
+
+    _buildComposer() {
+        this._mapComposer = [];
+        for (let col=0; col<CBMapSetter.COL_COUNT; col++) {
+            this._mapComposer[col] = [];
+            for (let row=0; row<CBMapSetter.ROW_COUNT; row++) {
+                this._mapComposer[col][row] = new CBMapPedestalArtifact(this, col, row, new Point2D(
+                    (col-CBMapSetter.COL_COUNT/2 + 0.5) * CBMapPedestalArtifact.DIMENSION.w -CBMapSetter.SELECTOR_WIDTH/2 -CBMapSetter.PEDESTAL_COMMANDS_MARGIN,
+                    (row-CBMapSetter.ROW_COUNT/2 + 0.5) * CBMapPedestalArtifact.DIMENSION.h
+                ));
+                this.addArtifact(this._mapComposer[col][row]);
+            }
+        }
+    }
+
+    setMapOnComposerCell(pedestal) {
+        if (this._selectedIndex !== undefined) {
+            pedestal.setMap(this._models[this._selectedIndex]);
+            pedestal.setCommands();
+        }
+        this.updateCommands();
+    }
+
+    updateCommands() {
+        this.setTranslateCommandsActiveStatus();
+        this._ok.setActive(this.colorizeEmptyCell());
+    }
+
+    enterCell(artifact) {
+        this.removeArtifact(artifact);
+        this.addArtifact(artifact);
+        if (artifact._map) {
+            artifact.setCommands();
+        }
+    }
+
+    leaveCell(artifact) {
+        artifact.unsetCommands();
+    }
+
+    _fillSelectors(first) {
+        this._firstModel = first < 0 ? 0 : first;
+        let maxSelector = first+3;
+        if (maxSelector > this._models.length) {
+            maxSelector = this._models.length;
+            this._firstModel = maxSelector -3;
+            if (this._firstModel<0) this._firstModel = 0;
+        }
+        for (let index=this._firstModel; index<maxSelector; index++) {
+            this._mapSelectors[index-this._firstModel].setMap(this._models[index]);
+        }
+        this._selectorTop.setActive(this._firstModel>0);
+        this._selectorBottom.setActive(maxSelector<this._models.length);
+    }
+
+    _getSelectedSelector() {
+        let index = this._selectedIndex -this._firstModel;
+        if (index>=0 && index<=this._mapSelectors.length) {
+            return this._mapSelectors[index];
+        }
+        else return null;
+    }
+
+    select(index) {
+        this._selectedIndex = this._firstModel + index;
+        this._updateSelection(this._getSelectedSelector());
+    }
+
+    _updateSelection(selector) {
+        if (this._selected !== selector) {
+            if (this._selected) {
+                this._selected.unselect();
+            }
+            this._selected = selector;
+            if (this._selected) {
+                this._selected.select();
+            }
+        }
+    }
+
+    setTranslateCommandsActiveStatus() {
+        this._translateToTop.setActive(this.isTranslateCommandActive(this._translateToTop.direction));
+        this._translateToLeft.setActive(this.isTranslateCommandActive(this._translateToLeft.direction));
+        this._translateToRight.setActive(this.isTranslateCommandActive(this._translateToRight.direction));
+        this._translateToBottom.setActive(this.isTranslateCommandActive(this._translateToBottom.direction));
+    }
+
+    getAreaToFill() {
+        let minCol = CBMapSetter.COL_COUNT;
+        let maxCol = 0;
+        let minRow = CBMapSetter.ROW_COUNT;
+        let maxRow = 0;
+        for (let col = 0; col < CBMapSetter.COL_COUNT; col++) {
+            for (let row = 0; row < CBMapSetter.ROW_COUNT; row++) {
+                if (this._mapComposer[col][row]._map) {
+                    if (minCol>this._mapComposer[col][row]._col) minCol = this._mapComposer[col][row]._col;
+                    if (maxCol<this._mapComposer[col][row]._col) maxCol = this._mapComposer[col][row]._col;
+                    if (minRow>this._mapComposer[col][row]._row) minRow = this._mapComposer[col][row]._row;
+                    if (maxRow<this._mapComposer[col][row]._row) maxRow = this._mapComposer[col][row]._row;
+                }
+            }
+        }
+        if (minCol>maxCol) return null;
+        return {minCol, minRow, maxCol, maxRow};
+    }
+
+    colorizeEmptyCell() {
+        let area = this.getAreaToFill();
+        let missing = false;
+        for (let col = 0; col < CBMapSetter.COL_COUNT; col++) {
+            for (let row = 0; row < CBMapSetter.ROW_COUNT; row++) {
+                if (!this._mapComposer[col][row]._map) {
+                    if (!area || (col<area.minCol || col>area.maxCol || row<area.minRow || row>area.maxRow)) {
+                        this._mapComposer[col][row].colorize("#E0E0E0");
+                    }
+                    else {
+                        this._mapComposer[col][row].colorize("#FFE0E0");
+                        missing = true;
+                    }
+                }
+            }
+        }
+        return area && !missing;
+    }
+
+    isTranslateCommandActive(direction) {
+        if (direction.col === 1) {
+            for (let row = 0; row < CBMapSetter.ROW_COUNT; row++) {
+                if (this._mapComposer[CBMapSetter.COL_COUNT-1][row]._map) return false;
+            }
+        }
+        if (direction.col === -1) {
+            for (let row = 0; row < CBMapSetter.ROW_COUNT; row++) {
+                if (this._mapComposer[0][row]._map) return false;
+            }
+        }
+        if (direction.row === 1) {
+            for (let col = 0; col < CBMapSetter.COL_COUNT; col++) {
+                if (this._mapComposer[col][CBMapSetter.ROW_COUNT-1]._map) return false;
+            }
+        }
+        if (direction.row === -1) {
+            for (let col = 0; col < CBMapSetter.COL_COUNT; col++) {
+                if (this._mapComposer[col][0]._map) return false;
+            }
+        }
+        return true;
+    }
+
+    translateMap(direction) {
+        if (direction.col === 1) {
+            for (let row = 0; row < CBMapSetter.ROW_COUNT; row++) {
+                for (let col = CBMapSetter.COL_COUNT - 1; col > 0; col--) {
+                    if (this._mapComposer[col - 1][row]._map) {
+                        this._mapComposer[col][row].copyMap(this._mapComposer[col - 1][row]);
+                    } else this._mapComposer[col][row].unsetMap();
+                }
+                this._mapComposer[0][row].unsetMap();
+            }
+        }
+        if (direction.col === -1) {
+            for (let row = 0; row < CBMapSetter.ROW_COUNT; row++) {
+                for (let col = 0; col < CBMapSetter.COL_COUNT - 1; col++) {
+                    if (this._mapComposer[col + 1][row]._map) {
+                        this._mapComposer[col][row].copyMap(this._mapComposer[col + 1][row]);
+                    } else this._mapComposer[col][row].unsetMap();
+                }
+                this._mapComposer[CBMapSetter.COL_COUNT - 1][row].unsetMap();
+            }
+        }
+        if (direction.row === 1) {
+            for (let col = 0; col < CBMapSetter.COL_COUNT; col++) {
+                for (let row = CBMapSetter.ROW_COUNT - 1; row > 0; row--) {
+                    if (this._mapComposer[col][row - 1]._map) {
+                        this._mapComposer[col][row].copyMap(this._mapComposer[col][row - 1]);
+                    } else this._mapComposer[col][row].unsetMap();
+                }
+                this._mapComposer[col][0].unsetMap();
+            }
+        }
+        if (direction.row === -1) {
+            for (let col = 0; col < CBMapSetter.COL_COUNT; col++) {
+                for (let row = 0; row < CBMapSetter.ROW_COUNT - 1; row++) {
+                    if (this._mapComposer[col][row + 1]._map) {
+                        this._mapComposer[col][row].copyMap(this._mapComposer[col][row + 1]);
+                    } else this._mapComposer[col][row].unsetMap();
+                }
+                this._mapComposer[col][CBMapSetter.ROW_COUNT - 1].unsetMap();
+            }
+        }
+        this.updateCommands();
+    }
+
+
+    get width() {
+        return 850;
+    }
+
+    get height() {
+        return 550;
+    }
+
+    static SELECTOR_WIDTH = 100;
+    static MAP_SELECTION_HEIGHT = 135;
+    static TRANSLATER_COMMANDS_MARGIN = new Point2D(-40, -230);
+    static TRANSLATOR_COMMANDS_SHIFT = 50;
+    static OKKO_COMMANDS_MARGIN = new Point2D(-40, 240);
+    static OKKO_COMMANDS_SHIFT = 60;
+    static PEDESTAL_COMMANDS_MARGIN = 25;
+    static ROW_COUNT = 4;
+    static COL_COUNT = 8;
+}
+
 export class CBEditUnitMenu extends DIconMenu {
 
     constructor(game, unit) {
@@ -1028,6 +1586,22 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
         this.openPopup(new CBUnitsRoster(this), this.viewportCenter);
     }
 
+    arrangeMap() {
+        this.closeActuators();
+        this.closePopup();
+        this.openPopup(new CBMapSetter(this, [
+            {path: "./../images/maps/map1.png"},
+            {path: "./../images/maps/map2.png"},
+            {path: "./../images/maps/map3.png"},
+            {path: "./../images/maps/map4.png"},
+            {path: "./../images/maps/map5.png"},
+            {path: "./../images/maps/map6.png"},
+            {path: "./../images/maps/map7.png"},
+            {path: "./../images/maps/map8.png"},
+            {path: "./../images/maps/map9.png"}
+        ]), this.viewportCenter);
+    }
+
     setMenu() {
         this._showCommand = new DPushButton(
             "./../images/commands/show.png", "./../images/commands/show-inactive.png",
@@ -1040,6 +1614,7 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 this.showCommand(this._saveCommand);
                 this.showCommand(this._loadCommand);
                 this.showCommand(this._editUnitsCommand);
+                this.showCommand(this._setMapCommand);
                 this.showCommand(this._fullScreenCommand);
                 animation();
             });
@@ -1055,6 +1630,7 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 this.hideCommand(this._saveCommand);
                 this.hideCommand(this._loadCommand);
                 this.hideCommand(this._editUnitsCommand);
+                this.hideCommand(this._setMapCommand);
                 this.hideCommand(this._fullScreenCommand);
                 animation();
             });
@@ -1096,9 +1672,16 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 animation();
             }).setTurnAnimation(true, ()=>{}
         );
+        this._setMapCommand = new DMultiStatePushButton(
+            ["./../images/commands/set-map.png", "./../images/commands/set-map-inactive.png"],
+            new Point2D(-480, -60), (state, animation)=>{
+                this.arrangeMap();
+                animation();
+            }).setTurnAnimation(true, ()=>{}
+        );
         this._fullScreenCommand = new DMultiStatePushButton(
             ["./../images/commands/full-screen-on.png", "./../images/commands/full-screen-off.png"],
-            new Point2D(-480, -60), (state, animation)=>{
+            new Point2D(-540, -60), (state, animation)=>{
                 if (!state)
                     getDrawPlatform().requestFullscreen();
                 else

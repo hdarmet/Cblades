@@ -286,6 +286,7 @@ export class DArtifact extends LocalisationAware(Object) {
             delete this._settings;
         }
         this.refresh();
+        return this;
     }
 
     changeSettings(settings) {
@@ -388,6 +389,11 @@ export function AreaArtifact(clazz) {
 
         get dimension() {
             return this._dimension;
+        }
+
+        set dimension(dimension) {
+            this._dimension = dimension;
+            this.refresh();
         }
 
         get area() {
@@ -1449,12 +1455,12 @@ export class DBoard {
                 if (artifact) ignored.add(artifact);
                 if (artifact !== this._mouseOverArtifact) {
                     if (this._mouseOverArtifact) {
-                        this._mouseOverArtifact.onMouseLeave && this._mouseOverArtifact.onMouseLeave(event);
+                        this._mouseOverArtifact.onMouseLeave && this._mouseOverArtifact.onMouseLeave(event, artifact);
+                    }
+                    if (artifact) {
+                        artifact.onMouseEnter && artifact.onMouseEnter(event, this._mouseOverArtifact);
                     }
                     this._mouseOverArtifact = artifact;
-                    if (this._mouseOverArtifact) {
-                        this._mouseOverArtifact.onMouseEnter && this._mouseOverArtifact.onMouseEnter(event);
-                    }
                 }
                 if (this._mouseOverArtifact && this._mouseOverArtifact.onMouseMove) {
                     processed = this._mouseOverArtifact.onMouseMove(event);
