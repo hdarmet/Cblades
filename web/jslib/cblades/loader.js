@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    CBHex, CBHexSideId
+    CBHex, CBHexSideId, CBMap
 } from "./map.js";
 import {
     sendPost
@@ -22,8 +22,8 @@ import {
     CBStateSequenceElement, CBTurnSequenceElement
 } from "./sequences.js";
 
-//let consoleLog = console.log;
-let consoleLog = ()=>{};
+let consoleLog = console.log;
+//let consoleLog = ()=>{};
 
 export class Connector {
 
@@ -230,6 +230,23 @@ export class GameLoader {
             players: []
         };
         if (this._game._oid) gameSpecs.id = this._game._oid;
+        let mapCompositionSpecs = {
+            version: this._game.map._oversion || 0,
+            boards: []
+        }
+        if (this._game.map._oid) mapCompositionSpecs.id = this._game.map._oid;
+        gameSpecs.map = mapCompositionSpecs;
+        for (let board of this._game.map.mapBoards) {
+            let boardSpec = {
+                version: board._oversion || 0,
+                col: board.col,
+                row: board.row,
+                path: board.path,
+                invert: !!board.invert
+            };
+            if (board._oid) boardSpec.id = board._oid;
+            mapCompositionSpecs.boards.push(boardSpec);
+        }
         for (let player of this._game.players) {
             let playerSpecs = {
                 version: player._oversion || 0,
@@ -242,7 +259,10 @@ export class GameLoader {
             for (let wing of player.wings) {
                 let wingSpecs = {
                     version: wing._oversion || 0,
-                    banner: wing.banner,
+                    banner: {
+                        name: wing.banner.name,
+                        path: wing.banner.path
+                    },
                     units: [],
                     retreatZone: []
                 }
@@ -309,6 +329,18 @@ export class GameLoader {
         this._game._oversion = specs.version || 0;
         this._game._name = specs.name;
         if (specs.id) this._game._oid = specs.id;
+        let configuration = [];
+        for (let boardSpec of specs.map.boards) {
+            let board = {
+                _oid: boardSpec.id,
+                col: boardSpec.col,
+                row: boardSpec.row,
+                path: boardSpec.path,
+            }
+            if (boardSpec.invert) board.invert = true;
+            configuration.push(board);
+        }
+        this._game.changeMap(new CBMap(configuration));
         for (let playerSpec of specs.players) {
             let player = this._game.getPlayer(playerSpec.name);
             console.assert(player);

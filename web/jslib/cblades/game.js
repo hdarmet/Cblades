@@ -32,8 +32,9 @@ export class CBAbstractArbitrator {
 
 export class CBAbstractPlayer {
 
-    constructor(name) {
+    constructor(name, path) {
         this._name = name;
+        this._path = path;
         this._init();
     }
 
@@ -49,6 +50,10 @@ export class CBAbstractPlayer {
 
     get name() {
         return this._name;
+    }
+
+    get path() {
+        return this._path;
     }
 
     changeSelection(playable, event) {
@@ -593,11 +598,29 @@ export class CBAbstractGame {
     }
 
     setMap(map) {
+        console.assert(!this._map);
         this._map = map;
         this._buildBoard(map);
         map.element.setOnBoard(this._board);
         map.game = this;
         return this;
+    }
+
+    changeMap(map) {
+        console.assert(this._map);
+        this._map.element.removeFromBoard(this._board);
+        delete this._map.game;
+        this._map = map;
+        this._board.setDimension(map.dimension);
+        map.element.setOnBoard(this._board);
+        map.game = this;
+    }
+
+    setPlayers(players) {
+        this._players = [];
+        for (let player of players) {
+            this.addPlayer(player);
+        }
     }
 
     addPlayer(player) {

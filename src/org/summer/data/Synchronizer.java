@@ -100,10 +100,13 @@ public class Synchronizer implements DataSunbeam {
 		}
 		else {
 			Long id = idGetter.apply(json);
-			E entity = ReflectUtil.get(this.target, targetFieldName);
-			if (entity==null || id==null || entity.getId()!=id) {
-				E targetEntity = creator.apply(json);
-				relationshipWave.set(this.target, targetFieldName, targetEntity);
+			E entity;
+			if (id == null) {
+				entity = creator.apply(json);
+				relationshipWave.set(this.target, targetFieldName, entity);
+			}
+			else {
+				entity = ReflectUtil.get(this.target, targetFieldName);
 			}
 			updater.accept(json, entity);
 		}
@@ -292,7 +295,8 @@ public class Synchronizer implements DataSunbeam {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public Synchronizer read(String jsonFieldName, String targetFieldName, Function ... functions) {
+	@SafeVarargs
+	final public <T, R> Synchronizer read(String jsonFieldName, String targetFieldName, Function<T, R> ... functions) {
 		Object readValue = ReflectUtil.get(this.target, targetFieldName);
 		for (Function function: functions) {
 			readValue = function.apply(readValue);

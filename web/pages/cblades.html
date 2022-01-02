@@ -98,7 +98,7 @@
     new CBWindDirectionCounter().setOnGame(game);
     new CBFogCounter().setOnGame(game);
 */
-    let player1 = new CBInteractivePlayer("player1");
+    let player1 = new CBInteractivePlayer("player1", "./../images/units/players/orc-1.png");
     game.addPlayer(player1);
     let wing1 = new CBWing(player1, GoblinBanner1);
     wing1.setTiredness(10);
@@ -120,7 +120,7 @@
 
     //new CBWingTirednessCounter(wing1).registerOnGame(game);
     //new CBWingMoralCounter(wing1).registerOnGame(game);
-    let player2 = new CBInteractivePlayer("player2");
+    let player2 = new CBInteractivePlayer("player2", "./../images/units/players/roughneck-1.png");
     game.addPlayer(player2);
     let wing2 = new CBWing(player2, RoughneckBanner1);
     wing2.setRetreatZone(map.getNorthZone());

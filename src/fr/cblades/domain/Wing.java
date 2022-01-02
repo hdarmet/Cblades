@@ -4,12 +4,14 @@ import org.summer.data.BaseEntity;
 
 import javax.persistence.*;
 import java.util.*;
+import java.util.Map;
 
 @Entity
 @Table(indexes=@Index(name="idx_wing", unique=true, columnList="player_id, banner"))
 public class Wing extends BaseEntity {
 
-    String banner="";
+    @ManyToOne
+    Banner banner;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "wing_id")
     List<Unit> units = new ArrayList<>();
@@ -19,10 +21,10 @@ public class Wing extends BaseEntity {
     @Transient
     Map<String, Unit> unitsByName;
 
-    public String getBanner() {
+    public Banner getBanner() {
         return this.banner;
     }
-    public Wing setBanner(String banner) {
+    public Wing setBanner(Banner banner) {
         this.banner = banner;
         return this;
     }

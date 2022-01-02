@@ -29,11 +29,11 @@ import {
 import {
     D2StatesIconMenuItem, DDownNavigation,
     DIconMenu, DIconMenuItem, DKo,
-    DLeftNavigation, DMultiStatePushButton, DNextNavigation, DOk,
+    DLeftNavigation, DMinus, DMultiStatePushButton, DNextNavigation, DOk, DPlus,
     DPopup, DPrevNavigation, DPushButton, DRightNavigation, DUpNavigation
 } from "../widget.js";
 import {
-    DBoard,
+    DBoard, DElement,
     DImageArtifact, DMultiImagesArtifact, DPedestalArtifact, DRectArtifact
 } from "../board.js";
 import {GoblinLeader, GoblinSkirmisher, GoblinWolfRider, WizardLeader} from "./armies/orcs.js";
@@ -46,11 +46,14 @@ import {
 } from "./armies/roughnecks.js";
 import {
     CBCharge,
-    CBCohesion, CBMunitions, CBOrderInstruction, CBTiredness
+    CBCohesion, CBMunitions, CBOrderInstruction, CBTiredness, CBWing
 } from "./unit.js";
 import {
     BoardLoader, Connector, GameLoader
 } from "./loader.js";
+import {
+    CBMap
+} from "./map.js";
 
 export class CBMapEditorHexHeightTrigger extends NeighborRawActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
 
@@ -394,24 +397,104 @@ export class CBFormationMoveActuator extends CBFormationPlacementActuator {
 
 }
 
-export class CBWingArtifact extends DPedestalArtifact {
+export class CBBattleArtifact extends DPedestalArtifact {
 
-    constructor() {
-        super(null, "widget-items", new Point2D(0, CBUnitsRoster.WING_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2));
+    constructor(header, position) {
+        super(null, "widget-items", position);
+        this._header = header;
+        this.setSettings(level => {
+            level.setShadowSettings("#000000", 10);
+        });
     }
 
+    get header() {
+        return this._header;
+    }
+
+    get active() {
+        return this._active;
+    }
+
+    setActive(active) {
+        this._active = active;
+        if (this._active) {
+            this.setSettings(level => {
+                level.setShadowSettings("#00FFFF", 10);
+            });
+        }
+        else {
+            this.setSettings(level => {
+                level.setShadowSettings("#000000", 10);
+            });
+        }
+    }
+
+    onMouseEnter(event) {
+        if (this._active) {
+            this.setSettings(level => {
+                level.setShadowSettings("#FF0000", 10);
+            });
+        }
+        return true;
+    }
+
+    onMouseLeave(event) {
+        if (this._active) {
+            this.setSettings(level => {
+                level.setShadowSettings("#00FFFF", 10);
+            });
+        }
+        return true;
+    }
+
+}
+
+export class CBPlayerArtifact extends CBBattleArtifact {
+
+    setPlayer(player) {
+        this.artifact = player ? new DImageArtifact("-",
+            DImage.getImage(player.path), new Point2D(0, 0),
+            CBPlayerArtifact.DIMENSION) : null;
+    }
+
+    onMouseClick(event) {
+        if (this._active) {
+            this._header.managePlayer();
+        }
+        return true;
+    }
+
+    static DIMENSION = new Dimension2D(60, 60);
+
+}
+
+export class CBWingArtifact extends CBBattleArtifact {
+
     setWing(wing) {
-        this.artifact = new DImageArtifact("-", DImage.getImage(wing.banner), new Point2D(0, 0), CBWingArtifact.DIMENSION);
+        this.artifact = wing ? new DImageArtifact("-",
+            DImage.getImage(wing.path), new Point2D(0, 0),
+            CBWingArtifact.DIMENSION
+        ): null;
+    }
+
+    onMouseClick(event) {
+        if (this.active) {
+            this.header.manageWing();
+        }
+        return true;
     }
 
     static DIMENSION = new Dimension2D(50, 120);
+
 }
 
 export class CBPartyArtifact extends ActivableArtifactMixin(DImageArtifact) {
 
     constructor(index, emblem) {
         super("widget-items", DImage.getImage(emblem),
-            new Point2D((CBPartyArtifact.DIMENSION.w+10)*(index-2), CBUnitsRoster.WING_HEADER_DIMENSION.h + CBUnitsRoster.ROSTER_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            new Point2D(
+                (CBPartyArtifact.DIMENSION.w+10)*(index-2),
+                CBUnitsRosterHeader.dimension.h + CBUnitsRosterContent.ROSTER_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
             CBPartyArtifact.DIMENSION);
         this._index = index;
     }
@@ -495,33 +578,128 @@ export class CBUnitTypeArtifact extends ActivableArtifactMixin(DPedestalArtifact
     static DIMENSION = new Dimension2D(60, 60);
 }
 
-export class CBUnitsRoster extends DPopup {
+export class CBUnitsRosterHeader extends DElement {
 
-    constructor(game) {
-        super(CBUnitsRoster.DIMENSION);
-        this._game = game;
-        if (!this._game.rosterMap) {
-            this._game.wingIndex = 0;
-            this._game.rosterIndex = 0;
-            this._game.rosterStart = 0;
-            this._game.rosterMap = new Map();
-        }
+    constructor(parent) {
+        super();
+        this._parent = parent;
+        this._active = true;
         this.addArtifact(new DImageArtifact("widgets", DImage.getImage("./../images/units/misc/unit-wing-back.png"),
-            new Point2D(0, CBUnitsRoster.WING_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
-            CBUnitsRoster.WING_HEADER_DIMENSION)
+            new Point2D(0, CBUnitsRosterHeader.dimension.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            CBUnitsRosterHeader.dimension)
         );
-        this.addArtifact(new DRectArtifact("widgets",
-            new Point2D(0, CBUnitsRoster.WING_HEADER_DIMENSION.h + CBUnitsRoster.ROSTER_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
-            CBUnitsRoster.ROSTER_HEADER_DIMENSION, 1, "#000000", "#C0C0C0")
+        this._leftWing = new DLeftNavigation(
+            new Point2D(-CBUnitsRoster.DIMENSION.w/2+35,
+                CBUnitsRosterHeader.dimension.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            ()=>{
+                this._wingUpdate(-1);
+            }
         );
-        this._buildWingArtifacts();
-        this._buildRosterCommands();
-        this._buildRosters();
-        this._changeRosterContent(this._game.rosterIndex);
+        this.addArtifact(this._leftWing);
+        this._playerArtifact = new CBPlayerArtifact(this, new Point2D(
+            CBUnitsRosterHeader.PLAYER_MARGIN,
+            CBUnitsRosterHeader.dimension.h/2 - CBUnitsRoster.DIMENSION.h/2)
+        );
+        this.addArtifact(this._playerArtifact);
+        this._wingArtifact = new CBWingArtifact(this, new Point2D(
+            CBUnitsRosterHeader.WING_MARGIN,
+            CBUnitsRosterHeader.dimension.h/2 - CBUnitsRoster.DIMENSION.h/2)
+        );
+        this.addArtifact(this._wingArtifact);
+        this._rightWing = new DRightNavigation(
+            new Point2D(CBUnitsRoster.DIMENSION.w/2-35,
+                CBUnitsRosterHeader.dimension.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            ()=>{
+                this._wingUpdate(1);
+            }
+        );
+        this.addArtifact(this._rightWing);
+        this._wingUpdate(0);
+    }
+
+    setActive(active) {
+        this._active = active;
+        if (active) {
+            this._leftWing.setActive(this._parent.game.wingIndex > 0);
+            this._rightWing.setActive(this._parent.game.wingIndex < this.wings.length - 1);
+            this._wingArtifact.setActive(true);
+            this._playerArtifact.setActive(true);
+        }
+        else {
+            this._leftWing.setActive(false);
+            this._rightWing.setActive(false);
+            this._wingArtifact.setActive(false);
+            this._playerArtifact.setActive(false);
+        }
+    }
+
+    refreshPlayer() {
+        this._playerArtifact.setPlayer(this.player);
+        this._wingArtifact.setWing(this.wing);
+    }
+
+    refreshWing() {
+        this._wingArtifact.setWing(this.wing);
+    }
+
+    _wingUpdate(shift) {
+        this._parent.shiftWing(shift);
+        this.setPlayer(this.wing.player);
+        this._wingArtifact.setWing(this.wing);
+        this._playerArtifact.setPlayer(this.player);
+        this.setActive(this._active);
     }
 
     get wing() {
-        return this._wings[this._game.wingIndex];
+        return this._parent.wing;
+    }
+
+    get wings() {
+        return this._parent.wings;
+    }
+
+    get player() {
+        return this._parent.player;
+    }
+
+    setPlayer(player) {
+        this._parent.setPlayer(player);
+    }
+
+    static get dimension() {
+        return CBUnitsRosterHeader.WING_HEADER_DIMENSION;
+    }
+
+    managePlayer() {
+        this._parent.showPlayerSelector();
+    }
+
+    manageWing() {
+        this._parent.showWingSelector();
+    }
+
+    static PLAYER_MARGIN = -80;
+    static WING_MARGIN = 80;
+    static WING_HEADER_DIMENSION = new Dimension2D(500, 120);
+}
+
+export class CBUnitsRosterContent extends DElement {
+
+    constructor(parent) {
+        super();
+        this._parent = parent;
+        if (!this._parent.game.rosterMap) {
+            this._parent.game.rosterIndex = 0;
+            this._parent.game.rosterStart = 0;
+            this._parent.game.rosterMap = new Map();
+        }
+        this.addArtifact(new DRectArtifact("widgets",
+            new Point2D(0, CBUnitsRosterHeader.dimension.h + CBUnitsRosterContent.ROSTER_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
+            CBUnitsRosterContent.ROSTER_HEADER_DIMENSION, 1, "#000000", "#C0C0C0")
+        );
+        this._buildRosterCommands();
+        this._buildRosters();
+        this._changeRosterContent(this._parent.game.rosterIndex);
     }
 
     _update() {
@@ -531,67 +709,33 @@ export class CBUnitsRoster extends DPopup {
             }
         }
         this._rosterArtifacts = [];
-        for (let index=this._game.rosterStart; index<CBUnitsRoster.rosters.length && index<this._game.rosterStart+5; index++) {
-            let roster = CBUnitsRoster.rosters[index];
-            let rosterArtifact = new CBPartyArtifact(index-this._game.rosterStart, roster.emblem);
+        for (let index=this._parent.game.rosterStart; index<CBUnitsRosterContent.rosters.length && index<this._parent.game.rosterStart+5; index++) {
+            let roster = CBUnitsRosterContent.rosters[index];
+            let rosterArtifact = new CBPartyArtifact(index-this._parent.game.rosterStart, roster.emblem);
             this._rosterArtifacts.push(rosterArtifact);
             this.addArtifact(rosterArtifact);
         }
     }
 
-    _wingUpdate() {
-        this._wingArtifact.setWing(this.wing);
-        this._leftWing.setActive(this._game.wingIndex>0);
-        this._rightWing.setActive(this._game.wingIndex<this._wings.length-1);
-    }
-
-    _buildWingArtifacts() {
-        this._wings = [];
-        for (let player of this._game.players) {
-            this._wings.push(...player.wings);
-        }
-        this._leftWing = new DLeftNavigation(
-            new Point2D(-CBUnitsRoster.DIMENSION.w/2+35,
-                CBUnitsRoster.WING_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
-            ()=>{
-                this._game.wingIndex--;
-                this._wingUpdate();
-            }
-        );
-        this.addArtifact(this._leftWing);
-        this._wingArtifact = new CBWingArtifact();
-        this.addArtifact(this._wingArtifact);
-        this._rightWing = new DRightNavigation(
-            new Point2D(CBUnitsRoster.DIMENSION.w/2-35,
-                CBUnitsRoster.WING_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
-            ()=>{
-                this._game.wingIndex++;
-                this._wingUpdate();
-            }
-        );
-        this.addArtifact(this._rightWing);
-        this._wingUpdate();
-    }
-
     _buildRosterCommands() {
         this._leftRoster = new DLeftNavigation(
             new Point2D(-CBUnitsRoster.DIMENSION.w/2+35,
-                CBUnitsRoster.WING_HEADER_DIMENSION.h + CBUnitsRoster.ROSTER_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
+                CBUnitsRosterHeader.dimension.h + CBUnitsRosterContent.ROSTER_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
             ()=>{
-                this._game.rosterStart--;
+                this._parent.game.rosterStart--;
                 this._rightRoster.setActive(true);
-                if (this._game.rosterStart===0) this._leftRoster.setActive(false);
+                if (this._parent.game.rosterStart===0) this._leftRoster.setActive(false);
                 this._update();
             }
         );
         this.addArtifact(this._leftRoster);
         this._rightRoster = new DRightNavigation(
             new Point2D(CBUnitsRoster.DIMENSION.w/2-35,
-                CBUnitsRoster.WING_HEADER_DIMENSION.h + CBUnitsRoster.ROSTER_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
+                CBUnitsRosterHeader.dimension.h + CBUnitsRosterContent.ROSTER_HEADER_DIMENSION.h/2 - CBUnitsRoster.DIMENSION.h/2),
             ()=>{
-                this._game.rosterStart++;
+                this._parent.game.rosterStart++;
                 this._leftRoster.setActive(true);
-                if (this._game.rosterStart===CBUnitsRoster.rosters.length-5) this._rightRoster.setActive(false);
+                if (this._parent.game.rosterStart===CBUnitsRosterContent.rosters.length-5) this._rightRoster.setActive(false);
                 this._update();
             }
         );
@@ -604,8 +748,8 @@ export class CBUnitsRoster extends DPopup {
                 this.removeArtifact(unitType);
             }
         }
-        let roster = CBUnitsRoster.rosters[index];
-        this._unitArtifacts = this._game.rosterMap.get(roster);
+        let roster = CBUnitsRosterContent.rosters[index];
+        this._unitArtifacts = this._parent.game.rosterMap.get(roster);
         if (this._unitArtifacts) {
             for (let unitType of this._unitArtifacts) {
                 this.addArtifact(unitType);
@@ -613,13 +757,13 @@ export class CBUnitsRoster extends DPopup {
         }
         else {
             this.buildRosterContent(roster);
-            this._game.rosterMap.set(roster, this._unitArtifacts);
+            this._parent.game.rosterMap.set(roster, this._unitArtifacts);
         }
     }
 
     changeRosterContent(index) {
-        this._game.rosterIndex = this._game.rosterStart+index;
-        this._changeRosterContent(this._game.rosterIndex);
+        this._parent.game.rosterIndex = this._parent.game.rosterStart+index;
+        this._changeRosterContent(this._parent.game.rosterIndex);
     }
 
     buildRosterContent(roster) {
@@ -628,7 +772,7 @@ export class CBUnitsRoster extends DPopup {
             let col = index % 2;
             let row = Math.floor(index / 2);
             let x = col % 2 ? CBUnitsRoster.DIMENSION.w / 4 : -CBUnitsRoster.DIMENSION.w / 4;
-            let y = CBUnitsRoster.WING_HEADER_DIMENSION.h + CBUnitsRoster.ROSTER_HEADER_DIMENSION.h - CBUnitsRoster.DIMENSION.h / 2 +
+            let y = CBUnitsRosterHeader.dimension.h + CBUnitsRosterContent.ROSTER_HEADER_DIMENSION.h - CBUnitsRoster.DIMENSION.h / 2 +
                 (CBUnitTypeArtifact.DIMENSION.h + 10) * (row + 0.5) + 20;
             let unitTypeArtifact = this._buildUnitTypeArtifact(roster.unitTypes[index], x, y);
             this._buildUnitTypeEnhancers(x, y, unitTypeArtifact);
@@ -670,8 +814,8 @@ export class CBUnitsRoster extends DPopup {
 
     _buildRosters() {
         this._update();
-        this._leftRoster.setActive(this._game.rosterStart>0);
-        this._rightRoster.setActive(this._game.rosterStart<CBUnitsRoster.rosters.length-5);
+        this._leftRoster.setActive(this._parent.game.rosterStart>0);
+        this._rightRoster.setActive(this._parent.game.rosterStart<CBUnitsRosterContent.rosters.length-5);
     }
 
     static rosters = [{
@@ -713,19 +857,659 @@ export class CBUnitsRoster extends DPopup {
     }];
 
     placeUnit(trigger) {
-        this._game.closeActuators();
-        this._game.closePopup();
+        this._parent.game.closeActuators();
+        this._parent.game.closePopup();
         if (trigger.isFormation()) {
-            this._game.openActuator(new CBFormationCreationActuator(this._game.map, this.wing, trigger.type, trigger.steps));
+            this._parent.game.openActuator(new CBFormationCreationActuator(
+                this._parent.game.map, this._parent.currentWing,
+                trigger.type, trigger.steps)
+            );
         }
         else {
-            this._game.openActuator(new CBUnitCreationActuator(this._game.map, this.wing, trigger.type, trigger.steps));
+            this._parent.game.openActuator(new CBUnitCreationActuator(
+                this._parent.game.map, this._parent.currentWing,
+                trigger.type, trigger.steps)
+            );
+        }
+    }
+
+    get dimension() {
+        return CBUnitsRosterContent.ROSTER_HEADER_DIMENSION;
+    }
+
+    static ROSTER_HEADER_DIMENSION = new Dimension2D(500, 80);
+}
+
+export class CBRosterSelectorCell extends DPedestalArtifact {
+
+    constructor(parent, col, row, position) {
+        super(null, "widget-items", position);
+        this._parent = parent;
+        this._col = col;
+        this._row = row;
+    }
+
+    setItem(item, selected, excluded) {
+        this._item = item;
+        this.artifact = item ?  new DImageArtifact("-",
+            DImage.getImage(this._item.path),
+            new Point2D(0, 0),
+            this._getDimension()
+        ): null;
+        if (item) {
+            this._selected = selected.has(item.name);
+            this._excluded = excluded.has(item.name);
+        }
+        this._setSettings(false);
+        return this;
+    }
+
+    _setSettings(inside) {
+        if (this._item) {
+            if (this._excluded) {
+                this.setSettings(level => {
+                    level.setShadowSettings("#000000", 5);
+                });
+            } else {
+                if (this._selected === inside) {
+                    this.setSettings(level => {
+                        level.setShadowSettings("#0050FF", 5);
+                    });
+                } else {
+                    this.setSettings(level => {
+                        level.setShadowSettings("#FF0000", 20);
+                    });
+                }
+            }
+        }
+        else {
+            this.setSettings(level => {
+                level.setShadowSettings("#000000", 0);
+            });
+        }
+    }
+
+    onMouseEnter(event) {
+        this._setSettings(true);
+        return true;
+    }
+
+    onMouseLeave(event) {
+        this._setSettings(false);
+        return true;
+    }
+
+    get selected() {
+        return this._selected;
+    }
+
+    get item() {
+        return this._item;
+    }
+
+    onMouseClick(event) {
+        this._selected = !this._selected;
+        this._setSettings(false);
+        this._parent._changeCellState(this);
+        return true;
+    }
+
+}
+
+export class CBRosterSelector extends DElement {
+
+    constructor(parent, content, selected, excluded) {
+        super();
+        this._parent = parent;
+        this._firstItemIndex=0;
+        this._content = content;
+        this.addArtifact(new DRectArtifact("widgets",
+            new Point2D(0, CBUnitsRoster.DIMENSION.h/2 - CBUnitsRosterContent.ROSTER_HEADER_DIMENSION.h/2),
+            CBUnitsRosterContent.ROSTER_HEADER_DIMENSION, 1, "#000000", "#C0C0C0")
+        );
+        this._selected = selected;
+        this._excluded = excluded;
+        this._buildSelectorCommands();
+        this._buildSelectionContent();
+    }
+
+    _buildSelectorCommands() {
+        this._leftSelectorPage = new DLeftNavigation(new Point2D(
+            this._getNavigationMarginCount() -CBUnitsRoster.DIMENSION.w/2,
+            CBUnitsRoster.DIMENSION.h/2 - CBUnitsRosterContent.ROSTER_HEADER_DIMENSION.h/2
+        ), ()=>{
+            this._updateContent(-this._getRowCount());
+        });
+        this.addArtifact(this._leftSelectorPage);
+        this._validateButton = new DOk(new Point2D(
+            -this._getNavigationMarginCount(),
+            CBUnitsRoster.DIMENSION.h/2 - CBUnitsRosterContent.ROSTER_HEADER_DIMENSION.h/2
+        ), ()=>{
+            this._parent.validateBattleSettings();
+        });
+        this.addArtifact(this._validateButton);
+        this._cancelButton = new DKo(new Point2D(
+            this._getNavigationMarginCount(),
+            CBUnitsRoster.DIMENSION.h/2 - CBUnitsRosterContent.ROSTER_HEADER_DIMENSION.h/2
+        ), ()=>{
+            this._parent.cancelBattleSettings();
+        });
+        this.addArtifact(this._cancelButton);
+        this._rightSelectorPage = new DRightNavigation(new Point2D(
+            -this._getNavigationMarginCount() +CBUnitsRoster.DIMENSION.w/2,
+            CBUnitsRoster.DIMENSION.h/2 - CBUnitsRosterContent.ROSTER_HEADER_DIMENSION.h/2
+        ), ()=>{
+            this._updateContent(this._getRowCount());
+        });
+        this.addArtifact(this._rightSelectorPage);
+    }
+
+    _updateContent(shift) {
+        this._firstItemIndex+=shift;
+        this.changeSelectionContent();
+    }
+
+    _buildSelectionContent() {
+        this._cells = [];
+        for (let col=0; col<this._getColCount(); col++) {
+            this._cells[col] = [];
+            for (let row=0; row<this._getRowCount(); row++) {
+                this._cells[col][row] = this._buildCell(col, row, new Point2D(
+                    this._getCellDimension().w*(0.5-this._getColCount()/2+col),
+                    this._getCellDimension().h*(0.5-this._getRowCount()/2+row)+this._getHeightShift()
+                ));
+                this.addArtifact(this._cells[col][row]);
+            }
+        }
+    }
+
+    changeSelectionContent() {
+        let selected = this._selected();
+        let excluded = this._excluded();
+        for (let col=0; col<this._getColCount(); col++) {
+            for (let row=0; row<this._getRowCount(); row++) {
+                this._cells[col][row].setItem(this._content[
+                    this._firstItemIndex+col*this._getRowCount()+row
+                ], selected, excluded);
+            }
+        }
+        this._leftSelectorPage.setActive(this._firstItemIndex > 0);
+        this._rightSelectorPage.setActive(
+            this._firstItemIndex+(this._getColCount()*this._getRowCount()) < this._content.length
+        );
+        this._validateButton.setActive(this._parent.battleSettingsAreValid());
+    }
+
+    _changeCellState(cell) {
+        this._parent.activateHeader(false);
+        this._validateButton.setActive(this._parent.battleSettingsAreValid());
+    }
+
+}
+
+export class CBPlayerSelectorCell extends CBRosterSelectorCell {
+
+    _getDimension() {
+        return CBPlayerSelectorCell.DIMENSION;
+    }
+
+    static DIMENSION = new Dimension2D(60, 60);
+
+}
+
+export class CBPlayerSelector extends CBRosterSelector {
+
+    constructor(parent, content) {
+        super(parent, content,
+            ()=>new Set(parent.players.map(player=>player.name)),
+            ()=>new Set());
+    }
+
+    _buildCell(col, row, position, selected, excluded) {
+        return new CBPlayerSelectorCell(this, col, row, position, selected, excluded);
+    }
+
+    _getColCount() {
+        return CBPlayerSelector.COL_COUNT;
+    }
+
+    _getRowCount() {
+        return CBPlayerSelector.ROW_COUNT;
+    }
+
+    _getNavigationMarginCount() {
+        return CBPlayerSelector.NAVIGATION_MARGIN;
+    }
+
+    _getHeightShift() {
+        return CBPlayerSelector.HEIGHT_SHIFT;
+    }
+
+    _getCellDimension() {
+        return CBPlayerSelector.CELL_DIMENSION;
+    }
+
+    _changeCellState(cell) {
+        if (cell.selected) {
+            this._parent.addPlayer(cell.item);
+            this._parent.showWingSelector();
+        }
+        else {
+            this._parent.removePlayer(cell.item);
+        }
+        super._changeCellState(cell);
+    }
+
+    static COL_COUNT = 6;
+    static ROW_COUNT = 6;
+    static NAVIGATION_MARGIN = 35;
+    static HEIGHT_SHIFT = 20;
+    static CELL_DIMENSION = new Dimension2D(80, 75)
+}
+
+export class CBWingSelectorCell extends CBRosterSelectorCell {
+
+    _getDimension() {
+        return CBWingSelectorCell.DIMENSION;
+    }
+
+    static DIMENSION = new Dimension2D(50, 120);
+
+}
+
+export class CBWingSelector extends CBRosterSelector {
+
+    constructor(parent, content) {
+        super(parent, content,
+            ()=>{
+                return parent.player ?
+                    new Set(parent.player.wings.map(wing=>wing.name)):
+                    new Set();
+            },
+            ()=>new Set(
+                parent.players.filter(
+                    player=>player!==parent.player).reduce(
+                        (wings, player)=>{
+                            wings.push(...player.wings.map(wing=>wing.name));
+                            return wings;
+                        }, []
+                    )
+                )
+        );
+    }
+
+    _buildCell(col, row, position, selected, excluded) {
+        return new CBWingSelectorCell(this, col, row, position, selected, excluded);
+    }
+
+    _getColCount() {
+        return CBWingSelector.COL_COUNT;
+    }
+
+    _getRowCount() {
+        return CBWingSelector.ROW_COUNT;
+    }
+
+    _getNavigationMarginCount() {
+        return CBWingSelector.NAVIGATION_MARGIN;
+    }
+
+    _getHeightShift() {
+        return CBWingSelector.HEIGHT_SHIFT;
+    }
+
+    _getCellDimension() {
+        return CBWingSelector.CELL_DIMENSION;
+    }
+
+    _changeCellState(cell) {
+        if (cell.selected) {
+            this._parent.addWing(cell.item);
+        }
+        else {
+            this._parent.removeWing(cell.item);
+        }
+        super._changeCellState(cell);
+    }
+
+    static COL_COUNT = 6;
+    static ROW_COUNT = 4;
+    static NAVIGATION_MARGIN = 35;
+    static HEIGHT_SHIFT = 20;
+    static CELL_DIMENSION = new Dimension2D(80, 120)
+}
+
+
+export class CBUnitsRoster extends DPopup {
+
+    constructor(game) {
+        super(CBUnitsRoster.DIMENSION);
+        this._game = game;
+        if (!this._game.rosterMap) {
+            this._game.wingIndex = 0;
+        }
+        this._loadBattleSettings(this._game);
+        this._wing = this.wings[this.game.wingIndex];
+        this._buildHeaderElement();
+        this._buildRosterElement();
+        this._buildPlayerSelector();
+        this._buildWingSelector();
+    }
+
+    shiftWing(shift) {
+        this._game.wingIndex+=shift;
+        this._wing = this.wings[this.game.wingIndex];
+    }
+
+    get wing() {
+        return this._wing;
+    }
+
+    get wings() {
+        let wings = [];
+        for (let player of this._players) {
+            wings.push(...player.wings);
+        }
+        return wings;
+    }
+
+    get players() {
+        return this._players;
+    }
+
+    get game() {
+        return this._game;
+    }
+
+    get currentWing() {
+        for (let player of this._game.players) {
+            for (let wing of player.wings) {
+                if (wing.banner.name === this._wing.name) {
+                    return wing;
+                }
+            }
+        }
+        return null;
+    }
+
+    activateHeader(active) {
+        this._header.setActive(active);
+    }
+
+    validateBattleSettings() {
+        let syncWings = (player, playerDesc)=>{
+            let wingMap = new Map();
+            for (let wing of player.wings) {
+                wingMap.set(wing.banner.name, wing);
+            }
+            let wings = [];
+            for (let wingDesc of playerDesc.wings) {
+                let wing = wingMap.get(wingDesc.name);
+                if (!wing) wing = new CBWing(null, {
+                    name:wingDesc.name,
+                    path:wingDesc.path
+                });
+                wings.push(wing);
+            }
+            player.setWings(wings);
+        }
+
+        let syncPlayers = ()=>{
+            let playerMap = new Map();
+            for (let player of this._game.players) {
+                playerMap.set(player.name, player);
+            }
+            let players = [];
+            for (let playerDesc of this._players) {
+                let player = playerMap.get(playerDesc.name);
+                if (!player) player = new CBEditorPlayer(playerDesc.name, playerDesc.path);
+                syncWings(player, playerDesc);
+                players.push(player);
+            }
+            this._game.setPlayers(players);
+        }
+
+        this.activateHeader(true);
+        syncPlayers();
+        this._showRosterContent();
+    }
+
+    cancelBattleSettings() {
+        let _retrievePlayer = ()=>{
+            for (let player of this._players) {
+                if (player.name === this._player.name) {
+                    return player;
+                }
+            }
+            return this._players[0];
+        }
+        let _retrieveWing = ()=>{
+            for (let wing of this._player.wings) {
+                if (wing.name === this._wing.name) {
+                    return wing;
+                }
+            }
+            return this._player.wings[0];
+        }
+
+        this.activateHeader(true);
+        this._loadBattleSettings(this._game);
+        this._player = _retrievePlayer();
+        this._wing = _retrieveWing();
+        this._header.refreshPlayer();
+        this._showRosterContent();
+    }
+
+    _loadBattleSettings(game) {
+        this._players = [];
+        for (let player of game.players) {
+            let playerDesc = {
+                name:player.name,
+                path:player.path
+            }
+            let wings = player.wings.map(wing=>{
+                return {
+                    name:wing.banner.name,
+                    path:wing.banner.path,
+                    player: playerDesc
+                }
+            });
+            playerDesc.wings = wings;
+            this._players.push(playerDesc);
+        }
+    }
+
+    battleSettingsAreValid() {
+        if (this._players.length<2) return false;
+        for (let player of this._players) {
+            if (player.wings.length===0) return false;
+        }
+        return true;
+    }
+
+    addPlayer(item) {
+        this._player = {
+            ...item,
+            wings: []
+        }
+        this._wing = null;
+        this._players.push(this._player);
+        this._header.refreshPlayer();
+    }
+
+    removePlayer(item) {
+        this._players = this._players.filter(player=>player.name !== item.name);
+        if (item.name === this._player.name) {
+            this._player = this._players[0];
+            this._header.refreshPlayer();
+        }
+    }
+
+    addWing(item) {
+        this._wing = {
+            ...item,
+            player: this._player
+        }
+        this._player.wings.push(this._wing);
+        this._header.refreshWing();
+    }
+
+    removeWing(item) {
+        this._player.wings = this._player.wings.filter(wing=>wing.name !== item.name);
+        if (item.name === this._wing.name) {
+            this._wing = this._player.wings[0];
+            this._header.refreshWing();
+        }
+    }
+
+    get player() {
+        return this._player;
+    }
+
+    setPlayer(player) {
+        this._player = player;
+    }
+
+    _buildHeaderElement() {
+        this._header = new CBUnitsRosterHeader(this);
+        this.addElement(this._header);
+    }
+
+    _buildRosterElement() {
+        this._rosterContent = new CBUnitsRosterContent(this);
+        this.addElement(this._rosterContent);
+    }
+
+    _buildPlayerSelector() {
+        this._playerSelector = new CBPlayerSelector(this,
+            CBUnitsRoster.allPlayers
+        );
+    }
+
+    _buildWingSelector() {
+        this._wingSelector = new CBWingSelector(this,
+            CBUnitsRoster.allWings
+        );
+    }
+
+    _showRosterContent() {
+        if (!this.hasElement(this._rosterContent)) {
+            if (this.hasElement(this._wingSelector)) {
+                this.removeElement(this._wingSelector);
+            }
+            if (this.hasElement(this._playerSelector)) {
+                this.removeElement(this._playerSelector);
+            }
+            this.addElement(this._rosterContent);
+        }
+    }
+
+    showPlayerSelector() {
+        if (!this.hasElement(this._playerSelector)) {
+            if (this.hasElement(this._rosterContent)) {
+                this.removeElement(this._rosterContent);
+            }
+            if (this.hasElement(this._wingSelector)) {
+                this.removeElement(this._wingSelector);
+            }
+            this._playerSelector.changeSelectionContent();
+            this.addElement(this._playerSelector);
+        }
+    }
+
+    showWingSelector() {
+        if (!this.hasElement(this._wingSelector)) {
+            if (this.hasElement(this._rosterContent)) {
+                this.removeElement(this._rosterContent);
+            }
+            if (this.hasElement(this._playerSelector)) {
+                this.removeElement(this._playerSelector);
+            }
+            this._wingSelector.changeSelectionContent();
+            this.addElement(this._wingSelector);
         }
     }
 
     static DIMENSION = new Dimension2D(500, 650);
-    static WING_HEADER_DIMENSION = new Dimension2D(500, 120);
-    static ROSTER_HEADER_DIMENSION = new Dimension2D(500, 80);
+
+    static allPlayers = [
+        {path:"./../images/units/players/orc-1.png", name:"player0"},
+        {path:"./../images/units/players/orc-2.png", name:"player1"},
+        {path:"./../images/units/players/roughneck-1.png", name:"player2"},
+        {path:"./../images/units/players/roughneck-2.png", name:"player3"},
+        {path:"./../images/units/players/orc-1.png", name:"player4"},
+        {path:"./../images/units/players/orc-2.png", name:"player5"},
+        {path:"./../images/units/players/roughneck-1.png", name:"player6"},
+        {path:"./../images/units/players/roughneck-2.png", name:"player7"},
+        {path:"./../images/units/players/orc-1.png", name:"player8"},
+        {path:"./../images/units/players/orc-2.png", name:"player9"},
+        {path:"./../images/units/players/roughneck-1.png", name:"player10"},
+        {path:"./../images/units/players/roughneck-2.png", name:"player11"},
+        {path:"./../images/units/players/orc-1.png", name:"player12"},
+        {path:"./../images/units/players/orc-2.png", name:"player13"},
+        {path:"./../images/units/players/roughneck-1.png", name:"player14"},
+        {path:"./../images/units/players/roughneck-2.png", name:"player15"},
+        {path:"./../images/units/players/orc-1.png", name:"player16"},
+        {path:"./../images/units/players/orc-2.png", name:"player17"},
+        {path:"./../images/units/players/roughneck-1.png", name:"player18"},
+        {path:"./../images/units/players/roughneck-2.png", name:"player19"},
+        {path:"./../images/units/players/orc-1.png", name:"player20"},
+        {path:"./../images/units/players/orc-2.png", name:"player21"},
+        {path:"./../images/units/players/roughneck-1.png", name:"player22"},
+        {path:"./../images/units/players/roughneck-2.png", name:"player23"},
+        {path:"./../images/units/players/orc-1.png", name:"player24"},
+        {path:"./../images/units/players/orc-2.png", name:"player25"},
+        {path:"./../images/units/players/roughneck-1.png", name:"player26"},
+        {path:"./../images/units/players/roughneck-2.png", name:"player27"},
+        {path:"./../images/units/players/orc-1.png", name:"player28"},
+        {path:"./../images/units/players/orc-2.png", name:"player29"},
+        {path:"./../images/units/players/roughneck-1.png", name:"player30"},
+        {path:"./../images/units/players/roughneck-2.png", name:"player31"},
+        {path:"./../images/units/players/orc-1.png", name:"player32"},
+        {path:"./../images/units/players/orc-2.png", name:"player33"},
+        {path:"./../images/units/players/roughneck-1.png", name:"player34"},
+        {path:"./../images/units/players/roughneck-2.png", name:"player35"},
+        {path:"./../images/units/players/orc-1.png", name:"player36"},
+        {path:"./../images/units/players/orc-2.png", name:"player37"},
+        {path:"./../images/units/players/roughneck-1.png", name:"player38"},
+        {path:"./../images/units/players/roughneck-2.png", name:"player39"},
+        {path:"./../images/units/players/roughneck-1.png", name:"player40"},
+        {path:"./../images/units/players/roughneck-2.png", name:"player41"}
+    ];
+
+    static allWings = [
+        {path:"./../images/units/orcs/banners/banner0.png", name:"orc-banner-1"},
+        {path:"./../images/units/orcs/banners/banner1.png", name:"orc-banner-2"},
+        {path:"./../images/units/orcs/banners/banner2.png", name:"banner2"},
+        {path:"./../images/units/mercenaries/banners/banner0.png", name:"roughneck-banner-1"},
+        {path:"./../images/units/mercenaries/banners/banner1.png", name:"roughneck-banner-2"},
+        {path:"./../images/units/mercenaries/banners/banner2.png", name:"banner5"},
+        {path:"./../images/units/orcs/banners/banner0.png", name:"banner6"},
+        {path:"./../images/units/orcs/banners/banner1.png", name:"banner7"},
+        {path:"./../images/units/orcs/banners/banner2.png", name:"banner8"},
+        {path:"./../images/units/mercenaries/banners/banner0.png", name:"banner9"},
+        {path:"./../images/units/mercenaries/banners/banner1.png", name:"banner10"},
+        {path:"./../images/units/mercenaries/banners/banner2.png", name:"banner11"},
+        {path:"./../images/units/orcs/banners/banner0.png", name:"banner12"},
+        {path:"./../images/units/orcs/banners/banner1.png", name:"banner13"},
+        {path:"./../images/units/orcs/banners/banner2.png", name:"banner14"},
+        {path:"./../images/units/mercenaries/banners/banner0.png", name:"banner15"},
+        {path:"./../images/units/mercenaries/banners/banner1.png", name:"banner16"},
+        {path:"./../images/units/mercenaries/banners/banner2.png", name:"banner17"},
+        {path:"./../images/units/orcs/banners/banner0.png", name:"banner18"},
+        {path:"./../images/units/orcs/banners/banner1.png", name:"banner19"},
+        {path:"./../images/units/orcs/banners/banner2.png", name:"banner20"},
+        {path:"./../images/units/mercenaries/banners/banner0.png", name:"banner21"},
+        {path:"./../images/units/mercenaries/banners/banner1.png", name:"banner22"},
+        {path:"./../images/units/mercenaries/banners/banner2.png", name:"banner23"},
+        {path:"./../images/units/orcs/banners/banner0.png", name:"banner24"},
+        {path:"./../images/units/orcs/banners/banner1.png", name:"banner25"},
+        {path:"./../images/units/orcs/banners/banner2.png", name:"banner26"},
+        {path:"./../images/units/mercenaries/banners/banner0.png", name:"banner27"},
+        {path:"./../images/units/mercenaries/banners/banner1.png", name:"banner28"},
+        {path:"./../images/units/mercenaries/banners/banner2.png", name:"banner29"}
+    ];
+
 }
 
 export class CBMapCommand extends DImageArtifact {
@@ -764,13 +1548,14 @@ export class CBMapCommand extends DImageArtifact {
     }
 
     static DIMENSION = new Dimension2D(36, 36);
+
 }
 
-export class CBMapPedestalArtifact extends DPedestalArtifact {
+export class CBMapCellArtifact extends DPedestalArtifact {
 
-    constructor(mapSetter, col, row, position) {
+    constructor(mapComposer, col, row, position) {
         super(null, "widget-items", position);
-        this._mapSetter = mapSetter;
+        this._mapComposer = mapComposer;
         this._col = col;
         this._row = row;
         this.colorize("#E0E0E0");
@@ -778,14 +1563,22 @@ export class CBMapPedestalArtifact extends DPedestalArtifact {
 
     colorize(color) {
         this.artifact = new DRectArtifact("widget-items",
-            new Point2D(0, 0), CBMapPedestalArtifact.DIMENSION,
+            new Point2D(0, 0), CBMapCellArtifact.DIMENSION,
             1,  "#000000", color);
     }
 
     copyMap(pedestal) {
-        this.setMap(pedestal._map);
+        this.setMap(pedestal.map);
         this._mapAngle = pedestal._mapAngle
         this.turn(this._mapAngle);
+    }
+
+    get map() {
+        return this._map;
+    }
+
+    isInverted() {
+        return !!this._mapAngle;
     }
 
     setMap(map) {
@@ -793,7 +1586,7 @@ export class CBMapPedestalArtifact extends DPedestalArtifact {
         this.turn(0);
         this._map = map;
         this.artifact = new DImageArtifact("-",
-            DImage.getImage(map.path),
+            DImage.getImage(map.path+"-icon.png"),
             new Point2D(0, 0), CBMapSelectorArtifact.DIMENSION
         );
     }
@@ -811,7 +1604,7 @@ export class CBMapPedestalArtifact extends DPedestalArtifact {
 
     onMouseEnter(event, fromArtifact) {
         if (fromArtifact !== this._turnCommand && fromArtifact !== this._deleteCommand) {
-            this._mapSetter.enterCell(this);
+            this._mapComposer.enterCell(this);
             this.setSettings(level => {
                 level.setShadowSettings("#FF0000", 10);
             });
@@ -821,7 +1614,7 @@ export class CBMapPedestalArtifact extends DPedestalArtifact {
 
     onMouseLeave(event, toArtifact) {
         if (toArtifact !== this._turnCommand && toArtifact !== this._deleteCommand) {
-            this._mapSetter.leaveCell(this);
+            this._mapComposer.leaveCell(this);
             this.setSettings(level => {
                 level.setShadowSettings("#000000", 0);
             });
@@ -830,7 +1623,7 @@ export class CBMapPedestalArtifact extends DPedestalArtifact {
     }
 
     onMouseClick(event) {
-        this._mapSetter.setMapOnComposerCell(this);
+        this._mapComposer.setMapOnComposerCell(this);
         return true;
     }
 
@@ -839,25 +1632,25 @@ export class CBMapPedestalArtifact extends DPedestalArtifact {
             "./../images/edit-actions/flip.png",
             this.position.minus(0, 30),
             pedestal=>pedestal.turnMap());
-        this._mapSetter.addArtifact(this._turnCommand);
+        this._mapComposer.addArtifact(this._turnCommand);
         this._deleteCommand = new CBMapCommand(this,
             "./../images/edit-actions/remove.png",
             this.position.plus(0, 30),
             pedestal=>{
                 pedestal.unsetMap();
-                this._mapSetter.updateCommands();
+                this._mapComposer.updateCommands();
             }
         );
-        this._mapSetter.addArtifact(this._deleteCommand);
+        this._mapComposer.addArtifact(this._deleteCommand);
     }
 
     unsetCommands() {
         if (this._turnCommand) {
-            this._mapSetter.removeArtifact(this._turnCommand);
+            this._mapComposer.removeArtifact(this._turnCommand);
             delete this._turnCommand;
         }
         if (this._deleteCommand) {
-            this._mapSetter.removeArtifact(this._deleteCommand);
+            this._mapComposer.removeArtifact(this._deleteCommand);
             delete this._deleteCommand;
         }
     }
@@ -865,11 +1658,11 @@ export class CBMapPedestalArtifact extends DPedestalArtifact {
     static DIMENSION = new Dimension2D(80, 125);
 }
 
-export class CBMapTranslatorCommand extends DMultiImagesArtifact {
+export class CBMapGliderCommand extends DMultiImagesArtifact {
 
-    constructor(mapSetter, path, inactivePath, position, direction) {
-        super("widget-items", [DImage.getImage(path), DImage.getImage(inactivePath)], position, CBMapTranslatorCommand.DIMENSION);
-        this._mapSetter = mapSetter;
+    constructor(mapComposer, path, inactivePath, position, direction) {
+        super("widget-items", [DImage.getImage(path), DImage.getImage(inactivePath)], position, CBMapGliderCommand.DIMENSION);
+        this._mapComposer = mapComposer;
         this._direction = direction;
         this._active = true;
         this.setSettings(level => {
@@ -913,7 +1706,7 @@ export class CBMapTranslatorCommand extends DMultiImagesArtifact {
 
     onMouseClick(event) {
         if (this._active) {
-            this._mapSetter.translateMap(this._direction);
+            this._mapComposer.translateMap(this._direction);
         }
         return true;
     }
@@ -928,9 +1721,9 @@ export class CBMapTranslatorCommand extends DMultiImagesArtifact {
 
 export class CBMapSelectorArtifact extends DPedestalArtifact {
 
-    constructor(mapSetter, index, location) {
+    constructor(mapComposer, index, location) {
         super(null, "widget-items", location);
-        this._mapSetter = mapSetter;
+        this._mapComposer = mapComposer;
         this._index = index;
         this.setSettings(
             level=>{
@@ -945,13 +1738,13 @@ export class CBMapSelectorArtifact extends DPedestalArtifact {
 
     setMap(map) {
         this.artifact = new DImageArtifact("-",
-            DImage.getImage(map.path),
+            DImage.getImage(map.path+"-icon.png"),
             new Point2D(0, 0), CBMapSelectorArtifact.DIMENSION
         );
     }
 
     onMouseClick(event) {
-        this._mapSetter.select(this.index);
+        this._mapComposer.select(this.index);
         return true;
     }
 
@@ -990,62 +1783,65 @@ export class CBMapSelectorArtifact extends DPedestalArtifact {
     static DIMENSION = new Dimension2D(80, 125);
 }
 
-export class CBMapSetter extends DPopup {
+export class CBMapComposer extends DPopup {
 
-    constructor(game, models) {
+    constructor(game, configuration, models) {
         super(new Dimension2D(10, 10), true);
         this._models = models;
         this._firstModel = 0;
         this._game = game;
-        this.resize(new Dimension2D(this.width, this.height));
+        this.resize(CBMapComposer.DIMENSION);
         this._buildSelector();
         this._buildComposer();
         this._buildCommands();
+        this._init(configuration);
     }
 
     _buildCommands() {
-        this._translateToTop = new CBMapTranslatorCommand(this,
+        this._translateToTop = new CBMapGliderCommand(this,
             "./../images/commands/top.png","./../images/commands/top-inactive.png",
-            new Point2D(this.width/2-CBMapSetter.SELECTOR_WIDTH, 0)
-                .plusPoint(CBMapSetter.TRANSLATER_COMMANDS_MARGIN),
+            new Point2D(CBMapComposer.DIMENSION.w/2-CBMapComposer.SELECTOR_WIDTH, 0)
+                .plusPoint(CBMapComposer.GLIDER_COMMANDS_MARGIN),
             {col:0, row:-1});
         this.addArtifact(this._translateToTop);
-        this._translateToLeft = new CBMapTranslatorCommand(this,
+        this._translateToLeft = new CBMapGliderCommand(this,
             "./../images/commands/prev.png", "./../images/commands/prev-inactive.png",
-            new Point2D(this.width/2-CBMapSetter.SELECTOR_WIDTH, 0)
-                .plusPoint(CBMapSetter.TRANSLATER_COMMANDS_MARGIN).plus(0, CBMapSetter.TRANSLATOR_COMMANDS_SHIFT),
+            new Point2D(CBMapComposer.DIMENSION.w/2-CBMapComposer.SELECTOR_WIDTH, 0)
+                .plusPoint(CBMapComposer.GLIDER_COMMANDS_MARGIN).plus(0, CBMapComposer.GLIDER_COMMANDS_SHIFT),
             {col:-1, row:0});
         this.addArtifact(this._translateToLeft);
-        this._translateToRight = new CBMapTranslatorCommand(this,
+        this._translateToRight = new CBMapGliderCommand(this,
             "./../images/commands/next.png", "./../images/commands/next-inactive.png",
-            new Point2D(this.width/2-CBMapSetter.SELECTOR_WIDTH, 0)
-                .plusPoint(CBMapSetter.TRANSLATER_COMMANDS_MARGIN).plus(0, CBMapSetter.TRANSLATOR_COMMANDS_SHIFT*2),
+            new Point2D(CBMapComposer.DIMENSION.w/2-CBMapComposer.SELECTOR_WIDTH, 0)
+                .plusPoint(CBMapComposer.GLIDER_COMMANDS_MARGIN).plus(0, CBMapComposer.GLIDER_COMMANDS_SHIFT*2),
             {col:1, row:0});
         this.addArtifact(this._translateToRight);
-        this._translateToBottom = new CBMapTranslatorCommand(this,
+        this._translateToBottom = new CBMapGliderCommand(this,
             "./../images/commands/bottom.png", "./../images/commands/bottom-inactive.png",
-            new Point2D(this.width/2-CBMapSetter.SELECTOR_WIDTH, 0)
-                .plusPoint(CBMapSetter.TRANSLATER_COMMANDS_MARGIN).plus(0, CBMapSetter.TRANSLATOR_COMMANDS_SHIFT*3),
+            new Point2D(CBMapComposer.DIMENSION.w/2-CBMapComposer.SELECTOR_WIDTH, 0)
+                .plusPoint(CBMapComposer.GLIDER_COMMANDS_MARGIN).plus(0, CBMapComposer.GLIDER_COMMANDS_SHIFT*3),
             {col:0, row:1});
         this.addArtifact(this._translateToBottom);
-        this._ko = new DKo(new Point2D(this.width/2-CBMapSetter.SELECTOR_WIDTH, 0)
-            .plusPoint(CBMapSetter.OKKO_COMMANDS_MARGIN).minus(0, CBMapSetter.OKKO_COMMANDS_SHIFT),()=>{
+        this._ko = new DKo(new Point2D(CBMapComposer.DIMENSION.w/2-CBMapComposer.SELECTOR_WIDTH, 0)
+            .plusPoint(CBMapComposer.OKKO_COMMANDS_MARGIN).minus(0, CBMapComposer.OKKO_COMMANDS_SHIFT),()=>{
             this._game.closePopup();
         });
         this.addArtifact(this._ko);
-        this._ok = new DOk(new Point2D(this.width/2-CBMapSetter.SELECTOR_WIDTH, 0)
-            .plusPoint(CBMapSetter.OKKO_COMMANDS_MARGIN),()=>{});
+        this._ok = new DOk(new Point2D(CBMapComposer.DIMENSION.w/2-CBMapComposer.SELECTOR_WIDTH, 0)
+            .plusPoint(CBMapComposer.OKKO_COMMANDS_MARGIN),()=>{
+            this._game.replaceMap(this.getMapConfiguration());
+        });
         this.addArtifact(this._ok.setActive(false));
     }
 
     _buildSelector() {
-        let selectorX = this.width / 2 - CBMapSetter.SELECTOR_WIDTH / 2;
+        let selectorX = CBMapComposer.DIMENSION.w / 2 - CBMapComposer.SELECTOR_WIDTH / 2;
         this._selector = new DRectArtifact("widgets",
-            new Point2D(this.width / 2 - CBMapSetter.SELECTOR_WIDTH / 2, 0),
-            new Dimension2D(CBMapSetter.SELECTOR_WIDTH, this.height), 1, "#000000", "#C0C0C0");
+            new Point2D(CBMapComposer.DIMENSION.w / 2 - CBMapComposer.SELECTOR_WIDTH / 2, 0),
+            new Dimension2D(CBMapComposer.SELECTOR_WIDTH, CBMapComposer.DIMENSION.h), 1, "#000000", "#C0C0C0");
         this.addArtifact(this._selector);
         this._selectorTop = new DUpNavigation(
-            new Point2D(selectorX, 35 - this.height / 2),
+            new Point2D(selectorX, 35 - CBMapComposer.DIMENSION.h / 2),
             () => {
                 this._fillSelectors(this._firstModel - 1);
                 this._updateSelection(this._getSelectedSelector());
@@ -1053,7 +1849,7 @@ export class CBMapSetter extends DPopup {
         );
         this.addArtifact(this._selectorTop);
         this._selectorBottom = new DDownNavigation(
-            new Point2D(selectorX, -35 + this.height / 2),
+            new Point2D(selectorX, -35 + CBMapComposer.DIMENSION.h / 2),
             () => {
                 this._fillSelectors(this._firstModel + 1);
                 this._updateSelection(this._getSelectedSelector());
@@ -1061,9 +1857,9 @@ export class CBMapSetter extends DPopup {
         );
         this.addArtifact(this._selectorBottom);
         this._mapSelectors = [];
-        this._mapSelectors.push(new CBMapSelectorArtifact(this, 0, new Point2D(selectorX, -CBMapSetter.MAP_SELECTION_HEIGHT)));
+        this._mapSelectors.push(new CBMapSelectorArtifact(this, 0, new Point2D(selectorX, -CBMapComposer.MAP_SELECTOR_HEIGHT)));
         this._mapSelectors.push(new CBMapSelectorArtifact(this, 1, new Point2D(selectorX, 0)));
-        this._mapSelectors.push(new CBMapSelectorArtifact(this, 2, new Point2D(selectorX, CBMapSetter.MAP_SELECTION_HEIGHT)));
+        this._mapSelectors.push(new CBMapSelectorArtifact(this, 2, new Point2D(selectorX, CBMapComposer.MAP_SELECTOR_HEIGHT)));
         for (let mapSelector of this._mapSelectors) {
             this.addArtifact(mapSelector);
         }
@@ -1072,16 +1868,27 @@ export class CBMapSetter extends DPopup {
 
     _buildComposer() {
         this._mapComposer = [];
-        for (let col=0; col<CBMapSetter.COL_COUNT; col++) {
+        for (let col=0; col<CBMapComposer.COL_COUNT; col++) {
             this._mapComposer[col] = [];
-            for (let row=0; row<CBMapSetter.ROW_COUNT; row++) {
-                this._mapComposer[col][row] = new CBMapPedestalArtifact(this, col, row, new Point2D(
-                    (col-CBMapSetter.COL_COUNT/2 + 0.5) * CBMapPedestalArtifact.DIMENSION.w -CBMapSetter.SELECTOR_WIDTH/2 -CBMapSetter.PEDESTAL_COMMANDS_MARGIN,
-                    (row-CBMapSetter.ROW_COUNT/2 + 0.5) * CBMapPedestalArtifact.DIMENSION.h
+            for (let row=0; row<CBMapComposer.ROW_COUNT; row++) {
+                this._mapComposer[col][row] = new CBMapCellArtifact(this, col, row, new Point2D(
+                    (col-CBMapComposer.COL_COUNT/2 + 0.5) * CBMapCellArtifact.DIMENSION.w -CBMapComposer.SELECTOR_WIDTH/2 -CBMapComposer.CELL_COMMANDS_MARGIN,
+                    (row-CBMapComposer.ROW_COUNT/2 + 0.5) * CBMapCellArtifact.DIMENSION.h
                 ));
                 this.addArtifact(this._mapComposer[col][row]);
             }
         }
+    }
+
+    _init(configuration) {
+        for(let board of configuration) {
+            let model = {
+                path:board.path.substring(0, board.path.length-4),
+            }
+            this._mapComposer[board.col][board.row].setMap(model);
+            if (board.invert) this._mapComposer[board.col][board.row].turnMap();
+        }
+        this.updateCommands();
     }
 
     setMapOnComposerCell(pedestal) {
@@ -1100,7 +1907,7 @@ export class CBMapSetter extends DPopup {
     enterCell(artifact) {
         this.removeArtifact(artifact);
         this.addArtifact(artifact);
-        if (artifact._map) {
+        if (artifact.map) {
             artifact.setCommands();
         }
     }
@@ -1157,13 +1964,13 @@ export class CBMapSetter extends DPopup {
     }
 
     getAreaToFill() {
-        let minCol = CBMapSetter.COL_COUNT;
+        let minCol = CBMapComposer.COL_COUNT;
         let maxCol = 0;
-        let minRow = CBMapSetter.ROW_COUNT;
+        let minRow = CBMapComposer.ROW_COUNT;
         let maxRow = 0;
-        for (let col = 0; col < CBMapSetter.COL_COUNT; col++) {
-            for (let row = 0; row < CBMapSetter.ROW_COUNT; row++) {
-                if (this._mapComposer[col][row]._map) {
+        for (let col = 0; col < CBMapComposer.COL_COUNT; col++) {
+            for (let row = 0; row < CBMapComposer.ROW_COUNT; row++) {
+                if (this._mapComposer[col][row].map) {
                     if (minCol>this._mapComposer[col][row]._col) minCol = this._mapComposer[col][row]._col;
                     if (maxCol<this._mapComposer[col][row]._col) maxCol = this._mapComposer[col][row]._col;
                     if (minRow>this._mapComposer[col][row]._row) minRow = this._mapComposer[col][row]._row;
@@ -1178,9 +1985,9 @@ export class CBMapSetter extends DPopup {
     colorizeEmptyCell() {
         let area = this.getAreaToFill();
         let missing = false;
-        for (let col = 0; col < CBMapSetter.COL_COUNT; col++) {
-            for (let row = 0; row < CBMapSetter.ROW_COUNT; row++) {
-                if (!this._mapComposer[col][row]._map) {
+        for (let col = 0; col < CBMapComposer.COL_COUNT; col++) {
+            for (let row = 0; row < CBMapComposer.ROW_COUNT; row++) {
+                if (!this._mapComposer[col][row].map) {
                     if (!area || (col<area.minCol || col>area.maxCol || row<area.minRow || row>area.maxRow)) {
                         this._mapComposer[col][row].colorize("#E0E0E0");
                     }
@@ -1196,23 +2003,23 @@ export class CBMapSetter extends DPopup {
 
     isTranslateCommandActive(direction) {
         if (direction.col === 1) {
-            for (let row = 0; row < CBMapSetter.ROW_COUNT; row++) {
-                if (this._mapComposer[CBMapSetter.COL_COUNT-1][row]._map) return false;
+            for (let row = 0; row < CBMapComposer.ROW_COUNT; row++) {
+                if (this._mapComposer[CBMapComposer.COL_COUNT-1][row].map) return false;
             }
         }
         if (direction.col === -1) {
-            for (let row = 0; row < CBMapSetter.ROW_COUNT; row++) {
-                if (this._mapComposer[0][row]._map) return false;
+            for (let row = 0; row < CBMapComposer.ROW_COUNT; row++) {
+                if (this._mapComposer[0][row].map) return false;
             }
         }
         if (direction.row === 1) {
-            for (let col = 0; col < CBMapSetter.COL_COUNT; col++) {
-                if (this._mapComposer[col][CBMapSetter.ROW_COUNT-1]._map) return false;
+            for (let col = 0; col < CBMapComposer.COL_COUNT; col++) {
+                if (this._mapComposer[col][CBMapComposer.ROW_COUNT-1].map) return false;
             }
         }
         if (direction.row === -1) {
-            for (let col = 0; col < CBMapSetter.COL_COUNT; col++) {
-                if (this._mapComposer[col][0]._map) return false;
+            for (let col = 0; col < CBMapComposer.COL_COUNT; col++) {
+                if (this._mapComposer[col][0].map) return false;
             }
         }
         return true;
@@ -1220,9 +2027,9 @@ export class CBMapSetter extends DPopup {
 
     translateMap(direction) {
         if (direction.col === 1) {
-            for (let row = 0; row < CBMapSetter.ROW_COUNT; row++) {
-                for (let col = CBMapSetter.COL_COUNT - 1; col > 0; col--) {
-                    if (this._mapComposer[col - 1][row]._map) {
+            for (let row = 0; row < CBMapComposer.ROW_COUNT; row++) {
+                for (let col = CBMapComposer.COL_COUNT - 1; col > 0; col--) {
+                    if (this._mapComposer[col - 1][row].map) {
                         this._mapComposer[col][row].copyMap(this._mapComposer[col - 1][row]);
                     } else this._mapComposer[col][row].unsetMap();
                 }
@@ -1230,19 +2037,19 @@ export class CBMapSetter extends DPopup {
             }
         }
         if (direction.col === -1) {
-            for (let row = 0; row < CBMapSetter.ROW_COUNT; row++) {
-                for (let col = 0; col < CBMapSetter.COL_COUNT - 1; col++) {
-                    if (this._mapComposer[col + 1][row]._map) {
+            for (let row = 0; row < CBMapComposer.ROW_COUNT; row++) {
+                for (let col = 0; col < CBMapComposer.COL_COUNT - 1; col++) {
+                    if (this._mapComposer[col + 1][row].map) {
                         this._mapComposer[col][row].copyMap(this._mapComposer[col + 1][row]);
                     } else this._mapComposer[col][row].unsetMap();
                 }
-                this._mapComposer[CBMapSetter.COL_COUNT - 1][row].unsetMap();
+                this._mapComposer[CBMapComposer.COL_COUNT - 1][row].unsetMap();
             }
         }
         if (direction.row === 1) {
-            for (let col = 0; col < CBMapSetter.COL_COUNT; col++) {
-                for (let row = CBMapSetter.ROW_COUNT - 1; row > 0; row--) {
-                    if (this._mapComposer[col][row - 1]._map) {
+            for (let col = 0; col < CBMapComposer.COL_COUNT; col++) {
+                for (let row = CBMapComposer.ROW_COUNT - 1; row > 0; row--) {
+                    if (this._mapComposer[col][row - 1].map) {
                         this._mapComposer[col][row].copyMap(this._mapComposer[col][row - 1]);
                     } else this._mapComposer[col][row].unsetMap();
                 }
@@ -1250,34 +2057,39 @@ export class CBMapSetter extends DPopup {
             }
         }
         if (direction.row === -1) {
-            for (let col = 0; col < CBMapSetter.COL_COUNT; col++) {
-                for (let row = 0; row < CBMapSetter.ROW_COUNT - 1; row++) {
-                    if (this._mapComposer[col][row + 1]._map) {
+            for (let col = 0; col < CBMapComposer.COL_COUNT; col++) {
+                for (let row = 0; row < CBMapComposer.ROW_COUNT - 1; row++) {
+                    if (this._mapComposer[col][row + 1].map) {
                         this._mapComposer[col][row].copyMap(this._mapComposer[col][row + 1]);
                     } else this._mapComposer[col][row].unsetMap();
                 }
-                this._mapComposer[col][CBMapSetter.ROW_COUNT - 1].unsetMap();
+                this._mapComposer[col][CBMapComposer.ROW_COUNT - 1].unsetMap();
             }
         }
         this.updateCommands();
     }
 
-
-    get width() {
-        return 850;
+    getMapConfiguration() {
+        let area = this.getAreaToFill();
+        let configuration = [];
+        for (let col = area.minCol; col<=area.maxCol; col++) {
+            for (let row = area.minRow; row<=area.maxRow; row++) {
+                let board = {path:this._mapComposer[col][row].map.path+".png", col:col-area.minCol, row:row-area.minRow};
+                if (this._mapComposer[col][row].isInverted()) board.invert = true;
+                    configuration.push(board);
+            }
+        }
+        return configuration;
     }
 
-    get height() {
-        return 550;
-    }
-
+    static DIMENSION = new Dimension2D(850, 550);
     static SELECTOR_WIDTH = 100;
-    static MAP_SELECTION_HEIGHT = 135;
-    static TRANSLATER_COMMANDS_MARGIN = new Point2D(-40, -230);
-    static TRANSLATOR_COMMANDS_SHIFT = 50;
+    static MAP_SELECTOR_HEIGHT = 135;
+    static GLIDER_COMMANDS_MARGIN = new Point2D(-40, -230);
+    static GLIDER_COMMANDS_SHIFT = 50;
     static OKKO_COMMANDS_MARGIN = new Point2D(-40, 240);
     static OKKO_COMMANDS_SHIFT = 60;
-    static PEDESTAL_COMMANDS_MARGIN = 25;
+    static CELL_COMMANDS_MARGIN = 25;
     static ROW_COUNT = 4;
     static COL_COUNT = 8;
 }
@@ -1417,8 +2229,16 @@ export class CBEditorPlayer extends CBAbstractPlayer {
         return true;
     }
 
-    _registerWing(wing) {
+    setWings(wings) {
+        this._wings = [];
+        for (let wing of wings) {
+            this.addWing(wing);
+        }
+    }
+
+    addWing(wing) {
         this._wings.push(wing);
+        wing.player = this;
     }
 
     /*
@@ -1589,16 +2409,16 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
     arrangeMap() {
         this.closeActuators();
         this.closePopup();
-        this.openPopup(new CBMapSetter(this, [
-            {path: "./../images/maps/map1.png"},
-            {path: "./../images/maps/map2.png"},
-            {path: "./../images/maps/map3.png"},
-            {path: "./../images/maps/map4.png"},
-            {path: "./../images/maps/map5.png"},
-            {path: "./../images/maps/map6.png"},
-            {path: "./../images/maps/map7.png"},
-            {path: "./../images/maps/map8.png"},
-            {path: "./../images/maps/map9.png"}
+        this.openPopup(new CBMapComposer(this, this.map.mapBoards, [
+            {path: "./../images/maps/map1"},
+            {path: "./../images/maps/map2"},
+            {path: "./../images/maps/map3"},
+            {path: "./../images/maps/map4"},
+            {path: "./../images/maps/map5"},
+            {path: "./../images/maps/map6"},
+            {path: "./../images/maps/map7"},
+            {path: "./../images/maps/map8"},
+            {path: "./../images/maps/map9"}
         ]), this.viewportCenter);
     }
 
@@ -1691,4 +2511,9 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
             .setTurnAnimation(true, ()=>this._fullScreenCommand.setState(this._fullScreenCommand.state?0:1));
     }
 
+    replaceMap(configuration) {
+        this.closePopup();
+        let map = new CBMap(configuration);
+        this.changeMap(map);
+    }
 }

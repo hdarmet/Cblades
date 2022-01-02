@@ -32,9 +32,9 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 			try {
 				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
-					Game newGame = writeToGame(request, new Game());
+					Game newGame = writeToGame(em, request, new Game());
 					persist(em, newGame);
-					result.set(readFromGame(newGame));
+					result.set(readFromGame(em, newGame));
 				});
 				return result.get();
 			} catch (PersistenceException pe) {
@@ -52,7 +52,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
 				Collection<Game> games = findGames(em, "select g from Game g");
-				result.set(readFromGames(games));
+				result.set(readFromGames(em, games));
 			});
 			return result.get();
 		}, ADMIN);
@@ -70,7 +70,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 							"Unknown Game with name %s", name
 					);
 				}
-				result.set(readFromGame(game));
+				result.set(readFromGame(em, game));
 			});
 			return result.get();
 		}, ADMIN);
@@ -83,7 +83,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 			inTransaction(em->{
 				String id = params.get("id");
 				Game game = findGame(em, new Long(id));
-				result.set(readFromGame(game));
+				result.set(readFromGame(em, game));
 			});
 			return result.get();
 		}, ADMIN);
@@ -113,9 +113,9 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 				inTransaction(em->{
 					String id = params.get("id");
 					Game game = findGame(em, new Long(id));
-					writeToGame(request, game);
+					writeToGame(em, request, game);
 					flush(em);
-					result.set(readFromGame(game));
+					result.set(readFromGame(em, game));
 				});
 				return result.get();
 			} catch (PersistenceException pe) {
@@ -124,10 +124,20 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 		}, ADMIN);
 	}
 
-	Game writeToGame(Json json, Game game) {
+	Game writeToGame(EntityManager em, Json json, Game game) {
 		verify(json)
 			.checkRequired("version")
 			.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 80)
+			.inspect("map", mJson->verify(mJson)
+				.checkRequired("version")
+				.each("boards", bJson->verify(bJson)
+					.checkRequired("version")
+					.checkRequired("col").checkMin("col", -1).checkMax("col", 200)
+					.checkRequired("row").checkMin("row", -1).checkMax("row", 200)
+					.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 80)
+					.checkRequired("invert").checkBoolean("invert")
+				)
+			)
 			.each("players", pJson->verify(pJson)
 				.checkRequired("version")
 				.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 80)
@@ -171,6 +181,16 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 		sync(json, game)
 			.write("version")
 			.write("name")
+			.writeLink("map", (pJson, map)->sync(pJson, map)
+				.write("version")
+				.syncEach("boards", (bJson, board)->sync(bJson, board)
+					.write("version")
+					.write("col")
+					.write("row")
+					.writeRef("path", "board", (String path)->Board.getByPath(em, path))
+					.write("invert")
+				)
+			)
 			.syncEach("players", (pJson, player)->sync(pJson, player)
 				.write("version")
 				.write("name")
@@ -211,12 +231,24 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 		return game;
 	}
 
-	Json readFromGame(Game game) {
+	Json readFromGame(EntityManager em, Game game) {
 		Json json = Json.createJsonObject();
 		sync(json, game)
 			.read("id")
 			.read("version")
 			.read("name")
+			.readLink("map", (pJson, map)->sync(pJson, map)
+				.read("id")
+				.read("version")
+				.readEach("boards", (bJson, boardPlacement)->sync(bJson, boardPlacement)
+					.read("id")
+					.read("version")
+					.read("path", "board", Board::getPath)
+					.read("col")
+					.read("row")
+					.read("invert")
+				)
+			)
 			.readEach("players", (pJson, player)->sync(pJson, player)
 				.read("id")
 				.read("version")
@@ -262,7 +294,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 		return json;
 	}
 
-	Json readFromGameHeader(Game game) {
+	Json readFromGameHeader(EntityManager em, Game game) {
 		Json json = Json.createJsonObject();
 		sync(json, game)
 			.read("id")
@@ -297,9 +329,9 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 		else throw new SummerControllerException(409, "query did not return a unique result: "+games.size());
 	}
 
-	Json readFromGames(Collection<Game> games) {
+	Json readFromGames(EntityManager em, Collection<Game> games) {
 		Json list = Json.createJsonArray();
-		games.stream().forEach(game->list.push(readFromGameHeader(game)));
+		games.stream().forEach(game->list.push(readFromGameHeader(em, game)));
 		return list;
 	}
 

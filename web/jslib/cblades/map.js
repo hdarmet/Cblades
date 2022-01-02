@@ -1091,7 +1091,11 @@ export class CBMap extends CBAbstractMap {
             });
         }
         super(boardCols, boardRows, imageSpecs);
+        this._mapBoards = mapBoards;
     }
 
+    get mapBoards() {
+        return this._mapBoards;
+    }
 }
 

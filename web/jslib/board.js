@@ -949,10 +949,163 @@ export class DElement extends LocalisationAware(Object) {
         return this._alpha;
     }
 
-    set alpha(alpha) {
+    _setAlpha(alpha) {
         this._alpha = alpha;
         this.refresh();
     }
+
+    set alpha(alpha) {
+        this._setAlpha(alpha);
+    }
+}
+
+export class DComposedElement extends DElement {
+
+    constructor(...args) {
+        super(...args);
+        this._elements = new Set();
+    }
+
+    _memento() {
+        let memento = super._memento();
+        memento.elements = new Set(this._elements);
+        return memento;
+    }
+
+    _revert(memento) {
+        super._revert(memento);
+        this._elements = memento.elements;
+    }
+
+    hasElement(element) {
+        return this._elements.has(element);
+    }
+
+    addElement(element) {
+        console.assert(!this._elements.has(element));
+        this._elements.add(element);
+        if (this.board) {
+            element.setLocation(this.location);
+            element.setAngle(this.angle);
+            element.setOnBoard(this.board);
+        }
+    }
+
+    removeElement(element) {
+        console.assert(this._elements.has(element));
+        this._elements.delete(element);
+        if (this.board) {
+            element.setLocation(new Point2D(0, 0));
+            element.setAngle(0);
+            element.removeFromBoard(this.board);
+        }
+    }
+
+    appendElement(element) {
+        Memento.register(this);
+        console.assert(!this._elements.has(element));
+        this._elements.add(element);
+        if (this.board) {
+            element.setLocation(this.location);
+            element.setAngle(this.angle);
+            element.show(this.board);
+        }
+    }
+
+    deleteElement(element) {
+        Memento.register(this);
+        console.assert(this._elements.has(element));
+        this._elements.remove(element);
+        if (this.board) {
+            element.location.setLocation(new Point2D(0, 0));
+            element.setAngle(0);
+            element.hide(this.board);
+        }
+    }
+
+    setLocation(point) {
+        super.setLocation(point);
+        for (let element of this.elements) {
+            element.setLocation(point);
+        }
+        return this;
+    }
+
+    get elements() {
+        return this._elements;
+    }
+
+    setOnBoard(board) {
+        super.setOnBoard(board);
+        for (let element of this.elements) {
+            element.setOnBoard(board);
+        }
+        return this;
+    }
+
+    removeFromBoard() {
+        super.removeFromBoard();
+        for (let element of this.elements) {
+            element.removeFromBoard();
+        }
+        return this;
+    }
+
+    move(point) {
+        super.move(point);
+        for (let element of this.elements) {
+            element.move(point);
+        }
+        return this;
+    }
+
+    rotate(angle) {
+        super.rotate(angle);
+        for (let element of this.elements) {
+            element.rotate(angle);
+        }
+        return this;
+    }
+
+    show(board) {
+        super.show(board);
+        for (let element of this.elements) {
+            element.show(board);
+        }
+        return this;
+    }
+
+    hide() {
+        super.hide();
+        for (let element of this.elements) {
+            element.hide();
+        }
+        return this;
+    }
+
+    refresh() {
+        super.refresh();
+        for (let element of this.elements) {
+            element.refresh();
+        }
+        return this;
+    }
+
+    get boundingArea() {
+        let area = super.boundingArea;
+        for (let index=1; index<this.elements.length; index++) {
+            area = area.add(this.elements[index].boundingArea);
+        }
+        return area;
+    }
+
+    _setAlpha(alpha) {
+        super._setAlpha(alpha);
+        for (let element of this.elements) {
+            element._setAlpha(alpha);
+        }
+    }
+
 }
 
 /**
@@ -1386,13 +1539,22 @@ export class DBoard {
         this._draw.fitWindow();
     }
 
+    setDimension(dimension) {
+        this._dimension = dimension;
+        this._resize();
+    }
+
     _processGlobalEvent(source, event, value) {
         if (event === DDraw.RESIZE_EVENT) {
-            this._adjust();
-            this._requestRepaint();
-            Mechanisms.fire(this, DBoard.RESIZE_EVENT, value);
-            this.paint();
+            this._resize();
         }
+    }
+
+    _resize() {
+        this._adjust();
+        this._requestRepaint();
+        Mechanisms.fire(this, DBoard.RESIZE_EVENT);
+        this.paint();
     }
 
     _registerLevels(levels) {

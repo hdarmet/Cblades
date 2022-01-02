@@ -284,7 +284,7 @@ export class CBWingIndicator extends DMultiImagesIndicator {
         super(paths, CBWingIndicator.DIMENSION, 0);
         this.artifact.changeImage(this._getValue(wing));
         this._bannerArtifact = new DImageArtifact("widgets",
-            DImage.getImage(wing.banner),
+            DImage.getImage(wing.banner.path),
             new Point2D(
                 CBWingIndicator.DIMENSION.w/2 - CBWingIndicator.BANNER_DIMENSION.w/2 - CBWingIndicator.MARGIN,
                 0

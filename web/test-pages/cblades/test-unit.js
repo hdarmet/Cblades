@@ -717,7 +717,7 @@ describe("Unit", ()=> {
             wing.setRetreatZone(map.getSouthZone());
         then:
             assert(wing.retreatZone).unorderedArrayEqualsTo(map.getSouthZone());
-            assert(wing.banner).equalsTo("./../units/banner.png");
+            assert(wing.banner.path).equalsTo("./../units/banner.png");
         when:
             wing.setMoral(10);
             wing.setTiredness(9);

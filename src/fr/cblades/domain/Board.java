@@ -8,7 +8,10 @@ import java.util.Collections;
 import java.util.List;
 
 @Entity
-@Table(indexes=@Index(name="idx_board", unique=true, columnList="name"))
+@Table(indexes= {
+    @Index(name="idx_board_by_name", unique=true, columnList="name"),
+    @Index(name="idx_board_by_path", unique=true, columnList="path")
+})
 public class Board extends BaseEntity {
 
     String name="";
@@ -43,6 +46,17 @@ public class Board extends BaseEntity {
     public Board removeHex(Hex hex) {
         this.hexes.remove(hex);
         return this;
+    }
+
+    public static Board getByPath(EntityManager em, String path) {
+        Query query = em.createQuery("select b from Board b where b.path = :path");
+        query.setParameter("path", path);
+        try {
+            return (Board)query.getSingleResult();
+        }
+        catch (EntityNotFoundException enf) {
+            return null;
+        }
     }
 
 }

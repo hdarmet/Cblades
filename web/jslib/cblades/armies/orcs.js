@@ -18,9 +18,18 @@ import {
     CBTroopType, CBCharacterType
 } from "../unit.js";
 
-export let GoblinBanner0 = "./../images/units/orcs/banners/banner0.png";
-export let GoblinBanner1 = "./../images/units/orcs/banners/banner1.png";
-export let GoblinBanner2 = "./../images/units/orcs/banners/banner2.png";
+export let GoblinBanner0 = {
+    name: "orc-banner-0",
+    path: "./../images/units/orcs/banners/banner0.png"
+};
+export let GoblinBanner1 = {
+    name: "orc-banner-1",
+    path: "./../images/units/orcs/banners/banner1.png"
+};
+export let GoblinBanner2 = {
+    name: "orc-banner-2",
+    path: "./../images/units/orcs/banners/banner2.png"
+};
 
 export let GoblinLeader = new CBCharacterType("Goblin Leader",
     [

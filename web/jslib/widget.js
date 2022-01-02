@@ -16,7 +16,13 @@ import {
     DArtifactRotateAnimation,
     DMultiImagesArtifact,
     DArtifactAnimation,
-    DArtifactAlphaAnimation, DTextArtifact, DRectArtifact, DComposedImageArtifact, RectArtifact, TextArtifact
+    DArtifactAlphaAnimation,
+    DTextArtifact,
+    DRectArtifact,
+    DComposedImageArtifact,
+    RectArtifact,
+    TextArtifact,
+    DComposedElement
 } from "./board.js";
 import {
     Area2D,
@@ -45,7 +51,7 @@ function adjustOnScreen(level, area, point) {
     return new Point2D(x, y);
 }
 
-export class DWidget extends DElement {
+export class DWidget extends DComposedElement {
 
     constructor() {
         super();
@@ -946,6 +952,27 @@ export class DKo extends DCommand {
     static DIMENSION = new Dimension2D(50, 50);
 }
 
+export class DPlus extends DCommand {
+
+    constructor(position, action) {
+        let image = DImage.getImage("./../images/commands/plus.png");
+        let inactiveImage = DImage.getImage("./../images/commands/plus-inactive.png");
+        super(image, inactiveImage, position, DPlus.DIMENSION, action);
+    }
+
+    static DIMENSION = new Dimension2D(25, 25);
+}
+
+export class DMinus extends DCommand {
+
+    constructor(position, action) {
+        let image = DImage.getImage("./../images/commands/minus.png");
+        let inactiveImage = DImage.getImage("./../images/commands/minus-inactive.png");
+        super(image, inactiveImage, position, DMinus.DIMENSION, action);
+    }
+
+    static DIMENSION = new Dimension2D(25, 25);
+}
 
 export class DInsertFrame {
 
@@ -1134,6 +1161,21 @@ export class DInsertFrame {
 
     }
 
+    get leftButton() {
+        return this._leftButton;
+    }
+
+    get rightButton() {
+        return this._rightButton;
+    }
+
+    get upButton() {
+        return this._upButton;
+    }
+
+    get downButton() {
+        return this._downButton;
+    }
 }
 
 class InsertBorder extends DRectArtifact {
@@ -1219,22 +1261,6 @@ export class DAbstractInsert extends DElement {
         for (let frame of this._frames) {
             frame._previousPage();
         }
-    }
-
-    get leftButton() {
-        return this._leftButton;
-    }
-
-    get rightButton() {
-        return this._rightButton;
-    }
-
-    get upButton() {
-        return this._upButton;
-    }
-
-    get downButton() {
-        return this._downButton;
     }
 
 }

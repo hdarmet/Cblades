@@ -427,11 +427,13 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 			"}";
 
 	@Test
-	public void upadteAGame() {
+	public void updateAGame() {
 		Unit unit = (Unit)setEntityId(new Unit().setName("/red/redbanner.png-0")
 			.setPositionCol(3).setPositionRow(4).setPositionAngle(180), 105);
 		TargetHex retreatHex = (TargetHex)setEntityId(new TargetHex().setCol(4).setRow(5), 104);
-		Wing wing = (Wing)setEntityId(new Wing().setBanner("/red/redbanner.png")
+		Banner banner = (Banner)setEntityId(new Banner().setPath("/red/redbanner.png").setName("red-banner-1"),
+				103);
+		Wing wing = (Wing)setEntityId(new Wing().setBanner(banner)
 			.addToRetreatZone(retreatHex).addUnit(unit), 103);
 		Location location = (Location)setEntityId(new Location().setRow(3).setCol(4).addUnit(unit), 106);
 		Player player = (Player)setEntityId(new Player().setName("Hector").addWing(wing).addHex(location), 102);
@@ -585,8 +587,11 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 			.setType("unit-type");
 		TargetHex hex = new TargetHex()
 			.setCol(0).setRow(1);
+		Banner banner = new Banner()
+			.setName("banner-0")
+			.setPath("/there/where/banner.png");
 		Wing wing = new Wing()
-			.setBanner("/there/where/banner.png-0")
+			.setBanner(banner)
 			.addUnit(unit)
 			.addToRetreatZone(hex);
 		Assert.assertEquals("/there/where/banner.png-0", wing.getBanner());
@@ -606,8 +611,11 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 			.setName("/there/where/unit.png-0")
 			.setCategory(UnitCategory.FORMATION)
 			.setType("unit-type");
+		Banner banner = new Banner()
+			.setName("banner-0")
+			.setPath("/there/where/banner.png");
 		Wing wing = new Wing()
-			.setBanner("/there/where/banner.png")
+			.setBanner(banner)
 			.addUnit(unit);
 		Location location = new Location()
 			.setCol(4).setRow(5)

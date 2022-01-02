@@ -15,6 +15,8 @@ public class Game extends BaseEntity {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "game_id")
     List<Player> players = new ArrayList<>();
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    Map map;
 
     public String getName() {
         return this.name;
@@ -38,6 +40,14 @@ public class Game extends BaseEntity {
 
     public Player getPlayer(String name) {
         return this.players.stream().filter(player->name.equals(player.getName())).findFirst().orElse(null);
+    }
+
+    public Map getMap() {
+        return this.map;
+    }
+    public Game setMap(Map map) {
+        this.map = map;
+        return this;
     }
 
 }

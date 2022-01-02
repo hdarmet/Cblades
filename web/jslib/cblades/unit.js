@@ -79,8 +79,9 @@ export class CBUnitPlayer extends CBBasicPlayer {
         this._wings = [];
     }
 
-    _registerWing(wing) {
+    addWing(wing) {
         this._wings.push(wing);
+        wing.player = this;
     }
 
     get wings() {
@@ -406,8 +407,9 @@ export class CBTroopType extends CBUnitType {
 export class CBWing {
 
     constructor(player, banner) {
-        this._player = player;
-        this._player._registerWing(this);
+        if (player) {
+            player.addWing(this);
+        }
         this._orderInstruction = CBOrderInstruction.DEFEND;
         this._retreatZone = [];
         this._moral = 11;
@@ -439,6 +441,10 @@ export class CBWing {
 
     get player() {
         return this._player;
+    }
+
+    set player(player) {
+        this._player = player;
     }
 
     get leader() {
@@ -541,7 +547,7 @@ export class CBWing {
         let number = 0;
         var unitNames = new Set(this.playables.map(unit=>unit.name));
         while(true) {
-            let name = this._banner+"-"+number;
+            let name = this._banner.name+"-"+number;
             if (unitNames.has(name)) number+=1;
             else return name;
         }

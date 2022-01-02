@@ -15,9 +15,18 @@ import {
     CBTroopType, CBCharacterType
 } from "../unit.js";
 
-export let RoughneckBanner0 = "./../images/units/mercenaries/banners/banner0.png";
-export let RoughneckBanner1 = "./../images/units/mercenaries/banners/banner1.png";
-export let RoughneckBanner2 = "./../images/units/mercenaries/banners/banner2.png";
+export let RoughneckBanner0 = {
+    name: "roughneck-banner-0",
+    path: "./../images/units/mercenaries/banners/banner0.png"
+};
+export let RoughneckBanner1 = {
+    name: "roughneck-banner-1",
+    path: "./../images/units/mercenaries/banners/banner1.png"
+};
+export let RoughneckBanner2 = {
+    name: "roughneck-banner-2",
+    path: "./../images/units/mercenaries/banners/banner2.png"
+};
 
 export let RoughneckLeader = new CBCharacterType("Company Leader",
     [
