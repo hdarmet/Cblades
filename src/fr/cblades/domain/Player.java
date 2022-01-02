@@ -13,7 +13,8 @@ import java.util.stream.Collectors;
 @Table(indexes=@Index(name="idx_player", unique=true, columnList="game_id, name"))
 public class Player extends BaseEntity {
 
-    String name="";
+    @ManyToOne
+    PlayerIdentity identity;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "player_id")
     List<Wing> wings = new ArrayList<>();
@@ -22,10 +23,14 @@ public class Player extends BaseEntity {
     List<Location> locations = new ArrayList<>();
 
     public String getName() {
-        return this.name;
+        return this.identity.getName();
     }
-    public Player setName(String name) {
-        this.name = name;
+
+    public PlayerIdentity getIdentity() {
+        return this.identity;
+    }
+    public Player setIdentity(PlayerIdentity identity) {
+        this.identity = identity;
         return this;
     }
 
@@ -53,8 +58,8 @@ public class Player extends BaseEntity {
         return this;
     }
 
-    public Wing getWing(String banner) {
-        return this.wings.stream().filter(wing->banner.equals(wing.getBanner())).findFirst().orElse(null);
+    public Wing getWing(String bannerName) {
+        return this.wings.stream().filter(wing->bannerName.equals(wing.getBanner().getName())).findFirst().orElse(null);
     }
 
     public Unit getUnit(String name) {

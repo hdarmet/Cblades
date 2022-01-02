@@ -5,29 +5,29 @@ import org.summer.data.BaseEntity;
 import javax.persistence.*;
 
 @Entity
-@Table(indexes=@Index(name="idx_banner", unique=true, columnList="name"))
-public class Banner extends BaseEntity {
+@Table(indexes=@Index(name="idx_player_identity", unique=true, columnList="name"))
+public class PlayerIdentity extends BaseEntity {
 
     String name;
     String path;
 
     public String getName() { return this.name; }
-    public Banner setName(String name) {
+    public PlayerIdentity setName(String name) {
         this.name = name;
         return this;
     }
 
     public String getPath() { return this.path; }
-    public Banner setPath(String path) {
+    public PlayerIdentity setPath(String path) {
         this.path = path;
         return this;
     }
 
-    public static Banner getByName(EntityManager em, String name) {
-        Query query = em.createQuery("select b from Banner b where b.name = :name");
+    public static PlayerIdentity getByName(EntityManager em, String name) {
+        Query query = em.createQuery("select pi from PlayerIdentity pi where pi.name = :name");
         query.setParameter("name", name);
         try {
-            return (Banner)query.getSingleResult();
+            return (PlayerIdentity)query.getSingleResult();
         }
         catch (EntityNotFoundException enf) {
             return null;

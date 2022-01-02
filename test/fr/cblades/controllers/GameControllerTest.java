@@ -41,9 +41,9 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 			"			version:0, name:\"Hector\",\n" +
 			"			wings:[\n" +
 			"		{\n" +
-			"			version:0, banner:\"/red/redbanner.png\",\n" +
+			"			version:0, banner:\"redbanner\",\n" +
 			"			units:[{\n" +
-			"				version:0, name:\"/red/redbanner.png-0\", category:\"T\", type:\"unit\",\n" +
+			"				version:0, name:\"redbanner-0\", category:\"T\", type:\"unit\",\n" +
 			"				angle:120, positionCol:3, positionRow:4, positionAngle:0, steps:2,\n" +
 			"				tiredness:\"F\", ammunition:\"P\", cohesion:\"GO\", charging:false,\n" +
 			"				contact:false, orderGiven:false, played:false\n" +
@@ -53,28 +53,40 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 			"			]\n" +
 			"		}],\n" +
 			"		locations:[\n" +
-			"			{version:0,col:3,row:4,units:[\"/red/redbanner.png-0\"]}\n" +
+			"			{version:0,col:3,row:4,units:[\"redbanner-0\"]}\n" +
 			"		]\n" +
 			"	}]\n" +
 			"}";
 
 	@Test
 	public void createNewBoard() {
+		dataManager.register("createQuery", null, null,
+				"select pi from PlayerIdentity pi where pi.name = :name");
+		dataManager.register("setParameter", null, null,"name", "Hector");
+		dataManager.register("getSingleResult",
+			setEntityId(new PlayerIdentity().setName("Hector").setPath("/players/hector.png"), 107),null);
+		dataManager.register("createQuery", null, null,
+				"select b from Banner b where b.name = :name");
+		dataManager.register("setParameter", null, null,"name", "redbanner");
+		dataManager.register("getSingleResult",
+			setEntityId(new Banner().setName("redbanner").setPath("/red/redbanner.png"), 107),null);
 		dataManager.register("persist", null, null, (Predicate) entity->{
 			Assert.assertTrue(entity instanceof Game);
 			Game game = (Game) entity;
 			Assert.assertEquals("Test", game.getName());
 			Assert.assertEquals(1, game.getPlayers().size());
 			Player player = game.getPlayers().get(0);
-			Assert.assertEquals("Hector", player.getName());
+			Assert.assertEquals("Hector", player.getIdentity().getName());
+			Assert.assertEquals("/players/hector.png", player.getIdentity().getPath());
 			Assert.assertEquals(1, player.getWings().size());
 			Wing wing = player.getWings().get(0);
-			Assert.assertEquals("/red/redbanner.png", wing.getBanner());
+			Assert.assertEquals("redbanner", wing.getBanner().getName());
+			Assert.assertEquals("/red/redbanner.png", wing.getBanner().getPath());
 			Assert.assertEquals(1, wing.getUnits().size());
 			Unit unit = wing.getUnits().get(0);
 			Assert.assertEquals(0, unit.getId());
 			Assert.assertEquals(0, unit.getVersion());
-			Assert.assertEquals("/red/redbanner.png-0", unit.getName());
+			Assert.assertEquals("redbanner-0", unit.getName());
 			Assert.assertEquals(UnitCategory.TROOP, unit.getCategory());
 			Assert.assertEquals("unit", unit.getType());
 			Assert.assertEquals(120, unit.getAngle());
@@ -117,7 +129,7 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 						"retreatZone\":[" +
 							"{\"col\":3,\"id\":0,\"row\":4,\"version\":0}" +
 						"]," +
-						"\"banner\":\"/red/redbanner.png\"," +
+						"\"banner\":\"redbanner\"," +
 						"\"id\":0," +
 						"\"units\":[" +
 						"{" +
@@ -125,7 +137,7 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 							"\"charging\":false,\"positionAngle\":0," +
 							"\"type\":\"unit\",\"version\":0,\"steps\":2," +
 							"\"played\":false,\"orderGiven\":false," +
-							"\"contact\":false,\"name\":\"/red/redbanner.png-0\"," +
+							"\"contact\":false,\"name\":\"redbanner-0\"," +
 							"\"angle\":120,\"positionCol\":3,\"id\":0," +
 							"\"cohesion\":\"GO\",\"category\":\"T\"," +
 							"\"positionRow\":4" +
@@ -136,7 +148,7 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 						"{" +
 							"\"col\":3,\"id\":0,\"row\":4," +
 							"\"units\":[" +
-								"\"/red/redbanner.png-0\"" +
+								"\"redbanner-0\"" +
 							"]," +
 							"\"version\":0" +
 						"}" +
@@ -154,6 +166,16 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 
 	@Test
 	public void tryToCreateAnAlreadyExistingGame() {
+		dataManager.register("createQuery", null, null,
+				"select pi from PlayerIdentity pi where pi.name = :name");
+		dataManager.register("setParameter", null, null,"name", "Hector");
+		dataManager.register("getSingleResult",
+				setEntityId(new PlayerIdentity().setName("Hector").setPath("/players/hector.png"), 107),null);
+		dataManager.register("createQuery", null, null,
+				"select b from Banner b where b.name = :name");
+		dataManager.register("setParameter", null, null,"name", "redbanner");
+		dataManager.register("getSingleResult",
+				setEntityId(new Banner().setName("redbanner").setPath("/red/redbanner.png"), 107),null);
 		dataManager.register("persist", null,
 			new PersistenceException("Entity already Exists"),
 				(Predicate) entity->{
@@ -409,9 +431,9 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 			"		id:102, version:0, name:\"Hector\",\n" +
 			"		wings:[\n" +
 			"		{\n" +
-			"			id:103, version:0, banner:\"/red/redbanner.png\",\n" +
+			"			id:103, version:0, banner:\"redbanner\",\n" +
 			"			units:[{\n" +
-			"				id:105, version:0, name:\"/red/redbanner.png-0\", category:\"T\", type:\"unit\",\n" +
+			"				id:105, version:0, name:\"redbanner-0\", category:\"T\", type:\"unit\",\n" +
 			"				angle:120, positionCol:3, positionRow:4, positionAngle:0, steps:1,\n" +
 			"				tiredness:\"T\", ammunition:\"S\", cohesion:\"D\", charging:true,\n" +
 			"				contact:true, orderGiven:true, played:true\n" +
@@ -421,25 +443,36 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 			"			]\n" +
 			"		}],\n" +
 			"		locations:[\n" +
-			"			{id:106, version:0,col:3,row:4,units:[\"/red/redbanner.png-0\"]}\n" +
+			"			{id:106, version:0,col:3,row:4,units:[\"redbanner-0\"]}\n" +
 			"		]\n" +
 			"	}]\n" +
 			"}";
 
 	@Test
 	public void updateAGame() {
-		Unit unit = (Unit)setEntityId(new Unit().setName("/red/redbanner.png-0")
+		Unit unit = (Unit)setEntityId(new Unit().setName("redbanner-0")
 			.setPositionCol(3).setPositionRow(4).setPositionAngle(180), 105);
 		TargetHex retreatHex = (TargetHex)setEntityId(new TargetHex().setCol(4).setRow(5), 104);
-		Banner banner = (Banner)setEntityId(new Banner().setPath("/red/redbanner.png").setName("red-banner-1"),
+		Banner banner = (Banner)setEntityId(new Banner().setPath("/plue/bluebanner.png").setName("bluebanner"),
 				103);
 		Wing wing = (Wing)setEntityId(new Wing().setBanner(banner)
 			.addToRetreatZone(retreatHex).addUnit(unit), 103);
 		Location location = (Location)setEntityId(new Location().setRow(3).setCol(4).addUnit(unit), 106);
-		Player player = (Player)setEntityId(new Player().setName("Hector").addWing(wing).addHex(location), 102);
+		PlayerIdentity playerIdentity = (PlayerIdentity)setEntityId(new PlayerIdentity().setName("Achilles").setPath("/players/achilles.png"), 107);
+		Player player = (Player)setEntityId(new Player().setIdentity(playerIdentity).addWing(wing).addHex(location), 102);
 		Game game = (Game)setEntityId(new Game().setName("game1").addPlayer(player), 101);
 
 		dataManager.register("find", game, null, Game.class, 101L);
+		dataManager.register("createQuery", null, null,
+				"select pi from PlayerIdentity pi where pi.name = :name");
+		dataManager.register("setParameter", null, null,"name", "Hector");
+		dataManager.register("getSingleResult",
+				setEntityId(new PlayerIdentity().setName("Hector").setPath("/players/hector.png"), 107),null);
+		dataManager.register("createQuery", null, null,
+				"select b from Banner b where b.name = :name");
+		dataManager.register("setParameter", null, null,"name", "redbanner");
+		dataManager.register("getSingleResult",
+				setEntityId(new Banner().setName("redbanner").setPath("/red/redbanner.png"), 107),null);
 		dataManager.register("flush", null, null);
 		securityManager.doConnect("admin", 0);
 		Json result = gameController.update(params("id", "101"), Json.createJsonFromString(SIMPLE_GAME_UPDATE));
@@ -450,14 +483,14 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 						"retreatZone\":[" +
 							"{\"col\":3,\"id\":104,\"row\":4,\"version\":0}" +
 						"]," +
-						"\"banner\":\"/red/redbanner.png\"," +
+						"\"banner\":\"redbanner\"," +
 						"\"id\":103," +
 						"\"units\":[{" +
 							"\"ammunition\":\"S\",\"tiredness\":\"T\"," +
 							"\"charging\":true,\"positionAngle\":0," +
 							"\"type\":\"unit\",\"version\":0,\"steps\":1," +
 							"\"played\":true,\"orderGiven\":true," +
-							"\"contact\":true,\"name\":\"/red/redbanner.png-0\"," +
+							"\"contact\":true,\"name\":\"redbanner-0\"," +
 							"\"angle\":120,\"positionCol\":3,\"id\":105," +
 							"\"cohesion\":\"D\",\"category\":\"T\"," +
 							"\"positionRow\":4" +
@@ -466,7 +499,7 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 						"\"locations\":[{" +
 							"\"col\":3,\"id\":106,\"row\":4," +
 							"\"units\":[" +
-								"\"/red/redbanner.png-0\"" +
+								"\"redbanner-0\"" +
 							"]," +
 							"\"version\":0" +
 						"}]," +
@@ -594,7 +627,7 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 			.setBanner(banner)
 			.addUnit(unit)
 			.addToRetreatZone(hex);
-		Assert.assertEquals("/there/where/banner.png-0", wing.getBanner());
+		Assert.assertEquals(banner, wing.getBanner());
 		Assert.assertEquals(1, wing.getUnits().size());
 		Assert.assertEquals(unit, wing.getUnits().get(0));
 		wing.removeUnit(unit);
@@ -620,14 +653,17 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 		Location location = new Location()
 			.setCol(4).setRow(5)
 			.addUnit(unit);
-		Player player = new Player()
+		PlayerIdentity playerIdentity = new PlayerIdentity()
 			.setName("Hector")
+			.setPath("/red/redplayer.png");
+		Player player = new Player()
+			.setIdentity(playerIdentity)
 			.addWing(wing)
 			.addHex(location);
 		Assert.assertEquals("Hector", player.getName());
 		Assert.assertEquals(1, player.getWings().size());
 		Assert.assertEquals(wing, player.getWings().get(0));
-		Assert.assertEquals(wing, player.getWing("/there/where/banner.png"));
+		Assert.assertEquals(wing, player.getWing("banner-0"));
 		Assert.assertNull(player.getWing("/there/where/otherbanner.png"));
 		Assert.assertEquals(unit, player.getUnit("/there/where/unit.png-0"));
 		Assert.assertNull(player.getUnit("/there/where/otherunit.png-0"));
@@ -641,8 +677,11 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 
 	@Test
 	public void checkGameEntity() {
+		PlayerIdentity playerIdentity = new PlayerIdentity()
+			.setName("Hector")
+			.setPath("/red/redplayer.png");
 		Player player = new Player()
-			.setName("Hector");
+			.setIdentity(playerIdentity);
 		Game game = new Game()
 			.setName("game")
 			.addPlayer(player);

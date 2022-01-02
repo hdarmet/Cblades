@@ -1,9 +1,6 @@
 package fr.cblades;
 
-import fr.cblades.domain.Banner;
-import fr.cblades.domain.Board;
-import fr.cblades.domain.Login;
-import fr.cblades.domain.Player;
+import fr.cblades.domain.*;
 import org.summer.Ref;
 import org.summer.annotation.Launch;
 import org.summer.annotation.Setup;
@@ -30,10 +27,10 @@ public class FakeData {
             data.persist(em, new Board().setName("map9").setPath("./../images/maps/map9.png"));
         });
         data.inTransaction(em->{
-            data.persist(em, new Player().setName("orc1").setPath("./../images/units/players/orc-1.png"));
-            data.persist(em, new Player().setName("orc2").setPath("./../images/units/players/orc-2.png"));
-            data.persist(em, new Player().setName("roughneck1").setPath("./../images/units/players/roughneck-1.png"));
-            data.persist(em, new Player().setName("roughneck2").setPath("./../images/units/players/roughneck-2.png"));
+            data.persist(em, new PlayerIdentity().setName("orc1").setPath("./../images/units/players/orc-1.png"));
+            data.persist(em, new PlayerIdentity().setName("orc2").setPath("./../images/units/players/orc-2.png"));
+            data.persist(em, new PlayerIdentity().setName("roughneck1").setPath("./../images/units/players/roughneck-1.png"));
+            data.persist(em, new PlayerIdentity().setName("roughneck2").setPath("./../images/units/players/roughneck-2.png"));
         });
         data.inTransaction(em->{
             data.persist(em, new Banner().setName("orc-banner0").setPath("./../images/units/orcs/banners/banner0.png"));
