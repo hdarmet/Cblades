@@ -245,6 +245,7 @@ export class GameLoader {
                 col: board.col,
                 row: board.row,
                 path: board.path,
+                icon: board.icon,
                 invert: !!board.invert
             };
             if (board._oid) boardSpec.id = board._oid;
@@ -342,6 +343,7 @@ export class GameLoader {
                 col: boardSpec.col,
                 row: boardSpec.row,
                 path: boardSpec.path,
+                icon: boardSpec.icon
             }
             if (boardSpec.invert) board.invert = true;
             configuration.push(board);

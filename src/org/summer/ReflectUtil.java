@@ -1,5 +1,7 @@
 package org.summer;
 
+import org.summer.data.BaseEntity;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -137,12 +139,24 @@ public class ReflectUtil {
 	}
 
 	public static <T, E> T get(E thisEntity, String fieldName) {
-		Field field = getField(thisEntity.getClass(), fieldName);
-		return get(thisEntity, field);
+		String[] paths = fieldName.split("\\.");
+		Object entity = thisEntity;
+		for (int index=0; index<paths.length-1; index++) {
+			Field field = getField(thisEntity.getClass(), paths[index]);
+			entity = get(entity, field);
+		}
+		Field field = getField(entity.getClass(), paths[paths.length-1]);
+		return get(entity, field);
 	}
 
 	public static <T, E> void set(E thisEntity, String fieldName, T value) {
-		Field field = getField(thisEntity.getClass(), fieldName);
+		String[] paths = fieldName.split("\\.");
+		Object entity = thisEntity;
+		for (int index=0; index<paths.length-1; index++) {
+			Field field = getField(thisEntity.getClass(), paths[index]);
+			entity = get(entity, field);
+		}
+		Field field = getField(entity.getClass(), paths[paths.length-1]);
 		set(thisEntity, field, value);
 	}
 	

@@ -594,6 +594,7 @@ export class CBUnitsRosterHeader extends DElement {
                 CBUnitsRosterHeader.dimension.h/2 - CBUnitsRoster.DIMENSION.h/2),
             ()=>{
                 this._wingUpdate(-1);
+                this._parent.updateWingSelectionContent();
             }
         );
         this.addArtifact(this._leftWing);
@@ -612,6 +613,7 @@ export class CBUnitsRosterHeader extends DElement {
                 CBUnitsRosterHeader.dimension.h/2 - CBUnitsRoster.DIMENSION.h/2),
             ()=>{
                 this._wingUpdate(1);
+                this._parent.updateWingSelectionContent();
             }
         );
         this.addArtifact(this._rightWing);
@@ -1204,6 +1206,10 @@ export class CBUnitsRoster extends DPopup {
         this._wing = this.wings[this.game.wingIndex];
     }
 
+    updateWingSelectionContent() {
+        this._wingSelector.changeSelectionContent();
+    }
+
     get wing() {
         return this._wing;
     }
@@ -1426,6 +1432,9 @@ export class CBUnitsRoster extends DPopup {
             }
             this._wingSelector.changeSelectionContent();
             this.addElement(this._wingSelector);
+        }
+        else {
+            this._wingSelector.changeSelectionContent();
         }
     }
 
@@ -2070,7 +2079,11 @@ export class CBMapComposer extends DPopup {
         let configuration = [];
         for (let col = area.minCol; col<=area.maxCol; col++) {
             for (let row = area.minRow; row<=area.maxRow; row++) {
-                let board = {path:this._mapComposer[col][row].map.path, col:col-area.minCol, row:row-area.minRow};
+                let board = {
+                    path:this._mapComposer[col][row].map.path,
+                    icon:this._mapComposer[col][row].map.icon,
+                    col:col-area.minCol, row:row-area.minRow
+                };
                 if (this._mapComposer[col][row].isInverted()) board.invert = true;
                     configuration.push(board);
             }
