@@ -16,6 +16,7 @@ public class Board extends BaseEntity {
 
     String name="";
     String path="";
+    String icon="";
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "board_id")
     List<Hex> hexes = new ArrayList<>();
@@ -33,6 +34,14 @@ public class Board extends BaseEntity {
     }
     public Board setPath(String path) {
         this.path = path;
+        return this;
+    }
+
+    public String getIcon() {
+        return this.icon;
+    }
+    public Board setIcon(String icon) {
+        this.icon = icon;
         return this;
     }
 

@@ -15,9 +15,7 @@ import org.summer.controller.SummerControllerException;
 import org.summer.data.DataSunbeam;
 import org.summer.security.SecuritySunbeam;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceException;
-import javax.persistence.Query;
+import javax.persistence.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -37,11 +35,18 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 					result.set(readFromGame(em, newGame));
 				});
 				return result.get();
-			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, 
-					"Game with name (%s) already exists",
-					request.get("name"), null
+			}
+			catch (EntityNotFoundException enf) {
+				throw new SummerControllerException(500, enf.getMessage());
+			}
+			catch (EntityExistsException ee) {
+				throw new SummerControllerException(500,
+						"Game with name (%s) already exists",
+						request.get("name"), null
 				);
+			}
+			catch (PersistenceException pe) {
+				throw new SummerControllerException(500, pe.getMessage());
 			}
 		}, ADMIN);
 	}
@@ -140,10 +145,16 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 			)
 			.each("players", pJson->verify(pJson)
 				.checkRequired("version")
-				.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 80)
+				.inspect("identity",  bJson->verify(bJson)
+					.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 80)
+					.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 80)
+				)
 				.each("wings", wJson->verify(wJson)
 					.checkRequired("version")
-					.checkRequired("banner").checkMinSize("banner", 2).checkMaxSize("banner", 80)
+					.inspect("banner",  bJson->verify(bJson)
+						.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 80)
+						.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 80)
+					)
 					.each("retreatZone", lJson->verify(lJson)
 						.checkRequired("version")
 						.checkRequired("col").checkMin("col", -1).checkMax("col", 200)
@@ -193,10 +204,10 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 			)
 			.syncEach("players", (pJson, player)->sync(pJson, player)
 				.write("version")
-				.writeRef("name", "identity", (String name)->PlayerIdentity.getByName(em, name))
+				.writeRef("identity.name", "identity", (String name)->PlayerIdentity.getByName(em, name))
 				.syncEach("wings", (wJson, wing)->sync(wJson, wing)
 					.write("version")
-					.writeRef("banner", "banner", (String name)->Banner.getByName(em, name))
+					.writeRef("banner.name", "banner", (String name)->Banner.getByName(em, name))
 					.syncEach("retreatZone", (lJson, location)->sync(lJson, location)
 						.write("version")
 						.write("col")
@@ -252,11 +263,17 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 			.readEach("players", (pJson, player)->sync(pJson, player)
 				.read("id")
 				.read("version")
-				.read("name", "identity", PlayerIdentity::getName)
+				.readLink("identity", (bJson, map)->sync(bJson, map)
+						.read("name")
+						.read("path")
+				)
 				.readEach("wings", (wJson, wing)->sync(wJson, wing)
 					.read("id")
 					.read("version")
-					.read("banner", "banner", Banner::getName)
+					.readLink("banner", (bJson, map)->sync(bJson, map)
+						.read("name")
+						.read("path")
+					)
 					.readEach("retreatZone", (lJson, location)->sync(lJson, location)
 						.read("id")
 						.read("version")

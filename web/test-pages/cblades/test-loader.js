@@ -73,7 +73,7 @@ describe("Loader", ()=> {
     it("Create board", () => {
         given:
             var game = new CBGame("Test");
-            var board = new CBBoard("board", "./../images/maps/map.png");
+            var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
         when:
@@ -175,7 +175,7 @@ describe("Loader", ()=> {
     it("Fail to create board", () => {
         given:
             var game = new CBGame("Test");
-            var board = new CBBoard("board", "./../images/maps/map.png");
+            var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
         when:
@@ -193,7 +193,7 @@ describe("Loader", ()=> {
     it("Update board", () => {
         given:
             var game = new CBGame("Test");
-            var board = new CBBoard("board", "./../images/maps/map.png");
+            var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
         when:
@@ -223,7 +223,7 @@ describe("Loader", ()=> {
     it("Update board", () => {
         given:
             var game = new CBGame("Test");
-            var board = new CBBoard("board", "./../images/maps/map.png");
+            var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
         when:
@@ -243,7 +243,7 @@ describe("Loader", ()=> {
     it("Load board", () => {
         given:
             var game = new CBGame("Test");
-            var board = new CBBoard("board", "./../images/maps/map.png");
+            var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
         when:
@@ -275,7 +275,7 @@ describe("Loader", ()=> {
     it("Fails to load board", () => {
         given:
             var game = new CBGame("Test");
-            var board = new CBBoard("board", "./../images/maps/map.png");
+            var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
         when:

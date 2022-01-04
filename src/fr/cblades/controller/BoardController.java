@@ -52,7 +52,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
 				Collection<Board> boards = findBoards(em.createQuery("select b from Board b left outer join fetch b.hexes"));
-				result.set(readFromBoards(boards));
+				result.set(readFromBoardSummaries(boards));
 			});
 			return result.get();
 		}, ADMIN);
@@ -131,6 +131,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 20)
 			.checkPattern("name", "[a-zA-Z0-9_\\-]+")
 			.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 200)
+			.checkRequired("icon").checkMinSize("icon", 2).checkMaxSize("icon", 200)
 			.each("hexes", cJson->verify(cJson)
 				.checkRequired("version")
 				.checkRequired("col").checkMin("col", 0).checkMax("col", 13)
@@ -146,6 +147,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.write("version")
 			.write("name")
 			.write("path")
+			.write("icon")
 			.syncEach("hexes", (hJson, hex)->sync(hJson, hex)
 				.write("version")
 				.write("col")
@@ -166,6 +168,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("version")
 			.read("name")
 			.read("path")
+			.read("icon")
 			.readEach("hexes", (hJson, hex)->sync(hJson, hex)
 				.read("id")
 				.read("version")
@@ -177,6 +180,17 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				.read("side180Type", HexSideType::getLabel)
 				.read("side240Type", HexSideType::getLabel)
 			);
+		return json;
+	}
+
+	Json readFromBoardSummary(Board board) {
+		Json json = Json.createJsonObject();
+		sync(json, board)
+				.read("id")
+				.read("version")
+				.read("name")
+				.read("path")
+				.read("icon");
 		return json;
 	}
 
@@ -196,9 +210,9 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return boards.stream().distinct().collect(Collectors.toList());
 	}
 
-	Json readFromBoards(Collection<Board> boards) {
+	Json readFromBoardSummaries(Collection<Board> boards) {
 		Json list = Json.createJsonArray();
-		boards.stream().forEach(board->list.push(readFromBoard(board)));
+		boards.stream().forEach(board->list.push(readFromBoardSummary(board)));
 		return list;
 	}
 

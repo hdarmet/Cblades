@@ -84,6 +84,7 @@ export class BoardLoader {
             version: this._board._oversion || 0,
             name: this._board._name,
             path: this._board._path,
+            icon: this._board._icon,
             hexes: []
         };
         if (this._board._oid) mapSpecs.id = this._board._oid;
@@ -107,6 +108,7 @@ export class BoardLoader {
         this._board._oversion = specs.version || 0;
         this._board._name = specs.name;
         this._board._path = specs.path;
+        this._board._icon = specs.icon;
         if (specs.id) this._board._oid = specs.id;
         for (let hexSpec of specs.hexes) {
             let hexId = this._board.getHex(hexSpec.col, hexSpec.row);
@@ -184,8 +186,9 @@ export class BoardLoader {
 
 export class GameLoader {
 
-    constructor(game) {
+    constructor(game, playerCreator) {
         this._game = game;
+        this._playerCreator = playerCreator;
     }
 
     save() {
@@ -250,7 +253,10 @@ export class GameLoader {
         for (let player of this._game.players) {
             let playerSpecs = {
                 version: player._oversion || 0,
-                name: player.name,
+                identity: {
+                    name: player.identity.name,
+                    path: player.identity.path
+                },
                 wings: [],
                 locations: []
             }
@@ -342,11 +348,16 @@ export class GameLoader {
         }
         this._game.changeMap(new CBMap(configuration));
         for (let playerSpec of specs.players) {
-            let player = this._game.getPlayer(playerSpec.name);
-            console.assert(player);
+            let player = this._game.getPlayer(playerSpec.identity.name);
+            if (!player) {
+                player = this._playerCreator(playerSpec.identity.name, playerSpec.identity.path);
+                this._game.addPlayer(player);
+            }
+            else {
+                player.setIdentity(playerSpec.identity);
+            }
             player._oid = playerSpec.id;
             player._oversion = playerSpec.version;
-            player._name = playerSpec.name;
             let unitsMap = new Map();
             for (let wingSpec of playerSpec.wings) {
                 let wing = new CBWing(player, wingSpec.banner);
@@ -702,6 +713,97 @@ export class SequenceLoader {
             case "B":
                 return CBStacking.BOTTOM;
         }
+    }
+
+}
+
+export class PlayerIdentityListLoader {
+
+    constructor() {
+    }
+
+    load(action) {
+        sendPost("/api/player-identity/all",
+            {},
+            (text, status) => {
+                let json = JSON.parse(text);
+                action(this.fromSpecs(json));
+                consoleLog(`Player identities loaded : ${status}`)
+            },
+            (text, status) => consoleLog(`Unable to load player identities`)
+        );
+    }
+
+    fromSpecs(specs) {
+        let playerIdentities = [];
+        for (let playerIdentitySpec of specs) {
+            playerIdentities.push({
+                name: playerIdentitySpec.name,
+                path: playerIdentitySpec.path
+            });
+        }
+        return playerIdentities;
+    }
+
+}
+
+export class BannerListLoader {
+
+    constructor() {
+    }
+
+    load(action) {
+        sendPost("/api/banner/all",
+            {},
+            (text, status) => {
+                let json = JSON.parse(text);
+                action(this.fromSpecs(json));
+                consoleLog(`Banners loaded : ${status}`)
+            },
+            (text, status) => consoleLog(`Unable to load banners`)
+        );
+    }
+
+    fromSpecs(specs) {
+        let banners = [];
+        for (let bannerSpec of specs) {
+            banners.push({
+                name: bannerSpec.name,
+                path: bannerSpec.path
+            });
+        }
+        return banners;
+    }
+
+}
+
+export class BoardListLoader {
+
+    constructor() {
+    }
+
+    load(action) {
+        sendPost("/api/board/all",
+            {},
+            (text, status) => {
+                let json = JSON.parse(text);
+                action(this.fromSpecs(json));
+                consoleLog(`Boards loaded : ${status}`)
+            },
+            (text, status) => consoleLog(`Unable to load boards`)
+        );
+    }
+
+    fromSpecs(specs) {
+        let boards = [];
+        for (let boardSpec of specs) {
+            boards.push({
+                name: boardSpec.name,
+                path: boardSpec.path,
+                icon: boardSpec.icon
+            });
+        }
+        return boards;
     }
 
 }

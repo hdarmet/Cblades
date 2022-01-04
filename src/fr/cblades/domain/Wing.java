@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.Map;
 
 @Entity
-@Table(indexes=@Index(name="idx_wing", unique=true, columnList="player_id, banner"))
+@Table(indexes=@Index(name="idx_wing", columnList="player_id"))
 public class Wing extends BaseEntity {
 
     @ManyToOne

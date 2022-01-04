@@ -108,7 +108,7 @@ describe("Map", ()=> {
 
     it("Checks board general features", () => {
         given:
-            var board = new CBBoard("board1", "./../images/maps/map.png");
+            var board = new CBBoard("board1", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             var game = new CBTestGame();
         when:
             game.setMap(board);

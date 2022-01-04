@@ -29,7 +29,7 @@ public class Banner extends BaseEntity {
         try {
             return (Banner)query.getSingleResult();
         }
-        catch (EntityNotFoundException enf) {
+        catch (NoResultException nre) {
             return null;
         }
     }

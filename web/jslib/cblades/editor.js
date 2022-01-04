@@ -49,7 +49,8 @@ import {
     CBCohesion, CBMunitions, CBOrderInstruction, CBTiredness, CBWing
 } from "./unit.js";
 import {
-    BoardLoader, Connector, GameLoader
+    BannerListLoader, BoardListLoader,
+    BoardLoader, Connector, GameLoader, PlayerIdentityListLoader
 } from "./loader.js";
 import {
     CBMap
@@ -948,9 +949,11 @@ export class CBRosterSelectorCell extends DPedestalArtifact {
     }
 
     onMouseClick(event) {
-        this._selected = !this._selected;
-        this._setSettings(false);
-        this._parent._changeCellState(this);
+        if (!this._excluded) {
+            this._selected = !this._selected;
+            this._setSettings(false);
+            this._parent._changeCellState(this);
+        }
         return true;
     }
 
@@ -1182,7 +1185,7 @@ export class CBWingSelector extends CBRosterSelector {
 
 export class CBUnitsRoster extends DPopup {
 
-    constructor(game) {
+    constructor(game, playerIdentities, banners) {
         super(CBUnitsRoster.DIMENSION);
         this._game = game;
         if (!this._game.rosterMap) {
@@ -1192,8 +1195,8 @@ export class CBUnitsRoster extends DPopup {
         this._wing = this.wings[this.game.wingIndex];
         this._buildHeaderElement();
         this._buildRosterElement();
-        this._buildPlayerSelector();
-        this._buildWingSelector();
+        this._buildPlayerSelector(playerIdentities);
+        this._buildWingSelector(banners);
     }
 
     shiftWing(shift) {
@@ -1380,16 +1383,12 @@ export class CBUnitsRoster extends DPopup {
         this.addElement(this._rosterContent);
     }
 
-    _buildPlayerSelector() {
-        this._playerSelector = new CBPlayerSelector(this,
-            CBUnitsRoster.allPlayers
-        );
+    _buildPlayerSelector(playerIdentities) {
+        this._playerSelector = new CBPlayerSelector(this, playerIdentities);
     }
 
-    _buildWingSelector() {
-        this._wingSelector = new CBWingSelector(this,
-            CBUnitsRoster.allWings
-        );
+    _buildWingSelector(banners) {
+        this._wingSelector = new CBWingSelector(this, banners);
     }
 
     _showRosterContent() {
@@ -1586,7 +1585,7 @@ export class CBMapCellArtifact extends DPedestalArtifact {
         this.turn(0);
         this._map = map;
         this.artifact = new DImageArtifact("-",
-            DImage.getImage(map.path+"-icon.png"),
+            DImage.getImage(map.icon),
             new Point2D(0, 0), CBMapSelectorArtifact.DIMENSION
         );
     }
@@ -1738,7 +1737,7 @@ export class CBMapSelectorArtifact extends DPedestalArtifact {
 
     setMap(map) {
         this.artifact = new DImageArtifact("-",
-            DImage.getImage(map.path+"-icon.png"),
+            DImage.getImage(map.icon),
             new Point2D(0, 0), CBMapSelectorArtifact.DIMENSION
         );
     }
@@ -1882,10 +1881,7 @@ export class CBMapComposer extends DPopup {
 
     _init(configuration) {
         for(let board of configuration) {
-            let model = {
-                path:board.path.substring(0, board.path.length-4),
-            }
-            this._mapComposer[board.col][board.row].setMap(model);
+            this._mapComposer[board.col][board.row].setMap(board);
             if (board.invert) this._mapComposer[board.col][board.row].turnMap();
         }
         this.updateCommands();
@@ -2074,7 +2070,7 @@ export class CBMapComposer extends DPopup {
         let configuration = [];
         for (let col = area.minCol; col<=area.maxCol; col++) {
             for (let row = area.minRow; row<=area.maxRow; row++) {
-                let board = {path:this._mapComposer[col][row].map.path+".png", col:col-area.minCol, row:row-area.minRow};
+                let board = {path:this._mapComposer[col][row].map.path, col:col-area.minCol, row:row-area.minRow};
                 if (this._mapComposer[col][row].isInverted()) board.invert = true;
                     configuration.push(board);
             }
@@ -2092,6 +2088,18 @@ export class CBMapComposer extends DPopup {
     static CELL_COMMANDS_MARGIN = 25;
     static ROW_COUNT = 4;
     static COL_COUNT = 8;
+
+    static allBoards = [
+        {path: "./../images/maps/map1.png", icon: "./../images/maps/map1-icon.png"},
+        {path: "./../images/maps/map2.png", icon: "./../images/maps/map2-icon.png"},
+        {path: "./../images/maps/map3.png", icon: "./../images/maps/map3-icon.png"},
+        {path: "./../images/maps/map4.png", icon: "./../images/maps/map4-icon.png"},
+        {path: "./../images/maps/map5.png", icon: "./../images/maps/map5-icon.png"},
+        {path: "./../images/maps/map6.png", icon: "./../images/maps/map6-icon.png"},
+        {path: "./../images/maps/map7.png", icon: "./../images/maps/map7-icon.png"},
+        {path: "./../images/maps/map8.png", icon: "./../images/maps/map8-icon.png"},
+        {path: "./../images/maps/map9.png", icon: "./../images/maps/map9-icon.png"}
+    ];
 }
 
 export class CBEditUnitMenu extends DIconMenu {
@@ -2403,23 +2411,19 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
     editUnits() {
         this.closeActuators();
         this.closePopup();
-        this.openPopup(new CBUnitsRoster(this), this.viewportCenter);
+        new PlayerIdentityListLoader().load(playerIdentities=> {
+            new BannerListLoader().load(banners => {
+                this.openPopup(new CBUnitsRoster(this, playerIdentities, banners), this.viewportCenter);
+            });
+        });
     }
 
     arrangeMap() {
         this.closeActuators();
         this.closePopup();
-        this.openPopup(new CBMapComposer(this, this.map.mapBoards, [
-            {path: "./../images/maps/map1"},
-            {path: "./../images/maps/map2"},
-            {path: "./../images/maps/map3"},
-            {path: "./../images/maps/map4"},
-            {path: "./../images/maps/map5"},
-            {path: "./../images/maps/map6"},
-            {path: "./../images/maps/map7"},
-            {path: "./../images/maps/map8"},
-            {path: "./../images/maps/map9"}
-        ]), this.viewportCenter);
+        new BoardListLoader().load(boards=>{
+            this.openPopup(new CBMapComposer(this, this.map.mapBoards, boards), this.viewportCenter);
+        })
     }
 
     setMenu() {
@@ -2475,13 +2479,13 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
         this._saveCommand = new DPushButton(
             "./../images/commands/save.png", "./../images/commands/save-inactive.png",
             new Point2D(-300, -60), animation=>{
-                new GameLoader(this).save();
+                new GameLoader(this, (name, path)=>new CBEditorPlayer(name, path)).save();
                 animation();
             }).setTurnAnimation(true);
         this._loadCommand = new DPushButton(
             "./../images/commands/load.png", "./../images/commands/load-inactive.png",
             new Point2D(-360, -60), animation=>{
-                new GameLoader(this).load();
+                new GameLoader(this, (name, path)=>new CBEditorPlayer(name, path)).load();
                 animation();
             }
         ).setTurnAnimation(true);

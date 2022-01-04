@@ -29,7 +29,7 @@ public class PlayerIdentity extends BaseEntity {
         try {
             return (PlayerIdentity)query.getSingleResult();
         }
-        catch (EntityNotFoundException enf) {
+        catch (NoResultException enf) {
             return null;
         }
     }

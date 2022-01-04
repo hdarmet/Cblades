@@ -2037,7 +2037,7 @@ describe("Editor", ()=> {
     it("Checks connect/save/load from the Map editor", () => {
         given:
             var game = new CBMapEditorGame();
-            var board = new CBBoard("board", "./../images/maps/map.png");
+            var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.setMenu();
             game.start();

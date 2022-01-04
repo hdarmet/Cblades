@@ -13,6 +13,11 @@ import org.summer.SummerException;
 
 public interface RelationshipOwnerSeawave {
 
+	default <T> Class<?> getType(T thisEntity, String thisFieldName) {
+		Field thisField = ReflectUtil.getField(thisEntity.getClass(), thisFieldName);
+		return thisField.getType();
+	}
+
 	default <T, E> void setOneToOne(T thisEntity, String thisFieldName, E entity, String reverseFieldName) {
 		Field thisField = ReflectUtil.getField(thisEntity.getClass(), thisFieldName);
 		Field reverseField = reverseFieldName==null ? null : ReflectUtil.getField(entity.getClass(), reverseFieldName);

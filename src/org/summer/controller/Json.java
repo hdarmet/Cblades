@@ -101,6 +101,16 @@ public class Json implements Iterable {
 		}
 	}
 
+	public <T> T search(String path) {
+		String[] names = path.split("\\.");
+		Object value = this;
+		for (String name : names) {
+			if (value == null) return null;
+			value = ((Json)value).get(name);
+		}
+		return (T)value;
+	}
+
 	public Long getLong(String name, String... aliases) {
 		Integer value = get(name, aliases);
 		return value==null ? null : new Long(value);

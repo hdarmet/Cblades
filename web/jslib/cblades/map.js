@@ -1051,7 +1051,7 @@ export class CBAbstractMap {
 
 export class CBBoard extends CBAbstractMap {
 
-    constructor(name, path) {
+    constructor(name, path, icon) {
         super(1, 1, [{
             image: DImage.getImage(path),
             location: new Point2D(0, 0),
@@ -1059,6 +1059,7 @@ export class CBBoard extends CBAbstractMap {
         }]);
         this._name = name;
         this._path = path;
+        this._icon = icon;
     }
 
     get name() {
@@ -1068,6 +1069,11 @@ export class CBBoard extends CBAbstractMap {
     get path() {
         return this._path;
     }
+
+    get icon() {
+        return this._icon;
+    }
+
 }
 
 export class CBMap extends CBAbstractMap {

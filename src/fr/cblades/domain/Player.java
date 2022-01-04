@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Entity
-@Table(indexes=@Index(name="idx_player", unique=true, columnList="game_id, name"))
+@Table(indexes=@Index(name="idx_player", columnList="game_id"))
 public class Player extends BaseEntity {
 
     @ManyToOne

@@ -33,8 +33,10 @@ export class CBAbstractArbitrator {
 export class CBAbstractPlayer {
 
     constructor(name, path) {
-        this._name = name;
-        this._path = path;
+        this._identity = {
+            name: name,
+            path: path
+        };
         this._init();
     }
 
@@ -48,12 +50,23 @@ export class CBAbstractPlayer {
         this._init();
     }
 
+    get identity() {
+        return this._identity;
+    }
+
+    setIdentity(identity) {
+        this._identity = {
+            name: identity.name,
+            path: identity.path
+        }
+    }
+
     get name() {
-        return this._name;
+        return this._identity.name;
     }
 
     get path() {
-        return this._path;
+        return this._identity.path;
     }
 
     changeSelection(playable, event) {

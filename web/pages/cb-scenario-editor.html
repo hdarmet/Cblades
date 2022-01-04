@@ -26,19 +26,19 @@
 
     let game = new CBScenarioEditorGame("scenario");
     let map = new CBMap([
-        {path:"./../images/maps/map1.png", col:0, row:0, invert:true},
-        {path:"./../images/maps/map4.png", col:1, row:0}
+        {path:"./../images/maps/map1.png", icon:"./../images/maps/map1-icon.png", col:0, row:0, invert:true},
+        {path:"./../images/maps/map4.png", icon:"./../images/maps/map4-icon.png", col:1, row:0}
     ]);
     game.setMap(map);
     game.fitWindow();
     document.body.appendChild(game.root);
     game.setMenu();
 
-    let player1 = new CBEditorPlayer("player1", "./../images/units/players/orc-1.png");
+    let player1 = new CBEditorPlayer("orc-1", "./../images/units/players/orc-1.png");
     game.addPlayer(player1);
     let wing1 = new CBWing(player1, GoblinBanner1);
     wing1.setRetreatZone(map.getSouthZone());
-    let player2 = new CBEditorPlayer("player2", "./../images/units/players/roughneck-1.png");
+    let player2 = new CBEditorPlayer("roughneck-1", "./../images/units/players/roughneck-1.png");
     game.addPlayer(player2);
     let wing2 = new CBWing(player2, RoughneckBanner1);
     wing2.setRetreatZone(map.getNorthZone());
