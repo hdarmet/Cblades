@@ -39,14 +39,11 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 			catch (EntityNotFoundException enf) {
 				throw new SummerControllerException(500, enf.getMessage());
 			}
-			catch (EntityExistsException ee) {
+			catch (PersistenceException pe) {
 				throw new SummerControllerException(500,
 						"Game with name (%s) already exists",
 						request.get("name"), null
 				);
-			}
-			catch (PersistenceException pe) {
-				throw new SummerControllerException(500, pe.getMessage());
 			}
 		}, ADMIN);
 	}

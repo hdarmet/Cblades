@@ -63,7 +63,7 @@ public class Board extends BaseEntity {
         try {
             return (Board)query.getSingleResult();
         }
-        catch (EntityNotFoundException enf) {
+        catch (NoResultException enf) {
             return null;
         }
     }

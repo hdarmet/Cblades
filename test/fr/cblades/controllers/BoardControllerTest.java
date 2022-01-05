@@ -61,7 +61,7 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 		dataManager.register("flush", null, null);
 		securityManager.doConnect("admin", 0);
 		boardController.create(params(), Json.createJsonFromString(
-			"{ 'version':0, 'name':'map1', 'path':'here/there/map.png', 'hexes':[" +
+			"{ 'version':0, 'name':'map1', 'path':'here/there/map.png', 'icon':'here/there/map-icon.png', 'hexes':[" +
 				"{'version':0, 'col':2, 'row':3, 'type':'OC', 'height':1,'side120Type':'N', 'side180Type':'E', 'side240Type':'D'}," +
 				"{'version':0, 'col':4, 'row':5, 'type':'OD', 'height':2,'side120Type':'C', 'side180Type':'W', 'side240Type':'N'}," +
 			"]}"
@@ -80,7 +80,7 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 		securityManager.doConnect("admin", 0);
 		try {
 			boardController.create(params(), Json.createJsonFromString(
-				"{ 'version':0, 'name':'map1', 'path':'here/there/map.png', 'hexes':[" +
+				"{ 'version':0, 'name':'map1', 'path':'here/there/map.png', 'icon':'here/there/map-icon.png', 'hexes':[" +
 					"{'version':0, 'col':2, 'row':3, 'type':'OC', 'height':1,'side120Type':'N', 'side180Type':'E', 'side240Type':'D'}," +
 					"{'version':0, 'col':4, 'row':5, 'type':'OD', 'height':2,'side120Type':'C', 'side180Type':'W', 'side240Type':'N'}," +
 				"]}"
@@ -99,7 +99,7 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 		securityManager.doConnect("someone", 0);
 		try {
 			boardController.create(params(), Json.createJsonFromString(
-				"{ 'version':0, 'name':'map1', 'path':'here/there/map.png', 'hexes':[" +
+				"{ 'version':0, 'name':'map1', 'path':'here/there/map.png', 'icon':'here/there/map-icon.png', 'hexes':[" +
 					"{'version':0, 'col':2, 'row':3, 'type':'OC', 'height':1,'side120Type':'N', 'side180Type':'E', 'side240Type':'D'}," +
 					"{'version':0, 'col':4, 'row':5, 'type':'OD', 'height':2,'side120Type':'C', 'side180Type':'W', 'side240Type':'N'}," +
 				"]}"
@@ -117,16 +117,16 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 	public void listAllBoard() {
 		dataManager.register("createQuery", null, null, "select b from Board b left outer join fetch b.hexes");
 		dataManager.register("getResultList", arrayList(
-			setEntityId(new Board().setName("map1").setPath("/there/where/map1.png"), 1),
-				setEntityId(new Board().setName("map2").setPath("/there/where/map2.png"), 2)
+			setEntityId(new Board().setName("map1").setPath("/there/where/map1.png").setIcon("/there/where/map1-icon.png"), 1),
+			setEntityId(new Board().setName("map2").setPath("/there/where/map2.png").setIcon("/there/where/map2-icon.png"), 2)
 		), null);
 		securityManager.doConnect("admin", 0);
 		Json result = boardController.getAll(params(), null);
-		Assert.assertEquals(result.toString(),
+		Assert.assertEquals(
 			"[" +
-				"{\"hexes\":[],\"path\":\"/there/where/map1.png\",\"name\":\"map1\",\"id\":1,\"version\":0}," +
-				"{\"hexes\":[],\"path\":\"/there/where/map2.png\",\"name\":\"map2\",\"id\":2,\"version\":0}" +
-			"]" );
+				"{\"path\":\"/there/where/map1.png\",\"name\":\"map1\",\"icon\":\"/there/where/map1-icon.png\",\"id\":1,\"version\":0}," +
+				"{\"path\":\"/there/where/map2.png\",\"name\":\"map2\",\"icon\":\"/there/where/map2-icon.png\",\"id\":2,\"version\":0}" +
+			"]", result.toString());
 		dataManager.hasFinished();
 	}
 
@@ -149,12 +149,15 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 		dataManager.register("createQuery", null, null, "select b from Board b left outer join fetch b.hexes where b.name = :name");
 		dataManager.register("setParameter", null, null,"name", "map1");
 		dataManager.register("getSingleResult",
-			setEntityId(new Board().setName("map1").setPath("/there/where/map1.png"), 1),
+			setEntityId(new Board().setName("map1")
+				.setPath("/there/where/map1.png")
+				.setIcon("/there/where/map1-icon.png"), 1),
 		null);
 		securityManager.doConnect("admin", 0);
 		Json result = boardController.getByName(params("name", "map1"), null);
-		Assert.assertEquals(result.toString(),
-				"{\"hexes\":[],\"path\":\"/there/where/map1.png\",\"name\":\"map1\",\"id\":1,\"version\":0}"
+		Assert.assertEquals(
+			"{\"hexes\":[],\"path\":\"/there/where/map1.png\",\"name\":\"map1\",\"icon\":\"/there/where/map1-icon.png\",\"id\":1,\"version\":0}",
+			result.toString()
 		);
 		dataManager.hasFinished();
 	}
@@ -193,12 +196,15 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void getOneBoardById() {
 		dataManager.register("find",
-				setEntityId(new Board().setName("map1").setPath("/there/where/map1.png"), 1L),
+				setEntityId(new Board().setName("map1")
+					.setPath("/there/where/map1.png")
+					.setIcon("/there/where/map1-icon.png"), 1L),
 			null, Board.class, 1L);
 		securityManager.doConnect("admin", 0);
 		Json result = boardController.getById(params("id", "1"), null);
-		Assert.assertEquals(result.toString(),
-			"{\"hexes\":[],\"path\":\"/there/where/map1.png\",\"name\":\"map1\",\"id\":1,\"version\":0}"
+		Assert.assertEquals(
+			"{\"hexes\":[],\"path\":\"/there/where/map1.png\",\"name\":\"map1\",\"icon\":\"/there/where/map1-icon.png\",\"id\":1,\"version\":0}",
+			result.toString()
 		);
 		dataManager.hasFinished();
 	}
@@ -237,7 +243,9 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void deleteABoard() {
 		dataManager.register("find",
-			setEntityId(new Board().setName("map1").setPath("/there/where/map1.png"), 1L),
+			setEntityId(new Board().setName("map1")
+				.setPath("/there/where/map1.png")
+				.setPath("/there/where/map1-icon.png"), 1L),
 			null, Board.class, 1L);
 		Ref<Board> rBoard = new Ref<>();
 		dataManager.register("merge", (Supplier)()->rBoard.get(), null,
@@ -316,7 +324,9 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void upadteABoard() {
 		dataManager.register("find",
-			setEntityId(new Board().setName("map1").setPath("/there/where/map1.png").addHex(
+			setEntityId(new Board().setName("map1")
+					.setPath("/there/where/map1.png")
+					.setIcon("/there/where/map1-icon.png").addHex(
 				(Hex)setEntityId(new Hex().setCol(2).setRow(3).setHeight(1).setType(HexType.IMPASSABLE)
 					.setSide120Type(HexSideType.EASY).setSide180Type(HexSideType.NORMAL).setSide240Type(HexSideType.WALL), 1)
 			), 1L),
@@ -324,16 +334,17 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 		dataManager.register("flush", null, null);
 		securityManager.doConnect("admin", 0);
 		Json result = boardController.update(params("id", "1"), Json.createJsonFromString(
-			"{ 'id':1, 'version':0, 'name':'map2', 'path':'here/there/map2.png', 'hexes':[" +
+			"{ 'id':1, 'version':0, 'name':'map2', 'path':'here/there/map2.png', 'icon':'here/there/map2-icon.png', 'hexes':[" +
 				"{'id':1, 'version':0, 'col':2, 'row':3, 'type':'OC', 'height':2,'side120Type':'N', 'side180Type':'E', 'side240Type':'D'}," +
 				"{'version':0, 'col':4, 'row':5, 'type':'OD', 'height':2,'side120Type':'C', 'side180Type':'W', 'side240Type':'N'}," +
 			"]}"
 		));
-		Assert.assertEquals(result.toString(),
+		Assert.assertEquals(
 		"{\"hexes\":[" +
 				"{\"col\":2,\"side180Type\":\"E\",\"id\":1,\"row\":3,\"type\":\"OC\",\"side240Type\":\"D\",\"version\":0,\"height\":2,\"side120Type\":\"N\"}," +
 				"{\"col\":4,\"side180Type\":\"W\",\"id\":0,\"row\":5,\"type\":\"OD\",\"side240Type\":\"N\",\"version\":0,\"height\":2,\"side120Type\":\"C\"}" +
-			"],\"path\":\"here/there/map2.png\",\"name\":\"map2\",\"id\":1,\"version\":0}"
+			"],\"path\":\"here/there/map2.png\",\"name\":\"map2\",\"icon\":\"here/there/map2-icon.png\",\"id\":1,\"version\":0}",
+			result.toString()
 		);
 		dataManager.hasFinished();
 	}

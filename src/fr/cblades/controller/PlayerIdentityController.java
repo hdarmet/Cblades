@@ -1,7 +1,6 @@
 package fr.cblades.controller;
 
 import fr.cblades.StandardUsers;
-import fr.cblades.domain.Banner;
 import fr.cblades.domain.PlayerIdentity;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
@@ -14,6 +13,7 @@ import org.summer.controller.SummerControllerException;
 import org.summer.data.DataSunbeam;
 import org.summer.security.SecuritySunbeam;
 
+import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
@@ -36,11 +36,15 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 					result.set(readFromPlayerIdentity(newPlayerIdentity));
 				});
 				return result.get();
-			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, 
+			}
+			catch (EntityExistsException pe) {
+				throw new SummerControllerException(500,
 					"Player Identity with name (%s) already exists",
 					request.get("name"), null
 				);
+			}
+			catch (PersistenceException pe) {
+				throw new SummerControllerException(500, pe.getMessage());
 			}
 		}, ADMIN);
 	}

@@ -13,6 +13,7 @@ import org.summer.controller.SummerControllerException;
 import org.summer.data.DataManipulatorSunbeam;
 
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceException;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -36,12 +37,27 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 
 	static String SIMPLE_GAME_CREATION = "{\n" +
 			"	version:0, name:\"Test\",\n" +
+			"	map:{\n" +
+			"		version:0, " +
+			"		boards:[{\n" +
+			"			version:0, icon:\"/map/map1-icon.png\", path:\"/map/map1.png\", " +
+			"			col:4, row:5, invert:true\n" +
+			"		}],\n" +
+			"	},\n" +
 			"	players:[\n" +
 			"		{\n" +
-			"			version:0, name:\"Hector\",\n" +
+			"			version:0, " +
+			"			identity:{\n" +
+			"				name: \"Hector\"," +
+			"				path: \"/players/hector.png\"" +
+			"			},\n" +
 			"			wings:[\n" +
 			"		{\n" +
-			"			version:0, banner:\"redbanner\",\n" +
+			"			version:0, " +
+			"			banner:{\n" +
+			"				name: \"redbanner\"," +
+			"				path: \"/map/redbanner.png\"" +
+			"			},\n" +
 			"			units:[{\n" +
 			"				version:0, name:\"redbanner-0\", category:\"T\", type:\"unit\",\n" +
 			"				angle:120, positionCol:3, positionRow:4, positionAngle:0, steps:2,\n" +
@@ -61,6 +77,11 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 	@Test
 	public void createNewBoard() {
 		dataManager.register("createQuery", null, null,
+				"select b from Board b where b.path = :path");
+		dataManager.register("setParameter", null, null,"path", "/map/map1.png");
+		dataManager.register("getSingleResult",
+				setEntityId(new Board().setName("map1").setPath("/map/map1.png").setIcon("/map/map1-icon.png"), 109),null);
+		dataManager.register("createQuery", null, null,
 				"select pi from PlayerIdentity pi where pi.name = :name");
 		dataManager.register("setParameter", null, null,"name", "Hector");
 		dataManager.register("getSingleResult",
@@ -75,6 +96,16 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 			Game game = (Game) entity;
 			Assert.assertEquals("Test", game.getName());
 			Assert.assertEquals(1, game.getPlayers().size());
+			Map map = game.getMap();
+			Assert.assertEquals(1, map.getBoardPlacements().size());
+			BoardPlacement boardPlacement = map.getBoardPlacements().get(0);
+			Assert.assertEquals(4, boardPlacement.getCol());
+			Assert.assertEquals(5, boardPlacement.getRow());
+			Assert.assertTrue(boardPlacement.isInvert());
+			Board board = boardPlacement.getBoard();
+			Assert.assertEquals("map1", board.getName());
+			Assert.assertEquals("/map/map1-icon.png", board.getIcon());
+			Assert.assertEquals("/map/map1.png", board.getPath());
 			Player player = game.getPlayers().get(0);
 			Assert.assertEquals("Hector", player.getIdentity().getName());
 			Assert.assertEquals("/players/hector.png", player.getIdentity().getPath());
@@ -124,12 +155,19 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 			"{" +
 				"\"players\":[" +
 				"{" +
+					"\"identity\":{" +
+						"\"path\":\"/players/hector.png\"," +
+						"\"name\":\"Hector\"" +
+					"},"+
 					"\"wings\":[" +
 					"{\"" +
 						"retreatZone\":[" +
 							"{\"col\":3,\"id\":0,\"row\":4,\"version\":0}" +
 						"]," +
-						"\"banner\":\"redbanner\"," +
+						"\"banner\":{" +
+							"\"path\":\"/red/redbanner.png\"," +
+							"\"name\":\"redbanner\"" +
+						"}," +
 						"\"id\":0," +
 						"\"units\":[" +
 						"{" +
@@ -143,7 +181,7 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 							"\"positionRow\":4" +
 						"}" +
 						"]," +
-						"\"version\":0}],\"name\":\"Hector\"," +
+						"\"version\":0}]," +
 						"\"locations\":[" +
 						"{" +
 							"\"col\":3,\"id\":0,\"row\":4," +
@@ -157,7 +195,16 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 				"}" +
 				"]," +
 				"\"name\":\"Test\"," +
+				"\"id\":0,\"version\":0," +
+			"\"map\":{" +
+				"\"boards\":[{" +
+					"\"path\":\"/map/map1.png\"," +
+					"\"col\":4,\"invert\":true," +
+					"\"icon\":\"/map/map1-icon.png\"," +
+					"\"id\":0,\"row\":5,\"version\":0" +
+				"}]," +
 				"\"id\":0,\"version\":0" +
+			"}" +
 			"}",
 			response.toString()
 		);
@@ -166,6 +213,11 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 
 	@Test
 	public void tryToCreateAnAlreadyExistingGame() {
+		dataManager.register("createQuery", null, null,
+				"select b from Board b where b.path = :path");
+		dataManager.register("setParameter", null, null,"path", "/map/map1.png");
+		dataManager.register("getSingleResult",
+				setEntityId(new Board().setName("map1").setPath("/map/map1.png").setIcon("/map/map1-icon.png"), 109),null);
 		dataManager.register("createQuery", null, null,
 				"select pi from PlayerIdentity pi where pi.name = :name");
 		dataManager.register("setParameter", null, null,"name", "Hector");
@@ -177,7 +229,7 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 		dataManager.register("getSingleResult",
 				setEntityId(new Banner().setName("redbanner").setPath("/red/redbanner.png"), 107),null);
 		dataManager.register("persist", null,
-			new PersistenceException("Entity already Exists"),
+				new PersistenceException("Entity already Exists"),
 				(Predicate) entity->{
 					return (entity instanceof Game);
 				}
@@ -188,8 +240,80 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
-			Assert.assertEquals(409, sce.getStatus());
+			Assert.assertEquals(500, sce.getStatus());
 			Assert.assertEquals("Game with name (Test) already exists", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void tryToCreateAGameThatRefersToAnUnexistingBoard() {
+		dataManager.register("createQuery", null, null,
+				"select b from Board b where b.path = :path");
+		dataManager.register("setParameter", null, null,"path", "/map/map1.png");
+		dataManager.register("getSingleResult",
+				null, new NoResultException("Board not found."));
+		securityManager.doConnect("admin", 0);
+		try {
+			gameController.create(params(), Json.createJsonFromString(SIMPLE_GAME_CREATION));
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(500, sce.getStatus());
+			Assert.assertEquals("Board not found for value: /map/map1.png", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void tryToCreateAGameThatRefersToAnUnexistingPlayerIdentity() {
+		dataManager.register("createQuery", null, null,
+				"select b from Board b where b.path = :path");
+		dataManager.register("setParameter", null, null,"path", "/map/map1.png");
+		dataManager.register("getSingleResult",
+				setEntityId(new Board().setName("map1").setPath("/map/map1.png").setIcon("/map/map1-icon.png"), 109),null);
+		dataManager.register("createQuery", null, null,
+				"select pi from PlayerIdentity pi where pi.name = :name");
+		dataManager.register("setParameter", null, null,"name", "Hector");
+		dataManager.register("getSingleResult",
+				null, new NoResultException("Identity not found."));
+		securityManager.doConnect("admin", 0);
+		try {
+			gameController.create(params(), Json.createJsonFromString(SIMPLE_GAME_CREATION));
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(500, sce.getStatus());
+			Assert.assertEquals("PlayerIdentity not found for value: Hector", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void tryToCreateAGameThatRefersToAnUnexistingBanner() {
+		dataManager.register("createQuery", null, null,
+				"select b from Board b where b.path = :path");
+		dataManager.register("setParameter", null, null,"path", "/map/map1.png");
+		dataManager.register("getSingleResult",
+				setEntityId(new Board().setName("map1").setPath("/map/map1.png").setIcon("/map/map1-icon.png"), 109),null);
+		dataManager.register("createQuery", null, null,
+				"select pi from PlayerIdentity pi where pi.name = :name");
+		dataManager.register("setParameter", null, null,"name", "Hector");
+		dataManager.register("getSingleResult",
+				setEntityId(new PlayerIdentity().setName("Hector").setPath("/players/hector.png"), 107),null);
+		dataManager.register("createQuery", null, null,
+				"select b from Banner b where b.name = :name");
+		dataManager.register("setParameter", null, null,"name", "redbanner");
+		dataManager.register("getSingleResult",
+				null, new NoResultException("Banner not found."));
+		securityManager.doConnect("admin", 0);
+		try {
+			gameController.create(params(), Json.createJsonFromString(SIMPLE_GAME_CREATION));
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(500, sce.getStatus());
+			Assert.assertEquals("Banner not found for value: redbanner", sce.getMessage());
 		}
 		dataManager.hasFinished();
 	}
@@ -428,10 +552,18 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 			"	id:101, version:0, name:\"game\",\n" +
 			"	players:[\n" +
 			"	{\n" +
-			"		id:102, version:0, name:\"Hector\",\n" +
+			"		id:102, version:0, " +
+			"		identity:{\n" +
+			"			name: \"Hector\"," +
+			"			path: \"/players/hector.png\"" +
+			"		},\n" +
 			"		wings:[\n" +
 			"		{\n" +
-			"			id:103, version:0, banner:\"redbanner\",\n" +
+			"			id:103, version:0, " +
+			"			banner:{\n" +
+			"				name: \"redbanner\"," +
+			"				path: \"/map/redbanner.png\"" +
+			"			},\n" +
 			"			units:[{\n" +
 			"				id:105, version:0, name:\"redbanner-0\", category:\"T\", type:\"unit\",\n" +
 			"				angle:120, positionCol:3, positionRow:4, positionAngle:0, steps:1,\n" +
@@ -479,11 +611,18 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 		Assert.assertEquals(
 			"{" +
 				"\"players\":[{" +
+					"\"identity\":{" +
+						"\"path\":\"/players/hector.png\"," +
+						"\"name\":\"Hector\"" +
+					"},"+
 					"\"wings\":[{\"" +
 						"retreatZone\":[" +
 							"{\"col\":3,\"id\":104,\"row\":4,\"version\":0}" +
 						"]," +
-						"\"banner\":\"redbanner\"," +
+						"\"banner\":{" +
+							"\"path\":\"/red/redbanner.png\"," +
+							"\"name\":\"redbanner\"" +
+						"}," +
 						"\"id\":103," +
 						"\"units\":[{" +
 							"\"ammunition\":\"S\",\"tiredness\":\"T\"," +
@@ -495,7 +634,7 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 							"\"cohesion\":\"D\",\"category\":\"T\"," +
 							"\"positionRow\":4" +
 						"}]," +
-						"\"version\":0}],\"name\":\"Hector\"," +
+						"\"version\":0}]," +
 						"\"locations\":[{" +
 							"\"col\":3,\"id\":106,\"row\":4," +
 							"\"units\":[" +
@@ -677,21 +816,47 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 
 	@Test
 	public void checkGameEntity() {
+		Map map = new Map();
 		PlayerIdentity playerIdentity = new PlayerIdentity()
 			.setName("Hector")
 			.setPath("/red/redplayer.png");
 		Player player = new Player()
 			.setIdentity(playerIdentity);
 		Game game = new Game()
+			.setMap(map)
 			.setName("game")
 			.addPlayer(player);
 		Assert.assertEquals("game", game.getName());
 		Assert.assertEquals(1, game.getPlayers().size());
 		Assert.assertEquals(player, game.getPlayers().get(0));
 		Assert.assertEquals(player, game.getPlayer("Hector"));
+		Assert.assertEquals(map, game.getMap());
 		Assert.assertNull(game.getPlayer("Patrocle"));
 		game.removePlayer(player);
 		Assert.assertEquals(0, game.getPlayers().size());
+	}
+
+	@Test
+	public void checkBoardPlacementEntity() {
+		Board board = new Board();
+		BoardPlacement boardPlacement = new BoardPlacement()
+			.setBoard(board)
+			.setCol(4).setRow(5)
+			.setInvert(true);
+		Assert.assertEquals(board, boardPlacement.getBoard());
+		Assert.assertEquals(4, boardPlacement.getCol());
+		Assert.assertEquals(5, boardPlacement.getRow());
+		Assert.assertTrue(boardPlacement.isInvert());
+	}
+
+	@Test
+	public void checkMapPlacementEntity() {
+		BoardPlacement boardPlacement = new BoardPlacement();
+		Map map = new Map().addBoardPlacement(boardPlacement);
+		Assert.assertEquals(1, map.getBoardPlacements().size());
+		Assert.assertEquals(boardPlacement, map.getBoardPlacements().get(0));
+		map.removeBoardPlacement(boardPlacement);
+		Assert.assertEquals(0, map.getBoardPlacements().size());
 	}
 
 }

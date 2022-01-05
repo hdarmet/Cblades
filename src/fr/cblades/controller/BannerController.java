@@ -16,9 +16,7 @@ import org.summer.controller.SummerControllerException;
 import org.summer.data.DataSunbeam;
 import org.summer.security.SecuritySunbeam;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceException;
-import javax.persistence.Query;
+import javax.persistence.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -38,11 +36,15 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 					result.set(readFromBanner(newBanner));
 				});
 				return result.get();
-			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, 
+			}
+			catch (EntityExistsException pe) {
+				throw new SummerControllerException(500,
 					"Banner with name (%s) already exists",
 					request.get("name"), null
 				);
+			}
+			catch (PersistenceException pe) {
+				throw new SummerControllerException(500, pe.getMessage());
 			}
 		}, ADMIN);
 	}
