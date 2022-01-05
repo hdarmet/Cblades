@@ -37,6 +37,9 @@ import {
 import {
     CBMovementTeacher
 } from "../../../jslib/cblades/teachers/movement-teacher.js";
+import {
+    banner1, banner2
+} from "../game-examples.js";
 
 describe("Movement teacher", ()=> {
 
@@ -89,9 +92,9 @@ describe("Movement teacher", ()=> {
         game.setMap(map);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer("player1");
+        let player1 = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1, "./../units/banner1.png");
+        let wing1 = new CBWing(player1, banner1);
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
         let unit11 = new CBTroop(unitType1, wing1);
         unit11.addToMap(map.getHex(5, 8));
@@ -107,9 +110,9 @@ describe("Movement teacher", ()=> {
 
     function create2Players4UnitsTinyGame() {
         let {game, arbitrator, map, player1, wing1, unit11, unit12, leader11} = createTinyGame();
-        let player2 = new CBUnitPlayer("player2");
+        let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2, "./../units/banner2.png");
+        let wing2 = new CBWing(player2, banner2);
         let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
         let unit21 = new CBTroop(unitType2, wing2);
         unit21.addToMap(map.getHex(7, 8));
@@ -125,9 +128,9 @@ describe("Movement teacher", ()=> {
 
     function create2Players5UnitsTinyGame() {
         let {game, arbitrator, map, player1, wing1, unit11, unit12, leader11} = createTinyGame();
-        let player2 = new CBUnitPlayer("player2");
+        let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2, "./../units/banner2.png");
+        let wing2 = new CBWing(player2, banner2);
         let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
         let unit21 = new CBTroop(unitType2, wing2);
         unit21.addToMap(map.getHex(7, 8));
@@ -147,12 +150,12 @@ describe("Movement teacher", ()=> {
         let game = new CBGame("Test");
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer("player1");
+        let player1 = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBUnitPlayer("player2");
+        let wing1 = new CBWing(player1, banner1);
+        let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2, "./../units/banner2.png");
+        let wing2 = new CBWing(player2, banner2);
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1",
@@ -185,12 +188,12 @@ describe("Movement teacher", ()=> {
         let game = new CBGame("Test");
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer("player1");
+        let player1 = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBUnitPlayer("player2");
+        let wing1 = new CBWing(player1, banner1);
+        let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2, "./../units/banner2.png");
+        let wing2 = new CBWing(player2, banner2);
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1",

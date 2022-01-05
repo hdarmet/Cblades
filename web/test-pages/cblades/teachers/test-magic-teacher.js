@@ -41,6 +41,9 @@ import {
 import {
     Dimension2D
 } from "../../../jslib/geometry.js";
+import {
+    banner1, banner2
+} from "../game-examples.js";
 
 describe("Magic teacher", ()=> {
 
@@ -104,12 +107,12 @@ describe("Magic teacher", ()=> {
         let game = new CBGame("Test");
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer("player1");
+        let player1 = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBUnitPlayer("player2");
+        let wing1 = new CBWing(player1, banner1);
+        let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2, "./../units/banner2.png");
+        let wing2 = new CBWing(player2, banner2);
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
@@ -137,9 +140,9 @@ describe("Magic teacher", ()=> {
         let game = new CBGame("Test");
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer("player1");
+        let player1 = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1, "./../units/banner1.png");
+        let wing1 = new CBWing(player1, banner1);
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let leaderType1 = new CBTestLeaderType("leader1", ["./../images/units/misc/leader1.png", "./../images/units/misc/leader1b.png"])
@@ -154,9 +157,9 @@ describe("Magic teacher", ()=> {
         let game = new CBGame("Test");
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer("player1");
+        let player1 = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1, "./../units/banner1.png");
+        let wing1 = new CBWing(player1, banner1);
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let leaderType1 = new CBTestArcaneWizardType("wizard1", ["./../images/units/misc/wizard1.png", "./../images/units/misc/wizard1b.png"])

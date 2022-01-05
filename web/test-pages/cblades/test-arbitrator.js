@@ -37,6 +37,9 @@ import {
 import {
     Dimension2D, invertAngle
 } from "../../jslib/geometry.js";
+import {
+    banner1, banner2
+} from "./game-examples.js";
 
 describe("Arbitrator", ()=> {
 
@@ -91,9 +94,9 @@ describe("Arbitrator", ()=> {
         game.setMap(map);
         let arbitrator = new CBArbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer("player1");
+        let player1 = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1, "./../units/banner1.png");
+        let wing1 = new CBWing(player1, banner1);
         wing1.setRetreatZone(map.getWestZone());
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
         let unit11 = new CBTroop(unitType1, wing1);
@@ -110,9 +113,9 @@ describe("Arbitrator", ()=> {
 
     function create2Players4UnitsTinyGame() {
         let {game, arbitrator, map, player1, wing1, unit11, unit12, leader11} = createTinyGame();
-        let player2 = new CBUnitPlayer("player2");
+        let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2, "./../units/banner2.png");
+        let wing2 = new CBWing(player2, banner2);
         //wing2.setRetreatZone(map.getEastZone());
         let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
         let unit21 = new CBTroop(unitType2, wing2);
@@ -132,9 +135,9 @@ describe("Arbitrator", ()=> {
         game.setMap(map);
         let arbitrator = new CBArbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer("player1");
+        let player1 = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1, "./../units/banner1.png");
+        let wing1 = new CBWing(player1, banner1);
         wing1.setRetreatZone(map.getWestZone());
         let unitType1 = new CBTestUnitType("unit1",
             ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"],
@@ -163,9 +166,9 @@ describe("Arbitrator", ()=> {
 
     function create2Players1Formation2UnitsTinyGame() {
         let {game, arbitrator, map, player1, wing1, formation11, unit11, unit12, leader11} = createTinyFormationGame();
-        let player2 = new CBUnitPlayer("player2");
+        let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2, "./../units/banner2.png");
+        let wing2 = new CBWing(player2, banner2);
         //wing2.setRetreatZone(map.getEastZone());
         let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
         let unit21 = new CBTroop(unitType2, wing2);

@@ -654,6 +654,16 @@ export function showColoredRect(x, y, color, w, h) {
     ];
 }
 
+export function showShadowedImage(x, y, image, shadowColor, shadowBlur, w, h) {
+    return [
+        "save()",
+        `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+        `shadowColor = ${shadowColor}`, `shadowBlur = ${shadowBlur}`,
+        `drawImage(${image}, -${w/2}, -${h/2}, ${w}, ${h})`,
+        'restore()',
+    ];
+}
+
 export function showImage(x, y, image, w, h) {
     return [
         "save()",

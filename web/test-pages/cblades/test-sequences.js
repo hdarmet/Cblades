@@ -174,7 +174,7 @@ describe("Sequences", ()=> {
                 played: true
             })).isTrue();
             assert(element.toString()).equalsTo(
-                "{ Type: State, Unit: ./../units/banner.png-0, Cohesion: 1, Tiredness: 1, Munitions: 2," +
+                "{ Type: State, Unit: banner-0, Cohesion: 1, Tiredness: 1, Munitions: 2," +
                 " Charging: 2, Engaging: true, OrderGiven: true, Played: true }"
             );
             assert(element.delay).equalsTo(0);
@@ -250,7 +250,7 @@ describe("Sequences", ()=> {
                 stacking: CBStacking.BOTTOM
             })).isTrue();
             assert(element.toString()).equalsTo(
-                "{ Type: Move, Unit: ./../units/banner1.png-0, Cohesion: 0, Tiredness: 0, Munitions: 0," +
+                "{ Type: Move, Unit: banner1-0, Cohesion: 0, Tiredness: 0, Munitions: 0," +
                 " Charging: 0, Engaging: false, OrderGiven: false, Played: false," +
                 " HexLocation: point(0, -196.875), Stacking: 0 }"
             );
@@ -315,7 +315,7 @@ describe("Sequences", ()=> {
                 played: false
             })).isTrue();
             assert(element.toString()).equalsTo(
-                "{ Type: Rotate, Unit: ./../units/banner1.png-0, Cohesion: 0, Tiredness: 0, Munitions: 0," +
+                "{ Type: Rotate, Unit: banner1-0, Cohesion: 0, Tiredness: 0, Munitions: 0," +
                 " Charging: 0, Engaging: false, OrderGiven: false, Played: false," +
                 " Angle: 60 }"
             );
@@ -375,7 +375,7 @@ describe("Sequences", ()=> {
                 played: false
             })).isTrue();
             assert(element.toString()).equalsTo(
-                "{ Type: Reorient, Unit: ./../units/banner1.png-0, Cohesion: 0, Tiredness: 0, Munitions: 0," +
+                "{ Type: Reorient, Unit: banner1-0, Cohesion: 0, Tiredness: 0, Munitions: 0," +
                 " Charging: 0, Engaging: false, OrderGiven: false, Played: false," +
                 " Angle: 60 }"
             );
@@ -442,7 +442,7 @@ describe("Sequences", ()=> {
                 played: false
             })).isTrue();
             assert(element.toString()).equalsTo(
-                "{ Type: Turn, Unit: ./../units/banner1.png-1, Cohesion: 0, Tiredness: 0, Munitions: 0," +
+                "{ Type: Turn, Unit: banner1-1, Cohesion: 0, Tiredness: 0, Munitions: 0," +
                 " Charging: 0, Engaging: false, OrderGiven: false, Played: false," +
                 " HexLocation: point(85.25, -147.6562), Stacking: 1, Angle: 30 }"
             );

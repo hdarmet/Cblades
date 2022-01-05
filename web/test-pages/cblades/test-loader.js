@@ -323,9 +323,12 @@ describe("Loader", ()=> {
             var game = new CBGame("Test");
             var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
-            var player = new CBUnitPlayer("Hector");
+            var player = new CBUnitPlayer("Hector", "/players/hector.png");
             game.addPlayer(player);
-            var wing = new CBWing(player, "/red/redbanner.png");
+            var wing = new CBWing(player, {
+                name: "redbanner",
+                path: "/red/redbanner.png"
+            });
             wing.setRetreatZone([
                 map.getHex(0, 0),
                 map.getHex(0, 1)
@@ -346,12 +349,20 @@ describe("Loader", ()=> {
                 version:0, name:"Test",
                 players:[
                 {
-                    version:0, name:"Hector",
+                    version:0,
+                    identity: {
+                        name: "Hector",
+                        path: "/players/hector.png"
+                    },
                     wings:[
                     {
-                        version:0, banner:"/red/redbanner.png",
+                        version:0,
+                        banner:{
+                            name: "redbanner",
+                            path: "/red/redbanner.png"
+                        },
                         units:[{
-                            version:0, name:"/red/redbanner.png-0", category:"T", type:"unit",
+                            version:0, name:"redbanner-0", category:"T", type:"unit",
                             angle:0, positionCol:0, positionRow:0, positionAngle:0, steps:2,
                             tiredness:"F", ammunition:"P", cohesion:"GO", charging:false,
                             contact:false, orderGiven:false, played:false
@@ -362,7 +373,7 @@ describe("Loader", ()=> {
                         ]
                     }],
                     locations:[
-                        {version:0,col:0,row:0,units:["/red/redbanner.png-0"]}
+                        {version:0,col:0,row:0,units:["redbanner-0"]}
                     ]
                 }]
             });
@@ -392,9 +403,12 @@ describe("Loader", ()=> {
             var game = new CBGame("Test");
             var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
-            var player = new CBUnitPlayer("Hector");
+            var player = new CBUnitPlayer("Hector", "/players/hector.png");
             game.addPlayer(player);
-            var wing = new CBWing(player, "/red/redbanner.png");
+            var wing = new CBWing(player, {
+                name: "redbanner",
+                path: "/red/redbanner.png"
+            });
             wing.setRetreatZone([
                 map.getHex(0, 0),
                 map.getHex(0, 1)
@@ -425,17 +439,17 @@ describe("Loader", ()=> {
             var requestContent = getDrawPlatform().getRequest().requestContent;
             assert(requestContent.players[0].wings[0]).objectEqualsTo(  {
                 units:[{
-                    version:0, name:"/red/redbanner.png-0", category:"T", type:"unit",
+                    version:0, name:"redbanner-0", category:"T", type:"unit",
                     angle:0, positionCol:0, positionRow:0, positionAngle:0, steps:2,
                     tiredness:"F", ammunition:"P", cohesion:"GO", charging:false,
                     contact:false, orderGiven:false, played:true
                 }, {
-                    version:0, name:"/red/redbanner.png-1", category:"T", type:"unit",
+                    version:0, name:"redbanner-1", category:"T", type:"unit",
                     angle:0, positionCol:0, positionRow:1, positionAngle:0, steps:2,
                     tiredness:"T", ammunition:"S", cohesion:"D", charging:true,
                     contact:false, orderGiven:true, played:false
                 }, {
-                    version:0, name:"/red/redbanner.png-2", category:"T", type:"unit",
+                    version:0, name:"redbanner-2", category:"T", type:"unit",
                     angle:0, positionCol:0, positionRow:1, positionAngle:0, steps:2,
                     tiredness:"E", ammunition:"E", cohesion:"R", charging:false,
                     contact:true, orderGiven:false, played:false
@@ -447,8 +461,8 @@ describe("Loader", ()=> {
             });
             assert(requestContent.players[0]).objectEqualsTo({
                 locations:[
-                    {version:0,col:0,row:0,units:["/red/redbanner.png-0"]},
-                    {version:0,col:0,row:1,units:["/red/redbanner.png-1", "/red/redbanner.png-2"]}
+                    {version:0,col:0,row:0,units:["redbanner-0"]},
+                    {version:0,col:0,row:1,units:["redbanner-1", "redbanner-2"]}
                 ]
             });
     });
@@ -504,7 +518,11 @@ describe("Loader", ()=> {
             var game = new CBGame("Test");
             game._oid = 101;
             game._oversion = 1;
-            var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
+            var map = new CBMap([{
+                _oid: 111, _oversion:3,
+                path: "./../images/maps/map.png", icon: "./../images/maps/map-icon.png",
+                col:0, row:0
+            }]);
             game.setMap(map);
             game.start();
         when:
@@ -523,7 +541,7 @@ describe("Loader", ()=> {
         given:
             var game = new CBGame("Test");
             var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
-            var player = new CBUnitPlayer("Hector");
+            var player = new CBUnitPlayer("Hector", "/players/hector.png");
             game.addPlayer(player);
             game.setMap(map);
             game.start();
@@ -533,6 +551,8 @@ describe("Loader", ()=> {
         when:
             game._oid = 101;
             game._oversion = 1;
+            map._oid = 110;
+            map._oversion = 2;
             new GameLoader(game).load();
         then:
             assert(getDrawPlatform().getRequest().uri).equalsTo("/api/game/by-name/Test");
@@ -541,26 +561,46 @@ describe("Loader", ()=> {
             var requestContent =  {
                 id:101,
                 version:2, name:"Test",
+                map: {
+                    id:110,
+                    version:2,
+                    boards: [
+                        {
+                            id:111,
+                            version:3,
+                            row: 0, col: 0,
+                            path: "/map/map1.png", icon: "/map/map1-icon.png", invert: true
+                        }
+                    ]
+                },
                 players:[
                     {
                         id:102,
-                        version:2, name:"Hector",
+                        version:2,
+                        identity: {
+                            name:"Hector",
+                            path:"/players/hector.png"
+                        },
                         wings:[
                             {
                                 id:103,
-                                version:2, banner:"/red/redbanner.png",
+                                version:2,
+                                banner: {
+                                    name: "redbanner",
+                                    path: "/red/redbanner.png"
+                                },
                                 units:[{
-                                    id:201, version:0, name:"/red/redbanner.png-0", category:"T", type:"unit",
+                                    id:201, version:0, name:"redbanner-0", category:"T", type:"unit",
                                     angle:0, positionCol:0, positionRow:0, positionAngle:0, steps:2,
                                     tiredness:"F", ammunition:"P", cohesion:"GO", charging:false,
                                     contact:false, orderGiven:false, played:true
                                 }, {
-                                    id:202, version:0, name:"/red/redbanner.png-1", category:"T", type:"unit",
+                                    id:202, version:0, name:"redbanner-1", category:"T", type:"unit",
                                     angle:0, positionCol:0, positionRow:1, positionAngle:0, steps:2,
                                     tiredness:"T", ammunition:"S", cohesion:"D", charging:true,
                                     contact:false, orderGiven:true, played:false
                                 }, {
-                                    id:203, version:0, name:"/red/redbanner.png-2", category:"T", type:"unit",
+                                    id:203, version:0, name:"redbanner-2", category:"T", type:"unit",
                                     angle:0, positionCol:0, positionRow:1, positionAngle:0, steps:2,
                                     tiredness:"E", ammunition:"E", cohesion:"R", charging:false,
                                     contact:true, orderGiven:false, played:false
@@ -571,8 +611,8 @@ describe("Loader", ()=> {
                                 ]
                             }],
                         locations:[
-                            {version:0,col:0,row:0,units:["/red/redbanner.png-0"]},
-                            {version:0,col:0,row:1,units:["/red/redbanner.png-1", "/red/redbanner.png-2"]}
+                            {version:0,col:0,row:0,units:["redbanner-0"]},
+                            {version:0,col:0,row:1,units:["redbanner-1", "redbanner-2"]}
                         ]
                     }]
             };
@@ -589,7 +629,7 @@ describe("Loader", ()=> {
         given:
             var game = new CBGame("Test");
             var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
-            var player = new CBUnitPlayer("Hector");
+            var player = new CBUnitPlayer("Hector", "/players/hector.png");
             game.addPlayer(player);
             game.setMap(map);
             game.start();
@@ -612,26 +652,50 @@ describe("Loader", ()=> {
             var requestContent =  {
                 id:101,
                 version:2, name:"Test",
+                map: {
+                    id:110,
+                    version:2,
+                    boards: [
+                        {
+                            id:111,
+                            version:3,
+                            row: 0, col: 0,
+                            path: "/map/map1.png", icon: "/map/map1-icon.png", invert: true
+                        }
+                    ]
+                },
                 players:[
                     {
                         id:102,
-                        version:2, name:"Hector",
+                        version:2,
+                        identity: {
+                            id:110,
+                            version:3,
+                            name: "Hector",
+                            path: "/players/hector.png"
+                        },
                         wings:[
                             {
                                 id:103,
-                                version:2, banner:"/red/redbanner.png",
+                                version:2,
+                                banner: {
+                                    id:109,
+                                    version:2,
+                                    name: "redbanner",
+                                    path: "/red/redbanner.png"
+                                },
                                 units:[{
-                                    id:201, version:0, name:"/red/redbanner.png-0", category:"C", type:"character",
+                                    id:201, version:0, name:"redbanner-0", category:"C", type:"character",
                                     angle:0, positionCol:1, positionRow:1, positionAngle:0, steps:2,
                                     tiredness:"F", ammunition:"P", cohesion:"GO", charging:false,
                                     contact:false, orderGiven:false, played:true
                                 }, {
-                                    id:202, version:0, name:"/red/redbanner.png-1", category:"T", type:"unit",
+                                    id:202, version:0, name:"redbanner-1", category:"T", type:"unit",
                                     angle:0, positionCol:1, positionRow:1, positionAngle:0, steps:2,
                                     tiredness:"T", ammunition:"S", cohesion:"D", charging:true,
                                     contact:false, orderGiven:true, played:false
                                 }, {
-                                    id:203, version:0, name:"/red/redbanner.png-2", category:"F", type:"unit",
+                                    id:203, version:0, name:"redbanner-2", category:"F", type:"unit",
                                     angle:0, positionCol:1, positionRow:1, positionAngle:0, steps:4,
                                     tiredness:"E", ammunition:"E", cohesion:"R", charging:false,
                                     contact:true, orderGiven:false, played:false
@@ -642,8 +706,8 @@ describe("Loader", ()=> {
                                 ]
                             }],
                         locations:[
-                            {version:0,col:1,row:0,units:["/red/redbanner.png-2"]},
-                            {version:0,col:1,row:1,units:["/red/redbanner.png-2", "/red/redbanner.png-1", "/red/redbanner.png-0"]}
+                            {version:0,col:1,row:0,units:["redbanner-2"]},
+                            {version:0,col:1,row:1,units:["redbanner-2", "redbanner-1", "redbanner-0"]}
                         ]
                     }]
             };
@@ -660,8 +724,12 @@ describe("Loader", ()=> {
     it("Fails toad game", () => {
         given:
             var game = new CBGame("Test");
-            var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
-            var player = new CBUnitPlayer("Hector");
+            var map = new CBMap([{
+                path: "./../images/maps/map.png",
+                icon: "./../images/maps/map-icon.png",
+                col:0, row:0
+            }]);
+            var player = new CBUnitPlayer("Hector", "/players/hector.png");
             game.addPlayer(player);
             game.setMap(map);
             game.start();
@@ -713,28 +781,28 @@ describe("Loader", ()=> {
                     version:0, game:"Game", count:0,
                     elements:[
                         {
-                            version:0,type:"State", unit:"./../units/banner1.png-0",
+                            version:0,type:"State", unit:"banner1-0",
                             cohesion:"GO", tiredness:"F", ammunition:"P", charging:"N",
                             engaging:false, orderGiven:false, played:false
                         },
                         {
-                            version:0, type:"Move", unit:"./../units/banner1.png-0",
+                            version:0, type:"Move", unit:"banner1-0",
                             cohesion:"D", tiredness:"T", ammunition:"S", charging:"BC",
                             engaging:false, orderGiven:false, played:false,
                             hexCol:5, hexRow:8, stacking:"B"
                         },
                         {
-                            version:0, type:"Rotate", unit:"./../units/banner1.png-0",
+                            version:0, type:"Rotate", unit:"banner1-0",
                             cohesion:"R", tiredness:"E", ammunition:"E", charging:"CC",
                             engaging:false, orderGiven:false, played:false,angle:60
                         },
                         {
-                            version:0, type:"Reorient", unit:"./../units/banner1.png-0",
+                            version:0, type:"Reorient", unit:"banner1-0",
                             cohesion:"X", tiredness:"F", ammunition:"P", charging:"C",
                             engaging:true, orderGiven:true, played:true, angle:60
                         },
                         {
-                            version:0, type:"Turn", unit:"./../units/banner1.png-1",
+                            version:0, type:"Turn", unit:"banner1-1",
                             cohesion:"GO", tiredness:"F", ammunition:"P", charging:"N",
                             engaging:false, orderGiven:false, played:false,
                             hexCol:6, hexRow:8, hexAngle:0, stacking:"T", angle:60
@@ -776,28 +844,28 @@ describe("Loader", ()=> {
                 version: 0, game: "Game", count: 0,
                 elements: [
                     {
-                        version: 0, type: "State", unit: "./../units/banner1.png-0",
+                        version: 0, type: "State", unit: "banner1-0",
                         cohesion: "GO", tiredness: "F", ammunition: "P", charging: "N",
                         engaging: false, orderGiven: false, played: false
                     },
                     {
-                        version: 0, type: "Move", unit: "./../units/banner1.png-0",
+                        version: 0, type: "Move", unit: "banner1-0",
                         cohesion: "D", tiredness: "T", ammunition: "S", charging: "BC",
                         engaging: false, orderGiven: false, played: false,
                         hexCol: 5, hexRow: 8, stacking: "B"
                     },
                     {
-                        version: 0, type: "Rotate", unit: "./../units/banner1.png-0",
+                        version: 0, type: "Rotate", unit: "banner1-0",
                         cohesion: "R", tiredness: "E", ammunition: "E", charging: "CC",
                         engaging: false, orderGiven: false, played: false, angle: 60
                     },
                     {
-                        version: 0, type: "Reorient", unit: "./../units/banner1.png-0",
+                        version: 0, type: "Reorient", unit: "banner1-0",
                         cohesion: "X", tiredness: "F", ammunition: "P", charging: "C",
                         engaging: true, orderGiven: true, played: true, angle: 60
                     },
                     {
-                        version: 0, type: "Turn", unit: "./../units/banner1.png-1",
+                        version: 0, type: "Turn", unit: "banner1-1",
                         cohesion: "GO", tiredness: "F", ammunition: "P", charging: "N",
                         engaging: false, orderGiven: false, played: false,
                         hexCol: 6, hexRow: 8, hexAngle: 0, stacking: "T", angle: 60

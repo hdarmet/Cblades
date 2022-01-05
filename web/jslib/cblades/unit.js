@@ -407,6 +407,7 @@ export class CBTroopType extends CBUnitType {
 export class CBWing {
 
     constructor(player, banner) {
+        console.assert(banner.name);
         if (player) {
             player.addWing(this);
         }

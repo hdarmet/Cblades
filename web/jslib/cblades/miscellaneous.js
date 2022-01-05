@@ -377,7 +377,7 @@ export class CBWingDisplayablePlayable extends CBDisplayableCounter {
         this._wing = wing;
         this.artifact.changeImage(this.getValue(this._wing));
         this._bannerArtifact = new DImageArtifact("counters",
-            DImage.getImage(wing.banner),
+            DImage.getImage(wing.banner.path),
             new Point2D(
                 CBWingDisplayablePlayable.DIMENSION.w/2 - CBWingDisplayablePlayable.BANNER_DIMENSION.w/2 - CBWingDisplayablePlayable.MARGIN,
                 0

@@ -39,7 +39,7 @@ import {
     CBCombatTeacher
 } from "../../../jslib/cblades/teachers/combat-teacher.js";
 import {
-    createTroop, createCharacter, createFormation
+    createTroop, createCharacter, createFormation, banner1, banner2
 } from "../game-examples.js";
 
 describe("Combat teacher", ()=> {
@@ -88,12 +88,12 @@ describe("Combat teacher", ()=> {
         var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer("player1");
+        let player1 = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBUnitPlayer("player2");
+        let wing1 = new CBWing(player1, banner1);
+        let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2, "./../units/banner2.png");
+        let wing2 = new CBWing(player2, banner2);
         game.setMap(map);
         game.start();
         let unitFireType1 = new CBTestFireUnitType("unit1",

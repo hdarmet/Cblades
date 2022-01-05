@@ -66,6 +66,9 @@ import {
     zoomAndRotate60,
     zoomAndRotate90
 } from "./interactive-tools.js";
+import {
+    banner, banner1, banner2, banner3
+} from "./game-examples.js";
 
 describe("Unit", ()=> {
 
@@ -139,9 +142,9 @@ describe("Unit", ()=> {
 
     function createTinyGame() {
         var { game, map } = prepareTinyGame();
-        var player = new CBUnitPlayer("player1");
+        var player = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player);
-        let wing = new CBWing(player, "./../units/banner.png");
+        let wing = new CBWing(player, banner);
         let unitType = new CBTestTroopType("unit", [
             "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
         ]);
@@ -154,9 +157,9 @@ describe("Unit", ()=> {
 
     function createTinyFormationGame() {
         var { game, map } = prepareTinyGame();
-        var player = new CBUnitPlayer("player1");
+        var player = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player);
-        let wing = new CBWing(player, "./../units/banner.png");
+        let wing = new CBWing(player, banner);
         let unitType = new CBTestTroopType("unit", [
             "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
             ],
@@ -176,9 +179,9 @@ describe("Unit", ()=> {
 
     function create2UnitsTinyGame(start = true) {
         var { game, map } = prepareTinyGame();
-        let player = new CBUnitPlayer("player");
+        let player = new CBUnitPlayer("player", "/players/player.png");
         game.addPlayer(player);
-        let wing = new CBWing(player, "./../units/banner.png");
+        let wing = new CBWing(player, banner);
         let unitType1 = new CBTestTroopType("unit1", ["./../images/units/misc/unit1.png"]);
         let unit1 = new CBTroop(unitType1, wing);
         unit1.addToMap(map.getHex(5, 8));
@@ -259,15 +262,15 @@ describe("Unit", ()=> {
     it("Checks unit player", () => {
         given:
             var { game, map } = prepareTinyGame();
-            let player1 = new CBUnitPlayer("player1");
+            let player1 = new CBUnitPlayer("player1", "/players/player1.png");
             player1.canPlay = function() { return true; };
             game.addPlayer(player1);
-            let player2 = new CBUnitPlayer("player2");
+            let player2 = new CBUnitPlayer("player2", "/players/player2.png");
             game.addPlayer(player2);
             let unitType = new CBTestTroopType("unit1", ["./../images/units/misc/unit1.png"]);
-            var wing1 = new CBWing(player1, "./../units/banner1.png");
-            var wing2 = new CBWing(player1, "./../units/banner2.png");
-            var wing3 = new CBWing(player1, "./../units/banner3.png");
+            var wing1 = new CBWing(player1, banner1);
+            var wing2 = new CBWing(player1, banner2);
+            var wing3 = new CBWing(player1, banner3);
             let unit1 = new CBTroop(unitType, wing1);
             unit1.addToMap(map.getHex(5, 8));
             let unit2 = new CBTroop(unitType, wing1);
@@ -305,9 +308,9 @@ describe("Unit", ()=> {
     it("Checks that a unit may carry other counters (not undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
-            var player = new CBUnitPlayer("player1");
+            var player = new CBUnitPlayer("player1", "/players/player1.png");
             game.addPlayer(player);
-            var wing = new CBWing(player, "./../units/banner.png");
+            var wing = new CBWing(player, banner);
             let unitType1 = new CBTestTroopType("unit1",
                 ["./../images/units/misc/unit1.png"]);
             var unit = new CBTroop(unitType1, wing);
@@ -527,9 +530,9 @@ describe("Unit", ()=> {
     it("Checks that a unit may have option counters (not undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
-            var player = new CBUnitPlayer("player1");
+            var player = new CBUnitPlayer("player1", "/players/player1.png");
             game.addPlayer(player);
-            var wing = new CBWing(player, "./../units/banner.png");
+            var wing = new CBWing(player, banner);
             let unitType1 = new CBTestTroopType("unit1",
                 ["./../images/units/misc/unit1.png"]);
             var unit = new CBTroop(unitType1, wing);
@@ -563,9 +566,9 @@ describe("Unit", ()=> {
     it("Checks option features", () => {
         given:
             var { game, map } = prepareTinyGame();
-            var player = new CBUnitPlayer("player1");
+            var player = new CBUnitPlayer("player1", "/players/player1.png");
             game.addPlayer(player);
-            var wing = new CBWing(player, "./../units/banner.png");
+            var wing = new CBWing(player, banner);
             let unitType1 = new CBTestTroopType("unit1",
                 ["./../images/units/misc/unit1.png"]);
             var unit = new CBTroop(unitType1, wing);
@@ -588,9 +591,9 @@ describe("Unit", ()=> {
 
         given:
             var { game, map } = prepareTinyGame();
-            var player = new CBUnitPlayer("player1");
+            var player = new CBUnitPlayer("player1", "/players/player1.png");
             game.addPlayer(player);
-            var wing = new CBWing(player, "./../units/banner.png");
+            var wing = new CBWing(player, banner);
             let unitType1 = new CBTestTroopType("unit1",
                 ["./../images/units/misc/unit1.png"]);
             var unit = new CBTroop(unitType1, wing);
@@ -642,9 +645,9 @@ describe("Unit", ()=> {
         given:
             var { game, map } = prepareTinyGame();
         when:
-            var player = new CBUnitPlayer("player1");
+            var player = new CBUnitPlayer("player1", "/players/player1.png");
             game.addPlayer(player);
-            var wing = new CBWing(player, "./../units/banner.png");
+            var wing = new CBWing(player, banner);
             wing.setRetreatZone(map.getSouthZone());
             let troopType = new CBTestTroopType("troop",
                 ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"],
@@ -677,9 +680,9 @@ describe("Unit", ()=> {
         given:
             var { game, map } = prepareTinyGame();
         when:
-            var player = new CBUnitPlayer("player1");
+            var player = new CBUnitPlayer("player1", "/players/player1.png");
             game.addPlayer(player);
-            var wing = new CBWing(player, "./../units/banner.png");
+            var wing = new CBWing(player, banner);
             let unitType1 = new CBTestTroopType("unit1",
                 ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"],
                 ["./../images/units/misc/formation1.png", "./../images/units/misc/formation1b.png"]);
@@ -711,9 +714,9 @@ describe("Unit", ()=> {
         given:
             var { game, map } = prepareTinyGame();
         when:
-            var player = new CBUnitPlayer("player1");
+            var player = new CBUnitPlayer("player1", "/players/player1.png");
             game.addPlayer(player);
-            var wing = new CBWing(player, "./../units/banner.png");
+            var wing = new CBWing(player, banner);
             wing.setRetreatZone(map.getSouthZone());
         then:
             assert(wing.retreatZone).unorderedArrayEqualsTo(map.getSouthZone());
@@ -742,24 +745,23 @@ describe("Unit", ()=> {
         given:
             var { wing, unit, map, unitType } = createTinyGame();
         then:
-            assert(unit.name).equalsTo("./../units/banner.png-0");
+            assert(unit.name).equalsTo("banner-0");
         when:
             var unit2 = new CBTroop(unitType, wing);
             unit2.addToMap(map.getHex(3, 4));
         then:
-            assert(unit2.name).equalsTo("./../units/banner.png-1");
+            assert(unit2.name).equalsTo("banner-1");
         when:
             unit.removeFromMap();
             var unit3 = new CBTroop(unitType, wing);
             unit3.addToMap(map.getHex(4, 4));
         then:
-            assert(unit3.name).equalsTo("./../units/banner.png-0");
+            assert(unit3.name).equalsTo("banner-0");
         when:
-            unit._name = "./../units/banner.png-0";
+            unit._name = "banner-0";
             unit.addToMap(map.getHex(4, 5));
         then:
-            assert(unit.name).equalsTo("./../units/banner.png-2");
-
+            assert(unit.name).equalsTo("banner-2");
     });
 
     it("Checks unit move profile", () => {
@@ -1706,9 +1708,9 @@ describe("Unit", ()=> {
 
     function createTinyCommandGame() {
         var { game, map } = prepareTinyGame();
-        var player = new CBUnitPlayer("player1");
+        var player = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player);
-        let wing = new CBWing(player, "./../units/banner.png");
+        let wing = new CBWing(player, banner);
         let unitType = new CBTestTroopType("unit", [
             "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
         ]);
@@ -1946,9 +1948,9 @@ describe("Unit", ()=> {
 
     function prepareTinyGameWithFormation() {
         var { game, map } = prepareTinyGame();
-        var player = new CBUnitPlayer("player1");
+        var player = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player);
-        let wing = new CBWing(player, "./../units/banner.png");
+        let wing = new CBWing(player, banner);
         let unitType = new CBTestTroopType("unit", [], [
             "./../images/units/misc/formation.png", "./../images/units/misc/formationb.png"
         ]);

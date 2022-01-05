@@ -1161,21 +1161,6 @@ export class DInsertFrame {
 
     }
 
-    get leftButton() {
-        return this._leftButton;
-    }
-
-    get rightButton() {
-        return this._rightButton;
-    }
-
-    get upButton() {
-        return this._upButton;
-    }
-
-    get downButton() {
-        return this._downButton;
-    }
 }
 
 class InsertBorder extends DRectArtifact {
@@ -1281,6 +1266,22 @@ export class DInsert extends DAbstractInsert {
 
     focusOn(focus) {
         this._frame.focusOn(focus);
+    }
+
+    get leftButton() {
+        return this._leftButton;
+    }
+
+    get rightButton() {
+        return this._rightButton;
+    }
+
+    get upButton() {
+        return this._upButton;
+    }
+
+    get downButton() {
+        return this._downButton;
     }
 
 }

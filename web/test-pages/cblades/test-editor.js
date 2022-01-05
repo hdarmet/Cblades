@@ -57,7 +57,7 @@ import {
     showMenuItem,
     clickOnActionMenu,
     showSelectedTroop,
-    showSelectedFormation, getArtifactPoint, mouseMoveOnPoint
+    showSelectedFormation, getArtifactPoint, mouseMoveOnPoint, showShadowedImage
 } from "./interactive-tools.js";
 import {
     GoblinLeader,
@@ -441,17 +441,23 @@ describe("Editor", ()=> {
     }
 
     function buildScenarioEditorGame() {
-        let BlueBanner0 = "./../images/units/blue/banners/banner0.png";
-        let RedBanner0 = "./../images/units/red/banners/banner0.png";
+        let BlueBanner0 = {
+            name: "blue-banner",
+            path: "./../images/units/blue/banners/banner0.png"
+        };
+        let RedBanner0 = {
+            name: "red-banner",
+            path: "./../images/units/red/banners/banner0.png"
+        };
 
         var game = new CBScenarioEditorGame();
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
-        let player1 = new CBEditorPlayer("player1");
+        let player1 = new CBEditorPlayer("player1", "./../players/player1.png");
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, BlueBanner0);
         wing1.setRetreatZone(map.getSouthZone());
-        let player2 = new CBEditorPlayer("player2");
+        let player2 = new CBEditorPlayer("player2", "./../players/player1.png");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, RedBanner0);
         wing2.setRetreatZone(map.getNorthZone());
@@ -489,13 +495,15 @@ describe("Editor", ()=> {
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
         when:
             game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
             repaint(game);
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showPopup(500, 400, 500, 650));
             assertDirectives(widgetsLayer, showImage(500, 135, "./../images/units/misc/unit-wing-back.png", 500, 120));
-            assertDirectives(widgetsLayer, showColoredRect(500, 235, "#C0C0C0", 500, 80));
             assertDirectives(widgetsLayer, showInactivePopupCommand("left", 285, 135));
             assertDirectives(widgetsLayer, showPopupCommand("right", 715, 135));
+            assertDirectives(widgetsLayer, showColoredRect(500, 235, "#C0C0C0", 500, 80));
             assertDirectives(widgetsLayer, showInactivePopupCommand("left", 285, 235));
             assertDirectives(widgetsLayer, showPopupCommand("right", 715, 235));
 
@@ -516,7 +524,10 @@ describe("Editor", ()=> {
             assertNoMoreDirectives(widgetsLayer);
 
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showImage(500, 135, "./../images/units/blue/banners/banner0.png", 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player1.png",
+                "#00FFFF", 10, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/blue/banners/banner0.png",
+                "#00FFFF", 10, 50, 120));
             assertDirectives(itemsLayer, showTroopButton(360, 235, "orcs/unit1L"));
             assertDirectives(itemsLayer, showTroopButton(430, 235, "mercenaries/unit1L"));
             assertDirectives(itemsLayer, showTroopButton(500, 235, "orcs/unit1L"));
@@ -530,31 +541,39 @@ describe("Editor", ()=> {
             var { game } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
         when:
             var unitEditorPopup = getEditUnitPopup(game);
-            clickOnArtifact(game, unitEditorPopup._rightWing);
+            clickOnArtifact(game, unitEditorPopup._header._rightWing);
             repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showPopup(500, 400, 500, 650));
             assertDirectives(widgetsLayer, showImage(500, 135, "./../images/units/misc/unit-wing-back.png", 500, 120));
-            assertDirectives(widgetsLayer, showColoredRect(500, 235, "#C0C0C0", 500, 80));
             assertDirectives(widgetsLayer, showPopupCommand("left", 285, 135));
             assertDirectives(widgetsLayer, showInactivePopupCommand("right", 715, 135));
+            assertDirectives(widgetsLayer, showColoredRect(500, 235, "#C0C0C0", 500, 80));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showImage(500, 135, "./../images/units/red/banners/banner0.png", 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player1.png",
+                "#00FFFF", 10, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/red/banners/banner0.png",
+                "#00FFFF", 10, 50, 120));
         when:
-            clickOnArtifact(game, unitEditorPopup._leftWing);
+            clickOnArtifact(game, unitEditorPopup._header._leftWing);
             repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showPopup(500, 400, 500, 650));
             assertDirectives(widgetsLayer, showImage(500, 135, "./../images/units/misc/unit-wing-back.png", 500, 120));
-            assertDirectives(widgetsLayer, showColoredRect(500, 235, "#C0C0C0", 500, 80));
             assertDirectives(widgetsLayer, showInactivePopupCommand("left", 285, 135));
             assertDirectives(widgetsLayer, showPopupCommand("right", 715, 135));
+            assertDirectives(widgetsLayer, showColoredRect(500, 235, "#C0C0C0", 500, 80));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showImage(500, 135, "./../images/units/blue/banners/banner0.png", 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player1.png",
+                "#00FFFF", 10, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/blue/banners/banner0.png",
+                "#00FFFF", 10, 50, 120));
     });
 
     it("Checks change rosters in editor popup", () => {
@@ -562,53 +581,61 @@ describe("Editor", ()=> {
             var { game } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
         when:
             var unitEditorPopup = getEditUnitPopup(game);
-            clickOnArtifact(game, unitEditorPopup._rightRoster);
+            clickOnArtifact(game, unitEditorPopup._rosterContent._rightRoster);
             repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showPopup(500, 400, 500, 650));
             assertDirectives(widgetsLayer, showImage(500, 135, "./../images/units/misc/unit-wing-back.png", 500, 120));
-            assertDirectives(widgetsLayer, showColoredRect(500, 235, "#C0C0C0", 500, 80));
             assertDirectives(widgetsLayer, showInactivePopupCommand("left", 285, 135));
             assertDirectives(widgetsLayer, showPopupCommand("right", 715, 135));
+            assertDirectives(widgetsLayer, showColoredRect(500, 235, "#C0C0C0", 500, 80));
             assertDirectives(widgetsLayer, showPopupCommand("left", 285, 235));
             assertDirectives(widgetsLayer, showPopupCommand("right", 715, 235));
 
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showImage(500, 135, "./../images/units/blue/banners/banner0.png", 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player1.png",
+                "#00FFFF", 10, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/blue/banners/banner0.png",
+                "#00FFFF", 10, 50, 120));
             assertDirectives(itemsLayer, showTroopButton(360, 235, "mercenaries/unit1L"));
             assertDirectives(itemsLayer, showTroopButton(430, 235, "orcs/unit1L"));
         when:
-            clickOnArtifact(game, unitEditorPopup._leftRoster);
+            clickOnArtifact(game, unitEditorPopup._rosterContent._leftRoster);
             repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showPopup(500, 400, 500, 650));
             assertDirectives(widgetsLayer, showImage(500, 135, "./../images/units/misc/unit-wing-back.png", 500, 120));
-            assertDirectives(widgetsLayer, showColoredRect(500, 235, "#C0C0C0", 500, 80));
             assertDirectives(widgetsLayer, showInactivePopupCommand("left", 285, 135));
             assertDirectives(widgetsLayer, showPopupCommand("right", 715, 135));
+            assertDirectives(widgetsLayer, showColoredRect(500, 235, "#C0C0C0", 500, 80));
             assertDirectives(widgetsLayer, showInactivePopupCommand("left", 285, 235));
             assertDirectives(widgetsLayer, showPopupCommand("right", 715, 235));
 
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showImage(500, 135, "./../images/units/blue/banners/banner0.png", 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player1.png",
+                "#00FFFF", 10, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/blue/banners/banner0.png",
+                "#00FFFF", 10, 50, 120));
             assertDirectives(itemsLayer, showTroopButton(360, 235, "orcs/unit1L"));
             assertDirectives(itemsLayer, showTroopButton(430, 235, "mercenaries/unit1L"));
         when:
             for (let index=0; index<2; index++) {
-                clickOnArtifact(game, unitEditorPopup._rightRoster);
+                clickOnArtifact(game, unitEditorPopup._rosterContent._rightRoster);
             }
             repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showPopup(500, 400, 500, 650));
             assertDirectives(widgetsLayer, showImage(500, 135, "./../images/units/misc/unit-wing-back.png", 500, 120));
-            assertDirectives(widgetsLayer, showColoredRect(500, 235, "#C0C0C0", 500, 80));
             assertDirectives(widgetsLayer, showInactivePopupCommand("left", 285, 135));
             assertDirectives(widgetsLayer, showPopupCommand("right", 715, 135));
+            assertDirectives(widgetsLayer, showColoredRect(500, 235, "#C0C0C0", 500, 80));
             assertDirectives(widgetsLayer, showPopupCommand("left", 285, 235));
             assertDirectives(widgetsLayer, showInactivePopupCommand("right", 715, 235));
     });
@@ -617,9 +644,9 @@ describe("Editor", ()=> {
         skipDirectives(widgetsLayer, 4);
         assertDirectives(widgetsLayer, showPopup(500, 400, 500, 650));
         assertDirectives(widgetsLayer, showImage(500, 135, "./../images/units/misc/unit-wing-back.png", 500, 120));
-        assertDirectives(widgetsLayer, showColoredRect(500, 235, "#C0C0C0", 500, 80));
         assertDirectives(widgetsLayer, showInactivePopupCommand("left", 285, 135));
         assertDirectives(widgetsLayer, showPopupCommand("right", 715, 135));
+        assertDirectives(widgetsLayer, showColoredRect(500, 235, "#C0C0C0", 500, 80));
         assertDirectives(widgetsLayer, showInactivePopupCommand("left", 285, 235));
         assertDirectives(widgetsLayer, showPopupCommand("right", 715, 235));
     }
@@ -629,9 +656,11 @@ describe("Editor", ()=> {
             var { game } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
         when:
             var unitEditorPopup = getEditUnitPopup(game);
-            clickOnArtifact(game, unitEditorPopup._rosterArtifacts[1]);
+            clickOnArtifact(game, unitEditorPopup._rosterContent._rosterArtifacts[1]);
             repaint(game);
         then:
             skipEditorHeader(widgetsLayer);
@@ -652,15 +681,15 @@ describe("Editor", ()=> {
     });
 
     function getUnitButton(unitRoster, index) {
-        return unitRoster._unitArtifacts[index*3];
+        return unitRoster._rosterContent._unitArtifacts[index*3];
     }
 
     function getPrevButton(unitRoster, index) {
-        return unitRoster._unitArtifacts[index*3+1];
+        return unitRoster._rosterContent._unitArtifacts[index*3+1];
     }
 
     function getNextButton(unitRoster, index) {
-        return unitRoster._unitArtifacts[index*3+2];
+        return unitRoster._rosterContent._unitArtifacts[index*3+2];
     }
 
     it("Checks change character/troop type steps", () => {
@@ -668,6 +697,8 @@ describe("Editor", ()=> {
             var { game } = buildScenarioEditorGame();
             var [widgetsLayer] = getLayers(game.board, "widgets");
             game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
         when:
             var unitEditorPopup = getEditUnitPopup(game);
             clickOnArtifact(game, getPrevButton(unitEditorPopup, 0));
@@ -692,11 +723,13 @@ describe("Editor", ()=> {
             var { game } = buildScenarioEditorGame();
             var [widgetsLayer] = getLayers(game.board, "widgets");
             game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
         when:
             var unitEditorPopup = getEditUnitPopup(game);
             clickOnArtifact(game, getPrevButton(unitEditorPopup, 0));
-            clickOnArtifact(game, unitEditorPopup._rosterArtifacts[1]);
-            clickOnArtifact(game, unitEditorPopup._rosterArtifacts[0]);
+            clickOnArtifact(game, unitEditorPopup._rosterContent._rosterArtifacts[1]);
+            clickOnArtifact(game, unitEditorPopup._rosterContent._rosterArtifacts[0]);
             repaint(game);
         then:
             skipEditorHeader(widgetsLayer);
@@ -710,9 +743,11 @@ describe("Editor", ()=> {
             var { game } = buildScenarioEditorGame();
             var [widgetsLayer] = getLayers(game.board, "widgets", "widget-items");
             game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
         when:
             var unitEditorPopup = getEditUnitPopup(game);
-            clickOnArtifact(game, unitEditorPopup._rosterArtifacts[1]);
+            clickOnArtifact(game, unitEditorPopup._rosterContent._rosterArtifacts[1]);
             clickOnArtifact(game, getNextButton(unitEditorPopup, 3));
             repaint(game);
         then:
@@ -771,6 +806,8 @@ describe("Editor", ()=> {
             var { game, map } = buildScenarioEditorGame();
             var [actuatorsLayer, widgetsLayer, units0Layer] = getLayers(game.board, "actuators", "widgets", "units-0");
             game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
         when:
             var unitEditorPopup = getEditUnitPopup(game);
             clickOnArtifact(game, getUnitButton(unitEditorPopup, 2));
@@ -817,9 +854,11 @@ describe("Editor", ()=> {
             var { game, map } = buildScenarioEditorGame();
             var [actuatorsLayer, widgetsLayer, formations0Layer] = getLayers(game.board, "actuators", "widgets", "formations-0");
             game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
         when:
             var unitEditorPopup = getEditUnitPopup(game);
-            clickOnArtifact(game, unitEditorPopup._rosterArtifacts[1]);
+            clickOnArtifact(game, unitEditorPopup._rosterContent._rosterArtifacts[1]);
             clickOnArtifact(game, getNextButton(unitEditorPopup, 3));
             clickOnArtifact(game, getUnitButton(unitEditorPopup, 3));
             repaint(game);
@@ -1715,7 +1754,8 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("save", 700, 740));
             assertDirectives(commandsLayer, showGameCommand("load", 640, 740));
             assertDirectives(commandsLayer, showGameCommand("edit-units", 580, 740));
-            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 520, 740));
+            assertDirectives(commandsLayer, showGameCommand("set-map", 520, 740));
+            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 460, 740));
             assertNoMoreDirectives(commandsLayer);
     });
 
@@ -1742,13 +1782,14 @@ describe("Editor", ()=> {
             loadAllImages();
             game._showCommand.action();
             game._editUnitsCommand.action();
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
             executeAllAnimations();
         when:
             clickOnArtifact(game, game._editUnitsCommand.artifacts[0]);
             executeAllAnimations();
         then:
-            assert(getEditUnitPopup(game)).isDefined();
-            assert(getMapEditorActuator(game)).isNotDefined();
+            assert(getEditUnitPopup(game)).isNotDefined();
     });
 
     it("Checks global push menu button for Map Editor", () => {
@@ -1815,7 +1856,8 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("save", 700, 740));
             assertDirectives(commandsLayer, showGameCommand("load", 640, 740));
             assertDirectives(commandsLayer, showGameCommand("edit-units", 580, 740));
-            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 520, 740));
+            assertDirectives(commandsLayer, showGameCommand("set-map", 520, 740));
+            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 460, 740));
         when:
             game._hideCommand.action();
             repaint(game);
@@ -1986,7 +2028,8 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("save", 1700, 1440));
             assertDirectives(commandsLayer, showGameCommand("load", 1640, 1440));
             assertDirectives(commandsLayer, showGameCommand("edit-units", 1580, 1440));
-            assertDirectives(commandsLayer, showGameCommand("full-screen-off", 1520, 1440));
+            assertDirectives(commandsLayer, showGameCommand("set-map", 1520, 1440));
+            assertDirectives(commandsLayer, showGameCommand("full-screen-off", 1460, 1440));
             assertNoMoreDirectives(commandsLayer);
         when:
             game._fullScreenCommand.action();
@@ -2011,7 +2054,8 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("save", 1200, 940));
             assertDirectives(commandsLayer, showGameCommand("load", 1140, 940));
             assertDirectives(commandsLayer, showGameCommand("edit-units", 1080, 940));
-            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 1020, 940));
+            assertDirectives(commandsLayer, showGameCommand("set-map", 1020, 940));
+            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 960, 940));
             assertNoMoreDirectives(commandsLayer);
     });
 

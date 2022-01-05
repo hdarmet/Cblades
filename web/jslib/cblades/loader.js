@@ -22,8 +22,8 @@ import {
     CBStateSequenceElement, CBTurnSequenceElement
 } from "./sequences.js";
 
-let consoleLog = console.log;
-//let consoleLog = ()=>{};
+//let consoleLog = console.log;
+let consoleLog = ()=>{};
 
 export class Connector {
 
@@ -228,19 +228,20 @@ export class GameLoader {
 
     toSpecs() {
         let gameSpecs = {
+            id : this._game._oid,
             version: this._game._oversion || 0,
             name: this._game._name,
             players: []
         };
-        if (this._game._oid) gameSpecs.id = this._game._oid;
         let mapCompositionSpecs = {
+            id : this._game.map._oid,
             version: this._game.map._oversion || 0,
             boards: []
         }
-        if (this._game.map._oid) mapCompositionSpecs.id = this._game.map._oid;
         gameSpecs.map = mapCompositionSpecs;
         for (let board of this._game.map.mapBoards) {
             let boardSpec = {
+                id : board._oid,
                 version: board._oversion || 0,
                 col: board.col,
                 row: board.row,
@@ -248,32 +249,35 @@ export class GameLoader {
                 icon: board.icon,
                 invert: !!board.invert
             };
-            if (board._oid) boardSpec.id = board._oid;
             mapCompositionSpecs.boards.push(boardSpec);
         }
         for (let player of this._game.players) {
             let playerSpecs = {
+                id : player._oid,
                 version: player._oversion || 0,
                 identity: {
+                    id: player.identity._oid,
+                    version: player.identity._oversion || 0,
                     name: player.identity.name,
                     path: player.identity.path
                 },
                 wings: [],
                 locations: []
             }
-            if (player._oid) playerSpecs.id = player._oid;
             let locations = new Set();
             for (let wing of player.wings) {
                 let wingSpecs = {
+                    id : wing._oid,
                     version: wing._oversion || 0,
                     banner: {
+                        id: wing.banner._oid,
+                        version: wing.banner._oversion,
                         name: wing.banner.name,
                         path: wing.banner.path
                     },
                     units: [],
                     retreatZone: []
                 }
-                if (wing._oid) wingSpecs.id = wing._oid;
                 for (let retreatHex of wing.retreatZone) {
                     let retreatHexSpecs = {
                         version: 0,
@@ -286,6 +290,7 @@ export class GameLoader {
                     let position = unit instanceof CBFormation ? unit.hexLocation.fromHex : unit.hexLocation;
                     let positionAngle = unit instanceof CBFormation ? unit.hexLocation.angle : 0;
                     let unitSpecs = {
+                        id : unit._oid,
                         version: unit._oversion || 0,
                         name: unit.name,
                         category: this.getUnitCategoryCode(unit),
@@ -303,7 +308,6 @@ export class GameLoader {
                         orderGiven: unit.hasReceivedOrder(),
                         played: unit.isPlayed()
                     }
-                    if (unit._oid) unitSpecs.id = unit._oid;
                     wingSpecs.units.push(unitSpecs);
                     for (let hexId of unit.hexLocation.hexes) {
                         locations.add(hexId);
@@ -340,6 +344,7 @@ export class GameLoader {
         for (let boardSpec of specs.map.boards) {
             let board = {
                 _oid: boardSpec.id,
+                _oversion: boardSpec.version,
                 col: boardSpec.col,
                 row: boardSpec.row,
                 path: boardSpec.path,
@@ -348,7 +353,10 @@ export class GameLoader {
             if (boardSpec.invert) board.invert = true;
             configuration.push(board);
         }
-        this._game.changeMap(new CBMap(configuration));
+        let map = new CBMap(configuration);
+        map._oid = specs.map.id;
+        map._oversion = specs.map.version;
+        this._game.changeMap(map);
         for (let playerSpec of specs.players) {
             let player = this._game.getPlayer(playerSpec.identity.name);
             if (!player) {
@@ -360,9 +368,16 @@ export class GameLoader {
             }
             player._oid = playerSpec.id;
             player._oversion = playerSpec.version;
+            player._identity._oid = playerSpec.identity.id;
+            player._identity._oversion = playerSpec.identity.version;
             let unitsMap = new Map();
             for (let wingSpec of playerSpec.wings) {
-                let wing = new CBWing(player, wingSpec.banner);
+                let wing = new CBWing(player, {
+                    _oid: wingSpec.banner.id,
+                    _oversion: wingSpec.banner.version,
+                    name: wingSpec.banner.name,
+                    path: wingSpec.banner.path
+                });
                 wing._oid = wingSpec.id;
                 wing._oversion = wingSpec.version;
                 let retreatZone = [];

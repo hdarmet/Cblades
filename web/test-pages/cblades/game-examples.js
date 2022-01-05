@@ -32,6 +32,26 @@ import {
     BurningMixin
 } from "../../jslib/cblades/miscellaneous.js";
 
+export let banner = {
+    name: "banner",
+    path: "./../units/banner.png"
+}
+
+export let banner1 = {
+    name: "banner1",
+    path: "./../units/banner1.png"
+}
+
+export let banner2 = {
+    name: "banner2",
+    path: "./../units/banner2.png"
+}
+
+export let banner3 = {
+    name: "banner3",
+    path: "./../units/banner3.png"
+}
+
 export function createBaseGame() {
     let game = new (BurningMixin(WeatherMixin(CBGame)))("Game");
     let arbitrator = new CBTestArbitrator();
@@ -47,7 +67,7 @@ export function create1PlayerBaseGame() {
     let {game, map} = baseGame;
     let player = new CBInteractivePlayer("player1");
     game.addPlayer(player);
-    let wing = new CBWing(player, "./../units/banner.png");
+    let wing = new CBWing(player, banner);
     wing.setRetreatZone(map.getWestZone());
     return {
         ...baseGame,
@@ -63,9 +83,9 @@ export function create2PlayersBaseGame() {
     game.addPlayer(player1);
     let player2 = new CBInteractivePlayer("player2");
     game.addPlayer(player2);
-    let wing1 = new CBWing(player1, "./../units/banner1.png");
+    let wing1 = new CBWing(player1, banner1);
     wing1.setRetreatZone(map.getWestZone());
-    let wing2 = new CBWing(player2, "./../units/banner2.png");
+    let wing2 = new CBWing(player2, banner2);
     wing2.setRetreatZone(map.getEastZone());
     return {
         ...baseGame,

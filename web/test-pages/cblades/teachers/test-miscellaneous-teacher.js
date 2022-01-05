@@ -38,6 +38,9 @@ import {
 import {
     CBWeather, CBFog
 } from "../../../jslib/cblades/weather.js";
+import {
+    banner, banner1, banner2
+} from "../game-examples.js";
 
 describe("Miscellaneous teacher", ()=> {
 
@@ -75,9 +78,9 @@ describe("Miscellaneous teacher", ()=> {
         game.setMap(map);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player = new CBUnitPlayer("player1");
+        let player = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player);
-        let wing = new CBWing(player, "./../units/banner.png");
+        let wing = new CBWing(player, banner);
         let unitType = new CBTestUnitType("unit", ["./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"])
         let unit = new CBTroop(unitType, wing);
         game.start();
@@ -88,12 +91,12 @@ describe("Miscellaneous teacher", ()=> {
         let game = new CBGame("Test");
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let player1 = new CBUnitPlayer("player1");
+        let player1 = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1, "./../units/banner1.png");
-        let player2 = new CBUnitPlayer("player2");
+        let wing1 = new CBWing(player1, banner1);
+        let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2, "./../units/banner2.png");
+        let wing2 = new CBWing(player2, banner2);
         var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
