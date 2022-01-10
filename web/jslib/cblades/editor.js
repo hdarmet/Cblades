@@ -403,9 +403,6 @@ export class CBBattleArtifact extends DPedestalArtifact {
     constructor(header, position) {
         super(null, "widget-items", position);
         this._header = header;
-        this.setSettings(level => {
-            level.setShadowSettings("#000000", 10);
-        });
     }
 
     get header() {
@@ -589,7 +586,7 @@ export class CBUnitsRosterHeader extends DElement {
             new Point2D(0, CBUnitsRosterHeader.dimension.h/2 - CBUnitsRoster.DIMENSION.h/2),
             CBUnitsRosterHeader.dimension)
         );
-        this._leftWing = new DLeftNavigation(
+        this._prevWingButton = new DLeftNavigation(
             new Point2D(-CBUnitsRoster.DIMENSION.w/2+35,
                 CBUnitsRosterHeader.dimension.h/2 - CBUnitsRoster.DIMENSION.h/2),
             ()=>{
@@ -597,7 +594,7 @@ export class CBUnitsRosterHeader extends DElement {
                 this._parent.updateWingSelectionContent();
             }
         );
-        this.addArtifact(this._leftWing);
+        this.addArtifact(this._prevWingButton);
         this._playerArtifact = new CBPlayerArtifact(this, new Point2D(
             CBUnitsRosterHeader.PLAYER_MARGIN,
             CBUnitsRosterHeader.dimension.h/2 - CBUnitsRoster.DIMENSION.h/2)
@@ -608,7 +605,7 @@ export class CBUnitsRosterHeader extends DElement {
             CBUnitsRosterHeader.dimension.h/2 - CBUnitsRoster.DIMENSION.h/2)
         );
         this.addArtifact(this._wingArtifact);
-        this._rightWing = new DRightNavigation(
+        this._nextWingButton = new DRightNavigation(
             new Point2D(CBUnitsRoster.DIMENSION.w/2-35,
                 CBUnitsRosterHeader.dimension.h/2 - CBUnitsRoster.DIMENSION.h/2),
             ()=>{
@@ -616,21 +613,21 @@ export class CBUnitsRosterHeader extends DElement {
                 this._parent.updateWingSelectionContent();
             }
         );
-        this.addArtifact(this._rightWing);
+        this.addArtifact(this._nextWingButton);
         this._wingUpdate(0);
     }
 
     setActive(active) {
         this._active = active;
         if (active) {
-            this._leftWing.setActive(this._parent.game.wingIndex > 0);
-            this._rightWing.setActive(this._parent.game.wingIndex < this.wings.length - 1);
+            this._prevWingButton.setActive(this._parent.game.wingIndex > 0);
+            this._nextWingButton.setActive(this._parent.game.wingIndex < this.wings.length - 1);
             this._wingArtifact.setActive(true);
             this._playerArtifact.setActive(true);
         }
         else {
-            this._leftWing.setActive(false);
-            this._rightWing.setActive(false);
+            this._prevWingButton.setActive(false);
+            this._nextWingButton.setActive(false);
             this._wingArtifact.setActive(false);
             this._playerArtifact.setActive(false);
         }
@@ -651,6 +648,22 @@ export class CBUnitsRosterHeader extends DElement {
         this._wingArtifact.setWing(this.wing);
         this._playerArtifact.setPlayer(this.player);
         this.setActive(this._active);
+    }
+
+    get prevWingButton() {
+        return this._prevWingButton;
+    }
+
+    get nextWingButton() {
+        return this._nextWingButton;
+    }
+
+    get playerArtifact() {
+        return this._playerArtifact;
+    }
+
+    get wingArtifact() {
+        return this._wingArtifact;
     }
 
     get wing() {
@@ -876,10 +889,6 @@ export class CBUnitsRosterContent extends DElement {
         }
     }
 
-    get dimension() {
-        return CBUnitsRosterContent.ROSTER_HEADER_DIMENSION;
-    }
-
     static ROSTER_HEADER_DIMENSION = new Dimension2D(500, 80);
 }
 
@@ -924,11 +933,6 @@ export class CBRosterSelectorCell extends DPedestalArtifact {
                     });
                 }
             }
-        }
-        else {
-            this.setSettings(level => {
-                level.setShadowSettings("#000000", 0);
-            });
         }
     }
 
@@ -979,13 +983,13 @@ export class CBRosterSelector extends DElement {
     }
 
     _buildSelectorCommands() {
-        this._leftSelectorPage = new DLeftNavigation(new Point2D(
+        this._prevSelectorPage = new DLeftNavigation(new Point2D(
             this._getNavigationMarginCount() -CBUnitsRoster.DIMENSION.w/2,
             CBUnitsRoster.DIMENSION.h/2 - CBUnitsRosterContent.ROSTER_HEADER_DIMENSION.h/2
         ), ()=>{
             this._updateContent(-this._getRowCount());
         });
-        this.addArtifact(this._leftSelectorPage);
+        this.addArtifact(this._prevSelectorPage);
         this._validateButton = new DOk(new Point2D(
             -this._getNavigationMarginCount(),
             CBUnitsRoster.DIMENSION.h/2 - CBUnitsRosterContent.ROSTER_HEADER_DIMENSION.h/2
@@ -1000,13 +1004,13 @@ export class CBRosterSelector extends DElement {
             this._parent.cancelBattleSettings();
         });
         this.addArtifact(this._cancelButton);
-        this._rightSelectorPage = new DRightNavigation(new Point2D(
+        this._nextSelectorPage = new DRightNavigation(new Point2D(
             -this._getNavigationMarginCount() +CBUnitsRoster.DIMENSION.w/2,
             CBUnitsRoster.DIMENSION.h/2 - CBUnitsRosterContent.ROSTER_HEADER_DIMENSION.h/2
         ), ()=>{
             this._updateContent(this._getRowCount());
         });
-        this.addArtifact(this._rightSelectorPage);
+        this.addArtifact(this._nextSelectorPage);
     }
 
     _updateContent(shift) {
@@ -1028,6 +1032,18 @@ export class CBRosterSelector extends DElement {
         }
     }
 
+    get prevSelectorPage() {
+        return this._prevSelectorPage;
+    }
+
+    get nextSelectorPage() {
+        return this._nextSelectorPage;
+    }
+
+    getCell(col, row) {
+        return this._cells[col][row];
+    }
+
     changeSelectionContent() {
         let selected = this._selected();
         let excluded = this._excluded();
@@ -1038,8 +1054,8 @@ export class CBRosterSelector extends DElement {
                 ], selected, excluded);
             }
         }
-        this._leftSelectorPage.setActive(this._firstItemIndex > 0);
-        this._rightSelectorPage.setActive(
+        this._prevSelectorPage.setActive(this._firstItemIndex > 0);
+        this._nextSelectorPage.setActive(
             this._firstItemIndex+(this._getColCount()*this._getRowCount()) < this._content.length
         );
         this._validateButton.setActive(this._parent.battleSettingsAreValid());
@@ -1184,7 +1200,6 @@ export class CBWingSelector extends CBRosterSelector {
     static CELL_DIMENSION = new Dimension2D(80, 120)
 }
 
-
 export class CBUnitsRoster extends DPopup {
 
     constructor(game, playerIdentities, banners) {
@@ -1210,6 +1225,14 @@ export class CBUnitsRoster extends DPopup {
         this._wingSelector.changeSelectionContent();
     }
 
+    get playerSelector() {
+        return this._playerSelector;
+    }
+
+    get wingSelector() {
+        return this._wingSelector;
+    }
+
     get wing() {
         return this._wing;
     }
@@ -1228,6 +1251,10 @@ export class CBUnitsRoster extends DPopup {
 
     get game() {
         return this._game;
+    }
+
+    get header() {
+        return this._header;
     }
 
     get currentWing() {
@@ -1439,85 +1466,6 @@ export class CBUnitsRoster extends DPopup {
     }
 
     static DIMENSION = new Dimension2D(500, 650);
-
-    static allPlayers = [
-        {path:"./../images/units/players/orc-1.png", name:"player0"},
-        {path:"./../images/units/players/orc-2.png", name:"player1"},
-        {path:"./../images/units/players/roughneck-1.png", name:"player2"},
-        {path:"./../images/units/players/roughneck-2.png", name:"player3"},
-        {path:"./../images/units/players/orc-1.png", name:"player4"},
-        {path:"./../images/units/players/orc-2.png", name:"player5"},
-        {path:"./../images/units/players/roughneck-1.png", name:"player6"},
-        {path:"./../images/units/players/roughneck-2.png", name:"player7"},
-        {path:"./../images/units/players/orc-1.png", name:"player8"},
-        {path:"./../images/units/players/orc-2.png", name:"player9"},
-        {path:"./../images/units/players/roughneck-1.png", name:"player10"},
-        {path:"./../images/units/players/roughneck-2.png", name:"player11"},
-        {path:"./../images/units/players/orc-1.png", name:"player12"},
-        {path:"./../images/units/players/orc-2.png", name:"player13"},
-        {path:"./../images/units/players/roughneck-1.png", name:"player14"},
-        {path:"./../images/units/players/roughneck-2.png", name:"player15"},
-        {path:"./../images/units/players/orc-1.png", name:"player16"},
-        {path:"./../images/units/players/orc-2.png", name:"player17"},
-        {path:"./../images/units/players/roughneck-1.png", name:"player18"},
-        {path:"./../images/units/players/roughneck-2.png", name:"player19"},
-        {path:"./../images/units/players/orc-1.png", name:"player20"},
-        {path:"./../images/units/players/orc-2.png", name:"player21"},
-        {path:"./../images/units/players/roughneck-1.png", name:"player22"},
-        {path:"./../images/units/players/roughneck-2.png", name:"player23"},
-        {path:"./../images/units/players/orc-1.png", name:"player24"},
-        {path:"./../images/units/players/orc-2.png", name:"player25"},
-        {path:"./../images/units/players/roughneck-1.png", name:"player26"},
-        {path:"./../images/units/players/roughneck-2.png", name:"player27"},
-        {path:"./../images/units/players/orc-1.png", name:"player28"},
-        {path:"./../images/units/players/orc-2.png", name:"player29"},
-        {path:"./../images/units/players/roughneck-1.png", name:"player30"},
-        {path:"./../images/units/players/roughneck-2.png", name:"player31"},
-        {path:"./../images/units/players/orc-1.png", name:"player32"},
-        {path:"./../images/units/players/orc-2.png", name:"player33"},
-        {path:"./../images/units/players/roughneck-1.png", name:"player34"},
-        {path:"./../images/units/players/roughneck-2.png", name:"player35"},
-        {path:"./../images/units/players/orc-1.png", name:"player36"},
-        {path:"./../images/units/players/orc-2.png", name:"player37"},
-        {path:"./../images/units/players/roughneck-1.png", name:"player38"},
-        {path:"./../images/units/players/roughneck-2.png", name:"player39"},
-        {path:"./../images/units/players/roughneck-1.png", name:"player40"},
-        {path:"./../images/units/players/roughneck-2.png", name:"player41"}
-    ];
-
-    static allWings = [
-        {path:"./../images/units/orcs/banners/banner0.png", name:"orc-banner-1"},
-        {path:"./../images/units/orcs/banners/banner1.png", name:"orc-banner-2"},
-        {path:"./../images/units/orcs/banners/banner2.png", name:"banner2"},
-        {path:"./../images/units/mercenaries/banners/banner0.png", name:"roughneck-banner-1"},
-        {path:"./../images/units/mercenaries/banners/banner1.png", name:"roughneck-banner-2"},
-        {path:"./../images/units/mercenaries/banners/banner2.png", name:"banner5"},
-        {path:"./../images/units/orcs/banners/banner0.png", name:"banner6"},
-        {path:"./../images/units/orcs/banners/banner1.png", name:"banner7"},
-        {path:"./../images/units/orcs/banners/banner2.png", name:"banner8"},
-        {path:"./../images/units/mercenaries/banners/banner0.png", name:"banner9"},
-        {path:"./../images/units/mercenaries/banners/banner1.png", name:"banner10"},
-        {path:"./../images/units/mercenaries/banners/banner2.png", name:"banner11"},
-        {path:"./../images/units/orcs/banners/banner0.png", name:"banner12"},
-        {path:"./../images/units/orcs/banners/banner1.png", name:"banner13"},
-        {path:"./../images/units/orcs/banners/banner2.png", name:"banner14"},
-        {path:"./../images/units/mercenaries/banners/banner0.png", name:"banner15"},
-        {path:"./../images/units/mercenaries/banners/banner1.png", name:"banner16"},
-        {path:"./../images/units/mercenaries/banners/banner2.png", name:"banner17"},
-        {path:"./../images/units/orcs/banners/banner0.png", name:"banner18"},
-        {path:"./../images/units/orcs/banners/banner1.png", name:"banner19"},
-        {path:"./../images/units/orcs/banners/banner2.png", name:"banner20"},
-        {path:"./../images/units/mercenaries/banners/banner0.png", name:"banner21"},
-        {path:"./../images/units/mercenaries/banners/banner1.png", name:"banner22"},
-        {path:"./../images/units/mercenaries/banners/banner2.png", name:"banner23"},
-        {path:"./../images/units/orcs/banners/banner0.png", name:"banner24"},
-        {path:"./../images/units/orcs/banners/banner1.png", name:"banner25"},
-        {path:"./../images/units/orcs/banners/banner2.png", name:"banner26"},
-        {path:"./../images/units/mercenaries/banners/banner0.png", name:"banner27"},
-        {path:"./../images/units/mercenaries/banners/banner1.png", name:"banner28"},
-        {path:"./../images/units/mercenaries/banners/banner2.png", name:"banner29"}
-    ];
-
 }
 
 export class CBMapCommand extends DImageArtifact {

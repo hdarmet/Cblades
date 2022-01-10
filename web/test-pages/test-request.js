@@ -4,6 +4,7 @@ import {
     assert, describe, it, before
 } from "../jstest/jtest.js";
 import {
+    completeRequester,
     getCookie,
     requester, requestServer
 } from "../jslib/request.js";
@@ -42,6 +43,15 @@ describe("Request", ()=> {
             }
         };
     }
+
+    it("Checks cookie property implementation", () => {
+        given:
+            completeRequester();
+            document.cookie = "mycookie";
+        then:
+            assert(requester.cookie.indexOf("mycookie")>=0).isTrue();
+    });
+
 
     it("Checks a request that succeeds", () => {
         given:

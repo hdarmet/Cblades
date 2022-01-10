@@ -4,10 +4,15 @@ export let requester = {
     fetch: fetch.bind(window),
     locationOrigin: document.defaultView.location.origin
 }
-Object.defineProperty(requester, "cookie", {
-    get: function() { return document.cookie; },
-    configurable: true
-});
+export function completeRequester() {
+    Object.defineProperty(requester, "cookie", {
+        get: function () {
+            return document.cookie;
+        },
+        configurable: true
+    });
+}
+completeRequester();
 
 /*
 export function setCookie(cname, cvalue, exdays) {

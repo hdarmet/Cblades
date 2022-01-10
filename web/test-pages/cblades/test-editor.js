@@ -29,7 +29,7 @@ import {
 } from "../../jslib/cblades/unit.js";
 import {
     CBMapEditorGame, CBScenarioEditorGame, CBEditorPlayer, CBEditUnitMenu, CBFormationPlacementActuator,
-    CBMapEditActuator, CBUnitPlacementActuator, CBUnitsRoster
+    CBMapEditActuator, CBUnitPlacementActuator, CBUnitsRoster, CBUnitsRosterContent
 } from "../../jslib/cblades/editor.js";
 import {
     clickOnTrigger,
@@ -498,6 +498,7 @@ describe("Editor", ()=> {
             getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
             getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
             repaint(game);
+        then:
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showPopup(500, 400, 500, 650));
             assertDirectives(widgetsLayer, showImage(500, 135, "./../images/units/misc/unit-wing-back.png", 500, 120));
@@ -545,7 +546,7 @@ describe("Editor", ()=> {
             getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
         when:
             var unitEditorPopup = getEditUnitPopup(game);
-            clickOnArtifact(game, unitEditorPopup._header._rightWing);
+            clickOnArtifact(game, unitEditorPopup.header.nextWingButton);
             repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
@@ -560,7 +561,7 @@ describe("Editor", ()=> {
             assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/red/banners/banner0.png",
                 "#00FFFF", 10, 50, 120));
         when:
-            clickOnArtifact(game, unitEditorPopup._header._leftWing);
+            clickOnArtifact(game, unitEditorPopup.header.prevWingButton);
             repaint(game);
         then:
             skipDirectives(widgetsLayer, 4);
@@ -574,6 +575,258 @@ describe("Editor", ()=> {
                 "#00FFFF", 10, 60, 60));
             assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/blue/banners/banner0.png",
                 "#00FFFF", 10, 50, 120));
+    });
+
+    it("Checks player/wing header artifacts appeance when mouse moves on them", () => {
+        given:
+            var {game} = buildScenarioEditorGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
+            game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            var unitEditorPopup = getEditUnitPopup(game);
+            clickOnArtifact(game, unitEditorPopup.header.prevWingButton);
+            repaint(game);
+        when:
+            mouseMoveOnArtifact(game, unitEditorPopup.header.playerArtifact);
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player1.png",
+                "#FF0000", 10, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/blue/banners/banner0.png",
+                "#00FFFF", 10, 50, 120));
+        when:
+            mouseMoveOnArtifact(game, unitEditorPopup.header.wingArtifact);
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player1.png",
+                "#00FFFF", 10, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/blue/banners/banner0.png",
+                "#FF0000", 10, 50, 120));
+    });
+
+    let players = [
+        {
+            name: "player1",
+            path: "./../players/player1.png"
+        }, {
+            name: "player2",
+            path: "./../players/player2.png"
+        }, {
+            name: "player3",
+            path: "./../players/player3.png"
+        }
+    ];
+
+    let banners = [
+        {
+            name: "blue-banner",
+            path: "./../images/units/blue/banners/banner0.png"
+        }, {
+            name: "red-banner",
+            path: "./../images/units/red/banners/banner0.png"
+        }, {
+            name: "green-banner",
+            path: "./../images/units/green/banners/banner0.png"
+        }
+    ];
+
+    it("Checks player selection", () => {
+        given:
+            var { game } = buildScenarioEditorGame();
+            var [itemsLayer] = getLayers(game.board, "widget-items");
+            game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify(players), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+        when:
+            var unitEditorPopup = getEditUnitPopup(game);
+            clickOnArtifact(game, unitEditorPopup.header.playerArtifact);
+            repaint(game);
+        then:
+            assert(unitEditorPopup.header.playerArtifact.active).isTrue();
+            assert(unitEditorPopup.header.wingArtifact.active).isTrue();
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player1.png",
+                "#00FFFF", 10, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/blue/banners/banner0.png",
+                "#00FFFF", 10, 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage(300, 232.5, "./../players/player1.png",
+                "#FF0000", 20, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(300, 307.5, "./../players/player2.png",
+                "#FF0000", 20, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(300, 382.5, "./../players/player3.png",
+                "#0050FF", 5, 60, 60));
+        when:
+            mouseMoveOnArtifact(game, unitEditorPopup.playerSelector.getCell(0, 0));
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player1.png",
+                "#00FFFF", 10, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/blue/banners/banner0.png",
+                "#00FFFF", 10, 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage(300, 232.5, "./../players/player1.png",
+                "#0050FF", 5, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(300, 307.5, "./../players/player2.png",
+                "#FF0000", 20, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(300, 382.5, "./../players/player3.png",
+                "#0050FF", 5, 60, 60));
+        when:
+            mouseMoveOnArtifact(game, unitEditorPopup.playerSelector.getCell(0, 2));
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player1.png",
+                "#00FFFF", 10, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/blue/banners/banner0.png",
+                "#00FFFF", 10, 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage(300, 232.5, "./../players/player1.png",
+                "#FF0000", 20, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(300, 307.5, "./../players/player2.png",
+                "#FF0000", 20, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(300, 382.5, "./../players/player3.png",
+                "#FF0000", 20, 60, 60));
+    });
+
+    it("Checks wing selection", () => {
+        given:
+            var { game } = buildScenarioEditorGame();
+            var [itemsLayer] = getLayers(game.board, "widget-items");
+            game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify(banners), 200);
+        when:
+            var unitEditorPopup = getEditUnitPopup(game);
+            clickOnArtifact(game, unitEditorPopup.header.wingArtifact);
+            repaint(game);
+        then:
+            assert(unitEditorPopup.header.playerArtifact.active).isTrue();
+            assert(unitEditorPopup.header.wingArtifact.active).isTrue();
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player1.png",
+                "#00FFFF", 10, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/blue/banners/banner0.png",
+                "#00FFFF", 10, 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage( 300, 240, "./../images/units/blue/banners/banner0.png",
+                "#FF0000", 20, 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage( 300, 360, "./../images/units/red/banners/banner0.png",
+                "#000000", 5, 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage( 300, 480, "./../images/units/green/banners/banner0.png",
+                "#0050FF", 5, 50, 120));
+        when:
+            mouseMoveOnArtifact(game, unitEditorPopup.wingSelector.getCell(0, 0));
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player1.png",
+                "#00FFFF", 10, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/blue/banners/banner0.png",
+                "#00FFFF", 10, 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage( 300, 240, "./../images/units/blue/banners/banner0.png",
+                "#0050FF", 5, 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage( 300, 360, "./../images/units/red/banners/banner0.png",
+                "#000000", 5, 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage( 300, 480, "./../images/units/green/banners/banner0.png",
+                "#0050FF", 5, 50, 120));
+        when:
+            mouseMoveOnArtifact(game, unitEditorPopup.wingSelector.getCell(0, 1));
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player1.png",
+                "#00FFFF", 10, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/blue/banners/banner0.png",
+                "#00FFFF", 10, 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage( 300, 240, "./../images/units/blue/banners/banner0.png",
+                "#FF0000", 20, 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage( 300, 360, "./../images/units/red/banners/banner0.png",
+                "#000000", 5, 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage( 300, 480, "./../images/units/green/banners/banner0.png",
+                "#0050FF", 5, 50, 120));
+        when:
+            mouseMoveOnArtifact(game, unitEditorPopup.wingSelector.getCell(0, 2));
+            repaint(game);
+        then:
+            skipDirectives(itemsLayer, 4);
+            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player1.png",
+                "#00FFFF", 10, 60, 60));
+            assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/blue/banners/banner0.png",
+                "#00FFFF", 10, 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage( 300, 240, "./../images/units/blue/banners/banner0.png",
+                "#FF0000", 20, 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage( 300, 360, "./../images/units/red/banners/banner0.png",
+                "#000000", 5, 50, 120));
+            assertDirectives(itemsLayer, showShadowedImage( 300, 480, "./../images/units/green/banners/banner0.png",
+                "#FF0000", 20, 50, 120));
+    });
+
+    it("Checks that a player selection inactivate the roster header", () => {
+        given:
+            var { game } = buildScenarioEditorGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
+            game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify(banners), 200);
+        when:
+            var unitEditorPopup = getEditUnitPopup(game);
+            clickOnArtifact(game, unitEditorPopup.header.playerArtifact);
+            clickOnArtifact(game, unitEditorPopup.playerSelector.getCell(0, 0));
+        then:
+            assert(unitEditorPopup.header.playerArtifact.active).isFalse();
+            assert(unitEditorPopup.header.wingArtifact.active).isFalse();
+    });
+
+    it("Checks that a wing selection inactivate the roster header", () => {
+        given:
+            var { game } = buildScenarioEditorGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
+            game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify(banners), 200);
+        when:
+            var unitEditorPopup = getEditUnitPopup(game);
+            clickOnArtifact(game, unitEditorPopup.header.wingArtifact);
+            clickOnArtifact(game, unitEditorPopup.wingSelector.getCell(0, 0));
+        then:
+            assert(unitEditorPopup.header.playerArtifact.active).isFalse();
+            assert(unitEditorPopup.header.wingArtifact.active).isFalse();
+    });
+
+    it("Checks navigation in player selection", () => {
+        given:
+            var players = [];
+            for (let index = 0; index<40; index++) {
+                players.push({name : "player"+index, path: "./players/player"+index+".png"});
+            }
+            var { game } = buildScenarioEditorGame();
+            var [widgets, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
+            game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify(players), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+        when:
+            var unitEditorPopup = getEditUnitPopup(game);
+            clickOnArtifact(game, unitEditorPopup.header.playerArtifact);
+            repaint(game);
+        then:
+            assert(unitEditorPopup.playerSelector.prevSelectorPage.active).isFalse();
+            assert(unitEditorPopup.playerSelector.nextSelectorPage.active).isTrue();
+            assert(unitEditorPopup.playerSelector.getCell(0, 0).item.name).equalsTo("player0");
+        when:
+            clickOnArtifact(game, unitEditorPopup.playerSelector.nextSelectorPage);
+            repaint(game);
+        then:
+            assert(unitEditorPopup.playerSelector.prevSelectorPage.active).isTrue();
+            assert(unitEditorPopup.playerSelector.nextSelectorPage.active).isFalse();
+            assert(unitEditorPopup.playerSelector.getCell(0, 0).item.name).equalsTo("player6");
+        when:
+            clickOnArtifact(game, unitEditorPopup.playerSelector.prevSelectorPage);
+            repaint(game);
+        then:
+            assert(unitEditorPopup.playerSelector.prevSelectorPage.active).isFalse();
+            assert(unitEditorPopup.playerSelector.nextSelectorPage.active).isTrue();
+            assert(unitEditorPopup.playerSelector.getCell(0, 0).item.name).equalsTo("player0");
     });
 
     it("Checks change rosters in editor popup", () => {

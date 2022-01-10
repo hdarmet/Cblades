@@ -240,9 +240,9 @@ function createTinyGame() {
 
 function create2PlayersTinyGame() {
     var { game, map } = createBasicGame();
-    let player1 = new CBTestPlayer("player1");
+    let player1 = new CBTestPlayer("player1", "./players/player1.png");
     game.addPlayer(player1);
-    let player2 = new CBTestPlayer("player2");
+    let player2 = new CBTestPlayer("player2", "./players/player2.png");
     game.addPlayer(player2);
     let playable0 = new CBTestPlayable("units", player1, ["./../images/units/misc/unit0.png"]);
     playable0.addToMap(map.getHex(5, 8));
@@ -328,6 +328,26 @@ describe("Game", ()=> {
             assertNoMoreDirectives(unitsLayer);
     });
 
+    it("Checks game edition", () => {
+        given:
+            var {game} = createTinyGame();
+            var [mapLayer] = getLayers(game.board, "map", "units");
+            loadAllImages();
+        when:
+            var newMap = new CBMap([{path:"./../images/maps/newmap.png", col:0, row:0}]);
+            game.changeMap(newMap);
+            repaint(game);
+        then:
+            assertClearDirectives(mapLayer);
+            assertDirectives(mapLayer, showMap("newmap", zoomAndRotate0(500, 400)));
+        when:
+            var player1 = new CBTestPlayer("Hector", "./players/hector.png");
+            var player2 = new CBTestPlayer("Achilles", "./players/achilles.png");
+            game.setPlayers([player1, player2]);
+        then:
+            assert(game.players).arrayEqualsTo([player1, player2]);
+    });
+
     it("Checks game fitting on window", () => {
         given:
             var {game} = createTinyGame();
@@ -366,20 +386,33 @@ describe("Game", ()=> {
         then:
             assert(game.players).unorderedArrayEqualsTo([player1, player2]);
             assert(player1.name).equalsTo("player1");
+            assert(player1.path).equalsTo("./players/player1.png");
             assert(player1._memento()).isDefined();
             assert(player1._revert({}));
             assert(player1.canFinishPlayable({})).isTrue();
+        when:
+            player1.setIdentity({
+                name: "Hector",
+                path: "./players/hector.png"
+            });
+        then:
+            assert(player1.identity).objectEqualsTo({
+                name: "Hector",
+                path: "./players/hector.png"
+            });
+            assert(player1.name).equalsTo("Hector");
+            assert(player1.path).equalsTo("./players/hector.png");
         when:
             var init = false;
             player1._init = function() { init = true;};
             player1.clean();
         then:
-            assert(player1).isTrue();
+            assert(init).isTrue();
         when:
             init = false;
             player1.cancel();
         then:
-            assert(player1).isTrue();
+            assert(init).isTrue();
     });
 
     it("Checks that playing a playable is finishing its action", () => {
@@ -397,6 +430,23 @@ describe("Game", ()=> {
             assert(playable.action.status).equalsTo(CBAction.FINISHED);
         when:
             delete playable._action;
+        then:
+            assert(playable.isPlayed()).isFalse();
+        when:
+            playable.played = true;
+        then:
+            assert(playable.isPlayed()).isTrue();
+    });
+
+    it("Checks that playable may be marked playable without defining an action", () => {
+        given:
+            var {game, playable} = createTinyGame();
+        when:
+            playable.played = true;
+        then:
+            assert(playable.isPlayed()).isTrue();
+        when:
+            playable.played = false;
         then:
             assert(playable.isPlayed()).isFalse();
     });

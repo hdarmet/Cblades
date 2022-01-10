@@ -624,7 +624,7 @@ export class CBAbstractGame {
         this._map.element.removeFromBoard(this._board);
         delete this._map.game;
         this._map = map;
-        this._board.setDimension(map.dimension);
+        this._board.dimension = map.dimension;
         map.element.setOnBoard(this._board);
         map.game = this;
     }

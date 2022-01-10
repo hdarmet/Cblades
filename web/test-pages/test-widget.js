@@ -32,7 +32,15 @@ import {
     DMask,
     DScene,
     DMessage,
-    DMultiStatePushButton, DRotatableIndicator, DSwipe, DPrevNavigation, DNextNavigation, D2StatesIconMenuItem
+    DMultiStatePushButton,
+    DRotatableIndicator,
+    DSwipe,
+    DPrevNavigation,
+    DNextNavigation,
+    D2StatesIconMenuItem,
+    DOk,
+    DKo,
+    DPlus, DMinus
 } from "../jslib/widget.js";
 import {
     clickOnArtifact, mouseMoveOnArtifact, mouseMoveOutOfArtifact
@@ -86,6 +94,43 @@ describe("Widget", ()=> {
             board.paint();
         then:
             assert(getDirectives(layer, 4).length).equalsTo(0);
+    });
+
+    it("Checks raw widget resizing", () => {
+        when:
+            var { board, widgetsLayer:layer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            let widget = new DWidget()
+                .setPanelSettings(new Dimension2D(100, 150))
+                .setLocation(new Point2D(250, 150))
+                .setOnBoard(board);
+            resetDirectives(layer);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                    "setTransform(1, 0, 0, 1, 250, 150)",
+                    "shadowColor = #000000", "shadowBlur = 10",
+                    "strokeStyle = #000000", "lineWidth = 1",
+                    "strokeRect(-50, -75, 100, 150)",
+                    "fillStyle = #FFFFFF",
+                    "fillRect(-50, -75, 100, 150)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(layer);
+            widget.resize(new Dimension2D(80, 200));
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 250, 150)',
+                    'shadowColor = #000000', 'shadowBlur = 10',
+                    'strokeStyle = #000000', 'lineWidth = 1',
+                    'strokeRect(-40, -100, 80, 200)',
+                    'fillStyle = #FFFFFF',
+                    'fillRect(-40, -100, 80, 200)',
+                'restore()'
+            ]);
     });
 
     it("Checks widget adjusting", () => {
@@ -1425,6 +1470,174 @@ describe("Widget", ()=> {
             clickOnArtifact(board, prevButton);
         then:
             assert(counter).equalsTo(0);
+    });
+
+    it("Checks ok button", () => {
+        given:
+            var { board, widgetsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var counter = 0;
+            var popup = new DPopup(new Dimension2D(500, 200));
+            var okButton = new DOk(new Point2D(-50, 0), event=>counter++);
+            popup.addArtifact(okButton);
+            loadAllImages();
+            popup.open(board, new Point2D(500, 300));
+        when:
+            resetDirectives(widgetsLayer);
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 14)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 195, 195)',
+                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'drawImage(./../images/commands/ok.png, -25, -25, 50, 50)',
+                'restore()'
+            ]);
+        when:
+            clickOnArtifact(board, okButton);
+        then:
+            assert(counter).equalsTo(1);
+        when:
+            resetDirectives(widgetsLayer);
+            okButton.setActive(false);
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 14)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 195, 195)',
+                    'shadowColor = #000000', 'shadowBlur = 10',
+                    'drawImage(./../images/commands/ok-inactive.png, -25, -25, 50, 50)',
+                'restore()'
+            ]);
+        when:
+            clickOnArtifact(board, okButton);
+        then:
+            assert(counter).equalsTo(1);
+    });
+
+    it("Checks ko button", () => {
+        given:
+            var { board, widgetsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var counter = 0;
+            var popup = new DPopup(new Dimension2D(500, 200));
+            var koButton = new DKo(new Point2D(-50, 0), event=>counter++);
+            popup.addArtifact(koButton);
+            loadAllImages();
+            popup.open(board, new Point2D(500, 300));
+        when:
+            resetDirectives(widgetsLayer);
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 14)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 195, 195)',
+                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'drawImage(./../images/commands/ko.png, -25, -25, 50, 50)',
+                'restore()'
+            ]);
+        when:
+            clickOnArtifact(board, koButton);
+        then:
+            assert(counter).equalsTo(1);
+        when:
+            resetDirectives(widgetsLayer);
+            koButton.setActive(false);
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 14)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 195, 195)',
+                    'shadowColor = #000000', 'shadowBlur = 10',
+                    'drawImage(./../images/commands/ko-inactive.png, -25, -25, 50, 50)',
+                'restore()'
+            ]);
+        when:
+            clickOnArtifact(board, koButton);
+        then:
+            assert(counter).equalsTo(1);
+    });
+
+    it("Checks plus button", () => {
+        given:
+            var { board, widgetsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var counter = 0;
+            var popup = new DPopup(new Dimension2D(500, 200));
+            var plusButton = new DPlus(new Point2D(-50, 0), event=>counter++);
+            popup.addArtifact(plusButton);
+            loadAllImages();
+            popup.open(board, new Point2D(500, 300));
+        when:
+            resetDirectives(widgetsLayer);
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 14)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 195, 195)',
+                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'drawImage(./../images/commands/plus.png, -12.5, -12.5, 25, 25)',
+                'restore()'
+            ]);
+        when:
+            clickOnArtifact(board, plusButton);
+        then:
+            assert(counter).equalsTo(1);
+        when:
+            resetDirectives(widgetsLayer);
+            plusButton.setActive(false);
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 14)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 195, 195)',
+                    'shadowColor = #000000', 'shadowBlur = 10',
+                    'drawImage(./../images/commands/plus-inactive.png, -12.5, -12.5, 25, 25)',
+                'restore()'
+            ]);
+        when:
+            clickOnArtifact(board, plusButton);
+        then:
+            assert(counter).equalsTo(1);
+    });
+
+    it("Checks plus button", () => {
+        given:
+            var { board, widgetsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            var counter = 0;
+            var popup = new DPopup(new Dimension2D(500, 200));
+            var minusButton = new DMinus(new Point2D(-50, 0), event=>counter++);
+            popup.addArtifact(minusButton);
+            loadAllImages();
+            popup.open(board, new Point2D(500, 300));
+        when:
+            resetDirectives(widgetsLayer);
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 14)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 195, 195)',
+                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'drawImage(./../images/commands/minus.png, -12.5, -12.5, 25, 25)',
+                'restore()'
+            ]);
+        when:
+            clickOnArtifact(board, minusButton);
+        then:
+            assert(counter).equalsTo(1);
+        when:
+            resetDirectives(widgetsLayer);
+            minusButton.setActive(false);
+            board.paint();
+        then:
+            assert(getDirectives(widgetsLayer, 14)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 195, 195)',
+                    'shadowColor = #000000', 'shadowBlur = 10',
+                    'drawImage(./../images/commands/minus-inactive.png, -12.5, -12.5, 25, 25)',
+                'restore()'
+            ]);
+        when:
+            clickOnArtifact(board, minusButton);
+        then:
+            assert(counter).equalsTo(1);
     });
 
     it("Checks ok markers on an insert", () => {

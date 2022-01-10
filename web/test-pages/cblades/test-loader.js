@@ -19,7 +19,8 @@ import {
     CBBoard, CBHex, CBMap,
 } from "../../jslib/cblades/map.js";
 import {
-    BoardLoader, Connector, GameLoader, SequenceLoader
+    BannerListLoader, BoardListLoader,
+    BoardLoader, Connector, GameLoader, PlayerIdentityListLoader, SequenceLoader
 } from "../../jslib/cblades/loader.js";
 import {
     CBCharacterType,
@@ -553,7 +554,7 @@ describe("Loader", ()=> {
             game._oversion = 1;
             map._oid = 110;
             map._oversion = 2;
-            new GameLoader(game).load();
+            new GameLoader(game, (name, path)=>new CBUnitPlayer(name, path)).load();
         then:
             assert(getDrawPlatform().getRequest().uri).equalsTo("/api/game/by-name/Test");
             assert(getDrawPlatform().getRequest().method).equalsTo("POST");
@@ -614,10 +615,23 @@ describe("Loader", ()=> {
                             {version:0,col:0,row:0,units:["redbanner-0"]},
                             {version:0,col:0,row:1,units:["redbanner-1", "redbanner-2"]}
                         ]
-                    }]
+                    },
+                    {
+                        id:102,
+                        version:2,
+                        identity: {
+                            name:"Achilles",
+                            path:"/players/achilles.png"
+                        },
+                        wings:[],
+                        locations:[]
+                    }
+                ]
             };
             getDrawPlatform().requestSucceeds(JSON.stringify(requestContent), 200);
         then:
+            assert(game.players[1]).is(CBUnitPlayer);
+            assert(game.players[1].name).equalsTo("Achilles");
             assert(game._oid).equalsTo(101);
             assert(game._oversion).equalsTo(2);
             let specs = new GameLoader(game).toSpecs();
@@ -840,6 +854,10 @@ describe("Loader", ()=> {
             new SequenceLoader().load(game, requestContent => {
                 sequence = requestContent;
             });
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/sequence/by-game/Game/0");
+            assert(getDrawPlatform().getRequest().method).equalsTo("POST");
+        when:
             var requestContent = {
                 version: 0, game: "Game", count: 0,
                 elements: [
@@ -919,6 +937,145 @@ describe("Loader", ()=> {
             getDrawPlatform().requestFails("Test Error", 500);
         then:
             assert(sequence).isNotDefined();
+    });
+
+    it("Load player identities", () => {
+        when:
+            var identities;
+            new PlayerIdentityListLoader().load(requestContent => {
+                identities = requestContent;
+            });
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/player-identity/all");
+            assert(getDrawPlatform().getRequest().method).equalsTo("POST");
+        when:
+            var requestContent = [
+                {
+                    name: "Hector",
+                    path: "./players/hector.png"
+                },
+                {
+                    name: "Achilles",
+                    path: "./players/achilles.png"
+                }
+            ];
+            getDrawPlatform().requestSucceeds(JSON.stringify(requestContent), 200);
+        then:
+            assert(identities).objectEqualsTo([
+                {
+                    name: "Hector",
+                    path: "./players/hector.png"
+                },
+                {
+                    name: "Achilles",
+                    path: "./players/achilles.png"
+                }
+            ]);
+    });
+
+    it("When player identities loading fails", () => {
+        when:
+            var identities;
+            new PlayerIdentityListLoader().load(requestContent => {
+                identities = requestContent;
+            });
+            getDrawPlatform().requestFails("Test Error", 500);
+        then:
+            assert(identities).isNotDefined();
+    });
+
+    it("Load banners", () => {
+        when:
+            var banners;
+            new BannerListLoader().load(requestContent => {
+                banners = requestContent;
+            });
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/banner/all");
+            assert(getDrawPlatform().getRequest().method).equalsTo("POST");
+        when:
+            var requestContent = [
+                {
+                    name: "redflag",
+                    path: "./banners/redflag.png"
+                },
+                {
+                    name: "blueflag",
+                    path: "./banners/blueflag.png"
+                }
+            ];
+            getDrawPlatform().requestSucceeds(JSON.stringify(requestContent), 200);
+        then:
+            assert(banners).objectEqualsTo([
+                {
+                    name: "redflag",
+                    path: "./banners/redflag.png"
+                },
+                {
+                    name: "blueflag",
+                    path: "./banners/blueflag.png"
+                },
+            ]);
+    });
+
+    it("When banner list loading fails", () => {
+        when:
+            var banners;
+            new BannerListLoader().load(requestContent => {
+                banners = requestContent;
+            });
+            getDrawPlatform().requestFails("Test Error", 500);
+        then:
+            assert(banners).isNotDefined();
+    });
+
+    it("Load boards", () => {
+        when:
+            var boards;
+            new BoardListLoader().load(requestContent => {
+                boards = requestContent;
+            });
+        then:
+            assert(getDrawPlatform().getRequest().uri).equalsTo("/api/board/all");
+            assert(getDrawPlatform().getRequest().method).equalsTo("POST");
+        when:
+            var requestContent = [
+                {
+                    name: "map1",
+                    path: "./maps/map1.png",
+                    icon: "./maps/map1-icon.png"
+                },
+                {
+                    name: "map1",
+                    path: "./maps/map2.png",
+                    icon: "./maps/map2-icon.png"
+                }
+            ];
+            getDrawPlatform().requestSucceeds(JSON.stringify(requestContent), 200);
+        then:
+            assert(boards).objectEqualsTo([
+                {
+                    name: "map1",
+                    path: "./maps/map1.png",
+                    icon: "./maps/map1-icon.png"
+                },
+                {
+                    name: "map1",
+                    path: "./maps/map2.png",
+                    icon: "./maps/map2-icon.png"
+                }
+            ]);
+    });
+
+    it("When board list loading fails", () => {
+        when:
+            var boards;
+            new BoardListLoader().load(requestContent => {
+                boards = requestContent;
+            });
+            getDrawPlatform().requestFails("Test Error", 500);
+        then:
+            assert(boards).isNotDefined();
     });
 
 });

@@ -27,7 +27,7 @@ import {
     DRectArtifact,
     DComposedImageArtifact,
     DArtifact,
-    DPedestalArtifact
+    DPedestalArtifact, DComposedElement
 } from "../jslib/board.js";
 import {
     mockPlatform, getDirectives, resetDirectives, createEvent, loadAllImages, getLayers, assertDirectives
@@ -98,6 +98,22 @@ describe("Board", ()=> {
                     "clearRect(0, 0, 1500, 1000)",
                 "restore()"
             ]);
+    });
+
+    it("Checks board resize", () => {
+        given:
+            var board = new DBoard(new Dimension2D(2500, 2000), new Dimension2D(500, 300),
+                new DSimpleLevel("map"));
+            var [mapLayer] = getLayers(board, "map");
+        when:
+            resetDirectives(mapLayer);
+            board.dimension = new Dimension2D(5000, 2000);
+            board.paint();
+        then:
+            assert(board.viewportDimension.w).equalsTo(500);
+            assert(board.viewportDimension.h).equalsTo(300);
+            assert(board.dimension.w).equalsTo(5000);
+            assert(board.dimension.h).equalsTo(2000);
     });
 
     function createBoardWithMapUnitsAndMarkersLevels(width, height, viewPortWidth, viewPortHeight) {
@@ -268,6 +284,286 @@ describe("Board", ()=> {
             assert(getDirectives(layer).length).equalsTo(12);
             assert(getDirectives(layer)).arrayContains("../images/unit1.png");
             assert(getDirectives(layer)).arrayContains("../images/unit2.png");
+    });
+
+    it("Checks composed element (not undoable)", () => {
+        given:
+            var { board, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+        when:
+            var backgroundImage = DImage.getImage("../images/background.png");
+            backgroundImage._root.onload();
+            var image = DImage.getImage("../images/unit.png");
+            image._root.onload();
+            var backgroundArtifact = new DImageArtifact("units", backgroundImage,
+                new Point2D(0, 0), new Dimension2D(100, 100));
+            var artifact = new DImageArtifact("units", image,
+                new Point2D(0, 0), new Dimension2D(50, 50));
+            var element = new DElement(artifact);
+            var composedElement = new DComposedElement(backgroundArtifact);
+            composedElement.setLocation(new Point2D(100, 50));
+            resetDirectives(layer);
+            composedElement.addElement(element);
+            composedElement.setOnBoard(board);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/background.png, -50, -50, 100, 100)',
+                'restore()',
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/unit.png, -25, -25, 50, 50)',
+                'restore()'
+            ]);
+        when:
+            resetDirectives(layer);
+            composedElement.removeElement(element);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/background.png, -50, -50, 100, 100)',
+                'restore()',
+            ]);
+        when:
+            resetDirectives(layer);
+            composedElement.addElement(element);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/background.png, -50, -50, 100, 100)',
+                'restore()',
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/unit.png, -25, -25, 50, 50)',
+                'restore()'
+            ]);
+        when:
+            resetDirectives(layer);
+            composedElement.removeFromBoard();
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks composed element (undoable)", () => {
+        given:
+            var { board, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            Memento.activate();
+            Memento.open();
+        when:
+            var backgroundImage = DImage.getImage("../images/background.png");
+            backgroundImage._root.onload();
+            var image = DImage.getImage("../images/unit.png");
+            image._root.onload();
+            var backgroundArtifact = new DImageArtifact("units", backgroundImage,
+                new Point2D(0, 0), new Dimension2D(100, 100));
+            var artifact = new DImageArtifact("units", image,
+                new Point2D(0, 0), new Dimension2D(50, 50));
+            var element = new DElement(artifact);
+            var composedElement = new DComposedElement(backgroundArtifact);
+            composedElement.setLocation(new Point2D(100, 50));
+            resetDirectives(layer);
+            composedElement.appendElement(element);
+            composedElement.show(board);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/background.png, -50, -50, 100, 100)',
+                    'restore()',
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/unit.png, -25, -25, 50, 50)',
+                'restore()'
+            ]);
+        when:
+            Memento.open();
+            resetDirectives(layer);
+            composedElement.deleteElement(element);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/background.png, -50, -50, 100, 100)',
+                'restore()',
+            ]);
+        when:
+            Memento.open();
+            resetDirectives(layer);
+            composedElement.appendElement(element);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/background.png, -50, -50, 100, 100)',
+                'restore()',
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/unit.png, -25, -25, 50, 50)',
+                'restore()'
+            ]);
+        when:
+            resetDirectives(layer);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/background.png, -50, -50, 100, 100)',
+                'restore()',
+            ]);
+        when:
+            resetDirectives(layer);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/background.png, -50, -50, 100, 100)',
+                'restore()',
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/unit.png, -25, -25, 50, 50)',
+                'restore()'
+            ]);
+        when:
+            resetDirectives(layer);
+            composedElement.hide();
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([]);
+        when:
+            resetDirectives(layer);
+            Memento.undo();
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/background.png, -50, -50, 100, 100)',
+                'restore()',
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/unit.png, -25, -25, 50, 50)',
+                'restore()'
+            ]);
+    });
+
+    it("Checks element manipulation by a composed element (not undoable)", () => {
+        given:
+            var { board, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+        when:
+            var backgroundImage = DImage.getImage("../images/background.png");
+            backgroundImage._root.onload();
+            var image = DImage.getImage("../images/unit.png");
+            image._root.onload();
+            var backgroundArtifact = new DImageArtifact("units", image,
+                new Point2D(0, 0), new Dimension2D(50, 150));
+            var artifact = new DImageArtifact("units", image,
+                new Point2D(0, 0), new Dimension2D(100, 100));
+            var element = new DElement(artifact);
+            var composedElement = new DComposedElement(backgroundArtifact);
+        then:
+            assert(composedElement.hasElement(element)).isFalse();
+        when:
+            composedElement.addElement(element);
+        then:
+            assert(composedElement.boundingArea).equalsTo(new Area2D(-50, -75, 50, 75));
+        when:
+            composedElement.setLocation(new Point2D(100, 50));
+            composedElement.setAngle(60);
+            resetDirectives(layer);
+            composedElement.setOnBoard(board);
+            board.paint();
+        then:
+            assert(composedElement.hasElement(element)).isTrue();
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(0.5, 0.866, -0.866, 0.5, 350, 200)',
+                    'drawImage(../images/unit.png, -25, -75, 50, 150)',
+                'restore()',
+                'save()',
+                    'setTransform(0.5, 0.866, -0.866, 0.5, 350, 200)',
+                    'drawImage(../images/unit.png, -50, -50, 100, 100)',
+                'restore()'
+            ]);
+        when:
+            resetDirectives(layer);
+            composedElement.alpha = 0;
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks element manipulation by a composed element (undoable)", () => {
+        given:
+            var { board, unitsLayer:layer } = createBoardWithMapUnitsAndMarkersLevels(500, 300, 500, 300);
+            Memento.activate();
+        when:
+            var image = DImage.getImage("../images/unit.png");
+            image._root.onload();
+            var artifact = new DImageArtifact("units", image,
+                new Point2D(0, 0), new Dimension2D(100, 100));
+            var element = new DElement(artifact);
+            var composedElement = new DComposedElement();
+            composedElement.setOnBoard(board);
+            composedElement.appendElement(element);
+        when:
+            Memento.open();
+            composedElement.move(new Point2D(100, 50));
+            resetDirectives(layer);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 350, 200)',
+                    'drawImage(../images/unit.png, -50, -50, 100, 100)',
+                'restore()'
+            ]);
+        when:
+            Memento.open();
+            composedElement.rotate(60);
+            resetDirectives(layer);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(0.5, 0.866, -0.866, 0.5, 350, 200)',
+                    'drawImage(../images/unit.png, -50, -50, 100, 100)',
+                'restore()'
+            ]);
+        when:
+            Memento.undo();
+            resetDirectives(layer);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                'setTransform(1, 0, 0, 1, 350, 200)',
+                'drawImage(../images/unit.png, -50, -50, 100, 100)',
+                'restore()'
+            ]);
+        when:
+            Memento.undo();
+            resetDirectives(layer);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(1, 0, 0, 1, 250, 150)',
+                    'drawImage(../images/unit.png, -50, -50, 100, 100)',
+                'restore()'
+            ]);
     });
 
     it("Checks default element settings", () => {
@@ -1436,6 +1732,19 @@ describe("Board", ()=> {
                     "strokeStyle = #00FF00", "lineWidth = #FF0000",
                     "strokeRect(-25, -25, 50, 50)",
                 "restore()"
+            ]);
+        when:
+            artifact.dimension = new Dimension2D(100, 25);
+            resetDirectives(layer);
+            board.paint();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                'save()',
+                    'setTransform(0.9962, 0.0872, -0.0872, 0.9962, 260, 165)',
+                    'fillStyle = #0000FF', 'fillRect(-50, -12.5, 100, 25)',
+                    'strokeStyle = #00FF00', 'lineWidth = #FF0000',
+                    'strokeRect(-50, -12.5, 100, 25)',
+                'restore()'
             ]);
     });
 

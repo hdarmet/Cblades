@@ -411,7 +411,7 @@ export function AreaArtifact(clazz) {
             return Area2D.rectBoundingArea(this.viewportTransform,
                 -this.dimension.w/2, -this.dimension.h/2,
                 this.dimension.w, this.dimension.h);
-       }
+        }
 
     }
 }
@@ -963,12 +963,12 @@ export class DComposedElement extends DElement {
 
     constructor(...args) {
         super(...args);
-        this._elements = new Set();
+        this._elements = [];
     }
 
     _memento() {
         let memento = super._memento();
-        memento.elements = new Set(this._elements);
+        memento.elements = [...this._elements];
         return memento;
     }
 
@@ -978,49 +978,58 @@ export class DComposedElement extends DElement {
     }
 
     hasElement(element) {
-        return this._elements.has(element);
+        return this._elements.indexOf(element)>=0;
     }
 
     addElement(element) {
-        console.assert(!this._elements.has(element));
-        this._elements.add(element);
+        console.assert(!this.hasElement(element));
+        this._elements.push(element);
+        element.setLocation(this.location);
+        element.setAngle(this.angle);
         if (this.board) {
-            element.setLocation(this.location);
-            element.setAngle(this.angle);
             element.setOnBoard(this.board);
         }
     }
 
     removeElement(element) {
-        console.assert(this._elements.has(element));
-        this._elements.delete(element);
+        console.assert(this.hasElement(element));
+        this._elements.splice(this._elements.indexOf(element), 1);
+        element.setLocation(new Point2D(0, 0));
+        element.setAngle(0);
         if (this.board) {
-            element.setLocation(new Point2D(0, 0));
-            element.setAngle(0);
             element.removeFromBoard(this.board);
         }
     }
 
     appendElement(element) {
         Memento.register(this);
-        console.assert(!this._elements.has(element));
-        this._elements.add(element);
+        console.assert(!this.hasElement(element));
+        this._elements.push(element);
+        element.move(this.location);
+        element.rotate(this.angle);
         if (this.board) {
-            element.setLocation(this.location);
-            element.setAngle(this.angle);
             element.show(this.board);
         }
     }
 
     deleteElement(element) {
         Memento.register(this);
-        console.assert(this._elements.has(element));
-        this._elements.remove(element);
+        console.assert(this.hasElement(element));
+        this._elements.splice(this._elements.indexOf(element), 1);
+        Memento.register(element);
+        element.move(new Point2D(0, 0));
+        element.rotate(0);
         if (this.board) {
-            element.location.setLocation(new Point2D(0, 0));
-            element.setAngle(0);
             element.hide(this.board);
         }
+    }
+
+    setAngle(angle) {
+        super.setAngle(angle);
+        for (let element of this.elements) {
+            element.setAngle(angle);
+        }
+        return this;
     }
 
     setLocation(point) {
@@ -1083,17 +1092,9 @@ export class DComposedElement extends DElement {
         return this;
     }
 
-    refresh() {
-        super.refresh();
-        for (let element of this.elements) {
-            element.refresh();
-        }
-        return this;
-    }
-
     get boundingArea() {
         let area = super.boundingArea;
-        for (let index=1; index<this.elements.length; index++) {
+        for (let index=0; index<this.elements.length; index++) {
             area = area.add(this.elements[index].boundingArea);
         }
         return area;
@@ -1539,7 +1540,7 @@ export class DBoard {
         this._draw.fitWindow();
     }
 
-    setDimension(dimension) {
+    set dimension(dimension) {
         this._dimension = dimension;
         this._resize();
     }

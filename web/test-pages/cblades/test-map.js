@@ -51,9 +51,6 @@ class CBTestUnit {
         return true;
     }
 
-    get playables() {
-        return [this];
-    }
 }
 
 class CBTestLeader extends CBTestUnit {
@@ -108,7 +105,9 @@ describe("Map", ()=> {
 
     it("Checks board general features", () => {
         given:
-            var board = new CBBoard("board1", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
+            var board = new CBBoard(
+                "board1", "./../images/maps/map.png", "./../images/maps/map-icon.png"
+            );
             var game = new CBTestGame();
         when:
             game.setMap(board);
@@ -117,16 +116,18 @@ describe("Map", ()=> {
             assert(board.artifact).is(MapImageArtifact);
             assert(board.name).equalsTo("board1");
             assert(board.path).equalsTo("./../images/maps/map.png");
+            assert(board.icon).equalsTo("./../images/maps/map-icon.png");
     });
 
     it("Checks a map with several mapboard", () => {
         given:
-            var map = new CBMap([
+            var mapBoards = [
                 {path:"./../images/maps/map1.png", col:0, row:0, invert:true},
                 {path:"./../images/maps/map2.png", col:0, row:1},
                 {path:"./../images/maps/map3.png", col:1, row:0},
                 {path:"./../images/maps/map4.png", col:1, row:1, invert:true}
-            ]);
+            ];
+            var map = new CBMap(mapBoards);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -161,6 +162,8 @@ describe("Map", ()=> {
             assert(map.dimension.toString()).equalsTo("dimension(4092, 6300)");
             assert(map.colCount).equalsTo(24);
             assert(map.rowCount).equalsTo(32);
+            assert(map.rowCount).equalsTo(32);
+            assert(map.mapBoards).objectEqualsTo(mapBoards);
     });
 
     it("Checks map borders", () => {
