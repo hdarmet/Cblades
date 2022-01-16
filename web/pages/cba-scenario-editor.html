@@ -33,9 +33,9 @@
     let game = new CBScenarioEditorGame("scenario");
 
     registerResponse("/api/player-identity/all", [
-        {path:"./../images/units/players/orc-1.png", name:"player0"},
+        {path:"./../images/units/players/orc-1.png", name:"orc-1"},
         {path:"./../images/units/players/orc-2.png", name:"player1"},
-        {path:"./../images/units/players/roughneck-1.png", name:"player2"},
+        {path:"./../images/units/players/roughneck-1.png", name:"roughneck-1"},
         {path:"./../images/units/players/roughneck-2.png", name:"player3"},
         {path:"./../images/units/players/orc-1.png", name:"player4"},
         {path:"./../images/units/players/orc-2.png", name:"player5"},
@@ -108,6 +108,18 @@
         {path:"./../images/units/mercenaries/banners/banner0.png", name:"banner27"},
         {path:"./../images/units/mercenaries/banners/banner1.png", name:"banner28"},
         {path:"./../images/units/mercenaries/banners/banner2.png", name:"banner29"}
+    ]);
+
+    registerResponse("/api/board/all", [
+        {path: "./../images/maps/map1.png", icon: "./../images/maps/map1-icon.png"},
+        {path: "./../images/maps/map2.png", icon: "./../images/maps/map2-icon.png"},
+        {path: "./../images/maps/map3.png", icon: "./../images/maps/map3-icon.png"},
+        {path: "./../images/maps/map4.png", icon: "./../images/maps/map4-icon.png"},
+        {path: "./../images/maps/map5.png", icon: "./../images/maps/map5-icon.png"},
+        {path: "./../images/maps/map6.png", icon: "./../images/maps/map6-icon.png"},
+        {path: "./../images/maps/map7.png", icon: "./../images/maps/map7-icon.png"},
+        {path: "./../images/maps/map8.png", icon: "./../images/maps/map8-icon.png"},
+        {path: "./../images/maps/map9.png", icon: "./../images/maps/map9-icon.png"}
     ]);
 
     registerResponse("/api/game/create",

@@ -242,6 +242,7 @@ let _images = new Map();
 export class DImage {
 
     constructor(path) {
+        console.assert(path);
         this._root = _platform.createElement("img");
         this._root.src = path;
         this._todos = [];

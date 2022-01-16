@@ -56,7 +56,7 @@ import {
     CBMap
 } from "./map.js";
 
-export class CBMapEditorHexHeightTrigger extends NeighborRawActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
+export class CBBoardEditorHexHeightTrigger extends NeighborRawActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
 
     constructor(actuator, hex) {
         let images = [
@@ -98,7 +98,7 @@ export class CBMapEditorHexHeightTrigger extends NeighborRawActuatorArtifactMixi
 
 }
 
-export class CBMapEditorHexTypeTrigger extends NeighborActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
+export class CBBoardEditorHexTypeTrigger extends NeighborActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
 
     constructor(actuator, hex) {
         let images = [
@@ -144,7 +144,7 @@ export class CBMapEditorHexTypeTrigger extends NeighborActuatorArtifactMixin(CBA
 
 }
 
-export class CBMapEditorHexSideTypeTrigger extends NeighborRawActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
+export class CBBoardEditorHexSideTypeTrigger extends NeighborRawActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
 
     constructor(actuator, hexSide) {
         let images = [
@@ -181,37 +181,37 @@ export class CBMapEditorHexSideTypeTrigger extends NeighborRawActuatorArtifactMi
 
 }
 
-export class CBMapEditActuator extends NeighborActuatorMixin(CBActuator) {
+export class CBBoardEditActuator extends NeighborActuatorMixin(CBActuator) {
 
     constructor(map) {
         super();
 
         let imageArtifacts = [];
         for (let hex of map.hexes) {
-            let triggerType = new CBMapEditorHexTypeTrigger(this, hex);
+            let triggerType = new CBBoardEditorHexTypeTrigger(this, hex);
             imageArtifacts.push(triggerType);
-            let triggerHeight = new CBMapEditorHexHeightTrigger(this, hex);
+            let triggerHeight = new CBBoardEditorHexHeightTrigger(this, hex);
             imageArtifacts.push(triggerHeight);
         }
         for (let hexSide of map.hexSides) {
-            let trigger = new CBMapEditorHexSideTypeTrigger(this, hexSide);
+            let trigger = new CBBoardEditorHexSideTypeTrigger(this, hexSide);
             imageArtifacts.push(trigger);
         }
         this.initElement(imageArtifacts);
     }
 
     getHexTypeTrigger(hexLocation) {
-        return this.findTrigger(trigger=>trigger instanceof CBMapEditorHexTypeTrigger &&
+        return this.findTrigger(trigger=>trigger instanceof CBBoardEditorHexTypeTrigger &&
             trigger.hexLocation.similar(hexLocation));
     }
 
     getHexHeightTrigger(hexLocation) {
-        return this.findTrigger(trigger=>trigger instanceof CBMapEditorHexHeightTrigger &&
+        return this.findTrigger(trigger=>trigger instanceof CBBoardEditorHexHeightTrigger &&
             trigger.hexLocation.similar(hexLocation));
     }
 
     getHexSideTypeTrigger(hexLocation) {
-        return this.findTrigger(trigger=>trigger instanceof CBMapEditorHexSideTypeTrigger &&
+        return this.findTrigger(trigger=>trigger instanceof CBBoardEditorHexSideTypeTrigger &&
             trigger.hexLocation.similar(hexLocation));
     }
 
@@ -411,6 +411,10 @@ export class CBBattleArtifact extends DPedestalArtifact {
 
     get active() {
         return this._active;
+    }
+
+    get path() {
+        return this.artifact ? this.artifact.image.path : null;
     }
 
     setActive(active) {
@@ -1032,6 +1036,14 @@ export class CBRosterSelector extends DElement {
         }
     }
 
+    get validateButton() {
+        return this._validateButton;
+    }
+
+    get cancelButton() {
+        return this._cancelButton;
+    }
+
     get prevSelectorPage() {
         return this._prevSelectorPage;
     }
@@ -1058,12 +1070,12 @@ export class CBRosterSelector extends DElement {
         this._nextSelectorPage.setActive(
             this._firstItemIndex+(this._getColCount()*this._getRowCount()) < this._content.length
         );
-        this._validateButton.setActive(this._parent.battleSettingsAreValid());
+        this._validateButton.setActive(this._isValidationPossible());
     }
 
     _changeCellState(cell) {
         this._parent.activateHeader(false);
-        this._validateButton.setActive(this._parent.battleSettingsAreValid());
+        this._validateButton.setActive(this._isValidationPossible());
     }
 
 }
@@ -1113,12 +1125,16 @@ export class CBPlayerSelector extends CBRosterSelector {
     _changeCellState(cell) {
         if (cell.selected) {
             this._parent.addPlayer(cell.item);
-            this._parent.showWingSelector();
+            this._parent.showWingSelector(true);
         }
         else {
             this._parent.removePlayer(cell.item);
         }
         super._changeCellState(cell);
+    }
+
+    _isValidationPossible() {
+        return this._parent.battleSettingsAreValid();
     }
 
     static COL_COUNT = 6;
@@ -1193,6 +1209,10 @@ export class CBWingSelector extends CBRosterSelector {
         super._changeCellState(cell);
     }
 
+    _isValidationPossible() {
+        return this._parent.playerSettingsAreValid(this._parent.player);
+    }
+
     static COL_COUNT = 6;
     static ROW_COUNT = 4;
     static NAVIGATION_MARGIN = 35;
@@ -1233,6 +1253,10 @@ export class CBUnitsRoster extends DPopup {
         return this._wingSelector;
     }
 
+    get rosterContent() {
+        return this._rosterContent;
+    }
+
     get wing() {
         return this._wing;
     }
@@ -1265,14 +1289,16 @@ export class CBUnitsRoster extends DPopup {
                 }
             }
         }
-        return null;
     }
 
     activateHeader(active) {
+        if (active) {
+            this.game.wingIndex = this.wings.map(wing => wing.name).indexOf(this._wing.name);
+        }
         this._header.setActive(active);
     }
 
-    validateBattleSettings() {
+    _validateBattleSettings() {
         let syncWings = (player, playerDesc)=>{
             let wingMap = new Map();
             for (let wing of player.wings) {
@@ -1310,7 +1336,21 @@ export class CBUnitsRoster extends DPopup {
         this._showRosterContent();
     }
 
-    cancelBattleSettings() {
+    _validatePlayerCreation() {
+        delete this._playerCreation;
+        this.showPlayerSelector();
+    }
+
+    validateBattleSettings() {
+        if (this._playerCreation) {
+            this._validatePlayerCreation();
+        }
+        else {
+            this._validateBattleSettings();
+        }
+    }
+
+    _cancelBattleSettings() {
         let _retrievePlayer = ()=>{
             for (let player of this._players) {
                 if (player.name === this._player.name) {
@@ -1320,20 +1360,39 @@ export class CBUnitsRoster extends DPopup {
             return this._players[0];
         }
         let _retrieveWing = ()=>{
+            this._game.wingIndex = 0;
             for (let wing of this._player.wings) {
+                this._game.wingIndex++;
                 if (wing.name === this._wing.name) {
                     return wing;
                 }
             }
-            return this._player.wings[0];
+            this._game.wingIndex = 0;
+            return this._player.wings.length>0 ? this._player.wings[0] : null;
         }
 
         this.activateHeader(true);
         this._loadBattleSettings(this._game);
-        this._player = _retrievePlayer();
+        this.setPlayer(_retrievePlayer());
         this._wing = _retrieveWing();
         this._header.refreshPlayer();
         this._showRosterContent();
+    }
+
+    _cancelPlayerCreation() {
+        delete this._playerCreation;
+        this._players = this._players.filter(player=>(player !== this._player));
+        this._resetBattleArtifacts();
+        this.showPlayerSelector();
+    }
+
+    cancelBattleSettings() {
+        if (this._playerCreation) {
+            this._cancelPlayerCreation();
+        }
+        else {
+            this._cancelBattleSettings();
+        }
     }
 
     _loadBattleSettings(game) {
@@ -1355,10 +1414,14 @@ export class CBUnitsRoster extends DPopup {
         }
     }
 
+    playerSettingsAreValid(player) {
+        return player.wings.length>0;
+    }
+
     battleSettingsAreValid() {
         if (this._players.length<2) return false;
         for (let player of this._players) {
-            if (player.wings.length===0) return false;
+            if (!this.playerSettingsAreValid(player)) return false;
         }
         return true;
     }
@@ -1373,11 +1436,16 @@ export class CBUnitsRoster extends DPopup {
         this._header.refreshPlayer();
     }
 
+    _resetBattleArtifacts() {
+        this._player = this._players.length>0 ? this._players[0] : null;
+        this._wing = (this._player && this._player.wings.length>0) ? this._player.wings[0] : null;
+        this._header.refreshPlayer();
+    }
+
     removePlayer(item) {
         this._players = this._players.filter(player=>player.name !== item.name);
         if (item.name === this._player.name) {
-            this._player = this._players[0];
-            this._header.refreshPlayer();
+            this._resetBattleArtifacts();
         }
     }
 
@@ -1418,6 +1486,7 @@ export class CBUnitsRoster extends DPopup {
 
     _buildPlayerSelector(playerIdentities) {
         this._playerSelector = new CBPlayerSelector(this, playerIdentities);
+        this._backToPlayersSelector = false;
     }
 
     _buildWingSelector(banners) {
@@ -1449,7 +1518,8 @@ export class CBUnitsRoster extends DPopup {
         }
     }
 
-    showWingSelector() {
+    showWingSelector(playerCreation) {
+        if (playerCreation) this._playerCreation = true;
         if (!this.hasElement(this._wingSelector)) {
             if (this.hasElement(this._rosterContent)) {
                 this.removeElement(this._rosterContent);
@@ -1459,9 +1529,6 @@ export class CBUnitsRoster extends DPopup {
             }
             this._wingSelector.changeSelectionContent();
             this.addElement(this._wingSelector);
-        }
-        else {
-            this._wingSelector.changeSelectionContent();
         }
     }
 
@@ -1515,6 +1582,9 @@ export class CBMapCellArtifact extends DPedestalArtifact {
         this._col = col;
         this._row = row;
         this.colorize("#E0E0E0");
+        this.setSettings(level => {
+            level.setShadowSettings("#000000", 0);
+        });
     }
 
     colorize(color) {
@@ -1559,7 +1629,7 @@ export class CBMapCellArtifact extends DPedestalArtifact {
     }
 
     onMouseEnter(event, fromArtifact) {
-        if (fromArtifact !== this._turnCommand && fromArtifact !== this._deleteCommand) {
+        if (!fromArtifact || (fromArtifact !== this._turnCommand && fromArtifact !== this._deleteCommand)) {
             this._mapComposer.enterCell(this);
             this.setSettings(level => {
                 level.setShadowSettings("#FF0000", 10);
@@ -1600,6 +1670,14 @@ export class CBMapCellArtifact extends DPedestalArtifact {
         this._mapComposer.addArtifact(this._deleteCommand);
     }
 
+    get turnCommand() {
+        return this._turnCommand;
+    }
+
+    get deleteCommand() {
+        return this._deleteCommand;
+    }
+
     unsetCommands() {
         if (this._turnCommand) {
             this._mapComposer.removeArtifact(this._turnCommand);
@@ -1621,9 +1699,6 @@ export class CBMapGliderCommand extends DMultiImagesArtifact {
         this._mapComposer = mapComposer;
         this._direction = direction;
         this._active = true;
-        this.setSettings(level => {
-            level.setShadowSettings("#00FFFF", 10);
-        });
     }
 
     setActive(active) {
@@ -1836,6 +1911,10 @@ export class CBMapComposer extends DPopup {
         }
     }
 
+    getCell(col, row) {
+        return this._mapComposer[col][row];
+    }
+
     _init(configuration) {
         for(let board of configuration) {
             this._mapComposer[board.col][board.row].setMap(board);
@@ -1914,6 +1993,22 @@ export class CBMapComposer extends DPopup {
         this._translateToLeft.setActive(this.isTranslateCommandActive(this._translateToLeft.direction));
         this._translateToRight.setActive(this.isTranslateCommandActive(this._translateToRight.direction));
         this._translateToBottom.setActive(this.isTranslateCommandActive(this._translateToBottom.direction));
+    }
+
+    get translateToTop() {
+        return this._translateToTop;
+    }
+
+    get translateToBottom() {
+        return this._translateToBottom;
+    }
+
+    get translateToLeft() {
+        return this._translateToLeft;
+    }
+
+    get translateToRight() {
+        return this._translateToRight;
     }
 
     getAreaToFill() {
@@ -2050,17 +2145,6 @@ export class CBMapComposer extends DPopup {
     static ROW_COUNT = 4;
     static COL_COUNT = 8;
 
-    static allBoards = [
-        {path: "./../images/maps/map1.png", icon: "./../images/maps/map1-icon.png"},
-        {path: "./../images/maps/map2.png", icon: "./../images/maps/map2-icon.png"},
-        {path: "./../images/maps/map3.png", icon: "./../images/maps/map3-icon.png"},
-        {path: "./../images/maps/map4.png", icon: "./../images/maps/map4-icon.png"},
-        {path: "./../images/maps/map5.png", icon: "./../images/maps/map5-icon.png"},
-        {path: "./../images/maps/map6.png", icon: "./../images/maps/map6-icon.png"},
-        {path: "./../images/maps/map7.png", icon: "./../images/maps/map7-icon.png"},
-        {path: "./../images/maps/map8.png", icon: "./../images/maps/map8-icon.png"},
-        {path: "./../images/maps/map9.png", icon: "./../images/maps/map9-icon.png"}
-    ];
 }
 
 export class CBEditUnitMenu extends DIconMenu {
@@ -2253,10 +2337,10 @@ export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
         this._board.delOnKeyDown();
     }
 
-    editMap() {
+    editBoard() {
         this.closeActuators();
         this.closePopup();
-        this.openActuator(new CBMapEditActuator(this.map));
+        this.openActuator(new CBBoardEditActuator(this.map));
     }
 
     setMenu() {
@@ -2270,7 +2354,7 @@ export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 this.showCommand(this._settingsCommand);
                 this.showCommand(this._saveCommand);
                 this.showCommand(this._loadCommand);
-                this.showCommand(this._editMapCommand);
+                this.showCommand(this._editBoardCommand);
                 this.showCommand(this._fullScreenCommand);
                 animation();
             });
@@ -2285,7 +2369,7 @@ export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 this.hideCommand(this._settingsCommand);
                 this.hideCommand(this._saveCommand);
                 this.hideCommand(this._loadCommand);
-                this.hideCommand(this._editMapCommand);
+                this.hideCommand(this._editBoardCommand);
                 this.hideCommand(this._fullScreenCommand);
                 animation();
             });
@@ -2319,10 +2403,10 @@ export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 new BoardLoader(this.map).load();
                 animation();
             }).setTurnAnimation(true);
-        this._editMapCommand = new DMultiStatePushButton(
-            ["./../images/commands/edit-map.png", "./../images/commands/field.png"],
+        this._editBoardCommand = new DMultiStatePushButton(
+            ["./../images/commands/edit-board.png", "./../images/commands/field.png"],
             new Point2D(-420, -60), (state, animation)=>{
-                this.editMap();
+                this.editBoard();
                 animation();
             }).setTurnAnimation(true, ()=>{}
         );
@@ -2379,7 +2463,7 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
         });
     }
 
-    arrangeMap() {
+    editMap() {
         this.closeActuators();
         this.closePopup();
         new BoardListLoader().load(boards=>{
@@ -2399,7 +2483,7 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 this.showCommand(this._saveCommand);
                 this.showCommand(this._loadCommand);
                 this.showCommand(this._editUnitsCommand);
-                this.showCommand(this._setMapCommand);
+                this.showCommand(this._editMapCommand);
                 this.showCommand(this._fullScreenCommand);
                 animation();
             });
@@ -2415,7 +2499,7 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 this.hideCommand(this._saveCommand);
                 this.hideCommand(this._loadCommand);
                 this.hideCommand(this._editUnitsCommand);
-                this.hideCommand(this._setMapCommand);
+                this.hideCommand(this._editMapCommand);
                 this.hideCommand(this._fullScreenCommand);
                 animation();
             });
@@ -2457,10 +2541,10 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 animation();
             }).setTurnAnimation(true, ()=>{}
         );
-        this._setMapCommand = new DMultiStatePushButton(
-            ["./../images/commands/set-map.png", "./../images/commands/set-map-inactive.png"],
+        this._editMapCommand = new DMultiStatePushButton(
+            ["./../images/commands/edit-map.png", "./../images/commands/edit-map-inactive.png"],
             new Point2D(-480, -60), (state, animation)=>{
-                this.arrangeMap();
+                this.editMap();
                 animation();
             }).setTurnAnimation(true, ()=>{}
         );

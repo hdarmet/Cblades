@@ -170,6 +170,7 @@ export let mockPlatform = {
     },
 
     drawImage(context, image, ...params) {
+        console.assert(image.src);
         for(let index in params) {
             if (typeof(params[index])==="number") {
                 params[index] = round(params[index]);

@@ -29,7 +29,7 @@ import {
 } from "../../jslib/cblades/unit.js";
 import {
     CBMapEditorGame, CBScenarioEditorGame, CBEditorPlayer, CBEditUnitMenu, CBFormationPlacementActuator,
-    CBMapEditActuator, CBUnitPlacementActuator, CBUnitsRoster, CBUnitsRosterContent
+    CBBoardEditActuator, CBUnitPlacementActuator, CBUnitsRoster, CBUnitsRosterContent, CBMapComposer
 } from "../../jslib/cblades/editor.js";
 import {
     clickOnTrigger,
@@ -57,7 +57,7 @@ import {
     showMenuItem,
     clickOnActionMenu,
     showSelectedTroop,
-    showSelectedFormation, getArtifactPoint, mouseMoveOnPoint, showShadowedImage
+    showSelectedFormation, getArtifactPoint, mouseMoveOnPoint, showShadowedImage, showMask
 } from "./interactive-tools.js";
 import {
     GoblinLeader,
@@ -122,7 +122,7 @@ describe("Editor", ()=> {
 
     function getMapEditorActuator(game) {
         for (let actuator of game.actuators) {
-            if (actuator instanceof CBMapEditActuator) return actuator;
+            if (actuator instanceof CBBoardEditActuator) return actuator;
         }
         return null;
     }
@@ -144,7 +144,7 @@ describe("Editor", ()=> {
             loadAllImages();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
         when:
-            game.editMap();
+            game.editBoard();
             let mapEditActuator = getMapEditorActuator(game);
             let hexTrigger = mapEditActuator.getHexTypeTrigger(map.getHex(4, 5));
             mouseMoveOnTrigger(game, hexTrigger);
@@ -170,7 +170,7 @@ describe("Editor", ()=> {
             game.setMap(map);
             game.start();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
-            game.editMap();
+            game.editBoard();
             paint(game);
             loadAllImages();
             var mapEditActuator = getMapEditorActuator(game);
@@ -300,7 +300,7 @@ describe("Editor", ()=> {
             game.setMap(map);
             game.start();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
-            game.editMap();
+            game.editBoard();
             paint(game);
             loadAllImages();
             var mapEditActuator = getMapEditorActuator(game);
@@ -361,7 +361,7 @@ describe("Editor", ()=> {
             game.setMap(map);
             game.start();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
-            game.editMap();
+            game.editBoard();
             paint(game);
             loadAllImages();
             var mapEditActuator = getMapEditorActuator(game);
@@ -440,6 +440,318 @@ describe("Editor", ()=> {
         return { game, map};
     }
 
+    function showMapSelector(map, x, y) {
+        return [
+            "save()",
+                `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+                "shadowColor = #000000", "shadowBlur = 10",
+                `drawImage(./../images/maps/${map}-icon.png, -40, -62.5, 80, 125)`,
+            "restore()"
+        ]
+    }
+
+    function showFilledMapCell(map, col, row, inverted=false) {
+        return [
+            "save()",
+                `setTransform(1, 0, 0, 1, ${145+col*80}, ${212.5+row*125})`,
+                "shadowBlur = 0",
+                `drawImage(./../images/maps/${map}-icon.png, -40, -62.5, 80, 125)`,
+            "restore()"
+        ]
+    }
+
+    function showSelectedFilledMapCell(map, col, row, inverted=false, onFlip=false, onRemove=false) {
+        return [
+            "save()",
+                `setTransform(1, 0, 0, 1, ${145+col*80}, ${212.5+row*125})`,
+                "shadowColor = #FF0000", "shadowBlur = 10",
+                `drawImage(./../images/maps/${map}-icon.png, -40, -62.5, 80, 125)`,
+            "restore()",
+            "save()",
+                `setTransform(1, 0, 0, 1, 145, ${182.5+row*125})`,
+                onFlip ? "shadowColor = #FF0000" : "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(./../images/edit-actions/flip.png, -18, -18, 36, 36)",
+            "restore()",
+            "save()",
+                `setTransform(1, 0, 0, 1, 145, ${242.5+row*125})`,
+                onRemove ? "shadowColor = #FF0000" : "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(./../images/edit-actions/remove.png, -18, -18, 36, 36)",
+            "restore()"
+        ]
+    }
+
+    function showEmptyMapCell(col, row) {
+        return [
+            "save()",
+                `setTransform(1, 0, 0, 1, ${145+col*80}, ${212.5+row*125})`,
+                "shadowBlur = 0",
+                "fillStyle = #E0E0E0", "fillRect(-40, -62.5, 80, 125)",
+                "strokeStyle = #000000", "lineWidth = 1",
+                "strokeRect(-40, -62.5, 80, 125)",
+            "restore()"
+        ]
+    }
+
+    function showSelectedEmptyMapCell(col, row) {
+        return [
+            "save()",
+                `setTransform(1, 0, 0, 1, ${145+col*80}, ${212.5+row*125})`,
+                "shadowColor = #FF0000", "shadowBlur = 10",
+                "fillStyle = #E0E0E0", "fillRect(-40, -62.5, 80, 125)",
+                "strokeStyle = #000000", "lineWidth = 1",
+                "strokeRect(-40, -62.5, 80, 125)",
+            "restore()"
+        ]
+    }
+
+    function assertMapContent(layer, boards) {
+        let boardMap = new Map();
+        for (let board of boards) {
+            boardMap.set(board.col*4+board.row, board);
+        }
+        let selected = null;
+        for (let col=0; col<8; col++) {
+            for (let row=0; row<4; row++) {
+                let board = boardMap.get(col*4+row);
+                if (board) {
+                    if (board.front) {
+                        selected = board;
+                    }
+                    else {
+                        assertDirectives(layer, showFilledMapCell(board.map, col, row));
+                    }
+                }
+                else {
+                    assertDirectives(layer, showEmptyMapCell(col, row));
+                }
+            }
+        }
+    }
+
+    function showActiveMoveBoardCommand(command, x, y) {
+        return [
+            "save()",
+                `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+                "shadowColor = #00FFFF", "shadowBlur = 5",
+                `drawImage(./../images/commands/${command}.png, -18, -18, 36, 36)`,
+            "restore()"
+        ]
+    }
+
+    function showInactiveMoveBoardCommand(command, x, y) {
+        return [
+            "save()",
+                `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+                "shadowColor = #000000", "shadowBlur = 5",
+                `drawImage(./../images/commands/${command}-inactive.png, -18, -18, 36, 36)`,
+            "restore()"
+        ]
+    }
+
+    function showSelectedMoveBoardCommand(command, x, y) {
+        return [
+            "save()",
+            `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+            "shadowColor = #FF0000", "shadowBlur = 10",
+            `drawImage(./../images/commands/${command}.png, -18, -18, 36, 36)`,
+            "restore()"
+        ]
+    }
+
+    function showActiveMapCommand(command, x, y) {
+        return [
+            "save()",
+                `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                `drawImage(./../images/commands/${command}.png, -25, -25, 50, 50)`,
+            "restore()"
+        ];
+    }
+
+    function showInactiveMapCommand(command, x, y) {
+        return [
+            "save()",
+                `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+                "shadowColor = #000000", "shadowBlur = 10",
+                `drawImage(./../images/commands/${command}-inactive.png, -25, -25, 50, 50)`,
+            "restore()"
+        ];
+    }
+
+    function showSelectedMapCommand(command, x, y) {
+        return [
+            "save()",
+                `setTransform(1, 0, 0, 1, ${x}, ${y})`,
+                "shadowColor = #FF0000", "shadowBlur = 10",
+                `drawImage(./../images/commands/${command}.png, -25, -25, 50, 50)`,
+            "restore()"
+        ];
+    }
+
+    function getMapComposerPopup(game) {
+        return game._popup && game._popup instanceof CBMapComposer ? game._popup : null;
+    }
+
+    function assertMapComposerContent(itemsLayer, { commands, boards, cells }) {
+
+        function showMoveBoardCommand(command, active, highlight, col, row) {
+            if (active) {
+                if (highlight) {
+                    return showSelectedMoveBoardCommand(command, col, row);
+                }
+                else {
+                    return showActiveMoveBoardCommand(command, col, row);
+                }
+            }
+            else {
+                return showInactiveMoveBoardCommand(command, col, row);
+            }
+        }
+
+        skipDirectives(itemsLayer, 4);
+        assertDirectives(itemsLayer, showMapSelector(boards[0].board, 875, 265));
+        assertDirectives(itemsLayer, showMapSelector(boards[1].board, 875, 400));
+        assertDirectives(itemsLayer, showMapSelector(boards[2].board, 875, 535));
+
+        assertMapContent(itemsLayer, cells);
+        assertDirectives(itemsLayer, showMoveBoardCommand(
+            "top", commands.top.active, commands.top.highlight, 785, 170));
+        assertDirectives(itemsLayer, showMoveBoardCommand(
+            "prev", commands.prev.active, commands.prev.highlight, 785, 220));
+        assertDirectives(itemsLayer, showMoveBoardCommand(
+            "next", commands.next.active, commands.next.highlight,785, 270));
+        assertDirectives(itemsLayer, showMoveBoardCommand(
+            "bottom", commands.bottom.active, commands.bottom.highlight,785, 320));
+        for (let board of cells) {
+            if (board.front) {
+                if (board.map) {
+                    if (board.selected) {
+                        assertDirectives(itemsLayer, showSelectedFilledMapCell(board.map, board.col, board.row));
+                    } else {
+                        assertDirectives(itemsLayer, showFilledMapCell(board.map, board.col, board.row));
+                    }
+                }
+                else {
+                    if (board.selected) {
+                        assertDirectives(itemsLayer, showSelectedEmptyMapCell(board.col, board.row));
+                    } else {
+                        assertDirectives(itemsLayer, showEmptyMapCell(board.col, board.row));
+                    }
+                }
+            }
+        }
+        assertNoMoreDirectives(itemsLayer);
+    }
+
+    let allBoards = [
+        { name: "map", path: "./../images/maps/map.png", icon: "./../images/maps/map-icon.png" },
+        { name: "map1", path: "./../images/maps/map1.png", icon: "./../images/maps/map1-icon.png" },
+        { name: "map2", path: "./../images/maps/map2.png", icon: "./../images/maps/map2-icon.png" },
+        { name: "map3", path: "./../images/maps/map3.png", icon: "./../images/maps/map3-icon.png" }
+    ];
+
+    it("Checks open units editor popup and board catalog loading", () => {
+        given:
+            var { game } = buildScenarioEditorGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
+        when:
+            game.editMap();
+            getDrawPlatform().requestSucceeds(JSON.stringify(allBoards), 200);
+            repaint(game);
+        then:
+            skipDirectives(widgetsLayer, 4);
+            assertDirectives(widgetsLayer, showMask());
+            assertDirectives(widgetsLayer, showPopup(500, 400, 850, 550));
+            assertDirectives(widgetsLayer, showColoredRect(875, 400, "#C0C0C0", 100, 550));
+            assertDirectives(widgetsLayer, showInactiveMapCommand("up", 875, 160));
+            assertDirectives(widgetsLayer, showActiveMapCommand("down", 875, 640));
+            assertDirectives(widgetsLayer, showActiveMapCommand("ko", 785, 580));
+            assertDirectives(widgetsLayer, showActiveMapCommand("ok", 785, 640));
+            assertNoMoreDirectives(widgetsLayer);
+
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [{ map:"map", row:0, col:0 }]
+            });
+    });
+
+    it("Checks map composer glider buttons", () => {
+        given:
+            var { game } = buildScenarioEditorGame();
+            var [itemsLayer] = getLayers(game.board, "widget-items");
+        when:
+            game.editMap();
+            getDrawPlatform().requestSucceeds(JSON.stringify(allBoards), 200);
+            var mapComposer = getMapComposerPopup(game);
+            repaint(game);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [{ map:"map", row:0, col:0 }]
+            });
+        when:
+            mouseMoveOnArtifact(game, mapComposer.translateToRight);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true, highlight:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [{ map:"map", row:0, col:0 }]
+            });
+        when:
+            mouseMoveOnArtifact(game, mapComposer.translateToLeft);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [{ map:"map", row:0, col:0 }]
+            });
+        when:
+            clickOnArtifact(game, mapComposer.translateToRight);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:true }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [{ map:"map", row:0, col:1 }]
+            });
+    });
+
+    it("Checks border edition in map composer content", () => {
+        given:
+            var { game } = buildScenarioEditorGame();
+            var [itemsLayer] = getLayers(game.board, "widget-items");
+        when:
+            game.editMap();
+            getDrawPlatform().requestSucceeds(JSON.stringify(allBoards), 200);
+            var mapComposer = getMapComposerPopup(game);
+            repaint(game);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [{ map:"map", row:0, col:0 }]
+            });
+        when:
+            mouseMoveOnArtifact(game, mapComposer.getCell(0, 0));
+            repaint(game);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [{ map:"map", row:0, col:0, front:true, selected:true }]
+            });
+        when:
+            mouseMoveOnArtifact(game, mapComposer.getCell(1, 0));
+            repaint(game);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [{ map:"map", row:0, col:0, front:true }, { row:0, col:1, front:true, selected:true }]
+            });
+    });
+
     function buildScenarioEditorGame() {
         let BlueBanner0 = {
             name: "blue-banner",
@@ -451,18 +763,36 @@ describe("Editor", ()=> {
         };
 
         var game = new CBScenarioEditorGame();
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let map = new CBMap([{
+            path:"./../images/maps/map.png",
+            icon:"./../images/maps/map-icon.png",
+            col:0, row:0
+        }]);
         game.setMap(map);
         let player1 = new CBEditorPlayer("player1", "./../players/player1.png");
         game.addPlayer(player1);
         let wing1 = new CBWing(player1, BlueBanner0);
         wing1.setRetreatZone(map.getSouthZone());
-        let player2 = new CBEditorPlayer("player2", "./../players/player1.png");
+        let player2 = new CBEditorPlayer("player2", "./../players/player2.png");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, RedBanner0);
         wing2.setRetreatZone(map.getNorthZone());
         game.start();
         return { game, map, player1, player2, wing1, wing2 };
+    }
+
+    function build3playersScenarioEditorGame() {
+        let GreenBanner0 = {
+            name: "green-banner",
+            path: "./../images/units/green/banners/banner0.png"
+        };
+
+        let { game, map, player1, player2, wing1, wing2 } = buildScenarioEditorGame();
+        let player3 = new CBEditorPlayer("player3", "./../players/player3.png");
+        game.addPlayer(player3);
+        let wing3 = new CBWing(player3, GreenBanner0);
+        wing3.setRetreatZone(map.getWestZone());
+        return { game, map, player1, player2, player3, wing1, wing2, wing3 };
     }
 
     function showTroopButton(x, y, unit) {
@@ -539,7 +869,7 @@ describe("Editor", ()=> {
 
     it("Checks wing switching in editor popup", () => {
         given:
-            var { game } = buildScenarioEditorGame();
+            var { game, wing2 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             game.editUnits();
             getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
@@ -549,6 +879,7 @@ describe("Editor", ()=> {
             clickOnArtifact(game, unitEditorPopup.header.nextWingButton);
             repaint(game);
         then:
+            assert(unitEditorPopup.currentWing).equalsTo(wing2);
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showPopup(500, 400, 500, 650));
             assertDirectives(widgetsLayer, showImage(500, 135, "./../images/units/misc/unit-wing-back.png", 500, 120));
@@ -556,7 +887,7 @@ describe("Editor", ()=> {
             assertDirectives(widgetsLayer, showInactivePopupCommand("right", 715, 135));
             assertDirectives(widgetsLayer, showColoredRect(500, 235, "#C0C0C0", 500, 80));
             skipDirectives(itemsLayer, 4);
-            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player1.png",
+            assertDirectives(itemsLayer, showShadowedImage(420, 135, "./../players/player2.png",
                 "#00FFFF", 10, 60, 60));
             assertDirectives(itemsLayer, showShadowedImage(580, 135, "./../images/units/red/banners/banner0.png",
                 "#00FFFF", 10, 50, 120));
@@ -767,7 +1098,7 @@ describe("Editor", ()=> {
             var { game } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             game.editUnits();
-            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify(players), 200);
             getDrawPlatform().requestSucceeds(JSON.stringify(banners), 200);
         when:
             var unitEditorPopup = getEditUnitPopup(game);
@@ -801,7 +1132,6 @@ describe("Editor", ()=> {
                 players.push({name : "player"+index, path: "./players/player"+index+".png"});
             }
             var { game } = buildScenarioEditorGame();
-            var [widgets, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
             game.editUnits();
             getDrawPlatform().requestSucceeds(JSON.stringify(players), 200);
             getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
@@ -827,6 +1157,40 @@ describe("Editor", ()=> {
             assert(unitEditorPopup.playerSelector.prevSelectorPage.active).isFalse();
             assert(unitEditorPopup.playerSelector.nextSelectorPage.active).isTrue();
             assert(unitEditorPopup.playerSelector.getCell(0, 0).item.name).equalsTo("player0");
+    });
+
+    it("Checks navigation in wing selection", () => {
+        given:
+            var banners = [];
+            for (let index = 0; index<28; index++) {
+                banners.push({name : "banner"+index, path: "./banners/banner"+index+".png"});
+            }
+            var { game } = buildScenarioEditorGame();
+            game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify([]), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify(banners), 200);
+        when:
+            var unitEditorPopup = getEditUnitPopup(game);
+            clickOnArtifact(game, unitEditorPopup.header.wingArtifact);
+            repaint(game);
+        then:
+            assert(unitEditorPopup.wingSelector.prevSelectorPage.active).isFalse();
+            assert(unitEditorPopup.wingSelector.nextSelectorPage.active).isTrue();
+            assert(unitEditorPopup.wingSelector.getCell(0, 0).item.name).equalsTo("banner0");
+        when:
+            clickOnArtifact(game, unitEditorPopup.wingSelector.nextSelectorPage);
+            repaint(game);
+        then:
+            assert(unitEditorPopup.wingSelector.prevSelectorPage.active).isTrue();
+            assert(unitEditorPopup.wingSelector.nextSelectorPage.active).isFalse();
+            assert(unitEditorPopup.wingSelector.getCell(0, 0).item.name).equalsTo("banner4");
+        when:
+            clickOnArtifact(game, unitEditorPopup.wingSelector.prevSelectorPage);
+            repaint(game);
+        then:
+            assert(unitEditorPopup.wingSelector.prevSelectorPage.active).isFalse();
+            assert(unitEditorPopup.wingSelector.nextSelectorPage.active).isTrue();
+            assert(unitEditorPopup.wingSelector.getCell(0, 0).item.name).equalsTo("banner0");
     });
 
     it("Checks change rosters in editor popup", () => {
@@ -893,6 +1257,199 @@ describe("Editor", ()=> {
             assertDirectives(widgetsLayer, showInactivePopupCommand("right", 715, 235));
     });
 
+    it("Checks a player creation process", () => {
+        given:
+            var { game } = buildScenarioEditorGame();
+            game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify(players), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify(banners), 200);
+        when:
+            var unitEditorPopup = getEditUnitPopup(game);
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isTrue();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isFalse();
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player1.png");
+            assert(unitEditorPopup.header.wingArtifact.path).equalsTo("./../images/units/blue/banners/banner0.png");
+        when:
+            clickOnArtifact(game, unitEditorPopup.header.playerArtifact);
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isTrue();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isFalse();
+            assert(unitEditorPopup.wingSelector.validateButton.active).isTrue();
+            assert(unitEditorPopup.wingSelector.cancelButton.active).isTrue();
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player1.png");
+            assert(unitEditorPopup.header.wingArtifact.path).equalsTo("./../images/units/blue/banners/banner0.png");
+        when:
+            clickOnArtifact(game, unitEditorPopup.playerSelector.getCell(0, 2));
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isTrue();
+            assert(unitEditorPopup.wingSelector.validateButton.active).isFalse();
+            assert(unitEditorPopup.wingSelector.cancelButton.active).isTrue();
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player3.png");
+            assert(unitEditorPopup.header.wingArtifact.path).isNotDefined();
+        when:
+            clickOnArtifact(game, unitEditorPopup.wingSelector.getCell(0, 2));
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isTrue();
+            assert(unitEditorPopup.wingSelector.validateButton.active).isTrue();
+            assert(unitEditorPopup.wingSelector.cancelButton.active).isTrue();
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player3.png");
+            assert(unitEditorPopup.header.wingArtifact.path).equalsTo("./../images/units/green/banners/banner0.png");
+        when:
+            clickOnArtifact(game, unitEditorPopup.wingSelector.validateButton);
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isTrue();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isFalse();
+            assert(unitEditorPopup.header.playerArtifact.active).isFalse();
+            assert(unitEditorPopup.header.wingArtifact.active).isFalse();
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player3.png");
+            assert(unitEditorPopup.header.wingArtifact.path).equalsTo("./../images/units/green/banners/banner0.png");
+            assert(game.players.length).equalsTo(2);
+        when:
+            clickOnArtifact(game, unitEditorPopup.playerSelector.validateButton);
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isTrue();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isFalse();
+            assert(unitEditorPopup.header.playerArtifact.active).isTrue();
+            assert(unitEditorPopup.header.wingArtifact.active).isTrue();
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player3.png");
+            assert(unitEditorPopup.header.wingArtifact.path).equalsTo("./../images/units/green/banners/banner0.png");
+            assert(game.players.length).equalsTo(3);
+            assert(game.players[2].name).equalsTo("player3");
+            assert(game.players[2].wings.length).equalsTo(1);
+            assert(game.players[2].wings[0].banner.name).equalsTo("green-banner");
+    });
+
+    it("Checks the cancellation of a player creation process from the wing selector page", () => {
+        given:
+            var { game } = buildScenarioEditorGame();
+            game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify(players), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify(banners), 200);
+        when:
+            var unitEditorPopup = getEditUnitPopup(game);
+            clickOnArtifact(game, unitEditorPopup.header.playerArtifact);
+            clickOnArtifact(game, unitEditorPopup.playerSelector.getCell(0, 2));
+            clickOnArtifact(game, unitEditorPopup.wingSelector.getCell(0, 2));
+            clickOnArtifact(game, unitEditorPopup.wingSelector.cancelButton);
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isTrue();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isFalse();
+            assert(unitEditorPopup.header.playerArtifact.active).isFalse();
+            assert(unitEditorPopup.header.wingArtifact.active).isFalse();
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player1.png");
+            assert(unitEditorPopup.header.wingArtifact.path).equalsTo("./../images/units/blue/banners/banner0.png");
+            assert(game.players.length).equalsTo(2);
+    });
+
+    it("Checks the cancellation of a player creation process from the player selector page", () => {
+        given:
+            var { game } = buildScenarioEditorGame();
+            game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify(players), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify(banners), 200);
+        when:
+            var unitEditorPopup = getEditUnitPopup(game);
+            clickOnArtifact(game, unitEditorPopup.header.playerArtifact);
+            clickOnArtifact(game, unitEditorPopup.playerSelector.getCell(0, 2));
+            clickOnArtifact(game, unitEditorPopup.wingSelector.getCell(0, 2));
+            clickOnArtifact(game, unitEditorPopup.wingSelector.validateButton);
+            clickOnArtifact(game, unitEditorPopup.playerSelector.cancelButton);
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isTrue();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isFalse();
+            assert(unitEditorPopup.header.playerArtifact.active).isTrue();
+            assert(unitEditorPopup.header.wingArtifact.active).isTrue();
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player1.png");
+            assert(unitEditorPopup.header.wingArtifact.path).equalsTo("./../images/units/blue/banners/banner0.png");
+            assert(game.players.length).equalsTo(2);
+    });
+
+    it("Checks a player deletion process", () => {
+        given:
+            var { game } = build3playersScenarioEditorGame();
+            game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify(players), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify(banners), 200);
+        when:
+            var unitEditorPopup = getEditUnitPopup(game);
+            clickOnArtifact(game, unitEditorPopup.header.playerArtifact);
+            clickOnArtifact(game, unitEditorPopup.playerSelector.getCell(0, 0));
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isTrue();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isFalse();
+            assert(unitEditorPopup.playerSelector.validateButton.active).isTrue();
+            assert(unitEditorPopup.wingSelector.cancelButton.active).isTrue();
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player2.png");
+            assert(unitEditorPopup.header.wingArtifact.path).equalsTo("./../images/units/red/banners/banner0.png");
+        when:
+            clickOnArtifact(game, unitEditorPopup.playerSelector.validateButton);
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isTrue();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isFalse();
+            assert(unitEditorPopup.header.playerArtifact.active).isTrue();
+            assert(unitEditorPopup.header.wingArtifact.active).isTrue();
+            assert(game.players.length).equalsTo(2);
+            assert(game.players[0].name).equalsTo("player2");
+            assert(game.players[1].name).equalsTo("player3");
+    });
+
+    it("Checks that it is not possible to validate when only one player is defined", () => {
+        given:
+            var { game } = buildScenarioEditorGame();
+            game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify(players), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify(banners), 200);
+        when:
+            var unitEditorPopup = getEditUnitPopup(game);
+            clickOnArtifact(game, unitEditorPopup.header.playerArtifact);
+            clickOnArtifact(game, unitEditorPopup.playerSelector.getCell(0, 0));
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isTrue();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isFalse();
+            assert(unitEditorPopup.playerSelector.validateButton.active).isFalse();
+            assert(unitEditorPopup.wingSelector.cancelButton.active).isTrue();
+    });
+
+    it("Checks a player deletion process", () => {
+        given:
+            var { game } = build3playersScenarioEditorGame();
+            game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify(players), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify(banners), 200);
+        when:
+            var unitEditorPopup = getEditUnitPopup(game);
+            clickOnArtifact(game, unitEditorPopup.header.playerArtifact);
+            clickOnArtifact(game, unitEditorPopup.playerSelector.getCell(0, 1));
+        then:
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player1.png");
+            assert(unitEditorPopup.header.wingArtifact.path).equalsTo("./../images/units/blue/banners/banner0.png");
+        when:
+            clickOnArtifact(game, unitEditorPopup.playerSelector.cancelButton);
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isTrue();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isFalse();
+            assert(unitEditorPopup.header.playerArtifact.active).isTrue();
+            assert(unitEditorPopup.header.wingArtifact.active).isTrue();
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player1.png");
+            assert(unitEditorPopup.header.wingArtifact.path).equalsTo("./../images/units/blue/banners/banner0.png");
+            assert(game.players.length).equalsTo(3);
+    });
+
     function skipEditorHeader(widgetsLayer) {
         skipDirectives(widgetsLayer, 4);
         assertDirectives(widgetsLayer, showPopup(500, 400, 500, 650));
@@ -903,6 +1460,66 @@ describe("Editor", ()=> {
         assertDirectives(widgetsLayer, showInactivePopupCommand("left", 285, 235));
         assertDirectives(widgetsLayer, showPopupCommand("right", 715, 235));
     }
+
+    it("Checks a wings edition process", () => {
+        given:
+            var { game } = buildScenarioEditorGame();
+            game.editUnits();
+            getDrawPlatform().requestSucceeds(JSON.stringify(players), 200);
+            getDrawPlatform().requestSucceeds(JSON.stringify(banners), 200);
+        when:
+            var unitEditorPopup = getEditUnitPopup(game);
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isTrue();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isFalse();
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player1.png");
+            assert(unitEditorPopup.header.wingArtifact.path).equalsTo("./../images/units/blue/banners/banner0.png");
+        when:
+            clickOnArtifact(game, unitEditorPopup.header.wingArtifact);
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isTrue();
+            assert(unitEditorPopup.wingSelector.validateButton.active).isTrue();
+            assert(unitEditorPopup.wingSelector.cancelButton.active).isTrue();
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player1.png");
+            assert(unitEditorPopup.header.wingArtifact.path).equalsTo("./../images/units/blue/banners/banner0.png");
+        when:
+            clickOnArtifact(game, unitEditorPopup.wingSelector.getCell(0, 0));
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isTrue();
+            assert(unitEditorPopup.header.playerArtifact.active).isFalse();
+            assert(unitEditorPopup.header.wingArtifact.active).isFalse();
+            assert(unitEditorPopup.wingSelector.validateButton.active).isFalse();
+            assert(unitEditorPopup.wingSelector.cancelButton.active).isTrue();
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player1.png");
+            assert(unitEditorPopup.header.wingArtifact.path).isNotDefined();
+        when:
+            clickOnArtifact(game, unitEditorPopup.wingSelector.getCell(0, 2));
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isTrue();
+            assert(unitEditorPopup.wingSelector.validateButton.active).isTrue();
+            assert(unitEditorPopup.wingSelector.cancelButton.active).isTrue();
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player1.png");
+            assert(unitEditorPopup.header.wingArtifact.path).equalsTo("./../images/units/green/banners/banner0.png");
+        when:
+            clickOnArtifact(game, unitEditorPopup.wingSelector.validateButton);
+        then:
+            assert(unitEditorPopup.hasElement(unitEditorPopup.rosterContent)).isTrue();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.playerSelector)).isFalse();
+            assert(unitEditorPopup.hasElement(unitEditorPopup.wingSelector)).isFalse();
+            assert(unitEditorPopup.header.playerArtifact.active).isTrue();
+            assert(unitEditorPopup.header.wingArtifact.active).isTrue();
+            assert(unitEditorPopup.header.playerArtifact.path).equalsTo("./../players/player1.png");
+            assert(unitEditorPopup.header.wingArtifact.path).equalsTo("./../images/units/green/banners/banner0.png");
+            assert(game.players[0].wings.length).equalsTo(1);
+            assert(game.players[0].wings[0].banner.name).equalsTo("green-banner");
+    });
 
     it("Checks select rosters in editor popup", () => {
         given:
@@ -2007,7 +2624,7 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("save", 700, 740));
             assertDirectives(commandsLayer, showGameCommand("load", 640, 740));
             assertDirectives(commandsLayer, showGameCommand("edit-units", 580, 740));
-            assertDirectives(commandsLayer, showGameCommand("set-map", 520, 740));
+            assertDirectives(commandsLayer, showGameCommand("edit-map", 520, 740));
             assertDirectives(commandsLayer, showGameCommand("full-screen-on", 460, 740));
             assertNoMoreDirectives(commandsLayer);
     });
@@ -2018,10 +2635,10 @@ describe("Editor", ()=> {
             game.setMenu();
             loadAllImages();
             game._showCommand.action();
-            game._editMapCommand.action();
+            game._editBoardCommand.action();
             executeAllAnimations();
         when:
-            clickOnArtifact(game, game._editMapCommand.artifacts[0]);
+            clickOnArtifact(game, game._editBoardCommand.artifacts[0]);
             executeAllAnimations();
         then:
             assert(getMapEditorActuator(game)).isDefined();
@@ -2071,7 +2688,7 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("settings", 760, 740));
             assertDirectives(commandsLayer, showGameCommand("save", 700, 740));
             assertDirectives(commandsLayer, showGameCommand("load", 640, 740));
-            assertDirectives(commandsLayer, showGameCommand("edit-map", 580, 740));
+            assertDirectives(commandsLayer, showGameCommand("edit-board", 580, 740));
             assertDirectives(commandsLayer, showGameCommand("full-screen-on", 520, 740));
         when:
             game._hideCommand.action();
@@ -2109,7 +2726,7 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("save", 700, 740));
             assertDirectives(commandsLayer, showGameCommand("load", 640, 740));
             assertDirectives(commandsLayer, showGameCommand("edit-units", 580, 740));
-            assertDirectives(commandsLayer, showGameCommand("set-map", 520, 740));
+            assertDirectives(commandsLayer, showGameCommand("edit-map", 520, 740));
             assertDirectives(commandsLayer, showGameCommand("full-screen-on", 460, 740));
         when:
             game._hideCommand.action();
@@ -2185,7 +2802,7 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("settings", 1760, 1440));
             assertDirectives(commandsLayer, showGameCommand("save", 1700, 1440));
             assertDirectives(commandsLayer, showGameCommand("load", 1640, 1440));
-            assertDirectives(commandsLayer, showGameCommand("edit-map", 1580, 1440));
+            assertDirectives(commandsLayer, showGameCommand("edit-board", 1580, 1440));
             assertDirectives(commandsLayer, showGameCommand("full-screen-off", 1520, 1440));
             assertNoMoreDirectives(commandsLayer);
         when:
@@ -2210,7 +2827,7 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("settings", 1260, 940));
             assertDirectives(commandsLayer, showGameCommand("save", 1200, 940));
             assertDirectives(commandsLayer, showGameCommand("load", 1140, 940));
-            assertDirectives(commandsLayer, showGameCommand("edit-map", 1080, 940));
+            assertDirectives(commandsLayer, showGameCommand("edit-board", 1080, 940));
             assertDirectives(commandsLayer, showGameCommand("full-screen-on", 1020, 940));
             assertNoMoreDirectives(commandsLayer);
     });
@@ -2281,7 +2898,7 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("save", 1700, 1440));
             assertDirectives(commandsLayer, showGameCommand("load", 1640, 1440));
             assertDirectives(commandsLayer, showGameCommand("edit-units", 1580, 1440));
-            assertDirectives(commandsLayer, showGameCommand("set-map", 1520, 1440));
+            assertDirectives(commandsLayer, showGameCommand("edit-map", 1520, 1440));
             assertDirectives(commandsLayer, showGameCommand("full-screen-off", 1460, 1440));
             assertNoMoreDirectives(commandsLayer);
         when:
@@ -2307,7 +2924,7 @@ describe("Editor", ()=> {
             assertDirectives(commandsLayer, showGameCommand("save", 1200, 940));
             assertDirectives(commandsLayer, showGameCommand("load", 1140, 940));
             assertDirectives(commandsLayer, showGameCommand("edit-units", 1080, 940));
-            assertDirectives(commandsLayer, showGameCommand("set-map", 1020, 940));
+            assertDirectives(commandsLayer, showGameCommand("edit-map", 1020, 940));
             assertDirectives(commandsLayer, showGameCommand("full-screen-on", 960, 940));
             assertNoMoreDirectives(commandsLayer);
     });
