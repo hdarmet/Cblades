@@ -28,7 +28,7 @@ import {
 } from "../mechanisms.js";
 import {
     D2StatesIconMenuItem, DDownNavigation,
-    DIconMenu, DIconMenuItem, DKo,
+    DIconMenu, DIconMenuItem, DCancel,
     DLeftNavigation, DMinus, DMultiStatePushButton, DNextNavigation, DOk, DPlus,
     DPopup, DPrevNavigation, DPushButton, DRightNavigation, DUpNavigation
 } from "../widget.js";
@@ -1001,7 +1001,7 @@ export class CBRosterSelector extends DElement {
             this._parent.validateBattleSettings();
         });
         this.addArtifact(this._validateButton);
-        this._cancelButton = new DKo(new Point2D(
+        this._cancelButton = new DCancel(new Point2D(
             this._getNavigationMarginCount(),
             CBUnitsRoster.DIMENSION.h/2 - CBUnitsRosterContent.ROSTER_HEADER_DIMENSION.h/2
         ), ()=>{
@@ -1554,13 +1554,11 @@ export class CBMapCommand extends DImageArtifact {
     }
 
     onMouseLeave(event, toArtifact) {
+        this.setSettings(level => {
+            level.setShadowSettings("#00FFFF", 10);
+        });
         if (toArtifact !== this._pedestal) {
             this._pedestal.onMouseLeave(event, toArtifact);
-        }
-        else {
-            this.setSettings(level => {
-                level.setShadowSettings("#00FFFF", 0);
-            });
         }
         return true;
     }
@@ -1625,6 +1623,7 @@ export class CBMapCellArtifact extends DPedestalArtifact {
     unsetMap() {
         delete this._mapAngle;
         delete this._map;
+        this.turn(0);
         this.unsetCommands();
     }
 
@@ -1829,40 +1828,60 @@ export class CBMapComposer extends DPopup {
     }
 
     _buildCommands() {
-        this._translateToTop = new CBMapGliderCommand(this,
+        this._translateUp = new CBMapGliderCommand(this,
             "./../images/commands/top.png","./../images/commands/top-inactive.png",
             new Point2D(CBMapComposer.DIMENSION.w/2-CBMapComposer.SELECTOR_WIDTH, 0)
                 .plusPoint(CBMapComposer.GLIDER_COMMANDS_MARGIN),
             {col:0, row:-1});
-        this.addArtifact(this._translateToTop);
-        this._translateToLeft = new CBMapGliderCommand(this,
+        this.addArtifact(this._translateUp);
+        this._translateLeft = new CBMapGliderCommand(this,
             "./../images/commands/prev.png", "./../images/commands/prev-inactive.png",
             new Point2D(CBMapComposer.DIMENSION.w/2-CBMapComposer.SELECTOR_WIDTH, 0)
                 .plusPoint(CBMapComposer.GLIDER_COMMANDS_MARGIN).plus(0, CBMapComposer.GLIDER_COMMANDS_SHIFT),
             {col:-1, row:0});
-        this.addArtifact(this._translateToLeft);
-        this._translateToRight = new CBMapGliderCommand(this,
+        this.addArtifact(this._translateLeft);
+        this._translateRight = new CBMapGliderCommand(this,
             "./../images/commands/next.png", "./../images/commands/next-inactive.png",
             new Point2D(CBMapComposer.DIMENSION.w/2-CBMapComposer.SELECTOR_WIDTH, 0)
                 .plusPoint(CBMapComposer.GLIDER_COMMANDS_MARGIN).plus(0, CBMapComposer.GLIDER_COMMANDS_SHIFT*2),
             {col:1, row:0});
-        this.addArtifact(this._translateToRight);
-        this._translateToBottom = new CBMapGliderCommand(this,
+        this.addArtifact(this._translateRight);
+        this._translateDown = new CBMapGliderCommand(this,
             "./../images/commands/bottom.png", "./../images/commands/bottom-inactive.png",
             new Point2D(CBMapComposer.DIMENSION.w/2-CBMapComposer.SELECTOR_WIDTH, 0)
                 .plusPoint(CBMapComposer.GLIDER_COMMANDS_MARGIN).plus(0, CBMapComposer.GLIDER_COMMANDS_SHIFT*3),
             {col:0, row:1});
-        this.addArtifact(this._translateToBottom);
-        this._ko = new DKo(new Point2D(CBMapComposer.DIMENSION.w/2-CBMapComposer.SELECTOR_WIDTH, 0)
+        this.addArtifact(this._translateDown);
+        this._cancel = new DCancel(new Point2D(CBMapComposer.DIMENSION.w/2-CBMapComposer.SELECTOR_WIDTH, 0)
             .plusPoint(CBMapComposer.OKKO_COMMANDS_MARGIN).minus(0, CBMapComposer.OKKO_COMMANDS_SHIFT),()=>{
             this._game.closePopup();
         });
-        this.addArtifact(this._ko);
+        this.addArtifact(this._cancel);
         this._ok = new DOk(new Point2D(CBMapComposer.DIMENSION.w/2-CBMapComposer.SELECTOR_WIDTH, 0)
             .plusPoint(CBMapComposer.OKKO_COMMANDS_MARGIN),()=>{
             this._game.replaceMap(this.getMapConfiguration());
         });
         this.addArtifact(this._ok.setActive(false));
+    }
+
+    get selectorTop() {
+        return this._selectorTop;
+    }
+
+    get selectorBottom() {
+        return this._selectorBottom;
+    }
+
+    get ok() {
+        return this._ok;
+    }
+
+    get cancel() {
+        return this._cancel;
+    }
+
+    getMapSelectors(index) {
+        return this._mapSelectors[index];
     }
 
     _buildSelector() {
@@ -1989,26 +2008,26 @@ export class CBMapComposer extends DPopup {
     }
 
     setTranslateCommandsActiveStatus() {
-        this._translateToTop.setActive(this.isTranslateCommandActive(this._translateToTop.direction));
-        this._translateToLeft.setActive(this.isTranslateCommandActive(this._translateToLeft.direction));
-        this._translateToRight.setActive(this.isTranslateCommandActive(this._translateToRight.direction));
-        this._translateToBottom.setActive(this.isTranslateCommandActive(this._translateToBottom.direction));
+        this._translateUp.setActive(this.isTranslateCommandActive(this._translateUp.direction));
+        this._translateLeft.setActive(this.isTranslateCommandActive(this._translateLeft.direction));
+        this._translateRight.setActive(this.isTranslateCommandActive(this._translateRight.direction));
+        this._translateDown.setActive(this.isTranslateCommandActive(this._translateDown.direction));
     }
 
-    get translateToTop() {
-        return this._translateToTop;
+    get translateUp() {
+        return this._translateUp;
     }
 
-    get translateToBottom() {
-        return this._translateToBottom;
+    get translateDown() {
+        return this._translateDown;
     }
 
-    get translateToLeft() {
-        return this._translateToLeft;
+    get translateLeft() {
+        return this._translateLeft;
     }
 
-    get translateToRight() {
-        return this._translateToRight;
+    get translateRight() {
+        return this._translateRight;
     }
 
     getAreaToFill() {
@@ -2050,6 +2069,12 @@ export class CBMapComposer extends DPopup {
     }
 
     isTranslateCommandActive(direction) {
+        let empty = true;
+        for (let row = 0; row < CBMapComposer.ROW_COUNT; row++) {
+            for (let col = 0; col < CBMapComposer.COL_COUNT; col++) {
+                if (this._mapComposer[col][row].map) empty = false;
+            }
+        }
         if (direction.col === 1) {
             for (let row = 0; row < CBMapComposer.ROW_COUNT; row++) {
                 if (this._mapComposer[CBMapComposer.COL_COUNT-1][row].map) return false;
@@ -2070,7 +2095,7 @@ export class CBMapComposer extends DPopup {
                 if (this._mapComposer[col][0].map) return false;
             }
         }
-        return true;
+        return !empty;
     }
 
     translateMap(direction) {

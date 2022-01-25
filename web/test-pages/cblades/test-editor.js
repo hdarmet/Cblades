@@ -440,11 +440,12 @@ describe("Editor", ()=> {
         return { game, map};
     }
 
-    function showMapSelector(map, x, y) {
+    function showMapSelector(map, highlighted, selected, x, y) {
+        let shadow = selected ? "#FF0000" : highlighted ? "#00FFFF" : "#000000";
         return [
             "save()",
                 `setTransform(1, 0, 0, 1, ${x}, ${y})`,
-                "shadowColor = #000000", "shadowBlur = 10",
+                `shadowColor = ${shadow}`, "shadowBlur = 10",
                 `drawImage(./../images/maps/${map}-icon.png, -40, -62.5, 80, 125)`,
             "restore()"
         ]
@@ -460,21 +461,22 @@ describe("Editor", ()=> {
         ]
     }
 
-    function showSelectedFilledMapCell(map, col, row, inverted=false, onFlip=false, onRemove=false) {
+    function showSelectedFilledMapCell(map, col, row, inverted=false, onTurn=false, onDelete=false) {
+        let ad = inverted ? -1 : 1;
         return [
             "save()",
-                `setTransform(1, 0, 0, 1, ${145+col*80}, ${212.5+row*125})`,
+                `setTransform(${ad}, 0, 0, ${ad}, ${145+col*80}, ${212.5+row*125})`,
                 "shadowColor = #FF0000", "shadowBlur = 10",
                 `drawImage(./../images/maps/${map}-icon.png, -40, -62.5, 80, 125)`,
             "restore()",
             "save()",
-                `setTransform(1, 0, 0, 1, 145, ${182.5+row*125})`,
-                onFlip ? "shadowColor = #FF0000" : "shadowColor = #00FFFF", "shadowBlur = 10",
+                `setTransform(1, 0, 0, 1, ${145+col*80}, ${182.5+row*125})`,
+                onTurn ? "shadowColor = #FF0000" : "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(./../images/edit-actions/flip.png, -18, -18, 36, 36)",
             "restore()",
             "save()",
-                `setTransform(1, 0, 0, 1, 145, ${242.5+row*125})`,
-                onRemove ? "shadowColor = #FF0000" : "shadowColor = #00FFFF", "shadowBlur = 10",
+                `setTransform(1, 0, 0, 1, ${145+col*80}, ${242.5+row*125})`,
+                onDelete ? "shadowColor = #FF0000" : "shadowColor = #00FFFF", "shadowBlur = 10",
                 "drawImage(./../images/edit-actions/remove.png, -18, -18, 36, 36)",
             "restore()"
         ]
@@ -488,6 +490,18 @@ describe("Editor", ()=> {
                 "fillStyle = #E0E0E0", "fillRect(-40, -62.5, 80, 125)",
                 "strokeStyle = #000000", "lineWidth = 1",
                 "strokeRect(-40, -62.5, 80, 125)",
+            "restore()"
+        ]
+    }
+
+    function showHoleMapCell(col, row) {
+        return [
+            "save()",
+            `setTransform(1, 0, 0, 1, ${145+col*80}, ${212.5+row*125})`,
+            "shadowBlur = 0",
+            "fillStyle = #FFE0E0", "fillRect(-40, -62.5, 80, 125)",
+            "strokeStyle = #000000", "lineWidth = 1",
+            "strokeRect(-40, -62.5, 80, 125)",
             "restore()"
         ]
     }
@@ -518,7 +532,15 @@ describe("Editor", ()=> {
                         selected = board;
                     }
                     else {
-                        assertDirectives(layer, showFilledMapCell(board.map, col, row));
+                        if (board.map) {
+                            assertDirectives(layer, showFilledMapCell(board.map, col, row));
+                        }
+                        else if (board.hole) {
+                            assertDirectives(layer, showHoleMapCell(col, row));
+                        }
+                        else {
+                            assertDirectives(layer, showEmptyMapCell(col, row));
+                        }
                     }
                 }
                 else {
@@ -609,10 +631,13 @@ describe("Editor", ()=> {
         }
 
         skipDirectives(itemsLayer, 4);
-        assertDirectives(itemsLayer, showMapSelector(boards[0].board, 875, 265));
-        assertDirectives(itemsLayer, showMapSelector(boards[1].board, 875, 400));
-        assertDirectives(itemsLayer, showMapSelector(boards[2].board, 875, 535));
-
+        for (let index=0; index<3; index++) {
+            if (boards[index]) {
+                assertDirectives(itemsLayer, showMapSelector(
+                    boards[index].board, boards[index].highlighted, boards[index].selected, 875, 265+135*index
+                ));
+            }
+        }
         assertMapContent(itemsLayer, cells);
         assertDirectives(itemsLayer, showMoveBoardCommand(
             "top", commands.top.active, commands.top.highlight, 785, 170));
@@ -626,9 +651,11 @@ describe("Editor", ()=> {
             if (board.front) {
                 if (board.map) {
                     if (board.selected) {
-                        assertDirectives(itemsLayer, showSelectedFilledMapCell(board.map, board.col, board.row));
+                        assertDirectives(itemsLayer, showSelectedFilledMapCell(
+                            board.map, board.col, board.row, board.inverted, board.onTurn, board.onDelete));
                     } else {
-                        assertDirectives(itemsLayer, showFilledMapCell(board.map, board.col, board.row));
+                        assertDirectives(itemsLayer, showFilledMapCell(
+                            board.map, board.col, board.row, board.inverted, board.onTurn, board.onDelete));
                     }
                 }
                 else {
@@ -643,6 +670,26 @@ describe("Editor", ()=> {
         assertNoMoreDirectives(itemsLayer);
     }
 
+    function assertMapComposerCommands(widgetsLayer, {up, down, ok, cancel}) {
+        function showMapCommand(command, active, x, y) {
+            if (active) {
+                return showActiveMapCommand(command, x, y);
+            } else {
+                return showInactiveMapCommand(command, x, y);
+            }
+        }
+
+        skipDirectives(widgetsLayer, 4);
+        assertDirectives(widgetsLayer, showMask());
+        assertDirectives(widgetsLayer, showPopup(500, 400, 850, 550));
+        assertDirectives(widgetsLayer, showColoredRect(875, 400, "#C0C0C0", 100, 550));
+        assertDirectives(widgetsLayer, showMapCommand("up", up, 875, 160));
+        assertDirectives(widgetsLayer, showMapCommand("down", down, 875, 640));
+        assertDirectives(widgetsLayer, showMapCommand("ko", cancel, 785, 580));
+        assertDirectives(widgetsLayer, showMapCommand("ok", ok, 785, 640));
+        assertNoMoreDirectives(widgetsLayer);
+    }
+
     let allBoards = [
         { name: "map", path: "./../images/maps/map.png", icon: "./../images/maps/map-icon.png" },
         { name: "map1", path: "./../images/maps/map1.png", icon: "./../images/maps/map1-icon.png" },
@@ -650,7 +697,12 @@ describe("Editor", ()=> {
         { name: "map3", path: "./../images/maps/map3.png", icon: "./../images/maps/map3-icon.png" }
     ];
 
-    it("Checks open units editor popup and board catalog loading", () => {
+    let fewBoards = [
+        { name: "map", path: "./../images/maps/map.png", icon: "./../images/maps/map-icon.png" },
+        { name: "map1", path: "./../images/maps/map1.png", icon: "./../images/maps/map1-icon.png" }
+    ];
+
+    it("Checks open map composer popup and board catalog loading", () => {
         given:
             var { game } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
@@ -659,19 +711,27 @@ describe("Editor", ()=> {
             getDrawPlatform().requestSucceeds(JSON.stringify(allBoards), 200);
             repaint(game);
         then:
-            skipDirectives(widgetsLayer, 4);
-            assertDirectives(widgetsLayer, showMask());
-            assertDirectives(widgetsLayer, showPopup(500, 400, 850, 550));
-            assertDirectives(widgetsLayer, showColoredRect(875, 400, "#C0C0C0", 100, 550));
-            assertDirectives(widgetsLayer, showInactiveMapCommand("up", 875, 160));
-            assertDirectives(widgetsLayer, showActiveMapCommand("down", 875, 640));
-            assertDirectives(widgetsLayer, showActiveMapCommand("ko", 785, 580));
-            assertDirectives(widgetsLayer, showActiveMapCommand("ok", 785, 640));
-            assertNoMoreDirectives(widgetsLayer);
-
+            assertMapComposerCommands(widgetsLayer, {up:false, down:true, ok:true, cancel:true});
             assertMapComposerContent(itemsLayer, {
                 commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
                 boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [{ map:"map", row:0, col:0 }]
+            });
+    });
+
+    it("Checks board composer opening when board catalog is tiny", () => {
+        given:
+            var { game } = buildScenarioEditorGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
+        when:
+            game.editMap();
+            getDrawPlatform().requestSucceeds(JSON.stringify(fewBoards), 200);
+            repaint(game);
+        then:
+            assertMapComposerCommands(widgetsLayer, {up:false, down:false, ok:true, cancel:true});
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}],
                 cells: [{ map:"map", row:0, col:0 }]
             });
     });
@@ -692,7 +752,8 @@ describe("Editor", ()=> {
                 cells: [{ map:"map", row:0, col:0 }]
             });
         when:
-            mouseMoveOnArtifact(game, mapComposer.translateToRight);
+            mouseMoveOnArtifact(game, mapComposer.translateRight);
+            repaint(game);
         then:
             assertMapComposerContent(itemsLayer, {
                 commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true, highlight:true }, bottom:{ active:true } },
@@ -700,7 +761,8 @@ describe("Editor", ()=> {
                 cells: [{ map:"map", row:0, col:0 }]
             });
         when:
-            mouseMoveOnArtifact(game, mapComposer.translateToLeft);
+            mouseMoveOnArtifact(game, mapComposer.translateLeft);
+            repaint(game);
         then:
             assertMapComposerContent(itemsLayer, {
                 commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
@@ -708,16 +770,75 @@ describe("Editor", ()=> {
                 cells: [{ map:"map", row:0, col:0 }]
             });
         when:
-            clickOnArtifact(game, mapComposer.translateToRight);
+            clickOnArtifact(game, mapComposer.translateRight);
+            repaint(game);
         then:
             assertMapComposerContent(itemsLayer, {
                 commands: { top:{ active:false }, prev:{ active:true }, next:{ active:true }, bottom:{ active:true } },
                 boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
                 cells: [{ map:"map", row:0, col:1 }]
             });
+        when:
+            clickOnArtifact(game, mapComposer.translateDown);
+            repaint(game);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:true }, prev:{ active:true }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [{ map:"map", row:1, col:1 }]
+            });
+        when:
+            clickOnArtifact(game, mapComposer.translateLeft);
+            repaint(game);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:true }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [{ map:"map", row:1, col:0 }]
+            });
+        when:
+            clickOnArtifact(game, mapComposer.translateUp);
+            repaint(game);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [{ map:"map", row:0, col:0 }]
+            });
     });
 
-    it("Checks border edition in map composer content", () => {
+    it("Checks map composer glider buttons", () => {
+        given:
+            var {game} = buildScenarioEditorGame();
+            var [itemsLayer] = getLayers(game.board, "widget-items");
+        when:
+            game.editMap();
+            getDrawPlatform().requestSucceeds(JSON.stringify(allBoards), 200);
+            var mapComposer = getMapComposerPopup(game);
+            for (let col=1; col<8; col++) {
+                clickOnArtifact(game, mapComposer.translateRight);
+            }
+            repaint(game);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: {top: {active: false}, prev: {active: true}, next: {active: false}, bottom: {active: true}},
+                boards: [{board: "map"}, {board: "map1"}, {board: "map2"}],
+                cells: [{map: "map", col: 7, row: 0}]
+            });
+        when:
+            for (let row=1; row<4; row++) {
+                clickOnArtifact(game, mapComposer.translateDown);
+            }
+            repaint(game);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: {top: {active: true}, prev: {active: true}, next: {active: false}, bottom: {active: false}},
+                boards: [{board: "map"}, {board: "map1"}, {board: "map2"}],
+                cells: [{map: "map", col: 7, row: 3}]
+            });
+    });
+
+    it("Checks board edition in map composer content", () => {
         given:
             var { game } = buildScenarioEditorGame();
             var [itemsLayer] = getLayers(game.board, "widget-items");
@@ -750,9 +871,287 @@ describe("Editor", ()=> {
                 boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
                 cells: [{ map:"map", row:0, col:0, front:true }, { row:0, col:1, front:true, selected:true }]
             });
+        when:
+            mouseMoveOnArtifact(game, mapComposer.getCell(0, 0));
+            mouseMoveOnArtifact(game, mapComposer.getCell(0, 0).deleteCommand);
+            repaint(game);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [{ row:0, col:1, front:true}, { map:"map", row:0, col:0, front:true, selected:true, onDelete:true }]
+            });
+        when:
+            mouseMoveOnArtifact(game, mapComposer.getCell(0, 0).turnCommand);
+            repaint(game);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [{ row:0, col:1, front:true}, { map:"map", row:0, col:0, front:true, selected:true, onTurn:true }]
+            });
+        when:
+            clickOnArtifact(game, mapComposer.getCell(0, 0).turnCommand);
+            repaint(game);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [
+                    { row:0, col:1, front:true},
+                    { map:"map", row:0, col:0, front:true, inverted:true, selected:true, onTurn:true }
+                ]
+            });
+        when:
+            clickOnArtifact(game, mapComposer.getCell(0, 0).deleteCommand);
+            repaint(game);
+        then:
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:false }, bottom:{ active:false } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [
+                    { row:0, col:1, front:true},
+                    { row:0, col:0, front:true, inverted:true, selected:true }
+                ]
+            });
     });
 
-    function buildScenarioEditorGame() {
+    it("Checks board selection", () => {
+        given:
+            var { game } = buildScenarioEditorGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
+        when:
+            game.editMap();
+            getDrawPlatform().requestSucceeds(JSON.stringify(allBoards), 200);
+            var mapComposer = getMapComposerPopup(game);
+            repaint(game);
+        then:
+            assertMapComposerCommands(widgetsLayer, {up:false, down:true, ok:true, cancel:true});
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1"}, { board: "map2"}],
+                cells: [{ map:"map", row:0, col:0 }]
+            });
+        when:
+            clickOnArtifact(game, mapComposer.selectorBottom);
+            repaint(game);
+        then:
+            assertMapComposerCommands(widgetsLayer, {up:true, down:false, ok:true, cancel:true});
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map1"}, { board: "map2"}, { board: "map3"}],
+                cells: [{ map:"map", row:0, col:0 }]
+            });
+        when:
+            mouseMoveOnArtifact(game, mapComposer.getMapSelectors(1));
+            repaint(game);
+        then:
+            assertMapComposerCommands(widgetsLayer, {up:true, down:false, ok:true, cancel:true});
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map1"}, { board: "map2", highlighted:true }, { board: "map3"}],
+                cells: [{ map:"map", row:0, col:0 }]
+            });
+        when:
+            mouseMoveOnArtifact(game, mapComposer.getMapSelectors(0));
+            repaint(game);
+        then:
+            assertMapComposerCommands(widgetsLayer, {up:true, down:false, ok:true, cancel:true});
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map1", highlighted:true }, { board: "map2" }, { board: "map3"}],
+                cells: [{ map:"map", row:0, col:0 }]
+            });
+        when:
+            clickOnArtifact(game, mapComposer.getMapSelectors(0));
+            repaint(game);
+        then:
+            assertMapComposerCommands(widgetsLayer, {up:true, down:false, ok:true, cancel:true});
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map1", selected:true }, { board: "map2" }, { board: "map3"}],
+                cells: [{ map:"map", row:0, col:0 }]
+            });
+        when:
+            clickOnArtifact(game, mapComposer.getMapSelectors(1));
+            repaint(game);
+        then:
+            assertMapComposerCommands(widgetsLayer, {up:true, down:false, ok:true, cancel:true});
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map1" }, { board: "map2", selected:true }, { board: "map3"}],
+                cells: [{ map:"map", row:0, col:0 }]
+            });
+        when:
+            clickOnArtifact(game, mapComposer.selectorTop);
+            repaint(game);
+        then:
+            assertMapComposerCommands(widgetsLayer, {up:false, down:true, ok:true, cancel:true});
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map"}, { board: "map1" }, { board: "map2", selected:true }],
+                cells: [{ map:"map", row:0, col:0 }]
+            });
+    });
+
+    it("Checks map composition", () => {
+        given:
+            var {game} = buildScenarioEditorGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
+        when:
+            game.editMap();
+            getDrawPlatform().requestSucceeds(JSON.stringify(allBoards), 200);
+            var mapComposer = getMapComposerPopup(game);
+            repaint(game);
+        then:
+            assertMapComposerCommands(widgetsLayer, {up: false, down: true, ok: true, cancel: true});
+            assertMapComposerContent(itemsLayer, {
+                commands: {top: {active: false}, prev: {active: false}, next: {active: true}, bottom: {active: true}},
+                boards: [{board: "map"}, {board: "map1"}, {board: "map2"}],
+                cells: [{map: "map", row: 0, col: 0}]
+            });
+        when:
+            clickOnArtifact(game, mapComposer.getMapSelectors(1));
+            repaint(game);
+        then:
+            assertMapComposerCommands(widgetsLayer, {up:false, down:true, ok:true, cancel:true});
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map" }, { board: "map1", selected:true }, { board: "map2"}],
+                cells: [{ map:"map", row:0, col:0 }]
+            });
+        when:
+            mouseMoveOnArtifact(game, mapComposer.getCell(1, 0));
+            clickOnArtifact(game, mapComposer.getCell(1, 0));
+            repaint(game);
+        then:
+            assertMapComposerCommands(widgetsLayer, {up:false, down:true, ok:true, cancel:true});
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map" }, { board: "map1", selected:true }, { board: "map2"}],
+                cells: [{ map:"map", row:0, col:0 }, { map:"map1", row:0, col:1, front:true, selected:true }]
+            });
+            assert(mapComposer.ok.active).isTrue();
+            assert(mapComposer.cancel.active).isTrue();
+    });
+
+    it("Checks map composition when there are map holes", () => {
+        given:
+            var {game} = buildScenarioEditorGame();
+            var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
+        when:
+            game.editMap();
+            getDrawPlatform().requestSucceeds(JSON.stringify(allBoards), 200);
+            var mapComposer = getMapComposerPopup(game);
+            clickOnArtifact(game, mapComposer.getMapSelectors(1));
+            mouseMoveOnArtifact(game, mapComposer.getCell(1, 1));
+            clickOnArtifact(game, mapComposer.getCell(1, 1));
+            repaint(game);
+        then:
+            assertMapComposerCommands(widgetsLayer, {up:false, down:true, ok:false, cancel:true});
+            assertMapComposerContent(itemsLayer, {
+                commands: { top:{ active:false }, prev:{ active:false }, next:{ active:true }, bottom:{ active:true } },
+                boards: [{ board: "map" }, { board: "map1", selected:true }, { board: "map2"}],
+                cells: [
+                    { map:"map", row:0, col:0 }, { row:1, col:0, hole:true },
+                    { row:0, col:1, hole:true }, { map:"map1", row:1, col:1, front:true, selected:true }
+                ]
+            });
+            assert(mapComposer.ok.active).isFalse();
+            assert(mapComposer.cancel.active).isTrue();
+    });
+
+    it("Checks map edition and confirmation", () => {
+        given:
+            var {game} = buildScenarioEditorGame(true);
+            var [mapLayer, widgetsLayer, widgetsItems, widgetsCommands] = getLayers(game.board, "map", "widgets", "widget-items", "widget-commands");
+        when:
+            game.editMap();
+            getDrawPlatform().requestSucceeds(JSON.stringify(allBoards), 200);
+            var mapComposer = getMapComposerPopup(game);
+            clickOnArtifact(game, mapComposer.getMapSelectors(1));
+            mouseMoveOnArtifact(game, mapComposer.getCell(1, 0));
+            clickOnArtifact(game, mapComposer.getCell(1, 0));
+            clickOnArtifact(game, mapComposer.ok);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(widgetsItems, 4);
+            assertNoMoreDirectives(widgetsCommands, 4);
+            skipDirectives(mapLayer, 4);
+            assertDirectives(mapLayer, [
+                'save()',
+                    'setTransform(-0.4888, 0, 0, -0.4888, 0, 400)',
+                    'drawImage(./../images/maps/map.png, -1023, -1575, 2046, 3150)',
+                'restore()',
+                'save()',
+                    'setTransform(0.4888, 0, 0, 0.4888, 1000, 400)',
+                    'drawImage(./../images/maps/map1.png, -1023, -1575, 2046, 3150)',
+                'restore()'
+            ]);
+            assertNoMoreDirectives(mapLayer);
+    });
+
+    it("Checks map edition and cancellation", () => {
+        given:
+            var {game} = buildScenarioEditorGame();
+            var [mapLayer, widgetsLayer, widgetsItems, widgetsCommands] = getLayers(game.board, "map", "widgets", "widget-items", "widget-commands");
+        when:
+            game.editMap();
+            getDrawPlatform().requestSucceeds(JSON.stringify(allBoards), 200);
+            var mapComposer = getMapComposerPopup(game);
+            clickOnArtifact(game, mapComposer.getMapSelectors(1));
+            mouseMoveOnArtifact(game, mapComposer.getCell(1, 0));
+            clickOnArtifact(game, mapComposer.getCell(1, 0));
+            clickOnArtifact(game, mapComposer.cancel);
+            repaint(game);
+        then:
+            assertNoMoreDirectives(widgetsLayer, 4);
+            assertNoMoreDirectives(widgetsItems, 4);
+            assertNoMoreDirectives(widgetsCommands, 4);
+            skipDirectives(mapLayer, 4);
+            assertDirectives(mapLayer, [
+                'save()',
+                    'setTransform(0.4888, 0, 0, 0.4888, 500, 400)',
+                    'drawImage(./../images/maps/map.png, -1023, -1575, 2046, 3150)',
+                'restore()'
+            ]);
+            assertNoMoreDirectives(mapLayer);
+    });
+
+    it("Checks map composer push menu button", () => {
+        given:
+            var editMode = false;
+            var { game } = buildScenarioEditorGame();
+            game.editMap = function() {
+                editMode = !editMode;
+            }
+            game.setMenu();
+            var [commandsLayer] = getLayers(game.board, "widget-commands");
+            loadAllImages();
+            game._showCommand.action();
+            executeAllAnimations();
+        when:
+            game._editMapCommand.action();
+            executeAllAnimations();
+            resetDirectives(commandsLayer);
+            repaint(game);
+        then:
+            assert(editMode).isTrue();
+            assertClearDirectives(commandsLayer);
+            assertDirectives(commandsLayer, showGameCommand("hide", 940, 740));
+            assertDirectives(commandsLayer, showGameCommand("undo", 880, 740));
+            assertDirectives(commandsLayer, showGameCommand("redo", 820, 740));
+            assertDirectives(commandsLayer, showGameCommand("settings", 760, 740));
+            assertDirectives(commandsLayer, showGameCommand("save", 700, 740));
+            assertDirectives(commandsLayer, showGameCommand("load", 640, 740));
+            assertDirectives(commandsLayer, showGameCommand("edit-units", 580, 740));
+            assertDirectives(commandsLayer, showGameCommand("edit-map", 520, 740));
+            assertDirectives(commandsLayer, showGameCommand("full-screen-on", 460, 740));
+            assertNoMoreDirectives(commandsLayer);
+    });
+
+    function buildScenarioEditorGame(invert = false) {
         let BlueBanner0 = {
             name: "blue-banner",
             path: "./../images/units/blue/banners/banner0.png"
@@ -766,7 +1165,7 @@ describe("Editor", ()=> {
         let map = new CBMap([{
             path:"./../images/maps/map.png",
             icon:"./../images/maps/map-icon.png",
-            col:0, row:0
+            col:0, row:0, invert
         }]);
         game.setMap(map);
         let player1 = new CBEditorPlayer("player1", "./../players/player1.png");

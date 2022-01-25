@@ -39,7 +39,7 @@ import {
     DNextNavigation,
     D2StatesIconMenuItem,
     DOk,
-    DKo,
+    DCancel,
     DPlus, DMinus
 } from "../jslib/widget.js";
 import {
@@ -1519,7 +1519,7 @@ describe("Widget", ()=> {
             var { board, widgetsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
             var counter = 0;
             var popup = new DPopup(new Dimension2D(500, 200));
-            var koButton = new DKo(new Point2D(-50, 0), event=>counter++);
+            var koButton = new DCancel(new Point2D(-50, 0), event=>counter++);
             popup.addArtifact(koButton);
             loadAllImages();
             popup.open(board, new Point2D(500, 300));

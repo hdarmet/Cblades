@@ -941,12 +941,12 @@ export class DOk extends DCommand {
     static DIMENSION = new Dimension2D(50, 50);
 }
 
-export class DKo extends DCommand {
+export class DCancel extends DCommand {
 
     constructor(position, action) {
         let image = DImage.getImage("./../images/commands/ko.png");
         let inactiveImage = DImage.getImage("./../images/commands/ko-inactive.png");
-        super(image, inactiveImage, position, DKo.DIMENSION, action);
+        super(image, inactiveImage, position, DCancel.DIMENSION, action);
     }
 
     static DIMENSION = new Dimension2D(50, 50);
