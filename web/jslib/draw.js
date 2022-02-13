@@ -48,6 +48,14 @@ let _targetPlatform = {
         element.setAttribute(attrName, attrValue);
     },
 
+    removeAttribute(element, attrName) {
+        element.removeAttribute(attrName);
+    },
+
+    setText(element, text) {
+        element.textContent = text;
+    },
+
     setWindowStyleAttribute(attrName, attrValue) {
         window.document.body.style[attrName] = attrValue;
     },
@@ -78,6 +86,10 @@ let _targetPlatform = {
 
     appendChild(parent, child) {
         parent.appendChild(child);
+    },
+
+    removeChild(parent, child) {
+        parent.removeChild(child);
     },
 
     getContext(element, contextName) {

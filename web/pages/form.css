@@ -1,0 +1,329 @@
+
+.form-label {
+    font-weight: bold;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.form-row-container {
+    margin-top: 5px;
+}
+
+.form-line-container {
+    display: flex;
+    margin-top: 5px;
+}
+
+.form-field.vitamin-active .form-label {
+    color: black;
+}
+
+.form-field.vitamin-inactive .form-label {
+    color: #dddddd;
+}
+
+.form-input-text, .form-input-password {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1em;
+}
+
+.form-field.vitamin-active .form-input-text, .form-field.vitamin-active .form-input-password {
+    color: black;
+}
+
+.form-field.vitamin-inactive .form-input-text, .form-field.vitamin-inactive .form-input-password {
+    color: #cccccc;
+}
+
+/* Set a style for all buttons */
+.form-button {
+    display: flex;
+    flex-direction: row-reverse;
+    color: black;
+    padding: 5px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 1.5em;
+    text-shadow: 1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white;
+    text-align: left;
+    width: 200px;
+    height: 66px;
+}
+
+.form-button-accept.vitamin-active {
+    background-image: url("../images/site/buttons/green.png");
+}
+
+.form-button-refuse.vitamin-active {
+    background-image: url("../images/site/buttons/red.png");
+}
+
+.form-button-neutral.vitamin-active {
+    background-image: url("../images/site/buttons/blue.png");
+}
+
+.form-button.vitamin-inactive {
+    background-image: url("../images/site/buttons/inactive.png");
+}
+
+.form-line-container .form-button {
+    margin: 5px;
+}
+
+.form-button.vitamin-active:hover {
+    opacity: 0.8;
+}
+
+/* Extra styles for the cancel button */
+.form-cancelbtn {
+    width: auto;
+    padding: 10px 18px;
+    background-color: #f44336;
+}
+
+/* Center the image and position the close button */
+.form-imgcontainer {
+    text-align: center;
+    margin: 24px 0 12px 0;
+    position: relative;
+}
+
+.form-avatar {
+    width: 40%;
+    border-radius: 50%;
+}
+
+.form-field {
+    padding: 5px;
+}
+
+.form-row {
+    display: flex;
+}
+
+.form-1column {
+    padding: 0px;
+}
+
+.form-2columns {
+    flex: 50%;
+    padding: 0px;
+}
+
+.form-3columns {
+    flex: 33.333%;
+    padding: 0px;
+}
+
+.form-4columns {
+    flex: 25%;
+    padding: 0px;
+}
+
+.form-password {
+    float: right;
+    padding-top: 16px;
+}
+
+/* The container */
+.form-checkmark-container {
+    display: block;
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 12px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.form-checkmark-container.vitamin-active {
+    cursor: pointer;
+}
+
+.form-checkmark-container.vitamin-inactive {
+    cursor: default;
+}
+
+.form-checkmark-label {
+    display: flex;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    height: 25px;
+    align-items: center;
+}
+
+/* Hide the browser's default checkbox */
+.form-checkmark-container input {
+    position: absolute;
+    opacity: 0;
+}
+
+/* Create a custom checkbox */
+.form-checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 25px;
+    background-color: #eeeeee;
+}
+
+.form-line-container .form-checkmark-container {
+    margin-right: 10px;
+}
+
+/* On mouse-over, add a grey background color */
+.form-checkmark-container.vitamin-active:hover input ~ .form-checkmark {
+    background-color: #cccccc;
+}
+
+/* When the checkbox is checked, add a blue background */
+.form-checkmark-container.vitamin-active input:checked ~ .form-checkmark {
+    background-color: #2196F3;
+}
+
+/* When the checkbox is checked, add a blue background */
+.form-checkmark-container.vitamin-inactive input:checked ~ .form-checkmark {
+    background-color: #cccccc;
+}
+
+.form-checkmark-container.vitamin-active .form-checkmark-label {
+    color: black;
+}
+
+.form-checkmark-container.vitamin-inactive .form-checkmark-label {
+    color: #dddddd;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.form-checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+/* Show the checkmark when checked */
+.form-checkmark-container input:checked ~ .form-checkmark:after {
+    display: block;
+}
+
+/* Style the checkmark/indicator */
+.form-checkmark-container .form-checkmark:after {
+    left: 9px;
+    top: 5px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
+/* The container */
+.form-radio-container {
+    display: block;
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 12px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.form-radio-container.vitamin-active {
+    cursor: pointer;
+}
+
+.form-radio-container.vitamin-inactive {
+    cursor: default;
+}
+
+.form-radio-label {
+    display: flex;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    height: 25px;
+    align-items: center;
+}
+
+/* Hide the browser's default radio button */
+.form-radio-container input {
+    position: absolute;
+    opacity: 0;
+}
+
+/* Create a custom radio button */
+.form-radio {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 25px;
+    background-color: #eee;
+    border-radius: 50%;
+}
+
+.form-line-container .form-radio-container {
+    margin-right: 10px;
+}
+
+/* On mouse-over, add a grey background color */
+.form-radio-container.vitamin-active:hover input ~ .form-radio {
+    background-color: #cccccc;
+}
+
+/* When the checkbox is checked, add a blue background */
+.form-radio-container.vitamin-active input:checked ~ .form-radio {
+    background-color: #2196F3;
+}
+
+/* When the checkbox is checked, add a blue background */
+.form-radio-container.vitamin-inactive input:checked ~ .form-radio {
+    background-color: #cccccc;
+}
+
+/* Create the indicator (the dot/circle - hidden when not checked) */
+.form-radio:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+/* Show the indicator (dot/circle) when checked */
+.form-radio-container input:checked ~ .form-radio:after {
+    display: block;
+}
+
+/* Style the indicator (dot/circle) */
+.form-radio-container .form-radio:after {
+    top: 9px;
+    left: 9px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: white;
+}
+
+.form-radio-container.vitamin-active .form-radio-label {
+    color: black;
+}
+
+.form-radio-container.vitamin-inactive .form-radio-label {
+    color: #dddddd;
+}
+
+@font-face {
+    font-family: 'Carolingia';
+    src: url('./carolingia.ttf');
+}

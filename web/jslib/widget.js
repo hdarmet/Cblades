@@ -191,7 +191,7 @@ export class DIconMenuItem extends DImageArtifact {
                 DIconMenuItem.MARGIN+DIconMenuItem.ICON_SIZE/2 + (DIconMenuItem.MARGIN+DIconMenuItem.ICON_SIZE)*row
             ),
             DIconMenuItem.ICON_DIMENSION, 0);
-        this._inactive = DImage.getImage(pathInactive);
+        this._inactive = pathInactive ? DImage.getImage(pathInactive) : super.image;
         this._active = true;
         this._col = col;
         this._row = row;

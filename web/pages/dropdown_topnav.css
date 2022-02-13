@@ -1,0 +1,78 @@
+/* Main menu container (fixed menu)*/
+.ddtn-main {
+    position: fixed;
+    top: 0;
+    width: 100%;
+}
+
+/* Navbar container */
+.ddtn-navbar {
+    overflow: hidden;
+    background-color: #f9f9f9;
+    font-family: Arial;
+}
+
+/* Links inside the navbar */
+.ddtn-navbar a {
+    float: left;
+    font-size: 16px;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+/* The dropdown container */
+.ddtn-dropdown {
+    float: left;
+    overflow: hidden;
+}
+
+/* Dropdown button */
+.ddtn-dropdown .ddtn-droptitle {
+    font-size: 16px;
+    border: none;
+    outline: none;
+    padding: 14px 16px;
+    background-color: inherit;
+    font-family: inherit; /* Important for vertical align on mobile phones */
+    margin: 0; /* Important for vertical align on mobile phones */
+}
+
+.ddtn-navbar a.vitamin-active, .ddtn-dropdown.vitamin-active .ddtn-droptitle, .ddtn-dropdown-content a.vitamin-active:hover {
+    color: black;
+}
+
+.ddtn-navbar a.vitamin-inactive, .ddtn-dropdown.vitamin-inactive .ddtn-droptitle, .ddtn-dropdown-content a.vitamin-inactive:hover {
+    color: #ddd;
+    cursor: default;
+}
+
+/* Add a red background color to navbar links on hover */
+.ddtn-navbar a.vitamin-active:hover, .ddtn-dropdown.vitamin-active:hover .ddtn-droptitle, .ddtn-dropdown-content a.vitamin-active:hover {
+    background-color: #ddd;
+}
+
+/* Dropdown content (hidden by default) */
+.ddtn-dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+/* Links inside the dropdown */
+.ddtn-dropdown-content a {
+    float: none;
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+}
+
+/* Show the dropdown menu on hover */
+.ddtn-dropdown.vitamin-active:hover .ddtn-dropdown-content {
+    display: block;
+}

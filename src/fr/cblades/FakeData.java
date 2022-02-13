@@ -19,6 +19,7 @@ public class FakeData {
             data.persist(em, new Board().setName("map7").setPath("./../images/maps/map7.png").setIcon("./../images/maps/map7-icon.png"));
             data.persist(em, new Board().setName("map8").setPath("./../images/maps/map8.png").setIcon("./../images/maps/map8-icon.png"));
             data.persist(em, new Board().setName("map9").setPath("./../images/maps/map9.png").setIcon("./../images/maps/map9-icon.png"));
+            data.persist(em, new Board().setName("map10").setPath("./../images/maps/map10.png").setIcon("./../images/maps/map10-icon.png"));
         });
         data.inTransaction(em->{
             data.persist(em, new PlayerIdentity().setName("orc-1").setPath("./../images/units/players/orc-1.png"));

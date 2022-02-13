@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="./dropdown_topnav.css" rel="stylesheet" type="text/css">
+    <link href="./modal.css" rel="stylesheet" type="text/css">
+    <link href="./form.css" rel="stylesheet" type="text/css">
+    <title>Cursed Blades</title>
+</head>
+<body>
+
+
+<script type="module">
+
+    import {
+        Div
+    } from "../jslib/components.js";
+    import {
+        VApp, VMainMenu, VModal, VCheckboxes, VRadios, VButtons
+    } from "../jslib/vitamins.js";
+
+    let vmenu = new VMainMenu({ref:"menu"})
+        .addMenu({ref:"contact", title:"Contact", enabled:false, action:()=>console.log("contact")})
+        .addDropdownMenu({ref:"file", title:"File"}, $=>{$
+            .addMenu({ref:"load", title:"Load", action:()=>{
+                    vmenu.get("load").enabled = false;
+                    vmenu.get("save").enabled = true;
+                    vmenu.get("admin").enabled = true;
+                }
+            })
+            .addMenu({ref:"save", title:"Save", enabled:false, action:()=>{
+                    vmenu.get("load").enabled = true;
+                    vmenu.get("save").enabled = false;
+                    vmenu.get("admin").enabled = false;
+                }
+            })
+        })
+        .addDropdownMenu({ref:"admin", title:"Admin", enabled:false}, $=>{$
+            .addMenu({ref:"map", title:"Map", action:()=> {
+                    vmenu.get("file").removeMenu("save");
+                    vmenu.insertMenu({
+                        ref:"avant-propos", title:"Avant Propos...", action:()=>{
+                            console.log("Avant propos");
+                            vregistration.show();
+                        }
+                    }, "a-propos")
+                }
+            })
+            .addMenu({ref:"units", title:"Units", action:()=> {
+                    vmenu.get("file").addMenu({ref:"save", title:"Save", enabled:false, action:()=>{
+                            vmenu.get("load").enabled = true;
+                            vmenu.get("save").enabled = false;
+                            vmenu.get("admin").enabled = false;
+                        }
+                    });
+                }
+            })
+        })
+        .addMenu({ref:"a-propos", title:"A Propos...", action:()=>{
+            vmodal.show();
+        }});
+
+    let vmodal = new VModal({"ref":"modal"})
+        .addContainer({ref:"login-container", enabled:false, columns:2},$=>{$
+            .addField({
+                ref:"login", label:"Login", value:"My name",
+                onInput:event=>{
+                    console.log(vmodal.get("login").value);
+                }
+            })
+            .addField({ref:"password", label:"Password"})
+            .addField({field: new VCheckboxes({
+                        ref: "boxes", label: "Boxes",
+                        checkboxes: [
+                            {ref: "PIV", checked:true, title: "PIV"},
+                            {ref: "VIP", title: "VIP"}
+                        ],
+                        onInput: event=>{
+                            console.log(vmodal.get("boxes").value);
+                        }
+                    })
+                }
+            )
+            .addField({field: new VRadios({
+                        ref: "radios", label: "Radios",
+                        radios: [
+                            {ref: "blue", checked:true, title: "Blue"},
+                            {ref: "red", title: "Red"}
+                        ],
+                        onInput: event=>{
+                            console.log(vmodal.get("radios").value);
+                        }
+                    })
+                }
+            )
+        })
+        .addContainer({ref:"registration-c2"},$=>{$
+            .addField({ref:"c2-firstname", label:"First Name"})
+            .addField({ref:"c2-lastname", label:"Last Name"})
+            .addField({field:new VButtons({ref: "buttons", buttons:[
+                    {ref:"validate", type:"accept", enabled:false, label:"Validate",
+                        onClick:event=>console.log("Validate")},
+                    {ref:"cancel", type:"refuse", label:"Cancel",
+                        onClick:event=>console.log("Cancel")}
+                ]})}
+            );
+        });
+
+    let vregistration = new VModal({"ref":"registration"})
+        .addContainer({ref:"registration-container"},$=>{$
+            .addField({ref:"firstname", label:"First Name"})
+            .addField({ref:"lastname", label:"Last Name"})
+        });
+
+    /*
+    let link = new A("item 1");
+    let mitem1 = new LI().add(link).onMouseClick(event=>{console.log("item one"); return true;}).addClass("active");
+    let mitem2 = new LI("item2").onMouseClick(event=>console.log("item two"));
+
+    let menu = new UL()
+        .setWidth("100%")
+        .add(mitem1)
+        .add(mitem2)
+        .addClass("nav navbar-nav")
+        .onMouseClick(event=>console.log("menu"));
+
+    let menuPane = new Div()
+        .setWidth("30%").setHeight("100%")
+        .setColor("#E0FFFF")
+        .setFloating("left")
+        .add(menu);
+     */
+
+    let down = new Div()
+        .setWidth("100%").setHeight("30%")
+        .setColor("#E0E0FF")
+        .setFloating("bottom");
+    let content = new Div()
+        .setWidth("100%").setHeight("100%")
+        .setColor("#E0FFE0")
+        .setOverflow("auto")
+        .setFloating("top")
+        .add(down);
+    let app = new VApp()
+        .setWidth("100%").setHeight("100%")
+        .setColor("#E0E0E0")
+        .add(vmenu)
+        .add(content)
+        .add(vmodal)
+        .add(vregistration);
+    document.body.parentElement.style["height"] = "100%";
+    document.body.style["height"] = "100%";
+    document.body.style["margin"] = "0";
+    document.body.appendChild(app.root);
+
+</script>
+</body>
+</html>
