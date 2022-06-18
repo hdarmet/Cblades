@@ -134,4 +134,5 @@ public interface DataSunbeam {
 			query.setParameter((String)params[i], params[i+1]);
 		}		
 	}
+
 }

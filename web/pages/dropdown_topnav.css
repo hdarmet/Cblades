@@ -1,14 +1,13 @@
 /* Main menu container (fixed menu)*/
 .ddtn-main {
-    position: fixed;
-    top: 0;
+    position: absolute;
+    bottom: 0;
     width: 100%;
 }
 
 /* Navbar container */
 .ddtn-navbar {
     overflow: hidden;
-    background-color: #f9f9f9;
     font-family: Arial;
 }
 
@@ -38,18 +37,32 @@
     margin: 0; /* Important for vertical align on mobile phones */
 }
 
-.ddtn-navbar a.vitamin-active, .ddtn-dropdown.vitamin-active .ddtn-droptitle, .ddtn-dropdown-content a.vitamin-active:hover {
+.ddtn-dropdown-content a.vitamin-active:hover {
     color: black;
 }
 
+.ddtn-menu-bar-item.vitamin-active, .ddtn-dropdown.vitamin-active .ddtn-menu-bar-item {
+    color: #f44336;
+    font-weight: bold;
+}
+
 .ddtn-navbar a.vitamin-inactive, .ddtn-dropdown.vitamin-inactive .ddtn-droptitle, .ddtn-dropdown-content a.vitamin-inactive:hover {
-    color: #ddd;
+    color: #dddddd;
+    cursor: default;
+}
+
+.ddtn-dropdown.vitamin-inactive .ddtn-droptitle, .ddtn-dropdown-content a.vitamin-inactive:hover {
+    color: #dddddd;
     cursor: default;
 }
 
 /* Add a red background color to navbar links on hover */
 .ddtn-navbar a.vitamin-active:hover, .ddtn-dropdown.vitamin-active:hover .ddtn-droptitle, .ddtn-dropdown-content a.vitamin-active:hover {
-    background-color: #ddd;
+    background-color: #dddddd40;
+}
+
+.ddtn-dropdown-content a.vitamin-active:hover {
+      background-color: #dddddd;
 }
 
 /* Dropdown content (hidden by default) */
@@ -59,7 +72,7 @@
     background-color: #f9f9f9;
     min-width: 160px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 1;
+    z-index: 100;
 }
 
 /* Links inside the dropdown */

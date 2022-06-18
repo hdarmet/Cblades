@@ -13,13 +13,39 @@
     padding-top: 60px;
 }
 
+.modal-title {
+    height: 2em;
+    border-bottom: 2px solid #0f0f0f;
+    margin-bottom: 16px;
+}
+
+.modal-title-text {
+    font-family: CenturyGothicStd, Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+.modal-title-close {
+    width: 1.5em;
+    height: 1.5em;
+    float: right;
+}
+
+.modal-title-close:hover {
+    opacity: 0.6;
+    cursor: pointer;
+}
+
 /* Modal Content/Box */
 .modal-content {
     background-color: #fefefe;
     margin: 5% auto 15% auto; /* 5% from the top, 15% from the bottom and centered */
     border: 1px solid #888;
     width: 80%; /* Could be more or less, depending on screen size */
+    min-width: 500px;
+    max-width: 800px;
     padding: 20px;
+    border-radius: 20px;
 }
 
 /* Add Zoom Animation */

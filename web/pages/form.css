@@ -21,13 +21,32 @@
     color: #dddddd;
 }
 
-.form-input-text, .form-input-password {
+.form-input-text, .form-input-password, .form-input-select, .form-input-textarea {
     width: 100%;
-    padding: 12px 20px;
+    padding: 5px 10px;
     margin: 8px 0;
     display: inline-block;
-    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid #ccc;
     box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1em;
+}
+
+.form-input-textarea {
+    height: 8em;
+}
+
+.form-input-text:focus, .form-input-password:focus, .form-input-select:focus, .form-input-textarea:focus {
+    background-color: #f2f2f2;
+    outline: none;
+    border-bottom: 1px solid #aaa;
+}
+
+.form-input-select-option {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 1em;
 }
@@ -51,11 +70,11 @@
     border-radius: 12px;
     cursor: pointer;
     font-family: Carolingia, Arial, Helvetica, sans-serif;
-    font-size: 1.5em;
+    font-size: 1.2em;
     text-shadow: 1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white;
     text-align: left;
-    width: 200px;
-    height: 66px;
+    width: 150px;
+    height: 50px;
 }
 
 .form-button-accept.vitamin-active {
@@ -103,29 +122,6 @@
 
 .form-field {
     padding: 5px;
-}
-
-.form-row {
-    display: flex;
-}
-
-.form-1column {
-    padding: 0px;
-}
-
-.form-2columns {
-    flex: 50%;
-    padding: 0px;
-}
-
-.form-3columns {
-    flex: 33.333%;
-    padding: 0px;
-}
-
-.form-4columns {
-    flex: 25%;
-    padding: 0px;
 }
 
 .form-password {
@@ -321,9 +317,4 @@
 
 .form-radio-container.vitamin-inactive .form-radio-label {
     color: #dddddd;
-}
-
-@font-face {
-    font-family: 'Carolingia';
-    src: url('./carolingia.ttf');
 }

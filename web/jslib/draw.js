@@ -53,7 +53,7 @@ let _targetPlatform = {
     },
 
     setText(element, text) {
-        element.textContent = text;
+        element.innerHTML = text;
     },
 
     setWindowStyleAttribute(attrName, attrValue) {
@@ -70,6 +70,10 @@ let _targetPlatform = {
 
     addEventListener(element, event, func, option=true) {
         element.addEventListener(event, func, option);
+    },
+
+    removeEventListener(element, event, func) {
+        element.removeEventListener(event, func);
     },
 
     setTimeout(handler, timeout, ...args) {
