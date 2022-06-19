@@ -26,19 +26,23 @@ Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adi
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addDropdownMenu({ref:"material-menu", title:"Pour jouer"}, $=>{$
-        .addMenu({ref:"dwnld-rules-menu", title:"Télécharger les règles et les aides de jeu", action:()=>{
-
+        .addMenu({ref:"dwnld-rules-menu", title:"Les règles et les aides de jeu", action:()=>{
+                vPageContent.showRulesGallery();
             }
         })
-        .addMenu({ref:"dwnld-map-menu", title:"Télécharger les cartes", action:()=>{
+        .addMenu({ref:"dwnld-map-menu", title:"Les cartes", action:()=>{
                 vPageContent.showMapsGallery();
             }
         })
-        .addMenu({ref:"dwnld-armies-menu", title:"Télécharger les factions", action:()=>{
+        .addMenu({ref:"dwnld-armies-menu", title:"Les factions", action:()=>{
                 vPageContent.showFactionsGallery();
             }
         })
-        .addMenu({ref:"dwnld-markers-menu", title:"Télécharger les marqueurs", action:()=>{
+        .addMenu({ref:"dwnld-magic-menu", title:"La magie", action:()=>{
+                vPageContent.showMagicGallery();
+            }
+        })
+        .addMenu({ref:"dwnld-markers-menu", title:"Les marqueurs", action:()=>{
 
             }
         })
@@ -167,6 +171,41 @@ export function download(url) {
     document.body.removeChild(a)
 }
 
+///////////////////////////////////////////
+var rules = {
+    "game-rules": {ref:"game-rules", name: "Game Rules", description: "Rules Of The Game", file: "Cursed Blades Rules" },
+    "units-activation": {ref:"units-activation", name: "Units Activation Player Aid", description: "The Player Aid that helps to activate a Unit", file: "Fiche Activation des Unités" },
+}
+
+export function declareRule(ruleRef, ruleName, ruleDescription, ruleFile) {
+    return {
+        ref:ruleRef,
+        img:`../images/site/rules/${ruleRef}.png`, width:"90%",
+        title: ruleName, description:ruleDescription,
+        button:"Download", action:event=>{
+            download(`../docs/${ruleFile}.pdf`);
+        }
+    };
+}
+
+export var vRulesTitle = new VHeader({
+    ref:"rules-title",
+    left:"../images/site/left-rules.png", right:"../images/site/right-rules.png",
+    title: "Rules And Player Aids"
+}).addClass("rules-title");
+
+export var vRulesGallery = new VGallery({ref:"rules", kind: "gallery-rules"});
+
+vRulesGallery.show = function() {
+    this.clearCards();
+    for (let rule in rules) {
+        this.addCard(declareRule(rules[rule].ref, rules[rule].name, rules[rule].description, rules[rule].file));
+    }
+    return this;
+}
+
+///////////////////////////////////////////////
+
 var maps = {
     "map-1": {ref:"map-1", name: "map1", description: "Landscape crossed by a path" },
     "map-2": {ref:"map-2", name: "map2", description: "Landscape crossed by a path" },
@@ -223,39 +262,115 @@ vMapsGallery.show = function() {
     return this;
 }
 
+export var vMagicTitle = new VHeader({
+    ref:"magic-title",
+    left:"../images/site/left-magic.png", right:"../images/site/right-magic.png",
+    title: "Magical Arts"
+}).addClass("magic-title");
 
-export function declareCounter(factionRef, counterRef, counterName) {
+export function declareMagic(magicRef, magicName, magicDescription) {
     return {
-        ref:counterRef,
-        image: new VMagnifiedImage({
-            ref:`img-${factionRef}-${counterRef}`,
-            img:`../images/site/factions/${factionRef}/${counterRef}-icon.png`,
-            zoomImg:`../images/site/factions/${factionRef}/${counterRef}.png`,
-            width:"90%"
-        }),
-        title:counterName,
-        button:"Download", action:event=>{
-            download(`../images/site/factions/${factionRef}/${counterRef}.png`);
+        ref:"magic-"+magicName,
+        img:`../images/site/magic/${magicRef}.png`,
+        title:magicName, description:magicDescription,
+        button:"Downloadable", action:event=>{
+            vPageContent.showMagicCountersGallery(magics[magicRef]);
         }
     };
 }
 
-export var vCountersGallery = new VGallery({ref:"counter", kind: "gallery-counter"});
-
-vCountersGallery.setFaction = function(faction) {
-    this._faction = faction;
+var magics = {
+    arcanic: {
+        ref: "arcanic", name: "Arcanic Art",
+        description: "The Versatile Art of Arcany. The Versatile Art of Arcany. The Versatile Art of Arcany. The Versatile Art of Arcany. The Versatile Art of Arcany. The Versatile Art of Arcany.",
+        counterSheets: 1,
+        playerAid: "Fiche Art Arcanique"
+    },
+    pyromantic: {
+        ref: "pyromantic", name: "Pyromantic Art",
+        description: "The Destructive Art Of Pyromancy",
+        counterSheets: 1,
+        playerAid: "Fiche Art Pyromantique"
+    },
+    telluric: {
+        ref: "telluric", name: "Tellurical Art",
+        description: "The Fundamental Art Of Tellury"
+    },
+    biotic: {
+        ref: "biotic", name: "Biotic Art",
+        description: "The Fascinating Art Of Biology"
+    },
+    demonic: {
+        ref: "demonic", name: "Demonological Art",
+        description: "The Frightening Art Of Demonology"
+    },
+    necromantic: {
+        ref: "necromantic", name: "Necromancy Art",
+        description: "The Horrible Art Of Necromancy"
+    },
+    theologic: {
+        ref: "theologic", name: "Theological Art",
+        description: "The Saint Art Of Theology"
+    },
 }
 
-vCountersGallery.show = function() {
-    vCountersGallery.clearCards();
-    for (let counterIndex=1; counterIndex<=this._faction.counterSheets; counterIndex++) {
-        vCountersGallery.addCard(declareCounter(
-            this._faction.ref,
+export var vMagicGallery = new VGallery({ref:"magic", kind: "gallery-magic"});
+
+vMagicGallery.show = function() {
+    this.clearCards();
+    for (let magic in magics) {
+        this.addCard(declareMagic(magics[magic].ref, magics[magic].name, magics[magic].description, magics[magic].playerAid));
+    }
+    return this;
+}
+
+export function declareMagicPlayerAid(magicRef, playerAid) {
+    return {
+        ref:"playerAid",
+        img:`../images/site/magic/${magicRef}/player-aid.png`, width:"90%",
+        title:"Player Aid",
+        playerAid: `../site/docs/${playerAid}.pdf`,
+        button:"Download", action:event=>{
+            download(`../docs/${playerAid}.pdf`);
+        }
+    };
+}
+
+export function declareMagicCounter(magicRef, counterRef, counterName) {
+    return {
+        ref:counterRef,
+        image: new VMagnifiedImage({
+            ref:`img-${magicRef}-${counterRef}`,
+            img:`../images/site/magic/${magicRef}/${counterRef}-icon.png`,
+            zoomImg:`../images/site/magic/${magicRef}/${counterRef}.png`,
+            width:"90%"
+        }),
+        title:counterName,
+        button:"Download", action:event=>{
+            download(`../images/site/magic/${magicRef}/${counterRef}.png`);
+        }
+    };
+}
+
+export var vMagicCountersGallery = new VGallery({ref:"magic-counters", kind: "gallery-magic-counters"});
+
+vMagicCountersGallery.setMagicArt = function(art) {
+    this._art = art;
+}
+
+vMagicCountersGallery.show = function() {
+    vMagicCountersGallery.clearCards();
+    vMagicCountersGallery.addCard(declareMagicPlayerAid(
+        this._art.ref, this._art.playerAid
+    ))
+    for (let counterIndex=1; counterIndex<=this._art.counterSheets; counterIndex++) {
+        vMagicCountersGallery.addCard(declareMagicCounter(
+            this._art.ref,
             `counters${counterIndex}`,
             `Counter Sheet # ${counterIndex} Front`
         ))
-        .addCard(declareCounter(
-            this._faction.ref,
+        .addCard(declareMagicCounter(
+            this._art.ref,
             `counters${counterIndex}b`,
             `Counter Sheet # ${counterIndex} Back`
         ))
@@ -263,28 +378,28 @@ vCountersGallery.show = function() {
     return this;
 }
 
-export var vFactionSummary = new VSlot({ref: "counter-page-summary-slot"});
+export var vMagicSummary = new VSlot({ref: "counter-page-summary-slot"});
 
-export var vCounterPageGallery = new VContainer({ref: "counter-page-content"})
-    .addClass("gallery-counter-page")
-    .add(vFactionSummary)
-    .add(vCountersGallery);
+export var vMagicCountersPageGallery = new VContainer({ref: "magic-counters-page-content"})
+    .addClass("gallery-magic-counters-page")
+    .add(vMagicSummary)
+    .add(vMagicCountersGallery);
 
-vCounterPageGallery.show = function() {
-    vFactionSummary.set({
+vMagicCountersPageGallery.show = function() {
+    vMagicSummary.set({
         content: new VSummary({
-            ref: "faction-summary",
-            img: `../images/site/factions/${vCountersGallery._faction.ref}.png`,
-            alt: vCountersGallery._faction.name,
-            title: vCountersGallery._faction.name,
-            description: vCountersGallery._faction.description
+            ref: "magic-summary",
+            img: `../images/site/magic/${vMagicCountersGallery._art.ref}.png`,
+            alt: vMagicCountersGallery._art.name,
+            title: vMagicCountersGallery._art.name,
+            description: vMagicCountersGallery._art.description
         })
     });
-    vCountersGallery.show();
+    vMagicCountersGallery.show();
 }
 
 export var vFactionsTitle = new VHeader({
-    ref:"maps-title",
+    ref:"army-title",
     left:"../images/site/left-factions.png", right:"../images/site/right-factions.png",
     title: "Factions"
 }).addClass("factions-title");
@@ -295,7 +410,7 @@ export function declareFaction(factionRef, factionName, factionDescription) {
         img:`../images/site/factions/${factionRef}.png`,
         title:factionName, description:factionDescription,
         button:"Counters Sheets", action:event=>{
-            vPageContent.showCountersGallery(factions[factionRef]);
+            vPageContent.showFactionCountersGallery(factions[factionRef]);
         }
     };
 }
@@ -345,6 +460,65 @@ vFactionsGallery.show = function() {
     return this;
 }
 
+export function declareFactionCounter(factionRef, counterRef, counterName) {
+    return {
+        ref:counterRef,
+        image: new VMagnifiedImage({
+            ref:`img-${factionRef}-${counterRef}`,
+            img:`../images/site/factions/${factionRef}/${counterRef}-icon.png`,
+            zoomImg:`../images/site/factions/${factionRef}/${counterRef}.png`,
+            width:"90%"
+        }),
+        title:counterName,
+        button:"Download", action:event=>{
+            download(`../images/site/factions/${factionRef}/${counterRef}.png`);
+        }
+    };
+}
+
+export var vFactionCountersGallery = new VGallery({ref:"factions-counter", kind: "gallery-faction-counters"});
+
+vFactionCountersGallery.setFaction = function(faction) {
+    this._faction = faction;
+}
+
+vFactionCountersGallery.show = function() {
+    vFactionCountersGallery.clearCards();
+    for (let counterIndex=1; counterIndex<=this._faction.counterSheets; counterIndex++) {
+        vFactionCountersGallery.addCard(declareFactionCounter(
+            this._faction.ref,
+            `counters${counterIndex}`,
+            `Counter Sheet # ${counterIndex} Front`
+        ))
+        .addCard(declareFactionCounter(
+                this._faction.ref,
+                `counters${counterIndex}b`,
+                `Counter Sheet # ${counterIndex} Back`
+        ))
+    }
+    return this;
+}
+
+export var vFactionSummary = new VSlot({ref: "counter-page-summary-slot"});
+
+export var vFactionCountersPageGallery = new VContainer({ref: "faction-counters-page-content"})
+    .addClass("gallery-faction-counters-page")
+    .add(vFactionSummary)
+    .add(vFactionCountersGallery);
+
+vFactionCountersPageGallery.show = function() {
+    vFactionSummary.set({
+        content: new VSummary({
+            ref: "faction-summary",
+            img: `../images/site/factions/${vFactionCountersGallery._faction.ref}.png`,
+            alt: vFactionCountersGallery._faction.name,
+            title: vFactionCountersGallery._faction.name,
+            description: vFactionCountersGallery._faction.description
+        })
+    });
+    vFactionCountersGallery.show();
+}
+
 class VPageContent extends VContainer {
 
     constructor() {
@@ -364,6 +538,18 @@ class VPageContent extends VContainer {
             this._page.show && this._page.show();
             this.add(this._page);
         }
+    }
+
+    _showRulesGallery() {
+        this._changeTitle(vRulesTitle);
+        this._changeGallery(vRulesGallery);
+    }
+
+    showRulesGallery() {
+        history.pushState({
+            revert: "vPageContent._showRulesGallery();"
+        }, "rules-gallery");
+        this._showRulesGallery();
     }
 
     _showMapsGallery() {
@@ -390,18 +576,44 @@ class VPageContent extends VContainer {
         this._showFactionsGallery();
     }
 
-    _showCountersGallery(faction) {
-        this._changeTitle(null);
-        vCountersGallery.setFaction(faction);
-        this._changeGallery(vCounterPageGallery);
+    _showFactionCountersGallery(faction) {
+        this._changeTitle(vFactionsTitle);
+        vFactionCountersGallery.setFaction(faction);
+        this._changeGallery(vFactionCountersPageGallery);
     }
 
-    showCountersGallery(faction) {
+    showFactionCountersGallery(faction) {
         history.pushState({
-            revert: "vPageContent._showCountersGallery(event.state.faction);",
+            revert: "vPageContent._showFactionCountersGallery(event.state.faction);",
             faction
-        }, "counters-gallery");
-        this._showCountersGallery(faction);
+        }, "faction-counters-gallery");
+        this._showFactionCountersGallery(faction);
+    }
+
+    _showMagicGallery() {
+        this._changeTitle(vMagicTitle);
+        this._changeGallery(vMagicGallery);
+    }
+
+    showMagicGallery() {
+        history.pushState({
+            revert: "vPageContent._showMagicGallery();"
+        }, "magic-gallery");
+        this._showMagicGallery();
+    }
+
+    _showMagicCountersGallery(art) {
+        this._changeTitle(vMagicTitle);
+        vMagicCountersGallery.setMagicArt(art);
+        this._changeGallery(vMagicCountersPageGallery);
+    }
+
+    showMagicCountersGallery(art) {
+        history.pushState({
+            revert: "vPageContent._showMagicCountersGallery(event.state.art);",
+            art
+        }, "magic-counters-gallery");
+        this._showMagicCountersGallery(art);
     }
 }
 
