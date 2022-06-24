@@ -108,9 +108,11 @@ export function Vitamin(Component) {
                 if (this._active) {
                     this.removeClass("vitamin-inactive");
                     this.addClass("vitamin-active");
+                    this.onActivate && this.onActivate();
                 } else {
                     this.removeClass("vitamin-active");
                     this.addClass("vitamin-inactive");
+                    this.onDesactivate && this.onDesactivate();
                 }
             }
         }
@@ -406,7 +408,7 @@ export class VInputField extends VField {
 
     _initField({value, onInput, onChange}) {
         this._input = new Input(value).addClass("form-input-text");
-        this.value = value ? vale : "";
+        this.value = value ? value : "";
         onInput&&this._input.onInput(onInput);
         onChange&&this._input.onChange(onChange);
         this.add(this._input);
@@ -516,6 +518,36 @@ export class VSelectField extends VField {
         this._options = options;
     }
 
+}
+
+export class VSearch extends Vitamin(Div) {
+
+    constructor({ref, value, placeholder="Keywords", searchAction}) {
+        super(ref);
+        this.addClass("search");
+        this._input = new Input(value).setType("search").setAttribute("placeholder", placeholder).addClass("search-input-text");
+        this.value = value ? value : "";
+        this._button = new Div().addClass("search-button");
+        this._searchAction = event=>searchAction(this._input.getValue());
+        this.add(this._input);
+        this.add(this._button);
+    }
+
+    get value() {
+        return this.field.getValue();
+    }
+
+    set value(value) {
+        this._input.setValue(value);
+    }
+
+    onActivate() {
+        this._button.onEvent("click", this._searchAction);
+    }
+
+    onDesactivate() {
+        this._button.onEvent("click", null);
+    }
 }
 
 export class VContainer extends Vitamin(Div) {
@@ -872,10 +904,15 @@ export class VHeader extends Vitamin(Div) {
         this.addClass("header-container");
         this._left = new Img(left).addClass("header-left-image");
         this.add(this._left);
-        this._title = new Span(title).addClass("header-text");
+        this._title = new VSlot({ref: ref+"-title"}).addClass("header-text");
         this.add(this._title);
+        title && this.setTitle(title);
         this._right = new Img(right).addClass("header-right-image");
         this.add(this._right);
+    }
+
+    setTitle(title) {
+        this._title.set({content: new Span(title)});
     }
 
     addVitamin(component) {
@@ -1019,7 +1056,7 @@ export class VSlot extends Vitamin(Div) {
 
     constructor({ref, content}) {
         super({ref});
-        this.set({content});
+        content && this.set({content});
     }
 
     set({content}) {
@@ -1126,6 +1163,219 @@ export class VGallery extends Vitamin(Div) {
         }
         this._cards = [];
     }
+}
+
+export class VParagraph extends Vitamin(Div) {
+
+    constructor({ref, img, image, alt, title, description}) {
+        super({ref});
+        this.addClass("paragraph");
+        if (image) {
+            this._divImage = image;
+        }
+        else {
+            this._divImage = new Div();
+            this._image = new Img(img).setAlt(alt).addClass("paragraph-image");
+            this._divImage.add(this._image);
+        }
+        this.add(this._divImage);
+        this._content = new Div().addClass("paragraph-container");
+        this.add(this._content);
+        this._title = new P(title).addClass("paragraph-title");
+        this._content.add(this._title);
+        if (Array.isArray(description)) {
+            this._descriptions = [];
+            for (let descriptionLine of description) {
+                let line = new P(descriptionLine).addClass("paragraph-line");
+                this._descriptions.push(line);
+                this._content.add(line);
+            }
+        }
+        else {
+            this._description = new P(description).addClass("paragraph-line");
+            this._content.add(this._description);
+        }
+    }
+
+}
+
+export class VVotes extends Vitamin(Div) {
+
+    constructor({ref, likes, dislikes, actionLikes, actionDislikes}) {
+        super({ref});
+        this._likesIcon = new Div().addClass("likes-icon");
+        this._likesValue = new Div().addClass("likes-value").setText(""+likes);
+        if (actionLikes) {
+            this._likesIcon.onEvent("click", event=>actionLikes(this._likesValue, event));
+        }
+        this._dislikesIcon = new Div().addClass("dislikes-icon");
+        this._dislikesValue = new Div().addClass("dislikes-value").setText(""+dislikes);
+        if (actionDislikes) {
+            this._dislikesIcon.onEvent("click", event=>actionDislikes(this._dislikesValue, event));
+        }
+        this.addClass("show-votes")
+            .add(this._likesIcon).add(this._likesValue)
+            .add(this._dislikesIcon).add(this._dislikesValue);
+    }
+
+}
+
+export class VArticle extends Vitamin(Div) {
+
+    constructor({ref, kind = "article", title, paragraphs, votes, action}) {
+        super({ref});
+        this.addClass(kind);
+        this._title = new P(title).addClass("article-title");
+        this.add(this._title);
+        if (votes) {
+            this._votes = new VVotes(votes);
+            this.add(this._votes);
+        }
+        let left = true;
+        for (let paragraphSpec of paragraphs) {
+            let paragraph = new VParagraph(paragraphSpec);
+            paragraph.addClass(left ? "image-on-left" : "image-on-right");
+            left = !left;
+            this.add(paragraph);
+        }
+        this.onEvent("click", ()=>{
+            action && action({ref, title, paragraphs, votes})
+        });
+    }
+
+}
+
+export class VWall extends Vitamin(Div) {
+
+    constructor({ref, kind="wall-vertical"}, builder) {
+        super({ref});
+        kind&&this.addClass(kind);
+        this._lastElement =new Div();
+        this.add(this._lastElement);
+        this._notes = [];
+        builder&&builder(this);
+    }
+
+    setLoadNotes(action) {
+        this._loadNotes = action;
+        return this;
+    }
+
+    resizeGridItem(note){
+        let rowHeight = parseInt(window.getComputedStyle(this.root).getPropertyValue('grid-auto-rows'));
+        let rowGap = parseInt(window.getComputedStyle(this.root).getPropertyValue('grid-row-gap'));
+        let rowSpan = Math.ceil((note.root.getBoundingClientRect().height+rowGap)/(rowHeight+rowGap));
+        note._envelope.root.style.gridRowEnd = "span "+rowSpan;
+    }
+
+    onActivate() {
+        this.resizeAllGridItems();
+        this._resizeAll = ()=>this.resizeAllGridItems();
+        window.addEventListener("resize", this._resizeAll);
+        this._detectVisibility = ()=>this.detectVisibility();
+        window.addEventListener("scroll", this._detectVisibility);
+        Img.addLoaderListener(this);
+        this.detectVisibility();
+    }
+
+    onDesactivate() {
+        window.removeEventListener("resize", this._resizeAll);
+        window.addEventListener("scroll", this._detectVisibility);
+        Img.removeLoaderListener(this);
+    }
+
+    onImageLoaded(img) {
+        this.resizeAllGridItems();
+    }
+
+    resizeAllGridItems() {
+        for(let note of this._notes){
+            this.resizeGridItem(note);
+        }
+    }
+
+    addNote(note) {
+        note._envelope = new Div();
+        note._envelope.add(note);
+        this.insert(note._envelope, this._lastElement);
+        this._notes.push(note);
+        return this;
+    }
+
+    clearNotes() {
+        for (let note of this._notes) {
+            this.remove(note._envelope);
+        }
+        this._notes = [];
+    }
+
+    detectVisibility() {
+        let topOfElement = this._lastElement.root.offsetTop;
+        let bottomOfElement = this._lastElement.root.offsetTop + this._lastElement.root.offsetHeight + this._lastElement.root.style.marginTop;
+        let bottomOfScreen = window.scrollY + window.innerHeight;
+        let topOfScreen = window.scrollY;
+        if ((bottomOfScreen > topOfElement) && (topOfScreen < bottomOfElement)) {
+            this._loadNotes && this._loadNotes();
+        }
+    }
+
+}
+
+export class VNewspaper extends Vitamin(Div) {
+
+    constructor({ref, kind="newspaper"}, builder) {
+        super({ref});
+        kind && this.addClass(kind);
+        this._content = new Div().addClass("newspaper-container");
+        this.add(this._content);
+        builder&&builder(this);
+    }
+
+    addParagraph({img, image, alt, title, description}, article, left) {
+        if (image) {
+            article.add(image);
+        }
+        else {
+            image = new Img(img).setAlt(alt).addClass("paragraph-image");
+            article.add(image);
+        }
+        image.addClass(left ? "image-on-left" : "image-on-right");
+        article.add(new P(title).addClass("paragraph-title"));
+        if (Array.isArray(description)) {
+            for (let descriptionLine of description) {
+                let line = new P(descriptionLine).addClass("paragraph-line");
+                article.add(line);
+            }
+        }
+        else {
+            article.add(new P(description).addClass("paragraph-line"));
+        }
+    }
+
+    addArticle({title, paragraphs, votes}) {
+        let article = new Div().addClass(("article-container"));
+        this._content.add(article);
+        article.add(new P(title).addClass("article-title"));
+        let left = true;
+        for (let paragraph of paragraphs) {
+            this.addParagraph(paragraph, article, left);
+            left = !left;
+        }
+        let voteContainer = new Div().addClass("votes-container");
+        voteContainer.add(new VVotes(votes))
+        article.add(voteContainer);
+        return this;
+    }
+
+    setArticle(params) {
+        if (this._content) {
+            this.remove(this._content);
+            this._content = new Div().addClass("newspaper-container");
+            this.add(this._content);
+        }
+        this.addArticle(params);
+    }
+
 }
 
 export class VFileLoader extends Vitamin(Div) {

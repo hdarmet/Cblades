@@ -1,0 +1,502 @@
+
+.search-input-text {
+    width: 50%;
+    min-width: 200px;
+    max-width: 500px;
+    padding: 5px 10px;
+    margin: 15px 15px;
+    display: inline-block;
+    vertical-align: middle;
+    background-color: #f9f9f9;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid #ccc;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1em;
+}
+
+.search-input-text:focus {
+    background-color: #f2f2f2;
+    outline: none;
+    border-bottom: 1px solid #aaa;
+}
+
+.vitamin-active .search-input-text {
+    color: black;
+}
+
+.vitamin-inactive .search-input-text {
+    color: #cccccc;
+}
+
+.search-button {
+    display: inline-block;
+    vertical-align: middle;
+    border: none;
+    cursor: pointer;
+    width: 70px;
+    height: 50px;
+}
+
+.vitamin-active .search-button {
+    background-image: url("../images/site/search-button.png");
+}
+
+.vitamin-inactive .search-button {
+    background-image: url("../images/site/search-button-inactive.png");
+}
+
+.vitamin-active .search-button:hover {
+    opacity: 0.8;
+}
+
+
+
+
+
+
+.new-articles .search {
+    background-color: #f8f2de;
+}
+
+.new-articles .search-input-text {
+    background-color: #e9ddbe;
+}
+
+.new-articles-title.header-container {
+    position: -webkit-sticky;
+    position: sticky;
+    top: -100px;
+    background-color: #f8f2de;
+    width: 100%;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.new-articles-title .header-left-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.new-articles-title .header-right-image {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.new-articles-title .header-text {
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 3em;
+    color: #2c4762;
+    text-shadow: 0 0 0.05em #fff, 0 0 0.2em #e0e0e0, 0 0 0.3em #555555;;
+    z-index: 1;
+}
+
+.new-articles-content {
+    padding: 10px;
+    background-color: #f8f2de;
+    display: grid;
+    grid-gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(450px,1fr));
+    grid-auto-rows: 20px;
+}
+
+.new-articles-content .article-title {
+    display: inline;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.new-articles-content .paragraph-title {
+    font-weight: bold;
+}
+
+.new-articles-content .article {
+    font-family: Arial, Helvetica, sans-serif;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    background-color: #fff8f4;
+    max-width: 600px;
+    position: relative;
+    max-height: 600px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.new-articles-content .article .show-votes {
+    display: inline-block;
+    vertical-align: middle;
+    float: right;
+}
+
+.new-articles-content .article .likes-icon {
+    display: table-cell;
+    width: 38px;
+    height: 33px;
+    background-image: url('../images/site/likes.png');
+    vertical-align: middle;
+}
+
+.new-articles-content .article .likes-value {
+    display: table-cell;
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 1.5em;
+    vertical-align: middle;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.new-articles-content .article .dislikes-icon {
+    display: table-cell;
+    width: 38px;
+    height: 33px;
+    background-image: url('../images/site/dislikes.png');
+    vertical-align: middle;
+}
+
+.new-articles-content .article .dislikes-value {
+    display: table-cell;
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 1.5em;
+    vertical-align: middle;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.new-articles-content .paragraph::after {
+    content  : "";
+    position : absolute;
+    bottom   : 0;
+    left     : 0;
+    pointer-events   : none;
+    background-image : linear-gradient(to bottom, #fff8f400, #fff8f4ff 90%);
+    width    : 100%;
+    height   : 4em;
+}
+
+.new-articles-content .paragraph-image {
+    display: block;
+    margin: 10px;
+    width: 50%;
+}
+
+.new-articles-content .image-on-left .paragraph-image {
+    float: left;
+}
+
+.new-articles-content .image-on-right .paragraph-image {
+    float: right;
+}
+
+.new-articles-content .paragraph-container {
+    margin-bottom: 10px;
+}
+
+.new-articles-content .paragraph-container::after, .gallery-row::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+
+
+
+.articles-about-game .search {
+    background-color: #f8f2de;
+}
+
+.articles-about-game .search-input-text {
+    background-color: #e9ddbe;
+}
+
+.articles-about-game-title.header-container {
+    position: -webkit-sticky;
+    position: sticky;
+    top: -100px;
+    background-color: #f8f2de;
+    width: 100%;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.articles-about-game-title .header-left-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.articles-about-game-title .header-right-image {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.articles-about-game-title .header-text {
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 3em;
+    color: #2c4762;
+    text-shadow: 0 0 0.05em #fff, 0 0 0.2em #e0e0e0, 0 0 0.3em #555555;;
+    z-index: 1;
+}
+
+.articles-about-game-content {
+    padding: 10px;
+    background-color: #f8f2de;
+    display: grid;
+    grid-gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(450px,1fr));
+    grid-auto-rows: 20px;
+}
+
+.articles-about-game-content .article-title {
+    display: inline;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.articles-about-game-content .paragraph-title {
+    font-weight: bold;
+}
+
+.articles-about-game-content .article {
+    font-family: Arial, Helvetica, sans-serif;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    background-color: #fff8f4;
+    max-width: 600px;
+    position: relative;
+    max-height: 600px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.articles-about-game-content .article .show-votes {
+    display: inline-block;
+    vertical-align: middle;
+    float: right;
+}
+
+.articles-about-game-content .article .likes-icon {
+    display: table-cell;
+    width: 38px;
+    height: 33px;
+    background-image: url('../images/site/likes.png');
+    vertical-align: middle;
+}
+
+.articles-about-game-content .article .likes-value {
+    display: table-cell;
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 1.5em;
+    vertical-align: middle;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.articles-about-game-content .article .dislikes-icon {
+    display: table-cell;
+    width: 38px;
+    height: 33px;
+    background-image: url('../images/site/dislikes.png');
+    vertical-align: middle;
+}
+
+.articles-about-game-content .article .dislikes-value {
+    display: table-cell;
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 1.5em;
+    vertical-align: middle;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.articles-about-game-content .paragraph::after {
+    content  : "";
+    position : absolute;
+    bottom   : 0;
+    left     : 0;
+    pointer-events   : none;
+    background-image : linear-gradient(to bottom, #fff8f400, #fff8f4ff 90%);
+    width    : 100%;
+    height   : 4em;
+}
+
+.articles-about-game-content .paragraph-image {
+    display: block;
+    margin: 10px;
+    width: 50%;
+}
+
+.articles-about-game-content .image-on-left .paragraph-image {
+    float: left;
+}
+
+.articles-about-game-content .image-on-right .paragraph-image {
+    float: right;
+}
+
+.articles-about-game-content .paragraph-container {
+    margin-bottom: 10px;
+}
+
+.articles-about-game-content .paragraph-container::after, .gallery-row::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+
+
+
+
+
+
+
+
+.newspaper-title.header-container {
+    position: -webkit-sticky;
+    position: sticky;
+    top: -100px;
+    background-color: #f8f2de;
+    width: 100%;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.newspaper-title .header-left-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.newspaper-title .header-right-image {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.newspaper-title .header-text {
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 3em;
+    color: #2c4762;
+    text-shadow: 0 0 0.05em #fff, 0 0 0.2em #e0e0e0, 0 0 0.3em #555555;;
+    z-index: 2;
+}
+
+.newspaper {
+    padding: 15px;
+    background-color: #f8f2de;
+    height: 100%;
+}
+
+.newspaper-container {
+    font-family: Arial, Helvetica, sans-serif;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    background-color: #fff8f4;
+}
+
+@media screen and (max-width: 900px) {
+    .newspaper-container {
+        column-count: 1;
+    }
+}
+
+@media screen and (min-width: 900px) and (max-width: 1500px) {
+    .newspaper-container {
+        column-count: 2;
+    }
+}
+
+@media screen and (min-width: 1500px) {
+    .newspaper-container {
+        column-count: 3;
+    }
+}
+
+.newspaper .article-title {
+    display: none;
+}
+
+.newspaper .paragraph-title {
+    font-weight: bold;
+}
+
+.newspaper .paragraph-image {
+    display: block;
+    margin: 10px;
+    width: 50%;
+}
+
+.newspaper .image-on-left.paragraph-image {
+    float: left;
+}
+
+.newspaper .image-on-right.paragraph-image {
+    float: right;
+}
+
+.newspaper .votes-container {
+    text-align: center;
+}
+
+.newspaper .show-votes {
+    display: inline-block;
+    margin: auto
+}
+
+.newspaper .likes-icon {
+    display: table-cell;
+    width: 38px;
+    height: 33px;
+    background-image: url('../images/site/likes.png');
+    vertical-align: middle;
+}
+
+.newspaper .likes-value {
+    display: table-cell;
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 1.5em;
+    vertical-align: middle;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.newspaper .dislikes-icon {
+    display: table-cell;
+    width: 38px;
+    height: 33px;
+    background-image: url('../images/site/dislikes.png');
+    vertical-align: middle;
+}
+
+.newspaper .likes-icon:hover {
+    opacity: 0.5;
+    cursor: pointer;
+}
+
+.newspaper .dislikes-icon:hover {
+    opacity: 0.5;
+    cursor: pointer;
+}
+
+.newspaper .dislikes-value {
+    display: table-cell;
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 1.5em;
+    vertical-align: middle;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+
+
+

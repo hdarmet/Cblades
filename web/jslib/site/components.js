@@ -430,6 +430,11 @@ export class Img extends DOM(DComponent) {
     constructor(imgSrc) {
         super("img");
         this.setSrc(imgSrc);
+        this.root.onload = function(){
+            for (let listener of Img._loaderListeners) {
+                listener.onImageLoaded(this);
+            }
+        };
     }
 
     getSrc() {
@@ -441,8 +446,17 @@ export class Img extends DOM(DComponent) {
         return this;
     }
 
-}
+    static _loaderListeners = new Set();
 
+    static addLoaderListener(listener) {
+        Img._loaderListeners.add(listener);
+    }
+
+    static removeLoaderListener(listener) {
+        Img._loaderListeners.delete(listener);
+    }
+
+}
 
 export class App extends Div {
 

@@ -1,3 +1,4 @@
+
 /* Main menu container (fixed menu)*/
 .ddtn-main {
     position: absolute;
@@ -24,6 +25,7 @@
 .ddtn-dropdown {
     float: left;
     overflow: hidden;
+    cursor: pointer;
 }
 
 /* Dropdown button */
@@ -44,6 +46,7 @@
 .ddtn-menu-bar-item.vitamin-active, .ddtn-dropdown.vitamin-active .ddtn-menu-bar-item {
     color: #f44336;
     font-weight: bold;
+    cursor: pointer;
 }
 
 .ddtn-navbar a.vitamin-inactive, .ddtn-dropdown.vitamin-inactive .ddtn-droptitle, .ddtn-dropdown-content a.vitamin-inactive:hover {

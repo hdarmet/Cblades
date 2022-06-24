@@ -2,7 +2,7 @@
 
 import {
     VInputField, VList, VLine, VModal, VApp, VSelectField, VInputTextArea, VButtons, VDisplay,
-    VLink, VRow
+    VLink, VRow, VContainer, VWall, VSearch
 } from "./vitamins.js";
 
 export class CVContact extends VList {
@@ -176,4 +176,21 @@ export class CVSocialRow extends VRow {
     }
 
     static PARTNERSHIP_REF = "social-row";
+}
+
+export class CVWall extends VContainer {
+
+    constructor({ref, kind="wall-vertical", searchAction}, builder) {
+        super({ref});
+        this.addClass(kind);
+        this._search = new VSearch({ref:ref+"_search", searchAction});
+        this.add(this._search);
+        this._wall = new VWall({ref:ref+"-content", kind:kind+"-content"}, builder);
+        this.add(this._wall);
+    }
+
+    setLoadNotes(action) {
+        this._wall.setLoadNotes(action);
+        return this;
+    }
 }
