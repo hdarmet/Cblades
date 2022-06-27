@@ -2,8 +2,35 @@
 
 import {
     VInputField, VList, VLine, VModal, VApp, VSelectField, VInputTextArea, VButtons, VDisplay,
-    VLink, VRow, VContainer, VWall, VSearch
+    VLink, VRow, VContainer, VWall, VSearch, VFileLoader, VButton, VTheme, VFileLoaderField, VMessageHandler
 } from "./vitamins.js";
+
+export class CVMessage extends VModal {
+
+    constructor(message) {
+        super({ref: CVMessage.MESSAGE_REF});
+        this.addClass("message-modal");
+        this._display = new VDisplay({ref:"message-display"});
+        this.addContainer({ref:"message-display-container", columns:1},$=>$
+            .addField({field: this._display})
+        );
+    }
+
+    show(title, content) {
+        this.title = title;
+        this._display.content = content;
+        VApp.instance.register(this);
+        super.show();
+    }
+
+    static MESSAGE_REF = "message";
+
+    static onMessageEmitted({title, message}) {
+        new CVMessage().show(title, message);
+    }
+
+}
+VMessageHandler.addMessageListener(CVMessage);
 
 export class CVContact extends VList {
     constructor({address, phone, email, writeToUs}) {
@@ -17,7 +44,7 @@ export class CVContact extends VList {
         this._writeToUs = new VLine({ref:"contact-writetous", text:writeToUs,
             action: ()=>{
                 console.log("write !");
-                VApp.instance.add(this._writeToUsModal);
+                VApp.instance.register(this._writeToUsModal);
                 this._writeToUsModal.show();
             }
         }).addClass("contact-writetous-dot");
@@ -121,8 +148,8 @@ export class CVLegalNotice extends VList {
     }
 
     showArticle(title, content) {
-        console.log("show !");
-        VApp.instance.add(this._legalNoticeModal);
+        console.log("show")
+        VApp.instance.register(this._legalNoticeModal);
         this._legalNoticeModal.show(title, content);
     }
 
@@ -193,4 +220,50 @@ export class CVWall extends VContainer {
         this._wall.setLoadNotes(action);
         return this;
     }
+}
+
+export class VCThemeEditor extends VContainer {
+
+    constructor({ref, kind="theme-editor", accept, verify, columns=2}) {
+        super({ref, columns});
+        this.addClass(kind);
+        this._category = new VSelectField({ref:"theme-category", label:"Category",
+            options: [
+                {ref: "category-game", value: "game", text:"About The Game"},
+                {ref: "category-legends", value: "legends", text:"Stories And Legends"},
+                {ref: "category-examples", value: "examples", text:"Play Examples"}
+            ]
+        });
+        this.addField({field:this._category, column:1});
+        this._title = new VInputField({
+            ref:"theme-title-input", label:"Title",
+            onInput: event=>{
+                this._theme.setTitle(this._title.value);
+            }
+        });
+        this.addField({field:this._title, column:1});
+        this._imageLoader = new VFileLoaderField({
+            ref:"theme-image", label:"Image",
+            accept, verify,
+            onInput: event=>{
+                this._theme.setImage(this._imageLoader.imageSrc);
+            }
+        });
+        this.addField({field:this._imageLoader, column:1});
+        this._description = new VInputTextArea({
+            ref:"theme-content-input", label:"Description",
+            onInput: event=>{
+                this._theme.setDescription(this._description.value);
+            }
+        });
+        this.addField({field:this._description, column:1});
+        this._send = new VButton({ref: "propose-theme", label:"Propose", type:"accept"});
+        this.addField({field:this._send, column:1});
+        this._theme = new VTheme({
+            ref: "theme1", title: "Bla bla bla", img: `../images/site/themes/rules.png`,
+            description: "bla bla bla"
+        });
+        this.addField({field:this._theme, column:0});
+    }
+
 }

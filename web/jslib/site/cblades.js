@@ -8,10 +8,10 @@ import {
     VMagnifiedImage,
     VSummary,
     VSlot,
-    VArticle, VNewspaper
+    VArticle, VNewspaper, VTheme, VFileLoader, VMessageHandler
 } from "./vitamins.js";
 import {
-    CVLegalNotice, CVContact, CVPartnerships, CVSocialRow, CVWall
+    CVLegalNotice, CVContact, CVPartnerships, CVSocialRow, CVWall, VCThemeEditor, CVMessage
 } from "./cvitamin.js";
 
 var text = `
@@ -62,18 +62,37 @@ export var vMenu = new VMainMenu({ref:"menu"})
             }
         })
         .addMenu({ref:"about-game-menu", title:"Sur le Jeu", action:()=>{
-                vPageContent.showArticlesAboutGameWall();
+                vPageContent.showThemesAboutGameWall();
             }
         })
         .addMenu({ref:"lore-articles-menu", title:"Histoires et légendes", action:()=>{
-
+                vPageContent.showThemesAboutGameWall();
             }
         })
         .addMenu({ref:"rule-articles-menu", title:"Exemples de jeu", action:()=>{
-                vPageContent.showMapsGallery();
+                vPageContent.showThemesAboutGameWall();
+            }
+        })
+    })
+    .addDropdownMenu({ref:"contribution-menu", title:"Pour contribuer"}, $=>{$
+        .addMenu({ref:"propose-theme-menu", title:"Proposer un thème", action:()=>{
+                vPageContent.showProposeTheme();
+            }
+        })
+        .addMenu({ref:"propose-article-menu", title:"Proposer un article", action:()=>{
+                vPageContent.showThemesAboutGameWall();
+            }
+        })
+        .addMenu({ref:"propose-map-menu", title:"Proposer une carte", action:()=>{
+                vPageContent.showThemesAboutGameWall();
+            }
+        })
+        .addMenu({ref:"propose-scenario", title:"Proposer un scénario", action:()=>{
+                vPageContent.showThemesAboutGameWall();
             }
         })
     });
+
 /*
     .addDropdownMenu({ref:"admin", title:"Admin", enabled:false}, $=>{$
         .addMenu({ref:"map", title:"Map", action:()=> {
@@ -662,13 +681,74 @@ vNewArticlesWall.setLoadNotes(function() {
     }));
 });
 
-
-
 export var vArticlesAboutGameTitle = new VHeader({
     ref:"articles-about-game-title",
     left:"../images/site/left-articles-about-game.png", right:"../images/site/right-articles-about-game.png",
     title: "About the game"
 }).addClass("articles-about-game-title");
+
+export var vThemesAboutGameWall = new CVWall({
+    ref:"themes-about-game",
+    kind: "themes-about-game",
+    searchAction: text=>alert("search:"+text)
+}, $=>{$
+    .addNote(new VTheme({
+        ref: "theme1", title: "Rules", img: `../images/site/themes/rules.png`,
+        description: paragrpahText,
+        action:theme=>{
+            vPageContent.showArticlesAboutGameWall();
+        }
+    }))
+    .addNote(new VTheme({
+        ref: "theme2", title: "Strategies And Tactics", img: `../images/site/themes/strategy.png`,
+        description: paragrpahText,
+        action:theme=>{
+            vPageContent.showArticlesAboutGameWall();
+        }
+    }))
+    .addNote(new VTheme({
+        ref: "theme3", title: "Units", img: `../images/site/themes/units.png`,
+        description: paragrpahText,
+        action:theme=>{
+            vPageContent.showArticlesAboutGameWall();
+        }
+    }))
+    .addNote(new VTheme({
+        ref: "theme4", title: "Magic", img: `../images/site/themes/magic.png`,
+        description: paragrpahText,
+        action:theme=>{
+            vPageContent.showArticlesAboutGameWall();
+        }
+    }))
+    .addNote(new VTheme({
+        ref: "theme5", title: "Scenario", img: `../images/site/themes/scenario.png`,
+        description: paragrpahText,
+        action:theme=>{
+            vPageContent.showArticlesAboutGameWall();
+        }
+    }))
+    .addNote(new VTheme({
+        ref: "theme6", title: "Campains", img: `../images/site/themes/campains.png`,
+        description: paragrpahText,
+        action:theme=>{
+            vPageContent.showArticlesAboutGameWall();
+        }
+    }))
+    .addNote(new VTheme({
+        ref: "theme7", title: "History", img: `../images/site/themes/history.png`,
+        description: paragrpahText,
+        action:theme=>{
+            vPageContent.showArticlesAboutGameWall();
+        }
+    }))
+    .addNote(new VTheme({
+        ref: "theme8", title: "Siege", img: `../images/site/themes/siege.png`,
+        description: paragrpahText,
+        action:theme=>{
+            vPageContent.showArticlesAboutGameWall();
+        }
+    }))
+});
 
 export var vArticlesAboutGameWall = new CVWall({
     ref:"articles-about-game",
@@ -745,9 +825,6 @@ vArticlesAboutGameWall.setLoadNotes(function() {
     }));
 });
 
-
-
-
 export var vNewspaperTitle = new VHeader({
     ref:"newspaper-title",
     left:"../images/site/left-legends.png", right:"../images/site/right-legends.png"
@@ -755,6 +832,29 @@ export var vNewspaperTitle = new VHeader({
 
 export var vNewspaperContent = new VNewspaper({
     ref:"newspaper-content"
+});
+
+export var vContributeTitle = new VHeader({
+    ref:"contribute-title",
+    left:"../images/site/left-contribute.png", right:"../images/site/right-contribute.png"
+}).addClass("contribute-title");
+
+export var vThemeEditor = new VCThemeEditor({
+    ref:"theme-editor",
+    accept(file) {
+        if (!VFileLoader.isImage(file)) {
+            VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (450 x 150) pixels."});
+            return false;
+        }
+        return true;
+    },
+    verify(image) {
+        if (image.offsetWidth!==450 || image.offsetHeight!==150) {
+            VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (450 x 150) pixels."});
+            return false;
+        }
+        return true;
+    }
 });
 
 class VPageContent extends VContainer {
@@ -878,6 +978,18 @@ class VPageContent extends VContainer {
         this._showNewArticlesWall();
     }
 
+    _showThemesAboutGameWall() {
+        this._changeTitle(vArticlesAboutGameTitle);
+        this._changeContent(vThemesAboutGameWall);
+    }
+
+    showThemesAboutGameWall() {
+        history.pushState({
+            revert: "vPageContent._showThemesAboutGameWall();"
+        }, "themes-about-game");
+        this._showThemesAboutGameWall();
+    }
+
     _showArticlesAboutGameWall() {
         this._changeTitle(vArticlesAboutGameTitle);
         this._changeContent(vArticlesAboutGameWall);
@@ -912,6 +1024,19 @@ class VPageContent extends VContainer {
             revert: `vPageContent._showNewspaper(${JSON.stringify(article)});`
         }, "newsPaper");
         this._showNewspaper(article);
+    }
+
+    _showProposeTheme() {
+        vContributeTitle.setTitle("Propose A Theme");
+        this._changeTitle(vContributeTitle);
+        this._changeContent(vThemeEditor);
+    }
+
+    showProposeTheme() {
+        history.pushState({
+            revert: "vPageContent._showProposeTheme();"
+        }, "propose-theme");
+        this._showProposeTheme();
     }
 }
 

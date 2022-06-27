@@ -64,3 +64,9 @@
     background: #aaaaaa;
     border-radius: 6px;
 }
+
+/* Modal Content/Box */
+.modal-content {
+    width: 300px; /* Could be more or less, depending on screen size */
+    height: 100px;
+}

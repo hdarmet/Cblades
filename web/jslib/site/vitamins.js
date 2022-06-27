@@ -172,6 +172,26 @@ export function Vitamin(Component) {
 
 }
 
+export class VMessageHandler {
+
+    static _messageListeners = new Set();
+
+    static addMessageListener(listener) {
+        VMessageHandler._messageListeners.add(listener);
+    }
+
+    static removeMessageListener(listener) {
+        VMessageHandler._messageListeners.delete(listener);
+    }
+
+    static emit(message) {
+        for (let listener of VMessageHandler._messageListeners) {
+            listener.onMessageEmitted(message);
+        }
+    }
+
+}
+
 export class VApp extends Vitamin(Div) {
 
     _initActivation() {
@@ -181,9 +201,10 @@ export class VApp extends Vitamin(Div) {
         this.addClass("vitamin-active");
     }
 
-    add(component) {
-        super.add(component);
-        return this;
+    register(modal) {
+        if (!this.contains(modal)) {
+            this.add(modal);
+        }
     }
 
     static get instance() {
@@ -439,15 +460,48 @@ export class VPasswordField extends VField {
 export class VInputTextArea extends VField {
 
     _initField({value, onInput, onChange}) {
-        this._input = new TextArea(value).addClass("form-input-textarea");
-        this.value = value ? vale : "";
+        let createIcon = ({command, classPrefix=command})=>{
+            return new Span("").addClass(`fa fa-${classPrefix} fa-fw`).setAttribute("aria-hidden", true)
+                .onEvent("mousedown", event=>{
+                    event.preventDefault();
+                })
+                .onEvent("mouseup", event=>{
+                        event.preventDefault();
+                        this.format(command);
+                    }
+                );
+        };
+        this._iconBold = createIcon({command: 'bold'});
+        this._iconItalic = createIcon({command: 'italic'});
+        this._iconUnderline = createIcon({command: 'underline'});
+        this._iconList = createIcon({command: 'insertunorderedlist', classPrefix:'list'});
+        this._iconBar = new Div().addClass("editor-toolbar")
+            .add(this._iconBold)
+            .add(this._iconItalic)
+            .add(this._iconUnderline)
+            .add(this._iconList);
+        this.add(this._iconBar);
+        this._input = new Div().setText(value).addClass("form-input-textarea").setAttribute("contenteditable", "true");
+        this.value = value ? value : "";
         onInput&&this._input.onInput(onInput);
         onChange&&this._input.onChange(onChange);
         this.add(this._input);
     }
 
+    format(command, value) {
+        document.execCommand(command, false, value);
+    }
+
     get field() {
         return this._input;
+    }
+
+    get value() {
+        return this.field.root.innerHTML;
+    }
+
+    set value(value) {
+        this.field.root.innerHTML = value;
     }
 
 }
@@ -520,6 +574,7 @@ export class VSelectField extends VField {
 
 }
 
+
 export class VSearch extends Vitamin(Div) {
 
     constructor({ref, value, placeholder="Keywords", searchAction}) {
@@ -573,9 +628,9 @@ export class VContainer extends Vitamin(Div) {
         builder&&builder(this);
     }
 
-    addField({field, ...params}, builder) {
+    addField({field, column, ...params}, builder) {
         field = field ? field : builder(params);
-        this._columns[this._fields.length%this._columns.length].add(field);
+        this._columns[column===undefined ? this._fields.length%this._columns.length: column].add(field);
         this._fields.push(field);
         return this;
     }
@@ -1245,6 +1300,47 @@ export class VArticle extends Vitamin(Div) {
 
 }
 
+export class VTheme extends Vitamin(Div) {
+
+    constructor({ref, title, img, alt, image, description, action}) {
+        super({ref});
+        this.addClass("theme");
+        this._header = new Div().addClass("theme-header");
+        this.add(this._header);
+        if (image) {
+            this._divImage = image;
+        }
+        else {
+            this._divImage = new Div();
+            this._image = new Img(img).setAlt(alt).addClass("theme-image");
+            this._divImage.add(this._image);
+        }
+        this._header.add(this._divImage);
+        this._title = new P(title).addClass("theme-title");
+        this._header.add(this._title);
+        this._description = new P(description).addClass("theme-description");
+        this.add(this._description);
+        this.onEvent("click", ()=>{
+            action && action(this);
+        });
+    }
+
+    setTitle(title) {
+        this._title.setText(title);
+        return this;
+    }
+
+    setDescription(description) {
+        this._description.setText(description);
+        return this;
+    }
+
+    setImage(imageSrc) {
+        this._image.setSrc(imageSrc);
+        return this;
+    }
+}
+
 export class VWall extends Vitamin(Div) {
 
     constructor({ref, kind="wall-vertical"}, builder) {
@@ -1380,8 +1476,10 @@ export class VNewspaper extends Vitamin(Div) {
 
 export class VFileLoader extends Vitamin(Div) {
 
-    constructor({ref}) {
+    constructor({ref, accept, verify}) {
         super({ref});
+        this._accept = accept;
+        this._verify = verify;
         this.addClass("file-loader");
         this.onEvent("drop", event=>this.dropHandler(event));
         this.onEvent("dragover", event=>this.dragOverHandler(event));
@@ -1394,6 +1492,9 @@ export class VFileLoader extends Vitamin(Div) {
                 if (event.dataTransfer.items[i].kind === 'file') {
                     let file = event.dataTransfer.items[i].getAsFile();
                     console.log('... file[' + i + '].name = ' + file.name);
+                    if (!this._accept || this._accept(file)) {
+                        this.showFile(file);
+                    }
                 }
             }
         } else {
@@ -1403,10 +1504,89 @@ export class VFileLoader extends Vitamin(Div) {
         }
     }
 
+    static isImage(file) {
+        return file.type === "image/png" || file.type === "image/jpg";
+    }
+
+    showFile(file) {
+        let trigger = ()=> {
+            let event = new Event("loadfile");
+            event.file = file;
+            this._inputAction && this._inputAction(event);
+            this._changeAction && this._changeAction(event);
+        }
+
+        if (VFileLoader.isImage(file)) {
+            let image = new Img().setSrc(URL.createObjectURL(file));
+            image.onEvent("load", ()=> {
+                document.body.appendChild(image.root);
+                if (!this._verify || this._verify(image)) {
+                    this._image && this.remove(this._image);
+                    this._image = image;
+                    this.add(this._image);
+                    console.log(this._image.root.offsetHeight);
+                    trigger();
+                }
+                else {
+                    document.body.removeChild(image.root);
+                }
+            });
+        }
+        else trigger();
+    }
+
     dragOverHandler(event) {
         event.preventDefault();
     }
 
+    onInput(action) {
+        this._inputAction = action;
+        return this;
+    }
+
+    onChange(action) {
+        this._changeAction = action;
+        return this;
+    }
+
+    get file() {
+        return this._file;
+    }
+
+    get imageSrc() {
+        return this._image.getSrc();
+    }
+
+    set imageSrc(src) {
+        this._image.setSrc(src);
+    }
+}
+
+export class VFileLoaderField extends VField {
+
+    _initField({value, accept, verify, onInput, onChange}) {
+        this._loader = new VFileLoader({ref:this.ref+"-loader", accept, verify}).addClass("form-file-loader");
+        //this.value = value ? value : "";
+        onInput&&this._loader.onInput(onInput);
+        onChange&&this._loader.onChange(onChange);
+        this.add(this._loader);
+    }
+
+    get field() {
+        return this._loader;
+    }
+
+    get file() {
+        return this._loader.file;
+    }
+
+    get imageSrc() {
+        return this._loader.imageSrc;
+    }
+
+    set imageSrc(imageSrc) {
+        this._loader.imageSrc = imageSrc;
+    }
 }
 
 export class VLine extends Vitamin(LI) {

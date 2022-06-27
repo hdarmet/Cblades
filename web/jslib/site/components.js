@@ -46,6 +46,10 @@ export class DComposed extends DComponent {
         }
     }
 
+    contains(child) {
+        return this._children && this._children.indexOf(child)>=0;
+    }
+
     get children() {
         return this._children ? this._children : [];
     }
@@ -238,6 +242,14 @@ export function DOM(clazz) {
             return this;
         }
 
+        onChange(changeAction) {
+            return this.onEvent("change", changeAction);
+        }
+
+        onInput(inputAction) {
+            return this.onEvent("input", inputAction);
+        }
+
         onMouseClick(clickAction) {
             return this.onEvent("click", clickAction);
         }
@@ -370,14 +382,6 @@ export function InputMixin(clazz) {
                 this._root.removeAttribute("disabled");
             }
             return this;
-        }
-
-        onChange(changeAction) {
-            return this.onEvent("change", changeAction);
-        }
-
-        onInput(inputAction) {
-            return this.onEvent("input", inputAction);
         }
 
     }

@@ -34,6 +34,24 @@
     box-sizing: border-box;
     font-family: Arial, Helvetica, sans-serif;
     font-size: 1em;
+    overflow: auto;
+}
+
+.editor-toolbar
+{
+    border:solid 1px #ddd;
+    background:#e0e0e0;
+    border-radius:3px;
+}
+
+.editor-toolbar > span
+{
+    cursor:pointer;
+}
+
+.editor-toolbar > span:hover
+{
+    text-decoration:underline;
 }
 
 .form-input-textarea {

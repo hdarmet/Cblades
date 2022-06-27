@@ -51,11 +51,6 @@
     opacity: 0.8;
 }
 
-
-
-
-
-
 .new-articles .search {
     background-color: #f8f2de;
 }
@@ -91,8 +86,8 @@
 .new-articles-title .header-text {
     font-family: Carolingia, Arial, Helvetica, sans-serif;
     font-size: 3em;
-    color: #2c4762;
-    text-shadow: 0 0 0.05em #fff, 0 0 0.2em #e0e0e0, 0 0 0.3em #555555;;
+    color: #000000;
+    text-shadow: 1px 1px 0 #ffffff, -1px -1px 0 #ffffff, -1px 1px 0.1em #ffffff, 1px -1px 0.1em #ffffff, 1px -1px 0.2em #ffffff, -1px 1px 0.2em #ffffff, -1px 1px 0.3em #ffffff, 1px -1px 0.3em #ffffff;
     z-index: 1;
 }
 
@@ -202,8 +197,51 @@
     display: table;
 }
 
+.themes-about-game .search {
+    background-color: #f8f2de;
+}
 
+.themes-about-game .search-input-text {
+    background-color: #e9ddbe;
+}
 
+.themes-about-game-content {
+    padding: 10px;
+    background-color: #f8f2de;
+    display: grid;
+    grid-gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    grid-auto-rows: 20px;
+}
+
+.theme-header {
+    position: relative;
+    text-align: center;
+}
+
+.theme-header .theme-title {
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 3em;
+    color: #000000;
+    text-shadow: 1px 1px 0 #ffffff, -1px -1px 0 #ffffff, -1px 1px 0.1em #ffffff, 1px -1px 0.1em #ffffff, 1px -1px 0.2em #ffffff, -1px 1px 0.2em #ffffff, -1px 1px 0.3em #ffffff, 1px -1px 0.3em #ffffff;
+    position: absolute;
+    width: 80%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.theme {
+    font-family: Arial, Helvetica, sans-serif;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    background-color: #fff8f4;
+    max-width: 600px;
+    position: relative;
+    max-height: 600px;
+    overflow: hidden;
+    cursor: pointer;
+}
 
 .articles-about-game .search {
     background-color: #f8f2de;
@@ -240,8 +278,8 @@
 .articles-about-game-title .header-text {
     font-family: Carolingia, Arial, Helvetica, sans-serif;
     font-size: 3em;
-    color: #2c4762;
-    text-shadow: 0 0 0.05em #fff, 0 0 0.2em #e0e0e0, 0 0 0.3em #555555;;
+    color: #000000;
+    text-shadow: 1px 1px 0 #ffffff, -1px -1px 0 #ffffff, -1px 1px 0.1em #ffffff, 1px -1px 0.1em #ffffff, 1px -1px 0.2em #ffffff, -1px 1px 0.2em #ffffff, -1px 1px 0.3em #ffffff, 1px -1px 0.3em #ffffff;
     z-index: 1;
 }
 
@@ -351,14 +389,6 @@
     display: table;
 }
 
-
-
-
-
-
-
-
-
 .newspaper-title.header-container {
     position: -webkit-sticky;
     position: sticky;
@@ -386,8 +416,8 @@
 .newspaper-title .header-text {
     font-family: Carolingia, Arial, Helvetica, sans-serif;
     font-size: 3em;
-    color: #2c4762;
-    text-shadow: 0 0 0.05em #fff, 0 0 0.2em #e0e0e0, 0 0 0.3em #555555;;
+    color: #000000;
+    text-shadow: 1px 1px 0 #ffffff, -1px -1px 0 #ffffff, -1px 1px 0.1em #ffffff, 1px -1px 0.1em #ffffff, 1px -1px 0.2em #ffffff, -1px 1px 0.2em #ffffff, -1px 1px 0.3em #ffffff, 1px -1px 0.3em #ffffff;
     z-index: 2;
 }
 
@@ -497,6 +527,72 @@
     padding-right: 10px;
 }
 
+.contribute-title.header-container {
+    position: -webkit-sticky;
+    position: sticky;
+    top: -100px;
+    background-color: #f8f2de;
+    width: 100%;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.contribute-title .header-left-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.contribute-title .header-right-image {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.contribute-title .header-text {
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 3em;
+    color: #000000;
+    text-shadow: 1px 1px 0 #ffffff, -1px -1px 0 #ffffff, -1px 1px 0.1em #ffffff, 1px -1px 0.1em #ffffff, 1px -1px 0.2em #ffffff, -1px 1px 0.2em #ffffff, -1px 1px 0.3em #ffffff, 1px -1px 0.3em #ffffff;
+    z-index: 1;
+}
+
+.theme-editor {
+    padding: 15px;
+    background-color: #f8f2de;
+    height: 100%;
+}
+
+.theme-editor .file-loader {
+    width: 450px;
+    height: 150px;
+    border: solid #555555;
+}
+
+.theme-editor .editor-toolbar
+{
+    max-width: 450px;
+    border:solid 1px #ddd;
+    background:#e0e0e0;
+    border-radius:3px;
+}
+
+.theme-editor .form-input-text, .theme-editor .form-input-select, .theme-editor .form-input-textarea {
+    display: block;
+    max-width: 450px;
+    background-color: #e9ddbe;
+}
+
+.theme-editor .form-input-textarea {
+    height: 300px;
+}
+
+.theme-editor .theme {
+    float: right;
+    margin-right: 50px;
+}
 
 
 
