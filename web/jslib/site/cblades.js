@@ -11,8 +11,11 @@ import {
     VArticle, VNewspaper, VTheme, VFileLoader, VMessageHandler
 } from "./vitamins.js";
 import {
-    CVLegalNotice, CVContact, CVPartnerships, CVSocialRow, CVWall, VCThemeEditor, CVMessage
+    CVLegalNotice, CVContact, CVPartnerships, CVSocialRow, CVWall, VCThemeEditor, CVMessage, VCArticleEditor
 } from "./cvitamin.js";
+import {
+    Div
+} from "./components.js";
 
 var text = `
 <h1>The Main Title</h1>
@@ -80,7 +83,7 @@ export var vMenu = new VMainMenu({ref:"menu"})
             }
         })
         .addMenu({ref:"propose-article-menu", title:"Proposer un article", action:()=>{
-                vPageContent.showThemesAboutGameWall();
+                vPageContent.showProposeArticle();
             }
         })
         .addMenu({ref:"propose-map-menu", title:"Proposer une carte", action:()=>{
@@ -613,8 +616,8 @@ export var vNewArticlesWall = new CVWall({
 }, $=>{$
     .addNote(new VArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
-            {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:[paragrpahText, paragrpahText]},
-            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText}
+            {ref: "art1-par1", imgPos:"left", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:[paragrpahText, paragrpahText]},
+            {ref: "art1-par2", imgPos:"right", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText}
         ],
         action:article=>{
             vPageContent.showNewspaper(article);
@@ -622,9 +625,9 @@ export var vNewArticlesWall = new CVWall({
     }))
     .addNote(new VArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
-            {ref: "art1-par3", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
-            {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
-            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText}
+            {ref: "art1-par3", imgPos:"left", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
+            {ref: "art1-par1", imgPos:"right", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
+            {ref: "art1-par2", imgPos:"left", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText}
         ],
         action:article=>{
             vPageContent.showNewspaper(article);
@@ -632,8 +635,8 @@ export var vNewArticlesWall = new CVWall({
     }))
     .addNote(new VArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
-            {ref: "art1-par3", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
-            {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
+            {ref: "art1-par3", imgPos:"left", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
+            {ref: "art1-par1", imgPos:"right", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
         ],
         action:article=>{
             vPageContent.showNewspaper(article);
@@ -641,8 +644,8 @@ export var vNewArticlesWall = new CVWall({
     }))
     .addNote(new VArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
-            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText},
-            {ref: "art1-par3", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
+            {ref: "art1-par2", imgPos:"left", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText},
+            {ref: "art1-par3", imgPos:"right", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
         ],
         action:article=>{
             vPageContent.showNewspaper(article);
@@ -653,9 +656,9 @@ export var vNewArticlesWall = new CVWall({
 vNewArticlesWall.setLoadNotes(function() {
     this.addNote(new VArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
-            {ref: "art1-par3", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
-            {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
-            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText}
+            {ref: "art1-par3", imgPos:"left", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
+            {ref: "art1-par1", imgPos:"right", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
+            {ref: "art1-par2", imgPos:"left", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText}
         ],
         action:article=>{
             vPageContent.showNewspaper(article);
@@ -663,8 +666,8 @@ vNewArticlesWall.setLoadNotes(function() {
     }))
     .addNote(new VArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
-            {ref: "art1-par3", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
-            {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
+            {ref: "art1-par3", imgPos:"left", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
+            {ref: "art1-par1", imgPos:"right", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
         ],
         action:article=>{
             vPageContent.showNewspaper(article);
@@ -672,8 +675,8 @@ vNewArticlesWall.setLoadNotes(function() {
     }))
     .addNote(new VArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
-            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText},
-            {ref: "art1-par3", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
+            {ref: "art1-par2", imgPos:"left", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText},
+            {ref: "art1-par3", imgPos:"right", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
         ],
         action:article=>{
             vPageContent.showNewspaper(article);
@@ -766,9 +769,9 @@ export var vArticlesAboutGameWall = new CVWall({
     }))
     .addNote(new VArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
-            {ref: "art1-par3", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
+            {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"left", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
-            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText}
+            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"right", title:"Et ça continue...", description:paragrpahText}
         ],
         action:article=>{
             vPageContent.showNewspaper(article);
@@ -776,8 +779,8 @@ export var vArticlesAboutGameWall = new CVWall({
     }))
     .addNote(new VArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
-            {ref: "art1-par3", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
-            {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
+            {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"left", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
+            {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"right", title:"Ca commence...", description:paragrpahText+paragrpahText},
         ],
         action:article=>{
             vPageContent.showNewspaper(article);
@@ -785,8 +788,8 @@ export var vArticlesAboutGameWall = new CVWall({
     }))
     .addNote(new VArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
-            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText},
-            {ref: "art1-par3", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
+            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"left", title:"Et ça continue...", description:paragrpahText},
+            {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"right", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
         ],
         action:article=>{
             vPageContent.showNewspaper(article);
@@ -797,9 +800,9 @@ export var vArticlesAboutGameWall = new CVWall({
 vArticlesAboutGameWall.setLoadNotes(function() {
     this.addNote(new VArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
-            {ref: "art1-par3", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
-            {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
-            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText}
+            {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"left", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
+            {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"right", title:"Ca commence...", description:paragrpahText+paragrpahText},
+            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"left", title:"Et ça continue...", description:paragrpahText}
         ],
         action:article=>{
             vPageContent.showNewspaper(article);
@@ -807,8 +810,8 @@ vArticlesAboutGameWall.setLoadNotes(function() {
     }))
     .addNote(new VArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
-            {ref: "art1-par3", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
-            {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
+            {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"left", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
+            {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"right", title:"Ca commence...", description:paragrpahText+paragrpahText},
         ],
         action:article=>{
             vPageContent.showNewspaper(article);
@@ -816,8 +819,8 @@ vArticlesAboutGameWall.setLoadNotes(function() {
     }))
     .addNote(new VArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
-            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText},
-            {ref: "art1-par3", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
+            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"left", title:"Et ça continue...", description:paragrpahText},
+            {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"right", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
         ],
         action:article=>{
             vPageContent.showNewspaper(article);
@@ -857,6 +860,40 @@ export var vThemeEditor = new VCThemeEditor({
     }
 });
 
+export var vThemeEditorDescription = new Div().setText(paragrpahText).addClass("description");
+export var vThemeEditorPage = new VContainer({ref:"theme-editor-page"})
+    .addClass("theme-editor-page")
+    .add(vThemeEditorDescription)
+    .add(vThemeEditor);
+
+
+export var vArticleEditor = new VCArticleEditor({
+    ref:"article-editor",
+    accept(file) {
+        if (!VFileLoader.isImage(file)) {
+            VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (600 x 350) pixels."});
+            return false;
+        }
+        return true;
+    },
+    verify(image) {
+        if (image.offsetWidth!==600 || image.offsetHeight!==350) {
+            VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (650 x 350) pixels."});
+            return false;
+        }
+        return true;
+    }
+});
+
+export var vArticleEditorDescription = new Div().setText(paragrpahText).addClass("description");
+export var vArticleEditorPage = new VContainer({ref:"theme-editor-page"})
+    .addClass("theme-editor-page")
+    .add(vArticleEditorDescription)
+    .add(vArticleEditor);
+vArticleEditorPage.canLeave = function(leave) {
+    return vArticleEditor.canLeave(leave);
+}
+
 class VPageContent extends VContainer {
 
     constructor() {
@@ -878,133 +915,132 @@ class VPageContent extends VContainer {
         }
     }
 
-    _showRulesGallery() {
-        this._changeTitle(vRulesTitle);
-        this._changeContent(vRulesGallery);
+    _changePage(title, content, byHistory, historize) {
+        if (!this._page || !this._page.canLeave || this._page.canLeave(()=>{
+            if (byHistory) {
+                history._preventDefault = true;
+                history.back();
+            }
+            else {
+                historize();
+            }
+            this._changeTitle(title);
+            this._changeContent(content);
+        })) {
+            if (!byHistory) {
+                historize();
+            }
+            this._changeTitle(title);
+            this._changeContent(content);
+            return true;
+        }
+        return false
+    }
+
+    _showRulesGallery(byHistory, historize) {
+        return this._changePage(vRulesTitle, vRulesGallery, byHistory, historize);
     }
 
     showRulesGallery() {
-        history.pushState({
-            revert: "vPageContent._showRulesGallery();"
-        }, "rules-gallery");
-        this._showRulesGallery();
+        this._showRulesGallery(false, ()=>
+            historize("rules-gallery", "vPageContent._showRulesGallery(true);")
+        );
     }
 
-    _showMapsGallery() {
-        this._changeTitle(vMapsTitle);
-        this._changeContent(vMapsGallery);
+    _showMapsGallery(byHistory, historize) {
+        return this._changePage(vMapsTitle, vMapsGallery, byHistory, historize);
     }
 
     showMapsGallery() {
-        history.pushState({
-            revert: "vPageContent._showMapsGallery();"
-        }, "maps-gallery");
-        this._showMapsGallery();
+        this._showMapsGallery(false, ()=>
+            historize("maps-gallery", "vPageContent._showMapsGallery(true);")
+        );
     }
 
-    _showFactionsGallery() {
-        this._changeTitle(vFactionsTitle);
-        this._changeContent(vFactionsGallery);
+    _showFactionsGallery(byHistory, historize) {
+        return this._changePage(vFactionsTitle, vFactionsGallery, byHistory, historize);
     }
 
     showFactionsGallery() {
-        history.pushState({
-            revert: "vPageContent._showFactionsGallery();"
-        }, "factions-gallery");
-        this._showFactionsGallery();
+        this._showFactionsGallery(false, ()=>
+            historize("factions-gallery", "vPageContent._showFactionsGallery(true);")
+        );
     }
 
-    _showFactionCountersGallery(faction) {
-        this._changeTitle(vFactionsTitle);
+    _showFactionCountersGallery(faction, byHistory, historize) {
         vFactionCountersGallery.setFaction(faction);
-        this._changeContent(vFactionCountersPageGallery);
+        return this._changePage(vFactionsTitle, vFactionCountersPageGallery, byHistory, historize);
     }
 
     showFactionCountersGallery(faction) {
-        history.pushState({
-            revert: "vPageContent._showFactionCountersGallery(event.state.faction);",
-            faction
-        }, "faction-counters-gallery");
-        this._showFactionCountersGallery(faction);
+        this._showFactionCountersGallery(faction, false, ()=>
+            historize("faction-counters-gallery", "vPageContent._showFactionCountersGallery(event.state.faction, true);")
+        );
     }
 
-    _showMagicGallery() {
-        this._changeTitle(vMagicTitle);
-        this._changeContent(vMagicGallery);
+    _showMagicGallery(byHistory, historize) {
+        return this._changePage(vMagicTitle, vMagicGallery, byHistory, historize);
     }
 
     showMagicGallery() {
-        history.pushState({
-            revert: "vPageContent._showMagicGallery();"
-        }, "magic-gallery");
-        this._showMagicGallery();
+        this._showMagicGallery(false, ()=>
+            historize("magic-gallery", "vPageContent._showMagicGallery(true);")
+        );
     }
 
-    _showMagicCountersGallery(art) {
-        this._changeTitle(vMagicTitle);
+    _showMagicCountersGallery(art, byHistory, historize) {
         vMagicCountersGallery.setMagicArt(art);
-        this._changeContent(vMagicCountersPageGallery);
+        return this._changePage(vMagicTitle, vMagicCountersPageGallery, byHistory, historize);
     }
 
     showMagicCountersGallery(art) {
-        history.pushState({
-            revert: "vPageContent._showMagicCountersGallery(event.state.art);",
-            art
-        }, "magic-counters-gallery");
-        this._showMagicCountersGallery(art);
+        this._showMagicCountersGallery(art, false, ()=>
+            historize("magic-counters-gallery", "vPageContent._showMagicCountersGallery(event.state.art, true);")
+        );
     }
 
-    _showMarkersGallery() {
-        this._changeTitle(vMarkersTitle);
-        this._changeContent(vMarkersGallery);
+    _showMarkersGallery(byHistory, historize) {
+        return this._changePage(vMarkersTitle, vMarkersGallery, byHistory, historize);
     }
 
     showMarkersGallery() {
-        history.pushState({
-            revert: "vPageContent._showMarkersGallery();"
-        }, "markers-gallery");
-        this._showMarkersGallery();
+        this._showMarkersGallery(false, ()=>
+            historize("markers-gallery", "vPageContent._showMarkersGallery(true);")
+        );
     }
 
-    _showNewArticlesWall() {
-        this._changeTitle(vNewArticlesTitle);
-        this._changeContent(vNewArticlesWall);
+    _showNewArticlesWall(byHistory, historize) {
+        return this._changePage(vNewArticlesTitle, vNewArticlesWall, byHistory, historize);
     }
 
     showNewArticlesWall() {
-        history.pushState({
-            revert: "vPageContent._showNewArticlesWall();"
-        }, "new-articles");
-        this._showNewArticlesWall();
+        this._showNewArticlesWall(false, ()=>
+            historize("new-articles", "vPageContent._showNewArticlesWall(true);")
+        );
     }
 
-    _showThemesAboutGameWall() {
-        this._changeTitle(vArticlesAboutGameTitle);
-        this._changeContent(vThemesAboutGameWall);
+    _showThemesAboutGameWall(byHistory, historize) {
+        return this._changePage(vArticlesAboutGameTitle, vThemesAboutGameWall, byHistory, historize);
     }
 
     showThemesAboutGameWall() {
-        history.pushState({
-            revert: "vPageContent._showThemesAboutGameWall();"
-        }, "themes-about-game");
-        this._showThemesAboutGameWall();
+        this._showThemesAboutGameWall(false, ()=>
+            historize("themes-about-game", "vPageContent._showThemesAboutGameWall(true);")
+        );
     }
 
-    _showArticlesAboutGameWall() {
-        this._changeTitle(vArticlesAboutGameTitle);
-        this._changeContent(vArticlesAboutGameWall);
+    _showArticlesAboutGameWall(byHistory, historize) {
+        return this._changePage(vArticlesAboutGameTitle, vArticlesAboutGameWall, byHistory, historize);
     }
 
     showArticlesAboutGameWall() {
-        history.pushState({
-            revert: "vPageContent._showArticlesAboutGameWall();"
-        }, "articles-about-game");
-        this._showArticlesAboutGameWall();
+        this._showArticlesAboutGameWall(false, ()=>
+            historize("articles-about-game", "vPageContent._showArticlesAboutGameWall(true);")
+        );
     }
 
-    _showNewspaper(article) {
+    _showNewspaper(article, byHistory, historize) {
         vNewspaperTitle.setTitle(article.title);
-        this._changeTitle(vNewspaperTitle);
         vNewspaperContent.setArticle({
             title: article.title, paragraphs: article.paragraphs, votes: {
                 ...article.votes,
@@ -1016,28 +1052,37 @@ class VPageContent extends VContainer {
                 },
             }
         });
-        this._changeContent(vNewspaperContent);
+        return this._changePage(vNewspaperTitle, vNewspaperContent, byHistory, historize);
     }
 
     showNewspaper(article) {
-        history.pushState({
-            revert: `vPageContent._showNewspaper(${JSON.stringify(article)});`
-        }, "newsPaper");
-        this._showNewspaper(article);
+        this._showNewspaper(article, false, ()=>
+            historize("newspaper", `vPageContent._showNewspaper(${JSON.stringify(article)}, true);`)
+        );
     }
 
-    _showProposeTheme() {
+    _showProposeTheme(byHistory, historize) {
         vContributeTitle.setTitle("Propose A Theme");
-        this._changeTitle(vContributeTitle);
-        this._changeContent(vThemeEditor);
+        return this._changePage(vContributeTitle, vThemeEditorPage, byHistory, historize);
     }
 
     showProposeTheme() {
-        history.pushState({
-            revert: "vPageContent._showProposeTheme();"
-        }, "propose-theme");
-        this._showProposeTheme();
+        this._showProposeTheme(false, ()=>
+            historize("propose-theme", "vPageContent._showProposeTheme(true);")
+        );
     }
+
+    _showProposeArticle(byHistory, historize) {
+        vContributeTitle.setTitle("Propose An Article");
+        return this._changePage(vContributeTitle, vArticleEditorPage, byHistory, historize);
+    }
+
+    showProposeArticle() {
+        this._showProposeArticle(false, ()=>
+            historize("propose-article", "vPageContent._showProposeArticle(true);")
+        );
+    }
+
 }
 
 export var vPageContent = new VPageContent();
@@ -1046,7 +1091,31 @@ Function.prototype.clone = function() {
     return this;
 }
 
-window.onpopstate = function (event) {
-    console.log(event);
-    event.state && event.state.revert && eval(event.state.revert);
+
+export function historize(title, revert) {
+    console.log("H:", {title, revert})
+    history.pushState({
+        title, revert
+    }, title);
 }
+
+window.onpopstate = function (event) {
+    if (history._preventDefault) {
+        delete history._preventDefault;
+    }
+    else {
+        if (event.state) {
+            console.log("PS:", event.state);
+            if (event.state.revert) {
+                if (!eval(event.state.revert)) {
+                    history._preventDefault = true;
+                    console.log("forward !");
+                    history.forward();
+                }
+            }
+        }
+    }
+    return true;
+}
+
+

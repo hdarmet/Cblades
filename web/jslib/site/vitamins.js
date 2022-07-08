@@ -133,6 +133,7 @@ export function Vitamin(Component) {
                     }
                     return true;
                 });
+                return true;
             }
             else {
                 this._desactivate();
@@ -159,13 +160,13 @@ export function Vitamin(Component) {
         }
 
         onEvent(event, action) {
-            super.onEvent(event, event=>{
+            super.onEvent(event, action ? event=>{
                 if (this._active) {
-                    return  action(event);
+                    return action(event);
                 } else {
                     return false;
                 }
-            });
+            } : null);
         }
 
     }
@@ -174,19 +175,39 @@ export function Vitamin(Component) {
 
 export class VMessageHandler {
 
-    static _messageListeners = new Set();
+    static _listeners = new Set();
 
     static addMessageListener(listener) {
-        VMessageHandler._messageListeners.add(listener);
+        VMessageHandler._listeners.add(listener);
     }
 
     static removeMessageListener(listener) {
-        VMessageHandler._messageListeners.delete(listener);
+        VMessageHandler._listeners.delete(listener);
     }
 
-    static emit(message) {
-        for (let listener of VMessageHandler._messageListeners) {
-            listener.onMessageEmitted(message);
+    static emit({title, message}) {
+        for (let listener of VMessageHandler._listeners) {
+            listener.onMessageEmitted({title, message});
+        }
+    }
+
+}
+
+export class VConfirmHandler {
+
+    static _listeners = new Set();
+
+    static addMessageListener(listener) {
+        VConfirmHandler._listeners.add(listener);
+    }
+
+    static removeMessageListener(listener) {
+        VConfirmHandler._listeners.delete(listener);
+    }
+
+    static emit({title, message, actionOk, actionCancel}) {
+        for (let listener of VConfirmHandler._listeners) {
+            listener.onConfirmEmitted({title, message, actionOk, actionCancel});
         }
     }
 
@@ -352,36 +373,86 @@ export class VMainMenu extends Vitamin(Div) {
 
 }
 
-/*
-<div id="id01" class="modal">
+export class VToggleSwitch extends Vitamin(Label) {
 
-  <form class="modal-content animate" action="/action_page.php" method="post">
-    <div class="imgcontainer">
-      <span onclick="document.getElementById('id01').style.display='none'" class="close" title="Close Modal">&times;</span>
-      <img src="img_avatar2.png" alt="Avatar" class="avatar">
-    </div>
+    constructor({ref, kind}) {
+        super(ref);
+        kind && this.addClass(kind);
+        this._input = new Input().setType("checkbox");
+        this.addClass("form-toggle");
+        this.add(this._input)
+            .add(new Span().addClass("slider").addClass("round"));
+    }
 
-    <div class="container">
-      <label for="uname"><b>Username</b></label>
-      <input type="text" placeholder="Enter Username" name="uname" required>
+    get checked() {
+        return this._input.getChecked();
+    }
 
-      <label for="psw"><b>Password</b></label>
-      <input type="password" placeholder="Enter Password" name="psw" required>
+    set checked(checked) {
+        this._input.setChecked(checked);
+    }
+}
 
-      <button type="submit">Login</button>
-      <label>
-        <input type="checkbox" checked="checked" name="remember"> Remember me
-      </label>
-    </div>
+export class VSwitch extends Vitamin(Div) {
 
-    <div class="container" style="background-color:#f1f1f1">
-      <button type="button" onclick="document.getElementById('id01').style.display='none'" class="cancelbtn">Cancel</button>
-      <span class="psw">Forgot <a href="#">password?</a></span>
-    </div>
-  </form>
-</div>
+    constructor({ref, kind, options, onInput, onChange}) {
+        super(ref);
+        this._inputAction = onInput;
+        this._changeAction = onChange;
+        this._input = {};
+        kind && this.addClass(kind);
+        this.addClass("form-switch-wrapper")
+        this._content = new Div().addClass("form-switch-radio");
+        this.add(this._content);
+        let index=0;
+        this._sliderWidth = 100/options.length-4;
+        this._slider = new Div().addClass("form-switch-option-slider");
+        for (let option of options) {
+            let input = new Input().setId(`switch-${index}`).setType("radio").setName(ref)
+                .onEvent("change", ()=>{
+                    this.value = option.value;
+                    this._trigger(value);
+                });
+            input._pos = index;
+            this._input[option.value] = input;
+            if (option.checked) {
+                this.value = option.value;
+            }
+            let label = new Label("").setFor(`switch-${index}`).add(new P(option.title));
+            this._content.add(input).add(label);
+            index++;
+        }
+        this._slider.addStyle("width", `${this._sliderWidth}%`)
+        this._content.add(this._slider);
+    }
 
- */
+    _moveSlider(pos) {
+        this._slider.addStyle("left", `${(this._sliderWidth+4)*pos+2}%`);
+    }
+
+    _trigger(value) {
+        let event = new Event("select");
+        event.value = value;
+        this._inputAction && this._inputAction(event);
+        this._changeAction && this._changeAction(event);
+    }
+
+    get value() {
+        return this._current;
+    }
+
+    set value(value) {
+        if (value !== this._current) {
+            this._current !== undefined && this._input[this._current].setChecked(false);
+            this._current = value;
+            if (value !== undefined) {
+                this._input[value].setChecked(true);
+                this._moveSlider(this._input[this._current]._pos);
+            }
+        }
+    }
+
+}
 
 export class VField extends Vitamin(Div) {
 
@@ -466,10 +537,9 @@ export class VInputTextArea extends VField {
                     event.preventDefault();
                 })
                 .onEvent("mouseup", event=>{
-                        event.preventDefault();
-                        this.format(command);
-                    }
-                );
+                    event.preventDefault();
+                    this.format(command);
+                });
         };
         this._iconBold = createIcon({command: 'bold'});
         this._iconItalic = createIcon({command: 'italic'});
@@ -484,7 +554,7 @@ export class VInputTextArea extends VField {
         this._input = new Div().setText(value).addClass("form-input-textarea").setAttribute("contenteditable", "true");
         this.value = value ? value : "";
         onInput&&this._input.onInput(onInput);
-        onChange&&this._input.onChange(onChange);
+        onChange&&this._input.onEvent("blur", onChange);
         this.add(this._input);
     }
 
@@ -526,13 +596,15 @@ export class VOption extends Vitamin(Option) {
 
 export class VSelectField extends VField {
 
-    _initField({value, options, onChange}) {
+    _initField({value, multiple, size, options, onChange}) {
         this._select = new Select(value).addClass("form-input-select");
         this.value = value;
         this._options = [];
         options && (this.optionLines = options);
         onChange&&this._select.onChange(onChange);
         this.add(this._select);
+        multiple && this._select.setAttribute("multiple", true);
+        size && this._select.setAttribute("size", size);
     }
 
     get field() {
@@ -562,6 +634,16 @@ export class VSelectField extends VField {
             this.remove(option);
         }
         this._options = [];
+    }
+
+    get values() {
+        return [...this._root.selectedOptions].map(option=>option.value);
+    }
+
+    set values(values) {
+        for (let value of values) {
+
+        }
     }
 
     get options() {
@@ -657,6 +739,77 @@ export class VContainer extends Vitamin(Div) {
 
 }
 
+export class VSplitterPanel extends Vitamin(Div) {
+
+    constructor({ref, enabled=true}, builder) {
+        super({ref});
+        this.enabled = enabled;
+        this._leftPane = new Div().addClass("splitter-left-pane");
+        this._separator = new Div().addClass("splitter-separator");
+        this._rightPane = new Div().addClass("splitter-right-pane");
+        this.addClass("splitter-panel")
+            .add(this._leftPane)
+            .add(this._separator)
+            .add(this._rightPane);
+        this._separator.onEvent("mousedown", event=>{
+            //console.log("mouse down: " + e.clientX);
+            this._startPoint = {event,
+                offsetLeft:  this._separator.offsetLeft,
+                offsetTop:   this._separator.offsetTop,
+                firstWidth:  this._leftPane.offsetWidth,
+                secondWidth: this._rightPane.offsetWidth
+            };
+            document.onmousemove = event=> {
+                let delta = {
+                    x: event.clientX - this._startPoint.event.clientX,
+                    y: event.clientY - this._startPoint.event.clientY
+                };
+                // Prevent negative-sized elements
+                delta.x = Math.min(Math.max(delta.x, -this._startPoint.firstWidth), this._startPoint.secondWidth);
+                this._leftPane.addStyle("width", (this._startPoint.firstWidth + delta.x) + "px");
+                this._rightPane.addStyle("width", (this._startPoint.secondWidth - delta.x) + "px");
+            };
+            document.onmouseup = () => {
+                //console.log("mouse up");
+                document.onmousemove = document.onmouseup = null;
+            }
+        });
+        builder&&builder(this);
+        this._enlargeObserver = new MutationObserver(mutations=>{
+            let changed = false;
+            for (let mutation of mutations) {
+                if (mutation.attributeName === "style") changed = true;
+            }
+            if (changed) this._resize();
+        });
+        this._enlargeObserver.observe(this.root, {attributes:true});
+        window.addEventListener("resize", event=>{
+            this._resize();
+        });
+    }
+
+    _resize() {
+        let separatorWidth = this._separator.offsetWidth;
+        let totalWidth = this.offsetWidth-separatorWidth;
+        let firstWidth =  this._leftPane.offsetWidth;
+        let secondWidth = this._rightPane.offsetWidth;
+        let previousTotalWidth = firstWidth + secondWidth;
+        this._leftPane.addStyle("width", (firstWidth/previousTotalWidth*totalWidth) + "px");
+        this._rightPane.addStyle("width", (secondWidth/previousTotalWidth*totalWidth) + "px");
+    }
+
+    addOnLeft(vitamin) {
+        this._leftPane.add(vitamin);
+        return this;
+    }
+
+    addOnRight(vitamin) {
+        this._rightPane.add(vitamin);
+        return this;
+    }
+
+}
+
 export class VButton extends Vitamin(Button) {
 
     constructor({ref, label, type, enabled=true, onClick}) {
@@ -665,7 +818,12 @@ export class VButton extends Vitamin(Button) {
         if (type===VButton.TYPES.ACCEPT) this.addClass("form-button-accept");
         else if (type===VButton.TYPES.REFUSE) this.addClass("form-button-refuse");
         else this.addClass("form-button-neutral");
-        onClick&&this.onMouseClick(onClick);
+        this._onClick = onClick;
+        enabled&&this._onClick&&this.onMouseClick(event=>{
+            event.preventDefault();
+            this._onClick(event);
+            return true;
+        });
         this.enabled = enabled;
     }
 
@@ -673,6 +831,35 @@ export class VButton extends Vitamin(Button) {
         ACCEPT: "accept",
         REFUSE: "refuse",
         NEUTRAL: "neutral",
+    }
+
+}
+
+export class VCommand extends Vitamin(Img) {
+
+    constructor({ref, imgEnabled, imgDisabled, enabled=true, onClick}) {
+        super(ref);
+        this._imgEnabled = imgEnabled;
+        this._imgDisabled = imgDisabled;
+        this._onClick = onClick;
+        this.addClass("form-command");
+        this.setSrc(enabled ? imgEnabled : imgDisabled);
+        enabled&&this._onClick&&this.onMouseClick(event=>{
+            event.preventDefault();
+            this._onClick(event);
+            return true;
+        });
+        this.enabled = enabled;
+    }
+
+    onActivate() {
+        this.setSrc(this._imgEnabled);
+        this._onClick && this.onMouseClick(this._onClick);
+    }
+
+    onDesactivate() {
+        this.setSrc(this._imgDisabled);
+        this.onMouseClick(null);
     }
 
 }
@@ -1004,10 +1191,10 @@ export class VFooter extends Vitamin(Div) {
 
 export class VMagnifiedImage extends Vitamin(Div) {
 
-    constructor({ref, img, zoomImg, alt, width}) {
+    constructor({ref, img, zoomImg, width}) {
         super({ref});
         this.addClass("img-magnifier-container");
-        this._image = new Img(img).setAlt(alt).setWidth(width).addClass("gallery-card-image");
+        this._image = new Img(img).setWidth(width).addClass("gallery-card-image");
         this.add(this._image);
         this.onEvent("mousemove", event=>{
             this._event = event;
@@ -1129,11 +1316,11 @@ export class VSlot extends Vitamin(Div) {
 
 export class VSummary extends Vitamin(Div) {
 
-    constructor({ref, img, alt, width, title, description}) {
+    constructor({ref, img, width, title, description}) {
         super({ref});
         this.addClass("gallery-summary");
         this._divImage = new Div();
-        this._image = new Img(img).setAlt(alt).setWidth(width).addClass("gallery-summary-image");
+        this._image = new Img(img).setWidth(width).addClass("gallery-summary-image");
         this._divImage.add(this._image);
         this.add(this._divImage);
         this._content = new Div().addClass("gallery-summary-container");
@@ -1158,7 +1345,7 @@ export class VSummary extends Vitamin(Div) {
 
 export class VCard extends Vitamin(Div) {
 
-    constructor({ref, img, image, alt, width, title, description, button, action}) {
+    constructor({ref, img, image, width, title, description, button, action}) {
         super({ref});
         this.addClass("gallery-card");
         if (image) {
@@ -1166,7 +1353,7 @@ export class VCard extends Vitamin(Div) {
         }
         else {
             this._divImage = new Div();
-            this._image = new Img(img).setAlt(alt).setWidth(width).addClass("gallery-card-image");
+            this._image = new Img(img).setWidth(width).addClass("gallery-card-image");
             this._divImage.add(this._image);
         }
         this.add(this._divImage);
@@ -1222,20 +1409,25 @@ export class VGallery extends Vitamin(Div) {
 
 export class VParagraph extends Vitamin(Div) {
 
-    constructor({ref, img, image, alt, title, description}) {
+    constructor({ref, img, image, imgPos, title, description, action}) {
         super({ref});
-        this.addClass("paragraph");
+        this.addClass("embed-paragraph");
+        this._embed = new Div();
+        this.add(this._embed);
+        this._embed.addClass("paragraph");
+        this.imgPos = imgPos;
         if (image) {
             this._divImage = image;
+            this._embed.add(this._divImage);
         }
-        else {
+        else if (img) {
             this._divImage = new Div();
-            this._image = new Img(img).setAlt(alt).addClass("paragraph-image");
+            this._image = new Img(img).addClass("paragraph-image");
             this._divImage.add(this._image);
+            this._embed.add(this._divImage);
         }
-        this.add(this._divImage);
         this._content = new Div().addClass("paragraph-container");
-        this.add(this._content);
+        this._embed.add(this._content);
         this._title = new P(title).addClass("paragraph-title");
         this._content.add(this._title);
         if (Array.isArray(description)) {
@@ -1250,8 +1442,75 @@ export class VParagraph extends Vitamin(Div) {
             this._description = new P(description).addClass("paragraph-line");
             this._content.add(this._description);
         }
+        this.action=action;
     }
 
+    set action(action) {
+        action && this.onEvent("click", action);
+    }
+
+    get specification() {
+        let description;
+        if (Array.isArray(this._description)) {
+            description = this._description.map(description=>description.getText());
+        }
+        else {
+            description = this._description.getText();
+        }
+        return {
+            ref: this.ref.ref,
+            img: this._image ? this._image.getSrc() : null,
+            imgPos: this._imgPos,
+            title: this._title.getText(),
+            description: description
+        };
+    }
+
+    get title() {
+        return this._title.getText();
+    }
+
+    set title(title) {
+        this._title.setText(title);
+    }
+
+    get description() {
+        return this._description.getText();
+    }
+
+    set description(description) {
+        this._description.setText(description);
+    }
+
+    get image() {
+        return this._image ? this._image.getSrc() : null;
+    }
+
+    set image(imageSrc) {
+        if (this._image) {
+            this._image.setSrc(imageSrc);
+        }
+        else {
+            this._divImage = new Div();
+            this._image = new Img(imageSrc).addClass("paragraph-image");
+            this._divImage.add(this._image);
+            this._embed.insert(this._divImage, this._content);
+        }
+    }
+
+    get imgPos() {
+        return this._imgPos;
+    }
+
+    set imgPos(imgPos) {
+        if (this._imgPos) {
+            this.removeClass(`image-on-${this._imgPos}`);
+        }
+        this._imgPos = imgPos;
+        if (this._imgPos) {
+            this.addClass(`image-on-${this._imgPos}`);
+        }
+    }
 }
 
 export class VVotes extends Vitamin(Div) {
@@ -1286,23 +1545,90 @@ export class VArticle extends Vitamin(Div) {
             this._votes = new VVotes(votes);
             this.add(this._votes);
         }
-        let left = true;
-        for (let paragraphSpec of paragraphs) {
-            let paragraph = new VParagraph(paragraphSpec);
-            paragraph.addClass(left ? "image-on-left" : "image-on-right");
-            left = !left;
-            this.add(paragraph);
+        this._paragraphs=[];
+        if (paragraphs) {
+            for (let paragraphSpec of paragraphs) {
+                this.createParagraph(paragraphSpec);
+            }
         }
         this.onEvent("click", ()=>{
             action && action({ref, title, paragraphs, votes})
         });
+
     }
 
+    createParagraph(paragraphSpec) {
+        let paragraph = new VParagraph(paragraphSpec);
+        this.add(paragraph);
+        this._paragraphs.push(paragraph);
+        return paragraph;
+    }
+
+    insertParagraph(paragraphSpec, before) {
+        let index = this._paragraphs.indexOf(before);
+        let paragraph = new VParagraph(paragraphSpec);
+        this._paragraphs.splice(index, 0, paragraph);
+        this.insert(paragraph, before);
+        return paragraph;
+    }
+
+    removeParagraph(index) {
+        let paragraph = this._paragraphs[index];
+        this.remove(paragraph);
+        this._paragraphs.splice(index, 1);
+        return paragraph;
+    }
+
+    exchangeParagraphs(paragraph) {
+        let index = this._paragraphs.indexOf(paragraph);
+        this.remove(paragraph);
+        this.insert(paragraph, this._paragraphs[index-1]);
+        this._paragraphs.splice(index, 1);
+        this._paragraphs.splice(index-1, 0, paragraph);
+    }
+
+    getParagraph(ref) {
+        for (let paragraph of this._paragraphs) {
+            if (paragraph.ref.ref === ref) return paragraph;
+        }
+        return null;
+    }
+
+    get paragraphs() {
+        return this._paragraphs;
+    }
+
+    get title() {
+        return this._title.getText();
+    }
+
+    set title(title) {
+        this._title.setText(title);
+    }
+
+    get specification() {
+        return {
+            ref: this.ref,
+            title: this._title.getText(),
+            paragraphs: this._paragraphs.map(paragraph=>paragraph.specification)
+        }
+    }
+
+    set specification(specification) {
+        this._title.setText(specification.article.title);
+        for (let paragraph of this._paragraphs) {
+            this.remove(paragraph);
+        }
+        this._paragraphs = [];
+        for (let paragraphSpec of specification.article.paragraphs) {
+            this.createParagraph(paragraphSpec);
+        }
+    }
 }
 
 export class VTheme extends Vitamin(Div) {
 
-    constructor({ref, title, img, alt, image, description, action}) {
+    constructor({ref, title, img, image, description, action}) {
         super({ref});
         this.addClass("theme");
         this._header = new Div().addClass("theme-header");
@@ -1312,7 +1638,7 @@ export class VTheme extends Vitamin(Div) {
         }
         else {
             this._divImage = new Div();
-            this._image = new Img(img).setAlt(alt).addClass("theme-image");
+            this._image = new Img(img).addClass("theme-image");
             this._divImage.add(this._image);
         }
         this._header.add(this._divImage);
@@ -1325,19 +1651,16 @@ export class VTheme extends Vitamin(Div) {
         });
     }
 
-    setTitle(title) {
+    set title(title) {
         this._title.setText(title);
-        return this;
     }
 
-    setDescription(description) {
+    set description(description) {
         this._description.setText(description);
-        return this;
     }
 
-    setImage(imageSrc) {
+    set image(imageSrc) {
         this._image.setSrc(imageSrc);
-        return this;
     }
 }
 
@@ -1427,12 +1750,12 @@ export class VNewspaper extends Vitamin(Div) {
         builder&&builder(this);
     }
 
-    addParagraph({img, image, alt, title, description}, article, left) {
+    addParagraph({img, image, title, description}, article, left) {
         if (image) {
             article.add(image);
         }
         else {
-            image = new Img(img).setAlt(alt).addClass("paragraph-image");
+            image = new Img(img).addClass("paragraph-image");
             article.add(image);
         }
         image.addClass(left ? "image-on-left" : "image-on-right");
@@ -1508,31 +1831,19 @@ export class VFileLoader extends Vitamin(Div) {
         return file.type === "image/png" || file.type === "image/jpg";
     }
 
-    showFile(file) {
-        let trigger = ()=> {
-            let event = new Event("loadfile");
-            event.file = file;
-            this._inputAction && this._inputAction(event);
-            this._changeAction && this._changeAction(event);
-        }
+    _trigger(file) {
+        let event = new Event("loadfile");
+        event.file = file;
+        this._inputAction && this._inputAction(event);
+        this._changeAction && this._changeAction(event);
+    }
 
+    showFile(file) {
         if (VFileLoader.isImage(file)) {
-            let image = new Img().setSrc(URL.createObjectURL(file));
-            image.onEvent("load", ()=> {
-                document.body.appendChild(image.root);
-                if (!this._verify || this._verify(image)) {
-                    this._image && this.remove(this._image);
-                    this._image = image;
-                    this.add(this._image);
-                    console.log(this._image.root.offsetHeight);
-                    trigger();
-                }
-                else {
-                    document.body.removeChild(image.root);
-                }
-            });
+            this.imageSrc = URL.createObjectURL(file);
+            this._trigger(this.imageSrc);
         }
-        else trigger();
+        else this._trigger(file);
     }
 
     dragOverHandler(event) {
@@ -1549,17 +1860,32 @@ export class VFileLoader extends Vitamin(Div) {
         return this;
     }
 
-    get file() {
-        return this._file;
-    }
-
     get imageSrc() {
-        return this._image.getSrc();
+        return this._image ? this._image.getSrc() : null;
     }
 
     set imageSrc(src) {
-        this._image.setSrc(src);
+        if (src) {
+            let image = new Img().setSrc(src);
+            image.onEvent("load", () => {
+                document.body.appendChild(image.root);
+                if (!this._verify || this._verify(image)) {
+                    this._image && this.remove(this._image);
+                    this._image = image;
+                    this.add(this._image);
+                    this.addClass("with-image");
+                } else {
+                    document.body.removeChild(image.root);
+                }
+            });
+        }
+        else {
+            this._image && this.remove(this._image);
+            this.removeClass("with-image");
+            delete this._image;
+        }
     }
+
 }
 
 export class VFileLoaderField extends VField {

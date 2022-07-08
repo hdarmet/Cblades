@@ -9,6 +9,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 10;
 }
 
 .maps-title .header-left-image {
@@ -28,7 +29,7 @@
     font-size: 3em;
     color: #2c4762;
     text-shadow: 0 0 0.05em #fff, 0 0 0.2em #e0e0e0, 0 0 0.3em #555555;;
-    z-index: 1;
+    z-index: 11;
 }
 
 .gallery-maps.gallery-row {
@@ -125,6 +126,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 10;
 }
 
 .markers-title .header-left-image {
@@ -144,7 +146,7 @@
     font-size: 3em;
     color: #2c4762;
     text-shadow: 0 0 0.05em #fff, 0 0 0.2em #e0e0e0, 0 0 0.3em #555555;;
-    z-index: 1;
+    z-index: 11;
 }
 
 .gallery-markers.gallery-row {
@@ -243,7 +245,7 @@
     /*Set the size of the magnifier glass:*/
     width: 400px;
     height: 400px;
-    z-index: 1;
+    z-index: 11;
 }
 
 .rules-title.header-container {
@@ -256,6 +258,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 10;
 }
 
 .rules-title .header-left-image {
@@ -275,7 +278,7 @@
     font-size: 3em;
     color: #2c4762;
     text-shadow: 0 0 0.05em #fff, 0 0 0.2em #e0e0e0, 0 0 0.3em #555555;
-    z-index: 1;
+    z-index: 11;
 }
 
 .gallery-rules.gallery-row {
@@ -372,6 +375,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 10;
 }
 
 .magic-title .header-left-image {
@@ -391,7 +395,7 @@
     font-size: 3em;
     color: #2c4762;
     text-shadow: 0 0 0.05em #fff, 0 0 0.2em #e0e0e0, 0 0 0.3em #555555;;
-    z-index: 1;
+    z-index: 11;
 }
 
 .gallery-magic.gallery-row {
@@ -591,6 +595,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 10;
 }
 
 .factions-title .header-left-image {
@@ -610,7 +615,7 @@
     font-size: 3em;
     color: #2c4762;
     text-shadow: 0 0 0.05em #fff, 0 0 0.2em #e0e0e0, 0 0 0.3em #555555;;
-    z-index: 1;
+    z-index: 11;
 }
 
 .gallery-factions.gallery-row {

@@ -161,8 +161,10 @@ export function DOM(clazz) {
             if (!this._classes) {
                 this._classes = [];
             }
-            this._classes.push(clazz);
-            getDrawPlatform().setAttribute(this._root, "class", this._classes.join(" "));
+            if (this._classes.indexOf(clazz)<0) {
+                this._classes.push(clazz);
+                getDrawPlatform().setAttribute(this._root, "class", this._classes.join(" "));
+            }
             return this;
         }
 
@@ -200,6 +202,15 @@ export function DOM(clazz) {
             return this.getAttribute("alt");
         }
 
+        setId(id) {
+            this.setAttribute("id", id);
+            return this;
+        }
+
+        getId() {
+            return this.getAttribute("id");
+        }
+
         setType(type) {
             this.setAttribute("type", type);
             return this;
@@ -226,13 +237,21 @@ export function DOM(clazz) {
             return this._root.offsetHeight;
         }
 
+        get offsetTop() {
+            return this._root.offsetTop;
+        }
+
+        get offsetLeft() {
+            return this._root.offsetLeft;
+        }
+
         get root() {
             return this._root;
         }
 
         onEvent(event, action) {
             if (this["_"+event]) {
-                getDrawPlatform().removeEventListener(this._root, event, action);
+                getDrawPlatform().removeEventListener(this._root, event, this["_"+event]);
                 delete this["_"+event];
             }
             if (action) {
@@ -337,6 +356,14 @@ export class Label extends DOM(DComposed) {
         this.setText(label);
     }
 
+    setFor(id) {
+        this.setAttribute("for", id);
+        return this;
+    }
+
+    getFor() {
+        return this.getAttribute("for");
+    }
 }
 
 export class Span extends DOM(DComposed) {
@@ -465,3 +492,67 @@ export class Img extends DOM(DComponent) {
 export class App extends Div {
 
 }
+
+export class UndoRedo {
+
+    static listeners = [];
+
+    static addListener(listener) {
+        UndoRedo.listeners.push(listener);
+        if (!UndoRedo.active) {
+            UndoRedo.active = true;
+        }
+    }
+
+    static removeListener(listener) {
+        let index = UndoRedo.listeners.indexOf(listener);
+        if (index>=0) {
+            UndoRedo.listeners.splice(index, 1);
+        }
+        if (!UndoRedo.listeners.length) {
+            delete UndoRedo.active;
+            alert("desactivate");
+        }
+    }
+
+    static emitUndoEvent() {
+        for (let listener of UndoRedo.listeners) {
+            listener.undo && listener.undo();
+        }
+    }
+
+    static emitRedoEvent() {
+        for (let listener of UndoRedo.listeners) {
+            listener.redo && listener.redo();
+        }
+    }
+
+}
+
+document.body.onkeydown = event=>{
+    if (event.ctrlKey) {
+        if (event.key === 'z' && UndoRedo.active) {
+            event.preventDefault();
+            return false;
+        }
+        else if (event.key === 'y' && UndoRedo.active) {
+            event.preventDefault();
+            return false;
+        }
+    }
+};
+
+document.body.onkeyup = event=>{
+    if (event.ctrlKey) {
+        if (event.key === 'z' && UndoRedo.active) {
+            event.preventDefault();
+            UndoRedo.emitUndoEvent();
+            return true;
+        }
+        else if (event.key === 'y' && UndoRedo.active) {
+            event.preventDefault();
+            UndoRedo.emitRedoEvent();
+            return true;
+        }
+    }
+};
