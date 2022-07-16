@@ -11,7 +11,15 @@ import {
     VArticle, VNewspaper, VTheme, VFileLoader, VMessageHandler
 } from "./vitamins.js";
 import {
-    CVLegalNotice, CVContact, CVPartnerships, CVSocialRow, CVWall, VCThemeEditor, CVMessage, VCArticleEditor
+    CVLegalNotice,
+    CVContact,
+    CVPartnerships,
+    CVSocialRow,
+    CVWall,
+    VCThemeEditor,
+    CVMessage,
+    VCArticleEditor,
+    VCMapEditor, VCScenarioEditor
 } from "./cvitamin.js";
 import {
     Div
@@ -87,11 +95,11 @@ export var vMenu = new VMainMenu({ref:"menu"})
             }
         })
         .addMenu({ref:"propose-map-menu", title:"Proposer une carte", action:()=>{
-                vPageContent.showThemesAboutGameWall();
+                vPageContent.showProposeMap();
             }
         })
         .addMenu({ref:"propose-scenario", title:"Proposer un scénario", action:()=>{
-                vPageContent.showThemesAboutGameWall();
+                vPageContent.showProposeScenario();
             }
         })
     });
@@ -852,7 +860,7 @@ export var vThemeEditor = new VCThemeEditor({
         return true;
     },
     verify(image) {
-        if (image.offsetWidth!==450 || image.offsetHeight!==150) {
+        if (image.imageWidth!==450 || image.imageHeight!==150) {
             VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (450 x 150) pixels."});
             return false;
         }
@@ -877,7 +885,7 @@ export var vArticleEditor = new VCArticleEditor({
         return true;
     },
     verify(image) {
-        if (image.offsetWidth!==600 || image.offsetHeight!==350) {
+        if (image.imageWidth!==600 || image.imageHeight!==350) {
             VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (650 x 350) pixels."});
             return false;
         }
@@ -892,6 +900,52 @@ export var vArticleEditorPage = new VContainer({ref:"theme-editor-page"})
     .add(vArticleEditor);
 vArticleEditorPage.canLeave = function(leave) {
     return vArticleEditor.canLeave(leave);
+}
+
+export var vMapEditor = new VCMapEditor({
+    ref:"map-editor",
+    accept(file) {
+        if (!VFileLoader.isImage(file)) {
+            VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (2046 x 3150) pixels."});
+            return false;
+        }
+        return true;
+    },
+    verify(image) {
+        if (image.imageWidth!==2046 || image.imageHeight!==3150) {
+            VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (2046 x 3150) pixels."});
+            return false;
+        }
+        return true;
+    },
+    onEdit() {
+        vMapEditor.openInNewTab("./cb-map-editor.html");
+    }
+});
+
+export var vMapEditorDescription = new Div().setText(paragrpahText).addClass("description");
+export var vMapEditorPage = new VContainer({ref:"map-editor-page"})
+    .addClass("map-editor-page")
+    .add(vMapEditorDescription)
+    .add(vMapEditor);
+vMapEditorPage.canLeave = function(leave) {
+    return vMapEditor.canLeave(leave);
+}
+
+export var vScenarioEditor = new VCScenarioEditor({
+    ref:"scenario-editor",
+    onEdit() {
+        vScenarioEditor.openInNewTab("./cba-scenario-editor.html");
+    }
+});
+
+export var vScenarioEditorDescription = new Div().setText(paragrpahText).addClass("description");
+export var vScenarioEditorPage = new VContainer({ref:"scenario-editor-page"})
+    .addClass("scenario-editor-page")
+    .add(vScenarioEditorDescription)
+    .add(vScenarioEditor);
+vScenarioEditorPage.canLeave = function(leave) {
+    return vScenarioEditor.canLeave(leave);
 }
 
 class VPageContent extends VContainer {
@@ -1080,6 +1134,28 @@ class VPageContent extends VContainer {
     showProposeArticle() {
         this._showProposeArticle(false, ()=>
             historize("propose-article", "vPageContent._showProposeArticle(true);")
+        );
+    }
+
+    _showProposeMap(byHistory, historize) {
+        vContributeTitle.setTitle("Propose A Map");
+        return this._changePage(vContributeTitle, vMapEditorPage, byHistory, historize);
+    }
+
+    showProposeMap() {
+        this._showProposeMap(false, ()=>
+            historize("propose-map", "vPageContent._showProposeMap(true);")
+        );
+    }
+
+    _showProposeScenario(byHistory, historize) {
+        vContributeTitle.setTitle("Propose A Scenario");
+        return this._changePage(vContributeTitle, vScenarioEditorPage, byHistory, historize);
+    }
+
+    showProposeScenario() {
+        this._showProposeScenario(false, ()=>
+            historize("propose-scenario", "vPageContent._showProposeScenario(true);")
         );
     }
 

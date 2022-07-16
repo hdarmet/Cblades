@@ -19,7 +19,7 @@ import {
     VTheme,
     VFileLoaderField,
     VMessageHandler,
-    VArticle, VSwitch, VCommand, VSplitterPanel, VConfirmHandler
+    VArticle, VSwitch, VCommand, VSplitterPanel, VConfirmHandler, VScenario
 } from "./vitamins.js";
 import {
     UndoRedo
@@ -286,7 +286,76 @@ export class CVWall extends VContainer {
     }
 }
 
-export class VCThemeEditor extends VSplitterPanel {
+
+export function Undoable(clazz) {
+
+    return class extends clazz {
+
+        constructor(...params) {
+            super(...params);
+            this._clean();
+        }
+
+        _isDirty() {
+            return this._undos && this._undos.length>0;
+        }
+
+        _clean() {
+            this._undos = [];
+            this._redos = [];
+        }
+
+        onActivate() {
+            UndoRedo.addListener(this);
+        }
+
+        onDesactivate() {
+            UndoRedo.removeListener(this);
+        }
+
+        _memorize(component) {
+            if (!component || this._memorized!==component) {
+                this._undos.push(this._register());
+                this._redos = [];
+                this._memorized = component;
+            }
+        }
+
+        undo() {
+            this._redos.push(this._register());
+            let specification = this._undos.pop();
+            this._recover(specification);
+        }
+
+        redo() {
+            this._undos.push(this._register());
+            let specification = this._redos.pop();
+            this._recover(specification);
+        }
+
+        canLeave(leave) {
+            if (this._isDirty()) {
+                VConfirmHandler.emit({
+                    title: "Confirm", message: "Article not saved. Do you want to Quit ?",
+                    actionOk: () => {
+                        this._clean();
+                        leave();
+                    },
+                    actionCancel: () => {
+                        this._clean();
+                        leave();
+                    }
+                })
+                return false;
+            }
+            return true;
+        }
+
+    }
+
+}
+
+export class VCThemeEditor extends Undoable(VSplitterPanel) {
 
     constructor({ref, kind="theme-editor", accept, verify}) {
         super({ref});
@@ -302,6 +371,7 @@ export class VCThemeEditor extends VSplitterPanel {
         this._title = new VInputField({
             ref:"theme-title-input", label:"Title",
             onInput: event=>{
+                this._memorize(this._title);
                 this._theme.title = this._title.value;
             }
         });
@@ -310,6 +380,7 @@ export class VCThemeEditor extends VSplitterPanel {
             ref:"theme-image", label:"Image",
             accept, verify,
             onInput: event=>{
+                this._memorize(this._imageLoader);
                 this._theme.image = this._imageLoader.imageSrc;
             }
         });
@@ -317,6 +388,7 @@ export class VCThemeEditor extends VSplitterPanel {
         this._description = new VInputTextArea({
             ref:"theme-content-input", label:"Description",
             onInput: event=>{
+                this._memorize(this._description);
                 this._theme.description = this._description.value;
             }
         });
@@ -328,11 +400,29 @@ export class VCThemeEditor extends VSplitterPanel {
             description: "bla bla bla"
         });
         this.addOnLeft(this._theme);
+        this._editTheme();
+    }
+
+    _editTheme() {
+        this._title.value = this._theme.title;
+        this._description.value = this._theme.description;
+        this._imageLoader.imageSrc = this._theme.image;
+    }
+
+    _register() {
+        return this._theme.specification;
+    }
+
+    _recover(specification) {
+        if (specification) {
+            this._theme.specification = specification;
+            this._editTheme();
+        }
     }
 
 }
 
-export class VCArticleEditor extends VSplitterPanel {
+export class VCArticleEditor extends Undoable(VSplitterPanel) {
 
     constructor({ref, kind="article-editor", accept, verify}) {
         super({ref});
@@ -390,9 +480,6 @@ export class VCArticleEditor extends VSplitterPanel {
             onInput: event=>{
                 this._memorize();
                 this._paragraph.description = this._description.value;
-            },
-            onChange: event=>{
-                delete this._memorized;
             }
         });
         this.addOnRight(this._description);
@@ -416,33 +503,11 @@ export class VCArticleEditor extends VSplitterPanel {
         this._clean();
     }
 
-    _isDirty() {
-        return this._undos && this._undos.length>0;
-    }
-
-    _clean() {
-        this._undos = [];
-        this._redos = [];
-    }
-
-    onActivate() {
-        UndoRedo.addListener(this);
-    }
-
-    onDesactivate() {
-        UndoRedo.removeListener(this);
-    }
-
-    _memorize(component) {
-        if (!component || this._memorized!==component) {
-            console.log("memo")
-            this._undos.push({
-                current: this._paragraph.ref.ref,
-                themes: this._category.value,
-                article: this._article.specification
-            });
-            this._redos = [];
-            this._memorized = component;
+    _register() {
+        return {
+            current: this._paragraph.ref.ref,
+            themes: this._category.values,
+            article: this._article.specification
         }
     }
 
@@ -456,23 +521,10 @@ export class VCArticleEditor extends VSplitterPanel {
                 }
             }
             this._articleTitle.value = this._article.title;
+            this._category.values = specification.themes;
             let paragraph = this._article.getParagraph(specification.current);
             this._selectParagraph(paragraph);
         }
-    }
-
-    undo() {
-        console.log("undo");
-        this._redos.push({current: this._paragraph.ref.ref, article:this._article.specification});
-        let specification = this._undos.pop();
-        this._recover(specification);
-    }
-
-    redo() {
-        console.log("redo");
-        this._undos.push({current: this._paragraph.ref.ref, article:this._article.specification});
-        let specification = this._redos.pop();
-        this._recover(specification);
     }
 
     createParagraph(paragraphSpec) {
@@ -648,22 +700,164 @@ export class VCArticleEditor extends VSplitterPanel {
         return true;
     }
 
-    canLeave(leave) {
-        if (this._isDirty()) {
-            VConfirmHandler.emit({
-                title: "Confirm", message: "Article not saved. Do you want to Quit ?",
-                actionOk: () => {
-                    this._clean();
-                    leave();
-                },
-                actionCancel: () => {
-                    this._clean();
-                    leave();
+}
+
+export class VCMapEditor extends Undoable(VSplitterPanel) {
+
+    constructor({ref, kind="map-editor", accept, verify, onEdit, onPropose}) {
+        super({ref});
+        this.addClass(kind);
+        this._imageLoader = new VFileLoaderField({
+            ref:"map-image", label:"Image",
+            accept, verify,
+            magnified: true,
+            onInput: event=>{
+                this._memorize(this._imageLoader);
+            }
+        });
+        this.addOnLeft(this._imageLoader);
+        this._title = new VInputField({
+            ref:"map-title-input", label:"Title",
+            onInput: event=>{
+                this._memorize(this._title);
+            }
+        });
+        this.addOnRight(this._title);
+        this._description = new VInputTextArea({
+            ref:"map-description-input", label:"Description",
+            onInput: event=>{
+                this._memorize(this._description);
+            }
+        });
+        this.addOnRight(this._description);
+        this._send = new VButtons({ref: "map-buttons", vertical:false, buttons:[
+            {
+                ref:"edit", type: VButton.TYPES.NEUTRAL, label:"Edit",
+                onClick:event=>{
+                    this._onEdit();
                 }
-            })
-            return false;
+            },
+            {
+                ref:"propose", type: VButton.TYPES.ACCEPT, label:"Propose",
+                onClick:event=>{
+                    this._onPropose();
+                }
+            }
+        ]});
+        this.addOnRight(this._send);
+        this._onEdit = onEdit;
+        this._onPropose = onPropose;
+    }
+
+    _register() {
+        return {
+            title: this._title.getText(),
+            description: this._description.getText(),
+            img: this._imageLoader.imageSrc
         }
-        return true;
+    }
+
+    _recover(specification) {
+        if (specification) {
+            this._title.setText(specification.title);
+            this._description.setText(specification.description);
+            this._imageLoader.imageSrc = specification.img;
+        }
+    }
+
+    openInNewTab(url) {
+        window.open(url, '_blank').focus();
     }
 }
 
+export class VCScenarioEditor extends Undoable(VSplitterPanel) {
+
+    constructor({ref, kind="scenario-editor", accept, verify, onEdit, onPropose}) {
+        super({ref});
+        this.addClass(kind);
+
+        this._title = new VInputField({
+            ref:"map-title-input", label:"Title",
+            onInput: event=>{
+                this._memorize(this._title);
+                this._scenario.title = this._title.value;
+            }
+        });
+        this.addOnRight(this._title);
+        this._story = new VInputTextArea({
+            ref:"scenario-story-input", label:"Story",
+            onInput: event=>{
+                this._memorize(this._story);
+                this._scenario.story = this._story.value;
+            }
+        });
+        this.addOnRight(this._story);
+        this._victory = new VInputTextArea({
+            ref:"scenario-victory-input", label:"Victory Conditions",
+            onInput: event=>{
+                this._memorize(this._victory);
+                this._scenario.victory = this._victory.value;
+            }
+        });
+        this.addOnRight(this._victory);
+        this._specialRules = new VInputTextArea({
+            ref:"scenario-special-rules-input", label:"Special Rules",
+            onInput: event=>{
+                this._memorize(this._specialRules);
+                this._scenario.specialRules = this._specialRules.value;
+            }
+        });
+        this.addOnRight(this._specialRules);
+        this._send = new VButtons({ref: "scenario-buttons", vertical:false, buttons:[
+            {
+                ref:"edit", type: VButton.TYPES.NEUTRAL, label:"Edit",
+                onClick:event=>{
+                    this._onEdit();
+                }
+            },
+            {
+                ref:"propose", type: VButton.TYPES.ACCEPT, label:"Propose",
+                onClick:event=>{
+                    this._onPropose();
+                }
+            }
+        ]});
+        this.addOnRight(this._send);
+        this._onEdit = onEdit;
+        this._onPropose = onPropose;
+        this._scenario = new VScenario({
+            ref: "theme1", title: "Bla bla bla", img: `../images/scenarii/scenario1.png`,
+            story: "bla bla bla", victory: "bla bla bla", specialRules: "bla bla bla"
+        });
+        this.addOnLeft(this._scenario);
+        this._editScenario();
+    }
+
+    _editScenario() {
+        this._title.value = this._scenario.title;
+        this._story.value = this._scenario.story;
+        this._victory.value = this._scenario.victory;
+        this._specialRules.value = this._scenario.specialRules;
+    }
+
+    _register() {
+        return {
+            title: this._title.getText(),
+            story: this._story.getText(),
+            victory: this._victory.getText(),
+            specialRules: this._specialRules.getText()
+        }
+    }
+
+    _recover(specification) {
+        if (specification) {
+            this._title.setText(specification.title);
+            this._story.setText(specification.story);
+            this._specialRules.setText(specification.specialRules);
+        }
+    }
+
+    openInNewTab(url) {
+        window.open(url, '_blank').focus();
+    }
+}

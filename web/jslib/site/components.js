@@ -458,7 +458,7 @@ export class TextArea extends InputMixin(DOM(DComposed)) {
 
 export class Img extends DOM(DComponent) {
 
-    constructor(imgSrc) {
+    constructor(imgSrc, onLoad) {
         super("img");
         this.setSrc(imgSrc);
         this.root.onload = function(){
@@ -466,14 +466,16 @@ export class Img extends DOM(DComponent) {
                 listener.onImageLoaded(this);
             }
         };
+        onLoad && this.onEvent("load", onLoad);
     }
 
     getSrc() {
         return this._root.src;
     }
 
-    setSrc(imgSrc) {
+    setSrc(imgSrc, trigger) {
         this._root.src = imgSrc;
+        trigger && this.onEvent("load", trigger);
         return this;
     }
 
@@ -511,7 +513,6 @@ export class UndoRedo {
         }
         if (!UndoRedo.listeners.length) {
             delete UndoRedo.active;
-            alert("desactivate");
         }
     }
 

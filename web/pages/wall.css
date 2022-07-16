@@ -244,6 +244,27 @@
     cursor: pointer;
 }
 
+.scenario-header .scenario-title {
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 2em;
+    color: #000000;
+    margin-block-start: 0.1em;
+    margin-block-end: 0.1em;
+    text-shadow: 1px 1px 0 #ffffff, -1px -1px 0 #ffffff, -1px 1px 0.1em #ffffff, 1px -1px 0.1em #ffffff, 1px -1px 0.2em #ffffff, -1px 1px 0.2em #ffffff, -1px 1px 0.3em #ffffff, 1px -1px 0.3em #ffffff;
+}
+
+.scenario {
+    font-family: Arial, Helvetica, sans-serif;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    background-color: #fff8f4;
+    max-width: 600px;
+    position: relative;
+    max-height: 600px;
+    cursor: pointer;
+}
+
+
 .articles-about-game .search {
     background-color: #f8f2de;
 }
@@ -576,6 +597,15 @@
     height: 100%;
 }
 
+.theme-editor .splitter-left-pane {
+    min-width: 500px;
+    padding: 0;
+}
+
+.theme-editor .splitter-right-pane {
+    padding-right: 30px;
+}
+
 .theme-editor .file-loader {
     width: 450px;
     height: 150px;
@@ -584,7 +614,7 @@
 
 .theme-editor .editor-toolbar
 {
-    max-width: 450px;
+    max-width: 600px;
     border:solid 1px #ddd;
     background:#e0e0e0;
     border-radius:3px;
@@ -592,7 +622,7 @@
 
 .theme-editor .form-input-text, .theme-editor .form-input-select, .theme-editor .form-input-textarea {
     display: block;
-    max-width: 450px;
+    max-width: 600px;
     background-color: #e9ddbe;
 }
 
@@ -601,8 +631,9 @@
 }
 
 .theme-editor .theme {
-    float: right;
-    margin-right: 50px;
+    margin: auto;
+    width: 450px;
+    overflow-wrap: break-word;
 }
 
 .article-editor .article {
@@ -658,6 +689,10 @@
     padding: 15px;
     background-color: #f8f2de;
     height: 100%;
+}
+
+.article-editor .splitter-right-pane {
+    padding-right: 30px;
 }
 
 .article-editor .file-loader {
@@ -773,4 +808,109 @@
     opacity: 0.8;
 }
 
+.map-editor-page .description {
+    padding: 15px;
+    background-color: #f8f2de;
+    font-family: Arial, Helvetica, sans-serif;
+    height: 100%;
+}
+
+.map-editor {
+    padding: 15px;
+    background-color: #f8f2de;
+    height: 100%;
+}
+
+.map-editor .splitter-left-pane {
+    min-width: 500px;
+    padding: 0;
+}
+
+.map-editor .splitter-left-pane .form-field {
+    margin: auto;
+    width: 350px;
+}
+
+.map-editor .splitter-right-pane {
+    padding-right: 30px;
+    width: 100%;
+}
+
+.map-editor .file-loader {
+    width: 350px;
+    height: 539px;
+    border: solid #555555;
+}
+
+.map-editor .file-loader img {
+    width: 350px;
+}
+
+.map-editor .editor-toolbar
+{
+    max-width: 600px;
+    border:solid 1px #ddd;
+    background:#e0e0e0;
+    border-radius:3px;
+}
+
+.map-editor .form-input-text, .map-editor .form-input-textarea {
+    display: block;
+    max-width: 600px;
+    background-color: #e9ddbe;
+}
+
+.map-editor .form-input-textarea {
+    height: 300px;
+}
+
+.scenario-editor-page .description {
+    padding: 15px;
+    background-color: #f8f2de;
+    font-family: Arial, Helvetica, sans-serif;
+    height: 100%;
+}
+
+.scenario-editor {
+    padding: 15px;
+    background-color: #f8f2de;
+    height: 100%;
+}
+
+.scenario-editor .splitter-left-pane {
+    min-width: 500px;
+    padding: 0;
+}
+
+.scenario-editor .splitter-left-pane .form-field {
+    margin: auto;
+    width: 350px;
+}
+
+.scenario-editor .scenario-image {
+    width: 500px;
+}
+
+.scenario-editor .splitter-right-pane {
+    padding-right: 30px;
+    width: 100%;
+}
+
+.scenario-editor .editor-toolbar
+{
+    max-width: 450px;
+    border:solid 1px #ddd;
+    background:#e0e0e0;
+    border-radius:3px;
+}
+
+.scenario-editor .form-input-text, .scenario-editor .form-input-textarea {
+    display: block;
+    max-width: 600px;
+    background-color: #e9ddbe;
+}
+
+.scenario-editor .form-input-textarea {
+    height: 300px;
+}
 

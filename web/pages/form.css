@@ -406,6 +406,9 @@
 }
 
 
+.vitamin-image {
+    overflow: auto
+}
 
 
 .form-switch-wrapper *{
