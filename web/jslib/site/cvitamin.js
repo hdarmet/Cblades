@@ -22,6 +22,7 @@ import {
     VArticle, VSwitch, VCommand, VSplitterPanel, VConfirmHandler, VScenario
 } from "./vitamins.js";
 import {
+    P,
     UndoRedo
 } from "./components.js";
 
@@ -297,7 +298,9 @@ export function Undoable(clazz) {
         }
 
         _isDirty() {
-            return this._undos && this._undos.length>0;
+            let memento = this._register();
+            let lastMemento = this._undos[0];
+            return JSON.stringify(memento) !== JSON.stringify(lastMemento);
         }
 
         _clean() {
@@ -314,23 +317,31 @@ export function Undoable(clazz) {
         }
 
         _memorize(component) {
-            if (!component || this._memorized!==component) {
-                this._undos.push(this._register());
+            let memento = this._register();
+            let lastMemento = this._undos[this._undos.length-1];
+            if (JSON.stringify(memento) !== JSON.stringify(lastMemento)) {
+                this._undos.push(memento);
+                console.log(this._undos[this._undos.length-1])
                 this._redos = [];
-                this._memorized = component;
             }
         }
 
         undo() {
-            this._redos.push(this._register());
-            let specification = this._undos.pop();
-            this._recover(specification);
+            let memento = this._register();
+            let lastMemento = this._undos[this._undos.length-1];
+            while (JSON.stringify(memento) === JSON.stringify(lastMemento)) {
+                if (this._undos.length === 1) return;
+                this._undos.pop();
+                lastMemento = this._undos[this._undos.length - 1];
+            }
+            this._redos.push(memento);
+            this._recover(lastMemento);
         }
 
         redo() {
-            this._undos.push(this._register());
             let specification = this._redos.pop();
             this._recover(specification);
+            this._undos.push(this._register());
         }
 
         canLeave(leave) {
@@ -365,14 +376,19 @@ export class VCThemeEditor extends Undoable(VSplitterPanel) {
                 {ref: "category-game", value: "game", text:"About The Game"},
                 {ref: "category-legends", value: "legends", text:"Stories And Legends"},
                 {ref: "category-examples", value: "examples", text:"Play Examples"}
-            ]
+            ],
+            onChange: event=>{
+                this._memorize();
+            }
         });
         this.addOnRight(this._category);
         this._title = new VInputField({
             ref:"theme-title-input", label:"Title",
             onInput: event=>{
-                this._memorize(this._title);
                 this._theme.title = this._title.value;
+            },
+            onChange: event=>{
+                this._memorize();
             }
         });
         this.addOnRight(this._title);
@@ -380,27 +396,38 @@ export class VCThemeEditor extends Undoable(VSplitterPanel) {
             ref:"theme-image", label:"Image",
             accept, verify,
             onInput: event=>{
-                this._memorize(this._imageLoader);
                 this._theme.image = this._imageLoader.imageSrc;
+            },
+            onChange: event=>{
+                this._memorize();
             }
         });
         this.addOnRight(this._imageLoader);
         this._description = new VInputTextArea({
             ref:"theme-content-input", label:"Description",
             onInput: event=>{
-                this._memorize(this._description);
                 this._theme.description = this._description.value;
+            },
+            onChange: event=>{
+                this._memorize();
             }
         });
         this.addOnRight(this._description);
         this._send = new VButton({ref: "propose-theme", label:"Propose", type:"accept"});
         this.addOnRight(this._send);
+    }
+
+    set theme(specification) {
+        if (this._theme) {
+            this.removeFromLeft(this._theme);
+        }
         this._theme = new VTheme({
-            ref: "theme1", title: "Bla bla bla", img: `../images/site/themes/rules.png`,
-            description: "bla bla bla"
+            ...specification
         });
         this.addOnLeft(this._theme);
         this._editTheme();
+        this._clean();
+        this._memorize();
     }
 
     _editTheme() {
@@ -410,12 +437,15 @@ export class VCThemeEditor extends Undoable(VSplitterPanel) {
     }
 
     _register() {
-        return this._theme.specification;
+        let specification = this._theme.specification;
+        specification.category = this._category.value;
+        return specification;
     }
 
     _recover(specification) {
         if (specification) {
             this._theme.specification = specification;
+            this._category.value = specification.category;
             this._editTheme();
         }
     }
@@ -444,15 +474,17 @@ export class VCArticleEditor extends Undoable(VSplitterPanel) {
                 {ref: "theme-siege", value: "Siege", text:"Siege"}
             ],
             onChange: event=>{
-                this._memorize(this._category);
+                this._memorize();
             }
         });
         this.addOnRight(this._category);
         this._paragraphTitle = new VInputField({
             ref:"paragraph-title-input", label:"Paragraph Title",
             onInput: event=>{
-                this._memorize(this._paragraphTitle);
                 this._paragraph.title = this._paragraphTitle.value;
+            },
+            onChange: event=>{
+                this._memorize();
             }
         });
         this.addOnRight(this._paragraphTitle);
@@ -460,8 +492,10 @@ export class VCArticleEditor extends Undoable(VSplitterPanel) {
             ref:"paragraph-image", label:"Image",
             accept, verify,
             onInput: event=>{
-                this._memorize(this._imageLoader);
                 this._paragraph.image = this._imageLoader.imageSrc;
+            },
+            onChange: event=>{
+                this._memorize();
             }
         });
         this.addOnRight(this._imageLoader);
@@ -470,37 +504,43 @@ export class VCArticleEditor extends Undoable(VSplitterPanel) {
                 {title: "left", value: "left"}, {title:"center", value:"center"}, {title:"right", value:"right"}
             ],
             onInput:event=>{
-                this._memorize(this._imagePos);
                 this._paragraph.imgPos = this._imagePos.value;
+            },
+            onChange: event=>{
+                this._memorize();
             }
         });
         this.addOnRight(this._imagePos);
         this._description = new VInputTextArea({
             ref:"paragraph-content-input", label:"Description",
             onInput: event=>{
-                this._memorize();
                 this._paragraph.description = this._description.value;
+            },
+            onChange: event=>{
+                this._memorize();
             }
         });
         this.addOnRight(this._description);
         this._send = new VButton({ref: "propose-article", label:"Propose", type:"accept"});
         this.addOnRight(this._send);
-
-        this._article = new VArticle({
-            ref: "article", title: "Bla bla bla"
-        });
-        this.createParagraph({
-            ref: "paragraph1", title: "Bla bla bla", imgPos:"left", img: `../images/site/factions/orcs.png`,
-            description: "bla bla bla"
-        });
-        this.createParagraph({
-            ref: "paragraph2", title: "Bla bla bla", imgPos:"right", img: `../images/site/factions/roughneck.png`,
-            description: "bla bla bla"
-        });
-        this._selectParagraph(this._article.paragraphs[0]);
-        this.addOnLeft(this._article);
         this._newParagraphSpecs = {imgPos: "center", title: "Title", description: "Description"};
+    }
+
+    set article(articleSpec) {
+        if (this._article) {
+            this.removeFromLeft(this._article);
+        }
+        this._article = new VArticle({
+            ref: articleSpec.ref,
+            title: articleSpec.title
+        });
+        for (let paragraphSpec of articleSpec.paragraphs) {
+            this.createParagraph(paragraphSpec);
+        }
+        this._article.paragraphs[0] && this._selectParagraph(this._article.paragraphs[0]);
+        this.addOnLeft(this._article);
         this._clean();
+        this._memorize();
     }
 
     _register() {
@@ -711,21 +751,21 @@ export class VCMapEditor extends Undoable(VSplitterPanel) {
             ref:"map-image", label:"Image",
             accept, verify,
             magnified: true,
-            onInput: event=>{
-                this._memorize(this._imageLoader);
+            onChange: event=>{
+                this._memorize();
             }
         });
         this.addOnLeft(this._imageLoader);
         this._title = new VInputField({
             ref:"map-title-input", label:"Title",
-            onInput: event=>{
+            onChange: event=>{
                 this._memorize(this._title);
             }
         });
         this.addOnRight(this._title);
         this._description = new VInputTextArea({
             ref:"map-description-input", label:"Description",
-            onInput: event=>{
+            onChange: event=>{
                 this._memorize(this._description);
             }
         });
@@ -751,18 +791,26 @@ export class VCMapEditor extends Undoable(VSplitterPanel) {
 
     _register() {
         return {
-            title: this._title.getText(),
-            description: this._description.getText(),
+            title: this._title.value,
+            description: this._description.value,
             img: this._imageLoader.imageSrc
         }
     }
 
     _recover(specification) {
         if (specification) {
-            this._title.setText(specification.title);
-            this._description.setText(specification.description);
+            this._title.value = specification.title;
+            this._description.value = specification.description;
             this._imageLoader.imageSrc = specification.img;
         }
+    }
+
+    set map(map) {
+        this._title.value = map.title;
+        this._description.value = map.description;
+        this._imageLoader.imageSrc = map.img;
+        this._clean();
+        this._memorize();
     }
 
     openInNewTab(url) {
@@ -772,39 +820,46 @@ export class VCMapEditor extends Undoable(VSplitterPanel) {
 
 export class VCScenarioEditor extends Undoable(VSplitterPanel) {
 
-    constructor({ref, kind="scenario-editor", accept, verify, onEdit, onPropose}) {
+    constructor({ref, kind="scenario-editor", onEdit, onPropose}) {
         super({ref});
         this.addClass(kind);
-
         this._title = new VInputField({
             ref:"map-title-input", label:"Title",
             onInput: event=>{
-                this._memorize(this._title);
                 this._scenario.title = this._title.value;
+            },
+            onChange: event=>{
+                this._memorize();
             }
         });
         this.addOnRight(this._title);
         this._story = new VInputTextArea({
             ref:"scenario-story-input", label:"Story",
             onInput: event=>{
-                this._memorize(this._story);
                 this._scenario.story = this._story.value;
+            },
+            onChange: event=>{
+                this._memorize();
             }
         });
         this.addOnRight(this._story);
         this._victory = new VInputTextArea({
             ref:"scenario-victory-input", label:"Victory Conditions",
             onInput: event=>{
-                this._memorize(this._victory);
                 this._scenario.victory = this._victory.value;
+            },
+            onChange: event=>{
+                this._memorize();
             }
         });
         this.addOnRight(this._victory);
         this._specialRules = new VInputTextArea({
             ref:"scenario-special-rules-input", label:"Special Rules",
             onInput: event=>{
-                this._memorize(this._specialRules);
                 this._scenario.specialRules = this._specialRules.value;
+            },
+            onChange: event=>{
+                this._memorize();
             }
         });
         this.addOnRight(this._specialRules);
@@ -825,12 +880,17 @@ export class VCScenarioEditor extends Undoable(VSplitterPanel) {
         this.addOnRight(this._send);
         this._onEdit = onEdit;
         this._onPropose = onPropose;
-        this._scenario = new VScenario({
-            ref: "theme1", title: "Bla bla bla", img: `../images/scenarii/scenario1.png`,
-            story: "bla bla bla", victory: "bla bla bla", specialRules: "bla bla bla"
-        });
+    }
+
+    set scenario(scenarioSpec) {
+        if (this._scenario) {
+            this.removeFromLeft(this._scenario);
+        }
+        this._scenario = new VScenario(scenarioSpec);
         this.addOnLeft(this._scenario);
         this._editScenario();
+        this._clean();
+        this._memorize();
     }
 
     _editScenario() {

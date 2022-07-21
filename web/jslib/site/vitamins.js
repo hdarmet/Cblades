@@ -94,9 +94,9 @@ export function Vitamin(Component) {
 
         get parent() {
             let parent = this.getParent();
-            if (parent) {
+            while (parent) {
                 if (isVitamin(parent)) return parent;
-                parent = this.getParent();
+                parent = parent.getParent();
             }
             return null;
         }
@@ -118,7 +118,7 @@ export function Vitamin(Component) {
         }
 
         _activate() {
-            this._updateActivation(!!this.parent && this.parent.active);
+            this._updateActivation(!!this.parent && !!this.parent.active);
             if (this._active) {
                 this.visitDown(vitamin=> {
                     if (this !== vitamin) {
@@ -805,11 +805,20 @@ export class VSplitterPanel extends Vitamin(Div) {
         return this;
     }
 
+    removeFromLeft(vitamin) {
+        this._leftPaneContent.remove(vitamin);
+        return this;
+    }
+
     addOnRight(vitamin) {
         this._rightPaneContent.add(vitamin);
         return this;
     }
 
+    removeFromRight(vitamin) {
+        this._rightPaneContent.remove(vitamin);
+        return this;
+    }
 }
 
 export class VButton extends Vitamin(Button) {
@@ -1419,8 +1428,15 @@ export class VCard extends Vitamin(Div) {
             this._description = new P(description).addClass("gallery-card-line");
             this._content.add(this._description);
         }
-        this._button = new VButton({ref:ref+"-button", label:button, type:VButton.TYPES.ACCEPT, onClick:action});
-        this._content.add(new Span().add(this._button).addClass("gallery-card-button"));
+        if (button) {
+            this._button = new VButton({
+                ref: ref + "-button",
+                label: button,
+                type: VButton.TYPES.ACCEPT,
+                onClick: action
+            });
+            this._content.add(new Span().add(this._button).addClass("gallery-card-button"));
+        }
     }
 
 }
@@ -1473,18 +1489,8 @@ export class VParagraph extends Vitamin(Div) {
         this._embed.add(this._content);
         this._title = new P(title).addClass("paragraph-title");
         this._content.add(this._title);
-        if (Array.isArray(description)) {
-            this._descriptions = [];
-            for (let descriptionLine of description) {
-                let line = new P(descriptionLine).addClass("paragraph-line");
-                this._descriptions.push(line);
-                this._content.add(line);
-            }
-        }
-        else {
-            this._description = new P(description).addClass("paragraph-line");
-            this._content.add(this._description);
-        }
+        this._description = new P(description).addClass("paragraph-line");
+        this._content.add(this._description);
         this.action=action;
     }
 
@@ -1494,12 +1500,7 @@ export class VParagraph extends Vitamin(Div) {
 
     get specification() {
         let description;
-        if (Array.isArray(this._description)) {
-            description = this._description.map(description=>description.getText());
-        }
-        else {
-            description = this._description.getText();
-        }
+        description = this._description.getText();
         return {
             ref: this.ref.ref,
             img: this._image ? this._image.src : null,
@@ -1573,6 +1574,20 @@ export class VVotes extends Vitamin(Div) {
             .add(this._dislikesIcon).add(this._dislikesValue);
     }
 
+    get likes() {
+        return parseInt(this._likesValue.getText());
+    }
+
+    get dislikes() {
+        return parseInt(this._dislikesValue.getText());
+    }
+
+    get specification() {
+        return {
+            likes: this.likes,
+            dislikes: this.dislikes
+        }
+    }
 }
 
 export class VArticle extends Vitamin(Div) {
@@ -1592,10 +1607,9 @@ export class VArticle extends Vitamin(Div) {
                 this.createParagraph(paragraphSpec);
             }
         }
-        this.onEvent("click", ()=>{
-            action && action({ref, title, paragraphs, votes})
+        this.onEvent("click", event=>{
+            action && action(this)
         });
-
     }
 
     createParagraph(paragraphSpec) {
@@ -1648,11 +1662,13 @@ export class VArticle extends Vitamin(Div) {
     }
 
     get specification() {
-        return {
+        let specification = {
             ref: this.ref,
             title: this._title.getText(),
-            paragraphs: this._paragraphs.map(paragraph=>paragraph.specification)
-        }
+            paragraphs: this._paragraphs.map(paragraph=>paragraph.specification),
+        };
+        if (this._votes) specification.votes = this._votes.specification;
+        return specification;
     }
 
     set specification(specification) {
@@ -1669,17 +1685,12 @@ export class VArticle extends Vitamin(Div) {
 
 export class VTheme extends Vitamin(Div) {
 
-    constructor({ref, title, img, image, description, action}) {
+    constructor({ref, title, img, description, action}) {
         super({ref});
         this.addClass("theme");
         this._header = new Div().addClass("theme-header");
         this.add(this._header);
-        if (image) {
-            this._image = image;
-        }
-        else {
-            this._image = new VImage({ref:this.ref+"-image", kind:"theme-image", img});
-        }
+        this._image = new VImage({ref:this.ref+"-image", kind:"theme-image", img});
         this._image && this._header.add(this._image);
         this._title = new P(title).addClass("theme-title");
         this._header.add(this._title);
@@ -1711,28 +1722,77 @@ export class VTheme extends Vitamin(Div) {
     }
 
     set image(img) {
-        if (this._image) {
-            this._image.setSrc(img);
-        }
-        else {
-            this._image = new VImage({ref:this.ref+"-image", kind:"theme-image", img});
-            this._header.insert(this._image, this._title);
-        }
+        if (this._image) this._header.remove(this._image);
+        this._image = new VImage({ref:this.ref+"-image", kind:"theme-image", img});
+        this._header.insert(this._image, this._title);
     }
 
     get specification() {
-        let description;
-        if (Array.isArray(this._description)) {
-            description = this._description.map(description=>description.getText());
-        }
-        else {
-            description = this._description.getText();
-        }
         return {
             ref: this.ref.ref,
             img: this._image ? this._image.src : null,
             title: this._title.getText(),
-            description: description
+            description: this._description.getText()
+        };
+    }
+
+    set specification(specification) {
+        this._title.setText(specification.title);
+        this._description.setText(specification.description);
+        this._image.setSrc(specification.img);
+    }
+
+}
+
+export class VMap extends Vitamin(Div) {
+
+    constructor({ref, title, img, description, action}) {
+        super({ref});
+        this.addClass("map");
+        this._header = new Div().addClass("map-header");
+        this.add(this._header);
+        this._title = new P(title).addClass("map-title");
+        this._header.add(this._title);
+        this._image = new VMagnifiedImage({ref:this.ref+"-image", kind:"map-image", img});
+        this._image && this._header.add(this._image);
+        this._description = new P(description).addClass("map-description");
+        this.add(this._description);
+        this.onEvent("click", ()=>{
+            action && action(this);
+        });
+    }
+
+    get title() {
+        return this._title.getText();
+    }
+
+    set title(title) {
+        this._title.setText(title);
+    }
+
+    get description() {
+        return this._description.getText();
+    }
+
+    set description(description) {
+        this._description.setText(description);
+    }
+
+    get image() {
+        return this._image ? this._image.src : null;
+    }
+
+    set image(img) {
+        this._image = new VImage({ref:this.ref+"-image", kind:"theme-image", img});
+        this._header.insert(this._image, this._title);
+    }
+
+    get specification() {
+        return {
+            ref: this.ref.ref,
+            img: this._image ? this._image.src : null,
+            title: this._title.getText(),
+            description: this._description.getText()
         };
     }
 
@@ -1753,19 +1813,22 @@ export class VScenario extends Vitamin(Div) {
         this.add(this._header);
         this._title = new P(title).addClass("scenario-title");
         this._header.add(this._title);
-        if (image) {
-            this._image = image;
-        }
-        else {
-            this._image = new VMagnifiedImage({ref:this.ref+"-image", kind:"scenario-image", img});
-        }
+        this._image = new VMagnifiedImage({ref:this.ref+"-image", kind:"scenario-image", img});
         this._image && this._header.add(this._image);
+        this._content = new Div().addClass("scenario-content");
+        this.add(this._content);
+        this._storyTitle = new P("Story").addClass("scenario-story-title");
+        this._content.add(this._storyTitle);
         this._story = new P(story).addClass("scenario-story");
-        this.add(this._story);
+        this._content.add(this._story);
+        this._victoryTitle = new P("Victory Conditions").addClass("scenario-victory-title");
+        this._content.add(this._victoryTitle);
         this._victory = new P(victory).addClass("scenario-victory");
-        this.add(this._victory);
+        this._content.add(this._victory);
+        this._specialRulesTitle = new P("Special Rules").addClass("scenario-special-rules-title");
+        this._content.add(this._specialRulesTitle);
         this._specialRules = new P(specialRules).addClass("scenario-special-rules");
-        this.add(this._specialRules);
+        this._content.add(this._specialRules);
         this.onEvent("click", ()=>{
             action && action(this);
         });
@@ -1808,13 +1871,8 @@ export class VScenario extends Vitamin(Div) {
     }
 
     set image(img) {
-        if (this._image) {
-            this._image.setSrc(img);
-        }
-        else {
-            this._image = new VImage({ref:this.ref+"-image", kind:"scenario-image", img});
-            this._header.insert(this._image, this._title);
-        }
+        this._image = new VImage({ref:this.ref+"-image", kind:"scenario-image", img});
+        this._header.insert(this._image, this._title);
     }
 
     get specification() {
@@ -1822,9 +1880,9 @@ export class VScenario extends Vitamin(Div) {
             ref: this.ref.ref,
             img: this._image ? this._image.src : null,
             title: this._title.getText(),
-            story: this._story,
-            victory: this._victory,
-            specialRules: this._specialRules
+            story: this._story.getText(),
+            victory: this._victory.getText(),
+            specialRules: this._specialRules.getText()
         };
     }
 
@@ -1892,6 +1950,7 @@ export class VWall extends Vitamin(Div) {
         note._envelope.add(note);
         this.insert(note._envelope, this._lastElement);
         this._notes.push(note);
+        note._added();
         return this;
     }
 

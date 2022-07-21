@@ -8,7 +8,7 @@ import {
     VMagnifiedImage,
     VSummary,
     VSlot,
-    VArticle, VNewspaper, VTheme, VFileLoader, VMessageHandler
+    VArticle, VNewspaper, VTheme, VFileLoader, VMessageHandler, VScenario, VMap
 } from "./vitamins.js";
 import {
     CVLegalNotice,
@@ -87,7 +87,7 @@ export var vMenu = new VMainMenu({ref:"menu"})
     })
     .addDropdownMenu({ref:"contribution-menu", title:"Pour contribuer"}, $=>{$
         .addMenu({ref:"propose-theme-menu", title:"Proposer un thème", action:()=>{
-                vPageContent.showProposeTheme();
+                vPageContent.showProposeTheme(null);
             }
         })
         .addMenu({ref:"propose-article-menu", title:"Proposer un article", action:()=>{
@@ -100,6 +100,10 @@ export var vMenu = new VMainMenu({ref:"menu"})
         })
         .addMenu({ref:"propose-scenario", title:"Proposer un scénario", action:()=>{
                 vPageContent.showProposeScenario();
+            }
+        })
+        .addMenu({ref:"your-proposals", title:"Vos contributions", action:()=>{
+                vPageContent.showYourProposals();
             }
         })
     });
@@ -873,7 +877,13 @@ export var vThemeEditorPage = new VContainer({ref:"theme-editor-page"})
     .addClass("theme-editor-page")
     .add(vThemeEditorDescription)
     .add(vThemeEditor);
-
+vThemeEditorPage.canLeave = function(leave) {
+    return vThemeEditor.canLeave(leave);
+}
+vThemeEditorPage.setTheme = function(theme) {
+    vThemeEditor.theme = theme;
+    return this;
+}
 
 export var vArticleEditor = new VCArticleEditor({
     ref:"article-editor",
@@ -900,6 +910,10 @@ export var vArticleEditorPage = new VContainer({ref:"theme-editor-page"})
     .add(vArticleEditor);
 vArticleEditorPage.canLeave = function(leave) {
     return vArticleEditor.canLeave(leave);
+}
+vArticleEditorPage.setArticle = function(article) {
+    vArticleEditor.article = article;
+    return this;
 }
 
 export var vMapEditor = new VCMapEditor({
@@ -931,6 +945,10 @@ export var vMapEditorPage = new VContainer({ref:"map-editor-page"})
 vMapEditorPage.canLeave = function(leave) {
     return vMapEditor.canLeave(leave);
 }
+vMapEditorPage.setMap = function(map) {
+    vMapEditor.map = map;
+    return this;
+}
 
 export var vScenarioEditor = new VCScenarioEditor({
     ref:"scenario-editor",
@@ -947,6 +965,79 @@ export var vScenarioEditorPage = new VContainer({ref:"scenario-editor-page"})
 vScenarioEditorPage.canLeave = function(leave) {
     return vScenarioEditor.canLeave(leave);
 }
+vScenarioEditorPage.setScenario = function(scenario) {
+    vScenarioEditor.scenario = scenario;
+    return this;
+}
+
+export var vYourProposalsTitle = new VHeader({
+    ref:"your-proposals-title",
+    left:"../images/site/left-contribute.png", right:"../images/site/right-contribute.png",
+    title: "Your Proposals"
+}).addClass("contribute-title");
+
+export var vYourProposalsWall = new CVWall({
+    ref:"your-proposals",
+    kind: "your-proposals",
+    searchAction: text=>alert("search:"+text)
+}, $=>{$
+    .addNote(new VArticle({
+        ref: "art1", title: "An Interesting Story", paragraphs: [
+            {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"left", title:"Ca commence...", description:[paragrpahText, paragrpahText]},
+            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"right", title:"Et ça continue...", description:paragrpahText}
+        ],
+        action:article=>{
+            vPageContent.showProposeArticle(article);
+        }
+    }))
+    .addNote(new VScenario({
+        ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
+        story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
+        action:scenario=>{
+            vPageContent.showProposeScenario(scenario);
+        }
+    }))
+    .addNote(new VTheme({
+        ref: "theme1", title: "Rules", img: `../images/site/themes/rules.png`,
+        description: paragrpahText,
+        action: theme => {
+            vPageContent.showProposeTheme(theme);
+        }
+    }))
+    .addNote(new VMap({
+        ref: "map1", title: "The Map", img: `../images/maps/map-7.png`,
+        description: paragrpahText,
+        action: map => {
+            vPageContent.showProposeMap(map);
+        }
+    }))
+});
+
+vYourProposalsWall.setLoadNotes(function() {
+    this.addNote(new VArticle({
+        ref: "art1", title: "An Interesting Story", paragraphs: [
+            {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"right", title:"Ca commence...", description:[paragrpahText, paragrpahText]},
+            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"left", title:"Et ça continue...", description:paragrpahText}
+        ],
+        action:article=>{
+            vPageContent.showProposeArticle(article);
+        }
+    }))
+    .addNote(new VScenario({
+        ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
+        story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
+        action:scenario=>{
+            vPageContent.showProposeScenario(scenario);
+        }
+    }))
+    .addNote(new VTheme({
+        ref: "theme1", title: "Rules", img: `../images/site/themes/rules.png`,
+        description: paragrpahText,
+        action: theme => {
+            vPageContent.showProposeTheme(theme);
+        }
+    }))
+});
 
 class VPageContent extends VContainer {
 
@@ -1096,69 +1187,115 @@ class VPageContent extends VContainer {
     _showNewspaper(article, byHistory, historize) {
         vNewspaperTitle.setTitle(article.title);
         vNewspaperContent.setArticle({
-            title: article.title, paragraphs: article.paragraphs, votes: {
+            title: article.title,
+            paragraphs: article.paragraphs,
+            votes: {
                 ...article.votes,
                 actionLikes: likes => {
                     likes.setText("" + (parseInt(likes.getText()) + 1));
                 },
                 actionDislikes: dislikes => {
                     dislikes.setText("" + (parseInt(dislikes.getText()) + 1));
-                },
+                }
             }
         });
         return this._changePage(vNewspaperTitle, vNewspaperContent, byHistory, historize);
     }
 
     showNewspaper(article) {
-        this._showNewspaper(article, false, ()=>
-            historize("newspaper", `vPageContent._showNewspaper(${JSON.stringify(article)}, true);`)
+        let specification = article.specification;
+        this._showNewspaper(specification, false, ()=>
+            historize("newspaper", `vPageContent._showNewspaper(${JSON.stringify(specification)}, true);`)
         );
     }
 
-    _showProposeTheme(byHistory, historize) {
+    _showProposeTheme(themeSpec, byHistory, historize) {
         vContributeTitle.setTitle("Propose A Theme");
+        vThemeEditorPage.setTheme(themeSpec);
         return this._changePage(vContributeTitle, vThemeEditorPage, byHistory, historize);
     }
 
-    showProposeTheme() {
-        this._showProposeTheme(false, ()=>
-            historize("propose-theme", "vPageContent._showProposeTheme(true);")
+    showProposeTheme(theme = null) {
+        let specification = theme ? theme.specification:{
+            ref: "theme1", title: "Bla bla bla", img: `../images/site/themes/rules.png`,
+            description: "bla bla bla"
+        };
+        this._showProposeTheme(specification,false, ()=>
+            historize("propose-theme", `vPageContent._showProposeTheme(${JSON.stringify(specification)}, true);`)
         );
     }
 
-    _showProposeArticle(byHistory, historize) {
+    _showProposeArticle(articleSpec, byHistory, historize) {
         vContributeTitle.setTitle("Propose An Article");
+        vArticleEditorPage.setArticle(articleSpec);
         return this._changePage(vContributeTitle, vArticleEditorPage, byHistory, historize);
     }
 
-    showProposeArticle() {
-        this._showProposeArticle(false, ()=>
-            historize("propose-article", "vPageContent._showProposeArticle(true);")
+    showProposeArticle(article = null) {
+        let specification = article ? article.specification: {
+            ref: "article", title: "Bla bla bla",
+            paragraphs: [
+                {
+                    ref: "paragraph1", title: "Bla bla bla",
+                    imgPos: "left", img: `../images/site/factions/orcs.png`,
+                    description: "bla bla bla"
+                }, {
+                    ref: "paragraph2", title: "Bla bla bla",
+                    imgPos: "right", img: `../images/site/factions/roughneck.png`,
+                    description: "bla bla bla"
+                }
+            ]
+        };
+        this._showProposeArticle(specification,false, ()=>
+            historize("propose-article", `vPageContent._showProposeArticle(${JSON.stringify(specification)}, true);`)
         );
     }
 
-    _showProposeMap(byHistory, historize) {
+    _showProposeMap(mapSpec, byHistory, historize) {
         vContributeTitle.setTitle("Propose A Map");
+        vMapEditorPage.setMap(mapSpec);
         return this._changePage(vContributeTitle, vMapEditorPage, byHistory, historize);
     }
 
-    showProposeMap() {
-        this._showProposeMap(false, ()=>
-            historize("propose-map", "vPageContent._showProposeMap(true);")
+    showProposeMap(map = null) {
+        let specification = map ? map.specification: {
+            ref: "map",
+            description: "bla bla"
+        };
+        this._showProposeMap(specification, false, ()=>
+            historize("propose-map", `vPageContent._showProposeMap(${JSON.stringify(specification)}, true);`)
         );
     }
 
-    _showProposeScenario(byHistory, historize) {
+    _showProposeScenario(scenarioSpec, byHistory, historize) {
         vContributeTitle.setTitle("Propose A Scenario");
+        vScenarioEditorPage.setScenario(scenarioSpec);
         return this._changePage(vContributeTitle, vScenarioEditorPage, byHistory, historize);
     }
 
-    showProposeScenario() {
-        this._showProposeScenario(false, ()=>
-            historize("propose-scenario", "vPageContent._showProposeScenario(true);")
+    showProposeScenario(scenario = null) {
+        let specification = scenario ? scenario.specification: {
+            ref: "scen1", title: "Bla bla bla",
+            img: `../images/scenarii/scenario1.png`,
+            story: "bla bla bla",
+            victory: "bla bla bla",
+            specialRules: "bla bla bla"
+        };
+        this._showProposeScenario(specification,false, ()=>
+            historize("propose-scenario", `vPageContent._showProposeScenario(${JSON.stringify(specification)},true);`)
         );
     }
 
+    _showYourProposals(byHistory, historize) {
+        vContributeTitle.setTitle("Your Proposals");
+        return this._changePage(vYourProposalsTitle, vYourProposalsWall, byHistory, historize);
+    }
+
+    showYourProposals() {
+        this._showYourProposals(false, ()=>
+            historize("your-proposals", "vPageContent._showYourProposals(true);")
+        );
+    }
 }
 
 export var vPageContent = new VPageContent();
@@ -1169,7 +1306,6 @@ Function.prototype.clone = function() {
 
 
 export function historize(title, revert) {
-    console.log("H:", {title, revert})
     history.pushState({
         title, revert
     }, title);
@@ -1193,5 +1329,48 @@ window.onpopstate = function (event) {
     }
     return true;
 }
+
+let inheritMap = new Map();
+Array.from(document.styleSheets).forEach(function (styleSheet) {
+    try {
+        Array.from(styleSheet.cssRules).forEach(function (cssRule) {
+            if (cssRule.selectorText.trim().match(/\.-?[_a-zA-Z]+[_a-zA-Z0-9-]*/)) {
+                inheritMap.set(cssRule.selectorText.trim().substring(1), cssRule);
+            }
+        });
+    } catch (exception) {}
+});
+Array.from(document.styleSheets).forEach(function (styleSheet) {
+    function cssExtend(cssRule) {
+        //console.log(cssRule.cssText);
+        if (cssRule.style) {
+            let extensions = cssRule.style.getPropertyValue("--extends");
+            if (extensions) {
+                extensions = extensions.trim().split(",");
+                cssRule.style.removeProperty("--extends");
+                for (let extension of extensions) {
+                    if (extension) {
+                        extension = extension.trim();
+                        let inherited = inheritMap.get(extension);
+                        if (inherited) {
+                            cssExtend(inherited);
+                            for (let property of inherited.style) {
+                                if (cssRule.style.getPropertyValue(property)==="") {
+                                    cssRule.style.setProperty(property, inherited.style.getPropertyValue(property));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    try {
+        Array.from(styleSheet.cssRules).forEach(function (cssRule) {
+            //console.log(cssRule.selectorText);
+            cssExtend(cssRule);
+        });
+    } catch (exception) {console.log(exception)}
+});
 
 
