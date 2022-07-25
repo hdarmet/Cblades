@@ -2,6 +2,18 @@
     background-color: #f8f2de;
 }
 
+.ex-scrollbar {
+    width: 12px;
+    height: 8px;
+    background-color: #e9ddbe;
+    border-radius: 6px;
+}
+
+.ex-scrollbar-thumb {
+    background: #c9b581;
+    border-radius: 6px;
+}
+
 .ex-page-header-left-image {
     position: absolute;
     top: 0;
@@ -607,6 +619,14 @@
     --extends: ex-input-text;
 }
 
+.theme-editor .form-input-textarea::-webkit-scrollbar {
+    --extends: ex-scrollbar
+}
+
+.theme-editor .form-input-textarea::-webkit-scrollbar-thumb {
+    --extends: ex-scrollbar-thumb
+}
+
 .theme-editor .form-input-textarea {
     height: 300px;
 }
@@ -691,6 +711,14 @@
 
 .article-editor .form-input-textarea {
     height: 300px;
+}
+
+.article-editor .form-input-textarea::-webkit-scrollbar {
+    --extends: ex-scrollbar
+}
+
+.article-editor .form-input-textarea::-webkit-scrollbar-thumb {
+    --extends: ex-scrollbar-thumb
 }
 
 .article-editor .paragraph {
@@ -805,6 +833,14 @@
     height: 300px;
 }
 
+.map-editor .form-input-textarea::-webkit-scrollbar {
+    --extends: ex-scrollbar
+}
+
+.map-editor .form-input-textarea::-webkit-scrollbar-thumb {
+    --extends: ex-scrollbar-thumb
+}
+
 .scenario-editor-page .description {
     --extends: ex-info-page-description;
 }
@@ -842,6 +878,14 @@
 
 .scenario-editor .form-input-textarea {
     height: 300px;
+}
+
+.scenario-editor .form-input-textarea::-webkit-scrollbar {
+    --extends: ex-scrollbar
+}
+
+.scenario-editor .form-input-textarea::-webkit-scrollbar-thumb {
+    --extends: ex-scrollbar-thumb
 }
 
 .your-proposals .search {

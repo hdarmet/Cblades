@@ -82,6 +82,14 @@
     color: #cccccc;
 }
 
+.form-message {
+    font-family: Arial, Helvetica, sans-serif;
+    color: red;
+    font-size: 0.9em;
+    margin: 0;
+    padding: 0;
+}
+
 /* Set a style for all buttons */
 .form-button {
     display: flex;

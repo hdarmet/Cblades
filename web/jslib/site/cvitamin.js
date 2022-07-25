@@ -1,30 +1,28 @@
 'use strict'
 
 import {
-    VInputField,
+    Undoable,
     VList,
     VLine,
     VModal,
-    VApp,
-    VSelectField,
-    VInputTextArea,
-    VButtons,
     VDisplay,
     VLink,
     VRow,
     VContainer,
-    VWall,
-    VSearch,
-    VButton,
-    VTheme,
-    VFileLoaderField,
     VMessageHandler,
-    VArticle, VSwitch, VCommand, VSplitterPanel, VConfirmHandler, VScenario
+    VConfirmHandler,
+    VMessage,
 } from "./vitamins.js";
 import {
-    P,
-    UndoRedo
-} from "./components.js";
+    VInputField,
+    VSelectField,
+    VInputTextArea,
+    VButtons,
+    VButton,
+    VPasswordField,
+    mandatory,
+    matchesEmail, matchesName, matchesPassword, matchesLogin, or, and, isValid, VFormContainer
+} from "./vforms.js";
 
 export class CVMessage extends VModal {
 
@@ -32,7 +30,9 @@ export class CVMessage extends VModal {
         super({ref: CVMessage.MESSAGE_REF});
         this.addClass("message-modal");
         this._display = new VDisplay({ref:"message-display"});
-        this.addContainer({ref:"message-display-container", columns:1},$=>$
+        this.addContainer({ref:"message-display-container",
+            container:new VFormContainer({columns:1})
+        },$=>$
             .addField({field: this._display})
         );
     }
@@ -40,7 +40,6 @@ export class CVMessage extends VModal {
     show({title, message}) {
         this.title = title;
         this._display.content = message;
-        VApp.instance.register(this);
         super.show();
     }
 
@@ -59,7 +58,9 @@ export class CVConfirm extends VModal {
         super({ref: CVConfirm.CONFIRM_REF});
         this.addClass("confirm-modal");
         this._display = new VDisplay({ref:"confirm-display"});
-        this.addContainer({ref:"confirm-display-container", columns:1},$=>$
+        this.addContainer({ref:"confirm-display-container",
+            container:new VFormContainer({columns:1})
+        },$=>$
             .addField({field: this._display})
             .addField({field: new VButtons({ref: "confirm-buttons", verical:false, buttons:[
                 {
@@ -85,7 +86,6 @@ export class CVConfirm extends VModal {
         this._display.content = message;
         this._actionOk = actionOk;
         this._actionCancel = actionCancel;
-        VApp.instance.register(this);
         super.show();
     }
 
@@ -109,7 +109,6 @@ export class CVContact extends VList {
             .addClass("contact-email-dot");
         this._writeToUs = new VLine({ref:"contact-writetous", text:writeToUs,
             action: ()=>{
-                VApp.instance.register(this._writeToUsModal);
                 this._writeToUsModal.show();
             }
         }).addClass("contact-writetous-dot");
@@ -147,14 +146,18 @@ export class CVWriteToUs extends VModal {
             ]
         });
         this._message = new VInputTextArea({ref:"contact-message", label:"Message"});
-        this.addContainer({ref:"writetous-identity", columns:2},$=>$
+        this.addContainer({ref:"writetous-identity",
+            container:new VFormContainer({columns:2})
+        },$=>$
             .addField({field: this._firstName})
             .addField({field: this._lastName})
             .addField({field: this._email})
             .addField({field: this._country})
             .addField({field: this._subject})
         );
-        this.addContainer({ref:"writetous-message", columns:1},$=>$
+        this.addContainer({ref:"writetous-message",
+            container:new VFormContainer({columns:1})
+        },$=>$
             .addField({field: this._subject})
             .addField({field: this._message})
             .addField({field:new VButtons({ref: "buttons", buttons:[
@@ -213,8 +216,6 @@ export class CVLegalNotice extends VList {
     }
 
     showArticle(title, content) {
-        console.log("show")
-        VApp.instance.register(this._legalNoticeModal);
         this._legalNoticeModal.show(title, content);
     }
 
@@ -226,7 +227,9 @@ export class CVArticleDisplay extends VModal {
     constructor() {
         super({ref: CVWriteToUs.ARTICLE_DISPLAY_REF});
         this._display = new VDisplay({ref:"article-display"});
-        this.addContainer({ref:"article-display-container", columns:1},$=>$
+        this.addContainer({ref:"article-display-container",
+            container:new VFormContainer({columns:1})
+        },$=>$
             .addField({field: this._display})
         );
     }
@@ -270,654 +273,149 @@ export class CVSocialRow extends VRow {
     static PARTNERSHIP_REF = "social-row";
 }
 
-export class CVWall extends VContainer {
+export class VCLogin extends VModal {
 
-    constructor({ref, kind="wall-vertical", searchAction}, builder) {
-        super({ref});
-        this.addClass(kind);
-        this._search = new VSearch({ref:ref+"_search", searchAction});
-        this.add(this._search);
-        this._wall = new VWall({ref:ref+"-content", kind:kind+"-content"}, builder);
-        this.add(this._wall);
-    }
-
-    setLoadNotes(action) {
-        this._wall.setLoadNotes(action);
-        return this;
-    }
-}
-
-
-export function Undoable(clazz) {
-
-    return class extends clazz {
-
-        constructor(...params) {
-            super(...params);
-            this._clean();
-        }
-
-        _isDirty() {
-            let memento = this._register();
-            let lastMemento = this._undos[0];
-            return JSON.stringify(memento) !== JSON.stringify(lastMemento);
-        }
-
-        _clean() {
-            this._undos = [];
-            this._redos = [];
-        }
-
-        onActivate() {
-            UndoRedo.addListener(this);
-        }
-
-        onDesactivate() {
-            UndoRedo.removeListener(this);
-        }
-
-        _memorize(component) {
-            let memento = this._register();
-            let lastMemento = this._undos[this._undos.length-1];
-            if (JSON.stringify(memento) !== JSON.stringify(lastMemento)) {
-                this._undos.push(memento);
-                console.log(this._undos[this._undos.length-1])
-                this._redos = [];
-            }
-        }
-
-        undo() {
-            let memento = this._register();
-            let lastMemento = this._undos[this._undos.length-1];
-            while (JSON.stringify(memento) === JSON.stringify(lastMemento)) {
-                if (this._undos.length === 1) return;
-                this._undos.pop();
-                lastMemento = this._undos[this._undos.length - 1];
-            }
-            this._redos.push(memento);
-            this._recover(lastMemento);
-        }
-
-        redo() {
-            let specification = this._redos.pop();
-            this._recover(specification);
-            this._undos.push(this._register());
-        }
-
-        canLeave(leave) {
-            if (this._isDirty()) {
-                VConfirmHandler.emit({
-                    title: "Confirm", message: "Article not saved. Do you want to Quit ?",
-                    actionOk: () => {
-                        this._clean();
-                        leave();
-                    },
-                    actionCancel: () => {
-                        this._clean();
-                        leave();
-                    }
+    constructor({connect}) {
+        super({"ref":"login", "title":"Connection"});
+        this._connect = connect;
+        this.addClass("login");
+        this._loginField = new VInputField({
+            ref:"login", label:"Login", value:"My name",
+            validate: mandatory({
+                validate: or({
+                    message: "Enter login or email",
+                    validators: [
+                        matchesLogin({}), matchesEmail({})
+                    ]
                 })
-                return false;
-            }
-            return true;
-        }
-
-    }
-
-}
-
-export class VCThemeEditor extends Undoable(VSplitterPanel) {
-
-    constructor({ref, kind="theme-editor", accept, verify}) {
-        super({ref});
-        this.addClass(kind);
-        this._category = new VSelectField({ref:"theme-category", label:"Category",
-            options: [
-                {ref: "category-game", value: "game", text:"About The Game"},
-                {ref: "category-legends", value: "legends", text:"Stories And Legends"},
-                {ref: "category-examples", value: "examples", text:"Play Examples"}
-            ],
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnRight(this._category);
-        this._title = new VInputField({
-            ref:"theme-title-input", label:"Title",
-            onInput: event=>{
-                this._theme.title = this._title.value;
-            },
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnRight(this._title);
-        this._imageLoader = new VFileLoaderField({
-            ref:"theme-image", label:"Image",
-            accept, verify,
-            onInput: event=>{
-                this._theme.image = this._imageLoader.imageSrc;
-            },
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnRight(this._imageLoader);
-        this._description = new VInputTextArea({
-            ref:"theme-content-input", label:"Description",
-            onInput: event=>{
-                this._theme.description = this._description.value;
-            },
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnRight(this._description);
-        this._send = new VButton({ref: "propose-theme", label:"Propose", type:"accept"});
-        this.addOnRight(this._send);
-    }
-
-    set theme(specification) {
-        if (this._theme) {
-            this.removeFromLeft(this._theme);
-        }
-        this._theme = new VTheme({
-            ...specification
-        });
-        this.addOnLeft(this._theme);
-        this._editTheme();
-        this._clean();
-        this._memorize();
-    }
-
-    _editTheme() {
-        this._title.value = this._theme.title;
-        this._description.value = this._theme.description;
-        this._imageLoader.imageSrc = this._theme.image;
-    }
-
-    _register() {
-        let specification = this._theme.specification;
-        specification.category = this._category.value;
-        return specification;
-    }
-
-    _recover(specification) {
-        if (specification) {
-            this._theme.specification = specification;
-            this._category.value = specification.category;
-            this._editTheme();
-        }
-    }
-
-}
-
-export class VCArticleEditor extends Undoable(VSplitterPanel) {
-
-    constructor({ref, kind="article-editor", accept, verify}) {
-        super({ref});
-        this.addClass(kind);
-        this._articleTitle = new VInputField({
-            ref:"article-title-input", label:"Article Title",
-            onInput: event=>{
-                this._memorize(this._articleTitle);
-                this._article.title = this._articleTitle.value;
-            }
-        });
-        this.addOnRight(this._articleTitle);
-        this._category = new VSelectField({ref:"article-theme", label:"Themes",
-            multiple: true, size: 4,
-            options: [
-                {ref: "theme-rules", value: "Rules", text:"Rule"},
-                {ref: "theme-strategy", value: "Strategy", text:"Stories And Legends"},
-                {ref: "theme-magic", value: "Magic", text:"Magic"},
-                {ref: "theme-siege", value: "Siege", text:"Siege"}
-            ],
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnRight(this._category);
-        this._paragraphTitle = new VInputField({
-            ref:"paragraph-title-input", label:"Paragraph Title",
-            onInput: event=>{
-                this._paragraph.title = this._paragraphTitle.value;
-            },
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnRight(this._paragraphTitle);
-        this._imageLoader = new VFileLoaderField({
-            ref:"paragraph-image", label:"Image",
-            accept, verify,
-            onInput: event=>{
-                this._paragraph.image = this._imageLoader.imageSrc;
-            },
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnRight(this._imageLoader);
-        this._imagePos = new VSwitch({ref:"paragraph-image-pos", kind:"paragraph-position",
-            options:[
-                {title: "left", value: "left"}, {title:"center", value:"center"}, {title:"right", value:"right"}
-            ],
+            }),
             onInput:event=>{
-                this._paragraph.imgPos = this._imagePos.value;
-            },
-            onChange: event=>{
-                this._memorize();
+                this._forgottenMessage.message = "";
+                this.get("Signin").enabled = !!this._loginField.value && !!this._passwordField.value;
             }
         });
-        this.addOnRight(this._imagePos);
-        this._description = new VInputTextArea({
-            ref:"paragraph-content-input", label:"Description",
-            onInput: event=>{
-                this._paragraph.description = this._description.value;
-            },
-            onChange: event=>{
-                this._memorize();
+        this._passwordField = new VPasswordField({
+            ref:"password", label:"Password", value:"P@ssW0rd",
+            validate: mandatory({validate: matchesPassword({})}),
+            onInput:event=>{
+                this._forgottenMessage.message = "";
+                this.get("Signin").enabled = !!this._loginField.value && !!this._passwordField.value;
             }
         });
-        this.addOnRight(this._description);
-        this._send = new VButton({ref: "propose-article", label:"Propose", type:"accept"});
-        this.addOnRight(this._send);
-        this._newParagraphSpecs = {imgPos: "center", title: "Title", description: "Description"};
-    }
-
-    set article(articleSpec) {
-        if (this._article) {
-            this.removeFromLeft(this._article);
-        }
-        this._article = new VArticle({
-            ref: articleSpec.ref,
-            title: articleSpec.title
+        this._forgottenMessage = new VMessage({ref:"forgotMsg"});
+        this._passwordForgotten = new VLink({
+            ref:"forgotPsw", text:"Forgot Password ?",
+            onClick:event=>{
+                this._forgottenMessage.message = "Message sent to your email address";
+            }
         });
-        for (let paragraphSpec of articleSpec.paragraphs) {
-            this.createParagraph(paragraphSpec);
-        }
-        this._article.paragraphs[0] && this._selectParagraph(this._article.paragraphs[0]);
-        this.addOnLeft(this._article);
-        this._clean();
-        this._memorize();
+        this._signInContainer = new VFormContainer({ref:"signin", columns:1},$=>{$
+            .addField({field: this._loginField})
+            .addField({field: this._passwordField})
+            .addField({field: this._forgottenMessage})
+            .addField({field: this._passwordForgotten})
+            .addField({field:new VButtons({ref: "buttons", buttons:[
+                {
+                    ref:"Signin", type:"accept", enabled:false, label:"Sign In",
+                    onClick:event=>{
+                        this.connect();
+                    }
+                },
+                {
+                    ref:"Signup", type:"neutral", label:"Sign Up",
+                    onClick:event=>{
+                        this.removeContainer({container:this._signInContainer});
+                        this.addContainer({container:this._signUpContainer});
+                        this.removeClass("sign-in");
+                        this.addClass("sign-up");
+                    }
+                }
+            ]})});
+        });
+        this._defineLoginField = new VInputField({
+            ref:"def-login", label:"Login", value:"My name",
+            validate: mandatory({validate: matchesLogin({})}),
+            onInput:event=>{
+            }
+        });
+        this._defineEmailField = new VInputField({
+            ref:"def-email", label:"Email", value:"me@me.com",
+            validate: mandatory({validate: matchesEmail({})}),
+            onInput:event=>{
+            }
+        });
+        this._definePasswordField = new VPasswordField({
+            ref:"def-password", label:"Password", value:"",
+            validate: mandatory({validate: matchesPassword({})}),
+            onInput:event=>{
+            }
+        });
+        this._defineReenterPasswordField = new VPasswordField({
+            ref:"def-reply-password", label:"Re-enter Password", value:"",
+            validate: mandatory({
+                validate: and({
+                    validators: [
+                        matchesPassword({}),
+                        (field, quit)=> {
+                            if (quit && this._defineReenterPasswordField.value !== this._definePasswordField.value) {
+                                return "Passwords do not match."
+                            }
+                            return "";
+                        }
+                    ]
+                })
+            }),
+            onInput:event=>{
+            }
+        });
+        this._defineFirstNameField = new VInputField({
+            ref:"def-first-name", label:"First Name", value:"",
+            validate: mandatory({validate: matchesName({})}),
+            onInput:event=>{
+            }
+        });
+        this._defineLastNameField = new VInputField({
+            ref:"def-last-name", label:"Last Name", value:"",
+            validate: mandatory({validate: matchesName({})}),
+            onInput:event=>{
+            }
+        });
+        this._signUpContainer = new VFormContainer({ref:"signup", columns:2},$=>{$
+            .addField({field: this._defineLoginField})
+            .addField({field: this._defineEmailField})
+            .addField({field: this._definePasswordField})
+            .addField({field: this._defineReenterPasswordField})
+            .addField({field: this._defineFirstNameField})
+            .addField({field: this._defineLastNameField})
+            .addField({field:new VButtons({ref: "buttons", buttons:[
+                {
+                    ref:"Signup", type:"accept", label:"Sign Up",
+                    onClick:event=>{
+                        this.connect();
+                    }},
+                {
+                    ref:"Signin", type:"neutral", label:"Sign In",
+                    onClick:event=>{
+                        this.removeContainer({container:this._signUpContainer});
+                        this.addContainer({container:this._signInContainer});
+                        this.removeClass("sign-up");
+                        this.addClass("sign-in");
+                    }},
+            ]})});
+        });
+        this.addContainer({container: this._signInContainer});
+        this.addClass("sign-in");
     }
 
-    _register() {
+    connect() {
+        if (isValid(this) && this._connect()) {
+            this.hide();
+        }
+    }
+
+    get connection() {
         return {
-            current: this._paragraph.ref.ref,
-            themes: this._category.values,
-            article: this._article.specification
+            login: this._loginField.value
         }
-    }
-
-    _recover(specification) {
-        if (specification) {
-            this._article.specification = specification;
-            for (let paragraph of this._article.paragraphs) {
-                paragraph.action = event => {
-                    this.selectParagraph(paragraph);
-                    return true;
-                }
-            }
-            this._articleTitle.value = this._article.title;
-            this._category.values = specification.themes;
-            let paragraph = this._article.getParagraph(specification.current);
-            this._selectParagraph(paragraph);
-        }
-    }
-
-    createParagraph(paragraphSpec) {
-        let paragraph = this._article.createParagraph({
-            ...paragraphSpec,
-            action: event => {
-                this.selectParagraph(paragraph);
-                return true;
-            }
-        });
-        return paragraph;
-    }
-
-    selectParagraph(paragraph) {
-        if (paragraph!==this._paragraph) {
-            this._memorize(null);
-            this._selectParagraph(paragraph);
-        }
-    }
-
-    _selectParagraph(paragraph) {
-        this._unselectParagraph();
-        this._paragraph = paragraph;
-        this._paragraph.addClass("selected");
-        this._articleTitle.value = this._article.title;
-        this._paragraphTitle.value = this._paragraph.title;
-        this._description.value = this._paragraph.description;
-        this._imageLoader.imageSrc = this._paragraph.image;
-        this._imagePos.value = this._paragraph.imgPos;
-        this._deleteCommand = new VCommand({
-            ref:"paragraph-delete-cmd",
-            imgEnabled: `../images/site/buttons/minus.png`,
-            imgDisabled: `../images/site/buttons/minus-disabled.png`,
-            onClick: event=>{
-                event.stopPropagation();
-                return this._deleteParagraph();
-            }
-        }).addClass("delete-command");
-        this._paragraph.add(this._deleteCommand);
-        this._insertBeforeCommand = new VCommand({
-            ref: "paragraph-insert-before-cmd",
-            imgPos: "center",
-            imgEnabled: `../images/site/buttons/plus.png`,
-            imgDisabled: `../images/site/buttons/plus-disabled.png`,
-            onClick: event=>{
-                event.stopPropagation();
-                return this._createBefore();
-            }
-        }).addClass("insert-before-command");
-        this._paragraph.add(this._insertBeforeCommand);
-        this._insertAfterCommand = new VCommand({
-            ref:"paragraph-insert-after-cmd",
-            imgEnabled: `../images/site/buttons/plus.png`,
-            imgDisabled: `../images/site/buttons/plus-disabled.png`,
-            onClick: event=>{
-                event.stopPropagation();
-                return this._createAfter();
-            }
-        }).addClass("insert-after-command");
-        this._paragraph.add(this._insertAfterCommand);
-        this._goUpCommand = new VCommand({
-            ref: "paragraph-goup-cmd",
-            imgEnabled: `../images/site/buttons/goup.png`,
-            imgDisabled: `../images/site/buttons/goup-disabled.png`,
-            onClick: event => {
-                event.stopPropagation();
-                return this._goUp();
-            }
-        }).addClass("goup-command");
-        this._paragraph.add(this._goUpCommand);
-        this._goDownCommand = new VCommand({
-            ref: "paragraph-godown-cmd",
-            imgEnabled: `../images/site/buttons/godown.png`,
-            imgDisabled: `../images/site/buttons/godown-disabled.png`,
-            onClick: event=>{
-                event.stopPropagation();
-                return this._goDown();
-            }
-        }).addClass("godown-command");
-        this._paragraph.add(this._goDownCommand);
-        this._updateGoCommands();
-    }
-
-    _updateGoCommands() {
-        this._goUpCommand.enabled = this._article.paragraphs.indexOf(this._paragraph)!==0;
-        this._goDownCommand.enabled = this._article.paragraphs.indexOf(this._paragraph)<this._article.paragraphs.length-1;
-    }
-
-    _unselectParagraph() {
-        if (this._paragraph) {
-            this._paragraph.removeClass("selected");
-            this._paragraph.remove(this._deleteCommand);
-            this._paragraph.remove(this._goUpCommand);
-            this._paragraph.remove(this._goDownCommand);
-            this._paragraph.remove(this._insertBeforeCommand);
-            this._paragraph.remove(this._insertAfterCommand);
-        }
-    }
-
-    _goUp() {
-        let index = this._article.paragraphs.indexOf(this._paragraph);
-        if (index>0) {
-            this._article.exchangeParagraphs(this._paragraph);
-        }
-        this._updateGoCommands();
-        return true;
-    }
-
-    _goDown() {
-        let index = this._article.paragraphs.indexOf(this._paragraph);
-        if (index+1<this._article.paragraphs.length) {
-            this._article.exchangeParagraphs(this._article.paragraphs[index+1]);
-        }
-        this._updateGoCommands();
-        return true;
-    }
-
-    _createBefore() {
-        this._memorize(null);
-        let paragraph = this._article.insertParagraph({
-            ref: crypto.randomUUID(),
-            ...this._newParagraphSpecs,
-            action: event => {
-                this.selectParagraph(paragraph);
-                return true;
-            }
-        }, this._paragraph);
-        this._selectParagraph(paragraph);
-        this._updateGoCommands();
-        return true;
-    }
-
-    _createAfter() {
-        this._memorize(null);
-        let index = this._article.paragraphs.indexOf(this._paragraph);
-        if (index === this._article.paragraphs.length-1) {
-            let paragraph = this.createParagraph({
-                ref: crypto.randomUUID(),
-                ...this._newParagraphSpecs
-            });
-            this._selectParagraph(paragraph);
-        }
-        else {
-            let paragraph = this._article.insertParagraph({
-                ref: crypto.randomUUID(),
-                ...this._newParagraphSpecs,
-                action: event => {
-                    this.selectParagraph(paragraph);
-                    return true;
-                }
-            }, this._article.paragraphs[index+1]);
-            this._selectParagraph(paragraph);
-        }
-        this._updateGoCommands();
-        return true;
-    }
-
-    _deleteParagraph() {
-        this._memorize(null);
-        let index = this._article.paragraphs.indexOf(this._paragraph);
-        this._article.removeParagraph(index);
-        if (this._article.paragraphs.length===0) {
-            let paragraph = this.createParagraph({
-                ref: crypto.randomUUID(),
-                ...this._newParagraphSpecs
-            });
-            this._selectParagraph(paragraph);
-        }
-        else {
-            this._selectParagraph(this._article.paragraphs[index]);
-        }
-        this._updateGoCommands();
-        return true;
-    }
-
-}
-
-export class VCMapEditor extends Undoable(VSplitterPanel) {
-
-    constructor({ref, kind="map-editor", accept, verify, onEdit, onPropose}) {
-        super({ref});
-        this.addClass(kind);
-        this._imageLoader = new VFileLoaderField({
-            ref:"map-image", label:"Image",
-            accept, verify,
-            magnified: true,
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnLeft(this._imageLoader);
-        this._title = new VInputField({
-            ref:"map-title-input", label:"Title",
-            onChange: event=>{
-                this._memorize(this._title);
-            }
-        });
-        this.addOnRight(this._title);
-        this._description = new VInputTextArea({
-            ref:"map-description-input", label:"Description",
-            onChange: event=>{
-                this._memorize(this._description);
-            }
-        });
-        this.addOnRight(this._description);
-        this._send = new VButtons({ref: "map-buttons", vertical:false, buttons:[
-            {
-                ref:"edit", type: VButton.TYPES.NEUTRAL, label:"Edit",
-                onClick:event=>{
-                    this._onEdit();
-                }
-            },
-            {
-                ref:"propose", type: VButton.TYPES.ACCEPT, label:"Propose",
-                onClick:event=>{
-                    this._onPropose();
-                }
-            }
-        ]});
-        this.addOnRight(this._send);
-        this._onEdit = onEdit;
-        this._onPropose = onPropose;
-    }
-
-    _register() {
-        return {
-            title: this._title.value,
-            description: this._description.value,
-            img: this._imageLoader.imageSrc
-        }
-    }
-
-    _recover(specification) {
-        if (specification) {
-            this._title.value = specification.title;
-            this._description.value = specification.description;
-            this._imageLoader.imageSrc = specification.img;
-        }
-    }
-
-    set map(map) {
-        this._title.value = map.title;
-        this._description.value = map.description;
-        this._imageLoader.imageSrc = map.img;
-        this._clean();
-        this._memorize();
-    }
-
-    openInNewTab(url) {
-        window.open(url, '_blank').focus();
-    }
-}
-
-export class VCScenarioEditor extends Undoable(VSplitterPanel) {
-
-    constructor({ref, kind="scenario-editor", onEdit, onPropose}) {
-        super({ref});
-        this.addClass(kind);
-        this._title = new VInputField({
-            ref:"map-title-input", label:"Title",
-            onInput: event=>{
-                this._scenario.title = this._title.value;
-            },
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnRight(this._title);
-        this._story = new VInputTextArea({
-            ref:"scenario-story-input", label:"Story",
-            onInput: event=>{
-                this._scenario.story = this._story.value;
-            },
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnRight(this._story);
-        this._victory = new VInputTextArea({
-            ref:"scenario-victory-input", label:"Victory Conditions",
-            onInput: event=>{
-                this._scenario.victory = this._victory.value;
-            },
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnRight(this._victory);
-        this._specialRules = new VInputTextArea({
-            ref:"scenario-special-rules-input", label:"Special Rules",
-            onInput: event=>{
-                this._scenario.specialRules = this._specialRules.value;
-            },
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnRight(this._specialRules);
-        this._send = new VButtons({ref: "scenario-buttons", vertical:false, buttons:[
-            {
-                ref:"edit", type: VButton.TYPES.NEUTRAL, label:"Edit",
-                onClick:event=>{
-                    this._onEdit();
-                }
-            },
-            {
-                ref:"propose", type: VButton.TYPES.ACCEPT, label:"Propose",
-                onClick:event=>{
-                    this._onPropose();
-                }
-            }
-        ]});
-        this.addOnRight(this._send);
-        this._onEdit = onEdit;
-        this._onPropose = onPropose;
-    }
-
-    set scenario(scenarioSpec) {
-        if (this._scenario) {
-            this.removeFromLeft(this._scenario);
-        }
-        this._scenario = new VScenario(scenarioSpec);
-        this.addOnLeft(this._scenario);
-        this._editScenario();
-        this._clean();
-        this._memorize();
-    }
-
-    _editScenario() {
-        this._title.value = this._scenario.title;
-        this._story.value = this._scenario.story;
-        this._victory.value = this._scenario.victory;
-        this._specialRules.value = this._scenario.specialRules;
-    }
-
-    _register() {
-        return {
-            title: this._title.getText(),
-            story: this._story.getText(),
-            victory: this._victory.getText(),
-            specialRules: this._specialRules.getText()
-        }
-    }
-
-    _recover(specification) {
-        if (specification) {
-            this._title.setText(specification.title);
-            this._story.setText(specification.story);
-            this._specialRules.setText(specification.specialRules);
-        }
-    }
-
-    openInNewTab(url) {
-        window.open(url, '_blank').focus();
     }
 }

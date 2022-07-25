@@ -22,6 +22,16 @@
 }
 
 /* The dropdown container */
+.ddtn-dropdown.right-menu {
+    float: right;
+}
+
+/* Links inside the navbar */
+.ddtn-navbar.right-menu a {
+    float: right;
+}
+
+/* The dropdown container */
 .ddtn-dropdown {
     float: left;
     overflow: hidden;
@@ -47,6 +57,10 @@
     color: #f44336;
     font-weight: bold;
     cursor: pointer;
+}
+
+.ddtn-menu-bar-item.right-menu {
+    float: right;
 }
 
 .ddtn-navbar a.vitamin-inactive, .ddtn-dropdown.vitamin-inactive .ddtn-droptitle, .ddtn-dropdown-content a.vitamin-inactive:hover {

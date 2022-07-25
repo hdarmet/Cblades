@@ -1,29 +1,40 @@
 import {
-    VGallery,
     VContainer,
     VHeader,
     VFooter,
     VText,
     VMainMenu,
     VMagnifiedImage,
-    VSummary,
     VSlot,
-    VArticle, VNewspaper, VTheme, VFileLoader, VMessageHandler, VScenario, VMap
+    VMessageHandler
 } from "./vitamins.js";
+import {
+    VFileLoader, VFormContainer
+} from "./vforms.js";
 import {
     CVLegalNotice,
     CVContact,
     CVPartnerships,
     CVSocialRow,
-    CVWall,
-    VCThemeEditor,
-    CVMessage,
-    VCArticleEditor,
-    VCMapEditor, VCScenarioEditor
+    VCLogin
 } from "./cvitamin.js";
 import {
     Div
 } from "./components.js";
+import {
+    VGallery,
+    VSummary,
+    VArticle,
+    VNewspaper,
+    VTheme,
+    VScenario,
+    VMap,
+    VWallWithSearch,
+    VThemeEditor,
+    VArticleEditor,
+    VMapEditor,
+    VScenarioEditor,
+} from "./vbooks.js";
 
 var text = `
 <h1>The Main Title</h1>
@@ -44,66 +55,90 @@ Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adi
 Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
 </p>`;
 
+export var connection = null;
+
 export var vMenu = new VMainMenu({ref:"menu"})
-    .addDropdownMenu({ref:"material-menu", title:"Pour jouer"}, $=>{$
-        .addMenu({ref:"dwnld-rules-menu", title:"Les règles et les aides de jeu", action:()=>{
+    .addDropdownMenu({ref:"material-menu", label:"Pour jouer"}, $=>{$
+        .addMenu({ref:"dwnld-rules-menu", label:"Les règles et les aides de jeu", action:()=>{
                 vPageContent.showRulesGallery();
             }
         })
-        .addMenu({ref:"dwnld-map-menu", title:"Les cartes", action:()=>{
+        .addMenu({ref:"dwnld-map-menu", label:"Les cartes", action:()=>{
                 vPageContent.showMapsGallery();
             }
         })
-        .addMenu({ref:"dwnld-armies-menu", title:"Les factions", action:()=>{
+        .addMenu({ref:"dwnld-armies-menu", label:"Les factions", action:()=>{
                 vPageContent.showFactionsGallery();
             }
         })
-        .addMenu({ref:"dwnld-magic-menu", title:"La magie", action:()=>{
+        .addMenu({ref:"dwnld-magic-menu", label:"La magie", action:()=>{
                 vPageContent.showMagicGallery();
             }
         })
-        .addMenu({ref:"dwnld-markers-menu", title:"Les marqueurs", action:()=>{
+        .addMenu({ref:"dwnld-markers-menu", label:"Les marqueurs", action:()=>{
                 vPageContent.showMarkersGallery();
             }
         })
     })
-    .addDropdownMenu({ref:"articles-menu", title:"Pour approfondir"}, $=>{$
-        .addMenu({ref:"new-articles-menu", title:"Nouveaux articles", action:()=>{
+    .addDropdownMenu({ref:"articles-menu", label:"Pour approfondir"}, $=>{$
+        .addMenu({ref:"new-articles-menu", label:"Nouveaux articles", action:()=>{
                 vPageContent.showNewArticlesWall();
             }
         })
-        .addMenu({ref:"about-game-menu", title:"Sur le Jeu", action:()=>{
+        .addMenu({ref:"about-game-menu", label:"Sur le Jeu", action:()=>{
                 vPageContent.showThemesAboutGameWall();
             }
         })
-        .addMenu({ref:"lore-articles-menu", title:"Histoires et légendes", action:()=>{
+        .addMenu({ref:"lore-articles-menu", label:"Histoires et légendes", action:()=>{
                 vPageContent.showThemesAboutGameWall();
             }
         })
-        .addMenu({ref:"rule-articles-menu", title:"Exemples de jeu", action:()=>{
+        .addMenu({ref:"rule-articles-menu", label:"Exemples de jeu", action:()=>{
                 vPageContent.showThemesAboutGameWall();
             }
         })
     })
-    .addDropdownMenu({ref:"contribution-menu", title:"Pour contribuer"}, $=>{$
-        .addMenu({ref:"propose-theme-menu", title:"Proposer un thème", action:()=>{
+    .addDropdownMenu({ref:"contribution-menu", label:"Pour contribuer"}, $=>{$
+        .addMenu({ref:"propose-theme-menu", label:"Proposer un thème", action:()=>{
                 vPageContent.showProposeTheme(null);
             }
         })
-        .addMenu({ref:"propose-article-menu", title:"Proposer un article", action:()=>{
+        .addMenu({ref:"propose-article-menu", label:"Proposer un article", action:()=>{
                 vPageContent.showProposeArticle();
             }
         })
-        .addMenu({ref:"propose-map-menu", title:"Proposer une carte", action:()=>{
+        .addMenu({ref:"propose-map-menu", label:"Proposer une carte", action:()=>{
                 vPageContent.showProposeMap();
             }
         })
-        .addMenu({ref:"propose-scenario", title:"Proposer un scénario", action:()=>{
+        .addMenu({ref:"propose-scenario", label:"Proposer un scénario", action:()=>{
                 vPageContent.showProposeScenario();
             }
         })
-        .addMenu({ref:"your-proposals", title:"Vos contributions", action:()=>{
+        .addMenu({ref:"your-proposals", label:"Vos contributions", action:()=>{
                 vPageContent.showYourProposals();
+            }
+        })
+    })
+    .addMenu({ref:"login", kind:"right-menu", label:connection?"Logout":"Login", action:()=>{
+        if (connection) {
+            connection = null;
+            vMenu.get("login").label = "Login";
+        }
+        else {
+            connection = {
+                login: vLogin.connection
+            }
+            vLogin.show();
+        }
+    }})
+    .addDropdownMenu({ref:"play-menu", kind:"right-menu", label:"Jouer en ligne"}, $=>{$
+        .addMenu({ref:"forum-menu", label:"Forum", action:()=>{
+                vPageContent.showProposeTheme(null);
+            }
+        })
+        .addMenu({ref:"propose-article-menu", label:"Proposer un article", action:()=>{
+                vPageContent.showProposeArticle();
             }
         })
     });
@@ -143,12 +178,12 @@ export var vHeader = new VHeader({
 
 export var vFooter = new VFooter({
     ref:"footer",
-    summary: new VContainer({ref:"footer-summary", separated:true, columns:3}, $=>{$
+    summary: new VFormContainer({ref:"footer-summary", separated:true, columns:3}, $=>{$
         .addField({field: new VText({ref:"footer-summary-contact", text:"Contact"}).addStyle("margin", "5px")})
         .addField({field: new VText({ref:"footer-summary-legal", text:"Legal"}).addStyle("margin", "5px")})
         .addField({field: new VText({ref:"footer-summary-partnership", text:"Partnership"}).addStyle("margin", "5px")})
     }),
-    content: new VContainer({ref:"footer-content", separated:true, columns:3}, $=>{$
+    content: new VFormContainer({ref:"footer-content", separated:true, columns:3}, $=>{$
         .addField({field: new CVContact({
             address: "Cursed Blades<br>22 Sword Street<br>92120 Lance",
             phone: "(+33)6 8744 0442",
@@ -183,7 +218,7 @@ export var vFooter = new VFooter({
                 content: text
             }
         })})
-        .addField({field: new VContainer({ref:"footer-content", columns:1}, $=>{$
+        .addField({field: new VFormContainer({ref:"footer-content", columns:1}, $=>{$
             .addField({field:new CVPartnerships({
                 patreon: {
                     label: "Our Patreon Page",
@@ -207,6 +242,13 @@ export var vFooter = new VFooter({
                 })})
             })})
     })
+});
+
+export var vLogin = new  VCLogin({
+    connect: ()=>{
+        vMenu.get("login").label = "logout";
+        return true;
+    }
 });
 
 export function download(url) {
@@ -424,7 +466,7 @@ vMagicCountersGallery.show = function() {
 
 export var vMagicSummary = new VSlot({ref: "counter-page-summary-slot"});
 
-export var vMagicCountersPageGallery = new VContainer({ref: "magic-counters-page-content"})
+export var vMagicCountersPageGallery = new VFormContainer({ref: "magic-counters-page-content"})
     .addClass("gallery-magic-counters-page")
     .add(vMagicSummary)
     .add(vMagicCountersGallery);
@@ -545,7 +587,7 @@ vFactionCountersGallery.show = function() {
 
 export var vFactionSummary = new VSlot({ref: "counter-page-summary-slot"});
 
-export var vFactionCountersPageGallery = new VContainer({ref: "faction-counters-page-content"})
+export var vFactionCountersPageGallery = new VFormContainer({ref: "faction-counters-page-content"})
     .addClass("gallery-faction-counters-page")
     .add(vFactionSummary)
     .add(vFactionCountersGallery);
@@ -621,7 +663,7 @@ export var vNewArticlesTitle = new VHeader({
     title: "New Articles"
 }).addClass("new-articles-title");
 
-export var vNewArticlesWall = new CVWall({
+export var vNewArticlesWall = new VWallWithSearch({
     ref:"new-articles",
     kind: "new-articles",
     searchAction: text=>alert("search:"+text)
@@ -702,7 +744,7 @@ export var vArticlesAboutGameTitle = new VHeader({
     title: "About the game"
 }).addClass("articles-about-game-title");
 
-export var vThemesAboutGameWall = new CVWall({
+export var vThemesAboutGameWall = new VWallWithSearch({
     ref:"themes-about-game",
     kind: "themes-about-game",
     searchAction: text=>alert("search:"+text)
@@ -765,7 +807,7 @@ export var vThemesAboutGameWall = new CVWall({
     }))
 });
 
-export var vArticlesAboutGameWall = new CVWall({
+export var vArticlesAboutGameWall = new VWallWithSearch({
     ref:"articles-about-game",
     kind: "articles-about-game",
     searchAction: text=>alert("search:"+text)
@@ -854,7 +896,7 @@ export var vContributeTitle = new VHeader({
     left:"../images/site/left-contribute.png", right:"../images/site/right-contribute.png"
 }).addClass("contribute-title");
 
-export var vThemeEditor = new VCThemeEditor({
+export var vThemeEditor = new VThemeEditor({
     ref:"theme-editor",
     accept(file) {
         if (!VFileLoader.isImage(file)) {
@@ -873,7 +915,7 @@ export var vThemeEditor = new VCThemeEditor({
 });
 
 export var vThemeEditorDescription = new Div().setText(paragrpahText).addClass("description");
-export var vThemeEditorPage = new VContainer({ref:"theme-editor-page"})
+export var vThemeEditorPage = new VFormContainer({ref:"theme-editor-page"})
     .addClass("theme-editor-page")
     .add(vThemeEditorDescription)
     .add(vThemeEditor);
@@ -885,7 +927,7 @@ vThemeEditorPage.setTheme = function(theme) {
     return this;
 }
 
-export var vArticleEditor = new VCArticleEditor({
+export var vArticleEditor = new VArticleEditor({
     ref:"article-editor",
     accept(file) {
         if (!VFileLoader.isImage(file)) {
@@ -904,7 +946,7 @@ export var vArticleEditor = new VCArticleEditor({
 });
 
 export var vArticleEditorDescription = new Div().setText(paragrpahText).addClass("description");
-export var vArticleEditorPage = new VContainer({ref:"theme-editor-page"})
+export var vArticleEditorPage = new VFormContainer({ref:"theme-editor-page"})
     .addClass("theme-editor-page")
     .add(vArticleEditorDescription)
     .add(vArticleEditor);
@@ -916,7 +958,7 @@ vArticleEditorPage.setArticle = function(article) {
     return this;
 }
 
-export var vMapEditor = new VCMapEditor({
+export var vMapEditor = new VMapEditor({
     ref:"map-editor",
     accept(file) {
         if (!VFileLoader.isImage(file)) {
@@ -938,7 +980,7 @@ export var vMapEditor = new VCMapEditor({
 });
 
 export var vMapEditorDescription = new Div().setText(paragrpahText).addClass("description");
-export var vMapEditorPage = new VContainer({ref:"map-editor-page"})
+export var vMapEditorPage = new VFormContainer({ref:"map-editor-page"})
     .addClass("map-editor-page")
     .add(vMapEditorDescription)
     .add(vMapEditor);
@@ -950,7 +992,7 @@ vMapEditorPage.setMap = function(map) {
     return this;
 }
 
-export var vScenarioEditor = new VCScenarioEditor({
+export var vScenarioEditor = new VScenarioEditor({
     ref:"scenario-editor",
     onEdit() {
         vScenarioEditor.openInNewTab("./cba-scenario-editor.html");
@@ -958,7 +1000,7 @@ export var vScenarioEditor = new VCScenarioEditor({
 });
 
 export var vScenarioEditorDescription = new Div().setText(paragrpahText).addClass("description");
-export var vScenarioEditorPage = new VContainer({ref:"scenario-editor-page"})
+export var vScenarioEditorPage = new VFormContainer({ref:"scenario-editor-page"})
     .addClass("scenario-editor-page")
     .add(vScenarioEditorDescription)
     .add(vScenarioEditor);
@@ -976,7 +1018,7 @@ export var vYourProposalsTitle = new VHeader({
     title: "Your Proposals"
 }).addClass("contribute-title");
 
-export var vYourProposalsWall = new CVWall({
+export var vYourProposalsWall = new VWallWithSearch({
     ref:"your-proposals",
     kind: "your-proposals",
     searchAction: text=>alert("search:"+text)
@@ -1260,6 +1302,7 @@ class VPageContent extends VContainer {
     showProposeMap(map = null) {
         let specification = map ? map.specification: {
             ref: "map",
+            title: "bla bla",
             description: "bla bla"
         };
         this._showProposeMap(specification, false, ()=>

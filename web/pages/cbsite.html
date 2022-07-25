@@ -9,6 +9,7 @@
     <link href="./wall.css" rel="stylesheet" type="text/css">
     <link href="./header-footer.css" rel="stylesheet" type="text/css">
     <link href="./page.css" rel="stylesheet" type="text/css">
+    <link href="./player.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/froala-editor/4.0.12/css/froala_editor.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/froala-editor/4.0.12/js/froala_editor.min.js"></script>
@@ -19,15 +20,23 @@
 <script type="module">
 
     import {
-        VApp, VModal, VButtons, VFileLoader
+        VApp, VModal
     } from "../jslib/site/vitamins.js";
+
+    import {
+        VButtons, VFileLoader
+    } from "../jslib/site/vforms.js";
 
     import {
         vFooter, vHeader, vPageContent
     } from "../jslib/site/cblades.js";
+    /*
+    import {VFormContainer} from "../jslib/site/vforms";
 
     let vmodal = new VModal({"ref":"modal", "title":"Connection"})
-        .addContainer({ref:"login-container", enabled:false, columns:2},$=>{$
+        .addContainer({ref:"login-container", enabled:false,
+            container:new VFormContainer({columns:2}
+        )},$=>{$
             .addInputField({
                 ref:"login", label:"Login", value:"My name",
                 onInput:event=>{
@@ -75,7 +84,7 @@
         });
 
     let vloader = new VFileLoader({ref:"loader"});
-
+*/
     let app = new VApp()
         .setWidth("100%")
         .setColor("#E0E0E0")
