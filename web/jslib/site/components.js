@@ -8,6 +8,10 @@ export class DComponent {
 
 }
 
+export function isComponent(any) {
+    return any._domType !== undefined;
+}
+
 export class DComposed extends DComponent {
 
     add(component) {
@@ -44,6 +48,10 @@ export class DComposed extends DComponent {
                 component._removed && component._removed();
             }
         }
+    }
+
+    clear() {
+        getDrawPlatform().replaceChildren(this._root);
     }
 
     contains(child) {
@@ -191,6 +199,10 @@ export function DOM(clazz) {
 
         getText() {
             return this._text;
+        }
+
+        getInnerHTML() {
+            return getDrawPlatform().getText(this._root);
         }
 
         setAlt(alt) {
@@ -384,6 +396,74 @@ export class P extends DOM(DComposed) {
 
 }
 
+export class Blockquote extends DOM(DComposed) {
+
+    constructor(innerHTML) {
+        super("blockquote");
+        this.setText(innerHTML);
+    }
+
+}
+
+export class I extends DOM(DComposed) {
+
+    constructor(icon) {
+        super("i");
+        this.addClass("fa fa-"+icon);
+    }
+
+}
+
+export class TR extends DOM(DComposed) {
+
+    constructor() {
+        super("tr");
+    }
+
+}
+
+export class Table extends DOM(DComposed) {
+
+    constructor() {
+        super("table");
+    }
+
+}
+
+export class Thead extends DOM(DComposed) {
+
+    constructor() {
+        super("thead");
+    }
+
+}
+
+export class TBody extends DOM(DComposed) {
+
+    constructor() {
+        super("tbody");
+    }
+
+}
+
+export class TH extends DOM(DComposed) {
+
+    constructor(text) {
+        super("th");
+        this.setText(text);
+    }
+
+}
+
+export class TD extends DOM(DComposed) {
+
+    constructor(text) {
+        super("td");
+        this.setText(text);
+    }
+
+}
+
 export function InputMixin(clazz) {
 
     return class extends clazz {
@@ -444,6 +524,25 @@ export class Input extends InputMixin(DOM(DComposed)) {
     setChecked(checked) {
         this._root.checked = checked;
         return this;
+    }
+
+}
+
+export class Checkbox extends Input {
+
+    constructor() {
+        super();
+        this.setType("checkbox");
+    }
+
+}
+
+export class Radio extends Input {
+
+    constructor(name) {
+        super();
+        this.setType("radio");
+        this.setName(name);
     }
 
 }
@@ -557,3 +656,38 @@ document.body.onkeyup = event=>{
         }
     }
 };
+
+if (!String.format) {
+    String.format = function(format) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        return format.replace(/{(\d+)}/g, function(match, number) {
+            return typeof args[number] != 'undefined'
+                ? args[number]
+                : match
+                ;
+        });
+    };
+}
+
+export function replaceSelectedText(root, node) {
+    let sel = window.getSelection();
+    let ancestor = sel.baseNode;
+    while (ancestor && ancestor !== root) {
+        ancestor = ancestor.parentNode;
+    }
+    if (ancestor === root) {
+        if (sel.rangeCount) {
+            let range = sel.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(node);
+            range.setStartAfter(node);
+            sel.addRange(range);
+        }
+    }
+}
+
+let _uniqueId=0;
+
+export function getUniqueId() {
+    return _uniqueId++;
+}

@@ -3,15 +3,16 @@
 }
 
 .ex-scrollbar {
-    width: 12px;
-    height: 8px;
+    width: 20px;
+    height: 20px;
     background-color: #e9ddbe;
-    border-radius: 6px;
 }
 
 .ex-scrollbar-thumb {
     background: #c9b581;
-    border-radius: 6px;
+    border: solid 4px #e9ddbe;
+    border-radius: 10px;
+    cursor: pointer;
 }
 
 .ex-page-header-left-image {

@@ -1,0 +1,143 @@
+
+.table-frame {
+    font-family: "Open Sans", sans-serif;
+    background-color: #ffffff;
+    width: 100%;
+    height: 95vh;
+    max-width: 100%;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /*box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);*/
+    overflow: hidden;
+}
+
+.table-content::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+    background-color: #eeeeee;
+}
+
+.table-content::-webkit-scrollbar-thumb {
+    background: #aaaaaa;
+    border: solid 2px #eeeeee;
+    border-radius: 8px;
+}
+
+.table-content {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    overflow: auto;
+    box-sizing: border-box;
+}
+.table-content .table-radio {
+    display: none;
+}
+.table-content .table-radio:checked + .table-display {
+    display: block;
+}
+.table-content .table-radio:checked + .table-display + table {
+    width: 100%;
+    display: table;
+}
+
+.table-frame .pagination > label.active {
+    color: #ffffff;
+    background-color: dimgray;
+    cursor: default;
+}
+.table-frame .pagination > label.disabled {
+    color: #afafaf;
+    cursor: default;
+}
+
+.table-content .table-display {
+    background-color: #e2e2e2;
+    text-align: right;
+    padding: 10px;
+    position: sticky;
+    left: 0;
+}
+.table-content table {
+    background-color: #ffffff;
+    font-size: 16px;
+    border-collapse: collapse;
+}
+.table-content table tr:last-child td {
+    border-bottom: 0;
+}
+.table-content table tr th,
+.table-content table tr td {
+    text-align: left;
+    padding: 15px;
+    box-sizing: border-box;
+}
+.table-content table tr th {
+    color: #ffffff;
+    font-weight: normal;
+    background-color: #afafaf;
+    border-bottom: solid 2px #d8d8d8;
+    position: sticky;
+    top: 0;
+}
+.table-content table tr td {
+    border: solid 1px #d8d8d8;
+    border-left: 0;
+    border-right: 0;
+    white-space: nowrap;
+    padding: 5px;
+}
+.table-content table tbody tr {
+    transition: background-color 150ms ease-out;
+}
+.table-content table tbody tr:nth-child(2n) {
+    background-color: whitesmoke;
+}
+.table-content table tbody tr:hover {
+    background-color: #ebebeb;
+}
+.table-frame .pagination {
+    background-color: #dcdcdc;
+    width: 100%;
+    cursor: default;
+    overflow: hidden;
+    padding: 10px;
+}
+.table-frame .pagination > label {
+    background-color: #dcdcdc;
+    color: #5f5f5f;
+    padding: 10px;
+    cursor: pointer;
+}
+.table-frame .pagination > label.enabled:hover {
+    background-color: darkgray;
+}
+.table-frame .pagination > label:active {
+    color: #ffffff;
+    background-color: #767676;
+}
+
+.table-title h2 {
+    margin: 0;
+    padding: 0;
+}
+
+.tabs input + label {             /* box with rounded corner */
+    border: 1px solid #999;
+    background: #EEE;
+    padding: 4px 12px;
+    border-radius: 4px 4px 0 0;
+    position: relative;
+    top: 1px;
+}
+.tabs input:checked + label {     /* white background for selected tab */
+    background: #FFF;
+    border-bottom: 1px solid transparent;
+}
+.tabs input ~ .tab {          /* grey line between tab and contents */
+    border-top: 1px solid #999;
+    padding: 12px;
+}

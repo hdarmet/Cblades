@@ -1,0 +1,269 @@
+
+.ex-forum-command {
+    font-family: sans-serif;
+    display: inline;
+    border: solid 1px grey;
+    border-radius: 16px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-left: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.forum-title {
+    --extends: ex-page-header-container;
+    background-color: #f0f0ff;
+}
+
+.forum-title .header-text {
+    --extends: ex-header-text
+}
+
+.forum-title .header-left-image {
+    --extends: ex-page-header-left-image;
+}
+
+.forum-title .header-right-image {
+    --extends: ex-page-header-right-image;
+}
+
+.forum-thread {
+    background-color: #f0f0ff;
+    height: 100%;
+    border: solid 2px transparent;
+}
+
+.forum-thread .table-frame {
+    background-color: #f0f0ff;
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
+    box-shadow: rgba(0, 0, 0, 0.2) 0 4px 8px 0;
+    margin: 10px;
+}
+
+.forum-thread .table-content {
+    background-color: #f0f0f0;
+}
+
+.forum-thread .table-content .column-1 {
+    vertical-align: top;
+    font-size: 14px;
+    width: 100%;
+}
+
+.avatar-image img {
+    width: 80px;
+    height: 80px;
+}
+
+.avatar div {
+    font-size: 12px;
+    text-align: center;
+}
+
+.avatar p {
+    margin: 0;
+}
+
+.avatar-identity p {
+    font-weight: bolder;
+}
+
+.avatar-level p {
+    font-style: italic;
+}
+
+.avatar-comment-count i {
+    padding: 0;
+    margin: 0;
+    width: 20px;
+}
+
+.comment-content {
+    height: 100%;
+}
+
+.comment-date {
+    height: 20px;
+    margin: 0;
+}
+
+.comment-date p {
+    margin-left: 0;
+    margin-top: 0;
+}
+
+.comment-date {
+    color: grey;
+    font-size: 12px;
+}
+
+.comment-text {
+    min-height: 100px;
+    margin: 0;
+}
+
+.comment-commands {
+    float: right;
+    height: 40px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    overflow: hidden;
+}
+
+.comment-commands p {
+    margin-bottom: 0;
+}
+
+.comment-commands .fa-heart:before {
+    font-size: 20px;
+}
+
+.comment-liked.fa-heart:before {
+    color: #ff4336;
+}
+
+.comment-not-liked.fa-heart:before {
+    color: #aa0000;
+}
+
+.like-comment {
+    width: 20px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.like-comment-count {
+    display: inline;
+    font-weight: bold;
+    padding-left: 0;
+    margin-left: 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+.quote-comment {
+    --extends: ex-forum-command;
+}
+
+.quote-comment:hover, .like-comment-count:hover {
+    opacity: 0.5;
+}
+
+.thread-title {
+    float: left;
+    font-size: 20px;
+    font-weight: bolder;
+    font-style: italic;
+}
+
+.thread-pager {
+    color: grey;
+    font-size: 14px;
+}
+
+
+.forum-thread-post-editor .form-input-textarea::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+    background-color: #eeeeee;
+}
+
+.forum-thread-post-editor .form-input-textarea::-webkit-scrollbar-thumb {
+    background: #aaaaaa;
+    border: solid 2px #eeeeee;
+    border-radius: 8px;
+}
+
+.forum-thread-post-editor {
+    padding: 20px;
+    background-color: #e2e2e2;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 4px 8px 0;
+    margin: 10px;
+}
+
+.forum-thread-post-editor blockquote {
+    background-color: #d0f0f0;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-bottom: 10px;
+}
+
+.forum-thread-post-editor .cite {
+    color: #2c4762;
+    font-size: 12px;
+    font-style: italic;
+    padding-bottom: 5px;
+}
+
+.emoji-list {
+    font-size: 50px;
+}
+
+.table-title h2 {
+    margin: 0;
+    padding: 0;
+}
+
+.forum-emoji {
+    font-size: 24px;
+}
+
+.forum-emoji input {
+    display: none;
+}
+.forum-emoji input + label {             /* box with rounded corner */
+    border: 1px solid #999999;
+    background: #eeeeee;
+    padding: 4px 12px;
+    border-radius: 4px 4px 0 0;
+    position: relative;
+    top: 1px;
+}
+.forum-emoji input:checked + label {     /* white background for selected tab */
+    background: #ffffff;
+    border-bottom: 1px solid transparent;
+}
+.forum-emoji input + label:hover {     /* white background for selected tab */
+    opacity: 0.5;
+}
+.forum-emoji-bar {          /* grey line between tab and contents */
+    height: 36px;
+}
+.forum-emoji-content {          /* grey line between tab and contents */
+    border: 1px solid #999999;
+    padding: 12px;
+    background: #ffffff;
+}
+.forum-emoji-content .emoji-icon {
+    cursor: pointer;
+    user-select: none;
+}
+
+.forum-emoji-bar .emoji-preferences {
+    border: solid 1px #999999;
+    background: #ffffff;
+    height: 32px;
+    float: right;
+    width: 200px;
+    display: flex;
+    align-items: center;
+}
+.forum-emoji-bar .emoji-icon {
+    cursor: pointer;
+    vertical-align: center;
+    user-select: none;
+    padding-bottom: 2px;
+}
+
+.forum-send-command {
+    --extends: ex-forum-command;
+    float: right;
+    background-color: #ffffff;
+}
+.forum-send-command:hover {
+    opacity: 0.5;
+}

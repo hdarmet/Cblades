@@ -1,0 +1,340 @@
+'use strict'
+
+import {
+    Checkbox,
+    Div, Img, isComponent, TBody, TD, TH, Thead, TR, Label, Table, getUniqueId, Radio
+} from "./components.js";
+import {
+    Vitamin
+} from "./vitamins.js";
+
+export class VContainer extends Vitamin(Div) {
+
+    constructor({ref, enabled=true, separated=false, columns}, builder) {
+        super(ref);
+        this.enabled = enabled;
+        this._fields = [];
+        this.addClass("page-container");
+        if (!columns || columns===1) {
+            this._columns = [this];
+            this.addClass("container-1column");
+        } else {
+            this._columns = [];
+            this.addClass("container-row");
+            for (let index=0; index<columns; index++) {
+                let column = new Div().addClass(`container-${columns}columns`).addClass(`container-column${index}`);
+                if (separated && index>0) column.addClass("subsequent-column");
+                this._columns.push(column);
+                this.add(column);
+            }
+        }
+        builder&&builder(this);
+    }
+
+    addField({field, column, ...params}, builder) {
+        field = field ? field : builder(params);
+        this._columns[column===undefined ? this._fields.length%this._columns.length: column].add(field);
+        this._fields.push(field);
+        return this;
+    }
+
+}
+
+export class VSplitterPanel extends Vitamin(Div) {
+
+    constructor({ref, enabled=true}, builder) {
+        super({ref});
+        this.enabled = enabled;
+        this._leftPane = new Div().addClass("splitter-left-pane");
+        this._leftPaneContent = new Div().addClass("splitter-left-pane-content");
+        this._separator = new Div().addClass("splitter-separator");
+        this._rightPane = new Div().addClass("splitter-right-pane");
+        this._rightPaneContent = new Div().addClass("splitter-right-pane-content");
+        this.addClass("splitter-panel")
+            .add(this._leftPane.add(this._leftPaneContent))
+            .add(this._separator)
+            .add(this._rightPane.add(this._rightPaneContent));
+        this._separator.onEvent("mousedown", event=>{
+            //console.log("mouse down: " + e.clientX);
+            this._startPoint = {event,
+                offsetLeft:  this._separator.offsetLeft,
+                offsetTop:   this._separator.offsetTop,
+                firstWidth:  this._leftPane.offsetWidth,
+                secondWidth: this._rightPane.offsetWidth
+            };
+            document.onmousemove = event=> {
+                let delta = {
+                    x: event.clientX - this._startPoint.event.clientX,
+                    y: event.clientY - this._startPoint.event.clientY
+                };
+                // Prevent negative-sized elements
+                delta.x = Math.min(Math.max(delta.x, -this._startPoint.firstWidth), this._startPoint.secondWidth);
+                this._leftPane.addStyle("width", (this._startPoint.firstWidth + delta.x) + "px");
+                this._rightPane.addStyle("width", (this._startPoint.secondWidth - delta.x) + "px");
+            };
+            document.onmouseup = () => {
+                //console.log("mouse up");
+                document.onmousemove = document.onmouseup = null;
+            }
+        });
+        builder&&builder(this);
+        this._enlargeObserver = new MutationObserver(mutations=>{
+            let changed = false;
+            for (let mutation of mutations) {
+                if (mutation.attributeName === "style") changed = true;
+            }
+            if (changed) this._resize();
+        });
+        this._enlargeObserver.observe(this.root, {attributes:true});
+        window.addEventListener("resize", event=>{
+            this._resize();
+        });
+    }
+
+    _resize() {
+        let separatorWidth = this._separator.offsetWidth;
+        let totalWidth = this.offsetWidth-separatorWidth;
+        let firstWidth =  this._leftPane.offsetWidth;
+        let secondWidth = this._rightPane.offsetWidth;
+        let previousTotalWidth = firstWidth + secondWidth;
+        this._leftPane.addStyle("width", (firstWidth/previousTotalWidth*totalWidth) + "px");
+        this._rightPane.addStyle("width", (secondWidth/previousTotalWidth*totalWidth) + "px");
+    }
+
+    addOnLeft(vitamin) {
+        this._leftPaneContent.add(vitamin);
+        return this;
+    }
+
+    removeFromLeft(vitamin) {
+        this._leftPaneContent.remove(vitamin);
+        return this;
+    }
+
+    addOnRight(vitamin) {
+        this._rightPaneContent.add(vitamin);
+        return this;
+    }
+
+    removeFromRight(vitamin) {
+        this._rightPaneContent.remove(vitamin);
+        return this;
+    }
+}
+
+export class VWall extends Vitamin(Div) {
+
+    constructor({ref, kind="wall-vertical"}, builder) {
+        super({ref});
+        kind&&this.addClass(kind);
+        this._lastElement =new Div();
+        this.add(this._lastElement);
+        this._notes = [];
+        builder&&builder(this);
+    }
+
+    setLoadNotes(action) {
+        this._loadNotes = action;
+        return this;
+    }
+
+    resizeGridItem(note){
+        let rowHeight = parseInt(window.getComputedStyle(this.root).getPropertyValue('grid-auto-rows'));
+        let rowGap = parseInt(window.getComputedStyle(this.root).getPropertyValue('grid-row-gap'));
+        let rowSpan = Math.ceil((note.root.getBoundingClientRect().height+rowGap)/(rowHeight+rowGap));
+        note._envelope.root.style.gridRowEnd = "span "+rowSpan;
+    }
+
+    onActivate() {
+        this.resizeAllGridItems();
+        this._resizeAll = ()=>this.resizeAllGridItems();
+        window.addEventListener("resize", this._resizeAll);
+        this._detectVisibility = ()=>this.detectVisibility();
+        window.addEventListener("scroll", this._detectVisibility);
+        Img.addLoaderListener(this);
+        this.detectVisibility();
+    }
+
+    onDesactivate() {
+        window.removeEventListener("resize", this._resizeAll);
+        window.addEventListener("scroll", this._detectVisibility);
+        Img.removeLoaderListener(this);
+    }
+
+    onImageLoaded(img) {
+        this.resizeAllGridItems();
+    }
+
+    resizeAllGridItems() {
+        for(let note of this._notes){
+            this.resizeGridItem(note);
+        }
+    }
+
+    addNote(note) {
+        note._envelope = new Div();
+        note._envelope.add(note);
+        this.insert(note._envelope, this._lastElement);
+        this._notes.push(note);
+        note._added();
+        return this;
+    }
+
+    clearNotes() {
+        for (let note of this._notes) {
+            this.remove(note._envelope);
+        }
+        this._notes = [];
+    }
+
+    detectVisibility() {
+        let topOfElement = this._lastElement.root.offsetTop;
+        let bottomOfElement = this._lastElement.root.offsetTop + this._lastElement.root.offsetHeight + this._lastElement.root.style.marginTop;
+        let bottomOfScreen = window.scrollY + window.innerHeight;
+        let topOfScreen = window.scrollY;
+        if ((bottomOfScreen > topOfElement) && (topOfScreen < bottomOfElement)) {
+            this._loadNotes && this._loadNotes();
+        }
+    }
+
+}
+
+export class VTable extends Vitamin(Div) {
+
+    constructor({ref, initPage, changePage}) {
+        super({ref});
+        this.addClass("table-frame");
+        this._content = new Div().addClass("table-content");
+        this._pagination = new Div().addClass("pagination");
+        this.add(this._content).add(this._pagination);
+        this._changePage = changePage;
+        initPage&&initPage(this);
+    }
+
+    setPagination({first, last, current}) {
+        this._pagination.clear();
+        if (first !== last) {
+            let previous = new Label("&laquo; Previous");
+            if (current === first) {
+                previous.addClass("disabled");
+            }
+            else {
+                previous.onMouseClick(event=>{
+                    this._changePage(current-1);
+                })
+            }
+            this._pagination.add(previous);
+            for (let page = first; page <= last; page++) {
+                let designed = page;
+                let pageNumber = new Label(page).onMouseClick(event=>{
+                    this._changePage(designed);
+                });
+                if (current === page) pageNumber.addClass("active");
+                this._pagination.add(pageNumber);
+            }
+            let next = new Label("Next &raquo;");
+            if (current === last) {
+                next.addClass("disabled");
+            }
+            else {
+                next.addClass("enabled");
+                next.onMouseClick(event=>{
+                    this._changePage(current+1);
+                })
+            }
+            this._pagination.add(next);
+        }
+    }
+
+    setContent({summary, selectable, columns, data}) {
+        this._content.clear();
+        if (summary) {
+            if (isComponent(summary)) {
+                this._content.add(summary);
+            }
+            else {
+                this._content.add(new Div().addClass("table-display").setText(summary));
+            }
+        }
+        this._table = new Table();
+        this._content.add(this._table);
+        if (columns) {
+            this._columns = new TR();
+            this._table.add(new Thead().add(this._columns));
+            if (selectable) this._columns.add(new TH(""));
+            for (let column of this._columns) {
+                if (isComponent(column)) {
+                    this._columns.add(new TH("").add(column));
+                }
+                else {
+                    this._columns.add(new TH(column));
+                }
+            }
+            this._content.add(this._columns);
+        }
+        this._body = new TBody();
+        this._table.add(this._body);
+        for (let line of data) {
+            let row = new TR();
+            this._body.add(row);
+            let col=0;
+            if (selectable) {
+                let selection = new Checkbox();
+                row.add(new TD().add(selection));
+            }
+            for (let cell of line) {
+                if (isComponent(cell)) {
+                    row.add(new TD("").add(cell).addClass("column-"+col++));
+                }
+                else {
+                    row.add(new TD(cell).addClass("column-"+col++));
+                }
+            }
+        }
+    }
+
+}
+
+export class VTabSet extends Vitamin(Div) {
+
+    constructor({ref, kind="tabs", tabs}) {
+        super({ref});
+        this.addClass(kind);
+        this._tabs = new Div().addClass(kind+"-bar");
+        this._tabsContent = new Div().addClass(kind+"-content");
+        let index=0;
+        let name = "tabs"+getUniqueId();
+        for (let tab of tabs) {
+            let tabId = getUniqueId();
+            let radio = new Radio(name).setId(tabId).setChecked(index===0)
+                .onEvent("change", event=> {
+                    if (radio.getChecked()) {
+                        this._tabsContent.clear();
+                        this._tabsContent.add(tab.content);
+                    }
+                }
+            );
+            this._tabs.add(radio);
+            if (isComponent(tab.tab)) {
+                this._tabs.add(tab.tab.onMouseClick(event=>{
+                    radio.setChecked(true);
+                }));
+            }
+            else {
+                this._tabs.add(new Label(tab.tab).setFor(tabId));
+            }
+            if (radio.getChecked()) {
+                this._tabsContent.add(tab.content);
+            }
+            index++;
+        }
+        this.add(this._tabs).add(this._tabsContent);
+    }
+
+    get tabBar() {
+        return this._tabs;
+    }
+}
+
+
+

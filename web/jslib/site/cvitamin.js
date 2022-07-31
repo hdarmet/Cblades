@@ -1,14 +1,12 @@
 'use strict'
 
 import {
-    Undoable,
     VList,
     VLine,
     VModal,
     VDisplay,
     VLink,
     VRow,
-    VContainer,
     VMessageHandler,
     VConfirmHandler,
     VMessage,
@@ -30,10 +28,11 @@ export class CVMessage extends VModal {
         super({ref: CVMessage.MESSAGE_REF});
         this.addClass("message-modal");
         this._display = new VDisplay({ref:"message-display"});
-        this.addContainer({ref:"message-display-container",
-            container:new VFormContainer({columns:1})
-        },$=>$
-            .addField({field: this._display})
+        this.addContainer({
+                ref: "message-display-container",
+                container: new VFormContainer({columns: 1})
+                    .addField({field: this._display})
+            }
         );
     }
 
@@ -58,26 +57,30 @@ export class CVConfirm extends VModal {
         super({ref: CVConfirm.CONFIRM_REF});
         this.addClass("confirm-modal");
         this._display = new VDisplay({ref:"confirm-display"});
-        this.addContainer({ref:"confirm-display-container",
-            container:new VFormContainer({columns:1})
-        },$=>$
-            .addField({field: this._display})
-            .addField({field: new VButtons({ref: "confirm-buttons", verical:false, buttons:[
-                {
-                    ref:"confirm-ok", type: VButton.TYPES.ACCEPT, label:"Ok",
-                    onClick:event=>{
-                        this._actionOk();
-                        this.hide();
-                    }
-                },
-                {
-                    ref:"confirm-cancel", type: VButton.TYPES.REFUSE, label:"Cancel",
-                    onClick:event=>{
-                        this._actionCancel();
-                        this.hide();
-                    }
-                }
-            ]})})
+        this.addContainer({
+            ref: "confirm-display-container",
+            container: new VFormContainer({columns: 1})
+                .addField({field: this._display})
+                .addField({
+                    field: new VButtons({
+                        ref: "confirm-buttons", verical: false, buttons: [
+                            {
+                                ref: "confirm-ok", type: VButton.TYPES.ACCEPT, label: "Ok",
+                                onClick: event => {
+                                    this._actionOk();
+                                    this.hide();
+                                }
+                            },
+                            {
+                                ref: "confirm-cancel", type: VButton.TYPES.REFUSE, label: "Cancel",
+                                onClick: event => {
+                                    this._actionCancel();
+                                    this.hide();
+                                }
+                            }]
+                    })
+                })
+            }
         );
     }
 
@@ -146,26 +149,32 @@ export class CVWriteToUs extends VModal {
             ]
         });
         this._message = new VInputTextArea({ref:"contact-message", label:"Message"});
-        this.addContainer({ref:"writetous-identity",
-            container:new VFormContainer({columns:2})
-        },$=>$
-            .addField({field: this._firstName})
-            .addField({field: this._lastName})
-            .addField({field: this._email})
-            .addField({field: this._country})
-            .addField({field: this._subject})
+        this.addContainer({
+            ref: "writetous-identity",
+            container: new VFormContainer({columns: 2})
+                .addField({field: this._firstName})
+                .addField({field: this._lastName})
+                .addField({field: this._email})
+                .addField({field: this._country})
+                .addField({field: this._subject})
+            }
         );
-        this.addContainer({ref:"writetous-message",
-            container:new VFormContainer({columns:1})
-        },$=>$
-            .addField({field: this._subject})
-            .addField({field: this._message})
-            .addField({field:new VButtons({ref: "buttons", buttons:[
-                        {ref:"send-message", type:"accept", label:"Send",
-                            onClick:event=>console.log("Validate")}
-                    ]}
-                )}
-            )
+        this.addContainer({
+            ref: "writetous-message",
+            container: new VFormContainer({columns: 1})
+                .addField({field: this._subject})
+                .addField({field: this._message})
+                .addField({
+                    field: new VButtons({
+                        ref: "buttons", buttons: [
+                            {
+                                ref: "send-message", type: "accept", label: "Send",
+                                onClick: event => console.log("Validate")
+                            }
+                        ]
+                    })
+                })
+            }
         );
     }
 
@@ -227,10 +236,11 @@ export class CVArticleDisplay extends VModal {
     constructor() {
         super({ref: CVWriteToUs.ARTICLE_DISPLAY_REF});
         this._display = new VDisplay({ref:"article-display"});
-        this.addContainer({ref:"article-display-container",
-            container:new VFormContainer({columns:1})
-        },$=>$
-            .addField({field: this._display})
+        this.addContainer({
+            ref: "article-display-container",
+            container: new VFormContainer({columns: 1})
+                .addField({field: this._display})
+            }
         );
     }
 

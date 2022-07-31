@@ -5,14 +5,16 @@ import {
 } from "./components.js";
 import {
     Undoable,
-    VContainer,
     VImage,
     Vitamin,
     VMagnifiedImage,
     VSearch,
+} from "./vitamins.js";
+import {
+    VContainer,
     VSplitterPanel,
     VWall
-} from "./vitamins.js";
+} from "./vcontainer.js";
 import {
     VButton, VButtons, VCommand,
     VFileLoaderField,

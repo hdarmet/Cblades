@@ -4,8 +4,11 @@ import {
     A, Button, Div, Form, Img, Input, Label, Option, P, Select, Span
 } from "./components.js";
 import {
-    VContainer, Vitamin, VMagnifiedImage
+    Vitamin, VMagnifiedImage
 } from "./vitamins.js";
+import {
+    VContainer
+} from "./vcontainer.js";
 
 export class VToggleSwitch extends Vitamin(Label) {
 
@@ -276,7 +279,7 @@ export class VPasswordField extends VField {
 
 export class VInputTextArea extends VField {
 
-    _initField({value}) {
+    _initField({value, link}) {
         let createIcon = ({command, classPrefix=command})=>{
             return new Span("").addClass(`fa fa-${classPrefix} fa-fw`).setAttribute("aria-hidden", true)
                 .onEvent("mousedown", event=>{
@@ -284,18 +287,25 @@ export class VInputTextArea extends VField {
                 })
                 .onEvent("mouseup", event=>{
                     event.preventDefault();
-                    this.format(command);
+                    command();
                 });
         };
-        this._iconBold = createIcon({command: 'bold'});
-        this._iconItalic = createIcon({command: 'italic'});
-        this._iconUnderline = createIcon({command: 'underline'});
-        this._iconList = createIcon({command: 'insertunorderedlist', classPrefix:'list'});
+        this._iconBold = createIcon({classPrefix: 'bold', command:()=>this.format('bold')});
+        this._iconItalic = createIcon({classPrefix: 'italic', command:()=>this.format('bold')});
+        this._iconUnderline = createIcon({classPrefix: 'underline', command:()=>this.format('bold')});
+        if (link) {
+            this._link=link;
+            this._iconLink = createIcon({classPrefix: 'link', command:()=>this._link(document.getSelection())});
+        }
+        this._iconList = createIcon({classPrefix:'list', command:()=>this.format('insertunorderedlist')});
         this._iconBar = new Div().addClass("editor-toolbar")
             .add(this._iconBold)
             .add(this._iconItalic)
             .add(this._iconUnderline)
             .add(this._iconList);
+        if (this._iconLink) {
+            this._iconBar.add(this._iconLink);
+        }
         this.add(this._iconBar);
         this._input = new Div().setText(value).addClass("form-input-textarea").setAttribute("contenteditable", "true");
         this.value = value ? value : "";

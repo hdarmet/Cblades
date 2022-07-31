@@ -52,6 +52,10 @@ let _targetPlatform = {
         element.removeAttribute(attrName);
     },
 
+    getText(element) {
+        return element.innerHTML;
+    },
+
     setText(element, text) {
         element.innerHTML = text;
     },
@@ -94,6 +98,10 @@ let _targetPlatform = {
 
     removeChild(parent, child) {
         parent.removeChild(child);
+    },
+
+    replaceChildren(parent, ...children) {
+        parent.replaceChildren(...children);
     },
 
     getContext(element, contextName) {

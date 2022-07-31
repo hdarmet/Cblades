@@ -1,5 +1,4 @@
 import {
-    VContainer,
     VHeader,
     VFooter,
     VText,
@@ -8,6 +7,9 @@ import {
     VSlot,
     VMessageHandler
 } from "./vitamins.js";
+import {
+    VContainer
+} from "./vcontainer.js";
 import {
     VFileLoader, VFormContainer
 } from "./vforms.js";
@@ -35,6 +37,9 @@ import {
     VMapEditor,
     VScenarioEditor,
 } from "./vbooks.js";
+import {
+    VForumThread
+} from "./vforum.js";
 
 var text = `
 <h1>The Main Title</h1>
@@ -138,7 +143,7 @@ export var vMenu = new VMainMenu({ref:"menu"})
             }
         })
         .addMenu({ref:"propose-article-menu", label:"Proposer un article", action:()=>{
-                vPageContent.showProposeArticle();
+                vPageContent.showForumThread();
             }
         })
     });
@@ -1081,6 +1086,48 @@ vYourProposalsWall.setLoadNotes(function() {
     }))
 });
 
+export var vForumTitle = new VHeader({
+    ref:"forum-title",
+    title: "Forum",
+    left:"../images/site/left-forum.png", right:"../images/site/right-forum.png"
+}).addClass("forum-title");
+
+function getComments(pageIndex) {
+    let names = ['Dominique', 'Pierre', 'Thomas'];
+    let levels = ['Warrior', 'Knight', 'King'];
+    let comments = [];
+    for (let index=pageIndex*10; index<25 && index<pageIndex*10+10; index++) {
+        comments.push({
+            avatarImage: `../images/site/avatars/avatar${index%3+1}.png`,
+            avatarIdentity: names[index%3],
+            avatarLevel: levels[index%3],
+            avatarCommentCount: (index%3+1)*17,
+            comment: `The ${index}th comment of ${names[index%3]}`,
+            likes: index*2+1,
+            liked: index%5 === 0,
+            date: new Date()
+        });
+    }
+    return comments;
+}
+
+export var vForumThread = new VForumThread({
+    loadPage:(pageIndex, update)=>{
+        update({
+            title: "Ma petite discussion",
+            pageCount: 3,
+            currentPage: pageIndex,
+            commentCount: 25,
+            firstComment: pageIndex*10,
+            lastComment: pageIndex*10+10,
+            comments: getComments(pageIndex)
+        });
+    },
+    send: post=>{
+        console.log("Post sent", post);
+    }
+});
+
 class VPageContent extends VContainer {
 
     constructor() {
@@ -1337,6 +1384,16 @@ class VPageContent extends VContainer {
     showYourProposals() {
         this._showYourProposals(false, ()=>
             historize("your-proposals", "vPageContent._showYourProposals(true);")
+        );
+    }
+
+    _showForumThread(byHistory, historize) {
+        return this._changePage(vForumTitle, vForumThread, byHistory, historize);
+    }
+
+    showForumThread() {
+        this._showForumThread(false, ()=>
+            historize("forum-thread", "vPageContent._showForumThread(true);")
         );
     }
 }

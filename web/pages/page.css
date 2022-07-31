@@ -1,3 +1,16 @@
+
+body::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+    background-color: #eeeeee;
+}
+
+body::-webkit-scrollbar-thumb {
+    background: #aaaaaa;
+    border: solid 2px #eeeeee;
+    border-radius: 8px;
+}
+
 @font-face {
     font-family: 'Carolingia';
     src: url('./carolingia.ttf');
