@@ -13,6 +13,18 @@
     padding-top: 60px;
 }
 
+.modal .form-input-textarea::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+    background-color: #eeeeee;
+}
+
+.modal .form-input-textarea::-webkit-scrollbar-thumb {
+    background: #aaaaaa;
+    border: solid 2px #eeeeee;
+    border-radius: 8px;
+}
+
 .modal-title {
     height: 2em;
     border-bottom: 2px solid #0f0f0f;

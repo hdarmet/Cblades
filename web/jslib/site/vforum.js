@@ -25,17 +25,12 @@ export class VForumThreadComments extends VTable {
         });
         this._loadPage = loadPage;
         this._insertQuote = insertQuote;
-        this._init();
-    }
-
-    _init() {
-        this._change(0);
     }
 
     _change(index) {
         this._loadPage(index, page=> {
             let lines = [];
-            this._reportModal = new VForumReport();
+            !this._reportModal && (this._reportModal = new VForumReport());
             for (let comment of page.comments) {
                 let icon = new Div().add(new Img(comment.avatarImage)).addClass("avatar-image");
                 let identity = new Div().add(new P(comment.avatarIdentity)).addClass("avatar-identity");
@@ -99,6 +94,15 @@ export class VForumThreadComments extends VTable {
                 first, last, current:page.currentPage
             });
         });
+    }
+
+    getThread() {
+        return this._thread;
+    }
+
+    setThread(thread) {
+        this._thread = thread;
+        this._change(0);
     }
 
     static SUMMARY = "Showing {1} to {2} of {0} comments";
@@ -217,6 +221,10 @@ export class VForumThread extends VContainer {
         }});
         this.add(this._comments).add(this._editPost);
     }
+
+    setThread(thread) {
+        this._comments.setThread(thread);
+    }
 }
 
 export class VForumReport extends VModal {
@@ -255,3 +263,178 @@ export class VForumReport extends VModal {
     static REPORT_REF = "forum-report";
     static REPORT_TITLE = "Report";
 }
+
+
+export class VForumsList extends VTable {
+
+    constructor({loadForums, selectForum}) {
+        super({ref:"forums-list",
+            select: selectForum
+        });
+        loadForums(forums=> {
+            let lines = [];
+            for (let forum of forums.forums) {
+                let forumTitle = new Div().add(new P(forum.title)).addClass("forum-comment-title");
+                let forumComment = new Div().add(new P(forum.comment)).addClass("forum-comment-text");
+                let forumContent = new Div().addClass("forum-content")
+                    .add(forumTitle)
+                    .add(forumComment);
+                let forumThreadsCount = new Span(forum.threads).addClass("forum-threads-count");
+                let forumRepliesCount = new Span(forum.replies).addClass("forum-replies-count");
+                let forumStats = new Div().addClass("forum-stats")
+                    .add(new I("comment").setAlt("threads"))
+                    .add(forumThreadsCount)
+                    .add(new Span(" /"))
+                    .add(new I("comments").setAlt("replies"))
+                    .add(forumRepliesCount);
+                let forumLastCommentDate = new Div()
+                    .add(new Span("Last post on ").addClass("forum-comment-post"))
+                    .add(new Span(forum.lastCommentDate.toLocaleDateString()).addClass("forum-comment-date"));
+                let forumLastCommentThread = new Div().add(new Span(forum.lastCommentThread)).addClass("forum-comment-thread");
+                let forumLastCommentAuthor = new Div().add(new Span(forum.lastCommentAuthor)).addClass("forum-comment-author");
+                let forumLastComment = new Div().addClass("forum-comments")
+                    .add(forumLastCommentDate)
+                    .add(forumLastCommentThread)
+                    .add(forumLastCommentAuthor);
+                lines.push([forumContent, forumStats, forumLastComment]);
+            }
+            this.setContent({
+                data: lines
+            });
+        });
+    }
+
+}
+
+export class VForums extends VContainer {
+
+    constructor({loadForums, selectForum}) {
+        super({ref: "forums", columns: 1});
+        this.addClass("forums-container");
+        this._forums = new VForumsList({loadForums, selectForum});
+        this.add(this._forums);
+    }
+}
+
+
+
+export class VProposeThread extends VModal {
+
+    constructor() {
+        super({ref: VProposeThread.REF, title: VProposeThread.TITLE});
+        this._title = new VInputField({ref:"thread-title", label:"Title"});
+        this._comment = new VInputTextArea({ref:"thread-comment", label:"Comment"});
+        this.addContainer({
+            ref: "thread-comment",
+            container: new VFormContainer({columns: 1})
+                .addField({field: this._title})
+                .addField({field: this._comment})
+                .addField({
+                    field: new VButtons({
+                        ref: "buttons", buttons: [
+                            {
+                                ref: "propose-thread", type: "accept", label: "Propose",
+                                onClick: event => {
+                                    console.log("Validate");
+                                    this.hide();
+                                }
+                            }
+                        ]
+                    })
+                })
+            }
+        );
+    }
+
+    static REF = "propose-thread";
+    static TITLE = "Propose A Thread";
+}
+
+
+
+export class VForumThreads extends VTable {
+
+    constructor({loadThreads, selectThread}) {
+        super({ref:"forum-threads",
+            changePage: pageIndex=>this._change(pageIndex),
+            select: selectThread
+        });
+        this._loadThreads = loadThreads;
+    }
+
+    setForum(forum) {
+        this._forum = forum;
+        this._change(0);
+    }
+
+    _change(index) {
+        this._loadThreads(index, forum=> {
+            let lines = [];
+            !this._proposeThreadModal && (this._proposeThreadModal = new VProposeThread());
+            for (let thread of forum.threads) {
+                let threadTitle = new Div().add(new P(thread.title)).addClass("thread-comment-title");
+                let threadComment = new Div().add(new P(thread.comment)).addClass("thread-comment-text");
+                let threadContent = new Div().addClass("thread-content")
+                    .add(threadTitle)
+                    .add(threadComment);
+                let threadThumbsCount = new Span(thread.threads).addClass("threads-count");
+                let threadCommentsCount = new Span(thread.comments).addClass("thread-comments-count");
+                let threadStats = new Div().addClass("thread-stats")
+                    .add(new I("comments").setAlt("replies"))
+                    .add(threadThumbsCount)
+                    .add(new Span(" /"))
+                    .add(new I("thumbs-up").setAlt("thumbs"))
+                    .add(threadCommentsCount);
+                let threadLastCommentDate = new Div()
+                    .add(new Span("Last post on ").addClass("thread-comment-post"))
+                    .add(new Span(thread.lastCommentDate.toLocaleDateString()).addClass("thread-comment-date"));
+                let threadLastCommentAuthor = new Div().add(new Span(thread.lastCommentAuthor)).addClass("thread-comment-author");
+                let threadLastComment = new Div().addClass("thread-comments")
+                    .add(threadLastCommentDate)
+                    .add(threadLastCommentAuthor);
+                lines.push([threadContent, threadStats, threadLastComment]);
+            }
+            let title = new Span(forum.title)
+                .addClass("thread-title")
+            let pageSummary = new Span()
+                .addClass("thread-pager")
+                .setText(String.format(VForumThreads.SUMMARY, forum.threadsCount, forum.firstThread, forum.lastThread));
+            let summary = new Div()
+                .addClass("table-display")
+                .add(title)
+                .add(new Span("Propose Thread").addClass("propose-thread").onMouseClick(event=>{
+                    this._proposeThreadModal.show();
+                }))
+                .add(pageSummary);
+            this.setContent({
+                summary,
+                data: lines
+            });
+            let first = forum.pageCount<=5 ? 0 : forum.currentPage-2;
+            if (first<0) first = 0;
+            let last = forum.pageCount<=5 ? forum.pageCount-1 : forum.currentPage+2;
+            if (last>=forum.pageCount) last=forum.pageCount-1;
+            this.setPagination({
+                first, last, current:forum.currentPage
+            });
+        });
+    }
+
+    static SUMMARY = "Showing {1} to {2} of {0} threads";
+}
+
+export class VForum extends VContainer {
+
+    constructor({loadThreads, selectThread}) {
+        super({ref: "forum", columns: 1});
+        this.addClass("forum-container");
+        this._threads = new VForumThreads({loadThreads, selectThread});
+        this.add(this._threads);
+    }
+
+    setForum(forum) {
+        this._threads.setForum(forum);
+    }
+
+}
+

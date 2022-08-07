@@ -30,6 +30,142 @@
     --extends: ex-page-header-right-image;
 }
 
+.forums-container {
+    background-color: #f0f0ff;
+    height: 100%;
+    border: solid 2px transparent;
+}
+
+.forums-container .table-frame {
+    font-size: 14px;
+    width: calc(100% - 20px);
+    height: auto;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 4px 8px 0;
+    margin: 10px;
+}
+
+.forums-container tr {
+    user-select: none;
+    cursor: pointer;
+}
+
+.forums-container .forum-comment-title {
+    font-weight: bolder;
+}
+.forums-container .forum-comment-text {
+    font-size: 14px;
+}
+.forums-container td.column-0 {
+    width: 55%;
+}
+
+.forums-container i {
+    width: 15px;
+    padding: 0 0 5px 0;
+}
+
+.forums-container .forum-threads-count {
+    font-size: 14px;
+}
+.forums-container .forum-replies-count {
+    font-size: 14px;
+}
+.forums-container td.column-1 {
+    width: 15%;
+}
+
+.forums-container .forum-comment-post {
+    font-size: 12px;
+    color: grey;
+}
+.forums-container .forum-comment-date {
+    font-size: 14px;
+}
+.forums-container .forum-comment-thread {
+    font-weight: bolder;
+    font-size: 14px;
+}
+.forums-container .forum-comment-author {
+    font-style: italic;
+    font-size: 14px;
+}
+.forums-container td.column-2 {
+    width: 30%;
+}
+
+/* */
+.forum-container {
+    background-color: #f0f0ff;
+    height: 100%;
+    border: solid 2px transparent;
+}
+
+.forum-container .table-frame {
+    font-size: 14px;
+    width: calc(100% - 20px);
+    height: auto;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 4px 8px 0;
+    margin: 10px;
+}
+
+.forum-container tr {
+    user-select: none;
+    cursor: pointer;
+}
+
+.forum-container .thread-comment-title {
+    font-weight: bolder;
+}
+.forum-container .thread-comment-text {
+    font-size: 14px;
+}
+.forum-container td.column-0 {
+    width: 60%;
+}
+
+.forum-container i {
+    width: 15px;
+    padding: 0 0 5px 0;
+}
+
+.forum-container .threads-count {
+    font-size: 14px;
+}
+.forum-container .thread-comments-count {
+    font-size: 14px;
+}
+.forum-container td.column-1 {
+    width: 15%;
+}
+
+.forum-container .thread-comment-post {
+    font-size: 12px;
+    color: grey;
+}
+.forum-container .thread-comment-date {
+    font-size: 14px;
+}
+.forum-container .thread-comment-thread {
+    font-weight: bolder;
+    font-size: 14px;
+}
+.forum-container .thread-comment-author {
+    font-style: italic;
+    font-size: 14px;
+}
+.forum-container td.column-2 {
+    width: 15%;
+}
+
+.propose-thread {
+    --extends: ex-forum-command;
+    float: left;
+}
+.propose-thread:hover {
+    opacity: 0.5;
+}
+/* */
+
 .forum-thread {
     background-color: #f0f0ff;
     height: 100%;
@@ -164,7 +300,6 @@
     color: grey;
     font-size: 14px;
 }
-
 
 .forum-thread-post-editor .form-input-textarea::-webkit-scrollbar {
     width: 16px;

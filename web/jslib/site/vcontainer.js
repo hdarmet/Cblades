@@ -201,19 +201,25 @@ export class VWall extends Vitamin(Div) {
 
 export class VTable extends Vitamin(Div) {
 
-    constructor({ref, initPage, changePage}) {
+    constructor({ref, initPage, changePage, select}) {
         super({ref});
         this.addClass("table-frame");
         this._content = new Div().addClass("table-content");
-        this._pagination = new Div().addClass("pagination");
-        this.add(this._content).add(this._pagination);
+        this.add(this._content);
         this._changePage = changePage;
+        this._select = select;
         initPage&&initPage(this);
     }
 
     setPagination({first, last, current}) {
-        this._pagination.clear();
         if (first !== last) {
+            if (!this._pagination) {
+                this._pagination = new Div().addClass("pagination");
+                this.add(this._pagination);
+            }
+            else {
+                this._pagination.clear();
+            }
             let previous = new Label("&laquo; Previous");
             if (current === first) {
                 previous.addClass("disabled");
@@ -276,6 +282,7 @@ export class VTable extends Vitamin(Div) {
         this._table.add(this._body);
         for (let line of data) {
             let row = new TR();
+            if (this._select) row.onMouseClick(event=>this._select(row));
             this._body.add(row);
             let col=0;
             if (selectable) {
