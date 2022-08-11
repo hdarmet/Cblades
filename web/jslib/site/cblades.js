@@ -8,7 +8,8 @@ import {
     VMessageHandler
 } from "./vitamins.js";
 import {
-    VContainer
+    VContainer,
+    VWallWithSearch
 } from "./vcontainer.js";
 import {
     VFileLoader, VFormContainer
@@ -31,7 +32,6 @@ import {
     VTheme,
     VScenario,
     VMap,
-    VWallWithSearch,
     VThemeEditor,
     VArticleEditor,
     VMapEditor,
@@ -42,6 +42,10 @@ import {
     VForums,
     VForumThread, VForumThreads
 } from "./vforum.js";
+import {
+    VGame, VGameProposal, VGameScenario, VJoinGameWall, VProposeGameWall,
+    VYourGamesWall
+} from "./vplays.js";
 
 var text = `
 <h1>The Main Title</h1>
@@ -65,6 +69,9 @@ Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adi
 export var connection = null;
 
 export var vMenu = new VMainMenu({ref:"menu"})
+    .addMenu({ref:"home", label:"Accueil", action:()=>{
+
+    }})
     .addDropdownMenu({ref:"material-menu", label:"Pour jouer"}, $=>{$
         .addMenu({ref:"dwnld-rules-menu", label:"Les règles et les aides de jeu", action:()=>{
                 vPageContent.showRulesGallery();
@@ -140,12 +147,20 @@ export var vMenu = new VMainMenu({ref:"menu"})
         }
     }})
     .addDropdownMenu({ref:"play-menu", kind:"right-menu", label:"Jouer en ligne"}, $=>{$
-        .addMenu({ref:"forum-menu", label:"Forum", action:()=>{
-                vPageContent.showForums();
+        .addMenu({ref:"my-games", label:"Mes parties", action:()=>{
+                vPageContent.showYourGames();
             }
         })
-        .addMenu({ref:"propose-article-menu", label:"Proposer un article", action:()=>{
-                vPageContent.showForumThread();
+        .addMenu({ref:"propose-game", label:"Proposer une partie", action:()=>{
+                vPageContent.showProposeAGame();
+            }
+        })
+        .addMenu({ref:"join-game", label:"Relever un défi", action:()=>{
+                vPageContent.showJoinAGame();
+            }
+        })
+        .addMenu({ref:"forum-menu", label:"Forum", action:()=>{
+                vPageContent.showForums();
             }
         })
     });
@@ -1343,6 +1358,115 @@ export var vForumThread = new VForumThread({
     }
 });
 
+export var vGamesTitle = new VHeader({
+    ref:"games-title",
+    left:"../images/site/left-games.png", right:"../images/site/right-games.png",
+}).addClass("games-title");
+
+function getGame() {
+    return new VGame({
+        ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
+        story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
+        turnNumber: 12,
+        participations: [
+            {
+                army: "Orc",
+                player: "Big-Cheftain",
+                status: "active"
+            },
+            {
+                army: "Roughneck",
+                player: "rearmor",
+                status: "passive"
+            }
+        ],
+        action:game=>{
+            vYourGamesWall.openInNewTab("./cblades.html");
+        }
+    });
+}
+
+export var vYourGamesWall = new VYourGamesWall()
+    .addNote(getGame())
+    .addNote(getGame())
+    .addNote(getGame())
+    .addNote(getGame());
+
+vYourGamesWall.setLoadNotes(function() {
+    this.addNote(getGame())
+        .addNote(getGame())
+        .addNote(getGame())
+        .addNote(getGame())
+        .addNote(getGame());
+});
+
+function getScenario() {
+    return new VGameScenario({
+        ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
+        story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
+        turnNumber: 12,
+        participations: [
+            {
+                army: "Orc"
+            },
+            {
+                army: "Roughneck",
+            },
+            {
+                army: "Elves",
+            }
+        ]
+    });
+}
+
+export var vProposeGameWall = new VProposeGameWall()
+    .addNote(getScenario())
+    .addNote(getScenario())
+    .addNote(getScenario())
+    .addNote(getScenario());
+
+vProposeGameWall.setLoadNotes(function() {
+    this.addNote(getScenario())
+        .addNote(getScenario())
+        .addNote(getScenario())
+        .addNote(getScenario())
+        .addNote(getScenario());
+});
+
+function getProposal() {
+    return new VGameProposal({
+        ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
+        story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
+        turnNumber: 12,
+        participations: [
+            {
+                army: "Orc",
+                player: "Big-Cheftain"
+            },
+            {
+                army: "Roughneck",
+            },
+            {
+                army: "Elves",
+            }
+        ]
+    });
+}
+
+export var vJoinGameWall = new VJoinGameWall()
+    .addNote(getProposal())
+    .addNote(getProposal())
+    .addNote(getProposal())
+    .addNote(getProposal());
+
+vJoinGameWall.setLoadNotes(function() {
+    this.addNote(getProposal())
+        .addNote(getProposal())
+        .addNote(getProposal())
+        .addNote(getProposal())
+        .addNote(getProposal());
+});
+
 class VPageContent extends VContainer {
 
     constructor() {
@@ -1631,6 +1755,39 @@ class VPageContent extends VContainer {
     showForumThread(thread) {
         this._showForumThread(thread, false, ()=>
             historize("forum-thread", `vPageContent._showForumThread(${JSON.stringify(thread)}, true);`)
+        );
+    }
+
+    _showYourGames(byHistory, historize) {
+        vGamesTitle.setTitle("My Games");
+        return this._changePage(vGamesTitle, vYourGamesWall, byHistory, historize);
+    }
+
+    showYourGames() {
+        this._showYourGames(false, ()=>
+            historize("my-games", `vPageContent._showYourGames(true);`)
+        );
+    }
+
+    _showProposeAGame(byHistory, historize) {
+        vGamesTitle.setTitle("Propose A Game");
+        return this._changePage(vGamesTitle, vProposeGameWall, byHistory, historize);
+    }
+
+    showProposeAGame() {
+        this._showProposeAGame(false, ()=>
+            historize("propose-a-game", `vPageContent._showProposeAGame(true);`)
+        );
+    }
+
+    _showJoinAGame(byHistory, historize) {
+        vGamesTitle.setTitle("Join A Game");
+        return this._changePage(vGamesTitle, vJoinGameWall, byHistory, historize);
+    }
+
+    showJoinAGame() {
+        this._showJoinAGame(false, ()=>
+            historize("join-a-game", `vPageContent._showJoinAGame(true);`)
         );
     }
 

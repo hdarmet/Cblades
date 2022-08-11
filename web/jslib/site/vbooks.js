@@ -605,23 +605,6 @@ export class VNewspaper extends Vitamin(Div) {
 
 }
 
-export class VWallWithSearch extends VContainer {
-
-    constructor({ref, kind="wall-vertical", searchAction}, builder) {
-        super({ref});
-        this.addClass(kind);
-        this._search = new VSearch({ref:ref+"_search", searchAction});
-        this.add(this._search);
-        this._wall = new VWall({ref:ref+"-content", kind:kind+"-content"}, builder);
-        this.add(this._wall);
-    }
-
-    setLoadNotes(action) {
-        this._wall.setLoadNotes(action);
-        return this;
-    }
-}
-
 export class VThemeEditor extends Undoable(VSplitterPanel) {
 
     constructor({ref, kind="theme-editor", accept, verify}) {

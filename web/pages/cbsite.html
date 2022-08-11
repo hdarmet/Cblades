@@ -12,6 +12,7 @@
     <link href="./player.css" rel="stylesheet" type="text/css">
     <link href="./table.css" rel="stylesheet" type="text/css">
     <link href="./forum.css" rel="stylesheet" type="text/css">
+    <link href="./plays.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <title>Cursed Blades</title>
 </head>
@@ -30,61 +31,7 @@
     import {
         vFooter, vHeader, vPageContent
     } from "../jslib/site/cblades.js";
-    /*
-    import {VFormContainer} from "../jslib/site/vforms";
 
-    let vmodal = new VModal({"ref":"modal", "title":"Connection"})
-        .addContainer({ref:"login-container", enabled:false,
-            container:new VFormContainer({columns:2}
-        )},$=>{$
-            .addInputField({
-                ref:"login", label:"Login", value:"My name",
-                onInput:event=>{
-                    console.log(vmodal.get("login").value);
-                }
-            })
-            .addPasswordField({ref:"password", label:"Password"})
-            .addCheckBoxesField({
-                ref: "boxes", label: "Boxes",
-                checkboxes: [
-                    {ref: "PIV", checked:true, title: "PIV"},
-                    {ref: "VIP", title: "VIP"}
-                ],
-                onInput: event=>{
-                    console.log(vmodal.get("boxes").value);
-                }
-            })
-            .addRadiosField({
-                ref: "radios", label: "Radios",
-                radios: [
-                    {ref: "blue", checked:true, title: "Blue"},
-                    {ref: "red", title: "Red"}
-                ],
-                onInput: event=>{
-                    console.log(vmodal.get("radios").value);
-                }
-            })
-        })
-        .addContainer({ref:"registration-c2"},$=>{$
-            .addInputField({ref:"c2-firstname", label:"First Name"})
-            .addInputField({ref:"c2-lastname", label:"Last Name"})
-            .addField({field:new VButtons({ref: "buttons", buttons:[
-                    {ref:"validate", type:"accept", enabled:false, label:"Validate",
-                        onClick:event=>console.log("Validate")},
-                    {ref:"cancel", type:"refuse", label:"Cancel",
-                        onClick:event=>console.log("Cancel")}
-                ]})}
-            );
-        });
-
-    let vregistration = new VModal({ref:"registration"})
-        .addContainer({ref:"registration-container"},$=>{$
-            .addInputField({ref:"firstname", label:"First Name"})
-            .addInputField({ref:"lastname", label:"Last Name"})
-        });
-
-    let vloader = new VFileLoader({ref:"loader"});
-*/
     let app = new VApp()
         .setWidth("100%")
         .setColor("#E0E0E0")
@@ -92,8 +39,6 @@
         .add(vHeader)
         .add(vPageContent)
         .add(vFooter);
-//        .add(vmodal)
-//        .add(vregistration);
     document.body.parentElement.style["height"] = "100%";
     document.body.style["height"] = "100%";
     document.body.style["margin"] = "0";

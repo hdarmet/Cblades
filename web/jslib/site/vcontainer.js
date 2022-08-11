@@ -5,7 +5,7 @@ import {
     Div, Img, isComponent, TBody, TD, TH, Thead, TR, Label, Table, getUniqueId, Radio
 } from "./components.js";
 import {
-    Vitamin
+    Vitamin, VSearch
 } from "./vitamins.js";
 
 export class VContainer extends Vitamin(Div) {
@@ -197,6 +197,33 @@ export class VWall extends Vitamin(Div) {
         }
     }
 
+}
+
+export class VWallWithSearch extends VContainer {
+
+    constructor({ref, kind="wall-vertical", searchAction}, builder) {
+        super({ref});
+        this.addClass(kind);
+        this._search = new VSearch({ref:ref+"_search", searchAction});
+        this.add(this._search);
+        this._wall = new VWall({ref:ref+"-content", kind:kind+"-content"}, builder);
+        this.add(this._wall);
+    }
+
+    addNote(note) {
+        this._wall.addNote(note);
+        return this;
+    }
+
+    clearNotes() {
+        this._wall.clearNotes();
+        return this;
+    }
+
+    setLoadNotes(action) {
+        this._wall.setLoadNotes(action);
+        return this;
+    }
 }
 
 export class VTable extends Vitamin(Div) {

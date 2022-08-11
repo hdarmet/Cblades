@@ -96,7 +96,6 @@
 }
 
 .ex-record-content {
-    --extends: ex-info-background-color;
     padding: 10px;
     display: grid;
     grid-gap: 10px;
@@ -285,7 +284,7 @@
 }
 
 .new-articles-content {
-    --extends: ex-record-content;
+    --extends: ex-record-content, ex-info-background-color;
 }
 
 .new-articles-content .article-title {
@@ -351,7 +350,7 @@
 }
 
 .themes-about-game-content {
-    --extends: ex-record-content;
+    --extends: ex-record-content, ex-info-background-color;
 }
 
 .theme-header {
@@ -421,7 +420,7 @@
 }
 
 .articles-about-game-content {
-    --extends: ex-record-content;
+    --extends: ex-record-content, ex-info-background-color;
 }
 
 .articles-about-game-content .article-title {
@@ -914,7 +913,7 @@
 }
 
 .your-proposals-content {
-    --extends: ex-record-content;
+    --extends: ex-record-content, ex-info-background-color;
 }
 
 .your-proposals-content .article-title {
