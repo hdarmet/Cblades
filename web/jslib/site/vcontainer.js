@@ -1,8 +1,8 @@
 'use strict'
 
 import {
-    Checkbox,
-    Div, Img, isComponent, TBody, TD, TH, Thead, TR, Label, Table, getUniqueId, Radio
+    Checkbox, A,
+    Div, Img, isComponent, TBody, TD, TH, Thead, TR, Label, Table, getUniqueId, Radio, Span
 } from "./components.js";
 import {
     Vitamin, VSearch
@@ -157,7 +157,7 @@ export class VWall extends Vitamin(Div) {
 
     onDesactivate() {
         window.removeEventListener("resize", this._resizeAll);
-        window.addEventListener("scroll", this._detectVisibility);
+        window.removeEventListener("scroll", this._detectVisibility);
         Img.removeLoaderListener(this);
     }
 
@@ -188,11 +188,10 @@ export class VWall extends Vitamin(Div) {
     }
 
     detectVisibility() {
-        let topOfElement = this._lastElement.root.offsetTop;
-        let bottomOfElement = this._lastElement.root.offsetTop + this._lastElement.root.offsetHeight + this._lastElement.root.style.marginTop;
+        let clientRect = this._lastElement.root.getBoundingClientRect();
         let bottomOfScreen = window.scrollY + window.innerHeight;
         let topOfScreen = window.scrollY;
-        if ((bottomOfScreen > topOfElement) && (topOfScreen < bottomOfElement)) {
+        if ((bottomOfScreen > clientRect.y) && (topOfScreen < clientRect.y+clientRect.height)) {
             this._loadNotes && this._loadNotes();
         }
     }
@@ -367,6 +366,89 @@ export class VTabSet extends Vitamin(Div) {
 
     get tabBar() {
         return this._tabs;
+    }
+}
+
+export class VSlideShow extends Vitamin(Div) {
+
+    constructor({ref, kind="slideshow"}) {
+        super({ref});
+        this.addClass(kind);
+        this._content = new Div().addClass("slide-container");
+        this._dots = new Div().addClass("slide-dots");
+        this.add(this._content);
+        this.add(this._dots);
+        this.switchSlides();
+    }
+
+    setSlides(slides) {
+        this._slides = slides;
+        this._content.clear();
+        this._dots.clear();
+        let counter=0;
+        for (let slide of slides) {
+            let index=counter;
+            this._content.add(new Div().addClass("slides").addClass("fade-slide").add(slide));
+            this._dots.add(new Span("").addClass("slide-dot").onMouseClick(event=>{
+                this.setSlide(index)
+            }));
+            counter++;
+        }
+        this.add(new A("\u276e").addClass("slide-prev").onMouseClick(event=>{
+            this.moveSlide(-1)
+        }))
+        .add(new A("\u276f").addClass("slide-next").onMouseClick(event=>{
+            this.moveSlide(1)
+        }))
+        this._slideIndex = 0;
+        this._showSlides(this._slideIndex);
+        return this;
+    }
+
+    _suspendSwitching() {
+        if (this._token) {
+            clearInterval(this._token)
+        }
+        setTimeout(()=>{
+            this.switchSlides();
+        }, 10000);
+    }
+
+    moveSlide(steps) {
+        this._suspendSwitching();
+        this._showSlides(this._slideIndex + steps);
+    }
+
+    setSlide(index) {
+        this._suspendSwitching();
+        this._showSlides(index);
+    }
+
+    _showSlides(index) {
+        this._slideIndex = index;
+        if (this._slideIndex >= this._slides.length) {
+            this._slideIndex = 0
+        }
+        if (this._slideIndex < 0) {
+            this._slideIndex = this._slides.length-1
+        }
+        let content = this._content.children;
+        let dots = this._dots.children;
+        for (let i = 0; i < content.length; i++) {
+            content[i].removeClass("slide-visible");
+                //style.display = "none";
+        }
+        for (let i = 0; i < dots.length; i++) {
+            dots[i].removeClass("slide-active")
+        }
+        content[this._slideIndex].addClass("slide-visible");
+        dots[this._slideIndex].addClass("slide-active");
+    }
+
+    switchSlides() {
+        this._token = setInterval(()=>{
+            this._showSlides(this._slideIndex+1)
+        }, 7000); // Change image every 2 seconds
     }
 }
 

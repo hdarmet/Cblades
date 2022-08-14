@@ -22,7 +22,7 @@ import {
     VCLogin
 } from "./cvitamin.js";
 import {
-    Div
+    Div, Img
 } from "./components.js";
 import {
     VGallery,
@@ -46,6 +46,10 @@ import {
     VGame, VGameProposal, VGameScenario, VJoinGameWall, VProposeGameWall,
     VYourGamesWall
 } from "./vplays.js";
+import {
+    VAnnoucement, VEvent,
+    VHome
+} from "./vhome.js";
 
 var text = `
 <h1>The Main Title</h1>
@@ -70,7 +74,7 @@ export var connection = null;
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
-
+            vPageContent.showHome();
     }})
     .addDropdownMenu({ref:"material-menu", label:"Pour jouer"}, $=>{$
         .addMenu({ref:"dwnld-rules-menu", label:"Les règles et les aides de jeu", action:()=>{
@@ -140,9 +144,6 @@ export var vMenu = new VMainMenu({ref:"menu"})
             vMenu.get("login").label = "Login";
         }
         else {
-            connection = {
-                login: vLogin.connection
-            }
             vLogin.show();
         }
     }})
@@ -268,6 +269,9 @@ export var vFooter = new VFooter({
 
 export var vLogin = new  VCLogin({
     connect: ()=>{
+        connection = {
+            login: vLogin.connection
+        };
         vMenu.get("login").label = "logout";
         return true;
     }
@@ -666,6 +670,17 @@ vMarkersGallery.show = function() {
     return this;
 }
 
+var shortParagrpahText = `
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+`;
+var middleParagrpahText = `lorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor s
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+`;
 var paragrpahText = `
 Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
 Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
@@ -1467,10 +1482,42 @@ vJoinGameWall.setLoadNotes(function() {
         .addNote(getProposal());
 });
 
+function logLoader() {
+    for (let index=0; index<20; index++ ) {
+        this._lastElement = new VEvent({
+            ref:"e1", date:new Date(),
+            title:"Iste natus error sit voluptatem",
+            img: "../images/site/left-legends.png",
+            text: "piciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae",
+        });
+        this._content.add(this._lastElement);
+    }
+}
+
+function myLogLoader() {
+    for (let index=0; index<20; index++ ) {
+        this._lastElement = new VEvent({
+            ref:"e1", date:new Date(),
+            title:"Iste natus error sit voluptatem",
+            img: "../images/site/left-legends.png",
+            text: "piciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae",
+        });
+        this._content.add(this._lastElement);
+    }
+}
+
+let vHome = new VHome({ref:"home", logLoader, myLogLoader});
+vHome.setSlides([
+   new VAnnoucement({ref:"a1", img:"../images/scenarii/scenario1.png", description:paragrpahText}),
+   new VAnnoucement({ref:"a2", img:"../images/site/factions/grunedeborg.png", description:shortParagrpahText}),
+   new VAnnoucement({ref:"a3", img:"../images/maps/map-12.png", description:middleParagrpahText})
+]);
+
 class VPageContent extends VContainer {
 
     constructor() {
         super({ref: "page-content"});
+        this._showHome(true);
     }
 
     _changeTitle(title) {
@@ -1509,6 +1556,19 @@ class VPageContent extends VContainer {
         }
         return false
     }
+
+
+    _showHome(byHistory, historize) {
+        return this._changePage(null, vHome, byHistory, historize);
+    }
+
+    showHome() {
+        this._showHome(false, ()=>
+            historize("home", "vPageContent._showHome(true);")
+        );
+    }
+
+
 
     _showRulesGallery(byHistory, historize) {
         return this._changePage(vRulesTitle, vRulesGallery, byHistory, historize);

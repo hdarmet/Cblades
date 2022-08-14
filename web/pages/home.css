@@ -1,0 +1,150 @@
+
+.home {
+    background-color: white
+}
+
+.home .log-title {
+    font-weight: bolder;
+    margin: 16px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1.2em;
+}
+
+.home .log-container {
+    background-color: white;
+    overflow: auto;
+    height: 700px;
+    margin: 16px;
+    padding: 5px;
+}
+
+.home .event {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.home .event-date {
+    display: block;
+    color: red;
+    font-style: italic;
+    font-size: 0.8em;
+}
+
+.home .event-title {
+    display: block;
+    color: red;
+    font-weight: bold; font-size: 1em;
+}
+
+.home .event-img {
+    width: 100%;
+}
+
+.home .event-text {
+    margin-top: 0;
+    font-size: 1em;
+}
+
+.home .log-container::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    background-color: #eeeeee;
+}
+
+.home .log-container::-webkit-scrollbar-thumb {
+    background: #aaaaaa;
+    border: solid 2px #eeeeee;
+    border-radius: 8px;
+}
+
+.slideshow .announcement {
+    width: 100%;
+    min-height: 500px;
+    background-size: cover;
+}
+
+.slideshow .announcement-description {
+    width: 90%;
+    background-color: black;
+    color: white;
+    opacity: 0.8;
+    position: absolute;
+    bottom: 0;
+    padding: 10px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.slideshow {
+    position: relative;
+    background-color: white;
+}
+
+.slideshow .slide-container {
+    width: calc(100%);
+    height: 500px;
+}
+
+/* Hide the images by default */
+.slideshow .slides {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+}
+
+.slideshow .slides.slide-visible {
+    opacity: 1;
+    transition: opacity 1.5s ease;
+}
+
+.slideshow .slide-dots {
+    padding:16px;
+    text-align:center;
+}
+
+/* Next & previous buttons */
+.slideshow .slide-prev, .slideshow .slide-next {
+    cursor: pointer;
+    position: absolute;
+    top: 200px;
+    width: auto;
+    padding: 16px;
+    margin-top: -22px;
+    color: white;
+    font-weight: bold;
+    font-size: 36px;
+    transition: 0.6s ease;
+    border-radius: 0 6px 6px 0;
+    user-select: none;
+    text-decoration: none;
+}
+
+/* Position the "next button" to the right */
+.slideshow .slide-next {
+    right: 0;
+    border-radius: 6px 0 0 6px;
+}
+
+/* On hover, add a black background color with a little bit see-through */
+.slideshow .slide-prev:hover, .slideshow .slide-next:hover {
+    background-color: rgba(0,0,0,0.8);
+}
+
+/* The dots/bullets/indicators */
+.slideshow .slide-dot {
+    cursor: pointer;
+    height: 15px;
+    width: 15px;
+    margin: 2px 2px;
+    background-color: #bbb;
+    border-radius: 50%;
+    display: inline-block;
+    transition: background-color 0.6s ease;
+}
+
+.slideshow .slide-active, .slideshow .slide-dot:hover {
+    background-color: #717171;
+}
