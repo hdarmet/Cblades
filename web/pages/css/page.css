@@ -13,12 +13,12 @@ body::-webkit-scrollbar-thumb {
 
 @font-face {
     font-family: 'Carolingia';
-    src: url('./carolingia.ttf');
+    src: url('../carolingia.ttf');
 }
 
 @font-face {
     font-family: 'CenturyGothicStd';
-    src: url('./CenturyGothicStdRegular.otf');
+    src: url('CenturyGothicStdRegular.otf');
 }
 
 .page-container {

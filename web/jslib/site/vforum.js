@@ -21,13 +21,13 @@ export class VForumThreadComments extends VTable {
 
     constructor({loadPage, insertQuote}) {
         super({ref:"forum-thread-comments",
-            changePage: pageIndex=>this._change(pageIndex)
+            changePage: pageIndex=>this._setPage(pageIndex)
         });
         this._loadPage = loadPage;
         this._insertQuote = insertQuote;
     }
 
-    _change(index) {
+    _setPage(index) {
         this._loadPage(index, page=> {
             let lines = [];
             !this._reportModal && (this._reportModal = new VForumReport());
@@ -102,7 +102,7 @@ export class VForumThreadComments extends VTable {
 
     setThread(thread) {
         this._thread = thread;
-        this._change(0);
+        this._setPage(0);
     }
 
     static SUMMARY = "Showing {1} to {2} of {0} comments";
@@ -356,7 +356,7 @@ export class VForumThreads extends VTable {
 
     constructor({loadThreads, selectThread}) {
         super({ref:"forum-threads",
-            changePage: pageIndex=>this._change(pageIndex),
+            changePage: pageIndex=>this._setPage(pageIndex),
             select: selectThread
         });
         this._loadThreads = loadThreads;
@@ -364,10 +364,10 @@ export class VForumThreads extends VTable {
 
     setForum(forum) {
         this._forum = forum;
-        this._change(0);
+        this._setPage(0);
     }
 
-    _change(index) {
+    _setPage(index) {
         this._loadThreads(index, forum=> {
             let lines = [];
             !this._proposeThreadModal && (this._proposeThreadModal = new VProposeThread());

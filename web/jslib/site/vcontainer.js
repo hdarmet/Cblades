@@ -2,7 +2,7 @@
 
 import {
     Checkbox, A,
-    Div, Img, isComponent, TBody, TD, TH, Thead, TR, Label, Table, getUniqueId, Radio, Span
+    Div, Img, isComponent, TBody, TD, TH, Thead, TR, Label, Table, getUniqueId, Radio, Span, P
 } from "./components.js";
 import {
     Vitamin, VSearch
@@ -35,6 +35,11 @@ export class VContainer extends Vitamin(Div) {
         field = field ? field : builder(params);
         this._columns[column===undefined ? this._fields.length%this._columns.length: column].add(field);
         this._fields.push(field);
+        return this;
+    }
+
+    addContainer({column, ...params}, builder) {
+        this.addField({field:new VContainer({...params}, builder), column});
         return this;
     }
 
@@ -89,6 +94,12 @@ export class VSplitterPanel extends Vitamin(Div) {
         window.addEventListener("resize", event=>{
             this._resize();
         });
+    }
+
+    onActivate() {
+        super.onActivate();
+        console.log("resize")
+        this._resize();
     }
 
     _resize() {
@@ -146,6 +157,7 @@ export class VWall extends Vitamin(Div) {
     }
 
     onActivate() {
+        super.onActivate();
         this.resizeAllGridItems();
         this._resizeAll = ()=>this.resizeAllGridItems();
         window.addEventListener("resize", this._resizeAll);
@@ -156,6 +168,7 @@ export class VWall extends Vitamin(Div) {
     }
 
     onDesactivate() {
+        super.onDesactivate();
         window.removeEventListener("resize", this._resizeAll);
         window.removeEventListener("scroll", this._detectVisibility);
         Img.removeLoaderListener(this);
@@ -294,15 +307,15 @@ export class VTable extends Vitamin(Div) {
             this._columns = new TR();
             this._table.add(new Thead().add(this._columns));
             if (selectable) this._columns.add(new TH(""));
-            for (let column of this._columns) {
+            let col=0;
+            for (let column of columns) {
                 if (isComponent(column)) {
-                    this._columns.add(new TH("").add(column));
+                    this._columns.add(new TH("").addClass("column-"+col++).add(column));
                 }
                 else {
-                    this._columns.add(new TH(column));
+                    this._columns.add(new TH(column).addClass("column-"+col++));
                 }
             }
-            this._content.add(this._columns);
         }
         this._body = new TBody();
         this._table.add(this._body);
@@ -450,6 +463,88 @@ export class VSlideShow extends Vitamin(Div) {
             this._showSlides(this._slideIndex+1)
         }, 7000); // Change image every 2 seconds
     }
+}
+
+export class VLog extends Vitamin(Div) {
+
+    constructor({ref, title="", logLoader}) {
+        super(ref);
+        this._title=new P(title).addClass("log-title");
+        this.add(this._title);
+        this._content = new Div();
+        this.add(this._content).addClass("log-container");
+        this._loadLogs = logLoader;
+        this._loadLogs();
+    }
+
+    onActivate() {
+        super.onActivate();
+        this._detectVisibility = ()=>this.detectVisibility();
+        window.addEventListener("scroll", this._detectVisibility);
+        this._content.root.addEventListener("scroll", this._detectVisibility);
+        this.detectVisibility();
+    }
+
+    onDesactivate() {
+        super.onDesactivate();
+        window.removeEventListener("scroll", this._detectVisibility);
+        this._content.root.removeEventListener("scroll", this._detectVisibility);
+    }
+
+    detectVisibility() {
+        let clientRect = this._lastElement.root.getBoundingClientRect();
+        let bottomOfScreen = window.scrollY + window.innerHeight;
+        let topOfScreen = window.scrollY;
+        if ((bottomOfScreen > clientRect.y) && (topOfScreen < clientRect.y+clientRect.height)) {
+            this._loadLogs && this._loadLogs();
+        }
+    }
+}
+
+export class VPageContent extends VContainer {
+
+    constructor({ref}) {
+        super({ref});
+        this._showHome(true);
+    }
+
+    _changeTitle(title) {
+        if (this._title) this.remove(this._title);
+        this._title = title;
+        if (this._title) this.add(this._title);
+    }
+
+    _changeContent(gallery) {
+        if (this._page) this.remove(this._page);
+        this._page = gallery;
+        if (this._page) {
+            this._page.show && this._page.show();
+            this.add(this._page);
+        }
+    }
+
+    _changePage(title, content, byHistory, historize) {
+        if (!this._page || !this._page.canLeave || this._page.canLeave(()=>{
+            if (byHistory) {
+                history._preventDefault = true;
+                history.back();
+            }
+            else {
+                historize();
+            }
+            this._changeTitle(title);
+            this._changeContent(content);
+        })) {
+            if (!byHistory) {
+                historize();
+            }
+            this._changeTitle(title);
+            this._changeContent(content);
+            return true;
+        }
+        return false
+    }
+
 }
 
 

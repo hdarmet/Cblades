@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    Div, A, Button, Form, Label, Input, Span, App, Img, P, UL, LI, UndoRedo
+    Div, A, Form, Input, Span, App, Img, P, UL, LI, UndoRedo
 } from "./components.js";
 
 export function isVitamin(component) {
@@ -107,15 +107,21 @@ export function Vitamin(Component) {
             if (active !== this._active) {
                 this._active = active;
                 if (this._active) {
-                    this.removeClass("vitamin-inactive");
-                    this.addClass("vitamin-active");
-                    this.onActivate && this.onActivate();
+                    this.onActivate();
                 } else {
-                    this.removeClass("vitamin-active");
-                    this.addClass("vitamin-inactive");
-                    this.onDesactivate && this.onDesactivate();
+                    this.onDesactivate();
                 }
             }
+        }
+
+        onActivate() {
+            this.removeClass("vitamin-inactive");
+            this.addClass("vitamin-active");
+        }
+
+        onDesactivate() {
+            this.removeClass("vitamin-active");
+            this.addClass("vitamin-inactive");
         }
 
         _activate() {
@@ -199,10 +205,12 @@ export function Undoable(clazz) {
         }
 
         onActivate() {
+            super.onActivate();
             UndoRedo.addListener(this);
         }
 
         onDesactivate() {
+            super.onDesactivate();
             UndoRedo.removeListener(this);
         }
 
@@ -234,10 +242,10 @@ export function Undoable(clazz) {
             this._undos.push(this._register());
         }
 
-        canLeave(leave) {
+        canLeave(leave, message) {
             if (this._isDirty()) {
                 VConfirmHandler.emit({
-                    title: "Confirm", message: "Article not saved. Do you want to Quit ?",
+                    title: "Confirm", message,
                     actionOk: () => {
                         this._clean();
                         leave();
@@ -303,6 +311,7 @@ export class VApp extends Vitamin(Div) {
         VApp._instance = this;
         this._active = true;
         this.addClass("vitamin-active");
+        this.addClass("app");
     }
 
     register(modal) {
@@ -313,163 +322,6 @@ export class VApp extends Vitamin(Div) {
 
     static get instance() {
         return VApp._instance;
-    }
-
-}
-
-export class VMenuItem extends Vitamin(A) {
-
-    constructor({ref, label, kind, enabled=true, action}) {
-        super(ref, label);
-        kind && this.addClass(kind);
-        this.enabled = enabled;
-        this.onMouseClick(
-            ()=>this.active&&action()
-        );
-    }
-
-    get label() {
-        return this.getText();
-    }
-
-    set label(label) {
-        this.setText(label);
-    }
-}
-
-export class VMenuBarMenuItem extends VMenuItem {
-
-    constructor(params) {
-        super(params);
-        this.addClass("ddtn-menu-bar-item");
-    }
-
-}
-
-export class VDropdownMenu extends Vitamin(Div) {
-    constructor({ref, label, kind, enabled=true}, builder) {
-        super(ref);
-        kind && this.addClass(kind);
-        this.addClass("ddtn-dropdown");
-        this._button = new Button(label);
-        this.add(this._button.addClass("ddtn-droptitle").addClass("ddtn-menu-bar-item"));
-        this._content = new Div().addClass("ddtn-dropdown-content");
-        this.add(this._content);
-        builder&&builder(this);
-        this.enabled = enabled;
-    }
-
-    addMenu({ref, label, enabled, action, menu}) {
-        let vmenu = menu ? menu : new VMenuItem({ref, label, enabled, action});
-        this._content.add(vmenu);
-        return this;
-    }
-
-    removeMenu(ref) {
-        let toRemove = this.get(ref);
-        this._content.remove(toRemove);
-        return this;
-    }
-
-    insertMenu({ref, label, enabled, action}, beforeRef) {
-        let beforeMenu = this.get(beforeRef);
-        console.assert(beforeMenu);
-        if (beforeMenu) {
-            let menu = new VMenuItem({ref, label, enabled, action});
-            this._content.insert(menu, beforeMenu);
-        }
-        return this;
-    }
-
-    get label() {
-        return this._button.getText();
-    }
-
-    set label(label) {
-        this._button.setText(label);
-    }
-}
-
-export class VMenu extends Vitamin(Div) {
-
-    constructor({ref, kind}) {
-        super({ref});
-        this.addClass("ddtn-navbar");
-        kind && this.addClass(kind);
-    }
-
-    addMenu(params) {
-        let menu = new VMenuBarMenuItem(params);
-        this.add(menu);
-        return this;
-    }
-
-    insertMenu({menu, ...params}, beforeRef) {
-        let beforeMenu = this.get(beforeRef);
-        console.assert(beforeMenu);
-        if (beforeMenu) {
-            let vmenu = menu ? menu : new VMenuBarMenuItem(params);
-            this.insert(vmenu, beforeMenu);
-        }
-        return this;
-    }
-
-    removeMenu(ref) {
-        let toRemove = this.get(ref);
-        this.remove(toRemove);
-        return this;
-    }
-
-    addDropdownMenu({...params}, builder) {
-        let ddmenu = new VDropdownMenu({...params}, builder);
-        this.add(ddmenu);
-        return this;
-    }
-
-    insertDropdownMenu({...params}, beforeRef, builder) {
-        let beforeMenu = this.get(beforeRef);
-        console.assert(beforeMenu);
-        if (beforeMenu) {
-            let ddmenu = new VDropdownMenu({...params}, builder);
-            this.insert(ddmenu, beforeMenu);
-        }
-        return this;
-    }
-
-}
-
-export class VMainMenu extends Vitamin(Div) {
-
-    constructor({ref}) {
-        super({ref:"main-"+ref});
-        this.addClass("ddtn-main");
-        this._menu = new VMenu({ref});
-        this.add(this._menu);
-    }
-
-    addMenu(params) {
-        this._menu.addMenu(params);
-        return this;
-    }
-
-    removeMenu(ref) {
-        this._menu.removeMenu(ref);
-        return this;
-    }
-
-    insertMenu({ref, label, enabled, action, menu}, beforeRef) {
-        this._menu.insertMenu({ref, label, enabled, action, menu}, beforeRef);
-        return this;
-    }
-
-    insertDropdownMenu({ref, label, enabled}, beforeRef, builder) {
-        this._menu.insertDropdownMenu({ref, label, enabled}, beforeRef, builder);
-        return this;
-    }
-
-    addDropdownMenu(params, builder) {
-        this._menu.addDropdownMenu(params, builder);
-        return this;
     }
 
 }
@@ -492,34 +344,12 @@ export class VMessage extends Vitamin(P) {
 
 }
 
-export class VSearch extends Vitamin(Div) {
+export class VText extends Vitamin(P) {
 
-    constructor({ref, value, placeholder="Keywords", searchAction}) {
-        super(ref);
-        this.addClass("search");
-        this._input = new Input(value).setType("search").setAttribute("placeholder", placeholder).addClass("search-input-text");
-        this.value = value ? value : "";
-        this._button = new Div().addClass("search-button");
-        this._searchAction = event=>searchAction(this._input.getValue());
-        this.add(this._input);
-        this.add(this._button);
+    constructor({ref, text}) {
+        super({ref}, text);
     }
 
-    get value() {
-        return this.field.getValue();
-    }
-
-    set value(value) {
-        this._input.setValue(value);
-    }
-
-    onActivate() {
-        this._button.onEvent("click", this._searchAction);
-    }
-
-    onDesactivate() {
-        this._button.onEvent("click", null);
-    }
 }
 
 export class VModal extends Vitamin(Div) {
@@ -574,62 +404,36 @@ export class VModal extends Vitamin(Div) {
 
 }
 
-export class VText extends Vitamin(P) {
+export class VSearch extends Vitamin(Div) {
 
-    constructor({ref, text}) {
-        super({ref}, text);
+    constructor({ref, value, placeholder="Keywords", searchAction}) {
+        super(ref);
+        this.addClass("search");
+        this._input = new Input(value).setType("search").setAttribute("placeholder", placeholder).addClass("search-input-text");
+        this.value = value ? value : "";
+        this._button = new Div().addClass("search-button");
+        this._searchAction = event=>searchAction(this._input.getValue());
+        this.add(this._input);
+        this.add(this._button);
     }
 
-}
-
-export class VHeader extends Vitamin(Div) {
-
-    constructor({ref, left, right, title}) {
-        super({ref});
-        this.addClass("header-container");
-        this._left = new Img(left).addClass("header-left-image");
-        this.add(this._left);
-        this._title = new VSlot({ref: ref+"-title"}).addClass("header-text");
-        this.add(this._title);
-        title && this.setTitle(title);
-        this._right = new Img(right).addClass("header-right-image");
-        this.add(this._right);
+    get value() {
+        return this.field.getValue();
     }
 
-    setTitle(title) {
-        this._title.set({content: new Span(title)});
+    set value(value) {
+        this._input.setValue(value);
     }
 
-    addVitamin(component) {
-        this.add(component);
-        return this;
+    onActivate() {
+        super.onActivate();
+        this._button.onEvent("click", this._searchAction);
     }
 
-}
-
-export class VFooter extends Vitamin(Div) {
-
-    constructor({ref, summary, content}) {
-        super({ref});
-        this.addClass("footer-container");
-        this._summary = new Div().addClass("footer-summary");
-        this.add(this._summary);
-        this._summary.add(summary);
-        this._content = new Div().addClass("footer-content");
-        this.add(this._content);
-        this._content.add(content);
+    onDesactivate() {
+        super.onDesactivate();
+        this._button.onEvent("click", null);
     }
-
-    addSummaryVitamin(component) {
-        this._summary.add(component);
-        return this;
-    }
-
-    addContentVitamin(component) {
-        this._content.add(component);
-        return this;
-    }
-
 }
 
 export class VImage extends Vitamin(Div) {
@@ -887,3 +691,74 @@ export class VLink extends Vitamin(A) {
     }
 
 }
+
+Function.prototype.clone = function() {
+    return this;
+}
+
+
+export function historize(title, revert) {
+    history.pushState({
+        title, revert
+    }, title);
+}
+
+window.onpopstate = function (event) {
+    if (history._preventDefault) {
+        delete history._preventDefault;
+    }
+    else {
+        if (event.state) {
+            if (event.state.revert) {
+                if (!eval(event.state.revert)) {
+                    history._preventDefault = true;
+                    history.forward();
+                }
+            }
+        }
+    }
+    return true;
+}
+
+let inheritMap = new Map();
+Array.from(document.styleSheets).forEach(function (styleSheet) {
+    try {
+        Array.from(styleSheet.cssRules).forEach(function (cssRule) {
+            if (cssRule.selectorText.trim().match(/\.-?[_a-zA-Z]+[_a-zA-Z0-9-]*/)) {
+                inheritMap.set(cssRule.selectorText.trim().substring(1), cssRule);
+            }
+        });
+    } catch (exception) {}
+});
+Array.from(document.styleSheets).forEach(function (styleSheet) {
+    function cssExtend(cssRule) {
+        //console.log(cssRule.cssText);
+        if (cssRule.style) {
+            let extensions = cssRule.style.getPropertyValue("--extends");
+            if (extensions) {
+                extensions = extensions.trim().split(",");
+                cssRule.style.removeProperty("--extends");
+                for (let extension of extensions) {
+                    if (extension) {
+                        extension = extension.trim();
+                        let inherited = inheritMap.get(extension);
+                        if (inherited) {
+                            cssExtend(inherited);
+                            for (let property of inherited.style) {
+                                if (cssRule.style.getPropertyValue(property)==="") {
+                                    cssRule.style.setProperty(property, inherited.style.getPropertyValue(property));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    try {
+        Array.from(styleSheet.cssRules).forEach(function (cssRule) {
+            //console.log(cssRule.selectorText);
+            cssExtend(cssRule);
+        });
+    } catch (exception) {console.log(exception)}
+});

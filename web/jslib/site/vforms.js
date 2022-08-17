@@ -172,8 +172,8 @@ export class VField extends Vitamin(Div) {
         this.add(this._label);
         this._message = new P().addClass("form-message");
         this.add(this._message);
-        this._initField(params);
-        this._initEvent(params);
+        this._initField({value, ...params});
+        this._initEvent({value, ...params});
     }
 
     _onInput(onInput) {
@@ -279,9 +279,9 @@ export class VPasswordField extends VField {
 
 export class VInputTextArea extends VField {
 
-    _initField({value, link}) {
-        let createIcon = ({command, classPrefix=command})=>{
-            return new Span("").addClass(`fa fa-${classPrefix} fa-fw`).setAttribute("aria-hidden", true)
+    _initField({value, heading, link}) {
+        let createIcon = ({command, text="", classPrefix=command})=>{
+            return new Span(text).addClass(`fa fa-${classPrefix} fa-fw`).setAttribute("aria-hidden", true)
                 .onEvent("mousedown", event=>{
                     event.preventDefault();
                 })
@@ -291,8 +291,12 @@ export class VInputTextArea extends VField {
                 });
         };
         this._iconBold = createIcon({classPrefix: 'bold', command:()=>this.format('bold')});
-        this._iconItalic = createIcon({classPrefix: 'italic', command:()=>this.format('bold')});
-        this._iconUnderline = createIcon({classPrefix: 'underline', command:()=>this.format('bold')});
+        this._iconItalic = createIcon({classPrefix: 'italic', command:()=>this.format('italic')});
+        this._iconUnderline = createIcon({classPrefix: 'underline', command:()=>this.format('underline')});
+        this._iconH1Heading = createIcon({classPrefix: 'header', text:"1", command:()=>this.format('formatBlock', '<h1>')});
+        this._iconH2Heading = createIcon({classPrefix: 'header', text:"2", command:()=>this.format('formatBlock', '<h2>')});
+        this._iconH3Heading = createIcon({classPrefix: 'header', text:"3", command:()=>this.format('formatBlock', '<h3>')});
+        this._iconH4Heading = createIcon({classPrefix: 'header', text:"4", command:()=>this.format('formatBlock', '<h4>')});
         if (link) {
             this._link=link;
             this._iconLink = createIcon({classPrefix: 'link', command:()=>this._link(document.getSelection())});
@@ -303,6 +307,12 @@ export class VInputTextArea extends VField {
             .add(this._iconItalic)
             .add(this._iconUnderline)
             .add(this._iconList);
+        if (heading) {
+            this._iconBar.add(this._iconH1Heading)
+                .add(this._iconH2Heading)
+                .add(this._iconH3Heading)
+                .add(this._iconH4Heading);
+        }
         if (this._iconLink) {
             this._iconBar.add(this._iconLink);
         }
@@ -317,7 +327,7 @@ export class VInputTextArea extends VField {
     }
 
     format(command, value) {
-        document.execCommand(command, false, value);
+        document.execCommand(command, true, value);
     }
 
     get field() {
@@ -336,14 +346,14 @@ export class VInputTextArea extends VField {
 
 export class VOption extends Vitamin(Option) {
 
-    constructor({ref, value, text}) {
+    constructor({ref, value, text=value}) {
         super(ref);
         this.setText(text);
-        this.setAttribute("value", value);
+        this.setValue(value);
     }
 
     get value() {
-        return this.getAttribute("value");
+        return this.getValue();
     }
 
     get text() {
@@ -355,10 +365,10 @@ export class VOption extends Vitamin(Option) {
 export class VSelectField extends VField {
 
     _initField({value, multiple, size, options, onChange}) {
-        this._select = new Select(value).addClass("form-input-select");
-        this.value = value;
+        this._select = new Select().addClass("form-input-select");
         this._options = [];
         options && (this.optionLines = options);
+        this.value = value;
         this.add(this._select);
         multiple && this._select.setAttribute("multiple", true);
         size && this._select.setAttribute("size", size);
@@ -388,7 +398,7 @@ export class VSelectField extends VField {
 
     _removeOptions(options) {
         for (let option of options) {
-            this.remove(option);
+            this._select.remove(option);
         }
         this._options = [];
     }
@@ -402,7 +412,6 @@ export class VSelectField extends VField {
         for (let value of values) {
             selected[value] = true;
         }
-        console.log(this._select._root);
         for (let option of this._select._root) {
             option.selected = !!selected[option.value];
         }
@@ -423,9 +432,7 @@ export class VButton extends Vitamin(Button) {
     constructor({ref, label, type, enabled=true, onClick}) {
         super(ref, label);
         this.addClass("form-button");
-        if (type===VButton.TYPES.ACCEPT) this.addClass("form-button-accept");
-        else if (type===VButton.TYPES.REFUSE) this.addClass("form-button-refuse");
-        else this.addClass("form-button-neutral");
+        this.addClass("form-button-"+type);
         this._onClick = onClick;
         this.enabled = enabled;
     }
@@ -465,11 +472,13 @@ export class VCommand extends Vitamin(Img) {
     }
 
     onActivate() {
+        super.onActivate();
         this.setSrc(this._imgEnabled);
         this._onClick && this.onMouseClick(this._onClick);
     }
 
     onDesactivate() {
+        super.onDesactivate();
         this.setSrc(this._imgDisabled);
         this.onMouseClick(null);
     }
@@ -785,6 +794,10 @@ export class VFileLoader extends Vitamin(Div) {
         return this._image ? this._image.src : null;
     }
 
+    set imageSrc(imageSrc) {
+        return this.setImageSrc(imageSrc);
+    }
+
     setImageSrc(src, trigger) {
         if (src) {
             let image = new VMagnifiedImage({
@@ -815,12 +828,13 @@ export class VFileLoader extends Vitamin(Div) {
 
 export class VFileLoaderField extends VField {
 
-    _initField({accept, verify, magnified}) {
+    _initField({accept, verify, imageSrc, magnified}) {
         this._loader = new VFileLoader({
             ref:this.ref+"-loader",
             magnified,
             accept, verify
         }).addClass("form-file-loader");
+        this._loader.imageSrc = imageSrc;
         this.add(this._loader);
     }
 
@@ -839,4 +853,5 @@ export class VFileLoaderField extends VField {
     set imageSrc(imageSrc) {
         this._loader.setImageSrc(imageSrc);
     }
+
 }

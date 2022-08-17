@@ -497,8 +497,18 @@ export function InputMixin(clazz) {
 
 export class Option extends DOM(DComposed) {
 
-    constructor() {
+    constructor(value, text) {
         super("option");
+        this.setValue(value);
+        this.setText(text);
+    }
+
+    getValue() {
+        return this.getAttribute("value");
+    }
+    setValue(value) {
+        this.setAttribute("value", value);
+        return this;
     }
 
 }
@@ -507,6 +517,23 @@ export class Select extends InputMixin(DOM(DComposed)) {
 
     constructor() {
         super("select");
+    }
+
+    getOptions() {
+        let options = [];
+        for (let option of this.children) {
+            options.push({value: option.getValue(), text: option.getText()});
+        }
+        return options;
+    }
+
+    setOptions(options) {
+        for (let line of options) {
+            let option = new Option(line.value, line.text).addClass("select-option");
+            this.children.push(option);
+            this.add(option);
+        }
+        return this;
     }
 
 }

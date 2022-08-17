@@ -1,14 +1,16 @@
 import {
-    VHeader,
-    VFooter,
     VText,
-    VMainMenu,
     VMagnifiedImage,
     VSlot,
-    VMessageHandler
+    VMessageHandler, historize
 } from "./vitamins.js";
 import {
-    VContainer,
+    VHeader,
+    VFooter,
+    VMainMenu
+} from "./vpage.js";
+import {
+    VPageContent,
     VWallWithSearch
 } from "./vcontainer.js";
 import {
@@ -22,7 +24,7 @@ import {
     VCLogin
 } from "./cvitamin.js";
 import {
-    Div, Img
+    Div
 } from "./components.js";
 import {
     VGallery,
@@ -40,7 +42,7 @@ import {
 import {
     VForum,
     VForums,
-    VForumThread, VForumThreads
+    VForumThread
 } from "./vforum.js";
 import {
     VGame, VGameProposal, VGameScenario, VJoinGameWall, VProposeGameWall,
@@ -74,59 +76,59 @@ export var connection = null;
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
-            vPageContent.showHome();
+            window.vPageContent.showHome();
     }})
     .addDropdownMenu({ref:"material-menu", label:"Pour jouer"}, $=>{$
         .addMenu({ref:"dwnld-rules-menu", label:"Les règles et les aides de jeu", action:()=>{
-                vPageContent.showRulesGallery();
+                window.vPageContent.showRulesGallery();
             }
         })
         .addMenu({ref:"dwnld-map-menu", label:"Les cartes", action:()=>{
-                vPageContent.showMapsGallery();
+                window.vPageContent.showMapsGallery();
             }
         })
         .addMenu({ref:"dwnld-armies-menu", label:"Les factions", action:()=>{
-                vPageContent.showFactionsGallery();
+                window.vPageContent.showFactionsGallery();
             }
         })
         .addMenu({ref:"dwnld-magic-menu", label:"La magie", action:()=>{
-                vPageContent.showMagicGallery();
+                window.vPageContent.showMagicGallery();
             }
         })
         .addMenu({ref:"dwnld-markers-menu", label:"Les marqueurs", action:()=>{
-                vPageContent.showMarkersGallery();
+                window.vPageContent.showMarkersGallery();
             }
         })
     })
     .addDropdownMenu({ref:"articles-menu", label:"Pour approfondir"}, $=>{$
         .addMenu({ref:"new-articles-menu", label:"Nouveaux articles", action:()=>{
-                vPageContent.showNewArticlesWall();
+                window.vPageContent.showNewArticlesWall();
             }
         })
         .addMenu({ref:"about-game-menu", label:"Sur le Jeu", action:()=>{
-                vPageContent.showThemesAboutGameWall();
+                window.vPageContent.showThemesAboutGameWall();
             }
         })
         .addMenu({ref:"lore-articles-menu", label:"Histoires et légendes", action:()=>{
-                vPageContent.showThemesAboutGameWall();
+                window.vPageContent.showThemesAboutGameWall();
             }
         })
         .addMenu({ref:"rule-articles-menu", label:"Exemples de jeu", action:()=>{
-                vPageContent.showThemesAboutGameWall();
+                window.vPageContent.showThemesAboutGameWall();
             }
         })
     })
     .addDropdownMenu({ref:"contribution-menu", label:"Pour contribuer"}, $=>{$
         .addMenu({ref:"propose-theme-menu", label:"Proposer un thème", action:()=>{
-                vPageContent.showProposeTheme(null);
+                window.vPageContent.showProposeTheme(null);
             }
         })
         .addMenu({ref:"propose-article-menu", label:"Proposer un article", action:()=>{
-                vPageContent.showProposeArticle();
+                window.vPageContent.showProposeArticle();
             }
         })
         .addMenu({ref:"propose-map-menu", label:"Proposer une carte", action:()=>{
-                vPageContent.showProposeMap();
+                window.vPageContent.showProposeMap();
             }
         })
         .addMenu({ref:"propose-scenario", label:"Proposer un scénario", action:()=>{
@@ -1066,28 +1068,28 @@ export var vYourProposalsWall = new VWallWithSearch({
             {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"right", title:"Et ça continue...", description:paragrpahText}
         ],
         action:article=>{
-            vPageContent.showProposeArticle(article);
+            window.vPageContent.showProposeArticle(article);
         }
     }))
     .addNote(new VScenario({
         ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
         story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
         action:scenario=>{
-            vPageContent.showProposeScenario(scenario);
+            window.vPageContent.showProposeScenario(scenario);
         }
     }))
     .addNote(new VTheme({
         ref: "theme1", title: "Rules", img: `../images/site/themes/rules.png`,
         description: paragrpahText,
         action: theme => {
-            vPageContent.showProposeTheme(theme);
+            window.vPageContent.showProposeTheme(theme);
         }
     }))
     .addNote(new VMap({
         ref: "map1", title: "The Map", img: `../images/maps/map-7.png`,
         description: paragrpahText,
         action: map => {
-            vPageContent.showProposeMap(map);
+            window.vPageContent.showProposeMap(map);
         }
     }))
 });
@@ -1099,21 +1101,21 @@ vYourProposalsWall.setLoadNotes(function() {
             {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"left", title:"Et ça continue...", description:paragrpahText}
         ],
         action:article=>{
-            vPageContent.showProposeArticle(article);
+            window.vPageContent.showProposeArticle(article);
         }
     }))
     .addNote(new VScenario({
         ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
         story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
         action:scenario=>{
-            vPageContent.showProposeScenario(scenario);
+            window.vPageContent.showProposeScenario(scenario);
         }
     }))
     .addNote(new VTheme({
         ref: "theme1", title: "Rules", img: `../images/site/themes/rules.png`,
         description: paragrpahText,
         action: theme => {
-            vPageContent.showProposeTheme(theme);
+            window.vPageContent.showProposeTheme(theme);
         }
     }))
 });
@@ -1316,7 +1318,7 @@ export var vForums = new VForums({
         });
     },
     selectForum:forum=>{
-        vPageContent.showForumThreads({
+        window.vPageContent.showForumThreads({
             // forum description
         });
     }
@@ -1350,7 +1352,7 @@ export var vForum = new VForum({
         });
     },
     selectThread:thread=>{
-        vPageContent.showForumThread({
+        window.vPageContent.showForumThread({
             // thread description
         });
     }
@@ -1513,50 +1515,12 @@ vHome.setSlides([
    new VAnnoucement({ref:"a3", img:"../images/maps/map-12.png", description:middleParagrpahText})
 ]);
 
-class VPageContent extends VContainer {
+class CBPageContent extends VPageContent {
 
     constructor() {
         super({ref: "page-content"});
         this._showHome(true);
     }
-
-    _changeTitle(title) {
-        if (this._title) this.remove(this._title);
-        this._title = title;
-        if (this._title) this.add(this._title);
-    }
-
-    _changeContent(gallery) {
-        if (this._page) this.remove(this._page);
-        this._page = gallery;
-        if (this._page) {
-            this._page.show && this._page.show();
-            this.add(this._page);
-        }
-    }
-
-    _changePage(title, content, byHistory, historize) {
-        if (!this._page || !this._page.canLeave || this._page.canLeave(()=>{
-            if (byHistory) {
-                history._preventDefault = true;
-                history.back();
-            }
-            else {
-                historize();
-            }
-            this._changeTitle(title);
-            this._changeContent(content);
-        })) {
-            if (!byHistory) {
-                historize();
-            }
-            this._changeTitle(title);
-            this._changeContent(content);
-            return true;
-        }
-        return false
-    }
-
 
     _showHome(byHistory, historize) {
         return this._changePage(null, vHome, byHistory, historize);
@@ -1564,11 +1528,9 @@ class VPageContent extends VContainer {
 
     showHome() {
         this._showHome(false, ()=>
-            historize("home", "vPageContent._showHome(true);")
+            historize("home", "window.vPageContent._showHome(true);")
         );
     }
-
-
 
     _showRulesGallery(byHistory, historize) {
         return this._changePage(vRulesTitle, vRulesGallery, byHistory, historize);
@@ -1576,7 +1538,7 @@ class VPageContent extends VContainer {
 
     showRulesGallery() {
         this._showRulesGallery(false, ()=>
-            historize("rules-gallery", "vPageContent._showRulesGallery(true);")
+            historize("rules-gallery", "window.vPageContent._showRulesGallery(true);")
         );
     }
 
@@ -1586,7 +1548,7 @@ class VPageContent extends VContainer {
 
     showMapsGallery() {
         this._showMapsGallery(false, ()=>
-            historize("maps-gallery", "vPageContent._showMapsGallery(true);")
+            historize("maps-gallery", "window.vPageContent._showMapsGallery(true);")
         );
     }
 
@@ -1596,7 +1558,7 @@ class VPageContent extends VContainer {
 
     showFactionsGallery() {
         this._showFactionsGallery(false, ()=>
-            historize("factions-gallery", "vPageContent._showFactionsGallery(true);")
+            historize("factions-gallery", "window.vPageContent._showFactionsGallery(true);")
         );
     }
 
@@ -1607,7 +1569,7 @@ class VPageContent extends VContainer {
 
     showFactionCountersGallery(faction) {
         this._showFactionCountersGallery(faction, false, ()=>
-            historize("faction-counters-gallery", "vPageContent._showFactionCountersGallery(event.state.faction, true);")
+            historize("faction-counters-gallery", "window.vPageContent._showFactionCountersGallery(event.state.faction, true);")
         );
     }
 
@@ -1617,7 +1579,7 @@ class VPageContent extends VContainer {
 
     showMagicGallery() {
         this._showMagicGallery(false, ()=>
-            historize("magic-gallery", "vPageContent._showMagicGallery(true);")
+            historize("magic-gallery", "window.vPageContent._showMagicGallery(true);")
         );
     }
 
@@ -1628,7 +1590,7 @@ class VPageContent extends VContainer {
 
     showMagicCountersGallery(art) {
         this._showMagicCountersGallery(art, false, ()=>
-            historize("magic-counters-gallery", "vPageContent._showMagicCountersGallery(event.state.art, true);")
+            historize("magic-counters-gallery", "window.vPageContent._showMagicCountersGallery(event.state.art, true);")
         );
     }
 
@@ -1638,7 +1600,7 @@ class VPageContent extends VContainer {
 
     showMarkersGallery() {
         this._showMarkersGallery(false, ()=>
-            historize("markers-gallery", "vPageContent._showMarkersGallery(true);")
+            historize("markers-gallery", "window.vPageContent._showMarkersGallery(true);")
         );
     }
 
@@ -1648,7 +1610,7 @@ class VPageContent extends VContainer {
 
     showNewArticlesWall() {
         this._showNewArticlesWall(false, ()=>
-            historize("new-articles", "vPageContent._showNewArticlesWall(true);")
+            historize("new-articles", "window.vPageContent._showNewArticlesWall(true);")
         );
     }
 
@@ -1658,7 +1620,7 @@ class VPageContent extends VContainer {
 
     showThemesAboutGameWall() {
         this._showThemesAboutGameWall(false, ()=>
-            historize("themes-about-game", "vPageContent._showThemesAboutGameWall(true);")
+            historize("themes-about-game", "window.vPageContent._showThemesAboutGameWall(true);")
         );
     }
 
@@ -1668,7 +1630,7 @@ class VPageContent extends VContainer {
 
     showArticlesAboutGameWall() {
         this._showArticlesAboutGameWall(false, ()=>
-            historize("articles-about-game", "vPageContent._showArticlesAboutGameWall(true);")
+            historize("articles-about-game", "window.vPageContent._showArticlesAboutGameWall(true);")
         );
     }
 
@@ -1693,7 +1655,7 @@ class VPageContent extends VContainer {
     showNewspaper(article) {
         let specification = article.specification;
         this._showNewspaper(specification, false, ()=>
-            historize("newspaper", `vPageContent._showNewspaper(${JSON.stringify(specification)}, true);`)
+            historize("newspaper", `window.vPageContent._showNewspaper(${JSON.stringify(specification)}, true);`)
         );
     }
 
@@ -1709,7 +1671,7 @@ class VPageContent extends VContainer {
             description: "bla bla bla"
         };
         this._showProposeTheme(specification,false, ()=>
-            historize("propose-theme", `vPageContent._showProposeTheme(${JSON.stringify(specification)}, true);`)
+            historize("propose-theme", `window.vPageContent._showProposeTheme(${JSON.stringify(specification)}, true);`)
         );
     }
 
@@ -1735,7 +1697,7 @@ class VPageContent extends VContainer {
             ]
         };
         this._showProposeArticle(specification,false, ()=>
-            historize("propose-article", `vPageContent._showProposeArticle(${JSON.stringify(specification)}, true);`)
+            historize("propose-article", `window.vPageContent._showProposeArticle(${JSON.stringify(specification)}, true);`)
         );
     }
 
@@ -1752,7 +1714,7 @@ class VPageContent extends VContainer {
             description: "bla bla"
         };
         this._showProposeMap(specification, false, ()=>
-            historize("propose-map", `vPageContent._showProposeMap(${JSON.stringify(specification)}, true);`)
+            historize("propose-map", `window.vPageContent._showProposeMap(${JSON.stringify(specification)}, true);`)
         );
     }
 
@@ -1771,7 +1733,7 @@ class VPageContent extends VContainer {
             specialRules: "bla bla bla"
         };
         this._showProposeScenario(specification,false, ()=>
-            historize("propose-scenario", `vPageContent._showProposeScenario(${JSON.stringify(specification)},true);`)
+            historize("propose-scenario", `window.vPageContent._showProposeScenario(${JSON.stringify(specification)},true);`)
         );
     }
 
@@ -1782,7 +1744,7 @@ class VPageContent extends VContainer {
 
     showYourProposals() {
         this._showYourProposals(false, ()=>
-            historize("your-proposals", "vPageContent._showYourProposals(true);")
+            historize("your-proposals", "window.vPageContent._showYourProposals(true);")
         );
     }
 
@@ -1792,7 +1754,7 @@ class VPageContent extends VContainer {
 
     showForums() {
         this._showForums(false, ()=>
-            historize("forums", "vPageContent._showForums(true);")
+            historize("forums", "window.vPageContent._showForums(true);")
         );
     }
 
@@ -1803,7 +1765,7 @@ class VPageContent extends VContainer {
 
     showForumThreads(forum) {
         this._showForumThreads(forum, false, ()=>
-            historize("forum-threads", `vPageContent._showForumThreads(${JSON.stringify(forum)}, true);`)
+            historize("forum-threads", `window.vPageContent._showForumThreads(${JSON.stringify(forum)}, true);`)
         );
     }
 
@@ -1814,7 +1776,7 @@ class VPageContent extends VContainer {
 
     showForumThread(thread) {
         this._showForumThread(thread, false, ()=>
-            historize("forum-thread", `vPageContent._showForumThread(${JSON.stringify(thread)}, true);`)
+            historize("forum-thread", `window.vPageContent._showForumThread(${JSON.stringify(thread)}, true);`)
         );
     }
 
@@ -1825,7 +1787,7 @@ class VPageContent extends VContainer {
 
     showYourGames() {
         this._showYourGames(false, ()=>
-            historize("my-games", `vPageContent._showYourGames(true);`)
+            historize("my-games", `window.vPageContent._showYourGames(true);`)
         );
     }
 
@@ -1836,7 +1798,7 @@ class VPageContent extends VContainer {
 
     showProposeAGame() {
         this._showProposeAGame(false, ()=>
-            historize("propose-a-game", `vPageContent._showProposeAGame(true);`)
+            historize("propose-a-game", `window.vPageContent._showProposeAGame(true);`)
         );
     }
 
@@ -1847,85 +1809,13 @@ class VPageContent extends VContainer {
 
     showJoinAGame() {
         this._showJoinAGame(false, ()=>
-            historize("join-a-game", `vPageContent._showJoinAGame(true);`)
+            historize("join-a-game", `window.vPageContent._showJoinAGame(true);`)
         );
     }
 
 }
 
-export var vPageContent = new VPageContent();
+window.vPageContent = new CBPageContent();
 
-Function.prototype.clone = function() {
-    return this;
-}
-
-
-export function historize(title, revert) {
-    history.pushState({
-        title, revert
-    }, title);
-}
-
-window.onpopstate = function (event) {
-    if (history._preventDefault) {
-        delete history._preventDefault;
-    }
-    else {
-        if (event.state) {
-            console.log("PS:", event.state);
-            if (event.state.revert) {
-                if (!eval(event.state.revert)) {
-                    history._preventDefault = true;
-                    console.log("forward !");
-                    history.forward();
-                }
-            }
-        }
-    }
-    return true;
-}
-
-let inheritMap = new Map();
-Array.from(document.styleSheets).forEach(function (styleSheet) {
-    try {
-        Array.from(styleSheet.cssRules).forEach(function (cssRule) {
-            if (cssRule.selectorText.trim().match(/\.-?[_a-zA-Z]+[_a-zA-Z0-9-]*/)) {
-                inheritMap.set(cssRule.selectorText.trim().substring(1), cssRule);
-            }
-        });
-    } catch (exception) {}
-});
-Array.from(document.styleSheets).forEach(function (styleSheet) {
-    function cssExtend(cssRule) {
-        //console.log(cssRule.cssText);
-        if (cssRule.style) {
-            let extensions = cssRule.style.getPropertyValue("--extends");
-            if (extensions) {
-                extensions = extensions.trim().split(",");
-                cssRule.style.removeProperty("--extends");
-                for (let extension of extensions) {
-                    if (extension) {
-                        extension = extension.trim();
-                        let inherited = inheritMap.get(extension);
-                        if (inherited) {
-                            cssExtend(inherited);
-                            for (let property of inherited.style) {
-                                if (cssRule.style.getPropertyValue(property)==="") {
-                                    cssRule.style.setProperty(property, inherited.style.getPropertyValue(property));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    try {
-        Array.from(styleSheet.cssRules).forEach(function (cssRule) {
-            //console.log(cssRule.selectorText);
-            cssExtend(cssRule);
-        });
-    } catch (exception) {console.log(exception)}
-});
 
 

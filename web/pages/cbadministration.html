@@ -5,16 +5,10 @@
     <link href="css/dropdown_topnav.css" rel="stylesheet" type="text/css">
     <link href="css/modal.css" rel="stylesheet" type="text/css">
     <link href="css/form.css" rel="stylesheet" type="text/css">
-    <link href="css/home.css" rel="stylesheet" type="text/css">
-    <link href="css/gallery.css" rel="stylesheet" type="text/css">
-    <link href="css/wall.css" rel="stylesheet" type="text/css">
     <link href="css/header-footer.css" rel="stylesheet" type="text/css">
     <link href="css/page.css" rel="stylesheet" type="text/css">
-    <link href="css/player.css" rel="stylesheet" type="text/css">
     <link href="css/table.css" rel="stylesheet" type="text/css">
-    <link href="css/forum.css" rel="stylesheet" type="text/css">
-    <link href="css/plays.css" rel="stylesheet" type="text/css">
-    <link href="css/site.css" rel="stylesheet" type="text/css">
+    <link href="css/administration.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <title>Cursed Blades</title>
 </head>
@@ -27,16 +21,14 @@
     } from "../jslib/site/vitamins.js";
 
     import {
-        vFooter, vHeader
-    } from "../jslib/site/cblades.js";
+        vHeader
+    } from "../jslib/site/cbadministration.js";
 
     let app = new VApp()
         .setWidth("100%")
-        .setColor("#E0E0E0")
-        .addStyle("padding-bottom", "50px")
+        .setColor("#ffffff")
         .add(vHeader)
-        .add(window.vPageContent)
-        .add(vFooter);
+        .add(window.vPageContent);
     document.body.parentElement.style["height"] = "100%";
     document.body.style["height"] = "100%";
     document.body.style["margin"] = "0";

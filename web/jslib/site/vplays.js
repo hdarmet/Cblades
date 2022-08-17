@@ -1,8 +1,6 @@
 'use strict'
 
 import {
-    VConfirmHandler,
-    VDisplay,
     VImage, Vitamin, VModal
 } from "./vitamins.js";
 import {

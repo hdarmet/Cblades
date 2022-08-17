@@ -61,8 +61,8 @@
 }
 
 .my-games .turn-number-value {
-    font-family: Carolingia, Arial, Helvetica, sans-serif;
-    font-size: 24px;
+    font-family: CenturyGothicStd, Arial, Helvetica, sans-serif;
+    font-size: 14px;
 }
 
 .my-games .army-label {
@@ -70,8 +70,8 @@
 }
 
 .my-games .army-name {
-    font-family: Carolingia, Arial, Helvetica, sans-serif;
-    font-size: 24px;
+    font-family: CenturyGothicStd, Arial, Helvetica, sans-serif;
+    font-size: 14px;
     padding: 5px;
 }
 
@@ -80,8 +80,8 @@
 }
 
 .my-games .player-name {
-    font-family: Carolingia, Arial, Helvetica, sans-serif;
-    font-size: 24px;
+    font-family: CenturyGothicStd, Arial, Helvetica, sans-serif;
+    font-size: 14px;
     padding: 5px;
 }
 
@@ -135,16 +135,10 @@
 }
 
 .propose-game-content .army-name {
-    font-family: Carolingia, Arial, Helvetica, sans-serif;
-    font-size: 24px;
+    font-family: CenturyGothicStd, Arial, Helvetica, sans-serif;
+    font-size: 14px;
     padding: 5px;
 }
-
-
-
-
-
-
 
 .join-game-content {
     --extends: ex-record-content, ex-play-background-color;
@@ -188,8 +182,8 @@
 }
 
 .join-game-content .army-name {
-    font-family: Carolingia, Arial, Helvetica, sans-serif;
-    font-size: 24px;
+    font-family: CenturyGothicStd, Arial, Helvetica, sans-serif;
+    font-size: 14px;
     padding: 5px;
 }
 
@@ -198,8 +192,8 @@
 }
 
 .join-game-content .player-name {
-    font-family: Carolingia, Arial, Helvetica, sans-serif;
-    font-size: 24px;
+    font-family: CenturyGothicStd, Arial, Helvetica, sans-serif;
+    font-size: 14px;
     padding: 5px;
 }
 

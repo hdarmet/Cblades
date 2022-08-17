@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    VContainer, VSlideShow, VWall
+    VContainer, VSlideShow, VLog
 } from "./vcontainer.js";
 import {
     Vitamin
@@ -54,39 +54,5 @@ export class VEvent extends Vitamin(Div) {
             this.add(new Img(img).addClass("event-img"))
         }
         this.add(new P(text).addClass("event-text"));
-    }
-}
-
-export class VLog extends Vitamin(Div) {
-
-    constructor({ref, title="", logLoader}) {
-        super(ref);
-        this._title=new P(title).addClass("log-title");
-        this.add(this._title);
-        this._content = new Div();
-        this.add(this._content).addClass("log-container");
-        this._loadLogs = logLoader;
-        this._loadLogs();
-    }
-
-    onActivate() {
-        this._detectVisibility = ()=>this.detectVisibility();
-        window.addEventListener("scroll", this._detectVisibility);
-        this._content.root.addEventListener("scroll", this._detectVisibility);
-        this.detectVisibility();
-    }
-
-    onDesactivate() {
-        window.removeEventListener("scroll", this._detectVisibility);
-        this._content.root.removeEventListener("scroll", this._detectVisibility);
-    }
-
-    detectVisibility() {
-        let clientRect = this._lastElement.root.getBoundingClientRect();
-        let bottomOfScreen = window.scrollY + window.innerHeight;
-        let topOfScreen = window.scrollY;
-        if ((bottomOfScreen > clientRect.y) && (topOfScreen < clientRect.y+clientRect.height)) {
-            this._loadLogs && this._loadLogs();
-        }
     }
 }
