@@ -120,7 +120,7 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					em.createQuery("select l from Login l where l.login=:login and l.password=:password"),
 					"login", login, "password", Login.encrypt(password));
 				if (logins.isEmpty()) {
-					throw new SummerControllerException(403, "Bad credentials");
+					throw new SummerControllerException(401, "Bad credentials");
 				}
 				else {
 					connect(login, 30*60*1000);

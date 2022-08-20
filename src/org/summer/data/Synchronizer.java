@@ -57,7 +57,19 @@ public class Synchronizer implements DataSunbeam {
 		}
 		return this;
 	}
-	
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public <T>Synchronizer writeSetter(String jsonFieldName, Consumer<T> setter, Function ... functions) {
+		Object readValue = this.json.search(jsonFieldName);
+		for (Function function: functions) {
+			readValue = function.apply(readValue);
+		}
+		if (readValue!=null) {
+			setter.accept((T)readValue);
+		}
+		return this;
+	}
+
 	@SafeVarargs
 	final public <T, R> Synchronizer write(String fieldName, Function<T, R> ... functions) {
 		return write(fieldName, fieldName, functions);
@@ -316,10 +328,22 @@ public class Synchronizer implements DataSunbeam {
 		}
 		return this;
 	}
-	
+
 	@SafeVarargs
 	final public <T, R> Synchronizer read(String fieldName, Function<T, R> ... functions) {
 		return read(fieldName, fieldName, functions);
+	}
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SafeVarargs
+	final public <T, R> Synchronizer readGetter(String jsonFieldName, Supplier<R> getter, Function<T, R> ... functions) {
+		Object readValue = getter.get();
+		for (Function function: functions) {
+			readValue = function.apply(readValue);
+		}
+		if (readValue!=null) {
+			this.json.put(jsonFieldName, readValue);
+		}
+		return this;
 	}
 
 	public <E extends BaseEntity> Synchronizer readLink(String jsonCollName, String targetCollName, BiConsumer<Json, E> reader) {

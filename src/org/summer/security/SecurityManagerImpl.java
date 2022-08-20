@@ -162,9 +162,11 @@ public class SecurityManagerImpl implements SecurityManager {
 
     void removeAuthentication(HttpServletResponse response) {
         Cookie jwtCookie = new Cookie("jwt", "");
+        jwtCookie.setPath("/");
         jwtCookie.setMaxAge(0);
         response.addCookie(jwtCookie);
         Cookie xsrfCookie = new Cookie("xsrfToken", "");
+        xsrfCookie.setPath("/");
         xsrfCookie.setMaxAge(0);
         response.addCookie(xsrfCookie);
     }

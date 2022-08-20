@@ -1,6 +1,6 @@
 import {
     VHeader,
-    VMainMenu,
+    VMainMenu, VWarning,
 } from "./vpage.js";
 import {
     VContainer,
@@ -10,7 +10,7 @@ import {
     historize, Undoable, VDisplay, Vitamin, VLink, VMessage, VModal, VSearch
 } from "./vitamins.js";
 import {
-    Div, Img, P, Select, Span
+    Div, Img, P, Select, Span, sendPost, sendGet
 } from "./components.js";
 import {
     and, isValid,
@@ -79,8 +79,17 @@ export var vMenu = new VMainMenu({ref:"menu"})
     })
     .addMenu({ref:"login", kind:"right-menu", label:connection?"Logout":"Login", action:()=>{
         if (connection) {
-            connection = null;
-            vMenu.get("login").label = "Login";
+            sendPost("/api/login/disconnect",null,
+                (text, status) => {
+                    console.log("Disconnection success: " + text + ": " + status);
+                    connection = null
+                    vMenu.get("login").label = "login";
+                },
+                (text, status) => {
+                    console.log("Disconnection failure: " + text + ": " + status);
+                    vLogin.showMessage(text);
+                }
+            );
         }
         else {
             vLogin.show();
@@ -261,23 +270,38 @@ export class CBNoticeEditorPage extends VContainer {
 
 export class CBUserListPage extends Vitamin(Div) {
 
-    constructor({loadPage, selectUser}) {
+    constructor({loadPage, selectUser, saveUser}) {
         super({ref:"user-list-page"});
         this._search = new VSearch({ref: "user-list-search", searchAction:text=>alert(text)});
         this._create = new VButton({ref:"user-create", type:"neutral", label:"Create User",
             onClick:event=>{
-                new CBEditUser({
+                this._createUserModal = new CBEditUser({
                     title: "Create User",
                     create: true,
                     user:{
                         avatar:"../images/site/avatars/default-avatar.png", role:"std", status:"pnd"
-                    }
+                    },
+                    save: saveUser
                 }).show()
             }
         }).addClass("right-button");
         this._search.add(this._create);
         this._table = new CBUserList({loadPage, selectUser});
         this.add(this._search).add(this._table);
+    }
+
+    get createUserModal() {
+        return this._createUserModal;
+    }
+
+    loadUsers() {
+        this._table.loadUsers();
+        return this;
+    }
+
+    refresh() {
+        this._table.refresh();
+        return this;
     }
 
 }
@@ -327,7 +351,7 @@ export class CBLogin extends VModal {
                 {
                     ref:"Signin", type:"accept", enabled:false, label:"Sign In",
                     onClick:event=>{
-                        this.connect();
+                        this.connect(this.login, this.password);
                     }
                 }
             ]})});
@@ -335,8 +359,20 @@ export class CBLogin extends VModal {
         this.addContainer({container: this._signInContainer});
     }
 
-    connect() {
-        if (isValid(this) && this._connect()) {
+    get login() {
+        return this._loginField.value;
+    }
+
+    get password() {
+        return this._passwordField.value;
+    }
+
+    showMessage(text) {
+        new VWarning().show({title:"Connection refused", message:text});
+    }
+
+    connect(login, password) {
+        if (isValid(this) && this._connect(login, password)) {
             this.hide();
         }
     }
@@ -346,16 +382,32 @@ export class CBLogin extends VModal {
             login: this._loginField.value
         }
     }
+
+
 }
 
-export var vLogin = new  CBLogin({
-    connect: ()=>{
-        connection = {
-            login: vLogin.connection
-        };
-        vMenu.get("login").label = "logout";
-        return true;
+export var vLogin = new CBLogin({
+    connect: (login, password)=>{
+        sendPost("/api/login/login",
+            {
+                login, password
+            },
+            (text, status) => {
+                console.log("Connection success: " + text + ": " + status);
+                connection = {
+                    login: vLogin.connection
+                };
+                vMenu.get("login").label = "logout";
+                vLogin.hide();
+            },
+            (text, status) => {
+                console.log("Connection failure: " + text + ": " + status);
+                vLogin.showMessage(text);
+            }
+        );
+        return false;
     }
+
 });
 
 export class CBConfirm extends VModal {
@@ -397,6 +449,7 @@ export class CBConfirm extends VModal {
         this._actionOk = actionOk;
         this._actionCancel = actionCancel;
         super.show();
+        return this;
     }
 
     static CONFIRM_REF = "confirm";
@@ -405,8 +458,9 @@ export class CBConfirm extends VModal {
 
 export class CBEditUser extends VModal {
 
-    constructor({title, create, user}) {
+    constructor({title, create, user, save}) {
         super({"user":"user-form", "title":title});
+        this._id = user.id;
         this._loginField = new VInputField({
             ref:"def-login", label:"Login", value:user.login,
             validate: mandatory({validate: matchesLogin({})}),
@@ -432,7 +486,7 @@ export class CBEditUser extends VModal {
                     validators: [
                         matchesPassword({}),
                         (field, quit)=> {
-                            if (quit && this._defineReenterPasswordField.value !== this._definePasswordField.value) {
+                            if (quit && this._reenterPasswordField.value !== this._passwordField.value) {
                                 return "Passwords do not match."
                             }
                             return "";
@@ -460,7 +514,8 @@ export class CBEditUser extends VModal {
             options: [
                 {ref: "id-standard", value: "std", text:"Standard"},
                 {ref: "id-contributor", value: "cnt", text:"Contributor"},
-                {ref: "id-administrator", value: "adm", text:"Administrator"}
+                {ref: "id-administrator", value: "adm", text:"Administrator"},
+                {ref: "id-tester", value: "tst", text:"Tester"}
             ],
             onInput:event=>{
             }
@@ -504,13 +559,13 @@ export class CBEditUser extends VModal {
             {
                 ref:"save-user", type:"accept", label:"Save",
                 onClick:event=>{
-
+                    save(this.specification);
                 }
             },
             {
                 ref:"cancel-user", type:"refuse", label:"Cancel",
                 onClick:event=>{
-
+                    this.hide();
                 }
             }
         ]});
@@ -532,16 +587,50 @@ export class CBEditUser extends VModal {
             buttons.add(new VButton({
                 ref: "delete-user", type: "neutral", label: "Delete",
                 onClick: event => {
-                    new CBConfirm().show({
+                    let confirm = new CBConfirm().show({
                         ref:"confirm-user-deletion",
                         title:"Delete User",
-                        message:"Do you really want to delete the User ?"
+                        message:"Do you really want to delete the User ?",
+                        actionOk: event=> {
+                            sendGet("/api/account/delete/" + user.id,
+                                null,
+                                (text, status) => {
+                                    console.log("Account delete success: " + text + ": " + status);
+                                    this.hide();
+                                    confirm.hide();
+                                    vUserList.refresh();
+                                },
+                                (text, status) => {
+                                    console.log("Account delete failure: " + text + ": " + status);
+                                    confirm.hide();
+                                    this.showMessage("Fail to delete User", text);
+                                }
+                            )
+                        }
                     });
                 }
             }).addClass("right-button"));
         }
         this.addContainer({container: this._container});
         this.addClass("user-form");
+    }
+
+    get specification() {
+        return {
+            id: this._id,
+            login: this._loginField.value,
+            email: this._emailField.value,
+            firstName: this._firstNameField.value,
+            lastName: this._lastNameField.value,
+            password: this._passwordField.value,
+            role: this._roleField.value,
+            status: this._statusField.value,
+            avatar: this._avatar.imageSrc
+        }
+    }
+
+    showMessage(title, text) {
+        new VWarning().show({title, message:text});
     }
 
 }
@@ -556,12 +645,21 @@ export class CBUserList extends VTable {
         this.addClass("user-list");
         this._loadPage = loadPage;
         this._selectUser = selectUser;
-        this._setPage(0);
     }
 
-    _setPage(index) {
+    loadUsers() {
+        this._setPage(0);
+        return this;
+    }
+
+    refresh() {
+        this._setPage(this._currentPage);
+    }
+
+    _setPage(page) {
         function getUser(line) {
             return {
+                id: line.id,
                 login: line.login.getText(),
                 firstName: line.firstName.getText(),
                 lastName: line.lastName.getText(),
@@ -571,7 +669,7 @@ export class CBUserList extends VTable {
                 status: line.status.getValue()
             };
         }
-        this._loadPage(index, page=> {
+        this._loadPage(page, page=> {
             let lines = [];
             for (let user of page.users) {
                 let line;
@@ -596,12 +694,13 @@ export class CBUserList extends VTable {
                 let role = new Select().setOptions([
                         { value:"std", text:"Standard" },
                         { value:"cnt", text:"Contributor" },
-                        { value:"adm", text:"Administrator" }
+                        { value:"adm", text:"Administrator" },
+                        { value:"tst", text:"Tester" }
                     ])
                     .addClass("form-input-select")
                     .setValue(user.role)
                     .addClass("user-role");
-                line = {login, firstName, lastName, avatar, email, role, status};
+                line = {id:user.id, login, firstName, lastName, avatar, email, role, status};
                 lines.push([login, firstName, lastName, avatar, email, role, status]);
             }
             let title = new Span(page.title)
@@ -618,6 +717,7 @@ export class CBUserList extends VTable {
                 columns: ["Login", "First Name", "LastName", "Avatar", "Email", "Role", "Status"],
                 data: lines
             });
+            this._currentPage = page.currentPage;
             let first = page.pageCount<=5 ? 0 : page.currentPage-2;
             if (first<0) first = 0;
             let last = page.pageCount<=5 ? page.pageCount-1 : page.currentPage+2;
@@ -653,18 +753,58 @@ function getUsers(pageIndex) {
 
 export var vUserList = new CBUserListPage({
     loadPage:(pageIndex, update)=>{
-        update({
-            title: "User List",
-            pageCount: 3,
-            currentPage: pageIndex,
-            userCount: 55,
-            firstUser: pageIndex*20+1,
-            lastUser: pageIndex*20+20,
-            users: getUsers(pageIndex)
-        });
+        sendGet("/api/account/all?page="+pageIndex, null,
+            (text, status) => {
+                console.log("Load user success: " + text + ": " + status);
+                let response = JSON.parse(text);
+                update({
+                    title: "User List",
+                    pageCount: Math.ceil(response.count/response.pageSize),
+                    currentPage: response.page,
+                    userCount: response.count,
+                    firstUser: response.page*response.pageSize+1,
+                    lastUser: response.page*response.pageSize+response.users.length,
+                    users: response.users//getUsers(pageIndex)
+                });
+                connection = {
+                    login: vLogin.connection
+                };
+            },
+            (text, status) => {
+                console.log("Load user failure: " + text + ": " + status);
+                vLogin.showMessage(text);
+            }
+        );
     },
+    saveUser: user=>{
+        sendPost("/api/account/create",
+                user,
+                (text, status) => {
+                    console.log("Account creation success: " + text + ": " + status);
+                    vUserList.createUserModal.hide();
+                    vUserList.refresh();
+                },
+                (text, status) => {
+                    console.log("Account creation failure: " + text + ": " + status);
+                    vUserList.createUserModal.showMessage("Fail to create User", text);
+                }
+            );
+        },
     selectUser: user=>{
-        new CBEditUser({title: "Edit User", user}).show();
+        let userEditor = new CBEditUser({title: "Edit User", user, save: user=>{
+            sendPost("/api/account/update/"+user.id,
+                user,
+                (text, status) => {
+                    console.log("Account update success: " + text + ": " + status);
+                    userEditor.hide();
+                    vUserList.refresh();
+                },
+                (text, status) => {
+                    console.log("Account update failure: " + text + ": " + status);
+                    userEditor.showMessage("Fail to update User", text);
+                }
+            );
+        }}).show();
     }
 });
 
@@ -682,6 +822,7 @@ export class CBPageContent extends VPageContent {
     }
 
     showUserList() {
+        vUserList.loadUsers();
         this._showUserList(false, ()=> {
                 historize("users", "vPageContent._showUserList(true);")
             }

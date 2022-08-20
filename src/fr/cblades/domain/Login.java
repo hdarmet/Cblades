@@ -15,8 +15,7 @@ public class Login extends BaseEntity {
 
     String login="";
     String password="";
-    boolean admin=false;
-    boolean test=false;
+    LoginRole role = LoginRole.STANDARD;
 
     public String getLogin() {
         return this.login;
@@ -26,27 +25,54 @@ public class Login extends BaseEntity {
         return this;
     }
 
-    public String getPassword() {
-        return password;
-    }
+    public String getPassword() { return password; }
     public Login setPassword(String password) {
         this.password = password;
         return this;
     }
 
-    public boolean isAdmin() {
-        return this.admin;
+    public LoginRole getRole() { return role; }
+    public Login setRole(LoginRole role) {
+        this.role = role;
+        return this;
     }
-    public Login setAdmin(boolean admin) {
-        this.admin = admin;
+
+    public boolean isAdministrator() {
+        return this.role==LoginRole.ADMINISTRATOR;
+    }
+    public Login setAdministrator(boolean admin) {
+        if (admin) {
+            this.role = LoginRole.ADMINISTRATOR;
+        }
+        else if (this.role==LoginRole.ADMINISTRATOR) {
+            this.role = LoginRole.STANDARD;
+        }
+        return this;
+    }
+
+    public boolean isContributor() {
+        return this.role==LoginRole.CONTRIBUTOR;
+    }
+    public Login setContributor(boolean contrib) {
+        if (contrib) {
+            this.role = LoginRole.CONTRIBUTOR;
+        }
+        else if (this.role==LoginRole.CONTRIBUTOR) {
+            this.role = LoginRole.STANDARD;
+        }
         return this;
     }
 
     public boolean isTest() {
-        return this.test;
+        return this.role==LoginRole.TEST;
     }
     public Login setTest(boolean test) {
-        this.test = test;
+        if (test) {
+            this.role = LoginRole.TEST;
+        }
+        else if (this.role==LoginRole.TEST) {
+            this.role = LoginRole.STANDARD;
+        }
         return this;
     }
 
@@ -60,8 +86,8 @@ public class Login extends BaseEntity {
             md.update(password.getBytes());
             byte[] bytes = md.digest();
             StringBuilder sb = new StringBuilder();
-            for(int i=0; i< bytes.length ;i++) {
-                sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+            for (byte aByte : bytes) {
+                sb.append(Integer.toString((aByte & 0xff) + 0x100, 16).substring(1));
             }
             return sb.toString();
         }

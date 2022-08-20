@@ -656,6 +656,14 @@ export class UndoRedo {
 
 }
 
+export function sendGet(uri, requestContent, success, failure, files) {
+    getDrawPlatform().requestServer(uri, requestContent, success, failure, files, 'GET');
+}
+
+export function sendPost(uri, requestContent, success, failure, files) {
+    getDrawPlatform().requestServer(uri, requestContent, success, failure, files, 'POST');
+}
+
 document.body.onkeydown = event=>{
     if (event.ctrlKey) {
         if (event.key === 'z' && UndoRedo.active) {

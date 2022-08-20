@@ -68,7 +68,7 @@ public class SetupApplicationTest implements TestSeawave, CollectionSunbeam, Dat
 		dataManager.register("createQuery", null, null, "select l from Login l where l.login=:login");
 		dataManager.register("setParameter", null, null,"login", "admin");
 		dataManager.register("getSingleResult",
-				setEntityId(new Login().setLogin("admin").setPassword("admin").setAdmin(true), 1), null);
+				setEntityId(new Login().setLogin("admin").setPassword("admin").setAdministrator(true), 1), null);
 		String[] roles = rolesFinder.find("admin");
 		Assert.assertArrayEquals(new String[]{StandardUsers.ADMIN, StandardUsers.USER}, roles);
 		dataManager.register("createQuery", null, null, "select l from Login l where l.login=:login");
@@ -95,7 +95,7 @@ public class SetupApplicationTest implements TestSeawave, CollectionSunbeam, Dat
 		dataManager.register("createQuery", null, null, "select l from Login l where l.login=:login");
 		dataManager.register("setParameter", null, null,"login", "admin");
 		dataManager.register("getSingleResult",
-				setEntityId(new Login().setLogin("admin").setPassword("admin").setAdmin(true), 1), null);
+				setEntityId(new Login().setLogin("admin").setPassword("admin").setAdministrator(true), 1), null);
 		String[] roles = rolesFinder.find("admin");
 		Assert.assertArrayEquals(new String[]{StandardUsers.ADMIN, StandardUsers.USER}, roles);
 		dataManager.register("createQuery", null, null, "select l from Login l where l.login=:login");
@@ -122,7 +122,7 @@ public class SetupApplicationTest implements TestSeawave, CollectionSunbeam, Dat
 			Login login = (Login) entity;
 			if (!"admin".equals(login.getLogin())) return false;
 			if (!"21232f297a57a5a743894a0e4a801fc3".equals(login.getPassword())) return false;
-			if (!login.isAdmin()) return false;
+			if (!login.isAdministrator()) return false;
 			if (login.isTest()) return false;
 			return true;
 		});
@@ -135,7 +135,7 @@ public class SetupApplicationTest implements TestSeawave, CollectionSunbeam, Dat
 			Login login = (Login) entity;
 			if (!"test".equals(login.getLogin())) return false;
 			if (!"098f6bcd4621d373cade4e832627b4f6".equals(login.getPassword())) return false;
-			if (login.isAdmin()) return false;
+			if (login.isAdministrator()) return false;
 			if (!login.isTest()) return false;
 			return true;
 		});
@@ -148,12 +148,12 @@ public class SetupApplicationTest implements TestSeawave, CollectionSunbeam, Dat
 		dataManager.register("createQuery", null, null, "select l from Login l where l.login=:login");
 		dataManager.register("setParameter", null, null,"login", "admin");
 		dataManager.register("getResultList", arrayList(
-				setEntityId(new Login().setLogin("admin").setPassword("admin").setAdmin(true), 1)
+				setEntityId(new Login().setLogin("admin").setPassword("admin").setAdministrator(true), 1)
 		), null);
 		dataManager.register("createQuery", null, null, "select l from Login l where l.login=:login");
 		dataManager.register("setParameter", null, null,"login", "test");
 		dataManager.register("getResultList", arrayList(
-				setEntityId(new Login().setLogin("test").setPassword("test").setAdmin(true), 1)
+				setEntityId(new Login().setLogin("test").setPassword("test").setAdministrator(true), 1)
 		), null);
 		dataManager.register("flush", null, null);
 		SetupApplication.declareStandardUsers();

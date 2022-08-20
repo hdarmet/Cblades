@@ -227,11 +227,10 @@ export class VWarning extends VModal {
         this.addClass("message-modal");
         this._display = new VDisplay({ref:"message-display"});
         this.addContainer({
-                ref: "message-display-container",
-                container: new VFormContainer({columns: 1})
-                    .addField({field: this._display})
-            }
-        );
+            ref: "message-display-container",
+            container: new VFormContainer({columns: 1})
+                .addField({field: this._display})
+        });
     }
 
     show({title, message}) {

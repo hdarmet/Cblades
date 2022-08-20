@@ -40,7 +40,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 			Login login = (Login) entity;
 			if (!"He".equals(login.getLogin())) return false;
 			if (!"298cde70c32a57b84d0a546fedbb2596".equals(login.getPassword())) return false;
-			if (login.isAdmin()) return false;
+			if (login.isAdministrator()) return false;
 			return true;
 		});
 		dataManager.register("flush", null, null);
@@ -93,8 +93,8 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	public void listAllLogins() {
 		dataManager.register("createQuery", null, null, "select l from Login l");
 		dataManager.register("getResultList", arrayList(
-			setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAdmin(true), 1),
-			setEntityId(new Login().setLogin("Paul").setPassword("PaUl").setAdmin(false), 2)
+			setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAdministrator(true), 1),
+			setEntityId(new Login().setLogin("Paul").setPassword("PaUl").setAdministrator(false), 2)
 		), null);
 		securityManager.doConnect("admin", 0);
 		Json result = loginController.getAll(params(), null);
@@ -123,7 +123,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void getOneLoginById() {
 		dataManager.register("find",
-			setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAdmin(true), 1L),
+			setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAdministrator(true), 1L),
 			null, Login.class, 1L);
 		securityManager.doConnect("admin", 0);
 		Json result = loginController.getById(params("id", "1"), null);
@@ -136,7 +136,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void tryToFindAnUnknownLogin() {
 		dataManager.register("find",
-			setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAdmin(true), 1L),
+			setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAdministrator(true), 1L),
 				new EntityNotFoundException("Entity Does Not Exists"), Login.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
@@ -167,7 +167,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void deleteALogin() {
 		dataManager.register("find",
-			setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAdmin(true), 1L),
+			setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAdministrator(true), 1L),
 			null, Login.class, 1L);
 		Ref<Login> rLogin = new Ref<>();
 		dataManager.register("merge", (Supplier)()->rLogin.get(), null,
@@ -246,7 +246,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void upadteALogin() {
 		dataManager.register("find",
-				setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAdmin(true), 1L),
+				setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAdministrator(true), 1L),
 				null, Login.class, 1L);
 		dataManager.register("flush", null, null);
 		securityManager.doConnect("admin", 0);
@@ -315,7 +315,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 
 	@Test
 	public void connectSuccessfully() {
-		Login userHe = (Login)setEntityId(new Login().setLogin("He").setPassword("298cde70c32a57b84d0a546fedbb2596").setAdmin(false), 1);
+		Login userHe = (Login)setEntityId(new Login().setLogin("He").setPassword("298cde70c32a57b84d0a546fedbb2596").setAdministrator(false), 1);
 		securityManager.register(
 			new MockSecurityManagerImpl.Credential("He", "298cde70c32a57b84d0a546fedbb2596", StandardUsers.USER)
 		);
@@ -385,10 +385,10 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 
 	@Test
 	public void checkLoginEntity() {
-		Login login = new Login().setLogin("Pieter").setPassword("298cde70c32a57b84d0a546fedbb2596").setAdmin(false).setTest(true);
+		Login login = new Login().setLogin("Pieter").setPassword("298cde70c32a57b84d0a546fedbb2596").setAdministrator(false).setTest(true);
 		Assert.assertEquals(login.getLogin(), "Pieter");
 		Assert.assertEquals(login.getPassword(), "298cde70c32a57b84d0a546fedbb2596");
-		Assert.assertFalse(login.isAdmin());
+		Assert.assertFalse(login.isAdministrator());
 		Assert.assertTrue(login.isTest());
 	}
 

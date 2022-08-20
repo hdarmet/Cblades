@@ -59,7 +59,14 @@ public interface DataSunbeam {
 	default <E> List<E> getResultList(Query query) {
 		return (List<E>)query.getResultList();
 	}
-	
+
+	@SuppressWarnings("unchecked")
+	default <E> List<E> getPagedResultList(Query query, int firstRow, int maxRowCount) {
+		query.setFirstResult(firstRow);
+		query.setMaxResults(maxRowCount);
+		return (List<E>)query.getResultList();
+	}
+
 	default <E> List<E> getResultList(EntityManager em, String queryString, Object ... params) {
 		Query query = em.createQuery(queryString);
 		setParams(query, params);

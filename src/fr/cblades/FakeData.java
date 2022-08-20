@@ -35,6 +35,13 @@ public class FakeData {
             data.persist(em, new Banner().setName("roughneck-banner-1").setPath("./../images/units/mercenaries/banners/banner1.png"));
             data.persist(em, new Banner().setName("roughneck-banner-2").setPath("./../images/units/mercenaries/banners/banner2.png"));
         });
+        data.inTransaction(em->{
+            Account temrad = new Account()
+                .setFirstName("Henri").setLastName("Darmet").setEmail("hdarmet@gmail.com")
+                .setAccess(new Login().setLogin("temrad").setPassword(Login.encrypt("P@ssW0rd.")))
+                .setAvatar("../images/site/avatars/my-avatar.png").setStatus(AccountStatus.ACTIVE);
+            data.persist(em, temrad);
+        });
     }
 
 }

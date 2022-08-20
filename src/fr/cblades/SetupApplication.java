@@ -3,6 +3,8 @@ package fr.cblades;
 
 import java.util.logging.Logger;
 
+import fr.cblades.domain.Account;
+import fr.cblades.domain.AccountStatus;
 import fr.cblades.domain.Login;
 import org.summer.Ref;
 import org.summer.annotation.Launch;
@@ -51,10 +53,10 @@ public class SetupApplication {
             data.inTransaction(em->{
                 login.set(data.getSingleResult(em, "select l from Login l where l.login=:login", "login", user));
             });
-            return login.get().isAdmin() ?
-                    new String[] {StandardUsers.ADMIN, StandardUsers.USER} :
-                    login.get().isTest() ? new String[] {StandardUsers.TEST} :
-                            new String[] {StandardUsers.USER};
+            return login.get().isAdministrator() ?
+                new String[] {StandardUsers.ADMIN, StandardUsers.USER} :
+                login.get().isTest() ? new String[] {StandardUsers.TEST} :
+                        new String[] {StandardUsers.USER};
         });
     }
 
@@ -63,10 +65,18 @@ public class SetupApplication {
         DataSunbeam data = new DataSunbeam() {};
         data.inTransaction(em->{
             if (data.getResultList(em, "select l from Login l where l.login=:login", "login", "admin").isEmpty()) {
-                data.persist(em, new Login().setLogin("admin").setPassword(Login.encrypt("admin")).setAdmin(true));
+                Account administrator = new Account()
+                    .setFirstName("Cursed").setLastName("Blades").setEmail("cursed.blades@gmail.com")
+                    .setAccess(new Login().setLogin("admin").setPassword(Login.encrypt("@dmInIstrat0r.")).setAdministrator(true))
+                    .setAvatar("../images/site/avatars/default-avatar.png").setStatus(AccountStatus.ACTIVE);
+                data.persist(em, administrator);
             }
             if (data.getResultList(em, "select l from Login l where l.login=:login", "login", "test").isEmpty()) {
-                data.persist(em, new Login().setLogin("test").setPassword(Login.encrypt("test")).setTest(true));
+                Account tester = new Account()
+                    .setFirstName("Cursed").setLastName("Knife").setEmail("cursed.knife@gmail.com")
+                    .setAccess(new Login().setLogin("test").setPassword(Login.encrypt("Test")).setTest(true))
+                    .setAvatar("../images/site/avatars/default-avatar.png").setStatus(AccountStatus.ACTIVE);
+                data.persist(em, tester);
             }
         });
     }
