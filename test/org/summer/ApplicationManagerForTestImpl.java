@@ -2,12 +2,16 @@ package org.summer;
 
 import org.summer.controller.ControllerManager;
 import org.summer.data.DataManager;
+import org.summer.platform.PlatformManager;
+
+import java.io.*;
 
 public class ApplicationManagerForTestImpl extends ApplicationManager {
 
 	Injector injector = new InjectorForTest();
 
 	DataManager dataManager = new MockDataManagerImpl();
+	PlatformManager platformManager;
 	org.summer.security.SecurityManager securityManager = new MockSecurityManagerImpl();
 
 	@Override
@@ -36,6 +40,17 @@ public class ApplicationManagerForTestImpl extends ApplicationManager {
 	@Override
 	public ControllerManager getControllerManager() {
 		return null;
+	}
+
+	@Override
+	public PlatformManager getPlatformManager() {
+		return this.platformManager;
+	}
+
+	@Override
+	public ApplicationManager setPlatformManager(PlatformManager platformManager) {
+		this.platformManager = platformManager;
+		return this;
 	}
 
 	public ApplicationManagerForTestImpl setDataManager(DataManager dataManager) {

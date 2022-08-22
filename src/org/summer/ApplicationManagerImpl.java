@@ -14,6 +14,7 @@ import org.summer.controller.ControllerManager;
 import org.summer.controller.ControllerManagerImpl;
 import org.summer.data.DataManager;
 import org.summer.data.DataManagerImpl;
+import org.summer.platform.PlatformManager;
 import org.summer.security.SecurityManagerImpl;
 
 public class ApplicationManagerImpl extends ApplicationManager {
@@ -115,5 +116,17 @@ public class ApplicationManagerImpl extends ApplicationManager {
 		appMethods.stream().forEach(executeASetUpMethod);
 	}
 
+	PlatformManager platformManager;
+
+	@Override
+	public PlatformManager getPlatformManager() {
+		return this.platformManager;
+	}
+
+	@Override
+	public ApplicationManagerImpl setPlatformManager(PlatformManager platformManager) {
+		this.platformManager = platformManager;
+		return this;
+	}
 
 }

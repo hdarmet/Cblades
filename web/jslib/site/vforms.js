@@ -739,10 +739,12 @@ export class VFileLoader extends Vitamin(Div) {
 
     dropHandler(event) {
         event.preventDefault();
+        this._files = [];
         if (event.dataTransfer.items) {
             for (let i = 0; i < event.dataTransfer.items.length; i++) {
                 if (event.dataTransfer.items[i].kind === 'file') {
                     let file = event.dataTransfer.items[i].getAsFile();
+                    this._files.push(file);
                     console.log('... file[' + i + '].name = ' + file.name);
                     if (!this._accept || this._accept(file)) {
                         this.showFile(file);
@@ -751,7 +753,9 @@ export class VFileLoader extends Vitamin(Div) {
             }
         } else {
             for (let i = 0; i < event.dataTransfer.files.length; i++) {
-                console.log('... file[' + i + '].name = ' + event.dataTransfer.files[i].name);
+                let file =event.dataTransfer.files[i];
+                this._files.push(file);
+                console.log('... file[' + i + '].name = ' + file.name);
             }
         }
     }
@@ -788,6 +792,10 @@ export class VFileLoader extends Vitamin(Div) {
     onChange(action) {
         this._changeAction = action;
         return this;
+    }
+
+    get files() {
+        return this._files;
     }
 
     get imageSrc() {
@@ -842,8 +850,8 @@ export class VFileLoaderField extends VField {
         return this._loader;
     }
 
-    get file() {
-        return this._loader.file;
+    get files() {
+        return this._loader.files;
     }
 
     get imageSrc() {

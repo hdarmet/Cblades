@@ -1,10 +1,6 @@
 package org.summer;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,18 +9,18 @@ public class FileSpecification {
 	
 	String name;
 	String fileName;
-	String type;
+	String extension;
 	InputStream stream;
 	
-	public FileSpecification(String name, String fileName, String type, InputStream stream) {
+	public FileSpecification(String name, String fileName, String extension, InputStream stream) {
 		this.name = name;
 		this.fileName = fileName;
-		this.type = type;
+		this.extension = extension;
 		this.stream = stream;
 	}
 	
 	public FileSpecification(String name, String fileName, InputStream stream) {
-		this(name, fileName, getTypeFromExtension(fileName), stream);
+		this(name, fileName, getExtension(fileName), stream);
 	}
 	
 	public FileSpecification(String name, InputStream stream, String type) {
@@ -32,7 +28,7 @@ public class FileSpecification {
 	}
 	
 	public FileSpecification(String filePath) {
-		this(getNameFromPath(filePath), getFileStreamFromPath(filePath), getTypeFromExtension(filePath));
+		this(getNameFromPath(filePath), getInputFileStreamFromPath(filePath), getExtension(filePath));
 	}
 	
 	public String getName() {
@@ -42,22 +38,25 @@ public class FileSpecification {
 	public String getFileName() {
 		return fileName;
 	}
-	
+
+	public String getExtension() {
+		return extension;
+	}
+
 	public String getType() {
-		return type;
+		return mimeTypes.get(extension);
 	}
 	
 	public InputStream getStream() {
 		return stream;
 	}
 	
-	static public String getTypeFromExtension(String fileName) {
+	static public String getExtension(String fileName) {
 		int index = fileName.lastIndexOf(".");
 		if (index==-1 || index>=fileName.length()-1) {
 			return null;
 		}
-		String extension = fileName.substring(index+1);
-		return mimeTypes.get(extension);
+		return fileName.substring(index+1);
 	}
 	
 	static public String getNameFromPath(String filePath) {
@@ -76,23 +75,21 @@ public class FileSpecification {
 	public static String getPath() {
 		try {
 			String path = FileSpecification.class.getClassLoader().getResource("").getPath();
-			String fullPath;
-			fullPath = URLDecoder.decode(path, "UTF-8");
-			String pathArr[] = fullPath.split("/WEB-INF/classes/");
-			return pathArr[0];
+			String fullPath = URLDecoder.decode(path, "UTF-8");
+			return fullPath.split("/WEB-INF/classes/")[0];
 		} catch (UnsupportedEncodingException e) {
 			throw new SummerException(e);
 		}
 	}
 
-	static public InputStream getFileStreamFromPath(String filePath) {
+	static public InputStream getInputFileStreamFromPath(String filePath) {
 		try {
 			return new FileInputStream(new File(getPath() + File.separatorChar + filePath));
 		} catch (FileNotFoundException e) {
 			throw new SummerException(e);
 		}
 	}
-	
+
 	static public String getFileNameFromName(String name, String type) {
 		String extension = extensions.get(type);
 		return extension==null ? name : name+"."+extension;

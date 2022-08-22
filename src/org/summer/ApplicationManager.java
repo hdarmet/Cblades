@@ -2,6 +2,7 @@ package org.summer;
 
 import org.summer.controller.ControllerManager;
 import org.summer.data.DataManager;
+import org.summer.platform.PlatformManager;
 
 public abstract class ApplicationManager {
 
@@ -26,5 +27,7 @@ public abstract class ApplicationManager {
 	public abstract org.summer.security.SecurityManager getSecurityManager();
 	
 	public abstract ControllerManager getControllerManager();
-	
+
+	public abstract PlatformManager getPlatformManager();
+	public abstract ApplicationManager setPlatformManager(PlatformManager platformManager);
 }

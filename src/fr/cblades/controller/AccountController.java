@@ -3,31 +3,58 @@ package fr.cblades.controller;
 import com.sun.accessibility.internal.resources.accessibility;
 import fr.cblades.StandardUsers;
 import fr.cblades.domain.*;
+import org.summer.FileSpecification;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
 import org.summer.annotation.Controller;
+import org.summer.annotation.MIME;
 import org.summer.annotation.REST;
 import org.summer.annotation.REST.Method;
 import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.data.DataSunbeam;
+import org.summer.platform.FileSunbeam;
+import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Controller
-public class AccountController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
-	
+public class AccountController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
+
+	@MIME(url="/api/account/images/:imagename")
+	public FileSpecification getImage(Map<String, Object> params) {
+		try {
+			Ref<FileSpecification> result = ref();
+			String imageName = (String)params.get("imagename");
+			result.set(new FileSpecification(imageName, imageName, PlatformManager.get().getInputStream("/avatars/"+imageName)));
+			return result.get();
+		} catch (PersistenceException pe) {
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+		}
+	}
+
+	String storeAvatar (Map<String, Object> params, long id) {
+		FileSpecification[] files = (FileSpecification[])params.get(MULTIPART_FILES);
+		if (files.length>0) {
+			if (files.length>1) throw new SummerControllerException(400, "Only one avatar file may be loaded.");
+			String fileName = "avatar"+id+"."+files[0].getExtension();
+			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/avatars/"+fileName));
+			return fileName;
+		}
+		return null;
+	}
+
 	@REST(url="/api/account/create", method=Method.POST)
-	public Json create(Map<String, String> params, Json request) {
+	public Json create(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				Ref<Json> result = new Ref<>();
@@ -95,14 +122,16 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 	}
 	
 	@REST(url="/api/account/update/:id", method=Method.POST)
-	public Json update(Map<String, String> params, Json request) {
+	public Json update(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
-					String id = params.get("id");
+					String id = (String)params.get("id");
 					Account account = findAccount(em, new Long(id));
+					String avatarName = storeAvatar(params, account.getId());
 					writeToAccount(request, account);
+					account.setAvatar("/api/account/images/"+avatarName);
 					flush(em);
 					result.set(readFromAccount(account));
 				});

@@ -615,6 +615,12 @@ export class CBEditUser extends VModal {
         this.addClass("user-form");
     }
 
+    get avatarFiles() {
+        return this._avatar.files && this._avatar.files.length===1 ?
+            [{key:"avatar", file:this._avatar.files[0]}] :
+            [];
+    }
+
     get specification() {
         return {
             id: this._id,
@@ -802,7 +808,8 @@ export var vUserList = new CBUserListPage({
                 (text, status) => {
                     console.log("Account update failure: " + text + ": " + status);
                     userEditor.showMessage("Fail to update User", text);
-                }
+                },
+                userEditor.avatarFiles
             );
         }}).show();
     }

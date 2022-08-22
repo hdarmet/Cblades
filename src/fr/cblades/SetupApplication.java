@@ -6,11 +6,13 @@ import java.util.logging.Logger;
 import fr.cblades.domain.Account;
 import fr.cblades.domain.AccountStatus;
 import fr.cblades.domain.Login;
+import org.summer.ApplicationManager;
 import org.summer.Ref;
 import org.summer.annotation.Launch;
 import org.summer.annotation.Setup;
 import org.summer.data.DataSunbeam;
 import org.summer.data.JPAOnHibernate;
+import org.summer.platform.LocalPlatformManagerImpl;
 import org.summer.security.SecurityManager;
 
 public class SetupApplication {
@@ -58,6 +60,16 @@ public class SetupApplication {
                 login.get().isTest() ? new String[] {StandardUsers.TEST} :
                         new String[] {StandardUsers.USER};
         });
+    }
+
+    @Setup
+    public static void setPlatformManager() {
+        if (isGae()) {
+            // A faire...
+        }
+        else {
+            ApplicationManager.get().setPlatformManager(new LocalPlatformManagerImpl("C:\\Content\\Blades"));
+        }
     }
 
     @Launch

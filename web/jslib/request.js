@@ -39,7 +39,6 @@ export function getCookie(cname) {
     return "";
 }
 
-/*
 export function loadFile(object, field, file) {
     let reader  = new FileReader();
     reader.addEventListener("loadend", function () {
@@ -48,28 +47,22 @@ export function loadFile(object, field, file) {
     reader.readAsDataURL(file);
     object[field] = reader.result;
 }
-*/
 
 export function requestServer(uri, requestContent, success, failure, files, method='POST') {
     let cookie = getCookie("xsrfToken");
     let body;
     let headers;
-/*
     if (files) {
         body = new FormData();
         if (requestContent) {
             body.append('request-part', JSON.stringify(requestContent));
         }
-        for (let file in files) {
-            body.append(file.name, file.file, file.file.name);
+        for (let file of files) {
+            body.append(file.key, file.file, file.file.name);
         }
-        headers = {
-            'Accept': '*\/*',
-            'Content-Type': 'multipart/form-data'
-        };
+        headers = {};
     }
     else {
- */
         headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
@@ -77,7 +70,7 @@ export function requestServer(uri, requestContent, success, failure, files, meth
         if (requestContent) {
             body = JSON.stringify(requestContent);
         }
-//    }
+    }
 
     if (cookie) headers['XSRF-TOKEN'] = cookie;
     let init = {
