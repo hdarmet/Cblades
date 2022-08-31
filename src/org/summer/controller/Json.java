@@ -61,7 +61,21 @@ public class Json implements Iterable {
 				throw new SummerException("Malformed JSON content : "+content, e2);
 			}
 		}
+	}
 
+	public static Json createJsonFromMap(Map<String, ?> content) {
+		Object json;
+		try {
+			json = new JSONObject(content);
+			return new Json((JSONObject)json);
+		} catch (JSONException e) {
+			try {
+				json = new JSONArray(content);
+				return new Json((JSONArray)json);
+			} catch (JSONException e2) {
+				throw new SummerException("Malformed JSON content : "+content, e2);
+			}
+		}
 	}
 	
 	public static Json createJsonObject() {

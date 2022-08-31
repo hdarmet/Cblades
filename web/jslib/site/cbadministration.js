@@ -339,7 +339,15 @@ export class CBLogin extends VModal {
         this._passwordForgotten = new VLink({
             ref:"forgotPsw", text:"Forgot Password ?",
             onClick:event=>{
-                this._forgottenMessage.message = "Message sent to your email address";
+                sendGet("/api/login/forgot-password?login=" + this._loginField.value,
+                    null,
+                    (text, status) => {
+                        this._forgottenMessage.message = "Message sent to your email address";
+                    },
+                    (text, status) => {
+                        this.showMessage("Unable To Send Mail", text);
+                    }
+                )
             }
         });
         this._signInContainer = new VFormContainer({ref:"signin", columns:1},$=>{$

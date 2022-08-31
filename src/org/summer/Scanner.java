@@ -17,7 +17,10 @@ public interface Scanner {
 
 	Collection<Class<?>> getClassesAnnotatedBy(
 			Class<? extends Annotation> annotationClass);
-	
+
+	Collection<Class<?>> getSummerClassesAnnotatedBy(
+			Class<? extends Annotation> annotationClass);
+
 	Collection<Method> getMethodsAnnotatedBy(
 			Class<? extends Annotation> annotationClass,
 			Class<? extends Annotation> profileAnnotationClass);

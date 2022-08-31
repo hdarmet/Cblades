@@ -15,6 +15,10 @@ public interface ControllerSunbeam {
 		return new Verifier(json);
 	}
 
+	default Verifier verify(Map<String, ?> params) {
+		return new Verifier(params);
+	}
+
 	default Synchronizer sync(Json json, BaseEntity target) {
 		return new Synchronizer(json, target);
 	}

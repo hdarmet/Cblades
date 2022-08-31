@@ -46,8 +46,8 @@ public class ScannerImpl implements Scanner {
 	
 	@Override
 	public Collection<Class<?>> getClassesAnnotatedBy(
-			Class<? extends Annotation> annotationClass,
-			Class<? extends Annotation> profileAnnotationClass) 
+		Class<? extends Annotation> annotationClass,
+		Class<? extends Annotation> profileAnnotationClass)
 	{
 		return this.appReflections.getTypesAnnotatedWith(annotationClass).stream()
 		.filter(componentClass->{
@@ -55,6 +55,13 @@ public class ScannerImpl implements Scanner {
 					getProfilesFromClassAnnotation(
 						componentClass, profileAnnotationClass)));			
 		}).collect(Collectors.toList());
+	}
+
+	@Override
+	public Collection<Class<?>> getSummerClassesAnnotatedBy(
+		Class<? extends Annotation> annotationClass)
+	{
+		return this.summerReflections.getTypesAnnotatedWith(annotationClass);
 	}
 
 	@Override

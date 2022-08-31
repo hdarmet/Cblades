@@ -4,6 +4,7 @@ import org.summer.data.Synchronizer;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -19,7 +20,12 @@ public class Verifier {
 		this.json = json;
 		this.result = null;
 	}
-	
+
+	public Verifier(Map<String, ?> params) {
+		this.json = Json.createJsonFromMap(params);
+		this.result = null;
+	}
+
 	public Verifier check(Predicate<Json> predicate, String field, String message) {
 		if (!predicate.test(json)) {
 			if (this.result==null) {

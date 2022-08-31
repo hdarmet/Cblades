@@ -19,7 +19,7 @@ public interface FileSunbeam {
             target.close();
         }
         catch (IOException ioe) {
-            throw new SummerException("IOException while copying streams.", ioe);
+            throw new SummerPlatformException("IOException while copying streams.", ioe);
         }
     }
 

@@ -2,11 +2,16 @@ package org.summer.platform;
 
 import org.summer.SummerException;
 
+import javax.mail.*;
 import java.io.*;
+import java.util.Properties;
 
 public class LocalPlatformManagerImpl implements PlatformManager  {
 
-    String basePath;
+    String basePath = "";
+    Properties mailParams= new Properties();
+    String mailFrom = "";
+    String mailPassword = "";
 
     public LocalPlatformManagerImpl(String basePath) {
         this.basePath = basePath;
@@ -31,4 +36,37 @@ public class LocalPlatformManagerImpl implements PlatformManager  {
             throw new SummerException(String.format("File %s", basePath + filePath));
         }
     }
+
+    public LocalPlatformManagerImpl setMailProperties(String ... params) {
+        for (int index=0; index<params.length; index+=2) {
+            this.mailParams.put(params[index], params[index+1]);
+        }
+        return this;
+    }
+
+    public LocalPlatformManagerImpl setMailCredentials(String from, String password) {
+        this.mailFrom = from;
+        this.mailPassword = password;
+        return this;
+    }
+
+    @Override
+    public Session getMailSession() {
+        return Session.getInstance(this.mailParams);
+    }
+
+    @Override
+    public void sendMail(Session session, Message msg) {
+        try {
+            Transport transport = session.getTransport("smtp");
+            transport.connect(
+                (String)this.mailParams.get("mail.smtp.host"),
+                Integer.parseInt((String)this.mailParams.get("mail.smtp.port")),
+                this.mailFrom, this.mailPassword);
+            transport.sendMessage(msg, msg.getAllRecipients());
+        } catch (MessagingException me) {
+            throw new SummerPlatformException("Mail exception", me);
+        }
+    }
+
 }

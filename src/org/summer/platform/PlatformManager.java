@@ -2,17 +2,23 @@ package org.summer.platform;
 
 import org.summer.ApplicationManager;
 
+import javax.mail.Message;
+import javax.mail.Session;
+import javax.mail.internet.MimeMessage;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public abstract interface PlatformManager {
+public interface PlatformManager {
 
-    public static PlatformManager get() {
+    static PlatformManager get() {
         return ApplicationManager.get().getPlatformManager();
     }
 
-    public InputStream getInputStream(String filePath);
+    InputStream getInputStream(String filePath);
 
-    public OutputStream getOutputStream(String filePath);
+    OutputStream getOutputStream(String filePath);
 
+    Session getMailSession();
+
+    void sendMail(Session session, Message msg);
 }

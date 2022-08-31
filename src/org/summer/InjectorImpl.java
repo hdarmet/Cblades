@@ -256,6 +256,10 @@ public class InjectorImpl implements Injector {
 	
 	void installComponents() {
 		Set<Class<?> > componentClasses = new HashSet<>();
+		componentClasses.addAll(Scanner.get().getSummerClassesAnnotatedBy(OneShotScoped.class));
+		componentClasses.addAll(Scanner.get().getSummerClassesAnnotatedBy(RequestScoped.class));
+		componentClasses.addAll(Scanner.get().getSummerClassesAnnotatedBy(SessionScoped.class));
+		componentClasses.addAll(Scanner.get().getSummerClassesAnnotatedBy(SingletonScoped.class));
 		componentClasses.addAll(Scanner.get().getClassesAnnotatedBy(OneShotScoped.class));
 		componentClasses.addAll(Scanner.get().getClassesAnnotatedBy(RequestScoped.class));
 		componentClasses.addAll(Scanner.get().getClassesAnnotatedBy(SessionScoped.class));

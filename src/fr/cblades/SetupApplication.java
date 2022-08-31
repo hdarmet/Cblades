@@ -12,6 +12,7 @@ import org.summer.annotation.Launch;
 import org.summer.annotation.Setup;
 import org.summer.data.DataSunbeam;
 import org.summer.data.JPAOnHibernate;
+import org.summer.platform.GAEPlatformManagerImpl;
 import org.summer.platform.LocalPlatformManagerImpl;
 import org.summer.security.SecurityManager;
 
@@ -64,11 +65,19 @@ public class SetupApplication {
 
     @Setup
     public static void setPlatformManager() {
-        if (isGae()) {
-            // A faire...
+        if (!isGae()) {
+            GAEPlatformManagerImpl gaePlatformManager = new GAEPlatformManagerImpl("cblades.appspot.com");
+            ApplicationManager.get().setPlatformManager(gaePlatformManager);
         }
         else {
-            ApplicationManager.get().setPlatformManager(new LocalPlatformManagerImpl("C:\\Content\\Blades"));
+            LocalPlatformManagerImpl  localPlatformManager = new LocalPlatformManagerImpl("C:\\Content\\Blades"
+            ).setMailProperties(
+                "mail.smtp.host", "smtp.mailtrap.io",
+                "mail.smtp.port", "2525"
+            ).setMailCredentials(
+              "0babec488ec1bd", "6330a2ef322b83"
+            );
+            ApplicationManager.get().setPlatformManager(localPlatformManager);
         }
     }
 

@@ -1,6 +1,7 @@
 package fr.cblades.controller;
 
 import fr.cblades.StandardUsers;
+import fr.cblades.domain.Account;
 import fr.cblades.domain.Login;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
@@ -11,6 +12,8 @@ import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.data.DataSunbeam;
+import org.summer.platform.MailService;
+import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
 
 import javax.persistence.EntityManager;
@@ -141,7 +144,37 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			return response;
 		});
 	}
-	
+
+	@REST(url="/api/login/forgot-password", method=Method.GET)
+	public Json forgotPassword(Map<String, String> params, Json request) {
+		try {
+			verify(params)
+				.checkRequired("login")
+				.checkMaxSize("login", 20)
+				.ensure();
+			inTransaction(em->{
+				String login = params.get("login");
+				Collection<Account> accounts = findAccounts(
+					em.createQuery("select a from Account a, Login l where a.access = l and l.login=:login"),
+						"login", login);
+				if (accounts.isEmpty()) {
+					throw new SummerControllerException(404, "Unknown Login");
+				}
+				else {
+					Account account = accounts.iterator().next();
+					use(MailService.class, mailService->{
+						mailService.sendEmail(account.getEmail(), "Forget Password", "Reniew Password");
+					});
+				}
+			});
+			Json response = Json.createJsonObject();
+			return response;
+		} catch (PersistenceException pe) {
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+		}
+
+	}
+
 	Login findLogin(EntityManager em, long id) {
 		Login login = find(em, Login.class, id);
 		if (login==null) {
@@ -151,7 +184,7 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 		return login;
 	}
-	
+
 	Login writeToLogin(Json json, Login login) {
 		verify(json)
 			.checkRequired("login")
@@ -185,7 +218,13 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		List<Login> logins = getResultList(query);
 		return logins.stream().distinct().collect(Collectors.toList());
 	}
-	
+
+	Collection<Account> findAccounts(Query query, Object... params) {
+		setParams(query, params);
+		List<Account> accounts = getResultList(query);
+		return accounts.stream().distinct().collect(Collectors.toList());
+	}
+
 	Json readFromLogins(Collection<Login> logins) {
 		Json list = Json.createJsonArray();
 		logins.stream().forEach(login->list.push(readFromLogin(login)));
