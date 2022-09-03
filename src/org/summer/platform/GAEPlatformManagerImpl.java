@@ -1,7 +1,6 @@
 package org.summer.platform;
 
 import com.google.cloud.storage.*;
-import org.summer.SummerException;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;

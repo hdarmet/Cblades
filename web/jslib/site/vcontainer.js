@@ -534,7 +534,7 @@ export class VPageContent extends VContainer {
             }
             this._changeTitle(title);
             this._changeContent(content);
-        })) {
+        }, ()=>{})) {
             if (!byHistory) {
                 historize();
             }

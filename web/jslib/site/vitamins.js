@@ -242,7 +242,7 @@ export function Undoable(clazz) {
             this._undos.push(this._register());
         }
 
-        canLeave(leave, message) {
+        canLeave(leave, notLeave, message) {
             if (this._isDirty()) {
                 VConfirmHandler.emit({
                     title: "Confirm", message,
@@ -251,8 +251,7 @@ export function Undoable(clazz) {
                         leave();
                     },
                     actionCancel: () => {
-                        this._clean();
-                        leave();
+                        notLeave();
                     }
                 })
                 return false;

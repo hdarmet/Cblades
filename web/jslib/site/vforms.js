@@ -99,7 +99,6 @@ export function mandatory({message, validate}) {
     }
 }
 
-
 export function isValid(container) {
     let result = true;
     container.visitDown(field=>{

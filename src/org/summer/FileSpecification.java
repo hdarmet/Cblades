@@ -11,7 +11,10 @@ public class FileSpecification {
 	String fileName;
 	String extension;
 	InputStream stream;
-	
+
+	public FileSpecification() {
+	}
+
 	public FileSpecification(String name, String fileName, String extension, InputStream stream) {
 		this.name = name;
 		this.fileName = fileName;
@@ -34,23 +37,45 @@ public class FileSpecification {
 	public String getName() {
 		return name;
 	}
+	public FileSpecification setName(String name) {
+		this.name = name;
+		if (this.fileName==null) {
+			setFileName(name);
+		}
+		return this;
+	}
 	
 	public String getFileName() {
 		return fileName;
+	}
+	public FileSpecification setFileName(String fileName) {
+		this.fileName = fileName;
+		if (this.extension == null) {
+			this.extension = getExtension(fileName);
+		}
+		return this;
 	}
 
 	public String getExtension() {
 		return extension;
 	}
+	public FileSpecification setExtension(String extension) {
+		this.extension = extension;
+		return this;
+	}
 
 	public String getType() {
-		return mimeTypes.get(extension);
+		return mimeTypes.get(getExtension());
 	}
 	
 	public InputStream getStream() {
 		return stream;
 	}
-	
+	public FileSpecification setStream(InputStream stream) {
+		this.stream = stream;
+		return this;
+	}
+
 	static public String getExtension(String fileName) {
 		int index = fileName.lastIndexOf(".");
 		if (index==-1 || index>=fileName.length()-1) {

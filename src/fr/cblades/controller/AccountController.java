@@ -1,6 +1,5 @@
 package fr.cblades.controller;
 
-import com.sun.accessibility.internal.resources.accessibility;
 import fr.cblades.StandardUsers;
 import fr.cblades.domain.*;
 import org.summer.FileSpecification;
@@ -21,7 +20,6 @@ import org.summer.security.SecuritySunbeam;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
-import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -33,10 +31,10 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 	@MIME(url="/api/account/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
 		try {
-			Ref<FileSpecification> result = ref();
 			String imageName = (String)params.get("imagename");
-			result.set(new FileSpecification(imageName, imageName, PlatformManager.get().getInputStream("/avatars/"+imageName)));
-			return result.get();
+			return new FileSpecification()
+			    .setName(imageName)
+				.setStream(PlatformManager.get().getInputStream("/avatars/"+imageName));
 		} catch (PersistenceException pe) {
 			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 		}

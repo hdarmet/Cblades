@@ -8,6 +8,7 @@ import javax.persistence.Index;
 import javax.persistence.Table;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 
 @Entity
 @Table(indexes=@Index(name="idx_login", unique=true, columnList="login"))
@@ -15,6 +16,8 @@ public class Login extends BaseEntity {
 
     String login="";
     String password="";
+    String altPassword=null;
+    long altPasswordLease = Integer.MIN_VALUE;
     LoginRole role = LoginRole.STANDARD;
 
     public String getLogin() {
@@ -34,6 +37,18 @@ public class Login extends BaseEntity {
     public LoginRole getRole() { return role; }
     public Login setRole(LoginRole role) {
         this.role = role;
+        return this;
+    }
+
+    public String getAltPassword() { return altPassword; }
+    public Login setAltPassword(String altPassword) {
+        this.altPassword = altPassword;
+        return this;
+    }
+
+    public long getAltPasswordLease() { return altPasswordLease; }
+    public Login setAltPasswordLease(long altPasswordLease) {
+        this.altPasswordLease = altPasswordLease;
         return this;
     }
 

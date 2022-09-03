@@ -247,8 +247,8 @@ export function measureText(text, font) {
     return measure;
 }
 
-export function sendGet(uri, requestContent, success, failure, files) {
-    getDrawPlatform().requestServer(uri, requestContent, success, failure, files, 'GET');
+export function sendGet(uri, success, failure, files) {
+    getDrawPlatform().requestServer(uri, null, success, failure, files, 'GET');
 }
 
 export function sendPost(uri, requestContent, success, failure, files) {

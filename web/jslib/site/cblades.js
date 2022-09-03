@@ -24,7 +24,7 @@ import {
     VCLogin
 } from "./cvitamin.js";
 import {
-    Div
+    Div, sendGet
 } from "./components.js";
 import {
     VGallery,
@@ -958,8 +958,8 @@ export var vThemeEditorPage = new VFormContainer({ref:"theme-editor-page"})
     .addClass("theme-editor-page")
     .add(vThemeEditorDescription)
     .add(vThemeEditor);
-vThemeEditorPage.canLeave = function(leave) {
-    return vThemeEditor.canLeave(leave);
+vThemeEditorPage.canLeave = function(leave, notLeave) {
+    return vThemeEditor.canLeave(leave, notLeave);
 }
 vThemeEditorPage.setTheme = function(theme) {
     vThemeEditor.theme = theme;
@@ -989,8 +989,8 @@ export var vArticleEditorPage = new VFormContainer({ref:"theme-editor-page"})
     .addClass("theme-editor-page")
     .add(vArticleEditorDescription)
     .add(vArticleEditor);
-vArticleEditorPage.canLeave = function(leave) {
-    return vArticleEditor.canLeave(leave);
+vArticleEditorPage.canLeave = function(leave, notLeave) {
+    return vArticleEditor.canLeave(leave, notLeave);
 }
 vArticleEditorPage.setArticle = function(article) {
     vArticleEditor.article = article;
@@ -1023,8 +1023,8 @@ export var vMapEditorPage = new VFormContainer({ref:"map-editor-page"})
     .addClass("map-editor-page")
     .add(vMapEditorDescription)
     .add(vMapEditor);
-vMapEditorPage.canLeave = function(leave) {
-    return vMapEditor.canLeave(leave);
+vMapEditorPage.canLeave = function(leave, notLeave) {
+    return vMapEditor.canLeave(leave, notLeave);
 }
 vMapEditorPage.setMap = function(map) {
     vMapEditor.map = map;
@@ -1043,8 +1043,8 @@ export var vScenarioEditorPage = new VFormContainer({ref:"scenario-editor-page"}
     .addClass("scenario-editor-page")
     .add(vScenarioEditorDescription)
     .add(vScenarioEditor);
-vScenarioEditorPage.canLeave = function(leave) {
-    return vScenarioEditor.canLeave(leave);
+vScenarioEditorPage.canLeave = function(leave, notLeave) {
+    return vScenarioEditor.canLeave(leave, notLeave);
 }
 vScenarioEditorPage.setScenario = function(scenario) {
     vScenarioEditor.scenario = scenario;
@@ -1814,6 +1814,20 @@ class CBPageContent extends VPageContent {
     }
 
 }
+
+window.notices = {};
+
+sendGet("/api/notice/published",
+    (text, status) => {
+        let notices = JSON.parse(text);
+        for (let notice of notices) {
+            window.notices[notice.category] = notice;
+        }
+    },
+    (text, status) => {
+        window.alert("Error");
+    }
+)
 
 window.vPageContent = new CBPageContent();
 

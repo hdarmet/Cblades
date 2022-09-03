@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 import fr.cblades.domain.Account;
 import fr.cblades.domain.AccountStatus;
 import fr.cblades.domain.Login;
+import fr.cblades.domain.Notice;
 import org.summer.ApplicationManager;
 import org.summer.Ref;
 import org.summer.annotation.Launch;
@@ -65,7 +66,7 @@ public class SetupApplication {
 
     @Setup
     public static void setPlatformManager() {
-        if (!isGae()) {
+        if (isGae()) {
             GAEPlatformManagerImpl gaePlatformManager = new GAEPlatformManagerImpl("cblades.appspot.com");
             ApplicationManager.get().setPlatformManager(gaePlatformManager);
         }
@@ -102,5 +103,17 @@ public class SetupApplication {
         });
     }
 
+    @Launch
+    public static void declareStandardNotices() {
+        DataSunbeam data = new DataSunbeam() {};
+        data.inTransaction(em->{
+            if (data.getResultList(em, "select n from Notice n where n.category=:category", "category", "forgot-password-mail").isEmpty()) {
+                Notice forgotNoticeMail = new Notice()
+                    .setCategory("forgot-password-mail").setTitle("Forgot Password").setText("Reniew Password %s")
+                    .setNoticeVersion("0.1").setPublished(true);
+                data.persist(em, forgotNoticeMail);
+            }
+        });
+    }
 }
 

@@ -120,17 +120,20 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				String login = request.get("login");
 				String password = request.get("password");
 				Collection<Login> logins = findLogins(
-					em.createQuery("select l from Login l where l.login=:login and l.password=:password"),
+					em.createQuery("select l from Login l where l.login=:login and l.password=:password or l.altPassword=:password"),
 					"login", login, "password", Login.encrypt(password));
 				if (logins.isEmpty()) {
 					throw new SummerControllerException(401, "Bad credentials");
 				}
 				else {
+					Login me = logins.iterator().next();
+					if (!me.getPassword().equals(Login.encrypt(password)) && me.getAltPasswordLease()<PlatformManager.get().now()) {
+						throw new SummerControllerException(401, "Bad credentials");
+					}
 					connect(login, 30*60*1000);
 				}
 			});
-			Json response = Json.createJsonObject();
-			return response;
+			return Json.createJsonObject();
 		} catch (PersistenceException pe) {
 			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 		}
@@ -140,13 +143,13 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json disconnect(Map<String, String> params, Json request) {
 		return (Json)ifConnected(user->{
 			disconnect();
-			Json response = Json.createJsonObject();
-			return response;
+			return Json.createJsonObject();
 		});
 	}
 
 	@REST(url="/api/login/forgot-password", method=Method.GET)
 	public Json forgotPassword(Map<String, String> params, Json request) {
+		final long VALIDITY_DELAY = 10*60*1000;
 		try {
 			verify(params)
 				.checkRequired("login")
@@ -162,17 +165,42 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				}
 				else {
 					Account account = accounts.iterator().next();
+					String altPassword = generateRandomPassword();
+					account.getAccess()
+						.setAltPassword(Login.encrypt(altPassword))
+						.setAltPasswordLease(PlatformManager.get().now()+VALIDITY_DELAY);
 					use(MailService.class, mailService->{
-						mailService.sendEmail(account.getEmail(), "Forget Password", "Reniew Password");
+						mailService.sendEmail(account.getEmail(), "Forget Password", "Reniew Password: "+altPassword);
 					});
 				}
 			});
-			Json response = Json.createJsonObject();
-			return response;
+			return Json.createJsonObject();
 		} catch (PersistenceException pe) {
 			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 		}
 
+	}
+
+	public static String generateRandomPassword() {
+		final String upperCaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		final String lowerCaseChars = "abcdefghijklmnopqrstuvwxyz";
+		final String digitChars = "0123456789";
+		final String specialChars = "!@#$%^&*.";
+		final String allChars = upperCaseChars+lowerCaseChars+digitChars+specialChars;
+		final int BASE_SIZE = 6;
+		char upperCaseChar = upperCaseChars.charAt((int)(PlatformManager.get().random()*upperCaseChars.length()));
+		char lowerCaseChar = lowerCaseChars.charAt((int)(PlatformManager.get().random()*lowerCaseChars.length()));
+		char digitChar = digitChars.charAt((int)(PlatformManager.get().random()*digitChars.length()));
+		char specialChar = specialChars.charAt((int)(PlatformManager.get().random()*specialChars.length()));
+		StringBuilder sb = new StringBuilder();
+		for (int index = 0; index < BASE_SIZE; index++) {
+			sb.append(allChars.charAt((int)(PlatformManager.get().random()*allChars.length())));
+		}
+		sb.insert((int)(PlatformManager.get().random()*BASE_SIZE), upperCaseChar);
+		sb.insert((int)(PlatformManager.get().random()*(BASE_SIZE+1)), lowerCaseChar);
+		sb.insert((int)(PlatformManager.get().random()*(BASE_SIZE+2)), digitChar);
+		sb.insert((int)(PlatformManager.get().random()*(BASE_SIZE+3)), specialChar);
+		return sb.toString();
 	}
 
 	Login findLogin(EntityManager em, long id) {

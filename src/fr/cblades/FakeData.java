@@ -42,6 +42,16 @@ public class FakeData {
                 .setAvatar("../images/site/avatars/my-avatar.png").setStatus(AccountStatus.ACTIVE);
             data.persist(em, temrad);
         });
+        data.inTransaction(em->{
+            Notice notice = new Notice()
+                .setCategory("forgot-password-mail").setTitle("Forgot My Password").setText("Reniew one more time %s")
+                .setNoticeVersion("0.2").setPublished(false);
+            data.persist(em, notice);
+            notice = new Notice()
+                .setCategory("forgot-password-mail").setTitle("Forgot My Password One More Time").setText("Ok try this one : %s")
+                .setNoticeVersion("0.3").setPublished(false);
+            data.persist(em, notice);
+        });
     }
 
 }

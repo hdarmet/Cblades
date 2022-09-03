@@ -656,8 +656,8 @@ export class VThemeEditor extends Undoable(VSplitterPanel) {
         this.addOnRight(this._send);
     }
 
-    canLeave(leave) {
-        return super.canLeave(leave, "Theme not saved. Do you want to Quit ?")
+    canLeave(leave, notLeave) {
+        return super.canLeave(leave, notLeave, "Theme not saved. Do you want to Quit ?")
     }
 
     set theme(specification) {
@@ -771,8 +771,8 @@ export class VArticleEditor extends Undoable(VSplitterPanel) {
         this._newParagraphSpecs = {imgPos: "center", title: "Title", description: "Description"};
     }
 
-    canLeave(leave) {
-        return super.canLeave(leave, "Article not saved. Do you want to Quit ?")
+    canLeave(leave, notLeave) {
+        return super.canLeave(leave, notLeave, "Article not saved. Do you want to Quit ?")
     }
 
     set article(articleSpec) {
@@ -1038,8 +1038,8 @@ export class VMapEditor extends Undoable(VSplitterPanel) {
         this._onPropose = onPropose;
     }
 
-    canLeave(leave) {
-        return super.canLeave(leave, "Map not saved. Do you want to Quit ?")
+    canLeave(leave, notLeave) {
+        return super.canLeave(leave, notLeave,"Map not saved. Do you want to Quit ?")
     }
 
     set map(map) {
@@ -1135,8 +1135,8 @@ export class VScenarioEditor extends Undoable(VSplitterPanel) {
         this._onPropose = onPropose;
     }
 
-    canLeave(leave) {
-        return super.canLeave(leave, "Scenario not saved. Do you want to Quit ?")
+    canLeave(leave, notLeave) {
+        return super.canLeave(leave, notLeave, "Scenario not saved. Do you want to Quit ?")
     }
 
     set scenario(scenarioSpec) {
