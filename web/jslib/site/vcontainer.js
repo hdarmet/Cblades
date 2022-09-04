@@ -523,7 +523,7 @@ export class VPageContent extends VContainer {
         }
     }
 
-    _changePage(title, content, byHistory, historize) {
+    _changePage(title, content, byHistory, historize, init=switchPage=>switchPage()) {
         if (!this._page || !this._page.canLeave || this._page.canLeave(()=>{
             if (byHistory) {
                 history._preventDefault = true;
@@ -532,14 +532,18 @@ export class VPageContent extends VContainer {
             else {
                 historize();
             }
-            this._changeTitle(title);
-            this._changeContent(content);
+            init(()=> {
+                this._changeTitle(title);
+                this._changeContent(content);
+            });
         }, ()=>{})) {
             if (!byHistory) {
                 historize();
             }
-            this._changeTitle(title);
-            this._changeContent(content);
+            init(()=> {
+                this._changeTitle(title);
+                this._changeContent(content);
+            });
             return true;
         }
         return false

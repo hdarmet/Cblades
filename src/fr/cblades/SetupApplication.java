@@ -103,16 +103,27 @@ public class SetupApplication {
         });
     }
 
+    static void declareStandardNotice(DataSunbeam data, String category, String title, String text) {
+        data.inTransaction(em->{
+            if (data.getResultList(em, "select n from Notice n where n.category=:category", "category", category).isEmpty()) {
+                Notice forgotNoticeMail = new Notice()
+                        .setCategory(category).setTitle(title).setText(text)
+                        .setNoticeVersion("0.1").setPublished(true);
+                data.persist(em, forgotNoticeMail);
+            }
+        });
+    }
+
     @Launch
     public static void declareStandardNotices() {
         DataSunbeam data = new DataSunbeam() {};
         data.inTransaction(em->{
-            if (data.getResultList(em, "select n from Notice n where n.category=:category", "category", "forgot-password-mail").isEmpty()) {
-                Notice forgotNoticeMail = new Notice()
-                    .setCategory("forgot-password-mail").setTitle("Forgot Password").setText("Reniew Password %s")
-                    .setNoticeVersion("0.1").setPublished(true);
-                data.persist(em, forgotNoticeMail);
-            }
+            declareStandardNotice(data, "forgot-password-mail", "Forgot Password", "Reniew Password %s");
+            declareStandardNotice(data, "legal-notice", "Legal Notice", "Text for Legal Notice");
+            declareStandardNotice(data, "private-life-policy-notice", "Private Life Policy", "Text for Private Life Policy");
+            declareStandardNotice(data, "cookie-management-notice", "Cookie Management", "Text for Cookie Management");
+            declareStandardNotice(data, "usage-policy-notice", "Usage Policy", "Text for Usage Policy");
+            declareStandardNotice(data, "your-contributions-notice", "Your Contributions", "Text for Your Contributions");
         });
     }
 }

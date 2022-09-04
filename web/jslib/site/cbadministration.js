@@ -256,7 +256,9 @@ export class CBNoticeEditor extends Undoable(VSplitterPanel) {
                         }
                     });
                 }},
-                {ref: "cancel-edition", label:"Cancel", type:"refuse"}
+                {ref: "cancel-edition", label:"Cancel", type:"refuse", onClick:event=>{
+                    this.setNotice(this._noticeObject);
+                }}
             ]
         });
         this.addOnRight(this._buttons);
@@ -966,6 +968,69 @@ export class CBPageContent extends VPageContent {
         return this._changePage(null, vUserList, byHistory, historize);
     }
 
+    editNotice(title, category, byHistory, historize) {
+        this._changePage(null, vNoticeEditorPage, byHistory, historize,
+            switchPage=>sendGet("/api/notice/by-category/"+category,
+                (text, status) => {
+                    let notices = JSON.parse(text);
+                    vNoticeEditorPage
+                        .setTitle(title)
+                        .setNotices(notices.map(notice=>{
+                            return {
+                                id: notice.id,
+                                objVersion: notice.version,
+                                title:notice.title,
+                                notice:notice.text,
+                                version:notice.noticeVersion,
+                                published: notice.published
+                            }
+                        }))
+                        .setSave((notice, successMessage, failureMessage)=>{
+                            sendPost("/api/notice/save",
+                                {
+                                    id: notice.id,
+                                    version: notice.objVersion,
+                                    title: notice.title,
+                                    text: notice.notice,
+                                    noticeVersion: notice.version,
+                                    published: notice.published,
+                                    category
+                                },
+                                (text, status) => {
+                                    let result = JSON.parse(text);
+                                    if (notice.id === undefined) {
+                                        notice.id = result.id;
+                                        notice.objVersion = result.version;
+                                    }
+                                    vNoticeEditorPage.setVersions();
+                                    vNoticeEditorPage.showMessage(successMessage, "");
+                                },
+                                (text, status) => {
+                                    vNoticeEditorPage.showMessage(failureMessage, text);
+                                })
+                            }
+                        )
+                        .setDelete((notice, successMessage, failureMessage)=>{
+                            sendGet("/api/notice/delete/"+notice.id,
+                                (text, status) => {
+                                    //vNoticeEditorPage.setVersions();
+                                    vNoticeEditorPage.editPublishedNotice();
+                                    vNoticeEditorPage.showMessage(successMessage, "");
+                                },
+                                (text, status) => {
+                                    vNoticeEditorPage.showMessage(failureMessage, text);
+                                })
+                            }
+                        );
+                    switchPage();
+                },
+                (text, status) => {
+                    vNoticeEditorPage.showMessage("Cannot load notices of category: "+category, text);
+                }
+            )
+        )
+    }
+
     showUserList() {
         vUserList.loadUsers();
         this._showUserList(false, ()=> {
@@ -975,12 +1040,7 @@ export class CBPageContent extends VPageContent {
     }
 
     _showLegalNoticeEdition(byHistory, historize) {
-        vNoticeEditorPage
-            .setTitle("Legal Notice Edition")
-            .setNotice({title:"Legal Notice", notice:noticeText, version:"V1", versions:[
-                {value:"V1"}, {value:"V1.1", text:"V1.1 (published)"}, {value:"V2"}
-            ]});
-        return this._changePage(null, vNoticeEditorPage, byHistory, historize);
+        this.editNotice("Legal Notice Edition", "legal-notice", byHistory, historize);
     }
 
     showLegalNoticeEdition() {
@@ -991,12 +1051,7 @@ export class CBPageContent extends VPageContent {
     }
 
     _showPrivateLifePolicyEdition(byHistory, historize) {
-        vNoticeEditorPage
-            .setTitle("Private Life Policy Edition")
-            .setNotice({title:"Private Life Policy", notice:noticeText, version:"V1", versions:[
-                    {value:"V1"}, {value:"V1.1", text:"V1.1 (published)"}, {value:"V2"}
-                ]});
-        return this._changePage(null, vNoticeEditorPage, byHistory, historize);
+        this.editNotice("Private Life Policy Edition", "private-life-policy-notice", byHistory, historize);
     }
 
     showPrivateLifePolicyEdition() {
@@ -1007,12 +1062,7 @@ export class CBPageContent extends VPageContent {
     }
 
     _showCookieManagementEdition(byHistory, historize) {
-        vNoticeEditorPage
-            .setTitle("Cookie Management Edition")
-            .setNotice({title:"Cookie Management", notice:noticeText, version:"V1", versions:[
-                    {value:"V1"}, {value:"V1.1", text:"V1.1 (published)"}, {value:"V2"}
-                ]});
-        return this._changePage(null, vNoticeEditorPage, byHistory, historize);
+        this.editNotice("Cookie Management Edition", "cookie-management-notice", byHistory, historize);
     }
 
     showCookieManagementEdition() {
@@ -1023,12 +1073,7 @@ export class CBPageContent extends VPageContent {
     }
 
     _showUsagePolicyEdition(byHistory, historize) {
-        vNoticeEditorPage
-            .setTitle("Usage Policy Edition")
-            .setNotice({title:"Usage Policy", notice:noticeText, version:"V1", versions:[
-                    {value:"V1"}, {value:"V1.1", text:"V1.1 (published)"}, {value:"V2"}
-                ]});
-        return this._changePage(null, vNoticeEditorPage, byHistory, historize);
+        this.editNotice("Usage Policy Edition", "usage-policy-notice", byHistory, historize);
     }
 
     showUsagePolicyEdition() {
@@ -1039,12 +1084,7 @@ export class CBPageContent extends VPageContent {
     }
 
     _showYourContributionsEdition(byHistory, historize) {
-        vNoticeEditorPage
-            .setTitle("Your Contributions Edition")
-            .setNotice({title:"Your Contributions", notice:noticeText, version:"V1", versions:[
-                    {value:"V1"}, {value:"V1.1", text:"V1.1 (published)"}, {value:"V2"}
-                ]});
-        return this._changePage(null, vNoticeEditorPage, byHistory, historize);
+        this.editNotice("Your Contributions Edition", "your-contributions-notice", byHistory, historize);
     }
 
     showYourContributionsEdition() {
@@ -1055,65 +1095,7 @@ export class CBPageContent extends VPageContent {
     }
 
     _showForgotPasswordMailEdition(byHistory, historize) {
-        sendGet("/api/notice/by-category/forgot-password-mail",
-            (text, status) => {
-                let notices = JSON.parse(text);
-                vNoticeEditorPage
-                    .setTitle("Mail de renouvellement de mot de Passe")
-                    .setNotices(notices.map(notice=>{
-                        return {
-                            id: notice.id,
-                            objVersion: notice.version,
-                            title:notice.title,
-                            notice:notice.text,
-                            version:notice.noticeVersion,
-                            published: notice.published
-                        }
-                    }))
-                    .setSave((notice, successMessage, failureMessage)=>{
-                        sendPost("/api/notice/save",
-                            {
-                                id: notice.id,
-                                version: notice.objVersion,
-                                title: notice.title,
-                                text: notice.notice,
-                                noticeVersion: notice.version,
-                                published: notice.published,
-                                category: "forgot-password-mail"
-                            },
-                            (text, status) => {
-                                let result = JSON.parse(text);
-                                if (notice.id === undefined) {
-                                    notice.id = result.id;
-                                    notice.objVersion = result.version;
-                                }
-                                vNoticeEditorPage.setVersions();
-                                vNoticeEditorPage.showMessage(successMessage, "");
-                            },
-                            (text, status) => {
-                                vNoticeEditorPage.showMessage(failureMessage, text);
-                            })
-                        }
-                    )
-                    .setDelete((notice, successMessage, failureMessage)=>{
-                        sendGet("/api/notice/delete/"+notice.id,
-                            (text, status) => {
-                                //vNoticeEditorPage.setVersions();
-                                vNoticeEditorPage.editPublishedNotice();
-                                vNoticeEditorPage.showMessage(successMessage, "");
-                            },
-                            (text, status) => {
-                                vNoticeEditorPage.showMessage(failureMessage, text);
-                            })
-                        }
-                    );
-                return this._changePage(null, vNoticeEditorPage, byHistory, historize);
-            },
-            (text, status) => {
-                vNoticeEditorPage.showMessage("Cannot load notices of category: "+"forgot-password-mail", text);
-            }
-        )
-
+        this.editNotice("Mail de renouvellement de mot de Passe", "forgot-password-mail", byHistory, historize);
     }
 
     showForgotPasswordMailEdition() {
