@@ -168,33 +168,6 @@ export var vMenu = new VMainMenu({ref:"menu"})
         })
     });
 
-/*
-    .addDropdownMenu({ref:"admin", title:"Admin", enabled:false}, $=>{$
-        .addMenu({ref:"map", title:"Map", action:()=> {
-                vmenu.get("file").removeMenu("save");
-                vmenu.insertMenu({
-                    ref:"avant-propos", title:"Avant Propos...", action:()=>{
-                        console.log("Avant propos");
-                        vregistration.show();
-                    }
-                }, "a-propos")
-            }
-        })
-        .addMenu({ref:"units", title:"Units", action:()=> {
-                vmenu.get("file").addMenu({ref:"save", title:"Save", enabled:false, action:()=>{
-                        vmenu.get("load").enabled = true;
-                        vmenu.get("save").enabled = false;
-                        vmenu.get("admin").enabled = false;
-                    }
-                });
-            }
-        })
-    })
-    .addMenu({ref:"a-propos", title:"A Propos...", action:()=>{
-            vmodal.show();
-        }});
-*/
-
 export var vHeader = new VHeader({
     ref:"header",
     left:"../images/site/left-title.png", right:"../images/site/right-title.png",
@@ -219,28 +192,28 @@ export var vFooter = new VFooter({
         .addField({field: new CVLegalNotice({
             legalNotice: {
                 label: "Legal Notice",
-                title: "Legal Notice",
-                content: text
+                title: ()=>window.notices["legal-notice"].title,
+                content: ()=>window.notices["legal-notice"].text
             },
             privateLifePolicy: {
                 label: "Private Life Policy",
-                title: "Private Life Policy",
-                content: text
+                title: ()=>window.notices["private-life-policy-notice"].title,
+                content: ()=>window.notices["private-life-policy-notice"].text
             },
             cookiesManagement: {
                 label: "Cookies Management",
-                title: "Cookies Management",
-                content: text
+                title: ()=>window.notices["cookie-management-notice"].title,
+                content: ()=>window.notices["cookie-management-notice"].text
             },
             usagePolicy: {
                 label: "Usage Policy",
-                title: "Usage Policy",
-                content: text
+                title: ()=>window.notices["usage-policy-notice"].title,
+                content: ()=>window.notices["usage-policy-notice"].text
             },
             contributions: {
                 label: "Your Contributions",
-                title: "Do you want to contribute ?",
-                content: text
+                title: ()=>window.notices["your-contributions-notice"].title,
+                content: ()=>window.notices["your-contributions-notice"].text
             }
         })})
         .addField({field: new VFormContainer({ref:"footer-content", columns:1}, $=>{$

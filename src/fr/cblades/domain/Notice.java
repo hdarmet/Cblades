@@ -10,7 +10,7 @@ public class Notice extends BaseEntity {
 
     String category;
     String title;
-    @Column(length = 4000)
+    @Column(length = 20000)
     String text;
     String noticeVersion;
     boolean published;

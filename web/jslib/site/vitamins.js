@@ -417,7 +417,7 @@ export class VSearch extends Vitamin(Div) {
     }
 
     get value() {
-        return this.field.getValue();
+        return this._input.getValue();
     }
 
     set value(value) {

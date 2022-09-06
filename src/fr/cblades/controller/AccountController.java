@@ -12,7 +12,9 @@ import org.summer.annotation.REST.Method;
 import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
+import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
+import org.summer.data.Synchronizer;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
@@ -40,15 +42,14 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 		}
 	}
 
-	String storeAvatar (Map<String, Object> params, long id) {
+	void storeAvatar (Map<String, Object> params, Account account) {
 		FileSpecification[] files = (FileSpecification[])params.get(MULTIPART_FILES);
 		if (files.length>0) {
 			if (files.length>1) throw new SummerControllerException(400, "Only one avatar file may be loaded.");
-			String fileName = "avatar"+id+"."+files[0].getExtension();
+			String fileName = "avatar"+account.getId()+"."+files[0].getExtension();
 			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/avatars/"+fileName));
-			return fileName;
+			account.setAvatar("/api/account/images/" + fileName);
 		}
-		return null;
 	}
 
 	@REST(url="/api/account/create", method=Method.POST)
@@ -57,8 +58,10 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 			try {
 				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
-					Account newAccount = writeToAccount(request, new Account().setAccess(new Login()));
+					Account newAccount = writeToAccount(request, new Account().setAccess(new Login()), true);
 					persist(em, newAccount);
+					storeAvatar(params, newAccount);
+					em.flush();
 					result.set(readFromAccount(newAccount));
 				});
 				return result.get();
@@ -78,7 +81,20 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 			inTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				long accountCount = getSingleResult(em.createQuery("select count(a) from Account a"));
-				Collection<Account> accounts = findAccounts(em.createQuery("select a from Account a left outer join fetch a.access"), pageNo);
+				String search = params.get("search");
+				String queryString = "select a from Account a left outer join fetch a.access";
+				if (search!=null) queryString+=" where fts('pg_catalog.english', " +
+					"a.access.login||' '||" +
+					"a.access.role||' '||" +
+					"a.firstName||' '||" +
+					"a.lastName||' '||" +
+					"a.email||' '||" +
+					"a.status, :search) = true";
+				Collection<Account> accounts = (search == null) ?
+					findAccounts(em.createQuery(queryString), pageNo):
+					findAccounts(em.createQuery(queryString), pageNo,
+					"search", search);
+				//Collection<Account> accounts = findAccounts(em.createQuery("select a from Account a left outer join fetch a.access"), pageNo);
 				result.set(Json.createJsonObject()
 					.put("users", readFromAccounts(accounts))
 					.put("count", accountCount)
@@ -127,9 +143,8 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Account account = findAccount(em, new Long(id));
-					String avatarName = storeAvatar(params, account.getId());
-					writeToAccount(request, account);
-					account.setAvatar("/api/account/images/"+avatarName);
+					writeToAccount(request, account, false);
+					storeAvatar(params, account);
 					flush(em);
 					result.set(readFromAccount(account));
 				});
@@ -150,8 +165,8 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 		return account;
 	}
 	
-	Account writeToAccount(Json json, Account account) {
-		verify(json)
+	Account writeToAccount(Json json, Account account, boolean passwordRequired) {
+		Verifier verifier = verify(json)
 			.checkRequired("firstName")
 			.checkMinSize("firstName", 2)
 			.checkMaxSize("firstName", 100)
@@ -161,6 +176,8 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 			.checkRequired("email")
 			.checkMinSize("email", 2)
 			.checkMaxSize("email", 100)
+			.checkMinSize("password", 4)
+			.checkMaxSize("password", 20)
 			.checkRequired("avatar")
 			.checkMinSize("avatar", 2)
 			.checkMaxSize("avatar", 100)
@@ -168,12 +185,12 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 			.checkRequired("login")
 			.checkMinSize("login", 2)
 			.checkMaxSize("login", 20)
-			.checkRequired("password")
-			.checkMinSize("password", 4)
-			.checkMaxSize("password", 20)
-			.check("role", LoginRole.byLabels().keySet())
-			.ensure();
-		sync(json, account)
+			.check("role", LoginRole.byLabels().keySet());
+		if (passwordRequired) {
+			verifier.checkRequired("password");
+		}
+		verifier.ensure();
+		Synchronizer synchronizer = sync(json, account)
 			.write("version")
 			.write("firstName")
 			.write("lastName")
@@ -181,8 +198,10 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 			.write("avatar")
 			.write("status", label->AccountStatus.byLabels().get(label))
 			.writeSetter("login", account::setLogin)
-			.writeSetter("password", account::setPassword, password->Login.encrypt((String)password))
 			.writeSetter("role", account::setRole, label->LoginRole.byLabels().get(label));
+		if (json.get("password")!=null) {
+			synchronizer.writeSetter("password", account::setPassword, password->Login.encrypt((String)password));
+		}
 		return account;
 	}
 
@@ -197,7 +216,6 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 			.read("avatar")
 			.read("status", AccountStatus::getLabel)
 			.readGetter("login", account::getLogin)
-			//.readGetter("password", account::getPassword)
 			.readGetter("role", account::getRole, LoginRole::getLabel);
 		return lJson;
 	}

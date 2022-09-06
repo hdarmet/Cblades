@@ -3,6 +3,7 @@ package fr.cblades.controller;
 import fr.cblades.StandardUsers;
 import fr.cblades.domain.Account;
 import fr.cblades.domain.Login;
+import fr.cblades.domain.Notice;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
 import org.summer.annotation.Controller;
@@ -169,8 +170,15 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					account.getAccess()
 						.setAltPassword(Login.encrypt(altPassword))
 						.setAltPasswordLease(PlatformManager.get().now()+VALIDITY_DELAY);
+					Notice notice = getSingleResult(em,
+							"select n from Notice n where n.category=:category and n.published = true",
+							"category", "forgot-password-mail");
 					use(MailService.class, mailService->{
-						mailService.sendEmail(account.getEmail(), "Forget Password", "Reniew Password: "+altPassword);
+						mailService.sendEmail(
+							account.getEmail(), notice.getTitle(),
+							String.format(notice.getText(), altPassword),
+							"blades.cursed@gmail.com"
+						);
 					});
 				}
 			});

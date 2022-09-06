@@ -3,9 +3,7 @@ package fr.cblades.domain;
 import org.summer.controller.SummerControllerException;
 import org.summer.data.BaseEntity;
 
-import javax.persistence.Entity;
-import javax.persistence.Index;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
@@ -18,6 +16,7 @@ public class Login extends BaseEntity {
     String password="";
     String altPassword=null;
     long altPasswordLease = Integer.MIN_VALUE;
+    @Enumerated(EnumType.STRING)
     LoginRole role = LoginRole.STANDARD;
 
     public String getLogin() {

@@ -7,9 +7,7 @@ import javax.mail.Session;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.SecureRandom;
-import java.time.LocalDate;
-import java.util.Date;
-import java.util.Random;
+import java.util.Properties;
 
 public interface PlatformManager {
 

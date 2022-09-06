@@ -6,6 +6,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(indexes=@Index(name="idx_account", unique=true, columnList="email"))
+//create index <idx-name>> on Account unsing GIN (to_tsvector('english', firstName || ' ' || lastName));
 public class Account extends BaseEntity {
 
     String firstName="";
@@ -14,6 +15,7 @@ public class Account extends BaseEntity {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     Login access;
     String avatar;
+    @Enumerated(EnumType.STRING)
     AccountStatus status;
 
     public String getFirstName() {

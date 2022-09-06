@@ -265,7 +265,10 @@ export class VInputField extends VField {
 export class VPasswordField extends VField {
 
     _initField({value}) {
-        this._input = new Input(value).setType("password").addClass("form-input-text");
+        this._input = new Input(value)
+            .setType("password")
+            .setAttribute("placeholder", "**********")
+            .addClass("form-input-text");
         this.value = value;
         this.add(this._input);
     }

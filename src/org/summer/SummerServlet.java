@@ -92,7 +92,7 @@ public class SummerServlet extends HttpServlet {
 		try {
 			String contextPath = request.getContextPath();
 			String contextualUri = uri.substring(contextPath.length());
-			log.info("Received: "+httpMethod.toString()+" "+uri.toLowerCase());
+			log.info("Received: "+httpMethod.toString()+" "+uri.toLowerCase()+" "+request.getQueryString());
 			processor.accept(contextualUri);
 		}
 		catch(SummerControllerException controllerException) {

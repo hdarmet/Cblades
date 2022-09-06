@@ -112,39 +112,39 @@ export class CVLegalNotice extends VList {
         super({ref: CVContact.LEGAL_NOTICE_REF});
         if (legalNotice) {
             this._legalNotice = new VLine({ref: "legal-notice", text: legalNotice.label,
-                action:()=>this.showArticle(legalNotice.title, legalNotice.content)})
+                action:()=>this.showArticle(legalNotice)})
                 .addClass("legal-notice-dot");
             this.addLine({field: this._legalNotice});
         }
         if (privateLifePolicy) {
             this._privateLifePolicy = new VLine({ref: "legal-privacy", text: privateLifePolicy.label,
-                action:()=>this.showArticle(privateLifePolicy.title, privateLifePolicy.content)})
+                action:()=>this.showArticle(privateLifePolicy)})
                 .addClass("legal-notice-dot");
             this.addLine({field: this._privateLifePolicy});
         }
         if (cookiesManagement) {
             this._cookiesManagement = new VLine({ref: "legal-cookie", text: cookiesManagement.label,
-                action:()=>this.showArticle(cookiesManagement.title, cookiesManagement.content)})
+                action:()=>this.showArticle(cookiesManagement)})
                 .addClass("legal-notice-dot");
             this.addLine({field: this._cookiesManagement});
         }
         if (usagePolicy) {
             this._usagePolicy = new VLine({ref: "legal-usage", text: usagePolicy.label,
-                action:()=>this.showArticle(usagePolicy.title, usagePolicy.content)})
+                action:()=>this.showArticle(usagePolicy)})
                 .addClass("legal-notice-dot");
             this.addLine({field: this._usagePolicy});
         }
         if (contributions) {
             this._contributions = new VLine({ref: "legal-contributions", text: contributions.label,
-                action:()=>this.showArticle(contributions.title, contributions.content)})
+                action:()=>this.showArticle(contributions)})
                 .addClass("legal-notice-dot");
             this.addLine({field: this._contributions});
         }
-        this._legalNoticeModal = new CVArticleDisplay();
+        this._noticeModal = new CVArticleDisplay();
     }
 
-    showArticle(title, content) {
-        this._legalNoticeModal.show(title, content);
+    showArticle(notice) {
+        this._noticeModal.show(notice.title(), notice.content());
     }
 
     static LEGAL_NOTICE_REF = "legal-form";
