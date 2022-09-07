@@ -1,3 +1,17 @@
+.ex-form-input {
+    padding: 5px 10px;
+    margin: 8px 0;
+    display: inline-block;
+    background-color: #f9f9f9;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid #ccc;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1em;
+    overflow: auto;
+}
 
 .form-label {
     font-weight: bold;
@@ -22,19 +36,12 @@
 }
 
 .form-input-text, .form-input-password, .form-input-select, .form-input-textarea {
+    --extends: ex-form-input;
     width: 100%;
-    padding: 5px 10px;
-    margin: 8px 0;
-    display: inline-block;
-    background-color: #f9f9f9;
-    border-top: none;
-    border-left: none;
-    border-right: none;
-    border-bottom: 1px solid #ccc;
-    box-sizing: border-box;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 1em;
-    overflow: auto;
+}
+
+.form-input-date {
+    --extends: ex-form-input;
 }
 
 .editor-toolbar

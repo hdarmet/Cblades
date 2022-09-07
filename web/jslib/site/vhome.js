@@ -2,13 +2,13 @@
 
 import {
     VContainer, VSlideShow, VLog
-} from "./vcontainer.js";
+} from "../vitamin/vcontainer.js";
 import {
     Vitamin
-} from "./vitamins.js";
+} from "../vitamin/vitamins.js";
 import {
     Div, Img, P, Span
-} from "./components.js";
+} from "../vitamin/components.js";
 
 export class VAnnoucement extends Vitamin(Div) {
 
@@ -20,6 +20,7 @@ export class VAnnoucement extends Vitamin(Div) {
                 .setText(description)
             );
     }
+
 }
 
 export class VHome extends VContainer {

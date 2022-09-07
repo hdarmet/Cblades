@@ -8,7 +8,7 @@ import {
     VRow,
     VMessage,
     VModal
-} from "./vitamins.js";
+} from "../vitamin/vitamins.js";
 import {
     VInputField,
     VSelectField,
@@ -18,7 +18,7 @@ import {
     VPasswordField,
     mandatory,
     matchesEmail, matchesName, matchesPassword, matchesLogin, or, and, isValid, VFormContainer
-} from "./vforms.js";
+} from "../vitamin/vforms.js";
 
 export class CVContact extends VList {
     constructor({address, phone, email, writeToUs}) {

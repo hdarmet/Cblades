@@ -2,26 +2,26 @@
 
 import {
     Div, Img, P, Span
-} from "./components.js";
+} from "../vitamin/components.js";
 import {
     Undoable,
     VImage,
     Vitamin,
     VMagnifiedImage,
     VSearch,
-} from "./vitamins.js";
+} from "../vitamin/vitamins.js";
 import {
     VContainer,
     VSplitterPanel,
     VWall
-} from "./vcontainer.js";
+} from "../vitamin/vcontainer.js";
 import {
     VButton, VButtons, VCommand,
     VFileLoaderField,
     VInputField, VInputTextArea,
     VSelectField,
     VSwitch
-} from "./vforms.js";
+} from "../vitamin/vforms.js";
 
 export class VSummary extends Vitamin(Div) {
 

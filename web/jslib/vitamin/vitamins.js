@@ -408,7 +408,15 @@ export class VSearch extends Vitamin(Div) {
     constructor({ref, value, placeholder="Keywords", searchAction}) {
         super(ref);
         this.addClass("search");
-        this._input = new Input(value).setType("search").setAttribute("placeholder", placeholder).addClass("search-input-text");
+        this._input = new Input(value)
+            .setType("search")
+            .setAttribute("placeholder", placeholder)
+            .addClass("search-input-text")
+            .onEvent("keydown", event=>{
+                if (event.key === 'Enter') {
+                   this._searchAction(event);
+                }
+            });
         this.value = value ? value : "";
         this._button = new Div().addClass("search-button");
         this._searchAction = event=>searchAction(this._input.getValue());

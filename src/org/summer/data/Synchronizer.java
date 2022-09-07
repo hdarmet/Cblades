@@ -1,17 +1,15 @@
 package org.summer.data;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.function.*;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 
 import org.summer.ReflectUtil;
-import org.summer.SummerException;
 import org.summer.controller.Json;
-import org.summer.controller.Verifier;
 
 public class Synchronizer implements DataSunbeam {
 
@@ -58,6 +56,23 @@ public class Synchronizer implements DataSunbeam {
 		return this;
 	}
 
+	public Synchronizer writeDate(String jsonFieldName, String targetFieldName, Function ... functions) {
+		Object readValue = this.json.search(jsonFieldName);
+		for (Function function: functions) {
+			readValue = function.apply(readValue);
+		}
+		try {
+			if (readValue!=null && !readValue.equals("")) {
+				System.out.println(readValue);
+				Date value = new SimpleDateFormat("yyyy-MM-dd").parse((String)readValue);
+				ReflectUtil.set(this.target, targetFieldName, value);
+			}
+		} catch (ParseException e) {
+			throw new IllegalArgumentException(e);
+		}
+		return this;
+	}
+
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public <T>Synchronizer writeSetter(String jsonFieldName, Consumer<T> setter, Function ... functions) {
 		Object readValue = this.json.search(jsonFieldName);
@@ -73,6 +88,11 @@ public class Synchronizer implements DataSunbeam {
 	@SafeVarargs
 	final public <T, R> Synchronizer write(String fieldName, Function<T, R> ... functions) {
 		return write(fieldName, fieldName, functions);
+	}
+
+	@SafeVarargs
+	final public <T, R> Synchronizer writeDate(String fieldName, Function<T, R> ... functions) {
+		return writeDate(fieldName, fieldName, functions);
 	}
 
 	public <E extends BaseEntity, P> Synchronizer writeRef(
@@ -330,9 +350,28 @@ public class Synchronizer implements DataSunbeam {
 	}
 
 	@SafeVarargs
+	final public <T, R> Synchronizer readDate(String jsonFieldName, String targetFieldName, Function<T, R> ... functions) {
+		Object readValue = ReflectUtil.get(this.target, targetFieldName);
+		for (Function function: functions) {
+			readValue = function.apply(readValue);
+		}
+		if (readValue!=null) {
+			String value = new SimpleDateFormat("yyyy-MM-dd").format(readValue);
+			this.json.put(jsonFieldName, value);
+		}
+		return this;
+	}
+
+	@SafeVarargs
 	final public <T, R> Synchronizer read(String fieldName, Function<T, R> ... functions) {
 		return read(fieldName, fieldName, functions);
 	}
+
+	@SafeVarargs
+	final public <T, R> Synchronizer readDate(String fieldName, Function<T, R> ... functions) {
+		return readDate(fieldName, fieldName, functions);
+	}
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@SafeVarargs
 	final public <T, R> Synchronizer readGetter(String jsonFieldName, Supplier<R> getter, Function<T, R> ... functions) {

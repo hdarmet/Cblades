@@ -31,10 +31,7 @@ public class PostgreSQLFTSFunction implements SQLFunction {
         if (args== null || args.size() < 2) {
             throw new IllegalArgumentException("The function must be passed at least 2 arguments");
         }
-        String fragment = null;
-        String ftsConfiguration = null;
-        String field = null;
-        String value = null;
+        String fragment, ftsConfiguration, field, value;
         if (args.size() > 2) {
             ftsConfiguration = (String) args.get(0);
             field = (String) args.get(1);

@@ -262,6 +262,20 @@ export class VInputField extends VField {
 
 }
 
+export class VDateField extends VField {
+
+    _initField({value}) {
+        this._input = new Input(value).setType("date").addClass("form-input-date");
+        this.value = value ? value : "";
+        this.add(this._input);
+    }
+
+    get field() {
+        return this._input;
+    }
+
+}
+
 export class VPasswordField extends VField {
 
     _initField({value}) {
@@ -763,7 +777,7 @@ export class VFileLoader extends Vitamin(Div) {
     }
 
     static isImage(file) {
-        return file.type === "image/png" || file.type === "image/jpg";
+        return file.type === "image/png" || file.type === "image/jpeg";
     }
 
     _trigger(file) {

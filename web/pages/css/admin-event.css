@@ -1,0 +1,39 @@
+.event-list .event-title {
+    font-size: 1.2em;
+    font-weight: bolder;
+    float: left;
+}
+
+.event-list img.event-illustration {
+    width: 200px;
+}
+
+.event-list .column-0 {
+    width: 10%;
+}
+.event-list .column-1 {
+    width: 20%;
+}
+.event-list .column-2 {
+    width: 20%;
+}
+.event-list .column-3 {
+    width: 40%;
+}
+.event-list .column-4 {
+    width: 10%;
+}
+
+.event-form .modal-content {
+    width: 800px;
+}
+
+.event-form .file-loader {
+    width:200px;
+    height:100px;
+    overflow: hidden;
+}
+
+.event-form .file-loader img {
+    width:100%;
+}

@@ -18,6 +18,7 @@ import org.summer.data.Synchronizer;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
+import org.summer.util.StringReplacer;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
@@ -33,7 +34,10 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 	@MIME(url="/api/account/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
 		try {
-			String imageName = (String)params.get("imagename");
+			String webName = (String)params.get("imagename");
+			int minusPos = webName.indexOf('-');
+			int pointPos = webName.indexOf('.');
+			String imageName = webName.substring(0, minusPos)+webName.substring(pointPos);
 			return new FileSpecification()
 			    .setName(imageName)
 				.setStream(PlatformManager.get().getInputStream("/avatars/"+imageName));
@@ -47,8 +51,9 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 		if (files.length>0) {
 			if (files.length>1) throw new SummerControllerException(400, "Only one avatar file may be loaded.");
 			String fileName = "avatar"+account.getId()+"."+files[0].getExtension();
+			String webName = "avatar"+account.getId()+"-"+System.currentTimeMillis()+"."+files[0].getExtension();
 			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/avatars/"+fileName));
-			account.setAvatar("/api/account/images/" + fileName);
+			account.setAvatar("/api/account/images/" + webName);
 		}
 	}
 
@@ -80,21 +85,30 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
-				long accountCount = getSingleResult(em.createQuery("select count(a) from Account a"));
 				String search = params.get("search");
+				String countQuery = "select count(a) from Account a";
 				String queryString = "select a from Account a left outer join fetch a.access";
-				if (search!=null) queryString+=" where fts('pg_catalog.english', " +
-					"a.access.login||' '||" +
-					"a.access.role||' '||" +
-					"a.firstName||' '||" +
-					"a.lastName||' '||" +
-					"a.email||' '||" +
-					"a.status, :search) = true";
+				if (search!=null) {
+					search = StringReplacer.replace(search,
+						"tester", "test");
+					String whereClause =" where fts('pg_catalog.english', " +
+						"a.access.login||' '||" +
+						"a.access.role||' '||" +
+						"a.firstName||' '||" +
+						"a.lastName||' '||" +
+						"a.email||' '||" +
+						"a.status, :search) = true";
+					queryString+=whereClause;
+					countQuery+=whereClause;
+				}
+				long accountCount = (search == null) ?
+					getSingleResult(em.createQuery(countQuery)) :
+					getSingleResult(em.createQuery(countQuery)
+						.setParameter("search", search));
 				Collection<Account> accounts = (search == null) ?
 					findAccounts(em.createQuery(queryString), pageNo):
 					findAccounts(em.createQuery(queryString), pageNo,
 					"search", search);
-				//Collection<Account> accounts = findAccounts(em.createQuery("select a from Account a left outer join fetch a.access"), pageNo);
 				result.set(Json.createJsonObject()
 					.put("users", readFromAccounts(accounts))
 					.put("count", accountCount)

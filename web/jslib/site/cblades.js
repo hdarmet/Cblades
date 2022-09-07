@@ -3,19 +3,19 @@ import {
     VMagnifiedImage,
     VSlot,
     VMessageHandler, historize
-} from "./vitamins.js";
+} from "../vitamin/vitamins.js";
 import {
     VHeader,
     VFooter,
     VMainMenu
-} from "./vpage.js";
+} from "../vitamin/vpage.js";
 import {
     VPageContent,
     VWallWithSearch
-} from "./vcontainer.js";
+} from "../vitamin/vcontainer.js";
 import {
     VFileLoader, VFormContainer
-} from "./vforms.js";
+} from "../vitamin/vforms.js";
 import {
     CVLegalNotice,
     CVContact,
@@ -25,7 +25,7 @@ import {
 } from "./cvitamin.js";
 import {
     Div, sendGet
-} from "./components.js";
+} from "../vitamin/components.js";
 import {
     VGallery,
     VSummary,
@@ -43,7 +43,7 @@ import {
     VForum,
     VForums,
     VForumThread
-} from "./vforum.js";
+} from "../vitamin/vforum.js";
 import {
     VGame, VGameProposal, VGameScenario, VJoinGameWall, VProposeGameWall,
     VYourGamesWall

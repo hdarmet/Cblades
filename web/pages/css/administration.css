@@ -77,53 +77,6 @@
     cursor: pointer;
 }
 
-.user-list .user-title {
-    font-size: 1.2em;
-    font-weight: bolder;
-    float: left;
-}
-
-.user-list img.user-avatar {
-    width: 80px;
-    height: 80px;
-}
-
-.user-list .column-0 {
-    width: 15%;
-}
-.user-list .column-1 {
-    width: 15%;
-}
-.user-list .column-2 {
-    width: 20%;
-}
-.user-list .column-3 {
-    width: 10%;
-}
-.user-list .column-4 {
-    width: 15%;
-}
-.user-list .column-5 {
-    width: 10%;
-}
-.user-list .column-6 {
-    width: 10%;
-}
-
-.user-form .modal-content {
-    width: 800px;
-}
-
-.user-form .file-loader {
-    width:300px;
-    height:300px;
-}
-
-.user-form .file-loader img {
-    width:100%;
-    height:100%;
-}
-
 .form-button {
     color: black;
     padding: 7px 20px;

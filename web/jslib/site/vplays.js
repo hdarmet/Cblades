@@ -2,16 +2,16 @@
 
 import {
     VImage, Vitamin, VModal
-} from "./vitamins.js";
+} from "../vitamin/vitamins.js";
 import {
     Div, P, Span
-} from "./components.js";
+} from "../vitamin/components.js";
 import {
     VWall, VWallWithSearch
-} from "./vcontainer.js";
+} from "../vitamin/vcontainer.js";
 import {
     VButton, VButtons, VFormContainer, VRadios
-} from "./vforms.js";
+} from "../vitamin/vforms.js";
 
 export class VArmy extends Vitamin(Div) {
 
