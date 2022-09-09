@@ -879,3 +879,50 @@ export class VFileLoaderField extends VField {
     }
 
 }
+
+export class VRef extends VField {
+
+    _initField({value, selector, nullable, imgNullable="./../images/site/buttons/cross.png", lineCreator}) {
+        this._container = new Div().addClass("form-ref-container");
+        this.add(this._container);
+        this._refCurrentEnvelope = new Div().addClass("form-ref-current-envelope");
+        this._choose = new VButton({
+            ref: "form-ref-select", type: "neutral", label: "Select",
+            onClick: event => {
+                selector.show();
+            }
+        }).addClass("form-ref-select");
+        this._container.add(this._refCurrentEnvelope).add(this._choose);
+        this._refCurrent = new Div().addClass("form-ref-current");
+        this._refCurrentEnvelope.add(this._refCurrent);
+        if (nullable) {
+            this._nullable = new VCommand({
+                ref: "form-erase-target", imgEnabled:imgNullable,
+                onClick: event=> this.value = null
+            });
+        }
+        this._refContent = new Div().addClass("form-ref-content");
+        this._lineCreator = lineCreator;
+        this.value = value;
+    }
+
+    get value() {
+        return this._value;
+    }
+
+    set value(value) {
+        this._value = value;
+        this._refContent.clear();
+        this._refCurrent.clear();
+        if (value) {
+            this._refContent.add(this._lineCreator(value));
+            this._refCurrent.add(this._refContent);
+            if (this._nullable) this._refCurrent.add(this._nullable);
+        }
+    }
+
+    get field() {
+        return this._choose;
+    }
+
+}

@@ -15,7 +15,7 @@ import {
     VFileLoader,
     VFileLoaderField,
     VFormContainer,
-    VInputField, VInputTextArea,
+    VInputField, VInputTextArea, VRef,
     VSelectField
 } from "../vitamin/vforms.js";
 import {
@@ -24,6 +24,9 @@ import {
 import {
     CBConfirm
 } from "./cbadministration.js";
+import {
+    CBUserSelector, loadUsers
+} from "./cbuser.js";
 
 export class CBEditEvent extends VModal {
 
@@ -72,9 +75,23 @@ export class CBEditEvent extends VModal {
                 return true;
             },
         });
+        let userSelector = new CBUserSelector({title:"Select Event User", loadPage:loadUsers, selectUser:user=>{
+                this._target.value = user;
+                userSelector.hide();
+            }
+        }).loadUsers();
+        this._target = new VRef({
+            ref: "target", label: "Target", nullable: true, selector: userSelector,
+            value: event.target,
+            lineCreator: account=> new Div().addClass("user-ref")
+                .add(new Img(account.avatar).addClass("user-avatar"))
+                .add(new Div().setText(account.login).addClass("user-login"))
+                .add(new Div().setText(account.firstName).addClass("user-first-name"))
+                .add(new Div().setText(account.lastName).addClass("user-last-name")
+            )
+        });
         let buttons = new VButtons({
-            ref: "buttons", buttons: [
-                {
+            ref: "buttons", buttons: [{
                     ref: "save-event", type: "accept", label: "Save",
                     onClick: event => {
                         saveEvent(this.specification);
@@ -96,6 +113,7 @@ export class CBEditEvent extends VModal {
                 .addField({field: this._statusField})
             })
             .addField({field: this._descriptionField})
+            .addField({field: this._target})
             .addField({field: buttons});
         });
         if (!create) {
@@ -128,7 +146,8 @@ export class CBEditEvent extends VModal {
             title: this._titleField.value,
             description: this._descriptionField.value,
             status: this._statusField.value,
-            illustration: this._illustration.imageSrc
+            illustration: this._illustration.imageSrc,
+            target: this._target.value
         };
     }
 
@@ -172,7 +191,8 @@ export class CBEventList extends VTable {
                 title: line.title.getText(),
                 description: line.description.getText(),
                 status: line.status.getValue(),
-                illustration: line.illustration.getSrc()
+                illustration: line.illustration.getSrc(),
+                target: line.target
             };
         }
 
@@ -228,7 +248,7 @@ export class CBEventList extends VTable {
                     .setValue(event.status)
                     .addClass("event-status")
                     .onChange(event => saveEvent(getEvent(line)));
-                line = {id: event.id, date, title, description, illustration, status};
+                line = {id: event.id, date, title, description, illustration, status, target:event.target};
                 lines.push([date, title, illustration, description, status]);
             }
             let title = new Span(pageData.title)
@@ -326,66 +346,74 @@ export class CBEventListPage extends Vitamin(Div) {
 
 }
 
+export function loadEvents(pageIndex, search, update) {
+    sendGet("/api/event/all?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
+        (text, status) => {
+            console.log("Load events success: " + text + ": " + status);
+            let response = JSON.parse(text);
+            update({
+                title: "Events List",
+                pageCount: Math.ceil(response.count / response.pageSize),
+                currentPage: response.page,
+                eventCount: response.count,
+                firstEvent: response.page * response.pageSize + 1,
+                lastEvent: response.page * response.pageSize + response.events.length,
+                events: response.events
+            });
+        },
+        (text, status) => {
+            console.log("Load Event failure: " + text + ": " + status);
+            this.showMessage("Unable to load Events", text);
+        }
+    );
+}
+
+export function createEvent(event, illustration, success, failure) {
+    sendPost("/api/event/create",
+        event,
+        (text, status) => {
+            console.log("Event creation success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Event creation failure: " + text + ": " + status);
+            failure(text, status);
+        },
+        illustration
+    );
+}
+
+export function deleteEvent(event, success, failure) {
+    sendGet("/api/event/delete/" + event.id,
+        (text, status) => {
+            console.log("Event delete success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Event delete failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
+}
+
+export function updateEvent(event, illustration, success, failure) {
+    sendPost("/api/event/update/" + event.id,
+        event,
+        (text, status) => {
+            console.log("Event update success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Event update failure: " + text + ": " + status);
+            failure(text, status);
+        },
+        illustration
+    );
+}
+
 export var vEventList = new CBEventListPage({
-    loadPage: (pageIndex, search, update) => {
-        sendGet("/api/event/all?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
-            (text, status) => {
-                console.log("Load events success: " + text + ": " + status);
-                let response = JSON.parse(text);
-                update({
-                    title: "Events List",
-                    pageCount: Math.ceil(response.count / response.pageSize),
-                    currentPage: response.page,
-                    eventCount: response.count,
-                    firstEvent: response.page * response.pageSize + 1,
-                    lastEvent: response.page * response.pageSize + response.events.length,
-                    events: response.events
-                });
-            },
-            (text, status) => {
-                console.log("Load Event failure: " + text + ": " + status);
-                this.showMessage("Unable to load Events", text);
-            }
-        );
-    },
-    createEvent: (event, illustration, success, failure) => {
-        sendPost("/api/event/create",
-            event,
-            (text, status) => {
-                console.log("Event creation success: " + text + ": " + status);
-                success(text, status);
-            },
-            (text, status) => {
-                console.log("Event creation failure: " + text + ": " + status);
-                failure(text, status);
-            },
-            illustration
-        );
-    },
-    deleteEvent: (event, success, failure) => {
-        sendGet("/api/event/delete/" + event.id,
-            (text, status) => {
-                console.log("Event delete success: " + text + ": " + status);
-                success(text, status);
-            },
-            (text, status) => {
-                console.log("Event delete failure: " + text + ": " + status);
-                failure(text, status);
-            }
-        );
-    },
-    updateEvent: (event, illustration, success, failure) => {
-        sendPost("/api/event/update/" + event.id,
-            event,
-            (text, status) => {
-                console.log("Event update success: " + text + ": " + status);
-                success(text, status);
-            },
-            (text, status) => {
-                console.log("Event update failure: " + text + ": " + status);
-                failure(text, status);
-            },
-            illustration
-        );
-    }
+    loadPage: loadEvents,
+    createEvent,
+    deleteEvent,
+    updateEvent
 });

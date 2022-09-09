@@ -538,6 +538,46 @@ export class Select extends InputMixin(DOM(DComposed)) {
 
 }
 
+export class Enum extends Span {
+
+    constructor(value) {
+        super();
+        this._value = value;
+    }
+
+    getOptions() {
+        let options = [];
+        for (let option in this._options) {
+            options.push({value: option, text: this._options.get(option)});
+        }
+        return options;
+    }
+
+    setOptions(options) {
+        this._options = new Map();
+        for (let line of options) {
+            this._options.set(line.value, line.text);
+        }
+        if (this._value) {
+            this.setText(this._options.get(this._value));
+        }
+        return this;
+    }
+
+    getValue() {
+        return this._value;
+    }
+
+    setValue(value) {
+        this._value = value;
+        if (this._value) {
+            this.setText(this._options.get(this._value));
+        }
+        return this;
+    }
+
+}
+
 export class Input extends InputMixin(DOM(DComposed)) {
 
     constructor() {

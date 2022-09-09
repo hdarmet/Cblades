@@ -251,7 +251,7 @@ export class VTable extends Vitamin(Div) {
     }
 
     setPagination({first, last, current}) {
-        if (first !== last) {
+        if (first < last) {
             if (!this._pagination) {
                 this._pagination = new Div().addClass("pagination");
                 this.add(this._pagination);
@@ -288,6 +288,12 @@ export class VTable extends Vitamin(Div) {
                 })
             }
             this._pagination.add(next);
+        }
+        else {
+            if (this._pagination) {
+                this.remove(this._pagination);
+                delete this._pagination;
+            }
         }
     }
 

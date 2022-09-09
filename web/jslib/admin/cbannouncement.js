@@ -306,66 +306,74 @@ export class CBAnnouncementListPage extends Vitamin(Div) {
 
 }
 
+export function loadAnnouncements(pageIndex, search, update) {
+    sendGet("/api/announcement/all?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
+        (text, status) => {
+            console.log("Load announcements success: " + text + ": " + status);
+            let response = JSON.parse(text);
+            update({
+                title: "Announcement List",
+                pageCount: Math.ceil(response.count / response.pageSize),
+                currentPage: response.page,
+                announcementCount: response.count,
+                firstAnnouncement: response.page * response.pageSize + 1,
+                lastAnnouncement: response.page * response.pageSize + response.announcements.length,
+                announcements: response.announcements
+            });
+        },
+        (text, status) => {
+            console.log("Load Announcement failure: " + text + ": " + status);
+            this.showMessage("Unable to load Announcements", text);
+        }
+    );
+}
+
+export function createAnnouncement(announcement, illustration, success, failure) {
+    sendPost("/api/announcement/create",
+        announcement,
+        (text, status) => {
+            console.log("Announcement creation success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Announcement creation failure: " + text + ": " + status);
+            failure(text, status);
+        },
+        illustration
+    );
+}
+
+export function deleteAnnouncement(announcement, success, failure) {
+    sendGet("/api/announcement/delete/" + announcement.id,
+        (text, status) => {
+            console.log("Announcement delete success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Announcement delete failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
+}
+
+export function updateAnnouncement(announcement, illustration, success, failure) {
+    sendPost("/api/announcement/update/" + announcement.id,
+        announcement,
+        (text, status) => {
+            console.log("Announcement update success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Announcement update failure: " + text + ": " + status);
+            failure(text, status);
+        },
+        illustration
+    );
+}
+
 export var vAnnouncementList = new CBAnnouncementListPage({
-    loadPage: (pageIndex, search, update) => {
-        sendGet("/api/announcement/all?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
-            (text, status) => {
-                console.log("Load announcements success: " + text + ": " + status);
-                let response = JSON.parse(text);
-                update({
-                    title: "Announcement List",
-                    pageCount: Math.ceil(response.count / response.pageSize),
-                    currentPage: response.page,
-                    announcementCount: response.count,
-                    firstAnnouncement: response.page * response.pageSize + 1,
-                    lastAnnouncement: response.page * response.pageSize + response.announcements.length,
-                    announcements: response.announcements
-                });
-            },
-            (text, status) => {
-                console.log("Load Announcement failure: " + text + ": " + status);
-                this.showMessage("Unable to load Announcements", text);
-            }
-        );
-    },
-    createAnnouncement: (announcement, illustration, success, failure) => {
-        sendPost("/api/announcement/create",
-            announcement,
-            (text, status) => {
-                console.log("Announcement creation success: " + text + ": " + status);
-                success(text, status);
-            },
-            (text, status) => {
-                console.log("Announcement creation failure: " + text + ": " + status);
-                failure(text, status);
-            },
-            illustration
-        );
-    },
-    deleteAnnouncement: (announcement, success, failure) => {
-        sendGet("/api/announcement/delete/" + announcement.id,
-            (text, status) => {
-                console.log("Announcement delete success: " + text + ": " + status);
-                success(text, status);
-            },
-            (text, status) => {
-                console.log("Announcement delete failure: " + text + ": " + status);
-                failure(text, status);
-            }
-        );
-    },
-    updateAnnouncement: (announcement, illustration, success, failure) => {
-        sendPost("/api/announcement/update/" + announcement.id,
-            announcement,
-            (text, status) => {
-                console.log("Announcement update success: " + text + ": " + status);
-                success(text, status);
-            },
-            (text, status) => {
-                console.log("Announcement update failure: " + text + ": " + status);
-                failure(text, status);
-            },
-            illustration
-        );
-    }
+    loadPage: loadAnnouncements,
+    createAnnouncement,
+    deleteAnnouncement,
+    updateAnnouncement
 });

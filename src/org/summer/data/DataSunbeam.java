@@ -73,6 +73,16 @@ public interface DataSunbeam {
 		return getResultList(query);
 	}
 
+	default int executeUpdate(Query query) {
+		return query.executeUpdate();
+	}
+
+	default int executeUpdate(EntityManager em, String queryString, Object ... params) {
+		Query query = em.createQuery(queryString);
+		setParams(query, params);
+		return executeUpdate(query);
+	}
+
 	default <E> void persist(EntityManager em, E entity) {
 		em.persist(entity);
 		em.flush();

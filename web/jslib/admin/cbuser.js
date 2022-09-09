@@ -1,10 +1,11 @@
 'use strict';
 
 import {
+    VContainer,
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, Select, sendGet, sendPost, Span
+    Div, Img, P, Select, sendGet, sendPost, Span, Enum
 } from "../vitamin/components.js";
 import {
     Vitamin, VModal, VSearch
@@ -31,6 +32,134 @@ import {
 import {
     CBConfirm
 } from "./cbadministration.js";
+
+export class CBUserSelector extends VModal {
+    constructor({title, loadPage, selectUser}) {
+        super({"user": "user-selector", "title": title});
+        this._search = new VSearch({
+            ref: "user-list-search", searchAction: search => {
+                this.loadUsers();
+            }
+        });
+        this._table = new CBUserSelection({loadPage, selectUser});
+        this.addContainer({
+            container: new VContainer({ ref:"user-selection-modal" }).add(this._search).add(this._table)
+        });
+    }
+
+    loadUsers() {
+        this._table.search = this._search.value;
+        this._table.loadUsers();
+        return this;
+    }
+
+    showMessage(title, text) {
+        new VWarning().show({title, message: text});
+    }
+
+}
+
+export class CBUserSelection extends VTable {
+
+    constructor({loadPage, selectUser}) {
+        super({
+            ref: "user-selection",
+            changePage: pageIndex => this._setPage(pageIndex)
+        });
+        this.addClass("user-selection");
+        this._loadPage = loadPage;
+        this._selectUser = selectUser;
+    }
+
+    set search(search) {
+        this._search = search;
+    }
+
+    loadUsers() {
+        this._setPage(0);
+        return this;
+    }
+
+    refresh() {
+        this._setPage(this._currentPage);
+    }
+
+    _setPage(pageIndex) {
+        function getUser(line) {
+            return {
+                id: line.id,
+                login: line.login.getText(),
+                firstName: line.firstName.getText(),
+                lastName: line.lastName.getText(),
+                avatar: line.avatar.getSrc(),
+                email: line.email.getText(),
+                role: line.role.getValue(),
+                status: line.status.getValue()
+            };
+        }
+
+        this._loadPage(pageIndex, this._search, pageData => {
+            let lines = [];
+            for (let user of pageData.users) {
+                let line;
+                let login = new P(user.login).addClass("user-Login")
+                    .onMouseClick(event => this._selectUser(getUser(line)));
+                let firstName = new P(user.firstName).addClass("user-first-name")
+                    .onMouseClick(event => this._selectUser(getUser(line)));
+                let lastName = new P(user.lastName).addClass("user-last-name")
+                    .onMouseClick(event => this._selectUser(getUser(line)));
+                let avatar = new Img(user.avatar).addClass("user-avatar")
+                    .onMouseClick(event => this._selectUser(getUser(line)));
+                let email = new P(user.email).addClass("user-email")
+                    .onMouseClick(event => this._selectUser(getUser(line)));
+                let status = new Enum(user.status).setOptions([
+                    {value: "act", text: "Active"},
+                    {value: "pnd", text: "Pending"},
+                    {value: "blk", text: "Blocked"}
+                ])
+                    .addClass("user-status")
+                    .onMouseClick(event => selectUser(getUser(line)));
+                let role = new Enum(user.role).setOptions([
+                    {value: "std", text: "Standard"},
+                    {value: "cnt", text: "Contributor"},
+                    {value: "adm", text: "Administrator"},
+                    {value: "tst", text: "Tester"}
+                ])
+                    .addClass("user-role")
+                    .onMouseClick(event => selectUser(getUser(line)));
+                line = {id: user.id, login, firstName, lastName, avatar, email, role, status};
+                lines.push([login, firstName, lastName, avatar, email, role, status]);
+            }
+            let title = new Span(pageData.title)
+                .addClass("user-title")
+            let pageSummary = new Span()
+                .addClass("user-pager")
+                .setText(pageData.userCount ?
+                    String.format(CBUserSelection.SUMMARY, pageData.userCount, pageData.firstUser, pageData.lastUser) :
+                    CBUserSelection.EMPTY_SUMMARY);
+            let summary = new Div()
+                .addClass("table-display")
+                .add(title)
+                .add(pageSummary);
+            this.setContent({
+                summary,
+                columns: ["Login", "First Name", "LastName", "Avatar", "Email", "Role", "Status"],
+                data: lines
+            });
+            this._currentPage = pageData.currentPage;
+            let first = pageData.pageCount <= 5 ? 0 : pageData.currentPage - 2;
+            if (first < 0) first = 0;
+            let last = pageData.pageCount <= 5 ? pageData.pageCount - 1 : pageData.currentPage + 2;
+            if (last >= pageData.pageCount) last = pageData.pageCount - 1;
+            this.setPagination({
+                first, last, current: pageData.currentPage
+            });
+        });
+    }
+
+    static SUMMARY = "Showing {1} to {2} of {0} user(s)";
+    static EMPTY_SUMMARY = "There are no users to show";
+}
 
 export class CBEditUser extends VModal {
 
@@ -388,66 +517,74 @@ export class CBUserListPage extends Vitamin(Div) {
 
 }
 
+export function loadUsers(pageIndex, search, update) {
+    sendGet("/api/account/all?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
+        (text, status) => {
+            console.log("Load user success: " + text + ": " + status);
+            let response = JSON.parse(text);
+            update({
+                title: "User List",
+                pageCount: Math.ceil(response.count / response.pageSize),
+                currentPage: response.page,
+                userCount: response.count,
+                firstUser: response.page * response.pageSize + 1,
+                lastUser: response.page * response.pageSize + response.users.length,
+                users: response.users//getUsers(pageIndex)
+            });
+        },
+        (text, status) => {
+            console.log("Load user failure: " + text + ": " + status);
+            this.showMessage("Unable to load Users", text);
+        }
+    );
+}
+
+export function createUser(user, avatar, success, failure) {
+    sendPost("/api/account/create",
+        user,
+        (text, status) => {
+            console.log("Account creation success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Account creation failure: " + text + ": " + status);
+            failure(text, status);
+        },
+        avatar
+    );
+}
+
+export function deleteUser(user, success, failure) {
+    sendGet("/api/account/delete/" + user.id,
+        (text, status) => {
+            console.log("Account delete success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Account delete failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
+}
+
+export function updateUser(user, avatar, success, failure) {
+    sendPost("/api/account/update/" + user.id,
+        user,
+        (text, status) => {
+            console.log("Account update success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Account update failure: " + text + ": " + status);
+            failure(text, status);
+        },
+        avatar
+    );
+}
+
 export var vUserList = new CBUserListPage({
-    loadPage: (pageIndex, search, update) => {
-        sendGet("/api/account/all?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
-            (text, status) => {
-                console.log("Load user success: " + text + ": " + status);
-                let response = JSON.parse(text);
-                update({
-                    title: "User List",
-                    pageCount: Math.ceil(response.count / response.pageSize),
-                    currentPage: response.page,
-                    userCount: response.count,
-                    firstUser: response.page * response.pageSize + 1,
-                    lastUser: response.page * response.pageSize + response.users.length,
-                    users: response.users//getUsers(pageIndex)
-                });
-            },
-            (text, status) => {
-                console.log("Load user failure: " + text + ": " + status);
-                this.showMessage("Unable to load Users", text);
-            }
-        );
-    },
-    createUser: (user, avatar, success, failure) => {
-        sendPost("/api/account/create",
-            user,
-            (text, status) => {
-                console.log("Account creation success: " + text + ": " + status);
-                success(text, status);
-            },
-            (text, status) => {
-                console.log("Account creation failure: " + text + ": " + status);
-                failure(text, status);
-            },
-            avatar
-        );
-    },
-    deleteUser: (user, success, failure) => {
-        sendGet("/api/account/delete/" + user.id,
-            (text, status) => {
-                console.log("Account delete success: " + text + ": " + status);
-                success(text, status);
-            },
-            (text, status) => {
-                console.log("Account delete failure: " + text + ": " + status);
-                failure(text, status);
-            }
-        );
-    },
-    updateUser: (user, avatar, success, failure) => {
-        sendPost("/api/account/update/" + user.id,
-            user,
-            (text, status) => {
-                console.log("Account update success: " + text + ": " + status);
-                success(text, status);
-            },
-            (text, status) => {
-                console.log("Account update failure: " + text + ": " + status);
-                failure(text, status);
-            },
-            avatar
-        );
-    }
+    loadPage: loadUsers,
+    createUser,
+    deleteUser,
+    updateUser
 });

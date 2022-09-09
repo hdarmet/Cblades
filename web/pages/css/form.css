@@ -429,3 +429,23 @@
     -o-transition: all .4s ease;
     transition: all .4s ease;
 }
+
+.form-ref-container, .form-ref-current {
+    display: table;
+}
+
+.form-ref-select, .form-ref-current-envelope, .form-ref-content {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.form-ref-container .form-command {
+    width: 10px;
+    height: 10px;
+    padding: 10px;
+}
+
+.form-ref-current {
+    background-color: #f0f0f0;
+}

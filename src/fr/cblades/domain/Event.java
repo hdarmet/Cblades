@@ -2,10 +2,7 @@ package fr.cblades.domain;
 
 import org.summer.data.BaseEntity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
+import javax.persistence.*;
 import java.util.Date;
 
 @Entity
@@ -18,6 +15,8 @@ public class Event extends BaseEntity {
     String illustration;
     @Enumerated(EnumType.STRING)
     EventStatus status;
+    @ManyToOne
+    Account target;
 
     public Date getDate() {
         return this.date;
@@ -56,6 +55,14 @@ public class Event extends BaseEntity {
     }
     public Event setStatus(EventStatus status) {
         this.status = status;
+        return this;
+    }
+
+    public Account getTarget() {
+        return this.target;
+    }
+    public Event setTarget(Account target) {
+        this.target = target;
         return this;
     }
 

@@ -1,8 +1,10 @@
 package fr.cblades.controller;
 
 import fr.cblades.StandardUsers;
+import fr.cblades.domain.Account;
 import fr.cblades.domain.Event;
 import fr.cblades.domain.EventStatus;
+import fr.cblades.domain.PlayerIdentity;
 import org.summer.FileSpecification;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
@@ -64,7 +66,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			try {
 				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
-					Event newEvent = writeToEvent(request, new Event());
+					Event newEvent = writeToEvent(em, request, new Event());
 					persist(em, newEvent);
 					storeIllustration(params, newEvent);
 					em.flush();
@@ -87,7 +89,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = params.get("search");
 				String countQuery = "select count(e) from Event e";
-				String queryString = "select e from Event e";
+				String queryString = "select e from Event e left outer join fetch e.target";
 				if (search!=null) {
 					search = StringReplacer.replace(search,
 						"coming", "zoon",
@@ -156,7 +158,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Event event = findEvent(em, new Long(id));
-					writeToEvent(request, event);
+					writeToEvent(em, request, event);
 					storeIllustration(params, event);
 					flush(em);
 					result.set(readFromEvent(event));
@@ -177,8 +179,18 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 		return event;
 	}
+
+	Account findAccount(EntityManager em, long id) {
+		Account account = find(em, Account.class, id);
+		if (account==null) {
+			throw new SummerControllerException(404,
+					"Unknown Account with id %d", id
+			);
+		}
+		return account;
+	}
 	
-	Event writeToEvent(Json json, Event event) {
+	Event writeToEvent(EntityManager em, Json json, Event event) {
 		Verifier verifier = verify(json)
 			.checkRequired("date")
 			.checkRequired("title")
@@ -197,7 +209,8 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.write("title")
 			.write("description")
 			.write("illustration")
-			.write("status", label->EventStatus.byLabels().get(label));
+			.write("status", label->EventStatus.byLabels().get(label))
+			.writeRef("target.id", "target", (Integer id)-> this.findAccount(em, id));
 		return event;
 	}
 
@@ -210,7 +223,14 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("title")
 			.read("description")
 			.read("illustration")
-			.read("status", EventStatus::getLabel);
+			.read("status", EventStatus::getLabel)
+			.readLink("target", (pJson, account)->sync(pJson, account)
+				.read("id")
+				.read("login", "access.login")
+				.read("firstName")
+				.read("lastName")
+				.read("avatar")
+			);
 		return lJson;
 	}
 

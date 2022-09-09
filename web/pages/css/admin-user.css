@@ -5,8 +5,8 @@
 }
 
 .user-list img.user-avatar {
-    width: 80px;
-    height: 80px;
+    width: 40px;
+    height: 40px;
 }
 
 .user-list .column-0 {
@@ -43,4 +43,48 @@
 .user-form .file-loader img {
     width:100%;
     height:100%;
+}
+
+.user-selection img.user-avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.user-selection .column-0 {
+    width: 15%;
+}
+.user-selection .column-1 {
+    width: 15%;
+}
+.user-selection .column-2 {
+    width: 20%;
+}
+.user-selection .column-3 {
+    width: 10%;
+}
+.user-selection .column-4 {
+    width: 15%;
+}
+.user-selection .column-5 {
+    width: 10%;
+}
+.user-selection .column-6 {
+    width: 10%;
+}
+
+.user-selection.table-frame {
+    height: 400px;
+}
+
+.user-selection .table-content table tr th, .user-selection .table-content table tr td {
+    padding: 5px;
+}
+
+.user-selection .table-content table tr th p , .user-selection .table-content table tr td p {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+div.user-ref {
+    background-color: #f0f0f0;
 }

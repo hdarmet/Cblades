@@ -344,11 +344,51 @@ export class CBNoticeEditorPage extends VContainer {
 
 let vNoticeEditorPage = new CBNoticeEditorPage();
 
+export function loadNotices(category, success, failure) {
+    sendGet("/api/notice/by-category/" + category,
+        (text, status) => {
+            let notices = JSON.parse(text);
+            console.log("Notices loaded.")
+            success(notices, status);
+        },
+        (text, status) => {
+            console.log("Fail to load notices")
+            failure(text, status);
+        }
+    );
+}
+
+export function saveNotice(notice, success, failure) {
+    sendPost("/api/notice/save",
+        notice,
+        (text, status) => {
+            console.log("Notice saved")
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Fail to save notice")
+            failure(text, status);
+        }
+    );
+}
+
+export function deleteNotice(notice, success, failure) {
+    sendGet("/api/notice/delete/" + notice.id,
+        (text, status) => {
+            console.log("Notice deleted")
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Fail to delete notice")
+            failure(text, status);
+        }
+    );
+}
+
 export function editNotice(title, category, byHistory, historize) {
     this._changePage(null, vNoticeEditorPage, byHistory, historize,
-        switchPage => sendGet("/api/notice/by-category/" + category,
-            (text, status) => {
-                let notices = JSON.parse(text);
+        switchPage => loadNotices(category,
+            (notices, status) => {
                 vNoticeEditorPage
                     .setTitle(title)
                     .setNotices(notices.map(notice => {
@@ -362,42 +402,39 @@ export function editNotice(title, category, byHistory, historize) {
                         }
                     }))
                     .setSave((notice, successMessage, failureMessage) => {
-                            sendPost("/api/notice/save",
-                                {
-                                    id: notice.id,
-                                    version: notice.objVersion,
-                                    title: notice.title,
-                                    text: notice.notice,
-                                    noticeVersion: notice.version,
-                                    published: notice.published,
-                                    category
-                                },
-                                (text, status) => {
-                                    let result = JSON.parse(text);
-                                    if (notice.id === undefined) {
-                                        notice.id = result.id;
-                                        notice.objVersion = result.version;
-                                    }
-                                    vNoticeEditorPage.setVersions();
-                                    vNoticeEditorPage.showMessage(successMessage, "");
-                                },
-                                (text, status) => {
-                                    vNoticeEditorPage.showMessage(failureMessage, text);
-                                })
-                        }
-                    )
+                        saveNotice({
+                            id: notice.id,
+                            version: notice.objVersion,
+                            title: notice.title,
+                            text: notice.notice,
+                            noticeVersion: notice.version,
+                            published: notice.published,
+                            category
+                        },
+                        (text, status) => {
+                            let result = JSON.parse(text);
+                            if (notice.id === undefined) {
+                                notice.id = result.id;
+                                notice.objVersion = result.version;
+                            }
+                            vNoticeEditorPage.setVersions();
+                            vNoticeEditorPage.showMessage(successMessage, "");
+                        },
+                        (text, status) => {
+                            vNoticeEditorPage.showMessage(failureMessage, text);
+                        })
+                    })
                     .setDelete((notice, successMessage, failureMessage) => {
-                            sendGet("/api/notice/delete/" + notice.id,
-                                (text, status) => {
-                                    //vNoticeEditorPage.setVersions();
-                                    vNoticeEditorPage.editPublishedNotice();
-                                    vNoticeEditorPage.showMessage(successMessage, "");
-                                },
-                                (text, status) => {
-                                    vNoticeEditorPage.showMessage(failureMessage, text);
-                                })
-                        }
-                    );
+                        deleteNotice(notice,
+                        (text, status) => {
+                            vNoticeEditorPage.editPublishedNotice();
+                            vNoticeEditorPage.showMessage(successMessage, "");
+                        },
+                        (text, status) => {
+                            vNoticeEditorPage.showMessage(failureMessage, text);
+                        })
+                    }
+                );
                 switchPage();
             },
             (text, status) => {

@@ -140,6 +140,8 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 				inTransaction(em->{
 					String id = params.get("id");
 					Account account = findAccount(em, new Long(id));
+					executeUpdate(em, "delete from Event e where e.target = :account",
+						"account", account);
 					remove(em, account);
 				});
 				return Json.createJsonObject().put("deleted", "ok");
