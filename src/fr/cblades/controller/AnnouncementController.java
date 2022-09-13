@@ -103,8 +103,8 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 					getSingleResult(em.createQuery(countQuery)
 						.setParameter("search", search));
 				Collection<Announcement> announcements = (search == null) ?
-					findAnnouncements(em.createQuery(queryString), pageNo):
-					findAnnouncements(em.createQuery(queryString), pageNo,
+					findPagedAnnouncements(em.createQuery(queryString), pageNo):
+					findPagedAnnouncements(em.createQuery(queryString), pageNo,
 					"search", search);
 				result.set(Json.createJsonObject()
 					.put("announcements", readFromAnnouncements(announcements))
@@ -116,7 +116,22 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 			return result.get();
 		}, ADMIN);
 	}
-	
+
+	@REST(url="/api/announcement/live", method=Method.GET)
+	public Json getLive(Map<String, String> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			String queryString = "select a from Announcement a where a.status=:status";
+			Collection<Announcement> announcements =
+				findAnnouncements(em.createQuery(queryString),
+					"status", AnnouncementStatus.LIVE);
+			result.set(Json.createJsonObject()
+				.put("announcements", readFromAnnouncements(announcements))
+			);
+		});
+		return result.get();
+	}
+
 	@REST(url="/api/announcement/find/:id", method=Method.POST)
 	public Json getById(Map<String, String> params, Json request) {
 		return (Json)ifAuthorized(user->{
@@ -205,12 +220,18 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 		return lJson;
 	}
 
-	Collection<Announcement> findAnnouncements(Query query, int page, Object... params) {
+	Collection<Announcement> findPagedAnnouncements(Query query, int page, Object... params) {
 		setParams(query, params);
-		List<Announcement> announcements = getPagedResultList(query, page, AnnouncementController.ANNOUNCEMENTS_BY_PAGE);
+		List<Announcement> announcements = getPagedResultList(query, page*AnnouncementController.ANNOUNCEMENTS_BY_PAGE, AnnouncementController.ANNOUNCEMENTS_BY_PAGE);
 		return announcements.stream().distinct().collect(Collectors.toList());
 	}
-	
+
+	Collection<Announcement> findAnnouncements(Query query, Object... params) {
+		setParams(query, params);
+		List<Announcement> announcements = getResultList(query);
+		return announcements.stream().distinct().collect(Collectors.toList());
+	}
+
 	Json readFromAnnouncements(Collection<Announcement> announcements) {
 		Json list = Json.createJsonArray();
 		announcements.stream().forEach(announcement->list.push(readFromAnnouncement(announcement)));

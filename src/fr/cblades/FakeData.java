@@ -4,6 +4,8 @@ import fr.cblades.domain.*;
 import org.summer.annotation.Launch;
 import org.summer.data.DataSunbeam;
 
+import java.util.Date;
+
 public class FakeData {
 
     @Launch
@@ -41,6 +43,24 @@ public class FakeData {
                 .setAccess(new Login().setLogin("temrad").setPassword(Login.encrypt("P@ssW0rd.")))
                 .setAvatar("../images/site/avatars/my-avatar.png").setStatus(AccountStatus.ACTIVE);
             data.persist(em, temrad);
+            long now = new Date().getTime();
+            for (int index=0; index<10; index++) {
+                Event event = new Event()
+                    .setDescription(SHORT_PARAGRAPH_TEXT)
+                    .setDate(new Date(now+index*10))
+                    .setTitle("Iste natus error sit voluptatem "+index)
+                    .setIllustration("../images/site/left-legends.png")
+                    .setTarget(temrad)
+                    .setStatus(EventStatus.LIVE);
+                data.persist(em, event);
+                event = new Event()
+                    .setDescription(SHORT_PARAGRAPH_TEXT)
+                    .setDate(new Date(now+1+index*10))
+                    .setTitle("Iste natus error sit voluptatem "+index)
+                    .setTarget(temrad)
+                    .setStatus(EventStatus.LIVE);
+                data.persist(em, event);
+            }
         });
         data.inTransaction(em->{
             Notice notice = new Notice()
@@ -52,7 +72,49 @@ public class FakeData {
                 .setNoticeVersion("0.3").setPublished(false);
             data.persist(em, notice);
         });
+        data.inTransaction(em-> {
+            Announcement announcement = new Announcement()
+                .setDescription(PARAGRAPH_TEXT)
+                .setIllustration("../../images/scenarii/scenario1.png")
+                .setStatus(AnnouncementStatus.LIVE);
+            data.persist(em, announcement);
+            announcement = new Announcement()
+                .setDescription(SHORT_PARAGRAPH_TEXT)
+                .setIllustration("../../images/site/factions/grunedeborg.png")
+                .setStatus(AnnouncementStatus.LIVE);
+            data.persist(em, announcement);
+            announcement = new Announcement()
+                .setDescription(LONG_PARAGRAPH_TEXT)
+                .setIllustration("../../images/maps/map-12.png")
+                .setStatus(AnnouncementStatus.LIVE);
+            data.persist(em, announcement);
+        });
+        data.inTransaction(em-> {
+            long now = new Date().getTime();
+            for (int index=0; index<10; index++) {
+                Event event = new Event()
+                    .setDescription(SHORT_PARAGRAPH_TEXT)
+                    .setDate(new Date(now+index*10))
+                    .setTitle("Iste natus error sit voluptatem "+index)
+                    .setIllustration("../images/site/right-legends.png")
+                    .setStatus(EventStatus.LIVE);
+                data.persist(em, event);
+                event = new Event()
+                    .setDescription(SHORT_PARAGRAPH_TEXT)
+                    .setDate(new Date(now+1+index*10))
+                    .setTitle("Iste natus error sit voluptatem "+index)
+                    .setStatus(EventStatus.LIVE);
+                data.persist(em, event);
+            }
+        });
     }
 
+    static String TINY_PARAGRAPH_TEXT = "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit";
+
+    static String SHORT_PARAGRAPH_TEXT = TINY_PARAGRAPH_TEXT + TINY_PARAGRAPH_TEXT;
+
+    static String PARAGRAPH_TEXT = SHORT_PARAGRAPH_TEXT + SHORT_PARAGRAPH_TEXT;
+
+    static String LONG_PARAGRAPH_TEXT = PARAGRAPH_TEXT + PARAGRAPH_TEXT;
 }
 

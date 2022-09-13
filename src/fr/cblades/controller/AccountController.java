@@ -238,7 +238,7 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 
 	Collection<Account> findAccounts(Query query, int page, Object... params) {
 		setParams(query, params);
-		List<Account> accounts = getPagedResultList(query, page, AccountController.ACCOUNTS_BY_PAGE);
+		List<Account> accounts = getPagedResultList(query, page*AccountController.ACCOUNTS_BY_PAGE, AccountController.ACCOUNTS_BY_PAGE);
 		return accounts.stream().distinct().collect(Collectors.toList());
 	}
 	

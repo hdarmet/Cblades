@@ -416,7 +416,7 @@ export class VSlideShow extends Vitamin(Div) {
         this.add(new A("\u276e").addClass("slide-prev").onMouseClick(event=>{
             this.moveSlide(-1)
         }))
-        .add(new A("\u276f").addClass("slide-next").onMouseClick(event=>{
+            .add(new A("\u276f").addClass("slide-next").onMouseClick(event=>{
             this.moveSlide(1)
         }))
         this._slideIndex = 0;
@@ -478,9 +478,24 @@ export class VLog extends Vitamin(Div) {
         this._title=new P(title).addClass("log-title");
         this.add(this._title);
         this._content = new Div();
-        this.add(this._content).addClass("log-container");
+        this.add(this._content).addClass("log-container").onEvent("scroll", event=>this.detectVisibility());
         this._loadLogs = logLoader;
-        this._loadLogs();
+        this.initLoad();
+    }
+
+    initLoad() {
+        this._content.clear();
+        this._page = 0;
+        this._loadLogs && this._loadLogs(0);
+    }
+
+    addLogs(events) {
+        if (events.length) {
+            for (let event of events) {
+                this._content.add(event);
+            }
+            this._lastElement = events[events.length-1];
+        }
     }
 
     onActivate() {
@@ -498,21 +513,20 @@ export class VLog extends Vitamin(Div) {
     }
 
     detectVisibility() {
-        let clientRect = this._lastElement.root.getBoundingClientRect();
-        let bottomOfScreen = window.scrollY + window.innerHeight;
-        let topOfScreen = window.scrollY;
-        if ((bottomOfScreen > clientRect.y) && (topOfScreen < clientRect.y+clientRect.height)) {
-            this._loadLogs && this._loadLogs();
+        if (this._lastElement) {
+            let clientRect = this._lastElement.root.getBoundingClientRect();
+            let bottomOfScreen = window.scrollY + window.innerHeight;
+            let topOfScreen = window.scrollY;
+            console.log(clientRect, topOfScreen, bottomOfScreen);
+            if ((bottomOfScreen > clientRect.y) && (topOfScreen < clientRect.y + clientRect.height)) {
+                this._page++;
+                this._loadLogs && this._loadLogs(this._page);
+            }
         }
     }
 }
 
 export class VPageContent extends VContainer {
-
-    constructor({ref}) {
-        super({ref});
-        this._showHome(true);
-    }
 
     _changeTitle(title) {
         if (this._title) this.remove(this._title);

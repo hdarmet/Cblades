@@ -158,29 +158,24 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				.ensure();
 			inTransaction(em->{
 				String login = params.get("login");
-				Collection<Account> accounts = findAccounts(
-					em.createQuery("select a from Account a, Login l where a.access = l and l.login=:login"),
-						"login", login);
-				if (accounts.isEmpty()) {
-					throw new SummerControllerException(404, "Unknown Login");
+				Account account = Login.findAccountByLogin(em, login);
+				if (account==null) {
+					throw new SummerControllerException(404, "No Account for login: "+login);
 				}
-				else {
-					Account account = accounts.iterator().next();
-					String altPassword = generateRandomPassword();
-					account.getAccess()
-						.setAltPassword(Login.encrypt(altPassword))
-						.setAltPasswordLease(PlatformManager.get().now()+VALIDITY_DELAY);
-					Notice notice = getSingleResult(em,
-							"select n from Notice n where n.category=:category and n.published = true",
-							"category", "forgot-password-mail");
-					use(MailService.class, mailService->{
-						mailService.sendEmail(
-							account.getEmail(), notice.getTitle(),
-							String.format(notice.getText(), altPassword),
-							"blades.cursed@gmail.com"
-						);
-					});
-				}
+				String altPassword = generateRandomPassword();
+				account.getAccess()
+					.setAltPassword(Login.encrypt(altPassword))
+					.setAltPasswordLease(PlatformManager.get().now()+VALIDITY_DELAY);
+				Notice notice = getSingleResult(em,
+						"select n from Notice n where n.category=:category and n.published = true",
+						"category", "forgot-password-mail");
+				use(MailService.class, mailService->{
+					mailService.sendEmail(
+						account.getEmail(), notice.getTitle(),
+						String.format(notice.getText(), altPassword),
+						"blades.cursed@gmail.com"
+					);
+				});
 			});
 			return Json.createJsonObject();
 		} catch (PersistenceException pe) {
@@ -255,16 +250,10 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return logins.stream().distinct().collect(Collectors.toList());
 	}
 
-	Collection<Account> findAccounts(Query query, Object... params) {
-		setParams(query, params);
-		List<Account> accounts = getResultList(query);
-		return accounts.stream().distinct().collect(Collectors.toList());
-	}
-
 	Json readFromLogins(Collection<Login> logins) {
 		Json list = Json.createJsonArray();
 		logins.stream().forEach(login->list.push(readFromLogin(login)));
 		return list;
 	}
-	
+
 }

@@ -2,11 +2,15 @@ package fr.cblades.domain;
 
 import org.summer.controller.SummerControllerException;
 import org.summer.data.BaseEntity;
+import org.summer.data.DataSunbeam;
 
 import javax.persistence.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(indexes=@Index(name="idx_login", unique=true, columnList="login"))
@@ -108,6 +112,17 @@ public class Login extends BaseEntity {
         catch (NoSuchAlgorithmException e)
         {
             throw new SummerControllerException(403, "Unexpected issue. Please report : %s", e.getMessage());
+        }
+    }
+
+    static public Account findAccountByLogin(EntityManager em, String login) {
+        Query query = em.createQuery("select a from Account a, Login l where a.access = l and l.login=:login")
+            .setParameter("login", login);
+        try {
+            return (Account)query.getSingleResult();
+        }
+        catch (NoResultException enf) {
+            return null;
         }
     }
 

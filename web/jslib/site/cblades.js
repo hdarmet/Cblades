@@ -7,7 +7,7 @@ import {
 import {
     VHeader,
     VFooter,
-    VMainMenu
+    VMainMenu, VWarning
 } from "../vitamin/vpage.js";
 import {
     VPageContent,
@@ -21,10 +21,10 @@ import {
     CVContact,
     CVPartnerships,
     CVSocialRow,
-    VCLogin
+    VCLogin, connect
 } from "./cvitamin.js";
 import {
-    Div, sendGet
+    Div, sendGet, sendPost
 } from "../vitamin/components.js";
 import {
     VGallery,
@@ -49,8 +49,7 @@ import {
     VYourGamesWall
 } from "./vplays.js";
 import {
-    VAnnoucement, VEvent,
-    VHome
+    loadAnnouncement, vHome
 } from "./vhome.js";
 
 var text = `
@@ -142,8 +141,17 @@ export var vMenu = new VMainMenu({ref:"menu"})
     })
     .addMenu({ref:"login", kind:"right-menu", label:connection?"Logout":"Login", action:()=>{
         if (connection) {
-            connection = null;
-            vMenu.get("login").label = "Login";
+            sendPost("/api/login/disconnect",null,
+                (text, status) => {
+                    console.log("Disconnection success: " + text + ": " + status);
+                    connection = null
+                    vMenu.get("login").label = "login";
+                },
+                (text, status) => {
+                    console.log("Disconnection failure: " + text + ": " + status);
+                    vLogin.showMessage(text);
+                }
+            );
         }
         else {
             vLogin.show();
@@ -243,12 +251,9 @@ export var vFooter = new VFooter({
 });
 
 export var vLogin = new  VCLogin({
-    connect: ()=>{
-        connection = {
-            login: vLogin.connection
-        };
+    connect: user=>{
+        connection = user;
         vMenu.get("login").label = "logout";
-        return true;
     }
 });
 
@@ -1457,37 +1462,6 @@ vJoinGameWall.setLoadNotes(function() {
         .addNote(getProposal());
 });
 
-function logLoader() {
-    for (let index=0; index<20; index++ ) {
-        this._lastElement = new VEvent({
-            ref:"e1", date:new Date(),
-            title:"Iste natus error sit voluptatem",
-            img: "../images/site/left-legends.png",
-            text: "piciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae",
-        });
-        this._content.add(this._lastElement);
-    }
-}
-
-function myLogLoader() {
-    for (let index=0; index<20; index++ ) {
-        this._lastElement = new VEvent({
-            ref:"e1", date:new Date(),
-            title:"Iste natus error sit voluptatem",
-            img: "../images/site/left-legends.png",
-            text: "piciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae",
-        });
-        this._content.add(this._lastElement);
-    }
-}
-
-let vHome = new VHome({ref:"home", logLoader, myLogLoader});
-vHome.setSlides([
-   new VAnnoucement({ref:"a1", img:"../images/scenarii/scenario1.png", description:paragrpahText}),
-   new VAnnoucement({ref:"a2", img:"../images/site/factions/grunedeborg.png", description:shortParagrpahText}),
-   new VAnnoucement({ref:"a3", img:"../images/maps/map-12.png", description:middleParagrpahText})
-]);
-
 class CBPageContent extends VPageContent {
 
     constructor() {
@@ -1496,7 +1470,11 @@ class CBPageContent extends VPageContent {
     }
 
     _showHome(byHistory, historize) {
-        return this._changePage(null, vHome, byHistory, historize);
+        loadAnnouncement(
+            ()=>{
+                this._changePage(null, vHome, byHistory, historize);
+            }
+        );
     }
 
     showHome() {
@@ -1784,6 +1762,10 @@ class CBPageContent extends VPageContent {
         this._showJoinAGame(false, ()=>
             historize("join-a-game", `window.vPageContent._showJoinAGame(true);`)
         );
+    }
+
+    showMessage(title, text) {
+        new VWarning().show({title, message: text});
     }
 
 }

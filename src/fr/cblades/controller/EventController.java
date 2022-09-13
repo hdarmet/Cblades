@@ -1,10 +1,7 @@
 package fr.cblades.controller;
 
 import fr.cblades.StandardUsers;
-import fr.cblades.domain.Account;
-import fr.cblades.domain.Event;
-import fr.cblades.domain.EventStatus;
-import fr.cblades.domain.PlayerIdentity;
+import fr.cblades.domain.*;
 import org.summer.FileSpecification;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
@@ -120,7 +117,46 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			return result.get();
 		}, ADMIN);
 	}
-	
+
+	@REST(url="/api/event/live", method=Method.GET)
+	public Json getLive(Map<String, String> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
+			String queryString = "select e from Event e where e.status=:status and e.target is null order by e.date desc";
+			Collection<Event> events =
+				findEvents(em.createQuery(queryString), pageNo,
+					"status", EventStatus.LIVE);
+			result.set(Json.createJsonObject()
+				.put("events", readFromEvents(events))
+			);
+		});
+		return result.get();
+	}
+
+	@REST(url="/api/event/account-live", method=Method.GET)
+	public Json getAccountLive(Map<String, String> params, Json request) {
+		return (Json)ifAuthorized(user-> {
+			Ref<Json> result = new Ref<>();
+			inTransaction(em -> {
+				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
+				Account account = Login.findAccountByLogin(em, user);
+				if (account==null) {
+					throw new SummerControllerException(404, "No Account for login: "+user);
+				}
+				String queryString = "select e from Event e where e.status=:status and e.target=:account order by e.date desc";
+				Collection<Event> events =
+						findEvents(em.createQuery(queryString), pageNo,
+								"account", account,
+								"status", EventStatus.LIVE);
+				result.set(Json.createJsonObject()
+						.put("events", readFromEvents(events))
+				);
+			});
+			return result.get();
+		});
+	}
+
 	@REST(url="/api/event/find/:id", method=Method.POST)
 	public Json getById(Map<String, String> params, Json request) {
 		return (Json)ifAuthorized(user->{
@@ -189,7 +225,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 		return account;
 	}
-	
+
 	Event writeToEvent(EntityManager em, Json json, Event event) {
 		Verifier verifier = verify(json)
 			.checkRequired("date")
@@ -236,7 +272,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	Collection<Event> findEvents(Query query, int page, Object... params) {
 		setParams(query, params);
-		List<Event> events = getPagedResultList(query, page, EventController.EVENTS_BY_PAGE);
+		List<Event> events = getPagedResultList(query, page*EventController.EVENTS_BY_PAGE, EventController.EVENTS_BY_PAGE);
 		return events.stream().distinct().collect(Collectors.toList());
 	}
 	

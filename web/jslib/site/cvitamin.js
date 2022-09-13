@@ -14,11 +14,16 @@ import {
     VSelectField,
     VInputTextArea,
     VButtons,
-    VButton,
     VPasswordField,
     mandatory,
     matchesEmail, matchesName, matchesPassword, matchesLogin, or, and, isValid, VFormContainer
 } from "../vitamin/vforms.js";
+import {
+    sendPost
+} from "../vitamin/components.js";
+import {
+    VWarning
+} from "../vitamin/vpage.js";
 
 export class CVContact extends VList {
     constructor({address, phone, email, writeToUs}) {
@@ -247,7 +252,7 @@ export class VCLogin extends VModal {
                 {
                     ref:"Signin", type:"accept", enabled:false, label:"Sign In",
                     onClick:event=>{
-                        this.connect();
+                        this.connect(this.login, this.password);
                     }
                 },
                 {
@@ -263,21 +268,15 @@ export class VCLogin extends VModal {
         });
         this._defineLoginField = new VInputField({
             ref:"def-login", label:"Login", value:"My name",
-            validate: mandatory({validate: matchesLogin({})}),
-            onInput:event=>{
-            }
+            validate: mandatory({validate: matchesLogin({})})
         });
         this._defineEmailField = new VInputField({
             ref:"def-email", label:"Email", value:"me@me.com",
-            validate: mandatory({validate: matchesEmail({})}),
-            onInput:event=>{
-            }
+            validate: mandatory({validate: matchesEmail({})})
         });
         this._definePasswordField = new VPasswordField({
             ref:"def-password", label:"Password", value:"",
-            validate: mandatory({validate: matchesPassword({})}),
-            onInput:event=>{
-            }
+            validate: mandatory({validate: matchesPassword({})})
         });
         this._defineReenterPasswordField = new VPasswordField({
             ref:"def-reply-password", label:"Re-enter Password", value:"",
@@ -293,21 +292,15 @@ export class VCLogin extends VModal {
                         }
                     ]
                 })
-            }),
-            onInput:event=>{
-            }
+            })
         });
         this._defineFirstNameField = new VInputField({
             ref:"def-first-name", label:"First Name", value:"",
-            validate: mandatory({validate: matchesName({})}),
-            onInput:event=>{
-            }
+            validate: mandatory({validate: matchesName({})})
         });
         this._defineLastNameField = new VInputField({
             ref:"def-last-name", label:"Last Name", value:"",
-            validate: mandatory({validate: matchesName({})}),
-            onInput:event=>{
-            }
+            validate: mandatory({validate: matchesName({})})
         });
         this._signUpContainer = new VFormContainer({ref:"signup", columns:2},$=>{$
             .addField({field: this._defineLoginField})
@@ -320,7 +313,16 @@ export class VCLogin extends VModal {
                 {
                     ref:"Signup", type:"accept", label:"Sign Up",
                     onClick:event=>{
-                        this.connect();
+                        createUser(this.specification,
+                            null,
+                            //this.createUserModal.avatarFiles,
+                            () => {
+                                this.connect(this.login, this.password);
+                            },
+                            text => {
+                                this.showMessage("Fail to create User", text);
+                            }
+                        )
                     }},
                 {
                     ref:"Signin", type:"neutral", label:"Sign In",
@@ -336,10 +338,39 @@ export class VCLogin extends VModal {
         this.addClass("sign-in");
     }
 
-    connect() {
-        if (isValid(this) && this._connect()) {
-            this.hide();
+    get specification() {
+        return {
+            login: this._defineLoginField.value,
+            email: this._defineEmailField.value,
+            firstName: this._defineFirstNameField.value,
+            lastName: this._defineLastNameField.value,
+            password: this._definePasswordField.value,
+            role: "std",
+            status: "act",
+            avatar: "../images/site/avatars/default-avatar.png"/*this._avatar.imageSrc*/
         }
+    }
+
+    connect(login, password) {
+        if (isValid(this)) {
+            connect(login, password,
+                text=>{
+                    this.hide();
+                    this._connect(JSON.parse(text));
+                },
+                (text, status)=>{
+                    this.showMessage(text);
+                }
+            );
+        }
+    }
+
+    get login() {
+        return this._loginField.value;
+    }
+
+    get password() {
+        return this._passwordField.value;
     }
 
     get connection() {
@@ -347,4 +378,40 @@ export class VCLogin extends VModal {
             login: this._loginField.value
         }
     }
+
+    showMessage(text) {
+        new VWarning().show({title:"Connection refused", message:text});
+    }
+
+}
+
+export function connect(login, password, success, failure) {
+    sendPost("/api/login/login",
+        {
+            login, password
+        },
+        (text, status) => {
+            console.log("Connection success: " + text + ": " + status);
+            success(text);
+        },
+        (text, status) => {
+            console.log("Connection failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
+}
+
+export function createUser(user, avatar, success, failure) {
+    sendPost("/api/account/create",
+        user,
+        (text, status) => {
+            console.log("Account creation success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Account creation failure: " + text + ": " + status);
+            failure(text, status);
+        },
+        avatar
+    );
 }

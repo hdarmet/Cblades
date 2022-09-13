@@ -32,14 +32,21 @@ public class SecurityManagerImpl implements SecurityManager {
 	public Object executeIfAuthorized(Executor executor, String... roles) {
         ClaimSet claimSet = checkAuthentication(SummerServlet.getRequest());
         String[] userRoles = getRoles(claimSet.subject);
-        for (String role : userRoles) {
-        	for (String authorizedRole : roles) {
-	            if (authorizedRole.equals(role)) {
-	                setAuthentication(SummerServlet.getResponse(), 
-	                	claimSet.subject, claimSet.expiration-claimSet.issuedAt);
-	                return executor.run(claimSet.subject);
-	            }
-	        }
+        if (roles.length>0) {
+            for (String role : userRoles) {
+                for (String authorizedRole : roles) {
+                    if (authorizedRole.equals(role)) {
+                        setAuthentication(SummerServlet.getResponse(),
+                                claimSet.subject, claimSet.expiration - claimSet.issuedAt);
+                        return executor.run(claimSet.subject);
+                    }
+                }
+            }
+        }
+        else {
+            setAuthentication(SummerServlet.getResponse(),
+                    claimSet.subject, claimSet.expiration - claimSet.issuedAt);
+            return executor.run(claimSet.subject);
         }
         throw new SummerControllerException(403, "Not authorized");
 	}

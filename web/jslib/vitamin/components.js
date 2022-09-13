@@ -51,6 +51,7 @@ export class DComposed extends DComponent {
     }
 
     clear() {
+        delete this._children;
         getDrawPlatform().replaceChildren(this._root);
     }
 
