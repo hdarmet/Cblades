@@ -4,6 +4,7 @@ import {
     VContainer, VSlideShow, VLog
 } from "../vitamin/vcontainer.js";
 import {
+    VLoginHandler,
     Vitamin
 } from "../vitamin/vitamins.js";
 import {
@@ -13,7 +14,7 @@ import {
     sendGet
 } from "../draw.js";
 import {
-    VWarning
+    showMessage
 } from "../vitamin/vpage.js";
 
 export class VAnnoucement extends Vitamin(Div) {
@@ -31,17 +32,47 @@ export class VAnnoucement extends Vitamin(Div) {
 
 export class VHome extends VContainer {
 
-    constructor({ref, kind="home", myLogLoader, logLoader}) {
+    constructor({ref, kind="home", myLogLoader, logLoader, connect}) {
         super({ref});
         this.addClass(kind);
         this._slideshow = new VSlideShow({ref:ref+"-slideshow"});
         this._events = new VContainer({ref:ref+"-content", columns:2});
         this.add(this._slideshow);
         this.add(this._events);
-        this._myLogs = new VLog({ref:"my-logs", title:"Pour moi", logLoader:myLogLoader});
+        this._myLogs = new VLog({
+            ref: "my-logs", title: "Pour moi",
+            logLoader: page => {
+                if (VLoginHandler.connection) {
+                    myLogLoader(page)
+                }
+            }
+        });
+        this._invitToConnect = new Div().add(
+            new Img("../images/site/invite-connection.jpg")
+        ).add(
+            new Div("Connect or Register to Play On-line or contribute.")
+        ).addClass("home-connect"
+        ).onEvent("click",
+            event=>connect&&connect()
+        );
         this._logs = new VLog({ref:"logs", title:"Pour tous", logLoader});
         this._events.addField({field: this._logs});
-        this._events.addField({field: this._myLogs});
+        this._rightPart = new Div().addClass("home-right-column").add(this._myLogs).add(this._invitToConnect);
+        this._invitToConnect.addClass(VLoginHandler.connection? "fade" : "not-fade");
+        this._events.addField({field: this._rightPart});
+        VLoginHandler.addLoginListener(this);
+    }
+
+    onConnection({user}) {
+        if (user) {
+            this._myLogs.initLoad();
+            this._invitToConnect.removeClass("not-fade");
+            this._invitToConnect.addClass("fade");
+        }
+        else {
+            this._invitToConnect.removeClass("fade");
+            this._invitToConnect.addClass("not-fade");
+        }
     }
 
     setSlides(slides) {
@@ -61,11 +92,6 @@ export class VHome extends VContainer {
         return this;
     }
 
-    showMessage(title, text) {
-        new VWarning().show({title, message: text});
-        return this;
-    }
-
 }
 
 export class VEvent extends Vitamin(Div) {
@@ -82,30 +108,6 @@ export class VEvent extends Vitamin(Div) {
     }
 }
 
-function logLoader() {
-    for (let index=0; index<20; index++ ) {
-        this._lastElement = new VEvent({
-            ref:"e1", date:new Date(),
-            title:"Iste natus error sit voluptatem",
-            img: "../images/site/left-legends.png",
-            text: "piciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae",
-        });
-        this._content.add(this._lastElement);
-    }
-}
-
-function myLogLoader() {
-    for (let index=0; index<20; index++ ) {
-        this._lastElement = new VEvent({
-            ref:"e1", date:new Date(),
-            title:"Iste natus error sit voluptatem",
-            img: "../images/site/left-legends.png",
-            text: "piciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae",
-        });
-        this._content.add(this._lastElement);
-    }
-}
-
 export let vHome = new VHome({ref:"home",
     logLoader: page=>{
         loadEvents(
@@ -118,7 +120,8 @@ export let vHome = new VHome({ref:"home",
         items=>{
             vHome.setMyLogs(items);
         }, page)
-    }
+    },
+    connect: ()=>VLoginHandler.login()
 });
 
 export function loadAnnouncement(success) {
@@ -137,7 +140,7 @@ export function loadAnnouncement(success) {
             success();
         },
         (text, status)=>{
-            vHome.showMessage("Error", "Cannot Load Page: "+text);
+            showMessage("Error", "Cannot Load Page: "+text);
         }
     );
 }
@@ -159,7 +162,7 @@ export function loadEvents(success, page) {
             success(items);
         },
         (text, status)=> {
-            vHome.showMessage("Error", "Cannot Load Logs: "+text);
+            showMessage("Error", "Cannot Load Logs: "+text);
         }
     );
 }
@@ -181,7 +184,7 @@ export function loadMyEvents(success, page) {
             success(items);
         },
         (text, status)=> {
-            vHome.showMessage("Error", "Cannot Load Logs: "+text);
+            showMessage("Error", "Cannot Load Logs: "+text);
         }
     );
 }

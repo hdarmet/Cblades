@@ -19,7 +19,7 @@ import {
     VSelectField
 } from "../vitamin/vforms.js";
 import {
-    VWarning
+    showMessage
 } from "../vitamin/vpage.js";
 import {
     CBConfirm
@@ -151,10 +151,6 @@ export class CBEditEvent extends VModal {
         };
     }
 
-    showMessage(title, text) {
-        new VWarning().show({title, message: text});
-    }
-
 }
 
 export class CBEventList extends VTable {
@@ -191,7 +187,7 @@ export class CBEventList extends VTable {
                 title: line.title.getText(),
                 description: line.description.getText(),
                 status: line.status.getValue(),
-                illustration: line.illustration.getSrc(),
+                illustration: line.illustration.getSrc ? line.illustration.getSrc() : undefined,
                 target: line.target
             };
         }
@@ -209,7 +205,7 @@ export class CBEventList extends VTable {
                             this.refresh();
                         },
                         text => {
-                            eventEditor.showMessage("Fail to update Event", text);
+                            showMessage("Fail to update Event", text);
                         }
                     ),
                     deleteEvent: event => this._deleteEvent(event,
@@ -220,14 +216,14 @@ export class CBEventList extends VTable {
                         },
                         text => {
                             eventEditor.confirm.hide();
-                            this.showMessage("Fail to delete Event", text);
+                            showMessage("Fail to delete Event", text);
                         }
                     ),
                 }).show();
             };
             let saveEvent = event => this._updateEvent(event, [],
-                () => this.parent.showMessage("Event saved."),
-                text => this.parent.showMessage("Unable to Save Event.", text),
+                () => showMessage("Event saved."),
+                text => showMessage("Unable to Save Event.", text),
             );
             for (let event of pageData.events) {
                 let line;
@@ -235,7 +231,7 @@ export class CBEventList extends VTable {
                     .onMouseClick(event => selectEvent(getEvent(line)));
                 let title = new Span(event.title).addClass("event-title")
                     .onMouseClick(event => selectEvent(getEvent(line)));
-                let illustration = new Img(event.illustration).addClass("event-illustration")
+                let illustration = event.illustration ? new Img(event.illustration).addClass("event-illustration") : new Div()
                     .onMouseClick(event => selectEvent(getEvent(line)));
                 let description = new P(event.description).addClass("event-description")
                     .onMouseClick(event => selectEvent(getEvent(line)));
@@ -278,10 +274,6 @@ export class CBEventList extends VTable {
         });
     }
 
-    showMessage(title, text) {
-        this.parent.showMessage(title, text);
-    }
-
     static SUMMARY = "Showing {1} to {2} of {0} event(s)";
     static EMPTY_SUMMARY = "There are no event to show";
 }
@@ -311,7 +303,7 @@ export class CBEventListPage extends Vitamin(Div) {
                             this.refresh();
                         },
                         text => {
-                            this.showMessage("Fail to create Event", text);
+                            showMessage("Fail to create Event", text);
                         }
                     ),
                     deleteEvent: () => {
@@ -340,10 +332,6 @@ export class CBEventListPage extends Vitamin(Div) {
         return this;
     }
 
-    showMessage(title, text) {
-        new VWarning().show({title, message: text});
-    }
-
 }
 
 export function loadEvents(pageIndex, search, update) {
@@ -363,7 +351,7 @@ export function loadEvents(pageIndex, search, update) {
         },
         (text, status) => {
             console.log("Load Event failure: " + text + ": " + status);
-            this.showMessage("Unable to load Events", text);
+            showMessage("Unable to load Events", text);
         }
     );
 }

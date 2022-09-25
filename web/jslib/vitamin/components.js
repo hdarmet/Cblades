@@ -348,8 +348,9 @@ export class Button extends DOM(DComposed) {
 
 export class Div extends DOM(DComposed) {
 
-    constructor() {
+    constructor(text) {
         super("div");
+        if (text) this.setText(text);
     }
 
 }

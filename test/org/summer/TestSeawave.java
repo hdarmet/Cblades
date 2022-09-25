@@ -9,10 +9,10 @@ public interface TestSeawave {
 		ReflectUtil.set(bean, name, target);
 	}
 	
-	default Map<String, String> params(String... params) {
-		Map<String, String> result = new HashMap<>();
+	default Map<String, Object> params(Object... params) {
+		Map<String, Object> result = new HashMap<>();
 		for (int index=0; index<params.length; index+=2) {
-			result.put(params[index], params[index+1]);
+			result.put((String)params[index], params[index+1]);
 		}
 		return result;
 	}

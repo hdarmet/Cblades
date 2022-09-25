@@ -23,7 +23,7 @@
 }
 
 .form-line-container {
-    /*display: flex;*/
+    display: flex;
     margin-top: 5px;
 }
 

@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
 	
 	@REST(url="/api/player-identity/create", method=Method.POST)
-	public Json create(Map<String, String> params, Json request) {
+	public Json create(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				Ref<Json> result = new Ref<>();
@@ -50,7 +50,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 	}
 
 	@REST(url="/api/player-identity/all", method=Method.POST)
-	public Json getAll(Map<String, String> params, Json request) {
+	public Json getAll(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
@@ -62,11 +62,11 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 	}
 
 	@REST(url="/api/player-identity/by-name/:name", method=Method.POST)
-	public Json getByName(Map<String, String> params, Json request) {
+	public Json getByName(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
-				String name = params.get("name");
+				String name = (String)params.get("name");
 				PlayerIdentity playerIdentity = getSingleResult(em,
 						"select pi from PlayerIdentity pi where pi.name = :name",
 						"name", name);
@@ -82,11 +82,11 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 	}
 
 	@REST(url="/api/player-identity/find/:id", method=Method.POST)
-	public Json getById(Map<String, String> params, Json request) {
+	public Json getById(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
-				String id = params.get("id");
+				String id = (String)params.get("id");
 				PlayerIdentity playerIdentity = findPlayerIdentity(em, new Long(id));
 				result.set(readFromPlayerIdentity(playerIdentity));
 			});
@@ -95,11 +95,11 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 	}
 
 	@REST(url="/api/player-identity/delete/:id", method=Method.POST)
-	public Json delete(Map<String, String> params, Json request) {
+	public Json delete(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = params.get("id");
+					String id = (String)params.get("id");
 					PlayerIdentity playerIdentity = findPlayerIdentity(em, new Long(id));
 					remove(em, playerIdentity);
 				});
@@ -111,12 +111,12 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 	}
 
 	@REST(url="/api/player-identity/update/:id", method=Method.POST)
-	public Json update(Map<String, String> params, Json request) {
+	public Json update(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
-					String id = params.get("id");
+					String id = (String)params.get("id");
 					PlayerIdentity playerIdentity = findPlayerIdentity(em, new Long(id));
 					writeToPlayerIdentity(request, playerIdentity);
 					flush(em);

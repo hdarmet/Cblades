@@ -33,8 +33,17 @@ export class VContainer extends Vitamin(Div) {
 
     addField({field, column, ...params}, builder) {
         field = field ? field : builder(params);
-        this._columns[column===undefined ? this._fields.length%this._columns.length: column].add(field);
+        let col = this._columns[column===undefined ? this._fields.length%this._columns.length: column];
+        field.column =col;
+        col.add(field);
         this._fields.push(field);
+        return this;
+    }
+
+    removeField({field}) {
+        field.column.remove(field);
+        delete field.column;
+        this._fields.splice(this._fields.indexOf(field), 1);
         return this;
     }
 

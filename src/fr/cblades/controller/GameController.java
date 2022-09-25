@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
 	
 	@REST(url="/api/game/create", method=Method.POST)
-	public Json create(Map<String, String> params, Json request) {
+	public Json create(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				Ref<Json> result = new Ref<>();
@@ -49,7 +49,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 	}
 
 	@REST(url="/api/game/all", method=Method.POST)
-	public Json getAll(Map<String, String> params, Json request) {
+	public Json getAll(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
@@ -61,11 +61,11 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 	}
 
 	@REST(url="/api/game/by-name/:name", method=Method.POST)
-	public Json getByName(Map<String, String> params, Json request) {
+	public Json getByName(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
-				String name = params.get("name");
+				String name = (String)params.get("name");
 				Game game = findOneGame(em, "select g from Game g where g.name = :name", "name", name);
 				if (game==null) {
 					throw new SummerControllerException(404,
@@ -79,11 +79,11 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 	}
 
 	@REST(url="/api/game/find/:id", method=Method.POST)
-	public Json getById(Map<String, String> params, Json request) {
+	public Json getById(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
-				String id = params.get("id");
+				String id = (String)params.get("id");
 				Game game = findGame(em, new Long(id));
 				result.set(readFromGame(em, game));
 			});
@@ -92,11 +92,11 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 	}
 
 	@REST(url="/api/game/delete/:id", method=Method.POST)
-	public Json delete(Map<String, String> params, Json request) {
+	public Json delete(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = params.get("id");
+					String id = (String)params.get("id");
 					Game game = findGame(em, new Long(id));
 					remove(em, game);
 				});
@@ -108,12 +108,12 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 	}
 
 	@REST(url="/api/game/update/:id", method=Method.POST)
-	public Json update(Map<String, String> params, Json request) {
+	public Json update(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
-					String id = params.get("id");
+					String id = (String)params.get("id");
 					Game game = findGame(em, new Long(id));
 					writeToGame(em, request, game);
 					flush(em);

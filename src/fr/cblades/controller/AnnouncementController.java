@@ -79,12 +79,12 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 	}
 	
 	@REST(url="/api/announcement/all", method=Method.GET)
-	public Json getAll(Map<String, String> params, Json request) {
+	public Json getAll(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
-				String search = params.get("search");
+				String search = (String)params.get("search");
 				String countQuery = "select count(a) from Announcement a";
 				String queryString = "select a from Announcement a";
 				if (search!=null) {
@@ -118,7 +118,7 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 	}
 
 	@REST(url="/api/announcement/live", method=Method.GET)
-	public Json getLive(Map<String, String> params, Json request) {
+	public Json getLive(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			String queryString = "select a from Announcement a where a.status=:status";
@@ -133,11 +133,11 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 	}
 
 	@REST(url="/api/announcement/find/:id", method=Method.POST)
-	public Json getById(Map<String, String> params, Json request) {
+	public Json getById(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
-				String id = params.get("id");
+				String id = (String)params.get("id");
 				Announcement announcement = findAnnouncement(em, new Long(id));
 				result.set(readFromAnnouncement(announcement));
 			});
@@ -146,11 +146,11 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 	}
 	
 	@REST(url="/api/announcement/delete/:id", method=Method.GET)
-	public Json delete(Map<String, String> params, Json request) {
+	public Json delete(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = params.get("id");
+					String id = (String)params.get("id");
 					Announcement announcement= findAnnouncement(em, new Long(id));
 					remove(em, announcement);
 				});

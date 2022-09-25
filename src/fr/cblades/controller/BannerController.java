@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class BannerController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
 	
 	@REST(url="/api/banner/create", method=Method.POST)
-	public Json create(Map<String, String> params, Json request) {
+	public Json create(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				Ref<Json> result = new Ref<>();
@@ -50,7 +50,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 	}
 
 	@REST(url="/api/banner/all", method=Method.POST)
-	public Json getAll(Map<String, String> params, Json request) {
+	public Json getAll(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
@@ -62,11 +62,11 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 	}
 
 	@REST(url="/api/banner/by-name/:name", method=Method.POST)
-	public Json getByName(Map<String, String> params, Json request) {
+	public Json getByName(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
-				String name = params.get("name");
+				String name = (String)params.get("name");
 				Banner banner = getSingleResult(em,
 						"select b from Banner b where b.name = :name",
 						"name", name);
@@ -82,11 +82,11 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 	}
 
 	@REST(url="/api/banner/find/:id", method=Method.POST)
-	public Json getById(Map<String, String> params, Json request) {
+	public Json getById(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
-				String id = params.get("id");
+				String id = (String)params.get("id");
 				Banner banner = findBanner(em, new Long(id));
 				result.set(readFromBanner(banner));
 			});
@@ -95,11 +95,11 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 	}
 
 	@REST(url="/api/banner/delete/:id", method=Method.POST)
-	public Json delete(Map<String, String> params, Json request) {
+	public Json delete(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = params.get("id");
+					String id = (String)params.get("id");
 					Banner banner = findBanner(em, new Long(id));
 					remove(em, banner);
 				});
@@ -111,12 +111,12 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 	}
 
 	@REST(url="/api/banner/update/:id", method=Method.POST)
-	public Json update(Map<String, String> params, Json request) {
+	public Json update(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
-					String id = params.get("id");
+					String id = (String)params.get("id");
 					Banner banner = findBanner(em, new Long(id));
 					writeToBanner(request, banner);
 					flush(em);

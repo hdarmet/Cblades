@@ -7,7 +7,7 @@ import {
     VLink,
     VRow,
     VMessage,
-    VModal
+    VModal, VLoginHandler
 } from "../vitamin/vitamins.js";
 import {
     VInputField,
@@ -22,8 +22,11 @@ import {
     sendPost
 } from "../vitamin/components.js";
 import {
-    VWarning
+    showMessage
 } from "../vitamin/vpage.js";
+import {
+    sendGet
+} from "../draw.js";
 
 export class CVContact extends VList {
     constructor({address, phone, email, writeToUs}) {
@@ -209,9 +212,8 @@ export class CVSocialRow extends VRow {
 
 export class VCLogin extends VModal {
 
-    constructor({connect}) {
+    constructor() {
         super({"ref":"login", "title":"Connection"});
-        this._connect = connect;
         this.addClass("login");
         this._loginField = new VInputField({
             ref:"login", label:"Login", value:"My name",
@@ -320,7 +322,7 @@ export class VCLogin extends VModal {
                                 this.connect(this.login, this.password);
                             },
                             text => {
-                                this.showMessage("Fail to create User", text);
+                                showMessage("Fail to create User", text);
                             }
                         )
                     }},
@@ -336,6 +338,7 @@ export class VCLogin extends VModal {
         });
         this.addContainer({container: this._signInContainer});
         this.addClass("sign-in");
+        VLoginHandler.addLoginListener(this);
     }
 
     get specification() {
@@ -356,10 +359,26 @@ export class VCLogin extends VModal {
             connect(login, password,
                 text=>{
                     this.hide();
-                    this._connect(JSON.parse(text));
+                    VLoginHandler.connection = JSON.parse(text);
                 },
                 (text, status)=>{
-                    this.showMessage(text);
+                    showMessage(text);
+                }
+            );
+        }
+    }
+
+    onLoginRequest({login}) {
+        if (login) {
+            this.show();
+        }
+        else {
+            disconnect(
+                (text) => {
+                    VLoginHandler.connection = null
+                },
+                (text, status) => {
+                    showMessage(text);
                 }
             );
         }
@@ -379,10 +398,21 @@ export class VCLogin extends VModal {
         }
     }
 
-    showMessage(text) {
-        new VWarning().show({title:"Connection refused", message:text});
-    }
+}
 
+export let vLogin = new VCLogin();
+
+export function disconnect(success, failure) {
+    sendGet("/api/login/logout",
+        (text, status) => {
+            console.log("Connection success: " + text + ": " + status);
+            success(text);
+        },
+        (text, status) => {
+            console.log("Connection failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
 }
 
 export function connect(login, password, success, failure) {

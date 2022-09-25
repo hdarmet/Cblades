@@ -23,8 +23,8 @@ public interface ControllerSunbeam {
 		return new Synchronizer(json, target);
 	}
 
-	default int getIntegerParam(Map<String, String> params, String paramName, String message) {
-		String param = params.get(paramName);
+	default int getIntegerParam(Map<String, Object> params, String paramName, String message) {
+		String param = (String)params.get(paramName);
 		try {
 			return Integer.parseInt(param);
 		} catch (NumberFormatException nfe) {

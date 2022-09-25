@@ -1,13 +1,13 @@
 'use strict';
 
 import {
-    VHeader, VMainMenu, VWarning
+    VHeader, VMainMenu, showMessage
 } from "../vitamin/vpage.js";
 import {
     VPageContent
 } from "../vitamin/vcontainer.js";
 import {
-    historize, VDisplay, VLink, VMessage, VModal
+    historize, VLoginHandler, VDisplay, VLink, VMessage, VModal
 } from "../vitamin/vitamins.js";
 import {
     sendGet, sendPost
@@ -37,8 +37,9 @@ import {
 import {
     vEventList
 } from "./cbevent.js";
-
-export var connection = null;
+import {
+    vBoardList
+} from "./cbboards.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -57,6 +58,10 @@ export var vMenu = new VMainMenu({ref:"menu"})
         })
         .addMenu({ref:"event-menu", label:"Evènements", action:()=>{
                 window.vPageContent.showEventList();
+            }
+        })
+        .addMenu({ref:"board-menu", label:"Cartes", action:()=>{
+                window.vPageContent.showBoardList();
             }
         })
     })
@@ -86,24 +91,20 @@ export var vMenu = new VMainMenu({ref:"menu"})
             }
         })
     })
-    .addMenu({ref:"login", kind:"right-menu", label:connection?"Logout":"Login", action:()=>{
-        if (connection) {
-            sendPost("/api/login/disconnect",null,
-                (text, status) => {
-                    console.log("Disconnection success: " + text + ": " + status);
-                    connection = null
-                    vMenu.get("login").label = "login";
-                },
-                (text, status) => {
-                    console.log("Disconnection failure: " + text + ": " + status);
-                    vLogin.showMessage(text);
-                }
-            );
+    .addMenu({ref:"login", kind:"right-menu", label:VLoginHandler.connection?"Logout":"Login",
+        action:()=> {
+            if (VLoginHandler.connection) {
+                VLoginHandler.logout();
+            } else {
+
+                VLoginHandler.login();
+            }
         }
-        else {
-            vLogin.show();
-        }
-    }})
+    });
+vMenu.onConnection = function({user}) {
+    vMenu.get("login").label = user ? "logout" : "login";
+}
+VLoginHandler.addLoginListener(vMenu);
 
 export var vHeader = new VHeader({
     ref:"header",
@@ -159,7 +160,7 @@ export class CBConfirm extends VModal {
 
 export class CBLogin extends VModal {
 
-    constructor({connect}) {
+    constructor() {
         super({"ref":"login", "title":"Connection"});
         this._connect = connect;
         this.addClass("login");
@@ -195,7 +196,7 @@ export class CBLogin extends VModal {
                         this._forgottenMessage.message = "Message sent to your email address";
                     },
                     (text, status) => {
-                        this.showMessage("Unable To Send Mail", text);
+                        showMessage("Unable To Send Mail", text);
                     }
                 )
             }
@@ -215,6 +216,7 @@ export class CBLogin extends VModal {
             ]})});
         });
         this.addContainer({container: this._signInContainer});
+        VLoginHandler.addLoginListener(this);
     }
 
     get login() {
@@ -225,47 +227,74 @@ export class CBLogin extends VModal {
         return this._passwordField.value;
     }
 
-    showMessage(text) {
-        new VWarning().show({title:"Connection refused", message:text});
-    }
-
-    connect(login, password) {
-        if (isValid(this) && this._connect(login, password)) {
-            this.hide();
-        }
-    }
-
     get connection() {
         return {
             login: this._loginField.value
         }
     }
 
-}
-
-export var vLogin = new CBLogin({
-    connect: (login, password)=>{
-        sendPost("/api/login/login",
-            {
-                login, password
-            },
-            (text, status) => {
-                console.log("Connection success: " + text + ": " + status);
-                connection = {
-                    login: vLogin.connection
-                };
-                vMenu.get("login").label = "logout";
-                vLogin.hide();
-            },
-            (text, status) => {
-                console.log("Connection failure: " + text + ": " + status);
-                vLogin.showMessage(text);
-            }
-        );
-        return false;
+    connect(login, password) {
+        if (isValid(this)) {
+            connect(login, password,
+                text=>{
+                    this.hide();
+                    VLoginHandler.connection = JSON.parse(text);
+                },
+                (text, status)=>{
+                    showMessage("Connection refused", text);
+                }
+            );
+        }
     }
 
-});
+    onLoginRequest({login}) {
+        if (login) {
+            this.show();
+        }
+        else {
+            disconnect(
+                (text) => {
+                    VLoginHandler.connection = null
+                },
+                (text, status) => {
+                    showMessage("Connection refused", text);
+                }
+            );
+        }
+    }
+
+}
+
+export function disconnect(success, failure) {
+    sendGet("/api/login/logout",
+        (text, status) => {
+            console.log("Connection success: " + text + ": " + status);
+            success(text);
+        },
+        (text, status) => {
+            console.log("Connection failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
+}
+
+export function connect(login, password, success, failure) {
+    sendPost("/api/login/login",
+        {
+            login, password
+        },
+        (text, status) => {
+            console.log("Connection success: " + text + ": " + status);
+            success(text);
+        },
+        (text, status) => {
+            console.log("Connection failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
+}
+
+export var vLogin = new CBLogin();
 
 export class CBPageContent extends VPageContent {
 
@@ -306,6 +335,18 @@ export class CBPageContent extends VPageContent {
         vEventList.loadEvents();
         this._showEventList(false, ()=> {
                 historize("event", "vPageContent._showEventList(true);")
+            }
+        );
+    }
+
+    _showBoardList(byHistory, historize) {
+        return this._changePage(null, vBoardList, byHistory, historize);
+    }
+
+    showBoardList() {
+        vBoardList.loadBoards();
+        this._showBoardList(false, ()=> {
+                historize("board", "vPageContent._showBoardList(true);")
             }
         );
     }

@@ -79,12 +79,12 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 	
 	@REST(url="/api/event/all", method=Method.GET)
-	public Json getAll(Map<String, String> params, Json request) {
+	public Json getAll(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
-				String search = params.get("search");
+				String search = (String)params.get("search");
 				String countQuery = "select count(e) from Event e";
 				String queryString = "select e from Event e left outer join fetch e.target";
 				if (search!=null) {
@@ -119,7 +119,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 
 	@REST(url="/api/event/live", method=Method.GET)
-	public Json getLive(Map<String, String> params, Json request) {
+	public Json getLive(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
@@ -135,7 +135,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 
 	@REST(url="/api/event/account-live", method=Method.GET)
-	public Json getAccountLive(Map<String, String> params, Json request) {
+	public Json getAccountLive(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user-> {
 			Ref<Json> result = new Ref<>();
 			inTransaction(em -> {

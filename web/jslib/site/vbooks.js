@@ -7,13 +7,10 @@ import {
     Undoable,
     VImage,
     Vitamin,
-    VMagnifiedImage,
-    VSearch,
+    VMagnifiedImage
 } from "../vitamin/vitamins.js";
 import {
-    VContainer,
-    VSplitterPanel,
-    VWall
+    VSplitterPanel
 } from "../vitamin/vcontainer.js";
 import {
     VButton, VButtons, VCommand,
@@ -22,6 +19,9 @@ import {
     VSelectField,
     VSwitch
 } from "../vitamin/vforms.js";
+import {
+    showMessage
+} from "../vitamin/vpage.js";
 
 export class VSummary extends Vitamin(Div) {
 
@@ -119,6 +119,7 @@ export class VGallery extends Vitamin(Div) {
         }
         this._cards = [];
     }
+
 }
 
 export class VParagraph extends Vitamin(Div) {

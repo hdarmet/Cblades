@@ -13,7 +13,7 @@ import {
     VButton, VButtons, VInputField, VInputTextArea, VSelectField
 } from "../vitamin/vforms.js";
 import {
-    VWarning
+    showMessage
 } from "../vitamin/vpage.js";
 import {
     CBConfirm
@@ -134,7 +134,7 @@ export class CBNoticeEditor extends Undoable(VSplitterPanel) {
                         this.setNotice(notice);
                         this.parent.addVersion(notice);
                         this._newVersion.value = "";
-                        this.parent.showMessage("You're working now on a new version.");
+                        showMessage("You're working now on a new version.");
                     },
                     () => {
                     });
@@ -337,9 +337,6 @@ export class CBNoticeEditorPage extends VContainer {
         return this;
     }
 
-    showMessage(title, text) {
-        new VWarning().show({title, message: text});
-    }
 }
 
 let vNoticeEditorPage = new CBNoticeEditorPage();
@@ -418,27 +415,27 @@ export function editNotice(title, category, byHistory, historize) {
                                 notice.objVersion = result.version;
                             }
                             vNoticeEditorPage.setVersions();
-                            vNoticeEditorPage.showMessage(successMessage, "");
+                            showMessage(successMessage);
                         },
                         (text, status) => {
-                            vNoticeEditorPage.showMessage(failureMessage, text);
+                            showMessage(failureMessage, text);
                         })
                     })
                     .setDelete((notice, successMessage, failureMessage) => {
                         deleteNotice(notice,
                         (text, status) => {
                             vNoticeEditorPage.editPublishedNotice();
-                            vNoticeEditorPage.showMessage(successMessage, "");
+                            showMessage(successMessage);
                         },
                         (text, status) => {
-                            vNoticeEditorPage.showMessage(failureMessage, text);
+                            showMessage(failureMessage, text);
                         })
                     }
                 );
                 switchPage();
             },
             (text, status) => {
-                vNoticeEditorPage.showMessage("Cannot load notices of category: " + category, text);
+                showMessage("Cannot load notices of category: " + category, text);
             }
         )
     )

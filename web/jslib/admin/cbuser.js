@@ -27,7 +27,7 @@ import {
     VSelectField
 } from "../vitamin/vforms.js";
 import {
-    VWarning
+    showMessage
 } from "../vitamin/vpage.js";
 import {
     CBConfirm
@@ -51,10 +51,6 @@ export class CBUserSelector extends VModal {
         this._table.search = this._search.value;
         this._table.loadUsers();
         return this;
-    }
-
-    showMessage(title, text) {
-        new VWarning().show({title, message: text});
     }
 
 }
@@ -309,10 +305,6 @@ export class CBEditUser extends VModal {
         return spec;
     }
 
-    showMessage(title, text) {
-        new VWarning().show({title, message: text});
-    }
-
 }
 
 export class CBUserList extends VTable {
@@ -368,7 +360,7 @@ export class CBUserList extends VTable {
                             this.refresh();
                         },
                         text => {
-                            userEditor.showMessage("Fail to update User", text);
+                            showMessage("Fail to update User", text);
                         }
                     ),
                     deleteUser: user => this._deleteUser(user,
@@ -379,14 +371,14 @@ export class CBUserList extends VTable {
                         },
                         text => {
                             userEditor.confirm.hide();
-                            this.showMessage("Fail to delete User", text);
+                            showMessage("Fail to delete User", text);
                         }
                     ),
                 }).show();
             };
             let saveUser = user => this._updateUser(user, [],
-                () => this.parent.showMessage("User saved."),
-                text => this.parent.showMessage("Unable to Save User.", text),
+                () => showMessage("User saved."),
+                text => showMessage("Unable to Save User.", text),
             );
             for (let user of pageData.users) {
                 let line;
@@ -449,10 +441,6 @@ export class CBUserList extends VTable {
         });
     }
 
-    showMessage(title, text) {
-        this.parent.showMessage(title, text);
-    }
-
     static SUMMARY = "Showing {1} to {2} of {0} user(s)";
     static EMPTY_SUMMARY = "There are no users to show";
 }
@@ -482,7 +470,7 @@ export class CBUserListPage extends Vitamin(Div) {
                             this.refresh();
                         },
                         text => {
-                            this.showMessage("Fail to create User", text);
+                            showMessage("Fail to create User", text);
                         }
                     ),
                     deleteUser: () => {
@@ -511,10 +499,6 @@ export class CBUserListPage extends Vitamin(Div) {
         return this;
     }
 
-    showMessage(title, text) {
-        new VWarning().show({title, message: text});
-    }
-
 }
 
 export function loadUsers(pageIndex, search, update) {
@@ -534,7 +518,7 @@ export function loadUsers(pageIndex, search, update) {
         },
         (text, status) => {
             console.log("Load user failure: " + text + ": " + status);
-            this.showMessage("Unable to load Users", text);
+            showMessage("Unable to load Users", text);
         }
     );
 }

@@ -303,6 +303,44 @@ export class VConfirmHandler {
 
 }
 
+export class VLoginHandler {
+
+    static _listeners = new Set();
+    static _connection = null;
+
+    static addLoginListener(listener) {
+        VLoginHandler._listeners.add(listener);
+    }
+
+    static removeLoginListener(listener) {
+        VLoginHandler._listeners.delete(listener);
+    }
+
+    static get connection() {
+        return VLoginHandler._connection;
+    }
+
+    static set connection(user) {
+        VLoginHandler._connection = user;
+        for (let listener of VLoginHandler._listeners) {
+            listener.onConnection&&listener.onConnection({user});
+        }
+    }
+
+    static login() {
+        for (let listener of VLoginHandler._listeners) {
+            listener.onLoginRequest&&listener.onLoginRequest({login:true});
+        }
+    }
+
+    static logout() {
+        for (let listener of VLoginHandler._listeners) {
+            listener.onLoginRequest&&listener.onLoginRequest({login:false});
+        }
+    }
+
+}
+
 export class VApp extends Vitamin(Div) {
 
     _initActivation() {

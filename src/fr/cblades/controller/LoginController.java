@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
 	
 	@REST(url="/api/login/create", method=Method.POST)
-	public Json create(Map<String, String> params, Json request) {
+	public Json create(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				Ref<Json> result = new Ref<>();
@@ -49,7 +49,7 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 	
 	@REST(url="/api/login/all", method=Method.POST)
-	public Json getAll(Map<String, String> params, Json request) {
+	public Json getAll(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
@@ -61,11 +61,11 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 	
 	@REST(url="/api/login/find/:id", method=Method.POST)
-	public Json getById(Map<String, String> params, Json request) {
+	public Json getById(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
-				String id = params.get("id");
+				String id = (String)params.get("id");
 				Login login = findLogin(em, new Long(id));
 				result.set(readFromLogin(login));
 			});
@@ -74,11 +74,11 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 	
 	@REST(url="/api/login/delete/:id", method=Method.POST)
-	public Json delete(Map<String, String> params, Json request) {
+	public Json delete(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = params.get("id");
+					String id = (String)params.get("id");
 					Login login = findLogin(em, new Long(id));
 					remove(em, login);
 				});
@@ -90,12 +90,12 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 	
 	@REST(url="/api/login/update/:id", method=Method.POST)
-	public Json update(Map<String, String> params, Json request) {
+	public Json update(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
-					String id = params.get("id");
+					String id = (String)params.get("id");
 					Login login = findLogin(em, new Long(id));
 					writeToLogin(request, login);
 					flush(em);
@@ -109,7 +109,7 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 	
 	@REST(url="/api/login/login", method=Method.POST)
-	public Json login(Map<String, String> params, Json request) {
+	public Json login(Map<String, Object> params, Json request) {
 		try {
 			verify(request)
 				.checkRequired("login")
@@ -140,8 +140,8 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 	}
 	
-	@REST(url="/api/login/disconnect", method=Method.POST)
-	public Json disconnect(Map<String, String> params, Json request) {
+	@REST(url="/api/login/logout", method=Method.GET)
+	public Json disconnect(Map<String, Object> params, Json request) {
 		return (Json)ifConnected(user->{
 			disconnect();
 			return Json.createJsonObject();
@@ -149,7 +149,7 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 
 	@REST(url="/api/login/forgot-password", method=Method.GET)
-	public Json forgotPassword(Map<String, String> params, Json request) {
+	public Json forgotPassword(Map<String, Object> params, Json request) {
 		final long VALIDITY_DELAY = 10*60*1000;
 		try {
 			verify(params)
@@ -157,7 +157,7 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				.checkMaxSize("login", 20)
 				.ensure();
 			inTransaction(em->{
-				String login = params.get("login");
+				String login = (String)params.get("login");
 				Account account = Login.findAccountByLogin(em, login);
 				if (account==null) {
 					throw new SummerControllerException(404, "No Account for login: "+login);

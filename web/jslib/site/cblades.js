@@ -2,12 +2,12 @@ import {
     VText,
     VMagnifiedImage,
     VSlot,
-    VMessageHandler, historize
+    VMessageHandler, historize, VLoginHandler
 } from "../vitamin/vitamins.js";
 import {
     VHeader,
     VFooter,
-    VMainMenu, VWarning
+    VMainMenu, showMessage
 } from "../vitamin/vpage.js";
 import {
     VPageContent,
@@ -21,7 +21,7 @@ import {
     CVContact,
     CVPartnerships,
     CVSocialRow,
-    VCLogin, connect
+    VCLogin
 } from "./cvitamin.js";
 import {
     Div, sendGet, sendPost
@@ -49,7 +49,7 @@ import {
     VYourGamesWall
 } from "./vplays.js";
 import {
-    loadAnnouncement, vHome
+    loadAnnouncement, VAnnoucement, vHome
 } from "./vhome.js";
 
 var text = `
@@ -70,8 +70,6 @@ Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adi
 Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
 Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
 </p>`;
-
-export var connection = null;
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -139,22 +137,13 @@ export var vMenu = new VMainMenu({ref:"menu"})
             }
         })
     })
-    .addMenu({ref:"login", kind:"right-menu", label:connection?"Logout":"Login", action:()=>{
-        if (connection) {
-            sendPost("/api/login/disconnect",null,
-                (text, status) => {
-                    console.log("Disconnection success: " + text + ": " + status);
-                    connection = null
-                    vMenu.get("login").label = "login";
-                },
-                (text, status) => {
-                    console.log("Disconnection failure: " + text + ": " + status);
-                    vLogin.showMessage(text);
-                }
-            );
+    .addMenu({ref:"login", kind:"right-menu", label:VLoginHandler.connection?"Logout":"Login",
+        action:()=>{
+        if (VLoginHandler.connection) {
+            VLoginHandler.logout();
         }
         else {
-            vLogin.show();
+            VLoginHandler.login();
         }
     }})
     .addDropdownMenu({ref:"play-menu", kind:"right-menu", label:"Jouer en ligne"}, $=>{$
@@ -175,6 +164,11 @@ export var vMenu = new VMainMenu({ref:"menu"})
             }
         })
     });
+
+vMenu.onConnection = function({user}) {
+    vMenu.get("login").label = user ? "logout" : "login";
+}
+VLoginHandler.addLoginListener(vMenu);
 
 export var vHeader = new VHeader({
     ref:"header",
@@ -248,13 +242,6 @@ export var vFooter = new VFooter({
                 })})
             })})
     })
-});
-
-export var vLogin = new  VCLogin({
-    connect: user=>{
-        connection = user;
-        vMenu.get("login").label = "logout";
-    }
 });
 
 export function download(url) {
@@ -345,14 +332,6 @@ export var vMapsTitle = new VHeader({
 }).addClass("maps-title");
 
 export var vMapsGallery = new VGallery({ref:"maps", kind: "gallery-maps"});
-
-vMapsGallery.show = function() {
-    this.clearCards();
-    for (let map in maps) {
-        this.addCard(declareMap(maps[map].ref, maps[map].name, maps[map].description));
-    }
-    return this;
-}
 
 export var vMagicTitle = new VHeader({
     ref:"magic-title",
@@ -1494,7 +1473,11 @@ class CBPageContent extends VPageContent {
     }
 
     _showMapsGallery(byHistory, historize) {
-        return this._changePage(vMapsTitle, vMapsGallery, byHistory, historize);
+        loadBoards(
+            ()=>{
+                this._changePage(vMapsTitle, vMapsGallery, byHistory, historize);
+            }
+        );
     }
 
     showMapsGallery() {
@@ -1764,10 +1747,6 @@ class CBPageContent extends VPageContent {
         );
     }
 
-    showMessage(title, text) {
-        new VWarning().show({title, message: text});
-    }
-
 }
 
 window.notices = {};
@@ -1786,5 +1765,33 @@ sendGet("/api/notice/published",
 
 window.vPageContent = new CBPageContent();
 
+export function loadBoards(success) {
+    sendGet("/api/board/live",
+        (text, status)=>{
+            vMapsGallery.clearCards();
+            let maps = JSON.parse(text);
+            for (let map of maps) {
+                vMapsGallery.addCard({
+                    ref: "map-"+map.id,
+                    image: new VMagnifiedImage({
+                        ref: `img-map-${map.id}`,
+                        img: map.icon,
+                        zoomImg: map.path,
+                        width: "90%"
+                    }),
+                    title: map.name,
+                    description: map.description,
+                    button: "Download", action: event => {
+                        download(map.path);
+                    }
+                });
+            }
+            success();
+        },
+        (text, status)=>{
+            showMessage("Error", "Cannot Load Maps: "+text);
+        }
+    );
+}
 
 

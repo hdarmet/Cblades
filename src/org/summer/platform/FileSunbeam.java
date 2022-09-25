@@ -2,9 +2,10 @@ package org.summer.platform;
 
 import org.summer.SummerException;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
 
 public interface FileSunbeam {
 

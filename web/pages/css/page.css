@@ -33,17 +33,17 @@ body::-webkit-scrollbar-thumb {
 }
 
 .container-2columns {
-    flex: 50%;
+    width: 50%;
     padding: 0;
 }
 
 .container-3columns {
-    flex: 33.333%;
+    width: 33.333%;
     padding: 0;
 }
 
 .container-4columns {
-    flex: 25%;
+    width: 25%;
     padding: 0;
 }
 

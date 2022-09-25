@@ -19,7 +19,7 @@ import {
     VSelectField
 } from "../vitamin/vforms.js";
 import {
-    VWarning
+    showMessage
 } from "../vitamin/vpage.js";
 import {
     CBConfirm
@@ -118,10 +118,6 @@ export class CBEditAnnouncement extends VModal {
         };
     }
 
-    showMessage(title, text) {
-        new VWarning().show({title, message: text});
-    }
-
 }
 
 export class CBAnnouncementList extends VTable {
@@ -173,7 +169,7 @@ export class CBAnnouncementList extends VTable {
                             this.refresh();
                         },
                         text => {
-                            announcementEditor.showMessage("Fail to update Announcement", text);
+                            showMessage("Fail to update Announcement", text);
                         }
                     ),
                     deleteAnnouncement: announcement => this._deleteAnnouncement(announcement,
@@ -184,14 +180,14 @@ export class CBAnnouncementList extends VTable {
                         },
                         text => {
                             announcementEditor.confirm.hide();
-                            this.showMessage("Fail to delete Announcement", text);
+                            showMessage("Fail to delete Announcement", text);
                         }
                     ),
                 }).show();
             };
             let saveAnnouncement = annoucement => this._updateAnnouncement(annoucement, [],
-                () => this.parent.showMessage("Announcement saved."),
-                text => this.parent.showMessage("Unable to Save Announcement.", text),
+                () => showMessage("Announcement saved."),
+                text => showMessage("Unable to Save Announcement.", text),
             );
             for (let announcement of pageData.announcements) {
                 let line;
@@ -238,10 +234,6 @@ export class CBAnnouncementList extends VTable {
         });
     }
 
-    showMessage(title, text) {
-        this.parent.showMessage(title, text);
-    }
-
     static SUMMARY = "Showing {1} to {2} of {0} announcement(s)";
     static EMPTY_SUMMARY = "There are no announcement to show";
 }
@@ -271,7 +263,7 @@ export class CBAnnouncementListPage extends Vitamin(Div) {
                             this.refresh();
                         },
                         text => {
-                            this.showMessage("Fail to create Announcement", text);
+                            showMessage("Fail to create Announcement", text);
                         }
                     ),
                     deleteAnnouncement: () => {
@@ -300,10 +292,6 @@ export class CBAnnouncementListPage extends Vitamin(Div) {
         return this;
     }
 
-    showMessage(title, text) {
-        new VWarning().show({title, message: text});
-    }
-
 }
 
 export function loadAnnouncements(pageIndex, search, update) {
@@ -323,7 +311,7 @@ export function loadAnnouncements(pageIndex, search, update) {
         },
         (text, status) => {
             console.log("Load Announcement failure: " + text + ": " + status);
-            this.showMessage("Unable to load Announcements", text);
+            showMessage("Unable to load Announcements", text);
         }
     );
 }

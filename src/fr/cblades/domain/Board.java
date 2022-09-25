@@ -15,17 +15,28 @@ import java.util.List;
 public class Board extends BaseEntity {
 
     String name="";
+    String description="";
     String path="";
     String icon="";
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "board_id")
     List<Hex> hexes = new ArrayList<>();
+    @Enumerated(EnumType.STRING)
+    BoardStatus status;
 
     public String getName() {
         return this.name;
     }
     public Board setName(String name) {
         this.name = name;
+        return this;
+    }
+
+    public String getDescription() {
+        return this.description;
+    }
+    public Board setDescription(String description) {
+        this.description = description;
         return this;
     }
 
@@ -42,6 +53,14 @@ public class Board extends BaseEntity {
     }
     public Board setIcon(String icon) {
         this.icon = icon;
+        return this;
+    }
+
+    public BoardStatus getStatus() {
+        return this.status;
+    }
+    public Board setStatus(BoardStatus status) {
+        this.status = status;
         return this;
     }
 

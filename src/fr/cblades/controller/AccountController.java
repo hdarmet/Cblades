@@ -80,12 +80,12 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 	}
 	
 	@REST(url="/api/account/all", method=Method.GET)
-	public Json getAll(Map<String, String> params, Json request) {
+	public Json getAll(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
-				String search = params.get("search");
+				String search = (String)params.get("search");
 				String countQuery = "select count(a) from Account a";
 				String queryString = "select a from Account a left outer join fetch a.access";
 				if (search!=null) {
@@ -121,11 +121,11 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 	}
 	
 	@REST(url="/api/account/find/:id", method=Method.POST)
-	public Json getById(Map<String, String> params, Json request) {
+	public Json getById(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
-				String id = params.get("id");
+				String id = (String)params.get("id");
 				Account account = findAccount(em, new Long(id));
 				result.set(readFromAccount(account));
 			});

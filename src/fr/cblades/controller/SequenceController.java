@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class SequenceController implements InjectorSunbeam, CollectionSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
 	
 	@REST(url="/api/sequence/create", method=Method.POST)
-	public Json create(Map<String, String> params, Json request) {
+	public Json create(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				Ref<Json> result = new Ref<>();
@@ -48,12 +48,12 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 	}
 
 	@REST(url="/api/sequence/by-game/:game/:count", method=Method.POST)
-	public Json getByGameAndCount(Map<String, String> params, Json request) {
+	public Json getByGameAndCount(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
-				String game = params.get("game");
-				long count = Long.parseLong(params.get("count"));
+				String game = (String)params.get("game");
+				long count = Long.parseLong((String)params.get("count"));
 				Sequence sequence = getSingleResult(em,
 						"select s from Sequence s left outer join fetch s.elements where s.game = :game and s.count = :count",
 						"game", game, "count", count);
@@ -69,11 +69,11 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 	}
 
 	@REST(url="/api/sequence/find/:id", method=Method.POST)
-	public Json getById(Map<String, String> params, Json request) {
+	public Json getById(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			Ref<Json> result = new Ref<>();
 			inTransaction(em->{
-				String id = params.get("id");
+				String id = (String)params.get("id");
 				Sequence sequence = findSequence(em, new Long(id));
 				result.set(readFromSequence(sequence));
 			});
@@ -82,11 +82,11 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 	}
 
 	@REST(url="/api/sequence/delete/:id", method=Method.POST)
-	public Json delete(Map<String, String> params, Json request) {
+	public Json delete(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = params.get("id");
+					String id = (String)params.get("id");
 					Sequence sequence = findSequence(em, new Long(id));
 					remove(em, sequence);
 				});

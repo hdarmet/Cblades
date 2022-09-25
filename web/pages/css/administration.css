@@ -117,6 +117,7 @@
 
 .form-line-container .form-button {
     margin: 5px;
+    display: flex;
 }
 
 .form-button.vitamin-active:hover {

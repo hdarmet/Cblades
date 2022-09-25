@@ -57,6 +57,55 @@
     border-radius: 8px;
 }
 
+.home .home-right-column {
+    width: 100%;
+    height: 720px;
+    overflow: hidden;
+    position: relative;
+}
+
+.home .home-connect {
+    position: absolute;
+    top: 0;
+    width: 100%;
+}
+
+.home .home-connect img {
+    position: absolute;
+    width: 100%;
+    cursor: pointer;
+    top: 0;
+}
+
+.home .home-connect div {
+    width: 50%;
+    min-width: 100px;
+    background-color: black;
+    color: white;
+    opacity: 0.8;
+    position: absolute;
+    top: 0;
+    padding: 10px;
+    font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer;
+}
+
+.home .home-right-column .log-container {
+    position: absolute;
+    top: 0;
+}
+
+.home .home-connect.fade {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1s;
+}
+
+.home .home-connect.not-fade {
+    opacity: 1;
+    transition: opacity 1s;
+}
+
 .slideshow .announcement {
     width: 100%;
     min-height: 500px;
@@ -148,3 +197,4 @@
 .slideshow .slide-active, .slideshow .slide-dot:hover {
     background-color: #717171;
 }
+

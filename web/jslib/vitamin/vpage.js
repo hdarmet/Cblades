@@ -12,6 +12,9 @@ import {
 import {
     VButton, VButtons, VFormContainer
 } from "./vforms.js";
+import {
+    getDrawPlatform
+} from "../draw.js";
 
 export class VFooter extends Vitamin(Div) {
 
@@ -297,3 +300,11 @@ export class VConfirm extends VModal {
 
 }
 VConfirmHandler.addMessageListener(VConfirm);
+
+export function showMessage(title, text) {
+    let warning = new VWarning()
+    warning.show({title, message: text});
+    if (!text) {
+        getDrawPlatform().setTimeout(()=>warning.hide(), 1000);
+    }
+}

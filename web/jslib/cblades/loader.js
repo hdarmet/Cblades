@@ -4,6 +4,7 @@ import {
     CBHex, CBHexSideId, CBMap
 } from "./map.js";
 import {
+    sendGet,
     sendPost
 } from "../draw.js";
 import {
@@ -800,8 +801,7 @@ export class BoardListLoader {
     }
 
     load(action) {
-        sendPost("/api/board/all",
-            {},
+        sendGet("/api/board/all",
             (text, status) => {
                 let json = JSON.parse(text);
                 action(this.fromSpecs(json));
