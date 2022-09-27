@@ -14,12 +14,10 @@ import {
 } from "../vitamin/vitamins.js";
 import {
     VButton,
-    VButtons, VDateField,
+    VButtons,
     VFileLoader,
     VFileLoaderField,
-    VFormContainer,
-    VInputField, VInputTextArea, VRef,
-    VSelectField
+    VInputField, VInputTextArea, VSelectField
 } from "../vitamin/vforms.js";
 import {
     showMessage
@@ -33,32 +31,44 @@ import {
 
 export class CBEditBoardPane extends Undoable(VSplitterPanel) {
 
-    constructor({ref, kind, accept, verify, onEdit}) {
+    constructor({ref, kind, board, accept, verify, onEdit}) {
         super({ref});
         this.addClass(kind);
-        this._imageLoader = new VFileLoaderField({
-            ref:"map-image", label:"Image",
+        this._path = new VFileLoaderField({
+            ref:"board-path", label:"Image",
             accept, verify,
             magnified: true,
             onChange: event=>{
                 this._memorize();
             }
         });
-        this.addOnLeft(this._imageLoader);
-        this._title = new VInputField({
-            ref:"map-title-input", label:"Title",
+        this.addOnLeft(this._path);
+        this._name = new VInputField({
+            ref:"board-name-input", label:"Title",
             onChange: event=>{
                 this._memorize();
             }
         });
-        this.addOnRight(this._title);
+        this.addOnRight(this._name);
         this._description = new VInputTextArea({
-            ref:"map-description-input", label:"Description",
+            ref:"board-description-input", label:"Description",
             onChange: event=>{
                 this._memorize();
             }
         });
         this.addOnRight(this._description);
+        this._status = new VSelectField({
+            ref: "board-status", label: "Status",
+            options: [
+                {value: "live", text: "Live"},
+                {value: "pnd", text: "Pending"},
+                {value: "prp", text: "Proposed"}
+            ],
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this.addOnRight(this._status);
         this._send = new VButtons({ref: "map-buttons", vertical:false, buttons:[{
                 ref:"edit", type: VButton.TYPES.NEUTRAL, label:"Edit",
                 onClick:event=>{
@@ -68,57 +78,78 @@ export class CBEditBoardPane extends Undoable(VSplitterPanel) {
         ]});
         this.addOnRight(this._send);
         this._onEdit = onEdit;
+        this.board = board;
     }
 
     canLeave(leave, notLeave) {
         return super.canLeave(leave, notLeave,"Board not saved. Do you want to Quit ?")
     }
 
+    get board() {
+        return {
+            name: this._name.value,
+            status: this._status.value,
+            description: this._description.value,
+            path: this._path.imageSrc,
+            icon: this._icon
+        }
+    }
+
     set board(board) {
-        this._title.value = board.title;
-        this._description.value = board.description;
-        this._imageLoader.imageSrc = board.img;
+        this._id = board.id;
+        this._name.value = board.name || "";
+        this._status.value = board.status || "prp";
+        this._description.value = board.description || "";
+        this._path.imageSrc = board.path || "";
+        this._icon = board.icon || "icon";
         this._clean();
         this._memorize();
     }
 
     _register() {
-        return {
-            title: this._title.value,
-            description: this._description.value,
-            img: this._imageLoader.imageSrc
-        }
+        return this.board;
     }
 
     _recover(specification) {
         if (specification) {
-            this._title.value = specification.title;
+            this._name.value = specification.name;
+            this._status.value = specification.status;
             this._description.value = specification.description;
-            this._imageLoader.imageSrc = specification.img;
+            this._path.imageSrc = specification.path;
+            this._icon = specification.icon;
         }
     }
 
+    get path()  {
+        return this._path.files ? this._path.files[0] : undefined;
+    }
+
+    get icon()  {
+        return this._path.getImageFile("icon.png", 205, 315);
+    }
+
     openInNewTab(url) {
-        window.open(url, '_blank').focus();
+        window.open(url+"?id="+this._id, '_blank').focus();
     }
 }
 
 export class CBEditBoard extends VModal {
 
     constructor({title, create, board, saveBoard, deleteBoard}) {
-        super({"event": "event-form", "title": title});
+        super({ref:"edit-board-modal", title});
         this._id = board.id;
         this._boardPane = new CBEditBoardPane({
             ref: "board-editor-pane",
             kind: "board-editor-pane",
-            accept: (file)=>{
+            board,
+            accept: file=>{
                 if (!VFileLoader.isImage(file)) {
                     VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (2046 x 3150) pixels."});
                     return false;
                 }
                 return true;
             },
-            verify: (image)=>{
+            verify: image=>{
                 if (image.imageWidth!==2046 || image.imageHeight!==3150) {
                     VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (2046 x 3150) pixels."});
                     return false;
@@ -126,7 +157,7 @@ export class CBEditBoard extends VModal {
                 return true;
             },
             onEdit: ()=>{
-                this._boardPane.openInNewTab("./cb-map-editor.html");
+                this._boardPane.openInNewTab("./cb-board-editor.html");
             }
         });
         this._buttons = new VButtons({
@@ -159,6 +190,23 @@ export class CBEditBoard extends VModal {
         this.addContainer({container: this._boardPane});
         this.addContainer({container: this._buttons});
         this.addClass("board-modal");
+    }
+
+    get imageFiles() {
+        return this._boardPane.path ?
+            [
+                {key: "path", file: this.path},
+                {key: "icon", file: this.icon}
+            ] :
+            [];
+    }
+
+    get path()  {
+        return this._boardPane.path;
+    }
+
+    get icon()  {
+        return this._boardPane.icon;
     }
 
     get specification() {
@@ -207,15 +255,14 @@ export class CBBoardList extends VTable {
                 path: line.path
             };
         }
-
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
             let selectBoard = board => {
                 let boardEditor = new CBEditBoard({
                     title: "Edit Board",
                     board,
-                    saveEvent: board => this._updateBoard(board,
-                        eventEditor.imageFiles,
+                    saveBoard: board => this._updateBoard(board,
+                        boardEditor.imageFiles,
                         () => {
                             boardEditor.hide();
                             this.refresh();
@@ -224,7 +271,7 @@ export class CBBoardList extends VTable {
                             showMessage("Fail to update Board", text);
                         }
                     ),
-                    deleteEvent: board => this._deleteBoard(event,
+                    deleteBoard: board => this._deleteBoard(board,
                         () => {
                             boardEditor.hide();
                             boardEditor.confirm.hide();
@@ -310,9 +357,10 @@ export class CBBoardListPage extends Vitamin(Div) {
                     board: {
                         status: "prp"
                     },
-                    saveBoard: board => createBoard(board,
-                        this._createBoardModal.path,
-                        this._createBoardModal.icon,
+                    saveBoard: board => createBoard(board, [
+                            {key: "path", file: this._createBoardModal.path},
+                            {key: "icon", file: this._createBoardModal.icon}
+                        ],
                         () => {
                             this._createBoardModal.hide();
                             this.refresh();
@@ -371,7 +419,7 @@ export function loadBoards(pageIndex, search, update) {
     );
 }
 
-export function createBoard(board, path, icon, success, failure) {
+export function createBoard(board, images, success, failure) {
     sendPost("/api/board/create",
         board,
         (text, status) => {
@@ -382,7 +430,7 @@ export function createBoard(board, path, icon, success, failure) {
             console.log("Board creation failure: " + text + ": " + status);
             failure(text, status);
         },
-        path, icon
+        images
     );
 }
 
@@ -399,7 +447,7 @@ export function deleteBoard(board, success, failure) {
     );
 }
 
-export function updateBoard(board, path, icon, success, failure) {
+export function updateBoard(board, images, success, failure) {
     sendPost("/api/board/update/" + board.id,
         board,
         (text, status) => {
@@ -410,7 +458,7 @@ export function updateBoard(board, path, icon, success, failure) {
             console.log("Board update failure: " + text + ": " + status);
             failure(text, status);
         },
-        path, icon
+        images
     );
 }
 

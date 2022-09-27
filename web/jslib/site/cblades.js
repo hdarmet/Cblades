@@ -36,7 +36,7 @@ import {
     VMap,
     VThemeEditor,
     VArticleEditor,
-    VMapEditor,
+    VBoardEditor,
     VScenarioEditor,
 } from "./vbooks.js";
 import {
@@ -954,7 +954,7 @@ vArticleEditorPage.setArticle = function(article) {
     return this;
 }
 
-export var vMapEditor = new VMapEditor({
+export var vBoardEditor = new VBoardEditor({
     ref:"map-editor",
     accept(file) {
         if (!VFileLoader.isImage(file)) {
@@ -971,20 +971,20 @@ export var vMapEditor = new VMapEditor({
         return true;
     },
     onEdit() {
-        vMapEditor.openInNewTab("./cb-map-editor.html");
+        vBoardEditor.openInNewTab("./cb-board-editor.html");
     }
 });
 
-export var vMapEditorDescription = new Div().setText(paragrpahText).addClass("description");
-export var vMapEditorPage = new VFormContainer({ref:"map-editor-page"})
+export var vBoardEditorDescription = new Div().setText(paragrpahText).addClass("description");
+export var vBoardEditorPage = new VFormContainer({ref:"map-editor-page"})
     .addClass("map-editor-page")
-    .add(vMapEditorDescription)
-    .add(vMapEditor);
-vMapEditorPage.canLeave = function(leave, notLeave) {
-    return vMapEditor.canLeave(leave, notLeave);
+    .add(vBoardEditorDescription)
+    .add(vBoardEditor);
+vBoardEditorPage.canLeave = function(leave, notLeave) {
+    return vBoardEditor.canLeave(leave, notLeave);
 }
-vMapEditorPage.setMap = function(map) {
-    vMapEditor.map = map;
+vBoardEditorPage.setBoard = function(board) {
+    vBoardEditor.board = board;
     return this;
 }
 
@@ -1635,10 +1635,10 @@ class CBPageContent extends VPageContent {
         );
     }
 
-    _showProposeMap(mapSpec, byHistory, historize) {
+    _showProposeMap(boardSpec, byHistory, historize) {
         vContributeTitle.setTitle("Propose A Map");
-        vMapEditorPage.setMap(mapSpec);
-        return this._changePage(vContributeTitle, vMapEditorPage, byHistory, historize);
+        vBoardEditorPage.setBoard(boardSpec);
+        return this._changePage(vContributeTitle, vBoardEditorPage, byHistory, historize);
     }
 
     showProposeMap(map = null) {

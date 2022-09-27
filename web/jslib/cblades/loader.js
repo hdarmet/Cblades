@@ -1,6 +1,7 @@
 'use strict'
 
 import {
+    CBBoard,
     CBHex, CBHexSideId, CBMap
 } from "./map.js";
 import {
@@ -40,56 +41,57 @@ export class Connector {
 
 export class BoardLoader {
 
-    constructor(board) {
-        this._board = board;
+    constructor() {
     }
 
-    save() {
-        let json = this.toSpecs();
+    save(board) {
+        let json = this.toSpecs(board);
         if (json.id === undefined) {
             sendPost("/api/board/create",
                 json,
                 (text, status) => {
                     consoleLog("SUCCESS! " + text + ": " + status);
-                    this.fromSpecs(JSON.parse(text));
+                    this.fromSpecs(board, JSON.parse(text));
                 },
                 (text, status) => consoleLog("FAILURE! " + text + ": " + status)
             );
         }
         else {
-            sendPost("/api/board/update/"+this._board._oid,
+            sendPost("/api/board/update-hexes/"+board._oid,
                 json,
                 (text, status) => {
                     consoleLog("SUCCESS! " + text + ": " + status);
-                    this.fromSpecs(JSON.parse(text));
+                    this.fromSpecs(board, JSON.parse(text));
                 },
                 (text, status) => consoleLog("FAILURE! " + text + ": " + status)
             );
         }
     }
 
-    load() {
-        sendPost("/api/board/by-name/"+this._board.name,
+    load(id, success) {
+        sendPost("/api/board/find/"+id,
             {},
             (text, status) => {
                 let json = JSON.parse(text);
-                this.fromSpecs(json);
-                consoleLog(`Board ${this._board.name} loaded : ${status}`)
+                let board = new CBBoard(json.name, json.path, json.icon);
+                this.fromSpecs(board, json);
+                success(board);
+                consoleLog(`Board ${board.name} loaded : ${status}`)
             },
-            (text, status) => consoleLog(`Unable to load ${this._board.name} : ${status}`)
+            (text, status) => consoleLog(`Unable to load ${id} : ${status}`)
         );
     }
 
-    toSpecs() {
+    toSpecs(board) {
         let mapSpecs = {
-            version: this._board._oversion || 0,
-            name: this._board._name,
-            path: this._board._path,
-            icon: this._board._icon,
+            version: board._oversion || 0,
+            name: board._name,
+            path: board._path,
+            icon: board._icon,
             hexes: []
         };
-        if (this._board._oid) mapSpecs.id = this._board._oid;
-        for (let hexId of this._board.hexes) {
+        if (board._oid) mapSpecs.id = board._oid;
+        for (let hexId of board.hexes) {
             mapSpecs.hexes.push({
                 version: hexId.hex._oversion || 0,
                 col: hexId.col,
@@ -104,15 +106,15 @@ export class BoardLoader {
         return mapSpecs;
     }
 
-    fromSpecs(specs) {
-        this._board._oid = specs.id || 0;
-        this._board._oversion = specs.version || 0;
-        this._board._name = specs.name;
-        this._board._path = specs.path;
-        this._board._icon = specs.icon;
-        if (specs.id) this._board._oid = specs.id;
+    fromSpecs(board, specs) {
+        board._oid = specs.id || 0;
+        board._oversion = specs.version || 0;
+        board._name = specs.name;
+        board._path = specs.path;
+        board._icon = specs.icon;
+        if (specs.id) board._oid = specs.id;
         for (let hexSpec of specs.hexes) {
-            let hexId = this._board.getHex(hexSpec.col, hexSpec.row);
+            let hexId = board.getHex(hexSpec.col, hexSpec.row);
             hexId.hex._oid = hexSpec.id;
             hexId.hex._oversion = hexSpec.version;
             hexId.type = this.getHexType(hexSpec.type);

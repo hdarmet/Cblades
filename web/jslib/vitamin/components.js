@@ -647,6 +647,15 @@ export class Img extends DOM(DComponent) {
         return this;
     }
 
+    getFile(fileName, width = this._root.width, height = this._root.height) {
+        let canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        let ctx = canvas.getContext("2d");
+        ctx.drawImage(this._root, 0, 0, width, height);
+        return new File([dataURLtoBlob(canvas.toDataURL("image/png"))], fileName);
+    }
+
     static _loaderListeners = new Set();
 
     static addLoaderListener(listener) {
@@ -767,4 +776,13 @@ let _uniqueId=0;
 
 export function getUniqueId() {
     return _uniqueId++;
+}
+
+function dataURLtoBlob(dataurl) {
+    let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {type:mime});
 }

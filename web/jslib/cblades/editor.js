@@ -2378,7 +2378,6 @@ export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 this.showCommand(this._redoCommand);
                 this.showCommand(this._settingsCommand);
                 this.showCommand(this._saveCommand);
-                this.showCommand(this._loadCommand);
                 this.showCommand(this._editBoardCommand);
                 this.showCommand(this._fullScreenCommand);
                 animation();
@@ -2393,7 +2392,6 @@ export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 this.hideCommand(this._redoCommand);
                 this.hideCommand(this._settingsCommand);
                 this.hideCommand(this._saveCommand);
-                this.hideCommand(this._loadCommand);
                 this.hideCommand(this._editBoardCommand);
                 this.hideCommand(this._fullScreenCommand);
                 animation();
@@ -2419,25 +2417,19 @@ export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
         this._saveCommand = new DPushButton(
             "./../images/commands/save.png", "./../images/commands/save-inactive.png",
             new Point2D(-300, -60), animation=>{
-                new BoardLoader(this.map).save();
-                animation();
-            }).setTurnAnimation(true);
-        this._loadCommand = new DPushButton(
-            "./../images/commands/load.png", "./../images/commands/load-inactive.png",
-            new Point2D(-360, -60), animation=>{
-                new BoardLoader(this.map).load();
+                new BoardLoader().save(this.map);
                 animation();
             }).setTurnAnimation(true);
         this._editBoardCommand = new DMultiStatePushButton(
             ["./../images/commands/edit-board.png", "./../images/commands/field.png"],
-            new Point2D(-420, -60), (state, animation)=>{
+            new Point2D(-360, -60), (state, animation)=>{
                 this.editBoard();
                 animation();
             }).setTurnAnimation(true, ()=>{}
         );
         this._fullScreenCommand = new DMultiStatePushButton(
             ["./../images/commands/full-screen-on.png", "./../images/commands/full-screen-off.png"],
-            new Point2D(-480, -60), (state, animation)=>{
+            new Point2D(-420, -60), (state, animation)=>{
                 if (!state)
                     getDrawPlatform().requestFullscreen();
                 else
@@ -2506,7 +2498,6 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 this.showCommand(this._redoCommand);
                 this.showCommand(this._settingsCommand);
                 this.showCommand(this._saveCommand);
-                this.showCommand(this._loadCommand);
                 this.showCommand(this._editUnitsCommand);
                 this.showCommand(this._editMapCommand);
                 this.showCommand(this._fullScreenCommand);
@@ -2522,7 +2513,6 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 this.hideCommand(this._redoCommand);
                 this.hideCommand(this._settingsCommand);
                 this.hideCommand(this._saveCommand);
-                this.hideCommand(this._loadCommand);
                 this.hideCommand(this._editUnitsCommand);
                 this.hideCommand(this._editMapCommand);
                 this.hideCommand(this._fullScreenCommand);
@@ -2552,13 +2542,6 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
                 new GameLoader(this, (name, path)=>new CBEditorPlayer(name, path)).save();
                 animation();
             }).setTurnAnimation(true);
-        this._loadCommand = new DPushButton(
-            "./../images/commands/load.png", "./../images/commands/load-inactive.png",
-            new Point2D(-360, -60), animation=>{
-                new GameLoader(this, (name, path)=>new CBEditorPlayer(name, path)).load();
-                animation();
-            }
-        ).setTurnAnimation(true);
         this._editUnitsCommand = new DMultiStatePushButton(
             ["./../images/commands/edit-units.png", "./../images/commands/edit-units-inactive.png"],
             new Point2D(-420, -60), (state, animation)=>{

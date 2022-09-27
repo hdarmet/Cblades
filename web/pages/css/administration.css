@@ -67,7 +67,7 @@
 .table-frame {
     font-size: 14px;
     width: calc(100% - 20px);
-    height: 700px;
+    height: 600px;
     box-shadow: rgba(0, 0, 0, 0.2) 0 4px 8px 0;
     margin: 10px;
 }

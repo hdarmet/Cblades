@@ -1,3 +1,4 @@
+
 .board-list .board-title {
     font-size: 1.2em;
     font-weight: bolder;
@@ -33,54 +34,37 @@
     width: 20%;
 }
 
-/*
-.event-form .modal-content {
-    width: 800px;
+.board-modal .modal-content {
+    width: 1200px;
+    max-width: 1200px;
+    margin: 0 auto 15% auto;
 }
 
-.event-form .file-loader {
-    width:200px;
-    height:100px;
-    overflow: hidden;
+.board-editor-pane .splitter-left-pane {
+    min-width: 400px;
+    padding: 0;
 }
 
-.event-form .file-loader img {
-    width:100%;
+.board-editor-pane .splitter-left-pane .form-field {
+    margin: auto;
+    width: 350px;
 }
 
-.event-form .user-avatar img {
-    width: 40px;
-    height: 40px;
+.board-editor-pane .splitter-right-pane {
+    padding-right: 30px;
+    min-width: 600px;
+    width: 100%;
 }
 
-.event-form .user-ref-content {
-    display: table;
+.board-editor-pane .file-loader {
+    width: 350px;
+    height: 539px;
 }
 
-.event-form .user-ref {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 1em;
-    display: table;
+.board-editor-pane .file-loader img {
+    width: 350px;
 }
 
-.event-form .user-ref div, .event-form .user-ref img {
-    display: table-cell;
-    text-align: center;
-    vertical-align: middle;
-    padding-left: 10px;
-    padding-right: 10px;
+.board-editor-pane .form-input-textarea {
+    height: 300px;
 }
-
-.event-form .user-ref .user-login {
-    font-weight: bolder;
-}
-
-.event-form img.user-avatar {
-    width: 40px;
-    height: 40px;
-}
-
-.user-ref {
-    padding-right: 80px;
-}
- */

@@ -45,7 +45,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			String imageName = webName.substring(0, minusPos)+webName.substring(pointPos);
 			return new FileSpecification()
 					.setName(imageName)
-					.setStream(PlatformManager.get().getInputStream("/board/"+imageName));
+					.setStream(PlatformManager.get().getInputStream("/boards/"+imageName));
 		} catch (PersistenceException pe) {
 			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 		}
@@ -55,12 +55,12 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
 		if (files.length > 0) {
 			if (files.length!= 2) throw new SummerControllerException(400, "Two board files must be loaded.");
-			String fileName = "board-" + board.getId() + "." + files[0].getExtension();
-			String fileIconName = "board-" + board.getId() + "." + files[1].getExtension();
-			String webName = "board-" + board.getId() + "-" + System.currentTimeMillis() + "." + files[0].getExtension();
-			String webIconName = "board-icon-" + board.getId() + "-" + System.currentTimeMillis() + "." + files[1].getExtension();
-			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/board/" + fileName));
-			copyStream(files[1].getStream(), PlatformManager.get().getOutputStream("/board/" + fileIconName));
+			String fileName = "board" + board.getId() + "." + files[0].getExtension();
+			String fileIconName = "boardicon" + board.getId() + "." + files[1].getExtension();
+			String webName = "board" + board.getId() + "-" + System.currentTimeMillis() + "." + files[0].getExtension();
+			String webIconName = "boardicon" + board.getId() + "-" + System.currentTimeMillis() + "." + files[1].getExtension();
+			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/boards/" + fileName));
+			copyStream(files[1].getStream(), PlatformManager.get().getOutputStream("/boards/" + fileIconName));
 			board.setPath("/api/board/images/" + webName);
 			board.setIcon("/api/board/images/" + webIconName);
 		}
@@ -171,7 +171,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}, ADMIN);
 	}
 
-	@REST(url="/api/board/delete/:id", method=Method.POST)
+	@REST(url="/api/board/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
 		return (Json)ifAuthorized(user->{
 			try {
@@ -197,6 +197,25 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					Board board = findBoard(em, new Long(id));
 					writeToBoard(request, board);
 					storeBoard(params, board);
+					flush(em);
+					result.set(readFromBoard(board));
+				});
+				return result.get();
+			} catch (PersistenceException pe) {
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			}
+		}, ADMIN);
+	}
+
+	@REST(url="/api/board/update-hexes/:id", method=Method.POST)
+	public Json updateHexes(Map<String, Object> params, Json request) {
+		return (Json)ifAuthorized(user->{
+			try {
+				Ref<Json> result = new Ref<>();
+				inTransaction(em->{
+					String id = (String)params.get("id");
+					Board board = findBoard(em, new Long(id));
+					writeToBoardHexes(request, board);
 					flush(em);
 					result.set(readFromBoard(board));
 				});
@@ -233,6 +252,33 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.write("path")
 			.write("icon")
 			.write("status", label->BoardStatus.byLabels().get(label))
+			.syncEach("hexes", (hJson, hex)->sync(hJson, hex)
+				.write("version")
+				.write("col")
+				.write("row")
+				.write("height")
+				.write("type", label->HexType.byLabels().get(label))
+				.write("side120Type", label->HexSideType.byLabels().get(label))
+				.write("side180Type", label->HexSideType.byLabels().get(label))
+				.write("side240Type", label->HexSideType.byLabels().get(label))
+			);
+		return board;
+	}
+
+	Board writeToBoardHexes(Json json, Board board) {
+		verify(json)
+			.each("hexes", cJson->verify(cJson)
+				.checkRequired("version")
+				.checkRequired("col").checkMin("col", 0).checkMax("col", 13)
+				.checkRequired("row").checkMin("row", 0).checkMax("row", 16)
+				.checkRequired("height").checkMin("height", -5).checkMax("height", 5)
+				.checkRequired("type").check("type", HexType.byLabels().keySet())
+				.checkRequired("side120Type").check("side120Type", HexSideType.byLabels().keySet())
+				.checkRequired("side180Type").check("side180Type", HexSideType.byLabels().keySet())
+				.checkRequired("side240Type").check("side240Type", HexSideType.byLabels().keySet())
+			)
+			.ensure();
+		sync(json, board)
 			.syncEach("hexes", (hJson, hex)->sync(hJson, hex)
 				.write("version")
 				.write("col")

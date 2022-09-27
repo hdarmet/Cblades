@@ -822,6 +822,10 @@ export class VFileLoader extends Vitamin(Div) {
         return this.setImageSrc(imageSrc);
     }
 
+    getImageFile(fileName, width, height) {
+        return this._image.getFile(fileName, width, height);
+    }
+
     setImageSrc(src, trigger) {
         if (src) {
             let image = new VMagnifiedImage({
@@ -868,6 +872,10 @@ export class VFileLoaderField extends VField {
 
     get files() {
         return this._loader.files;
+    }
+
+    getImageFile(fileName, width, height) {
+        return this._loader.getImageFile(fileName, width, height);
     }
 
     get imageSrc() {

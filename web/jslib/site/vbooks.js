@@ -19,9 +19,6 @@ import {
     VSelectField,
     VSwitch
 } from "../vitamin/vforms.js";
-import {
-    showMessage
-} from "../vitamin/vpage.js";
 
 export class VSummary extends Vitamin(Div) {
 
@@ -992,12 +989,12 @@ export class VArticleEditor extends Undoable(VSplitterPanel) {
 
 }
 
-export class VMapEditor extends Undoable(VSplitterPanel) {
+export class VBoardEditor extends Undoable(VSplitterPanel) {
 
     constructor({ref, kind="map-editor", accept, verify, onEdit, onPropose}) {
         super({ref});
         this.addClass(kind);
-        this._imageLoader = new VFileLoaderField({
+        this._path = new VFileLoaderField({
             ref:"map-image", label:"Image",
             accept, verify,
             magnified: true,
@@ -1005,14 +1002,14 @@ export class VMapEditor extends Undoable(VSplitterPanel) {
                 this._memorize();
             }
         });
-        this.addOnLeft(this._imageLoader);
-        this._title = new VInputField({
-            ref:"map-title-input", label:"Title",
+        this.addOnLeft(this._path);
+        this._name = new VInputField({
+            ref:"map-title-input", label:"Name",
             onChange: event=>{
                 this._memorize();
             }
         });
-        this.addOnRight(this._title);
+        this.addOnRight(this._name);
         this._description = new VInputTextArea({
             ref:"map-description-input", label:"Description",
             onChange: event=>{
@@ -1040,30 +1037,30 @@ export class VMapEditor extends Undoable(VSplitterPanel) {
     }
 
     canLeave(leave, notLeave) {
-        return super.canLeave(leave, notLeave,"Map not saved. Do you want to Quit ?")
+        return super.canLeave(leave, notLeave,"Board not saved. Do you want to Quit ?")
     }
 
-    set map(map) {
-        this._title.value = map.title;
-        this._description.value = map.description;
-        this._imageLoader.imageSrc = map.img;
+    set board(board) {
+        this._name.value = board.name;
+        this._description.value = board.description;
+        this._path.imageSrc = board.path;
         this._clean();
         this._memorize();
     }
 
     _register() {
         return {
-            title: this._title.value,
+            name: this._name.value,
             description: this._description.value,
-            img: this._imageLoader.imageSrc
+            path: this._path.imageSrc
         }
     }
 
     _recover(specification) {
         if (specification) {
-            this._title.value = specification.title;
+            this._name.value = specification.name;
             this._description.value = specification.description;
-            this._imageLoader.imageSrc = specification.img;
+            this._path.imageSrc = specification.path;
         }
     }
 
@@ -1078,7 +1075,7 @@ export class VScenarioEditor extends Undoable(VSplitterPanel) {
         super({ref});
         this.addClass(kind);
         this._title = new VInputField({
-            ref:"map-title-input", label:"Title",
+            ref:"scenario-title-input", label:"Title",
             onInput: event=>{
                 this._scenario.title = this._title.value;
             },

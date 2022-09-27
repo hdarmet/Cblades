@@ -511,6 +511,10 @@ export class VImage extends Vitamin(Div) {
         return this;
     }
 
+    getFile(fileName, width, height) {
+        return this._image.getFile(fileName, width, height);
+    }
+
 }
 
 export class VMagnifiedImage extends VImage {
