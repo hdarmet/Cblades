@@ -788,56 +788,56 @@
     opacity: 0.8;
 }
 
-.map-editor-page .description {
+.board-editor-page .description {
     --extends: ex-info-page-description;
 }
 
-.map-editor {
+.board-editor {
     --extends: ex-info-container;
 }
 
-.map-editor .splitter-left-pane {
+.board-editor .splitter-left-pane {
     min-width: 500px;
     padding: 0;
 }
 
-.map-editor .splitter-left-pane .form-field {
+.board-editor .splitter-left-pane .form-field {
     margin: auto;
     width: 350px;
 }
 
-.map-editor .splitter-right-pane {
+.board-editor .splitter-right-pane {
     padding-right: 30px;
     width: 100%;
 }
 
-.map-editor .file-loader {
+.board-editor .file-loader {
     --extends: ex-file-loader;
     width: 350px;
     height: 539px;
 }
 
-.map-editor .file-loader img {
+.board-editor .file-loader img {
     width: 350px;
 }
 
-.map-editor .editor-toolbar {
+.board-editor .editor-toolbar {
     --extends: ex-editor-toolbar;
 }
 
-.map-editor .form-input-text, .map-editor .form-input-textarea {
+.board-editor .form-input-text, .board-editor .form-input-textarea {
     --extends: ex-input-text;
 }
 
-.map-editor .form-input-textarea {
+.board-editor .form-input-textarea {
     height: 300px;
 }
 
-.map-editor .form-input-textarea::-webkit-scrollbar {
+.board-editor .form-input-textarea::-webkit-scrollbar {
     --extends: ex-scrollbar
 }
 
-.map-editor .form-input-textarea::-webkit-scrollbar-thumb {
+.board-editor .form-input-textarea::-webkit-scrollbar-thumb {
     --extends: ex-scrollbar-thumb
 }
 
@@ -987,20 +987,20 @@
     position: relative;
 }
 
-.your-proposals-content .map-title {
+.your-proposals-content .board-title {
     --extends: ex-record-title;
 }
 
-.your-proposals-content .map-image {
+.your-proposals-content .board-image {
     width:350px;
 }
 
-.your-proposals-content .map-description {
+.your-proposals-content .board-description {
     height: 150px;
     overflow: hidden;
     position: relative;
 }
 
-.your-proposals-content .map-description::after {
+.your-proposals-content .board-description::after {
     --extends: ex-record-end-mask;
 }

@@ -30,10 +30,10 @@ import {
     showMessage
 } from "../vitamin/vpage.js";
 import {
-    CBConfirm
-} from "./cbadministration.js";
+    CBAConfirm
+} from "./cba-administration.js";
 
-export class CBUserSelector extends VModal {
+export class CBAUserSelector extends VModal {
     constructor({title, loadPage, selectUser}) {
         super({"user": "user-selector", "title": title});
         this._search = new VSearch({
@@ -41,7 +41,7 @@ export class CBUserSelector extends VModal {
                 this.loadUsers();
             }
         });
-        this._table = new CBUserSelection({loadPage, selectUser});
+        this._table = new CBAUserSelection({loadPage, selectUser});
         this.add(new VContainer({ ref:"user-selection-modal" }).add(this._search).add(this._table));
     }
 
@@ -53,7 +53,7 @@ export class CBUserSelector extends VModal {
 
 }
 
-export class CBUserSelection extends VTable {
+export class CBAUserSelection extends VTable {
 
     constructor({loadPage, selectUser}) {
         super({
@@ -129,8 +129,8 @@ export class CBUserSelection extends VTable {
             let pageSummary = new Span()
                 .addClass("user-pager")
                 .setText(pageData.userCount ?
-                    String.format(CBUserSelection.SUMMARY, pageData.userCount, pageData.firstUser, pageData.lastUser) :
-                    CBUserSelection.EMPTY_SUMMARY);
+                    String.format(CBAUserSelection.SUMMARY, pageData.userCount, pageData.firstUser, pageData.lastUser) :
+                    CBAUserSelection.EMPTY_SUMMARY);
             let summary = new Div()
                 .addClass("table-display")
                 .add(title)
@@ -155,7 +155,7 @@ export class CBUserSelection extends VTable {
     static EMPTY_SUMMARY = "There are no users to show";
 }
 
-export class CBEditUser extends VModal {
+export class CBAEditUser extends VModal {
 
     constructor({title, create, user, saveUser, deleteUser}) {
         super({"user": "user-form", "title": title});
@@ -267,7 +267,7 @@ export class CBEditUser extends VModal {
             buttons.add(new VButton({
                 ref: "delete-user", type: "neutral", label: "Delete",
                 onClick: event => {
-                    this.confirm = new CBConfirm().show({
+                    this.confirm = new CBAConfirm().show({
                         ref: "confirm-user-deletion",
                         title: "Delete User",
                         message: "Do you really want to delete the User ?",
@@ -305,7 +305,7 @@ export class CBEditUser extends VModal {
 
 }
 
-export class CBUserList extends VTable {
+export class CBAUserList extends VTable {
 
     constructor({loadPage, updateUser, deleteUser}) {
         super({
@@ -348,7 +348,7 @@ export class CBUserList extends VTable {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
             let selectUser = user => {
-                let userEditor = new CBEditUser({
+                let userEditor = new CBAEditUser({
                     title: "Edit User",
                     user,
                     saveUser: user => this._updateUser(user,
@@ -417,8 +417,8 @@ export class CBUserList extends VTable {
             let pageSummary = new Span()
                 .addClass("user-pager")
                 .setText(pageData.userCount ?
-                    String.format(CBUserList.SUMMARY, pageData.userCount, pageData.firstUser, pageData.lastUser) :
-                    CBUserList.EMPTY_SUMMARY);
+                    String.format(CBAUserList.SUMMARY, pageData.userCount, pageData.firstUser, pageData.lastUser) :
+                    CBAUserList.EMPTY_SUMMARY);
             let summary = new Div()
                 .addClass("table-display")
                 .add(title)
@@ -443,7 +443,7 @@ export class CBUserList extends VTable {
     static EMPTY_SUMMARY = "There are no users to show";
 }
 
-export class CBUserListPage extends Vitamin(Div) {
+export class CBAUserListPage extends Vitamin(Div) {
 
     constructor({loadPage, createUser, updateUser, deleteUser}) {
         super({ref: "user-list-page"});
@@ -455,7 +455,7 @@ export class CBUserListPage extends Vitamin(Div) {
         this._create = new VButton({
             ref: "user-create", type: "neutral", label: "Create User",
             onClick: event => {
-                this._createUserModal = new CBEditUser({
+                this._createUserModal = new CBAEditUser({
                     title: "Create User",
                     create: true,
                     user: {
@@ -478,7 +478,7 @@ export class CBUserListPage extends Vitamin(Div) {
             }
         }).addClass("right-button");
         this._search.add(this._create);
-        this._table = new CBUserList({loadPage, updateUser, deleteUser});
+        this._table = new CBAUserList({loadPage, updateUser, deleteUser});
         this.add(this._search).add(this._table);
     }
 
@@ -564,7 +564,7 @@ export function updateUser(user, avatar, success, failure) {
     );
 }
 
-export var vUserList = new CBUserListPage({
+export var vUserList = new CBAUserListPage({
     loadPage: loadUsers,
     createUser,
     deleteUser,

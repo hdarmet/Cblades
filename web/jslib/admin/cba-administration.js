@@ -27,19 +27,19 @@ import {
 } from "../vitamin/vforms.js";
 import {
     editNotice
-} from "./cbnotice.js";
+} from "./cba-notice.js";
 import {
     vUserList
-} from "./cbuser.js";
+} from "./cba-user.js";
 import {
     vAnnouncementList
-} from "./cbannouncement.js";
+} from "./cba-announcement.js";
 import {
     vEventList
-} from "./cbevent.js";
+} from "./cba-event.js";
 import {
     vBoardList
-} from "./cbboards.js";
+} from "./cba-boards.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -112,10 +112,10 @@ export var vHeader = new VHeader({
     title: "Cursed Blades Administration"
 }).addClass("page-header").addVitamin(vMenu);
 
-export class CBConfirm extends VModal {
+export class CBAConfirm extends VModal {
 
     constructor() {
-        super({ref: CBConfirm.CONFIRM_REF});
+        super({ref: CBAConfirm.CONFIRM_REF});
         this.addClass("confirm-modal");
         this._display = new VDisplay({ref:"confirm-display"});
         this.add(
@@ -156,7 +156,7 @@ export class CBConfirm extends VModal {
 
 }
 
-export class CBLogin extends VModal {
+export class CBALogin extends VModal {
 
     constructor() {
         super({"ref":"login", "title":"Connection"});
@@ -292,9 +292,9 @@ export function connect(login, password, success, failure) {
     );
 }
 
-export var vLogin = new CBLogin();
+export var vLogin = new CBALogin();
 
-export class CBPageContent extends VPageContent {
+export class CBAPageContent extends VPageContent {
 
     constructor() {
         super({ref: "page-content"});
@@ -427,6 +427,6 @@ export class CBPageContent extends VPageContent {
     }
 }
 
-window.vPageContent = new CBPageContent();
+window.vPageContent = new CBAPageContent();
 
 

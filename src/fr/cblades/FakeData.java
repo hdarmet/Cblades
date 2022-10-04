@@ -12,7 +12,7 @@ public class FakeData {
     public static void createBoards() {
         DataSunbeam data = new DataSunbeam() {};
         data.inTransaction(em->{
-            data.persist(em, new Board().setName("map1").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-1.png").setIcon("./../images/maps/map-1-icon.png")
+            data.persist(em, new Board().setName("board1").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-1.png").setIcon("./../images/maps/map-1-icon.png")
                 .addComment(new Comment().setDate(new Date()).setText(TINY_PARAGRAPH_TEXT))
                 .addComment(new Comment().setDate(new Date()).setText(SHORT_PARAGRAPH_TEXT))
                 .addComment(new Comment().setDate(new Date()).setText(TINY_PARAGRAPH_TEXT))
@@ -20,15 +20,15 @@ public class FakeData {
                 .addComment(new Comment().setDate(new Date()).setText(TINY_PARAGRAPH_TEXT))
                 .addComment(new Comment().setDate(new Date()).setText(SHORT_PARAGRAPH_TEXT))
             );
-            data.persist(em, new Board().setName("map2").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-2.png").setIcon("./../images/maps/map-2-icon.png"));
-            data.persist(em, new Board().setName("map3").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-3.png").setIcon("./../images/maps/map-3-icon.png"));
-            data.persist(em, new Board().setName("map4").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-4.png").setIcon("./../images/maps/map-4-icon.png"));
-            data.persist(em, new Board().setName("map5").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-5.png").setIcon("./../images/maps/map-5-icon.png"));
-            data.persist(em, new Board().setName("map6").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-6.png").setIcon("./../images/maps/map-6-icon.png"));
-            data.persist(em, new Board().setName("map7").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-7.png").setIcon("./../images/maps/map-7-icon.png"));
-            data.persist(em, new Board().setName("map8").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-8.png").setIcon("./../images/maps/map-8-icon.png"));
-            data.persist(em, new Board().setName("map9").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-9.png").setIcon("./../images/maps/map-9-icon.png"));
-            data.persist(em, new Board().setName("map10").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-10.png").setIcon("./../images/maps/map-10-icon.png"));
+            data.persist(em, new Board().setName("board2").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-2.png").setIcon("./../images/maps/map-2-icon.png"));
+            data.persist(em, new Board().setName("board3").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-3.png").setIcon("./../images/maps/map-3-icon.png"));
+            data.persist(em, new Board().setName("board4").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-4.png").setIcon("./../images/maps/map-4-icon.png"));
+            data.persist(em, new Board().setName("board5").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-5.png").setIcon("./../images/maps/map-5-icon.png"));
+            data.persist(em, new Board().setName("board6").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-6.png").setIcon("./../images/maps/map-6-icon.png"));
+            data.persist(em, new Board().setName("board7").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-7.png").setIcon("./../images/maps/map-7-icon.png"));
+            data.persist(em, new Board().setName("board8").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-8.png").setIcon("./../images/maps/map-8-icon.png"));
+            data.persist(em, new Board().setName("board9").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-9.png").setIcon("./../images/maps/map-9-icon.png"));
+            data.persist(em, new Board().setName("board10").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-10.png").setIcon("./../images/maps/map-10-icon.png"));
         });
         data.inTransaction(em->{
             data.persist(em, new PlayerIdentity().setName("orc-1").setPath("./../images/units/players/orc-1.png"));

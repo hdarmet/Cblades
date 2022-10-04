@@ -17,59 +17,41 @@ import {
     VFileLoader, VFormContainer
 } from "../vitamin/vforms.js";
 import {
-    CVLegalNotice,
-    CVContact,
-    CVPartnerships,
-    CVSocialRow,
-    VCLogin
-} from "./cvitamin.js";
+    CBSLegalNotice,
+    CBSContact,
+    CBSPartnerships,
+    CBSSocialRow
+} from "./cbs-page.js";
 import {
-    Div, sendGet, sendPost
+    Div, sendGet
 } from "../vitamin/components.js";
 import {
-    VGallery,
-    VSummary,
-    VArticle,
-    VNewspaper,
-    VTheme,
-    VScenario,
-    VMap,
-    VThemeEditor,
-    VArticleEditor,
-    VBoardEditor,
-    VScenarioEditor,
-} from "./vbooks.js";
+    CBSGallery,
+    CBSSummary,
+    CBSArticle,
+    CBSNewspaper,
+    CBSTheme,
+    CBSScenario,
+    CBSThemeEditor,
+    CBSArticleEditor,
+    CBSScenarioEditor
+} from "./cbs-articles.js";
+import {
+    CBSBoard,
+    CBSBoardEditor
+} from "./cbs-board.js";
 import {
     VForum,
     VForums,
     VForumThread
 } from "../vitamin/vforum.js";
 import {
-    VGame, VGameProposal, VGameScenario, VJoinGameWall, VProposeGameWall,
-    VYourGamesWall
-} from "./vplays.js";
+    CBSGame, CBSGameProposal, CBSGameScenario, CBSJoinGameWall, CBSProposeGameWall,
+    CBSYourGamesWall
+} from "./cbs-plays.js";
 import {
-    loadAnnouncement, VAnnoucement, vHome
-} from "./vhome.js";
-
-var text = `
-<h1>The Main Title</h1>
-<p>Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit</p>
-<h2>The Second Title</h2>
-<p>Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit</p>
-<h2>The Third Title</h2>
-<p>
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-</p>`;
+    loadAnnouncement, vHome
+} from "./cbs-home.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -184,14 +166,14 @@ export var vFooter = new VFooter({
         .addField({field: new VText({ref:"footer-summary-partnership", text:"Partnership"}).addStyle("margin", "5px")})
     }),
     content: new VFormContainer({ref:"footer-content", separated:true, columns:3}, $=>{$
-        .addField({field: new CVContact({
+        .addField({field: new CBSContact({
             address: "Cursed Blades<br>22 Sword Street<br>92120 Lance",
             phone: "(+33)6 8744 0442",
             email: "cursed-blades@gmail.com",
             writeToUs: "Write to us"
         })})
         // CVLegalNotice
-        .addField({field: new CVLegalNotice({
+        .addField({field: new CBSLegalNotice({
             legalNotice: {
                 label: "Legal Notice",
                 title: ()=>window.notices["legal-notice"].title,
@@ -219,7 +201,7 @@ export var vFooter = new VFooter({
             }
         })})
         .addField({field: new VFormContainer({ref:"footer-content", columns:1}, $=>{$
-            .addField({field:new CVPartnerships({
+            .addField({field:new CBSPartnerships({
                 patreon: {
                     label: "Our Patreon Page",
                     url: "www.google.fr"
@@ -229,7 +211,7 @@ export var vFooter = new VFooter({
                     url: "www.youtube.com"
                 }
             })})
-            .addField({field: new CVSocialRow({
+            .addField({field: new CBSSocialRow({
                 facebook: {
                     url: "www.facebook.fr"
                 },
@@ -275,7 +257,7 @@ export var vRulesTitle = new VHeader({
     title: "Rules And Player Aids"
 }).addClass("rules-title");
 
-export var vRulesGallery = new VGallery({ref:"rules", kind: "gallery-rules"});
+export var vRulesGallery = new CBSGallery({ref:"rules", kind: "gallery-rules"});
 
 vRulesGallery.show = function() {
     this.clearCards();
@@ -285,53 +267,13 @@ vRulesGallery.show = function() {
     return this;
 }
 
-var maps = {
-    "map-1": {ref:"map-1", name: "map1", description: "Landscape crossed by a path" },
-    "map-2": {ref:"map-2", name: "map2", description: "Landscape crossed by a path" },
-    "map-3": {ref:"map-3", name: "map3", description: "Landscape crossed by a path" },
-    "map-4": {ref:"map-4", name: "map4", description: "Landscape crossed by a path" },
-    "map-5": {ref:"map-5", name: "map5", description: "Landscape crossed by a path" },
-    "map-6": {ref:"map-6", name: "map6", description: "Landscape crossed by a path" },
-    "map-7": {ref:"map-7", name: "map7", description: "Landscape crossed by a path" },
-    "map-8": {ref:"map-8", name: "map8", description: "Landscape crossed by a path" },
-    "map-9": {ref:"map-9", name: "map9", description: "Landscape crossed by a path" },
-    "map-10": {ref:"map-10", name: "map10", description: "Landscape crossed by a path" },
-    "map-11": {ref:"map-11", name: "map11", description: "Landscape crossed by a path" },
-    "map-12": {ref:"map-12", name: "map12", description: "Landscape crossed by a path" },
-    "map-13": {ref:"map-13", name: "map13", description: "Landscape crossed by a path" },
-    "map-14": {ref:"map-14", name: "map14", description: "Landscape crossed by a path" },
-    "map-15": {ref:"map-15", name: "map15", description: "Landscape crossed by a path" },
-    "map-16": {ref:"map-16", name: "map16", description: "Landscape crossed by a path" },
-    "map-17": {ref:"map-17", name: "map17", description: "Landscape crossed by a path" },
-    "map-18": {ref:"map-18", name: "map18", description: "Landscape crossed by a path" },
-    "map-19": {ref:"map-19", name: "map19", description: "Landscape crossed by a path" },
-    "map-20": {ref:"map-20", name: "map20", description: "Landscape crossed by a path" },
-    "map-21": {ref:"map-21", name: "map21", description: "Landscape crossed by a path" }
-}
-
-export function declareMap(mapRef, mapName, mapDescription) {
-    return {
-        ref:mapRef,
-        image: new VMagnifiedImage({
-            ref:`img-${mapRef}`,
-            img:`../images/maps/${mapRef}-icon.png`,
-            zoomImg:`../images/maps/${mapRef}.png`,
-            width:"90%"
-        }),
-        title:mapName, description:mapDescription,
-        button:"Download", action:event=>{
-            download(`../images/maps/${mapRef}.png`);
-        }
-    };
-}
-
-export var vMapsTitle = new VHeader({
+export var vBoardsTitle = new VHeader({
     ref:"maps-title",
     left:"../images/site/left-maps.png", right:"../images/site/right-maps.png",
-    title: "Maps"
+    title: "Boards"
 }).addClass("maps-title");
 
-export var vMapsGallery = new VGallery({ref:"maps", kind: "gallery-maps"});
+export var vBoardsGallery = new CBSGallery({ref:"maps", kind: "gallery-maps"});
 
 export var vMagicTitle = new VHeader({
     ref:"magic-title",
@@ -385,7 +327,7 @@ var magics = {
     },
 }
 
-export var vMagicGallery = new VGallery({ref:"magic", kind: "gallery-magic"});
+export var vMagicGallery = new CBSGallery({ref:"magic", kind: "gallery-magic"});
 
 vMagicGallery.show = function() {
     this.clearCards();
@@ -423,7 +365,7 @@ export function declareMagicCounter(magicRef, counterRef, counterName) {
     };
 }
 
-export var vMagicCountersGallery = new VGallery({ref:"magic-counters", kind: "gallery-magic-counters"});
+export var vMagicCountersGallery = new CBSGallery({ref:"magic-counters", kind: "gallery-magic-counters"});
 
 vMagicCountersGallery.setMagicArt = function(art) {
     this._art = art;
@@ -458,7 +400,7 @@ export var vMagicCountersPageGallery = new VFormContainer({ref: "magic-counters-
 
 vMagicCountersPageGallery.show = function() {
     vMagicSummary.set({
-        content: new VSummary({
+        content: new CBSSummary({
             ref: "magic-summary",
             img: `../images/site/magic/${vMagicCountersGallery._art.ref}.png`,
             alt: vMagicCountersGallery._art.name,
@@ -521,7 +463,7 @@ var factions = {
     },
 }
 
-export var vFactionsGallery = new VGallery({ref:"factions", kind: "gallery-factions"});
+export var vFactionsGallery = new CBSGallery({ref:"factions", kind: "gallery-factions"});
 
 vFactionsGallery.show = function() {
     this.clearCards();
@@ -547,7 +489,7 @@ export function declareFactionCounter(factionRef, counterRef, counterName) {
     };
 }
 
-export var vFactionCountersGallery = new VGallery({ref:"factions-counter", kind: "gallery-faction-counters"});
+export var vFactionCountersGallery = new CBSGallery({ref:"factions-counter", kind: "gallery-faction-counters"});
 
 vFactionCountersGallery.setFaction = function(faction) {
     this._faction = faction;
@@ -579,7 +521,7 @@ export var vFactionCountersPageGallery = new VFormContainer({ref: "faction-count
 
 vFactionCountersPageGallery.show = function() {
     vFactionSummary.set({
-        content: new VSummary({
+        content: new CBSSummary({
             ref: "faction-summary",
             img: `../images/site/factions/${vFactionCountersGallery._faction.ref}.png`,
             alt: vFactionCountersGallery._faction.name,
@@ -618,7 +560,7 @@ export var vMarkersTitle = new VHeader({
     title: "Markers"
 }).addClass("markers-title");
 
-export var vMarkersGallery = new VGallery({ref:"markers", kind: "gallery-markers"});
+export var vMarkersGallery = new CBSGallery({ref:"markers", kind: "gallery-markers"});
 
 vMarkersGallery.show = function() {
     this.clearCards();
@@ -664,7 +606,7 @@ export var vNewArticlesWall = new VWallWithSearch({
     kind: "new-articles",
     searchAction: text=>alert("search:"+text)
 }, $=>{$
-    .addNote(new VArticle({
+    .addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par1", imgPos:"left", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:[paragrpahText, paragrpahText]},
             {ref: "art1-par2", imgPos:"right", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText}
@@ -673,7 +615,7 @@ export var vNewArticlesWall = new VWallWithSearch({
             vPageContent.showNewspaper(article);
         }
     }))
-    .addNote(new VArticle({
+    .addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", imgPos:"left", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", imgPos:"right", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -683,7 +625,7 @@ export var vNewArticlesWall = new VWallWithSearch({
             vPageContent.showNewspaper(article);
         }
     }))
-    .addNote(new VArticle({
+    .addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", imgPos:"left", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", imgPos:"right", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -692,7 +634,7 @@ export var vNewArticlesWall = new VWallWithSearch({
             vPageContent.showNewspaper(article);
         }
     }))
-    .addNote(new VArticle({
+    .addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par2", imgPos:"left", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText},
             {ref: "art1-par3", imgPos:"right", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
@@ -704,7 +646,7 @@ export var vNewArticlesWall = new VWallWithSearch({
 });
 
 vNewArticlesWall.setLoadNotes(function() {
-    this.addNote(new VArticle({
+    this.addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", imgPos:"left", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", imgPos:"right", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -714,7 +656,7 @@ vNewArticlesWall.setLoadNotes(function() {
             vPageContent.showNewspaper(article);
         }
     }))
-    .addNote(new VArticle({
+    .addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", imgPos:"left", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", imgPos:"right", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -723,7 +665,7 @@ vNewArticlesWall.setLoadNotes(function() {
             vPageContent.showNewspaper(article);
         }
     }))
-    .addNote(new VArticle({
+    .addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par2", imgPos:"left", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText},
             {ref: "art1-par3", imgPos:"right", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
@@ -745,56 +687,56 @@ export var vThemesAboutGameWall = new VWallWithSearch({
     kind: "themes-about-game",
     searchAction: text=>alert("search:"+text)
 }, $=>{$
-    .addNote(new VTheme({
+    .addNote(new CBSTheme({
         ref: "theme1", title: "Rules", img: `../images/site/themes/rules.png`,
         description: paragrpahText,
         action:theme=>{
             vPageContent.showArticlesAboutGameWall();
         }
     }))
-    .addNote(new VTheme({
+    .addNote(new CBSTheme({
         ref: "theme2", title: "Strategies And Tactics", img: `../images/site/themes/strategy.png`,
         description: paragrpahText,
         action:theme=>{
             vPageContent.showArticlesAboutGameWall();
         }
     }))
-    .addNote(new VTheme({
+    .addNote(new CBSTheme({
         ref: "theme3", title: "Units", img: `../images/site/themes/units.png`,
         description: paragrpahText,
         action:theme=>{
             vPageContent.showArticlesAboutGameWall();
         }
     }))
-    .addNote(new VTheme({
+    .addNote(new CBSTheme({
         ref: "theme4", title: "Magic", img: `../images/site/themes/magic.png`,
         description: paragrpahText,
         action:theme=>{
             vPageContent.showArticlesAboutGameWall();
         }
     }))
-    .addNote(new VTheme({
+    .addNote(new CBSTheme({
         ref: "theme5", title: "Scenario", img: `../images/site/themes/scenario.png`,
         description: paragrpahText,
         action:theme=>{
             vPageContent.showArticlesAboutGameWall();
         }
     }))
-    .addNote(new VTheme({
+    .addNote(new CBSTheme({
         ref: "theme6", title: "Campains", img: `../images/site/themes/campains.png`,
         description: paragrpahText,
         action:theme=>{
             vPageContent.showArticlesAboutGameWall();
         }
     }))
-    .addNote(new VTheme({
+    .addNote(new CBSTheme({
         ref: "theme7", title: "History", img: `../images/site/themes/history.png`,
         description: paragrpahText,
         action:theme=>{
             vPageContent.showArticlesAboutGameWall();
         }
     }))
-    .addNote(new VTheme({
+    .addNote(new CBSTheme({
         ref: "theme8", title: "Siege", img: `../images/site/themes/siege.png`,
         description: paragrpahText,
         action:theme=>{
@@ -808,7 +750,7 @@ export var vArticlesAboutGameWall = new VWallWithSearch({
     kind: "articles-about-game",
     searchAction: text=>alert("search:"+text)
 }, $=>{$
-    .addNote(new VArticle({
+    .addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:[paragrpahText, paragrpahText]},
             {ref: "art1-par2", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText}
@@ -817,7 +759,7 @@ export var vArticlesAboutGameWall = new VWallWithSearch({
             vPageContent.showNewspaper(article);
         }
     }))
-    .addNote(new VArticle({
+    .addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"left", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -827,7 +769,7 @@ export var vArticlesAboutGameWall = new VWallWithSearch({
             vPageContent.showNewspaper(article);
         }
     }))
-    .addNote(new VArticle({
+    .addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"left", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"right", title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -836,7 +778,7 @@ export var vArticlesAboutGameWall = new VWallWithSearch({
             vPageContent.showNewspaper(article);
         }
     }))
-    .addNote(new VArticle({
+    .addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"left", title:"Et ça continue...", description:paragrpahText},
             {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"right", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
@@ -848,7 +790,7 @@ export var vArticlesAboutGameWall = new VWallWithSearch({
 });
 
 vArticlesAboutGameWall.setLoadNotes(function() {
-    this.addNote(new VArticle({
+    this.addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"left", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"right", title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -858,7 +800,7 @@ vArticlesAboutGameWall.setLoadNotes(function() {
             vPageContent.showNewspaper(article);
         }
     }))
-    .addNote(new VArticle({
+    .addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"left", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"right", title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -867,7 +809,7 @@ vArticlesAboutGameWall.setLoadNotes(function() {
             vPageContent.showNewspaper(article);
         }
     }))
-    .addNote(new VArticle({
+    .addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"left", title:"Et ça continue...", description:paragrpahText},
             {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"right", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
@@ -883,7 +825,7 @@ export var vNewspaperTitle = new VHeader({
     left:"../images/site/left-legends.png", right:"../images/site/right-legends.png"
 }).addClass("newspaper-title");
 
-export var vNewspaperContent = new VNewspaper({
+export var vNewspaperContent = new CBSNewspaper({
     ref:"newspaper-content"
 });
 
@@ -892,7 +834,7 @@ export var vContributeTitle = new VHeader({
     left:"../images/site/left-contribute.png", right:"../images/site/right-contribute.png"
 }).addClass("contribute-title");
 
-export var vThemeEditor = new VThemeEditor({
+export var vThemeEditor = new CBSThemeEditor({
     ref:"theme-editor",
     accept(file) {
         if (!VFileLoader.isImage(file)) {
@@ -923,7 +865,7 @@ vThemeEditorPage.setTheme = function(theme) {
     return this;
 }
 
-export var vArticleEditor = new VArticleEditor({
+export var vArticleEditor = new CBSArticleEditor({
     ref:"article-editor",
     accept(file) {
         if (!VFileLoader.isImage(file)) {
@@ -954,8 +896,8 @@ vArticleEditorPage.setArticle = function(article) {
     return this;
 }
 
-export var vBoardEditor = new VBoardEditor({
-    ref:"map-editor",
+export var vBoardEditor = new CBSBoardEditor({
+    ref:"board-editor",
     accept(file) {
         if (!VFileLoader.isImage(file)) {
             VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (2046 x 3150) pixels."});
@@ -976,8 +918,8 @@ export var vBoardEditor = new VBoardEditor({
 });
 
 export var vBoardEditorDescription = new Div().setText(paragrpahText).addClass("description");
-export var vBoardEditorPage = new VFormContainer({ref:"map-editor-page"})
-    .addClass("map-editor-page")
+export var vBoardEditorPage = new VFormContainer({ref:"board-editor-page"})
+    .addClass("board-editor-page")
     .add(vBoardEditorDescription)
     .add(vBoardEditor);
 vBoardEditorPage.canLeave = function(leave, notLeave) {
@@ -988,7 +930,7 @@ vBoardEditorPage.setBoard = function(board) {
     return this;
 }
 
-export var vScenarioEditor = new VScenarioEditor({
+export var vScenarioEditor = new CBSScenarioEditor({
     ref:"scenario-editor",
     onEdit() {
         vScenarioEditor.openInNewTab("./cba-scenario-editor.html");
@@ -1019,7 +961,7 @@ export var vYourProposalsWall = new VWallWithSearch({
     kind: "your-proposals",
     searchAction: text=>alert("search:"+text)
 }, $=>{$
-    .addNote(new VArticle({
+    .addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", paragraphs: [
             {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"left", title:"Ca commence...", description:[paragrpahText, paragrpahText]},
             {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"right", title:"Et ça continue...", description:paragrpahText}
@@ -1028,21 +970,21 @@ export var vYourProposalsWall = new VWallWithSearch({
             window.vPageContent.showProposeArticle(article);
         }
     }))
-    .addNote(new VScenario({
+    .addNote(new CBSScenario({
         ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
         story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
         action:scenario=>{
             window.vPageContent.showProposeScenario(scenario);
         }
     }))
-    .addNote(new VTheme({
+    .addNote(new CBSTheme({
         ref: "theme1", title: "Rules", img: `../images/site/themes/rules.png`,
         description: paragrpahText,
         action: theme => {
             window.vPageContent.showProposeTheme(theme);
         }
     }))
-    .addNote(new VMap({
+    .addNote(new CBSBoard({
         ref: "map1", title: "The Map", img: `../images/maps/map-7.png`,
         description: paragrpahText,
         action: map => {
@@ -1052,7 +994,7 @@ export var vYourProposalsWall = new VWallWithSearch({
 });
 
 vYourProposalsWall.setLoadNotes(function() {
-    this.addNote(new VArticle({
+    this.addNote(new CBSArticle({
         ref: "art1", title: "An Interesting Story", paragraphs: [
             {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"right", title:"Ca commence...", description:[paragrpahText, paragrpahText]},
             {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"left", title:"Et ça continue...", description:paragrpahText}
@@ -1061,14 +1003,14 @@ vYourProposalsWall.setLoadNotes(function() {
             window.vPageContent.showProposeArticle(article);
         }
     }))
-    .addNote(new VScenario({
+    .addNote(new CBSScenario({
         ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
         story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
         action:scenario=>{
             window.vPageContent.showProposeScenario(scenario);
         }
     }))
-    .addNote(new VTheme({
+    .addNote(new CBSTheme({
         ref: "theme1", title: "Rules", img: `../images/site/themes/rules.png`,
         description: paragrpahText,
         action: theme => {
@@ -1338,7 +1280,7 @@ export var vGamesTitle = new VHeader({
 }).addClass("games-title");
 
 function getGame() {
-    return new VGame({
+    return new CBSGame({
         ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
         story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
         turnNumber: 12,
@@ -1360,7 +1302,7 @@ function getGame() {
     });
 }
 
-export var vYourGamesWall = new VYourGamesWall()
+export var vYourGamesWall = new CBSYourGamesWall()
     .addNote(getGame())
     .addNote(getGame())
     .addNote(getGame())
@@ -1375,7 +1317,7 @@ vYourGamesWall.setLoadNotes(function() {
 });
 
 function getScenario() {
-    return new VGameScenario({
+    return new CBSGameScenario({
         ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
         story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
         turnNumber: 12,
@@ -1393,7 +1335,7 @@ function getScenario() {
     });
 }
 
-export var vProposeGameWall = new VProposeGameWall()
+export var vProposeGameWall = new CBSProposeGameWall()
     .addNote(getScenario())
     .addNote(getScenario())
     .addNote(getScenario())
@@ -1408,7 +1350,7 @@ vProposeGameWall.setLoadNotes(function() {
 });
 
 function getProposal() {
-    return new VGameProposal({
+    return new CBSGameProposal({
         ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
         story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
         turnNumber: 12,
@@ -1427,7 +1369,7 @@ function getProposal() {
     });
 }
 
-export var vJoinGameWall = new VJoinGameWall()
+export var vJoinGameWall = new CBSJoinGameWall()
     .addNote(getProposal())
     .addNote(getProposal())
     .addNote(getProposal())
@@ -1441,7 +1383,7 @@ vJoinGameWall.setLoadNotes(function() {
         .addNote(getProposal());
 });
 
-class CBPageContent extends VPageContent {
+class CBSPageContent extends VPageContent {
 
     constructor() {
         super({ref: "page-content"});
@@ -1475,7 +1417,7 @@ class CBPageContent extends VPageContent {
     _showMapsGallery(byHistory, historize) {
         loadBoards(
             ()=>{
-                this._changePage(vMapsTitle, vMapsGallery, byHistory, historize);
+                this._changePage(vBoardsTitle, vBoardsGallery, byHistory, historize);
             }
         );
     }
@@ -1763,15 +1705,15 @@ sendGet("/api/notice/published",
     }
 )
 
-window.vPageContent = new CBPageContent();
+window.vPageContent = new CBSPageContent();
 
 export function loadBoards(success) {
     sendGet("/api/board/live",
         (text, status)=>{
-            vMapsGallery.clearCards();
+            vBoardsGallery.clearCards();
             let maps = JSON.parse(text);
             for (let map of maps) {
-                vMapsGallery.addCard({
+                vBoardsGallery.addCard({
                     ref: "map-"+map.id,
                     image: new VMagnifiedImage({
                         ref: `img-map-${map.id}`,

@@ -10,8 +10,7 @@ import {
 } from "../vitamin/components.js";
 import {
     Undoable,
-    VImage,
-    Vitamin, VMagnifiedImage, VMessageHandler, VModal, VSearch
+    Vitamin, VMessageHandler, VModal, VSearch
 } from "../vitamin/vitamins.js";
 import {
     mandatory, matchesName, range,
@@ -25,95 +24,16 @@ import {
     showMessage
 } from "../vitamin/vpage.js";
 import {
-    CBConfirm
-} from "./cbadministration.js";
+    CBAConfirm
+} from "./cba-administration.js";
 import {
-    CBUserSelector, loadUsers
-} from "./cbuser.js";
+    CBAUserSelector, loadUsers
+} from "./cba-user.js";
+import {
+    CBAEditComments
+} from "./cba-comment.js";
 
-export class CBEditComments extends Undoable(VModal) {
-
-    constructor({ref, kind, comments, acknowledge}) {
-        super({ref, title:"Comments"});
-        this.addClass(kind).addClass("comments-editor");
-        this._commentsList = new VContainer({ref:"comments-editor"});
-        this._newComment = new VInputTextArea({
-            ref:"board-new-comment-input", label:"New Comment",
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this._buttons = new VButtons({
-            ref: "buttons", buttons: [{
-                ref: "save-comment", type: "accept", label: "Ok",
-                onClick: event => {
-                    acknowledge(this.comments);
-                    this.hide();
-                }
-            },
-            {
-                ref: "cancel-comment", type: "refuse", label: "Cancel",
-                onClick: event => {
-                    this.hide();
-                }
-            }]
-        });
-        this.add(this._commentsList).add(this._newComment).add(this._buttons);
-        this.comments = comments;
-    }
-
-    get comments() {
-        return {
-            comments: structuredClone(this._comments),
-            newComment: this._newComment.value
-        }
-    }
-
-    set comments(comments) {
-        this._recover(comments);
-        this._clean();
-        this._memorize();
-    }
-
-    _register() {
-        return this.comments;
-    }
-
-    _recover(memento) {
-        this._comments = structuredClone(memento.comments);
-        this._newComment.value = memento.newComment;
-        this._commentsList.clearFields();
-        for (let comment of this._comments) {
-            this.addComment(comment);
-        }
-    }
-
-    addComment(comment) {
-        let commentField =  new Div().add(
-            new Div().add(
-                new Span(comment.date.toLocaleDateString()).addClass("comment-date")
-            ).add(
-                new Img("./../images/site/buttons/cross.png")
-                    .addClass("comment-remove")
-                    .onMouseClick(event=>{
-                        this._comments.remove(commentField._comment);
-                        this._commentsList.removeField({field: commentField});
-                        this._memorize();
-                    }
-                )
-            )
-        ).add(
-            new P(comment.text).addClass("comment-text")
-        );
-        commentField._comment = comment;
-        this._commentsList.addField({
-            field: commentField
-        });
-    }
-
-}
-
-export class CBEditBoardPane extends Undoable(VSplitterPanel) {
+export class CBAEditBoardPane extends Undoable(VSplitterPanel) {
 
     constructor({ref, kind, create, board, accept, verify, onEdit}) {
         super({ref});
@@ -157,7 +77,7 @@ export class CBEditBoardPane extends Undoable(VSplitterPanel) {
             }
         });
         this.addOnRight(this._description);
-        let userSelector = new CBUserSelector({title:"Select Board Account", loadPage:loadUsers, selectUser:user=>{
+        let userSelector = new CBAUserSelector({title:"Select Board Account", loadPage:loadUsers, selectUser: user=>{
                 this._author.setValue(user);
                 userSelector.hide();
             }
@@ -270,7 +190,7 @@ export class CBEditBoardPane extends Undoable(VSplitterPanel) {
     }
 
     onComments() {
-        new CBEditComments({
+        new CBAEditComments({
             "ref": "board-comments",
             "kind": "board-comments",
             comments: structuredClone(this._comments),
@@ -283,12 +203,12 @@ export class CBEditBoardPane extends Undoable(VSplitterPanel) {
     }
 }
 
-export class CBEditBoard extends VModal {
+export class CBAEditBoard extends VModal {
 
     constructor({title, create, board, saveBoard, deleteBoard}) {
         super({ref:"edit-board-modal", title});
         this._id = board.id;
-        this._boardPane = new CBEditBoardPane({
+        this._boardPane = new CBAEditBoardPane({
             ref: "board-editor-pane",
             kind: "board-editor-pane",
             board,
@@ -340,7 +260,7 @@ export class CBEditBoard extends VModal {
         this._deleteButton = new VButton({
             ref: "delete-event", type: "neutral", label: "Delete",
             onClick: evt => {
-                this.confirm = new CBConfirm().show({
+                this.confirm = new CBAConfirm().show({
                     ref: "confirm-event-deletion",
                     title: "Delete Event",
                     message: "Do you really want to delete the Event ?",
@@ -393,7 +313,7 @@ export class CBEditBoard extends VModal {
 
 }
 
-export class CBBoardList extends VTable {
+export class CBABoardList extends VTable {
 
     constructor({loadPage, saveBoard, deleteBoard}) {
         super({
@@ -422,7 +342,7 @@ export class CBBoardList extends VTable {
     selectBoard(board) {
         loadBoard(board,
             board=>{
-                let boardEditor = new CBEditBoard({
+                let boardEditor = new CBAEditBoard({
                     title: "Edit Board",
                     board,
                     saveBoard: board => this._saveBoard(board,
@@ -496,8 +416,8 @@ export class CBBoardList extends VTable {
             let pageSummary = new Span()
                 .addClass("board-pager")
                 .setText(pageData.eventCount ?
-                    String.format(CBBoardList.SUMMARY, pageData.boardCount, pageData.firstBoard, pageData.lastBoard) :
-                    CBBoardList.EMPTY_SUMMARY);
+                    String.format(CBABoardList.SUMMARY, pageData.boardCount, pageData.firstBoard, pageData.lastBoard) :
+                    CBABoardList.EMPTY_SUMMARY);
             let summary = new Div()
                 .addClass("table-display")
                 .add(title)
@@ -522,7 +442,7 @@ export class CBBoardList extends VTable {
     static EMPTY_SUMMARY = "There are no board to show";
 }
 
-export class CBBoardListPage extends Vitamin(Div) {
+export class CBABoardListPage extends Vitamin(Div) {
 
     constructor({loadPage, saveBoard, deleteBoard}) {
         super({ref: "board-list-page"});
@@ -534,7 +454,7 @@ export class CBBoardListPage extends Vitamin(Div) {
         this._create = new VButton({
             ref: "board-create", type: "neutral", label: "Create Board",
             onClick: event => {
-                this._createBoardModal = new CBEditBoard({
+                this._createBoardModal = new CBAEditBoard({
                     title: "Create Board",
                     create: true,
                     board: {
@@ -559,7 +479,7 @@ export class CBBoardListPage extends Vitamin(Div) {
             }
         }).addClass("right-button");
         this._search.add(this._create);
-        this._table = new CBBoardList({loadPage, saveBoard, deleteBoard});
+        this._table = new CBABoardList({loadPage, saveBoard, deleteBoard});
         this.add(this._search).add(this._table);
     }
 
@@ -651,7 +571,7 @@ export function deleteBoard(board, success, failure) {
     );
 }
 
-export var vBoardList = new CBBoardListPage({
+export var vBoardList = new CBABoardListPage({
     loadPage: loadBoards,
     deleteBoard,
     saveBoard

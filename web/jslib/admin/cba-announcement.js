@@ -22,10 +22,10 @@ import {
     showMessage
 } from "../vitamin/vpage.js";
 import {
-    CBConfirm
-} from "./cbadministration.js";
+    CBAConfirm
+} from "./cba-administration.js";
 
-export class CBEditAnnouncement extends VModal {
+export class CBAEditAnnouncement extends VModal {
 
     constructor({title, create, announcement, saveAnnouncement, deleteAnnouncement}) {
         super({"announcement": "announcement-form", "title": title});
@@ -90,7 +90,7 @@ export class CBEditAnnouncement extends VModal {
             buttons.add(new VButton({
                 ref: "delete-announcement", type: "neutral", label: "Delete",
                 onClick: event => {
-                    this.confirm = new CBConfirm().show({
+                    this.confirm = new CBAConfirm().show({
                         ref: "confirm-announcement-deletion",
                         title: "Delete Announcement",
                         message: "Do you really want to delete the Announcement ?",
@@ -120,7 +120,7 @@ export class CBEditAnnouncement extends VModal {
 
 }
 
-export class CBAnnouncementList extends VTable {
+export class CBAAnnouncementList extends VTable {
 
     constructor({loadPage, updateAnnouncement, deleteAnnouncement}) {
         super({
@@ -159,7 +159,7 @@ export class CBAnnouncementList extends VTable {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
             let selectAnnouncement = announcement => {
-                let announcementEditor = new CBEditAnnouncement({
+                let announcementEditor = new CBAEditAnnouncement({
                     title: "Edit Announcement",
                     announcement,
                     saveAnnouncement: announcement => this._updateAnnouncement(announcement,
@@ -212,8 +212,8 @@ export class CBAnnouncementList extends VTable {
             let pageSummary = new Span()
                 .addClass("announcement-pager")
                 .setText(pageData.announcementCount ?
-                    String.format(CBAnnouncementList.SUMMARY, pageData.announcementCount, pageData.firstAnnouncement, pageData.lastAnnouncement) :
-                    CBAnnouncementList.EMPTY_SUMMARY);
+                    String.format(CBAAnnouncementList.SUMMARY, pageData.announcementCount, pageData.firstAnnouncement, pageData.lastAnnouncement) :
+                    CBAAnnouncementList.EMPTY_SUMMARY);
             let summary = new Div()
                 .addClass("table-display")
                 .add(title)
@@ -238,7 +238,7 @@ export class CBAnnouncementList extends VTable {
     static EMPTY_SUMMARY = "There are no announcement to show";
 }
 
-export class CBAnnouncementListPage extends Vitamin(Div) {
+export class CBAAnnouncementListPage extends Vitamin(Div) {
 
     constructor({loadPage, createAnnouncement, updateAnnouncement, deleteAnnouncement}) {
         super({ref: "announcement-list-page"});
@@ -250,7 +250,7 @@ export class CBAnnouncementListPage extends Vitamin(Div) {
         this._create = new VButton({
             ref: "announcement-create", type: "neutral", label: "Create Announcement",
             onClick: event => {
-                this._createAnnouncementModal = new CBEditAnnouncement({
+                this._createAnnouncementModal = new CBAEditAnnouncement({
                     title: "Create Announcement",
                     create: true,
                     announcement: {
@@ -273,7 +273,7 @@ export class CBAnnouncementListPage extends Vitamin(Div) {
             }
         }).addClass("right-button");
         this._search.add(this._create);
-        this._table = new CBAnnouncementList({loadPage, updateAnnouncement, deleteAnnouncement});
+        this._table = new CBAAnnouncementList({loadPage, updateAnnouncement, deleteAnnouncement});
         this.add(this._search).add(this._table);
     }
 
@@ -359,7 +359,7 @@ export function updateAnnouncement(announcement, illustration, success, failure)
     );
 }
 
-export var vAnnouncementList = new CBAnnouncementListPage({
+export var vAnnouncementList = new CBAAnnouncementListPage({
     loadPage: loadAnnouncements,
     createAnnouncement,
     deleteAnnouncement,

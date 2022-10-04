@@ -28,9 +28,9 @@ import {
     sendGet
 } from "../draw.js";
 
-export class CVContact extends VList {
+export class CBSContact extends VList {
     constructor({address, phone, email, writeToUs}) {
-        super({ref: CVContact.CONTACT_REF});
+        super({ref: CBSContact.CONTACT_REF});
         this._address = new VLine({ref:"contact-address", text:address})
             .addClass("contact-address-dot");
         this._phone = new VLine({ref:"contact-phone", text:phone})
@@ -46,16 +46,16 @@ export class CVContact extends VList {
         this.addLine({field: this._phone});
         this.addLine({field: this._email});
         this.addLine({field: this._writeToUs});
-        this._writeToUsModal = new CVWriteToUs();
+        this._writeToUsModal = new CBSWriteToUs();
     }
 
     static CONTACT_REF = "contact-form";
 }
 
-export class CVWriteToUs extends VModal {
+export class CBSWriteToUs extends VModal {
 
     constructor() {
-        super({ref: CVWriteToUs.WRITE_TO_US_REF, title: CVWriteToUs.WRITE_TO_US_TITLE});
+        super({ref: CBSWriteToUs.WRITE_TO_US_REF, title: CBSWriteToUs.WRITE_TO_US_TITLE});
         this._firstName = new VInputField({ref:"contact-firstname", label:"First Name"});
         this._lastName = new VInputField({ref:"contact-lastname", label:"Last Name"});
         this._email = new VInputField({ref:"contact-email", label:"EMail"});
@@ -104,7 +104,7 @@ export class CVWriteToUs extends VModal {
     static WRITE_TO_US_TITLE = "Write To Us";
 }
 
-export class CVLegalNotice extends VList {
+export class CBSLegalNotice extends VList {
     constructor({
         legalNotice,
         privateLifePolicy,
@@ -112,7 +112,7 @@ export class CVLegalNotice extends VList {
         usagePolicy,
         contributions
     }) {
-        super({ref: CVContact.LEGAL_NOTICE_REF});
+        super({ref: CBSContact.LEGAL_NOTICE_REF});
         if (legalNotice) {
             this._legalNotice = new VLine({ref: "legal-notice", text: legalNotice.label,
                 action:()=>this.showArticle(legalNotice)})
@@ -143,7 +143,7 @@ export class CVLegalNotice extends VList {
                 .addClass("legal-notice-dot");
             this.addLine({field: this._contributions});
         }
-        this._noticeModal = new CVArticleDisplay();
+        this._noticeModal = new CBSArticleDisplay();
     }
 
     showArticle(notice) {
@@ -153,10 +153,10 @@ export class CVLegalNotice extends VList {
     static LEGAL_NOTICE_REF = "legal-form";
 }
 
-export class CVArticleDisplay extends VModal {
+export class CBSArticleDisplay extends VModal {
 
     constructor() {
-        super({ref: CVWriteToUs.ARTICLE_DISPLAY_REF});
+        super({ref: CBSWriteToUs.ARTICLE_DISPLAY_REF});
         this._display = new VDisplay({ref:"article-display"});
         this.add(
             new VFormContainer({columns: 1})
@@ -174,9 +174,9 @@ export class CVArticleDisplay extends VModal {
     static ARTICLE_DISPLAY_REF = "article-display";
 }
 
-export class CVPartnerships extends VList {
+export class CBSPartnerships extends VList {
     constructor(partners) {
-        super({ref: CVContact.PARTNERSHIP_REF});
+        super({ref: CBSContact.PARTNERSHIP_REF});
         for (let partner in partners) {
             this["_"+partner] = new VLine({
                 ref: "partnership", text: partners[partner].label,
@@ -193,9 +193,9 @@ export class CVPartnerships extends VList {
     static PARTNERSHIP_REF = "legal-form";
 }
 
-export class CVSocialRow extends VRow {
+export class CBSSocialRow extends VRow {
     constructor(medias) {
-        super({ref: CVSocialRow.PARTNERSHIP_REF}).addClass("social-row");
+        super({ref: CBSSocialRow.PARTNERSHIP_REF}).addClass("social-row");
         for (let media in medias) {
             this.add(new VLink({ref: "social-"+media, url: "//"+medias[media].url}).addClass("fa fa-"+media));
         }
@@ -204,7 +204,7 @@ export class CVSocialRow extends VRow {
     static PARTNERSHIP_REF = "social-row";
 }
 
-export class VCLogin extends VModal {
+export class CBSLogin extends VModal {
 
     constructor() {
         super({"ref":"login", "title":"Connection"});
@@ -394,7 +394,7 @@ export class VCLogin extends VModal {
 
 }
 
-export let vLogin = new VCLogin();
+export let vLogin = new CBSLogin();
 
 export function disconnect(success, failure) {
     sendGet("/api/login/logout",

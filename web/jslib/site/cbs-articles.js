@@ -20,7 +20,7 @@ import {
     VSwitch
 } from "../vitamin/vforms.js";
 
-export class VSummary extends Vitamin(Div) {
+export class CBSSummary extends Vitamin(Div) {
 
     constructor({ref, img, width, title, description}) {
         super({ref});
@@ -49,7 +49,7 @@ export class VSummary extends Vitamin(Div) {
 
 }
 
-export class VCard extends Vitamin(Div) {
+export class CBSCard extends Vitamin(Div) {
 
     constructor({ref, img, image, width, title, description, button, action}) {
         super({ref});
@@ -90,9 +90,9 @@ export class VCard extends Vitamin(Div) {
 
 }
 
-export class VGallery extends Vitamin(Div) {
+export class CBSGallery extends Vitamin(Div) {
 
-    constructor({ref, card=VCard, kind="gallery-vertical"}, builder) {
+    constructor({ref, card=CBSCard, kind="gallery-vertical"}, builder) {
         super({ref});
         this._cardClass = card;
         this.addClass("gallery-row");
@@ -119,7 +119,7 @@ export class VGallery extends Vitamin(Div) {
 
 }
 
-export class VParagraph extends Vitamin(Div) {
+export class CBSParagraph extends Vitamin(Div) {
 
     constructor({ref, img, image, imgPos, title, description, action}) {
         super({ref});
@@ -205,7 +205,7 @@ export class VParagraph extends Vitamin(Div) {
     }
 }
 
-export class VVotes extends Vitamin(Div) {
+export class CBSVotes extends Vitamin(Div) {
 
     constructor({ref, likes, dislikes, actionLikes, actionDislikes}) {
         super({ref});
@@ -240,7 +240,7 @@ export class VVotes extends Vitamin(Div) {
     }
 }
 
-export class VArticle extends Vitamin(Div) {
+export class CBSArticle extends Vitamin(Div) {
 
     constructor({ref, kind = "article", title, paragraphs, votes, action}) {
         super({ref});
@@ -248,7 +248,7 @@ export class VArticle extends Vitamin(Div) {
         this._title = new P(title).addClass("article-title");
         this.add(this._title);
         if (votes) {
-            this._votes = new VVotes(votes);
+            this._votes = new CBSVotes(votes);
             this.add(this._votes);
         }
         this._paragraphs=[];
@@ -263,7 +263,7 @@ export class VArticle extends Vitamin(Div) {
     }
 
     createParagraph(paragraphSpec) {
-        let paragraph = new VParagraph(paragraphSpec);
+        let paragraph = new CBSParagraph(paragraphSpec);
         this.add(paragraph);
         this._paragraphs.push(paragraph);
         return paragraph;
@@ -271,7 +271,7 @@ export class VArticle extends Vitamin(Div) {
 
     insertParagraph(paragraphSpec, before) {
         let index = this._paragraphs.indexOf(before);
-        let paragraph = new VParagraph(paragraphSpec);
+        let paragraph = new CBSParagraph(paragraphSpec);
         this._paragraphs.insert(index, paragraph);
         this.insert(paragraph, before);
         return paragraph;
@@ -333,7 +333,7 @@ export class VArticle extends Vitamin(Div) {
     }
 }
 
-export class VTheme extends Vitamin(Div) {
+export class CBSTheme extends Vitamin(Div) {
 
     constructor({ref, title, img, description, action}) {
         super({ref});
@@ -394,67 +394,7 @@ export class VTheme extends Vitamin(Div) {
 
 }
 
-export class VMap extends Vitamin(Div) {
-
-    constructor({ref, title, img, description, action}) {
-        super({ref});
-        this.addClass("map");
-        this._header = new Div().addClass("map-header");
-        this.add(this._header);
-        this._title = new P(title).addClass("map-title");
-        this._header.add(this._title);
-        this._image = new VMagnifiedImage({ref:this.ref+"-image", kind:"map-image", img});
-        this._image && this._header.add(this._image);
-        this._description = new P(description).addClass("map-description");
-        this.add(this._description);
-        this.onEvent("click", ()=>{
-            action && action(this);
-        });
-    }
-
-    get title() {
-        return this._title.getText();
-    }
-
-    set title(title) {
-        this._title.setText(title);
-    }
-
-    get description() {
-        return this._description.getText();
-    }
-
-    set description(description) {
-        this._description.setText(description);
-    }
-
-    get image() {
-        return this._image ? this._image.src : null;
-    }
-
-    set image(img) {
-        this._image = new VImage({ref:this.ref+"-image", kind:"theme-image", img});
-        this._header.insert(this._image, this._title);
-    }
-
-    get specification() {
-        return {
-            ref: this.ref.ref,
-            img: this._image ? this._image.src : null,
-            title: this._title.getText(),
-            description: this._description.getText()
-        };
-    }
-
-    set specification(specification) {
-        this._title.setText(specification.title);
-        this._description.setText(specification.description);
-        this._image.setSrc(specification.img);
-    }
-
-}
-
-export class VScenario extends Vitamin(Div) {
+export class CBSScenario extends Vitamin(Div) {
 
     constructor({ref, title, img, image, story, victory, specialRules, action}) {
         super({ref});
@@ -546,7 +486,7 @@ export class VScenario extends Vitamin(Div) {
 
 }
 
-export class VNewspaper extends Vitamin(Div) {
+export class CBSNewspaper extends Vitamin(Div) {
 
     constructor({ref, kind="newspaper"}, builder) {
         super({ref});
@@ -587,7 +527,7 @@ export class VNewspaper extends Vitamin(Div) {
             left = !left;
         }
         let voteContainer = new Div().addClass("votes-container");
-        voteContainer.add(new VVotes(votes))
+        voteContainer.add(new CBSVotes(votes))
         article.add(voteContainer);
         return this;
     }
@@ -603,7 +543,7 @@ export class VNewspaper extends Vitamin(Div) {
 
 }
 
-export class VThemeEditor extends Undoable(VSplitterPanel) {
+export class CBSThemeEditor extends Undoable(VSplitterPanel) {
 
     constructor({ref, kind="theme-editor", accept, verify}) {
         super({ref});
@@ -662,7 +602,7 @@ export class VThemeEditor extends Undoable(VSplitterPanel) {
         if (this._theme) {
             this.removeFromLeft(this._theme);
         }
-        this._theme = new VTheme({
+        this._theme = new CBSTheme({
             ...specification
         });
         this.addOnLeft(this._theme);
@@ -693,7 +633,7 @@ export class VThemeEditor extends Undoable(VSplitterPanel) {
 
 }
 
-export class VArticleEditor extends Undoable(VSplitterPanel) {
+export class CBSArticleEditor extends Undoable(VSplitterPanel) {
 
     constructor({ref, kind="article-editor", accept, verify}) {
         super({ref});
@@ -777,7 +717,7 @@ export class VArticleEditor extends Undoable(VSplitterPanel) {
         if (this._article) {
             this.removeFromLeft(this._article);
         }
-        this._article = new VArticle({
+        this._article = new CBSArticle({
             ref: articleSpec.ref,
             title: articleSpec.title
         });
@@ -989,87 +929,7 @@ export class VArticleEditor extends Undoable(VSplitterPanel) {
 
 }
 
-export class VBoardEditor extends Undoable(VSplitterPanel) {
-
-    constructor({ref, kind="map-editor", accept, verify, onEdit, onPropose}) {
-        super({ref});
-        this.addClass(kind);
-        this._path = new VFileLoaderField({
-            ref:"map-image", label:"Image",
-            accept, verify,
-            magnified: true,
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnLeft(this._path);
-        this._name = new VInputField({
-            ref:"map-title-input", label:"Name",
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnRight(this._name);
-        this._description = new VInputTextArea({
-            ref:"map-description-input", label:"Description",
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnRight(this._description);
-        this._send = new VButtons({ref: "map-buttons", vertical:false, buttons:[
-                {
-                    ref:"edit", type: VButton.TYPES.NEUTRAL, label:"Edit",
-                    onClick:event=>{
-                        this._onEdit();
-                    }
-                },
-                {
-                    ref:"propose", type: VButton.TYPES.ACCEPT, label:"Propose",
-                    onClick:event=>{
-                        this._onPropose();
-                    }
-                }
-            ]});
-        this.addOnRight(this._send);
-        this._onEdit = onEdit;
-        this._onPropose = onPropose;
-    }
-
-    canLeave(leave, notLeave) {
-        return super.canLeave(leave, notLeave,"Board not saved. Do you want to Quit ?")
-    }
-
-    set board(board) {
-        this._name.value = board.name;
-        this._description.value = board.description;
-        this._path.imageSrc = board.path;
-        this._clean();
-        this._memorize();
-    }
-
-    _register() {
-        return {
-            name: this._name.value,
-            description: this._description.value,
-            path: this._path.imageSrc
-        }
-    }
-
-    _recover(specification) {
-        if (specification) {
-            this._name.value = specification.name;
-            this._description.value = specification.description;
-            this._path.imageSrc = specification.path;
-        }
-    }
-
-    openInNewTab(url) {
-        window.open(url, '_blank').focus();
-    }
-}
-
-export class VScenarioEditor extends Undoable(VSplitterPanel) {
+export class CBSScenarioEditor extends Undoable(VSplitterPanel) {
 
     constructor({ref, kind="scenario-editor", onEdit, onPropose}) {
         super({ref});
@@ -1141,7 +1001,7 @@ export class VScenarioEditor extends Undoable(VSplitterPanel) {
         if (this._scenario) {
             this.removeFromLeft(this._scenario);
         }
-        this._scenario = new VScenario(scenarioSpec);
+        this._scenario = new CBSScenario(scenarioSpec);
         this.addOnLeft(this._scenario);
         this._editScenario();
         this._clean();

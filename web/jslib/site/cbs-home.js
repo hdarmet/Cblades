@@ -17,7 +17,7 @@ import {
     showMessage
 } from "../vitamin/vpage.js";
 
-export class VAnnoucement extends Vitamin(Div) {
+export class CBSAnnoucement extends Vitamin(Div) {
 
     constructor({ref, img, description}) {
         super({ref});
@@ -30,7 +30,7 @@ export class VAnnoucement extends Vitamin(Div) {
 
 }
 
-export class VHome extends VContainer {
+export class CBSHome extends VContainer {
 
     constructor({ref, kind="home", myLogLoader, logLoader, connect}) {
         super({ref});
@@ -94,7 +94,7 @@ export class VHome extends VContainer {
 
 }
 
-export class VEvent extends Vitamin(Div) {
+export class CBSEvent extends Vitamin(Div) {
 
     constructor({ref, img, date, title, text}) {
         super({ref});
@@ -108,7 +108,7 @@ export class VEvent extends Vitamin(Div) {
     }
 }
 
-export let vHome = new VHome({ref:"home",
+export let vHome = new CBSHome({ref:"home",
     logLoader: page=>{
         loadEvents(
         items=>{
@@ -130,7 +130,7 @@ export function loadAnnouncement(success) {
             let announcements = JSON.parse(text).announcements;
             let slides = [];
             for (let announcement of announcements) {
-                slides.push(new VAnnoucement({
+                slides.push(new CBSAnnoucement({
                     ref: "announcement-"+announcement.id,
                     img: announcement.illustration,
                     description: announcement.description
@@ -151,7 +151,7 @@ export function loadEvents(success, page) {
             let events = JSON.parse(text).events;
             let items = [];
             for (let event of events) {
-                items.push(new VEvent({
+                items.push(new CBSEvent({
                     ref: "announcement-"+event.id,
                     img: event.illustration,
                     date: new Date(event.date),
@@ -173,7 +173,7 @@ export function loadMyEvents(success, page) {
             let events = JSON.parse(text).events;
             let items = [];
             for (let event of events) {
-                items.push(new VEvent({
+                items.push(new CBSEvent({
                     ref: "announcement-"+event.id,
                     img: event.illustration,
                     date: new Date(event.date),

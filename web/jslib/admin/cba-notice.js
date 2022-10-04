@@ -16,29 +16,10 @@ import {
     showMessage
 } from "../vitamin/vpage.js";
 import {
-    CBConfirm
-} from "./cbadministration.js";
+    CBAConfirm
+} from "./cba-administration.js";
 
-var noticeText = `
-<h1>The Main Title</h1>
-<p>Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit</p>
-<h2>The Second Title</h2>
-<p>Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit</p>
-<h2>The Third Title</h2>
-<p>
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-</p>`;
-
-export class CBNotice extends Vitamin(Div) {
+export class CBANotice extends Vitamin(Div) {
 
     constructor({ref}) {
         super({ref});
@@ -81,14 +62,14 @@ export class CBNotice extends Vitamin(Div) {
 
 }
 
-export class CBNoticeEditor extends Undoable(VSplitterPanel) {
+export class CBANoticeEditor extends Undoable(VSplitterPanel) {
 
     constructor() {
         super({ref: "notice-editor"});
         this.addClass("notice-editor");
         this._noticeDisplayContainer = new Div().addClass("notice-display-container");
         this.addOnLeft(this._noticeDisplayContainer);
-        this._noticeDisplay = new CBNotice({ref: "notice-display"});
+        this._noticeDisplay = new CBANotice({ref: "notice-display"});
         this._noticeDisplayContainer.add(this._noticeDisplay);
         this._versionContainer = new VContainer({columns: 2});
         this.addOnRight(this._versionContainer);
@@ -184,7 +165,7 @@ export class CBNoticeEditor extends Undoable(VSplitterPanel) {
                 },
                 {
                     ref: "delete-notice", label: "Delete", type: "neutral", onClick: event => {
-                        new CBConfirm().show({
+                        new CBAConfirm().show({
                             ref: "confirm-notice-deletion",
                             title: "Delete Notice Version",
                             message: "Do you really want to delete this version of the Notice ?",
@@ -253,11 +234,11 @@ export class CBNoticeEditor extends Undoable(VSplitterPanel) {
 
 }
 
-export class CBNoticeEditorPage extends VContainer {
+export class CBANoticeEditorPage extends VContainer {
     constructor() {
         super({ref: "notice-editor-page"});
         this._title = new P("").addClass("page-title");
-        this._noticeEditor = new CBNoticeEditor();
+        this._noticeEditor = new CBANoticeEditor();
         this.addClass("notice-editor-page")
             .add(this._title)
             .add(this._noticeEditor);
@@ -339,7 +320,7 @@ export class CBNoticeEditorPage extends VContainer {
 
 }
 
-let vNoticeEditorPage = new CBNoticeEditorPage();
+let vNoticeEditorPage = new CBANoticeEditorPage();
 
 export function loadNotices(category, success, failure) {
     sendGet("/api/notice/by-category/" + category,

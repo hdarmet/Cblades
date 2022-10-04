@@ -13,7 +13,7 @@ import {
     VButton, VButtons, VFormContainer, VRadios
 } from "../vitamin/vforms.js";
 
-export class VArmy extends Vitamin(Div) {
+export class CBSArmy extends Vitamin(Div) {
 
     constructor({ref, army}) {
         super({ref});
@@ -31,7 +31,7 @@ export class VArmy extends Vitamin(Div) {
 
 }
 
-export class VParticipation extends VArmy {
+export class CBSParticipation extends CBSArmy {
 
     constructor({ref, army, player, status}) {
         super({ref, army});
@@ -54,7 +54,7 @@ export class VParticipation extends VArmy {
 
 }
 
-export class VProposal extends VArmy {
+export class CBSProposal extends CBSArmy {
 
     constructor({ref, army, player}) {
         super({ref, army});
@@ -81,7 +81,7 @@ export class VProposal extends VArmy {
 
 }
 
-export class VAbstractGame extends Vitamin(Div) {
+export class CBSAbstractGame extends Vitamin(Div) {
 
     constructor({
             ref,
@@ -181,7 +181,7 @@ export class VAbstractGame extends Vitamin(Div) {
 
 }
 
-export class VGame extends VAbstractGame {
+export class CBSGame extends CBSAbstractGame {
 
     constructor({
         ref,
@@ -205,7 +205,7 @@ export class VGame extends VAbstractGame {
     }
 
     _createParticipation(ref, participation) {
-        return new VParticipation({ref, ...participation});
+        return new CBSParticipation({ref, ...participation});
     }
 
     get specification() {
@@ -217,10 +217,10 @@ export class VGame extends VAbstractGame {
 
 }
 
-export class CVConfirmProposal extends VModal {
+export class CBSConfirmProposal extends VModal {
 
     constructor(proposal) {
-        super({ref: CVConfirmProposal.REF});
+        super({ref: CBSConfirmProposal.REF});
         this.title = "Confirm Proposal";
         this.addClass("confirm-proposal");
         let radios = [];
@@ -228,11 +228,11 @@ export class CVConfirmProposal extends VModal {
             radios.push({ref:participation.ref, title:participation.name, name:"select-army"});
         }
         this._armies = new VRadios({
-            ref:CVConfirmProposal.REF+"-armies", name: "armies", vertical:true, radios
+            ref:CBSConfirmProposal.REF+"-armies", name: "armies", vertical:true, radios
         });
         this.add(
             new VFormContainer({columns: 1})
-                .addField({field: new Span(CVConfirmProposal.TEXT).addClass("display-content")})
+                .addField({field: new Span(CBSConfirmProposal.TEXT).addClass("display-content")})
                 .addField({field: this._armies})
                 .addField({
                     field: new VButtons({
@@ -261,7 +261,7 @@ export class CVConfirmProposal extends VModal {
 
 }
 
-export class VGameScenario extends VAbstractGame {
+export class CBSGameScenario extends CBSAbstractGame {
 
     constructor({
             ref,
@@ -273,7 +273,7 @@ export class VGameScenario extends VAbstractGame {
             title, img, story, victory, specialRules,
             participations,
             action: ()=>{
-                new CVConfirmProposal(this.specification).show();
+                new CBSConfirmProposal(this.specification).show();
             }
         });
         this._command = new VButton({
@@ -283,15 +283,15 @@ export class VGameScenario extends VAbstractGame {
     }
 
     _createParticipation(ref, participation) {
-        return new VArmy({ref, ...participation});
+        return new CBSArmy({ref, ...participation});
     }
 
 }
 
-export class CVConfirmJoin extends VModal {
+export class CBSConfirmJoin extends VModal {
 
     constructor(proposal) {
-        super({ref: CVConfirmJoin.REF});
+        super({ref: CBSConfirmJoin.REF});
         this.title = "Confirm Joining";
         this.addClass("confirm-join");
         let radios = [];
@@ -301,11 +301,11 @@ export class CVConfirmJoin extends VModal {
             radios.push({ref:participation.ref, title:participation.name, enabled, checked, name:"select-army"});
         }
         this._armies = new VRadios({
-            ref:CVConfirmProposal.REF+"-armies", name: "armies", vertical:true, radios
+            ref:CBSConfirmProposal.REF+"-armies", name: "armies", vertical:true, radios
         });
         this.add(
             new VFormContainer({columns: 1})
-                .addField({field: new Span(CVConfirmJoin.TEXT).addClass("display-content")})
+                .addField({field: new Span(CBSConfirmJoin.TEXT).addClass("display-content")})
                 .addField({field: this._armies})
                 .addField({
                     field: new VButtons({
@@ -335,7 +335,7 @@ export class CVConfirmJoin extends VModal {
 
 }
 
-export class VGameProposal extends VAbstractGame {
+export class CBSGameProposal extends CBSAbstractGame {
 
     constructor({
                 ref,
@@ -347,7 +347,7 @@ export class VGameProposal extends VAbstractGame {
             title, img, story, victory, specialRules,
             participations,
             action: ()=>{
-                new CVConfirmJoin(this.specification).show();
+                new CBSConfirmJoin(this.specification).show();
             }
         });
         this._command = new VButton({
@@ -357,12 +357,12 @@ export class VGameProposal extends VAbstractGame {
     }
 
     _createParticipation(ref, participation) {
-        return new VProposal({ref, ...participation});
+        return new CBSProposal({ref, ...participation});
     }
 
 }
 
-export class VYourGamesWall extends VWall {
+export class CBSYourGamesWall extends VWall {
 
     constructor() {
         super({ref:"my-games", kind: "my-games"});
@@ -374,7 +374,7 @@ export class VYourGamesWall extends VWall {
 
 }
 
-export class VProposeGameWall extends VWallWithSearch {
+export class CBSProposeGameWall extends VWallWithSearch {
 
     constructor() {
         super({ref:"propose-game", kind: "propose-game",
@@ -383,7 +383,7 @@ export class VProposeGameWall extends VWallWithSearch {
 
 }
 
-export class VJoinGameWall extends VWallWithSearch {
+export class CBSJoinGameWall extends VWallWithSearch {
 
     constructor() {
         super({ref:"join-game", kind: "join-game",

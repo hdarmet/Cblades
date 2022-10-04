@@ -22,13 +22,13 @@ import {
     showMessage
 } from "../vitamin/vpage.js";
 import {
-    CBConfirm
-} from "./cbadministration.js";
+    CBAConfirm
+} from "./cba-administration.js";
 import {
-    CBUserSelector, loadUsers
-} from "./cbuser.js";
+    CBAUserSelector, loadUsers
+} from "./cba-user.js";
 
-export class CBEditEvent extends VModal {
+export class CBAEditEvent extends VModal {
 
     constructor({title, create, event, saveEvent, deleteEvent}) {
         super({"event": "event-form", "title": title});
@@ -75,7 +75,7 @@ export class CBEditEvent extends VModal {
                 return true;
             },
         });
-        let userSelector = new CBUserSelector({title:"Select Event User", loadPage:loadUsers, selectUser:user=>{
+        let userSelector = new CBAUserSelector({title:"Select Event User", loadPage:loadUsers, selectUser: user=>{
                 this._target.setValue(user);
                 userSelector.hide();
             }
@@ -120,7 +120,7 @@ export class CBEditEvent extends VModal {
             buttons.add(new VButton({
                 ref: "delete-event", type: "neutral", label: "Delete",
                 onClick: evt => {
-                    this.confirm = new CBConfirm().show({
+                    this.confirm = new CBAConfirm().show({
                         ref: "confirm-event-deletion",
                         title: "Delete Event",
                         message: "Do you really want to delete the Event ?",
@@ -153,7 +153,7 @@ export class CBEditEvent extends VModal {
 
 }
 
-export class CBEventList extends VTable {
+export class CBAEventList extends VTable {
 
     constructor({loadPage, updateEvent, deleteEvent}) {
         super({
@@ -195,7 +195,7 @@ export class CBEventList extends VTable {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
             let selectEvent = event => {
-                let eventEditor = new CBEditEvent({
+                let eventEditor = new CBAEditEvent({
                     title: "Edit Event",
                     event,
                     saveEvent: event => this._updateEvent(event,
@@ -252,8 +252,8 @@ export class CBEventList extends VTable {
             let pageSummary = new Span()
                 .addClass("event-pager")
                 .setText(pageData.eventCount ?
-                    String.format(CBEventList.SUMMARY, pageData.eventCount, pageData.firstEvent, pageData.lastEvent) :
-                    CBEventList.EMPTY_SUMMARY);
+                    String.format(CBAEventList.SUMMARY, pageData.eventCount, pageData.firstEvent, pageData.lastEvent) :
+                    CBAEventList.EMPTY_SUMMARY);
             let summary = new Div()
                 .addClass("table-display")
                 .add(title)
@@ -278,7 +278,7 @@ export class CBEventList extends VTable {
     static EMPTY_SUMMARY = "There are no event to show";
 }
 
-export class CBEventListPage extends Vitamin(Div) {
+export class CBAEventListPage extends Vitamin(Div) {
 
     constructor({loadPage, createEvent, updateEvent, deleteEvent}) {
         super({ref: "event-list-page"});
@@ -290,7 +290,7 @@ export class CBEventListPage extends Vitamin(Div) {
         this._create = new VButton({
             ref: "event-create", type: "neutral", label: "Create Event",
             onClick: event => {
-                this._createEventModal = new CBEditEvent({
+                this._createEventModal = new CBAEditEvent({
                     title: "Create Event",
                     create: true,
                     event: {
@@ -313,7 +313,7 @@ export class CBEventListPage extends Vitamin(Div) {
             }
         }).addClass("right-button");
         this._search.add(this._create);
-        this._table = new CBEventList({loadPage, updateEvent, deleteEvent});
+        this._table = new CBAEventList({loadPage, updateEvent, deleteEvent});
         this.add(this._search).add(this._table);
     }
 
@@ -399,7 +399,7 @@ export function updateEvent(event, illustration, success, failure) {
     );
 }
 
-export var vEventList = new CBEventListPage({
+export var vEventList = new CBAEventListPage({
     loadPage: loadEvents,
     createEvent,
     deleteEvent,
