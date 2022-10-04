@@ -357,6 +357,12 @@ export class VApp extends Vitamin(Div) {
         }
     }
 
+    unregister(modal) {
+        if (this.contains(modal)) {
+            this.remove(modal);
+        }
+    }
+
     static get instance() {
         return VApp._instance;
     }
@@ -403,16 +409,16 @@ export class VModal extends Vitamin(Div) {
         this._content.add(this._title);
         this._close.onMouseClick(event=>this.hide());
         builder&&builder(this._content);
-        this.add(this._content);
+        super.add(this._content);
     }
 
-    addContainer({container, ...params}, builder) {
-        this._content.add(container, builder);
+    add(component, builder) {
+        this.content.add(component, builder);
         return this;
     }
 
-    removeContainer({container}) {
-        this._content.remove(container);
+    remove(component) {
+        this.content.remove(component);
         return this;
     }
 
@@ -435,6 +441,7 @@ export class VModal extends Vitamin(Div) {
     }
 
     hide() {
+        VApp.instance.unregister(this);
         this.addStyle("display", "none");
         return this;
     }

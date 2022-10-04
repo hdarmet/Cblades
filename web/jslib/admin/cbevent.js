@@ -76,7 +76,7 @@ export class CBEditEvent extends VModal {
             },
         });
         let userSelector = new CBUserSelector({title:"Select Event User", loadPage:loadUsers, selectUser:user=>{
-                this._target.value = user;
+                this._target.setValue(user);
                 userSelector.hide();
             }
         }).loadUsers();
@@ -129,7 +129,7 @@ export class CBEditEvent extends VModal {
                 }
             }).addClass("right-button"));
         }
-        this.addContainer({container: this._container});
+        this.add(this._container);
         this.addClass("event-form");
     }
 

@@ -1,7 +1,7 @@
 'use strict';
 
 import {
-    Matrix2D, Area2D, Point2D, Dimension2D
+    Matrix2D, Area2D, Dimension2D
 } from "./geometry.js";
 import {
     Mechanisms
@@ -9,6 +9,28 @@ import {
 import {
     requestServer
 } from "./request.js";
+
+Array.prototype.remove = function(element) {
+    let index = this.indexOf(element);
+    if (index>=0) {
+        this.splice(index, 1);
+    }
+    return index;
+}
+Array.prototype.contains = function(element) {
+    return this.indexOf(element)>=0;
+}
+Array.prototype.insert = function(index, element) {
+    if (index>=0) {
+        this.splice(index, 0, element);
+    }
+}
+Array.prototype.first = function () {
+    return this.length>0 ? this[0] : null;
+}
+Array.prototype.last = function () {
+    return this.length>0 ? this[this.length-1] : null;
+}
 
 /**
  * _platform is a facade used to abstract the real (DOM) platform. Useful when this platform has to be replaced by a
@@ -600,7 +622,7 @@ export class DDraw {
         layer.setDraw(this, this);
         _platform.insertBefore(this._root, layer.root, this._layersArray[index].root);
         this._layers.set(layer.name, layer);
-        this._layersArray.splice(index, 0, layer);
+        this._layersArray.insert(index, layer);
         layer.updateTransform(this._transform);
         return layer;
     }

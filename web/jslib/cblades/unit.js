@@ -910,8 +910,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     removeCarried(piece) {
-        let indexPiece = this._carried.indexOf(piece);
-        this._carried.splice(indexPiece, 1);
+        this._carried.remove(piece);
         if (this.isShown()) piece.removeFromMap();
     }
 
@@ -926,10 +925,9 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     drop(piece) {
-        let indexPiece = this._carried.indexOf(piece);
-        console.assert(indexPiece>=0);
+        console.assert(this._carried.contains(piece));
         Memento.register(this);
-        this._carried.splice(indexPiece, 1);
+        this._carried.remove(piece);
         if (this.isShown()) {
             piece.deleteFromMap();
         }
@@ -943,9 +941,8 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     removeOption(piece) {
-        let indexPiece = this._options.indexOf(piece);
         this.removeCarried(piece);
-        this._options.splice(indexPiece, 1);
+        let indexPiece = this._options.remove(piece);
         for (let index = indexPiece; index<this._options.length; index++) {
             this._options[index].setPosition(this, index+1);
         }
@@ -961,11 +958,10 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     deleteOption(piece) {
-        let indexPiece = this._options.indexOf(piece);
-        console.assert(indexPiece>=0);
+        console.assert(this._options.contains(piece));
         Memento.register(this);
         this.drop(piece);
-        this._options.splice(indexPiece, 1);
+        let indexPiece = this._options.remove(piece, 1);
         for (let index = indexPiece; index<this._options.length; index++) {
             this._options[index].shift(this, index+1);
         }

@@ -781,7 +781,7 @@ export class DElement extends LocalisationAware(Object) {
 
     removeArtifact(artifact) {
         console.assert(this._artifacts.indexOf(artifact)>=0);
-        this._artifacts.splice(this._artifacts.indexOf(artifact), 1);
+        this._artifacts.remove(artifact);
         artifact._setElement(null);
         if (this._board) {
             artifact.removeFromBoard();
@@ -801,9 +801,9 @@ export class DElement extends LocalisationAware(Object) {
     }
 
     deleteArtifact(artifact) {
-        console.assert(this._artifacts.indexOf(artifact)>=0);
+        console.assert(this._artifacts.contains(artifact));
         Memento.register(this);
-        this._artifacts.splice(this._artifacts.indexOf(artifact), 1);
+        this._artifacts.remove(artifact);
         artifact._attach(null);
         if (this._board) {
             artifact.hide();
@@ -993,7 +993,7 @@ export class DComposedElement extends DElement {
 
     removeElement(element) {
         console.assert(this.hasElement(element));
-        this._elements.splice(this._elements.indexOf(element), 1);
+        this._elements.remove(element);
         element.setLocation(new Point2D(0, 0));
         element.setAngle(0);
         if (this.board) {
@@ -1015,7 +1015,7 @@ export class DComposedElement extends DElement {
     deleteElement(element) {
         Memento.register(this);
         console.assert(this.hasElement(element));
-        this._elements.splice(this._elements.indexOf(element), 1);
+        this._elements.remove(element);
         Memento.register(element);
         element.move(new Point2D(0, 0));
         element.rotate(0);

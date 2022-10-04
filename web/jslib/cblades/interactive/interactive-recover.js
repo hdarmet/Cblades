@@ -45,10 +45,7 @@ export function unregisterInteractiveRecover() {
     delete CBInteractivePlayer.prototype.replenishUnitMunitions;
     delete CBInteractivePlayer.prototype.reorganizeUnit;
     delete CBInteractivePlayer.prototype.rallyUnit;
-    let builderIndex = CBActionMenu.menuBuilders.indexOf(createRecoverMenuItems);
-    if (builderIndex>=0) {
-        CBActionMenu.menuBuilders.splice(builderIndex, 1);
-    }
+    CBActionMenu.menuBuilders.remove(createRecoverMenuItems);
 }
 
 export class InteractiveRestingAction extends CBAction {

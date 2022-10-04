@@ -59,9 +59,9 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 
 	@REST(url="/api/announcement/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					Announcement newAnnouncement = writeToAnnouncement(request, new Announcement());
 					persist(em, newAnnouncement);
@@ -69,19 +69,19 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 					em.flush();
 					result.set(readFromAnnouncement(newAnnouncement));
 				});
-				return result.get();
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, 
 					"Unable to create the announcement"
 				);
 			}
 		}, ADMIN);
+		return result.get();
 	}
 	
 	@REST(url="/api/announcement/all", method=Method.GET)
 	public Json getAll(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
@@ -113,8 +113,8 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 					.put("pageSize", AnnouncementController.ANNOUNCEMENTS_BY_PAGE)
 				);
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/announcement/live", method=Method.GET)
@@ -134,38 +134,38 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 
 	@REST(url="/api/announcement/find/:id", method=Method.POST)
 	public Json getById(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				String id = (String)params.get("id");
 				Announcement announcement = findAnnouncement(em, new Long(id));
 				result.set(readFromAnnouncement(announcement));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 	
 	@REST(url="/api/announcement/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Announcement announcement= findAnnouncement(em, new Long(id));
 					remove(em, announcement);
 				});
-				return Json.createJsonObject().put("deleted", "ok");
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return Json.createJsonObject().put("deleted", "ok");
 	}
 	
 	@REST(url="/api/announcement/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Announcement announcement = findAnnouncement(em, new Long(id));
@@ -174,11 +174,11 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 					flush(em);
 					result.set(readFromAnnouncement(announcement));
 				});
-				return result.get();
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return result.get();
 	}
 	
 	Announcement findAnnouncement(EntityManager em, long id) {

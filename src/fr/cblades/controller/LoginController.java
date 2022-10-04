@@ -30,15 +30,14 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	
 	@REST(url="/api/login/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					Login newLogin = writeToLogin(request, new Login());
 					persist(em, newLogin);
 					result.set(readFromLogin(newLogin));
 				});
-				return result.get();
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, 
 					"Login with this login (%s) already exists",
@@ -46,54 +45,55 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				);
 			}
 		}, ADMIN);
+		return result.get();
 	}
 	
 	@REST(url="/api/login/all", method=Method.POST)
 	public Json getAll(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				Collection<Login> logins = findLogins(em.createQuery("select l from Login l"));
 				result.set(readFromLogins(logins));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 	
 	@REST(url="/api/login/find/:id", method=Method.POST)
 	public Json getById(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				String id = (String)params.get("id");
 				Login login = findLogin(em, new Long(id));
 				result.set(readFromLogin(login));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 	
 	@REST(url="/api/login/delete/:id", method=Method.POST)
 	public Json delete(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Login login = findLogin(em, new Long(id));
 					remove(em, login);
 				});
-				return Json.createJsonObject().put("deleted", "ok");
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return Json.createJsonObject().put("deleted", "ok");
 	}
 	
 	@REST(url="/api/login/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Login login = findLogin(em, new Long(id));
@@ -101,11 +101,11 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					flush(em);
 					result.set(readFromLogin(login));
 				});
-				return result.get();
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return result.get();
 	}
 	
 	@REST(url="/api/login/login", method=Method.POST)
@@ -142,10 +142,10 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	
 	@REST(url="/api/login/logout", method=Method.GET)
 	public Json disconnect(Map<String, Object> params, Json request) {
-		return (Json)ifConnected(user->{
+		ifConnected(user->{
 			disconnect();
-			return Json.createJsonObject();
 		});
+		return Json.createJsonObject();
 	}
 
 	@REST(url="/api/login/forgot-password", method=Method.GET)

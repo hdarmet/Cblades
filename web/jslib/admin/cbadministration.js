@@ -118,30 +118,28 @@ export class CBConfirm extends VModal {
         super({ref: CBConfirm.CONFIRM_REF});
         this.addClass("confirm-modal");
         this._display = new VDisplay({ref:"confirm-display"});
-        this.addContainer({
-                ref: "confirm-display-container",
-                container: new VFormContainer({columns: 1})
-                    .addField({field: this._display})
-                    .addField({
-                        field: new VButtons({
-                            ref: "confirm-buttons", verical: false, buttons: [
-                                {
-                                    ref: "confirm-ok", type: VButton.TYPES.ACCEPT, label: "Ok",
-                                    onClick: event => {
-                                        this._actionOk();
-                                        this.hide();
-                                    }
-                                },
-                                {
-                                    ref: "confirm-cancel", type: VButton.TYPES.REFUSE, label: "Cancel",
-                                    onClick: event => {
-                                        this._actionCancel();
-                                        this.hide();
-                                    }
-                                }]
-                        })
+        this.add(
+            new VFormContainer({columns: 1})
+                .addField({field: this._display})
+                .addField({
+                    field: new VButtons({
+                        ref: "confirm-buttons", verical: false, buttons: [
+                            {
+                                ref: "confirm-ok", type: VButton.TYPES.ACCEPT, label: "Ok",
+                                onClick: event => {
+                                    this._actionOk();
+                                    this.hide();
+                                }
+                            },
+                            {
+                                ref: "confirm-cancel", type: VButton.TYPES.REFUSE, label: "Cancel",
+                                onClick: event => {
+                                    this._actionCancel();
+                                    this.hide();
+                                }
+                            }]
                     })
-            }
+                })
         );
     }
 
@@ -215,7 +213,7 @@ export class CBLogin extends VModal {
                 }
             ]})});
         });
-        this.addContainer({container: this._signInContainer});
+        this.add(this._signInContainer);
         VLoginHandler.addLoginListener(this);
     }
 

@@ -24,8 +24,8 @@ public class NoticeController implements InjectorSunbeam, DataSunbeam, SecurityS
 	
 	@REST(url="/api/notice/by-category/:category", method=Method.GET)
 	public Json getByCategory(Map<String, String> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				String name = params.get("category");
 				List<Notice> notices = getResultList(em,
@@ -33,8 +33,8 @@ public class NoticeController implements InjectorSunbeam, DataSunbeam, SecurityS
 						"category", name);
 				result.set(readFromNotices(notices));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/notice/published", method=Method.GET)
@@ -50,7 +50,7 @@ public class NoticeController implements InjectorSunbeam, DataSunbeam, SecurityS
 
 	@REST(url="/api/notice/delete/:id", method=Method.GET)
 	public Json delete(Map<String, String> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
 					String id = params.get("id");
@@ -60,19 +60,19 @@ public class NoticeController implements InjectorSunbeam, DataSunbeam, SecurityS
 					}
 					remove(em, notice);
 				});
-				return Json.createJsonObject().put("deleted", "ok");
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return Json.createJsonObject().put("deleted", "ok");
 	}
 
 	@REST(url="/api/notice/save", method=Method.POST)
 	public Json update(Map<String, String> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
 				checkIncomingNotice(request);
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					Integer id = request.get("id");
 					Notice notice = id!=null ? findNotice(em, id) : new Notice();
@@ -92,11 +92,11 @@ public class NoticeController implements InjectorSunbeam, DataSunbeam, SecurityS
 					flush(em);
 					result.set(readFromNotice(notice));
 				});
-				return result.get();
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return result.get();
 	}
 
 	void unpublishNotice(EntityManager em, String category) {

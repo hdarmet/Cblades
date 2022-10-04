@@ -116,7 +116,7 @@ export let mockPlatform = {
     insertBefore(parent, newChild, nextChild) {
         let index = parent.children.indexOf(nextChild);
         assert(index>=0).isTrue();
-        parent.children.splice(index, 0, newChild);
+        parent.children.insert(index, newChild);
     },
 
     getContext(element, contextName) {

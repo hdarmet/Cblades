@@ -23,6 +23,10 @@ public class Board extends BaseEntity {
     List<Hex> hexes = new ArrayList<>();
     @Enumerated(EnumType.STRING)
     BoardStatus status;
+    @ManyToOne
+    Account author;
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Comment> comments = new ArrayList<>();
 
     public String getName() {
         return this.name;
@@ -64,6 +68,14 @@ public class Board extends BaseEntity {
         return this;
     }
 
+    public Account getAuthor() {
+        return this.author;
+    }
+    public Board setAuthor(Account author) {
+        this.author = author;
+        return this;
+    }
+
     public List<Hex> getHexes() {
         return Collections.unmodifiableList(this.hexes);
     }
@@ -73,6 +85,18 @@ public class Board extends BaseEntity {
     }
     public Board removeHex(Hex hex) {
         this.hexes.remove(hex);
+        return this;
+    }
+
+    public List<Comment> getComments() {
+        return Collections.unmodifiableList(this.comments);
+    }
+    public Board addComment(Comment comment) {
+        this.comments.add(comment);
+        return this;
+    }
+    public Board removeComment(Comment comment) {
+        this.comments.remove(comment);
         return this;
     }
 

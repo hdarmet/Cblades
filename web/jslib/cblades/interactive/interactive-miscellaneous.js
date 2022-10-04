@@ -123,10 +123,7 @@ export function registerInteractiveMiscellaneous() {
 }
 export function unregisterInteractiveMiscellaneous() {
     delete CBInteractivePlayer.prototype.startMoveUnit;
-    let builderIndex = CBActionMenu.menuBuilders.indexOf(createMiscellaneousMenuItems);
-    if (builderIndex>=0) {
-        CBActionMenu.menuBuilders.splice(builderIndex, 1);
-    }
+    CBActionMenu.menuBuilders.remove(createMiscellaneousMenuItems);
 }
 
 export class InteractiveMergeUnitAction extends CBAction {

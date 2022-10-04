@@ -69,8 +69,7 @@ export class BoardLoader {
     }
 
     load(id, success) {
-        sendPost("/api/board/find/"+id,
-            {},
+        sendGet("/api/board/find/"+id,
             (text, status) => {
                 let json = JSON.parse(text);
                 let board = new CBBoard(json.name, json.path, json.icon);

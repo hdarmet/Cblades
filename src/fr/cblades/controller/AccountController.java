@@ -59,9 +59,9 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 
 	@REST(url="/api/account/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					Account newAccount = writeToAccount(request, new Account().setAccess(new Login()), true);
 					persist(em, newAccount);
@@ -69,7 +69,6 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 					em.flush();
 					result.set(readFromAccount(newAccount));
 				});
-				return result.get();
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, 
 					"Account with this login (%s) or email (%s) already exists",
@@ -77,12 +76,13 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 				);
 			}
 		}, ADMIN);
+		return result.get();
 	}
 	
 	@REST(url="/api/account/all", method=Method.GET)
 	public Json getAll(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
@@ -116,46 +116,48 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 					.put("pageSize", AccountController.ACCOUNTS_BY_PAGE)
 				);
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 	
 	@REST(url="/api/account/find/:id", method=Method.POST)
 	public Json getById(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				String id = (String)params.get("id");
 				Account account = findAccount(em, new Long(id));
 				result.set(readFromAccount(account));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 	
 	@REST(url="/api/account/delete/:id", method=Method.GET)
 	public Json delete(Map<String, String> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
 					String id = params.get("id");
 					Account account = findAccount(em, new Long(id));
 					executeUpdate(em, "delete from Event e where e.target = :account",
 						"account", account);
+					executeUpdate(em, "update from Board b set b.author = null where b.author = :account",
+							"account", account);
 					remove(em, account);
 				});
-				return Json.createJsonObject().put("deleted", "ok");
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return Json.createJsonObject().put("deleted", "ok");
 	}
 	
 	@REST(url="/api/account/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Account account = findAccount(em, new Long(id));
@@ -164,11 +166,11 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 					flush(em);
 					result.set(readFromAccount(account));
 				});
-				return result.get();
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return result.get();
 	}
 	
 	Account findAccount(EntityManager em, long id) {

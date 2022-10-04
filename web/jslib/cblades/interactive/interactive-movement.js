@@ -67,10 +67,7 @@ export function unregisterInteractiveMovement() {
     delete CBInteractivePlayer.prototype.startRoutUnit;
     delete CBInteractivePlayer.prototype.startMoveBackUnit;
     delete CBInteractivePlayer.prototype.startConfrontUnit;
-    let builderIndex = CBActionMenu.menuBuilders.indexOf(createMovementMenuItems);
-    if (builderIndex>=0) {
-        CBActionMenu.menuBuilders.splice(builderIndex, 1);
-    }
+    CBActionMenu.menuBuilders.remove(createMovementMenuItems);
 }
 
 export class InteractiveAbstractMovementAction extends CBAction {

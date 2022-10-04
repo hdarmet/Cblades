@@ -229,11 +229,10 @@ export class VWarning extends VModal {
         super({ref: VWarning.MESSAGE_REF});
         this.addClass("message-modal");
         this._display = new VDisplay({ref:"message-display"});
-        this.addContainer({
-            ref: "message-display-container",
-            container: new VFormContainer({columns: 1})
+        this.add(
+            new VFormContainer({columns: 1})
                 .addField({field: this._display})
-        });
+        );
     }
 
     show({title, message}) {
@@ -257,30 +256,28 @@ export class VConfirm extends VModal {
         super({ref: VConfirm.CONFIRM_REF});
         this.addClass("confirm-modal");
         this._display = new VDisplay({ref:"confirm-display"});
-        this.addContainer({
-                ref: "confirm-display-container",
-                container: new VFormContainer({columns: 1})
-                    .addField({field: this._display})
-                    .addField({
-                        field: new VButtons({
-                            ref: "confirm-buttons", verical: false, buttons: [
-                                {
-                                    ref: "confirm-ok", type: VButton.TYPES.ACCEPT, label: "Ok",
-                                    onClick: event => {
-                                        this._actionOk();
-                                        this.hide();
-                                    }
-                                },
-                                {
-                                    ref: "confirm-cancel", type: VButton.TYPES.REFUSE, label: "Cancel",
-                                    onClick: event => {
-                                        this._actionCancel();
-                                        this.hide();
-                                    }
-                                }]
-                        })
+        this.add(
+            new VFormContainer({columns: 1})
+                .addField({field: this._display})
+                .addField({
+                    field: new VButtons({
+                        ref: "confirm-buttons", verical: false, buttons: [
+                            {
+                                ref: "confirm-ok", type: VButton.TYPES.ACCEPT, label: "Ok",
+                                onClick: event => {
+                                    this._actionOk();
+                                    this.hide();
+                                }
+                            },
+                            {
+                                ref: "confirm-cancel", type: VButton.TYPES.REFUSE, label: "Cancel",
+                                onClick: event => {
+                                    this._actionCancel();
+                                    this.hide();
+                                }
+                            }]
                     })
-            }
+                })
         );
     }
 

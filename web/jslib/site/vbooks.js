@@ -272,7 +272,7 @@ export class VArticle extends Vitamin(Div) {
     insertParagraph(paragraphSpec, before) {
         let index = this._paragraphs.indexOf(before);
         let paragraph = new VParagraph(paragraphSpec);
-        this._paragraphs.splice(index, 0, paragraph);
+        this._paragraphs.insert(index, paragraph);
         this.insert(paragraph, before);
         return paragraph;
     }

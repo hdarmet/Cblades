@@ -2,9 +2,11 @@ package org.summer;
 
 import org.summer.controller.SummerControllerException;
 import org.summer.security.SecurityManager;
+import org.summer.security.SecurityManagerImpl;
 import org.summer.security.SecurityManagerImpl.Finder;
 
 import java.util.*;
+import java.util.function.BiPredicate;
 
 public class MockSecurityManagerImpl implements SecurityManager {
 
@@ -34,6 +36,10 @@ public class MockSecurityManagerImpl implements SecurityManager {
 			return this.roles;
 		}
 
+		public String[] getRolesArray() {
+			String[] roles = new String[this.roles.size()];
+			return this.roles.toArray(roles);
+		}
 	}
 	
 	Map<String, Credential> credentials = new HashMap<>();
@@ -65,24 +71,42 @@ public class MockSecurityManagerImpl implements SecurityManager {
 	}
 
 	@Override
-	public Object executeIfConnected(Executor executor) {
+	public void executeIfConnected(Executor executor) {
 		if (connection!=null) {
-			return executor.run(connection.id);
+			executor.run(connection.id);
 		}
 		else throw new SummerControllerException(403, "Not connected");
 	}
 
 	@Override
-	public Object executeIfAuthorized(Executor executor, String... roles) {
+	public boolean lookForRole(String user, String[] roles) {
 		if (connection!=null) {
-			boolean authorized = false;
+			if (roles.length==0) return true;
 			for (String role : roles) {
 				if (connection.roles.contains(role)) {
-					authorized = true;
+					return true;
 				}
 			}
-			if (authorized) {
-				return executor.run(connection.id);
+		}
+		return false;
+	}
+
+	@Override
+	public void executeIfAuthorized(Executor executor, String... roles) {
+		if (connection!=null) {
+			if (lookForRole(connection.id, roles)) {
+				executor.run(connection.id);
+			}
+			else throw new SummerControllerException(403, "Not authorized");
+		}
+		else throw new SummerControllerException(403, "Not connected");
+	}
+
+	@Override
+	public void executeIfAuthorized(Executor executor, BiPredicate<String, String[]> verifier) {
+		if (connection!=null) {
+			if (verifier.test(connection.id, connection.getRolesArray())) {
+				executor.run(connection.id);
 			}
 			else throw new SummerControllerException(403, "Not authorized");
 		}

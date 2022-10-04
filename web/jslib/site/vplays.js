@@ -230,9 +230,8 @@ export class CVConfirmProposal extends VModal {
         this._armies = new VRadios({
             ref:CVConfirmProposal.REF+"-armies", name: "armies", vertical:true, radios
         });
-        this.addContainer({
-            ref: "confirm-proposal-display-container",
-            container: new VFormContainer({columns: 1})
+        this.add(
+            new VFormContainer({columns: 1})
                 .addField({field: new Span(CVConfirmProposal.TEXT).addClass("display-content")})
                 .addField({field: this._armies})
                 .addField({
@@ -253,7 +252,6 @@ export class CVConfirmProposal extends VModal {
                             }]
                     })
                 })
-            }
         );
     }
 
@@ -305,31 +303,29 @@ export class CVConfirmJoin extends VModal {
         this._armies = new VRadios({
             ref:CVConfirmProposal.REF+"-armies", name: "armies", vertical:true, radios
         });
-        this.addContainer({
-                ref: "confirm-join-display-container",
-                container: new VFormContainer({columns: 1})
-                    .addField({field: new Span(CVConfirmJoin.TEXT).addClass("display-content")})
-                    .addField({field: this._armies})
-                    .addField({
-                        field: new VButtons({
-                            ref: "confirm-proposal-buttons", verical: false, buttons: [
-                                {
-                                    ref: "confirm-proposal-ok", type: VButton.TYPES.ACCEPT, label: "Ok",
-                                    onClick: event => {
-                                        console.log(proposal);
-                                        this.hide();
-                                    }
-                                },
-                                {
-                                    ref: "confirm-proposal-cancel", type: VButton.TYPES.REFUSE, label: "Cancel",
-                                    onClick: event => {
-                                        this.hide();
-                                    }
+        this.add(
+            new VFormContainer({columns: 1})
+                .addField({field: new Span(CVConfirmJoin.TEXT).addClass("display-content")})
+                .addField({field: this._armies})
+                .addField({
+                    field: new VButtons({
+                        ref: "confirm-proposal-buttons", verical: false, buttons: [
+                            {
+                                ref: "confirm-proposal-ok", type: VButton.TYPES.ACCEPT, label: "Ok",
+                                onClick: event => {
+                                    console.log(proposal);
+                                    this.hide();
                                 }
-                            ]
-                        })
+                            },
+                            {
+                                ref: "confirm-proposal-cancel", type: VButton.TYPES.REFUSE, label: "Cancel",
+                                onClick: event => {
+                                    this.hide();
+                                }
+                            }
+                        ]
                     })
-            }
+                })
         );
     }
 

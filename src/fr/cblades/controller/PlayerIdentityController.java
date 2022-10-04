@@ -27,15 +27,14 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 	
 	@REST(url="/api/player-identity/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					PlayerIdentity newPlayerIdentity = writeToPlayerIdentity(request, new PlayerIdentity());
 					persist(em, newPlayerIdentity);
 					result.set(readFromPlayerIdentity(newPlayerIdentity));
 				});
-				return result.get();
 			}
 			catch (EntityExistsException pe) {
 				throw new SummerControllerException(500,
@@ -47,24 +46,25 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 				throw new SummerControllerException(500, pe.getMessage());
 			}
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/player-identity/all", method=Method.POST)
 	public Json getAll(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				Collection<PlayerIdentity> playerIdentities = findPlayerIdentities(em.createQuery("select pi from PlayerIdentity pi"));
 				result.set(readFromPlayerIdentities(playerIdentities));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/player-identity/by-name/:name", method=Method.POST)
 	public Json getByName(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				String name = (String)params.get("name");
 				PlayerIdentity playerIdentity = getSingleResult(em,
@@ -77,44 +77,44 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 				}
 				result.set(readFromPlayerIdentity(playerIdentity));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/player-identity/find/:id", method=Method.POST)
 	public Json getById(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				String id = (String)params.get("id");
 				PlayerIdentity playerIdentity = findPlayerIdentity(em, new Long(id));
 				result.set(readFromPlayerIdentity(playerIdentity));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/player-identity/delete/:id", method=Method.POST)
 	public Json delete(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					PlayerIdentity playerIdentity = findPlayerIdentity(em, new Long(id));
 					remove(em, playerIdentity);
 				});
-				return Json.createJsonObject().put("deleted", "ok");
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return Json.createJsonObject().put("deleted", "ok");
 	}
 
 	@REST(url="/api/player-identity/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					PlayerIdentity playerIdentity = findPlayerIdentity(em, new Long(id));
@@ -122,11 +122,11 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 					flush(em);
 					result.set(readFromPlayerIdentity(playerIdentity));
 				});
-				return result.get();
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return result.get();
 	}
 
 	PlayerIdentity writeToPlayerIdentity(Json json, PlayerIdentity playerIdentity) {

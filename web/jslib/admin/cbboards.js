@@ -1,6 +1,7 @@
 'use strict';
 
 import {
+    VContainer,
     VSplitterPanel,
     VTable
 } from "../vitamin/vcontainer.js";
@@ -13,11 +14,12 @@ import {
     Vitamin, VMagnifiedImage, VMessageHandler, VModal, VSearch
 } from "../vitamin/vitamins.js";
 import {
+    mandatory, matchesName, range,
     VButton,
     VButtons,
     VFileLoader,
     VFileLoaderField,
-    VInputField, VInputTextArea, VSelectField
+    VInputField, VInputTextArea, VRef, VSelectField
 } from "../vitamin/vforms.js";
 import {
     showMessage
@@ -29,13 +31,96 @@ import {
     CBUserSelector, loadUsers
 } from "./cbuser.js";
 
+export class CBEditComments extends Undoable(VModal) {
+
+    constructor({ref, kind, comments, acknowledge}) {
+        super({ref, title:"Comments"});
+        this.addClass(kind).addClass("comments-editor");
+        this._commentsList = new VContainer({ref:"comments-editor"});
+        this._newComment = new VInputTextArea({
+            ref:"board-new-comment-input", label:"New Comment",
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this._buttons = new VButtons({
+            ref: "buttons", buttons: [{
+                ref: "save-comment", type: "accept", label: "Ok",
+                onClick: event => {
+                    acknowledge(this.comments);
+                    this.hide();
+                }
+            },
+            {
+                ref: "cancel-comment", type: "refuse", label: "Cancel",
+                onClick: event => {
+                    this.hide();
+                }
+            }]
+        });
+        this.add(this._commentsList).add(this._newComment).add(this._buttons);
+        this.comments = comments;
+    }
+
+    get comments() {
+        return {
+            comments: structuredClone(this._comments),
+            newComment: this._newComment.value
+        }
+    }
+
+    set comments(comments) {
+        this._recover(comments);
+        this._clean();
+        this._memorize();
+    }
+
+    _register() {
+        return this.comments;
+    }
+
+    _recover(memento) {
+        this._comments = structuredClone(memento.comments);
+        this._newComment.value = memento.newComment;
+        this._commentsList.clearFields();
+        for (let comment of this._comments) {
+            this.addComment(comment);
+        }
+    }
+
+    addComment(comment) {
+        let commentField =  new Div().add(
+            new Div().add(
+                new Span(comment.date.toLocaleDateString()).addClass("comment-date")
+            ).add(
+                new Img("./../images/site/buttons/cross.png")
+                    .addClass("comment-remove")
+                    .onMouseClick(event=>{
+                        this._comments.remove(commentField._comment);
+                        this._commentsList.removeField({field: commentField});
+                        this._memorize();
+                    }
+                )
+            )
+        ).add(
+            new P(comment.text).addClass("comment-text")
+        );
+        commentField._comment = comment;
+        this._commentsList.addField({
+            field: commentField
+        });
+    }
+
+}
+
 export class CBEditBoardPane extends Undoable(VSplitterPanel) {
 
-    constructor({ref, kind, board, accept, verify, onEdit}) {
+    constructor({ref, kind, create, board, accept, verify, onEdit}) {
         super({ref});
         this.addClass(kind);
         this._path = new VFileLoaderField({
             ref:"board-path", label:"Image",
+            validate: mandatory({}),
             accept, verify,
             magnified: true,
             onChange: event=>{
@@ -45,20 +130,14 @@ export class CBEditBoardPane extends Undoable(VSplitterPanel) {
         this.addOnLeft(this._path);
         this._name = new VInputField({
             ref:"board-name-input", label:"Title",
+            validate: mandatory({validate: range({min:2, max:20})}),
             onChange: event=>{
                 this._memorize();
             }
         });
-        this.addOnRight(this._name);
-        this._description = new VInputTextArea({
-            ref:"board-description-input", label:"Description",
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnRight(this._description);
         this._status = new VSelectField({
             ref: "board-status", label: "Status",
+            validate: mandatory({}),
             options: [
                 {value: "live", text: "Live"},
                 {value: "pnd", text: "Pending"},
@@ -68,17 +147,60 @@ export class CBEditBoardPane extends Undoable(VSplitterPanel) {
                 this._memorize();
             }
         });
-        this.addOnRight(this._status);
-        this._send = new VButtons({ref: "map-buttons", vertical:false, buttons:[{
+        let nameContainer = new VContainer({columns:2}).addField({field:this._name}).addField({field:this._status});
+        this.addOnRight(nameContainer);
+        this._description = new VInputTextArea({
+            ref:"board-description-input", label:"Description",
+            validate: mandatory({validate: range({min:2, max:2000})}),
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this.addOnRight(this._description);
+        let userSelector = new CBUserSelector({title:"Select Board Account", loadPage:loadUsers, selectUser:user=>{
+                this._author.setValue(user);
+                userSelector.hide();
+            }
+        }).loadUsers();
+        this._author = new VRef({
+            ref: "author", label: "Author", nullable: true, selector: userSelector,
+            //value: board.author,
+            lineCreator: account=> new Div().addClass("user-ref")
+                .add(new Img(account.avatar).addClass("user-avatar"))
+                .add(new Div().setText(account.login).addClass("user-login"))
+                .add(new Div().setText(account.firstName).addClass("user-first-name"))
+                .add(new Div().setText(account.lastName).addClass("user-last-name")
+            ),
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this.addOnRight(this._author);
+        this._buttons = new VButtons({ref: "map-buttons", vertical:false, buttons:[
+            {
                 ref:"edit", type: VButton.TYPES.NEUTRAL, label:"Edit",
                 onClick:event=>{
                     this._onEdit();
                 }
+            },
+            {
+                ref:"comments", type: VButton.TYPES.NEUTRAL, label:"Comments",
+                onClick:event=>{
+                    this.onComments();
+                }
             }
         ]});
-        this.addOnRight(this._send);
+        this._buttons.get("edit").enabled = !create;
+        this.addOnRight(this._buttons);
         this._onEdit = onEdit;
         this.board = board;
+    }
+
+    validate() {
+        return !this._path.validate()
+            | !this._name.validate()
+            | !this._description.validate()
+            | !this._status.validate();
     }
 
     canLeave(leave, notLeave) {
@@ -91,17 +213,23 @@ export class CBEditBoardPane extends Undoable(VSplitterPanel) {
             status: this._status.value,
             description: this._description.value,
             path: this._path.imageSrc,
-            icon: this._icon
+            icon: this._board.icon || "icon",
+            author: this._author.value,
+            comments: structuredClone(this._comments)
         }
     }
 
     set board(board) {
-        this._id = board.id;
+        this._board = board;
         this._name.value = board.name || "";
         this._status.value = board.status || "prp";
         this._description.value = board.description || "";
         this._path.imageSrc = board.path || "";
-        this._icon = board.icon || "icon";
+        this._author.value = board.author;
+        this._comments = {
+            comments: this._board.comments || [],
+            newComment: ""
+        }
         this._clean();
         this._memorize();
     }
@@ -116,8 +244,21 @@ export class CBEditBoardPane extends Undoable(VSplitterPanel) {
             this._status.value = specification.status;
             this._description.value = specification.description;
             this._path.imageSrc = specification.path;
+            this._author.value = specification.author;
             this._icon = specification.icon;
+            this._comments = structuredClone(specification.comments)
         }
+    }
+
+    saved(board) {
+        this.board = board;
+        this._buttons.get("edit").enabled = true;
+        return true;
+    }
+
+    set comments(comments) {
+        this._comments = comments;
+        this._memorize();
     }
 
     get path()  {
@@ -128,8 +269,17 @@ export class CBEditBoardPane extends Undoable(VSplitterPanel) {
         return this._path.getImageFile("icon.png", 205, 315);
     }
 
+    onComments() {
+        new CBEditComments({
+            "ref": "board-comments",
+            "kind": "board-comments",
+            comments: structuredClone(this._comments),
+            acknowledge: comments=>this.comments = comments
+        }).show();
+    }
+
     openInNewTab(url) {
-        window.open(url+"?id="+this._id, '_blank').focus();
+        window.open(url+"?id="+this._board.id, '_blank').focus();
     }
 }
 
@@ -142,6 +292,7 @@ export class CBEditBoard extends VModal {
             ref: "board-editor-pane",
             kind: "board-editor-pane",
             board,
+            create,
             accept: file=>{
                 if (!VFileLoader.isImage(file)) {
                     VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (2046 x 3150) pixels."});
@@ -162,34 +313,58 @@ export class CBEditBoard extends VModal {
         });
         this._buttons = new VButtons({
             ref: "buttons", buttons: [{
-                ref: "save-event", type: "accept", label: "Save",
+                ref: "save-board", type: "accept", label: "Save",
                 onClick: event => {
-                    saveBoard(this.specification);
+                    if (this.validate()) {
+                        let board = this.specification;
+                        let newComment = board.comments.newComment;
+                        if (newComment) {
+                            board.comments.comments.push({
+                                date: new Date(),
+                                text: newComment,
+                                version: 0
+                            });
+                        }
+                        board.comments = board.comments.comments;
+                        saveBoard(board);
+                    }
                 }
             },
             {
-                ref: "cancel-event", type: "refuse", label: "Cancel",
+                ref: "close-board", type: "neutral", label: "Close",
                 onClick: event => {
                     this.hide();
                 }
             }]
         });
-        if (!create) {
-            this._buttons.add(new VButton({
-                ref: "delete-event", type: "neutral", label: "Delete",
-                onClick: evt => {
-                    this.confirm = new CBConfirm().show({
-                        ref: "confirm-event-deletion",
-                        title: "Delete Event",
-                        message: "Do you really want to delete the Event ?",
-                        actionOk: evt => deleteBoard(board)
-                    });
-                }
-            }).addClass("right-button"));
-        }
-        this.addContainer({container: this._boardPane});
-        this.addContainer({container: this._buttons});
+        this._deleteButton = new VButton({
+            ref: "delete-event", type: "neutral", label: "Delete",
+            onClick: evt => {
+                this.confirm = new CBConfirm().show({
+                    ref: "confirm-event-deletion",
+                    title: "Delete Event",
+                    message: "Do you really want to delete the Event ?",
+                    actionOk: evt => deleteBoard(board)
+                });
+            }
+        }).addClass("right-button");
+        this._buttons.add(this._deleteButton);
+        this._deleteButton.enabled = !create;
+        this.add(this._boardPane);
+        this.add(this._buttons);
         this.addClass("board-modal");
+    }
+
+    validate() {
+        return this._boardPane.validate();
+    }
+
+    saved(board) {
+        this._boardPane.saved(board);
+        this._id = board.id;
+        this._deleteButton.enabled = true;
+        showMessage("Board saved.");
+        return true;
     }
 
     get imageFiles() {
@@ -220,14 +395,14 @@ export class CBEditBoard extends VModal {
 
 export class CBBoardList extends VTable {
 
-    constructor({loadPage, updateBoard, deleteBoard}) {
+    constructor({loadPage, saveBoard, deleteBoard}) {
         super({
             ref: "board-list",
             changePage: pageIndex => this._setPage(pageIndex)
         });
         this.addClass("board-list");
         this._loadPage = loadPage;
-        this._updateBoard = updateBoard;
+        this._saveBoard = saveBoard;
         this._deleteBoard = deleteBoard;
     }
 
@@ -244,27 +419,16 @@ export class CBBoardList extends VTable {
         this._setPage(this._currentPage);
     }
 
-    _setPage(pageIndex) {
-        function getBoard(line) {
-            return {
-                id: line.id,
-                name: line.name.getText(),
-                description: line.description.getText(),
-                status: line.status.getValue(),
-                icon: line.icon.getSrc(),
-                path: line.path
-            };
-        }
-        this._loadPage(pageIndex, this._search, pageData => {
-            let lines = [];
-            let selectBoard = board => {
+    selectBoard(board) {
+        loadBoard(board,
+            board=>{
                 let boardEditor = new CBEditBoard({
                     title: "Edit Board",
                     board,
-                    saveBoard: board => this._updateBoard(board,
+                    saveBoard: board => this._saveBoard(board,
                         boardEditor.imageFiles,
-                        () => {
-                            boardEditor.hide();
+                        text => {
+                            boardEditor.saved(parseBoard(text));
                             this.refresh();
                         },
                         text => {
@@ -283,19 +447,38 @@ export class CBBoardList extends VTable {
                         }
                     ),
                 }).show();
+            },
+
+        );
+
+    };
+
+    _setPage(pageIndex) {
+        function getBoard(line) {
+            return {
+                id: line.id,
+                name: line.name.getText(),
+                description: line.description.getText(),
+                status: line.status.getValue(),
+                icon: line.icon.getSrc(),
+                path: line.path,
+                author: line.author
             };
-            let saveBoard = board => this._updateBoard(board, null, null,
+        }
+        this._loadPage(pageIndex, this._search, pageData => {
+            let lines = [];
+            let saveBoard = board => this._saveBoard(board, null, null,
                 () => showMessage("Board saved."),
                 text => showMessage("Unable to Save Board.", text),
             );
             for (let board of pageData.boards) {
                 let line;
                 let icon = new Img(board.icon).addClass("board-icon")
-                    .onMouseClick(event => selectBoard(getBoard(line)));
+                    .onMouseClick(event => this.selectBoard(getBoard(line)));
                 let name = new Span(board.name).addClass("board-name")
-                    .onMouseClick(event => selectBoard(getBoard(line)));
+                    .onMouseClick(event => this.selectBoard(getBoard(line)));
                 let description = new P(board.description).addClass("board-description")
-                    .onMouseClick(event => selectBoard(getBoard(line)));
+                    .onMouseClick(event => this.selectBoard(getBoard(line)));
                 let status = new Select().setOptions([
                     {value: "live", text: "Live"},
                     {value: "pnd", text: "Pending"},
@@ -305,7 +488,7 @@ export class CBBoardList extends VTable {
                     .setValue(board.status)
                     .addClass("board-status")
                     .onChange(event => saveBoard(getBoard(line)));
-                line = {id: board.id, name, description, icon, status, path:board.path};
+                line = {id: board.id, name, description, icon, status, path:board.path, author:board.author};
                 lines.push([icon, name, description, status]);
             }
             let title = new Span(pageData.title)
@@ -341,7 +524,7 @@ export class CBBoardList extends VTable {
 
 export class CBBoardListPage extends Vitamin(Div) {
 
-    constructor({loadPage, createBoard, updateBoard, deleteBoard}) {
+    constructor({loadPage, saveBoard, deleteBoard}) {
         super({ref: "board-list-page"});
         this._search = new VSearch({
             ref: "board-list-search", searchAction: search => {
@@ -357,12 +540,12 @@ export class CBBoardListPage extends Vitamin(Div) {
                     board: {
                         status: "prp"
                     },
-                    saveBoard: board => createBoard(board, [
+                    saveBoard: board => saveBoard(board, [
                             {key: "path", file: this._createBoardModal.path},
                             {key: "icon", file: this._createBoardModal.icon}
                         ],
-                        () => {
-                            this._createBoardModal.hide();
+                        text => {
+                            this._createBoardModal.saved(parseBoard(text));
                             this.refresh();
                         },
                         text => {
@@ -376,7 +559,7 @@ export class CBBoardListPage extends Vitamin(Div) {
             }
         }).addClass("right-button");
         this._search.add(this._create);
-        this._table = new CBBoardList({loadPage, updateBoard, deleteBoard});
+        this._table = new CBBoardList({loadPage, saveBoard, deleteBoard});
         this.add(this._search).add(this._table);
     }
 
@@ -419,8 +602,29 @@ export function loadBoards(pageIndex, search, update) {
     );
 }
 
-export function createBoard(board, images, success, failure) {
-    sendPost("/api/board/create",
+function parseBoard(text) {
+    let board = JSON.parse(text);
+    for (let comment of board.comments) {
+        comment.date = new Date(comment.date);
+    }
+    return board;
+}
+
+export function loadBoard(board, success) {
+    sendGet("/api/board/load/"+board.id,
+        (text, status) => {
+            console.log("Board load success: " + text + ": " + status);
+            success(parseBoard(text));
+        },
+        (text, status) => {
+            console.log("Load Board failure: " + text + ": " + status);
+            showMessage("Unable to load Board of Id "+board.id, text);
+        }
+    );
+}
+
+export function saveBoard(board, images, success, failure) {
+    sendPost(board.id===undefined ? "/api/board/create" : "/api/board/update/" + board.id,
         board,
         (text, status) => {
             console.log("Board creation success: " + text + ": " + status);
@@ -447,24 +651,8 @@ export function deleteBoard(board, success, failure) {
     );
 }
 
-export function updateBoard(board, images, success, failure) {
-    sendPost("/api/board/update/" + board.id,
-        board,
-        (text, status) => {
-            console.log("Board update success: " + text + ": " + status);
-            success(text, status);
-        },
-        (text, status) => {
-            console.log("Board update failure: " + text + ": " + status);
-            failure(text, status);
-        },
-        images
-    );
-}
-
 export var vBoardList = new CBBoardListPage({
     loadPage: loadBoards,
-    createBoard,
     deleteBoard,
-    updateBoard
+    saveBoard
 });

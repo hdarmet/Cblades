@@ -634,8 +634,8 @@ export class CBHex {
     }
 
     _removePlayable(playable) {
-        console.assert(this._playables.indexOf(playable)>=0);
-        this._playables.splice(this._playables.indexOf(playable), 1);
+        console.assert(this._playables.contains(playable));
+        this._playables.remove(playable);
     }
 
     _appendPlayableOnTop(playable) {

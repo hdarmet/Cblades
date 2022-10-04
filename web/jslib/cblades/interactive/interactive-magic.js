@@ -55,10 +55,7 @@ export function registerInteractiveMagic() {
     );
 }
 export function unregisterInteractiveMagic() {
-    let builderIndex = CBActionMenu.menuBuilders.indexOf(createMagicMenuItems);
-    if (builderIndex>=0) {
-        CBActionMenu.menuBuilders.splice(builderIndex, 1);
-    }
+    CBActionMenu.menuBuilders.remove(createMagicMenuItems);
 }
 
 export class InteractiveChoseSpellAction extends CBAction {

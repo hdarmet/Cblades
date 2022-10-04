@@ -59,9 +59,9 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/event/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					Event newEvent = writeToEvent(em, request, new Event());
 					persist(em, newEvent);
@@ -69,24 +69,24 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					em.flush();
 					result.set(readFromEvent(newEvent));
 				});
-				return result.get();
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, 
 					"Unable to create the event"
 				);
 			}
 		}, ADMIN);
+		return result.get();
 	}
 	
 	@REST(url="/api/event/all", method=Method.GET)
 	public Json getAll(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(e) from Event e";
-				String queryString = "select e from Event e left outer join fetch e.target";
+				String queryString = "select e from Event e left outer join fetch e.target t left outer join fetch t.access";
 				if (search!=null) {
 					search = StringReplacer.replace(search,
 						"coming", "zoon",
@@ -114,8 +114,8 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					.put("pageSize", EventController.EVENTS_BY_PAGE)
 				);
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/event/live", method=Method.GET)
@@ -136,8 +136,8 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/event/account-live", method=Method.GET)
 	public Json getAccountLive(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user-> {
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user-> {
 			inTransaction(em -> {
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				Account account = Login.findAccountByLogin(em, user);
@@ -146,51 +146,51 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				}
 				String queryString = "select e from Event e where e.status=:status and e.target=:account order by e.date desc";
 				Collection<Event> events =
-						findEvents(em.createQuery(queryString), pageNo,
-								"account", account,
-								"status", EventStatus.LIVE);
+					findEvents(em.createQuery(queryString), pageNo,
+						"account", account,
+						"status", EventStatus.LIVE);
 				result.set(Json.createJsonObject()
-						.put("events", readFromEvents(events))
+					.put("events", readFromEvents(events))
 				);
 			});
-			return result.get();
 		});
+		return result.get();
 	}
 
 	@REST(url="/api/event/find/:id", method=Method.POST)
 	public Json getById(Map<String, String> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				String id = params.get("id");
 				Event event = findEvent(em, new Long(id));
 				result.set(readFromEvent(event));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 	
 	@REST(url="/api/event/delete/:id", method=Method.GET)
 	public Json delete(Map<String, String> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
 					String id = params.get("id");
 					Event event= findEvent(em, new Long(id));
 					remove(em, event);
 				});
-				return Json.createJsonObject().put("deleted", "ok");
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return Json.createJsonObject().put("deleted", "ok");
 	}
 	
 	@REST(url="/api/event/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Event event = findEvent(em, new Long(id));
@@ -199,11 +199,11 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					flush(em);
 					result.set(readFromEvent(event));
 				});
-				return result.get();
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return result.get();
 	}
 	
 	Event findEvent(EntityManager em, long id) {
@@ -216,11 +216,11 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return event;
 	}
 
-	Account findAccount(EntityManager em, long id) {
+	Account findTarget(EntityManager em, long id) {
 		Account account = find(em, Account.class, id);
 		if (account==null) {
 			throw new SummerControllerException(404,
-					"Unknown Account with id %d", id
+				"Unknown Account with id %d", id
 			);
 		}
 		return account;
@@ -246,7 +246,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.write("description")
 			.write("illustration")
 			.write("status", label->EventStatus.byLabels().get(label))
-			.writeRef("target.id", "target", (Integer id)-> this.findAccount(em, id));
+			.writeRef("target.id", "target", (Integer id)-> this.findTarget(em, id));
 		return event;
 	}
 

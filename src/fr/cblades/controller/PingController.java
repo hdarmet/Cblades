@@ -32,11 +32,10 @@ public class PingController implements SecuritySunbeam, StandardUsers {
     @REST(url="/api/ping-protected", method= REST.Method.POST)
     public Json pingProtected(Map<String, Object> params, Json request) {
         log.warning("call /api/ping-protected");
-        return (Json)ifAuthorized(user->{
-            Json response = Json.createJsonObject()
-                .put("message", "Hello Secure World !");
-            return response;
+        ifAuthorized(user->{
         }, ADMIN);
+        Json response = Json.createJsonObject().put("message", "Hello Secure World !");
+        return response;
     }
 
 }

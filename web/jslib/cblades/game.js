@@ -397,9 +397,8 @@ export class CBCounterDisplay {
     }
 
     removeCounter(counter) {
-        let counterIndex = this._counters.indexOf(counter);
-        console.assert(counterIndex>=0);
-        this._counters.splice(counterIndex, 1);
+        console.assert(this._counters.contains(counter));
+        this._counters.remove(counter);
         this._game._removePlayable(counter);
         this.setCounterLocations();
         counter._removeFromGame();
@@ -414,10 +413,9 @@ export class CBCounterDisplay {
     }
 
     deleteCounter(counter) {
-        let counterIndex = this._counters.indexOf(counter);
-        console.assert(counterIndex>=0);
+        console.assert(this._counters.contains(counter));
         Memento.register(this);
-        this._counters.splice(counterIndex, 1);
+        this._counters.contains(counter);
         this.adjustCounterLocations();
         counter._hide(this._game);
     }

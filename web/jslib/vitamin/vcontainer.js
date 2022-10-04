@@ -31,6 +31,14 @@ export class VContainer extends Vitamin(Div) {
         builder&&builder(this);
     }
 
+    clearFields() {
+        this._fields = [];
+        for (let column of this._columns) {
+            column.clear();
+        }
+        return this;
+    }
+
     addField({field, column, ...params}, builder) {
         field = field ? field : builder(params);
         let col = this._columns[column===undefined ? this._fields.length%this._columns.length: column];
@@ -43,7 +51,7 @@ export class VContainer extends Vitamin(Div) {
     removeField({field}) {
         field.column.remove(field);
         delete field.column;
-        this._fields.splice(this._fields.indexOf(field), 1);
+        this._fields.remove(field);
         return this;
     }
 

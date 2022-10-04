@@ -89,11 +89,24 @@ export class VSwitch extends Vitamin(Div) {
 
 export function mandatory({message, validate}) {
     return function(field, quit) {
-        if (field.value === undefined || field.value === null || field.value.trim() === "") {
+        if (field.value === undefined || field.value === null || (field.value.trim && field.value.trim() === "")) {
             return message ? message : field.label + " cannot be empty";
         }
         if (validate) {
             return validate(field, quit);
+        }
+        return "";
+    }
+}
+
+export function range({message, min, max}) {
+    return function(field, quit) {
+        if (field.value === undefined || field.value === null || field.value.trim() === "") {
+            return "";
+        }
+        if (quit) {
+            if (min && field.value.length<min) return message ? message : field.label + " must contain at least "+min+" characters.";
+            if (max && field.value.length>max) return message ? message : field.label + " must contain at most "+max+" characters.";
         }
         return "";
     }
@@ -810,12 +823,16 @@ export class VFileLoader extends Vitamin(Div) {
         return this;
     }
 
+    get value() {
+        return this.files;
+    }
+
     get files() {
         return this._files;
     }
 
     get imageSrc() {
-        return this._image ? this._image.src : null;
+        return this._imageSrc;
     }
 
     set imageSrc(imageSrc) {
@@ -828,6 +845,7 @@ export class VFileLoader extends Vitamin(Div) {
 
     setImageSrc(src, trigger) {
         if (src) {
+            this._imageSrc = src;
             let image = new VMagnifiedImage({
                 ref:this.ref+"-image", img:src,
                 onLoad: () => {
@@ -846,6 +864,7 @@ export class VFileLoader extends Vitamin(Div) {
             if (!this._magnified) image.desactivateMagnifier();
         }
         else {
+            delete this._imageSrc;
             this._image && this.remove(this._image);
             this.removeClass("with-image");
             delete this._image;
@@ -868,6 +887,10 @@ export class VFileLoaderField extends VField {
 
     get field() {
         return this._loader;
+    }
+
+    get value() {
+        return this._loader.value;
     }
 
     get files() {
@@ -916,6 +939,11 @@ export class VRef extends VField {
 
     get value() {
         return this._value;
+    }
+
+    setValue(value) {
+        this.value = value;
+        this._onChange({event:"onchange", value});
     }
 
     set value(value) {

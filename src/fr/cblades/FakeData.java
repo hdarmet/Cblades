@@ -12,7 +12,14 @@ public class FakeData {
     public static void createBoards() {
         DataSunbeam data = new DataSunbeam() {};
         data.inTransaction(em->{
-            data.persist(em, new Board().setName("map1").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-1.png").setIcon("./../images/maps/map-1-icon.png"));
+            data.persist(em, new Board().setName("map1").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-1.png").setIcon("./../images/maps/map-1-icon.png")
+                .addComment(new Comment().setDate(new Date()).setText(TINY_PARAGRAPH_TEXT))
+                .addComment(new Comment().setDate(new Date()).setText(SHORT_PARAGRAPH_TEXT))
+                .addComment(new Comment().setDate(new Date()).setText(TINY_PARAGRAPH_TEXT))
+                .addComment(new Comment().setDate(new Date()).setText(SHORT_PARAGRAPH_TEXT))
+                .addComment(new Comment().setDate(new Date()).setText(TINY_PARAGRAPH_TEXT))
+                .addComment(new Comment().setDate(new Date()).setText(SHORT_PARAGRAPH_TEXT))
+            );
             data.persist(em, new Board().setName("map2").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-2.png").setIcon("./../images/maps/map-2-icon.png"));
             data.persist(em, new Board().setName("map3").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-3.png").setIcon("./../images/maps/map-3-icon.png"));
             data.persist(em, new Board().setName("map4").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-4.png").setIcon("./../images/maps/map-4-icon.png"));

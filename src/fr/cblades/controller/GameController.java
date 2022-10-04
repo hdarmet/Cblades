@@ -26,15 +26,14 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 	
 	@REST(url="/api/game/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					Game newGame = writeToGame(em, request, new Game());
 					persist(em, newGame);
 					result.set(readFromGame(em, newGame));
 				});
-				return result.get();
 			}
 			catch (EntityNotFoundException enf) {
 				throw new SummerControllerException(500, enf.getMessage());
@@ -46,24 +45,25 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 				);
 			}
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/game/all", method=Method.POST)
 	public Json getAll(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				Collection<Game> games = findGames(em, "select g from Game g");
 				result.set(readFromGames(em, games));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/game/by-name/:name", method=Method.POST)
 	public Json getByName(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				String name = (String)params.get("name");
 				Game game = findOneGame(em, "select g from Game g where g.name = :name", "name", name);
@@ -74,44 +74,44 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 				}
 				result.set(readFromGame(em, game));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/game/find/:id", method=Method.POST)
 	public Json getById(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				String id = (String)params.get("id");
 				Game game = findGame(em, new Long(id));
 				result.set(readFromGame(em, game));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/game/delete/:id", method=Method.POST)
 	public Json delete(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Game game = findGame(em, new Long(id));
 					remove(em, game);
 				});
-				return Json.createJsonObject().put("deleted", "ok");
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return Json.createJsonObject().put("deleted", "ok");
 	}
 
 	@REST(url="/api/game/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Game game = findGame(em, new Long(id));
@@ -119,11 +119,11 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 					flush(em);
 					result.set(readFromGame(em, game));
 				});
-				return result.get();
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return result.get();
 	}
 
 	Game writeToGame(EntityManager em, Json json, Game game) {

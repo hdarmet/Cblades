@@ -2,6 +2,7 @@ package org.summer.security;
 
 import java.util.Date;
 import java.util.UUID;
+import java.util.function.BiPredicate;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.Cookie;
@@ -22,34 +23,54 @@ import io.jsonwebtoken.SignatureException;
 public class SecurityManagerImpl implements SecurityManager {
 
 	@Override
-	public Object executeIfConnected(Executor executor) {
+	public void executeIfConnected(Executor executor) {
         ClaimSet claimSet = checkAuthentication(SummerServlet.getRequest());
         setAuthentication(SummerServlet.getResponse(), claimSet.subject, claimSet.expiration-claimSet.issuedAt);
-		return executor.run(claimSet.subject);
+		executor.run(claimSet.subject);
 	}
-	
+
 	@Override
-	public Object executeIfAuthorized(Executor executor, String... roles) {
-        ClaimSet claimSet = checkAuthentication(SummerServlet.getRequest());
+	public boolean lookForRole(String user, String[] roles) {
+	    ClaimSet claimSet = checkAuthentication(SummerServlet.getRequest());
         String[] userRoles = getRoles(claimSet.subject);
         if (roles.length>0) {
             for (String role : userRoles) {
                 for (String authorizedRole : roles) {
                     if (authorizedRole.equals(role)) {
-                        setAuthentication(SummerServlet.getResponse(),
-                                claimSet.subject, claimSet.expiration - claimSet.issuedAt);
-                        return executor.run(claimSet.subject);
+                        return true;
                     }
                 }
             }
+            return false;
         }
-        else {
+        return true;
+    }
+
+	@Override
+	public void executeIfAuthorized(Executor executor, String... roles) {
+        ClaimSet claimSet = checkAuthentication(SummerServlet.getRequest());
+        if (lookForRole(claimSet.subject, roles)) {
             setAuthentication(SummerServlet.getResponse(),
                     claimSet.subject, claimSet.expiration - claimSet.issuedAt);
-            return executor.run(claimSet.subject);
+            executor.run(claimSet.subject);
         }
-        throw new SummerControllerException(403, "Not authorized");
+        else {
+            throw new SummerControllerException(403, "Not authorized");
+        }
 	}
+
+    @Override
+    public void executeIfAuthorized(Executor executor, BiPredicate<String, String[]> verifier) {
+        ClaimSet claimSet = checkAuthentication(SummerServlet.getRequest());
+        String login = claimSet.subject;
+        String[] userRoles = getRoles(claimSet.subject);
+        if (verifier.test(login, userRoles)) {
+            setAuthentication(SummerServlet.getResponse(),
+                claimSet.subject, claimSet.expiration - claimSet.issuedAt);
+            executor.run(claimSet.subject);
+        }
+        else throw new SummerControllerException(403, "Not authorized");
+    }
 
 	@Override
 	public void doConnect(String login, long expire) {

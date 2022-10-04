@@ -29,15 +29,14 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 	
 	@REST(url="/api/sequence/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					Sequence newSequence = writeToSequence(request, new Sequence());
 					persist(em, newSequence);
 					result.set(readFromSequence(newSequence));
 				});
-				return result.get();
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, 
 					"Sequence of game (%s) already exists",
@@ -45,12 +44,13 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 				);
 			}
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/sequence/by-game/:game/:count", method=Method.POST)
 	public Json getByGameAndCount(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				String game = (String)params.get("game");
 				long count = Long.parseLong((String)params.get("count"));
@@ -64,37 +64,37 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 				}
 				result.set(readFromSequence(sequence));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/sequence/find/:id", method=Method.POST)
 	public Json getById(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				String id = (String)params.get("id");
 				Sequence sequence = findSequence(em, new Long(id));
 				result.set(readFromSequence(sequence));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/sequence/delete/:id", method=Method.POST)
 	public Json delete(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Sequence sequence = findSequence(em, new Long(id));
 					remove(em, sequence);
 				});
-				return Json.createJsonObject().put("deleted", "ok");
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return Json.createJsonObject().put("deleted", "ok");
 	}
 
 	Sequence writeToSequence(Json json, Sequence sequence) {

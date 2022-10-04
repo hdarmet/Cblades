@@ -47,10 +47,7 @@ export function unregisterInteractiveFormation() {
     delete CBInteractivePlayer.prototype.includeTroops;
     delete CBInteractivePlayer.prototype.releaseTroops;
     delete CBInteractivePlayer.prototype.breakFormation;
-    let builderIndex = CBActionMenu.menuBuilders.indexOf(createFormationMenuItems);
-    if (builderIndex>=0) {
-        CBActionMenu.menuBuilders.splice(builderIndex, 1);
-    }
+    CBActionMenu.menuBuilders.remove(createFormationMenuItems);
 }
 
 export class InteractiveBreakFormationAction extends CBAction {

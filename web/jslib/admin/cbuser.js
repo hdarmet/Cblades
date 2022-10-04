@@ -42,9 +42,7 @@ export class CBUserSelector extends VModal {
             }
         });
         this._table = new CBUserSelection({loadPage, selectUser});
-        this.addContainer({
-            container: new VContainer({ ref:"user-selection-modal" }).add(this._search).add(this._table)
-        });
+        this.add(new VContainer({ ref:"user-selection-modal" }).add(this._search).add(this._table));
     }
 
     loadUsers() {
@@ -252,18 +250,18 @@ export class CBEditUser extends VModal {
             ]
         });
         this._container = new VFormContainer({ref: "signup", columns: 2}, $=>{$
-                .addField({field: this._loginField})
-                .addField({field: this._emailField})
-                .addField({field: this._firstNameField})
-                .addField({field: this._lastNameField})
-                .addContainer({}, $=>{$
-                        .addField({field: this._passwordField})
-                        .addField({field: this._reenterPasswordField})
-                        .addField({field: this._roleField})
-                        .addField({field: this._statusField})
-                })
-                .addField({field: this._avatar})
-                .addField({field: buttons});
+            .addField({field: this._loginField})
+            .addField({field: this._emailField})
+            .addField({field: this._firstNameField})
+            .addField({field: this._lastNameField})
+            .addContainer({}, $=>{$
+                .addField({field: this._passwordField})
+                .addField({field: this._reenterPasswordField})
+                .addField({field: this._roleField})
+                .addField({field: this._statusField})
+            })
+            .addField({field: this._avatar})
+            .addField({field: buttons});
         });
         if (!create) {
             buttons.add(new VButton({
@@ -278,7 +276,7 @@ export class CBEditUser extends VModal {
                 }
             }).addClass("right-button"));
         }
-        this.addContainer({container: this._container});
+        this.add(this._container);
         this.addClass("user-form");
     }
 

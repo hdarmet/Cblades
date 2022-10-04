@@ -74,10 +74,7 @@ export function unregisterInteractiveCombat() {
     delete CBInteractivePlayer.prototype.unitDuelAttack;
     delete CBInteractivePlayer.prototype.applyLossesToUnit;
     delete CBInteractivePlayer.prototype.advanceAttacker;
-    let builderIndex = CBActionMenu.menuBuilders.indexOf(createCombatMenuItems);
-    if (builderIndex>=0) {
-        CBActionMenu.menuBuilders.splice(builderIndex, 1);
-    }
+    CBActionMenu.menuBuilders.remove(createCombatMenuItems);
 }
 
 export class InteractiveAdvanceAction extends CBAction {

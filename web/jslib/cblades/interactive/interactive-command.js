@@ -59,10 +59,7 @@ export function unregisterInteractiveCommand() {
     delete CBInteractivePlayer.prototype.startToGiveOrders;
     delete CBInteractivePlayer.prototype.openOrderInstructionMenu;
     delete CBInteractivePlayer.prototype.changeOrderInstruction;
-    let builderIndex = CBActionMenu.menuBuilders.indexOf(createCommandMenuItems);
-    if (builderIndex>=0) {
-        CBActionMenu.menuBuilders.splice(builderIndex, 1);
-    }
+    CBActionMenu.menuBuilders.remove(createCommandMenuItems);
 }
 
 export class InteractiveTakeCommandAction extends CBAction {

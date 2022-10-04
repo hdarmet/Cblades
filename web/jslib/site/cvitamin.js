@@ -76,19 +76,15 @@ export class CVWriteToUs extends VModal {
             ]
         });
         this._message = new VInputTextArea({ref:"contact-message", label:"Message"});
-        this.addContainer({
-            ref: "writetous-identity",
-            container: new VFormContainer({columns: 2})
-                .addField({field: this._firstName})
-                .addField({field: this._lastName})
-                .addField({field: this._email})
-                .addField({field: this._country})
-                .addField({field: this._subject})
-            }
+        this.add(new VFormContainer({columns: 2})
+            .addField({field: this._firstName})
+            .addField({field: this._lastName})
+            .addField({field: this._email})
+            .addField({field: this._country})
+            .addField({field: this._subject})
         );
-        this.addContainer({
-            ref: "writetous-message",
-            container: new VFormContainer({columns: 1})
+        this.add(
+            new VFormContainer({columns: 1})
                 .addField({field: this._subject})
                 .addField({field: this._message})
                 .addField({
@@ -101,7 +97,6 @@ export class CVWriteToUs extends VModal {
                         ]
                     })
                 })
-            }
         );
     }
 
@@ -163,11 +158,10 @@ export class CVArticleDisplay extends VModal {
     constructor() {
         super({ref: CVWriteToUs.ARTICLE_DISPLAY_REF});
         this._display = new VDisplay({ref:"article-display"});
-        this.addContainer({
-            ref: "article-display-container",
-            container: new VFormContainer({columns: 1})
-                .addField({field: this._display})
-            }
+        this.add(
+            new VFormContainer({columns: 1})
+                .addField({field: this._display}
+            )
         );
     }
 
@@ -260,8 +254,8 @@ export class VCLogin extends VModal {
                 {
                     ref:"Signup", type:"neutral", label:"Sign Up",
                     onClick:event=>{
-                        this.removeContainer({container:this._signInContainer});
-                        this.addContainer({container:this._signUpContainer});
+                        this.remove(this._signInContainer);
+                        this.add(this._signUpContainer);
                         this.removeClass("sign-in");
                         this.addClass("sign-up");
                     }
@@ -329,14 +323,14 @@ export class VCLogin extends VModal {
                 {
                     ref:"Signin", type:"neutral", label:"Sign In",
                     onClick:event=>{
-                        this.removeContainer({container:this._signUpContainer});
-                        this.addContainer({container:this._signInContainer});
+                        this.remove(this._signUpContainer);
+                        this.add(this._signInContainer);
                         this.removeClass("sign-up");
                         this.addClass("sign-in");
                     }},
             ]})});
         });
-        this.addContainer({container: this._signInContainer});
+        this.add(this._signInContainer);
         this.addClass("sign-in");
         VLoginHandler.addLoginListener(this);
     }

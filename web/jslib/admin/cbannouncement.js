@@ -99,7 +99,7 @@ export class CBEditAnnouncement extends VModal {
                 }
             }).addClass("right-button"));
         }
-        this.addContainer({container: this._container});
+        this.add(this._container);
         this.addClass("announcement-form");
     }
 

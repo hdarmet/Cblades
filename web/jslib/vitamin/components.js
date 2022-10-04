@@ -30,7 +30,7 @@ export class DComposed extends DComponent {
             let index = this._children.indexOf(before);
             console.assert(index>=0);
             if (index>=0) {
-                this._children.splice(index, 0, component);
+                this._children.insert(index, component);
                 getDrawPlatform().insertBefore(this._root, component._root, before._root);
                 component._added && component._added();
             }
@@ -40,10 +40,7 @@ export class DComposed extends DComponent {
     remove(component) {
         console.assert(this._children);
         if (this._children) {
-            let index = this._children.indexOf(component);
-            console.assert(index>=0);
-            if (index>=0) {
-                this._children.splice(index, 1);
+            if (this._children.remove(component)>=0) {
                 getDrawPlatform().removeChild(this._root, component._root);
                 component._removed && component._removed();
             }
@@ -178,12 +175,8 @@ export function DOM(clazz) {
         }
 
         removeClass(clazz) {
-            if (this._classes) {
-                let index = this._classes.indexOf(clazz);
-                if (index>=0) {
-                    this._classes.splice(this._classes.indexOf(clazz), 1);
-                    getDrawPlatform().setAttribute(this._root, "class", this._classes.join(" "));
-                }
+            if (this._classes && this._classes.remove(clazz)>=0) {
+                getDrawPlatform().setAttribute(this._root, "class", this._classes.join(" "));
             }
             return this;
         }
@@ -684,17 +677,15 @@ export class UndoRedo {
     }
 
     static removeListener(listener) {
-        let index = UndoRedo.listeners.indexOf(listener);
-        if (index>=0) {
-            UndoRedo.listeners.splice(index, 1);
-        }
+        UndoRedo.listeners.remove(listener);
         if (!UndoRedo.listeners.length) {
             delete UndoRedo.active;
         }
     }
 
     static emitUndoEvent() {
-        for (let listener of UndoRedo.listeners) {
+        let listener = UndoRedo.listeners.last();
+        if (listener) {
             listener.undo && listener.undo();
         }
     }

@@ -27,15 +27,14 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 	
 	@REST(url="/api/banner/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					Banner newBanner = writeToBanner(request, new Banner());
 					persist(em, newBanner);
 					result.set(readFromBanner(newBanner));
 				});
-				return result.get();
 			}
 			catch (EntityExistsException pe) {
 				throw new SummerControllerException(500,
@@ -47,24 +46,25 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 				throw new SummerControllerException(500, pe.getMessage());
 			}
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/banner/all", method=Method.POST)
 	public Json getAll(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				Collection<Banner> banners = findBanners(em.createQuery("select b from Banner b"));
 				result.set(readFromBanners(banners));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/banner/by-name/:name", method=Method.POST)
 	public Json getByName(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				String name = (String)params.get("name");
 				Banner banner = getSingleResult(em,
@@ -77,44 +77,44 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 				}
 				result.set(readFromBanner(banner));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/banner/find/:id", method=Method.POST)
 	public Json getById(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
-			Ref<Json> result = new Ref<>();
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			inTransaction(em->{
 				String id = (String)params.get("id");
 				Banner banner = findBanner(em, new Long(id));
 				result.set(readFromBanner(banner));
 			});
-			return result.get();
 		}, ADMIN);
+		return result.get();
 	}
 
 	@REST(url="/api/banner/delete/:id", method=Method.POST)
 	public Json delete(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Banner banner = findBanner(em, new Long(id));
 					remove(em, banner);
 				});
-				return Json.createJsonObject().put("deleted", "ok");
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return Json.createJsonObject().put("deleted", "ok");
 	}
 
 	@REST(url="/api/banner/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
-		return (Json)ifAuthorized(user->{
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
 			try {
-				Ref<Json> result = new Ref<>();
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Banner banner = findBanner(em, new Long(id));
@@ -122,11 +122,11 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 					flush(em);
 					result.set(readFromBanner(banner));
 				});
-				return result.get();
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
 		}, ADMIN);
+		return result.get();
 	}
 
 	Banner writeToBanner(Json json, Banner banner) {

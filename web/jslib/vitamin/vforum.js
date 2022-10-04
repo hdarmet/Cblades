@@ -133,9 +133,7 @@ export class EmojiPreference extends Vitamin(Div) {
     }
 
     registerEmoji(icon) {
-        if (this._icons.indexOf(icon)>=0) {
-            this._icons.splice(this._icons.indexOf(icon), 1);
-        }
+        this._icons.remove(icon);
         this._icons.unshift(icon);
         if (this._icons.length > 5) this._icons.pop();
         this._showIcons();
@@ -238,9 +236,8 @@ export class VForumReport extends VModal {
             ]
         });
         this._message = new VInputTextArea({ref:"contact-message", label:"Message"});
-        this.addContainer({
-            ref: "report-message",
-            container: new VFormContainer({columns: 1})
+        this.add(
+            new VFormContainer({columns: 1})
                 .addField({field: this._reason})
                 .addField({field: this._message})
                 .addField({
@@ -256,7 +253,6 @@ export class VForumReport extends VModal {
                         ]
                     })
                 })
-            }
         );
     }
 
@@ -324,9 +320,8 @@ export class VProposeThread extends VModal {
         super({ref: VProposeThread.REF, title: VProposeThread.TITLE});
         this._title = new VInputField({ref:"thread-title", label:"Title"});
         this._comment = new VInputTextArea({ref:"thread-comment", label:"Comment"});
-        this.addContainer({
-            ref: "thread-comment",
-            container: new VFormContainer({columns: 1})
+        this.add(
+            new VFormContainer({columns: 1})
                 .addField({field: this._title})
                 .addField({field: this._comment})
                 .addField({
@@ -342,7 +337,6 @@ export class VProposeThread extends VModal {
                         ]
                     })
                 })
-            }
         );
     }
 
