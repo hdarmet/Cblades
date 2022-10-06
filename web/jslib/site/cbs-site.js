@@ -571,17 +571,6 @@ vMarkersGallery.show = function() {
     return this;
 }
 
-var shortParagrpahText = `
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-`;
-var middleParagrpahText = `lorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor s
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-`;
 var paragrpahText = `
 Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
 Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
@@ -897,24 +886,7 @@ vArticleEditorPage.setArticle = function(article) {
 }
 
 export var vBoardEditor = new CBSBoardEditor({
-    ref:"board-editor",
-    accept(file) {
-        if (!VFileLoader.isImage(file)) {
-            VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (2046 x 3150) pixels."});
-            return false;
-        }
-        return true;
-    },
-    verify(image) {
-        if (image.imageWidth!==2046 || image.imageHeight!==3150) {
-            VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (2046 x 3150) pixels."});
-            return false;
-        }
-        return true;
-    },
-    onEdit() {
-        vBoardEditor.openInNewTab("./cb-board-editor.html");
-    }
+    ref:"board-editor"
 });
 
 export var vBoardEditorDescription = new Div().setText(paragrpahText).addClass("description");

@@ -21,6 +21,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiPredicate;
@@ -67,8 +68,10 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			ifAuthorized(
 				user->{
 					try {
+						Account author = findAuthor(em, user);
+						addComment(request, newBoard, author);
 						newBoard.setStatus(BoardStatus.PROPOSED);
-						newBoard.setAuthor(findAuthor(em, user));
+						newBoard.setAuthor(author);
 						persist(em, newBoard);
 						storeBoardImages(params, newBoard);
 						result.set(readFromBoard(newBoard));
@@ -79,6 +82,31 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						);
 					}
 				}
+			);
+		});
+		return result.get();
+	}
+
+	@REST(url="/api/board/amend/:id", method=Method.POST)
+	public Json amend(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em-> {
+			String id = (String) params.get("id");
+			Board board = findBoard(em, new Long(id));
+			ifAuthorized(
+				user -> {
+					try {
+						Account author = findAuthor(em, user);
+						writeToProposedBoard(em, request, board);
+						addComment(request, board, author);
+						storeBoardImages(params, board);
+						flush(em);
+						result.set(readFromBoard(board));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+					}
+				},
+				verifyIfAdminOrOwner(board)
 			);
 		});
 		return result.get();
@@ -244,7 +272,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 					}
 				},
-				verifyIfAdminOrOwner(board)
+				ADMIN
 			);
 		});
 		return result.get();
@@ -291,6 +319,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
 			.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 200)
 			.checkRequired("icon").checkMinSize("icon", 2).checkMaxSize("icon", 200)
+			.checkMinSize("newComment", 2).checkMaxSize("newComment", 200)
 			.ensure();
 		sync(json, board)
 			.write("version")
@@ -299,6 +328,13 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.write("path")
 			.write("icon");
 		return board;
+	}
+
+	void addComment(Json json, Board board, Account author) {
+		String comment = json.get("newComment");
+		if (comment!=null) {
+			board.addComment(new Comment().setDate(new Date()).setText(comment).setAuthor(author));
+		}
 	}
 
 	Board writeToBoard(EntityManager em, Json json, Board board) {

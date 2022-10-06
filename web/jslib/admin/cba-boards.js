@@ -181,11 +181,11 @@ export class CBAEditBoardPane extends Undoable(VSplitterPanel) {
         this._memorize();
     }
 
-    get path()  {
+    get boardImage()  {
         return this._path.files ? this._path.files[0] : undefined;
     }
 
-    get icon()  {
+    get iconImage()  {
         return this._path.getImageFile("icon.png", 205, 315);
     }
 
@@ -288,20 +288,20 @@ export class CBAEditBoard extends VModal {
     }
 
     get imageFiles() {
-        return this._boardPane.path ?
+        return this.boardImage ?
             [
-                {key: "path", file: this.path},
-                {key: "icon", file: this.icon}
+                {key: "path", file: this.boardImage},
+                {key: "icon", file: this.iconImage}
             ] :
             [];
     }
 
-    get path()  {
-        return this._boardPane.path;
+    get boardImage()  {
+        return this._boardPane.boardImage;
     }
 
-    get icon()  {
-        return this._boardPane.icon;
+    get iconImage()  {
+        return this._boardPane.iconImage;
     }
 
     get specification() {
@@ -460,10 +460,8 @@ export class CBABoardListPage extends Vitamin(Div) {
                     board: {
                         status: "prp"
                     },
-                    saveBoard: board => saveBoard(board, [
-                            {key: "path", file: this._createBoardModal.path},
-                            {key: "icon", file: this._createBoardModal.icon}
-                        ],
+                    saveBoard: board => saveBoard(board,
+                        this._createBoardModal.imageFiles,
                         text => {
                             this._createBoardModal.saved(parseBoard(text));
                             this.refresh();

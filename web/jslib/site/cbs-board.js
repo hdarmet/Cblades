@@ -1,15 +1,22 @@
 import {
-    Undoable, VImage, Vitamin, VMagnifiedImage
+    Undoable, VImage, Vitamin, VMagnifiedImage, VMessageHandler
 } from "../vitamin/vitamins.js";
 import {
-    Div, P
+    Div, P, sendGet, sendPost
 } from "../vitamin/components.js";
 import {
     VSplitterPanel
 } from "../vitamin/vcontainer.js";
 import {
-    VButton, VButtons, VFileLoaderField, VInputField, VInputTextArea
+    mandatory, range,
+    VButton, VButtons, VFileLoader, VFileLoaderField, VInputField, VInputTextArea
 } from "../vitamin/vforms.js";
+import {
+    CBSEditComments
+} from "./cbs-comment.js";
+import {
+    showMessage
+} from "../vitamin/vpage.js";
 
 export class CBSBoard extends Vitamin(Div) {
 
@@ -73,12 +80,26 @@ export class CBSBoard extends Vitamin(Div) {
 
 export class CBSBoardEditor extends Undoable(VSplitterPanel) {
 
-    constructor({ref, kind="board-editor", accept, verify, onEdit, onPropose}) {
+    constructor({ref, kind="board-editor", board={}}) {
         super({ref});
         this.addClass(kind);
         this._path = new VFileLoaderField({
-            ref:"board-image", label:"Image",
-            accept, verify,
+            ref:"board-path", label:"Image",
+            validate: mandatory({}),
+            accept(file) {
+                if (!VFileLoader.isImage(file)) {
+                    VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (2046 x 3150) pixels."});
+                    return false;
+                }
+                return true;
+            },
+            verify(image) {
+                if (image.imageWidth!==2046 || image.imageHeight!==3150) {
+                    VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (2046 x 3150) pixels."});
+                    return false;
+                }
+                return true;
+            },
             magnified: true,
             onChange: event=>{
                 this._memorize();
@@ -86,7 +107,8 @@ export class CBSBoardEditor extends Undoable(VSplitterPanel) {
         });
         this.addOnLeft(this._path);
         this._name = new VInputField({
-            ref:"board-title-input", label:"Name",
+            ref:"board-title-input", label:"Title",
+            validate: mandatory({validate: range({min:2, max:20})}),
             onChange: event=>{
                 this._memorize();
             }
@@ -94,48 +116,90 @@ export class CBSBoardEditor extends Undoable(VSplitterPanel) {
         this.addOnRight(this._name);
         this._description = new VInputTextArea({
             ref:"board-description-input", label:"Description",
+            validate: mandatory({validate: range({min:2, max:2000})}),
             onChange: event=>{
                 this._memorize();
             }
         });
         this.addOnRight(this._description);
         this._send = new VButtons({ref: "board-buttons", vertical:false, buttons:[
-                {
-                    ref:"edit", type: VButton.TYPES.NEUTRAL, label:"Edit",
-                    onClick:event=>{
-                        this._onEdit();
-                    }
-                },
-                {
-                    ref:"propose", type: VButton.TYPES.ACCEPT, label:"Propose",
-                    onClick:event=>{
-                        this._onPropose();
+            {
+                ref:"edit", type: VButton.TYPES.NEUTRAL, label:"Edit",
+                onClick:event=>{
+                    this.openInNewTab("./cb-board-editor.html");
+                }
+            },
+            {
+                ref:"comments", type: VButton.TYPES.NEUTRAL, label:"Comments",
+                onClick:event=>{
+                    this.onComments();
+                }
+            },
+            {
+                ref:"propose", type: VButton.TYPES.ACCEPT, label:"Propose",
+                onClick:event=>{
+                    if (this.validate()) {
+                        let board = this.board;
+                        board.newComment = board.comments.newComment;
+                        delete board.comments;
+                        this.saveBoard(board);
                     }
                 }
-            ]});
+            }
+        ]});
         this.addOnRight(this._send);
-        this._onEdit = onEdit;
-        this._onPropose = onPropose;
+        this.board = board;
+    }
+
+    saveBoard(board) {
+        saveProposedBoard(board,
+            this.imageFiles,
+            text => {
+                this.saved(parseBoard(text));
+            },
+            text => {
+                showMessage("Fail to update Board", text);
+            }
+        );
+    }
+
+    validate() {
+        return !this._path.validate()
+             | !this._name.validate()
+             | !this._description.validate();
     }
 
     canLeave(leave, notLeave) {
         return super.canLeave(leave, notLeave,"Board not saved. Do you want to Quit ?")
     }
 
+    get board() {
+        return {
+            id: this._board.id,
+            name: this._name.value,
+            description: this._description.value,
+            path: this._path.imageSrc,
+            icon: this._board.icon || "icon",
+            comments: structuredClone(this._comments)
+        }
+    }
+
     set board(board) {
-        this._name.value = board.name;
-        this._description.value = board.description;
-        this._path.imageSrc = board.path;
+        this._board = board;
+        this._name.value = board.name || "";
+        this._description.value = board.description || "";
+        this._path.imageSrc = board.path || "";
+        this._comments = {
+            comments: this._board.comments || [],
+            newComment: ""
+        }
+        this._send.get("edit").enabled = board.id !== undefined;
         this._clean();
         this._memorize();
     }
 
     _register() {
-        return {
-            name: this._name.value,
-            description: this._description.value,
-            path: this._path.imageSrc
-        }
+        return this.board;
     }
 
     _recover(specification) {
@@ -143,10 +207,91 @@ export class CBSBoardEditor extends Undoable(VSplitterPanel) {
             this._name.value = specification.name;
             this._description.value = specification.description;
             this._path.imageSrc = specification.path;
+            this._icon = specification.icon;
+            this._comments = structuredClone(specification.comments);
         }
     }
 
-    openInNewTab(url) {
-        window.open(url, '_blank').focus();
+    set comments(comments) {
+        this._comments = structuredClone(comments);
+        this._memorize();
     }
+
+    onComments() {
+        new CBSEditComments({
+            "ref": "board-comments",
+            "kind": "board-comments",
+            comments: structuredClone(this._comments),
+            acknowledge: comments=>this.comments = comments
+        }).show();
+    }
+
+    openInNewTab(url) {
+        window.open(url+"?id="+this._board.id, '_blank').focus();
+    }
+
+    saved(board) {
+        this._board.id = board.id;
+        this._comments = {
+            comments: board.comments || [],
+            newComment: ""
+        }
+        this._send.get("edit").enabled = true;
+        showMessage("Board saved.");
+        return true;
+    }
+
+    get imageFiles() {
+        return this.boardImage ?
+            [
+                {key: "path", file: this.boardImage},
+                {key: "icon", file: this.iconImage}
+            ] :
+            [];
+    }
+
+    get boardImage()  {
+        return this._path.files ? this._path.files[0] : undefined;
+    }
+
+    get iconImage()  {
+        return this._path.getImageFile("icon.png", 205, 315);
+    }
+
+}
+
+function parseBoard(text) {
+    let board = JSON.parse(text);
+    for (let comment of board.comments) {
+        comment.date = new Date(comment.date);
+    }
+    return board;
+}
+
+export function loadProposedBoard(board, success) {
+    sendGet("/api/board/load/"+board.id,
+        (text, status) => {
+            console.log("Board load success: " + text + ": " + status);
+            success(parseBoard(text));
+        },
+        (text, status) => {
+            console.log("Load Board failure: " + text + ": " + status);
+            showMessage("Unable to load Board of Id "+board.id, text);
+        }
+    );
+}
+
+export function saveProposedBoard(board, images, success, failure) {
+    sendPost(board.id===undefined ? "/api/board/propose" : "/api/board/amend/" + board.id,
+        board,
+        (text, status) => {
+            console.log("Board proposal success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Board proposal failure: " + text + ": " + status);
+            failure(text, status);
+        },
+        images
+    );
 }
