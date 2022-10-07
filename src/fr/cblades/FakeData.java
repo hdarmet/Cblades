@@ -9,7 +9,7 @@ import java.util.Date;
 public class FakeData {
 
     @Launch
-    public static void createBoards() {
+    public static void createData() {
         DataSunbeam data = new DataSunbeam() {};
         data.inTransaction(em->{
             data.persist(em, new Board().setName("board1").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-1.png").setIcon("./../images/maps/map-1-icon.png")
@@ -113,6 +113,64 @@ public class FakeData {
                     .setStatus(EventStatus.LIVE);
                 data.persist(em, event);
             }
+        });
+        data.inTransaction(em-> {
+            Theme theme = new Theme()
+                .setDescription(SHORT_PARAGRAPH_TEXT)
+                .setTitle("Rules")
+                .setCategory(ThemeCategory.GAME)
+                .setIllustration("../images/site/themes/rules.png")
+                .setStatus(ThemeStatus.LIVE);
+            data.persist(em, theme);
+            theme = new Theme()
+                .setDescription(SHORT_PARAGRAPH_TEXT)
+                .setTitle("Strategies And Tactics")
+                .setCategory(ThemeCategory.GAME)
+                .setIllustration("../images/site/themes/strategy.png")
+                .setStatus(ThemeStatus.LIVE);
+            data.persist(em, theme);
+            theme = new Theme()
+                .setDescription(SHORT_PARAGRAPH_TEXT)
+                .setTitle("Units")
+                .setCategory(ThemeCategory.GAME)
+                .setIllustration("../images/site/themes/units.png")
+                .setStatus(ThemeStatus.LIVE);
+            data.persist(em, theme);
+            theme = new Theme()
+                .setDescription(SHORT_PARAGRAPH_TEXT)
+                .setTitle("Magic")
+                .setCategory(ThemeCategory.GAME)
+                .setIllustration("../images/site/themes/magic.png")
+                .setStatus(ThemeStatus.LIVE);
+            data.persist(em, theme);
+            theme = new Theme()
+                .setDescription(SHORT_PARAGRAPH_TEXT)
+                .setTitle("Scenario")
+                .setCategory(ThemeCategory.GAME)
+                .setIllustration("../images/site/themes/scenario.png")
+                .setStatus(ThemeStatus.LIVE);
+            data.persist(em, theme);
+            theme = new Theme()
+                .setDescription(SHORT_PARAGRAPH_TEXT)
+                .setTitle("Campains")
+                .setCategory(ThemeCategory.GAME)
+                .setIllustration("../images/site/themes/campains.png")
+                .setStatus(ThemeStatus.LIVE);
+            data.persist(em, theme);
+            theme = new Theme()
+                .setDescription(SHORT_PARAGRAPH_TEXT)
+                .setTitle("History")
+                .setCategory(ThemeCategory.GAME)
+                .setIllustration("../images/site/themes/history.png")
+                .setStatus(ThemeStatus.LIVE);
+            data.persist(em, theme);
+            theme = new Theme()
+                .setDescription(SHORT_PARAGRAPH_TEXT)
+                .setTitle("Siege")
+                .setCategory(ThemeCategory.GAME)
+                .setIllustration("../images/site/themes/siege.png")
+                .setStatus(ThemeStatus.LIVE);
+            data.persist(em, theme);
         });
     }
 

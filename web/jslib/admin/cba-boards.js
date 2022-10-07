@@ -84,7 +84,6 @@ export class CBAEditBoardPane extends Undoable(VSplitterPanel) {
         }).loadUsers();
         this._author = new VRef({
             ref: "author", label: "Author", nullable: true, selector: userSelector,
-            //value: board.author,
             lineCreator: account=> new Div().addClass("user-ref")
                 .add(new Img(account.avatar).addClass("user-avatar"))
                 .add(new Div().setText(account.login).addClass("user-login"))
@@ -118,9 +117,9 @@ export class CBAEditBoardPane extends Undoable(VSplitterPanel) {
 
     validate() {
         return !this._path.validate()
-            | !this._name.validate()
-            | !this._description.validate()
-            | !this._status.validate();
+            & !this._name.validate()
+            & !this._description.validate()
+            & !this._status.validate();
     }
 
     canLeave(leave, notLeave) {
@@ -259,12 +258,12 @@ export class CBAEditBoard extends VModal {
         });
         this._deleteButton = new VButton({
             ref: "delete-event", type: "neutral", label: "Delete",
-            onClick: evt => {
+            onClick: event => {
                 this.confirm = new CBAConfirm().show({
-                    ref: "confirm-event-deletion",
-                    title: "Delete Event",
-                    message: "Do you really want to delete the Event ?",
-                    actionOk: evt => deleteBoard(board)
+                    ref: "confirm-board-deletion",
+                    title: "Delete Board",
+                    message: "Do you really want to delete the Board ?",
+                    actionOk: event => deleteBoard(board)
                 });
             }
         }).addClass("right-button");

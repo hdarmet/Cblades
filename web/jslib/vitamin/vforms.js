@@ -824,7 +824,7 @@ export class VFileLoader extends Vitamin(Div) {
     }
 
     get value() {
-        return this.files;
+        return this.files || this._imageSrc;
     }
 
     get files() {

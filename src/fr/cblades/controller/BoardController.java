@@ -64,7 +64,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json propose(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Board newBoard = writeToProposedBoard(em, request, new Board());
+			Board newBoard = writeToProposedBoard(request, new Board());
 			ifAuthorized(
 				user->{
 					try {
@@ -97,7 +97,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				user -> {
 					try {
 						Account author = findAuthor(em, user);
-						writeToProposedBoard(em, request, board);
+						writeToProposedBoard(request, board);
 						addComment(request, board, author);
 						storeBoardImages(params, board);
 						flush(em);
@@ -312,7 +312,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		};
 	}
 
-	Board writeToProposedBoard(EntityManager em, Json json, Board board) {
+	Board writeToProposedBoard(Json json, Board board) {
 		verify(json)
 			.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 20)
 			.checkPattern("name", "[\\d\\s\\w]+")

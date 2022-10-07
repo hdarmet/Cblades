@@ -40,6 +40,9 @@ import {
 import {
     vBoardList
 } from "./cba-boards.js";
+import {
+    vThemeList
+} from "./cba-theme.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -62,6 +65,10 @@ export var vMenu = new VMainMenu({ref:"menu"})
         })
         .addMenu({ref:"board-menu", label:"Cartes", action:()=>{
                 window.vPageContent.showBoardList();
+            }
+        })
+        .addMenu({ref:"theme-menu", label:"Themes", action:()=>{
+                window.vPageContent.showThemeList();
             }
         })
     })
@@ -345,6 +352,18 @@ export class CBAPageContent extends VPageContent {
         vBoardList.loadBoards();
         this._showBoardList(false, ()=> {
                 historize("board", "vPageContent._showBoardList(true);")
+            }
+        );
+    }
+
+    _showThemeList(byHistory, historize) {
+        return this._changePage(null, vThemeList, byHistory, historize);
+    }
+
+    showThemeList() {
+        vThemeList.loadThemes();
+        this._showThemeList(false, ()=> {
+                historize("theme", "vPageContent._showThemeList(true);")
             }
         );
     }
