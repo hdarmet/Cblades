@@ -1,4 +1,5 @@
 import {
+    download,
     Undoable, VImage, Vitamin, VMagnifiedImage, VMessageHandler
 } from "../vitamin/vitamins.js";
 import {
@@ -9,7 +10,7 @@ import {
 } from "../vitamin/vcontainer.js";
 import {
     mandatory, range,
-    VButton, VButtons, VFileLoader, VFileLoaderField, VInputField, VInputTextArea
+    VButton, VButtons, VFileLoader, VFileLoaderField, VFormContainer, VInputField, VInputTextArea
 } from "../vitamin/vforms.js";
 import {
     CBSEditComments
@@ -17,6 +18,9 @@ import {
 import {
     showMessage
 } from "../vitamin/vpage.js";
+import {
+    CBSGallery
+} from "./cbs-container.js";
 
 export class CBSBoard extends Vitamin(Div) {
 
@@ -266,6 +270,81 @@ function parseBoard(text) {
         comment.date = new Date(comment.date);
     }
     return board;
+}
+
+export var vBoardsGallery = new CBSGallery({ref:"boards", kind: "gallery-maps"});
+
+export var vBoardEditor = new CBSBoardEditor({
+    ref:"board-editor"
+});
+
+var paragrpahText = `
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+`;
+
+export class CBSFormContainer extends VFormContainer {
+
+    constructor({ref, kind=ref, editor}) {
+        super({ref});
+        this._description = new Div().setText(paragrpahText).addClass("description");
+        this._editor = editor;
+        this.addClass(kind)
+            .add(this._description)
+            .add(this._editor);
+    }
+
+    get description() {
+        return this._description;
+    }
+
+    set description(description) {
+        this._description = new Div().setText(description);
+    }
+
+    canLeave = function(leave, notLeave) {
+        return this._editor.canLeave(leave, notLeave);
+    }
+
+}
+
+export var vBoardEditorPage = new CBSFormContainer({ref:"board-editor-page", editor:vBoardEditor});
+
+export function loadBoards(success) {
+    sendGet("/api/board/live",
+        (text, status)=>{
+            vBoardsGallery.clearCards();
+            let maps = JSON.parse(text);
+            for (let map of maps) {
+                vBoardsGallery.addCard({
+                    ref: "map-"+map.id,
+                    image: new VMagnifiedImage({
+                        ref: `img-map-${map.id}`,
+                        img: map.icon,
+                        zoomImg: map.path,
+                        width: "90%"
+                    }),
+                    title: map.name,
+                    description: map.description,
+                    button: "Download", action: event => {
+                        download(map.path);
+                    }
+                });
+            }
+            success();
+        },
+        (text, status)=>{
+            showMessage("Error", "Cannot Load Maps: "+text);
+        }
+    );
 }
 
 export function loadProposedBoard(board, success) {

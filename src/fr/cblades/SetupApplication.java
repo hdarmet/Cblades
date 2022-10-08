@@ -3,10 +3,7 @@ package fr.cblades;
 
 import java.util.logging.Logger;
 
-import fr.cblades.domain.Account;
-import fr.cblades.domain.AccountStatus;
-import fr.cblades.domain.Login;
-import fr.cblades.domain.Notice;
+import fr.cblades.domain.*;
 import org.summer.ApplicationManager;
 import org.summer.Ref;
 import org.summer.annotation.Launch;
@@ -106,10 +103,21 @@ public class SetupApplication {
     static void declareStandardNotice(DataSunbeam data, String category, String title, String text) {
         data.inTransaction(em->{
             if (data.getResultList(em, "select n from Notice n where n.category=:category", "category", category).isEmpty()) {
-                Notice forgotNoticeMail = new Notice()
+                Notice notice = new Notice()
                         .setCategory(category).setTitle(title).setText(text)
                         .setNoticeVersion("0.1").setPublished(true);
-                data.persist(em, forgotNoticeMail);
+                data.persist(em, notice);
+            }
+        });
+    }
+
+    static void declareStandardPresentation(DataSunbeam data, String category, String text) {
+        data.inTransaction(em->{
+            if (data.getResultList(em, "select p from Presentation p where p.category=:category", "category", category).isEmpty()) {
+                Presentation presentation = new Presentation()
+                    .setCategory(category)
+                    .setPresentationVersion("0.1").setPublished(true);
+                data.persist(em, presentation);
             }
         });
     }
@@ -124,6 +132,14 @@ public class SetupApplication {
             declareStandardNotice(data, "cookie-management-notice", "Cookie Management", "Text for Cookie Management");
             declareStandardNotice(data, "usage-policy-notice", "Usage Policy", "Text for Usage Policy");
             declareStandardNotice(data, "your-contributions-notice", "Your Contributions", "Text for Your Contributions");
+        });
+    }
+
+    @Launch
+    public static void declareStandardPresentations() {
+        DataSunbeam data = new DataSunbeam() {};
+        data.inTransaction(em->{
+            declareStandardPresentation(data, "edit-board-presentation", "Presentation of board edition.");
         });
     }
 }

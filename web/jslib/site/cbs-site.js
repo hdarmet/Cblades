@@ -2,7 +2,7 @@ import {
     VText,
     VMagnifiedImage,
     VSlot,
-    VMessageHandler, historize, VLoginHandler
+    VMessageHandler, historize, VLoginHandler, download
 } from "../vitamin/vitamins.js";
 import {
     VHeader,
@@ -26,8 +26,6 @@ import {
     Div, sendGet
 } from "../vitamin/components.js";
 import {
-    CBSGallery,
-    CBSSummary,
     CBSArticle,
     CBSNewspaper,
     CBSTheme,
@@ -37,8 +35,11 @@ import {
     CBSScenarioEditor
 } from "./cbs-articles.js";
 import {
-    CBSBoard,
-    CBSBoardEditor
+    CBSGallery,
+    CBSSummary
+} from "./cbs-container.js";
+import {
+    CBSBoard, loadBoards, vBoardsGallery, vBoardEditorPage, vBoardEditor
 } from "./cbs-board.js";
 import {
     VForum,
@@ -226,15 +227,6 @@ export var vFooter = new VFooter({
     })
 });
 
-export function download(url) {
-    const a = document.createElement('a')
-    a.href = url
-    a.download = url.split('/').pop()
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-}
-
 var rules = {
     "game-rules": {ref:"game-rules", name: "Game Rules", description: "Rules Of The Game", file: "Cursed Blades Rules" },
     "units-activation": {ref:"units-activation", name: "Units Activation Player Aid", description: "The Player Aid that helps to activate a Unit", file: "Fiche Activation des Unités" },
@@ -272,8 +264,6 @@ export var vBoardsTitle = new VHeader({
     left:"../images/site/left-maps.png", right:"../images/site/right-maps.png",
     title: "Boards"
 }).addClass("maps-title");
-
-export var vBoardsGallery = new CBSGallery({ref:"maps", kind: "gallery-maps"});
 
 export var vMagicTitle = new VHeader({
     ref:"magic-title",
@@ -882,23 +872,6 @@ vArticleEditorPage.canLeave = function(leave, notLeave) {
 }
 vArticleEditorPage.setArticle = function(article) {
     vArticleEditor.article = article;
-    return this;
-}
-
-export var vBoardEditor = new CBSBoardEditor({
-    ref:"board-editor"
-});
-
-export var vBoardEditorDescription = new Div().setText(paragrpahText).addClass("description");
-export var vBoardEditorPage = new VFormContainer({ref:"board-editor-page"})
-    .addClass("board-editor-page")
-    .add(vBoardEditorDescription)
-    .add(vBoardEditor);
-vBoardEditorPage.canLeave = function(leave, notLeave) {
-    return vBoardEditor.canLeave(leave, notLeave);
-}
-vBoardEditorPage.setBoard = function(board) {
-    vBoardEditor.board = board;
     return this;
 }
 
@@ -1550,8 +1523,8 @@ class CBSPageContent extends VPageContent {
     }
 
     _showProposeMap(boardSpec, byHistory, historize) {
-        vContributeTitle.setTitle("Propose A Map");
-        vBoardEditorPage.setBoard(boardSpec);
+        vContributeTitle.setTitle("Propose A Board");
+        vBoardEditor.board = boardSpec;
         return this._changePage(vContributeTitle, vBoardEditorPage, byHistory, historize);
     }
 
@@ -1679,33 +1652,5 @@ sendGet("/api/notice/published",
 
 window.vPageContent = new CBSPageContent();
 
-export function loadBoards(success) {
-    sendGet("/api/board/live",
-        (text, status)=>{
-            vBoardsGallery.clearCards();
-            let maps = JSON.parse(text);
-            for (let map of maps) {
-                vBoardsGallery.addCard({
-                    ref: "map-"+map.id,
-                    image: new VMagnifiedImage({
-                        ref: `img-map-${map.id}`,
-                        img: map.icon,
-                        zoomImg: map.path,
-                        width: "90%"
-                    }),
-                    title: map.name,
-                    description: map.description,
-                    button: "Download", action: event => {
-                        download(map.path);
-                    }
-                });
-            }
-            success();
-        },
-        (text, status)=>{
-            showMessage("Error", "Cannot Load Maps: "+text);
-        }
-    );
-}
 
 

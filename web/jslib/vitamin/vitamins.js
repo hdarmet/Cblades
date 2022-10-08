@@ -818,3 +818,12 @@ Array.from(document.styleSheets).forEach(function (styleSheet) {
         });
     } catch (exception) {console.log(exception)}
 });
+
+export function download(url) {
+    const a = document.createElement('a')
+    a.href = url
+    a.download = url.split('/').pop()
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+}

@@ -79,6 +79,12 @@ public class FakeData {
                 .setNoticeVersion("0.3").setPublished(false);
             data.persist(em, notice);
         });
+        data.inTransaction(em->{
+            Presentation presentation = new Presentation()
+                .setCategory("edit-board-presentation").setText("Reniew one more time %s")
+                .setPresentationVersion("0.2").setPublished(false);
+            data.persist(em, presentation);
+        });
         data.inTransaction(em-> {
             Announcement announcement = new Announcement()
                 .setDescription(PARAGRAPH_TEXT)

@@ -43,6 +43,9 @@ import {
 import {
     vThemeList
 } from "./cba-theme.js";
+import {
+    editPresentation
+} from "./cba-presentation.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -95,6 +98,10 @@ export var vMenu = new VMainMenu({ref:"menu"})
         })
         .addMenu({ref:"forgot-password-menu", label:"Mail de renouvellement de Mot de Passe", action:()=>{
                 window.vPageContent.showForgotPasswordMailEdition();
+            }
+        })
+        .addMenu({ref:"board-presentation-menu", label:"Presentation de l'édition de cartes", action:()=>{
+                window.vPageContent.showEditBoardPresentation();
             }
         })
     })
@@ -430,6 +437,17 @@ export class CBAPageContent extends VPageContent {
     showForgotPasswordMailEdition() {
         this._showForgotPasswordMailEdition(false, ()=> {
                 historize("edit-forgot-password-mail", "vPageContent._showForgotPasswordMailEdition(true);")
+            }
+        );
+    }
+
+    _showEditBoardPresentation(byHistory, historize) {
+        editPresentation.call(this,"Presentation de l'édition de cartes", "edit-board-presentation", byHistory, historize);
+    }
+
+    showEditBoardPresentation() {
+        this._showEditBoardPresentation(false, ()=> {
+                historize("edit-board-presentation", "vPageContent._showEditBoardPresentation(true);")
             }
         );
     }
