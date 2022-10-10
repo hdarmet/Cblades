@@ -83,8 +83,8 @@ export class VDropdownMenu extends Vitamin(Div) {
         this.enabled = enabled;
     }
 
-    addMenu({ref, label, enabled, action, menu}) {
-        let vmenu = menu ? menu : new VMenuItem({ref, label, enabled, action});
+    addMenu({ref, label, kind, enabled, action, menu}) {
+        let vmenu = menu ? menu : new VMenuItem({ref, label, kind, enabled, action});
         this._content.add(vmenu);
         return this;
     }

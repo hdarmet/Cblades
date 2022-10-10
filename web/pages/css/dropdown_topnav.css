@@ -37,6 +37,9 @@
     overflow: hidden;
     cursor: pointer;
 }
+.ddtn-dropdown .menu-separator {
+    border-bottom: 2px solid #c0c0c0;
+}
 
 /* Dropdown button */
 .ddtn-dropdown .ddtn-droptitle {

@@ -7,7 +7,7 @@ import {
 import {
     VHeader,
     VFooter,
-    VMainMenu, showMessage
+    VMainMenu
 } from "../vitamin/vpage.js";
 import {
     VPageContent,
@@ -28,9 +28,7 @@ import {
 import {
     CBSArticle,
     CBSNewspaper,
-    CBSTheme,
     CBSScenario,
-    CBSThemeEditor,
     CBSArticleEditor,
     CBSScenarioEditor
 } from "./cbs-articles.js";
@@ -38,6 +36,9 @@ import {
     CBSGallery,
     CBSSummary
 } from "./cbs-container.js";
+import {
+    CBSTheme, vThemeEditorPage, vThemeEditor
+} from "./cbs-theme.js";
 import {
     CBSBoard, loadBoards, vBoardsGallery, vBoardEditorPage, vBoardEditor
 } from "./cbs-board.js";
@@ -108,7 +109,7 @@ export var vMenu = new VMainMenu({ref:"menu"})
             }
         })
         .addMenu({ref:"propose-map-menu", label:"Proposer une carte", action:()=>{
-                window.vPageContent.showProposeMap();
+                window.vPageContent.showProposeBoard();
             }
         })
         .addMenu({ref:"propose-scenario", label:"Proposer un scénario", action:()=>{
@@ -813,37 +814,6 @@ export var vContributeTitle = new VHeader({
     left:"../images/site/left-contribute.png", right:"../images/site/right-contribute.png"
 }).addClass("contribute-title");
 
-export var vThemeEditor = new CBSThemeEditor({
-    ref:"theme-editor",
-    accept(file) {
-        if (!VFileLoader.isImage(file)) {
-            VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (450 x 150) pixels."});
-            return false;
-        }
-        return true;
-    },
-    verify(image) {
-        if (image.imageWidth!==450 || image.imageHeight!==150) {
-            VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (450 x 150) pixels."});
-            return false;
-        }
-        return true;
-    }
-});
-
-export var vThemeEditorDescription = new Div().setText(paragrpahText).addClass("description");
-export var vThemeEditorPage = new VFormContainer({ref:"theme-editor-page"})
-    .addClass("theme-editor-page")
-    .add(vThemeEditorDescription)
-    .add(vThemeEditor);
-vThemeEditorPage.canLeave = function(leave, notLeave) {
-    return vThemeEditor.canLeave(leave, notLeave);
-}
-vThemeEditorPage.setTheme = function(theme) {
-    vThemeEditor.theme = theme;
-    return this;
-}
-
 export var vArticleEditor = new CBSArticleEditor({
     ref:"article-editor",
     accept(file) {
@@ -933,7 +903,7 @@ export var vYourProposalsWall = new VWallWithSearch({
         ref: "map1", title: "The Map", img: `../images/maps/map-7.png`,
         description: paragrpahText,
         action: map => {
-            window.vPageContent.showProposeMap(map);
+            window.vPageContent.showProposeBoard(map);
         }
     }))
 });
@@ -1482,14 +1452,14 @@ class CBSPageContent extends VPageContent {
 
     _showProposeTheme(themeSpec, byHistory, historize) {
         vContributeTitle.setTitle("Propose A Theme");
-        vThemeEditorPage.setTheme(themeSpec);
+        vThemeEditor.theme = themeSpec;
         return this._changePage(vContributeTitle, vThemeEditorPage, byHistory, historize);
     }
 
     showProposeTheme(theme = null) {
         let specification = theme ? theme.specification:{
-            ref: "theme1", title: "Bla bla bla", img: `../images/site/themes/rules.png`,
-            description: "bla bla bla"
+            ref: "theme1", title: "", img: `../images/site/themes/rules.png`,
+            description: ""
         };
         this._showProposeTheme(specification,false, ()=>
             historize("propose-theme", `window.vPageContent._showProposeTheme(${JSON.stringify(specification)}, true);`)
@@ -1522,20 +1492,20 @@ class CBSPageContent extends VPageContent {
         );
     }
 
-    _showProposeMap(boardSpec, byHistory, historize) {
+    _showProposeBoard(boardSpec, byHistory, historize) {
         vContributeTitle.setTitle("Propose A Board");
         vBoardEditor.board = boardSpec;
         return this._changePage(vContributeTitle, vBoardEditorPage, byHistory, historize);
     }
 
-    showProposeMap(map = null) {
-        let specification = map ? map.specification: {
-            ref: "map",
-            title: "bla bla",
-            description: "bla bla"
+    showProposeBoard(board = null) {
+        let specification = board ? board.specification: {
+            ref: "board",
+            title: "",
+            description: ""
         };
-        this._showProposeMap(specification, false, ()=>
-            historize("propose-map", `window.vPageContent._showProposeMap(${JSON.stringify(specification)}, true);`)
+        this._showProposeBoard(specification, false, ()=>
+            historize("propose-board", `window.vPageContent._showProposeBoard(${JSON.stringify(specification)}, true);`)
         );
     }
 
@@ -1636,17 +1606,31 @@ class CBSPageContent extends VPageContent {
 
 }
 
-window.notices = {};
-
 sendGet("/api/notice/published",
     (text, status) => {
+        window.notices = {};
         let notices = JSON.parse(text);
         for (let notice of notices) {
             window.notices[notice.category] = notice;
         }
     },
     (text, status) => {
-        window.alert("Error");
+        window.alert("Error: "+text);
+    }
+)
+
+sendGet("/api/presentation/published",
+    (text, status) => {
+        window.presentations = {};
+        let presentations = JSON.parse(text);
+        for (let presentation of presentations) {
+            window.presentations[presentation.category] = presentation;
+        }
+        vBoardEditorPage.description = window.presentations["edit-board-presentation"].text;
+        vThemeEditorPage.description = window.presentations["edit-theme-presentation"].text;
+    },
+    (text, status) => {
+        window.alert("Error: "+text);
     }
 )
 

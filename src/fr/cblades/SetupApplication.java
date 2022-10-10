@@ -116,6 +116,7 @@ public class SetupApplication {
             if (data.getResultList(em, "select p from Presentation p where p.category=:category", "category", category).isEmpty()) {
                 Presentation presentation = new Presentation()
                     .setCategory(category)
+                    .setText(text)
                     .setPresentationVersion("0.1").setPublished(true);
                 data.persist(em, presentation);
             }
@@ -139,7 +140,10 @@ public class SetupApplication {
     public static void declareStandardPresentations() {
         DataSunbeam data = new DataSunbeam() {};
         data.inTransaction(em->{
+            declareStandardPresentation(data, "edit-theme-presentation", "Presentation of theme edition.");
+            declareStandardPresentation(data, "edit-article-presentation", "Presentation of article edition.");
             declareStandardPresentation(data, "edit-board-presentation", "Presentation of board edition.");
+            declareStandardPresentation(data, "edit-scenario-presentation", "Presentation of scenario edition.");
         });
     }
 }

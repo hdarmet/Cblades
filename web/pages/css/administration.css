@@ -161,6 +161,26 @@
     max-width: 800px;
 }
 
+.presentation-editor .splitter-left-pane {
+    min-width: 550px;
+}
+
+.presentation-display-container {
+    height: 650px;
+    display: flex;
+    justify-content: center;
+}
+
+.presentation-container {
+    margin: auto;
+    min-width: 500px;
+    max-width: 800px;
+}
+
+.presentation-editor-page .form-input-textarea {
+    height: 350px;
+}
+
 .new-version {
     display: flex;
 }

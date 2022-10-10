@@ -21,6 +21,9 @@ import {
 import {
     CBSGallery
 } from "./cbs-container.js";
+import {
+    CBSFormContainer
+} from "./cbs-widgets.js";
 
 export class CBSBoard extends Vitamin(Div) {
 
@@ -277,44 +280,6 @@ export var vBoardsGallery = new CBSGallery({ref:"boards", kind: "gallery-maps"})
 export var vBoardEditor = new CBSBoardEditor({
     ref:"board-editor"
 });
-
-var paragrpahText = `
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-`;
-
-export class CBSFormContainer extends VFormContainer {
-
-    constructor({ref, kind=ref, editor}) {
-        super({ref});
-        this._description = new Div().setText(paragrpahText).addClass("description");
-        this._editor = editor;
-        this.addClass(kind)
-            .add(this._description)
-            .add(this._editor);
-    }
-
-    get description() {
-        return this._description;
-    }
-
-    set description(description) {
-        this._description = new Div().setText(description);
-    }
-
-    canLeave = function(leave, notLeave) {
-        return this._editor.canLeave(leave, notLeave);
-    }
-
-}
 
 export var vBoardEditorPage = new CBSFormContainer({ref:"board-editor-page", editor:vBoardEditor});
 

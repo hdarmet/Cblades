@@ -92,16 +92,28 @@ export var vMenu = new VMainMenu({ref:"menu"})
                 window.vPageContent.showUsagePolicyEdition();
             }
         })
-        .addMenu({ref:"your-contributions-menu", label:"Vos contributions", action:()=>{
+        .addMenu({ref:"your-contributions-menu", kind:"menu-separator", label:"Vos contributions", action:()=>{
                 window.vPageContent.showYourContributionsEdition();
             }
         })
-        .addMenu({ref:"forgot-password-menu", label:"Mail de renouvellement de Mot de Passe", action:()=>{
+        .addMenu({ref:"forgot-password-menu", kind:"menu-separator", label:"Mail de renouvellement de Mot de Passe", action:()=>{
                 window.vPageContent.showForgotPasswordMailEdition();
+            }
+        })
+        .addMenu({ref:"theme-presentation-menu", label:"Presentation de l'édition de thèmes", action:()=>{
+                window.vPageContent.showEditThemePresentation();
+            }
+        })
+        .addMenu({ref:"article-presentation-menu", label:"Presentation de l'édition d'articles", action:()=>{
+                window.vPageContent.showEditArticlePresentation();
             }
         })
         .addMenu({ref:"board-presentation-menu", label:"Presentation de l'édition de cartes", action:()=>{
                 window.vPageContent.showEditBoardPresentation();
+            }
+        })
+        .addMenu({ref:"scenario-presentation-menu", label:"Presentation de l'édition de scenarii", action:()=>{
+                window.vPageContent.showEditScenarioPresentation();
             }
         })
     })
@@ -441,6 +453,28 @@ export class CBAPageContent extends VPageContent {
         );
     }
 
+    _showEditThemePresentation(byHistory, historize) {
+        editPresentation.call(this,"Presentation de l'édition de thèmes", "edit-theme-presentation", byHistory, historize);
+    }
+
+    showEditThemePresentation() {
+        this._showEditThemePresentation(false, ()=> {
+                historize("edit-theme-presentation", "vPageContent._showEditThemePresentation(true);")
+            }
+        );
+    }
+
+    _showEditArticlePresentation(byHistory, historize) {
+        editPresentation.call(this,"Presentation de l'édition d'articles", "edit-article-presentation", byHistory, historize);
+    }
+
+    showEditArticlePresentation() {
+        this._showEditArticlePresentation(false, ()=> {
+                historize("edit-article-presentation", "vPageContent._showEditArticlePresentation(true);")
+            }
+        );
+    }
+
     _showEditBoardPresentation(byHistory, historize) {
         editPresentation.call(this,"Presentation de l'édition de cartes", "edit-board-presentation", byHistory, historize);
     }
@@ -448,6 +482,17 @@ export class CBAPageContent extends VPageContent {
     showEditBoardPresentation() {
         this._showEditBoardPresentation(false, ()=> {
                 historize("edit-board-presentation", "vPageContent._showEditBoardPresentation(true);")
+            }
+        );
+    }
+
+    _showEditScenarioPresentation(byHistory, historize) {
+        editPresentation.call(this,"Presentation de l'édition de scénario", "edit-scenario-presentation", byHistory, historize);
+    }
+
+    showEditScenarioPresentation() {
+        this._showEditScenarioPresentation(false, ()=> {
+                historize("edit-scenario-presentation", "vPageContent._showEditScenarioPresentation(true);")
             }
         );
     }

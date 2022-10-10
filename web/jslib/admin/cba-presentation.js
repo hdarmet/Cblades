@@ -242,6 +242,12 @@ export class CBAPresentationEditorPage extends VContainer {
         return this;
     }
 
+    removeVersion(presentation) {
+        this._presentations.remove(presentation);
+        this.setVersions();
+        return this;
+    }
+
     setVersions() {
         let versions = this._presentations.map(presentation => {
             return {
@@ -376,6 +382,7 @@ export function editPresentation(title, category, byHistory, historize) {
                         deletePresentation(presentation,
                         (text, status) => {
                             vPresentationEditorPage.editPublishedPresentation();
+                            vPresentationEditorPage.removeVersion(presentation);
                             showMessage(successMessage);
                         },
                         (text, status) => {

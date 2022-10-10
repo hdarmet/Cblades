@@ -41,7 +41,7 @@ export class CBATheme extends Vitamin(Div) {
         this._header = new Div().addClass("theme-header");
         this.add(this._header);
         this._illustration = new VImage({ref:this.ref+"-illustration", kind:"theme-illustration", img:illustration||"../images/site/themes/default-theme.png"});
-        this._illustration && this._header.add(this._illustration);
+        this._header.add(this._illustration);
         this._title = new P(title).addClass("theme-title");
         this._header.add(this._title);
         this._description = new P(description).addClass("theme-description");

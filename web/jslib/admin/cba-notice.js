@@ -271,6 +271,12 @@ export class CBANoticeEditorPage extends VContainer {
         return this;
     }
 
+    removeVersion(notice) {
+        this._notices.remove(notice);
+        this.setVersions();
+        return this;
+    }
+
     setVersions() {
         let versions = this._notices.map(notice => {
             return {
@@ -406,6 +412,7 @@ export function editNotice(title, category, byHistory, historize) {
                         deleteNotice(notice,
                         (text, status) => {
                             vNoticeEditorPage.editPublishedNotice();
+                            vNoticeEditorPage.removeVersion(notice);
                             showMessage(successMessage);
                         },
                         (text, status) => {

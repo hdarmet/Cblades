@@ -81,7 +81,7 @@ public class FakeData {
         });
         data.inTransaction(em->{
             Presentation presentation = new Presentation()
-                .setCategory("edit-board-presentation").setText("Reniew one more time %s")
+                .setCategory("edit-board-presentation").setText("Another text to describe board contribution.")
                 .setPresentationVersion("0.2").setPublished(false);
             data.persist(em, presentation);
         });
