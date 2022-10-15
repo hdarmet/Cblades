@@ -10,6 +10,13 @@ import {
     requestServer
 } from "./request.js";
 
+Array.prototype.add = function(element) {
+    let index = this.indexOf(element);
+    if (index<0) {
+        this.push(element);
+    }
+    return index;
+}
 Array.prototype.remove = function(element) {
     let index = this.indexOf(element);
     if (index>=0) {

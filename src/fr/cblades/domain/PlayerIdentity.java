@@ -1,6 +1,8 @@
 package fr.cblades.domain;
 
+import org.summer.controller.SummerControllerException;
 import org.summer.data.BaseEntity;
+import org.summer.data.SummerNotFoundException;
 
 import javax.persistence.*;
 
@@ -30,7 +32,7 @@ public class PlayerIdentity extends BaseEntity {
             return (PlayerIdentity)query.getSingleResult();
         }
         catch (NoResultException enf) {
-            return null;
+            throw new SummerNotFoundException("PlayerIdentity of name %s not found", name);
         }
     }
 

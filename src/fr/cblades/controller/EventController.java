@@ -14,6 +14,7 @@ import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
+import org.summer.data.SummerNotFoundException;
 import org.summer.data.Synchronizer;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
@@ -216,38 +217,32 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return event;
 	}
 
-	Account findTarget(EntityManager em, long id) {
-		Account account = find(em, Account.class, id);
-		if (account==null) {
-			throw new SummerControllerException(404,
-				"Unknown Account with id %d", id
-			);
-		}
-		return account;
-	}
-
 	Event writeToEvent(EntityManager em, Json json, Event event) {
-		Verifier verifier = verify(json)
-			.checkRequired("date")
-			.checkRequired("title")
-			.checkMinSize("title", 2)
-			.checkMaxSize("title", 19995)
-			.checkRequired("description")
-			.checkMinSize("description", 2)
-			.checkMaxSize("description", 19995)
-			.checkMinSize("illustration", 2)
-			.checkMaxSize("illustration", 100)
-			.check("status", EventStatus.byLabels().keySet());
-		verifier.ensure();
-		Synchronizer synchronizer = sync(json, event)
-			.write("version")
-			.writeDate("date")
-			.write("title")
-			.write("description")
-			.write("illustration")
-			.write("status", label->EventStatus.byLabels().get(label))
-			.writeRef("target.id", "target", (Integer id)-> this.findTarget(em, id));
-		return event;
+		try {
+			Verifier verifier = verify(json)
+				.checkRequired("date")
+				.checkRequired("title")
+				.checkMinSize("title", 2)
+				.checkMaxSize("title", 19995)
+				.checkRequired("description")
+				.checkMinSize("description", 2)
+				.checkMaxSize("description", 19995)
+				.checkMinSize("illustration", 2)
+				.checkMaxSize("illustration", 100)
+				.check("status", EventStatus.byLabels().keySet());
+			verifier.ensure();
+			Synchronizer synchronizer = sync(json, event)
+				.write("version")
+				.writeDate("date")
+				.write("title")
+				.write("description")
+				.write("illustration")
+				.write("status", label -> EventStatus.byLabels().get(label))
+				.writeRef("target.id", "target", (Integer id) -> Account.find(em, id));
+			return event;
+		} catch (SummerNotFoundException snfe) {
+			throw new SummerControllerException(404, snfe.getMessage());
+		}
 	}
 
 	Json readFromEvent(Event event) {

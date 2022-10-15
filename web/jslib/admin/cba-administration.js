@@ -46,6 +46,9 @@ import {
 import {
     editPresentation
 } from "./cba-presentation.js";
+import {
+    vArticleList
+} from "./cba-article.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -72,6 +75,10 @@ export var vMenu = new VMainMenu({ref:"menu"})
         })
         .addMenu({ref:"theme-menu", label:"Themes", action:()=>{
                 window.vPageContent.showThemeList();
+            }
+        })
+        .addMenu({ref:"article-menu", label:"Articles", action:()=>{
+                window.vPageContent.showArticleList();
             }
         })
     })
@@ -122,7 +129,6 @@ export var vMenu = new VMainMenu({ref:"menu"})
             if (VLoginHandler.connection) {
                 VLoginHandler.logout();
             } else {
-
                 VLoginHandler.login();
             }
         }
@@ -383,6 +389,18 @@ export class CBAPageContent extends VPageContent {
         vThemeList.loadThemes();
         this._showThemeList(false, ()=> {
                 historize("theme", "vPageContent._showThemeList(true);")
+            }
+        );
+    }
+
+    _showArticleList(byHistory, historize) {
+        return this._changePage(null, vArticleList, byHistory, historize);
+    }
+
+    showArticleList() {
+        vArticleList.loadArticles();
+        this._showArticleList(false, ()=> {
+                historize("article", "vPageContent._showArticleList(true);")
             }
         );
     }

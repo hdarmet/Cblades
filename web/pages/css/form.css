@@ -315,6 +315,70 @@
     color: #dddddd;
 }
 
+.form-dropdown-list {
+    display: inline-block;
+    font-family: Arial, Helvetica, sans-serif;
+    width: 100%;
+}
+
+.form-dropdown-list .anchor {
+    position: relative;
+    cursor: pointer;
+    display: inline-block;
+    padding: 5px 55px 5px 5px;
+    width: calc(100% - 60px);
+    border: 1px solid #ccc;
+}
+
+.form-dropdown-list .anchor:after {
+    position: absolute;
+    content: "";
+    border-left: 2px solid black;
+    border-top: 2px solid black;
+    padding: 3px;
+    right: 10px;
+    top: 30%;
+    -moz-transform: rotate(-135deg);
+    -ms-transform: rotate(-135deg);
+    -o-transform: rotate(-135deg);
+    -webkit-transform: rotate(-135deg);
+    transform: rotate(-135deg);
+}
+
+.form-dropdown-list .anchor:after:hover {
+    opacity: 0.5;
+}
+
+.form-dropdown-list ul.items {
+    position: absolute;
+    padding: 5px 5px 5px 5px;
+    display: none;
+    margin: 0;
+    border: 1px solid #ccc;
+    border-top: none;
+    background-color: #f9f9f9;
+}
+
+.form-dropdown-list ul.items li {
+    list-style: none;
+}
+
+.form-dropdown-list ul.items li:hover {
+    background-color: sandybrown;
+    cursor: pointer;
+}
+
+.form-dropdown-list .visible.items {
+    display: block;
+}
+
+
+
+
+
+
+
+
 /* The switch - the box around the slider */
 .form-toggle {
     position: relative;

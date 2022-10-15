@@ -96,7 +96,7 @@ export class CBATheme extends Vitamin(Div) {
 
 export class CBAEditThemePane extends Undoable(VSplitterPanel) {
 
-    constructor({ref, kind, create, theme, accept, verify, onEdit}) {
+    constructor({ref, kind, theme, accept, verify}) {
         super({ref});
         this.addClass(kind);
         this._category = new VSelectField({
@@ -220,12 +220,6 @@ export class CBAEditThemePane extends Undoable(VSplitterPanel) {
         }
         this._themeView = new CBATheme(theme);
         this.addOnLeft(this._themeView);
-        this._editTheme();
-        this._clean();
-        this._memorize();
-    }
-
-    _editTheme() {
         this._category.value = this._theme.category || "game";
         this._status.value = this._theme.status || "prp";
         this._title.value = this._theme.title || "";
@@ -236,6 +230,8 @@ export class CBAEditThemePane extends Undoable(VSplitterPanel) {
             comments: this._theme.comments || [],
             newComment: ""
         }
+        this._clean();
+        this._memorize();
     }
 
     _register() {
@@ -578,8 +574,8 @@ export function loadThemes(pageIndex, search, update) {
                 pageCount: Math.ceil(response.count / response.pageSize),
                 currentPage: response.page,
                 themeCount: response.count,
-                firstEvent: response.page * response.pageSize + 1,
-                lastEvent: response.page * response.pageSize + response.themes.length,
+                firstTheme: response.page * response.pageSize + 1,
+                lastTheme: response.page * response.pageSize + response.themes.length,
                 themes: response.themes
             });
         },

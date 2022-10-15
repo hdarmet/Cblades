@@ -1,0 +1,238 @@
+
+
+.articles-about-game .search {
+    --extends: ex-info-background-color;
+}
+
+.articles-about-game .search-input-text {
+    --extends: ex-search-input-text;
+}
+
+.articles-about-game-title.header-container {
+    --extends: ex-info-header-container;
+}
+
+.articles-about-game-title .header-left-image {
+    --extends: ex-page-header-left-image;
+}
+
+.articles-about-game-title .header-right-image {
+    --extends: ex-page-header-right-image;
+}
+
+.articles-about-game-title .header-text {
+    --extends: ex-header-text
+}
+
+.articles-about-game-content {
+    --extends: ex-record-content, ex-info-background-color;
+}
+
+.articles-about-game-content .article-title {
+    --extends: ex-record-title;
+}
+
+.articles-about-game-content .paragraph-title {
+    --extends: ex-paragraph-title;
+}
+
+.articles-about-game-content .article {
+    --extends: ex-record-container, ex-record-down-clip;
+}
+
+.articles-about-game-content .article .show-votes {
+    display: inline-block;
+    vertical-align: middle;
+    float: right;
+}
+
+.articles-about-game-content .article .likes-icon {
+    --extends: ex-likes-icon;
+}
+
+.articles-about-game-content .article .likes-value {
+    --extends: ex-vote-values;
+}
+
+.articles-about-game-content .article .dislikes-icon {
+    --extends: ex-dislikes-icon;
+}
+
+.articles-about-game-content .article .dislikes-value {
+    --extends: ex-vote-values;
+}
+
+.articles-about-game-content .paragraph::after {
+    --extends: ex-record-end-mask;
+}
+
+.articles-about-game-content .paragraph-image {
+    --extends: ex-paragraph-image;
+}
+
+.articles-about-game-content .image-on-left .paragraph-image {
+    --extends: ex-paragraph-image-on-left;
+}
+
+.articles-about-game-content .image-on-right .paragraph-image {
+    --extends: ex-paragraph-image-on-right;
+}
+
+.articles-about-game-content .paragraph-container {
+    --extends: ex-paragraph-container;
+}
+
+.article-editor .article {
+    --extends: ex-record-background;
+    margin-right: 15px;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.article-editor .article-title {
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 2em;
+    color: #000000;
+    text-shadow: 1px 1px 0 #ffffff, -1px -1px 0 #ffffff, -1px 1px 0.1em #ffffff, 1px -1px 0.1em #ffffff, 1px -1px 0.2em #ffffff, -1px 1px 0.2em #ffffff, -1px 1px 0.3em #ffffff, 1px -1px 0.3em #ffffff;
+    margin-block-start: 15px;
+    margin-block-end: 15px;
+}
+
+.article-editor .paragraph-title {
+    --extends: ex-paragraph-title;
+}
+
+.article-editor .paragraph-image {
+    display: block;
+    margin: 10px;
+}
+
+.article-editor .image-on-left .paragraph-image {
+    --extends: ex-paragraph-image-on-left;
+    width: 50%;
+}
+
+.article-editor .image-on-center .paragraph-image {
+    width: 95%;
+}
+
+.article-editor .image-on-right .paragraph-image {
+    --extends: ex-paragraph-image-on-right;
+    width: 50%;
+}
+
+.article-editor-page .description {
+    --extends: ex-info-page-description;
+}
+
+.article-editor {
+    --extends: ex-info-container;
+}
+
+.article-editor .splitter-right-pane {
+    padding-right: 30px;
+}
+
+.article-editor .file-loader {
+    --extends: ex-file-loader;
+    width: 100%;
+    max-width: 600px;
+}
+
+.article-editor .file-loader.with-image {
+    overflow: auto;
+    display: table-cell;
+}
+
+.article-editor .file-loader img {
+    width: 100%;
+    display: grid;
+}
+
+.article-editor .editor-toolbar {
+    --extends: ex-editor-toolbar;
+}
+
+.article-editor .form-input-text, .article-editor .form-input-select, .article-editor .form-input-textarea {
+    --extends: ex-input-text;
+}
+
+.article-editor .form-input-textarea {
+    height: 300px;
+}
+
+.article-editor .form-input-textarea::-webkit-scrollbar {
+    --extends: ex-scrollbar
+}
+
+.article-editor .form-input-textarea::-webkit-scrollbar-thumb {
+    --extends: ex-scrollbar-thumb
+}
+
+.article-editor .paragraph {
+    overflow: auto;
+    cursor: pointer;
+}
+
+.article-editor .embed-paragraph {
+    position: relative;
+}
+
+.article-editor .embed-paragraph.selected {
+    border: solid 2px red;
+}
+
+.article-editor .form-command {
+    --extends: ex-command-disappear;
+    position: absolute;
+    margin: auto;
+    text-align: center;
+}
+
+.article-editor .selected:hover .form-command {
+    --extends: ex-command-appear;
+}
+
+.article-editor .delete-command {;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+.article-editor .goup-command {
+    left: 0;
+    right: 50%;
+    text-align: center;
+    top: -16px;
+}
+
+.article-editor .godown-command {
+    left: 0;
+    right: 50%;
+    text-align: center;
+    bottom: -16px;
+}
+
+.article-editor .insert-before-command {
+    left: 50%;
+    right: 0;
+    text-align: center;
+    top: -16px;
+}
+
+.article-editor .insert-after-command {
+    left: 50%;
+    right: 0;
+    text-align: center;
+    bottom: -16px;
+}
+
+.article-editor .selected:hover .form-command {
+    --extends: ex-command-appear;
+}
+
+.article-editor  .form-command.vitamin-active:hover {
+    opacity: 0.8;
+}
+

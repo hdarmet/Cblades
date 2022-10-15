@@ -24,11 +24,11 @@ public class ReflectUtil {
 			getters = Arrays.asList(klass.getMethods()).stream()
 			.filter(method->{
 				return method.getParameterCount()==0 && (
-						(method.getName().length()>3 && method.getName().startsWith("get") 
-								&& method.getReturnType()!=Void.TYPE) ||
-						(method.getName().length()>2 && method.getName().startsWith("is")
-						&& (method.getReturnType()!=Boolean.class || method.getReturnType()!=Boolean.TYPE))
-					);
+					(method.getName().length()>3 && method.getName().startsWith("get")
+							&& method.getReturnType()!=Void.TYPE) ||
+					(method.getName().length()>2 && method.getName().startsWith("is")
+					&& (method.getReturnType()!=Boolean.class || method.getReturnType()!=Boolean.TYPE))
+				);
 			})
 			.collect(Collectors.toMap(method->canonize(method.getName(), "get", "is"), method->method));
 			ReflectUtil.getters.put(klass, getters);
@@ -44,8 +44,8 @@ public class ReflectUtil {
 			setters = Arrays.asList(klass.getMethods()).stream()
 			.filter(method->{
 				return method.getParameterCount()==1 && (
-						method.getName().length()>3 && method.getName().startsWith("set")
-					);
+					method.getName().length()>3 && method.getName().startsWith("set")
+				);
 			})
 			.collect(Collectors.toMap(method->canonize(method.getName(), "set"), method->method));
 			ReflectUtil.setters.put(klass, setters);
@@ -144,6 +144,7 @@ public class ReflectUtil {
 		for (int index=0; index<paths.length-1; index++) {
 			Field field = getField(thisEntity.getClass(), paths[index]);
 			entity = get(entity, field);
+			if (entity==null) return null;
 		}
 		Field field = getField(entity.getClass(), paths[paths.length-1]);
 		return get(entity, field);
@@ -155,6 +156,7 @@ public class ReflectUtil {
 		for (int index=0; index<paths.length-1; index++) {
 			Field field = getField(thisEntity.getClass(), paths[index]);
 			entity = get(entity, field);
+			if (entity==null) return;
 		}
 		Field field = getField(entity.getClass(), paths[paths.length-1]);
 		set(thisEntity, field, value);

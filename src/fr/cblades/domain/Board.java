@@ -1,5 +1,6 @@
 package fr.cblades.domain;
 
+import org.summer.SummerException;
 import org.summer.data.BaseEntity;
 
 import javax.persistence.*;
@@ -107,7 +108,9 @@ public class Board extends BaseEntity {
             return (Board)query.getSingleResult();
         }
         catch (NoResultException enf) {
-            return null;
+            throw new SummerException(
+                String.format("Unknown Board with path %s", path)
+            );
         }
     }
 

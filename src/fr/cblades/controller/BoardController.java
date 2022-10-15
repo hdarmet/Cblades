@@ -13,6 +13,7 @@ import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.data.DataSunbeam;
+import org.summer.data.SummerNotFoundException;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
@@ -68,7 +69,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			ifAuthorized(
 				user->{
 					try {
-						Account author = findAuthor(em, user);
+						Account author = Account.find(em, user);
 						addComment(request, newBoard, author);
 						newBoard.setStatus(BoardStatus.PROPOSED);
 						newBoard.setAuthor(author);
@@ -96,7 +97,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			ifAuthorized(
 				user -> {
 					try {
-						Account author = findAuthor(em, user);
+						Account author = Account.find(em, user);
 						writeToProposedBoard(request, board);
 						addComment(request, board, author);
 						storeBoardImages(params, board);
@@ -104,6 +105,8 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						result.set(readFromBoard(board));
 					} catch (PersistenceException pe) {
 						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+					} catch (SummerNotFoundException snfe) {
+						throw new SummerControllerException(404, snfe.getMessage());
 					}
 				},
 				verifyIfAdminOrOwner(board)
@@ -338,35 +341,39 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 
 	Board writeToBoard(EntityManager em, Json json, Board board) {
-		verify(json)
-			.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 20)
-			.checkPattern("name", "[\\d\\s\\w]+")
-			.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
-			.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 200)
-			.checkRequired("icon").checkMinSize("icon", 2).checkMaxSize("icon", 200)
-			.check("status",BoardStatus.byLabels().keySet())
-			.each("comments", cJson->verify(cJson)
-				.checkRequired("version")
-				.checkRequired("date")
-				.checkRequired("text")
-				.checkMinSize("text", 2)
-				.checkMaxSize("text", 19995)
-			)
-			.ensure();
-		sync(json, board)
-			.write("version")
-			.write("name")
-			.write("description")
-			.write("path")
-			.write("icon")
-			.write("status", label->BoardStatus.byLabels().get(label))
-			.writeRef("author.id", "author", (Integer id)-> this.findAuthor(em, id))
-			.syncEach("comments", (cJson, comment)->sync(cJson, comment)
-				.write("version")
-				.writeDate("date")
-				.write("text")
-			);
-		return board;
+		try {
+			verify(json)
+					.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 20)
+					.checkPattern("name", "[\\d\\s\\w]+")
+					.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
+					.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 200)
+					.checkRequired("icon").checkMinSize("icon", 2).checkMaxSize("icon", 200)
+					.check("status", BoardStatus.byLabels().keySet())
+					.each("comments", cJson -> verify(cJson)
+							.checkRequired("version")
+							.checkRequired("date")
+							.checkRequired("text")
+							.checkMinSize("text", 2)
+							.checkMaxSize("text", 19995)
+					)
+					.ensure();
+			sync(json, board)
+					.write("version")
+					.write("name")
+					.write("description")
+					.write("path")
+					.write("icon")
+					.write("status", label -> BoardStatus.byLabels().get(label))
+					.writeRef("author.id", "author", (Integer id) -> Account.find(em, id))
+					.syncEach("comments", (cJson, comment) -> sync(cJson, comment)
+							.write("version")
+							.writeDate("date")
+							.write("text")
+					);
+			return board;
+		} catch (SummerNotFoundException snfe) {
+			throw new SummerControllerException(404, snfe.getMessage());
+		}
 	}
 
 	Board writeToBoardHexes(Json json, Board board) {
@@ -471,26 +478,6 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				.read("text")
 			);
 		return json;
-	}
-
-	Account findAuthor(EntityManager em, long id) {
-		Account account = find(em, Account.class, id);
-		if (account==null) {
-			throw new SummerControllerException(404,
-					"Unknown Account with id %d", id
-			);
-		}
-		return account;
-	}
-
-	Account findAuthor(EntityManager em, String user) {
-		Account account = Login.findAccountByLogin(em, user);
-		if (account==null) {
-			throw new SummerControllerException(404,
-				"Unknown Account with Login name %s", user
-			);
-		}
-		return account;
 	}
 
 	Board findBoard(EntityManager em, long id) {

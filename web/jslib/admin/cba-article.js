@@ -1,0 +1,1000 @@
+'use strict';
+
+import {
+    VContainer,
+    VSplitterPanel,
+    VTable
+} from "../vitamin/vcontainer.js";
+import {
+    Div, Img, P, Select, sendGet, sendPost, Span
+} from "../vitamin/components.js";
+import {
+    Undoable, VImage,
+    Vitamin, VMessageHandler, VModal, VSearch
+} from "../vitamin/vitamins.js";
+import {
+    mandatory, range,
+    VButton,
+    VButtons, VCommand, VDropdownListField,
+    VFileLoader,
+    VFileLoaderField,
+    VInputField, VInputTextArea, VRef, VSelectField, VSwitch
+} from "../vitamin/vforms.js";
+import {
+    showMessage
+} from "../vitamin/vpage.js";
+import {
+    CBAConfirm
+} from "./cba-administration.js";
+import {
+    CBAUserSelector, loadUsers
+} from "./cba-user.js";
+import {
+    CBAEditComments
+} from "./cba-comment.js";
+
+export class CBAParagraph extends Vitamin(Div) {
+
+    constructor({ref, version, illustration, illustrationFile, illustrationPosition, title, text, action}) {
+        super({ref});
+        this.addClass("embed-paragraph");
+        this._embed = new Div();
+        this.add(this._embed);
+        this._embed.addClass("paragraph");
+        this.illustrationPosition = illustrationPosition;
+        if (illustration) {
+            this._illustration = new VImage({ref:ref+"-image", kind:"paragraph-image", img:illustration});
+        }
+        if (this._illustration) this._embed.add(this._illustration);
+        this._content = new Div().addClass("paragraph-container");
+        this._embed.add(this._content);
+        this._title = new P(title).addClass("paragraph-title");
+        this._content.add(this._title);
+        this._text = new P(text).addClass("paragraph-text");
+        this._content.add(this._text);
+        this._illustrationFile = illustrationFile;
+        this._version = version;
+        this.action=action;
+    }
+
+    set action(action) {
+        action && this.onEvent("click", action);
+    }
+
+    get specification() {
+        return {
+            ref: this.ref.ref,
+            version: this._version,
+            illustration: this._illustration ? this._illustration.src : null,
+            illustrationPosition: this._illustrationPosition,
+            title: this._title.getText(),
+            text: this._text.getText()
+        };
+    }
+
+    get title() {
+        return this._title.getText();
+    }
+
+    set title(title) {
+        this._title.setText(title);
+    }
+
+    get text() {
+        return this._text.getText();
+    }
+
+    set text(text) {
+        this._text.setText(text);
+    }
+
+    get illustration() {
+        return this._illustration ? this._illustration.src : null;
+    }
+
+    get illustrationFile() {
+        return this._illustrationFile;
+    }
+
+    set illustrationFile(illustrationFile) {
+        this._illustrationFile = illustrationFile;
+    }
+
+    set illustration(illustration) {
+        if (this._illustration) {
+            this._illustration.setSrc(illustration);
+        }
+        else {
+            this._illustration = new VImage({ref:this.ref+"-image", kind:"paragraph-image", img:illustration});
+            this._embed.insert(this._illustration, this._content);
+        }
+    }
+
+    get illustrationPosition() {
+        return this._illustrationPosition;
+    }
+
+    set illustrationPosition(illustrationPosition) {
+        if (this._illustrationPosition) {
+            this.removeClass(`image-on-${this._illustrationPosition}`);
+        }
+        this._illustrationPosition = illustrationPosition;
+        if (this._illustrationPosition) {
+            this.addClass(`image-on-${this._illustrationPosition}`);
+        }
+    }
+}
+
+export class CBAArticle extends Vitamin(Div) {
+
+    constructor({kind, action, ...article}) {
+        super({ref:"article-"+article.id});
+        this.addClass(kind);
+        this._title = new P(article.title).addClass("article-title");
+        this.add(this._title);
+        this._paragraphs=[];
+        if (article.paragraphs) {
+            for (let paragraphSpec of article.paragraphs) {
+                this.createParagraph(paragraphSpec);
+            }
+        }
+        this.onEvent("click", event=>{
+            action && action(this)
+        });
+    }
+
+    createParagraph(paragraphSpec) {
+        let paragraph = new CBAParagraph(paragraphSpec);
+        this.add(paragraph);
+        this._paragraphs.push(paragraph);
+        return paragraph;
+    }
+
+    insertParagraph(paragraphSpec, before) {
+        let index = this._paragraphs.indexOf(before);
+        let paragraph = new CBAParagraph(paragraphSpec);
+        this._paragraphs.insert(index, paragraph);
+        this.insert(paragraph, before);
+        return paragraph;
+    }
+
+    removeParagraph(index) {
+        let paragraph = this._paragraphs[index];
+        this.remove(paragraph);
+        this._paragraphs.splice(index, 1);
+        return paragraph;
+    }
+
+    exchangeParagraphs(paragraph) {
+        let index = this._paragraphs.indexOf(paragraph);
+        this.remove(paragraph);
+        this.insert(paragraph, this._paragraphs[index-1]);
+        this._paragraphs.splice(index, 1);
+        this._paragraphs.splice(index-1, 0, paragraph);
+    }
+
+    getParagraph(ref) {
+        for (let paragraph of this._paragraphs) {
+            if (paragraph.ref.ref === ref) return paragraph;
+        }
+        return null;
+    }
+
+    get paragraphs() {
+        return this._paragraphs;
+    }
+
+    get title() {
+        return this._title.getText();
+    }
+
+    set title(title) {
+        this._title.setText(title);
+    }
+
+    get specification() {
+        return {
+            title: this._title.getText(),
+            paragraphs: this._paragraphs.map((paragraph, ordinal)=>{
+                return {
+                    ordinal,
+                    ...paragraph.specification
+                }
+            }),
+        };
+    }
+
+    set specification(specification) {
+        this._title.setText(specification.article.title);
+        for (let paragraph of this._paragraphs) {
+            this.remove(paragraph);
+        }
+        this._paragraphs = [];
+        for (let paragraphSpec of specification.article.paragraphs) {
+            this.createParagraph(paragraphSpec);
+        }
+    }
+}
+
+export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
+
+    constructor({ref, kind, article, accept, verify}) {
+        super({ref});
+        this.addClass(kind);
+        this._newParagraphSpecs = {
+            version: 0,
+            illustrationPosition: "right",
+            title: "Paragraph title",
+            text: "Paragraph text"
+        };
+        if (!article.paragraphs) {
+            article.paragraphs = [
+                structuredClone(this._newParagraphSpecs)
+            ]
+        }
+        this._themes = new VDropdownListField({ref:"article-theme", label:"Themes",
+            validate: mandatory({}),
+            options: [
+                {ref: "theme-rules", value: "Rules", label:"Rule"},
+                {ref: "theme-strategy", value: "Strategy", label:"Stories And Legends"},
+                {ref: "theme-magic", value: "Magic", label:"Magic"},
+                {ref: "theme-siege", value: "Siege", label:"Siege"}
+            ],
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this._status = new VSelectField({
+            ref: "article-status", label: "Status",
+            validate: mandatory({}),
+            options: [
+                {value: "live", text: "Live"},
+                {value: "pnd", text: "Pending"},
+                {value: "prp", text: "Proposed"}
+            ],
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        let nameContainer = new VContainer({columns:2}).addField({field:this._themes}).addField({field:this._status});
+        this.addOnRight(nameContainer);
+        this._articleTitle = new VInputField({
+            ref:"article-title-input", label:"Article Title",
+            validate: mandatory({validate: range({min:2, max:200})}),
+            onInput: event=>{
+                this._articleView.title = this._articleTitle.value;
+            },
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this.addOnRight(this._articleTitle);
+        this._paragraphTitle = new VInputField({
+            ref:"paragraph-title-input", label:"Paragraph Title",
+            validate: mandatory({validate: range({min:2, max:200})}),
+            onInput: event=>{
+                this._paragraphView.title = this._paragraphTitle.value;
+            },
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this.addOnRight(this._paragraphTitle);
+        this._illustration = new VFileLoaderField({
+            ref:"paragraph-image", label:"Image",
+            validate: mandatory({}),
+            accept, verify,
+            onInput: event=>{
+                this._paragraphView.illustration = this._illustration.imageSrc;
+                if (this._illustration.files && this._illustration.files.length>0) {
+                    this._paragraphView.illustrationFile = this._illustration.files[0];
+                }
+            },
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this.addOnRight(this._illustration);
+        this._illustrationPosition = new VSwitch({ref:"paragraph-image-pos", kind:"paragraph-position",
+            options:[
+                {title: "left", value: "left"},
+                {title:"center", value:"center"},
+                {title:"right", value:"right"}
+            ],
+            onInput:event=>{
+                this._paragraphView.illustrationPosition = this._illustrationPosition.value;
+            },
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this.addOnRight(this._illustrationPosition);
+        this._text = new VInputTextArea({
+            ref:"paragraph-content-input", label:"Text",
+            validate: mandatory({validate: range({min:2, max:20000})}),
+            onInput: event=>{
+                this._paragraphView.text = this._text.value;
+            },
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this.addOnRight(this._text);
+        let userSelector = new CBAUserSelector({title:"Select Article Account", loadPage:loadUsers, selectUser: user=>{
+                this._author.setValue(user);
+                userSelector.hide();
+            }
+        }).loadUsers();
+        this._author = new VRef({
+            ref: "author", label: "Author", nullable: true, selector: userSelector,
+            validate: mandatory({}),
+            lineCreator: account=> new Div().addClass("user-ref")
+                .add(new Img(account.avatar).addClass("user-avatar"))
+                .add(new Div().setText(account.login).addClass("user-login"))
+                .add(new Div().setText(account.firstName).addClass("user-first-name"))
+                .add(new Div().setText(account.lastName).addClass("user-last-name")
+            ),
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this.addOnRight(this._author);
+        this._buttons = new VButtons({ref: "map-buttons", vertical:false, buttons:[
+            {
+                ref:"comments", type: VButton.TYPES.NEUTRAL, label:"Comments",
+                onClick:event=>{
+                    this.onComments();
+                }
+            }
+        ]});
+        this.addOnRight(this._buttons);
+        this.article = article;
+    }
+
+    validate() {
+        return !this._themes.validate()
+            & !this._articleTitle.validate()
+            & !this._paragraphTitle.validate()
+            & !this._text.validate()
+            & !this._illustration.validate()
+            & !this._status.validate()
+            & !this._author.validate();
+    }
+
+    canLeave(leave, notLeave) {
+        return super.canLeave(leave, notLeave,"Article not saved. Do you want to Quit ?")
+    }
+
+    get article() {
+        return {
+            themes: this._themes.value,
+            status: this._status.value,
+            ...this._articleView.specification,
+            author: this._author.value,
+            comments: structuredClone(this._comments)
+        }
+    }
+
+    set article(article) {
+        this._article = article;
+        if (this._articleView) {
+            this.removeFromLeft(this._articleView);
+        }
+        this._articleView = new CBAArticle({
+            article
+        });
+        for (let paragraphSpec of article.paragraphs) {
+            this.createParagraph(paragraphSpec);
+        }
+        this._articleView.paragraphs[0] && this._selectParagraph(this._articleView.paragraphs[0]);
+        this.addOnLeft(this._articleView);
+        this._comments = {
+            comments: this._article.comments || [],
+            newComment: ""
+        }
+        this._clean();
+        this._memorize();
+    }
+
+    _register() {
+        return {
+            current: this._paragraphView ? this._paragraphView.ref.ref : null,
+            themes: this._themes.values,
+            article: this._articleView.specification
+        }
+    }
+
+    _recover(specification) {
+        if (specification) {
+            this._articleView.specification = specification;
+            for (let paragraphView of this._articleView.paragraphs) {
+                paragraphView.action = event => {
+                    this.selectParagraph(paragraphView);
+                    return true;
+                }
+            }
+            this._articleTitle.value = this._articleView.title;
+            this._themes.values = specification.themes;
+            let paragraphView = this._articleView.getParagraph(specification.current);
+            this._selectParagraph(paragraphView);
+            this._author.value = specification.author;
+            this._comments = structuredClone(specification.comments)
+        }
+    }
+
+    saved(article) {
+        this.article = article;
+        return true;
+    }
+
+    set comments(comments) {
+        this._comments = comments;
+        this._memorize();
+    }
+
+    get themeIllustration()  {
+        return this._illustration.files ? this._illustration.files[0] : undefined;
+    }
+
+    onComments() {
+        new CBAEditComments({
+            "ref": "article-comments",
+            "kind": "article-comments",
+            comments: structuredClone(this._comments),
+            acknowledge: comments=>this.comments = comments
+        }).show();
+    }
+
+    createParagraph(paragraphSpec) {
+        let paragraphView = this._articleView.createParagraph({
+            ...paragraphSpec,
+            action: event => {
+                this.selectParagraph(paragraphView);
+                return true;
+            }
+        });
+        return paragraphView;
+    }
+
+    selectParagraph(paragraphView) {
+        if (paragraphView!==this._paragraphView) {
+            this._selectParagraph(paragraphView);
+            this._memorize();
+        }
+    }
+
+    _selectParagraph(paragraphView) {
+        this._unselectParagraph();
+        this._paragraphView = paragraphView;
+        this._paragraphView.addClass("selected");
+        this._articleTitle.value = this._articleView.title;
+        this._paragraphTitle.value = this._paragraphView.title;
+        this._text.value = this._paragraphView.text;
+        this._illustration.imageSrc = this._paragraphView.illustration;
+        this._illustrationPosition.value = this._paragraphView.illustrationPosition;
+        this._deleteCommand = new VCommand({
+            ref:"paragraph-delete-cmd",
+            imgEnabled: `../images/site/buttons/minus.png`,
+            imgDisabled: `../images/site/buttons/minus-disabled.png`,
+            onClick: event=>{
+                event.stopPropagation();
+                return this._deleteParagraph();
+            }
+        }).addClass("delete-command");
+        this._paragraphView.add(this._deleteCommand);
+        this._insertBeforeCommand = new VCommand({
+            ref: "paragraph-insert-before-cmd",
+            illustrationPosition: "center",
+            imgEnabled: `../images/site/buttons/plus.png`,
+            imgDisabled: `../images/site/buttons/plus-disabled.png`,
+            onClick: event=>{
+                event.stopPropagation();
+                return this._createBefore();
+            }
+        }).addClass("insert-before-command");
+        this._paragraphView.add(this._insertBeforeCommand);
+        this._insertAfterCommand = new VCommand({
+            ref:"paragraph-insert-after-cmd",
+            imgEnabled: `../images/site/buttons/plus.png`,
+            imgDisabled: `../images/site/buttons/plus-disabled.png`,
+            onClick: event=>{
+                event.stopPropagation();
+                return this._createAfter();
+            }
+        }).addClass("insert-after-command");
+        this._paragraphView.add(this._insertAfterCommand);
+        this._goUpCommand = new VCommand({
+            ref: "paragraph-goup-cmd",
+            imgEnabled: `../images/site/buttons/goup.png`,
+            imgDisabled: `../images/site/buttons/goup-disabled.png`,
+            onClick: event => {
+                event.stopPropagation();
+                return this._goUp();
+            }
+        }).addClass("goup-command");
+        this._paragraphView.add(this._goUpCommand);
+        this._goDownCommand = new VCommand({
+            ref: "paragraph-godown-cmd",
+            imgEnabled: `../images/site/buttons/godown.png`,
+            imgDisabled: `../images/site/buttons/godown-disabled.png`,
+            onClick: event=>{
+                event.stopPropagation();
+                return this._goDown();
+            }
+        }).addClass("godown-command");
+        this._paragraphView.add(this._goDownCommand);
+        this._updateGoCommands();
+    }
+
+    _updateGoCommands() {
+        this._goUpCommand.enabled = this._articleView.paragraphs.indexOf(this._paragraphView)!==0;
+        this._goDownCommand.enabled = this._articleView.paragraphs.indexOf(this._paragraphView)<this._articleView.paragraphs.length-1;
+    }
+
+    _unselectParagraph() {
+        if (this._paragraphView) {
+            this._paragraphView.removeClass("selected");
+            this._paragraphView.remove(this._deleteCommand);
+            this._paragraphView.remove(this._goUpCommand);
+            this._paragraphView.remove(this._goDownCommand);
+            this._paragraphView.remove(this._insertBeforeCommand);
+            this._paragraphView.remove(this._insertAfterCommand);
+        }
+    }
+
+    _goUp() {
+        let index = this._articleView.paragraphs.indexOf(this._paragraphView);
+        if (index>0) {
+            this._articleView.exchangeParagraphs(this._paragraphView);
+        }
+        this._updateGoCommands();
+        return true;
+    }
+
+    _goDown() {
+        let index = this._articleView.paragraphs.indexOf(this._paragraphView);
+        if (index+1<this._articleView.paragraphs.length) {
+            this._articleView.exchangeParagraphs(this._articleView.paragraphs[index+1]);
+        }
+        this._updateGoCommands();
+        return true;
+    }
+
+    _createBefore() {
+        let paragraphView = this._articleView.insertParagraph({
+            ref: crypto.randomUUID(),
+            ...this._newParagraphSpecs,
+            action: event => {
+                this.selectParagraph(paragraphView);
+                return true;
+            }
+        }, this._paragraphView);
+        this._selectParagraph(paragraphView);
+        this._updateGoCommands();
+        this._memorize();
+        return true;
+    }
+
+    _createAfter() {
+        let index = this._articleView.paragraphs.indexOf(this._paragraphView);
+        if (index === this._articleView.paragraphs.length-1) {
+            let paragraphView = this.createParagraph({
+                ref: crypto.randomUUID(),
+                ...this._newParagraphSpecs
+            });
+            this._selectParagraph(paragraphView);
+        }
+        else {
+            let paragraphView = this._article.insertParagraph({
+                ref: crypto.randomUUID(),
+                ...this._newParagraphSpecs,
+                action: event => {
+                    this.selectParagraph(paragraphView);
+                    return true;
+                }
+            }, this._article.paragraphs[index+1]);
+            this._selectParagraph(paragraphView);
+        }
+        this._updateGoCommands();
+        this._memorize();
+        return true;
+    }
+
+    _deleteParagraph() {
+        let index = this._articleView.paragraphs.indexOf(this._paragraphView);
+        this._articleView.removeParagraph(index);
+        if (this._articleView.paragraphs.length===0) {
+            let paragraphView = this.createParagraph({
+                ref: crypto.randomUUID(),
+                ...this._newParagraphSpecs
+            });
+            this._selectParagraph(paragraphView);
+        }
+        else {
+            this._selectParagraph(this._article.paragraphs[index]);
+        }
+        this._updateGoCommands();
+        this._memorize();
+        return true;
+    }
+
+    get imageFiles() {
+        let illustrations = [];
+        for (let ordinal=0; ordinal<this._articleView.paragraphs.length; ordinal++) {
+            let file = this._articleView.paragraphs[ordinal].illustrationFile;
+            if (file) {
+                illustrations.push({key: "illustration-" + ordinal, file});
+            }
+        }
+        return illustrations.length ? illustrations : null;
+    }
+}
+
+export class CBAEditArticle extends VModal {
+
+    constructor({title, create, article, saveArticle, deleteArticle}) {
+        super({ref:"edit-article-modal", title});
+        this._id = article.id;
+        this._articlePane = new CBAEditArticlePane({
+            ref: "article-editor-pane",
+            kind: "article-editor-pane",
+            article,
+            create,
+            accept(file) {
+                if (!VFileLoader.isImage(file)) {
+                    VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (600 x 350) pixels."});
+                    return false;
+                }
+                return true;
+            },
+            verify(image) {
+                if (image.imageWidth!==600 || image.imageHeight!==350) {
+                    VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (650 x 350) pixels."});
+                    return false;
+                }
+                return true;
+            }
+        });
+        this._buttons = new VButtons({
+            ref: "buttons", buttons: [{
+                ref: "save-article", type: "accept", label: "Save",
+                onClick: event => {
+                    if (this.validate()) {
+                        let theme = this.specification;
+                        let newComment = theme.comments.newComment;
+                        if (newComment) {
+                            theme.comments.comments.push({
+                                date: new Date(),
+                                text: newComment,
+                                version: 0
+                            });
+                        }
+                        theme.comments = theme.comments.comments;
+                        saveArticle(theme);
+                    }
+                }
+            },
+            {
+                ref: "close-article", type: "neutral", label: "Close",
+                onClick: event => {
+                    this.hide();
+                }
+            }]
+        });
+        this._deleteButton = new VButton({
+            ref: "delete-article", type: "neutral", label: "Delete",
+            onClick: event => {
+                this.confirm = new CBAConfirm().show({
+                    ref: "confirm-article-deletion",
+                    title: "Delete Article",
+                    message: "Do you really want to delete the Article ?",
+                    actionOk: event => deleteArticle(article)
+                });
+            }
+        }).addClass("right-button");
+        this._buttons.add(this._deleteButton);
+        this._deleteButton.enabled = !create;
+        this.add(this._articlePane);
+        this.add(this._buttons);
+        this.addClass("article-modal");
+    }
+
+    validate() {
+        return this._articlePane.validate();
+    }
+
+    saved(article) {
+        this._articlePane.saved(article);
+        this._id = article.id;
+        this._deleteButton.enabled = true;
+        showMessage("Article saved.");
+        return true;
+    }
+
+    get imageFiles() {
+        return this._articlePane.imageFiles;
+    }
+
+    get illustration()  {
+        return this._articlePane.illustration;
+    }
+
+    get specification() {
+        return {
+            id: this._id,
+            ...this._articlePane.article
+        };
+    }
+
+}
+
+export class CBAArticleList extends VTable {
+
+    constructor({loadPage, saveArticle, deleteArticle}) {
+        super({
+            ref: "article-list",
+            changePage: pageIndex => this._setPage(pageIndex)
+        });
+        this.addClass("article-list");
+        this._loadPage = loadPage;
+        this._saveArticle = saveArticle;
+        this._deleteArticle = deleteArticle;
+    }
+
+    set search(search) {
+        this._search = search;
+    }
+
+    loadArticles() {
+        this._setPage(0);
+        return this;
+    }
+
+    refresh() {
+        this._setPage(this._currentPage);
+    }
+
+    selectArticle(article) {
+        loadArticle(article,
+            article=>{
+                let articleEditor = new CBAEditArticle({
+                    title: "Edit Article",
+                    article,
+                    saveArticle: article => this._saveArticle(article,
+                        articleEditor.imageFiles,
+                        text => {
+                            articleEditor.saved(parseArticle(text));
+                            this.refresh();
+                        },
+                        text => {
+                            showMessage("Fail to update Article", text);
+                        }
+                    ),
+                    deleteArticle: article => this._deleteArticle(article,
+                        () => {
+                            articleEditor.hide();
+                            articleEditor.confirm.hide();
+                            this.refresh();
+                        },
+                        text => {
+                            articleEditor.confirm.hide();
+                            showMessage("Fail to delete Article", text);
+                        }
+                    ),
+                }).show();
+            },
+
+        );
+
+    };
+
+    _setPage(pageIndex) {
+        function getArticle(line) {
+            return {
+                id: line.id,
+                themes: line.themes.getText(),
+                articleTitle: line.title.getText(),
+                status: line.status.getValue()
+            };
+        }
+        function getAuthor(article) {
+            return article.author.firstName+" "+article.author.lastName;
+        }
+        function getFirstParagraph(article) {
+            return "<h4>"+article.firstParagraph.title+"</h4>" + article.firstParagraph.text;
+        }
+        this._loadPage(pageIndex, this._search, pageData => {
+            let lines = [];
+            let saveArticle = article => this._saveArticle(article, null,
+                () => showMessage("Article saved."),
+                text => showMessage("Unable to Save Article.", text),
+            );
+            for (let article of pageData.articles) {
+                let line;
+                let themes = new Span(article.themes).addClass("article-themes")
+                    .onMouseClick(event => this.selectTheme(getArticle(line)));
+                let title = new Span(article.title).addClass("article-name")
+                    .onMouseClick(event => this.selectArticle(getArticle(line)));
+                let author = new Span(getAuthor(article)).addClass("article-name")
+                    .onMouseClick(event => this.selectArticle(getArticle(line)));
+                let illustration = new Img(article.firstParagraph.illustration).addClass("article-illustration")
+                    .onMouseClick(event => this.selectArticle(getArticle(line)));
+                let firstParagraph = new P(getFirstParagraph(article)).addClass("article-paragraph")
+                    .onMouseClick(event => this.selectArticle(getArticle(line)));
+                let status = new Select().setOptions([
+                    {value: "live", text: "Live"},
+                    {value: "pnd", text: "Pending"},
+                    {value: "prp", text: "Proposed"}
+                ])
+                    .addClass("form-input-select")
+                    .setValue(article.status)
+                    .addClass("article-status")
+                    .onChange(event => saveArticle(getArticle(line)));
+                line = {id: article.id, themes, title, status};
+                lines.push([themes, title, author, illustration, firstParagraph, status]);
+            }
+            let title = new Span(pageData.title)
+                .addClass("article-title")
+            let pageSummary = new Span()
+                .addClass("article-pager")
+                .setText(pageData.eventCount ?
+                    String.format(CBAArticleList.SUMMARY, pageData.articleCount, pageData.firstArticle, pageData.lastArticle) :
+                    CBAArticleList.EMPTY_SUMMARY);
+            let summary = new Div()
+                .addClass("table-display")
+                .add(title)
+                .add(pageSummary);
+            this.setContent({
+                summary,
+                columns: ["Themes", "Title", "Author", "Illustration", "First paragraph", "Status"],
+                data: lines
+            });
+            this._currentPage = pageData.currentPage;
+            let first = pageData.pageCount <= 5 ? 0 : pageData.currentPage - 2;
+            if (first < 0) first = 0;
+            let last = pageData.pageCount <= 5 ? pageData.pageCount - 1 : pageData.currentPage + 2;
+            if (last >= pageData.pageCount) last = pageData.pageCount - 1;
+            this.setPagination({
+                first, last, current: pageData.currentPage
+            });
+        });
+    }
+
+    static SUMMARY = "Showing {1} to {2} of {0} article(s)";
+    static EMPTY_SUMMARY = "There are no article to show";
+}
+
+export class CBAArticleListPage extends Vitamin(Div) {
+
+    constructor({loadPage, saveArticle, deleteArticle}) {
+        super({ref: "article-list-page"});
+        this._search = new VSearch({
+            ref: "article-list-search", searchAction: search => {
+                this.loadArticles();
+            }
+        });
+        this._create = new VButton({
+            ref: "article-create", type: "neutral", label: "Create Article",
+            onClick: event => {
+                this._createArticleModal = new CBAEditArticle({
+                    title: "Create Article",
+                    create: true,
+                    article: {
+                        title: "Article Title",
+                        version: 0,
+                        status: "prp"
+                    },
+                    saveArticle: article => saveArticle(article,
+                        this._createArticleModal.imageFiles,
+                        text => {
+                            this._createArticleModal.saved(parseArticle(text));
+                            this.refresh();
+                        },
+                        text => {
+                            showMessage("Fail to create Article", text);
+                        }
+                    ),
+                    deleteArticle: () => {
+                        this._createArticleModal.hide();
+                    }
+                }).show()
+            }
+        }).addClass("right-button");
+        this._search.add(this._create);
+        this._table = new CBAArticleList({loadPage, saveArticle, deleteArticle});
+        this.add(this._search).add(this._table);
+    }
+
+    get createArtcileModal() {
+        return this._createArticleModal;
+    }
+
+    loadArticles() {
+        this._table.search = this._search.value;
+        this._table.loadArticles();
+        return this;
+    }
+
+    refresh() {
+        this._table.refresh();
+        return this;
+    }
+
+}
+
+export function loadArticles(pageIndex, search, update) {
+    sendGet("/api/article/all?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
+        (text, status) => {
+            console.log("Load article success: " + text + ": " + status);
+            let response = JSON.parse(text);
+            update({
+                title: "Article List",
+                pageCount: Math.ceil(response.count / response.pageSize),
+                currentPage: response.page,
+                articleCount: response.count,
+                firstArticle: response.page * response.pageSize + 1,
+                lastArticle: response.page * response.pageSize + response.articles.length,
+                articles: response.articles
+            });
+        },
+        (text, status) => {
+            console.log("Load Article failure: " + text + ": " + status);
+            showMessage("Unable to load Articles", text);
+        }
+    );
+}
+
+function parseArticle(text) {
+    let article = JSON.parse(text);
+    for (let comment of article.comments) {
+        comment.date = new Date(comment.date);
+    }
+    return article;
+}
+
+export function loadArticle(article, success) {
+    sendGet("/api/article/load/"+article.id,
+        (text, status) => {
+            console.log("Article load success: " + text + ": " + status);
+            success(parseArticle(text));
+        },
+        (text, status) => {
+            console.log("Load Article failure: " + text + ": " + status);
+            showMessage("Unable to load Article of Id "+article.id, text);
+        }
+    );
+}
+
+export function saveArticle(article, images, success, failure) {
+    sendPost(article.id===undefined ? "/api/article/create" : "/api/article/update/" + article.id,
+        article,
+        (text, status) => {
+            console.log("Article creation success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Article creation failure: " + text + ": " + status);
+            failure(text, status);
+        },
+        images
+    );
+}
+
+export function deleteArticle(article, success, failure) {
+    sendGet("/api/article/delete/" + article.id,
+        (text, status) => {
+            console.log("Article delete success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Article delete failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
+}
+
+export var vArticleList = new CBAArticleListPage({
+    loadPage: loadArticles,
+    deleteArticle,
+    saveArticle
+});

@@ -85,4 +85,17 @@ public class Theme extends BaseEntity {
         return this;
     }
 
+    public static Theme getByTitle(EntityManager em, String title) {
+        Query query = em.createQuery("select t from Theme t " +
+            "left outer join fetch t.author a " +
+            "left outer join fetch a.access " +
+            "where t.title = :title");
+        query.setParameter("title", title);
+        try {
+            return (Theme)query.getSingleResult();
+        }
+        catch (NoResultException enf) {
+            return null;
+        }
+    }
 }

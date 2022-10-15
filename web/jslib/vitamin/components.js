@@ -163,6 +163,10 @@ export function DOM(clazz) {
             return this.getStyle("overflow");
         }
 
+        containsClass(clazz) {
+            return this._classes.indexOf(clazz)>=0;
+        }
+
         addClass(clazz) {
             if (!this._classes) {
                 this._classes = [];

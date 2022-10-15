@@ -28,10 +28,12 @@ import {
 import {
     CBSArticle,
     CBSNewspaper,
-    CBSScenario,
-    CBSArticleEditor,
-    CBSScenarioEditor
+    CBSArticleEditor
 } from "./cbs-articles.js";
+import {
+    CBSScenario,
+    CBSScenarioEditor
+} from "./cbs-scenario.js";
 import {
     CBSGallery,
     CBSSummary

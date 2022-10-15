@@ -13,6 +13,7 @@ import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.data.DataSunbeam;
+import org.summer.data.SummerNotFoundException;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
@@ -64,7 +65,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			ifAuthorized(
 				user->{
 					try {
-						Account author = findAuthor(em, user);
+						Account author = Account.find(em, user);
 						addComment(request, newTheme, author);
 						newTheme.setStatus(ThemeStatus.PROPOSED);
 						newTheme.setAuthor(author);
@@ -76,6 +77,8 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 							"Theme with title (%s) already exists",
 							request.get("title"), null
 						);
+					} catch (SummerNotFoundException snfe) {
+						throw new SummerControllerException(404, snfe.getMessage());
 					}
 				}
 			);
@@ -92,7 +95,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			ifAuthorized(
 				user -> {
 					try {
-						Account author = findAuthor(em, user);
+						Account author = Account.find(em, user);
 						writeToProposedTheme(request, theme);
 						addComment(request, theme, author);
 						storeThemeImages(params, theme);
@@ -100,6 +103,8 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						result.set(readFromTheme(theme));
 					} catch (PersistenceException pe) {
 						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+					} catch (SummerNotFoundException snfe) {
+						throw new SummerControllerException(404, snfe.getMessage());
 					}
 				},
 				verifyIfAdminOrOwner(theme)
@@ -184,13 +189,16 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return result.get();
 	}
 
-	@REST(url="/api/board/by-title/:title", method=Method.POST)
+	@REST(url="/api/theme/by-title/:title", method=Method.GET)
 	public Json getByTitle(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			String title = (String)params.get("title");
 			Theme theme = getSingleResult(em,
-				"select t from Theme t left outer join fetch t.author a left outer join fetch a.access where t.title = :title",
+				"select t from Theme t " +
+						"left outer join fetch t.author a " +
+						"left outer join fetch a.access " +
+						"where t.title = :title",
 				"title", title);
 			if (theme==null) {
 				throw new SummerControllerException(404,
@@ -299,35 +307,39 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 
 	Theme writeToTheme(EntityManager em, Json json, Theme theme) {
-		verify(json)
-			.check("category", ThemeCategory.byLabels().keySet())
-			.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
-			.checkPattern("title", "[\\d\\s\\w]+")
-			.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
-			.checkRequired("illustration").checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
-			.check("status", ThemeStatus.byLabels().keySet())
-			.each("comments", cJson->verify(cJson)
-				.checkRequired("version")
-				.checkRequired("date")
-				.checkRequired("text")
-				.checkMinSize("text", 2)
-				.checkMaxSize("text", 19995)
-			)
-			.ensure();
-		sync(json, theme)
-			.write("version")
-			.write("category", label->ThemeCategory.byLabels().get(label))
-			.write("title")
-			.write("description")
-			.write("illustration")
-			.write("status", label->ThemeStatus.byLabels().get(label))
-			.writeRef("author.id", "author", (Integer id)-> this.findAuthor(em, id))
-			.syncEach("comments", (cJson, comment)->sync(cJson, comment)
+		try {
+			verify(json)
+				.check("category", ThemeCategory.byLabels().keySet())
+				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
+				.checkPattern("title", "[\\d\\s\\w]+")
+				.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
+				.checkRequired("illustration").checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
+				.check("status", ThemeStatus.byLabels().keySet())
+				.each("comments", cJson->verify(cJson)
+					.checkRequired("version")
+					.checkRequired("date")
+					.checkRequired("text")
+					.checkMinSize("text", 2)
+					.checkMaxSize("text", 19995)
+				)
+				.ensure();
+			sync(json, theme)
 				.write("version")
-				.writeDate("date")
-				.write("text")
-			);
-		return theme;
+				.write("category", label->ThemeCategory.byLabels().get(label))
+				.write("title")
+				.write("description")
+				.write("illustration")
+				.write("status", label->ThemeStatus.byLabels().get(label))
+				.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
+				.syncEach("comments", (cJson, comment)->sync(cJson, comment)
+					.write("version")
+					.writeDate("date")
+					.write("text")
+				);
+			return theme;
+		} catch (SummerNotFoundException snfe) {
+			throw new SummerControllerException(404, snfe.getMessage());
+		}
 	}
 
 	Json readFromThemeSummary(Theme theme) {
@@ -374,26 +386,6 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				.read("text")
 			);
 		return json;
-	}
-
-	Account findAuthor(EntityManager em, long id) {
-		Account account = find(em, Account.class, id);
-		if (account==null) {
-			throw new SummerControllerException(404,
-				"Unknown Account with id %d", id
-			);
-		}
-		return account;
-	}
-
-	Account findAuthor(EntityManager em, String user) {
-		Account account = Login.findAccountByLogin(em, user);
-		if (account==null) {
-			throw new SummerControllerException(404,
-				"Unknown Account with Login name %s", user
-			);
-		}
-		return account;
 	}
 
 	Theme findTheme(EntityManager em, long id) {

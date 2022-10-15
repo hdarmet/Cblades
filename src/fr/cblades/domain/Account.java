@@ -1,6 +1,7 @@
 package fr.cblades.domain;
 
 import org.summer.data.BaseEntity;
+import org.summer.data.SummerNotFoundException;
 
 import javax.persistence.*;
 
@@ -84,6 +85,26 @@ public class Account extends BaseEntity {
     public Account setRole(LoginRole role) {
         this.access.setRole(role);
         return this;
+    }
+
+    static public Account find(EntityManager em, long id) {
+        Account account = em.find(Account.class, id);
+        if (account==null) {
+            throw new SummerNotFoundException(
+                String.format("Unknown Account with id %d", id)
+            );
+        }
+        return account;
+    }
+
+    static public Account find(EntityManager em, String user) {
+        Account account = Login.findAccountByLogin(em, user);
+        if (account==null) {
+            throw new SummerNotFoundException(
+                String.format("Unknown Account with Login name %s", user)
+            );
+        }
+        return account;
     }
 
 }

@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    A, Button, Div, Form, Img, Input, Label, Option, P, Select, Span
+    A, Button, Checkbox, Div, Form, Img, Input, Label, LI, Option, P, Select, Span, UL
 } from "./components.js";
 import {
     Vitamin, VMagnifiedImage
@@ -83,6 +83,142 @@ export class VSwitch extends Vitamin(Div) {
                 this._moveSlider(this._input[this._current]._pos);
             }
         }
+    }
+
+}
+
+export class VDropdownList extends Vitamin(Div) {
+
+    constructor({ref, kind, placeholder="Select", options, selector, onInput, onChange}) {
+        super(ref);
+        this.addClass("form-dropdown-list");
+        kind&&this.addClass(kind);
+        this._placeholder = placeholder;
+        this._anchor = new Div().setText(this._placeholder)
+            .addClass("anchor")
+            .onEvent("click", event=>this._toggleDropdown());
+        this._items = new UL().addClass("items");
+        this.add(this._anchor).add(this._items);
+        this._value = [];
+        this._labels = [];
+        this._onInput = onInput;
+        this._onChange = onChange;
+        this.setOptions(options, selector, onInput, onChange);
+    }
+
+    getValue() {
+        return this._value;
+    }
+
+    get value() {
+        return this.getValue();
+    }
+
+    setValue(value) {
+        this._value = value;
+        let checked = new Map(value);
+        for (let item of this._items) {
+            item._checkbox.setChecked(checked.contains(item._value));
+        }
+        return this;
+    }
+
+    set value(value) {
+        this.setValue(value);
+    }
+
+    onChange(onChange) {
+        this._onChange = onChange;
+    }
+
+    onInput(onInput) {
+        this._onInput = onInput;
+    }
+
+    getAttribute(name) {
+        if (name.toLowerCase()==="disabled") {
+            return this._disabled;
+        }
+        else return super.getAttribute(name);
+    }
+
+    addAttribute(name, value) {
+        if (name.toLowerCase()==="disabled") {
+            let disabled = !!this._disabled;
+            this._disabled = !!value;
+            if (this._disabled !== disabled) {
+                if (this._disabled) {
+                    this.remove(this._items);
+                } else {
+                    this.add(this._items);
+                }
+            }
+        }
+        else super.addAttribute(name, value);
+        return this;
+    }
+
+    removeAttribute(name) {
+        if (name.toLowerCase()==="disabled") {
+            if (this._disabled !== undefined) {
+                if (this._disabled) {
+                    this.remove(this._items);
+                }
+                delete this._disabled;
+            }
+        }
+        else super.removeAttribute(name);
+        return this;
+    }
+
+    setOptions(options, selector) {
+        let buildOptions = options=> {
+            this._items.clear();
+            for (let option of options) {
+                let changeAction = event => {
+                    this._changeValue(checkbox.getChecked(), option.value, option.label);
+                    this._onChange && this._onChange(event);
+                    this._onInput && this._onInput(event);
+                };
+                let checkbox = new Checkbox().onEvent("change", changeAction);
+                let value = new Span(option.label || option.value);
+                let item = new LI()
+                    .add(checkbox)
+                    .add(value)
+                    .onEvent("click", event => {
+                        checkbox.setChecked(!checkbox.getChecked());
+                        changeAction(event);
+                    });
+                item._checkbox = checkbox;
+                item._value = value;
+                this._items.add(item);
+            }
+        }
+        if (selector) {
+            selector(buildOptions)
+        }
+        else {
+            buildOptions(options);
+        }
+    }
+
+    _changeValue(selected, optionValue, optionLabel) {
+        if (selected) {
+            this._value.add(optionValue);
+            this._labels.add(optionLabel);
+        }
+        else {
+            this._value.remove(optionValue);
+            this._labels.remove(optionLabel);
+        }
+        this._anchor.setText(this._labels.join(", "));
+    }
+
+    _toggleDropdown() {
+        if (this._items.containsClass('visible'))
+            this._items.removeClass('visible');
+        else
+            this._items.addClass('visible');
     }
 
 }
@@ -530,6 +666,20 @@ export class VDownload extends Vitamin(A) {
         ACCEPT: "accept",
         REFUSE: "refuse",
         NEUTRAL: "neutral",
+    }
+
+}
+
+export class VDropdownListField extends VField {
+
+    _initField({value, options, onInput, onChange}) {
+        this._select = new VDropdownList({value, options, onInput, onChange})
+            .addClass("form-input-dropdownlist");
+        this.add(this._select);
+    }
+
+    get field() {
+        return this._select;
     }
 
 }
