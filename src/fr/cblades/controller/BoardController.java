@@ -281,6 +281,28 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return result.get();
 	}
 
+	@REST(url="/api/board/update-status/:id", method=Method.POST)
+	public Json updateStatus(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em-> {
+			String id = (String) params.get("id");
+			Board board = findBoard(em, new Long(id));
+			ifAuthorized(
+				user -> {
+					try {
+						writeToBoardStatus(request, board);
+						flush(em);
+						result.set(readFromBoard(board));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+					}
+				},
+				ADMIN
+			);
+		});
+		return result.get();
+	}
+
 	@REST(url="/api/board/update-hexes/:id", method=Method.POST)
 	public Json updateHexes(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
@@ -343,37 +365,47 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	Board writeToBoard(EntityManager em, Json json, Board board) {
 		try {
 			verify(json)
-					.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 20)
-					.checkPattern("name", "[\\d\\s\\w]+")
-					.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
-					.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 200)
-					.checkRequired("icon").checkMinSize("icon", 2).checkMaxSize("icon", 200)
-					.check("status", BoardStatus.byLabels().keySet())
-					.each("comments", cJson -> verify(cJson)
-							.checkRequired("version")
-							.checkRequired("date")
-							.checkRequired("text")
-							.checkMinSize("text", 2)
-							.checkMaxSize("text", 19995)
-					)
-					.ensure();
+				.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 20)
+				.checkPattern("name", "[\\d\\s\\w]+")
+				.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
+				.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 200)
+				.checkRequired("icon").checkMinSize("icon", 2).checkMaxSize("icon", 200)
+				.check("status", BoardStatus.byLabels().keySet())
+				.each("comments", cJson -> verify(cJson)
+					.checkRequired("version")
+					.checkRequired("date")
+					.checkRequired("text")
+					.checkMinSize("text", 2)
+					.checkMaxSize("text", 19995)
+				)
+				.ensure();
 			sync(json, board)
+				.write("version")
+				.write("name")
+				.write("description")
+				.write("path")
+				.write("icon")
+				.write("status", label -> BoardStatus.byLabels().get(label))
+				.writeRef("author.id", "author", (Integer id) -> Account.find(em, id))
+				.syncEach("comments", (cJson, comment) -> sync(cJson, comment)
 					.write("version")
-					.write("name")
-					.write("description")
-					.write("path")
-					.write("icon")
-					.write("status", label -> BoardStatus.byLabels().get(label))
-					.writeRef("author.id", "author", (Integer id) -> Account.find(em, id))
-					.syncEach("comments", (cJson, comment) -> sync(cJson, comment)
-							.write("version")
-							.writeDate("date")
-							.write("text")
-					);
+					.writeDate("date")
+					.write("text")
+				);
 			return board;
 		} catch (SummerNotFoundException snfe) {
 			throw new SummerControllerException(404, snfe.getMessage());
 		}
+	}
+
+	Board writeToBoardStatus(Json json, Board board) {
+		verify(json)
+			.checkRequired("id").checkInteger("id", "Not a valid id")
+			.check("status", BoardStatus.byLabels().keySet())
+			.ensure();
+		sync(json, board)
+			.write("status", label->BoardStatus.byLabels().get(label));
+		return board;
 	}
 
 	Board writeToBoardHexes(Json json, Board board) {

@@ -58,7 +58,9 @@ export class CBAParagraph extends Vitamin(Div) {
     }
 
     set action(action) {
-        action && this.onEvent("click", action);
+        action && this.onEvent("click", event=>{
+            action(this)
+        });
     }
 
     get specification() {
@@ -127,8 +129,9 @@ export class CBAParagraph extends Vitamin(Div) {
 
 export class CBAArticle extends Vitamin(Div) {
 
-    constructor({kind, action, ...article}) {
+    constructor({kind, action, paragraphAction, article}) {
         super({ref:"article-"+article.id});
+        this._paragraphAction = paragraphAction;
         this.addClass(kind);
         this._title = new P(article.title).addClass("article-title");
         this.add(this._title);
@@ -144,7 +147,10 @@ export class CBAArticle extends Vitamin(Div) {
     }
 
     createParagraph(paragraphSpec) {
-        let paragraph = new CBAParagraph(paragraphSpec);
+        let paragraph = new CBAParagraph({
+            ...paragraphSpec,
+            action: this._paragraphAction
+        });
         this.add(paragraph);
         this._paragraphs.push(paragraph);
         return paragraph;
@@ -221,25 +227,22 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
     constructor({ref, kind, article, accept, verify}) {
         super({ref});
         this.addClass(kind);
-        this._newParagraphSpecs = {
-            version: 0,
-            illustrationPosition: "right",
-            title: "Paragraph title",
-            text: "Paragraph text"
-        };
         if (!article.paragraphs) {
+            this._newParagraphSpecs = {
+                version: 0,
+                illustrationPosition: "right",
+                title: "Paragraph title",
+                text: "Paragraph text"
+            };
             article.paragraphs = [
                 structuredClone(this._newParagraphSpecs)
             ]
         }
         this._themes = new VDropdownListField({ref:"article-theme", label:"Themes",
             validate: mandatory({}),
-            options: [
-                {ref: "theme-rules", value: "Rules", label:"Rule"},
-                {ref: "theme-strategy", value: "Strategy", label:"Stories And Legends"},
-                {ref: "theme-magic", value: "Magic", label:"Magic"},
-                {ref: "theme-siege", value: "Siege", label:"Siege"}
-            ],
+            selector: buildOptions => {
+                loadLiveThemes(buildOptions);
+            },
             onChange: event=>{
                 this._memorize();
             }
@@ -367,7 +370,10 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
 
     get article() {
         return {
-            themes: this._themes.value,
+            themes: this._themes.selection.map(theme=>{ return {
+                id: theme.value,
+                title: theme.label
+            }}),
             status: this._status.value,
             ...this._articleView.specification,
             author: this._author.value,
@@ -381,13 +387,18 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
             this.removeFromLeft(this._articleView);
         }
         this._articleView = new CBAArticle({
+            paragraphAction:paragraphView => {
+                this.selectParagraph(paragraphView);
+                return true;
+            },
             article
         });
-        for (let paragraphSpec of article.paragraphs) {
-            this.createParagraph(paragraphSpec);
-        }
         this._articleView.paragraphs[0] && this._selectParagraph(this._articleView.paragraphs[0]);
         this.addOnLeft(this._articleView);
+        this._articleTitle.value = article.title;
+        this._themes.value = article.themes ? article.themes.map(theme=>theme.id) : [];
+        this._status.value = article.status || "live";
+        this._author.value = article.author;
         this._comments = {
             comments: this._article.comments || [],
             newComment: ""
@@ -446,14 +457,7 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
     }
 
     createParagraph(paragraphSpec) {
-        let paragraphView = this._articleView.createParagraph({
-            ...paragraphSpec,
-            action: event => {
-                this.selectParagraph(paragraphView);
-                return true;
-            }
-        });
-        return paragraphView;
+        return this._articleView.createParagraph(paragraphSpec);
     }
 
     selectParagraph(paragraphView) {
@@ -529,6 +533,7 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
     _updateGoCommands() {
         this._goUpCommand.enabled = this._articleView.paragraphs.indexOf(this._paragraphView)!==0;
         this._goDownCommand.enabled = this._articleView.paragraphs.indexOf(this._paragraphView)<this._articleView.paragraphs.length-1;
+        this._deleteCommand.enabled = this._articleView.paragraphs.length>1;
     }
 
     _unselectParagraph() {
@@ -611,7 +616,7 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
             this._selectParagraph(paragraphView);
         }
         else {
-            this._selectParagraph(this._article.paragraphs[index]);
+            this._selectParagraph(this._articleView.paragraphs[index]);
         }
         this._updateGoCommands();
         this._memorize();
@@ -660,17 +665,17 @@ export class CBAEditArticle extends VModal {
                 ref: "save-article", type: "accept", label: "Save",
                 onClick: event => {
                     if (this.validate()) {
-                        let theme = this.specification;
-                        let newComment = theme.comments.newComment;
+                        let article = this.specification;
+                        let newComment = article.comments.newComment;
                         if (newComment) {
-                            theme.comments.comments.push({
+                            article.comments.comments.push({
                                 date: new Date(),
                                 text: newComment,
                                 version: 0
                             });
                         }
-                        theme.comments = theme.comments.comments;
-                        saveArticle(theme);
+                        article.comments = article.comments.comments;
+                        saveArticle(article);
                     }
                 }
             },
@@ -730,7 +735,7 @@ export class CBAEditArticle extends VModal {
 
 export class CBAArticleList extends VTable {
 
-    constructor({loadPage, saveArticle, deleteArticle}) {
+    constructor({loadPage, deleteArticle, saveArticle, saveArticleStatus}) {
         super({
             ref: "article-list",
             changePage: pageIndex => this._setPage(pageIndex)
@@ -738,6 +743,7 @@ export class CBAArticleList extends VTable {
         this.addClass("article-list");
         this._loadPage = loadPage;
         this._saveArticle = saveArticle;
+        this._saveArticleStatus = saveArticleStatus;
         this._deleteArticle = deleteArticle;
     }
 
@@ -792,7 +798,6 @@ export class CBAArticleList extends VTable {
         function getArticle(line) {
             return {
                 id: line.id,
-                themes: line.themes.getText(),
                 articleTitle: line.title.getText(),
                 status: line.status.getValue()
             };
@@ -805,13 +810,13 @@ export class CBAArticleList extends VTable {
         }
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
-            let saveArticle = article => this._saveArticle(article, null,
+            let saveArticleStatus = article => this._saveArticleStatus(article,
                 () => showMessage("Article saved."),
                 text => showMessage("Unable to Save Article.", text),
             );
             for (let article of pageData.articles) {
                 let line;
-                let themes = new Span(article.themes).addClass("article-themes")
+                let themes = new Span(article.themes.map(theme=>theme.title).join(", ")).addClass("article-themes")
                     .onMouseClick(event => this.selectTheme(getArticle(line)));
                 let title = new Span(article.title).addClass("article-name")
                     .onMouseClick(event => this.selectArticle(getArticle(line)));
@@ -829,7 +834,7 @@ export class CBAArticleList extends VTable {
                     .addClass("form-input-select")
                     .setValue(article.status)
                     .addClass("article-status")
-                    .onChange(event => saveArticle(getArticle(line)));
+                    .onChange(event => saveArticleStatus(getArticle(line)));
                 line = {id: article.id, themes, title, status};
                 lines.push([themes, title, author, illustration, firstParagraph, status]);
             }
@@ -866,7 +871,7 @@ export class CBAArticleList extends VTable {
 
 export class CBAArticleListPage extends Vitamin(Div) {
 
-    constructor({loadPage, saveArticle, deleteArticle}) {
+    constructor({loadPage, deleteArticle, saveArticle, saveArticleStatus}) {
         super({ref: "article-list-page"});
         this._search = new VSearch({
             ref: "article-list-search", searchAction: search => {
@@ -901,7 +906,7 @@ export class CBAArticleListPage extends Vitamin(Div) {
             }
         }).addClass("right-button");
         this._search.add(this._create);
-        this._table = new CBAArticleList({loadPage, saveArticle, deleteArticle});
+        this._table = new CBAArticleList({loadPage, saveArticle, saveArticleStatus, deleteArticle});
         this.add(this._search).add(this._table);
     }
 
@@ -969,14 +974,28 @@ export function saveArticle(article, images, success, failure) {
     sendPost(article.id===undefined ? "/api/article/create" : "/api/article/update/" + article.id,
         article,
         (text, status) => {
-            console.log("Article creation success: " + text + ": " + status);
+            console.log("Article saving success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Article creation failure: " + text + ": " + status);
+            console.log("Article saving failure: " + text + ": " + status);
             failure(text, status);
         },
         images
+    );
+}
+
+export function saveArticleStatus(article, success, failure) {
+    sendPost("/api/article/update-status/" + article.id,
+        article,
+        (text, status) => {
+            console.log("Article status update success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Article status update failure: " + text + ": " + status);
+            failure(text, status);
+        }
     );
 }
 
@@ -993,8 +1012,24 @@ export function deleteArticle(article, success, failure) {
     );
 }
 
+export function loadLiveThemes(update) {
+    sendGet("/api/theme/live",
+        (text, status) => {
+            console.log("Load live themes success: " + text + ": " + status);
+            let themes = JSON.parse(text);
+            let options = themes.map(theme=>{return {value:theme.id, label:theme.title}});
+            update(options);
+        },
+        (text, status) => {
+            console.log("Load Live Themes failure: " + text + ": " + status);
+            showMessage("Unable to load Themes", text);
+        }
+    );
+}
+
 export var vArticleList = new CBAArticleListPage({
     loadPage: loadArticles,
     deleteArticle,
-    saveArticle
+    saveArticle,
+    saveArticleStatus
 });

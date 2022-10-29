@@ -206,6 +206,25 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}, ADMIN);
 		return result.get();
 	}
+
+	@REST(url="/api/event/update-status/:id", method=Method.POST)
+	public Json updateStatus(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
+			try {
+				inTransaction(em->{
+					String id = (String)params.get("id");
+					Event event = findEvent(em, new Long(id));
+					writeToEventStatus(em, request, event);
+					flush(em);
+					result.set(readFromEvent(event));
+				});
+			} catch (PersistenceException pe) {
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			}
+		}, ADMIN);
+		return result.get();
+	}
 	
 	Event findEvent(EntityManager em, long id) {
 		Event event = find(em, Event.class, id);
@@ -243,6 +262,16 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		} catch (SummerNotFoundException snfe) {
 			throw new SummerControllerException(404, snfe.getMessage());
 		}
+	}
+
+	Event writeToEventStatus(EntityManager em, Json json, Event event) {
+		verify(json)
+			.checkRequired("id").checkInteger("id", "Not a valid id")
+			.check("status", EventStatus.byLabels().keySet())
+			.ensure();
+		sync(json, event)
+			.write("status", label->EventStatus.byLabels().get(label));
+		return event;
 	}
 
 	Json readFromEvent(Event event) {

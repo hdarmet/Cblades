@@ -95,15 +95,14 @@ export class VDropdownList extends Vitamin(Div) {
         kind&&this.addClass(kind);
         this._placeholder = placeholder;
         this._anchor = new Div().setText(this._placeholder)
-            .addClass("anchor")
-            .onEvent("click", event=>this._toggleDropdown());
+            .addClass("anchor");
         this._items = new UL().addClass("items");
         this.add(this._anchor).add(this._items);
         this._value = [];
         this._labels = [];
         this._onInput = onInput;
         this._onChange = onChange;
-        this.setOptions(options, selector, onInput, onChange);
+        this.setOptions(options, selector);
     }
 
     getValue() {
@@ -114,11 +113,23 @@ export class VDropdownList extends Vitamin(Div) {
         return this.getValue();
     }
 
+    get selection() {
+        let result = [];
+        for (let index=0; index<this._value.length; index++) {
+            result.push({
+                value: this._value[index],
+                label: this._labels[index]
+            });
+        }
+        return result;
+    }
+
     setValue(value) {
         this._value = value;
-        let checked = new Map(value);
-        for (let item of this._items) {
-            item._checkbox.setChecked(checked.contains(item._value));
+        let checked = new Set();
+        this._value.forEach(value=>checked.add(value))
+        for (let item of this._items.children) {
+            item._checkbox.setChecked(checked.has(item._value));
         }
         return this;
     }
@@ -184,11 +195,11 @@ export class VDropdownList extends Vitamin(Div) {
                 let value = new Span(option.label || option.value);
                 let item = new LI()
                     .add(checkbox)
-                    .add(value)
-                    .onEvent("click", event => {
-                        checkbox.setChecked(!checkbox.getChecked());
-                        changeAction(event);
-                    });
+                    .add(value);
+                value.onEvent("click", event => {
+                    checkbox.setChecked(!checkbox.getChecked());
+                    changeAction(event);
+                });
                 item._checkbox = checkbox;
                 item._value = value;
                 this._items.add(item);
@@ -211,14 +222,7 @@ export class VDropdownList extends Vitamin(Div) {
             this._value.remove(optionValue);
             this._labels.remove(optionLabel);
         }
-        this._anchor.setText(this._labels.join(", "));
-    }
-
-    _toggleDropdown() {
-        if (this._items.containsClass('visible'))
-            this._items.removeClass('visible');
-        else
-            this._items.addClass('visible');
+        this._anchor.setText(this._labels.length>0?this._labels.join(", "):this._placeholder);
     }
 
 }
@@ -529,7 +533,7 @@ export class VOption extends Vitamin(Option) {
 
 export class VSelectField extends VField {
 
-    _initField({value, multiple, size, options, onChange}) {
+    _initField({value, multiple, size, options}) {
         this._select = new Select().addClass("form-input-select");
         this._options = [];
         options && (this.optionLines = options);
@@ -627,7 +631,7 @@ export class VCommand extends Vitamin(Img) {
         this._imgDisabled = imgDisabled;
         this._onClick = onClick;
         this.addClass("form-command");
-        this.setSrc(enabled ? imgEnabled : imgDisabled);
+        this.setSrc(imgDisabled);
         enabled&&this._onClick&&this.onMouseClick(event=>{
             event.preventDefault();
             this._onClick(event);
@@ -672,8 +676,8 @@ export class VDownload extends Vitamin(A) {
 
 export class VDropdownListField extends VField {
 
-    _initField({value, options, onInput, onChange}) {
-        this._select = new VDropdownList({value, options, onInput, onChange})
+    _initField({value, selector, options}) {
+        this._select = new VDropdownList({value, selector, options})
             .addClass("form-input-dropdownlist");
         this.add(this._select);
     }
@@ -682,6 +686,9 @@ export class VDropdownListField extends VField {
         return this._select;
     }
 
+    get selection() {
+        return this._select.selection;
+    }
 }
 
 export class VButtons extends Vitamin(Div) {

@@ -155,14 +155,15 @@ export class CBAEditEvent extends VModal {
 
 export class CBAEventList extends VTable {
 
-    constructor({loadPage, updateEvent, deleteEvent}) {
+    constructor({loadPage, saveEvent, saveEventStatus, deleteEvent}) {
         super({
             ref: "event-list",
             changePage: pageIndex => this._setPage(pageIndex)
         });
         this.addClass("event-list");
         this._loadPage = loadPage;
-        this._updateEvent = updateEvent;
+        this._saveEvent = saveEvent;
+        this._saveEventStatus = saveEventStatus;
         this._deleteEvent = deleteEvent;
     }
 
@@ -198,7 +199,7 @@ export class CBAEventList extends VTable {
                 let eventEditor = new CBAEditEvent({
                     title: "Edit Event",
                     event,
-                    saveEvent: event => this._updateEvent(event,
+                    saveEvent: event => this._saveEvent(event,
                         eventEditor.illustrationFiles,
                         () => {
                             eventEditor.hide();
@@ -221,7 +222,7 @@ export class CBAEventList extends VTable {
                     ),
                 }).show();
             };
-            let saveEvent = event => this._updateEvent(event, [],
+            let saveEventStatus = event => this._saveEventStatus(event,
                 () => showMessage("Event saved."),
                 text => showMessage("Unable to Save Event.", text),
             );
@@ -243,7 +244,7 @@ export class CBAEventList extends VTable {
                     .addClass("form-input-select")
                     .setValue(event.status)
                     .addClass("event-status")
-                    .onChange(event => saveEvent(getEvent(line)));
+                    .onChange(event => saveEventStatus(getEvent(line)));
                 line = {id: event.id, date, title, description, illustration, status, target:event.target};
                 lines.push([date, title, illustration, description, status]);
             }
@@ -280,7 +281,7 @@ export class CBAEventList extends VTable {
 
 export class CBAEventListPage extends Vitamin(Div) {
 
-    constructor({loadPage, createEvent, updateEvent, deleteEvent}) {
+    constructor({loadPage, saveEvent, saveEventStatus, deleteEvent}) {
         super({ref: "event-list-page"});
         this._search = new VSearch({
             ref: "event-list-search", searchAction: search => {
@@ -296,7 +297,7 @@ export class CBAEventListPage extends Vitamin(Div) {
                     event: {
                         status: "soon"
                     },
-                    saveEvent: event => createEvent(event,
+                    saveEvent: event => saveEvent(event,
                         this._createEventModal.illustrationFiles,
                         () => {
                             this._createEventModal.hide();
@@ -313,7 +314,7 @@ export class CBAEventListPage extends Vitamin(Div) {
             }
         }).addClass("right-button");
         this._search.add(this._create);
-        this._table = new CBAEventList({loadPage, updateEvent, deleteEvent});
+        this._table = new CBAEventList({loadPage, saveEvent, saveEventStatus, deleteEvent});
         this.add(this._search).add(this._table);
     }
 
@@ -356,21 +357,6 @@ export function loadEvents(pageIndex, search, update) {
     );
 }
 
-export function createEvent(event, illustration, success, failure) {
-    sendPost("/api/event/create",
-        event,
-        (text, status) => {
-            console.log("Event creation success: " + text + ": " + status);
-            success(text, status);
-        },
-        (text, status) => {
-            console.log("Event creation failure: " + text + ": " + status);
-            failure(text, status);
-        },
-        illustration
-    );
-}
-
 export function deleteEvent(event, success, failure) {
     sendGet("/api/event/delete/" + event.id,
         (text, status) => {
@@ -384,24 +370,38 @@ export function deleteEvent(event, success, failure) {
     );
 }
 
-export function updateEvent(event, illustration, success, failure) {
-    sendPost("/api/event/update/" + event.id,
+export function saveEvent(event, illustration, success, failure) {
+    sendPost(event.id===undefined ? "/api/event/create" : "/api/event/update/" + event.id,
         event,
         (text, status) => {
-            console.log("Event update success: " + text + ": " + status);
+            console.log("Event saving success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Event update failure: " + text + ": " + status);
+            console.log("Event saving failure: " + text + ": " + status);
             failure(text, status);
         },
         illustration
     );
 }
 
+export function saveEventStatus(event, success, failure) {
+    sendPost("/api/event/update-status/" + event.id,
+        event,
+        (text, status) => {
+            console.log("Event status saving success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Event status saving failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
+}
+
 export var vEventList = new CBAEventListPage({
     loadPage: loadEvents,
-    createEvent,
     deleteEvent,
-    updateEvent
+    saveEvent,
+    saveEventStatus
 });

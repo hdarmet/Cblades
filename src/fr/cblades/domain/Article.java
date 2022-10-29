@@ -16,8 +16,8 @@ public class Article extends BaseEntity {
 
     String title="";
     boolean recent;
-    @ManyToOne
-    Theme theme;
+    @ManyToMany
+    List<Theme> themes = new ArrayList<>();
     @OneToOne(cascade = CascadeType.ALL)
     Paragraph firstParagraph;
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
@@ -35,6 +35,18 @@ public class Article extends BaseEntity {
     }
     public Article setTitle(String title) {
         this.title = title;
+        return this;
+    }
+
+    public List<Theme> getThemes() {
+        return Collections.unmodifiableList(this.themes);
+    }
+    public Article addTheme(Theme theme) {
+        this.themes.add(theme);
+        return this;
+    }
+    public Article removeTheme(Theme theme) {
+        this.themes.remove(theme);
         return this;
     }
 
@@ -60,14 +72,6 @@ public class Article extends BaseEntity {
     }
     public Article setRecent(boolean recent) {
         this.recent = recent;
-        return this;
-    }
-
-    public Theme getTheme() {
-        return this.theme;
-    }
-    public Article setTheme(Theme theme) {
-        this.theme = theme;
         return this;
     }
 

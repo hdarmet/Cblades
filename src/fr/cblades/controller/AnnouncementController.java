@@ -180,6 +180,25 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 		}, ADMIN);
 		return result.get();
 	}
+
+	@REST(url="/api/announcement/update-status/:id", method=Method.POST)
+	public Json updateStatus(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
+			try {
+				inTransaction(em->{
+					String id = (String)params.get("id");
+					Announcement announcement = findAnnouncement(em, new Long(id));
+					writeToAnnouncementStatus(request, announcement);
+					flush(em);
+					result.set(readFromAnnouncement(announcement));
+				});
+			} catch (PersistenceException pe) {
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			}
+		}, ADMIN);
+		return result.get();
+	}
 	
 	Announcement findAnnouncement(EntityManager em, long id) {
 		Announcement announcement = find(em, Announcement.class, id);
@@ -206,6 +225,16 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 			.write("description")
 			.write("illustration")
 			.write("status", label->AnnouncementStatus.byLabels().get(label));
+		return announcement;
+	}
+
+	Announcement writeToAnnouncementStatus(Json json, Announcement announcement) {
+		verify(json)
+				.checkRequired("id").checkInteger("id", "Not a valid id")
+				.check("status", AnnouncementStatus.byLabels().keySet())
+				.ensure();
+		sync(json, announcement)
+				.write("status", label->AnnouncementStatus.byLabels().get(label));
 		return announcement;
 	}
 

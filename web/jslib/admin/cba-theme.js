@@ -379,7 +379,7 @@ export class CBAEditTheme extends VModal {
 
 export class CBAThemeList extends VTable {
 
-    constructor({loadPage, saveTheme, deleteTheme}) {
+    constructor({loadPage, saveTheme, saveThemeStatus, deleteTheme}) {
         super({
             ref: "theme-list",
             changePage: pageIndex => this._setPage(pageIndex)
@@ -387,6 +387,7 @@ export class CBAThemeList extends VTable {
         this.addClass("theme-list");
         this._loadPage = loadPage;
         this._saveTheme = saveTheme;
+        this._saveThemeStatus = saveThemeStatus;
         this._deleteTheme = deleteTheme;
     }
 
@@ -451,7 +452,7 @@ export class CBAThemeList extends VTable {
         }
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
-            let saveTheme = theme => this._saveTheme(theme, null,
+            let saveThemeStatus = theme => this._saveThemeStatus(theme,
                 () => showMessage("Theme saved."),
                 text => showMessage("Unable to Save Theme.", text),
             );
@@ -473,7 +474,7 @@ export class CBAThemeList extends VTable {
                     .addClass("form-input-select")
                     .setValue(theme.status)
                     .addClass("theme-status")
-                    .onChange(event => saveTheme(getTheme(line)));
+                    .onChange(event => saveThemeStatus(getTheme(line)));
                 line = {id: theme.id, illustration, category, title, description, status, author:theme.author};
                 lines.push([illustration, category, title, description, status]);
             }
@@ -510,7 +511,7 @@ export class CBAThemeList extends VTable {
 
 export class CBAThemeListPage extends Vitamin(Div) {
 
-    constructor({loadPage, saveTheme, deleteTheme}) {
+    constructor({loadPage, saveTheme, saveThemeStatus, deleteTheme}) {
         super({ref: "theme-list-page"});
         this._search = new VSearch({
             ref: "theme-list-search", searchAction: search => {
@@ -543,7 +544,7 @@ export class CBAThemeListPage extends Vitamin(Div) {
             }
         }).addClass("right-button");
         this._search.add(this._create);
-        this._table = new CBAThemeList({loadPage, saveTheme, deleteTheme});
+        this._table = new CBAThemeList({loadPage, saveTheme, saveThemeStatus, deleteTheme});
         this.add(this._search).add(this._table);
     }
 
@@ -611,14 +612,28 @@ export function saveTheme(theme, images, success, failure) {
     sendPost(theme.id===undefined ? "/api/theme/create" : "/api/theme/update/" + theme.id,
         theme,
         (text, status) => {
-            console.log("Theme creation success: " + text + ": " + status);
+            console.log("Theme saving success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Theme creation failure: " + text + ": " + status);
+            console.log("Theme saving failure: " + text + ": " + status);
             failure(text, status);
         },
         images
+    );
+}
+
+export function saveThemeStatus(theme, success, failure) {
+    sendPost("/api/theme/update-status/" + theme.id,
+        theme,
+        (text, status) => {
+            console.log("Theme status saving success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Theme status saving failure: " + text + ": " + status);
+            failure(text, status);
+        }
     );
 }
 
@@ -638,5 +653,6 @@ export function deleteTheme(theme, success, failure) {
 export var vThemeList = new CBAThemeListPage({
     loadPage: loadThemes,
     deleteTheme,
-    saveTheme
+    saveTheme,
+    saveThemeStatus
 });

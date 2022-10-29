@@ -188,7 +188,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 			Collection<Article> articles = findArticles(em.createQuery(
 				"select a from Article a " +
 					"join fetch a.firstParagraph p " +
-					"join fetch a.theme t " +
+					"join fetch a.themes t " +
 					"join fetch a.author w " +
 					"join fetch w.access " +
 					"where a.status=:status and a.recent=:recent"),
@@ -207,7 +207,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 			Collection<Article> articles = findArticles(em.createQuery(
 				"select a from Article a " +
 					"join fetch a.firstParagraph p " +
-					"join fetch a.theme t " +
+					"join fetch a.themes t " +
 					"join fetch a.author w " +
 					"join fetch w.access " +
 					"where a.status=:status and t.title=:title"),
@@ -226,7 +226,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 			Article article = getSingleResult(em,
 				"select a from Article a " +
 					"join fetch a.firstParagraph p " +
-					"join fetch a.theme t " +
+					"join fetch a.themes t " +
 					"join fetch a.author w " +
 					"join fetch w.access " +
 					"where a.title=:title",
@@ -277,6 +277,28 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 		return Json.createJsonObject().put("deleted", "ok");
 	}
 
+	@REST(url="/api/article/update-status/:id", method=Method.POST)
+	public Json updateStatus(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em-> {
+			String id = (String) params.get("id");
+			Article article = findArticle(em, new Long(id));
+			ifAuthorized(
+				user -> {
+					try {
+						writeToArticleStatus(em, request, article);
+						flush(em);
+						result.set(readFromArticle(article));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+					}
+				},
+				ADMIN
+			);
+		});
+		return result.get();
+	}
+
 	@REST(url="/api/article/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
@@ -315,10 +337,11 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 	Article writeToProposedArticle(EntityManager em, Json json, Article article) {
 		try {
 			verify(json)
-				.check("theme", ThemeCategory.byLabels().keySet())
 				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkPattern("theme", "[\\d\\s\\w]+")
+				.each("themes", tJson->verify(tJson)
+					.checkRequired("id").checkInteger("id", "Not a valid id")
+				)
 				.checkMinSize("newComment", 2).checkMaxSize("newComment", 200)
 				.each("paragraphs", cJson->verify(cJson)
 					.checkRequired("version")
@@ -335,8 +358,8 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 				.ensure();
 			sync(json, article)
 				.write("version")
-				.writeRef("theme",  (String title)->Theme.getByTitle(em, title))
 				.write("title")
+				.syncEach("themes", (Json jsonTheme)-> Theme.find(em, jsonTheme.getLong("id")))
 				.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
 				.syncEach("paragraphs", (cJson, comment)->sync(cJson, comment)
 					.write("version")
@@ -361,13 +384,24 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 		}
 	}
 
+	Article writeToArticleStatus(EntityManager em, Json json, Article article) {
+		verify(json)
+			.checkRequired("id").checkInteger("id", "Not a valid id")
+			.check("status", ArticleStatus.byLabels().keySet())
+			.ensure();
+		sync(json, article)
+			.write("status", label->ArticleStatus.byLabels().get(label));
+		return article;
+	}
+
 	Article writeToArticle(EntityManager em, Json json, Article article) {
 		try {
 			verify(json)
-				.check("theme", ThemeCategory.byLabels().keySet())
 				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkPattern("theme", "[\\d\\s\\w]+")
+				.each("themes", tJson->verify(tJson)
+						.checkRequired("id").checkInteger("id", "Not a valid id")
+				)
 				.check("status", ThemeStatus.byLabels().keySet())
 				.each("paragraphs", cJson->verify(cJson)
 					.checkRequired("version")
@@ -391,8 +425,8 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 				.ensure();
 			sync(json, article)
 				.write("version")
-				.writeRef("theme",  (String title)->Theme.getByTitle(em, title))
 				.write("title")
+				.syncEach("themes", (Json jsonTheme)-> Theme.find(em, jsonTheme.getLong("id")))
 				.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
 				.write("status", label->ArticleStatus.byLabels().get(label))
 				.syncEach("paragraphs", (cJson, comment)->sync(cJson, comment)
@@ -421,7 +455,10 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 		sync(json, article)
 			.read("id")
 			.read("version")
-			.read("theme", "theme.title")
+			.readEach("themes", (tJson, account)->sync(tJson, account)
+				.read("id")
+				.read("title")
+			)
 			.read("title")
 			.read("status", ArticleStatus::getLabel)
 			.readLink("firstParagraph", (pJson, paragraph)->sync(pJson, paragraph)
@@ -445,7 +482,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 		sync(json, article)
 			.read("id")
 			.read("version")
-			.readLink("theme", (pJson, account)->sync(pJson, account)
+			.readEach("themes", (tJson, account)->sync(tJson, account)
 				.read("id")
 				.read("title")
 			)

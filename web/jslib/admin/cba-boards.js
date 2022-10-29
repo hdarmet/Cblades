@@ -314,7 +314,7 @@ export class CBAEditBoard extends VModal {
 
 export class CBABoardList extends VTable {
 
-    constructor({loadPage, saveBoard, deleteBoard}) {
+    constructor({loadPage, saveBoard, saveBoardStatus, deleteBoard}) {
         super({
             ref: "board-list",
             changePage: pageIndex => this._setPage(pageIndex)
@@ -322,6 +322,7 @@ export class CBABoardList extends VTable {
         this.addClass("board-list");
         this._loadPage = loadPage;
         this._saveBoard = saveBoard;
+        this._saveBoardStatus = saveBoardStatus;
         this._deleteBoard = deleteBoard;
     }
 
@@ -386,7 +387,7 @@ export class CBABoardList extends VTable {
         }
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
-            let saveBoard = board => this._saveBoard(board, null, null,
+            let saveBoardStatus = board => this._saveBoardStatus(board,
                 () => showMessage("Board saved."),
                 text => showMessage("Unable to Save Board.", text),
             );
@@ -406,7 +407,7 @@ export class CBABoardList extends VTable {
                     .addClass("form-input-select")
                     .setValue(board.status)
                     .addClass("board-status")
-                    .onChange(event => saveBoard(getBoard(line)));
+                    .onChange(event => saveBoardStatus(getBoard(line)));
                 line = {id: board.id, name, description, icon, status, path:board.path, author:board.author};
                 lines.push([icon, name, description, status]);
             }
@@ -443,7 +444,7 @@ export class CBABoardList extends VTable {
 
 export class CBABoardListPage extends Vitamin(Div) {
 
-    constructor({loadPage, saveBoard, deleteBoard}) {
+    constructor({loadPage, saveBoard, saveBoardStatus, deleteBoard}) {
         super({ref: "board-list-page"});
         this._search = new VSearch({
             ref: "board-list-search", searchAction: search => {
@@ -476,7 +477,7 @@ export class CBABoardListPage extends Vitamin(Div) {
             }
         }).addClass("right-button");
         this._search.add(this._create);
-        this._table = new CBABoardList({loadPage, saveBoard, deleteBoard});
+        this._table = new CBABoardList({loadPage, saveBoard, saveBoardStatus, deleteBoard});
         this.add(this._search).add(this._table);
     }
 
@@ -544,14 +545,28 @@ export function saveBoard(board, images, success, failure) {
     sendPost(board.id===undefined ? "/api/board/create" : "/api/board/update/" + board.id,
         board,
         (text, status) => {
-            console.log("Board creation success: " + text + ": " + status);
+            console.log("Board saving success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Board creation failure: " + text + ": " + status);
+            console.log("Board saving failure: " + text + ": " + status);
             failure(text, status);
         },
         images
+    );
+}
+
+export function saveBoardStatus(board, success, failure) {
+    sendPost("/api/board/update-status/" + board.id,
+        board,
+        (text, status) => {
+            console.log("Board status saving success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Board status saving failure: " + text + ": " + status);
+            failure(text, status);
+        }
     );
 }
 
@@ -571,5 +586,6 @@ export function deleteBoard(board, success, failure) {
 export var vBoardList = new CBABoardListPage({
     loadPage: loadBoards,
     deleteBoard,
-    saveBoard
+    saveBoard,
+    saveBoardStatus
 });

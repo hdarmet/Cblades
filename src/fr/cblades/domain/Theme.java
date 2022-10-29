@@ -1,6 +1,7 @@
 package fr.cblades.domain;
 
 import org.summer.data.BaseEntity;
+import org.summer.data.SummerNotFoundException;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -83,6 +84,16 @@ public class Theme extends BaseEntity {
     public Theme removeComment(Comment comment) {
         this.comments.remove(comment);
         return this;
+    }
+
+    static public Theme find(EntityManager em, long id) {
+        Theme theme = em.find(Theme.class, id);
+        if (theme==null) {
+            throw new SummerNotFoundException(
+                String.format("Unknown Theme with id %d", id)
+            );
+        }
+        return theme;
     }
 
     public static Theme getByTitle(EntityManager em, String title) {

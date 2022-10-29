@@ -122,14 +122,15 @@ export class CBAEditAnnouncement extends VModal {
 
 export class CBAAnnouncementList extends VTable {
 
-    constructor({loadPage, updateAnnouncement, deleteAnnouncement}) {
+    constructor({loadPage, saveAnnouncement, saveAnnouncementStatus, deleteAnnouncement}) {
         super({
             ref: "announcement-list",
             changePage: pageIndex => this._setPage(pageIndex)
         });
         this.addClass("announcement-list");
         this._loadPage = loadPage;
-        this._updateAnnouncement = updateAnnouncement;
+        this._saveAnnouncement = saveAnnouncement;
+        this._saveAnnouncementStatus = saveAnnouncementStatus;
         this._deleteAnnouncement = deleteAnnouncement;
     }
 
@@ -162,7 +163,7 @@ export class CBAAnnouncementList extends VTable {
                 let announcementEditor = new CBAEditAnnouncement({
                     title: "Edit Announcement",
                     announcement,
-                    saveAnnouncement: announcement => this._updateAnnouncement(announcement,
+                    saveAnnouncement: announcement => this._saveAnnouncement(announcement,
                         announcementEditor.illustrationFiles,
                         () => {
                             announcementEditor.hide();
@@ -185,9 +186,9 @@ export class CBAAnnouncementList extends VTable {
                     ),
                 }).show();
             };
-            let saveAnnouncement = annoucement => this._updateAnnouncement(annoucement, [],
+            let saveAnnouncementStatus = annoucement => this._saveAnnouncementStatus(annoucement,
                 () => showMessage("Announcement saved."),
-                text => showMessage("Unable to Save Announcement.", text),
+                text => showMessage("Unable to Save Announcement.", text)
             );
             for (let announcement of pageData.announcements) {
                 let line;
@@ -203,7 +204,7 @@ export class CBAAnnouncementList extends VTable {
                     .addClass("form-input-select")
                     .setValue(announcement.status)
                     .addClass("announcement-status")
-                    .onChange(event => saveAnnouncement(getAnnouncement(line)));
+                    .onChange(event => saveAnnouncementStatus(getAnnouncement(line)));
                 line = {id: announcement.id, description, illustration, status};
                 lines.push([illustration, description, status]);
             }
@@ -240,7 +241,7 @@ export class CBAAnnouncementList extends VTable {
 
 export class CBAAnnouncementListPage extends Vitamin(Div) {
 
-    constructor({loadPage, createAnnouncement, updateAnnouncement, deleteAnnouncement}) {
+    constructor({loadPage, saveAnnouncement, saveAnnouncementStatus, deleteAnnouncement}) {
         super({ref: "announcement-list-page"});
         this._search = new VSearch({
             ref: "announcement-list-search", searchAction: search => {
@@ -256,7 +257,7 @@ export class CBAAnnouncementListPage extends Vitamin(Div) {
                     announcement: {
                         illustration: "../images/site/announcement/default-announcement.png", status: "soon"
                     },
-                    saveAnnouncement: announcement => createAnnouncement(announcement,
+                    saveAnnouncement: announcement => saveAnnouncement(announcement,
                         this._createAnnouncementModal.illustrationFiles,
                         () => {
                             this._createAnnouncementModal.hide();
@@ -273,7 +274,7 @@ export class CBAAnnouncementListPage extends Vitamin(Div) {
             }
         }).addClass("right-button");
         this._search.add(this._create);
-        this._table = new CBAAnnouncementList({loadPage, updateAnnouncement, deleteAnnouncement});
+        this._table = new CBAAnnouncementList({loadPage, saveAnnouncement, saveAnnouncementStatus, deleteAnnouncement});
         this.add(this._search).add(this._table);
     }
 
@@ -316,21 +317,6 @@ export function loadAnnouncements(pageIndex, search, update) {
     );
 }
 
-export function createAnnouncement(announcement, illustration, success, failure) {
-    sendPost("/api/announcement/create",
-        announcement,
-        (text, status) => {
-            console.log("Announcement creation success: " + text + ": " + status);
-            success(text, status);
-        },
-        (text, status) => {
-            console.log("Announcement creation failure: " + text + ": " + status);
-            failure(text, status);
-        },
-        illustration
-    );
-}
-
 export function deleteAnnouncement(announcement, success, failure) {
     sendGet("/api/announcement/delete/" + announcement.id,
         (text, status) => {
@@ -344,15 +330,30 @@ export function deleteAnnouncement(announcement, success, failure) {
     );
 }
 
-export function updateAnnouncement(announcement, illustration, success, failure) {
-    sendPost("/api/announcement/update/" + announcement.id,
+export function saveAnnouncement(announcement, illustration, success, failure) {
+    sendPost(announcement.id===undefined ? "/api/announcement/create" : "/api/announcement/update/" + announcement.id,
         announcement,
         (text, status) => {
-            console.log("Announcement update success: " + text + ": " + status);
+            console.log("Announcement saving success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Announcement update failure: " + text + ": " + status);
+            console.log("Announcement saving failure: " + text + ": " + status);
+            failure(text, status);
+        },
+        illustration
+    );
+}
+
+export function saveAnnouncementStatus(announcement, success, failure) {
+    sendPost("/api/announcement/update-status/" + announcement.id,
+        announcement,
+        (text, status) => {
+            console.log("Announcement status saving success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Announcement status saving failure: " + text + ": " + status);
             failure(text, status);
         },
         illustration
@@ -361,7 +362,7 @@ export function updateAnnouncement(announcement, illustration, success, failure)
 
 export var vAnnouncementList = new CBAAnnouncementListPage({
     loadPage: loadAnnouncements,
-    createAnnouncement,
     deleteAnnouncement,
-    updateAnnouncement
+    saveAnnouncement,
+    saveAnnouncementStatus
 });

@@ -1,4 +1,8 @@
 
+.article-list td.column-3 img {
+    width: 250px;
+}
+
 .article-editor-pane .article {
     --extends: ex-record-background;
     margin-right: 15px;
@@ -27,6 +31,10 @@
     text-shadow: 1px 1px 0 #ffffff, -1px -1px 0 #ffffff, -1px 1px 0.1em #ffffff, 1px -1px 0.1em #ffffff, 1px -1px 0.2em #ffffff, -1px 1px 0.2em #ffffff, -1px 1px 0.3em #ffffff, 1px -1px 0.3em #ffffff;
     margin-block-start: 15px;
     margin-block-end: 15px;
+}
+
+.article-editor-pane .paragraph {
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 .article-editor-pane .paragraph-title {

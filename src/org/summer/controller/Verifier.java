@@ -155,7 +155,31 @@ public class Verifier {
 				(json.get(field) instanceof Number) &&
 				(((Number)json.get(field)).doubleValue()<=max.doubleValue()), field, message);
 	}
-	
+
+	public Verifier checkInteger(String field, String message) {
+		return check(json->json.get(field)==null||
+			(json.get(field) instanceof Integer), field, message);
+	}
+
+	public Verifier checkLong(String field, String message) {
+		return check(json->json.get(field)==null||
+				(json.get(field) instanceof Long), field, message);
+	}
+
+	public Verifier checkFloat(String field, String message) {
+		return check(json->json.get(field)==null||
+				(json.get(field) instanceof Float), field, message);
+	}
+
+	public Verifier checkDouble(String field, String message) {
+		return check(json->json.get(field)==null||
+				(json.get(field) instanceof Double), field, message);
+	}
+
+	public Verifier checkInteger(String field) {
+		return checkEmail(field, "not a valid integer");
+	}
+
 	public Verifier checkEmail(String field, String message) {
 		return checkPattern(field, "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$", 
 				message);

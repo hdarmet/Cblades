@@ -368,16 +368,9 @@
     cursor: pointer;
 }
 
-.form-dropdown-list .visible.items {
+.form-dropdown-list:hover .items {
     display: block;
 }
-
-
-
-
-
-
-
 
 /* The switch - the box around the slider */
 .form-toggle {

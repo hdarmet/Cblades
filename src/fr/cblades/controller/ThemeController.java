@@ -182,7 +182,9 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json getLive(Map<String, String> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Collection<Theme> themes = findThemes(em.createQuery("select t from Theme t where t.status=:status"),
+			Collection<Theme> themes = findThemes(em.createQuery(
+					"select t from Theme t where t.status=:status"
+				),
 				"status", ThemeStatus.LIVE);
 			result.set(readFromThemeSummaries(themes));
 		});
@@ -269,6 +271,28 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return result.get();
 	}
 
+	@REST(url="/api/theme/update-status/:id", method=Method.POST)
+	public Json updateStatus(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em-> {
+			String id = (String) params.get("id");
+			Theme theme = findTheme(em, new Long(id));
+			ifAuthorized(
+				user -> {
+					try {
+						writeToThemeStatus(em, request, theme);
+						flush(em);
+						result.set(readFromTheme(theme));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+					}
+				},
+				ADMIN
+			);
+		});
+		return result.get();
+	}
+
 	BiPredicate<String, String[]> verifyIfAdminOrOwner(Theme theme) {
 		return (user, roles) -> {
 			if (theme.getAuthor() != null && theme.getAuthor().getLogin().equals(user)) {
@@ -340,6 +364,16 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		} catch (SummerNotFoundException snfe) {
 			throw new SummerControllerException(404, snfe.getMessage());
 		}
+	}
+
+	Theme writeToThemeStatus(EntityManager em, Json json, Theme theme) {
+		verify(json)
+			.checkRequired("id").checkInteger("id", "Not a valid id")
+			.check("status", ThemeStatus.byLabels().keySet())
+			.ensure();
+		sync(json, theme)
+			.write("status", label->ThemeStatus.byLabels().get(label));
+		return theme;
 	}
 
 	Json readFromThemeSummary(Theme theme) {
