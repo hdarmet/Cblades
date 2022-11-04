@@ -158,9 +158,9 @@ public class FakeData {
             data.persist(em, theme);
             theme = new Theme()
                 .setDescription(SHORT_PARAGRAPH_TEXT)
-                .setTitle("Campains")
+                .setTitle("Campaigns")
                 .setCategory(ThemeCategory.GAME)
-                .setIllustration("../images/site/themes/campains.png")
+                .setIllustration("../images/site/themes/campaigns.png")
                 .setStatus(ThemeStatus.LIVE);
             data.persist(em, theme);
             theme = new Theme()
@@ -177,6 +177,46 @@ public class FakeData {
                 .setIllustration("../images/site/themes/siege.png")
                 .setStatus(ThemeStatus.LIVE);
             data.persist(em, theme);
+        });
+        data.inTransaction(em-> {
+            Article article = new Article()
+                .setTitle("My First Article")
+                .setRecent(true)
+                .setAuthor(Account.find(em, "temrad"))
+                .addTheme(Theme.getByTitle(em, "Campaigns"))
+                .addTheme(Theme.getByTitle(em, "History"))
+                .setStatus(ArticleStatus.LIVE)
+                .addParagraph(new Paragraph()
+                    .setOrdinal(0)
+                    .setTitle("First paragraph")
+                    .setText(PARAGRAPH_TEXT)
+                    .setIllustrationPosition("../images/site/factions/amarys.png")
+                    .setIllustrationPosition(IllustrationPosition.LEFT)
+                ).addParagraph(new Paragraph()
+                    .setOrdinal(1)
+                    .setTitle("Second paragraph")
+                    .setText(PARAGRAPH_TEXT)
+                    .setIllustrationPosition("../images/site/factions/demons.png")
+                    .setIllustrationPosition(IllustrationPosition.LEFT)
+                );
+            article.setFirstParagraph(article.getParagraph(0));
+            data.persist(em, article);
+            article = new Article()
+                .setTitle("My Second Article")
+                .setRecent(true)
+                .setAuthor(Account.find(em, "temrad"))
+                .addTheme(Theme.getByTitle(em, "Strategies And Tactics"))
+                .addTheme(Theme.getByTitle(em, "Rules"))
+                .setStatus(ArticleStatus.LIVE)
+                .addParagraph(new Paragraph()
+                    .setOrdinal(0)
+                    .setTitle("First paragraph")
+                    .setText(PARAGRAPH_TEXT)
+                    .setIllustrationPosition("../images/site/factions/hill.png")
+                    .setIllustrationPosition(IllustrationPosition.LEFT)
+                );
+            article.setFirstParagraph(article.getParagraph(0));
+            data.persist(em, article);
         });
     }
 

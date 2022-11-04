@@ -9,6 +9,7 @@ public class Paragraph extends BaseEntity {
 
     int ordinal;
     String title="";
+    @Column(length = 2000)
     String text="";
     String illustration ="";
     @Enumerated(EnumType.STRING)
@@ -41,7 +42,7 @@ public class Paragraph extends BaseEntity {
     public String getIllustration() {
         return this.illustration;
     }
-    public Paragraph setIllustration(String illustration) {
+    public Paragraph setIllustrationPosition(String illustration) {
         this.illustration = illustration;
         return this;
     }
@@ -49,7 +50,7 @@ public class Paragraph extends BaseEntity {
     public IllustrationPosition getIllustrationPosition() {
         return this.illustrationPosition;
     }
-    public Paragraph setIllustration(IllustrationPosition illustrationPosition) {
+    public Paragraph setIllustrationPosition(IllustrationPosition illustrationPosition) {
         this.illustrationPosition = illustrationPosition;
         return this;
     }

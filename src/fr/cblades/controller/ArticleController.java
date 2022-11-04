@@ -54,9 +54,9 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 			int ordinal = Integer.parseInt(file.getName().substring(file.getName().indexOf("-")+1));
 			String fileName = "paragraph" + article.getId() + "_" + ordinal + "." + files[0].getExtension();
 			String webName = "paragraph" + article.getId() + "_" + ordinal + "-" + System.currentTimeMillis() + "." + files[0].getExtension();
-			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/articles/" + fileName));
+			copyStream(file.getStream(), PlatformManager.get().getOutputStream("/articles/" + fileName));
 			log.info("Save: " + "/articles/" + fileName + " for: " + "/api/article/images/" + webName);
-			article.getParagraph(ordinal).setIllustration("/api/article/images/" + webName);
+			article.getParagraph(ordinal).setIllustrationPosition("/api/article/images/" + webName);
 		}
 	}
 

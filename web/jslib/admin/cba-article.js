@@ -211,12 +211,12 @@ export class CBAArticle extends Vitamin(Div) {
     }
 
     set specification(specification) {
-        this._title.setText(specification.article.title);
+        this._title.setText(specification.title);
         for (let paragraph of this._paragraphs) {
             this.remove(paragraph);
         }
         this._paragraphs = [];
-        for (let paragraphSpec of specification.article.paragraphs) {
+        for (let paragraphSpec of specification.paragraphs) {
             this.createParagraph(paragraphSpec);
         }
     }
@@ -227,13 +227,14 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
     constructor({ref, kind, article, accept, verify}) {
         super({ref});
         this.addClass(kind);
+        this._newParagraphSpecs = {
+            version: 0,
+            illustration: "../images/site/default-image.png",
+            illustrationPosition: "right",
+            title: "Paragraph title",
+            text: "Paragraph text"
+        };
         if (!article.paragraphs) {
-            this._newParagraphSpecs = {
-                version: 0,
-                illustrationPosition: "right",
-                title: "Paragraph title",
-                text: "Paragraph text"
-            };
             article.paragraphs = [
                 structuredClone(this._newParagraphSpecs)
             ]
@@ -410,8 +411,7 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
     _register() {
         return {
             current: this._paragraphView ? this._paragraphView.ref.ref : null,
-            themes: this._themes.values,
-            article: this._articleView.specification
+            ...this.article
         }
     }
 
@@ -425,9 +425,9 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
                 }
             }
             this._articleTitle.value = this._articleView.title;
-            this._themes.values = specification.themes;
             let paragraphView = this._articleView.getParagraph(specification.current);
             this._selectParagraph(paragraphView);
+            this._themes.values = specification.themes;
             this._author.value = specification.author;
             this._comments = structuredClone(specification.comments)
         }
@@ -817,7 +817,7 @@ export class CBAArticleList extends VTable {
             for (let article of pageData.articles) {
                 let line;
                 let themes = new Span(article.themes.map(theme=>theme.title).join(", ")).addClass("article-themes")
-                    .onMouseClick(event => this.selectTheme(getArticle(line)));
+                    .onMouseClick(event => this.selectArticle(getArticle(line)));
                 let title = new Span(article.title).addClass("article-name")
                     .onMouseClick(event => this.selectArticle(getArticle(line)));
                 let author = new Span(getAuthor(article)).addClass("article-name")
@@ -831,10 +831,10 @@ export class CBAArticleList extends VTable {
                     {value: "pnd", text: "Pending"},
                     {value: "prp", text: "Proposed"}
                 ])
-                    .addClass("form-input-select")
-                    .setValue(article.status)
-                    .addClass("article-status")
-                    .onChange(event => saveArticleStatus(getArticle(line)));
+                .addClass("form-input-select")
+                .setValue(article.status)
+                .addClass("article-status")
+                .onChange(event => saveArticleStatus(getArticle(line)));
                 line = {id: article.id, themes, title, status};
                 lines.push([themes, title, author, illustration, firstParagraph, status]);
             }

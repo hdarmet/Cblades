@@ -124,13 +124,23 @@ export class VDropdownList extends Vitamin(Div) {
         return result;
     }
 
+    _updateItems() {
+        let values = new Set();
+        this._labels = [];
+        this._value.forEach(value=>values.add(value));
+        for (let item of this._items.children) {
+            let checked = values.has(item._value);
+            item._checkbox.setChecked(checked);
+            if (checked) {
+                this._labels.push(item._label);
+            }
+        }
+        this._anchor.setText(this._labels.length>0?this._labels.join(", "):this._placeholder);
+    }
+
     setValue(value) {
         this._value = value;
-        let checked = new Set();
-        this._value.forEach(value=>checked.add(value))
-        for (let item of this._items.children) {
-            item._checkbox.setChecked(checked.has(item._value));
-        }
+        this._updateItems();
         return this;
     }
 
@@ -192,18 +202,21 @@ export class VDropdownList extends Vitamin(Div) {
                     this._onInput && this._onInput(event);
                 };
                 let checkbox = new Checkbox().onEvent("change", changeAction);
-                let value = new Span(option.label || option.value);
+                let label = option.label || option.value;
+                let optionLine = new Span(label);
                 let item = new LI()
                     .add(checkbox)
-                    .add(value);
-                value.onEvent("click", event => {
+                    .add(optionLine);
+                optionLine.onEvent("click", event => {
                     checkbox.setChecked(!checkbox.getChecked());
                     changeAction(event);
                 });
                 item._checkbox = checkbox;
-                item._value = value;
+                item._value = option.value;
+                item._label = label;
                 this._items.add(item);
             }
+            if (this._value) this._updateItems();
         }
         if (selector) {
             selector(buildOptions)
