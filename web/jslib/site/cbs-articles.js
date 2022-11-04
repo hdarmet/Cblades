@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    Div, Img, P
+    Div, Img, P, sendGet, sendPost
 } from "../vitamin/components.js";
 import {
     Undoable,
@@ -12,51 +12,63 @@ import {
     VSplitterPanel
 } from "../vitamin/vcontainer.js";
 import {
-    VButton, VButtons, VCommand,
+    mandatory, range,
+    VButton, VButtons, VCommand, VDropdownListField,
     VFileLoaderField,
     VInputField, VInputTextArea,
-    VSelectField,
     VSwitch
 } from "../vitamin/vforms.js";
+import {
+    loadLiveThemes
+} from "../admin/cba-article.js";
+import {
+    CBSEditComments
+} from "./cbs-comment.js";
+import {
+    CBSFormContainer
+} from "./cbs-widgets.js";
+import {
+    showMessage
+} from "../vitamin/vpage.js";
 
 export class CBSParagraph extends Vitamin(Div) {
 
-    constructor({ref, img, image, imgPos, title, description, action}) {
+    constructor({ref, version, illustration, illustrationFile, illustrationPosition, title, text, action}) {
         super({ref});
         this.addClass("embed-paragraph");
         this._embed = new Div();
         this.add(this._embed);
         this._embed.addClass("paragraph");
-        this.imgPos = imgPos;
-        if (image) {
-            this._image = image;
+        this.illustrationPosition = illustrationPosition;
+        if (illustration) {
+            this._illustration = new VImage({ref:ref+"-image", kind:"paragraph-image", img:illustration});
         }
-        else if (img) {
-            this._image = new VImage({ref:ref+"-image", kind:"paragraph-image", img});
-        }
-        if (this._image) this._embed.add(this._image);
+        if (this._illustration) this._embed.add(this._illustration);
         this._content = new Div().addClass("paragraph-container");
         this._embed.add(this._content);
         this._title = new P(title).addClass("paragraph-title");
         this._content.add(this._title);
-        this._description = new P(description).addClass("paragraph-line");
-        this._content.add(this._description);
+        this._text = new P(text).addClass("paragraph-text");
+        this._content.add(this._text);
+        this._illustrationFile = illustrationFile;
+        this._version = version;
         this.action=action;
     }
 
     set action(action) {
-        action && this.onEvent("click", action);
+        action && this.onEvent("click", event=>{
+            action(this)
+        });
     }
 
     get specification() {
-        let description;
-        description = this._description.getText();
         return {
             ref: this.ref.ref,
-            img: this._image ? this._image.src : null,
-            imgPos: this._imgPos,
+            version: this._version,
+            illustration: this._illustration ? this._illustration.src : null,
+            illustrationPosition: this._illustrationPosition,
             title: this._title.getText(),
-            description: description
+            text: this._text.getText()
         };
     }
 
@@ -68,41 +80,50 @@ export class CBSParagraph extends Vitamin(Div) {
         this._title.setText(title);
     }
 
-    get description() {
-        return this._description.getText();
+    get text() {
+        return this._text.getText();
     }
 
-    set description(description) {
-        this._description.setText(description);
+    set text(text) {
+        this._text.setText(text);
     }
 
-    get image() {
-        return this._image ? this._image.src : null;
+    get illustration() {
+        return this._illustration ? this._illustration.src : null;
     }
 
-    set image(img) {
-        if (this._image) {
-            this._image.setSrc(img);
+    get illustrationFile() {
+        return this._illustrationFile;
+    }
+
+    set illustrationFile(illustrationFile) {
+        this._illustrationFile = illustrationFile;
+    }
+
+    set illustration(illustration) {
+        if (this._illustration) {
+            this._illustration.setSrc(illustration);
         }
         else {
-            this._image = new VImage({ref:this.ref+"-image", kind:"paragraph-image", img});
-            this._embed.insert(this._image, this._content);
+            this._illustration = new VImage({ref:this.ref+"-image", kind:"paragraph-image", img:illustration});
+            this._embed.insert(this._illustration, this._content);
         }
     }
 
-    get imgPos() {
-        return this._imgPos;
+    get illustrationPosition() {
+        return this._illustrationPosition;
     }
 
-    set imgPos(imgPos) {
-        if (this._imgPos) {
-            this.removeClass(`image-on-${this._imgPos}`);
+    set illustrationPosition(illustrationPosition) {
+        if (this._illustrationPosition) {
+            this.removeClass(`image-on-${this._illustrationPosition}`);
         }
-        this._imgPos = imgPos;
-        if (this._imgPos) {
-            this.addClass(`image-on-${this._imgPos}`);
+        this._illustrationPosition = illustrationPosition;
+        if (this._illustrationPosition) {
+            this.addClass(`image-on-${this._illustrationPosition}`);
         }
     }
+
 }
 
 export class CBSVotes extends Vitamin(Div) {
@@ -142,18 +163,19 @@ export class CBSVotes extends Vitamin(Div) {
 
 export class CBSArticle extends Vitamin(Div) {
 
-    constructor({ref, kind = "article", title, paragraphs, votes, action}) {
-        super({ref});
-        this.addClass(kind);
-        this._title = new P(title).addClass("article-title");
+    constructor({action, paragraphAction, article, votes}) {
+        super({ref:"article-"+article.id});
+        this._paragraphAction = paragraphAction;
+        this.addClass("article");
+        this._title = new P(article.title).addClass("article-title");
         this.add(this._title);
         if (votes) {
             this._votes = new CBSVotes(votes);
             this.add(this._votes);
         }
         this._paragraphs=[];
-        if (paragraphs) {
-            for (let paragraphSpec of paragraphs) {
+        if (article.paragraphs) {
+            for (let paragraphSpec of article.paragraphs) {
                 this.createParagraph(paragraphSpec);
             }
         }
@@ -163,7 +185,10 @@ export class CBSArticle extends Vitamin(Div) {
     }
 
     createParagraph(paragraphSpec) {
-        let paragraph = new CBSParagraph(paragraphSpec);
+        let paragraph = new CBSParagraph({
+            ...paragraphSpec,
+            action: this._paragraphAction
+        });
         this.add(paragraph);
         this._paragraphs.push(paragraph);
         return paragraph;
@@ -213,21 +238,25 @@ export class CBSArticle extends Vitamin(Div) {
 
     get specification() {
         let specification = {
-            ref: this.ref,
             title: this._title.getText(),
-            paragraphs: this._paragraphs.map(paragraph=>paragraph.specification),
+            paragraphs: this._paragraphs.map((paragraph, ordinal)=>{
+                return {
+                    ordinal,
+                    ...paragraph.specification
+                }
+            })
         };
         if (this._votes) specification.votes = this._votes.specification;
         return specification;
     }
 
     set specification(specification) {
-        this._title.setText(specification.article.title);
+        this._title.setText(specification.title);
         for (let paragraph of this._paragraphs) {
             this.remove(paragraph);
         }
         this._paragraphs = [];
-        for (let paragraphSpec of specification.article.paragraphs) {
+        for (let paragraphSpec of specification.paragraphs) {
             this.createParagraph(paragraphSpec);
         }
     }
@@ -243,7 +272,7 @@ export class CBSNewspaper extends Vitamin(Div) {
         builder&&builder(this);
     }
 
-    addParagraph({img, image, title, description}, article, left) {
+    addParagraph({img, image, title, text}, article, left) {
         if (image) {
             article.add(image);
         }
@@ -253,14 +282,14 @@ export class CBSNewspaper extends Vitamin(Div) {
         }
         image.addClass(left ? "image-on-left" : "image-on-right");
         article.add(new P(title).addClass("paragraph-title"));
-        if (Array.isArray(description)) {
-            for (let descriptionLine of description) {
-                let line = new P(descriptionLine).addClass("paragraph-line");
+        if (Array.isArray(text)) {
+            for (let textLine of text) {
+                let line = new P(textLine).addClass("paragraph-line");
                 article.add(line);
             }
         }
         else {
-            article.add(new P(description).addClass("paragraph-line"));
+            article.add(new P(text).addClass("paragraph-line"));
         }
     }
 
@@ -292,152 +321,244 @@ export class CBSNewspaper extends Vitamin(Div) {
 
 export class CBSArticleEditor extends Undoable(VSplitterPanel) {
 
-    constructor({ref, kind="article-editor", accept, verify}) {
+    constructor({ref, kind, accept, verify}) {
         super({ref});
         this.addClass(kind);
+        this._newParagraphSpecs = {
+            version: 0,
+            illustration: "../images/site/default-image.png",
+            illustrationPosition: "right",
+            title: "Paragraph title",
+            text: "Paragraph text"
+        };
+        this._themes = new VDropdownListField({ref:"article-theme", label:"Themes",
+            validate: mandatory({}),
+            selector: buildOptions => {
+                loadLiveThemes(buildOptions);
+            },
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this.addOnRight(this._themes);
         this._articleTitle = new VInputField({
             ref:"article-title-input", label:"Article Title",
+            validate: mandatory({validate: range({min:2, max:200})}),
             onInput: event=>{
-                this._article.title = this._articleTitle.value;
+                this._articleView.title = this._articleTitle.value;
             },
             onChange: event=>{
                 this._memorize();
             }
         });
         this.addOnRight(this._articleTitle);
-        this._category = new VSelectField({ref:"article-theme", label:"Themes",
-            multiple: true, size: 4,
-            options: [
-                {ref: "theme-rules", value: "Rules", text:"Rule"},
-                {ref: "theme-strategy", value: "Strategy", text:"Stories And Legends"},
-                {ref: "theme-magic", value: "Magic", text:"Magic"},
-                {ref: "theme-siege", value: "Siege", text:"Siege"}
-            ],
-            onChange: event=>{
-                this._memorize();
-            }
-        });
-        this.addOnRight(this._category);
         this._paragraphTitle = new VInputField({
             ref:"paragraph-title-input", label:"Paragraph Title",
+            validate: mandatory({validate: range({min:2, max:200})}),
             onInput: event=>{
-                this._paragraph.title = this._paragraphTitle.value;
+                this._paragraphView.title = this._paragraphTitle.value;
             },
             onChange: event=>{
                 this._memorize();
             }
         });
         this.addOnRight(this._paragraphTitle);
-        this._imageLoader = new VFileLoaderField({
+        this._illustration = new VFileLoaderField({
             ref:"paragraph-image", label:"Image",
+            validate: mandatory({}),
             accept, verify,
             onInput: event=>{
-                this._paragraph.image = this._imageLoader.imageSrc;
+                this._paragraphView.illustration = this._illustration.imageSrc;
+                if (this._illustration.files && this._illustration.files.length>0) {
+                    this._paragraphView.illustrationFile = this._illustration.files[0];
+                }
             },
             onChange: event=>{
                 this._memorize();
             }
         });
-        this.addOnRight(this._imageLoader);
-        this._imagePos = new VSwitch({ref:"paragraph-image-pos", kind:"paragraph-position",
+        this.addOnRight(this._illustration);
+        this._illustrationPosition = new VSwitch({ref:"paragraph-image-pos", kind:"paragraph-position",
             options:[
-                {title: "left", value: "left"}, {title:"center", value:"center"}, {title:"right", value:"right"}
+                {title: "left", value: "left"},
+                {title:"center", value:"center"},
+                {title:"right", value:"right"}
             ],
             onInput:event=>{
-                this._paragraph.imgPos = this._imagePos.value;
+                this._paragraphView.illustrationPosition = this._illustrationPosition.value;
             },
             onChange: event=>{
                 this._memorize();
             }
         });
-        this.addOnRight(this._imagePos);
-        this._description = new VInputTextArea({
-            ref:"paragraph-content-input", label:"Description",
+        this.addOnRight(this._illustrationPosition);
+        this._text = new VInputTextArea({
+            ref:"paragraph-content-input", label:"Text",
+            validate: mandatory({validate: range({min:2, max:20000})}),
             onInput: event=>{
-                this._paragraph.description = this._description.value;
+                this._paragraphView.text = this._text.value;
             },
             onChange: event=>{
                 this._memorize();
             }
         });
-        this.addOnRight(this._description);
-        this._send = new VButton({ref: "propose-article", label:"Propose", type:"accept"});
+        this.addOnRight(this._text);
+        this._send = new VButtons({ref: "article-buttons", vertical:false, buttons:[
+            {
+                ref:"comments", type: VButton.TYPES.NEUTRAL, label:"Comments",
+                onClick:event=>{
+                    this.onComments();
+                }
+            },
+            {
+                ref:"propose", type: VButton.TYPES.ACCEPT, label:"Propose",
+                onClick:event=>{
+                    if (this.validate()) {
+                        let article = this.article;
+                        if (article.comments.newComment) {
+                            article.newComment = article.comments.newComment;
+                        }
+                        delete article.comments;
+                        this.saveArticle(article);
+                    }
+                }
+            }
+        ]});
         this.addOnRight(this._send);
-        this._newParagraphSpecs = {imgPos: "center", title: "Title", description: "Description"};
+    }
+
+    saveArticle(article) {
+        saveProposedArticle(article,
+            this.imageFiles,
+            text => {
+                this.saved(parseArticle(text));
+            },
+            text => {
+                showMessage("Fail to update Article", text);
+            }
+        );
+    }
+
+    validate() {
+        return !this._themes.validate()
+            & !this._articleTitle.validate()
+            & !this._paragraphTitle.validate()
+            & !this._text.validate()
+            & !this._illustration.validate();
     }
 
     canLeave(leave, notLeave) {
         return super.canLeave(leave, notLeave, "Article not saved. Do you want to Quit ?")
     }
 
-    set article(articleSpec) {
-        if (this._article) {
-            this.removeFromLeft(this._article);
+    get article() {
+        return {
+            themes: this._themes.selection.map(theme=>{ return {
+                id: theme.value,
+                title: theme.label
+            }}),
+            ...this._articleView.specification,
+            comments: structuredClone(this._comments)
         }
-        this._article = new CBSArticle({
-            ref: articleSpec.ref,
-            title: articleSpec.title
+    }
+
+    set article(article) {
+        if (!article.paragraphs) {
+            article.paragraphs = [
+                structuredClone(this._newParagraphSpecs)
+            ]
+        }
+        this._article = article;
+        if (this._articleView) {
+            this.removeFromLeft(this._articleView);
+        }
+        this._articleView = new CBSArticle({
+            paragraphAction:paragraphView => {
+                this.selectParagraph(paragraphView);
+                return true;
+            },
+            article
         });
-        for (let paragraphSpec of articleSpec.paragraphs) {
-            this.createParagraph(paragraphSpec);
+        this._articleView.paragraphs[0] && this._selectParagraph(this._articleView.paragraphs[0]);
+        this.addOnLeft(this._articleView);
+        this._articleTitle.value = article.title;
+        this._themes.value = article.themes ? article.themes.map(theme=>theme.id) : [];
+        this._comments = {
+            comments: this._article.comments || [],
+            newComment: ""
         }
-        this._article.paragraphs[0] && this._selectParagraph(this._article.paragraphs[0]);
-        this.addOnLeft(this._article);
         this._clean();
         this._memorize();
     }
 
     _register() {
         return {
-            current: this._paragraph.ref.ref,
-            themes: this._category.values,
-            article: this._article.specification
+            current: this._paragraphView ? this._paragraphView.ref.ref : null,
+            ...this.article
         }
     }
 
     _recover(specification) {
         if (specification) {
-            this._article.specification = specification;
-            for (let paragraph of this._article.paragraphs) {
+            this._articleView.specification = specification;
+            for (let paragraph of this._articleView.paragraphs) {
                 paragraph.action = event => {
                     this.selectParagraph(paragraph);
                     return true;
                 }
             }
-            this._articleTitle.value = this._article.title;
-            this._category.values = specification.themes;
-            let paragraph = this._article.getParagraph(specification.current);
-            this._selectParagraph(paragraph);
+            this._articleTitle.value = this._articleView.title;
+            let paragraphView = this._articleView.getParagraph(specification.current);
+            this._selectParagraph(paragraphView);
+            this._themes.value = specification.themes.map(theme=>theme.id);
+            this._comments = structuredClone(specification.comments)
         }
     }
 
-    createParagraph(paragraphSpec) {
-        let paragraph = this._article.createParagraph({
-            ...paragraphSpec,
-            action: event => {
-                this.selectParagraph(paragraph);
-                return true;
-            }
-        });
-        return paragraph;
+    saved(article) {
+        this._article.id = article.id;
+        this._comments = {
+            comments: article.comments || [],
+            newComment: ""
+        }
+        showMessage("Article saved.");
+        return true;
     }
 
-    selectParagraph(paragraph) {
-        if (paragraph!==this._paragraph) {
-            this._selectParagraph(paragraph);
+    set comments(comments) {
+        this._comments = structuredClone(comments);
+        this._memorize();
+    }
+
+    onComments() {
+        new CBSEditComments({
+            "ref": "article-comments",
+            "kind": "article-comments",
+            comments: structuredClone(this._comments),
+            acknowledge: comments=>this.comments = comments
+        }).show();
+    }
+
+    createParagraph(paragraphSpec) {
+        return this._articleView.createParagraph(paragraphSpec);
+    }
+
+    selectParagraph(paragraphView) {
+        if (paragraphView!==this._paragraphView) {
+            this._selectParagraph(paragraphView);
             this._memorize();
         }
     }
 
-    _selectParagraph(paragraph) {
+    _selectParagraph(paragraphView) {
         this._unselectParagraph();
-        this._paragraph = paragraph;
-        this._paragraph.addClass("selected");
-        this._articleTitle.value = this._article.title;
-        this._paragraphTitle.value = this._paragraph.title;
-        this._description.value = this._paragraph.description;
-        this._imageLoader.imageSrc = this._paragraph.image;
-        this._imagePos.value = this._paragraph.imgPos;
+        this._paragraphView = paragraphView;
+        this._paragraphView.addClass("selected");
+        this._articleTitle.value = this._articleView.title;
+        this._paragraphTitle.value = this._paragraphView.title;
+        this._text.value = this._paragraphView.text;
+        this._illustration.imageSrc = this._paragraphView.illustration;
+        this._illustrationPosition.value = this._paragraphView.illustrationPosition;
         this._deleteCommand = new VCommand({
             ref:"paragraph-delete-cmd",
             imgEnabled: `../images/site/buttons/minus.png`,
@@ -447,10 +568,10 @@ export class CBSArticleEditor extends Undoable(VSplitterPanel) {
                 return this._deleteParagraph();
             }
         }).addClass("delete-command");
-        this._paragraph.add(this._deleteCommand);
+        this._paragraphView.add(this._deleteCommand);
         this._insertBeforeCommand = new VCommand({
             ref: "paragraph-insert-before-cmd",
-            imgPos: "center",
+            illustrationPosition: "center",
             imgEnabled: `../images/site/buttons/plus.png`,
             imgDisabled: `../images/site/buttons/plus-disabled.png`,
             onClick: event=>{
@@ -458,7 +579,7 @@ export class CBSArticleEditor extends Undoable(VSplitterPanel) {
                 return this._createBefore();
             }
         }).addClass("insert-before-command");
-        this._paragraph.add(this._insertBeforeCommand);
+        this._paragraphView.add(this._insertBeforeCommand);
         this._insertAfterCommand = new VCommand({
             ref:"paragraph-insert-after-cmd",
             imgEnabled: `../images/site/buttons/plus.png`,
@@ -468,7 +589,7 @@ export class CBSArticleEditor extends Undoable(VSplitterPanel) {
                 return this._createAfter();
             }
         }).addClass("insert-after-command");
-        this._paragraph.add(this._insertAfterCommand);
+        this._paragraphView.add(this._insertAfterCommand);
         this._goUpCommand = new VCommand({
             ref: "paragraph-goup-cmd",
             imgEnabled: `../images/site/buttons/goup.png`,
@@ -478,7 +599,7 @@ export class CBSArticleEditor extends Undoable(VSplitterPanel) {
                 return this._goUp();
             }
         }).addClass("goup-command");
-        this._paragraph.add(this._goUpCommand);
+        this._paragraphView.add(this._goUpCommand);
         this._goDownCommand = new VCommand({
             ref: "paragraph-godown-cmd",
             imgEnabled: `../images/site/buttons/godown.png`,
@@ -488,78 +609,79 @@ export class CBSArticleEditor extends Undoable(VSplitterPanel) {
                 return this._goDown();
             }
         }).addClass("godown-command");
-        this._paragraph.add(this._goDownCommand);
+        this._paragraphView.add(this._goDownCommand);
         this._updateGoCommands();
     }
 
     _updateGoCommands() {
-        this._goUpCommand.enabled = this._article.paragraphs.indexOf(this._paragraph)!==0;
-        this._goDownCommand.enabled = this._article.paragraphs.indexOf(this._paragraph)<this._article.paragraphs.length-1;
+        this._goUpCommand.enabled = this._articleView.paragraphs.indexOf(this._paragraphView)!==0;
+        this._goDownCommand.enabled = this._articleView.paragraphs.indexOf(this._paragraphView)<this._articleView.paragraphs.length-1;
+        this._deleteCommand.enabled = this._articleView.paragraphs.length>1;
     }
 
     _unselectParagraph() {
-        if (this._paragraph) {
-            this._paragraph.removeClass("selected");
-            this._paragraph.remove(this._deleteCommand);
-            this._paragraph.remove(this._goUpCommand);
-            this._paragraph.remove(this._goDownCommand);
-            this._paragraph.remove(this._insertBeforeCommand);
-            this._paragraph.remove(this._insertAfterCommand);
+        if (this._paragraphView) {
+            this._paragraphView.removeClass("selected");
+            this._paragraphView.remove(this._deleteCommand);
+            this._paragraphView.remove(this._goUpCommand);
+            this._paragraphView.remove(this._goDownCommand);
+            this._paragraphView.remove(this._insertBeforeCommand);
+            this._paragraphView.remove(this._insertAfterCommand);
         }
     }
 
     _goUp() {
-        let index = this._article.paragraphs.indexOf(this._paragraph);
+        let index = this._articleView.paragraphs.indexOf(this._paragraphView);
         if (index>0) {
-            this._article.exchangeParagraphs(this._paragraph);
+            this._articleView.exchangeParagraphs(this._paragraphView);
         }
         this._updateGoCommands();
         return true;
     }
 
     _goDown() {
-        let index = this._article.paragraphs.indexOf(this._paragraph);
-        if (index+1<this._article.paragraphs.length) {
-            this._article.exchangeParagraphs(this._article.paragraphs[index+1]);
+        let index = this._articleView.paragraphs.indexOf(this._paragraphView);
+        if (index+1<this._articleView.paragraphs.length) {
+            this._articleView.exchangeParagraphs(this._articleView.paragraphs[index+1]);
         }
         this._updateGoCommands();
         return true;
     }
 
     _createBefore() {
-        let paragraph = this._article.insertParagraph({
+        let paragraphView = this._articleView.insertParagraph({
             ref: crypto.randomUUID(),
             ...this._newParagraphSpecs,
             action: event => {
-                this.selectParagraph(paragraph);
+                this.selectParagraph(paragraphView);
                 return true;
             }
-        }, this._paragraph);
-        this._selectParagraph(paragraph);
+        }, this._paragraphView);
+        this._selectParagraph(paragraphView);
         this._updateGoCommands();
         this._memorize();
         return true;
     }
 
     _createAfter() {
-        let index = this._article.paragraphs.indexOf(this._paragraph);
-        if (index === this._article.paragraphs.length-1) {
-            let paragraph = this.createParagraph({
+        let index = this._articleView.paragraphs.indexOf(this._paragraphView);
+        if (index === this._articleView.paragraphs.length-1) {
+            let paragraphView = this.createParagraph({
                 ref: crypto.randomUUID(),
                 ...this._newParagraphSpecs
             });
-            this._selectParagraph(paragraph);
+            this._selectParagraph(paragraphView);
         }
         else {
-            let paragraph = this._article.insertParagraph({
+            let paragraphView = this._article.insertParagraph({
                 ref: crypto.randomUUID(),
                 ...this._newParagraphSpecs,
                 action: event => {
-                    this.selectParagraph(paragraph);
+                    this.selectParagraph(paragraphView);
                     return true;
                 }
             }, this._article.paragraphs[index+1]);
-            this._selectParagraph(paragraph);
+            this._selectParagraph(paragraphView);
         }
         this._updateGoCommands();
         this._memorize();
@@ -567,21 +689,77 @@ export class CBSArticleEditor extends Undoable(VSplitterPanel) {
     }
 
     _deleteParagraph() {
-        let index = this._article.paragraphs.indexOf(this._paragraph);
-        this._article.removeParagraph(index);
-        if (this._article.paragraphs.length===0) {
-            let paragraph = this.createParagraph({
+        let index = this._articleView.paragraphs.indexOf(this._paragraphView);
+        this._articleView.removeParagraph(index);
+        if (this._articleView.paragraphs.length===0) {
+            let paragraphView = this.createParagraph({
                 ref: crypto.randomUUID(),
                 ...this._newParagraphSpecs
             });
-            this._selectParagraph(paragraph);
+            this._selectParagraph(paragraphView);
         }
         else {
-            this._selectParagraph(this._article.paragraphs[index]);
+            this._selectParagraph(this._articleView.paragraphs[index]);
         }
         this._updateGoCommands();
         this._memorize();
         return true;
     }
 
+    get imageFiles() {
+        let illustrations = [];
+        for (let ordinal=0; ordinal<this._articleView.paragraphs.length; ordinal++) {
+            let file = this._articleView.paragraphs[ordinal].illustrationFile;
+            if (file) {
+                illustrations.push({key: "illustration-" + ordinal, file});
+            }
+        }
+        return illustrations.length ? illustrations : null;
+    }
+
+}
+
+function parseArticle(text) {
+    let article = JSON.parse(text);
+    for (let comment of article.comments) {
+        comment.date = new Date(comment.date);
+    }
+    return article;
+}
+
+//export var vBoardsGallery = new CBSGallery({ref:"boards", kind: "gallery-maps"});
+
+export var vArticleEditor = new CBSArticleEditor({
+    ref:"article-editor",
+    kind:"article-editor"
+});
+
+export var vArticleEditorPage = new CBSFormContainer({ref:"article-editor-page", editor:vArticleEditor});
+
+export function loadProposedArticle(article, success) {
+    sendGet("/api/article/load/"+article.id,
+        (text, status) => {
+            console.log("Article load success: " + text + ": " + status);
+            success(parseArticle(text));
+        },
+        (text, status) => {
+            console.log("Load Article failure: " + text + ": " + status);
+            showMessage("Unable to load Article of Id "+article.id, text);
+        }
+    );
+}
+
+export function saveProposedArticle(article, images, success, failure) {
+    sendPost(article.id===undefined ? "/api/article/propose" : "/api/article/amend/" + article.id,
+        article,
+        (text, status) => {
+            console.log("Article proposal success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            console.log("Article proposal failure: " + text + ": " + status);
+            failure(text, status);
+        },
+        images
+    );
 }

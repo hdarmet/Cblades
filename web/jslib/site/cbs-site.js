@@ -2,7 +2,7 @@ import {
     VText,
     VMagnifiedImage,
     VSlot,
-    VMessageHandler, historize, VLoginHandler, download
+    historize, VLoginHandler, download
 } from "../vitamin/vitamins.js";
 import {
     VHeader,
@@ -14,7 +14,7 @@ import {
     VWallWithSearch
 } from "../vitamin/vcontainer.js";
 import {
-    VFileLoader, VFormContainer
+    VFormContainer
 } from "../vitamin/vforms.js";
 import {
     CBSLegalNotice,
@@ -26,9 +26,8 @@ import {
     Div, sendGet
 } from "../vitamin/components.js";
 import {
-    CBSArticle,
     CBSNewspaper,
-    CBSArticleEditor
+    vArticleEditor, vArticleEditorPage
 } from "./cbs-articles.js";
 import {
     CBSScenario,
@@ -587,8 +586,9 @@ export var vNewArticlesWall = new VWallWithSearch({
     ref:"new-articles",
     kind: "new-articles",
     searchAction: text=>alert("search:"+text)
-}, $=>{$
+}/*, $=>{$
     .addNote(new CBSArticle({
+        id: 0,
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par1", imgPos:"left", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:[paragrpahText, paragrpahText]},
             {ref: "art1-par2", imgPos:"right", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText}
@@ -598,6 +598,7 @@ export var vNewArticlesWall = new VWallWithSearch({
         }
     }))
     .addNote(new CBSArticle({
+        id: 1,
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", imgPos:"left", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", imgPos:"right", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -608,6 +609,7 @@ export var vNewArticlesWall = new VWallWithSearch({
         }
     }))
     .addNote(new CBSArticle({
+        id: 2,
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", imgPos:"left", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", imgPos:"right", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -617,6 +619,7 @@ export var vNewArticlesWall = new VWallWithSearch({
         }
     }))
     .addNote(new CBSArticle({
+        id: 3,
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par2", imgPos:"left", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText},
             {ref: "art1-par3", imgPos:"right", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
@@ -625,10 +628,12 @@ export var vNewArticlesWall = new VWallWithSearch({
             vPageContent.showNewspaper(article);
         }
     }))
-});
+}*/);
 
 vNewArticlesWall.setLoadNotes(function() {
+    /*
     this.addNote(new CBSArticle({
+        id: 4,
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", imgPos:"left", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", imgPos:"right", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -639,6 +644,7 @@ vNewArticlesWall.setLoadNotes(function() {
         }
     }))
     .addNote(new CBSArticle({
+        id: 5,
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", imgPos:"left", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", imgPos:"right", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -648,6 +654,7 @@ vNewArticlesWall.setLoadNotes(function() {
         }
     }))
     .addNote(new CBSArticle({
+        id: 6,
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par2", imgPos:"left", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText},
             {ref: "art1-par3", imgPos:"right", img:`../images/site/factions/elves.png`, title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
@@ -656,6 +663,7 @@ vNewArticlesWall.setLoadNotes(function() {
             vPageContent.showNewspaper(article);
         }
     }));
+     */
 });
 
 export var vArticlesAboutGameTitle = new VHeader({
@@ -731,8 +739,9 @@ export var vArticlesAboutGameWall = new VWallWithSearch({
     ref:"articles-about-game",
     kind: "articles-about-game",
     searchAction: text=>alert("search:"+text)
-}, $=>{$
+}/*, $=>{$
     .addNote(new CBSArticle({
+        id: 7,
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:[paragrpahText, paragrpahText]},
             {ref: "art1-par2", img:`../images/site/factions/orcs.png`, title:"Et ça continue...", description:paragrpahText}
@@ -742,6 +751,7 @@ export var vArticlesAboutGameWall = new VWallWithSearch({
         }
     }))
     .addNote(new CBSArticle({
+        id: 8,
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"left", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -752,6 +762,7 @@ export var vArticlesAboutGameWall = new VWallWithSearch({
         }
     }))
     .addNote(new CBSArticle({
+        id: 9,
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"left", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"right", title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -761,6 +772,7 @@ export var vArticlesAboutGameWall = new VWallWithSearch({
         }
     }))
     .addNote(new CBSArticle({
+        id: 10,
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"left", title:"Et ça continue...", description:paragrpahText},
             {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"right", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
@@ -769,10 +781,12 @@ export var vArticlesAboutGameWall = new VWallWithSearch({
             vPageContent.showNewspaper(article);
         }
     }))
-});
+}*/);
 
 vArticlesAboutGameWall.setLoadNotes(function() {
+    /*
     this.addNote(new CBSArticle({
+        id: 11,
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"left", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"right", title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -783,6 +797,7 @@ vArticlesAboutGameWall.setLoadNotes(function() {
         }
     }))
     .addNote(new CBSArticle({
+        id: 12,
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"left", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
             {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"right", title:"Ca commence...", description:paragrpahText+paragrpahText},
@@ -792,6 +807,7 @@ vArticlesAboutGameWall.setLoadNotes(function() {
         }
     }))
     .addNote(new CBSArticle({
+        id: 13,
         ref: "art1", title: "An Interesting Story", votes:{ref:"art1-vote", likes:3, dislikes:1}, paragraphs: [
             {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"left", title:"Et ça continue...", description:paragrpahText},
             {ref: "art1-par3", img:`../images/site/factions/elves.png`, imgPos:"right", title:"Et ça continue encore...", description:paragrpahText+paragrpahText+paragrpahText},
@@ -799,7 +815,7 @@ vArticlesAboutGameWall.setLoadNotes(function() {
         action:article=>{
             vPageContent.showNewspaper(article);
         }
-    }));
+    }));*/
 });
 
 export var vNewspaperTitle = new VHeader({
@@ -816,6 +832,7 @@ export var vContributeTitle = new VHeader({
     left:"../images/site/left-contribute.png", right:"../images/site/right-contribute.png"
 }).addClass("contribute-title");
 
+/*
 export var vArticleEditor = new CBSArticleEditor({
     ref:"article-editor",
     accept(file) {
@@ -846,7 +863,7 @@ vArticleEditorPage.setArticle = function(article) {
     vArticleEditor.article = article;
     return this;
 }
-
+*/
 export var vScenarioEditor = new CBSScenarioEditor({
     ref:"scenario-editor",
     onEdit() {
@@ -877,8 +894,9 @@ export var vYourProposalsWall = new VWallWithSearch({
     ref:"your-proposals",
     kind: "your-proposals",
     searchAction: text=>alert("search:"+text)
-}, $=>{$
+}/*, $=>{$
     .addNote(new CBSArticle({
+        id: 19,
         ref: "art1", title: "An Interesting Story", paragraphs: [
             {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"left", title:"Ca commence...", description:[paragrpahText, paragrpahText]},
             {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"right", title:"Et ça continue...", description:paragrpahText}
@@ -908,10 +926,12 @@ export var vYourProposalsWall = new VWallWithSearch({
             window.vPageContent.showProposeBoard(map);
         }
     }))
-});
+}*/);
 
 vYourProposalsWall.setLoadNotes(function() {
+    /*
     this.addNote(new CBSArticle({
+        id: 20,
         ref: "art1", title: "An Interesting Story", paragraphs: [
             {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"right", title:"Ca commence...", description:[paragrpahText, paragrpahText]},
             {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"left", title:"Et ça continue...", description:paragrpahText}
@@ -934,6 +954,7 @@ vYourProposalsWall.setLoadNotes(function() {
             window.vPageContent.showProposeTheme(theme);
         }
     }))
+     */
 });
 
 export var vForumTitle = new VHeader({
@@ -1470,24 +1491,13 @@ class CBSPageContent extends VPageContent {
 
     _showProposeArticle(articleSpec, byHistory, historize) {
         vContributeTitle.setTitle("Propose An Article");
-        vArticleEditorPage.setArticle(articleSpec);
+        vArticleEditor.article = articleSpec;
         return this._changePage(vContributeTitle, vArticleEditorPage, byHistory, historize);
     }
 
     showProposeArticle(article = null) {
-        let specification = article ? article.specification: {
-            ref: "article", title: "Bla bla bla",
-            paragraphs: [
-                {
-                    ref: "paragraph1", title: "Bla bla bla",
-                    imgPos: "left", img: `../images/site/factions/orcs.png`,
-                    description: "bla bla bla"
-                }, {
-                    ref: "paragraph2", title: "Bla bla bla",
-                    imgPos: "right", img: `../images/site/factions/roughneck.png`,
-                    description: "bla bla bla"
-                }
-            ]
+        let specification = article ? article.specification:{
+            ref: "article1", title: "Article Title"
         };
         this._showProposeArticle(specification,false, ()=>
             historize("propose-article", `window.vPageContent._showProposeArticle(${JSON.stringify(specification)}, true);`)

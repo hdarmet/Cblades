@@ -172,8 +172,8 @@ export class CBSBoardEditor extends Undoable(VSplitterPanel) {
 
     validate() {
         return !this._path.validate()
-             | !this._name.validate()
-             | !this._description.validate();
+             & !this._name.validate()
+             & !this._description.validate();
     }
 
     canLeave(leave, notLeave) {

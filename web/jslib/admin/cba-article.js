@@ -206,7 +206,7 @@ export class CBAArticle extends Vitamin(Div) {
                     ordinal,
                     ...paragraph.specification
                 }
-            }),
+            })
         };
     }
 
@@ -234,11 +234,6 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
             title: "Paragraph title",
             text: "Paragraph text"
         };
-        if (!article.paragraphs) {
-            article.paragraphs = [
-                structuredClone(this._newParagraphSpecs)
-            ]
-        }
         this._themes = new VDropdownListField({ref:"article-theme", label:"Themes",
             validate: mandatory({}),
             selector: buildOptions => {
@@ -384,6 +379,11 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
 
     set article(article) {
         this._article = article;
+        if (!article.paragraphs) {
+            article.paragraphs = [
+                structuredClone(this._newParagraphSpecs)
+            ]
+        }
         if (this._articleView) {
             this.removeFromLeft(this._articleView);
         }
@@ -427,7 +427,7 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
             this._articleTitle.value = this._articleView.title;
             let paragraphView = this._articleView.getParagraph(specification.current);
             this._selectParagraph(paragraphView);
-            this._themes.values = specification.themes;
+            this._themes.value = specification.themes.map(theme=>theme.id);
             this._author.value = specification.author;
             this._comments = structuredClone(specification.comments)
         }
@@ -441,10 +441,6 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
     set comments(comments) {
         this._comments = comments;
         this._memorize();
-    }
-
-    get themeIllustration()  {
-        return this._illustration.files ? this._illustration.files[0] : undefined;
     }
 
     onComments() {

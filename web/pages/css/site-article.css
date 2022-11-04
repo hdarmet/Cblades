@@ -129,6 +129,11 @@
     --extends: ex-info-container;
 }
 
+.article-editor .splitter-left-pane {
+    min-width: 500px;
+    padding: 0px;
+}
+
 .article-editor .splitter-right-pane {
     padding-right: 30px;
 }
@@ -153,7 +158,7 @@
     --extends: ex-editor-toolbar;
 }
 
-.article-editor .form-input-text, .article-editor .form-input-select, .article-editor .form-input-textarea {
+.article-editor .form-input-text, .article-editor .form-input-select, .article-editor .form-input-textarea, .article-editor .form-dropdown-list  {
     --extends: ex-input-text;
 }
 

@@ -198,8 +198,8 @@ export class VDropdownList extends Vitamin(Div) {
             for (let option of options) {
                 let changeAction = event => {
                     this._changeValue(checkbox.getChecked(), option.value, option.label);
-                    this._onChange && this._onChange(event);
                     this._onInput && this._onInput(event);
+                    this._onChange && this._onChange(event);
                 };
                 let checkbox = new Checkbox().onEvent("change", changeAction);
                 let label = option.label || option.value;
@@ -368,7 +368,7 @@ export class VField extends Vitamin(Div) {
     }
 
     validate() {
-        let message = this._validate(this, true);
+        let message = this._validate ? this._validate(this, true) : "";
         this.message = message;
         return message;
     }
