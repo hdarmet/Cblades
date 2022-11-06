@@ -25,8 +25,9 @@ import {
 
 export class CBSTheme extends Vitamin(Div) {
 
-    constructor({ref, title, illustration, description, action}) {
-        super({ref});
+    constructor({id, title, illustration, description, action}) {
+        super({ref:"theme-"+id});
+        this.id = id;
         this.addClass("theme");
         this._header = new Div().addClass("theme-header");
         this.add(this._header);
@@ -295,6 +296,20 @@ export var vThemeEditor = new CBSThemeEditor({
 });
 
 export var vThemeEditorPage = new CBSFormContainer({ref:"theme-editor-page", editor:vThemeEditor});
+
+export function loadThemesByCategory(pageIndex, category, search, update) {
+    sendGet("/api/theme/category/" + category + "?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
+        (text, status) => {
+            console.log("Load theme success: " + text + ": " + status);
+            let response = JSON.parse(text);
+            update(response);
+        },
+        (text, status) => {
+            console.log("Load Theme failure: " + text + ": " + status);
+            showMessage("Unable to load Themes", text);
+        }
+    );
+}
 
 export function loadProposedTheme(theme, success) {
     sendGet("/api/theme/load/"+theme.id,

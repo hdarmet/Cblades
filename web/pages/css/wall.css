@@ -157,6 +157,7 @@
 
 .newspaper-container {
     --extends: ex-record-background;
+    min-height: 200px;
 }
 
 @media screen and (max-width: 900px) {

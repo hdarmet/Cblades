@@ -1,84 +1,87 @@
+.articles-about-theme {
+    min-height: calc(100vh - 300px);
+    background-color: rgb(248, 242, 222);
+}
 
-
-.articles-about-game .search {
+.articles-about-theme .search {
     --extends: ex-info-background-color;
 }
 
-.articles-about-game .search-input-text {
+.articles-about-theme .search-input-text {
     --extends: ex-search-input-text;
 }
 
-.articles-about-game-title.header-container {
+.articles-about-theme-title.header-container {
     --extends: ex-info-header-container;
 }
 
-.articles-about-game-title .header-left-image {
+.articles-about-theme-title .header-left-image {
     --extends: ex-page-header-left-image;
 }
 
-.articles-about-game-title .header-right-image {
+.articles-about-theme-title .header-right-image {
     --extends: ex-page-header-right-image;
 }
 
-.articles-about-game-title .header-text {
+.articles-about-theme-title .header-text {
     --extends: ex-header-text
 }
 
-.articles-about-game-content {
+.articles-about-theme-content {
     --extends: ex-record-content, ex-info-background-color;
 }
 
-.articles-about-game-content .article-title {
+.articles-about-theme-content .article-title {
     --extends: ex-record-title;
 }
 
-.articles-about-game-content .paragraph-title {
+.articles-about-theme-content .paragraph-title {
     --extends: ex-paragraph-title;
 }
 
-.articles-about-game-content .article {
+.articles-about-theme-content .article {
     --extends: ex-record-container, ex-record-down-clip;
 }
 
-.articles-about-game-content .article .show-votes {
+.articles-about-theme-content .article .show-votes {
     display: inline-block;
     vertical-align: middle;
     float: right;
 }
 
-.articles-about-game-content .article .likes-icon {
+.articles-about-theme-content .article .likes-icon {
     --extends: ex-likes-icon;
 }
 
-.articles-about-game-content .article .likes-value {
+.articles-about-theme-content .article .likes-value {
     --extends: ex-vote-values;
 }
 
-.articles-about-game-content .article .dislikes-icon {
+.articles-about-theme-content .article .dislikes-icon {
     --extends: ex-dislikes-icon;
 }
 
-.articles-about-game-content .article .dislikes-value {
+.articles-about-theme-content .article .dislikes-value {
     --extends: ex-vote-values;
 }
 
-.articles-about-game-content .paragraph::after {
+.articles-about-theme-content .paragraph::after {
     --extends: ex-record-end-mask;
 }
 
-.articles-about-game-content .paragraph-image {
+.articles-about-theme-content .paragraph-image {
     --extends: ex-paragraph-image;
 }
 
-.articles-about-game-content .image-on-left .paragraph-image {
+.articles-about-theme-content .image-on-left .paragraph-image {
     --extends: ex-paragraph-image-on-left;
 }
 
-.articles-about-game-content .image-on-right .paragraph-image {
+.articles-about-theme-content .image-on-right .paragraph-image {
     --extends: ex-paragraph-image-on-right;
 }
 
-.articles-about-game-content .paragraph-container {
+.articles-about-theme-content .paragraph-container {
     --extends: ex-paragraph-container;
 }
 

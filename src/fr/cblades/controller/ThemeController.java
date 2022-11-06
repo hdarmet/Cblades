@@ -191,6 +191,35 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return result.get();
 	}
 
+	@REST(url="/api/theme/category/:category", method=Method.GET)
+	public Json getByCategory(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
+			String category = (String)params.get("category");
+			String search = (String)params.get("search");
+			String queryString = "select t from Theme t where t.category=:category";
+			if (search!=null) {
+				/*
+				search = StringReplacer.replace(search,
+						"tester", "test");
+				 */
+				String whereClause =" and fts('pg_catalog.english', " +
+					"t.title||' '||" +
+					"t.category||' '||" +
+					"t.description||' '||" +
+					"t.status, :search) = true";
+				queryString+=whereClause;
+			}
+			Collection<Theme> themes = (search == null) ?
+				findPagedThemes(em.createQuery(queryString), pageNo, "category", ThemeCategory.getByName(category)):
+				findPagedThemes(em.createQuery(queryString), pageNo, "category", ThemeCategory.getByName(category),
+						"search", search);
+			result.set(readFromPublishedThemes(themes));
+		});
+		return result.get();
+	}
+
 	@REST(url="/api/theme/by-title/:title", method=Method.GET)
 	public Json getByTitle(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
@@ -396,6 +425,16 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return json;
 	}
 
+	Json readFromPublishedTheme(Theme theme) {
+		Json json = Json.createJsonObject();
+		sync(json, theme)
+			.read("id")
+			.read("title")
+			.read("description")
+			.read("illustration");
+		return json;
+	}
+
 	Json readFromTheme(Theme theme) {
 		Json json = Json.createJsonObject();
 		sync(json, theme)
@@ -447,6 +486,12 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	Json readFromThemeSummaries(Collection<Theme> themes) {
 		Json list = Json.createJsonArray();
 		themes.stream().forEach(theme->list.push(readFromThemeSummary(theme)));
+		return list;
+	}
+
+	Json readFromPublishedThemes(Collection<Theme> themes) {
+		Json list = Json.createJsonArray();
+		themes.stream().forEach(theme->list.push(readFromPublishedTheme(theme)));
 		return list;
 	}
 

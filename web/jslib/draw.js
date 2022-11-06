@@ -10,34 +10,56 @@ import {
     requestServer
 } from "./request.js";
 
-Array.prototype.add = function(element) {
-    let index = this.indexOf(element);
-    if (index<0) {
-        this.push(element);
-    }
-    return index;
-}
-Array.prototype.remove = function(element) {
-    let index = this.indexOf(element);
-    if (index>=0) {
-        this.splice(index, 1);
-    }
-    return index;
-}
-Array.prototype.contains = function(element) {
-    return this.indexOf(element)>=0;
-}
-Array.prototype.insert = function(index, element) {
-    if (index>=0) {
-        this.splice(index, 0, element);
-    }
-}
-Array.prototype.first = function () {
-    return this.length>0 ? this[0] : null;
-}
-Array.prototype.last = function () {
-    return this.length>0 ? this[this.length-1] : null;
-}
+Object.defineProperty(Array.prototype, "add", {
+    value: function(element) {
+        let index = this.indexOf(element);
+        if (index<0) {
+            this.push(element);
+        }
+        return index;
+    },
+    enumerable: false
+});
+
+Object.defineProperty(Array.prototype, "remove", {
+    value: function(element) {
+        let index = this.indexOf(element);
+        if (index>=0) {
+            this.splice(index, 1);
+        }
+        return index;
+    },
+    enumerable: false
+});
+
+Object.defineProperty(Array.prototype, "contains", {
+    value: function(element) {
+        return this.indexOf(element)>=0;
+    },
+    enumerable: false
+});
+
+Object.defineProperty(Array.prototype, "insert", {
+    value: function(index, element) {
+        if (index>=0) {
+            this.splice(index, 0, element);
+        }
+    },
+    enumerable: false
+});
+
+Object.defineProperty(Array.prototype, "first", {
+    value: function () {
+        return this.length>0 ? this[0] : null;
+    },
+    enumerable: false
+});
+Object.defineProperty(Array.prototype, "last", {
+    value: function () {
+        return this.length>0 ? this[this.length-1] : null;
+    },
+    enumerable: false
+});
 
 /**
  * _platform is a facade used to abstract the real (DOM) platform. Useful when this platform has to be replaced by a

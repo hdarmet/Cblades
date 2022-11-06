@@ -1,4 +1,9 @@
 
+.themes-about-game {
+    min-height: calc(100vh - 300px);
+    background-color: rgb(248, 242, 222);
+}
+
 .theme-editor-page .description {
     --extends: ex-info-page-description;
 }

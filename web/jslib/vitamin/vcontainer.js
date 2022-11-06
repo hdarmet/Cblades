@@ -115,7 +115,6 @@ export class VSplitterPanel extends Vitamin(Div) {
 
     onActivate() {
         super.onActivate();
-        console.log("resize")
         this._resize();
     }
 
@@ -152,18 +151,16 @@ export class VSplitterPanel extends Vitamin(Div) {
 
 export class VWall extends Vitamin(Div) {
 
-    constructor({ref, kind="wall-vertical"}, builder) {
+    constructor({ref, kind="wall-vertical", requestNotes, receiveNotes}, builder) {
         super({ref});
         kind&&this.addClass(kind);
         this._lastElement =new Div();
         this.add(this._lastElement);
         this._notes = [];
+        this._page = 0;
+        this._requestNotes = requestNotes;
+        this._receiveNotes = receiveNotes;
         builder&&builder(this);
-    }
-
-    setLoadNotes(action) {
-        this._loadNotes = action;
-        return this;
     }
 
     resizeGridItem(note){
@@ -215,6 +212,19 @@ export class VWall extends Vitamin(Div) {
             this.remove(note._envelope);
         }
         this._notes = [];
+        this._page = 0;
+        this.detectVisibility();
+    }
+
+    loadNotes(response) {
+        delete this._loading;
+        if (response.length===0) {
+            delete this._page;
+        }
+        else {
+            this._receiveNotes.call(this, response);
+        }
+        return this;
     }
 
     detectVisibility() {
@@ -222,7 +232,10 @@ export class VWall extends Vitamin(Div) {
         let bottomOfScreen = window.scrollY + window.innerHeight;
         let topOfScreen = window.scrollY;
         if ((bottomOfScreen > clientRect.y) && (topOfScreen < clientRect.y+clientRect.height)) {
-            this._loadNotes && this._loadNotes();
+            if (this._requestNotes &&!this._loading && this._page!==undefined) {
+                this._requestNotes.call(this, this._page++);
+                this._loading = true;
+            }
         }
     }
 
@@ -230,12 +243,14 @@ export class VWall extends Vitamin(Div) {
 
 export class VWallWithSearch extends VContainer {
 
-    constructor({ref, kind="wall-vertical", searchAction}, builder) {
+    constructor({ref, kind="wall-vertical", searchAction, requestNotes, receiveNotes}, builder) {
         super({ref});
         this.addClass(kind);
         this._search = new VSearch({ref:ref+"_search", searchAction});
         this.add(this._search);
-        this._wall = new VWall({ref:ref+"-content", kind:kind+"-content"}, builder);
+        this._wall = new VWall({ref:ref+"-content", kind:kind+"-content", requestNotes:pageNo=>{
+            requestNotes.call(this._wall, pageNo, this._search.value);
+        }, receiveNotes}, builder);
         this.add(this._wall);
     }
 
@@ -249,10 +264,11 @@ export class VWallWithSearch extends VContainer {
         return this;
     }
 
-    setLoadNotes(action) {
-        this._wall.setLoadNotes(action);
+    loadNotes(response) {
+        this._wall.loadNotes(response);
         return this;
     }
+
 }
 
 export class VTable extends Vitamin(Div) {
@@ -483,7 +499,9 @@ export class VSlideShow extends Vitamin(Div) {
 
     switchSlides() {
         this._token = setInterval(()=>{
-            this._showSlides(this._slideIndex+1)
+            if (this._slideIndex!==undefined) {
+                this._showSlides(this._slideIndex + 1)
+            }
         }, 7000); // Change image every 2 seconds
     }
 }
@@ -534,7 +552,7 @@ export class VLog extends Vitamin(Div) {
             let clientRect = this._lastElement.root.getBoundingClientRect();
             let bottomOfScreen = window.scrollY + window.innerHeight;
             let topOfScreen = window.scrollY;
-            console.log(clientRect, topOfScreen, bottomOfScreen);
+            //console.log(clientRect, topOfScreen, bottomOfScreen);
             if ((bottomOfScreen > clientRect.y) && (topOfScreen < clientRect.y + clientRect.height)) {
                 this._page++;
                 this._loadLogs && this._loadLogs(this._page);

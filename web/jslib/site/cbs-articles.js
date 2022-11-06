@@ -272,15 +272,10 @@ export class CBSNewspaper extends Vitamin(Div) {
         builder&&builder(this);
     }
 
-    addParagraph({img, image, title, text}, article, left) {
-        if (image) {
-            article.add(image);
-        }
-        else {
-            image = new Img(img).addClass("paragraph-image");
-            article.add(image);
-        }
-        image.addClass(left ? "image-on-left" : "image-on-right");
+    addParagraph({illustration, illustrationPosition, title, text}, article) {
+        let image = new Img(illustration).addClass("paragraph-image");
+        article.add(image);
+        image.addClass(illustrationPosition==='left' ? "image-on-left" : illustrationPosition==='right' ? "image-on-right" : "image-on-center");
         article.add(new P(title).addClass("paragraph-title"));
         if (Array.isArray(text)) {
             for (let textLine of text) {
@@ -297,10 +292,8 @@ export class CBSNewspaper extends Vitamin(Div) {
         let article = new Div().addClass(("article-container"));
         this._content.add(article);
         article.add(new P(title).addClass("article-title"));
-        let left = true;
         for (let paragraph of paragraphs) {
-            this.addParagraph(paragraph, article, left);
-            left = !left;
+            this.addParagraph(paragraph, article);
         }
         let voteContainer = new Div().addClass("votes-container");
         voteContainer.add(new CBSVotes(votes))
@@ -727,14 +720,41 @@ function parseArticle(text) {
     return article;
 }
 
-//export var vBoardsGallery = new CBSGallery({ref:"boards", kind: "gallery-maps"});
-
 export var vArticleEditor = new CBSArticleEditor({
     ref:"article-editor",
     kind:"article-editor"
 });
 
 export var vArticleEditorPage = new CBSFormContainer({ref:"article-editor-page", editor:vArticleEditor});
+
+export function loadRecentArticles(pageIndex, search, update) {
+    sendGet("/api/article/recent?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
+        (text, status) => {
+            console.log("Load article success: " + text + ": " + status);
+            let response = JSON.parse(text);
+            update(response);
+        },
+        (text, status) => {
+            console.log("Load Article failure: " + text + ": " + status);
+            showMessage("Unable to load Articles", text);
+        }
+    );
+}
+
+
+export function loadArticlesByTheme(pageIndex, search, themeId, update) {
+    sendGet("/api/article/by-theme/"+themeId+"?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
+        (text, status) => {
+            console.log("Load article success: " + text + ": " + status);
+            let response = JSON.parse(text);
+            update(response);
+        },
+        (text, status) => {
+            console.log("Load Article failure: " + text + ": " + status);
+            showMessage("Unable to load Articles", text);
+        }
+    );
+}
 
 export function loadProposedArticle(article, success) {
     sendGet("/api/article/load/"+article.id,

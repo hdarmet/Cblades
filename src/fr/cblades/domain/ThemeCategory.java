@@ -28,4 +28,11 @@ public enum ThemeCategory {
         return byLabels;
     }
 
+    public static ThemeCategory getByName(String name) {
+        for (ThemeCategory category : ThemeCategory.values()) {
+            if (category.getLabel().equals(name)) return category;
+        }
+        return null;
+    }
+
 }

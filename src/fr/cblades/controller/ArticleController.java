@@ -148,7 +148,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(a) from Article a";
-				String queryString = "select a from Article a left outer join fetch a.firstParagraph p";
+				String queryString = "select a from Article a left outer join fetch a.themes t left outer join fetch a.firstParagraph p";
 				if (search!=null) {
 					/*
 					search = StringReplacer.replace(search,
@@ -156,7 +156,6 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 					 */
 					String whereClause =" where fts('pg_catalog.english', " +
 						"a.title||' '||" +
-						//"a.theme.title||' '||" +
 						"a.document.text ||' '||" +
 						"a.status, :search) = true";
 					queryString+=whereClause;
@@ -181,39 +180,59 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 		return result.get();
 	}
 
-	@REST(url="/api/article/new", method=Method.GET)
-	public Json getLiveNew(Map<String, String> params, Json request) {
+	@REST(url="/api/article/recent", method=Method.GET)
+	public Json getLiveNew(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Collection<Article> articles = findArticles(em.createQuery(
-				"select a from Article a " +
-					"join fetch a.firstParagraph p " +
-					"join fetch a.themes t " +
-					"join fetch a.author w " +
-					"join fetch w.access " +
-					"where a.status=:status and a.recent=:recent"),
+			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
+			String search = (String)params.get("search");
+			String queryString = "select a from Article a " +
+				"join fetch a.paragraphs p " +
+				"join fetch a.author w " +
+				"where a.status=:status and a.recent=:recent";
+			if (search!=null) {
+				String whereClause =" and fts('pg_catalog.english', " +
+					"a.title||' '||" +
+					"a.document.text, :search) = true";
+				queryString+=whereClause;
+			}
+			Collection<Article> articles = findPagedArticles(
+				search!=null ?
+					em.createQuery(queryString).setParameter("search", search):
+					em.createQuery(queryString),
+				pageNo,
 				"status", ArticleStatus.LIVE,
 				"recent", true);
-			result.set(readFromArticleSummaries(articles));
+			result.set(readFromPublishedArticles(articles));
 		});
 		return result.get();
 	}
 
-	@REST(url="/api/article/theme/:title", method=Method.GET)
-	public Json getLiveByTheme(Map<String, String> params, Json request) {
+	@REST(url="/api/article/by-theme/:theme", method=Method.GET)
+	public Json getLiveByTheme(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			String themeTitle = (String) params.get("title");
-			Collection<Article> articles = findArticles(em.createQuery(
-				"select a from Article a " +
-					"join fetch a.firstParagraph p " +
-					"join fetch a.themes t " +
+			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
+			long themeId = getIntegerParam(params, "theme", "The requested Theme Id is invalid (%s)");
+			String search = (String)params.get("search");
+			String queryString = "select a from Article a " +
+					"join fetch a.paragraphs p " +
 					"join fetch a.author w " +
-					"join fetch w.access " +
-					"where a.status=:status and t.title=:title"),
+					"where a.status=:status and :theme member of a.themes";
+			if (search!=null) {
+				String whereClause =" and fts('pg_catalog.english', " +
+						"a.title||' '||" +
+						"a.document.text, :search) = true";
+				queryString+=whereClause;
+			}
+			Collection<Article> articles = findPagedArticles(
+				search!=null ?
+					em.createQuery(queryString).setParameter("search", search):
+					em.createQuery(queryString),
+				pageNo,
 				"status", ArticleStatus.LIVE,
-				"title", themeTitle);
-			result.set(readFromArticleSummaries(articles));
+				"theme", Theme.find(em, themeId));
+			result.set(readFromPublishedArticles(articles));
 		});
 		return result.get();
 	}
@@ -512,6 +531,28 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 		return json;
 	}
 
+	Json readFromPublishedArticle(Article article) {
+		Json json = Json.createJsonObject();
+		sync(json, article)
+			.read("id")
+			.read("title")
+			.readEach("paragraphs", (pJson, paragraph)->sync(pJson, paragraph)
+				.read("id")
+				.read("title")
+				.read("illustration")
+				.read("illustrationPosition", IllustrationPosition::getLabel)
+				.read("text")
+			)
+			.readLink("author", (pJson, account)->sync(pJson, account)
+				.read("id")
+				.read("login", "access.login")
+				.read("firstName")
+				.read("lastName")
+				.read("avatar")
+			);
+		return json;
+	}
+
 	Article findArticle(EntityManager em, long id) {
 		Article article = find(em, Article.class, id);
 		if (article==null) {
@@ -537,6 +578,12 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 	Json readFromArticleSummaries(Collection<Article> articles) {
 		Json list = Json.createJsonArray();
 		articles.stream().forEach(article->list.push(readFromArticleSummary(article)));
+		return list;
+	}
+
+	Json readFromPublishedArticles(Collection<Article> articles) {
+		Json list = Json.createJsonArray();
+		articles.stream().forEach(article->list.push(readFromPublishedArticle(article)));
 		return list;
 	}
 
