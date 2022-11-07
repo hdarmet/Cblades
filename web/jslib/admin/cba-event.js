@@ -4,7 +4,7 @@ import {
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, Select, sendGet, sendPost, Span
+    Div, Img, P, requestLog, Select, sendGet, sendPost, Span
 } from "../vitamin/components.js";
 import {
     Vitamin, VModal, VSearch
@@ -338,7 +338,7 @@ export class CBAEventListPage extends Vitamin(Div) {
 export function loadEvents(pageIndex, search, update) {
     sendGet("/api/event/all?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
         (text, status) => {
-            console.log("Load events success: " + text + ": " + status);
+            requestLog("Load events success: " + text + ": " + status);
             let response = JSON.parse(text);
             update({
                 title: "Events List",
@@ -351,7 +351,7 @@ export function loadEvents(pageIndex, search, update) {
             });
         },
         (text, status) => {
-            console.log("Load Event failure: " + text + ": " + status);
+            requestLog("Load Event failure: " + text + ": " + status);
             showMessage("Unable to load Events", text);
         }
     );
@@ -360,11 +360,11 @@ export function loadEvents(pageIndex, search, update) {
 export function deleteEvent(event, success, failure) {
     sendGet("/api/event/delete/" + event.id,
         (text, status) => {
-            console.log("Event delete success: " + text + ": " + status);
+            requestLog("Event delete success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Event delete failure: " + text + ": " + status);
+            requestLog("Event delete failure: " + text + ": " + status);
             failure(text, status);
         }
     );
@@ -374,11 +374,11 @@ export function saveEvent(event, illustration, success, failure) {
     sendPost(event.id===undefined ? "/api/event/create" : "/api/event/update/" + event.id,
         event,
         (text, status) => {
-            console.log("Event saving success: " + text + ": " + status);
+            requestLog("Event saving success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Event saving failure: " + text + ": " + status);
+            requestLog("Event saving failure: " + text + ": " + status);
             failure(text, status);
         },
         illustration
@@ -389,11 +389,11 @@ export function saveEventStatus(event, success, failure) {
     sendPost("/api/event/update-status/" + event.id,
         event,
         (text, status) => {
-            console.log("Event status saving success: " + text + ": " + status);
+            requestLog("Event status saving success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Event status saving failure: " + text + ": " + status);
+            requestLog("Event status saving failure: " + text + ": " + status);
             failure(text, status);
         }
     );

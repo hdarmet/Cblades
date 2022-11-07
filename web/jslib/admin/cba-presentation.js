@@ -4,7 +4,7 @@ import {
     Undoable, Vitamin
 } from "../vitamin/vitamins.js";
 import {
-    Div, P, sendGet, sendPost, Span
+    Div, P, requestLog, sendGet, sendPost, Span
 } from "../vitamin/components.js";
 import {
     VContainer, VSplitterPanel
@@ -303,11 +303,11 @@ export function loadPresentations(category, success, failure) {
     sendGet("/api/presentation/by-category/" + category,
         (text, status) => {
             let presentations = JSON.parse(text);
-            console.log("Presentations loaded.")
+            requestLog("Presentations loaded.")
             success(presentations, status);
         },
         (text, status) => {
-            console.log("Fail to load presentations")
+            requestLog("Fail to load presentations")
             failure(text, status);
         }
     );
@@ -317,11 +317,11 @@ export function savePresentation(presentation, success, failure) {
     sendPost("/api/presentation/save",
         presentation,
         (text, status) => {
-            console.log("Presentation saved")
+            requestLog("Presentation saved")
             success(text, status);
         },
         (text, status) => {
-            console.log("Fail to save presentation")
+            requestLog("Fail to save presentation")
             failure(text, status);
         }
     );
@@ -330,18 +330,18 @@ export function savePresentation(presentation, success, failure) {
 export function deletePresentation(presentation, success, failure) {
     sendGet("/api/presentation/delete/" + presentation.id,
         (text, status) => {
-            console.log("Presentation deleted")
+            requestLog("Presentation deleted")
             success(text, status);
         },
         (text, status) => {
-            console.log("Fail to delete presentation")
+            requestLog("Fail to delete presentation")
             failure(text, status);
         }
     );
 }
 
 export function editPresentation(title, category, byHistory, historize) {
-    this._changePage(null, vPresentationEditorPage, byHistory, historize,
+    this.changePage(null, vPresentationEditorPage, byHistory, historize,
         switchPage => loadPresentations(category,
             (presentations, status) => {
                 vPresentationEditorPage

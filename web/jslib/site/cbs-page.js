@@ -19,6 +19,7 @@ import {
     matchesEmail, matchesName, matchesPassword, matchesLogin, or, and, isValid, VFormContainer
 } from "../vitamin/vforms.js";
 import {
+    requestLog,
     sendPost
 } from "../vitamin/components.js";
 import {
@@ -399,11 +400,11 @@ export let vLogin = new CBSLogin();
 export function disconnect(success, failure) {
     sendGet("/api/login/logout",
         (text, status) => {
-            console.log("Connection success: " + text + ": " + status);
+            requestLog("Connection success: " + text + ": " + status);
             success(text);
         },
         (text, status) => {
-            console.log("Connection failure: " + text + ": " + status);
+            requestLog("Connection failure: " + text + ": " + status);
             failure(text, status);
         }
     );
@@ -415,11 +416,11 @@ export function connect(login, password, success, failure) {
             login, password
         },
         (text, status) => {
-            console.log("Connection success: " + text + ": " + status);
+            requestLog("Connection success: " + text + ": " + status);
             success(text);
         },
         (text, status) => {
-            console.log("Connection failure: " + text + ": " + status);
+            requestLog("Connection failure: " + text + ": " + status);
             failure(text, status);
         }
     );
@@ -429,11 +430,11 @@ export function createUser(user, avatar, success, failure) {
     sendPost("/api/account/create",
         user,
         (text, status) => {
-            console.log("Account creation success: " + text + ": " + status);
+            requestLog("Account creation success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Account creation failure: " + text + ": " + status);
+            requestLog("Account creation failure: " + text + ": " + status);
             failure(text, status);
         },
         avatar

@@ -6,7 +6,7 @@ import {
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, Select, sendGet, sendPost, Span
+    Div, Img, P, requestLog, Select, sendGet, sendPost, Span
 } from "../vitamin/components.js";
 import {
     Undoable, VImage,
@@ -926,7 +926,7 @@ export class CBAArticleListPage extends Vitamin(Div) {
 export function loadArticles(pageIndex, search, update) {
     sendGet("/api/article/all?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
         (text, status) => {
-            console.log("Load article success: " + text + ": " + status);
+            requestLog("Load article success: " + text + ": " + status);
             let response = JSON.parse(text);
             update({
                 title: "Article List",
@@ -939,7 +939,7 @@ export function loadArticles(pageIndex, search, update) {
             });
         },
         (text, status) => {
-            console.log("Load Article failure: " + text + ": " + status);
+            requestLog("Load Article failure: " + text + ": " + status);
             showMessage("Unable to load Articles", text);
         }
     );
@@ -956,11 +956,11 @@ function parseArticle(text) {
 export function loadArticle(article, success) {
     sendGet("/api/article/load/"+article.id,
         (text, status) => {
-            console.log("Article load success: " + text + ": " + status);
+            requestLog("Article load success: " + text + ": " + status);
             success(parseArticle(text));
         },
         (text, status) => {
-            console.log("Load Article failure: " + text + ": " + status);
+            requestLog("Load Article failure: " + text + ": " + status);
             showMessage("Unable to load Article of Id "+article.id, text);
         }
     );
@@ -970,11 +970,11 @@ export function saveArticle(article, images, success, failure) {
     sendPost(article.id===undefined ? "/api/article/create" : "/api/article/update/" + article.id,
         article,
         (text, status) => {
-            console.log("Article saving success: " + text + ": " + status);
+            requestLog("Article saving success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Article saving failure: " + text + ": " + status);
+            requestLog("Article saving failure: " + text + ": " + status);
             failure(text, status);
         },
         images
@@ -985,11 +985,11 @@ export function saveArticleStatus(article, success, failure) {
     sendPost("/api/article/update-status/" + article.id,
         article,
         (text, status) => {
-            console.log("Article status update success: " + text + ": " + status);
+            requestLog("Article status update success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Article status update failure: " + text + ": " + status);
+            requestLog("Article status update failure: " + text + ": " + status);
             failure(text, status);
         }
     );
@@ -998,11 +998,11 @@ export function saveArticleStatus(article, success, failure) {
 export function deleteArticle(article, success, failure) {
     sendGet("/api/article/delete/" + article.id,
         (text, status) => {
-            console.log("Article delete success: " + text + ": " + status);
+            requestLog("Article delete success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Article delete failure: " + text + ": " + status);
+            requestLog("Article delete failure: " + text + ": " + status);
             failure(text, status);
         }
     );
@@ -1011,13 +1011,13 @@ export function deleteArticle(article, success, failure) {
 export function loadLiveThemes(update) {
     sendGet("/api/theme/live",
         (text, status) => {
-            console.log("Load live themes success: " + text + ": " + status);
+            requestLog("Load live themes success: " + text + ": " + status);
             let themes = JSON.parse(text);
             let options = themes.map(theme=>{return {value:theme.id, label:theme.title}});
             update(options);
         },
         (text, status) => {
-            console.log("Load Live Themes failure: " + text + ": " + status);
+            requestLog("Load Live Themes failure: " + text + ": " + status);
             showMessage("Unable to load Themes", text);
         }
     );

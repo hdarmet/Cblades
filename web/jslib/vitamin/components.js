@@ -288,9 +288,9 @@ export function DOM(clazz) {
 
 export class A extends DOM(DComposed) {
 
-    constructor(text, href="#") {
+    constructor(text, href) {
         super("a");
-        this.root.setAttribute("href", href);
+        if (href) this.root.setAttribute("href", href);
         this.setText(text);
     }
 
@@ -708,6 +708,10 @@ export function sendGet(uri, success, failure, files) {
 
 export function sendPost(uri, requestContent, success, failure, files) {
     getDrawPlatform().requestServer(uri, requestContent, success, failure, files, 'POST');
+}
+
+export function requestLog(...params) {
+    //console.log(...params);
 }
 
 document.body.onkeydown = event=>{

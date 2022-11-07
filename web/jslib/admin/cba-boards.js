@@ -6,7 +6,7 @@ import {
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, Select, sendGet, sendPost, Span
+    Div, Img, P, requestLog, Select, sendGet, sendPost, Span
 } from "../vitamin/components.js";
 import {
     Undoable,
@@ -501,7 +501,7 @@ export class CBABoardListPage extends Vitamin(Div) {
 export function loadBoards(pageIndex, search, update) {
     sendGet("/api/board/all?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
         (text, status) => {
-            console.log("Load boards success: " + text + ": " + status);
+            requestLog("Load boards success: " + text + ": " + status);
             let response = JSON.parse(text);
             update({
                 title: "Boards List",
@@ -514,7 +514,7 @@ export function loadBoards(pageIndex, search, update) {
             });
         },
         (text, status) => {
-            console.log("Load Board failure: " + text + ": " + status);
+            requestLog("Load Board failure: " + text + ": " + status);
             showMessage("Unable to load Boards", text);
         }
     );
@@ -531,11 +531,11 @@ function parseBoard(text) {
 export function loadBoard(board, success) {
     sendGet("/api/board/load/"+board.id,
         (text, status) => {
-            console.log("Board load success: " + text + ": " + status);
+            requestLog("Board load success: " + text + ": " + status);
             success(parseBoard(text));
         },
         (text, status) => {
-            console.log("Load Board failure: " + text + ": " + status);
+            requestLog("Load Board failure: " + text + ": " + status);
             showMessage("Unable to load Board of Id "+board.id, text);
         }
     );
@@ -545,11 +545,11 @@ export function saveBoard(board, images, success, failure) {
     sendPost(board.id===undefined ? "/api/board/create" : "/api/board/update/" + board.id,
         board,
         (text, status) => {
-            console.log("Board saving success: " + text + ": " + status);
+            requestLog("Board saving success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Board saving failure: " + text + ": " + status);
+            requestLog("Board saving failure: " + text + ": " + status);
             failure(text, status);
         },
         images
@@ -560,11 +560,11 @@ export function saveBoardStatus(board, success, failure) {
     sendPost("/api/board/update-status/" + board.id,
         board,
         (text, status) => {
-            console.log("Board status saving success: " + text + ": " + status);
+            requestLog("Board status saving success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Board status saving failure: " + text + ": " + status);
+            requestLog("Board status saving failure: " + text + ": " + status);
             failure(text, status);
         }
     );
@@ -573,11 +573,11 @@ export function saveBoardStatus(board, success, failure) {
 export function deleteBoard(board, success, failure) {
     sendGet("/api/board/delete/" + board.id,
         (text, status) => {
-            console.log("Board delete success: " + text + ": " + status);
+            requestLog("Board delete success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Board delete failure: " + text + ": " + status);
+            requestLog("Board delete failure: " + text + ": " + status);
             failure(text, status);
         }
     );

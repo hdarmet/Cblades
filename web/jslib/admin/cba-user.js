@@ -5,7 +5,7 @@ import {
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, Select, sendGet, sendPost, Span, Enum
+    Div, Img, P, Select, sendGet, sendPost, Span, Enum, requestLog
 } from "../vitamin/components.js";
 import {
     Vitamin, VModal, VSearch
@@ -502,7 +502,7 @@ export class CBAUserListPage extends Vitamin(Div) {
 export function loadUsers(pageIndex, search, update) {
     sendGet("/api/account/all?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
         (text, status) => {
-            console.log("Load user success: " + text + ": " + status);
+            requestLog("Load user success: " + text + ": " + status);
             let response = JSON.parse(text);
             update({
                 title: "User List",
@@ -515,7 +515,7 @@ export function loadUsers(pageIndex, search, update) {
             });
         },
         (text, status) => {
-            console.log("Load user failure: " + text + ": " + status);
+            requestLog("Load user failure: " + text + ": " + status);
             showMessage("Unable to load Users", text);
         }
     );
@@ -525,11 +525,11 @@ export function createUser(user, avatar, success, failure) {
     sendPost("/api/account/create",
         user,
         (text, status) => {
-            console.log("Account creation success: " + text + ": " + status);
+            requestLog("Account creation success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Account creation failure: " + text + ": " + status);
+            requestLog("Account creation failure: " + text + ": " + status);
             failure(text, status);
         },
         avatar
@@ -539,11 +539,11 @@ export function createUser(user, avatar, success, failure) {
 export function deleteUser(user, success, failure) {
     sendGet("/api/account/delete/" + user.id,
         (text, status) => {
-            console.log("Account delete success: " + text + ": " + status);
+            requestLog("Account delete success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Account delete failure: " + text + ": " + status);
+            requestLog("Account delete failure: " + text + ": " + status);
             failure(text, status);
         }
     );
@@ -553,11 +553,11 @@ export function updateUser(user, avatar, success, failure) {
     sendPost("/api/account/update/" + user.id,
         user,
         (text, status) => {
-            console.log("Account update success: " + text + ": " + status);
+            requestLog("Account update success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Account update failure: " + text + ": " + status);
+            requestLog("Account update failure: " + text + ": " + status);
             failure(text, status);
         },
         avatar

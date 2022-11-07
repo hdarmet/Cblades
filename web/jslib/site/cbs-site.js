@@ -657,7 +657,7 @@ export var vArticlesAboutThemeWall = new VWallWithSearch({
     }
 });
 vArticlesAboutThemeWall.setTheme = function(theme) {
-    this._theme = theme.id;
+    this._theme = theme;
     this.clearNotes();
 }
 
@@ -1116,15 +1116,16 @@ class CBSPageContent extends VPageContent {
 
     constructor() {
         super({ref: "page-content"});
-        this._showHome(true);
+        this.showHome();
     }
 
     _showHome(byHistory, historize) {
         loadAnnouncement(
             ()=>{
-                this._changePage(null, vHome, byHistory, historize);
+                this.changePage(null, vHome, byHistory, historize);
             }
         );
+        return true;
     }
 
     showHome() {
@@ -1134,7 +1135,7 @@ class CBSPageContent extends VPageContent {
     }
 
     _showRulesGallery(byHistory, historize) {
-        return this._changePage(vRulesTitle, vRulesGallery, byHistory, historize);
+        return this.changePage(vRulesTitle, vRulesGallery, byHistory, historize);
     }
 
     showRulesGallery() {
@@ -1146,7 +1147,7 @@ class CBSPageContent extends VPageContent {
     _showMapsGallery(byHistory, historize) {
         loadBoards(
             ()=>{
-                this._changePage(vBoardsTitle, vBoardsGallery, byHistory, historize);
+                this.changePage(vBoardsTitle, vBoardsGallery, byHistory, historize);
             }
         );
     }
@@ -1158,7 +1159,7 @@ class CBSPageContent extends VPageContent {
     }
 
     _showFactionsGallery(byHistory, historize) {
-        return this._changePage(vFactionsTitle, vFactionsGallery, byHistory, historize);
+        return this.changePage(vFactionsTitle, vFactionsGallery, byHistory, historize);
     }
 
     showFactionsGallery() {
@@ -1169,7 +1170,7 @@ class CBSPageContent extends VPageContent {
 
     _showFactionCountersGallery(faction, byHistory, historize) {
         vFactionCountersGallery.setFaction(faction);
-        return this._changePage(vFactionsTitle, vFactionCountersPageGallery, byHistory, historize);
+        return this.changePage(vFactionsTitle, vFactionCountersPageGallery, byHistory, historize);
     }
 
     showFactionCountersGallery(faction) {
@@ -1179,7 +1180,7 @@ class CBSPageContent extends VPageContent {
     }
 
     _showMagicGallery(byHistory, historize) {
-        return this._changePage(vMagicTitle, vMagicGallery, byHistory, historize);
+        return this.changePage(vMagicTitle, vMagicGallery, byHistory, historize);
     }
 
     showMagicGallery() {
@@ -1190,7 +1191,7 @@ class CBSPageContent extends VPageContent {
 
     _showMagicCountersGallery(art, byHistory, historize) {
         vMagicCountersGallery.setMagicArt(art);
-        return this._changePage(vMagicTitle, vMagicCountersPageGallery, byHistory, historize);
+        return this.changePage(vMagicTitle, vMagicCountersPageGallery, byHistory, historize);
     }
 
     showMagicCountersGallery(art) {
@@ -1200,7 +1201,7 @@ class CBSPageContent extends VPageContent {
     }
 
     _showMarkersGallery(byHistory, historize) {
-        return this._changePage(vMarkersTitle, vMarkersGallery, byHistory, historize);
+        return this.changePage(vMarkersTitle, vMarkersGallery, byHistory, historize);
     }
 
     showMarkersGallery() {
@@ -1210,7 +1211,7 @@ class CBSPageContent extends VPageContent {
     }
 
     _showNewArticlesWall(byHistory, historize) {
-        return this._changePage(vNewArticlesTitle, vNewArticlesWall, byHistory, historize);
+        return this.changePage(vNewArticlesTitle, vNewArticlesWall, byHistory, historize);
     }
 
     showNewArticlesWall() {
@@ -1219,8 +1220,8 @@ class CBSPageContent extends VPageContent {
         );
     }
 
-    _showThemesAboutGameWall(themeId, byHistory, historize) {
-        return this._changePage(vArticlesAboutGameTitle, vThemesAboutGameWall, byHistory, historize);
+    _showThemesAboutGameWall(byHistory, historize) {
+        return this.changePage(vArticlesAboutGameTitle, vThemesAboutGameWall, byHistory, historize);
     }
 
     showThemesAboutGameWall() {
@@ -1231,12 +1232,12 @@ class CBSPageContent extends VPageContent {
 
     _showArticlesAboutThemeWall(theme, byHistory, historize) {
         vArticlesAboutThemeWall.setTheme(theme);
-        return this._changePage(vArticlesAboutGameTitle, vArticlesAboutThemeWall, byHistory, historize);
+        return this.changePage(vArticlesAboutGameTitle, vArticlesAboutThemeWall, byHistory, historize);
     }
 
     showArticlesAboutThemeWall(theme) {
-        this._showArticlesAboutThemeWall(theme,false, ()=>
-            historize("articles-about-theme", "window.vPageContent._showArticlesThemeGameWall("+theme+", true);")
+        this._showArticlesAboutThemeWall(theme.id,false, ()=>
+            historize("articles-about-theme", "window.vPageContent._showArticlesAboutThemeWall("+theme.id+", true);")
         );
     }
 
@@ -1255,7 +1256,7 @@ class CBSPageContent extends VPageContent {
                 }
             }
         });
-        return this._changePage(vNewspaperTitle, vNewspaperContent, byHistory, historize);
+        return this.changePage(vNewspaperTitle, vNewspaperContent, byHistory, historize);
     }
 
     showNewspaper(article) {
@@ -1268,7 +1269,7 @@ class CBSPageContent extends VPageContent {
     _showProposeTheme(themeSpec, byHistory, historize) {
         vContributeTitle.setTitle("Propose A Theme");
         vThemeEditor.theme = themeSpec;
-        return this._changePage(vContributeTitle, vThemeEditorPage, byHistory, historize);
+        return this.changePage(vContributeTitle, vThemeEditorPage, byHistory, historize);
     }
 
     showProposeTheme(theme = null) {
@@ -1284,7 +1285,7 @@ class CBSPageContent extends VPageContent {
     _showProposeArticle(articleSpec, byHistory, historize) {
         vContributeTitle.setTitle("Propose An Article");
         vArticleEditor.article = articleSpec;
-        return this._changePage(vContributeTitle, vArticleEditorPage, byHistory, historize);
+        return this.changePage(vContributeTitle, vArticleEditorPage, byHistory, historize);
     }
 
     showProposeArticle(article = null) {
@@ -1299,7 +1300,7 @@ class CBSPageContent extends VPageContent {
     _showProposeBoard(boardSpec, byHistory, historize) {
         vContributeTitle.setTitle("Propose A Board");
         vBoardEditor.board = boardSpec;
-        return this._changePage(vContributeTitle, vBoardEditorPage, byHistory, historize);
+        return this.changePage(vContributeTitle, vBoardEditorPage, byHistory, historize);
     }
 
     showProposeBoard(board = null) {
@@ -1316,7 +1317,7 @@ class CBSPageContent extends VPageContent {
     _showProposeScenario(scenarioSpec, byHistory, historize) {
         vContributeTitle.setTitle("Propose A Scenario");
         vScenarioEditorPage.setScenario(scenarioSpec);
-        return this._changePage(vContributeTitle, vScenarioEditorPage, byHistory, historize);
+        return this.changePage(vContributeTitle, vScenarioEditorPage, byHistory, historize);
     }
 
     showProposeScenario(scenario = null) {
@@ -1334,7 +1335,7 @@ class CBSPageContent extends VPageContent {
 
     _showYourProposals(byHistory, historize) {
         vContributeTitle.setTitle("Your Proposals");
-        return this._changePage(vYourProposalsTitle, vYourProposalsWall, byHistory, historize);
+        return this.changePage(vYourProposalsTitle, vYourProposalsWall, byHistory, historize);
     }
 
     showYourProposals() {
@@ -1344,7 +1345,7 @@ class CBSPageContent extends VPageContent {
     }
 
     _showForums(byHistory, historize) {
-        return this._changePage(vForumTitle, vForums, byHistory, historize);
+        return this.changePage(vForumTitle, vForums, byHistory, historize);
     }
 
     showForums() {
@@ -1355,7 +1356,7 @@ class CBSPageContent extends VPageContent {
 
     _showForumThreads(forum, byHistory, historize) {
         vForum.setForum(forum);
-        return this._changePage(vForumTitle, vForum, byHistory, historize);
+        return this.changePage(vForumTitle, vForum, byHistory, historize);
     }
 
     showForumThreads(forum) {
@@ -1366,7 +1367,7 @@ class CBSPageContent extends VPageContent {
 
     _showForumThread(thread, byHistory, historize) {
         vForumThread.setThread(thread);
-        return this._changePage(vForumTitle, vForumThread, byHistory, historize);
+        return this.changePage(vForumTitle, vForumThread, byHistory, historize);
     }
 
     showForumThread(thread) {
@@ -1377,7 +1378,7 @@ class CBSPageContent extends VPageContent {
 
     _showYourGames(byHistory, historize) {
         vGamesTitle.setTitle("My Games");
-        return this._changePage(vGamesTitle, vYourGamesWall, byHistory, historize);
+        return this.changePage(vGamesTitle, vYourGamesWall, byHistory, historize);
     }
 
     showYourGames() {
@@ -1388,7 +1389,7 @@ class CBSPageContent extends VPageContent {
 
     _showProposeAGame(byHistory, historize) {
         vGamesTitle.setTitle("Propose A Game");
-        return this._changePage(vGamesTitle, vProposeGameWall, byHistory, historize);
+        return this.changePage(vGamesTitle, vProposeGameWall, byHistory, historize);
     }
 
     showProposeAGame() {
@@ -1399,7 +1400,7 @@ class CBSPageContent extends VPageContent {
 
     _showJoinAGame(byHistory, historize) {
         vGamesTitle.setTitle("Join A Game");
-        return this._changePage(vGamesTitle, vJoinGameWall, byHistory, historize);
+        return this.changePage(vGamesTitle, vJoinGameWall, byHistory, historize);
     }
 
     showJoinAGame() {
@@ -1439,6 +1440,3 @@ sendGet("/api/presentation/published",
 )
 
 window.vPageContent = new CBSPageContent();
-
-
-

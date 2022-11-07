@@ -4,7 +4,7 @@ import {
     Undoable, Vitamin
 } from "../vitamin/vitamins.js";
 import {
-    Div, P, sendGet, sendPost, Span
+    Div, P, requestLog, sendGet, sendPost, Span
 } from "../vitamin/components.js";
 import {
     VContainer, VSplitterPanel
@@ -332,11 +332,11 @@ export function loadNotices(category, success, failure) {
     sendGet("/api/notice/by-category/" + category,
         (text, status) => {
             let notices = JSON.parse(text);
-            console.log("Notices loaded.")
+            requestLog("Notices loaded.")
             success(notices, status);
         },
         (text, status) => {
-            console.log("Fail to load notices")
+            requestLog("Fail to load notices")
             failure(text, status);
         }
     );
@@ -346,11 +346,11 @@ export function saveNotice(notice, success, failure) {
     sendPost("/api/notice/save",
         notice,
         (text, status) => {
-            console.log("Notice saved")
+            requestLog("Notice saved")
             success(text, status);
         },
         (text, status) => {
-            console.log("Fail to save notice")
+            requestLog("Fail to save notice")
             failure(text, status);
         }
     );
@@ -359,18 +359,18 @@ export function saveNotice(notice, success, failure) {
 export function deleteNotice(notice, success, failure) {
     sendGet("/api/notice/delete/" + notice.id,
         (text, status) => {
-            console.log("Notice deleted")
+            requestLog("Notice deleted")
             success(text, status);
         },
         (text, status) => {
-            console.log("Fail to delete notice")
+            requestLog("Fail to delete notice")
             failure(text, status);
         }
     );
 }
 
 export function editNotice(title, category, byHistory, historize) {
-    this._changePage(null, vNoticeEditorPage, byHistory, historize,
+    this.changePage(null, vNoticeEditorPage, byHistory, historize,
         switchPage => loadNotices(category,
             (notices, status) => {
                 vNoticeEditorPage

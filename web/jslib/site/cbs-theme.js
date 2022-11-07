@@ -4,7 +4,7 @@ import {
     Undoable, VImage, Vitamin, VMessageHandler
 } from "../vitamin/vitamins.js";
 import {
-    Div, P, sendGet, sendPost
+    Div, P, requestLog, sendGet, sendPost
 } from "../vitamin/components.js";
 import {
     VSplitterPanel
@@ -300,12 +300,12 @@ export var vThemeEditorPage = new CBSFormContainer({ref:"theme-editor-page", edi
 export function loadThemesByCategory(pageIndex, category, search, update) {
     sendGet("/api/theme/category/" + category + "?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
         (text, status) => {
-            console.log("Load theme success: " + text + ": " + status);
+            requestLog("Load theme success: " + text + ": " + status);
             let response = JSON.parse(text);
             update(response);
         },
         (text, status) => {
-            console.log("Load Theme failure: " + text + ": " + status);
+            requestLog("Load Theme failure: " + text + ": " + status);
             showMessage("Unable to load Themes", text);
         }
     );
@@ -314,11 +314,11 @@ export function loadThemesByCategory(pageIndex, category, search, update) {
 export function loadProposedTheme(theme, success) {
     sendGet("/api/theme/load/"+theme.id,
         (text, status) => {
-            console.log("Theme load success: " + text + ": " + status);
+            requestLog("Theme load success: " + text + ": " + status);
             success(parseTheme(text));
         },
         (text, status) => {
-            console.log("Load Theme failure: " + text + ": " + status);
+            requestLog("Load Theme failure: " + text + ": " + status);
             showMessage("Unable to load Theme of Id "+theme.id, text);
         }
     );
@@ -328,11 +328,11 @@ export function saveProposedTheme(theme, images, success, failure) {
     sendPost(theme.id===undefined ? "/api/theme/propose" : "/api/theme/amend/" + theme.id,
         theme,
         (text, status) => {
-            console.log("Theme proposal success: " + text + ": " + status);
+            requestLog("Theme proposal success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Theme proposal failure: " + text + ": " + status);
+            requestLog("Theme proposal failure: " + text + ": " + status);
             failure(text, status);
         },
         images

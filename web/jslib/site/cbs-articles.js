@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    Div, Img, P, sendGet, sendPost
+    Div, Img, P, requestLog, sendGet, sendPost
 } from "../vitamin/components.js";
 import {
     Undoable,
@@ -730,12 +730,12 @@ export var vArticleEditorPage = new CBSFormContainer({ref:"article-editor-page",
 export function loadRecentArticles(pageIndex, search, update) {
     sendGet("/api/article/recent?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
         (text, status) => {
-            console.log("Load article success: " + text + ": " + status);
+            requestLog("Load article success: " + text + ": " + status);
             let response = JSON.parse(text);
             update(response);
         },
         (text, status) => {
-            console.log("Load Article failure: " + text + ": " + status);
+            requestLog("Load Article failure: " + text + ": " + status);
             showMessage("Unable to load Articles", text);
         }
     );
@@ -745,12 +745,12 @@ export function loadRecentArticles(pageIndex, search, update) {
 export function loadArticlesByTheme(pageIndex, search, themeId, update) {
     sendGet("/api/article/by-theme/"+themeId+"?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
         (text, status) => {
-            console.log("Load article success: " + text + ": " + status);
+            requestLog("Load article success: " + text + ": " + status);
             let response = JSON.parse(text);
             update(response);
         },
         (text, status) => {
-            console.log("Load Article failure: " + text + ": " + status);
+            requestLog("Load Article failure: " + text + ": " + status);
             showMessage("Unable to load Articles", text);
         }
     );
@@ -759,11 +759,11 @@ export function loadArticlesByTheme(pageIndex, search, themeId, update) {
 export function loadProposedArticle(article, success) {
     sendGet("/api/article/load/"+article.id,
         (text, status) => {
-            console.log("Article load success: " + text + ": " + status);
+            requestLog("Article load success: " + text + ": " + status);
             success(parseArticle(text));
         },
         (text, status) => {
-            console.log("Load Article failure: " + text + ": " + status);
+            requestLog("Load Article failure: " + text + ": " + status);
             showMessage("Unable to load Article of Id "+article.id, text);
         }
     );
@@ -773,11 +773,11 @@ export function saveProposedArticle(article, images, success, failure) {
     sendPost(article.id===undefined ? "/api/article/propose" : "/api/article/amend/" + article.id,
         article,
         (text, status) => {
-            console.log("Article proposal success: " + text + ": " + status);
+            requestLog("Article proposal success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Article proposal failure: " + text + ": " + status);
+            requestLog("Article proposal failure: " + text + ": " + status);
             failure(text, status);
         },
         images

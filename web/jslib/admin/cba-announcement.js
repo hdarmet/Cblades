@@ -4,7 +4,7 @@ import {
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, Select, sendGet, sendPost, Span
+    Div, Img, P, requestLog, Select, sendGet, sendPost, Span
 } from "../vitamin/components.js";
 import {
     Vitamin, VModal, VSearch
@@ -298,7 +298,7 @@ export class CBAAnnouncementListPage extends Vitamin(Div) {
 export function loadAnnouncements(pageIndex, search, update) {
     sendGet("/api/announcement/all?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
         (text, status) => {
-            console.log("Load announcements success: " + text + ": " + status);
+            requestLog("Load announcements success: " + text + ": " + status);
             let response = JSON.parse(text);
             update({
                 title: "Announcement List",
@@ -311,7 +311,7 @@ export function loadAnnouncements(pageIndex, search, update) {
             });
         },
         (text, status) => {
-            console.log("Load Announcement failure: " + text + ": " + status);
+            requestLog("Load Announcement failure: " + text + ": " + status);
             showMessage("Unable to load Announcements", text);
         }
     );
@@ -320,11 +320,11 @@ export function loadAnnouncements(pageIndex, search, update) {
 export function deleteAnnouncement(announcement, success, failure) {
     sendGet("/api/announcement/delete/" + announcement.id,
         (text, status) => {
-            console.log("Announcement delete success: " + text + ": " + status);
+            requestLog("Announcement delete success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Announcement delete failure: " + text + ": " + status);
+            requestLog("Announcement delete failure: " + text + ": " + status);
             failure(text, status);
         }
     );
@@ -334,11 +334,11 @@ export function saveAnnouncement(announcement, illustration, success, failure) {
     sendPost(announcement.id===undefined ? "/api/announcement/create" : "/api/announcement/update/" + announcement.id,
         announcement,
         (text, status) => {
-            console.log("Announcement saving success: " + text + ": " + status);
+            requestLog("Announcement saving success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Announcement saving failure: " + text + ": " + status);
+            requestLog("Announcement saving failure: " + text + ": " + status);
             failure(text, status);
         },
         illustration
@@ -349,11 +349,11 @@ export function saveAnnouncementStatus(announcement, success, failure) {
     sendPost("/api/announcement/update-status/" + announcement.id,
         announcement,
         (text, status) => {
-            console.log("Announcement status saving success: " + text + ": " + status);
+            requestLog("Announcement status saving success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Announcement status saving failure: " + text + ": " + status);
+            requestLog("Announcement status saving failure: " + text + ": " + status);
             failure(text, status);
         },
         illustration

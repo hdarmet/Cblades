@@ -5,6 +5,7 @@ import {
     Div, Img, isComponent, TBody, TD, TH, Thead, TR, Label, Table, getUniqueId, Radio, Span, P
 } from "./components.js";
 import {
+    cancelBack,
     Vitamin, VSearch
 } from "./vitamins.js";
 
@@ -578,30 +579,28 @@ export class VPageContent extends VContainer {
         }
     }
 
-    _changePage(title, content, byHistory, historize, init=switchPage=>switchPage()) {
-        if (!this._page || !this._page.canLeave || this._page.canLeave(()=>{
-            if (byHistory) {
-                history._preventDefault = true;
-                history.back();
+    changePage(title, content, byHistory, historize, init=switchPage=>switchPage()) {
+        if (!this._page || !this._page.canLeave) {
+            this._changePage(title, content, byHistory, historize, init);
+        }
+        else this._page.canLeave(
+            ()=>this._changePage(title, content, byHistory, historize, init),
+            ()=>{
+                if (byHistory) {
+                    cancelBack();
+                }
             }
-            else {
-                historize();
-            }
-            init(()=> {
-                this._changeTitle(title);
-                this._changeContent(content);
-            });
-        }, ()=>{})) {
+        );
+    }
+
+    _changePage(title, content, byHistory, historize, init) {
+        init(()=> {
             if (!byHistory) {
                 historize();
             }
-            init(()=> {
-                this._changeTitle(title);
-                this._changeContent(content);
-            });
-            return true;
-        }
-        return false
+            this._changeTitle(title);
+            this._changeContent(content);
+        });
     }
 
 }

@@ -752,11 +752,19 @@ Function.prototype.clone = function() {
     return this;
 }
 
-
+let i = 0
 export function historize(title, revert) {
+    console.log("Historize: "+revert);
+    i++;
     history.pushState({
         title, revert
     }, title);
+}
+
+export function cancelBack() {
+    console.log("Cancel Back");
+    history._preventDefault = true;
+    history.forward();
 }
 
 window.onpopstate = function (event) {
@@ -766,10 +774,8 @@ window.onpopstate = function (event) {
     else {
         if (event.state) {
             if (event.state.revert) {
-                if (!eval(event.state.revert)) {
-                    history._preventDefault = true;
-                    history.forward();
-                }
+                console.log("Revert to: " + event.state.revert);
+                eval(event.state.revert);
             }
         }
     }

@@ -10,6 +10,7 @@ import {
     historize, VLoginHandler, VDisplay, VLink, VMessage, VModal
 } from "../vitamin/vitamins.js";
 import {
+    requestLog,
     sendGet, sendPost
 } from "../vitamin/components.js";
 import {
@@ -298,11 +299,11 @@ export class CBALogin extends VModal {
 export function disconnect(success, failure) {
     sendGet("/api/login/logout",
         (text, status) => {
-            console.log("Connection success: " + text + ": " + status);
+            requestLog("Connection success: " + text + ": " + status);
             success(text);
         },
         (text, status) => {
-            console.log("Connection failure: " + text + ": " + status);
+            requestLog("Connection failure: " + text + ": " + status);
             failure(text, status);
         }
     );
@@ -314,11 +315,11 @@ export function connect(login, password, success, failure) {
             login, password
         },
         (text, status) => {
-            console.log("Connection success: " + text + ": " + status);
+            requestLog("Connection success: " + text + ": " + status);
             success(text);
         },
         (text, status) => {
-            console.log("Connection failure: " + text + ": " + status);
+            requestLog("Connection failure: " + text + ": " + status);
             failure(text, status);
         }
     );
@@ -330,11 +331,10 @@ export class CBAPageContent extends VPageContent {
 
     constructor() {
         super({ref: "page-content"});
-        //this._showHome(true);
     }
 
     _showUserList(byHistory, historize) {
-        return this._changePage(null, vUserList, byHistory, historize);
+        return this.changePage(null, vUserList, byHistory, historize);
     }
 
     showUserList() {
@@ -346,7 +346,7 @@ export class CBAPageContent extends VPageContent {
     }
 
     _showAnnouncementList(byHistory, historize) {
-        return this._changePage(null, vAnnouncementList, byHistory, historize);
+        return this.changePage(null, vAnnouncementList, byHistory, historize);
     }
 
     showAnnouncementList() {
@@ -358,7 +358,7 @@ export class CBAPageContent extends VPageContent {
     }
 
     _showEventList(byHistory, historize) {
-        return this._changePage(null, vEventList, byHistory, historize);
+        return this.changePage(null, vEventList, byHistory, historize);
     }
 
     showEventList() {
@@ -370,7 +370,7 @@ export class CBAPageContent extends VPageContent {
     }
 
     _showBoardList(byHistory, historize) {
-        return this._changePage(null, vBoardList, byHistory, historize);
+        return this.changePage(null, vBoardList, byHistory, historize);
     }
 
     showBoardList() {
@@ -382,7 +382,7 @@ export class CBAPageContent extends VPageContent {
     }
 
     _showThemeList(byHistory, historize) {
-        return this._changePage(null, vThemeList, byHistory, historize);
+        return this.changePage(null, vThemeList, byHistory, historize);
     }
 
     showThemeList() {
@@ -394,7 +394,7 @@ export class CBAPageContent extends VPageContent {
     }
 
     _showArticleList(byHistory, historize) {
-        return this._changePage(null, vArticleList, byHistory, historize);
+        return this.changePage(null, vArticleList, byHistory, historize);
     }
 
     showArticleList() {
@@ -516,7 +516,7 @@ export class CBAPageContent extends VPageContent {
     }
 
     _showHome(byHistory, historize) {
-        //       return this._changePage(null, vHome, byHistory, historize);
+        //       return this.changePage(null, vHome, byHistory, historize);
     }
 
     showHome() {

@@ -6,7 +6,7 @@ import {
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, Select, sendGet, sendPost, Span
+    Div, Img, P, requestLog, Select, sendGet, sendPost, Span
 } from "../vitamin/components.js";
 import {
     Undoable, VImage,
@@ -568,7 +568,7 @@ export class CBAThemeListPage extends Vitamin(Div) {
 export function loadThemes(pageIndex, search, update) {
     sendGet("/api/theme/all?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
         (text, status) => {
-            console.log("Load theme success: " + text + ": " + status);
+            requestLog("Load theme success: " + text + ": " + status);
             let response = JSON.parse(text);
             update({
                 title: "Themes List",
@@ -581,7 +581,7 @@ export function loadThemes(pageIndex, search, update) {
             });
         },
         (text, status) => {
-            console.log("Load Theme failure: " + text + ": " + status);
+            requestLog("Load Theme failure: " + text + ": " + status);
             showMessage("Unable to load Themes", text);
         }
     );
@@ -598,11 +598,11 @@ function parseTheme(text) {
 export function loadTheme(theme, success) {
     sendGet("/api/theme/load/"+theme.id,
         (text, status) => {
-            console.log("Theme load success: " + text + ": " + status);
+            requestLog("Theme load success: " + text + ": " + status);
             success(parseTheme(text));
         },
         (text, status) => {
-            console.log("Load Theme failure: " + text + ": " + status);
+            requestLog("Load Theme failure: " + text + ": " + status);
             showMessage("Unable to load Theme of Id "+theme.id, text);
         }
     );
@@ -612,11 +612,11 @@ export function saveTheme(theme, images, success, failure) {
     sendPost(theme.id===undefined ? "/api/theme/create" : "/api/theme/update/" + theme.id,
         theme,
         (text, status) => {
-            console.log("Theme saving success: " + text + ": " + status);
+            requestLog("Theme saving success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Theme saving failure: " + text + ": " + status);
+            requestLog("Theme saving failure: " + text + ": " + status);
             failure(text, status);
         },
         images
@@ -627,11 +627,11 @@ export function saveThemeStatus(theme, success, failure) {
     sendPost("/api/theme/update-status/" + theme.id,
         theme,
         (text, status) => {
-            console.log("Theme status saving success: " + text + ": " + status);
+            requestLog("Theme status saving success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Theme status saving failure: " + text + ": " + status);
+            requestLog("Theme status saving failure: " + text + ": " + status);
             failure(text, status);
         }
     );
@@ -640,11 +640,11 @@ export function saveThemeStatus(theme, success, failure) {
 export function deleteTheme(theme, success, failure) {
     sendGet("/api/theme/delete/" + theme.id,
         (text, status) => {
-            console.log("Theme delete success: " + text + ": " + status);
+            requestLog("Theme delete success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Theme delete failure: " + text + ": " + status);
+            requestLog("Theme delete failure: " + text + ": " + status);
             failure(text, status);
         }
     );

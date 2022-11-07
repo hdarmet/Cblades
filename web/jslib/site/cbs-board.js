@@ -3,7 +3,7 @@ import {
     Undoable, VImage, Vitamin, VMagnifiedImage, VMessageHandler
 } from "../vitamin/vitamins.js";
 import {
-    Div, P, sendGet, sendPost
+    Div, P, requestLog, sendGet, sendPost
 } from "../vitamin/components.js";
 import {
     VSplitterPanel
@@ -315,11 +315,11 @@ export function loadBoards(success) {
 export function loadProposedBoard(board, success) {
     sendGet("/api/board/load/"+board.id,
         (text, status) => {
-            console.log("Board load success: " + text + ": " + status);
+            requestLog("Board load success: " + text + ": " + status);
             success(parseBoard(text));
         },
         (text, status) => {
-            console.log("Load Board failure: " + text + ": " + status);
+            requestLog("Load Board failure: " + text + ": " + status);
             showMessage("Unable to load Board of Id "+board.id, text);
         }
     );
@@ -329,11 +329,11 @@ export function saveProposedBoard(board, images, success, failure) {
     sendPost(board.id===undefined ? "/api/board/propose" : "/api/board/amend/" + board.id,
         board,
         (text, status) => {
-            console.log("Board proposal success: " + text + ": " + status);
+            requestLog("Board proposal success: " + text + ": " + status);
             success(text, status);
         },
         (text, status) => {
-            console.log("Board proposal failure: " + text + ": " + status);
+            requestLog("Board proposal failure: " + text + ": " + status);
             failure(text, status);
         },
         images

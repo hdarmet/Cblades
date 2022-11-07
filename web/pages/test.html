@@ -1,130 +1,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <style>
-        .dropdown-check-list {
-            display: inline-block;
-        }
-
-        .dropdown-check-list .anchor {
-            position: relative;
-            cursor: pointer;
-            display: inline-block;
-            padding: 5px 55px 5px 5px;
-            border: 1px solid #ccc;
-            width: 250px;
-        }
-
-        .dropdown-check-list .anchor:after {
-            position: absolute;
-            content: "";
-            border-left: 2px solid black;
-            border-top: 2px solid black;
-            padding: 3px;
-            right: 10px;
-            top: 30%;
-            -moz-transform: rotate(-135deg);
-            -ms-transform: rotate(-135deg);
-            -o-transform: rotate(-135deg);
-            -webkit-transform: rotate(-135deg);
-            transform: rotate(-135deg);
-        }
-
-        .dropdown-check-list .anchor:after:hover {
-            opacity: 0.5;
-        }
-
-        .dropdown-check-list ul.items {
-            position: absolute;
-            padding: 5px 5px 5px 5px;
-            display: none;
-            margin: 0;
-            border: 1px solid #ccc;
-            border-top: none;
-            width: 300px;
-            background-color: #f9f9f9;
-        }
-
-        .dropdown-check-list ul.items li {
-            list-style: none;
-        }
-
-        .dropdown-check-list.visible .items {
-            display: block;
-        }
-     </style>
 
 </head>
 <body>
 <header>
 </header>
-<p>Suite</p>
-<p>Suite</p>
-<p>Suite</p>
-<p>Suite</p>
-<div id="list1" class="dropdown-check-list" tabindex="100">
-    <div class="anchor">Select Fruits</div>
-    <ul class="items">
-        <li><input type="checkbox" onchange="changeValue(this.checked, 'Apple')"/><span>Apple</span></li>
-        <li><input type="checkbox" onchange="changeValue(this.checked, 'Orange')"/>Orange</li>
-        <li><input type="checkbox" onchange="changeValue(this.checked, 'Grapes')"/>Grapes </li>
-        <li><input type="checkbox" onchange="changeValue(this.checked, 'Berry')"/>Berry </li>
-        <li><input type="checkbox" onchange="changeValue(this.checked, 'Mango')"/>Mango </li>
-        <li><input type="checkbox" onchange="changeValue(this.checked, 'Banana')"/>Banana </li>
-        <li><input type="checkbox" onchange="changeValue(this.checked, 'Tomato')"/>Tomato</li>
-    </ul>
-</div>
-<p>Suite</p>
-<p>Suite</p>
-<p>Suite</p>
+<p>ggggggggggggg</p>
 <script>
-    Array.prototype.add = function(element) {
-        let index = this.indexOf(element);
-        if (index<0) {
-            this.push(element);
-        }
-        return index;
-    }
-    Array.prototype.remove = function(element) {
-        let index = this.indexOf(element);
-        if (index>=0) {
-            this.splice(index, 1);
-        }
-        return index;
-    }
-    Array.prototype.contains = function(element) {
-        return this.indexOf(element)>=0;
-    }
-    Array.prototype.insert = function(index, element) {
-        if (index>=0) {
-            this.splice(index, 0, element);
-        }
-    }
-    Array.prototype.first = function () {
-        return this.length>0 ? this[0] : null;
-    }
-    Array.prototype.last = function () {
-        return this.length>0 ? this[this.length-1] : null;
-    }
-
-    let value = [];
-    function changeValue(selected, option) {
-        if (selected) {
-            value.add(option);
-        }
-        else {
-            value.remove(option);
-        }
-        console.log(value);
-        checkList.getElementsByClassName('anchor')[0].innerHTML = value.join(", ");
-    }
-    var checkList = document.getElementById('list1');
-    checkList.getElementsByClassName('anchor')[0].onclick = function(evt) {
-        if (checkList.classList.contains('visible'))
-            checkList.classList.remove('visible');
-        else
-            checkList.classList.add('visible');
-    }
+    window.onpopstate = function(event) {
+        alert("location: " + document.location + ", state: " + JSON.stringify(event.state));
+        const urlParams = new URLSearchParams(window.location.search);
+        const myParam = urlParams.get('myParam');
+        //update model accordingly
+    };
+    history.pushState({page: 1}, "title 1", "?page=1");
+    history.pushState({page: 2}, "title 2", "?page=2");
+    history.pushState({page: 3}, "title 3", "?page=3");
+    console.log(history.length);
+    /*
+    history.back(); // alerts "location: http://example.com/example.html?page=1, state: {"page":1}"
+    history.back(); // alerts "location: http://example.com/example.html, state: null
+    history.back();  // alerts "location: http://example.com/example.html?page=3, state: {"page":3}
+    */
 </script>
 </body>
 </html>
