@@ -254,9 +254,10 @@ export function Undoable(clazz) {
                         notLeave();
                     }
                 })
-                return false;
             }
-            return true;
+            else {
+                leave();
+            }
         }
 
     }

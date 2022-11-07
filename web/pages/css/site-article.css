@@ -1,87 +1,344 @@
-.articles-about-theme {
-    min-height: calc(100vh - 300px);
-    background-color: rgb(248, 242, 222);
-}
 
-.articles-about-theme .search {
+.new-articles .search {
     --extends: ex-info-background-color;
 }
 
-.articles-about-theme .search-input-text {
+.new-articles .search-input-text {
     --extends: ex-search-input-text;
 }
 
-.articles-about-theme-title.header-container {
+.new-articles-title.header-container {
     --extends: ex-info-header-container;
 }
 
-.articles-about-theme-title .header-left-image {
+.new-articles-title .header-left-image {
     --extends: ex-page-header-left-image;
 }
 
-.articles-about-theme-title .header-right-image {
+.new-articles-title .header-right-image {
     --extends: ex-page-header-right-image;
 }
 
-.articles-about-theme-title .header-text {
+.new-articles-title .header-text {
     --extends: ex-header-text
 }
 
-.articles-about-theme-content {
+.new-articles-content {
     --extends: ex-record-content, ex-info-background-color;
 }
 
-.articles-about-theme-content .article-title {
+.new-articles-content .article-title {
     --extends: ex-record-title;
 }
 
-.articles-about-theme-content .paragraph-title {
+.new-articles-content .paragraph-title {
     --extends: ex-paragraph-title;
 }
 
-.articles-about-theme-content .article {
+.new-articles-content .article {
     --extends: ex-record-container, ex-record-down-clip;
 }
 
-.articles-about-theme-content .article .show-votes {
+.new-articles-content .article .show-votes {
     display: inline-block;
     vertical-align: middle;
     float: right;
 }
 
-.articles-about-theme-content .article .likes-icon {
+.new-articles-content .article .likes-icon {
     --extends: ex-likes-icon;
 }
 
-.articles-about-theme-content .article .likes-value {
+.new-articles-content .article .likes-value {
     --extends: ex-vote-values;
 }
 
-.articles-about-theme-content .article .dislikes-icon {
+.new-articles-content .article .dislikes-icon {
     --extends: ex-dislikes-icon;
 }
 
-.articles-about-theme-content .article .dislikes-value {
+.new-articles-content .article .dislikes-value {
     --extends: ex-vote-values;
 }
 
-.articles-about-theme-content .paragraph::after {
+.new-articles-content .paragraph::after {
     --extends: ex-record-end-mask;
 }
 
-.articles-about-theme-content .paragraph-image {
+.new-articles-content .paragraph-image {
     --extends: ex-paragraph-image;
 }
 
-.articles-about-theme-content .image-on-left .paragraph-image {
+.new-articles-content .image-on-left .paragraph-image {
     --extends: ex-paragraph-image-on-left;
 }
 
-.articles-about-theme-content .image-on-right .paragraph-image {
+.new-articles-content .image-on-right .paragraph-image {
     --extends: ex-paragraph-image-on-right;
 }
 
-.articles-about-theme-content .paragraph-container {
+.new-articles-content .paragraph-container {
+    --extends: ex-paragraph-container;
+}
+
+.articles-about-game {
+    min-height: calc(100vh - 300px);
+    background-color: rgb(248, 242, 222);
+}
+
+.articles-about-game .search {
+    --extends: ex-info-background-color;
+}
+
+.articles-about-game .search-input-text {
+    --extends: ex-search-input-text;
+}
+
+.articles-about-game-title.header-container {
+    --extends: ex-info-header-container;
+}
+
+.articles-about-game-title .header-left-image {
+    --extends: ex-page-header-left-image;
+}
+
+.articles-about-game-title .header-right-image {
+    --extends: ex-page-header-right-image;
+}
+
+.articles-about-game-title .header-text {
+    --extends: ex-header-text
+}
+
+.articles-about-game-content {
+    --extends: ex-record-content, ex-info-background-color;
+}
+
+.articles-about-game-content .article-title {
+    --extends: ex-record-title;
+}
+
+.articles-about-game-content .paragraph-title {
+    --extends: ex-paragraph-title;
+}
+
+.articles-about-game-content .article {
+    --extends: ex-record-container, ex-record-down-clip;
+}
+
+.articles-about-game-content .article .show-votes {
+    display: inline-block;
+    vertical-align: middle;
+    float: right;
+}
+
+.articles-about-game-content .article .likes-icon {
+    --extends: ex-likes-icon;
+}
+
+.articles-about-game-content .article .likes-value {
+    --extends: ex-vote-values;
+}
+
+.articles-about-game-content .article .dislikes-icon {
+    --extends: ex-dislikes-icon;
+}
+
+.articles-about-game-content .article .dislikes-value {
+    --extends: ex-vote-values;
+}
+
+.articles-about-game-content .paragraph::after {
+    --extends: ex-record-end-mask;
+}
+
+.articles-about-game-content .paragraph-image {
+    --extends: ex-paragraph-image;
+}
+
+.articles-about-game-content .image-on-left .paragraph-image {
+    --extends: ex-paragraph-image-on-left;
+}
+
+.articles-about-game-content .image-on-right .paragraph-image {
+    --extends: ex-paragraph-image-on-right;
+}
+
+.articles-about-game-content .paragraph-container {
+    --extends: ex-paragraph-container;
+}
+
+.articles-about-legends {
+    min-height: calc(100vh - 300px);
+    background-color: rgb(248, 242, 222);
+}
+
+.articles-about-legends .search {
+    --extends: ex-info-background-color;
+}
+
+.articles-about-legends .search-input-text {
+    --extends: ex-search-input-text;
+}
+
+.articles-about-legends-title.header-container {
+    --extends: ex-info-header-container;
+}
+
+.articles-about-legends-title .header-left-image {
+    --extends: ex-page-header-left-image;
+}
+
+.articles-about-legends-title .header-right-image {
+    --extends: ex-page-header-right-image;
+}
+
+.articles-about-legends-title .header-text {
+    --extends: ex-header-text
+}
+
+.articles-about-legends-content {
+    --extends: ex-record-content, ex-info-background-color;
+}
+
+.articles-about-legends-content .article-title {
+    --extends: ex-record-title;
+}
+
+.articles-about-legends-content .paragraph-title {
+    --extends: ex-paragraph-title;
+}
+
+.articles-about-legends-content .article {
+    --extends: ex-record-container, ex-record-down-clip;
+}
+
+.articles-about-legends-content .article .show-votes {
+    display: inline-block;
+    vertical-align: middle;
+    float: right;
+}
+
+.articles-about-legends-content .article .likes-icon {
+    --extends: ex-likes-icon;
+}
+
+.articles-about-legends-content .article .likes-value {
+    --extends: ex-vote-values;
+}
+
+.articles-about-legends-content .article .dislikes-icon {
+    --extends: ex-dislikes-icon;
+}
+
+.articles-about-legends-content .article .dislikes-value {
+    --extends: ex-vote-values;
+}
+
+.articles-about-legends-content .paragraph::after {
+    --extends: ex-record-end-mask;
+}
+
+.articles-about-legends-content .paragraph-image {
+    --extends: ex-paragraph-image;
+}
+
+.articles-about-legends-content .image-on-left .paragraph-image {
+    --extends: ex-paragraph-image-on-left;
+}
+
+.articles-about-legends-content .image-on-right .paragraph-image {
+    --extends: ex-paragraph-image-on-right;
+}
+
+.articles-about-legends-content .paragraph-container {
+    --extends: ex-paragraph-container;
+}
+
+.articles-about-game-examples {
+    min-height: calc(100vh - 300px);
+    background-color: rgb(248, 242, 222);
+}
+
+.articles-about-game-examples .search {
+    --extends: ex-info-background-color;
+}
+
+.articles-about-game-examples .search-input-text {
+    --extends: ex-search-input-text;
+}
+
+.articles-about-game-examples-title.header-container {
+    --extends: ex-info-header-container;
+}
+
+.articles-about-game-examples-title .header-left-image {
+    --extends: ex-page-header-left-image;
+}
+
+.articles-about-game-examples-title .header-right-image {
+    --extends: ex-page-header-right-image;
+}
+
+.articles-about-game-examples-title .header-text {
+    --extends: ex-header-text
+}
+
+.articles-about-game-examples-content {
+    --extends: ex-record-content, ex-info-background-color;
+}
+
+.articles-about-game-examples-content .article-title {
+    --extends: ex-record-title;
+}
+
+.articles-about-game-examples-content .paragraph-title {
+    --extends: ex-paragraph-title;
+}
+
+.articles-about-game-examples-content .article {
+    --extends: ex-record-container, ex-record-down-clip;
+}
+
+.articles-about-game-examples-content .article .show-votes {
+    display: inline-block;
+    vertical-align: middle;
+    float: right;
+}
+
+.articles-about-game-examples-content .article .likes-icon {
+    --extends: ex-likes-icon;
+}
+
+.articles-about-game-examples-content .article .likes-value {
+    --extends: ex-vote-values;
+}
+
+.articles-about-game-examples-content .article .dislikes-icon {
+    --extends: ex-dislikes-icon;
+}
+
+.articles-about-game-examples-content .article .dislikes-value {
+    --extends: ex-vote-values;
+}
+
+.articles-about-game-examples-content .paragraph::after {
+    --extends: ex-record-end-mask;
+}
+
+.articles-about-game-examples-content .paragraph-image {
+    --extends: ex-paragraph-image;
+}
+
+.articles-about-game-examples-content .image-on-left .paragraph-image {
+    --extends: ex-paragraph-image-on-left;
+}
+
+.articles-about-game-examples-content .image-on-right .paragraph-image {
+    --extends: ex-paragraph-image-on-right;
+}
+
+.articles-about-game-examples-content .paragraph-container {
     --extends: ex-paragraph-container;
 }
 
@@ -242,5 +499,57 @@
 
 .article-editor  .form-command.vitamin-active:hover {
     opacity: 0.8;
+}
+
+
+.themes-about-game {
+    min-height: calc(100vh - 300px);
+    background-color: rgb(248, 242, 222);
+}
+
+.themes-about-legends {
+    min-height: calc(100vh - 300px);
+    background-color: rgb(248, 242, 222);
+}
+
+.themes-about-game-examples {
+    min-height: calc(100vh - 300px);
+    background-color: rgb(248, 242, 222);
+}
+
+.themes-about-game .search {
+    --extends: ex-info-background-color;
+}
+
+.themes-about-game .search-input-text {
+    --extends: ex-search-input-text;
+}
+
+.themes-about-game-content {
+    --extends: ex-record-content, ex-info-background-color;
+}
+
+.themes-about-legends .search {
+    --extends: ex-info-background-color;
+}
+
+.themes-about-legends .search-input-text {
+    --extends: ex-search-input-text;
+}
+
+.themes-about-legends-content {
+    --extends: ex-record-content, ex-info-background-color;
+}
+
+.themes-about-game-examples .search {
+    --extends: ex-info-background-color;
+}
+
+.themes-about-game-examples .search-input-text {
+    --extends: ex-search-input-text;
+}
+
+.themes-about-game-examples-content {
+    --extends: ex-record-content, ex-info-background-color;
 }
 

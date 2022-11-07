@@ -27,7 +27,7 @@ export class CBSFormContainer extends VFormContainer {
     }
 
     canLeave = function(leave, notLeave) {
-        return this._editor.canLeave(leave, notLeave);
+        this._editor.canLeave(leave, notLeave);
     }
 
 }

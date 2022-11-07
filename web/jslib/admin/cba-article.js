@@ -361,7 +361,7 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
     }
 
     canLeave(leave, notLeave) {
-        return super.canLeave(leave, notLeave,"Article not saved. Do you want to Quit ?")
+        super.canLeave(leave, notLeave,"Article not saved. Do you want to Quit ?")
     }
 
     get article() {

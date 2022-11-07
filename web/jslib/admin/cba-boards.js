@@ -123,7 +123,7 @@ export class CBAEditBoardPane extends Undoable(VSplitterPanel) {
     }
 
     canLeave(leave, notLeave) {
-        return super.canLeave(leave, notLeave,"Board not saved. Do you want to Quit ?")
+        super.canLeave(leave, notLeave,"Board not saved. Do you want to Quit ?")
     }
 
     get board() {

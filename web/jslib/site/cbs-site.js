@@ -92,11 +92,11 @@ export var vMenu = new VMainMenu({ref:"menu"})
             }
         })
         .addMenu({ref:"lore-articles-menu", label:"Histoires et légendes", action:()=>{
-                window.vPageContent.showThemesAboutGameWall();
+                window.vPageContent.showThemesAboutLegendsWall();
             }
         })
         .addMenu({ref:"rule-articles-menu", label:"Exemples de jeu", action:()=>{
-                window.vPageContent.showThemesAboutGameWall();
+                window.vPageContent.showThemesAboutGameExamplesWall();
             }
         })
     })
@@ -595,7 +595,7 @@ export var vNewArticlesWall = new VWallWithSearch({
             this.addNote(new CBSArticle({
                 article,
                 action: article => {
-                    vPageContent.showNewspaper(article);
+                    vPageContent.showNewArticlesNewspaper(article);
                 }
             }));
         }
@@ -606,10 +606,22 @@ export var vNewArticlesWall = new VWallWithSearch({
 });
 
 export var vArticlesAboutGameTitle = new VHeader({
-    ref:"articles-about-theme-title",
+    ref:"articles-about-game-title",
     left:"../images/site/left-articles-about-game.png", right:"../images/site/right-articles-about-game.png",
     title: "About the game"
-}).addClass("articles-about-theme-title");
+}).addClass("articles-about-game-title");
+
+export var vArticlesAboutLegendsTitle = new VHeader({
+    ref:"articles-about-legends-title",
+    left:"../images/site/left-legends.png", right:"../images/site/right-legends.png",
+    title: "Cursed Legends"
+}).addClass("articles-about-legends-title");
+
+export var vArticlesAboutGameExamplesTitle = new VHeader({
+    ref:"articles-about-game-example-title",
+    left:"../images/site/left-games.png", right:"../images/site/right-games.png",
+    title: "Game Examples"
+}).addClass("articles-about-game-examples-title");
 
 export var vThemesAboutGameWall = new VWallWithSearch({
     ref: "themes-about-game",
@@ -624,7 +636,7 @@ export var vThemesAboutGameWall = new VWallWithSearch({
             this.addNote(new CBSTheme({
                 ...theme,
                 action:theme=>{
-                    vPageContent.showArticlesAboutThemeWall(theme);
+                    vPageContent.showArticlesAboutGameThemeWall(theme);
                 }
             }));
         }
@@ -634,12 +646,58 @@ export var vThemesAboutGameWall = new VWallWithSearch({
     }
 });
 
-export var vArticlesAboutThemeWall = new VWallWithSearch({
-    ref:"articles-about-theme",
-    kind: "articles-about-theme",
+export var vThemesAboutLegendsWall = new VWallWithSearch({
+    ref: "themes-about-legends",
+    kind: "themes-about-legends",
     requestNotes: function (page, search) {
-        loadArticlesByTheme(page, search, vArticlesAboutThemeWall._theme, response=>{
-            vArticlesAboutThemeWall.loadNotes(response);
+        loadThemesByCategory(page, "legends", search, response=>{
+            vThemesAboutLegendsWall.loadNotes(response);
+        });
+    },
+    receiveNotes: function(response) {
+        for (let theme of response) {
+            this.addNote(new CBSTheme({
+                ...theme,
+                action:theme=>{
+                    vPageContent.showArticlesAboutLegendsThemeWall(theme);
+                }
+            }));
+        }
+    },
+    searchAction: ()=>{
+        vThemesAboutLegendsWall.clearNotes()
+    }
+});
+
+export var vThemesAboutGameExamplesWall = new VWallWithSearch({
+    ref: "themes-about-game-examples",
+    kind: "themes-about-game-examples",
+    requestNotes: function (page, search) {
+        loadThemesByCategory(page, "examples", search, response=>{
+            vThemesAboutGameExamplesWall.loadNotes(response);
+        });
+    },
+    receiveNotes: function(response) {
+        for (let theme of response) {
+            this.addNote(new CBSTheme({
+                ...theme,
+                action:theme=>{
+                    vPageContent.showArticlesAboutGameExamplesThemeWall(theme);
+                }
+            }));
+        }
+    },
+    searchAction: ()=>{
+        vThemesAboutGameExamplesWall.clearNotes()
+    }
+});
+
+export var vArticlesAboutGameThemeWall = new VWallWithSearch({
+    ref:"articles-about-game",
+    kind: "articles-about-game",
+    requestNotes: function (page, search) {
+        loadArticlesByTheme(page, search, vArticlesAboutGameThemeWall._theme, response=>{
+            vArticlesAboutGameThemeWall.loadNotes(response);
         });
     },
     receiveNotes: function(response) {
@@ -647,23 +705,92 @@ export var vArticlesAboutThemeWall = new VWallWithSearch({
             this.addNote(new CBSArticle({
                 article,
                 action: article => {
-                    vPageContent.showNewspaper(article);
+                    vPageContent.showArticlesAboutGameNewspaper(article);
                 }
             }));
         }
     },
     searchAction: ()=>{
-        vArticlesAboutThemeWall.clearNotes()
+        vArticlesAboutGameThemeWall.clearNotes()
     }
 });
-vArticlesAboutThemeWall.setTheme = function(theme) {
+vArticlesAboutGameThemeWall.setTheme = function(theme) {
     this._theme = theme;
     this.clearNotes();
 }
 
-export var vNewspaperTitle = new VHeader({
-    ref:"newspaper-title",
+export var vArticlesAboutLegendsThemeWall = new VWallWithSearch({
+    ref:"articles-about-legends",
+    kind: "articles-about-legends",
+    requestNotes: function (page, search) {
+        loadArticlesByTheme(page, search, vArticlesAboutLegendsThemeWall._theme, response=>{
+            vArticlesAboutLegendsThemeWall.loadNotes(response);
+        });
+    },
+    receiveNotes: function(response) {
+        for (let article of response) {
+            this.addNote(new CBSArticle({
+                article,
+                action: article => {
+                    vPageContent.showArticlesAboutLegendsNewspaper(article);
+                }
+            }));
+        }
+    },
+    searchAction: ()=>{
+        vArticlesAboutLegendsThemeWall.clearNotes()
+    }
+});
+vArticlesAboutLegendsThemeWall.setTheme = function(theme) {
+    this._theme = theme;
+    this.clearNotes();
+}
+
+export var vArticlesAboutGameExamplesThemeWall = new VWallWithSearch({
+    ref:"articles-about-game-examples",
+    kind: "articles-about-game-examples",
+    requestNotes: function (page, search) {
+        loadArticlesByTheme(page, search, vArticlesAboutGameExamplesThemeWall._theme, response=>{
+            vArticlesAboutGameExamplesThemeWall.loadNotes(response);
+        });
+    },
+    receiveNotes: function(response) {
+        for (let article of response) {
+            this.addNote(new CBSArticle({
+                article,
+                action: article => {
+                    vPageContent.showArticlesAboutGameExamplesNewspaper(article);
+                }
+            }));
+        }
+    },
+    searchAction: ()=>{
+        vArticlesAboutGameExamplesThemeWall.clearNotes()
+    }
+});
+vArticlesAboutGameExamplesThemeWall.setTheme = function(theme) {
+    this._theme = theme;
+    this.clearNotes();
+}
+
+export var vNewArticlesNewspaperTitle = new VHeader({
+    ref:"new-articles-newspaper-title",
+    left:"../images/site/left-new-articles.png", right:"../images/site/right-new-articles.png"
+}).addClass("newspaper-title");
+
+export var vArticlesAboutGameNewspaperTitle = new VHeader({
+    ref:"articles-about-legends-newspaper-title",
+    left:"../images/site/left-articles-about-game.png", right:"../images/site/right-articles-about-game.png"
+}).addClass("newspaper-title");
+
+export var vArticlesAboutLegendsNewspaperTitle = new VHeader({
+    ref:"articles-about-legends-newspaper-title",
     left:"../images/site/left-legends.png", right:"../images/site/right-legends.png"
+}).addClass("newspaper-title");
+
+export var vArticlesAboutGameExamplesNewspaperTitle = new VHeader({
+    ref:"game-example-articles-newspaper-title",
+    left:"../images/site/left-games.png", right:"../images/site/right-games.png"
 }).addClass("newspaper-title");
 
 export var vNewspaperContent = new CBSNewspaper({
@@ -720,7 +847,7 @@ export var vScenarioEditorPage = new VFormContainer({ref:"scenario-editor-page"}
     .add(vScenarioEditorDescription)
     .add(vScenarioEditor);
 vScenarioEditorPage.canLeave = function(leave, notLeave) {
-    return vScenarioEditor.canLeave(leave, notLeave);
+    vScenarioEditor.canLeave(leave, notLeave);
 }
 vScenarioEditorPage.setScenario = function(scenario) {
     vScenarioEditor.scenario = scenario;
@@ -1230,19 +1357,61 @@ class CBSPageContent extends VPageContent {
         );
     }
 
-    _showArticlesAboutThemeWall(theme, byHistory, historize) {
-        vArticlesAboutThemeWall.setTheme(theme);
-        return this.changePage(vArticlesAboutGameTitle, vArticlesAboutThemeWall, byHistory, historize);
+    _showThemesAboutLegendsWall(byHistory, historize) {
+        return this.changePage(vArticlesAboutLegendsTitle, vThemesAboutLegendsWall, byHistory, historize);
     }
 
-    showArticlesAboutThemeWall(theme) {
-        this._showArticlesAboutThemeWall(theme.id,false, ()=>
-            historize("articles-about-theme", "window.vPageContent._showArticlesAboutThemeWall("+theme.id+", true);")
+    showThemesAboutLegendsWall() {
+        this._showThemesAboutLegendsWall(false, ()=>
+            historize("themes-about-game", "window.vPageContent._showThemesAboutLegendsWall(true);")
         );
     }
 
-    _showNewspaper(article, byHistory, historize) {
-        vNewspaperTitle.setTitle(article.title);
+    _showThemesAboutGameExamplesWall(byHistory, historize) {
+        return this.changePage(vArticlesAboutGameExamplesTitle, vThemesAboutGameExamplesWall, byHistory, historize);
+    }
+
+    showThemesAboutGameExamplesWall() {
+        this._showThemesAboutGameExamplesWall(false, ()=>
+            historize("themes-about-game", "window.vPageContent._showThemesAboutGameExamplesWall(true);")
+        );
+    }
+
+    _showArticlesAboutGameThemeWall(theme, byHistory, historize) {
+        vArticlesAboutGameThemeWall.setTheme(theme);
+        return this.changePage(vArticlesAboutGameTitle, vArticlesAboutGameThemeWall, byHistory, historize);
+    }
+
+    showArticlesAboutGameThemeWall(theme) {
+        this._showArticlesAboutGameThemeWall(theme.id,false, ()=>
+            historize("articles-about-game", "window.vPageContent._showArticlesAboutGameThemeWall("+theme.id+", true);")
+        );
+    }
+
+    _showArticlesAboutLegendsThemeWall(theme, byHistory, historize) {
+        vArticlesAboutLegendsThemeWall.setTheme(theme);
+        return this.changePage(vArticlesAboutLegendsTitle, vArticlesAboutLegendsThemeWall, byHistory, historize);
+    }
+
+    showArticlesAboutLegendsThemeWall(theme) {
+        this._showArticlesAboutLegendsThemeWall(theme.id,false, ()=>
+            historize("articles-about-legends", "window.vPageContent._showArticlesAboutLegendsThemeWall("+theme.id+", true);")
+        );
+    }
+
+    _showArticlesAboutGameExamplesThemeWall(theme, byHistory, historize) {
+        vArticlesAboutGameExamplesThemeWall.setTheme(theme);
+        return this.changePage(vArticlesAboutGameExamplesTitle, vArticlesAboutGameExamplesThemeWall, byHistory, historize);
+    }
+
+    showArticlesAboutGameExamplesThemeWall(theme) {
+        this._showArticlesAboutGameExamplesThemeWall(theme.id,false, ()=>
+            historize("articles-about-game-examples", "window.vPageContent._showArticlesAboutGameExamplesThemeWall("+theme.id+", true);")
+        );
+    }
+
+    _showNewArticlesNewspaper(article, byHistory, historize) {
+        vNewArticlesNewspaperTitle.setTitle(article.title);
         vNewspaperContent.setArticle({
             title: article.title,
             paragraphs: article.paragraphs,
@@ -1256,13 +1425,88 @@ class CBSPageContent extends VPageContent {
                 }
             }
         });
-        return this.changePage(vNewspaperTitle, vNewspaperContent, byHistory, historize);
+        return this.changePage(vNewArticlesNewspaperTitle, vNewspaperContent, byHistory, historize);
     }
 
-    showNewspaper(article) {
+    showNewArticlesNewspaper(article) {
         let specification = article.specification;
-        this._showNewspaper(specification, false, ()=>
-            historize("newspaper", `window.vPageContent._showNewspaper(${JSON.stringify(specification)}, true);`)
+        this._showNewArticlesNewspaper(specification, false, ()=>
+            historize("new-articles-newspaper", `window.vPageContent._showNewArticlesNewspaper(${JSON.stringify(specification)}, true);`)
+        );
+    }
+
+    _showArticlesAboutGameNewspaper(article, byHistory, historize) {
+        vArticlesAboutGameNewspaperTitle.setTitle(article.title);
+        vNewspaperContent.setArticle({
+            title: article.title,
+            paragraphs: article.paragraphs,
+            votes: {
+                ...article.votes,
+                actionLikes: likes => {
+                    likes.setText("" + (parseInt(likes.getText()) + 1));
+                },
+                actionDislikes: dislikes => {
+                    dislikes.setText("" + (parseInt(dislikes.getText()) + 1));
+                }
+            }
+        });
+        return this.changePage(vArticlesAboutGameNewspaperTitle, vNewspaperContent, byHistory, historize);
+    }
+
+    showArticlesAboutGameNewspaper(article) {
+        let specification = article.specification;
+        this._showArticlesAboutGameNewspaper(specification, false, ()=>
+            historize("articles-about-game-newspaper", `window.vPageContent._showArticlesAboutGameNewspaper(${JSON.stringify(specification)}, true);`)
+        );
+    }
+
+    _showArticlesAboutLegendsNewspaper(article, byHistory, historize) {
+        vArticlesAboutLegendsNewspaperTitle.setTitle(article.title);
+        vNewspaperContent.setArticle({
+            title: article.title,
+            paragraphs: article.paragraphs,
+            votes: {
+                ...article.votes,
+                actionLikes: likes => {
+                    likes.setText("" + (parseInt(likes.getText()) + 1));
+                },
+                actionDislikes: dislikes => {
+                    dislikes.setText("" + (parseInt(dislikes.getText()) + 1));
+                }
+            }
+        });
+        return this.changePage(vArticlesAboutLegendsNewspaperTitle, vNewspaperContent, byHistory, historize);
+    }
+
+    showArticlesAboutLegendsNewspaper(article) {
+        let specification = article.specification;
+        this._showArticlesAboutLegendsNewspaper(specification, false, ()=>
+            historize("articles-about-legends-newspaper", `window.vPageContent._showArticlesAboutLegendsNewspaper(${JSON.stringify(specification)}, true);`)
+        );
+    }
+
+    _showArticlesAboutGameExamplesNewspaper(article, byHistory, historize) {
+        vArticlesAboutGameExamplesNewspaperTitle.setTitle(article.title);
+        vNewspaperContent.setArticle({
+            title: article.title,
+            paragraphs: article.paragraphs,
+            votes: {
+                ...article.votes,
+                actionLikes: likes => {
+                    likes.setText("" + (parseInt(likes.getText()) + 1));
+                },
+                actionDislikes: dislikes => {
+                    dislikes.setText("" + (parseInt(dislikes.getText()) + 1));
+                }
+            }
+        });
+        return this.changePage(vArticlesAboutGameExamplesNewspaperTitle, vNewspaperContent, byHistory, historize);
+    }
+
+    showArticlesAboutGameExamplesNewspaper(article) {
+        let specification = article.specification;
+        this._showArticlesAboutGameExamplesNewspaper(specification, false, ()=>
+            historize("game-example-articles-newspaper", `window.vPageContent._showArticlesAboutGameExamplesNewspaper(${JSON.stringify(specification)}, true);`)
         );
     }
 

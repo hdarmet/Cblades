@@ -131,7 +131,7 @@ public class FakeData {
             theme = new Theme()
                 .setDescription(SHORT_PARAGRAPH_TEXT)
                 .setTitle("Strategies And Tactics")
-                .setCategory(ThemeCategory.GAME)
+                .setCategory(ThemeCategory.EXAMPLES)
                 .setIllustration("../images/site/themes/strategy.png")
                 .setStatus(ThemeStatus.LIVE);
             data.persist(em, theme);
@@ -152,21 +152,21 @@ public class FakeData {
             theme = new Theme()
                 .setDescription(SHORT_PARAGRAPH_TEXT)
                 .setTitle("Scenario")
-                .setCategory(ThemeCategory.GAME)
+                .setCategory(ThemeCategory.EXAMPLES)
                 .setIllustration("../images/site/themes/scenario.png")
                 .setStatus(ThemeStatus.LIVE);
             data.persist(em, theme);
             theme = new Theme()
                 .setDescription(SHORT_PARAGRAPH_TEXT)
                 .setTitle("Campaigns")
-                .setCategory(ThemeCategory.GAME)
+                .setCategory(ThemeCategory.LEGEND)
                 .setIllustration("../images/site/themes/campaigns.png")
                 .setStatus(ThemeStatus.LIVE);
             data.persist(em, theme);
             theme = new Theme()
                 .setDescription(SHORT_PARAGRAPH_TEXT)
                 .setTitle("History")
-                .setCategory(ThemeCategory.GAME)
+                .setCategory(ThemeCategory.LEGEND)
                 .setIllustration("../images/site/themes/history.png")
                 .setStatus(ThemeStatus.LIVE);
             data.persist(em, theme);

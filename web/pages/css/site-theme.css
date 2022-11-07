@@ -1,7 +1,20 @@
 
-.themes-about-game {
-    min-height: calc(100vh - 300px);
-    background-color: rgb(248, 242, 222);
+.theme-header {
+    position: relative;
+    text-align: center;
+}
+
+.theme-header .theme-title {
+    --extends: ex-header-text;
+    position: absolute;
+    width: 80%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.theme {
+    --extends: ex-record-container, ex-record-down-clip;
 }
 
 .theme-editor-page .description {

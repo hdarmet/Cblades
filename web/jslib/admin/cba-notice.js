@@ -76,7 +76,7 @@ export class CBANoticeEditor extends Undoable(VSplitterPanel) {
         this._version = new VSelectField({
             ref: "notice-version", label: "Version",
             onInput: event => {
-                this.tryToLeave(() => {
+                this.canLeave(() => {
                         this.parent.changeNotice(this._version.value);
                     },
                     () => {
@@ -105,7 +105,7 @@ export class CBANoticeEditor extends Undoable(VSplitterPanel) {
         });
         this._copy = new VButton({
             ref: "copy-notice", type: "neutral", label: "Copy", enabled: false, onClick: () => {
-                this.tryToLeave(() => {
+                this.canLeave(() => {
                         let notice = {
                             title: this._noticeObject.title,
                             notice: this._noticeObject.notice,
@@ -186,13 +186,7 @@ export class CBANoticeEditor extends Undoable(VSplitterPanel) {
     }
 
     canLeave(leave, notLeave) {
-        return super.canLeave(leave, notLeave, "Notice not saved. Do you want to Change ?")
-    }
-
-    tryToLeave(leave, notLeave) {
-        if (this.canLeave(leave, notLeave)) {
-            leave();
-        }
+        super.canLeave(leave, notLeave, "Notice not saved. Do you want to Change ?")
     }
 
     _editNotice() {
@@ -245,7 +239,7 @@ export class CBANoticeEditorPage extends VContainer {
     }
 
     canLeave(leave, notLeave) {
-        return this._noticeEditor.canLeave(leave, notLeave);
+        this._noticeEditor.canLeave(leave, notLeave);
     }
 
     setTitle(title) {
