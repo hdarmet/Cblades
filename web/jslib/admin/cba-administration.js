@@ -50,6 +50,9 @@ import {
 import {
     vArticleList
 } from "./cba-article.js";
+import {
+    vScenarioList
+} from "./cba-scenario.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -80,6 +83,10 @@ export var vMenu = new VMainMenu({ref:"menu"})
         })
         .addMenu({ref:"article-menu", label:"Articles", action:()=>{
                 window.vPageContent.showArticleList();
+            }
+        })
+        .addMenu({ref:"scenario-menu", label:"Scenarios", action:()=>{
+                window.vPageContent.showScenarioList();
             }
         })
     })
@@ -389,6 +396,18 @@ export class CBAPageContent extends VPageContent {
         vThemeList.loadThemes();
         this._showThemeList(false, ()=> {
                 historize("theme", "vPageContent._showThemeList(true);")
+            }
+        );
+    }
+
+    _showScenarioList(byHistory, historize) {
+        return this.changePage(null, vScenarioList, byHistory, historize);
+    }
+
+    showScenarioList() {
+        vScenarioList.loadScenarios();
+        this._showScenarioList(false, ()=> {
+                historize("scenario", "vPageContent._showScenarioList(true);")
             }
         );
     }

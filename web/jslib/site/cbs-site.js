@@ -588,38 +588,6 @@ export var vContributeTitle = new VHeader({
     left:"../images/site/left-contribute.png", right:"../images/site/right-contribute.png"
 }).addClass("contribute-title");
 
-/*
-export var vArticleEditor = new CBSArticleEditor({
-    ref:"article-editor",
-    accept(file) {
-        if (!VFileLoader.isImage(file)) {
-            VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (600 x 350) pixels."});
-            return false;
-        }
-        return true;
-    },
-    verify(image) {
-        if (image.imageWidth!==600 || image.imageHeight!==350) {
-            VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (650 x 350) pixels."});
-            return false;
-        }
-        return true;
-    }
-});
-
-export var vArticleEditorDescription = new Div().setText(paragrpahText).addClass("description");
-export var vArticleEditorPage = new VFormContainer({ref:"theme-editor-page"})
-    .addClass("theme-editor-page")
-    .add(vArticleEditorDescription)
-    .add(vArticleEditor);
-vArticleEditorPage.tryToLeave = function(leave, notLeave) {
-    return vArticleEditor.tryToLeave(leave, notLeave);
-}
-vArticleEditorPage.setArticle = function(article) {
-    vArticleEditor.article = article;
-    return this;
-}
-*/
 export var vScenarioEditor = new CBSScenarioEditor({
     ref:"scenario-editor",
     onEdit() {

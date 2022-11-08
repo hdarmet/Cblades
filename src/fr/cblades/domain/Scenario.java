@@ -12,16 +12,20 @@ import java.util.List;
 @Table(indexes= {
     @Index(name="idx_theme_by_title", unique=true, columnList="title")
 })
-public class Theme extends BaseEntity {
+public class Scenario extends BaseEntity {
 
     String title="";
-    @Column(length = 1000)
-    String description="";
+    @Column(length = 2000)
+    String story="";
+    @Column(length = 2000)
+    String setUp="";
+    @Column(length = 2000)
+    String victoryConditions="";
+    @Column(length = 2000)
+    String specialRules="";
     String illustration ="";
     @Enumerated(EnumType.STRING)
-    ThemeCategory category;
-    @Enumerated(EnumType.STRING)
-    ThemeStatus status;
+    ScenarioStatus status;
     @ManyToOne
     Account author;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -30,39 +34,55 @@ public class Theme extends BaseEntity {
     public String getTitle() {
         return this.title;
     }
-    public Theme setTitle(String title) {
+    public Scenario setTitle(String title) {
         this.title = title;
         return this;
     }
 
-    public ThemeCategory getCategory() {
-        return this.category;
+    public String getStory() {
+        return this.story;
     }
-    public Theme setCategory(ThemeCategory category) {
-        this.category = category;
+    public Scenario setStory(String story) {
+        this.story = story;
         return this;
     }
 
-    public String getDescription() {
-        return this.description;
+    public String getSetUp() {
+        return this.setUp;
     }
-    public Theme setDescription(String description) {
-        this.description = description;
+    public Scenario setSetUp(String setUp) {
+        this.setUp = setUp;
+        return this;
+    }
+
+    public String getVictoryConditions() {
+        return this.victoryConditions;
+    }
+    public Scenario setVictoryConditions(String victoryConditions) {
+        this.victoryConditions = victoryConditions;
+        return this;
+    }
+
+    public String getSpecialRules() {
+        return this.specialRules;
+    }
+    public Scenario setSpecialRules(String specialRules) {
+        this.specialRules = specialRules;
         return this;
     }
 
     public String getIllustration() {
         return this.illustration;
     }
-    public Theme setIllustration(String illustration) {
+    public Scenario setIllustration(String illustration) {
         this.illustration = illustration;
         return this;
     }
 
-    public ThemeStatus getStatus() {
+    public ScenarioStatus getStatus() {
         return this.status;
     }
-    public Theme setStatus(ThemeStatus status) {
+    public Scenario setStatus(ScenarioStatus status) {
         this.status = status;
         return this;
     }
@@ -70,7 +90,7 @@ public class Theme extends BaseEntity {
     public Account getAuthor() {
         return this.author;
     }
-    public Theme setAuthor(Account author) {
+    public Scenario setAuthor(Account author) {
         this.author = author;
         return this;
     }
@@ -78,17 +98,17 @@ public class Theme extends BaseEntity {
     public List<Comment> getComments() {
         return Collections.unmodifiableList(this.comments);
     }
-    public Theme addComment(Comment comment) {
+    public Scenario addComment(Comment comment) {
         this.comments.add(comment);
         return this;
     }
-    public Theme removeComment(Comment comment) {
+    public Scenario removeComment(Comment comment) {
         this.comments.remove(comment);
         return this;
     }
 
-    static public Theme find(EntityManager em, long id) {
-        Theme theme = em.find(Theme.class, id);
+    static public Scenario find(EntityManager em, long id) {
+        Scenario theme = em.find(Scenario.class, id);
         if (theme==null) {
             throw new SummerNotFoundException(
                 String.format("Unknown Theme with id %d", id)
@@ -97,17 +117,4 @@ public class Theme extends BaseEntity {
         return theme;
     }
 
-    public static Theme getByTitle(EntityManager em, String title) {
-        Query query = em.createQuery("select t from Theme t " +
-            "left outer join fetch t.author a " +
-            "left outer join fetch a.access " +
-            "where t.title = :title");
-        query.setParameter("title", title);
-        try {
-            return (Theme)query.getSingleResult();
-        }
-        catch (NoResultException enf) {
-            return null;
-        }
-    }
 }

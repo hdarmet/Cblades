@@ -222,6 +222,17 @@ public class FakeData {
                 data.persist(em, article);
             }
         });
+        data.inTransaction(em-> {
+            Scenario scenario = new Scenario()
+                .setStory(PARAGRAPH_TEXT)
+                .setSetUp(PARAGRAPH_TEXT)
+                .setVictoryConditions(PARAGRAPH_TEXT)
+                .setSpecialRules(PARAGRAPH_TEXT)
+                .setTitle("Fierce fighting")
+                .setIllustration("../images/scenarii/scenario1.png")
+                .setStatus(ScenarioStatus.LIVE);
+            data.persist(em, scenario);
+        });
     }
 
     static String TINY_PARAGRAPH_TEXT = "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit";
