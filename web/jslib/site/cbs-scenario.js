@@ -167,8 +167,8 @@ export class CBSScenarioEditor extends Undoable(VSplitterPanel) {
         this._onPropose = onPropose;
     }
 
-    canLeave(leave, notLeave) {
-        super.canLeave(leave, notLeave, "Scenario not saved. Do you want to Quit ?")
+    tryToLeave(leave, notLeave) {
+        super.tryToLeave(leave, notLeave, "Scenario not saved. Do you want to Quit ?")
     }
 
     set scenario(scenarioSpec) {

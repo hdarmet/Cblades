@@ -122,8 +122,8 @@ export class CBAEditBoardPane extends Undoable(VSplitterPanel) {
             & !this._status.validate();
     }
 
-    canLeave(leave, notLeave) {
-        super.canLeave(leave, notLeave,"Board not saved. Do you want to Quit ?")
+    tryToLeave(leave, notLeave) {
+        super.tryToLeave(leave, notLeave,"Board not saved. Do you want to Quit ?")
     }
 
     get board() {

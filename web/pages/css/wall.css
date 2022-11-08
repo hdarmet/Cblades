@@ -86,11 +86,11 @@
     --extends: ex-paragraph-image-on-right;
 }
 
-.newspaper .votes-container {
+.newspaper .poll-container {
     text-align: center;
 }
 
-.newspaper .show-votes {
+.newspaper .show-poll {
     display: inline-block;
     margin: auto
 }

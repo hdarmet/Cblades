@@ -26,8 +26,15 @@ import {
     Div, sendGet
 } from "../vitamin/components.js";
 import {
-    CBSArticle,
-    CBSNewspaper, loadArticlesByTheme, loadRecentArticles,
+    vNewArticlesWall,
+    vThemesAboutGameWall,
+    vThemesAboutLegendsWall,
+    vThemesAboutGameExamplesWall,
+    vArticlesAboutGameThemeWall,
+    vArticlesAboutLegendsThemeWall,
+    vArticlesAboutGameExamplesThemeWall,
+    vNewspaperContent,
+    publishArticle,
     vArticleEditor, vArticleEditorPage
 } from "./cbs-articles.js";
 import {
@@ -38,7 +45,7 @@ import {
     CBSSummary
 } from "./cbs-container.js";
 import {
-    CBSTheme, vThemeEditorPage, vThemeEditor, loadThemesByCategory
+    vThemeEditorPage, vThemeEditor
 } from "./cbs-theme.js";
 import {
     loadBoards, vBoardsGallery, vBoardEditorPage, vBoardEditor
@@ -576,227 +583,6 @@ Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adi
 Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
 `;
 
-export var vNewArticlesTitle = new VHeader({
-    ref:"new-articles-title",
-    left:"../images/site/left-new-articles.png", right:"../images/site/right-new-articles.png",
-    title: "New Articles"
-}).addClass("new-articles-title");
-
-export var vNewArticlesWall = new VWallWithSearch({
-    ref:"new-articles",
-    kind: "new-articles",
-    requestNotes: function (page, search) {
-        loadRecentArticles(page, search, response=>{
-            vNewArticlesWall.loadNotes(response);
-        });
-    },
-    receiveNotes: function(response) {
-        for (let article of response) {
-            this.addNote(new CBSArticle({
-                article,
-                action: article => {
-                    vPageContent.showNewArticlesNewspaper(article);
-                }
-            }));
-        }
-    },
-    searchAction: ()=>{
-        vNewArticlesWall.clearNotes()
-    }
-});
-
-export var vArticlesAboutGameTitle = new VHeader({
-    ref:"articles-about-game-title",
-    left:"../images/site/left-articles-about-game.png", right:"../images/site/right-articles-about-game.png",
-    title: "About the game"
-}).addClass("articles-about-game-title");
-
-export var vArticlesAboutLegendsTitle = new VHeader({
-    ref:"articles-about-legends-title",
-    left:"../images/site/left-legends.png", right:"../images/site/right-legends.png",
-    title: "Cursed Legends"
-}).addClass("articles-about-legends-title");
-
-export var vArticlesAboutGameExamplesTitle = new VHeader({
-    ref:"articles-about-game-example-title",
-    left:"../images/site/left-games.png", right:"../images/site/right-games.png",
-    title: "Game Examples"
-}).addClass("articles-about-game-examples-title");
-
-export var vThemesAboutGameWall = new VWallWithSearch({
-    ref: "themes-about-game",
-    kind: "themes-about-game",
-    requestNotes: function (page, search) {
-        loadThemesByCategory(page, "game", search, response=>{
-            vThemesAboutGameWall.loadNotes(response);
-        });
-    },
-    receiveNotes: function(response) {
-        for (let theme of response) {
-            this.addNote(new CBSTheme({
-                ...theme,
-                action:theme=>{
-                    vPageContent.showArticlesAboutGameThemeWall(theme);
-                }
-            }));
-        }
-    },
-    searchAction: ()=>{
-        vThemesAboutGameWall.clearNotes()
-    }
-});
-
-export var vThemesAboutLegendsWall = new VWallWithSearch({
-    ref: "themes-about-legends",
-    kind: "themes-about-legends",
-    requestNotes: function (page, search) {
-        loadThemesByCategory(page, "legends", search, response=>{
-            vThemesAboutLegendsWall.loadNotes(response);
-        });
-    },
-    receiveNotes: function(response) {
-        for (let theme of response) {
-            this.addNote(new CBSTheme({
-                ...theme,
-                action:theme=>{
-                    vPageContent.showArticlesAboutLegendsThemeWall(theme);
-                }
-            }));
-        }
-    },
-    searchAction: ()=>{
-        vThemesAboutLegendsWall.clearNotes()
-    }
-});
-
-export var vThemesAboutGameExamplesWall = new VWallWithSearch({
-    ref: "themes-about-game-examples",
-    kind: "themes-about-game-examples",
-    requestNotes: function (page, search) {
-        loadThemesByCategory(page, "examples", search, response=>{
-            vThemesAboutGameExamplesWall.loadNotes(response);
-        });
-    },
-    receiveNotes: function(response) {
-        for (let theme of response) {
-            this.addNote(new CBSTheme({
-                ...theme,
-                action:theme=>{
-                    vPageContent.showArticlesAboutGameExamplesThemeWall(theme);
-                }
-            }));
-        }
-    },
-    searchAction: ()=>{
-        vThemesAboutGameExamplesWall.clearNotes()
-    }
-});
-
-export var vArticlesAboutGameThemeWall = new VWallWithSearch({
-    ref:"articles-about-game",
-    kind: "articles-about-game",
-    requestNotes: function (page, search) {
-        loadArticlesByTheme(page, search, vArticlesAboutGameThemeWall._theme, response=>{
-            vArticlesAboutGameThemeWall.loadNotes(response);
-        });
-    },
-    receiveNotes: function(response) {
-        for (let article of response) {
-            this.addNote(new CBSArticle({
-                article,
-                action: article => {
-                    vPageContent.showArticlesAboutGameNewspaper(article);
-                }
-            }));
-        }
-    },
-    searchAction: ()=>{
-        vArticlesAboutGameThemeWall.clearNotes()
-    }
-});
-vArticlesAboutGameThemeWall.setTheme = function(theme) {
-    this._theme = theme;
-    this.clearNotes();
-}
-
-export var vArticlesAboutLegendsThemeWall = new VWallWithSearch({
-    ref:"articles-about-legends",
-    kind: "articles-about-legends",
-    requestNotes: function (page, search) {
-        loadArticlesByTheme(page, search, vArticlesAboutLegendsThemeWall._theme, response=>{
-            vArticlesAboutLegendsThemeWall.loadNotes(response);
-        });
-    },
-    receiveNotes: function(response) {
-        for (let article of response) {
-            this.addNote(new CBSArticle({
-                article,
-                action: article => {
-                    vPageContent.showArticlesAboutLegendsNewspaper(article);
-                }
-            }));
-        }
-    },
-    searchAction: ()=>{
-        vArticlesAboutLegendsThemeWall.clearNotes()
-    }
-});
-vArticlesAboutLegendsThemeWall.setTheme = function(theme) {
-    this._theme = theme;
-    this.clearNotes();
-}
-
-export var vArticlesAboutGameExamplesThemeWall = new VWallWithSearch({
-    ref:"articles-about-game-examples",
-    kind: "articles-about-game-examples",
-    requestNotes: function (page, search) {
-        loadArticlesByTheme(page, search, vArticlesAboutGameExamplesThemeWall._theme, response=>{
-            vArticlesAboutGameExamplesThemeWall.loadNotes(response);
-        });
-    },
-    receiveNotes: function(response) {
-        for (let article of response) {
-            this.addNote(new CBSArticle({
-                article,
-                action: article => {
-                    vPageContent.showArticlesAboutGameExamplesNewspaper(article);
-                }
-            }));
-        }
-    },
-    searchAction: ()=>{
-        vArticlesAboutGameExamplesThemeWall.clearNotes()
-    }
-});
-vArticlesAboutGameExamplesThemeWall.setTheme = function(theme) {
-    this._theme = theme;
-    this.clearNotes();
-}
-
-export var vNewArticlesNewspaperTitle = new VHeader({
-    ref:"new-articles-newspaper-title",
-    left:"../images/site/left-new-articles.png", right:"../images/site/right-new-articles.png"
-}).addClass("newspaper-title");
-
-export var vArticlesAboutGameNewspaperTitle = new VHeader({
-    ref:"articles-about-legends-newspaper-title",
-    left:"../images/site/left-articles-about-game.png", right:"../images/site/right-articles-about-game.png"
-}).addClass("newspaper-title");
-
-export var vArticlesAboutLegendsNewspaperTitle = new VHeader({
-    ref:"articles-about-legends-newspaper-title",
-    left:"../images/site/left-legends.png", right:"../images/site/right-legends.png"
-}).addClass("newspaper-title");
-
-export var vArticlesAboutGameExamplesNewspaperTitle = new VHeader({
-    ref:"game-example-articles-newspaper-title",
-    left:"../images/site/left-games.png", right:"../images/site/right-games.png"
-}).addClass("newspaper-title");
-
-export var vNewspaperContent = new CBSNewspaper({
-    ref:"newspaper-content"
-});
-
 export var vContributeTitle = new VHeader({
     ref:"contribute-title",
     left:"../images/site/left-contribute.png", right:"../images/site/right-contribute.png"
@@ -826,8 +612,8 @@ export var vArticleEditorPage = new VFormContainer({ref:"theme-editor-page"})
     .addClass("theme-editor-page")
     .add(vArticleEditorDescription)
     .add(vArticleEditor);
-vArticleEditorPage.canLeave = function(leave, notLeave) {
-    return vArticleEditor.canLeave(leave, notLeave);
+vArticleEditorPage.tryToLeave = function(leave, notLeave) {
+    return vArticleEditor.tryToLeave(leave, notLeave);
 }
 vArticleEditorPage.setArticle = function(article) {
     vArticleEditor.article = article;
@@ -846,8 +632,8 @@ export var vScenarioEditorPage = new VFormContainer({ref:"scenario-editor-page"}
     .addClass("scenario-editor-page")
     .add(vScenarioEditorDescription)
     .add(vScenarioEditor);
-vScenarioEditorPage.canLeave = function(leave, notLeave) {
-    vScenarioEditor.canLeave(leave, notLeave);
+vScenarioEditorPage.tryToLeave = function(leave, notLeave) {
+    vScenarioEditor.tryToLeave(leave, notLeave);
 }
 vScenarioEditorPage.setScenario = function(scenario) {
     vScenarioEditor.scenario = scenario;
@@ -1239,6 +1025,50 @@ export var vJoinGameWall = new CBSJoinGameWall()
     .addNote(getProposal())
     .addNote(getProposal());
 
+export var vNewArticlesTitle = new VHeader({
+    ref:"new-articles-title",
+    left:"../images/site/left-new-articles.png", right:"../images/site/right-new-articles.png",
+    title: "New Articles"
+}).addClass("new-articles-title");
+
+export var vArticlesAboutGameTitle = new VHeader({
+    ref:"articles-about-game-title",
+    left:"../images/site/left-articles-about-game.png", right:"../images/site/right-articles-about-game.png",
+    title: "About the game"
+}).addClass("articles-about-game-title");
+
+export var vArticlesAboutLegendsTitle = new VHeader({
+    ref:"articles-about-legends-title",
+    left:"../images/site/left-legends.png", right:"../images/site/right-legends.png",
+    title: "Cursed Legends"
+}).addClass("articles-about-legends-title");
+
+export var vArticlesAboutGameExamplesTitle = new VHeader({
+    ref:"articles-about-game-example-title",
+    left:"../images/site/left-games.png", right:"../images/site/right-games.png",
+    title: "Game Examples"
+}).addClass("articles-about-game-examples-title");
+
+export var vNewArticlesNewspaperTitle = new VHeader({
+    ref:"new-articles-newspaper-title",
+    left:"../images/site/left-new-articles.png", right:"../images/site/right-new-articles.png"
+}).addClass("newspaper-title");
+
+export var vArticlesAboutGameNewspaperTitle = new VHeader({
+    ref:"articles-about-legends-newspaper-title",
+    left:"../images/site/left-articles-about-game.png", right:"../images/site/right-articles-about-game.png"
+}).addClass("newspaper-title");
+
+export var vArticlesAboutLegendsNewspaperTitle = new VHeader({
+    ref:"articles-about-legends-newspaper-title",
+    left:"../images/site/left-legends.png", right:"../images/site/right-legends.png"
+}).addClass("newspaper-title");
+
+export var vArticlesAboutGameExamplesNewspaperTitle = new VHeader({
+    ref:"game-example-articles-newspaper-title",
+    left:"../images/site/left-games.png", right:"../images/site/right-games.png"
+}).addClass("newspaper-title");
+
 class CBSPageContent extends VPageContent {
 
     constructor() {
@@ -1412,19 +1242,7 @@ class CBSPageContent extends VPageContent {
 
     _showNewArticlesNewspaper(article, byHistory, historize) {
         vNewArticlesNewspaperTitle.setTitle(article.title);
-        vNewspaperContent.setArticle({
-            title: article.title,
-            paragraphs: article.paragraphs,
-            votes: {
-                ...article.votes,
-                actionLikes: likes => {
-                    likes.setText("" + (parseInt(likes.getText()) + 1));
-                },
-                actionDislikes: dislikes => {
-                    dislikes.setText("" + (parseInt(dislikes.getText()) + 1));
-                }
-            }
-        });
+        vNewspaperContent.setArticle(publishArticle(vNewspaperContent, article));
         return this.changePage(vNewArticlesNewspaperTitle, vNewspaperContent, byHistory, historize);
     }
 
@@ -1437,19 +1255,7 @@ class CBSPageContent extends VPageContent {
 
     _showArticlesAboutGameNewspaper(article, byHistory, historize) {
         vArticlesAboutGameNewspaperTitle.setTitle(article.title);
-        vNewspaperContent.setArticle({
-            title: article.title,
-            paragraphs: article.paragraphs,
-            votes: {
-                ...article.votes,
-                actionLikes: likes => {
-                    likes.setText("" + (parseInt(likes.getText()) + 1));
-                },
-                actionDislikes: dislikes => {
-                    dislikes.setText("" + (parseInt(dislikes.getText()) + 1));
-                }
-            }
-        });
+        vNewspaperContent.setArticle(publishArticle(vNewspaperContent, article));
         return this.changePage(vArticlesAboutGameNewspaperTitle, vNewspaperContent, byHistory, historize);
     }
 
@@ -1462,19 +1268,7 @@ class CBSPageContent extends VPageContent {
 
     _showArticlesAboutLegendsNewspaper(article, byHistory, historize) {
         vArticlesAboutLegendsNewspaperTitle.setTitle(article.title);
-        vNewspaperContent.setArticle({
-            title: article.title,
-            paragraphs: article.paragraphs,
-            votes: {
-                ...article.votes,
-                actionLikes: likes => {
-                    likes.setText("" + (parseInt(likes.getText()) + 1));
-                },
-                actionDislikes: dislikes => {
-                    dislikes.setText("" + (parseInt(dislikes.getText()) + 1));
-                }
-            }
-        });
+        vNewspaperContent.setArticle(publishArticle(vNewspaperContent, article));
         return this.changePage(vArticlesAboutLegendsNewspaperTitle, vNewspaperContent, byHistory, historize);
     }
 
@@ -1487,19 +1281,7 @@ class CBSPageContent extends VPageContent {
 
     _showArticlesAboutGameExamplesNewspaper(article, byHistory, historize) {
         vArticlesAboutGameExamplesNewspaperTitle.setTitle(article.title);
-        vNewspaperContent.setArticle({
-            title: article.title,
-            paragraphs: article.paragraphs,
-            votes: {
-                ...article.votes,
-                actionLikes: likes => {
-                    likes.setText("" + (parseInt(likes.getText()) + 1));
-                },
-                actionDislikes: dislikes => {
-                    dislikes.setText("" + (parseInt(dislikes.getText()) + 1));
-                }
-            }
-        });
+        vNewspaperContent.setArticle(publishArticle(vNewspaperContent, article));
         return this.changePage(vArticlesAboutGameExamplesNewspaperTitle, vNewspaperContent, byHistory, historize);
     }
 

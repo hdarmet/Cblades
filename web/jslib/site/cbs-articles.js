@@ -6,10 +6,10 @@ import {
 import {
     Undoable,
     VImage,
-    Vitamin
+    Vitamin, VLoginHandler
 } from "../vitamin/vitamins.js";
 import {
-    VSplitterPanel
+    VSplitterPanel, VWallWithSearch
 } from "../vitamin/vcontainer.js";
 import {
     mandatory, range,
@@ -20,7 +20,7 @@ import {
 } from "../vitamin/vforms.js";
 import {
     loadLiveThemes
-} from "../admin/cba-article.js";
+} from "./cbs-theme.js";
 import {
     CBSEditComments
 } from "./cbs-comment.js";
@@ -28,8 +28,11 @@ import {
     CBSFormContainer
 } from "./cbs-widgets.js";
 import {
-    showMessage
+    showMessage, VHeader
 } from "../vitamin/vpage.js";
+import {
+    CBSTheme, loadThemesByCategory
+} from "./cbs-theme.js";
 
 export class CBSParagraph extends Vitamin(Div) {
 
@@ -126,10 +129,12 @@ export class CBSParagraph extends Vitamin(Div) {
 
 }
 
-export class CBSVotes extends Vitamin(Div) {
+export class CBSPoll extends Vitamin(Div) {
 
-    constructor({ref, likes, dislikes, actionLikes, actionDislikes}) {
+    constructor({ref, poll, likes, dislikes, actionLikes, actionDislikes}) {
         super({ref});
+        this._poll = poll;
+        console.log("poll : "+poll);
         this._likesIcon = new Div().addClass("likes-icon");
         this._likesValue = new Div().addClass("likes-value").setText(""+likes);
         if (actionLikes) {
@@ -140,9 +145,17 @@ export class CBSVotes extends Vitamin(Div) {
         if (actionDislikes) {
             this._dislikesIcon.onEvent("click", event=>actionDislikes(this._dislikesValue, event));
         }
-        this.addClass("show-votes")
+        this.addClass("show-poll")
             .add(this._likesIcon).add(this._likesValue)
             .add(this._dislikesIcon).add(this._dislikesValue);
+    }
+
+    get likesIcon() {
+        return this._likesIcon;
+    }
+
+    get dislikesIcon() {
+        return this._dislikesIcon;
     }
 
     get likes() {
@@ -153,8 +166,17 @@ export class CBSVotes extends Vitamin(Div) {
         return parseInt(this._dislikesValue.getText());
     }
 
+    set likes(likes) {
+        this._likesValue.setText(""+likes);
+    }
+
+    set dislikes(dislikes) {
+        this._dislikesValue.setText(""+dislikes);
+    }
+
     get specification() {
         return {
+            id: this._poll,
             likes: this.likes,
             dislikes: this.dislikes
         }
@@ -163,15 +185,19 @@ export class CBSVotes extends Vitamin(Div) {
 
 export class CBSArticle extends Vitamin(Div) {
 
-    constructor({action, paragraphAction, article, votes}) {
+    constructor({action, paragraphAction, article}) {
         super({ref:"article-"+article.id});
         this._paragraphAction = paragraphAction;
         this.addClass("article");
         this._title = new P(article.title).addClass("article-title");
         this.add(this._title);
-        if (votes) {
-            this._votes = new CBSVotes(votes);
-            this.add(this._votes);
+        if (article.poll) {
+            this._poll = new CBSPoll({
+                poll: article.poll.id,
+                likes: article.poll.likes,
+                dislikes: article.poll.dislikes
+            });
+            this.add(this._poll);
         }
         this._paragraphs=[];
         if (article.paragraphs) {
@@ -246,7 +272,7 @@ export class CBSArticle extends Vitamin(Div) {
                 }
             })
         };
-        if (this._votes) specification.votes = this._votes.specification;
+        if (this._poll) specification.poll = this._poll.specification;
         return specification;
     }
 
@@ -288,16 +314,17 @@ export class CBSNewspaper extends Vitamin(Div) {
         }
     }
 
-    addArticle({title, paragraphs, votes}) {
+    addArticle({title, paragraphs, poll}) {
         let article = new Div().addClass(("article-container"));
         this._content.add(article);
         article.add(new P(title).addClass("article-title"));
         for (let paragraph of paragraphs) {
             this.addParagraph(paragraph, article);
         }
-        let voteContainer = new Div().addClass("votes-container");
-        voteContainer.add(new CBSVotes(votes))
-        article.add(voteContainer);
+        let pollContainer = new Div().addClass("poll-container");
+        this._poll = new CBSPoll(poll);
+        pollContainer.add(this._poll);
+        article.add(pollContainer);
         return this;
     }
 
@@ -310,6 +337,9 @@ export class CBSNewspaper extends Vitamin(Div) {
         this.addArticle(params);
     }
 
+    get poll() {
+        return this._poll;
+    }
 }
 
 export class CBSArticleEditor extends Undoable(VSplitterPanel) {
@@ -440,8 +470,8 @@ export class CBSArticleEditor extends Undoable(VSplitterPanel) {
             & !this._illustration.validate();
     }
 
-    canLeave(leave, notLeave) {
-        super.canLeave(leave, notLeave, "Article not saved. Do you want to Quit ?")
+    tryToLeave(leave, notLeave) {
+        super.tryToLeave(leave, notLeave, "Article not saved. Do you want to Quit ?")
     }
 
     get article() {
@@ -726,6 +756,275 @@ export var vArticleEditor = new CBSArticleEditor({
 });
 
 export var vArticleEditorPage = new CBSFormContainer({ref:"article-editor-page", editor:vArticleEditor});
+
+export function publishArticle(newspaper, article) {
+    let myVote = null;
+    let vote = doVote=> {
+        if (myVote) {
+            doVote();
+        }
+        else {
+            readPoll(article.poll.id, vote=>{
+                myVote = vote;
+                doVote();
+            });
+        }
+    }
+    let updatePoll =  poll=> {
+        newspaper.poll.likes = poll.likes;
+        newspaper.poll.dislikes = poll.dislikes;
+        if (poll.option==="like") {
+            newspaper.poll.likesIcon.addClass("selected");
+        }
+        else {
+            newspaper.poll.likesIcon.removeClass("selected");
+        }
+        if (poll.option==="dislike") {
+            newspaper.poll.dislikesIcon.addClass("selected");
+        }
+        else {
+            newspaper.poll.dislikesIcon.removeClass("selected");
+        }
+        myVote = poll;
+    }
+    if (VLoginHandler.connection) {
+        readPoll(article.poll.id, updatePoll);
+    }
+    return {
+        title: article.title,
+        paragraphs: article.paragraphs,
+        poll: {
+            poll: article.poll.id,
+            likes: article.poll.likes,
+            dislikes: article.poll.dislikes,
+            actionLikes: likes => {
+                vote(()=>{
+                    sendVote(article.poll.id, myVote.option==="like" ? "none" : "like",
+                        updatePoll
+                    );
+                });
+            },
+            actionDislikes: dislikes => {
+                vote(()=>{
+                    sendVote(article.poll.id, myVote.option==="dislike" ? "none" : "dislike",
+                        updatePoll
+                    );
+                });
+            }
+        }
+    }
+}
+
+export var vNewArticlesWall = new VWallWithSearch({
+    ref:"new-articles",
+    kind: "new-articles",
+    requestNotes: function (page, search) {
+        loadRecentArticles(page, search, response=>{
+            vNewArticlesWall.loadNotes(response);
+        });
+    },
+    receiveNotes: function(response) {
+        for (let article of response) {
+            this.addNote(new CBSArticle({
+                article,
+                action: article => {
+                    vPageContent.showNewArticlesNewspaper(article);
+                }
+            }));
+        }
+    },
+    searchAction: ()=>{
+        vNewArticlesWall.clearNotes()
+    }
+});
+
+export var vThemesAboutGameWall = new VWallWithSearch({
+    ref: "themes-about-game",
+    kind: "themes-about-game",
+    requestNotes: function (page, search) {
+        loadThemesByCategory(page, "game", search, response=>{
+            vThemesAboutGameWall.loadNotes(response);
+        });
+    },
+    receiveNotes: function(response) {
+        for (let theme of response) {
+            this.addNote(new CBSTheme({
+                ...theme,
+                action:theme=>{
+                    vPageContent.showArticlesAboutGameThemeWall(theme);
+                }
+            }));
+        }
+    },
+    searchAction: ()=>{
+        vThemesAboutGameWall.clearNotes()
+    }
+});
+
+export var vThemesAboutLegendsWall = new VWallWithSearch({
+    ref: "themes-about-legends",
+    kind: "themes-about-legends",
+    requestNotes: function (page, search) {
+        loadThemesByCategory(page, "legends", search, response=>{
+            vThemesAboutLegendsWall.loadNotes(response);
+        });
+    },
+    receiveNotes: function(response) {
+        for (let theme of response) {
+            this.addNote(new CBSTheme({
+                ...theme,
+                action:theme=>{
+                    vPageContent.showArticlesAboutLegendsThemeWall(theme);
+                }
+            }));
+        }
+    },
+    searchAction: ()=>{
+        vThemesAboutLegendsWall.clearNotes()
+    }
+});
+
+export var vThemesAboutGameExamplesWall = new VWallWithSearch({
+    ref: "themes-about-game-examples",
+    kind: "themes-about-game-examples",
+    requestNotes: function (page, search) {
+        loadThemesByCategory(page, "examples", search, response=>{
+            vThemesAboutGameExamplesWall.loadNotes(response);
+        });
+    },
+    receiveNotes: function(response) {
+        for (let theme of response) {
+            this.addNote(new CBSTheme({
+                ...theme,
+                action:theme=>{
+                    vPageContent.showArticlesAboutGameExamplesThemeWall(theme);
+                }
+            }));
+        }
+    },
+    searchAction: ()=>{
+        vThemesAboutGameExamplesWall.clearNotes()
+    }
+});
+
+export var vArticlesAboutGameThemeWall = new VWallWithSearch({
+    ref:"articles-about-game",
+    kind: "articles-about-game",
+    requestNotes: function (page, search) {
+        loadArticlesByTheme(page, search, vArticlesAboutGameThemeWall._theme, response=>{
+            vArticlesAboutGameThemeWall.loadNotes(response);
+        });
+    },
+    receiveNotes: function(response) {
+        for (let article of response) {
+            this.addNote(new CBSArticle({
+                article,
+                action: article => {
+                    vPageContent.showArticlesAboutGameNewspaper(article);
+                }
+            }));
+        }
+    },
+    searchAction: ()=>{
+        vArticlesAboutGameThemeWall.clearNotes()
+    }
+});
+vArticlesAboutGameThemeWall.setTheme = function(theme) {
+    this._theme = theme;
+    this.clearNotes();
+}
+
+export var vArticlesAboutLegendsThemeWall = new VWallWithSearch({
+    ref:"articles-about-legends",
+    kind: "articles-about-legends",
+    requestNotes: function (page, search) {
+        loadArticlesByTheme(page, search, vArticlesAboutLegendsThemeWall._theme, response=>{
+            vArticlesAboutLegendsThemeWall.loadNotes(response);
+        });
+    },
+    receiveNotes: function(response) {
+        for (let article of response) {
+            this.addNote(new CBSArticle({
+                article,
+                action: article => {
+                    vPageContent.showArticlesAboutLegendsNewspaper(article);
+                }
+            }));
+        }
+    },
+    searchAction: ()=>{
+        vArticlesAboutLegendsThemeWall.clearNotes()
+    }
+});
+vArticlesAboutLegendsThemeWall.setTheme = function(theme) {
+    this._theme = theme;
+    this.clearNotes();
+}
+
+export var vArticlesAboutGameExamplesThemeWall = new VWallWithSearch({
+    ref:"articles-about-game-examples",
+    kind: "articles-about-game-examples",
+    requestNotes: function (page, search) {
+        loadArticlesByTheme(page, search, vArticlesAboutGameExamplesThemeWall._theme, response=>{
+            vArticlesAboutGameExamplesThemeWall.loadNotes(response);
+        });
+    },
+    receiveNotes: function(response) {
+        for (let article of response) {
+            this.addNote(new CBSArticle({
+                article,
+                action: article => {
+                    vPageContent.showArticlesAboutGameExamplesNewspaper(article);
+                }
+            }));
+        }
+    },
+    searchAction: ()=>{
+        vArticlesAboutGameExamplesThemeWall.clearNotes()
+    }
+});
+vArticlesAboutGameExamplesThemeWall.setTheme = function(theme) {
+    this._theme = theme;
+    this.clearNotes();
+}
+
+export var vNewspaperContent = new CBSNewspaper({
+    ref:"newspaper-content"
+});
+
+export function readPoll(poll, update) {
+    sendGet("/api/like-poll/vote/" + poll,
+        (text, status) => {
+            requestLog("Read Poll success: " + text + ": " + status);
+            let response = JSON.parse(text);
+            update(response);
+        },
+        (text, status) => {
+            requestLog("Read Poll failure: " + text + ": " + status);
+            if (status===403) {
+                showMessage("Login required to Vote", "Please login.");
+            }
+            else {
+                showMessage("Unable to read poll", text);
+            }
+        }
+    );
+}
+
+export function sendVote(poll, option, update) {
+    sendPost("/api/like-poll/vote/" + poll,
+        { option },
+        (text, status) => {
+            requestLog("Vote success: " + text + ": " + status);
+            let response = JSON.parse(text);
+            update(response);
+        },
+        (text, status) => {
+            requestLog("Vote failure: " + text + ": " + status);
+            showMessage("Unable to vote", text);
+        }
+    );
+}
 
 export function loadRecentArticles(pageIndex, search, update) {
     sendGet("/api/article/recent?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),

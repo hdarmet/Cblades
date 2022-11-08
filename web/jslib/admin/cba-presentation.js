@@ -62,7 +62,7 @@ export class CBAPresentationEditor extends Undoable(VSplitterPanel) {
         this._version = new VSelectField({
             ref: "presentation-version", label: "Version",
             onInput: event => {
-                this.canLeave(() => {
+                this.tryToLeave(() => {
                         this.parent.changePresentation(this._version.value);
                     },
                     () => {
@@ -91,7 +91,7 @@ export class CBAPresentationEditor extends Undoable(VSplitterPanel) {
         });
         this._copy = new VButton({
             ref: "copy-presentation", type: "neutral", label: "Copy", enabled: false, onClick: () => {
-                this.canLeave(() => {
+                this.tryToLeave(() => {
                         let presentation = {
                             presentation: this._presentationObject.presentation,
                             version: this._newVersion.value,
@@ -158,8 +158,8 @@ export class CBAPresentationEditor extends Undoable(VSplitterPanel) {
         this.addOnRight(this._buttons);
     }
 
-    canLeave(leave, notLeave) {
-        return super.canLeave(leave, notLeave, "Presentation not saved. Do you want to Change ?")
+    tryToLeave(leave, notLeave) {
+        return super.tryToLeave(leave, notLeave, "Presentation not saved. Do you want to Change ?")
     }
 
     _editPresentation() {
@@ -209,8 +209,8 @@ export class CBAPresentationEditorPage extends VContainer {
             .add(this._presentationEditor);
     }
 
-    canLeave(leave, notLeave) {
-        return this._presentationEditor.canLeave(leave, notLeave);
+    tryToLeave(leave, notLeave) {
+        return this._presentationEditor.tryToLeave(leave, notLeave);
     }
 
     setTitle(title) {

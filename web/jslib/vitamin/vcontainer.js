@@ -580,10 +580,10 @@ export class VPageContent extends VContainer {
     }
 
     changePage(title, content, byHistory, historize, init=switchPage=>switchPage()) {
-        if (!this._page || !this._page.canLeave) {
+        if (!this._page || !this._page.tryToLeave) {
             this._changePage(title, content, byHistory, historize, init);
         }
-        else this._page.canLeave(
+        else this._page.tryToLeave(
             ()=>this._changePage(title, content, byHistory, historize, init),
             ()=>{
                 if (byHistory) {

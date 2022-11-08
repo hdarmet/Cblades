@@ -242,7 +242,7 @@ export function Undoable(clazz) {
             this._undos.push(this._register());
         }
 
-        canLeave(leave, notLeave, message) {
+        tryToLeave(leave, notLeave, message) {
             if (this._isDirty()) {
                 VConfirmHandler.emit({
                     title: "Confirm", message,

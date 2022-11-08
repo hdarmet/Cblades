@@ -32,6 +32,9 @@ import {
 import {
     CBAEditComments
 } from "./cba-comment.js";
+import {
+    loadLiveThemes
+} from "./cba-theme.js";
 
 export class CBAParagraph extends Vitamin(Div) {
 
@@ -360,8 +363,8 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
             & !this._author.validate();
     }
 
-    canLeave(leave, notLeave) {
-        super.canLeave(leave, notLeave,"Article not saved. Do you want to Quit ?")
+    tryToLeave(leave, notLeave) {
+        super.tryToLeave(leave, notLeave,"Article not saved. Do you want to Quit ?")
     }
 
     get article() {
@@ -1004,21 +1007,6 @@ export function deleteArticle(article, success, failure) {
         (text, status) => {
             requestLog("Article delete failure: " + text + ": " + status);
             failure(text, status);
-        }
-    );
-}
-
-export function loadLiveThemes(update) {
-    sendGet("/api/theme/live",
-        (text, status) => {
-            requestLog("Load live themes success: " + text + ": " + status);
-            let themes = JSON.parse(text);
-            let options = themes.map(theme=>{return {value:theme.id, label:theme.title}});
-            update(options);
-        },
-        (text, status) => {
-            requestLog("Load Live Themes failure: " + text + ": " + status);
-            showMessage("Unable to load Themes", text);
         }
     );
 }

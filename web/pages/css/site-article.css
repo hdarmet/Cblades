@@ -1,3 +1,10 @@
+.likes-icon.selected {
+    filter: brightness(75%);
+}
+
+.dislikes-icon.selected {
+    filter: brightness(75%);
+}
 
 .new-articles .search {
     --extends: ex-info-background-color;
@@ -39,7 +46,7 @@
     --extends: ex-record-container, ex-record-down-clip;
 }
 
-.new-articles-content .article .show-votes {
+.new-articles-content .article .show-poll {
     display: inline-block;
     vertical-align: middle;
     float: right;
@@ -126,7 +133,7 @@
     --extends: ex-record-container, ex-record-down-clip;
 }
 
-.articles-about-game-content .article .show-votes {
+.articles-about-game-content .article .show-poll {
     display: inline-block;
     vertical-align: middle;
     float: right;
@@ -213,7 +220,7 @@
     --extends: ex-record-container, ex-record-down-clip;
 }
 
-.articles-about-legends-content .article .show-votes {
+.articles-about-legends-content .article .show-poll {
     display: inline-block;
     vertical-align: middle;
     float: right;
@@ -300,7 +307,7 @@
     --extends: ex-record-container, ex-record-down-clip;
 }
 
-.articles-about-game-examples-content .article .show-votes {
+.articles-about-game-examples-content .article .show-poll {
     display: inline-block;
     vertical-align: middle;
     float: right;

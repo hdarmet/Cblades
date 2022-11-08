@@ -22,6 +22,8 @@ public class Article extends BaseEntity {
     Paragraph firstParagraph;
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     Document document;
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    LikePoll poll;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     List<Paragraph> paragraphs = new ArrayList<>();
     ArticleStatus status;
@@ -129,4 +131,11 @@ public class Article extends BaseEntity {
         return this;
     }
 
+    public LikePoll getPoll() {
+        return this.poll;
+    }
+    public Article setPoll(LikePoll poll) {
+        this.poll = poll;
+        return this;
+    }
 }

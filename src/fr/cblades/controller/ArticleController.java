@@ -72,6 +72,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 						addComment(request, newArticle, author);
 						newArticle.setStatus(ArticleStatus.PROPOSED);
 						newArticle.setAuthor(author);
+						newArticle.setPoll(new LikePoll().setLikes(0).setDislikes(0));
 						persist(em, newArticle);
 						storeArticleImages(params, newArticle);
 						result.set(readFromArticle(newArticle));
@@ -121,6 +122,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			Article newArticle = writeToArticle(em, request, new Article());
+			newArticle.setPoll(new LikePoll().setLikes(0).setDislikes(0));
 			ifAuthorized(
 				user->{
 					try {
@@ -189,6 +191,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 			String queryString = "select a from Article a " +
 				"join fetch a.paragraphs p " +
 				"join fetch a.author w " +
+				"join fetch a.poll v " +
 				"where a.status=:status and a.recent=:recent";
 			if (search!=null) {
 				String whereClause =" and fts('pg_catalog.english', " +
@@ -218,6 +221,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 			String queryString = "select a from Article a " +
 					"join fetch a.paragraphs p " +
 					"join fetch a.author w " +
+					"join fetch a.poll v " +
 					"where a.status=:status and :theme member of a.themes";
 			if (search!=null) {
 				String whereClause =" and fts('pg_catalog.english', " +
@@ -549,6 +553,10 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 				.read("firstName")
 				.read("lastName")
 				.read("avatar")
+			).readLink("poll", (pJson, poll)->sync(pJson, poll)
+				.read("id")
+				.read("likes")
+				.read("dislikes")
 			);
 		return json;
 	}

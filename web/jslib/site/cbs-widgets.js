@@ -26,8 +26,8 @@ export class CBSFormContainer extends VFormContainer {
         this._description.setText(description);
     }
 
-    canLeave = function(leave, notLeave) {
-        this._editor.canLeave(leave, notLeave);
+    tryToLeave(leave, notLeave) {
+        this._editor.tryToLeave(leave, notLeave);
     }
 
 }
