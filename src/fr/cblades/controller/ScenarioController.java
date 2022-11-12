@@ -2,6 +2,7 @@ package fr.cblades.controller;
 
 import fr.cblades.StandardUsers;
 import fr.cblades.domain.*;
+import org.hibernate.Hibernate;
 import org.summer.FileSpecification;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
@@ -69,6 +70,15 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 						addComment(request, newScenario, author);
 						newScenario.setStatus(ScenarioStatus.PROPOSED);
 						newScenario.setAuthor(author);
+						newScenario.setGame(new Game()
+							.setMap(new fr.cblades.domain.Map()
+									/*
+								.addBoardPlacement(new BoardPlacement()
+									.setCol(0).setRow(0).setBoard(board)
+								)
+									 */
+							)
+						);
 						persist(em, newScenario);
 						storeScenarioImages(params, newScenario);
 						result.set(readFromScenario(newScenario));
@@ -121,6 +131,15 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 			ifAuthorized(
 				user->{
 					try {
+						newScenario.setGame(new Game()
+							.setMap(new fr.cblades.domain.Map()
+									/*
+								.addBoardPlacement(new BoardPlacement()
+									.setCol(0).setRow(0).setBoard(board)
+								)
+								*/
+							)
+						);
 						persist(em, newScenario);
 						storeScenarioImages(params, newScenario);
 						result.set(readFromScenario(newScenario));
@@ -231,7 +250,9 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 			String id = (String)params.get("id");
 			Scenario scenario = findScenario(em, new Long(id));
 			ifAuthorized(user->{
-				result.set(readFromScenario(scenario));
+				Json jScenario = readFromScenario(scenario);
+				jScenario.put("game", scenario.getGame().getId()); // force load
+				result.set(jScenario);
 			},
 			verifyIfAdminOrOwner(scenario));
 		});
@@ -377,6 +398,7 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 					.writeDate("date")
 					.write("text")
 				);
+			scenario.getGame().setName(scenario.getTitle());
 			return scenario;
 		} catch (SummerNotFoundException snfe) {
 			throw new SummerControllerException(404, snfe.getMessage());

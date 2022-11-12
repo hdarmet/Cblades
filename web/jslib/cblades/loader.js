@@ -216,12 +216,13 @@ export class GameLoader {
         }
     }
 
-    load() {
-        sendPost("/api/game/by-name/" + this._game.name,
+    load(id, loaded=()=>{}) {
+        sendPost("/api/game/find/" + id,
             {},
             (text, status) => {
                 let json = JSON.parse(text);
                 this.fromSpecs(json);
+                loaded();
                 consoleLog(`Game ${this._game.name} loaded : ${status}`)
             },
             (text, status) => consoleLog(`Unable to load ${this._game.name} : ${status}`)
@@ -343,17 +344,19 @@ export class GameLoader {
         this._game._name = specs.name;
         if (specs.id) this._game._oid = specs.id;
         let configuration = [];
-        for (let boardSpec of specs.map.boards) {
-            let board = {
-                _oid: boardSpec.id,
-                _oversion: boardSpec.version,
-                col: boardSpec.col,
-                row: boardSpec.row,
-                path: boardSpec.path,
-                icon: boardSpec.icon
+        if (specs.map.boards) {
+            for (let boardSpec of specs.map.boards) {
+                let board = {
+                    _oid: boardSpec.id,
+                    _oversion: boardSpec.version,
+                    col: boardSpec.col,
+                    row: boardSpec.row,
+                    path: boardSpec.path,
+                    icon: boardSpec.icon
+                }
+                if (boardSpec.invert) board.invert = true;
+                configuration.push(board);
             }
-            if (boardSpec.invert) board.invert = true;
-            configuration.push(board);
         }
         let map = new CBMap(configuration);
         map._oid = specs.map.id;
@@ -802,7 +805,7 @@ export class BoardListLoader {
     }
 
     load(action) {
-        sendGet("/api/board/all",
+        sendGet("/api/board/live",
             (text, status) => {
                 let json = JSON.parse(text);
                 action(this.fromSpecs(json));

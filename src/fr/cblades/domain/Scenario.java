@@ -26,6 +26,8 @@ public class Scenario extends BaseEntity {
     String illustration ="";
     @Enumerated(EnumType.STRING)
     ScenarioStatus status;
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    Game game;
     @ManyToOne
     Account author;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -92,6 +94,14 @@ public class Scenario extends BaseEntity {
     }
     public Scenario setAuthor(Account author) {
         this.author = author;
+        return this;
+    }
+
+    public Game getGame() {
+        return this.game;
+    }
+    public Scenario setGame(Game game) {
+        this.game = game;
         return this;
     }
 

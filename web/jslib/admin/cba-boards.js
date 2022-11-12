@@ -35,7 +35,7 @@ import {
 
 export class CBAEditBoardPane extends Undoable(VSplitterPanel) {
 
-    constructor({ref, kind, create, board, accept, verify, onEdit}) {
+    constructor({ref, kind, create, board, accept, verify}) {
         super({ref});
         this.addClass(kind);
         this._path = new VFileLoaderField({
@@ -99,7 +99,7 @@ export class CBAEditBoardPane extends Undoable(VSplitterPanel) {
             {
                 ref:"edit", type: VButton.TYPES.NEUTRAL, label:"Edit",
                 onClick:event=>{
-                    this._onEdit();
+                    window.open("./cb-board-editor.html?id="+this._board.id, '_blank').focus();
                 }
             },
             {
@@ -111,7 +111,6 @@ export class CBAEditBoardPane extends Undoable(VSplitterPanel) {
         ]});
         this._buttons.get("edit").enabled = !create;
         this.addOnRight(this._buttons);
-        this._onEdit = onEdit;
         this.board = board;
     }
 
@@ -197,9 +196,6 @@ export class CBAEditBoardPane extends Undoable(VSplitterPanel) {
         }).show();
     }
 
-    openInNewTab(url) {
-        window.open(url+"?id="+this._board.id, '_blank').focus();
-    }
 }
 
 export class CBAEditBoard extends VModal {
@@ -225,9 +221,6 @@ export class CBAEditBoard extends VModal {
                     return false;
                 }
                 return true;
-            },
-            onEdit: ()=>{
-                this._boardPane.openInNewTab("./cb-board-editor.html");
             }
         });
         this._buttons = new VButtons({

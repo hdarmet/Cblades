@@ -230,7 +230,11 @@ public class FakeData {
                 .setSpecialRules(PARAGRAPH_TEXT)
                 .setTitle("Fierce fighting")
                 .setIllustration("../images/scenarii/scenario1.png")
-                .setStatus(ScenarioStatus.LIVE);
+                .setStatus(ScenarioStatus.LIVE)
+                .setGame(new Game()
+                    .setMap(new fr.cblades.domain.Map())
+                );
+            scenario.getGame().setName(scenario.getTitle());
             data.persist(em, scenario);
         });
     }

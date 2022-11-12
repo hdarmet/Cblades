@@ -131,7 +131,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 		try {
 			verify(json)
 					.checkRequired("version")
-					.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 80)
+					.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 200)
 					.inspect("map", mJson -> verify(mJson)
 							.checkRequired("version")
 							.each("boards", bJson -> verify(bJson)

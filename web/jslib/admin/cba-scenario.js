@@ -245,6 +245,12 @@ export class CBAEditScenarioPane extends Undoable(VSplitterPanel) {
         this.addOnRight(this._author);
         this._buttons = new VButtons({ref: "map-buttons", vertical:false, buttons:[
             {
+                ref:"edit", type: VButton.TYPES.NEUTRAL, label:"Edit",
+                onClick:event=>{
+                    window.open("./cb-scenario-editor.html?id="+this._scenario.game, '_blank').focus();
+                }
+            },
+            {
                 ref:"comments", type: VButton.TYPES.NEUTRAL, label:"Comments",
                 onClick:event=>{
                     this.onComments();

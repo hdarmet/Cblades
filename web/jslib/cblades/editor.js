@@ -2544,21 +2544,21 @@ export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
             }).setTurnAnimation(true);
         this._editUnitsCommand = new DMultiStatePushButton(
             ["./../images/commands/edit-units.png", "./../images/commands/edit-units-inactive.png"],
-            new Point2D(-420, -60), (state, animation)=>{
+            new Point2D(-360, -60), (state, animation)=>{
                 this.editUnits();
                 animation();
             }).setTurnAnimation(true, ()=>{}
         );
         this._editMapCommand = new DMultiStatePushButton(
             ["./../images/commands/edit-map.png", "./../images/commands/edit-map-inactive.png"],
-            new Point2D(-480, -60), (state, animation)=>{
+            new Point2D(-420, -60), (state, animation)=>{
                 this.editMap();
                 animation();
             }).setTurnAnimation(true, ()=>{}
         );
         this._fullScreenCommand = new DMultiStatePushButton(
             ["./../images/commands/full-screen-on.png", "./../images/commands/full-screen-off.png"],
-            new Point2D(-540, -60), (state, animation)=>{
+            new Point2D(-480, -60), (state, animation)=>{
                 if (!state)
                     getDrawPlatform().requestFullscreen();
                 else
