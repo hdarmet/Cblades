@@ -14,38 +14,53 @@
     width: 20%;
 }
 
-.scenario-header {
-    position: relative;
-    text-align: center;
+.scenario-editor-pane .scenario-title {
+    --extends: ex-record-title;
 }
 
-.scenario-header .scenario-title {
-    position: absolute;
-    width: 80%; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-family: Carolingia, Arial, Helvetica, sans-serif;
-    font-size: 3em; color: rgb(0, 0, 0);
-    text-shadow: rgb(255, 255, 255) 1px 1px 0px, rgb(255, 255, 255) -1px -1px 0px, rgb(255, 255, 255) -1px 1px 0.1em, rgb(255, 255, 255) 1px -1px 0.1em, rgb(255, 255, 255) 1px -1px 0.2em, rgb(255, 255, 255) -1px 1px 0.2em, rgb(255, 255, 255) -1px 1px 0.3em, rgb(255, 255, 255) 1px -1px 0.3em;
-    z-index: 11;
+.scenario-editor-pane .scenario {
+    --extends: ex-record-container;
+    max-height: 1300px;
+    max-width: 670px;
+    overflow: auto;
+}
+
+.scenario-editor-pane img {
+    width: 100%;
+    max-width: 650px;
+}
+
+.scenario-editor-pane .scenario-story-title {
+    --extends: ex-paragraph-title;
+}
+
+.scenario-editor-pane .scenario-setup-title {
+    --extends: ex-paragraph-title;
+}
+
+.scenario-editor-pane .scenario-victory-conditions-title {
+    --extends: ex-paragraph-title;
+}
+
+.scenario-editor-pane .scenario-special-rules-title {
+    --extends: ex-paragraph-title;
 }
 
 .scenario-modal .modal-content {
-    width: 1200px;
-    max-width: 1200px;
+    min-width: 1300px;
     margin: 0 auto 15% auto;
 }
 
-.scenario {
-    width: 450px;
-    cursor: pointer;
-    font-family: Arial, Helvetica, sans-serif;
-    box-shadow: rgba(0, 0, 0, 0.2) 0px 4px 8px 0px;
-    padding: 15px;
-    background-color: rgb(255, 248, 244);
-    position: relative;
-    max-height: 600px;
-    overflow: hidden;
-    overflow-wrap: break-word;
+.scenario::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+    background-color: #eeeeee;
+}
+
+.scenario::-webkit-scrollbar-thumb {
+    background: #aaaaaa;
+    border: solid 2px #eeeeee;
+    border-radius: 8px;
 }
 
 .scenario-editor-pane .splitter-left-pane {
@@ -60,7 +75,9 @@
 }
 
 .scenario-editor-pane .file-loader {
-    width: 600px;
+    width: 450px;
+    height: auto;
+    min-height: 150px;
     border: solid rgb(85, 85, 85);
 }
 

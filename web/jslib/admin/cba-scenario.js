@@ -10,7 +10,7 @@ import {
 } from "../vitamin/components.js";
 import {
     Undoable, VImage,
-    Vitamin, VMessageHandler, VModal, VSearch
+    Vitamin, VMagnifiedImage, VMessageHandler, VModal, VSearch
 } from "../vitamin/vitamins.js";
 import {
     mandatory, range,
@@ -40,10 +40,13 @@ export class CBAScenario extends Vitamin(Div) {
         this.addClass("scenario");
         this._header = new Div().addClass("scenario-header");
         this.add(this._header);
-        this._illustration = new VImage({ref:this.ref+"-illustration", kind:"scenario-illustration", img:illustration||"../images/site/scenario/default-scenario.png"});
-        this._header.add(this._illustration);
         this._title = new P(title).addClass("scenario-title");
-        this._header.add(this._title);
+        this.add(this._title);
+        this._illustration = new VMagnifiedImage({
+            ref:this.ref+"-illustration", kind:"scenario-illustration",
+            img:illustration||"../images/site/default-image.png"
+        });
+        this.add(this._illustration);
         this._storyTitle = new P("Story:").addClass("scenario-story-title");
         this.add(this._storyTitle);
         this._story = new P(story).addClass("scenario-story");
@@ -109,10 +112,9 @@ export class CBAScenario extends Vitamin(Div) {
         return this._illustration ? this._illustration.src : null;
     }
 
-    set illustration(img) {
-        if (this._illustration) this._header.remove(this._illustration);
-        this._illustration = new VImage({ref:this.ref+"-illustration", kind:"scenario-illustration", img});
-        this._header.insert(this._illustration, this._title);
+    set illustration(illustration) {
+        this._illustration.setSrc(illustration);
+        this._illustration.setZoomSrc(illustration);
     }
 
     get specification() {
@@ -254,8 +256,7 @@ export class CBAEditScenarioPane extends Undoable(VSplitterPanel) {
     }
 
     validate() {
-        return !this._category.validate()
-            & !this._title.validate()
+        return !this._title.validate()
             & !this._story.validate()
             & !this._setUp.validate()
             & !this._victoryConditions.validate()

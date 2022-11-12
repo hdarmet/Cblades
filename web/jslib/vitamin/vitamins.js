@@ -506,17 +506,17 @@ export class VImage extends Vitamin(Div) {
         return this._image.getSrc();
     }
 
+    setSrc(imgSrc, trigger=this._onLoad) {
+        this._image.setSrc(imgSrc, trigger);
+        return this;
+    }
+
     get imageWidth() {
         return this._image.offsetWidth;
     }
 
     get imageHeight() {
         return this._image.offsetHeight;
-    }
-
-    setSrc(imgSrc, trigger=this._onLoad) {
-        this._image.setSrc(imgSrc, trigger);
-        return this;
     }
 
     getFile(fileName, width, height) {
@@ -640,6 +640,15 @@ export class VMagnifiedImage extends VImage {
         x = x - window.pageXOffset;
         y = y - window.pageYOffset;
         return {x ,y};
+    }
+
+    get zoomSrc() {
+        return this._zoomImg;
+    }
+
+    setZoomSrc(imgSrc) {
+        this._zoomImg = imgSrc;
+        return this;
     }
 
 }
