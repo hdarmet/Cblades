@@ -7,7 +7,19 @@
     --extends: ex-record-container;
 }
 
-.scenario-editor .scenario-image {
+.scenario-editor img {
+    width: 100%;
+    max-width: 650px;
+}
+
+.scenario-editor .file-loader {
+    width: 450px;
+    height: auto;
+    min-height: 150px;
+    border: solid rgb(85, 85, 85);
+}
+
+.scenario-editor .scenario-illustration {
     width: 600px;
 }
 
@@ -15,12 +27,27 @@
     --extends: ex-paragraph-title;
 }
 
-.scenario-editor .scenario-victory-title {
+.scenario-editor .scenario-setup-title {
+    --extends: ex-paragraph-title;
+}
+
+.scenario-editor .scenario-victory-conditions-title {
     --extends: ex-paragraph-title;
 }
 
 .scenario-editor .scenario-special-rules-title {
     --extends: ex-paragraph-title;
+}
+
+.scenario-editor .splitter-left-pane {
+    padding-right: 30px;
+    min-width: 500px;
+}
+
+.scenario-editor .splitter-right-pane {
+    padding-right: 30px;
+    min-width: 500px;
+    width: 100%;
 }
 
 .newspaper-title.header-container {
@@ -152,16 +179,6 @@
     margin: auto;
 }
 
-.scenario-editor .splitter-right-pane {
-    padding-right: 30px;
-    width: 100%;
-}
-
-.scenario-editor .splitter-left-pane .scenario {
-    margin: auto;
-    padding-right: 10px;
-}
-
 .scenario-editor .editor-toolbar {
     --extends: ex-editor-toolbar;
 }
@@ -171,7 +188,7 @@
 }
 
 .scenario-editor .form-input-textarea {
-    height: 300px;
+    height: 150px;
 }
 
 .scenario-editor .form-input-textarea::-webkit-scrollbar {

@@ -23,7 +23,7 @@ import {
     CBSSocialRow
 } from "./cbs-page.js";
 import {
-    Div, sendGet
+    sendGet
 } from "../vitamin/components.js";
 import {
     vNewArticlesWall,
@@ -38,7 +38,7 @@ import {
     vArticleEditor, vArticleEditorPage
 } from "./cbs-articles.js";
 import {
-    CBSScenarioEditor
+    vScenarioEditor, vScenarioEditorPage
 } from "./cbs-scenario.js";
 import {
     CBSGallery,
@@ -587,26 +587,6 @@ export var vContributeTitle = new VHeader({
     ref:"contribute-title",
     left:"../images/site/left-contribute.png", right:"../images/site/right-contribute.png"
 }).addClass("contribute-title");
-
-export var vScenarioEditor = new CBSScenarioEditor({
-    ref:"scenario-editor",
-    onEdit() {
-        vScenarioEditor.openInNewTab("./cba-scenario-editor.html");
-    }
-});
-
-export var vScenarioEditorDescription = new Div().setText(paragrpahText).addClass("description");
-export var vScenarioEditorPage = new VFormContainer({ref:"scenario-editor-page"})
-    .addClass("scenario-editor-page")
-    .add(vScenarioEditorDescription)
-    .add(vScenarioEditor);
-vScenarioEditorPage.tryToLeave = function(leave, notLeave) {
-    vScenarioEditor.tryToLeave(leave, notLeave);
-}
-vScenarioEditorPage.setScenario = function(scenario) {
-    vScenarioEditor.scenario = scenario;
-    return this;
-}
 
 export var vYourProposalsTitle = new VHeader({
     ref:"your-proposals-title",
@@ -1310,17 +1290,13 @@ class CBSPageContent extends VPageContent {
 
     _showProposeScenario(scenarioSpec, byHistory, historize) {
         vContributeTitle.setTitle("Propose A Scenario");
-        vScenarioEditorPage.setScenario(scenarioSpec);
+        vScenarioEditor.scenario = scenarioSpec;
         return this.changePage(vContributeTitle, vScenarioEditorPage, byHistory, historize);
     }
 
     showProposeScenario(scenario = null) {
         let specification = scenario ? scenario.specification: {
-            ref: "scen1", title: "Bla bla bla",
-            img: `../images/scenarii/scenario1.png`,
-            story: "bla bla bla",
-            victory: "bla bla bla",
-            specialRules: "bla bla bla"
+            ref: "scenario1", title: "Scenario Title"
         };
         this._showProposeScenario(specification,false, ()=>
             historize("propose-scenario", `window.vPageContent._showProposeScenario(${JSON.stringify(specification)},true);`)

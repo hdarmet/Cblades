@@ -475,7 +475,8 @@ export class CBSArticleEditor extends Undoable(VSplitterPanel) {
     }
 
     get article() {
-        return {
+        this._article = {
+            id: this._article.id,
             themes: this._themes.selection.map(theme=>{ return {
                 id: theme.value,
                 title: theme.label
@@ -483,6 +484,7 @@ export class CBSArticleEditor extends Undoable(VSplitterPanel) {
             ...this._articleView.specification,
             comments: structuredClone(this._comments)
         }
+        return this._article;
     }
 
     set article(article) {

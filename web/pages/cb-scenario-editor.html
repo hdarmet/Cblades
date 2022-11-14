@@ -26,15 +26,9 @@
     import {
         GameLoader
     } from "../jslib/cblades/loader.js";
-
-    function getParameterByName(name, url = window.location.href) {
-        name = name.replace(/[\[\]]/g, '\\$&');
-        var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-            results = regex.exec(url);
-        if (!results) return null;
-        if (!results[2]) return '';
-        return decodeURIComponent(results[2].replace(/\+/g, ' '));
-    }
+    import {
+        getParameterByName
+    } from "../jslib/draw.js";
 
     let game = new CBScenarioEditorGame("scenario");
     let map = new CBMap([]);
@@ -56,29 +50,6 @@
         }
     );
 
-    /*
-    let game = new CBScenarioEditorGame("scenario");
-
-    let map = new CBMap([
-        {path:"./../images/maps/map-1.png", icon:"./../images/maps/map-1-icon.png", col:0, row:0, invert:true},
-        {path:"./../images/maps/map-4.png", icon:"./../images/maps/map-4-icon.png", col:1, row:0}
-    ]);
-    game.setMap(map);
-    game.fitWindow();
-    document.body.appendChild(game.root);
-    game.setMenu();
-
-    let player1 = new CBEditorPlayer("orc-1", "./../images/units/players/orc-1.png");
-    game.addPlayer(player1);
-    let wing1 = new CBWing(player1, GoblinBanner1);
-    wing1.setRetreatZone(map.getSouthZone());
-    let player2 = new CBEditorPlayer("roughneck-1", "./../images/units/players/roughneck-1.png");
-    game.addPlayer(player2);
-    let wing2 = new CBWing(player2, RoughneckBanner1);
-    wing2.setRetreatZone(map.getNorthZone());
-
-    game.start();
-*/
 </script>
 </body>
 </html>

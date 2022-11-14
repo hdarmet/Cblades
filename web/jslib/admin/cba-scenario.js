@@ -38,8 +38,6 @@ export class CBAScenario extends Vitamin(Div) {
     constructor({ref, title, illustration, story, setUp, victoryConditions, specialRules, action}) {
         super({ref});
         this.addClass("scenario");
-        this._header = new Div().addClass("scenario-header");
-        this.add(this._header);
         this._title = new P(title).addClass("scenario-title");
         this.add(this._title);
         this._illustration = new VMagnifiedImage({
@@ -142,7 +140,7 @@ export class CBAScenario extends Vitamin(Div) {
 
 export class CBAEditScenarioPane extends Undoable(VSplitterPanel) {
 
-    constructor({ref, kind, scenario, accept, verify}) {
+    constructor({ref, kind, scenario, create, accept, verify}) {
         super({ref});
         this.addClass(kind);
         this._status = new VSelectField({
@@ -257,6 +255,7 @@ export class CBAEditScenarioPane extends Undoable(VSplitterPanel) {
                 }
             }
         ]});
+        this._buttons.get("edit").enabled = !create;
         this.addOnRight(this._buttons);
         this.scenario = scenario;
     }
@@ -332,6 +331,7 @@ export class CBAEditScenarioPane extends Undoable(VSplitterPanel) {
 
     saved(scenario) {
         this.scenario = scenario;
+        this._buttons.get("edit").enabled = true;
         return true;
     }
 

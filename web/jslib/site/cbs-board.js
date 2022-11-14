@@ -129,7 +129,7 @@ export class CBSBoardEditor extends Undoable(VSplitterPanel) {
             }
         });
         this.addOnRight(this._description);
-        this._send = new VButtons({ref: "board-buttons", vertical:false, buttons:[
+        this._buttons = new VButtons({ref: "board-buttons", vertical:false, buttons:[
             {
                 ref:"edit", type: VButton.TYPES.NEUTRAL, label:"Edit",
                 onClick:event=>{
@@ -147,14 +147,16 @@ export class CBSBoardEditor extends Undoable(VSplitterPanel) {
                 onClick:event=>{
                     if (this.validate()) {
                         let board = this.board;
-                        board.newComment = board.comments.newComment;
+                        if (board.comments.newComment) {
+                            board.newComment = board.comments.newComment;
+                        }
                         delete board.comments;
                         this.saveBoard(board);
                     }
                 }
             }
         ]});
-        this.addOnRight(this._send);
+        this.addOnRight(this._buttons);
         this.board = board;
     }
 
@@ -181,7 +183,7 @@ export class CBSBoardEditor extends Undoable(VSplitterPanel) {
     }
 
     get board() {
-        return {
+        this._board = {
             id: this._board.id,
             name: this._name.value,
             description: this._description.value,
@@ -189,6 +191,7 @@ export class CBSBoardEditor extends Undoable(VSplitterPanel) {
             icon: this._board.icon || "icon",
             comments: structuredClone(this._comments)
         }
+        return this._board;
     }
 
     set board(board) {
@@ -200,7 +203,7 @@ export class CBSBoardEditor extends Undoable(VSplitterPanel) {
             comments: this._board.comments || [],
             newComment: ""
         }
-        this._send.get("edit").enabled = board.id !== undefined;
+        this._buttons.get("edit").enabled = board.id !== undefined;
         this._clean();
         this._memorize();
     }
@@ -243,7 +246,7 @@ export class CBSBoardEditor extends Undoable(VSplitterPanel) {
             comments: board.comments || [],
             newComment: ""
         }
-        this._send.get("edit").enabled = true;
+        this._buttons.get("edit").enabled = true;
         showMessage("Board saved.");
         return true;
     }

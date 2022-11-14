@@ -10,7 +10,7 @@ import java.util.List;
 
 @Entity
 @Table(indexes= {
-    @Index(name="idx_theme_by_title", unique=true, columnList="title")
+    @Index(name="idx_scenario_by_title", unique=true, columnList="title")
 })
 public class Scenario extends BaseEntity {
 

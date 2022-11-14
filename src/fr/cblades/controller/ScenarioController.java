@@ -62,7 +62,10 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 	public Json propose(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Scenario newScenario = writeToProposedScenario(request, new Scenario());
+			Scenario newScenario = writeToProposedScenario(request, new Scenario().setGame(
+					new Game().setMap(new fr.cblades.domain.Map())
+				)
+			);
 			ifAuthorized(
 				user->{
 					try {
@@ -70,15 +73,6 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 						addComment(request, newScenario, author);
 						newScenario.setStatus(ScenarioStatus.PROPOSED);
 						newScenario.setAuthor(author);
-						newScenario.setGame(new Game()
-							.setMap(new fr.cblades.domain.Map()
-									/*
-								.addBoardPlacement(new BoardPlacement()
-									.setCol(0).setRow(0).setBoard(board)
-								)
-									 */
-							)
-						);
 						persist(em, newScenario);
 						storeScenarioImages(params, newScenario);
 						result.set(readFromScenario(newScenario));
@@ -127,17 +121,11 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 	public Json create(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Scenario newScenario = writeToScenario(em, request, new Scenario());
 			ifAuthorized(
 				user->{
 					try {
-						newScenario.setGame(new Game()
-							.setMap(new fr.cblades.domain.Map()
-									/*
-								.addBoardPlacement(new BoardPlacement()
-									.setCol(0).setRow(0).setBoard(board)
-								)
-								*/
+						Scenario newScenario = writeToScenario(em, request, new Scenario().setGame(
+								new Game().setMap(new fr.cblades.domain.Map())
 							)
 						);
 						persist(em, newScenario);
@@ -250,9 +238,7 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 			String id = (String)params.get("id");
 			Scenario scenario = findScenario(em, new Long(id));
 			ifAuthorized(user->{
-				Json jScenario = readFromScenario(scenario);
-				jScenario.put("game", scenario.getGame().getId()); // force load
-				result.set(jScenario);
+				result.set(readFromScenario(scenario));
 			},
 			verifyIfAdminOrOwner(scenario));
 		});
@@ -354,6 +340,7 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 			.write("victoryConditions")
 			.write("specialRules")
 			.write("illustration");
+		scenario.getGame().setName(scenario.getTitle());
 		return scenario;
 	}
 
@@ -462,6 +449,7 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 				.readDate("date")
 				.read("text")
 			);
+		json.put("game", scenario.getGame().getId()); // force load
 		return json;
 	}
 

@@ -199,7 +199,7 @@ export class CBSThemeEditor extends Undoable(VSplitterPanel) {
     }
 
     get theme() {
-        return {
+        this._theme = {
             id: this._theme.id,
             category: this._category.value,
             title: this._title.value,
@@ -207,6 +207,7 @@ export class CBSThemeEditor extends Undoable(VSplitterPanel) {
             illustration: this._illustration.imageSrc,
             comments: structuredClone(this._comments)
         }
+        return this._theme;
     }
 
     set theme(theme) {

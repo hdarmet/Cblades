@@ -20,15 +20,9 @@
     import {
         BoardLoader
     } from "../jslib/cblades/loader.js";
-
-    function getParameterByName(name, url = window.location.href) {
-        name = name.replace(/[\[\]]/g, '\\$&');
-        var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-            results = regex.exec(url);
-        if (!results) return null;
-        if (!results[2]) return '';
-        return decodeURIComponent(results[2].replace(/\+/g, ' '));
-    }
+    import {
+        getParameterByName
+    } from "../jslib/draw.js";
 
     new BoardLoader(new CBBoard()).load(getParameterByName("id"), map=>{
         let game = new CBMapEditorGame("Map");
@@ -40,7 +34,6 @@
         game.setMenu();
         game.start();
     });
-
 
 </script>
 </body>
