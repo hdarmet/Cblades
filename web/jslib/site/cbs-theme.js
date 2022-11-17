@@ -25,18 +25,21 @@ import {
 
 export class CBSTheme extends Vitamin(Div) {
 
-    constructor({id, title, illustration, description, action}) {
-        super({ref:"theme-"+id});
-        this.id = id;
+    constructor({theme, action}) {
+        super({ref:"theme-"+theme.id});
         this.addClass("theme");
         this._header = new Div().addClass("theme-header");
         this.add(this._header);
-        this._illustration = new VImage({ref:this.ref+"-illustration", kind:"theme-illustration", img:illustration||"../images/site/themes/default-theme.png"});
+        this._illustration = new VImage({
+            ref:this.ref+"-illustration",
+            kind:"theme-illustration"
+        });
         this._header.add(this._illustration);
-        this._title = new P(title).addClass("theme-title");
+        this._title = new P().addClass("theme-title");
         this._header.add(this._title);
-        this._description = new P(description).addClass("theme-description");
+        this._description = new P().addClass("theme-description");
         this.add(this._description);
+        this.specification = theme;
         this.onEvent("click", ()=>{
             action && action(this);
         });
@@ -70,7 +73,7 @@ export class CBSTheme extends Vitamin(Div) {
 
     get specification() {
         return {
-            ref: this.ref.ref,
+            id: this._id,
             illustration: this._illustration ? this._illustration.src : null,
             title: this._title.getText(),
             description: this._description.getText()
@@ -78,9 +81,10 @@ export class CBSTheme extends Vitamin(Div) {
     }
 
     set specification(specification) {
-        this._title.setText(specification.title);
-        this._description.setText(specification.description);
-        this._image.setSrc(specification.illustration);
+        this._id = specification.id;
+        this._title.setText(specification.title || "Theme Title");
+        this._description.setText(specification.description || "");
+        this._illustration.setSrc(specification.illustration || "../images/site/themes/default-theme.png");
     }
 
 }
@@ -215,7 +219,7 @@ export class CBSThemeEditor extends Undoable(VSplitterPanel) {
         if (this._themeView) {
             this.removeFromLeft(this._themeView);
         }
-        this._themeView = new CBSTheme(theme);
+        this._themeView = new CBSTheme({theme});
         this.addOnLeft(this._themeView);
         this._editTheme();
         this._clean();
@@ -267,11 +271,13 @@ export class CBSThemeEditor extends Undoable(VSplitterPanel) {
             newComment: ""
         }
         showMessage("Theme saved.");
+        this._clean();
+        this._memorize();
         return true;
     }
 
     get imageFiles() {
-        return this.boardImage ?
+        return this.illustration ?
             [
                 {key: "illustration", file: this.illustration}
             ] :

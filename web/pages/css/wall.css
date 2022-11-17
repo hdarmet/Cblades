@@ -298,18 +298,27 @@
     position: relative;
 }
 
-.your-proposals-content .board-title {
-    --extends: ex-record-title;
+.your-proposals-content .board {
+    font-family: Arial, Helvetica, sans-serif;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    background-color: #fff8f4;
+    padding: 15px;
+    max-width: 600px;
+    position: relative;
+}
+
+.your-proposals-content .board-name {
+    font-weight: bolder;
 }
 
 .your-proposals-content .board-image {
-    width:350px;
+    width:100%;
 }
 
 .your-proposals-content .board-description {
-    height: 150px;
     overflow: hidden;
     position: relative;
+    min-height: 50px;
 }
 
 .your-proposals-content .board-description::after {

@@ -251,7 +251,7 @@ export function Undoable(clazz) {
                         leave();
                     },
                     actionCancel: () => {
-                        notLeave();
+                        notLeave && notLeave();
                     }
                 })
             }

@@ -27,17 +27,16 @@ import {
 
 export class CBSBoard extends Vitamin(Div) {
 
-    constructor({ref, title, img, description, action}) {
-        super({ref});
+    constructor({board, action}) {
+        super({ref:"board-"+board.id});
         this.addClass("board");
-        this._header = new Div().addClass("board-header");
-        this.add(this._header);
-        this._title = new P(title).addClass("board-title");
-        this._header.add(this._title);
-        this._image = new VMagnifiedImage({ref:this.ref+"-image", kind:"board-image", img});
-        this._image && this._header.add(this._image);
-        this._description = new P(description).addClass("board-description");
+        this._image = new VMagnifiedImage({ref:this.ref+"-image", kind:"board-image"});
+        this.add(this._image);
+        this._name = new P().addClass("board-name");
+        this.add(this._name);
+        this._description = new P().addClass("board-description");
         this.add(this._description);
+        this.specification = board;
         this.onEvent("click", ()=>{
             action && action(this);
         });
@@ -64,23 +63,26 @@ export class CBSBoard extends Vitamin(Div) {
     }
 
     set image(img) {
-        this._image = new VImage({ref:this.ref+"-image", kind:"theme-image", img});
-        this._header.insert(this._image, this._title);
+        this._image.setSrc(img);
     }
 
     get specification() {
         return {
-            ref: this.ref.ref,
-            img: this._image ? this._image.src : null,
-            title: this._title.getText(),
+            id: this._id,
+            icon: this._icon,
+            path: this._image ? this._image.zoomSrc : null,
+            name: this._name.getText(),
             description: this._description.getText()
         };
     }
 
     set specification(specification) {
-        this._title.setText(specification.title);
+        this._id = specification.id;
+        this._name.setText(specification.name);
         this._description.setText(specification.description);
-        this._image.setSrc(specification.img);
+        this._image.setSrc(specification.path);
+        this._image.setZoomSrc(specification.path);
+        this._icon = specification.icon;
     }
 
 }
@@ -133,7 +135,7 @@ export class CBSBoardEditor extends Undoable(VSplitterPanel) {
             {
                 ref:"edit", type: VButton.TYPES.NEUTRAL, label:"Edit",
                 onClick:event=>{
-                    this.openInNewTab("./cb-board-editor.html");
+                    window.open("./cb-board-editor.html?id="+this._board.id, '_blank').focus();
                 }
             },
             {
@@ -236,10 +238,6 @@ export class CBSBoardEditor extends Undoable(VSplitterPanel) {
         }).show();
     }
 
-    openInNewTab(url) {
-        window.open(url+"?id="+this._board.id, '_blank').focus();
-    }
-
     saved(board) {
         this._board.id = board.id;
         this._comments = {
@@ -248,6 +246,8 @@ export class CBSBoardEditor extends Undoable(VSplitterPanel) {
         }
         this._buttons.get("edit").enabled = true;
         showMessage("Board saved.");
+        this._clean();
+        this._memorize();
         return true;
     }
 

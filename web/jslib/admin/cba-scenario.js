@@ -332,6 +332,8 @@ export class CBAEditScenarioPane extends Undoable(VSplitterPanel) {
     saved(scenario) {
         this.scenario = scenario;
         this._buttons.get("edit").enabled = true;
+        this._clean();
+        this._memorize();
         return true;
     }
 
@@ -402,7 +404,9 @@ export class CBAEditScenario extends VModal {
             {
                 ref: "close-scenario", type: "neutral", label: "Close",
                 onClick: event => {
-                    this.hide();
+                    this.tryToLeave(() => {
+                        this.hide();
+                    });
                 }
             }]
         });
@@ -422,6 +426,10 @@ export class CBAEditScenario extends VModal {
         this.add(this._scenarioPane);
         this.add(this._buttons);
         this.addClass("scenario-modal");
+    }
+
+    tryToLeave(leave, notLeave) {
+        return this._scenarioPane.tryToLeave(leave, notLeave);
     }
 
     validate() {

@@ -211,6 +211,34 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return result.get();
 	}
 
+	@REST(url="/api/board/contributions", method=Method.GET)
+	public Json getContributions(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
+		inTransaction(em->{
+			ifAuthorized(
+				user->{
+					try {
+						String searchClause =" and fts('pg_catalog.english', " +
+							"b.name||' '||" +
+							"b.description||' '||" +
+							"b.status, :search) = true";
+
+						String queryString = "select b from Board b where b.author=:author order by b.updateTimestamp, b.status";
+						Collection<Board> boards = findPagedBoards(
+							em.createQuery(queryString),
+							pageNo,
+							"author", Account.find(em, user));
+						result.set(readFromBoardSummaries(boards));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+					}
+				}
+			);
+		});
+		return result.get();
+	}
+
 	@REST(url="/api/board/find/:id", method=Method.GET)
 	public Json getById(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();

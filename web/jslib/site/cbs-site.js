@@ -7,7 +7,7 @@ import {
 import {
     VHeader,
     VFooter,
-    VMainMenu
+    VMainMenu, showMessage
 } from "../vitamin/vpage.js";
 import {
     VPageContent,
@@ -23,6 +23,7 @@ import {
     CBSSocialRow
 } from "./cbs-page.js";
 import {
+    requestLog,
     sendGet
 } from "../vitamin/components.js";
 import {
@@ -35,9 +36,10 @@ import {
     vArticlesAboutGameExamplesThemeWall,
     vNewspaperContent,
     publishArticle,
-    vArticleEditor, vArticleEditorPage
+    vArticleEditor, vArticleEditorPage, loadRecentArticles, CBSArticle, loadProposedArticle
 } from "./cbs-articles.js";
 import {
+    CBSScenario, loadProposedScenario,
     vScenarioEditor, vScenarioEditorPage
 } from "./cbs-scenario.js";
 import {
@@ -45,10 +47,10 @@ import {
     CBSSummary
 } from "./cbs-container.js";
 import {
-    vThemeEditorPage, vThemeEditor
+    vThemeEditorPage, vThemeEditor, CBSTheme, loadProposedTheme
 } from "./cbs-theme.js";
 import {
-    loadBoards, vBoardsGallery, vBoardEditorPage, vBoardEditor
+    loadBoards, vBoardsGallery, vBoardEditorPage, vBoardEditor, CBSBoard, loadProposedBoard
 } from "./cbs-board.js";
 import {
     VForum,
@@ -597,41 +599,77 @@ export var vYourProposalsTitle = new VHeader({
 export var vYourProposalsWall = new VWallWithSearch({
     ref:"your-proposals",
     kind: "your-proposals",
-    searchAction: text=>alert("search:"+text)
-}/*, $=>{$
-    .addNote(new CBSArticle({
-        id: 19,
-        ref: "art1", title: "An Interesting Story", paragraphs: [
-            {ref: "art1-par1", img:`../images/site/factions/roughneck.png`, imgPos:"left", title:"Ca commence...", description:[paragrpahText, paragrpahText]},
-            {ref: "art1-par2", img:`../images/site/factions/orcs.png`, imgPos:"right", title:"Et ça continue...", description:paragrpahText}
-        ],
-        action:article=>{
-            window.vPageContent.showProposeArticle(article);
+    requestNotes: function (page, search) {
+        vYourProposalsWall.updateTimestamp = page ? vYourProposalsWall.updateTimestamp||0 : 0;
+        loadContributions(vYourProposalsWall.updateTimestamp, search, response=>{
+            vYourProposalsWall.loadNotes(response);
+        });
+    },
+    receiveNotes: function(response) {
+        for (let item of response) {
+            if (!vYourProposalsWall.updateTimestamp || vYourProposalsWall.updateTimestamp>item.updateTimestamp) {
+                vYourProposalsWall.updateTimestamp = item.updateTimestamp;
+            }
+            if (item.type === "theme") {
+                this.addNote(new CBSTheme({
+                    theme: item,
+                    action: item => {
+                        loadProposedTheme(item.specification, theme=> {
+                            vPageContent.showProposeTheme(theme);
+                        })
+                    }
+                }));
+            }
+            else if (item.type === "board") {
+                this.addNote(new CBSBoard({
+                    board:item,
+                    action: item => {
+                        loadProposedBoard(item.specification, board=>{
+                            vPageContent.showProposeBoard(board);
+                        })
+                    }
+                }));
+            }
+            else if (item.type === "article") {
+                this.addNote(new CBSArticle({
+                    article:item,
+                    action: item => {
+                        loadProposedArticle(item.specification, article=> {
+                            vPageContent.showProposeArticle(article);
+                        })
+                    }
+                }));
+            }
+            else if (item.type === "scenario") {
+                    this.addNote(new CBSScenario({
+                    scenario:item,
+                    action: item => {
+                        loadProposedScenario(item.specification, scenario=>{
+                            vPageContent.showProposeScenario(scenario);
+                        })
+                    }
+                }));
+            }
         }
-    }))
-    .addNote(new CBSScenario({
-        ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
-        story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
-        action:scenario=>{
-            window.vPageContent.showProposeScenario(scenario);
-        }
-    }))
-    .addNote(new CBSTheme({
-        ref: "theme1", title: "Rules", img: `../images/site/themes/rules.png`,
-        description: paragrpahText,
-        action: theme => {
-            window.vPageContent.showProposeTheme(theme);
-        }
-    }))
-    .addNote(new CBSBoard({
-        ref: "map1", title: "The Map", img: `../images/maps/map-7.png`,
-        description: paragrpahText,
-        action: map => {
-            window.vPageContent.showProposeBoard(map);
-        }
-    }))
-}*/);
+    },
+    searchAction: ()=>{
+        vYourProposalsWall.clearNotes()
+    }
+});
 
+export function loadContributions(age, search, update) {
+    sendGet("/api/contributions/personal?age=" + age + (search ? "&search=" + encodeURIComponent(search) : ""),
+        (text, status) => {
+            requestLog("Load Contributions success: " + text + ": " + status);
+            let response = JSON.parse(text);
+            update(response);
+        },
+        (text, status) => {
+            requestLog("Load Contributions failure: " + text + ": " + status);
+            showMessage("Unable to load Contributions", text);
+        }
+    );
+}
 
 export var vForumTitle = new VHeader({
     ref:"forum-title",
@@ -1116,6 +1154,7 @@ class CBSPageContent extends VPageContent {
     }
 
     _showNewArticlesWall(byHistory, historize) {
+        vNewArticlesWall.clearNotes();
         return this.changePage(vNewArticlesTitle, vNewArticlesWall, byHistory, historize);
     }
 
@@ -1126,6 +1165,7 @@ class CBSPageContent extends VPageContent {
     }
 
     _showThemesAboutGameWall(byHistory, historize) {
+        vThemesAboutGameWall.clearNotes();
         return this.changePage(vArticlesAboutGameTitle, vThemesAboutGameWall, byHistory, historize);
     }
 
@@ -1136,6 +1176,7 @@ class CBSPageContent extends VPageContent {
     }
 
     _showThemesAboutLegendsWall(byHistory, historize) {
+        vThemesAboutLegendsWall.clearNotes();
         return this.changePage(vArticlesAboutLegendsTitle, vThemesAboutLegendsWall, byHistory, historize);
     }
 
@@ -1146,6 +1187,7 @@ class CBSPageContent extends VPageContent {
     }
 
     _showThemesAboutGameExamplesWall(byHistory, historize) {
+        vThemesAboutGameExamplesWall.clearNotes();
         return this.changePage(vArticlesAboutGameExamplesTitle, vThemesAboutGameExamplesWall, byHistory, historize);
     }
 
@@ -1247,7 +1289,7 @@ class CBSPageContent extends VPageContent {
     }
 
     showProposeTheme(theme = null) {
-        let specification = theme ? theme.specification:{
+        let specification = theme ? theme:{
             ref: "theme1", title: "", img: `../images/site/themes/rules.png`,
             description: ""
         };
@@ -1263,7 +1305,7 @@ class CBSPageContent extends VPageContent {
     }
 
     showProposeArticle(article = null) {
-        let specification = article ? article.specification:{
+        let specification = article ? article:{
             ref: "article1", title: "Article Title"
         };
         this._showProposeArticle(specification,false, ()=>
@@ -1278,7 +1320,7 @@ class CBSPageContent extends VPageContent {
     }
 
     showProposeBoard(board = null) {
-        let specification = board ? board.specification: {
+        let specification = board ? board: {
             ref: "board",
             title: "",
             description: ""
@@ -1295,7 +1337,7 @@ class CBSPageContent extends VPageContent {
     }
 
     showProposeScenario(scenario = null) {
-        let specification = scenario ? scenario.specification: {
+        let specification = scenario ? scenario: {
             ref: "scenario1", title: "Scenario Title"
         };
         this._showProposeScenario(specification,false, ()=>
@@ -1305,6 +1347,7 @@ class CBSPageContent extends VPageContent {
 
     _showYourProposals(byHistory, historize) {
         vContributeTitle.setTitle("Your Proposals");
+        vYourProposalsWall.clearNotes();
         return this.changePage(vYourProposalsTitle, vYourProposalsWall, byHistory, historize);
     }
 

@@ -189,22 +189,10 @@ export class CBSArticle extends Vitamin(Div) {
         super({ref:"article-"+article.id});
         this._paragraphAction = paragraphAction;
         this.addClass("article");
-        this._title = new P(article.title).addClass("article-title");
+        this._title = new P().addClass("article-title");
         this.add(this._title);
-        if (article.poll) {
-            this._poll = new CBSPoll({
-                poll: article.poll.id,
-                likes: article.poll.likes,
-                dislikes: article.poll.dislikes
-            });
-            this.add(this._poll);
-        }
-        this._paragraphs=[];
-        if (article.paragraphs) {
-            for (let paragraphSpec of article.paragraphs) {
-                this.createParagraph(paragraphSpec);
-            }
-        }
+        this._paragraphs = [];
+        this.specification = article;
         this.onEvent("click", event=>{
             action && action(this)
         });
@@ -264,6 +252,7 @@ export class CBSArticle extends Vitamin(Div) {
 
     get specification() {
         let specification = {
+            id: this._id,
             title: this._title.getText(),
             paragraphs: this._paragraphs.map((paragraph, ordinal)=>{
                 return {
@@ -277,13 +266,31 @@ export class CBSArticle extends Vitamin(Div) {
     }
 
     set specification(specification) {
+        this._id = specification.id;
         this._title.setText(specification.title);
         for (let paragraph of this._paragraphs) {
             this.remove(paragraph);
         }
         this._paragraphs = [];
-        for (let paragraphSpec of specification.paragraphs) {
-            this.createParagraph(paragraphSpec);
+        if (specification.paragraphs) {
+            for (let paragraphSpec of specification.paragraphs) {
+                this.createParagraph(paragraphSpec);
+            }
+        }
+        else  {
+            this.createParagraph(specification.firstParagraph);
+        }
+        if (this._poll) {
+            this.remove(this._poll);
+            delete this._poll;
+        }
+        if (specification.poll) {
+            this._poll = new CBSPoll({
+                poll: specification.poll.id,
+                likes: specification.poll.likes,
+                dislikes: specification.poll.dislikes
+            });
+            this.add(this._poll);
         }
     }
 }
@@ -547,6 +554,8 @@ export class CBSArticleEditor extends Undoable(VSplitterPanel) {
             newComment: ""
         }
         showMessage("Article saved.");
+        this._clean();
+        this._memorize();
         return true;
     }
 
@@ -851,7 +860,7 @@ export var vThemesAboutGameWall = new VWallWithSearch({
     receiveNotes: function(response) {
         for (let theme of response) {
             this.addNote(new CBSTheme({
-                ...theme,
+                theme,
                 action:theme=>{
                     vPageContent.showArticlesAboutGameThemeWall(theme);
                 }
@@ -874,7 +883,7 @@ export var vThemesAboutLegendsWall = new VWallWithSearch({
     receiveNotes: function(response) {
         for (let theme of response) {
             this.addNote(new CBSTheme({
-                ...theme,
+                theme,
                 action:theme=>{
                     vPageContent.showArticlesAboutLegendsThemeWall(theme);
                 }
@@ -897,7 +906,7 @@ export var vThemesAboutGameExamplesWall = new VWallWithSearch({
     receiveNotes: function(response) {
         for (let theme of response) {
             this.addNote(new CBSTheme({
-                ...theme,
+                theme,
                 action:theme=>{
                     vPageContent.showArticlesAboutGameExamplesThemeWall(theme);
                 }
@@ -1042,8 +1051,7 @@ export function loadRecentArticles(pageIndex, search, update) {
     );
 }
 
-
-export function loadArticlesByTheme(pageIndex, search, themeId, update) {
+export function loadArticlesByTheme(pageIndex, search, themeId, update, clean) {
     sendGet("/api/article/by-theme/"+themeId+"?page=" + pageIndex + (search ? "&search=" + encodeURIComponent(search) : ""),
         (text, status) => {
             requestLog("Load article success: " + text + ": " + status);
@@ -1051,6 +1059,7 @@ export function loadArticlesByTheme(pageIndex, search, themeId, update) {
             update(response);
         },
         (text, status) => {
+            if (clean) clean();
             requestLog("Load Article failure: " + text + ": " + status);
             showMessage("Unable to load Articles", text);
         }

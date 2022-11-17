@@ -32,4 +32,13 @@ public interface ControllerSunbeam {
 		}
 	}
 
+	default long getLongParam(Map<String, Object> params, String paramName, String message) {
+		String param = (String)params.get(paramName);
+		try {
+			return Long.parseLong(param);
+		} catch (NumberFormatException nfe) {
+			throw new SummerControllerException(400, message, param, null);
+		}
+	}
+
 }

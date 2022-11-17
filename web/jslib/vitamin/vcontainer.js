@@ -214,6 +214,7 @@ export class VWall extends Vitamin(Div) {
         }
         this._notes = [];
         this._page = 0;
+        delete this._loading;
         this.detectVisibility();
     }
 

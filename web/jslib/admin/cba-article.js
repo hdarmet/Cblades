@@ -438,6 +438,8 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
 
     saved(article) {
         this.article = article;
+        this._clean();
+        this._memorize();
         return true;
     }
 
@@ -681,7 +683,9 @@ export class CBAEditArticle extends VModal {
             {
                 ref: "close-article", type: "neutral", label: "Close",
                 onClick: event => {
-                    this.hide();
+                    this.tryToLeave(() => {
+                        this.hide();
+                    });
                 }
             }]
         });
@@ -701,6 +705,10 @@ export class CBAEditArticle extends VModal {
         this.add(this._articlePane);
         this.add(this._buttons);
         this.addClass("article-modal");
+    }
+
+    tryToLeave(leave, notLeave) {
+        return this._articlePane.tryToLeave(leave, notLeave);
     }
 
     validate() {

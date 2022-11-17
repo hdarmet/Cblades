@@ -171,6 +171,8 @@ export class CBAEditBoardPane extends Undoable(VSplitterPanel) {
     saved(board) {
         this.board = board;
         this._buttons.get("edit").enabled = true;
+        this._clean();
+        this._memorize();
         return true;
     }
 
@@ -245,7 +247,9 @@ export class CBAEditBoard extends VModal {
             {
                 ref: "close-board", type: "neutral", label: "Close",
                 onClick: event => {
-                    this.hide();
+                    this.tryToLeave(() => {
+                        this.hide();
+                    });
                 }
             }]
         });
@@ -269,6 +273,10 @@ export class CBAEditBoard extends VModal {
 
     validate() {
         return this._boardPane.validate();
+    }
+
+    tryToLeave(leave, notLeave) {
+        return this._boardPane.tryToLeave(leave, notLeave);
     }
 
     saved(board) {

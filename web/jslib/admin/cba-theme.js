@@ -252,6 +252,8 @@ export class CBAEditThemePane extends Undoable(VSplitterPanel) {
 
     saved(theme) {
         this.theme = theme;
+        this._clean();
+        this._memorize();
         return true;
     }
 
@@ -322,7 +324,9 @@ export class CBAEditTheme extends VModal {
             {
                 ref: "close-theme", type: "neutral", label: "Close",
                 onClick: event => {
-                    this.hide();
+                    this.tryToLeave(() => {
+                        this.hide();
+                    });
                 }
             }]
         });
@@ -342,6 +346,10 @@ export class CBAEditTheme extends VModal {
         this.add(this._themePane);
         this.add(this._buttons);
         this.addClass("theme-modal");
+    }
+
+    tryToLeave(leave, notLeave) {
+        return this._themePane.tryToLeave(leave, notLeave);
     }
 
     validate() {

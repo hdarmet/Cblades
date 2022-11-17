@@ -23,32 +23,32 @@ import {
 
 export class CBSScenario extends Vitamin(Div) {
 
-    constructor({ref, title, illustration, story, setUp, victoryConditions, specialRules, action}) {
-        super({ref});
+    constructor({scenario, action}) {
+        super({ref:"scenario-"+scenario.id});
         this.addClass("scenario");
-        this._title = new P(title).addClass("scenario-title");
+        this._title = new P().addClass("scenario-title");
         this.add(this._title);
         this._illustration = new VMagnifiedImage({
-            ref:this.ref+"-illustration", kind:"scenario-illustration",
-            img:illustration||"../images/site/default-image.png"
+            ref:this.ref+"-illustration", kind:"scenario-illustration"
         });
         this.add(this._illustration);
         this._storyTitle = new P("Story:").addClass("scenario-story-title");
         this.add(this._storyTitle);
-        this._story = new P(story).addClass("scenario-story");
+        this._story = new P().addClass("scenario-story");
         this.add(this._story);
         this._setUpTitle = new P("Set Up:").addClass("scenario-setup-title");
         this.add(this._setUpTitle);
-        this._setUp = new P(setUp).addClass("scenario-setup");
+        this._setUp = new P().addClass("scenario-setup");
         this.add(this._setUp);
         this._victoryConditionsTitle = new P("Victory Conditions:").addClass("scenario-victory-conditions-title");
         this.add(this._victoryConditionsTitle);
-        this._victoryConditions = new P(victoryConditions).addClass("scenario-victory-conditions");
+        this._victoryConditions = new P().addClass("scenario-victory-conditions");
         this.add(this._victoryConditions);
         this._specialRulesTitle = new P("Special Rules:").addClass("scenario-special-rules-title");
         this.add(this._specialRulesTitle);
-        this._specialRules = new P(specialRules).addClass("scenario-special-rules");
+        this._specialRules = new P().addClass("scenario-special-rules");
         this.add(this._specialRules);
+        this.specification = scenario;
         this.onEvent("click", ()=>{
             action && action(this);
         });
@@ -105,7 +105,7 @@ export class CBSScenario extends Vitamin(Div) {
 
     get specification() {
         return {
-            ref: this.ref.ref,
+            id: this._id,
             illustration: this._illustration ? this._illustration.src : null,
             title: this._title.getText(),
             story: this._story.getText(),
@@ -116,12 +116,13 @@ export class CBSScenario extends Vitamin(Div) {
     }
 
     set specification(specification) {
-        this._title.setText(specification.title);
-        this._story.setText(specification.story);
-        this._setUp.setText(specification.setUp);
-        this._victoryConditions.setText(specification.victoryConditions);
-        this._specialRules.setText(specification.specialRules);
-        this._illustration.setSrc(specification.illustration);
+        this._id = specification.id;
+        this._title.setText(specification.title || "Scenario Title");
+        this._story.setText(specification.story || "");
+        this._setUp.setText(specification.setUp || "");
+        this._victoryConditions.setText(specification.victoryConditions || "");
+        this._specialRules.setText(specification.specialRules || "");
+        this._illustration.setSrc(specification.illustration || "../images/site/default-image.png");
     }
 
 }
@@ -288,7 +289,7 @@ export class CBSScenarioEditor extends Undoable(VSplitterPanel) {
         if (this._scenarioView) {
             this.removeFromLeft(this._scenarioView);
         }
-        this._scenarioView = new CBSScenario(scenario);
+        this._scenarioView = new CBSScenario({scenario});
         this.addOnLeft(this._scenarioView);
         this._editScenario();
         this._clean();
@@ -341,6 +342,8 @@ export class CBSScenarioEditor extends Undoable(VSplitterPanel) {
         }
         this._buttons.get("edit").enabled = true;
         showMessage("Scenario saved.");
+        this._clean();
+        this._memorize();
         return true;
     }
 

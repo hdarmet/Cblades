@@ -1,10 +1,8 @@
 package org.summer.data;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.OptimisticLockException;
-import javax.persistence.Version;
+import fr.cblades.domain.Board;
+
+import javax.persistence.*;
 
 @MappedSuperclass
 public class BaseEntity implements RelationshipOwnerSeawave {
@@ -13,6 +11,7 @@ public class BaseEntity implements RelationshipOwnerSeawave {
 	long id;
 	@Version
 	long version;
+	long updateTimestamp;
 	
 	public long getId() {
 		return this.id;
@@ -28,4 +27,14 @@ public class BaseEntity implements RelationshipOwnerSeawave {
 		}
 		return this;
 	}
+
+	public long getUpdateTimestamp() {
+		return this.updateTimestamp;
+	}
+
+	@PrePersist @PreUpdate
+	void updateTimestamp() {
+		this.updateTimestamp = System.currentTimeMillis();
+	}
+
 }

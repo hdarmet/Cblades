@@ -383,7 +383,6 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 				.write("version")
 				.write("title")
 				.syncEach("themes", (Json jsonTheme)-> Theme.find(em, jsonTheme.getLong("id")))
-				.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
 				.syncEach("paragraphs", (cJson, comment)->sync(cJson, comment)
 					.write("version")
 					.write("ordinal")
