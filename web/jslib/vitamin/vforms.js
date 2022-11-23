@@ -4,6 +4,7 @@ import {
     A, Button, Checkbox, Div, Form, Img, Input, Label, LI, Option, P, Select, Span, UL
 } from "./components.js";
 import {
+    VImage,
     Vitamin, VMagnifiedImage
 } from "./vitamins.js";
 import {
@@ -349,7 +350,11 @@ export class VField extends Vitamin(Div) {
         this.field.onChange(onChange);
     }
 
-    _initEvent({validate, onInput, onChange}) {
+    _onClick(onClick) {
+        this.field.onMouseClick(onClick);
+    }
+
+    _initEvent({validate, onInput, onChange, onClick}) {
         this._validate = validate;
         if (validate) {
             this._onInput(event=>{
@@ -365,6 +370,7 @@ export class VField extends Vitamin(Div) {
             onInput&&this._onInput(onInput);
             onChange&&this._onChange(onChange);
         }
+        onClick&&this._onClick(onClick);
     }
 
     validate() {
@@ -997,6 +1003,10 @@ export class VFileLoader extends Vitamin(Div) {
         return this.files || this._imageSrc;
     }
 
+    get file() {
+        return this._files ? this._files[0] : null;
+    }
+
     get files() {
         return this._files;
     }
@@ -1007,6 +1017,10 @@ export class VFileLoader extends Vitamin(Div) {
 
     set imageSrc(imageSrc) {
         return this.setImageSrc(imageSrc);
+    }
+
+    getImageDataURL(fileName, width = this._root.width, height = this._root.height) {
+        return this._image.getDataURL(fileName, width, height);
     }
 
     getImageFile(fileName, width, height) {
@@ -1041,6 +1055,15 @@ export class VFileLoader extends Vitamin(Div) {
         }
     }
 
+    set placeholder(imageSrc) {
+        this._image && this.remove(this._image);
+        this._image = new VImage({
+            ref:this.ref+"-image", img:imageSrc,
+        });
+        this.addClass("with-image");
+        this.add(this._image);
+    }
+
 }
 
 export class VFileLoaderField extends VField {
@@ -1067,6 +1090,14 @@ export class VFileLoaderField extends VField {
         return this._loader.files;
     }
 
+    get file() {
+        return this._loader.file;
+    }
+
+    getImageDataURL(fileName, width = this._root.width, height = this._root.height) {
+        return this._loader.getImageDataURL(fileName, width, height);
+    }
+
     getImageFile(fileName, width, height) {
         return this._loader.getImageFile(fileName, width, height);
     }
@@ -1079,6 +1110,9 @@ export class VFileLoaderField extends VField {
         this._loader.setImageSrc(imageSrc);
     }
 
+    set placeholder(imageSrc) {
+        this._loader.placeholder = imageSrc;
+    }
 }
 
 export class VRef extends VField {

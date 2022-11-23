@@ -35,6 +35,9 @@ import {
 import {
     loadLiveThemes
 } from "./cba-theme.js";
+import {
+    DetailedForm, DetailedView
+} from "../vitamin/structured.js";
 
 export class CBAParagraph extends Vitamin(Div) {
 
@@ -130,7 +133,7 @@ export class CBAParagraph extends Vitamin(Div) {
     }
 }
 
-export class CBAArticle extends Vitamin(Div) {
+export class CBAArticle extends DetailedView(Vitamin(Div)) {
 
     constructor({kind, action, paragraphAction, article}) {
         super({ref:"article-"+article.id});
@@ -141,7 +144,7 @@ export class CBAArticle extends Vitamin(Div) {
         this._paragraphs=[];
         if (article.paragraphs) {
             for (let paragraphSpec of article.paragraphs) {
-                this.createParagraph(paragraphSpec);
+                this.createDetailRecord(paragraphSpec);
             }
         }
         this.onEvent("click", event=>{
@@ -149,37 +152,17 @@ export class CBAArticle extends Vitamin(Div) {
         });
     }
 
-    createParagraph(paragraphSpec) {
-        let paragraph = new CBAParagraph({
-            ...paragraphSpec,
+    // ++
+    get detailRecords() {
+        return this.paragraphs;
+    }
+
+    // ++
+    _createDetailRecord(detailRecordSpec) {
+        return new CBAParagraph({
+            ...detailRecordSpec,
             action: this._paragraphAction
         });
-        this.add(paragraph);
-        this._paragraphs.push(paragraph);
-        return paragraph;
-    }
-
-    insertParagraph(paragraphSpec, before) {
-        let index = this._paragraphs.indexOf(before);
-        let paragraph = new CBAParagraph(paragraphSpec);
-        this._paragraphs.insert(index, paragraph);
-        this.insert(paragraph, before);
-        return paragraph;
-    }
-
-    removeParagraph(index) {
-        let paragraph = this._paragraphs[index];
-        this.remove(paragraph);
-        this._paragraphs.splice(index, 1);
-        return paragraph;
-    }
-
-    exchangeParagraphs(paragraph) {
-        let index = this._paragraphs.indexOf(paragraph);
-        this.remove(paragraph);
-        this.insert(paragraph, this._paragraphs[index-1]);
-        this._paragraphs.splice(index, 1);
-        this._paragraphs.splice(index-1, 0, paragraph);
     }
 
     getParagraph(ref) {
@@ -204,28 +187,18 @@ export class CBAArticle extends Vitamin(Div) {
     get specification() {
         return {
             title: this._title.getText(),
-            paragraphs: this._paragraphs.map((paragraph, ordinal)=>{
-                return {
-                    ordinal,
-                    ...paragraph.specification
-                }
-            })
+            paragraphs: this._getDetailRecordsSpecification()
         };
     }
 
     set specification(specification) {
         this._title.setText(specification.title);
-        for (let paragraph of this._paragraphs) {
-            this.remove(paragraph);
-        }
-        this._paragraphs = [];
-        for (let paragraphSpec of specification.paragraphs) {
-            this.createParagraph(paragraphSpec);
-        }
+        this._setDetailRecordsSpecification(specification.paragraphs);
     }
+
 }
 
-export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
+export class CBAEditArticlePane extends DetailedForm(Undoable(VSplitterPanel)) {
 
     constructor({ref, kind, article, accept, verify}) {
         super({ref});
@@ -363,6 +336,15 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
             & !this._author.validate();
     }
 
+    // ++
+    _updateForm() {
+        this._articleTitle.value = this._articleView.title;
+        this._paragraphTitle.value = this._paragraphView.title;
+        this._text.value = this._paragraphView.text;
+        this._illustration.imageSrc = this._paragraphView.illustration;
+        this._illustrationPosition.value = this._paragraphView.illustrationPosition;
+    }
+
     tryToLeave(leave, notLeave) {
         super.tryToLeave(leave, notLeave,"Article not saved. Do you want to Quit ?")
     }
@@ -392,12 +374,12 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
         }
         this._articleView = new CBAArticle({
             paragraphAction:paragraphView => {
-                this.selectParagraph(paragraphView);
+                this.selectDetailRecord(paragraphView);
                 return true;
             },
             article
         });
-        this._articleView.paragraphs[0] && this._selectParagraph(this._articleView.paragraphs[0]);
+        this._articleView.paragraphs[0] && this._selectDetailRecord(this._articleView.paragraphs[0]);
         this.addOnLeft(this._articleView);
         this._articleTitle.value = article.title;
         this._themes.value = article.themes ? article.themes.map(theme=>theme.id) : [];
@@ -423,13 +405,13 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
             this._articleView.specification = specification;
             for (let paragraphView of this._articleView.paragraphs) {
                 paragraphView.action = event => {
-                    this.selectParagraph(paragraphView);
+                    this.selectDetailRecord(paragraphView);
                     return true;
                 }
             }
             this._articleTitle.value = this._articleView.title;
             let paragraphView = this._articleView.getParagraph(specification.current);
-            this._selectParagraph(paragraphView);
+            this._selectDetailRecord(paragraphView);
             this._themes.value = specification.themes.map(theme=>theme.id);
             this._author.value = specification.author;
             this._comments = structuredClone(specification.comments)
@@ -457,171 +439,24 @@ export class CBAEditArticlePane extends Undoable(VSplitterPanel) {
         }).show();
     }
 
-    createParagraph(paragraphSpec) {
-        return this._articleView.createParagraph(paragraphSpec);
+    // ++
+    get mainRecordView() {
+        return this._articleView;
     }
 
-    selectParagraph(paragraphView) {
-        if (paragraphView!==this._paragraphView) {
-            this._selectParagraph(paragraphView);
-            this._memorize();
-        }
+    // ++
+    get detailRecordView() {
+        return this._paragraphView;
     }
 
-    _selectParagraph(paragraphView) {
-        this._unselectParagraph();
-        this._paragraphView = paragraphView;
-        this._paragraphView.addClass("selected");
-        this._articleTitle.value = this._articleView.title;
-        this._paragraphTitle.value = this._paragraphView.title;
-        this._text.value = this._paragraphView.text;
-        this._illustration.imageSrc = this._paragraphView.illustration;
-        this._illustrationPosition.value = this._paragraphView.illustrationPosition;
-        this._deleteCommand = new VCommand({
-            ref:"paragraph-delete-cmd",
-            imgEnabled: `../images/site/buttons/minus.png`,
-            imgDisabled: `../images/site/buttons/minus-disabled.png`,
-            onClick: event=>{
-                event.stopPropagation();
-                return this._deleteParagraph();
-            }
-        }).addClass("delete-command");
-        this._paragraphView.add(this._deleteCommand);
-        this._insertBeforeCommand = new VCommand({
-            ref: "paragraph-insert-before-cmd",
-            illustrationPosition: "center",
-            imgEnabled: `../images/site/buttons/plus.png`,
-            imgDisabled: `../images/site/buttons/plus-disabled.png`,
-            onClick: event=>{
-                event.stopPropagation();
-                return this._createBefore();
-            }
-        }).addClass("insert-before-command");
-        this._paragraphView.add(this._insertBeforeCommand);
-        this._insertAfterCommand = new VCommand({
-            ref:"paragraph-insert-after-cmd",
-            imgEnabled: `../images/site/buttons/plus.png`,
-            imgDisabled: `../images/site/buttons/plus-disabled.png`,
-            onClick: event=>{
-                event.stopPropagation();
-                return this._createAfter();
-            }
-        }).addClass("insert-after-command");
-        this._paragraphView.add(this._insertAfterCommand);
-        this._goUpCommand = new VCommand({
-            ref: "paragraph-goup-cmd",
-            imgEnabled: `../images/site/buttons/goup.png`,
-            imgDisabled: `../images/site/buttons/goup-disabled.png`,
-            onClick: event => {
-                event.stopPropagation();
-                return this._goUp();
-            }
-        }).addClass("goup-command");
-        this._paragraphView.add(this._goUpCommand);
-        this._goDownCommand = new VCommand({
-            ref: "paragraph-godown-cmd",
-            imgEnabled: `../images/site/buttons/godown.png`,
-            imgDisabled: `../images/site/buttons/godown-disabled.png`,
-            onClick: event=>{
-                event.stopPropagation();
-                return this._goDown();
-            }
-        }).addClass("godown-command");
-        this._paragraphView.add(this._goDownCommand);
-        this._updateGoCommands();
+    // ++
+    set detailRecordView(detailRecordView) {
+        this._paragraphView = detailRecordView;
     }
 
-    _updateGoCommands() {
-        this._goUpCommand.enabled = this._articleView.paragraphs.indexOf(this._paragraphView)!==0;
-        this._goDownCommand.enabled = this._articleView.paragraphs.indexOf(this._paragraphView)<this._articleView.paragraphs.length-1;
-        this._deleteCommand.enabled = this._articleView.paragraphs.length>1;
-    }
-
-    _unselectParagraph() {
-        if (this._paragraphView) {
-            this._paragraphView.removeClass("selected");
-            this._paragraphView.remove(this._deleteCommand);
-            this._paragraphView.remove(this._goUpCommand);
-            this._paragraphView.remove(this._goDownCommand);
-            this._paragraphView.remove(this._insertBeforeCommand);
-            this._paragraphView.remove(this._insertAfterCommand);
-        }
-    }
-
-    _goUp() {
-        let index = this._articleView.paragraphs.indexOf(this._paragraphView);
-        if (index>0) {
-            this._articleView.exchangeParagraphs(this._paragraphView);
-        }
-        this._updateGoCommands();
-        return true;
-    }
-
-    _goDown() {
-        let index = this._articleView.paragraphs.indexOf(this._paragraphView);
-        if (index+1<this._articleView.paragraphs.length) {
-            this._articleView.exchangeParagraphs(this._articleView.paragraphs[index+1]);
-        }
-        this._updateGoCommands();
-        return true;
-    }
-
-    _createBefore() {
-        let paragraphView = this._articleView.insertParagraph({
-            ref: crypto.randomUUID(),
-            ...this._newParagraphSpecs,
-            action: event => {
-                this.selectParagraph(paragraphView);
-                return true;
-            }
-        }, this._paragraphView);
-        this._selectParagraph(paragraphView);
-        this._updateGoCommands();
-        this._memorize();
-        return true;
-    }
-
-    _createAfter() {
-        let index = this._articleView.paragraphs.indexOf(this._paragraphView);
-        if (index === this._articleView.paragraphs.length-1) {
-            let paragraphView = this.createParagraph({
-                ref: crypto.randomUUID(),
-                ...this._newParagraphSpecs
-            });
-            this._selectParagraph(paragraphView);
-        }
-        else {
-            let paragraphView = this._article.insertParagraph({
-                ref: crypto.randomUUID(),
-                ...this._newParagraphSpecs,
-                action: event => {
-                    this.selectParagraph(paragraphView);
-                    return true;
-                }
-            }, this._article.paragraphs[index+1]);
-            this._selectParagraph(paragraphView);
-        }
-        this._updateGoCommands();
-        this._memorize();
-        return true;
-    }
-
-    _deleteParagraph() {
-        let index = this._articleView.paragraphs.indexOf(this._paragraphView);
-        this._articleView.removeParagraph(index);
-        if (this._articleView.paragraphs.length===0) {
-            let paragraphView = this.createParagraph({
-                ref: crypto.randomUUID(),
-                ...this._newParagraphSpecs
-            });
-            this._selectParagraph(paragraphView);
-        }
-        else {
-            this._selectParagraph(this._articleView.paragraphs[index]);
-        }
-        this._updateGoCommands();
-        this._memorize();
-        return true;
+    // ++
+    get newDetailRecordSpec() {
+        return this._newParagraphSpecs;
     }
 
     get imageFiles() {

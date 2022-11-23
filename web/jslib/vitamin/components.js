@@ -635,6 +635,9 @@ export class Img extends DOM(DComponent) {
     }
 
     getSrc() {
+        if (this._root.src===undefined) {
+            console.assert("undefined !!");
+        }
         return this._root.src;
     }
 
@@ -644,13 +647,21 @@ export class Img extends DOM(DComponent) {
         return this;
     }
 
-    getFile(fileName, width = this._root.width, height = this._root.height) {
+    getDataBlob(fileName, width = this._root.width, height = this._root.height) {
         let canvas = document.createElement("canvas");
         canvas.width = width;
         canvas.height = height;
         let ctx = canvas.getContext("2d");
         ctx.drawImage(this._root, 0, 0, width, height);
-        return new File([dataURLtoBlob(canvas.toDataURL("image/png"))], fileName);
+        return dataURLtoBlob(canvas.toDataURL("image/png"));
+    }
+
+    getDataURL(fileName, width = this._root.width, height = this._root.height) {
+        return URL.createObjectURL(this.getDataBlob(fileName, width, height));
+    }
+
+    getFile(fileName, width = this._root.width, height = this._root.height) {
+        return new File([this.getDataBlob(fileName, width, height)], fileName);
     }
 
     static _loaderListeners = new Set();

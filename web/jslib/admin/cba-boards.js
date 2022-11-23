@@ -143,6 +143,7 @@ export class CBAEditBoardPane extends Undoable(VSplitterPanel) {
         this._status.value = board.status || "prp";
         this._description.value = board.description || "";
         this._path.imageSrc = board.path || "";
+        this._icon = board.icon || "",
         this._author.value = board.author;
         this._comments = {
             comments: this._board.comments || [],

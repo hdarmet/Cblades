@@ -523,6 +523,10 @@ export class VImage extends Vitamin(Div) {
         return this._image.getFile(fileName, width, height);
     }
 
+    getDataURL(fileName, width = this._root.width, height = this._root.height) {
+        return this._image.getDataURL(fileName, width, height);
+    }
+
 }
 
 export class VMagnifiedImage extends VImage {
@@ -538,9 +542,11 @@ export class VMagnifiedImage extends VImage {
         this._mouseEnterAction = event=>{
             this._magnify = true;
             this._event = event;
-            setTimeout(()=>{
+            setTimeout(() => {
                 if (this._magnify) {
-                    this.setMagnifier(5, this._zoomImg, this._event);
+                    if (this._zoomImg) {
+                        this.setMagnifier(5, this._zoomImg, this._event);
+                    }
                 }
             }, 1000);
         };

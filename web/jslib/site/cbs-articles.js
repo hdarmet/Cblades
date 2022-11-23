@@ -594,7 +594,7 @@ export class CBSArticleEditor extends Undoable(VSplitterPanel) {
         this._illustration.imageSrc = this._paragraphView.illustration;
         this._illustrationPosition.value = this._paragraphView.illustrationPosition;
         this._deleteCommand = new VCommand({
-            ref:"paragraph-delete-cmd",
+            ref:"detail-record-delete-cmd",
             imgEnabled: `../images/site/buttons/minus.png`,
             imgDisabled: `../images/site/buttons/minus-disabled.png`,
             onClick: event=>{
@@ -615,7 +615,7 @@ export class CBSArticleEditor extends Undoable(VSplitterPanel) {
         }).addClass("insert-before-command");
         this._paragraphView.add(this._insertBeforeCommand);
         this._insertAfterCommand = new VCommand({
-            ref:"paragraph-insert-after-cmd",
+            ref:"detail-record-insert-after-cmd",
             imgEnabled: `../images/site/buttons/plus.png`,
             imgDisabled: `../images/site/buttons/plus-disabled.png`,
             onClick: event=>{

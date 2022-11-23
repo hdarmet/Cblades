@@ -191,14 +191,14 @@ public class FakeData {
                         .setOrdinal(0)
                         .setTitle("First paragraph")
                         .setText(PARAGRAPH_TEXT)
-                        .setIllustrationPosition("../images/site/factions/amarys.png")
-                        .setIllustrationPosition(IllustrationPosition.LEFT)
+                        .setIllustration("../images/site/factions/amarys.png")
+                        .setIllustration(IllustrationPosition.LEFT)
                     ).addParagraph(new Paragraph()
                         .setOrdinal(1)
                         .setTitle("Second paragraph")
                         .setText(PARAGRAPH_TEXT)
-                        .setIllustrationPosition("../images/site/factions/demons.png")
-                        .setIllustrationPosition(IllustrationPosition.LEFT)
+                        .setIllustration("../images/site/factions/demons.png")
+                        .setIllustration(IllustrationPosition.LEFT)
                     ).setPoll(new LikePoll().setLikes(3).setDislikes(1));
                 article.setFirstParagraph(article.getParagraph(0));
                 article.buildDocument();
@@ -214,8 +214,8 @@ public class FakeData {
                         .setOrdinal(0)
                         .setTitle("First paragraph")
                         .setText(PARAGRAPH_TEXT)
-                        .setIllustrationPosition("../images/site/factions/hill.png")
-                        .setIllustrationPosition(IllustrationPosition.LEFT)
+                        .setIllustration("../images/site/factions/hill.png")
+                        .setIllustration(IllustrationPosition.LEFT)
                     ).setPoll(new LikePoll().setLikes(10).setDislikes(2));
                 article.setFirstParagraph(article.getParagraph(0));
                 article.buildDocument();
