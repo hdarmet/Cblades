@@ -315,7 +315,81 @@ public class FakeData {
                 .setStatus(FactionStatus.LIVE);
             data.persist(em, faction);
         });
+        data.inTransaction(em-> {
+            MagicArt magic = new MagicArt()
+                .setName("Arcanic Art")
+                .setDescription("The Versatile Art of Arcany. "+PARAGRAPH_TEXT)
+                .setIllustration("../images/site/magic/arcanic.png")
+                .addSheet(new Sheet()
+                    .setName("Counter sheet 1")
+                    .setPath("../images/site/magic/arcanic/counters1.png")
+                    .setIcon("../images/site/magic/arcanic/counters1-icon.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Counter sheet 1b")
+                    .setPath("../images/site/magic/arcanic/counters1b.png")
+                    .setIcon("../images/site/magic/arcanic/counters1b-icon.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Player Aid")
+                    .setPath("../docs/Fiche Art Arcanique.pdf")
+                    .setIcon("../images/site/magic/arcanic/player-aid.png")
+                )
+                .setStatus(MagicArtStatus.LIVE);
+            data.persist(em, magic);
+            magic = new MagicArt()
+                .setName("Pyromancy Art")
+                .setDescription("The Destructive Art Of Pyromancy. "+PARAGRAPH_TEXT)
+                .setIllustration("../images/site/magic/pyromantic.png")
+                .addSheet(new Sheet()
+                    .setName("Counter sheet 1")
+                    .setPath("../images/site/magic/pyromantic/counters1.png")
+                    .setIcon("../images/site/magic/pyromantic/counters1-icon.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Counter sheet 1b")
+                    .setPath("../images/site/magic/pyromantic/counters1b.png")
+                    .setIcon("../images/site/magic/pyromantic/counters1b-icon.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Player Aid")
+                    .setPath("../docs/Fiche Art Pyromantique.pdf")
+                    .setIcon("../images/site/magic/pyromantic/player-aid.png")
+                )
+                .setStatus(MagicArtStatus.LIVE);
+            data.persist(em, magic);
 
+            magic = new MagicArt()
+                .setName("Tellurical Art")
+                .setDescription("The Fundamental Art Of Tellury. "+PARAGRAPH_TEXT)
+                .setIllustration("../images/site/magic/telluric.png")
+                .setStatus(MagicArtStatus.LIVE);
+            data.persist(em, magic);
+            magic = new MagicArt()
+                .setName("Biotic Art")
+                .setDescription("The Fascinating Art Of Biology. "+PARAGRAPH_TEXT)
+                .setIllustration("../images/site/magic/biotic.png")
+                .setStatus(MagicArtStatus.LIVE);
+            data.persist(em, magic);
+            magic = new MagicArt()
+                .setName("Demonological Art")
+                .setDescription("The Frightening Art Of Demonology. "+PARAGRAPH_TEXT)
+                .setIllustration("../images/site/magic/demonic.png")
+                .setStatus(MagicArtStatus.LIVE);
+            data.persist(em, magic);
+            magic = new MagicArt()
+                .setName("Theological Art")
+                .setDescription("The Saint Art Of Theology. "+PARAGRAPH_TEXT)
+                .setIllustration("../images/site/magic/theologic.png")
+                .setStatus(MagicArtStatus.LIVE);
+            data.persist(em, magic);
+            magic = new MagicArt()
+                .setName("Necromancy Art")
+                .setDescription("The Horrible Art Of Necromancy. "+PARAGRAPH_TEXT)
+                .setIllustration("../images/site/magic/necromantic.png")
+                .setStatus(MagicArtStatus.LIVE);
+            data.persist(em, magic);
+        });
     }
 
     static String TINY_PARAGRAPH_TEXT = "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit";

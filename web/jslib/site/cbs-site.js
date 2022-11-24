@@ -68,6 +68,9 @@ import {
     loadFaction,
     loadFactions, vFactionCountersPageGallery, vFactionsGallery
 } from "./cbs-factions.js";
+import {
+    loadMagicArt, loadMagicArts, vMagicArtCountersPageGallery, vMagicArtsGallery
+} from "./cbs-magic.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -87,7 +90,7 @@ export var vMenu = new VMainMenu({ref:"menu"})
             }
         })
         .addMenu({ref:"dwnld-magic-menu", label:"La magie", action:()=>{
-                window.vPageContent.showMagicGallery();
+                window.vPageContent.showMagicArtsGallery();
             }
         })
         .addMenu({ref:"dwnld-markers-menu", label:"Les marqueurs", action:()=>{
@@ -280,12 +283,13 @@ export var vBoardsTitle = new VHeader({
     title: "Boards"
 }).addClass("maps-title");
 
-export var vMagicTitle = new VHeader({
+export var vMagicArtsTitle = new VHeader({
     ref:"magic-title",
     left:"../images/site/left-magic.png", right:"../images/site/right-magic.png",
     title: "Magical Arts"
 }).addClass("magic-title");
 
+/*
 export function declareMagic(magicRef, magicName, magicDescription) {
     return {
         ref:"magic-"+magicName,
@@ -415,7 +419,7 @@ vMagicCountersPageGallery.show = function() {
     });
     vMagicCountersGallery.show();
 }
-
+*/
 export var vFactionsTitle = new VHeader({
     ref:"army-title",
     left:"../images/site/left-factions.png", right:"../images/site/right-factions.png",
@@ -435,7 +439,7 @@ export function declareFaction(factionRef, factionName, factionDescription) {
     };
 }
 */
-
+/*
 var factions = {
     amarys: {
         ref: "amarys", name: "Amarys",
@@ -470,7 +474,7 @@ var factions = {
         counterSheets: 3
     },
 }
-
+*/
 /*
 export var vFactionsGallery = new CBSGallery({ref:"factions", kind: "gallery-factions"});
 
@@ -1137,25 +1141,30 @@ class CBSPageContent extends VPageContent {
         );
     }
 
-    _showMagicGallery(byHistory, historize) {
-        return this.changePage(vMagicTitle, vMagicGallery, byHistory, historize);
-    }
-
-    showMagicGallery() {
-        this._showMagicGallery(false, ()=>
-            historize("magic-gallery", "window.vPageContent._showMagicGallery(true);")
+    showMagicArtCountersGallery(faction) {
+        this._showMagicArtCountersGallery(faction, false, ()=>
+            historize("magic-counters-gallery", "window.vPageContent._showMagicArtCountersGallery(event.state.faction, true);")
         );
     }
 
-    _showMagicCountersGallery(art, byHistory, historize) {
-        vMagicCountersGallery.setMagicArt(art);
-        return this.changePage(vMagicTitle, vMagicCountersPageGallery, byHistory, historize);
+    _showMagicArtsGallery(byHistory, historize) {
+        loadMagicArts(
+            ()=>{
+                this.changePage(vMagicArtsTitle, vMagicArtsGallery, byHistory, historize);
+            }
+        );
     }
 
-    showMagicCountersGallery(art) {
-        this._showMagicCountersGallery(art, false, ()=>
-            historize("magic-counters-gallery", "window.vPageContent._showMagicCountersGallery(event.state.art, true);")
+    showMagicArtsGallery() {
+        this._showMagicArtsGallery(false, ()=>
+            historize("magics-gallery", "window.vPageContent._showMagicArtsGallery(true);")
         );
+    }
+
+    _showMagicArtCountersGallery(faction, byHistory, historize) {
+        loadMagicArt(faction, faction=> {
+            this.changePage(vMagicArtsTitle, vMagicArtCountersPageGallery, byHistory, historize);
+        });
     }
 
     _showMarkersGallery(byHistory, historize) {

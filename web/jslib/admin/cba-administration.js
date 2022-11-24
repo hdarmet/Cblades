@@ -54,6 +54,9 @@ import {
     vFactionList
 } from "./cba-faction.js";
 import {
+    vMagicArtList
+} from "./cba-magic.js";
+import {
     vScenarioList
 } from "./cba-scenario.js";
 
@@ -94,6 +97,10 @@ export var vMenu = new VMainMenu({ref:"menu"})
         })
         .addMenu({ref:"faction-menu", label:"Factions", action:()=>{
                 window.vPageContent.showFactionList();
+            }
+        })
+        .addMenu({ref:"magic-menu", label:"Magic Arts", action:()=>{
+                window.vPageContent.showMagicArtList();
             }
         })
     })
@@ -439,6 +446,18 @@ export class CBAPageContent extends VPageContent {
         vFactionList.loadFactions();
         this._showFactionList(false, ()=> {
                 historize("faction", "vPageContent._showFactionList(true);")
+            }
+        );
+    }
+
+    _showMagicArtList(byHistory, historize) {
+        return this.changePage(null, vMagicArtList, byHistory, historize);
+    }
+
+    showMagicArtList() {
+        vMagicArtList.loadMagicArts();
+        this._showMagicArtList(false, ()=> {
+                historize("magic", "vPageContent._showMagicArtList(true);")
             }
         );
     }
