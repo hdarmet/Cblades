@@ -156,6 +156,7 @@
 .faction-editor-pane .embed-sheet {
     display: inline-block;
     position: relative;
+    margin-bottom: 15px;
 }
 
 .faction-editor-pane .embed-sheet.selected {

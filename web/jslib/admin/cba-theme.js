@@ -6,7 +6,7 @@ import {
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, requestLog, Select, sendGet, sendPost, Span
+    Div, Img, isImageFile, P, requestLog, Select, sendGet, sendPost, Span
 } from "../vitamin/components.js";
 import {
     Undoable, VImage,
@@ -16,7 +16,6 @@ import {
     mandatory, range,
     VButton,
     VButtons,
-    VFileLoader,
     VFileLoaderField,
     VInputField, VInputTextArea, VRef, VSelectField
 } from "../vitamin/vforms.js";
@@ -288,7 +287,7 @@ export class CBAEditTheme extends VModal {
             theme,
             create,
             accept(file) {
-                if (!VFileLoader.isImage(file)) {
+                if (!isImageFile(file)) {
                     VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (450 x 150) pixels."});
                     return false;
                 }

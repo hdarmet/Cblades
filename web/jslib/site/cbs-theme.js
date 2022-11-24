@@ -4,14 +4,14 @@ import {
     Undoable, VImage, Vitamin, VMessageHandler
 } from "../vitamin/vitamins.js";
 import {
-    Div, P, requestLog, sendGet, sendPost
+    Div, isImageFile, P, requestLog, sendGet, sendPost
 } from "../vitamin/components.js";
 import {
     VSplitterPanel
 } from "../vitamin/vcontainer.js";
 import {
     mandatory, range,
-    VButton, VButtons, VFileLoader, VFileLoaderField, VInputField, VInputTextArea, VSelectField
+    VButton, VButtons, VFileLoaderField, VInputField, VInputTextArea, VSelectField
 } from "../vitamin/vforms.js";
 import {
     showMessage
@@ -121,7 +121,7 @@ export class CBSThemeEditor extends Undoable(VSplitterPanel) {
             ref:"theme-image", label:"Image",
             validate: mandatory({}),
             accept(file) {
-                if (!VFileLoader.isImage(file)) {
+                if (!isImageFile(file)) {
                     VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (450 x 150) pixels."});
                     return false;
                 }

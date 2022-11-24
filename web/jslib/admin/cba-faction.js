@@ -1,12 +1,11 @@
 'use strict';
 
 import {
-    VContainer,
     VSplitterPanel,
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, requestLog, Select, sendGet, sendPost, Span
+    Div, Img, isImageFile, isImageURL, P, requestLog, Select, sendGet, sendPost, Span
 } from "../vitamin/components.js";
 import {
     download,
@@ -16,10 +15,9 @@ import {
 import {
     mandatory, range,
     VButton,
-    VButtons, VCommand, VDropdownListField,
-    VFileLoader,
+    VButtons,
     VFileLoaderField,
-    VInputField, VInputTextArea, VRef, VSelectField, VSwitch
+    VInputField, VInputTextArea, VRef, VSelectField
 } from "../vitamin/vforms.js";
 import {
     showMessage
@@ -33,9 +31,6 @@ import {
 import {
     CBAEditComments
 } from "./cba-comment.js";
-import {
-    loadLiveThemes
-} from "./cba-theme.js";
 import {
     DetailedForm, DetailedView
 } from "../vitamin/structured.js";
@@ -249,7 +244,7 @@ export class CBAEditFactionPane extends DetailedForm(Undoable(VSplitterPanel)) {
             ref:"faction-illustration", label:"Faction illustration",
             validate: mandatory({}),
             accept(file) {
-                if (!VFileLoader.isImage(file)) {
+                if (!isImageFile(file)) {
                     VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (600 x 350) pixels."});
                     return false;
                 }
@@ -297,7 +292,7 @@ export class CBAEditFactionPane extends DetailedForm(Undoable(VSplitterPanel)) {
                 return true;
             },
             onInput: event=>{
-                if (VFileLoader.isImage(this._sheetPath.file)) {
+                if (isImageFile(this._sheetPath.file)) {
                     this._sheetIcon.imageSrc = this.getSheetIconSrcFromPath();
                     this._sheetView.icon = this.sheetIconSrc;
                     this._sheetView.iconFile = this.getSheetIconImageFromPath();
@@ -327,7 +322,7 @@ export class CBAEditFactionPane extends DetailedForm(Undoable(VSplitterPanel)) {
             ref:"sheet-icon", label:"Sheet Icon",
             validate: mandatory({}),
             accept(file) {
-                if (!VFileLoader.isImage(file)) {
+                if (!isImageFile(file)) {
                     VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (310 x 438) pixels."});
                     return false;
                 }
@@ -398,15 +393,19 @@ export class CBAEditFactionPane extends DetailedForm(Undoable(VSplitterPanel)) {
         this._factionIllustration.imageSrc = this._factionView.illustration;
         this._sheetName.value = this._sheetView.name;
         if (this._sheetView.path) {
-            this._sheetPath.imageSrc = this._sheetView.path;
+            if (isImageURL(this._sheetView.path)) {
+                this._sheetPath.imageSrc = this._sheetView.path;
+            }
+            else {
+                this._sheetPath.placeholder = "../images/site/document.png";
+            }
         }
-        if (!this._sheetView.pathFile) {
+        else if (!this._sheetView.pathFile) {
             this._sheetPath.placeholder = "../images/site/default-sheet.png";
         }
-        else if (!VFileLoader.isImage(this._sheetView.pathFile)) {
+        else if (!isImageFile(this._sheetView.pathFile)) {
             this._sheetPath.placeholder = "../images/site/document.png";
         }
-
         this._sheetIcon.imageSrc = this._sheetView.icon;
     }
 

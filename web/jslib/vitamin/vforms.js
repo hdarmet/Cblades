@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    A, Button, Checkbox, Div, Form, Img, Input, Label, LI, Option, P, Select, Span, UL
+    A, Button, Checkbox, Div, Form, Img, Input, isImageFile, Label, LI, Option, P, Select, Span, UL
 } from "./components.js";
 import {
     VImage,
@@ -965,10 +965,6 @@ export class VFileLoader extends Vitamin(Div) {
         }
     }
 
-    static isImage(file) {
-        return file.type === "image/png" || file.type === "image/jpeg";
-    }
-
     _trigger(file) {
         let event = new Event("loadfile");
         event.file = file;
@@ -977,7 +973,7 @@ export class VFileLoader extends Vitamin(Div) {
     }
 
     showFile(file) {
-        if (VFileLoader.isImage(file)) {
+        if (isImageFile(file)) {
             this.setImageSrc(URL.createObjectURL(file), ()=>{
                 this._trigger(this.imageSrc);
             });

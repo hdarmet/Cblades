@@ -4,7 +4,7 @@ import {
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, requestLog, Select, sendGet, sendPost, Span
+    Div, Img, isImageFile, P, requestLog, Select, sendGet, sendPost, Span
 } from "../vitamin/components.js";
 import {
     Vitamin, VModal, VSearch
@@ -59,7 +59,7 @@ export class CBAEditEvent extends VModal {
             ref: "event-illustration", label: "Illustration",
             imageSrc: event.illustration,
             accept: file => {
-                if (!VFileLoader.isImage(file)) {
+                if (!isImageFile(file)) {
                     this._illustration.message = "The image must be a PNG or JPEG file of size > (200 x 100) pixels.";
                     return false;
                 }

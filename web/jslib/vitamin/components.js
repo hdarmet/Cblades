@@ -713,6 +713,19 @@ export class UndoRedo {
 
 }
 
+export function isImageFile(file) {
+    return file.type === "image/png" || file.type === "image/jpeg";
+}
+
+export function isImageURL(url) {
+    let index = url.lastIndexOf(".");
+    if (index>=0) {
+        let extension = url.substring(index+1);
+        return extension === "png" || extension === "jpeg" || extension === "jpg";
+    }
+    return false;
+}
+
 export function sendGet(uri, success, failure, files) {
     getDrawPlatform().requestServer(uri, null, success, failure, files, 'GET');
 }

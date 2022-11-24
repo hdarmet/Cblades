@@ -198,6 +198,17 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 		return result.get();
 	}
 
+	@REST(url="/api/faction/live", method=Method.GET)
+	public Json getLive(Map<String, String> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			Collection<Faction> factions = findFactions(em.createQuery("select f from Faction f where f.status=:status"),
+				"status", FactionStatus.LIVE);
+			result.set(readFromFactionSummaries(factions));
+		});
+		return result.get();
+	}
+
 	@REST(url="/api/faction/by-name/:name", method=Method.GET)
 	public Json getByTitle(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
@@ -297,6 +308,20 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 				},
 				ADMIN
 			);
+		});
+		return result.get();
+	}
+
+	@REST(url="/api/faction/published/:id", method=Method.GET)
+	public Json getPublishedFaction(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			String id = (String)params.get("id");
+			Faction faction = findFaction(em, new Long(id));
+			if (faction.getStatus() != FactionStatus.LIVE) {
+				throw new SummerControllerException(409, "Faction is not live.");
+			}
+			result.set(readFromPublishedFaction(faction));
 		});
 		return result.get();
 	}
@@ -488,13 +513,6 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 				.read("name")
 				.read("icon")
 				.read("path")
-			)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
 			);
 		return json;
 	}

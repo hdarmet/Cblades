@@ -5,7 +5,7 @@ import {
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, Select, sendGet, sendPost, Span, Enum, requestLog
+    Div, Img, P, Select, sendGet, sendPost, Span, Enum, requestLog, isImageFile
 } from "../vitamin/components.js";
 import {
     Vitamin, VModal, VSearch
@@ -19,7 +19,6 @@ import {
     matchesPassword,
     VButton,
     VButtons,
-    VFileLoader,
     VFileLoaderField,
     VFormContainer,
     VInputField,
@@ -217,7 +216,7 @@ export class CBAEditUser extends VModal {
             ref: "user-avatar", label: "Avatar",
             imageSrc: user.avatar,
             accept: file => {
-                if (!VFileLoader.isImage(file)) {
+                if (!isImageFile(file)) {
                     this._avatar.message = "The image must be a PNG or JPEG square file of size > 100 pixels.";
                     return false;
                 }

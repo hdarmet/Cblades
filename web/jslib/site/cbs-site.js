@@ -64,6 +64,10 @@ import {
 import {
     loadAnnouncement, vHome
 } from "./cbs-home.js";
+import {
+    loadFaction,
+    loadFactions, vFactionCountersPageGallery, vFactionsGallery
+} from "./cbs-factions.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -325,7 +329,7 @@ var magics = {
     theologic: {
         ref: "theologic", name: "Theological Art",
         description: "The Saint Art Of Theology"
-    },
+    }
 }
 
 export var vMagicGallery = new CBSGallery({ref:"magic", kind: "gallery-magic"});
@@ -418,16 +422,19 @@ export var vFactionsTitle = new VHeader({
     title: "Factions"
 }).addClass("factions-title");
 
+/*
 export function declareFaction(factionRef, factionName, factionDescription) {
     return {
         ref:"army-"+factionName,
         img:`../images/site/factions/${factionRef}.png`,
         title:factionName, description:factionDescription,
-        button:"Counters Sheets", action:event=>{
+        button:"Counters Sheets",
+        action:event=>{
             vPageContent.showFactionCountersGallery(factions[factionRef]);
         }
     };
 }
+*/
 
 var factions = {
     amarys: {
@@ -464,6 +471,7 @@ var factions = {
     },
 }
 
+/*
 export var vFactionsGallery = new CBSGallery({ref:"factions", kind: "gallery-factions"});
 
 vFactionsGallery.show = function() {
@@ -473,7 +481,8 @@ vFactionsGallery.show = function() {
     }
     return this;
 }
-
+*/
+/*
 export function declareFactionCounter(factionRef, counterRef, counterName) {
     return {
         ref:counterRef,
@@ -532,6 +541,7 @@ vFactionCountersPageGallery.show = function() {
     });
     vFactionCountersGallery.show();
 }
+*/
 
 var markers = {
     "markers-1": {ref:"markers-1", sheet: "counters1", name: "markers1", description: "First sheet of markers" },
@@ -1102,7 +1112,11 @@ class CBSPageContent extends VPageContent {
     }
 
     _showFactionsGallery(byHistory, historize) {
-        return this.changePage(vFactionsTitle, vFactionsGallery, byHistory, historize);
+        loadFactions(
+            ()=>{
+                this.changePage(vFactionsTitle, vFactionsGallery, byHistory, historize);
+            }
+        );
     }
 
     showFactionsGallery() {
@@ -1112,8 +1126,9 @@ class CBSPageContent extends VPageContent {
     }
 
     _showFactionCountersGallery(faction, byHistory, historize) {
-        vFactionCountersGallery.setFaction(faction);
-        return this.changePage(vFactionsTitle, vFactionCountersPageGallery, byHistory, historize);
+        loadFaction(faction, faction=> {
+            this.changePage(vFactionsTitle, vFactionCountersPageGallery, byHistory, historize);
+        });
     }
 
     showFactionCountersGallery(faction) {

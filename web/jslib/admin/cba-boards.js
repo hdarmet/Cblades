@@ -6,17 +6,16 @@ import {
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, requestLog, Select, sendGet, sendPost, Span
+    Div, Img, isImageFile, P, requestLog, Select, sendGet, sendPost, Span
 } from "../vitamin/components.js";
 import {
     Undoable,
     Vitamin, VMessageHandler, VModal, VSearch
 } from "../vitamin/vitamins.js";
 import {
-    mandatory, matchesName, range,
+    mandatory, range,
     VButton,
     VButtons,
-    VFileLoader,
     VFileLoaderField,
     VInputField, VInputTextArea, VRef, VSelectField
 } from "../vitamin/vforms.js";
@@ -212,7 +211,7 @@ export class CBAEditBoard extends VModal {
             board,
             create,
             accept: file=>{
-                if (!VFileLoader.isImage(file)) {
+                if (!isImageFile(file)) {
                     VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (2046 x 3150) pixels."});
                     return false;
                 }

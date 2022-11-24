@@ -1,16 +1,16 @@
 import {
     download,
-    Undoable, VImage, Vitamin, VMagnifiedImage, VMessageHandler
+    Undoable, Vitamin, VMagnifiedImage, VMessageHandler
 } from "../vitamin/vitamins.js";
 import {
-    Div, P, requestLog, sendGet, sendPost
+    Div, isImageFile, P, requestLog, sendGet, sendPost
 } from "../vitamin/components.js";
 import {
     VSplitterPanel
 } from "../vitamin/vcontainer.js";
 import {
     mandatory, range,
-    VButton, VButtons, VFileLoader, VFileLoaderField, VFormContainer, VInputField, VInputTextArea
+    VButton, VButtons, VFileLoaderField, VInputField, VInputTextArea
 } from "../vitamin/vforms.js";
 import {
     CBSEditComments
@@ -96,7 +96,7 @@ export class CBSBoardEditor extends Undoable(VSplitterPanel) {
             ref:"board-path", label:"Image",
             validate: mandatory({}),
             accept(file) {
-                if (!VFileLoader.isImage(file)) {
+                if (!isImageFile(file)) {
                     VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size (2046 x 3150) pixels."});
                     return false;
                 }

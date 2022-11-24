@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    Div, A, Form, Input, Span, App, Img, P, UL, LI, UndoRedo
+    Div, A, Form, Input, Span, App, Img, P, UL, LI, UndoRedo, isImageURL
 } from "./components.js";
 
 export function isVitamin(component) {
@@ -544,7 +544,7 @@ export class VMagnifiedImage extends VImage {
             this._event = event;
             setTimeout(() => {
                 if (this._magnify) {
-                    if (this._zoomImg) {
+                    if (this._zoomImg && isImageURL(this._zoomImg)) {
                         this.setMagnifier(5, this._zoomImg, this._event);
                     }
                 }

@@ -6,10 +6,10 @@ import {
 } from "../vitamin/vcontainer.js";
 import {
     mandatory, range,
-    VButton, VButtons, VFileLoader, VFileLoaderField, VInputField, VInputTextArea, VRef, VSelectField
+    VButton, VButtons, VFileLoaderField, VInputField, VInputTextArea
 } from "../vitamin/vforms.js";
 import {
-    Div, P, requestLog, sendGet, sendPost
+    Div, isImageFile, P, requestLog, sendGet, sendPost
 } from "../vitamin/components.js";
 import {
     showMessage
@@ -147,7 +147,7 @@ export class CBSScenarioEditor extends Undoable(VSplitterPanel) {
             ref:"scenario-illustration", label:"Illustration",
             validate: mandatory({}),
             accept(file) {
-                if (!VFileLoader.isImage(file)) {
+                if (!isImageFile(file)) {
                     VMessageHandler.emit({title: "Error", message:"The image must be a PNG or JPEG file of size at least (450 x 150) pixels."});
                     return false;
                 }

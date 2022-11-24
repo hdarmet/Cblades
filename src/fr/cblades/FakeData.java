@@ -237,6 +237,85 @@ public class FakeData {
             scenario.getGame().setName(scenario.getTitle());
             data.persist(em, scenario);
         });
+        data.inTransaction(em-> {
+            Faction faction = new Faction()
+                .setName("Amarys")
+                .setDescription("The majestuous Sun-kingdom of Amarys. "+PARAGRAPH_TEXT)
+                .setIllustration("../images/site/factions/amarys.png")
+                .addSheet(new Sheet()
+                    .setName("Counter sheet 1")
+                    .setPath("../images/site/factions/amarys/counters1.png")
+                    .setIcon("../images/site/factions/amarys/counters1-icon.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Counter sheet 1b")
+                    .setPath("../images/site/factions/amarys/counters1b.png")
+                    .setIcon("../images/site/factions/amarys/counters1b-icon.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Counter sheet 2")
+                    .setPath("../images/site/factions/amarys/counters2.png")
+                    .setIcon("../images/site/factions/amarys/counters2-icon.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Counter sheet 2b")
+                    .setPath("../images/site/factions/amarys/counters2b.png")
+                    .setIcon("../images/site/factions/amarys/counters2b-icon.png")
+                )
+                .setStatus(FactionStatus.LIVE);
+            data.persist(em, faction);
+            faction = new Faction()
+                .setName("Roughneck")
+                .setDescription("The brave roughneck are the best human soldiers. "+PARAGRAPH_TEXT)
+                .setIllustration("../images/site/factions/roughneck.png")
+                .addSheet(new Sheet()
+                    .setName("Counter sheet 1")
+                    .setPath("../images/site/factions/roughneck/counters1.png")
+                    .setIcon("../images/site/factions/roughneck/counters1-icon.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Counter sheet 1b")
+                    .setPath("../images/site/factions/roughneck/counters1b.png")
+                    .setIcon("../images/site/factions/roughneck/counters1b-icon.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Counter sheet 2")
+                    .setPath("../images/site/factions/roughneck/counters2.png")
+                    .setIcon("../images/site/factions/roughneck/counters2-icon.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Counter sheet 2b")
+                    .setPath("../images/site/factions/roughneck/counters2b.png")
+                    .setIcon("../images/site/factions/roughneck/counters2b-icon.png")
+                )
+                .setStatus(FactionStatus.LIVE);
+            data.persist(em, faction);
+            faction = new Faction()
+                .setName("Orcs")
+                .setDescription("The savage orcs. "+PARAGRAPH_TEXT)
+                .setIllustration("../images/site/factions/orcs.png")
+                .setStatus(FactionStatus.LIVE);
+            data.persist(em, faction);
+            faction = new Faction()
+                .setName("Elves")
+                .setDescription("The brilliant elves. "+PARAGRAPH_TEXT)
+                .setIllustration("../images/site/factions/elves.png")
+                .setStatus(FactionStatus.LIVE);
+            data.persist(em, faction);
+            faction = new Faction()
+                .setName("Dwarves")
+                .setDescription("The tenacious dwarves. "+PARAGRAPH_TEXT)
+                .setIllustration("../images/site/factions/dwarves.png")
+                .setStatus(FactionStatus.LIVE);
+            data.persist(em, faction);
+            faction = new Faction()
+                .setName("Skavens")
+                .setDescription("The vicious skavens. "+PARAGRAPH_TEXT)
+                .setIllustration("../images/site/factions/skavens.png")
+                .setStatus(FactionStatus.LIVE);
+            data.persist(em, faction);
+        });
+
     }
 
     static String TINY_PARAGRAPH_TEXT = "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit";
