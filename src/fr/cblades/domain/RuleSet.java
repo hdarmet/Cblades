@@ -57,4 +57,9 @@ public class RuleSet extends BaseEntity {
         return this;
     }
 
+    public static RuleSet findByCategory(EntityManager em, String category) {
+        return (RuleSet)em.createQuery("select r from RuleSet r where r.category=:category")
+            .setParameter("category", category)
+            .getSingleResult();
+    }
 }

@@ -8,7 +8,7 @@ import java.util.Date;
 
 public class FakeData {
 
-    @Launch
+    @Launch(order = 10)
     public static void createData() {
         DataSunbeam data = new DataSunbeam() {};
         data.inTransaction(em->{
@@ -403,6 +403,58 @@ public class FakeData {
                 .setIllustration("../images/site/magic/necromantic.png")
                 .setStatus(MagicArtStatus.LIVE);
             data.persist(em, magic);
+        });
+        data.inTransaction(em-> {
+            RuleSet.findByCategory(em,"rules")
+                .addSheet(new Sheet()
+                    .setName("Game Rules")
+                    .setDescription("Rules Of The Game. "+TINY_PARAGRAPH_TEXT)
+                    .setPath("../docs/Cursed Blades Rules.pdf")
+                    .setIcon("../images/site/rules/game-rules.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Units Activation Player Aid")
+                    .setDescription("The Player Aid that helps to activate a Unit. "+PARAGRAPH_TEXT)
+                    .setPath("../docs/Fiche Activation des Unités.pdf")
+                    .setIcon("../images/site/rules/units-activation.png")
+                );
+            RuleSet.findByCategory(em,"markers")
+                .addSheet(new Sheet()
+                    .setName("Markers 1")
+                    .setDescription("First sheet of markers. "+PARAGRAPH_TEXT)
+                    .setPath("../images/site/markers/counters1.png")
+                    .setIcon("../images/site/markers/counters1-icon.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Markers 1b")
+                    .setDescription("Reverse first sheet of markers. "+PARAGRAPH_TEXT)
+                    .setPath("../images/site/markers/counters1b.png")
+                    .setIcon("../images/site/markers/counters1b-icon.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Markers 2")
+                    .setDescription("Second sheet of markers. "+PARAGRAPH_TEXT)
+                    .setPath("../images/site/markers/counters2.png")
+                    .setIcon("../images/site/markers/counters2-icon.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Markers 2b")
+                    .setDescription("Reverse third sheet of markers. "+PARAGRAPH_TEXT)
+                    .setPath("../images/site/markers/counters1b.png")
+                    .setIcon("../images/site/markers/counters1b-icon.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Markers 3")
+                    .setDescription("Third sheet of markers. "+PARAGRAPH_TEXT)
+                    .setPath("../images/site/markers/counters3.png")
+                    .setIcon("../images/site/markers/counters3-icon.png")
+                )
+                .addSheet(new Sheet()
+                    .setName("Markers 3b")
+                    .setDescription("Reverse third sheet of markers. "+PARAGRAPH_TEXT)
+                    .setPath("../images/site/markers/counters3b.png")
+                    .setIcon("../images/site/markers/counters3b-icon.png")
+                );
         });
     }
 

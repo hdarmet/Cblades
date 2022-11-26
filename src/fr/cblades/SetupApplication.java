@@ -123,6 +123,17 @@ public class SetupApplication {
         });
     }
 
+    static void declareStandardRuleSet(DataSunbeam data, String category) {
+        data.inTransaction(em->{
+            if (data.getResultList(em, "select r from RuleSet r where r.category=:category", "category", category).isEmpty()) {
+                RuleSet ruleSet = new RuleSet()
+                    .setCategory(category)
+                    .setRuleSetVersion("0.1").setPublished(true);
+                data.persist(em, ruleSet);
+            }
+        });
+    }
+
     @Launch
     public static void declareStandardNotices() {
         DataSunbeam data = new DataSunbeam() {};
@@ -146,5 +157,15 @@ public class SetupApplication {
             declareStandardPresentation(data, "edit-scenario-presentation", "Presentation of scenario edition.");
         });
     }
+
+    @Launch
+    public static void declareRuleSets() {
+        DataSunbeam data = new DataSunbeam() {};
+        data.inTransaction(em->{
+            declareStandardRuleSet(data, "rules");
+            declareStandardRuleSet(data, "markers");
+        });
+    }
+
 }
 

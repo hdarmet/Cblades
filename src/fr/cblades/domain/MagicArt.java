@@ -10,7 +10,7 @@ import java.util.List;
 
 @Entity
 @Table(indexes= {
-    @Index(name="idx_faction_by_name", unique=true, columnList="name")
+    @Index(name="idx_magic_by_name", unique=true, columnList="name")
 })
 public class MagicArt extends BaseEntity {
 

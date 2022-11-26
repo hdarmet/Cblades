@@ -1,8 +1,6 @@
 import {
     VText,
-    VMagnifiedImage,
-    VSlot,
-    historize, VLoginHandler, download
+    historize, VLoginHandler
 } from "../vitamin/vitamins.js";
 import {
     VHeader,
@@ -43,9 +41,6 @@ import {
     vScenarioEditor, vScenarioEditorPage
 } from "./cbs-scenario.js";
 import {
-    CBSGallery
-} from "./cbs-container.js";
-import {
     vThemeEditorPage, vThemeEditor, CBSTheme, loadProposedTheme
 } from "./cbs-theme.js";
 import {
@@ -70,6 +65,10 @@ import {
 import {
     loadMagicArt, loadMagicArts, vMagicArtCountersPageGallery, vMagicArtsGallery
 } from "./cbs-magic.js";
+import {
+    loadRuleSet, vMarkersGallery,
+    vRulesGallery
+} from "./cbs-ruleset.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -244,38 +243,11 @@ export var vFooter = new VFooter({
     })
 });
 
-var rules = {
-    "game-rules": {ref:"game-rules", name: "Game Rules", description: "Rules Of The Game", file: "Cursed Blades Rules" },
-    "units-activation": {ref:"units-activation", name: "Units Activation Player Aid", description: "The Player Aid that helps to activate a Unit", file: "Fiche Activation des Unités" },
-}
-
-export function declareRule(ruleRef, ruleName, ruleDescription, ruleFile) {
-    return {
-        ref:ruleRef,
-        img:`../images/site/rules/${ruleRef}.png`, width:"90%",
-        title: ruleName,
-        description:ruleDescription,
-        button:"Download", action:event=>{
-            download(`../docs/${ruleFile}.pdf`);
-        }
-    };
-}
-
 export var vRulesTitle = new VHeader({
     ref:"rules-title",
     left:"../images/site/left-rules.png", right:"../images/site/right-rules.png",
     title: "Rules And Player Aids"
 }).addClass("rules-title");
-
-export var vRulesGallery = new CBSGallery({ref:"rules", kind: "gallery-rules"});
-
-vRulesGallery.show = function() {
-    this.clearCards();
-    for (let rule in rules) {
-        this.addCard(declareRule(rules[rule].ref, rules[rule].name, rules[rule].description, rules[rule].file));
-    }
-    return this;
-}
 
 export var vBoardsTitle = new VHeader({
     ref:"maps-title",
@@ -289,302 +261,17 @@ export var vMagicArtsTitle = new VHeader({
     title: "Magical Arts"
 }).addClass("magic-title");
 
-/*
-export function declareMagic(magicRef, magicName, magicDescription) {
-    return {
-        ref:"magic-"+magicName,
-        img:`../images/site/magic/${magicRef}.png`,
-        title:magicName, description:magicDescription,
-        button:"Downloadable", action:event=>{
-            vPageContent.showMagicCountersGallery(magics[magicRef]);
-        }
-    };
-}
-
-var magics = {
-    arcanic: {
-        ref: "arcanic", name: "Arcanic Art",
-        description: "The Versatile Art of Arcany. The Versatile Art of Arcany. The Versatile Art of Arcany. The Versatile Art of Arcany. The Versatile Art of Arcany. The Versatile Art of Arcany.",
-        counterSheets: 1,
-        playerAid: "Fiche Art Arcanique"
-    },
-    pyromantic: {
-        ref: "pyromantic", name: "Pyromantic Art",
-        description: "The Destructive Art Of Pyromancy",
-        counterSheets: 1,
-        playerAid: "Fiche Art Pyromantique"
-    },
-    telluric: {
-        ref: "telluric", name: "Tellurical Art",
-        description: "The Fundamental Art Of Tellury"
-    },
-    biotic: {
-        ref: "biotic", name: "Biotic Art",
-        description: "The Fascinating Art Of Biology"
-    },
-    demonic: {
-        ref: "demonic", name: "Demonological Art",
-        description: "The Frightening Art Of Demonology"
-    },
-    necromantic: {
-        ref: "necromantic", name: "Necromancy Art",
-        description: "The Horrible Art Of Necromancy"
-    },
-    theologic: {
-        ref: "theologic", name: "Theological Art",
-        description: "The Saint Art Of Theology"
-    }
-}
-
-export var vMagicGallery = new CBSGallery({ref:"magic", kind: "gallery-magic"});
-
-vMagicGallery.show = function() {
-    this.clearCards();
-    for (let magic in magics) {
-        this.addCard(declareMagic(magics[magic].ref, magics[magic].name, magics[magic].description, magics[magic].playerAid));
-    }
-    return this;
-}
-
-export function declareMagicPlayerAid(magicRef, playerAid) {
-    return {
-        ref:"playerAid",
-        img:`../images/site/magic/${magicRef}/player-aid.png`, width:"90%",
-        title:"Player Aid",
-        playerAid: `../site/docs/${playerAid}.pdf`,
-        button:"Download", action:event=>{
-            download(`../docs/${playerAid}.pdf`);
-        }
-    };
-}
-
-export function declareMagicCounter(magicRef, counterRef, counterName) {
-    return {
-        ref:counterRef,
-        image: new VMagnifiedImage({
-            ref:`img-${magicRef}-${counterRef}`,
-            img:`../images/site/magic/${magicRef}/${counterRef}-icon.png`,
-            zoomImg:`../images/site/magic/${magicRef}/${counterRef}.png`,
-            width:"90%"
-        }),
-        title:counterName,
-        button:"Download", action:event=>{
-            download(`../images/site/magic/${magicRef}/${counterRef}.png`);
-        }
-    };
-}
-
-export var vMagicCountersGallery = new CBSGallery({ref:"magic-counters", kind: "gallery-magic-counters"});
-
-vMagicCountersGallery.setMagicArt = function(art) {
-    this._art = art;
-}
-
-vMagicCountersGallery.show = function() {
-    vMagicCountersGallery.clearCards();
-    vMagicCountersGallery.addCard(declareMagicPlayerAid(
-        this._art.ref, this._art.playerAid
-    ))
-    for (let counterIndex=1; counterIndex<=this._art.counterSheets; counterIndex++) {
-        vMagicCountersGallery.addCard(declareMagicCounter(
-            this._art.ref,
-            `counters${counterIndex}`,
-            `Counter Sheet # ${counterIndex} Front`
-        ))
-        .addCard(declareMagicCounter(
-            this._art.ref,
-            `counters${counterIndex}b`,
-            `Counter Sheet # ${counterIndex} Back`
-        ))
-    }
-    return this;
-}
-
-export var vMagicSummary = new VSlot({ref: "counter-page-summary-slot"});
-
-export var vMagicCountersPageGallery = new VFormContainer({ref: "magic-counters-page-content"})
-    .addClass("gallery-magic-counters-page")
-    .add(vMagicSummary)
-    .add(vMagicCountersGallery);
-
-vMagicCountersPageGallery.show = function() {
-    vMagicSummary.set({
-        content: new CBSSummary({
-            ref: "magic-summary",
-            img: `../images/site/magic/${vMagicCountersGallery._art.ref}.png`,
-            alt: vMagicCountersGallery._art.name,
-            title: vMagicCountersGallery._art.name,
-            description: vMagicCountersGallery._art.description
-        })
-    });
-    vMagicCountersGallery.show();
-}
-*/
 export var vFactionsTitle = new VHeader({
     ref:"army-title",
     left:"../images/site/left-factions.png", right:"../images/site/right-factions.png",
     title: "Factions"
 }).addClass("factions-title");
 
-/*
-export function declareFaction(factionRef, factionName, factionDescription) {
-    return {
-        ref:"army-"+factionName,
-        img:`../images/site/factions/${factionRef}.png`,
-        title:factionName, description:factionDescription,
-        button:"Counters Sheets",
-        action:event=>{
-            vPageContent.showFactionCountersGallery(factions[factionRef]);
-        }
-    };
-}
-*/
-/*
-var factions = {
-    amarys: {
-        ref: "amarys", name: "Amarys",
-        description: "The majestuous Sun-kingdom of Amarys",
-        counterSheets: 2
-    },
-    roughneck: {
-        ref: "roughneck", name: "Roughneck",
-        description: `The brave roughneck are the best human soldiers. The brave roughneck are the 
-        best human soldiers. The brave roughneck are the best human soldiers. The brave roughneck are the best human 
-        soldiers`,
-        counterSheets: 3
-    },
-    orcs: {
-        ref: "orcs", name: "Orcs",
-        description: "The savage orcs",
-        counterSheets: 3
-    },
-    elves: {
-        ref: "elves", name: "Elves",
-        description: "The brilliant elves",
-        counterSheets: 3
-    },
-    dwarves: {
-        ref: "dwarves", name: "Dwarves",
-        description: "The tenacious dwarves",
-        counterSheets: 3
-    },
-    skavens: {
-        ref: "skavens", name: "Skavens",
-        description: "The vicious skavens",
-        counterSheets: 3
-    },
-}
-*/
-/*
-export var vFactionsGallery = new CBSGallery({ref:"factions", kind: "gallery-factions"});
-
-vFactionsGallery.show = function() {
-    this.clearCards();
-    for (let faction in factions) {
-        this.addCard(declareFaction(factions[faction].ref, factions[faction].name, factions[faction].description));
-    }
-    return this;
-}
-*/
-/*
-export function declareFactionCounter(factionRef, counterRef, counterName) {
-    return {
-        ref:counterRef,
-        image: new VMagnifiedImage({
-            ref:`img-${factionRef}-${counterRef}`,
-            img:`../images/site/factions/${factionRef}/${counterRef}-icon.png`,
-            zoomImg:`../images/site/factions/${factionRef}/${counterRef}.png`,
-            width:"90%"
-        }),
-        title:counterName,
-        button:"Download", action:event=>{
-            download(`../images/site/factions/${factionRef}/${counterRef}.png`);
-        }
-    };
-}
-
-export var vFactionCountersGallery = new CBSGallery({ref:"factions-counter", kind: "gallery-faction-counters"});
-
-vFactionCountersGallery.setFaction = function(faction) {
-    this._faction = faction;
-}
-
-vFactionCountersGallery.show = function() {
-    vFactionCountersGallery.clearCards();
-    for (let counterIndex=1; counterIndex<=this._faction.counterSheets; counterIndex++) {
-        vFactionCountersGallery.addCard(declareFactionCounter(
-            this._faction.ref,
-            `counters${counterIndex}`,
-            `Counter Sheet # ${counterIndex} Front`
-        ))
-        .addCard(declareFactionCounter(
-                this._faction.ref,
-                `counters${counterIndex}b`,
-                `Counter Sheet # ${counterIndex} Back`
-        ))
-    }
-    return this;
-}
-
-export var vFactionSummary = new VSlot({ref: "counter-page-summary-slot"});
-
-export var vFactionCountersPageGallery = new VFormContainer({ref: "faction-counters-page-content"})
-    .addClass("gallery-faction-counters-page")
-    .add(vFactionSummary)
-    .add(vFactionCountersGallery);
-
-vFactionCountersPageGallery.show = function() {
-    vFactionSummary.set({
-        content: new CBSSummary({
-            ref: "faction-summary",
-            img: `../images/site/factions/${vFactionCountersGallery._faction.ref}.png`,
-            alt: vFactionCountersGallery._faction.name,
-            title: vFactionCountersGallery._faction.name,
-            description: vFactionCountersGallery._faction.description
-        })
-    });
-    vFactionCountersGallery.show();
-}
-*/
-
-var markers = {
-    "markers-1": {ref:"markers-1", sheet: "counters1", name: "markers1", description: "First sheet of markers" },
-    "markers-2": {ref:"markers-2", sheet: "counters2", name: "markers2", description: "Second sheet of markers" },
-    "markers-3": {ref:"markers-3", sheet: "counters3", name: "markers3", description: "Third sheet of markers" }
-}
-
-export function declareMarkers(markersRef, markersSheet, markersName, markersDescription) {
-    return {
-        ref:markersRef,
-        image: new VMagnifiedImage({
-            ref:`img-${markersRef}`,
-            img:`../images/site/markers/${markersSheet}-icon.png`,
-            zoomImg:`../images/site/markers/${markersSheet}.png`,
-            width:"90%"
-        }),
-        title:markersName, description:markersDescription,
-        button:"Download", action:event=>{
-            download(`../images/site/markers/${markersSheet}.png`);
-        }
-    };
-}
-
 export var vMarkersTitle = new VHeader({
     ref:"markers-title",
     left:"../images/site/left-markers.png", right:"../images/site/right-markers.png",
     title: "Markers"
 }).addClass("markers-title");
-
-export var vMarkersGallery = new CBSGallery({ref:"markers", kind: "gallery-markers"});
-
-vMarkersGallery.show = function() {
-    this.clearCards();
-    for (let marker in markers) {
-        this.addCard(declareMarkers(markers[marker].ref, markers[marker].sheet, markers[marker].name, markers[marker].description));
-        this.addCard(declareMarkers(markers[marker].ref, markers[marker].sheet+"b", markers[marker].name, markers[marker].description));
-    }
-    return this;
-}
 
 var paragrpahText = `
 Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
@@ -1092,7 +779,11 @@ class CBSPageContent extends VPageContent {
     }
 
     _showRulesGallery(byHistory, historize) {
-        return this.changePage(vRulesTitle, vRulesGallery, byHistory, historize);
+        loadRuleSet( "rules", vRulesGallery,
+            ()=>{
+                return this.changePage(vRulesTitle, vRulesGallery, byHistory, historize);
+            }
+        );
     }
 
     showRulesGallery() {
@@ -1168,7 +859,11 @@ class CBSPageContent extends VPageContent {
     }
 
     _showMarkersGallery(byHistory, historize) {
-        return this.changePage(vMarkersTitle, vMarkersGallery, byHistory, historize);
+        loadRuleSet( "markers", vMarkersGallery,
+            ()=>{
+                return this.changePage(vMarkersTitle, vMarkersGallery, byHistory, historize);
+            }
+        );
     }
 
     showMarkersGallery() {

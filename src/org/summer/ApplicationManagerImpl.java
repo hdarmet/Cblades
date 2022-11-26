@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
@@ -96,6 +97,7 @@ public class ApplicationManagerImpl extends ApplicationManager {
 	
 	void invokeSetupMethods() {
 		Consumer<Method> executeASetUpMethod = setupMethod->{
+			log.info("Execute: "+setupMethod.getName());
 			if ((setupMethod.getModifiers()|Modifier.STATIC)!=0) {
 				setupMethod.setAccessible(true);
 				try {
@@ -107,13 +109,21 @@ public class ApplicationManagerImpl extends ApplicationManager {
 			else throw new SummerException("Setup method must be static : "+setupMethod);
 		}; 
 		Collection<Method> summerMethods = this.scanner.getSummerMethodsAnnotedBy(Setup.class);
-		summerMethods.stream().forEach(executeASetUpMethod);
+		summerMethods.stream()
+			.sorted(Comparator.comparingInt(m -> m.getDeclaredAnnotation(Setup.class).order())
+		).forEach(executeASetUpMethod);
 		Collection<Method> appMethods = this.scanner.getMethodsAnnotatedBy(Setup.class);
-		appMethods.stream().forEach(executeASetUpMethod);
+		appMethods.stream()
+			.sorted(Comparator.comparingInt(m -> m.getDeclaredAnnotation(Setup.class).order())
+		).forEach(executeASetUpMethod);
 		summerMethods = this.scanner.getSummerMethodsAnnotedBy(Launch.class);
-		summerMethods.stream().forEach(executeASetUpMethod);
+		summerMethods.stream()
+			.sorted(Comparator.comparingInt(m -> m.getDeclaredAnnotation(Launch.class).order())
+		).forEach(executeASetUpMethod);
 		appMethods = this.scanner.getMethodsAnnotatedBy(Launch.class);
-		appMethods.stream().forEach(executeASetUpMethod);
+		appMethods.stream()
+			.sorted(Comparator.comparingInt(m -> m.getDeclaredAnnotation(Launch.class).order())
+		).forEach(executeASetUpMethod);
 	}
 
 	PlatformManager platformManager;
