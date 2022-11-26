@@ -62,7 +62,7 @@ public class MagicArt extends BaseEntity {
         List<Sheet> sheets = new ArrayList<>(this.sheets);
         sheets.sort(Comparator.comparingInt(p -> p.ordinal));
         for (Sheet sheet : sheets) {
-            textBuilder.append('\n').append(sheet.name);
+            textBuilder.append('\n').append(sheet.name).append(sheet.name);
         }
         String text = textBuilder.toString();
         if (this.document == null || !(this.document.getText().equals(text))) {

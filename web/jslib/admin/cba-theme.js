@@ -489,7 +489,7 @@ export class CBAThemeList extends VTable {
                 .addClass("theme-title")
             let pageSummary = new Span()
                 .addClass("theme-pager")
-                .setText(pageData.eventCount ?
+                .setText(pageData.themeCount ?
                     String.format(CBAThemeList.SUMMARY, pageData.themeCount, pageData.firstTheme, pageData.lastTheme) :
                     CBAThemeList.EMPTY_SUMMARY);
             let summary = new Div()

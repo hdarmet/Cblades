@@ -52,6 +52,8 @@ export class CBAMagicArt extends DetailedView(Vitamin(Div)) {
         this._header.add(this._name);
         this._description = new P().addClass("magic-description");
         this._header.add(this._description);
+        this._content = new Div().addClass("magic-content");
+        this.add(this._content);
         this._sheets=[];
         if (magicArt.sheets) {
             for (let sheetSpec of magicArt.sheets) {
@@ -62,6 +64,10 @@ export class CBAMagicArt extends DetailedView(Vitamin(Div)) {
         this.onEvent("click", event=>{
             action && action(this)
         });
+    }
+
+    get content() {
+        return this._content;
     }
 
     get detailRecords() {
@@ -281,6 +287,17 @@ export class CBAEditMagicArtPane extends DetailedForm(Undoable(VSplitterPanel)) 
             }
         });
         this.addOnRight(this._sheetName);
+        this._sheetDescription = new VInputTextArea({
+            ref:"sheet-description-input", label:"Sheet Description",
+            validate: mandatory({validate: range({min:2, max:20000})}),
+            onInput: event=>{
+                this._sheetView.description = this._sheetDescription.value;
+            },
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this.addOnRight(this._sheetDescription);
         let userSelector = new CBAUserSelector({title:"Select Magic Art Account", loadPage:loadUsers, selectUser: user=>{
                 this._author.setValue(user);
                 userSelector.hide();
@@ -316,6 +333,7 @@ export class CBAEditMagicArtPane extends DetailedForm(Undoable(VSplitterPanel)) 
         this._magicArtDescription.value = this._magicArtView.description;
         this._magicArtIllustration.imageSrc = this._magicArtView.illustration;
         this._sheetName.value = this._sheetView.name;
+        this._sheetDescription.value = this._sheetView.description;
         if (this._sheetView.path) {
             if (isImageURL(this._sheetView.path)) {
                 this._sheetPath.imageSrc = this._sheetView.path;
@@ -339,6 +357,7 @@ export class CBAEditMagicArtPane extends DetailedForm(Undoable(VSplitterPanel)) 
             & !this._magicArtIllustration.validate()
             & !this._sheetPath.validate()
             & !this._sheetName.validate()
+            & !this._sheetDescription.validate()
             & !this._status.validate()
             & !this._author.validate();
     }
@@ -683,7 +702,7 @@ export class CBAMagicArtList extends VTable {
                 .addClass("magic-title")
             let pageSummary = new Span()
                 .addClass("magic-pager")
-                .setText(pageData.eventCount ?
+                .setText(pageData.magicArtCount ?
                     String.format(CBAMagicArtList.SUMMARY, pageData.magicArtCount, pageData.firstMagicArt, pageData.lastMagicArt) :
                     CBAMagicArtList.EMPTY_SUMMARY);
             let summary = new Div()

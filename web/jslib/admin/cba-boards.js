@@ -416,7 +416,7 @@ export class CBABoardList extends VTable {
                 .addClass("board-title")
             let pageSummary = new Span()
                 .addClass("board-pager")
-                .setText(pageData.eventCount ?
+                .setText(pageData.boardCount ?
                     String.format(CBABoardList.SUMMARY, pageData.boardCount, pageData.firstBoard, pageData.lastBoard) :
                     CBABoardList.EMPTY_SUMMARY);
             let summary = new Div()
@@ -509,8 +509,8 @@ export function loadBoards(pageIndex, search, update) {
                 pageCount: Math.ceil(response.count / response.pageSize),
                 currentPage: response.page,
                 boardCount: response.count,
-                firstEvent: response.page * response.pageSize + 1,
-                lastEvent: response.page * response.pageSize + response.boards.length,
+                firstBoard: response.page * response.pageSize + 1,
+                lastBoard: response.page * response.pageSize + response.boards.length,
                 boards: response.boards
             });
         },

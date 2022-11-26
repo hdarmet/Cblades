@@ -43,8 +43,7 @@ import {
     vScenarioEditor, vScenarioEditorPage
 } from "./cbs-scenario.js";
 import {
-    CBSGallery,
-    CBSSummary
+    CBSGallery
 } from "./cbs-container.js";
 import {
     vThemeEditorPage, vThemeEditor, CBSTheme, loadProposedTheme
@@ -254,7 +253,8 @@ export function declareRule(ruleRef, ruleName, ruleDescription, ruleFile) {
     return {
         ref:ruleRef,
         img:`../images/site/rules/${ruleRef}.png`, width:"90%",
-        title: ruleName, description:ruleDescription,
+        title: ruleName,
+        description:ruleDescription,
         button:"Download", action:event=>{
             download(`../docs/${ruleFile}.pdf`);
         }

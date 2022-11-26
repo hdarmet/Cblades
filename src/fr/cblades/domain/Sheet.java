@@ -13,6 +13,8 @@ public class Sheet extends BaseEntity {
 
     int ordinal;
     String name="";
+    @Column(length = 20000)
+    String description="";
     String path="";
     String icon="";
 
@@ -29,6 +31,14 @@ public class Sheet extends BaseEntity {
     }
     public Sheet setName(String name) {
         this.name = name;
+        return this;
+    }
+
+    public String getDescription() {
+        return this.description;
+    }
+    public Sheet setDescription(String description) {
+        this.description = description;
         return this;
     }
 

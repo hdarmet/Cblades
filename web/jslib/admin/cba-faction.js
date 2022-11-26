@@ -37,7 +37,7 @@ import {
 
 export class CBASheet extends Vitamin(Div) {
 
-    constructor({id, version, path, pathFile, icon, iconFile, name, action}) {
+    constructor({id, version, path, pathFile, icon, iconFile, name, description, action}) {
         super({ref:"sheet-"+id});
         this._id = id;
         this._version = version;
@@ -51,6 +51,8 @@ export class CBASheet extends Vitamin(Div) {
         this._embed.add(this._content);
         this._name = new P(name).addClass("sheet-name");
         this._content.add(this._name);
+        this._description = new P(description).addClass("sheet-description");
+        this._content.add(this._description);
         this._pathFile = pathFile;
         this._iconFile = iconFile;
         this.action=action;
@@ -68,7 +70,8 @@ export class CBASheet extends Vitamin(Div) {
             version: this._version,
             path: this._path.zoomSrc ? this._path.zoomSrc : URL.createObjectURL(this._pathFile),
             icon: this._path.src,
-            name: this._name.getText()
+            name: this._name.getText(),
+            description: this._description.getText()
         };
     }
 
@@ -78,6 +81,14 @@ export class CBASheet extends Vitamin(Div) {
 
     set name(name) {
         this._name.setText(name);
+    }
+
+    get description() {
+        return this._description.getText();
+    }
+
+    set description(description) {
+        this._description.setText(description);
     }
 
     get path() {
@@ -128,6 +139,8 @@ export class CBAFaction extends DetailedView(Vitamin(Div)) {
         this._header.add(this._name);
         this._description = new P().addClass("faction-description");
         this._header.add(this._description);
+        this._content = new Div().addClass("faction-content");
+        this.add(this._content);
         this._sheets=[];
         if (faction.sheets) {
             for (let sheetSpec of faction.sheets) {
@@ -138,6 +151,10 @@ export class CBAFaction extends DetailedView(Vitamin(Div)) {
         this.onEvent("click", event=>{
             action && action(this)
         });
+    }
+
+    get content() {
+        return this._content;
     }
 
     get detailRecords() {
@@ -357,6 +374,17 @@ export class CBAEditFactionPane extends DetailedForm(Undoable(VSplitterPanel)) {
             }
         });
         this.addOnRight(this._sheetName);
+        this._sheetDescription = new VInputTextArea({
+            ref:"sheet-description-input", label:"Sheet Description",
+            validate: mandatory({validate: range({min:2, max:20000})}),
+            onInput: event=>{
+                this._sheetView.description = this._sheetDescription.value;
+            },
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this.addOnRight(this._sheetDescription);
         let userSelector = new CBAUserSelector({title:"Select Faction Account", loadPage:loadUsers, selectUser: user=>{
                 this._author.setValue(user);
                 userSelector.hide();
@@ -392,6 +420,7 @@ export class CBAEditFactionPane extends DetailedForm(Undoable(VSplitterPanel)) {
         this._factionDescription.value = this._factionView.description;
         this._factionIllustration.imageSrc = this._factionView.illustration;
         this._sheetName.value = this._sheetView.name;
+        this._sheetDescription.value = this._sheetView.description;
         if (this._sheetView.path) {
             if (isImageURL(this._sheetView.path)) {
                 this._sheetPath.imageSrc = this._sheetView.path;
@@ -415,6 +444,7 @@ export class CBAEditFactionPane extends DetailedForm(Undoable(VSplitterPanel)) {
             & !this._factionIllustration.validate()
             & !this._sheetPath.validate()
             & !this._sheetName.validate()
+            & !this._sheetDescription.validate()
             & !this._status.validate()
             & !this._author.validate();
     }
@@ -647,12 +677,6 @@ export class CBAEditFaction extends VModal {
         return this._factionPane.imageFiles;
     }
 
-    /*
-    get illustration()  {
-        return this._factionPane.illustration;
-    }
-     */
-
     get specification() {
         return {
             id: this._id,
@@ -768,7 +792,7 @@ export class CBAFactionList extends VTable {
                 .addClass("faction-title")
             let pageSummary = new Span()
                 .addClass("faction-pager")
-                .setText(pageData.eventCount ?
+                .setText(pageData.factionCount ?
                     String.format(CBAFactionList.SUMMARY, pageData.factionCount, pageData.firstFaction, pageData.lastFaction) :
                     CBAFactionList.EMPTY_SUMMARY);
             let summary = new Div()

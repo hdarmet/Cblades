@@ -683,7 +683,7 @@ export class CBAArticleList extends VTable {
                 .addClass("article-title")
             let pageSummary = new Span()
                 .addClass("article-pager")
-                .setText(pageData.eventCount ?
+                .setText(pageData.articleCount ?
                     String.format(CBAArticleList.SUMMARY, pageData.articleCount, pageData.firstArticle, pageData.lastArticle) :
                     CBAArticleList.EMPTY_SUMMARY);
             let summary = new Div()

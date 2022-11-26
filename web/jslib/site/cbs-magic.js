@@ -79,6 +79,7 @@ export function loadMagicArt(magicArt, success) {
                         width: "90%"
                     }),
                     title: sheet.name,
+                    description: sheet.description,
                     button: "Download",
                     action: event => {
                         download(sheet.path);

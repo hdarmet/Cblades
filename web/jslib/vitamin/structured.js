@@ -6,9 +6,10 @@ import {
 
 export function DetailedView(clazz) {
     return class extends clazz {
+
         createDetailRecord(detailRecordSpec) {
             let detailRecord = this._createDetailRecord(detailRecordSpec);
-            this.add(detailRecord);
+            this.content.add(detailRecord);
             this.detailRecords.push(detailRecord);
             return detailRecord;
         }
@@ -16,22 +17,22 @@ export function DetailedView(clazz) {
         insertDetailRecord(detailRecordSpec, before) {
             let index = this.detailRecords.indexOf(before);
             let detailRecord = this._createDetailRecord(detailRecordSpec);
-            this.insert(detailRecord, before);
+            this.content.insert(detailRecord, before);
             this.detailRecords.insert(index, detailRecord);
             return detailRecord;
         }
 
         removeDetailRecord(index) {
             let detailRecord = this.detailRecords[index];
-            this.remove(detailRecord);
+            this.content.remove(detailRecord);
             this.detailRecords.remove(index);
             return detailRecord;
         }
 
         exchangeDetailRecords(detailRecord) {
             let index = this.detailRecords.indexOf(detailRecord);
-            this.remove(detailRecord);
-            this.insert(detailRecord, this.detailRecords[index-1]);
+            this.content.remove(detailRecord);
+            this.content.insert(detailRecord, this.detailRecords[index-1]);
             this.detailRecords.splice(index, 1);
             this.detailRecords.splice(index-1, 0, detailRecord);
         }
@@ -47,7 +48,7 @@ export function DetailedView(clazz) {
 
         _setDetailRecordsSpecification(specification) {
             for (let detailRecord of this.detailRecords) {
-                this.remove(detailRecord);
+                this.content.remove(detailRecord);
             }
             this.detailRecords.length = 0;
             for (let detailRecord of specification) {

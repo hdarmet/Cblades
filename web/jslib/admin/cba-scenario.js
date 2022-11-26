@@ -567,7 +567,7 @@ export class CBAScenarioList extends VTable {
                 .addClass("scenario-title")
             let pageSummary = new Span()
                 .addClass("scenario-pager")
-                .setText(pageData.eventCount ?
+                .setText(pageData.scenarioCount ?
                     String.format(CBAScenarioList.SUMMARY, pageData.scenarioCount, pageData.firstScenario, pageData.lastScenario) :
                     CBAScenarioList.EMPTY_SUMMARY);
             let summary = new Div()
