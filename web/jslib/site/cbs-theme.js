@@ -45,6 +45,10 @@ export class CBSTheme extends Vitamin(Div) {
         });
     }
 
+    get id() {
+        return this._id;
+    }
+
     get title() {
         return this._title.getText();
     }
