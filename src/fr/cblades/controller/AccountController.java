@@ -231,6 +231,8 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 			.read("firstName")
 			.read("lastName")
 			.read("email")
+			.read("rating")
+			.read("messageCount")
 			.read("avatar")
 			.read("status", AccountStatus::getLabel)
 			.readGetter("login", account::getLogin)

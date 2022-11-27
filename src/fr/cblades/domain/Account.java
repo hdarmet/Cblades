@@ -13,6 +13,8 @@ public class Account extends BaseEntity {
     String firstName="";
     String lastName="";
     String email;
+    int rating=0;
+    int messageCount=0;
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     Login access;
     String avatar;
@@ -40,6 +42,22 @@ public class Account extends BaseEntity {
     }
     public Account setEmail(String email) {
         this.email = email;
+        return this;
+    }
+
+    public int getRating() {
+        return this.rating;
+    }
+    public Account setRating(int rating) {
+        this.rating = rating;
+        return this;
+    }
+
+    public int getMessageCount() {
+        return this.messageCount;
+    }
+    public Account setMessageCount(int messageCount) {
+        this.messageCount = messageCount;
         return this;
     }
 

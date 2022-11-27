@@ -468,6 +468,50 @@ public class FakeData {
                     .setIcon("../images/site/markers/counters3b-icon.png")
                 );
         });
+        data.inTransaction(em->{
+            Forum forum = new Forum()
+                .setTitle("Discussing Retailers")
+                .setDescription("Talk about retailers, eBay sellers, the BGG Marketplace, etc. — no offers or ads by sellers GeekMarket Beta will be shutting down (no new listings Aug 7, no new orders Aug 15)")
+                .setMessageCount(109)
+                .setThreadCount(9)
+                .setStatus(ForumStatus.LIVE);
+            data.persist(em, forum);
+            forum = new Forum()
+                .setTitle("Board Game Design")
+                .setDescription("A gathering place to discuss game design What areas of history would make a great hidden movement game? Extra points for non-military!")
+                .setMessageCount(295)
+                .setThreadCount(22)
+                .setStatus(ForumStatus.LIVE);
+            data.persist(em, forum);
+            forum = new Forum()
+                .setTitle("Design Contests")
+                .setDescription("Announce and participate in game design competitions")
+                .setMessageCount(857)
+                .setThreadCount(56)
+                .setStatus(ForumStatus.LIVE);
+            data.persist(em, forum);
+            forum = new Forum()
+                .setTitle("Art and Graphic Design")
+                .setDescription("Show off your work, and ask for advice Which logo design?")
+                .setMessageCount(44)
+                .setThreadCount(25)
+                .setStatus(ForumStatus.LIVE);
+            data.persist(em, forum);
+            forum = new Forum()
+                .setTitle("Design Theory")
+                .setDescription("Principles of game design not specific to one game Co-op games: a calm discussion on \"pass or fail\"")
+                .setThreadCount(1)
+                .setMessageCount(18)
+                .setStatus(ForumStatus.LIVE);
+            data.persist(em, forum);
+            forum = new Forum()
+                .setTitle("Design Queries and Problems")
+                .setDescription("Ask specific questions about a design in the works. Indirect storytelling for a game.")
+                .setThreadCount(25)
+                .setMessageCount(25)
+                .setStatus(ForumStatus.LIVE);
+            data.persist(em, forum);
+        });
     }
 
     static String TINY_PARAGRAPH_TEXT = "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit";
