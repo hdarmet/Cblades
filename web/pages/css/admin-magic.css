@@ -75,16 +75,6 @@
     margin-right: auto;
 }
 
-.magic-editor-pane .image-on-left .paragraph-image {
-    --extends: ex-paragraph-image-on-left;
-    width: 50%;
-}
-
-.magic-editor-pane .image-on-right .paragraph-image {
-    --extends: ex-paragraph-image-on-right;
-    width: 50%;
-}
-
 .magic-modal .modal-content {
     min-width: 1200px;
     margin: 0 auto 15% auto;
@@ -149,11 +139,6 @@
     --extends: ex-scrollbar-thumb
 }
 
-.magic-editor-pane .paragraph {
-    overflow: auto;
-    cursor: pointer;
-}
-
 .magic-editor-pane .magic-content {
     display: flex;
     flex-wrap: wrap;
@@ -213,10 +198,6 @@
     right: 0;
     text-align: center;
     bottom: -16px;
-}
-
-.magic-editor-pane .selected:hover .form-command {
-    --extends: ex-command-appear;
 }
 
 .magic-editor-pane  .form-command.vitamin-active:hover {

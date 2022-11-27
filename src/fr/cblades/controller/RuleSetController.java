@@ -71,7 +71,7 @@ public class RuleSetController implements InjectorSunbeam, DataSunbeam, Security
 			inTransaction(em->{
 				String name = params.get("category");
 				List<RuleSet> ruleSets = getResultList(em,
-					"select r from RuleSet r " +
+					"select distinct r from RuleSet r " +
 					"left outer join fetch r.sheets " +
 					"where r.category = :category",
 					"category", name);

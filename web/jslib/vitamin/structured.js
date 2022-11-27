@@ -25,7 +25,7 @@ export function DetailedView(clazz) {
         removeDetailRecord(index) {
             let detailRecord = this.detailRecords[index];
             this.content.remove(detailRecord);
-            this.detailRecords.remove(index);
+            this.detailRecords.remove(detailRecord);
             return detailRecord;
         }
 

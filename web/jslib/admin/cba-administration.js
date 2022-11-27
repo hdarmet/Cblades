@@ -59,6 +59,9 @@ import {
 import {
     vScenarioList
 } from "./cba-scenario.js";
+import {
+    editRuleSet
+} from "./cba-ruleset.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -95,12 +98,20 @@ export var vMenu = new VMainMenu({ref:"menu"})
                 window.vPageContent.showScenarioList();
             }
         })
+        .addMenu({ref:"rules-menu", label:"Rules and Player Aids", action:()=>{
+                window.vPageContent.showRulesAndPlayerAids();
+            }
+        })
         .addMenu({ref:"faction-menu", label:"Factions", action:()=>{
                 window.vPageContent.showFactionList();
             }
         })
         .addMenu({ref:"magic-menu", label:"Magic Arts", action:()=>{
                 window.vPageContent.showMagicArtList();
+            }
+        })
+        .addMenu({ref:"markers-menu", label:"Markers", action:()=>{
+                window.vPageContent.showMarkers();
             }
         })
     })
@@ -434,6 +445,28 @@ export class CBAPageContent extends VPageContent {
         vArticleList.loadArticles();
         this._showArticleList(false, ()=> {
                 historize("article", "vPageContent._showArticleList(true);")
+            }
+        );
+    }
+
+    _showRulesAndPlayerAids(byHistory, historize) {
+        editRuleSet.call(this, "Rules And Player Aids", "rules", byHistory, historize);
+    }
+
+    showRulesAndPlayerAids() {
+        this._showRulesAndPlayerAids(false, ()=> {
+                historize("rules", "vPageContent._showRulesAndPlayerAids(true);")
+            }
+        );
+    }
+
+    _showMarkers(byHistory, historize) {
+        editRuleSet.call(this, "Markers", "markers", byHistory, historize);
+    }
+
+    showMarkers() {
+        this._showMarkers(false, ()=> {
+                historize("markers", "vPageContent._showMarkers(true);")
             }
         );
     }
