@@ -24,6 +24,7 @@ public class MagicArt extends BaseEntity {
     Document document;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     List<Sheet> sheets = new ArrayList<>();
+    @Enumerated(EnumType.STRING)
     MagicArtStatus status;
     @ManyToOne
     Account author;

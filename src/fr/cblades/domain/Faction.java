@@ -24,6 +24,7 @@ public class Faction extends BaseEntity {
     Document document;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     List<Sheet> sheets = new ArrayList<>();
+    @Enumerated(EnumType.STRING)
     FactionStatus status;
     @ManyToOne
     Account author;

@@ -267,6 +267,7 @@ public class FakeData {
                     .setIcon("../images/site/factions/amarys/counters2b-icon.png")
                 )
                 .setStatus(FactionStatus.LIVE);
+            faction.buildDocument();
             data.persist(em, faction);
             faction = new Faction()
                 .setName("Roughneck")
@@ -297,30 +298,35 @@ public class FakeData {
                     .setIcon("../images/site/factions/roughneck/counters2b-icon.png")
                 )
                 .setStatus(FactionStatus.LIVE);
+            faction.buildDocument();
             data.persist(em, faction);
             faction = new Faction()
                 .setName("Orcs")
                 .setDescription("The savage orcs. "+PARAGRAPH_TEXT)
                 .setIllustration("../images/site/factions/orcs.png")
                 .setStatus(FactionStatus.LIVE);
+            faction.buildDocument();
             data.persist(em, faction);
             faction = new Faction()
                 .setName("Elves")
                 .setDescription("The brilliant elves. "+PARAGRAPH_TEXT)
                 .setIllustration("../images/site/factions/elves.png")
                 .setStatus(FactionStatus.LIVE);
+            faction.buildDocument();
             data.persist(em, faction);
             faction = new Faction()
                 .setName("Dwarves")
                 .setDescription("The tenacious dwarves. "+PARAGRAPH_TEXT)
                 .setIllustration("../images/site/factions/dwarves.png")
                 .setStatus(FactionStatus.LIVE);
+            faction.buildDocument();
             data.persist(em, faction);
             faction = new Faction()
                 .setName("Skavens")
                 .setDescription("The vicious skavens. "+PARAGRAPH_TEXT)
                 .setIllustration("../images/site/factions/skavens.png")
                 .setStatus(FactionStatus.LIVE);
+            faction.buildDocument();
             data.persist(em, faction);
         });
         data.inTransaction(em-> {
@@ -347,6 +353,7 @@ public class FakeData {
                     .setIcon("../images/site/magic/arcanic/player-aid.png")
                 )
                 .setStatus(MagicArtStatus.LIVE);
+            magic.buildDocument();
             data.persist(em, magic);
             magic = new MagicArt()
                 .setName("Pyromancy Art")
@@ -371,37 +378,42 @@ public class FakeData {
                     .setIcon("../images/site/magic/pyromantic/player-aid.png")
                 )
                 .setStatus(MagicArtStatus.LIVE);
+            magic.buildDocument();
             data.persist(em, magic);
-
             magic = new MagicArt()
                 .setName("Tellurical Art")
                 .setDescription("The Fundamental Art Of Tellury. "+PARAGRAPH_TEXT)
                 .setIllustration("../images/site/magic/telluric.png")
                 .setStatus(MagicArtStatus.LIVE);
+            magic.buildDocument();
             data.persist(em, magic);
             magic = new MagicArt()
                 .setName("Biotic Art")
                 .setDescription("The Fascinating Art Of Biology. "+PARAGRAPH_TEXT)
                 .setIllustration("../images/site/magic/biotic.png")
                 .setStatus(MagicArtStatus.LIVE);
+            magic.buildDocument();
             data.persist(em, magic);
             magic = new MagicArt()
                 .setName("Demonological Art")
                 .setDescription("The Frightening Art Of Demonology. "+PARAGRAPH_TEXT)
                 .setIllustration("../images/site/magic/demonic.png")
                 .setStatus(MagicArtStatus.LIVE);
+            magic.buildDocument();
             data.persist(em, magic);
             magic = new MagicArt()
                 .setName("Theological Art")
                 .setDescription("The Saint Art Of Theology. "+PARAGRAPH_TEXT)
                 .setIllustration("../images/site/magic/theologic.png")
                 .setStatus(MagicArtStatus.LIVE);
+            magic.buildDocument();
             data.persist(em, magic);
             magic = new MagicArt()
                 .setName("Necromancy Art")
                 .setDescription("The Horrible Art Of Necromancy. "+PARAGRAPH_TEXT)
                 .setIllustration("../images/site/magic/necromantic.png")
                 .setStatus(MagicArtStatus.LIVE);
+            magic.buildDocument();
             data.persist(em, magic);
         });
         data.inTransaction(em-> {
