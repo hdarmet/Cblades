@@ -332,7 +332,7 @@ export class VTable extends Vitamin(Div) {
         }
     }
 
-    setContent({summary, selectable, columns, data}) {
+    setContent({summary, selectable, columns, lines}) {
         this._content.clear();
         if (summary) {
             if (isComponent(summary)) {
@@ -360,22 +360,18 @@ export class VTable extends Vitamin(Div) {
         }
         this._body = new TBody();
         this._table.add(this._body);
-        for (let line of data) {
+        for (let line of lines) {
             let row = new TR();
-            if (this._select) row.onMouseClick(event=>this._select(row));
             this._body.add(row);
             let col=0;
             if (selectable) {
                 let selection = new Checkbox();
                 row.add(new TD().add(selection));
             }
-            for (let cell of line) {
-                if (isComponent(cell)) {
-                    row.add(new TD("").add(cell).addClass("column-"+col++));
-                }
-                else {
-                    row.add(new TD(cell).addClass("column-"+col++));
-                }
+            for (let cell of line.cells) {
+                let cellComponent = isComponent(cell) ? new TD("").add(cell) : new TD(cell);
+                row.add(cellComponent.add(cell).addClass("column-"+col++));
+                if (this._select && !cell.isInput) cellComponent.onMouseClick(event=>this._select(line.source));
             }
         }
     }

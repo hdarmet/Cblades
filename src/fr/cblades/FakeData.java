@@ -4,6 +4,7 @@ import fr.cblades.domain.*;
 import org.summer.annotation.Launch;
 import org.summer.data.DataSunbeam;
 
+import javax.persistence.EntityManager;
 import java.util.Date;
 
 public class FakeData {
@@ -476,6 +477,7 @@ public class FakeData {
                 .setThreadCount(9)
                 .setStatus(ForumStatus.LIVE);
             data.persist(em, forum);
+            createThreadsForForum(data, em, forum, 15);
             forum = new Forum()
                 .setTitle("Board Game Design")
                 .setDescription("A gathering place to discuss game design What areas of history would make a great hidden movement game? Extra points for non-military!")
@@ -483,6 +485,7 @@ public class FakeData {
                 .setThreadCount(22)
                 .setStatus(ForumStatus.LIVE);
             data.persist(em, forum);
+            createThreadsForForum(data, em, forum, 25);
             forum = new Forum()
                 .setTitle("Design Contests")
                 .setDescription("Announce and participate in game design competitions")
@@ -512,6 +515,19 @@ public class FakeData {
                 .setStatus(ForumStatus.LIVE);
             data.persist(em, forum);
         });
+    }
+
+    static void createThreadsForForum(DataSunbeam data, EntityManager em, Forum forum, int threadCount) {
+        for (int index=0; index<threadCount; index++) {
+            ForumThread thread = new ForumThread()
+                .setTitle("Thread "+index)
+                .setDescription(PARAGRAPH_TEXT)
+                .setLikeCount(index*5)
+                .setMessageCount(index)
+                .setStatus(ForumThreadStatus.LIVE)
+                .setForum(forum);
+            data.persist(em, thread);
+        }
     }
 
     static String TINY_PARAGRAPH_TEXT = "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit";

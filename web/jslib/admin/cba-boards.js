@@ -318,7 +318,8 @@ export class CBABoardList extends VTable {
     constructor({loadPage, saveBoard, saveBoardStatus, deleteBoard}) {
         super({
             ref: "board-list",
-            changePage: pageIndex => this._setPage(pageIndex)
+            changePage: pageIndex => this._setPage(pageIndex),
+            select: line => this.selectBoard(line)
         });
         this.addClass("board-list");
         this._loadPage = loadPage;
@@ -375,17 +376,6 @@ export class CBABoardList extends VTable {
     };
 
     _setPage(pageIndex) {
-        function getBoard(line) {
-            return {
-                id: line.id,
-                name: line.name.getText(),
-                description: line.description.getText(),
-                status: line.status.getValue(),
-                icon: line.icon.getSrc(),
-                path: line.path,
-                author: line.author
-            };
-        }
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
             let saveBoardStatus = board => this._saveBoardStatus(board,
@@ -394,12 +384,9 @@ export class CBABoardList extends VTable {
             );
             for (let board of pageData.boards) {
                 let line;
-                let icon = new Img(board.icon).addClass("board-icon")
-                    .onMouseClick(event => this.selectBoard(getBoard(line)));
-                let name = new Span(board.name).addClass("board-name")
-                    .onMouseClick(event => this.selectBoard(getBoard(line)));
-                let description = new P(board.description).addClass("board-description")
-                    .onMouseClick(event => this.selectBoard(getBoard(line)));
+                let icon = new Img(board.icon).addClass("board-icon");
+                let name = new Span(board.name).addClass("board-name");
+                let description = new P(board.description).addClass("board-description");
                 let status = new Select().setOptions([
                     {value: "live", text: "Live"},
                     {value: "pnd", text: "Pending"},
@@ -409,8 +396,16 @@ export class CBABoardList extends VTable {
                     .setValue(board.status)
                     .addClass("board-status")
                     .onChange(event => saveBoardStatus(getBoard(line)));
-                line = {id: board.id, name, description, icon, status, path:board.path, author:board.author};
-                lines.push([icon, name, description, status]);
+                line = {
+                    id: board.id,
+                    name: name.getText(),
+                    description: description.getText(),
+                    status: status.getValue(),
+                    icon: icon.getSrc(),
+                    path: board.path,
+                    author: board.author
+                };
+                lines.push({source:line, cells:[icon, name, description, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("board-title")
@@ -426,7 +421,7 @@ export class CBABoardList extends VTable {
             this.setContent({
                 summary,
                 columns: ["Icon", "Name", "Description", "Status"],
-                data: lines
+                lines
             });
             this._currentPage = pageData.currentPage;
             let first = pageData.pageCount <= 5 ? 0 : pageData.currentPage - 2;

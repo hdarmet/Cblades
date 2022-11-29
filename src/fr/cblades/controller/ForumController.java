@@ -93,19 +93,38 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return result.get();
 	}
 
-	@REST(url="/api/forum/read/:id", method=Method.GET)
+	@REST(url="/api/forum/threads/:id", method=Method.GET)
 	public Json readForum(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			String id = (String)params.get("id");
+			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 			Forum forum = findForum(em, new Long(id));
 			if (forum.getStatus() != ForumStatus.LIVE) {
 				throw new SummerControllerException(409, "Forum is not live.");
 			}
-			result.set(readFromForum(forum));
+			long threadCount = findCount(em.createQuery("select count(t) from ForumThread t " +
+				"where t.status=:status and t.forum=:forum"),
+				"status", ForumThreadStatus.LIVE,
+				"forum", forum);
+			Collection<ForumThread> threads = findPagedThreads(
+				em.createQuery("select t from ForumThread t " +
+				"left join fetch t.author w " +
+				"left join fetch w.access " +
+				"join fetch t.forum " +
+				"where t.status=:status and t.forum=:forum"), pageNo,
+				"status", ForumThreadStatus.LIVE,
+				"forum", forum);
+			result.set(Json.createJsonObject()
+				.put("threads", readFromForumThreads(threads))
+				.put("count", threadCount)
+				.put("page", pageNo)
+				.put("pageSize", FactionController.FACTIONS_BY_PAGE)
+			);
 		});
 		return result.get();
 	}
+
 
 	@REST(url="/api/forum/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
@@ -214,6 +233,19 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return json;
 	}
 
+	Json readFromForumThread(ForumThread thread) {
+		Json json = Json.createJsonObject();
+		sync(json, thread)
+			.read("id")
+			.read("version")
+			.read("title")
+			.read("description")
+			.read("likeCount")
+			.read("messageCount")
+			.read("status", ForumThreadStatus::getLabel);
+		return json;
+	}
+
 	Forum findForum(EntityManager em, long id) {
 		Forum forum = find(em, Forum.class, id);
 		if (forum==null) {
@@ -236,5 +268,22 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return list;
 	}
 
-	static int FORUMS_BY_PAGE = 16;
+	Json readFromForumThreads(Collection<ForumThread> threads) {
+		Json list = Json.createJsonArray();
+		threads.stream().forEach(thread->list.push(readFromForumThread(thread)));
+		return list;
+	}
+
+	Collection<ForumThread> findPagedThreads(Query query, int page, Object... params) {
+		setParams(query, params);
+		List<ForumThread> threads = getPagedResultList(query, page* FactionController.FACTIONS_BY_PAGE, FactionController.FACTIONS_BY_PAGE);
+		return threads.stream().distinct().collect(Collectors.toList());
+	}
+
+	long findCount(Query query, Object... params) {
+		setParams(query, params);
+		return getSingleResult(query);
+	}
+
+	static int THREADS_BY_PAGE = 16;
 }

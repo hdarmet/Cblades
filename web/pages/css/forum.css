@@ -13,20 +13,20 @@
     user-select: none;
 }
 
-.forum-title {
+.forum-page-title {
     --extends: ex-page-header-container;
     background-color: #f0f0ff;
 }
 
-.forum-title .header-text {
+.forum-page-title .header-text {
     --extends: ex-header-text
 }
 
-.forum-title .header-left-image {
+.forum-page-title .header-left-image {
     --extends: ex-page-header-left-image;
 }
 
-.forum-title .header-right-image {
+.forum-page-title .header-right-image {
     --extends: ex-page-header-right-image;
 }
 
@@ -49,10 +49,10 @@
     cursor: pointer;
 }
 
-.forums-container .forum-comment-title {
+.forums-container .forum-title {
     font-weight: bolder;
 }
-.forums-container .forum-comment-text {
+.forums-container .forum-text {
     font-size: 14px;
 }
 .forums-container td.column-0 {
@@ -74,18 +74,18 @@
     width: 15%;
 }
 
-.forums-container .forum-comment-post {
+.forums-container .forum-message-post {
     font-size: 12px;
     color: grey;
 }
-.forums-container .forum-comment-date {
+.forums-container .forum-message-date {
     font-size: 14px;
 }
-.forums-container .forum-comment-thread {
+.forums-container .forum-message-thread {
     font-weight: bolder;
     font-size: 14px;
 }
-.forums-container .forum-comment-author {
+.forums-container .forum-message-author {
     font-style: italic;
     font-size: 14px;
 }
@@ -113,10 +113,10 @@
     cursor: pointer;
 }
 
-.forum-container .thread-comment-title {
+.forum-container .threads-title {
     font-weight: bolder;
 }
-.forum-container .thread-comment-text {
+.forum-container .threads-description {
     font-size: 14px;
 }
 .forum-container td.column-0 {
@@ -127,29 +127,34 @@
     width: 15px;
     padding: 0 0 5px 0;
 }
-
-.forum-container .threads-count {
+.forum-container .thread-title {
+    font-weight: bolder;
+}
+.forum-container .thread-text {
     font-size: 14px;
 }
-.forum-container .thread-comments-count {
+.forum-container .threads-like-count {
+    font-size: 14px;
+}
+.forum-container .thread-message-count {
     font-size: 14px;
 }
 .forum-container td.column-1 {
     width: 15%;
 }
 
-.forum-container .thread-comment-post {
+.forum-container .thread-message-post {
     font-size: 12px;
     color: grey;
 }
-.forum-container .thread-comment-date {
+.forum-container .thread-message-date {
     font-size: 14px;
 }
-.forum-container .thread-comment-thread {
+.forum-container .thread-message-thread {
     font-weight: bolder;
     font-size: 14px;
 }
-.forum-container .thread-comment-author {
+.forum-container .thread-message-author {
     font-style: italic;
     font-size: 14px;
 }
@@ -166,13 +171,13 @@
 }
 /* */
 
-.forum-thread {
+.forum-thread-container {
     background-color: #f0f0ff;
     height: 100%;
     border: solid 2px transparent;
 }
 
-.forum-thread .table-frame {
+.forum-thread-container .table-frame {
     background-color: #f0f0ff;
     width: calc(100% - 20px);
     height: calc(100% - 20px);
@@ -180,11 +185,11 @@
     margin: 10px;
 }
 
-.forum-thread .table-content {
+.forum-thread-container .table-content {
     background-color: #f0f0f0;
 }
 
-.forum-thread .table-content .column-1 {
+.forum-thread-container .table-content .column-1 {
     vertical-align: top;
     font-size: 14px;
     width: 100%;
@@ -212,37 +217,37 @@
     font-style: italic;
 }
 
-.avatar-comment-count i {
+.avatar-message-count i {
     padding: 0;
     margin: 0;
     width: 20px;
 }
 
-.comment-content {
+.message-content {
     height: 100%;
 }
 
-.comment-date {
+.message-date {
     height: 20px;
     margin: 0;
 }
 
-.comment-date p {
+.message-date p {
     margin-left: 0;
     margin-top: 0;
 }
 
-.comment-date {
+.message-date {
     color: grey;
     font-size: 12px;
 }
 
-.comment-text {
+.message-text {
     min-height: 100px;
     margin: 0;
 }
 
-.comment-commands {
+.message-commands {
     float: right;
     height: 40px;
     margin-top: 4px;
@@ -250,29 +255,29 @@
     overflow: hidden;
 }
 
-.comment-commands p {
+.message-commands p {
     margin-bottom: 0;
 }
 
-.comment-commands .fa-heart:before {
+.message-commands .fa-heart:before {
     font-size: 20px;
 }
 
-.comment-liked.fa-heart:before {
+.message-liked.fa-heart:before {
     color: #ff4336;
 }
 
-.comment-not-liked.fa-heart:before {
+.message-not-liked.fa-heart:before {
     color: #aa0000;
 }
 
-.like-comment {
+.like-message {
     width: 20px;
     cursor: pointer;
     user-select: none;
 }
 
-.like-comment-count {
+.like-message-count {
     display: inline;
     font-weight: bold;
     padding-left: 0;
@@ -281,22 +286,22 @@
     user-select: none;
 }
 
-.quote-comment {
+.quote-message {
     --extends: ex-forum-command;
 }
 
-.quote-comment:hover, .like-comment-count:hover {
+.quote-message:hover, .like-message-count:hover {
     opacity: 0.5;
 }
 
-.thread-title {
+.forum-thread-container .thread-title {
     float: left;
     font-size: 20px;
     font-weight: bolder;
     font-style: italic;
 }
 
-.thread-pager {
+.forum-thread-container .thread-pager {
     color: grey;
     font-size: 14px;
 }

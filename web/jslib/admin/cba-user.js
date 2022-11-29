@@ -57,11 +57,11 @@ export class CBAUserSelection extends VTable {
     constructor({loadPage, selectUser}) {
         super({
             ref: "user-selection",
-            changePage: pageIndex => this._setPage(pageIndex)
+            changePage: pageIndex => this._setPage(pageIndex),
+            select: user => selectUser(user)
         });
         this.addClass("user-selection");
         this._loadPage = loadPage;
-        this._selectUser = selectUser;
     }
 
     set search(search) {
@@ -78,33 +78,15 @@ export class CBAUserSelection extends VTable {
     }
 
     _setPage(pageIndex) {
-        function getUser(line) {
-            return {
-                id: line.id,
-                login: line.login.getText(),
-                firstName: line.firstName.getText(),
-                lastName: line.lastName.getText(),
-                avatar: line.avatar.getSrc(),
-                email: line.email.getText(),
-                role: line.role.getValue(),
-                status: line.status.getValue()
-            };
-        }
-
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
             for (let user of pageData.users) {
                 let line;
-                let login = new P(user.login).addClass("user-Login")
-                    .onMouseClick(event => this._selectUser(getUser(line)));
-                let firstName = new P(user.firstName).addClass("user-first-name")
-                    .onMouseClick(event => this._selectUser(getUser(line)));
-                let lastName = new P(user.lastName).addClass("user-last-name")
-                    .onMouseClick(event => this._selectUser(getUser(line)));
-                let avatar = new Img(user.avatar).addClass("user-avatar")
-                    .onMouseClick(event => this._selectUser(getUser(line)));
-                let email = new P(user.email).addClass("user-email")
-                    .onMouseClick(event => this._selectUser(getUser(line)));
+                let login = new P(user.login).addClass("user-Login");
+                let firstName = new P(user.firstName).addClass("user-first-name");
+                let lastName = new P(user.lastName).addClass("user-last-name");
+                let avatar = new Img(user.avatar).addClass("user-avatar");
+                let email = new P(user.email).addClass("user-email");
                 let status = new Enum(user.status).setOptions([
                     {value: "act", text: "Active"},
                     {value: "pnd", text: "Pending"},
@@ -120,8 +102,17 @@ export class CBAUserSelection extends VTable {
                 ])
                     .addClass("user-role")
                     .onMouseClick(event => selectUser(getUser(line)));
-                line = {id: user.id, login, firstName, lastName, avatar, email, role, status};
-                lines.push([login, firstName, lastName, avatar, email, role, status]);
+                line =  {
+                    id: user.id,
+                    login: login.getText(),
+                    firstName: firstName.getText(),
+                    lastName: lastName.getText(),
+                    avatar: avatar.getSrc(),
+                    email: email.getText(),
+                    role: role.getValue(),
+                    status: status.getValue()
+                };
+                lines.push({source: line, cells:[login, firstName, lastName, avatar, email, role, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("user-title")
@@ -137,7 +128,7 @@ export class CBAUserSelection extends VTable {
             this.setContent({
                 summary,
                 columns: ["Login", "First Name", "LastName", "Avatar", "Email", "Role", "Status"],
-                data: lines
+                lines
             });
             this._currentPage = pageData.currentPage;
             let first = pageData.pageCount <= 5 ? 0 : pageData.currentPage - 2;
@@ -309,7 +300,8 @@ export class CBAUserList extends VTable {
     constructor({loadPage, updateUser, deleteUser}) {
         super({
             ref: "user-list",
-            changePage: pageIndex => this._setPage(pageIndex)
+            changePage: pageIndex => this._setPage(pageIndex),
+            select: user => this.selectUser(user)
         });
         this.addClass("user-list");
         this._loadPage = loadPage;
@@ -330,65 +322,48 @@ export class CBAUserList extends VTable {
         this._setPage(this._currentPage);
     }
 
-    _setPage(pageIndex) {
-        function getUser(line) {
-            return {
-                id: line.id,
-                login: line.login.getText(),
-                firstName: line.firstName.getText(),
-                lastName: line.lastName.getText(),
-                avatar: line.avatar.getSrc(),
-                email: line.email.getText(),
-                role: line.role.getValue(),
-                status: line.status.getValue()
-            };
-        }
+    selectUser(user) {
+        let userEditor = new CBAEditUser({
+            title: "Edit User",
+            user,
+            saveUser: user => this._updateUser(user,
+                userEditor.avatarFiles,
+                () => {
+                    userEditor.hide();
+                    this.refresh();
+                },
+                text => {
+                    showMessage("Fail to update User", text);
+                }
+            ),
+            deleteUser: user => this._deleteUser(user,
+                () => {
+                    userEditor.hide();
+                    userEditor.confirm.hide();
+                    this.refresh();
+                },
+                text => {
+                    userEditor.confirm.hide();
+                    showMessage("Fail to delete User", text);
+                }
+            ),
+        }).show();
+    };
 
+    _setPage(pageIndex) {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
-            let selectUser = user => {
-                let userEditor = new CBAEditUser({
-                    title: "Edit User",
-                    user,
-                    saveUser: user => this._updateUser(user,
-                        userEditor.avatarFiles,
-                        () => {
-                            userEditor.hide();
-                            this.refresh();
-                        },
-                        text => {
-                            showMessage("Fail to update User", text);
-                        }
-                    ),
-                    deleteUser: user => this._deleteUser(user,
-                        () => {
-                            userEditor.hide();
-                            userEditor.confirm.hide();
-                            this.refresh();
-                        },
-                        text => {
-                            userEditor.confirm.hide();
-                            showMessage("Fail to delete User", text);
-                        }
-                    ),
-                }).show();
-            };
             let saveUser = user => this._updateUser(user, [],
                 () => showMessage("User saved."),
                 text => showMessage("Unable to Save User.", text),
             );
             for (let user of pageData.users) {
                 let line;
-                let login = new P(user.login).addClass("user-Login")
-                    .onMouseClick(event => selectUser(getUser(line)));
-                let firstName = new P(user.firstName).addClass("user-first-name")
-                    .onMouseClick(event => selectUser(getUser(line)));
-                let lastName = new P(user.lastName).addClass("user-last-name")
-                    .onMouseClick(event => selectUser(getUser(line)));
-                let avatar = new Img(user.avatar).addClass("user-avatar")
-                    .onMouseClick(event => selectUser(getUser(line)));
-                let email = new P(user.email).addClass("user-email")
-                    .onMouseClick(event => selectUser(getUser(line)));
+                let login = new P(user.login).addClass("user-Login");
+                let firstName = new P(user.firstName).addClass("user-first-name");
+                let lastName = new P(user.lastName).addClass("user-last-name");
+                let avatar = new Img(user.avatar).addClass("user-avatar");
+                let email = new P(user.email).addClass("user-email");
                 let status = new Select().setOptions([
                     {value: "act", text: "Active"},
                     {value: "pnd", text: "Pending"},
@@ -408,8 +383,17 @@ export class CBAUserList extends VTable {
                     .setValue(user.role)
                     .addClass("user-role")
                     .onChange(event => saveUser(getUser(line)));
-                line = {id: user.id, login, firstName, lastName, avatar, email, role, status};
-                lines.push([login, firstName, lastName, avatar, email, role, status]);
+                line = {
+                    id: user.id,
+                    login: login.getText(),
+                    firstName: firstName.getText(),
+                    lastName: lastName.getText(),
+                    avatar: avatar.getSrc(),
+                    email: email.getText(),
+                    role: role.getValue(),
+                    status: status.getValue()
+                };
+                lines.push({source:line, cells:[login, firstName, lastName, avatar, email, role, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("user-title")
@@ -425,7 +409,7 @@ export class CBAUserList extends VTable {
             this.setContent({
                 summary,
                 columns: ["Login", "First Name", "LastName", "Avatar", "Email", "Role", "Status"],
-                data: lines
+                lines
             });
             this._currentPage = pageData.currentPage;
             let first = pageData.pageCount <= 5 ? 0 : pageData.currentPage - 2;

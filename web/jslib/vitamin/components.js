@@ -467,6 +467,10 @@ export function InputMixin(clazz) {
 
     return class extends clazz {
 
+        get isInput() {
+            return true;
+        }
+
         getValue() {
             return this._root.value;
         }

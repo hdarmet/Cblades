@@ -140,6 +140,8 @@ export class CBAArticle extends DetailedView(Vitamin(Div)) {
         this.addClass(kind);
         this._title = new P(article.title).addClass("article-title");
         this.add(this._title);
+        this._content = new Div().addClass("article-content");
+        this.add(this._content);
         this._paragraphs=[];
         if (article.paragraphs) {
             for (let paragraphSpec of article.paragraphs) {
@@ -149,6 +151,10 @@ export class CBAArticle extends DetailedView(Vitamin(Div)) {
         this.onEvent("click", event=>{
             action && action(this)
         });
+    }
+
+    get content() {
+        return this._content;
     }
 
     // ++
@@ -579,7 +585,8 @@ export class CBAArticleList extends VTable {
     constructor({loadPage, deleteArticle, saveArticle, saveArticleStatus}) {
         super({
             ref: "article-list",
-            changePage: pageIndex => this._setPage(pageIndex)
+            changePage: pageIndex => this._setPage(pageIndex),
+            select: line => this.selectArticle(line)
         });
         this.addClass("article-list");
         this._loadPage = loadPage;
@@ -630,19 +637,10 @@ export class CBAArticleList extends VTable {
                     ),
                 }).show();
             },
-
         );
-
     };
 
     _setPage(pageIndex) {
-        function getArticle(line) {
-            return {
-                id: line.id,
-                articleTitle: line.title.getText(),
-                status: line.status.getValue()
-            };
-        }
         function getAuthor(article) {
             return article.author.firstName+" "+article.author.lastName;
         }
@@ -657,27 +655,26 @@ export class CBAArticleList extends VTable {
             );
             for (let article of pageData.articles) {
                 let line;
-                let themes = new Span(article.themes.map(theme=>theme.title).join(", ")).addClass("article-themes")
-                    .onMouseClick(event => this.selectArticle(getArticle(line)));
-                let title = new Span(article.title).addClass("article-name")
-                    .onMouseClick(event => this.selectArticle(getArticle(line)));
-                let author = new Span(getAuthor(article)).addClass("article-name")
-                    .onMouseClick(event => this.selectArticle(getArticle(line)));
-                let illustration = new Img(article.firstParagraph.illustration).addClass("article-illustration")
-                    .onMouseClick(event => this.selectArticle(getArticle(line)));
-                let firstParagraph = new P(getFirstParagraph(article)).addClass("article-paragraph")
-                    .onMouseClick(event => this.selectArticle(getArticle(line)));
+                let themes = new Span(article.themes.map(theme=>theme.title).join(", ")).addClass("article-themes");
+                let title = new Span(article.title).addClass("article-name");
+                let author = new Span(getAuthor(article)).addClass("article-name");
+                let illustration = new Img(article.firstParagraph.illustration).addClass("article-illustration");
+                let firstParagraph = new P(getFirstParagraph(article)).addClass("article-paragraph");
                 let status = new Select().setOptions([
                     {value: "live", text: "Live"},
                     {value: "pnd", text: "Pending"},
                     {value: "prp", text: "Proposed"}
                 ])
-                .addClass("form-input-select")
-                .setValue(article.status)
-                .addClass("article-status")
-                .onChange(event => saveArticleStatus(getArticle(line)));
-                line = {id: article.id, themes, title, status};
-                lines.push([themes, title, author, illustration, firstParagraph, status]);
+                    .addClass("form-input-select")
+                    .setValue(article.status)
+                    .addClass("article-status")
+                    .onChange(event => saveArticleStatus(line));
+                line = {
+                    id: article.id,
+                    articleTitle: title.getText(),
+                    status: status.getValue()
+                };
+                lines.push({source:line, cells:[themes, title, author, illustration, firstParagraph, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("article-title")
@@ -693,7 +690,7 @@ export class CBAArticleList extends VTable {
             this.setContent({
                 summary,
                 columns: ["Themes", "Title", "Author", "Illustration", "First paragraph", "Status"],
-                data: lines
+                lines
             });
             this._currentPage = pageData.currentPage;
             let first = pageData.pageCount <= 5 ? 0 : pageData.currentPage - 2;

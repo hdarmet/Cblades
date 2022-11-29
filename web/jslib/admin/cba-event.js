@@ -158,7 +158,8 @@ export class CBAEventList extends VTable {
     constructor({loadPage, saveEvent, saveEventStatus, deleteEvent}) {
         super({
             ref: "event-list",
-            changePage: pageIndex => this._setPage(pageIndex)
+            changePage: pageIndex => this._setPage(pageIndex),
+            select: line => this.selectEvent(line)
         });
         this.addClass("event-list");
         this._loadPage = loadPage;
@@ -180,62 +181,47 @@ export class CBAEventList extends VTable {
         this._setPage(this._currentPage);
     }
 
-    _setPage(pageIndex) {
-        function getEvent(line) {
-            return {
-                id: line.id,
-                date: line.date.getText(),
-                title: line.title.getText(),
-                description: line.description.getText(),
-                status: line.status.getValue(),
-                illustration: line.illustration.getSrc ? line.illustration.getSrc() : undefined,
-                target: line.target
-            };
-        }
+    selectEvent(event) {
+        let eventEditor = new CBAEditEvent({
+            title: "Edit Event",
+            event,
+            saveEvent: event => this._saveEvent(event,
+                eventEditor.illustrationFiles,
+                () => {
+                    eventEditor.hide();
+                    this.refresh();
+                },
+                text => {
+                    showMessage("Fail to update Event", text);
+                }
+            ),
+            deleteEvent: event => this._deleteEvent(event,
+                () => {
+                    eventEditor.hide();
+                    eventEditor.confirm.hide();
+                    this.refresh();
+                },
+                text => {
+                    eventEditor.confirm.hide();
+                    showMessage("Fail to delete Event", text);
+                }
+            ),
+        }).show();
+    }
 
+    _setPage(pageIndex) {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
-            let selectEvent = event => {
-                let eventEditor = new CBAEditEvent({
-                    title: "Edit Event",
-                    event,
-                    saveEvent: event => this._saveEvent(event,
-                        eventEditor.illustrationFiles,
-                        () => {
-                            eventEditor.hide();
-                            this.refresh();
-                        },
-                        text => {
-                            showMessage("Fail to update Event", text);
-                        }
-                    ),
-                    deleteEvent: event => this._deleteEvent(event,
-                        () => {
-                            eventEditor.hide();
-                            eventEditor.confirm.hide();
-                            this.refresh();
-                        },
-                        text => {
-                            eventEditor.confirm.hide();
-                            showMessage("Fail to delete Event", text);
-                        }
-                    ),
-                }).show();
-            };
             let saveEventStatus = event => this._saveEventStatus(event,
                 () => showMessage("Event saved."),
                 text => showMessage("Unable to Save Event.", text),
             );
             for (let event of pageData.events) {
                 let line;
-                let date = new Span(event.date).addClass("event-date")
-                    .onMouseClick(event => selectEvent(getEvent(line)));
-                let title = new Span(event.title).addClass("event-title")
-                    .onMouseClick(event => selectEvent(getEvent(line)));
-                let illustration = event.illustration ? new Img(event.illustration).addClass("event-illustration") : new Div()
-                    .onMouseClick(event => selectEvent(getEvent(line)));
-                let description = new P(event.description).addClass("event-description")
-                    .onMouseClick(event => selectEvent(getEvent(line)));
+                let date = new Span(event.date).addClass("event-date");
+                let title = new Span(event.title).addClass("event-title");
+                let illustration = event.illustration ? new Img(event.illustration).addClass("event-illustration") : new Div();
+                let description = new P(event.description).addClass("event-description");
                 let status = new Select().setOptions([
                     {value: "live", text: "Live"},
                     {value: "arch", text: "Archived"},
@@ -245,8 +231,16 @@ export class CBAEventList extends VTable {
                     .setValue(event.status)
                     .addClass("event-status")
                     .onChange(event => saveEventStatus(getEvent(line)));
-                line = {id: event.id, date, title, description, illustration, status, target:event.target};
-                lines.push([date, title, illustration, description, status]);
+                line =  {
+                    id: event.id,
+                    date: date.getText(),
+                    title: title.getText(),
+                    description: description.getText(),
+                    status: status.getValue(),
+                    illustration: illustration.getSrc ? illustration.getSrc() : undefined,
+                    target: event.target
+                };
+                lines.push({source:line, cells:[date, title, illustration, description, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("event-title")
@@ -262,7 +256,7 @@ export class CBAEventList extends VTable {
             this.setContent({
                 summary,
                 columns: ["Date", "Title", "Illustration", "Description", "Status"],
-                data: lines
+                lines
             });
             this._currentPage = pageData.currentPage;
             let first = pageData.pageCount <= 5 ? 0 : pageData.currentPage - 2;

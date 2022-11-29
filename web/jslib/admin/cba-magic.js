@@ -604,7 +604,8 @@ export class CBAMagicArtList extends VTable {
     constructor({loadPage, deleteMagicArt, saveMagicArt, saveMagicArtStatus}) {
         super({
             ref: "magic-list",
-            changePage: pageIndex => this._setPage(pageIndex)
+            changePage: pageIndex => this._setPage(pageIndex),
+            select: magicArt => this.selectMagicArt(magicArt)
         });
         this.addClass("magic-list");
         this._loadPage = loadPage;
@@ -661,14 +662,6 @@ export class CBAMagicArtList extends VTable {
     };
 
     _setPage(pageIndex) {
-        function getMagicArt(line) {
-            return {
-                id: line.id,
-                magicArtName: line.name.getText(),
-                magicArtDescription: line.description.getText(),
-                status: line.status.getValue()
-            };
-        }
         function getAuthor(magicArt) {
             return magicArt.author.firstName+" "+magicArt.author.lastName;
         }
@@ -680,12 +673,9 @@ export class CBAMagicArtList extends VTable {
             );
             for (let magicArt of pageData.magicArts) {
                 let line;
-                let name = new Span(magicArt.name).addClass("magic-name")
-                    .onMouseClick(event => this.selectMagicArt(getMagicArt(line)));
-                let description = new Span(magicArt.description).addClass("magic-description")
-                    .onMouseClick(event => this.selectMagicArt(getMagicArt(line)));
-                let illustration = new Img(magicArt.illustration).addClass("magic-illustration")
-                    .onMouseClick(event => this.selectMagicArt(getMagicArt(line)));
+                let name = new Span(magicArt.name).addClass("magic-name");
+                let description = new Span(magicArt.description).addClass("magic-description");
+                let illustration = new Img(magicArt.illustration).addClass("magic-illustration");
                 let status = new Select().setOptions([
                     {value: "live", text: "Live"},
                     {value: "pnd", text: "Pending"},
@@ -695,8 +685,13 @@ export class CBAMagicArtList extends VTable {
                 .setValue(magicArt.status)
                 .addClass("magic-status")
                 .onChange(event => saveMagicArtStatus(getMagicArt(line)));
-                line = {id: magicArt.id, name, description, illustration, status};
-                lines.push([name, illustration, description, status]);
+                line = {
+                    id: magicArt.id,
+                    magicArtName: name.getText(),
+                    magicArtDescription: description.getText(),
+                    status: status.getValue()
+                };
+                lines.push({source:line, cells:[name, illustration, description, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("magic-title")
@@ -712,7 +707,7 @@ export class CBAMagicArtList extends VTable {
             this.setContent({
                 summary,
                 columns: ["Name", "Illustration", "Description", "Status"],
-                data: lines
+                lines
             });
             this._currentPage = pageData.currentPage;
             let first = pageData.pageCount <= 5 ? 0 : pageData.currentPage - 2;

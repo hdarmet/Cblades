@@ -124,13 +124,42 @@ export class CBAAnnouncementList extends VTable {
     constructor({loadPage, saveAnnouncement, saveAnnouncementStatus, deleteAnnouncement}) {
         super({
             ref: "announcement-list",
-            changePage: pageIndex => this._setPage(pageIndex)
+            changePage: pageIndex => this._setPage(pageIndex),
+            select: announcement=>this.selectAnnouncement(announcement)
         });
         this.addClass("announcement-list");
         this._loadPage = loadPage;
         this._saveAnnouncement = saveAnnouncement;
         this._saveAnnouncementStatus = saveAnnouncementStatus;
         this._deleteAnnouncement = deleteAnnouncement;
+    }
+
+    selectAnnouncement(announcement) {
+        let announcementEditor = new CBAEditAnnouncement({
+            title: "Edit Announcement",
+            announcement,
+            saveAnnouncement: announcement => this._saveAnnouncement(announcement,
+                announcementEditor.illustrationFiles,
+                () => {
+                    announcementEditor.hide();
+                    this.refresh();
+                },
+                text => {
+                    showMessage("Fail to update Announcement", text);
+                }
+            ),
+            deleteAnnouncement: announcement => this._deleteAnnouncement(announcement,
+                () => {
+                    announcementEditor.hide();
+                    announcementEditor.confirm.hide();
+                    this.refresh();
+                },
+                text => {
+                    announcementEditor.confirm.hide();
+                    showMessage("Fail to delete Announcement", text);
+                }
+            ),
+        }).show();
     }
 
     set search(search) {
@@ -147,54 +176,15 @@ export class CBAAnnouncementList extends VTable {
     }
 
     _setPage(pageIndex) {
-        function getAnnouncement(line) {
-            return {
-                id: line.id,
-                description: line.description.getText(),
-                status: line.status.getValue(),
-                illustration: line.illustration.getSrc()
-            };
-        }
-
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
-            let selectAnnouncement = announcement => {
-                let announcementEditor = new CBAEditAnnouncement({
-                    title: "Edit Announcement",
-                    announcement,
-                    saveAnnouncement: announcement => this._saveAnnouncement(announcement,
-                        announcementEditor.illustrationFiles,
-                        () => {
-                            announcementEditor.hide();
-                            this.refresh();
-                        },
-                        text => {
-                            showMessage("Fail to update Announcement", text);
-                        }
-                    ),
-                    deleteAnnouncement: announcement => this._deleteAnnouncement(announcement,
-                        () => {
-                            announcementEditor.hide();
-                            announcementEditor.confirm.hide();
-                            this.refresh();
-                        },
-                        text => {
-                            announcementEditor.confirm.hide();
-                            showMessage("Fail to delete Announcement", text);
-                        }
-                    ),
-                }).show();
-            };
             let saveAnnouncementStatus = annoucement => this._saveAnnouncementStatus(annoucement,
                 () => showMessage("Announcement saved."),
                 text => showMessage("Unable to Save Announcement.", text)
             );
             for (let announcement of pageData.announcements) {
-                let line;
                 let illustration = new Img(announcement.illustration).addClass("announcement-illustration")
-                    .onMouseClick(event => selectAnnouncement(getAnnouncement(line)));
-                let description = new P(announcement.description).addClass("announcement-description")
-                    .onMouseClick(event => selectAnnouncement(getAnnouncement(line)));
+                let description = new P(announcement.description).addClass("announcement-description");
                 let status = new Select().setOptions([
                     {value: "live", text: "Live"},
                     {value: "arch", text: "Archived"},
@@ -203,9 +193,14 @@ export class CBAAnnouncementList extends VTable {
                     .addClass("form-input-select")
                     .setValue(announcement.status)
                     .addClass("announcement-status")
-                    .onChange(event => saveAnnouncementStatus(getAnnouncement(line)));
-                line = {id: announcement.id, description, illustration, status};
-                lines.push([illustration, description, status]);
+                    .onChange(event => saveAnnouncementStatus(line));
+                let line = {
+                    id: announcement.id,
+                    description: description.getText(),
+                    status: status.getValue(),
+                    illustration: illustration.getSrc()
+                };
+                lines.push({source:line, cells:[illustration, description, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("announcement-title")
@@ -221,7 +216,7 @@ export class CBAAnnouncementList extends VTable {
             this.setContent({
                 summary,
                 columns: ["Illustration", "Description", "Status"],
-                data: lines
+                lines
             });
             this._currentPage = pageData.currentPage;
             let first = pageData.pageCount <= 5 ? 0 : pageData.currentPage - 2;

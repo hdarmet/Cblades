@@ -376,7 +376,7 @@ export var vForumTitle = new VHeader({
     ref:"forum-title",
     title: "Forum",
     left:"../images/site/left-forum.png", right:"../images/site/right-forum.png"
-}).addClass("forum-title");
+}).addClass("forum-page-title");
 
 export var vGamesTitle = new VHeader({
     ref:"games-title",

@@ -470,7 +470,8 @@ export class CBAScenarioList extends VTable {
     constructor({loadPage, saveScenario, saveScenarioStatus, deleteScenario}) {
         super({
             ref: "scenario-list",
-            changePage: pageIndex => this._setPage(pageIndex)
+            changePage: pageIndex => this._setPage(pageIndex),
+            select: scenario => this.selectScenario(scenario)
         });
         this.addClass("scenario-list");
         this._loadPage = loadPage;
@@ -527,16 +528,6 @@ export class CBAScenarioList extends VTable {
     };
 
     _setPage(pageIndex) {
-        function getScenario(line) {
-            return {
-                id: line.id,
-                title: line.title.getText(),
-                story: line.story.getText(),
-                status: line.status.getValue(),
-                illustration: line.illustration.getSrc(),
-                author: line.author
-            };
-        }
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
             let saveScenarioStatus = scenario => this._saveScenarioStatus(scenario,
@@ -544,13 +535,9 @@ export class CBAScenarioList extends VTable {
                 text => showMessage("Unable to Save Scenario.", text),
             );
             for (let scenario of pageData.scenarios) {
-                let line;
-                let illustration = new Img(scenario.illustration).addClass("scenario-illustration")
-                    .onMouseClick(event => this.selectScenario(getScenario(line)));
-                let title = new Span(scenario.title).addClass("scenario-name")
-                    .onMouseClick(event => this.selectScenario(getScenario(line)));
-                let story = new P(scenario.story).addClass("scenario-description")
-                    .onMouseClick(event => this.selectScenario(getScenario(line)));
+                let illustration = new Img(scenario.illustration).addClass("scenario-illustration");
+                let title = new Span(scenario.title).addClass("scenario-name");
+                let story = new P(scenario.story).addClass("scenario-description");
                 let status = new Select().setOptions([
                     {value: "live", text: "Live"},
                     {value: "pnd", text: "Pending"},
@@ -560,8 +547,15 @@ export class CBAScenarioList extends VTable {
                     .setValue(scenario.status)
                     .addClass("scenario-status")
                     .onChange(event => saveScenarioStatus(getScenario(line)));
-                line = {id: scenario.id, illustration, title, story, status, author:scenario.author};
-                lines.push([illustration, title, story, status]);
+                let line = {
+                    id: scenario.id,
+                    title: title.getText(),
+                    story: story.getText(),
+                    status: status.getValue(),
+                    illustration: illustration.getSrc(),
+                    author: scenario.author
+                };
+                lines.push({source:line, cells:[illustration, title, story, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("scenario-title")
@@ -577,7 +571,7 @@ export class CBAScenarioList extends VTable {
             this.setContent({
                 summary,
                 columns: ["Illustration", "Name", "Story", "Status"],
-                data: lines
+                lines
             });
             this._currentPage = pageData.currentPage;
             let first = pageData.pageCount <= 5 ? 0 : pageData.currentPage - 2;

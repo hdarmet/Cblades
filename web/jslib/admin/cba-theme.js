@@ -389,7 +389,8 @@ export class CBAThemeList extends VTable {
     constructor({loadPage, saveTheme, saveThemeStatus, deleteTheme}) {
         super({
             ref: "theme-list",
-            changePage: pageIndex => this._setPage(pageIndex)
+            changePage: pageIndex => this._setPage(pageIndex),
+            select: theme => this.selectTheme(theme)
         });
         this.addClass("theme-list");
         this._loadPage = loadPage;
@@ -446,17 +447,6 @@ export class CBAThemeList extends VTable {
     };
 
     _setPage(pageIndex) {
-        function getTheme(line) {
-            return {
-                id: line.id,
-                category: line.category.getText(),
-                title: line.title.getText(),
-                description: line.description.getText(),
-                status: line.status.getValue(),
-                illustration: line.illustration.getSrc(),
-                author: line.author
-            };
-        }
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
             let saveThemeStatus = theme => this._saveThemeStatus(theme,
@@ -465,14 +455,10 @@ export class CBAThemeList extends VTable {
             );
             for (let theme of pageData.themes) {
                 let line;
-                let illustration = new Img(theme.illustration).addClass("theme-illustration")
-                    .onMouseClick(event => this.selectTheme(getTheme(line)));
-                let category = new Span(theme.category).addClass("theme-category")
-                    .onMouseClick(event => this.selectTheme(getTheme(line)));
-                let title = new Span(theme.title).addClass("theme-name")
-                    .onMouseClick(event => this.selectTheme(getTheme(line)));
-                let description = new P(theme.description).addClass("theme-description")
-                    .onMouseClick(event => this.selectTheme(getTheme(line)));
+                let illustration = new Img(theme.illustration).addClass("theme-illustration");
+                let category = new Span(theme.category).addClass("theme-category");
+                let title = new Span(theme.title).addClass("theme-name");
+                let description = new P(theme.description).addClass("theme-description");
                 let status = new Select().setOptions([
                     {value: "live", text: "Live"},
                     {value: "pnd", text: "Pending"},
@@ -482,8 +468,16 @@ export class CBAThemeList extends VTable {
                     .setValue(theme.status)
                     .addClass("theme-status")
                     .onChange(event => saveThemeStatus(getTheme(line)));
-                line = {id: theme.id, illustration, category, title, description, status, author:theme.author};
-                lines.push([illustration, category, title, description, status]);
+                line = {
+                    id: theme.id,
+                    category: category.getText(),
+                    title: title.getText(),
+                    description: description.getText(),
+                    status: status.getValue(),
+                    illustration: illustration.getSrc(),
+                    author: theme.author
+                };
+                lines.push({source:line, cells:[illustration, category, title, description, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("theme-title")
@@ -499,7 +493,7 @@ export class CBAThemeList extends VTable {
             this.setContent({
                 summary,
                 columns: ["Illustration", "Category", "Name", "Description", "Status"],
-                data: lines
+                lines
             });
             this._currentPage = pageData.currentPage;
             let first = pageData.pageCount <= 5 ? 0 : pageData.currentPage - 2;

@@ -691,7 +691,8 @@ export class CBAFactionList extends VTable {
     constructor({loadPage, deleteFaction, saveFaction, saveFactionStatus}) {
         super({
             ref: "faction-list",
-            changePage: pageIndex => this._setPage(pageIndex)
+            changePage: pageIndex => this._setPage(pageIndex),
+            select: faction => this.selectFaction(faction)
         });
         this.addClass("faction-list");
         this._loadPage = loadPage;
@@ -742,20 +743,10 @@ export class CBAFactionList extends VTable {
                     ),
                 }).show();
             },
-
         );
-
     };
 
     _setPage(pageIndex) {
-        function getFaction(line) {
-            return {
-                id: line.id,
-                factionName: line.name.getText(),
-                factionDescription: line.description.getText(),
-                status: line.status.getValue()
-            };
-        }
         function getAuthor(faction) {
             return faction.author.firstName+" "+faction.author.lastName;
         }
@@ -770,12 +761,9 @@ export class CBAFactionList extends VTable {
             );
             for (let faction of pageData.factions) {
                 let line;
-                let name = new Span(faction.name).addClass("faction-name")
-                    .onMouseClick(event => this.selectFaction(getFaction(line)));
-                let description = new Span(faction.description).addClass("faction-description")
-                    .onMouseClick(event => this.selectFaction(getFaction(line)));
-                let illustration = new Img(faction.illustration).addClass("faction-illustration")
-                    .onMouseClick(event => this.selectFaction(getFaction(line)));
+                let name = new Span(faction.name).addClass("faction-name");
+                let description = new Span(faction.description).addClass("faction-description");
+                let illustration = new Img(faction.illustration).addClass("faction-illustration");
                 let status = new Select().setOptions([
                     {value: "live", text: "Live"},
                     {value: "pnd", text: "Pending"},
@@ -785,8 +773,13 @@ export class CBAFactionList extends VTable {
                 .setValue(faction.status)
                 .addClass("faction-status")
                 .onChange(event => saveFactionStatus(getFaction(line)));
-                line = {id: faction.id, name, description, illustration, status};
-                lines.push([name, illustration, description, status]);
+                line =  {
+                    id: faction.id,
+                    factionName: name.getText(),
+                    factionDescription: description.getText(),
+                    status: status.getValue()
+                };
+                lines.push({source:line, cells:[name, illustration, description, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("faction-title")
@@ -802,7 +795,7 @@ export class CBAFactionList extends VTable {
             this.setContent({
                 summary,
                 columns: ["Name", "Illustration", "Description", "Status"],
-                data: lines
+                lines
             });
             this._currentPage = pageData.currentPage;
             let first = pageData.pageCount <= 5 ? 0 : pageData.currentPage - 2;
