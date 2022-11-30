@@ -5,7 +5,9 @@ import org.summer.annotation.Launch;
 import org.summer.data.DataSunbeam;
 
 import javax.persistence.EntityManager;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class FakeData {
 
@@ -49,7 +51,8 @@ public class FakeData {
             Account temrad = new Account()
                 .setFirstName("Henri").setLastName("Darmet").setEmail("hdarmet@gmail.com")
                 .setAccess(new Login().setLogin("temrad").setPassword(Login.encrypt("P@ssW0rd.")))
-                .setAvatar("../images/site/avatars/my-avatar.png").setStatus(AccountStatus.ACTIVE);
+                .setAvatar("../images/site/avatars/my-avatar.png").setStatus(AccountStatus.ACTIVE)
+                .setRating(201).setMessageCount(100);
             data.persist(em, temrad);
             long now = new Date().getTime();
             for (int index=0; index<10; index++) {
@@ -69,6 +72,18 @@ public class FakeData {
                     .setStatus(EventStatus.LIVE);
                 data.persist(em, event);
             }
+            Account marie = new Account()
+                .setFirstName("Marie").setLastName("Duchemin").setEmail("mduduche@gmail.com")
+                .setAccess(new Login().setLogin("marie").setPassword(Login.encrypt("P@ssW0rd.")))
+                .setAvatar("../images/site/avatars/avatar1.png").setStatus(AccountStatus.ACTIVE)
+                .setRating(101).setMessageCount(120);
+            data.persist(em, marie);
+            Account paul = new Account()
+                .setFirstName("Paul").setLastName("Pain").setEmail("ppain@gmail.com")
+                .setAccess(new Login().setLogin("popol").setPassword(Login.encrypt("P@ssW0rd.")))
+                .setAvatar("../images/site/avatars/avatar2.png").setStatus(AccountStatus.ACTIVE)
+                .setRating(1001).setMessageCount(120);
+            data.persist(em, paul);
         });
         data.inTransaction(em->{
             Notice notice = new Notice()
@@ -470,6 +485,9 @@ public class FakeData {
                 );
         });
         data.inTransaction(em->{
+            List<Account> accounts = data.getResultList(em,
+                "select a from Account a left outer join fetch a.access w"
+            );
             Forum forum = new Forum()
                 .setTitle("Discussing Retailers")
                 .setDescription("Talk about retailers, eBay sellers, the BGG Marketplace, etc. — no offers or ads by sellers GeekMarket Beta will be shutting down (no new listings Aug 7, no new orders Aug 15)")
@@ -477,7 +495,7 @@ public class FakeData {
                 .setThreadCount(9)
                 .setStatus(ForumStatus.LIVE);
             data.persist(em, forum);
-            createThreadsForForum(data, em, forum, 15);
+            createThreadsForForum(data, em, forum, 5, 12, accounts);
             forum = new Forum()
                 .setTitle("Board Game Design")
                 .setDescription("A gathering place to discuss game design What areas of history would make a great hidden movement game? Extra points for non-military!")
@@ -485,7 +503,7 @@ public class FakeData {
                 .setThreadCount(22)
                 .setStatus(ForumStatus.LIVE);
             data.persist(em, forum);
-            createThreadsForForum(data, em, forum, 25);
+            createThreadsForForum(data, em, forum, 25, 0, accounts);
             forum = new Forum()
                 .setTitle("Design Contests")
                 .setDescription("Announce and participate in game design competitions")
@@ -517,7 +535,14 @@ public class FakeData {
         });
     }
 
-    static void createThreadsForForum(DataSunbeam data, EntityManager em, Forum forum, int threadCount) {
+    static void createThreadsForForum(
+        DataSunbeam data,
+        EntityManager em,
+        Forum forum,
+        int threadCount,
+        int messageCount,
+        List<Account> accounts
+    ) {
         for (int index=0; index<threadCount; index++) {
             ForumThread thread = new ForumThread()
                 .setTitle("Thread "+index)
@@ -527,6 +552,16 @@ public class FakeData {
                 .setStatus(ForumThreadStatus.LIVE)
                 .setForum(forum);
             data.persist(em, thread);
+            int accountIndex = 0;
+            for (int messageIndex=0; messageIndex<messageCount; messageIndex++) {
+                ForumMessage message = new ForumMessage()
+                    .setPublishedDate(new Date())
+                    .setLikeCount(123)
+                    .setText(PARAGRAPH_TEXT)
+                    .setForumThread(thread)
+                    .setAuthor(accounts.get((accountIndex++)%accounts.size()));
+                data.persist(em, message);
+            }
         }
     }
 

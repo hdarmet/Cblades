@@ -87,14 +87,16 @@ public class SetupApplication {
                 Account administrator = new Account()
                     .setFirstName("Cursed").setLastName("Blades").setEmail("cursed.blades@gmail.com")
                     .setAccess(new Login().setLogin("admin").setPassword(Login.encrypt("@dmInIstrat0r.")).setAdministrator(true))
-                    .setAvatar("../images/site/avatars/default-avatar.png").setStatus(AccountStatus.ACTIVE);
+                    .setAvatar("../images/site/avatars/default-avatar.png").setStatus(AccountStatus.ACTIVE)
+                    .setRating(0).setMessageCount(0);
                 data.persist(em, administrator);
             }
             if (data.getResultList(em, "select l from Login l where l.login=:login", "login", "test").isEmpty()) {
                 Account tester = new Account()
                     .setFirstName("Cursed").setLastName("Knife").setEmail("cursed.knife@gmail.com")
                     .setAccess(new Login().setLogin("test").setPassword(Login.encrypt("Test")).setTest(true))
-                    .setAvatar("../images/site/avatars/default-avatar.png").setStatus(AccountStatus.ACTIVE);
+                    .setAvatar("../images/site/avatars/default-avatar.png").setStatus(AccountStatus.ACTIVE)
+                    .setRating(0).setMessageCount(0);
                 data.persist(em, tester);
             }
         });

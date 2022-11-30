@@ -6,9 +6,6 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(indexes= {
-    @Index(name="idx_forum_thread_by_title", unique=true, columnList="forum_id,title")
-})
 public class ForumMessage extends BaseEntity {
 
     Date publishedDate;
@@ -44,7 +41,7 @@ public class ForumMessage extends BaseEntity {
         return this;
     }
 
-    public ForumThread getThread() {
+    public ForumThread getForumThread() {
         return this.thread;
     }
     public ForumMessage setForumThread(ForumThread thread) {

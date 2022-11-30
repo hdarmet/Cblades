@@ -193,16 +193,21 @@ export class VForum extends VContainer {
 
 export class VForumThreadMessages extends VTable {
 
-    constructor({loadPage, insertQuote}) {
+    constructor({loadMessages, insertQuote}) {
         super({ref:"messages",
             changePage: pageIndex=>this._setPage(pageIndex)
         });
-        this._loadPage = loadPage;
+        this._loadMessages= loadMessages;
         this._insertQuote = insertQuote;
     }
 
+    setThread(thread) {
+        this._thread = thread;
+        this._setPage(0);
+    }
+
     _setPage(index) {
-        this._loadPage(index, page=> {
+        this._loadMessages(index, this._thread, page=> {
             let lines = [];
             !this._reportModal && (this._reportModal = new VForumReport());
             for (let message of page.messages) {
@@ -216,22 +221,22 @@ export class VForumThreadMessages extends VTable {
                     .add(level)
                     .add(messageCounts);
                 let messageDate= new Div().add(new P("Posted on "+message.date.toLocaleDateString())).addClass("message-date");
-                let messageText = new Div().add(new P(message.message)).addClass("message-text");
-                let likes = new P(message.likes).addClass("like-message-count").onMouseClick(event=>console.log("liked"))
+                let messageText = new Div().add(new P(message.text)).addClass("message-text");
+                let likeCount = new P(message.likeCount).addClass("like-message-count").onMouseClick(event=>console.log("liked"))
                 let heart = new I("heart").addClass("like-message").onMouseClick(event=>console.log("liked"))
                 let clickOnLike = ()=>{
-                    message.likes += message.liked ? -1 : 1;
+                    message.likeCount += message.liked ? -1 : 1;
                     message.liked = !message.liked;
-                    likes.setText(message.likes);
+                    likeCount.setText(message.likeCount);
                     heart.removeClass(message.liked ? "message-not-liked" : "message-liked");
                     heart.addClass(message.liked ? "message-liked" : "message-not-liked");
                 }
-                likes.onMouseClick(clickOnLike)
+                likeCount.onMouseClick(clickOnLike)
                 heart.onMouseClick(clickOnLike)
                 heart.addClass(message.liked ? "message-liked" : "message-not-liked");
                 let messageCommands = new Div()
                     .add(heart)
-                    .add(likes)
+                    .add(likeCount)
                     .add(new P("Reply").addClass("quote-message").onMouseClick(event=>console.log("replied")))
                     .add(new P("Quote").addClass("quote-message").onMouseClick(event=>{
                         this._insertQuote(`<p class='cite'>${message.avatarIdentity} wrote: </p>${messageText.getInnerHTML()}`);
@@ -272,11 +277,6 @@ export class VForumThreadMessages extends VTable {
 
     getThread() {
         return this._thread;
-    }
-
-    setThread(thread) {
-        this._thread = thread;
-        this._setPage(0);
     }
 
     static SUMMARY = "Showing {1} to {2} of {0} messages";
@@ -338,7 +338,7 @@ export class VForumPostEditor extends VContainer {
     constructor({send}) {
         super({ref: "forum-editor", columns: 1});
         this.addClass("message-editor");
-        this._send = new Div().setText("Send Post").addClass("send-command").onMouseClick(
+        this._send = new Div().setText("Send Post").addClass("forum-send-command").onMouseClick(
             event=>send({content:this._post.value})
         );
         this.add(this._send);
@@ -384,11 +384,11 @@ export class VForumPostEditor extends VContainer {
 
 export class VForumThread extends VContainer {
 
-    constructor({loadPage, send}) {
+    constructor({loadMessages, send}) {
         super({ref: "forum-thread", columns: 1});
         this.addClass("forum-thread-container");
         this._editPost = new VForumPostEditor({send});
-        this._messages = new VForumThreadMessages({loadPage, insertQuote:text=>{
+        this._messages = new VForumThreadMessages({loadMessages, insertQuote:text=>{
             this._editPost.insertQuote(text);
         }});
         this.add(this._messages).add(this._editPost);

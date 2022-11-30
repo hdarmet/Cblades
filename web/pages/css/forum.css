@@ -402,6 +402,8 @@
 .forum-send-command {
     --extends: ex-forum-command;
     float: right;
+    font-size: 14px;
+    margin: 35px 10px 0  0;
     background-color: #ffffff;
 }
 .forum-send-command:hover {

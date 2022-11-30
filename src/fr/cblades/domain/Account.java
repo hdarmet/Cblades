@@ -1,5 +1,6 @@
 package fr.cblades.domain;
 
+import org.summer.SummerException;
 import org.summer.data.BaseEntity;
 import org.summer.data.SummerNotFoundException;
 
@@ -123,6 +124,15 @@ public class Account extends BaseEntity {
             );
         }
         return account;
+    }
+
+    static public String getRatingLevel(Account account) {
+        for (AccountRatingLevel level : AccountRatingLevel.values()) {
+            if (account.getRating()>=level.getMinRating() && account.getRating()<=level.getMaxRating()) {
+                return level.getLabel();
+            }
+        }
+        throw new SummerException("Unexcepted issue : a rating should be reached.");
     }
 
 }

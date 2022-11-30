@@ -10,185 +10,6 @@ import {
     showMessage
 } from "../vitamin/vpage.js";
 
-var paragrpahText = `
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-`;
-/*
-function getForums() {
-    return [
-        {
-            title: "Discussing Retailers",
-            threads: 9,
-            replies: 107,
-            message: `Talk about retailers, eBay sellers, the BGG Marketplace, etc. — no offers or ads by sellers
-    GeekMarket Beta will be shutting down (no new listings Aug 7, no new orders Aug 15)`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 1",
-            lastMessageAuthor: "Moray Johnson"
-        },
-        {
-            title: "Board Game Design",
-            threads: 22,
-            replies: 295,
-            message: `A gathering place to discuss game design
-            What areas of history would make a great hidden movement game? Extra points for non-military!`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 2",
-            lastMessageAuthor: "John Breckenridge"
-        },
-        {
-            title: "Design Contests",
-            threads: 857,
-            replies: 56,
-            message: `Announce and participate in game design competitions
-        2022 Solitaire Print and Play Contest`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 3",
-            lastMessageAuthor: "agoIffix Y Santaph"
-        },
-        {
-            title: "Art and Graphic Design",
-            threads: 44,
-            replies: 25,
-            message: `Show off your work, and ask for advice
-        Which logo design?`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 4",
-            lastMessageAuthor: "agoJohn Carimando"
-        },
-        {
-            title: "Design Theory",
-            hreads: 1,
-            replies: 18,
-            message: `Principles of game design not specific to one game
-    Co-op games: a calm discussion on "pass or fail"`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 5",
-            lastMessageAuthor: "agoOblivion Doll"
-        },
-        {
-            title: "Design Queries and Problems",
-            threads: 25,
-            replies: 25,
-            message: `Ask specific questions about a design in the works
-    Indirect storytelling for a game.`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 6",
-            lastMessageAuthor: "agoHayden Robinson"
-        },
-        {
-            title: "Works in Progress",
-            threads: 74,
-            replies: 114,
-            message: `Share updates about your projects
-        [WIP]Make Sail[2022 Solitaire Print&Play Game Design Contest][Components Available]`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 7",
-            lastMessageAuthor: "agoIffix Y Santaph"
-        },
-        {
-            title: "Seeking Playtesters",
-            threads: 26,
-            replies: 11,
-            message: `Find folks willing to test out your creation
-    Looking for Playtesters: S'Morse Code`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 8",
-            lastMessageAuthor: "agoCourtney Falk"
-        },
-        {
-            title: "Discussing Retailers",
-            threads: 9,
-            replies: 107,
-            message: `Talk about retailers, eBay sellers, the BGG Marketplace, etc. — no offers or ads by sellers
-    GeekMarket Beta will be shutting down (no new listings Aug 7, no new orders Aug 15)`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 9",
-            lastMessageAuthor: "Moray Johnson"
-        },
-        {
-            title: "Board Game Design",
-            threads: 22,
-            replies: 295,
-            message: `A gathering place to discuss game design
-            What areas of history would make a great hidden movement game? Extra points for non-military!`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 10",
-            lastMessageAuthor: "John Breckenridge"
-        },
-        {
-            title: "Design Contests",
-            threads: 857,
-            replies: 56,
-            message: `Announce and participate in game design competitions
-        2022 Solitaire Print and Play Contest`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 11",
-            lastMessageAuthor: "agoIffix Y Santaph"
-        },
-        {
-            title: "Art and Graphic Design",
-            threads: 44,
-            replies: 25,
-            message: `Show off your work, and ask for advice
-        Which logo design?`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 12",
-            lastMessageAuthor: "agoJohn Carimando"
-        },
-        {
-            title: "Design Theory",
-            hreads: 1,
-            replies: 18,
-            message: `Principles of game design not specific to one game
-    Co-op games: a calm discussion on "pass or fail"`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 13",
-            lastMessageAuthor: "agoOblivion Doll"
-        },
-        {
-            title: "Design Queries and Problems",
-            threads: 25,
-            replies: 25,
-            message: `Ask specific questions about a design in the works
-    Indirect storytelling for a game.`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 14",
-            lastMessageAuthor: "agoHayden Robinson"
-        },
-        {
-            title: "Works in Progress",
-            threads: 74,
-            replies: 114,
-            message: `Share updates about your projects
-        [WIP]Make Sail[2022 Solitaire Print&Play Game Design Contest][Components Available]`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 15",
-            lastMessageAuthor: "agoIffix Y Santaph"
-        },
-        {
-            title: "Seeking Playtesters",
-            threads: 26,
-            replies: 11,
-            message: `Find folks willing to test out your creation
-    Looking for Playtesters: S'Morse Code`,
-            lastMessageDate: new Date(),
-            lastMessageThread: "Post 16",
-            lastMessageAuthor: "agoCourtney Falk"
-        }
-    ];
-}
-*/
-
 function getMessages(pageIndex) {
     let names = ['Dominique', 'Pierre', 'Thomas'];
     let levels = ['Warrior', 'Knight', 'King'];
@@ -272,30 +93,58 @@ export var vForum = new VForum({
 });
 
 export var vForumThread = new VForumThread({
-    loadPage:(pageIndex, update)=>{
-        update({
-            title: "Ma petite discussion",
-            pageCount: 3,
-            currentPage: pageIndex,
-            messageCount: 25,
-            firstMessage: pageIndex*10+1,
-            lastMessage: pageIndex*10+10,
-            messages: getMessages(pageIndex)
-        });
+    loadMessages:(pageNo, thread, update)=>{
+        loadMessages(
+            pageNo, thread,
+            messagesSpec=>{
+                let messages=[];
+                for (let message of messagesSpec.messages) {
+                    messages.add({
+                        id: message.id,
+                        text: message.text,
+                        likeCount: message.likeCount,
+                        avatarImage: message.author.avatar,
+                        avatarIdentity: message.author.firstName+" "+message.author.lastName,
+                        avatarLevel: message.author.rating,
+                        avatarMessageCount: message.author.messageCount,
+                        liked: false,
+                        date: new Date(message.publishedDate)
+                    });
+                }
+                update({
+                    title: thread.title,
+                    pageCount: Math.ceil(messagesSpec.count / messagesSpec.pageSize),
+                    currentPage: messagesSpec.page,
+                    threadCount: messagesSpec.count,
+                    firstThread: messagesSpec.page * messagesSpec.pageSize + 1,
+                    lastThread: messagesSpec.page * messagesSpec.pageSize + messagesSpec.messages.length,
+                    messages
+                });
+            }
+        );
+
     },
     send: post=>{
         console.log("Post sent", post);
     }
 });
 
+function parseForums(text) {
+    return JSON.parse(text);
+}
+
 function parseThreads(text) {
+    return JSON.parse(text);
+}
+
+function parseMessages(text) {
     return JSON.parse(text);
 }
 
 export function loadForums(success) {
     sendGet("/api/forum/live",
         (text, status)=>{
-            let forumsSpec = JSON.parse(text);
+            let forumsSpec = parseForums(text);
             success(forumsSpec);
         },
         (text, status)=>{
@@ -311,7 +160,19 @@ export function loadThreads(pageNo, forum, success) {
             success(threads);
         },
         (text, status)=>{
-            showMessage("Error", "Cannot Load Faction: "+text);
+            showMessage("Error", "Cannot Load Threads: "+text);
+        }
+    );
+}
+
+export function loadMessages(pageNo, thread, success) {
+    sendGet("/api/forum/messages/"+thread.id+"?page="+pageNo,
+        (text, status)=>{
+            let messages = parseMessages(text);
+            success(messages);
+        },
+        (text, status)=>{
+            showMessage("Error", "Cannot Load Messages: "+text);
         }
     );
 }

@@ -94,7 +94,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 
 	@REST(url="/api/forum/threads/:id", method=Method.GET)
-	public Json readForum(Map<String, Object> params, Json request) {
+	public Json readThreads(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			String id = (String)params.get("id");
@@ -125,6 +125,36 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return result.get();
 	}
 
+	@REST(url="/api/forum/messages/:id", method=Method.GET)
+	public Json readMessages(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			String id = (String)params.get("id");
+			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
+			ForumThread forumThread = findForumThread(em, new Long(id));
+			if (forumThread.getStatus() != ForumThreadStatus.LIVE) {
+				throw new SummerControllerException(409, "Thread is not live.");
+			}
+			long messageCount = findCount(em.createQuery("select count(m) from ForumMessage m " +
+				"where m.thread=:thread"),
+		"thread", forumThread);
+			Collection<ForumMessage> messages = findPagedForumMessages(
+				em.createQuery("select m from ForumMessage m " +
+					"left join fetch m.author w " +
+					"left join fetch w.access " +
+					"join fetch m.thread " +
+					"where m.thread=:thread " +
+					"order by m.publishedDate desc"), pageNo,
+				"thread", forumThread);
+			result.set(Json.createJsonObject()
+				.put("messages", readFromForumMessages(messages))
+				.put("count", messageCount)
+				.put("page", pageNo)
+				.put("pageSize", FactionController.FACTIONS_BY_PAGE)
+			);
+		});
+		return result.get();
+	}
 
 	@REST(url="/api/forum/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
@@ -246,6 +276,26 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return json;
 	}
 
+	Json readFromForumMessage(ForumMessage message) {
+		Json json = Json.createJsonObject();
+		sync(json, message)
+			.read("id")
+			.read("version")
+			.readDate("publishedDate")
+			.read("text")
+			.read("likeCount")
+			.readLink("author", (pJson, account)->sync(pJson, account)
+				.read("id")
+				.read("login", "access.login")
+				.read("firstName")
+				.read("lastName")
+				.read("avatar")
+				.read("messageCount")
+				.process((aJson, author)->aJson.put("rating", Account.getRatingLevel((Account)author)))
+			);
+		return json;
+	}
+
 	Forum findForum(EntityManager em, long id) {
 		Forum forum = find(em, Forum.class, id);
 		if (forum==null) {
@@ -254,6 +304,16 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			);
 		}
 		return forum;
+	}
+
+	ForumThread findForumThread(EntityManager em, long id) {
+		ForumThread thread = find(em, ForumThread.class, id);
+		if (thread==null) {
+			throw new SummerControllerException(404,
+					"Unknown Thread with id %d", id
+			);
+		}
+		return thread;
 	}
 
 	Collection<Forum> findForums(Query query, Object... params) {
@@ -274,10 +334,22 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return list;
 	}
 
+	Json readFromForumMessages(Collection<ForumMessage> messages) {
+		Json list = Json.createJsonArray();
+		messages.stream().forEach(message->list.push(readFromForumMessage(message)));
+		return list;
+	}
+
 	Collection<ForumThread> findPagedThreads(Query query, int page, Object... params) {
 		setParams(query, params);
-		List<ForumThread> threads = getPagedResultList(query, page* FactionController.FACTIONS_BY_PAGE, FactionController.FACTIONS_BY_PAGE);
+		List<ForumThread> threads = getPagedResultList(query, page* ForumController.THREADS_BY_PAGE, ForumController.THREADS_BY_PAGE);
 		return threads.stream().distinct().collect(Collectors.toList());
+	}
+
+	Collection<ForumMessage> findPagedForumMessages(Query query, int page, Object... params) {
+		setParams(query, params);
+		List<ForumMessage> messages = getPagedResultList(query, page* ForumController.MESSAGES_BY_PAGE, ForumController.MESSAGES_BY_PAGE);
+		return messages.stream().distinct().collect(Collectors.toList());
 	}
 
 	long findCount(Query query, Object... params) {
@@ -286,4 +358,5 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 
 	static int THREADS_BY_PAGE = 16;
+	static int MESSAGES_BY_PAGE = 16;
 }
