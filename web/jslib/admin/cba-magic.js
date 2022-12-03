@@ -604,7 +604,7 @@ export class CBAMagicArtList extends VTable {
     constructor({loadPage, deleteMagicArt, saveMagicArt, saveMagicArtStatus}) {
         super({
             ref: "magic-list",
-            changePage: pageIndex => this._setPage(pageIndex),
+            changePage: pageIndex => this.setPage(pageIndex),
             select: magicArt => this.selectMagicArt(magicArt)
         });
         this.addClass("magic-list");
@@ -619,12 +619,12 @@ export class CBAMagicArtList extends VTable {
     }
 
     loadMagicArts() {
-        this._setPage(0);
+        this.setPage(0);
         return this;
     }
 
     refresh() {
-        this._setPage(this._currentPage);
+        this.setPage(this._currentPage);
     }
 
     selectMagicArt(magicArt) {
@@ -661,7 +661,7 @@ export class CBAMagicArtList extends VTable {
 
     };
 
-    _setPage(pageIndex) {
+    setPage(pageIndex) {
         function getAuthor(magicArt) {
             return magicArt.author.firstName+" "+magicArt.author.lastName;
         }

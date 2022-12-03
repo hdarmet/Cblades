@@ -13,7 +13,7 @@ import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.data.DataSunbeam;
-import org.summer.platform.MailService;
+import org.summer.services.MailService;
 import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
 

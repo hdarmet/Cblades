@@ -158,7 +158,7 @@ export class CBAEventList extends VTable {
     constructor({loadPage, saveEvent, saveEventStatus, deleteEvent}) {
         super({
             ref: "event-list",
-            changePage: pageIndex => this._setPage(pageIndex),
+            changePage: pageIndex => this.setPage(pageIndex),
             select: line => this.selectEvent(line)
         });
         this.addClass("event-list");
@@ -173,12 +173,12 @@ export class CBAEventList extends VTable {
     }
 
     loadEvents() {
-        this._setPage(0);
+        this.setPage(0);
         return this;
     }
 
     refresh() {
-        this._setPage(this._currentPage);
+        this.setPage(this._currentPage);
     }
 
     selectEvent(event) {
@@ -209,7 +209,7 @@ export class CBAEventList extends VTable {
         }).show();
     }
 
-    _setPage(pageIndex) {
+    setPage(pageIndex) {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
             let saveEventStatus = event => this._saveEventStatus(event,

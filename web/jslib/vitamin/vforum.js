@@ -22,10 +22,15 @@ import {
 export class VForumsList extends VTable {
 
     constructor({loadForums, selectForum}) {
-        super({ref:"forums-list",
+        super({
+            ref: "forums-list",
             select: selectForum
         });
-        loadForums(forums=> {
+        this._loadForums = loadForums;
+    }
+
+    loadForums() {
+        this._loadForums(forums=> {
             let lines = [];
             for (let forum of forums.forums) {
                 let forumTitle = new Div().add(new P(forum.title)).addClass("forum-title");
@@ -41,9 +46,14 @@ export class VForumsList extends VTable {
                     .add(new Span(" /"))
                     .add(new I("comments").setAlt("replies"))
                     .add(forumRepliesCount);
-                let forumLastMessageDate = new Div()
-                    .add(new Span("Last post on ").addClass("forum-last-message-post"))
-                    .add(new Span(forum.lastMessageDate.toLocaleDateString()).addClass("forum-last-message-date"));
+                let forumLastMessageDate = new Div();
+                if (forum.lastMessageDate) {
+                    forumLastMessageDate
+                        .add(new Span("Last post on ").addClass("forum-last-message-post"))
+                        .add(new Span(forum.lastMessageDate ?
+                            forum.lastMessageDate.toLocaleDateString() : "")
+                            .addClass("forum-last-message-date"));
+                }
                 let forumLastMessageThread = new Div().add(new Span(forum.lastMessageThread)).addClass("forum-last-message-thread");
                 let forumLastMessageAuthor = new Div().add(new Span(forum.lastMessageAuthor)).addClass("forum-last-message-author");
                 let forumLastMessage = new Div().addClass("forum-last-messages")
@@ -68,6 +78,11 @@ export class VForums extends VContainer {
         this._forums = new VForumsList({loadForums, selectForum});
         this.add(this._forums);
     }
+
+    loadForums() {
+        this._forums.loadForums();
+        return true;
+    }
 }
 
 // Forum
@@ -75,14 +90,14 @@ export class VForums extends VContainer {
 
 export class VProposeThread extends VModal {
 
-    constructor() {
+    constructor(proposeThread) {
         super({ref: VProposeThread.REF, title: VProposeThread.TITLE});
         this._title = new VInputField({ref:"thread-title", label:"Title"});
-        this._message = new VInputTextArea({ref:"thread-message", label:"Message"});
+        this._description = new VInputTextArea({ref:"thread-description", label:"Description"});
         this.add(
             new VFormContainer({columns: 1})
                 .addField({field: this._title})
-                .addField({field: this._message})
+                .addField({field: this._description})
                 .addField({
                     field: new VButtons({
                         ref: "buttons", buttons: [
@@ -90,6 +105,11 @@ export class VProposeThread extends VModal {
                                 ref: "propose-thread", type: "accept", label: "Propose",
                                 onClick: event => {
                                     console.log("Validate");
+                                    proposeThread({
+                                        forum: this._forum,
+                                        title: this._title.value,
+                                        description: this._description.value
+                                    })
                                     this.hide();
                                 }
                             }
@@ -99,29 +119,34 @@ export class VProposeThread extends VModal {
         );
     }
 
+    open(forum) {
+        this._forum = forum;
+        this.show();
+    }
+
     static REF = "propose-thread";
     static TITLE = "Propose A Thread";
 }
 
 export class VForumThreads extends VTable {
 
-    constructor({loadThreads, selectThread}) {
+    constructor({loadThreads, proposeThread, selectThread}) {
         super({ref:"threads",
-            changePage: pageIndex=>this._setPage(pageIndex),
+            changePage: pageIndex=>this.setPage(pageIndex),
             select: selectThread
         });
         this._loadThreads = loadThreads;
+        this._proposeThreadModal = new VProposeThread(proposeThread);
     }
 
     setForum(forum) {
         this._forum = forum;
-        this._setPage(0);
+        this.setPage(0);
     }
 
-    _setPage(index) {
+    setPage(index) {
         this._loadThreads(index, this._forum, forum=> {
             let lines = [];
-            !this._proposeThreadModal && (this._proposeThreadModal = new VProposeThread());
             for (let thread of forum.threads) {
                 let threadTitle = new Div().add(new P(thread.title)).addClass("thread-title");
                 let threadDescription = new Div().add(new P(thread.description)).addClass("thread-text");
@@ -136,9 +161,12 @@ export class VForumThreads extends VTable {
                     .add(new Span(" /"))
                     .add(new I("thumbs-up").setAlt("thumbs"))
                     .add(threadMessagesCount);
-                let threadLastMessageDate = new Div()
-                    .add(new Span("Last post on ").addClass("thread-last-message-post"))
-                    .add(new Span(thread.lastMessageDate.toLocaleDateString()).addClass("thread-last-message-date"));
+                let threadLastMessageDate = new Div();
+                if (thread.lastMessageDate) {
+                    threadLastMessageDate
+                        .add(new Span("Last post on ").addClass("thread-last-message-post"))
+                        .add(new Span(thread.lastMessageDate.toLocaleDateString()).addClass("thread-last-message-date"));
+                }
                 let threadLastMessageAuthor = new Div().add(new Span(thread.lastMessageAuthor)).addClass("thread-last-message-author");
                 let threadLastMessage = new Div().addClass("thread-last-message")
                     .add(threadLastMessageDate)
@@ -154,7 +182,7 @@ export class VForumThreads extends VTable {
                 .addClass("table-display")
                 .add(title)
                 .add(new Span("Propose Thread").addClass("propose-thread").onMouseClick(event=>{
-                    this._proposeThreadModal.show();
+                    this._proposeThreadModal.open(this._forum);
                 }))
                 .add(pageSummary);
             this.setContent({
@@ -171,20 +199,28 @@ export class VForumThreads extends VTable {
         });
     }
 
+    closeThreadEditor() {
+        this._proposeThreadModal.hide();
+    }
+
     static SUMMARY = "Showing {1} to {2} of {0} threads";
 }
 
 export class VForum extends VContainer {
 
-    constructor({loadThreads, selectThread}) {
+    constructor({loadThreads, proposeThread, selectThread}) {
         super({ref: "forum", columns: 1});
         this.addClass("forum-container");
-        this._threads = new VForumThreads({loadThreads, selectThread});
+        this._threads = new VForumThreads({loadThreads, proposeThread, selectThread});
         this.add(this._threads);
     }
 
     setForum(forum) {
         this._threads.setForum(forum);
+    }
+
+    closeThreadEditor() {
+        this._threads.closeThreadEditor();
     }
 
 }
@@ -193,20 +229,21 @@ export class VForum extends VContainer {
 
 export class VForumThreadMessages extends VTable {
 
-    constructor({loadMessages, insertQuote}) {
+    constructor({loadMessages, vote, insertQuote}) {
         super({ref:"messages",
-            changePage: pageIndex=>this._setPage(pageIndex)
+            changePage: pageIndex=>this.setPage(pageIndex)
         });
+        this._vote = vote;
         this._loadMessages= loadMessages;
         this._insertQuote = insertQuote;
     }
 
     setThread(thread) {
         this._thread = thread;
-        this._setPage(0);
+        this.setPage(0);
     }
 
-    _setPage(index) {
+    setPage(index) {
         this._loadMessages(index, this._thread, page=> {
             let lines = [];
             !this._reportModal && (this._reportModal = new VForumReport());
@@ -225,11 +262,15 @@ export class VForumThreadMessages extends VTable {
                 let likeCount = new P(message.likeCount).addClass("like-message-count").onMouseClick(event=>console.log("liked"))
                 let heart = new I("heart").addClass("like-message").onMouseClick(event=>console.log("liked"))
                 let clickOnLike = ()=>{
-                    message.likeCount += message.liked ? -1 : 1;
-                    message.liked = !message.liked;
-                    likeCount.setText(message.likeCount);
-                    heart.removeClass(message.liked ? "message-not-liked" : "message-liked");
-                    heart.addClass(message.liked ? "message-liked" : "message-not-liked");
+                    this._vote(message, message.liked?"none":"like",
+                        votation=>{
+                            message.likeCount = votation.likeCount,
+                            message.liked = votation.liked;
+                            likeCount.setText(message.likeCount);
+                            heart.removeClass(message.liked ? "message-not-liked" : "message-liked");
+                            heart.addClass(message.liked ? "message-liked" : "message-not-liked");
+                        }
+                    );
                 }
                 likeCount.onMouseClick(clickOnLike)
                 heart.onMouseClick(clickOnLike)
@@ -339,7 +380,7 @@ export class VForumPostEditor extends VContainer {
         super({ref: "forum-editor", columns: 1});
         this.addClass("message-editor");
         this._send = new Div().setText("Send Post").addClass("forum-send-command").onMouseClick(
-            event=>send({content:this._post.value})
+            event=>send({text:this._post.value, thread:this._thread})
         );
         this.add(this._send);
         this._link = new VInputField({
@@ -373,6 +414,17 @@ export class VForumPostEditor extends VContainer {
         this.add(this._emojiPicker);
     }
 
+    setThread(thread) {
+        this._thread = thread;
+        return this;
+    }
+
+    clearContent() {
+        this._post.value = "";
+        this._link.value = "";
+        return this;
+    }
+
     insertText(text) {
         replaceSelectedText(this._post._input.root, document.createTextNode(text));
     }
@@ -384,18 +436,34 @@ export class VForumPostEditor extends VContainer {
 
 export class VForumThread extends VContainer {
 
-    constructor({loadMessages, send}) {
+    constructor({loadMessages, vote, send}) {
         super({ref: "forum-thread", columns: 1});
         this.addClass("forum-thread-container");
         this._editPost = new VForumPostEditor({send});
-        this._messages = new VForumThreadMessages({loadMessages, insertQuote:text=>{
-            this._editPost.insertQuote(text);
-        }});
+        this._messages = new VForumThreadMessages({
+            loadMessages,
+            vote,
+            insertQuote:text=>{
+                this._editPost.insertQuote(text);
+            }
+        });
         this.add(this._messages).add(this._editPost);
     }
 
     setThread(thread) {
         this._messages.setThread(thread);
+        this._editPost.setThread(thread);
+        return this;
+    }
+
+    setPage(pageNo) {
+        this._messages.setPage(0);
+        return this;
+    }
+
+    clearPostEditor() {
+        this._editPost.clearContent();
+        return this;
     }
 }
 

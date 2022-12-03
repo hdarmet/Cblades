@@ -15,8 +15,8 @@ public abstract class ApplicationManager {
 	public synchronized static void set(ApplicationManager instance) {
 		ApplicationManager.instance = instance;
 	}
-	
-	public abstract void start();
+
+    public abstract void start();
 
 	public abstract Scanner getScanner();
 	

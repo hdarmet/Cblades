@@ -124,7 +124,7 @@ export class CBAAnnouncementList extends VTable {
     constructor({loadPage, saveAnnouncement, saveAnnouncementStatus, deleteAnnouncement}) {
         super({
             ref: "announcement-list",
-            changePage: pageIndex => this._setPage(pageIndex),
+            changePage: pageIndex => this.setPage(pageIndex),
             select: announcement=>this.selectAnnouncement(announcement)
         });
         this.addClass("announcement-list");
@@ -167,15 +167,15 @@ export class CBAAnnouncementList extends VTable {
     }
 
     loadAnnouncements() {
-        this._setPage(0);
+        this.setPage(0);
         return this;
     }
 
     refresh() {
-        this._setPage(this._currentPage);
+        this.setPage(this._currentPage);
     }
 
-    _setPage(pageIndex) {
+    setPage(pageIndex) {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
             let saveAnnouncementStatus = annoucement => this._saveAnnouncementStatus(annoucement,

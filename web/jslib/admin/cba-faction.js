@@ -691,7 +691,7 @@ export class CBAFactionList extends VTable {
     constructor({loadPage, deleteFaction, saveFaction, saveFactionStatus}) {
         super({
             ref: "faction-list",
-            changePage: pageIndex => this._setPage(pageIndex),
+            changePage: pageIndex => this.setPage(pageIndex),
             select: faction => this.selectFaction(faction)
         });
         this.addClass("faction-list");
@@ -706,12 +706,12 @@ export class CBAFactionList extends VTable {
     }
 
     loadFactions() {
-        this._setPage(0);
+        this.setPage(0);
         return this;
     }
 
     refresh() {
-        this._setPage(this._currentPage);
+        this.setPage(this._currentPage);
     }
 
     selectFaction(faction) {
@@ -746,7 +746,7 @@ export class CBAFactionList extends VTable {
         );
     };
 
-    _setPage(pageIndex) {
+    setPage(pageIndex) {
         function getAuthor(faction) {
             return faction.author.firstName+" "+faction.author.lastName;
         }

@@ -173,7 +173,7 @@ public class Verifier {
 	}
 
 	public Verifier checkInteger(String field) {
-		return checkEmail(field, "not a valid integer");
+		return checkInteger(field, "not a valid integer");
 	}
 
 	public Verifier checkEmail(String field, String message) {

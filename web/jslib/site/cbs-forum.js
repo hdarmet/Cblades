@@ -4,31 +4,12 @@ import {
     VForum, VForums, VForumThread
 } from "../vitamin/vforum.js";
 import {
-    sendGet
+    requestLog,
+    sendGet, sendPost
 } from "../vitamin/components.js";
 import {
     showMessage
 } from "../vitamin/vpage.js";
-
-function getMessages(pageIndex) {
-    let names = ['Dominique', 'Pierre', 'Thomas'];
-    let levels = ['Warrior', 'Knight', 'King'];
-    let messages = [];
-    for (let index=pageIndex*10; index<25 && index<pageIndex*10+10; index++) {
-        messages.push({
-            avatarImage: `../images/site/avatars/avatar${index%3+1}.png`,
-            avatarIdentity: names[index%3],
-            avatarLevel: levels[index%3],
-            avatarMessageCount: (index%3+1)*17,
-            //message: `The ${index}th message of ${names[index%3]}`,
-            message: paragrpahText,
-            likes: index*2+1,
-            liked: index%5 === 0,
-            date: new Date()
-        });
-    }
-    return messages;
-}
 
 export var vForums = new VForums({
     loadForums:update=>{
@@ -42,9 +23,9 @@ export var vForums = new VForums({
                         threads: forum.threadCount,
                         replies: forum.messageCount,
                         message: forum.description,
-                        lastMessageDate: new Date(),
-                        lastMessageThread: "Post 1",
-                        lastMessageAuthor: "Moray Johnson"
+                        lastMessageDate: forum.lastMessage ? new Date(forum.lastMessage.publishedDate) : null,
+                        lastMessageThread: forum.lastMessage && forum.lastMessage.thread ? forum.lastMessage.thread.title : null,
+                        lastMessageAuthor: forum.lastMessage && forum.lastMessage.author ? forum.lastMessage.author.firstName + " " + forum.lastMessage.author.lastName : ""
                     });
                 }
                 update({
@@ -71,8 +52,8 @@ export var vForum = new VForum({
                         description: thread.description,
                         messageCount: thread.messageCount,
                         likeCount: thread.likeCount,
-                        lastMessageDate: new Date(),
-                        lastMessageAuthor: "Moray Johnson"
+                        lastMessageDate: thread.lastMessage ? new Date(thread.lastMessage.publishedDate) : null,
+                        lastMessageAuthor: thread.lastMessage && thread.lastMessage.author ? thread.lastMessage.author.firstName + " " + thread.lastMessage.author.lastName : ""
                     });
                 }
                 update({
@@ -89,6 +70,21 @@ export var vForum = new VForum({
     },
     selectThread:thread=>{
         window.vPageContent.showForumThread(thread);
+    },
+    proposeThread:thread=>{
+        saveProposedThread({
+                forum: thread.forum.id,
+                title: thread.title,
+                description: thread.description
+            },
+            text => {
+                vForum.closeThreadEditor();
+                showMessage("Thread transmitted for validation");
+            },
+            text => {
+                showMessage("Fail to propose Thread", text);
+            }
+        );
     }
 });
 
@@ -102,7 +98,7 @@ export var vForumThread = new VForumThread({
                     messages.add({
                         id: message.id,
                         text: message.text,
-                        likeCount: message.likeCount,
+                        likeCount: message.poll.likes,
                         avatarImage: message.author.avatar,
                         avatarIdentity: message.author.firstName+" "+message.author.lastName,
                         avatarLevel: message.author.rating,
@@ -122,10 +118,28 @@ export var vForumThread = new VForumThread({
                 });
             }
         );
-
     },
-    send: post=>{
-        console.log("Post sent", post);
+    vote: (message, option, update)=>sendVote(
+        message, option, votation=>{
+            update({
+                likeCount: votation.likes,
+                liked: votation.option=="like"
+            })
+        }
+    ),
+    send: ({text, thread})=>{
+        postMessage({
+                text,
+                thread: thread.id
+            },
+            text => {
+                vForumThread.setPage(0);
+                vForumThread.clearPostEditor();
+            },
+            text => {
+                showMessage("Fail to Post Message", text);
+            }
+        );
     }
 });
 
@@ -173,6 +187,49 @@ export function loadMessages(pageNo, thread, success) {
         },
         (text, status)=>{
             showMessage("Error", "Cannot Load Messages: "+text);
+        }
+    );
+}
+
+export function postMessage(message, success, failure) {
+    sendPost("/api/forum/post",
+        message,
+        (text, status) => {
+            requestLog("Message post success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            requestLog("Message post failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
+}
+
+export function sendVote(message, option, update) {
+    sendPost("/api/forum/vote/" + message.id,
+        { option },
+        (text, status) => {
+            requestLog("Vote success: " + text + ": " + status);
+            let response = JSON.parse(text);
+            update(response);
+        },
+        (text, status) => {
+            requestLog("Vote failure: " + text + ": " + status);
+            showMessage("Unable to vote", text);
+        }
+    );
+}
+
+export function saveProposedThread(thread, success, failure) {
+    sendPost(thread.id===undefined ? "/api/forum/thread/propose" : "/api/forum/thread/amend/" + thread.id,
+        thread,
+        (text, status) => {
+            requestLog("Thread proposal success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            requestLog("Thread proposal failure: " + text + ": " + status);
+            failure(text, status);
         }
     );
 }

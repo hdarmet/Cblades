@@ -22,7 +22,7 @@ public class Article extends BaseEntity {
     Paragraph firstParagraph;
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     Document document;
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     LikePoll poll;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     List<Paragraph> paragraphs = new ArrayList<>();

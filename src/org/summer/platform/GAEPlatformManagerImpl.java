@@ -12,7 +12,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.Properties;
 
-public class GAEPlatformManagerImpl implements PlatformManager  {
+public class GAEPlatformManagerImpl extends AbstractPlatformManagerImpl  {
 
     String bucket = "";
 

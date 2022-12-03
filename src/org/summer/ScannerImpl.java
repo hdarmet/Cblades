@@ -49,12 +49,20 @@ public class ScannerImpl implements Scanner {
 		Class<? extends Annotation> annotationClass,
 		Class<? extends Annotation> profileAnnotationClass)
 	{
-		return this.appReflections.getTypesAnnotatedWith(annotationClass).stream()
-		.filter(componentClass->{
-			return profilesMatch(Arrays.asList(
-					getProfilesFromClassAnnotation(
-						componentClass, profileAnnotationClass)));			
-		}).collect(Collectors.toList());
+		Collection<Class<?>> entities =  this.summerReflections.getTypesAnnotatedWith(annotationClass).stream()
+			.filter(componentClass->{
+				return profilesMatch(Arrays.asList(
+				getProfilesFromClassAnnotation(
+						componentClass, profileAnnotationClass)));
+			}).collect(Collectors.toList());
+		entities.addAll(this.appReflections.getTypesAnnotatedWith(annotationClass).stream()
+			.filter(componentClass->{
+				return profilesMatch(Arrays.asList(
+						getProfilesFromClassAnnotation(
+							componentClass, profileAnnotationClass)));
+			}).collect(Collectors.toList())
+		);
+		return entities;
 	}
 
 	@Override

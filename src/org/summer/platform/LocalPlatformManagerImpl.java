@@ -5,8 +5,10 @@ import org.summer.SummerException;
 import javax.mail.*;
 import java.io.*;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
-public class LocalPlatformManagerImpl implements PlatformManager  {
+public class LocalPlatformManagerImpl extends AbstractPlatformManagerImpl  {
 
     String basePath = "";
     Properties mailParams= new Properties();

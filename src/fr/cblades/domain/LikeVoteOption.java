@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum LikeVoteOption {
+    NONE("N"),
     LIKE("L"),
     DISLIKE("D");
 

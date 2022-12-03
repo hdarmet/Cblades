@@ -1,6 +1,7 @@
 package fr.cblades.domain;
 
 import org.summer.data.BaseEntity;
+import org.summer.data.SummerNotFoundException;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -21,10 +22,8 @@ public class Forum extends BaseEntity {
     int messageCount=0;
     @Enumerated(EnumType.STRING)
     ForumStatus status;
-    /*
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    List<Sheet> sheets = new ArrayList<>();
-     */
+    @OneToOne
+    ForumMessage lastMessage;
 
     public String getTitle() {
         return this.title;
@@ -66,23 +65,12 @@ public class Forum extends BaseEntity {
         return this;
     }
 
-    /*
-    public List<Sheet> getSheets() {
-        return Collections.unmodifiableList(this.sheets);
+    public ForumMessage getLastMessage() {
+        return this.lastMessage;
     }
-    public Sheet getSheet(int ordinal) {
-        for (Sheet sheet : sheets) {
-            if (sheet.getOrdinal()==ordinal) return sheet;
-        }
-        return null;
-    }
-    public Forum addSheet(Sheet sheet) {
-        this.sheets.add(sheet);
+    public Forum setLastMessage(ForumMessage lastMessage) {
+        this.lastMessage = lastMessage;
         return this;
     }
-    public Forum removeSheet(Sheet sheet) {
-        this.sheets.remove(sheet);
-        return this;
-    }
-    */
+
 }

@@ -389,7 +389,7 @@ export class CBAThemeList extends VTable {
     constructor({loadPage, saveTheme, saveThemeStatus, deleteTheme}) {
         super({
             ref: "theme-list",
-            changePage: pageIndex => this._setPage(pageIndex),
+            changePage: pageIndex => this.setPage(pageIndex),
             select: theme => this.selectTheme(theme)
         });
         this.addClass("theme-list");
@@ -404,12 +404,12 @@ export class CBAThemeList extends VTable {
     }
 
     loadThemes() {
-        this._setPage(0);
+        this.setPage(0);
         return this;
     }
 
     refresh() {
-        this._setPage(this._currentPage);
+        this.setPage(this._currentPage);
     }
 
     selectTheme(theme) {
@@ -446,7 +446,7 @@ export class CBAThemeList extends VTable {
 
     };
 
-    _setPage(pageIndex) {
+    setPage(pageIndex) {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
             let saveThemeStatus = theme => this._saveThemeStatus(theme,

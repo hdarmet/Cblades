@@ -11,7 +11,8 @@ public class ForumMessage extends BaseEntity {
     Date publishedDate;
     @Column(length = 5000)
     String text="";
-    int likeCount=0;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    LikePoll poll;
     @ManyToOne
     ForumThread thread;
     @ManyToOne
@@ -33,11 +34,11 @@ public class ForumMessage extends BaseEntity {
         return this;
     }
 
-    public int getlikeCount() {
-        return this.likeCount;
+    public LikePoll getPoll() {
+        return this.poll;
     }
-    public ForumMessage setLikeCount(int likeCount) {
-        this.likeCount = likeCount;
+    public ForumMessage setPoll(LikePoll poll) {
+        this.poll = poll;
         return this;
     }
 

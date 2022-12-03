@@ -318,7 +318,7 @@ export class CBABoardList extends VTable {
     constructor({loadPage, saveBoard, saveBoardStatus, deleteBoard}) {
         super({
             ref: "board-list",
-            changePage: pageIndex => this._setPage(pageIndex),
+            changePage: pageIndex => this.setPage(pageIndex),
             select: line => this.selectBoard(line)
         });
         this.addClass("board-list");
@@ -333,12 +333,12 @@ export class CBABoardList extends VTable {
     }
 
     loadBoards() {
-        this._setPage(0);
+        this.setPage(0);
         return this;
     }
 
     refresh() {
-        this._setPage(this._currentPage);
+        this.setPage(this._currentPage);
     }
 
     selectBoard(board) {
@@ -375,7 +375,7 @@ export class CBABoardList extends VTable {
 
     };
 
-    _setPage(pageIndex) {
+    setPage(pageIndex) {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
             let saveBoardStatus = board => this._saveBoardStatus(board,

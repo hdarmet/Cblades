@@ -1004,7 +1004,7 @@ export var vNewspaperContent = new CBSNewspaper({
 });
 
 export function readPoll(poll, update) {
-    sendGet("/api/like-poll/vote/" + poll,
+    sendGet("/api/article/vote/" + poll,
         (text, status) => {
             requestLog("Read Poll success: " + text + ": " + status);
             let response = JSON.parse(text);
@@ -1023,7 +1023,7 @@ export function readPoll(poll, update) {
 }
 
 export function sendVote(poll, option, update) {
-    sendPost("/api/like-poll/vote/" + poll,
+    sendPost("/api/article/vote/" + poll,
         { option },
         (text, status) => {
             requestLog("Vote success: " + text + ": " + status);

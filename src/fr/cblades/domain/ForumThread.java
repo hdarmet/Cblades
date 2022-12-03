@@ -21,6 +21,8 @@ public class ForumThread extends BaseEntity {
     Forum forum;
     @ManyToOne
     Account author;
+    @OneToOne
+    ForumMessage lastMessage;
 
     public String getTitle() {
         return this.title;
@@ -75,6 +77,14 @@ public class ForumThread extends BaseEntity {
     }
     public ForumThread setAuthor(Account author) {
         this.author = author;
+        return this;
+    }
+
+    public ForumMessage getLastMessage() {
+        return this.lastMessage;
+    }
+    public ForumThread setLastMessage(ForumMessage lastMessage) {
+        this.lastMessage = lastMessage;
         return this;
     }
 

@@ -57,7 +57,7 @@ export class CBAUserSelection extends VTable {
     constructor({loadPage, selectUser}) {
         super({
             ref: "user-selection",
-            changePage: pageIndex => this._setPage(pageIndex),
+            changePage: pageIndex => this.setPage(pageIndex),
             select: user => selectUser(user)
         });
         this.addClass("user-selection");
@@ -69,15 +69,15 @@ export class CBAUserSelection extends VTable {
     }
 
     loadUsers() {
-        this._setPage(0);
+        this.setPage(0);
         return this;
     }
 
     refresh() {
-        this._setPage(this._currentPage);
+        this.setPage(this._currentPage);
     }
 
-    _setPage(pageIndex) {
+    setPage(pageIndex) {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
             for (let user of pageData.users) {
@@ -300,7 +300,7 @@ export class CBAUserList extends VTable {
     constructor({loadPage, updateUser, deleteUser}) {
         super({
             ref: "user-list",
-            changePage: pageIndex => this._setPage(pageIndex),
+            changePage: pageIndex => this.setPage(pageIndex),
             select: user => this.selectUser(user)
         });
         this.addClass("user-list");
@@ -314,12 +314,12 @@ export class CBAUserList extends VTable {
     }
 
     loadUsers() {
-        this._setPage(0);
+        this.setPage(0);
         return this;
     }
 
     refresh() {
-        this._setPage(this._currentPage);
+        this.setPage(this._currentPage);
     }
 
     selectUser(user) {
@@ -350,7 +350,7 @@ export class CBAUserList extends VTable {
         }).show();
     };
 
-    _setPage(pageIndex) {
+    setPage(pageIndex) {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
             let saveUser = user => this._updateUser(user, [],

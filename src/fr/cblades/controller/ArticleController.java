@@ -2,6 +2,7 @@ package fr.cblades.controller;
 
 import fr.cblades.StandardUsers;
 import fr.cblades.domain.*;
+import fr.cblades.services.LikeVoteService;
 import org.summer.FileSpecification;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
@@ -14,6 +15,7 @@ import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
+import org.summer.data.SummerPersistenceException;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
@@ -150,7 +152,10 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(a) from Article a";
-				String queryString = "select a from Article a left outer join fetch a.themes t left outer join fetch a.firstParagraph p";
+				String queryString = "select a from Article a " +
+					"left outer join fetch a.themes t " +
+					"left join fetch a.poll " +
+					"left outer join fetch a.firstParagraph p";
 				if (search!=null) {
 					/*
 					search = StringReplacer.replace(search,
@@ -189,9 +194,9 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 			String search = (String)params.get("search");
 			String queryString = "select a from Article a " +
-				"join fetch a.paragraphs p " +
-				"join fetch a.author w " +
-				"join fetch a.poll v " +
+				"join fetch a.paragraphs " +
+				"join fetch a.author " +
+				"join fetch a.poll " +
 				"where a.status=:status and a.recent=:recent";
 			if (search!=null) {
 				String whereClause =" and fts('pg_catalog.english', " +
@@ -219,9 +224,9 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 			long themeId = getIntegerParam(params, "theme", "The requested Theme Id is invalid (%s)");
 			String search = (String)params.get("search");
 			String queryString = "select a from Article a " +
-					"join fetch a.paragraphs p " +
-					"join fetch a.author w " +
-					"join fetch a.poll v " +
+					"join fetch a.paragraphs " +
+					"join fetch a.author " +
+					"join fetch a.poll " +
 					"where a.status=:status and :theme member of a.themes";
 			if (search!=null) {
 				String whereClause =" and fts('pg_catalog.english', " +
@@ -248,8 +253,8 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 			String title = (String)params.get("title");
 			Article article = getSingleResult(em,
 				"select a from Article a " +
-					"join fetch a.firstParagraph p " +
-					"join fetch a.themes t " +
+					"join fetch a.firstParagraph " +
+					"join fetch a.themes " +
 					"join fetch a.author w " +
 					"join fetch w.access " +
 					"where a.title=:title",
@@ -595,4 +600,69 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 	}
 
 	static int ARTICLES_BY_PAGE = 10;
+
+	@REST(url = "/api/article/vote/:poll", method = Method.GET)
+	public Json getVote(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		long pollId = getIntegerParam(params, "poll", "A valid Poll Id must be provided.");
+		use(LikeVoteService.class, likeVoteService -> {
+			ifAuthorized(
+				user -> {
+					try {
+						LikeVoteService.Votation votation = likeVoteService.getPoll(pollId, user);
+						Json response = readFromPoll(votation);
+						result.set(response);
+					} catch (SummerPersistenceException pe) {
+						throw new SummerControllerException(409, pe.getMessage());
+					} catch (SummerNotFoundException snfe) {
+						throw new SummerControllerException(404, snfe.getMessage());
+					}
+				}
+			);
+		});
+		return result.get();
+	}
+
+	@REST(url = "/api/article/vote/:poll", method = Method.POST)
+	public Json vote(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		long pollId = getIntegerParam(params, "poll", "A valid Poll Id must be provided.");
+		String option = request.get("option");
+		if (!"like".equals(option) && !"dislike".equals(option) && !"none".equals(option)) {
+			throw new SummerControllerException(400, "Vote option must be one of these: 'like', 'dislike' or 'none'");
+		}
+		use(LikeVoteService.class, likeVoteService -> {
+			ifAuthorized(
+				user -> {
+					try {
+						LikeVoteService.Votation votation = likeVoteService.vote(pollId,
+								option.equals("like") ? LikeVoteOption.LIKE : LikeVoteOption.DISLIKE,
+								user);
+						Json response = readFromPoll(votation);
+						result.set(response);
+					} catch (SummerPersistenceException pe) {
+						throw new SummerControllerException(409, pe.getMessage());
+					} catch (SummerNotFoundException snfe) {
+						throw new SummerControllerException(404, snfe.getMessage());
+					}
+				}
+			);
+		});
+		return result.get();
+	}
+
+	Json readFromPoll(LikeVoteService.Votation votation) {
+		Json json = Json.createJsonObject();
+		sync(json, votation.getPoll())
+				.read("likes")
+				.read("dislikes");
+		if (votation.getVote()==null) {
+			json.put("option", "none");
+		}
+		else {
+			json.put("option", votation.getVote().getOption()==LikeVoteOption.LIKE ? "like" : "dislike");
+		}
+		return json;
+	}
+
 }

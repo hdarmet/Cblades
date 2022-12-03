@@ -2,16 +2,20 @@ package org.summer.data;
 
 import java.util.Collection;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
+import javax.persistence.OptimisticLockException;
 
 import org.summer.ApplicationManager;
 import org.summer.Scanner;
 import org.summer.annotation.Profile;
 
 public interface DataManager {
+	static final Logger log = Logger.getLogger("summer");
 	public static final String DEFAULT_PERSISTENCE_UNIT = "default";
+	public static final int MAX_RETRIES = 4;
 
 	public interface Executor {
 		void run(EntityManager em);
@@ -23,6 +27,42 @@ public interface DataManager {
 
 	public static void inTransaction(Executor executor) {
 		ApplicationManager.get().getDataManager().executeInTransaction(executor);
+	}
+
+	public static void inTransactionUntilSuccessful(Executor executor) {
+		ApplicationManager.get().getDataManager().executeInTransactionUntilSuccessful(executor);
+	}
+
+	public static void inTransactionUntilSuccessful(String persistenceUnitName, Executor executor) {
+		ApplicationManager.get().getDataManager().executeInTransactionUntilSuccessful(persistenceUnitName, executor);
+	}
+
+	default void executeInTransactionUntilSuccessful(Executor executor) {
+		boolean finished = false;
+		int retries = 0;
+		while (!finished && retries<DataManager.MAX_RETRIES) {
+			try {
+				ApplicationManager.get().getDataManager().executeInTransaction(executor);
+				finished = true;
+			} catch (OptimisticLockException ole) {
+				retries++;
+				log.warning("OptimisticLockException encountered. Retry.");
+			}
+		}
+	}
+
+	default void executeInTransactionUntilSuccessful(String persistenceUnitName, Executor executor) {
+		boolean finished = false;
+		int retries = 0;
+		while (!finished && retries<DataManager.MAX_RETRIES) {
+			try {
+				ApplicationManager.get().getDataManager().executeInTransactionUntilSuccessful(persistenceUnitName, executor);
+				finished = true;
+			} catch (OptimisticLockException ole) {
+				retries++;
+				log.warning("OptimisticLockException encountered. Retry.");
+			}
+		}
 	}
 
 	public static void declarePersistenceUnit(
@@ -62,4 +102,5 @@ public interface DataManager {
 	default Collection<Class<?>> getEntityClasses() {
 		return Scanner.get().getClassesAnnotatedBy(Entity.class, Profile.class);
 	}
+
 }

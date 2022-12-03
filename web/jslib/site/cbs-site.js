@@ -828,6 +828,7 @@ class CBSPageContent extends VPageContent {
     }
 
     _showForums(byHistory, historize) {
+        vForums.loadForums();
         return this.changePage(vForumTitle, vForums, byHistory, historize);
     }
 

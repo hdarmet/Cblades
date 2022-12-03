@@ -1,6 +1,8 @@
-package org.summer.platform;
+package org.summer.services;
 
 import org.summer.annotation.SingletonScoped;
+import org.summer.platform.PlatformManager;
+import org.summer.platform.SummerPlatformException;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
@@ -13,7 +15,6 @@ import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Session;
-import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;

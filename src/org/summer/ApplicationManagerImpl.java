@@ -6,9 +6,12 @@ import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
+import org.summer.annotation.Job;
 import org.summer.annotation.Launch;
 import org.summer.annotation.Setup;
 import org.summer.controller.ControllerManager;
@@ -20,6 +23,8 @@ import org.summer.security.SecurityManagerImpl;
 
 public class ApplicationManagerImpl extends ApplicationManager {
 	static final Logger log = Logger.getLogger("summer");
+
+	ScheduledExecutorService jobService = Executors.newScheduledThreadPool(4);
 
 	public ApplicationManagerImpl(String rootForLookup, Set<String> profiles) {
 		setScanner(new ScannerImpl(rootForLookup, profiles));
@@ -33,6 +38,7 @@ public class ApplicationManagerImpl extends ApplicationManager {
 		setSecurityManager(new SecurityManagerImpl());
 		getControllerManager().installControllers();
 		invokeSetupMethods();
+		invokeJobsMethods();
 	}
 
 	Scanner scanner;
@@ -124,6 +130,18 @@ public class ApplicationManagerImpl extends ApplicationManager {
 		appMethods.stream()
 			.sorted(Comparator.comparingInt(m -> m.getDeclaredAnnotation(Launch.class).order())
 		).forEach(executeASetUpMethod);
+	}
+
+	void invokeJobsMethods() {
+		Consumer<Method> scheduleAJob = jobMethod->{
+			log.info("Schedule: "+jobMethod.getName());
+			Job jobAnnotation = jobMethod.getAnnotation(Job.class);
+			PlatformManager.scheduleJob(jobMethod, 0, jobAnnotation.frequency());
+		};
+		Collection<Method> summerMethods = this.scanner.getSummerMethodsAnnotedBy(Job.class);
+		summerMethods.stream().forEach(scheduleAJob);
+		Collection<Method> appMethods = this.scanner.getMethodsAnnotatedBy(Job.class);
+		appMethods.stream().forEach(scheduleAJob);
 	}
 
 	PlatformManager platformManager;

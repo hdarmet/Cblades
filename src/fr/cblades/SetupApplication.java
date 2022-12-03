@@ -12,6 +12,7 @@ import org.summer.data.DataSunbeam;
 import org.summer.data.JPAOnHibernate;
 import org.summer.platform.GAEPlatformManagerImpl;
 import org.summer.platform.LocalPlatformManagerImpl;
+import org.summer.platform.PlatformManager;
 import org.summer.security.SecurityManager;
 
 public class SetupApplication {
@@ -36,6 +37,11 @@ public class SetupApplication {
         }
         JPAOnHibernate.openPostgresDevPersistenceUnit(url, user, password);
         log.info("setup dev database !");
+    }
+
+    @Setup(order = 1)
+    public static void setupJobManager() {
+        PlatformManager.setJobPoolSize(5);
     }
 
     @Setup

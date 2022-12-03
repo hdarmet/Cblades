@@ -27,6 +27,14 @@ public interface DataSunbeam {
 		DataManager.inTransaction(executor);
 	}
 
+	default void inTransactionUntilSuccessful(String persistenceUnitName, Executor executor) {
+		DataManager.inTransactionUntilSuccessful(persistenceUnitName, executor);
+	}
+
+	default void inTransactionUntilSuccessful(Executor executor) {
+		DataManager.inTransactionUntilSuccessful(executor);
+	}
+
 	default <E> E find(EntityManager em, Class<E> entityClass, Object id) {
 		try {
 			return em.find(entityClass, id);
@@ -86,6 +94,12 @@ public interface DataSunbeam {
 	default <E> void persist(EntityManager em, E entity) {
 		em.persist(entity);
 		em.flush();
+	}
+
+	default <E> E merge(EntityManager em, E entity) {
+		entity = em.merge(entity);
+		em.flush();
+		return entity;
 	}
 
 	default <E> void remove(EntityManager em, E entity) {

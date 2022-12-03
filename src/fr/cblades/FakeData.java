@@ -1,6 +1,7 @@
 package fr.cblades;
 
 import fr.cblades.domain.*;
+import org.summer.annotation.Job;
 import org.summer.annotation.Launch;
 import org.summer.data.DataSunbeam;
 
@@ -556,14 +557,23 @@ public class FakeData {
             for (int messageIndex=0; messageIndex<messageCount; messageIndex++) {
                 ForumMessage message = new ForumMessage()
                     .setPublishedDate(new Date())
-                    .setLikeCount(123)
+                    .setPoll(new LikePoll().setLikes(123).setDislikes(0))
                     .setText(PARAGRAPH_TEXT)
                     .setForumThread(thread)
                     .setAuthor(accounts.get((accountIndex++)%accounts.size()));
                 data.persist(em, message);
+                thread.setLastMessage(message);
+                forum.setLastMessage(message);
             }
         }
     }
+
+    /*
+    @Job(frequency = 10000)
+    static void heartBeat() {
+        System.out.println("Boom boom");
+    }
+     */
 
     static String TINY_PARAGRAPH_TEXT = "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit";
 

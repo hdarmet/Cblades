@@ -2,11 +2,10 @@ package fr.cblades.controller;
 
 import fr.cblades.StandardUsers;
 import fr.cblades.domain.*;
-import org.summer.FileSpecification;
+import fr.cblades.services.LikeVoteService;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
 import org.summer.annotation.Controller;
-import org.summer.annotation.MIME;
 import org.summer.annotation.REST;
 import org.summer.annotation.REST.Method;
 import org.summer.controller.ControllerSunbeam;
@@ -14,8 +13,7 @@ import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
-import org.summer.platform.FileSunbeam;
-import org.summer.platform.PlatformManager;
+import org.summer.data.SummerPersistenceException;
 import org.summer.security.SecuritySunbeam;
 
 import javax.persistence.EntityManager;
@@ -71,7 +69,10 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json getLive(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			String queryString = "select f from Forum f where f.status=:status";
+			String queryString = "select f from Forum f " +
+					"left join fetch f.lastMessage m " +
+					"left join fetch m.thread " +
+					"where f.status=:status";
 			Collection<Forum> forums = findForums(em.createQuery(queryString),
 				"status", ForumStatus.LIVE);
 			result.set(readFromForums(forums));
@@ -103,7 +104,8 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			if (forum.getStatus() != ForumStatus.LIVE) {
 				throw new SummerControllerException(409, "Forum is not live.");
 			}
-			long threadCount = findCount(em.createQuery("select count(t) from ForumThread t " +
+			long threadCount = findCount(em.createQuery(
+				"select count(t) from ForumThread t " +
 				"where t.status=:status and t.forum=:forum"),
 				"status", ForumThreadStatus.LIVE,
 				"forum", forum);
@@ -111,6 +113,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				em.createQuery("select t from ForumThread t " +
 				"left join fetch t.author w " +
 				"left join fetch w.access " +
+				"left join fetch t.lastMessage " +
 				"join fetch t.forum " +
 				"where t.status=:status and t.forum=:forum"), pageNo,
 				"status", ForumThreadStatus.LIVE,
@@ -143,6 +146,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					"left join fetch m.author w " +
 					"left join fetch w.access " +
 					"join fetch m.thread " +
+					"join fetch m.poll " +
 					"where m.thread=:thread " +
 					"order by m.publishedDate desc"), pageNo,
 				"thread", forumThread);
@@ -219,26 +223,102 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return result.get();
 	}
 
+	@REST(url="/api/forum/post", method=Method.POST)
+	public Json postMessage(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
+			Ref<ForumMessage> newMessage = new Ref<>();
+			inTransaction(em->{
+				newMessage.set(writeToForumMessage(em, request, new ForumMessage()));
+				try {
+					Account author = Account.find(em, user);
+					newMessage.get()
+						.setAuthor(author)
+						.setPublishedDate(new Date())
+						.setPoll(new LikePoll().setLikes(0).setDislikes(0));
+					persist(em, newMessage.get());
+					result.set(readFromForumMessage(newMessage.get()));
+				} catch (PersistenceException pe) {
+					throw new SummerControllerException(409,
+						"Forum with title (%s) already exists",
+						request.get("title"), null
+					);
+				}
+			});
+			inTransactionUntilSuccessful(iem-> {
+				try {
+					ForumMessage message = merge(iem, newMessage.get());
+					ForumThread forumThread = message.getForumThread();
+					forumThread.setMessageCount(forumThread.getMessageCount()+1);
+					forumThread.setLastMessage(message);
+					Forum forum = forumThread.getForum();
+					forum.setLastMessage(message);
+					forum.setMessageCount(forum.getMessageCount()+1);
+				} catch (PersistenceException pe) {
+					throw new SummerControllerException(409, pe.getMessage());
+				}
+			});
+		});
+		return result.get();
+	}
+
+	ForumMessage writeToForumMessage(EntityManager em, Json json, ForumMessage forumMessage) {
+		try {
+			verify(json)
+				.checkRequired("text").checkMinSize("text", 2).checkMaxSize("text", 2000)
+				.checkInteger("thread")
+				.ensure();
+			sync(json, forumMessage)
+				.write("text")
+				.writeRef("thread", (Integer id) -> find(em, ForumThread. class, (long)id));
+			return forumMessage;
+		} catch (SummerNotFoundException snfe) {
+			throw new SummerControllerException(404, snfe.getMessage());
+		}
+	}
+
 	Forum writeToForum(EntityManager em, Json json, Forum forum) {
 		try {
 			verify(json)
 				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
 				.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
-				.checkRequired("illustration").checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
 				.check("status", ForumStatus.byLabels().keySet())
 				.ensure();
 			sync(json, forum)
 				.write("version")
 				.write("title")
 				.write("description")
-				.write("illustration")
 				.write("status", label->ForumStatus.byLabels().get(label));
 			return forum;
 		} catch (SummerNotFoundException snfe) {
 			throw new SummerControllerException(404, snfe.getMessage());
 		}
 	}
+
+	ForumThread writeToProposedForumThread(EntityManager em, Json json, ForumThread thread) {
+		try {
+			verify(json)
+				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
+				.checkPattern("title", "[\\d\\s\\w]+")
+				.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
+				.checkInteger("forum")
+				.check("status", ForumStatus.byLabels().keySet())
+				.ensure();
+			sync(json, thread)
+				.write("version")
+				.write("title")
+				.write("description")
+				.writeRef("forum", (Integer id) -> find(em, Forum. class, (long)id))
+				.write("status", label->ForumThreadStatus.byLabels().get(label));
+			return thread;
+		} catch (SummerNotFoundException snfe) {
+			throw new SummerControllerException(404, snfe.getMessage());
+		}
+	}
+
+
+
 
 	Forum writeToForumStatus(EntityManager em, Json json, Forum forum) {
 		verify(json)
@@ -259,7 +339,20 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("description")
 			.read("threadCount")
 			.read("messageCount")
-			.read("status", ForumStatus::getLabel);
+			.read("status", ForumStatus::getLabel)
+			.readLink("lastMessage", (lJson, message)->sync(lJson, message)
+				.readDate("publishedDate")
+				.readLink("thread", (pJson, account)->sync(pJson, account)
+					.read("title")
+				)
+				.readLink("author", (pJson, account)->sync(pJson, account)
+					.read("firstName")
+					.read("lastName")
+					.read("avatar")
+					.read("messageCount")
+					.process((aJson, author)->aJson.put("rating", Account.getRatingLevel((Account)author)))
+				)
+		);
 		return json;
 	}
 
@@ -272,7 +365,17 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("description")
 			.read("likeCount")
 			.read("messageCount")
-			.read("status", ForumThreadStatus::getLabel);
+			.read("status", ForumThreadStatus::getLabel)
+			.readLink("lastMessage", (lJson, message)->sync(lJson, message)
+				.readDate("publishedDate")
+				.readLink("author", (pJson, account)->sync(pJson, account)
+					.read("firstName")
+					.read("lastName")
+					.read("avatar")
+					.read("messageCount")
+					.process((aJson, author)->aJson.put("rating", Account.getRatingLevel((Account)author)))
+				)
+			);
 		return json;
 	}
 
@@ -283,7 +386,10 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("version")
 			.readDate("publishedDate")
 			.read("text")
-			.read("likeCount")
+			.readLink("poll", (pJson, poll)->sync(pJson, poll)
+				.read("id")
+				.read("likes")
+			)
 			.readLink("author", (pJson, account)->sync(pJson, account)
 				.read("id")
 				.read("login", "access.login")
@@ -359,4 +465,128 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	static int THREADS_BY_PAGE = 16;
 	static int MESSAGES_BY_PAGE = 16;
+
+	@REST(url = "/api/forum/vote/:message", method = Method.POST)
+	public Json vote(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		long messageId = getIntegerParam(params, "message", "A valid Message Id must be provided.");
+		String option = request.get("option");
+		if (!"like".equals(option) && !"none".equals(option)) {
+			throw new SummerControllerException(400, "Vote option must be one of these: 'like' or 'none'");
+		}
+		LikeVoteOption voteOption = option.equals("like") ? LikeVoteOption.LIKE : LikeVoteOption.DISLIKE;
+		use(LikeVoteService.class, likeVoteService -> {
+			ifAuthorized(
+				user -> {
+				inTransaction(em->{
+					try {
+						ForumMessage message = find(em, ForumMessage.class, messageId);
+						LikeVoteService.Votation votation = likeVoteService.vote(
+							em, message.getPoll(),
+							voteOption, user
+						);
+						Json response = readFromPoll(votation);
+						result.set(response);
+					} catch (SummerPersistenceException pe) {
+						throw new SummerControllerException(409, pe.getMessage());
+					} catch (SummerNotFoundException snfe) {
+						throw new SummerControllerException(404, snfe.getMessage());
+					}
+				});
+				inTransactionUntilSuccessful(iem->{
+					try {
+						ForumMessage message = find(iem, ForumMessage.class, messageId);
+						ForumThread thread = message.getForumThread();
+						if (voteOption == LikeVoteOption.LIKE) {
+							thread.setLikeCount(thread.getlikeCount()+1);
+						}
+						else {
+							thread.setLikeCount(thread.getlikeCount()-1);
+						}
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409, pe.getMessage());
+					}
+				});
+			});
+		});
+		return result.get();
+	}
+
+	Json readFromPoll(LikeVoteService.Votation votation) {
+		Json json = Json.createJsonObject();
+		sync(json, votation.getPoll())
+				.read("likes")
+				.read("dislikes");
+		if (votation.getVote()==null) {
+			json.put("option", "none");
+		}
+		else {
+			json.put("option", votation.getVote().getOption()==LikeVoteOption.LIKE ? "like" : "dislike");
+		}
+		return json;
+	}
+
+	@REST(url="/api/forum/thread/propose", method=Method.POST)
+	public Json propose(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			ForumThread newThread = writeToProposedForumThread(em, request, new ForumThread());
+			ifAuthorized(
+				user->{
+					try {
+						Account author = Account.find(em, user);
+						newThread.setStatus(ForumThreadStatus.PROPOSED);
+						newThread.setAuthor(author);
+						persist(em, newThread);
+						result.set(readFromForumThread(newThread));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409,
+								"Thread with title (%s) already exists",
+								request.get("title"), null
+						);
+					} catch (SummerNotFoundException snfe) {
+						throw new SummerControllerException(404, snfe.getMessage());
+					}
+				}
+			);
+		});
+		return result.get();
+	}
+
+	@REST(url="/api/forum/thread/amend/:id", method=Method.POST)
+	public Json amend(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em-> {
+			String id = (String) params.get("id");
+			ForumThread thread = find(em, ForumThread.class, new Long(id));
+			ifAuthorized(
+				user -> {
+					try {
+						Account author = Account.find(em, user);
+						writeToProposedForumThread(em, request, thread);
+						flush(em);
+						result.set(readFromForumThread(thread));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+					} catch (SummerNotFoundException snfe) {
+						throw new SummerControllerException(404, snfe.getMessage());
+					}
+				},
+				verifyIfAdminOrOwner(thread)
+			);
+		});
+		return result.get();
+	}
+
+	BiPredicate<String, String[]> verifyIfAdminOrOwner(ForumThread forumThread) {
+		return (user, roles) -> {
+			if (forumThread.getAuthor() != null && forumThread.getAuthor().getLogin().equals(user)) {
+				return true;
+			}
+			for (String role: roles) {
+				if (role.equals(ADMIN)) return true;
+			}
+			return false;
+		};
+	}
 }

@@ -470,7 +470,7 @@ export class CBAScenarioList extends VTable {
     constructor({loadPage, saveScenario, saveScenarioStatus, deleteScenario}) {
         super({
             ref: "scenario-list",
-            changePage: pageIndex => this._setPage(pageIndex),
+            changePage: pageIndex => this.setPage(pageIndex),
             select: scenario => this.selectScenario(scenario)
         });
         this.addClass("scenario-list");
@@ -485,12 +485,12 @@ export class CBAScenarioList extends VTable {
     }
 
     loadScenarios() {
-        this._setPage(0);
+        this.setPage(0);
         return this;
     }
 
     refresh() {
-        this._setPage(this._currentPage);
+        this.setPage(this._currentPage);
     }
 
     selectScenario(scenario) {
@@ -527,7 +527,7 @@ export class CBAScenarioList extends VTable {
 
     };
 
-    _setPage(pageIndex) {
+    setPage(pageIndex) {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
             let saveScenarioStatus = scenario => this._saveScenarioStatus(scenario,

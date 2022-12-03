@@ -585,7 +585,7 @@ export class CBAArticleList extends VTable {
     constructor({loadPage, deleteArticle, saveArticle, saveArticleStatus}) {
         super({
             ref: "article-list",
-            changePage: pageIndex => this._setPage(pageIndex),
+            changePage: pageIndex => this.setPage(pageIndex),
             select: line => this.selectArticle(line)
         });
         this.addClass("article-list");
@@ -600,12 +600,12 @@ export class CBAArticleList extends VTable {
     }
 
     loadArticles() {
-        this._setPage(0);
+        this.setPage(0);
         return this;
     }
 
     refresh() {
-        this._setPage(this._currentPage);
+        this.setPage(this._currentPage);
     }
 
     selectArticle(article) {
@@ -640,7 +640,7 @@ export class CBAArticleList extends VTable {
         );
     };
 
-    _setPage(pageIndex) {
+    setPage(pageIndex) {
         function getAuthor(article) {
             return article.author.firstName+" "+article.author.lastName;
         }

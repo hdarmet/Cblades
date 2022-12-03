@@ -1,4 +1,4 @@
-package org.summer.platform;
+package org.summer.services;
 
 public interface MailService {
 
