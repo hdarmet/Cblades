@@ -11,6 +11,7 @@ import {
     Div, Img, P, I, Span, replaceSelectedText, Blockquote, Input
 } from "./components.js";
 import {
+    mandatory, range,
     VButtons,
     VFormContainer,
     VInputField,
@@ -92,8 +93,14 @@ export class VProposeThread extends VModal {
 
     constructor(proposeThread) {
         super({ref: VProposeThread.REF, title: VProposeThread.TITLE});
-        this._title = new VInputField({ref:"thread-title", label:"Title"});
-        this._description = new VInputTextArea({ref:"thread-description", label:"Description"});
+        this._title = new VInputField({
+            ref:"thread-title", label:"Title",
+            validate: mandatory({validate: range({min:2, max:200})}),
+        });
+        this._description = new VInputTextArea({
+            ref:"thread-description", label:"Description",
+            validate: mandatory({validate: range({min:2, max:4995})}),
+        });
         this.add(
             new VFormContainer({columns: 1})
                 .addField({field: this._title})
@@ -229,13 +236,14 @@ export class VForum extends VContainer {
 
 export class VForumThreadMessages extends VTable {
 
-    constructor({loadMessages, vote, insertQuote}) {
+    constructor({loadMessages, sendReport, vote, insertQuote}) {
         super({ref:"messages",
             changePage: pageIndex=>this.setPage(pageIndex)
         });
         this._vote = vote;
         this._loadMessages= loadMessages;
         this._insertQuote = insertQuote;
+        this._sendReport = sendReport;
     }
 
     setThread(thread) {
@@ -246,7 +254,7 @@ export class VForumThreadMessages extends VTable {
     setPage(index) {
         this._loadMessages(index, this._thread, page=> {
             let lines = [];
-            !this._reportModal && (this._reportModal = new VForumReport());
+            !this._reportModal && (this._reportModal = new VForumReport(this._sendReport));
             for (let message of page.messages) {
                 let icon = new Div().add(new Img(message.avatarImage)).addClass("avatar-image");
                 let identity = new Div().add(new P(message.avatarIdentity)).addClass("avatar-identity");
@@ -283,7 +291,7 @@ export class VForumThreadMessages extends VTable {
                         this._insertQuote(`<p class='cite'>${message.avatarIdentity} wrote: </p>${messageText.getInnerHTML()}`);
                     }))
                     .add(new P("Report").addClass("quote-message").onMouseClick(event=>{
-                        this._reportModal.show();
+                        this._reportModal.open(message);
                     }))
                     .addClass("message-commands");
                 let messageContent = new Div().addClass("message-content")
@@ -318,6 +326,11 @@ export class VForumThreadMessages extends VTable {
 
     getThread() {
         return this._thread;
+    }
+
+    closeReportMessageModal() {
+        this._reportModal.hide();
+        return this;
     }
 
     static SUMMARY = "Showing {1} to {2} of {0} messages";
@@ -436,13 +449,14 @@ export class VForumPostEditor extends VContainer {
 
 export class VForumThread extends VContainer {
 
-    constructor({loadMessages, vote, send}) {
+    constructor({loadMessages, vote, send, sendReport}) {
         super({ref: "forum-thread", columns: 1});
         this.addClass("forum-thread-container");
         this._editPost = new VForumPostEditor({send});
         this._messages = new VForumThreadMessages({
             loadMessages,
             vote,
+            sendReport,
             insertQuote:text=>{
                 this._editPost.insertQuote(text);
             }
@@ -465,11 +479,17 @@ export class VForumThread extends VContainer {
         this._editPost.clearContent();
         return this;
     }
+
+    closeReportMessageModal() {
+        this._messages.closeReportMessageModal();
+        return this;
+    }
+
 }
 
 export class VForumReport extends VModal {
 
-    constructor() {
+    constructor(sendReport) {
         super({ref: VForumReport.REPORT_REF, title: VForumReport.REPORT_TITLE});
         this._reason = new VSelectField({ref:"reason", label:"Reason",
             options: [
@@ -477,17 +497,22 @@ export class VForumReport extends VModal {
                 {ref: "reason-off-topic", value: "off-topic", text:"Le propos est hors sujet."}
             ]
         });
-        this._message = new VInputTextArea({ref:"contact-message", label:"Message"});
+        this._text = new VInputTextArea({ref:"contact-message", label:"Message"});
         this.add(
             new VFormContainer({columns: 1})
                 .addField({field: this._reason})
-                .addField({field: this._message})
+                .addField({field: this._text})
                 .addField({
                     field: new VButtons({
                         ref: "buttons", buttons: [
                             {
                                 ref: "send-message", type: "accept", label: "Send",
                                 onClick: event => {
+                                    sendReport({
+                                        message: this._message,
+                                        reason: this._reason.value,
+                                        text: this._text.value
+                                    });
                                     console.log("Validate");
                                     this.hide();
                                 }
@@ -496,6 +521,13 @@ export class VForumReport extends VModal {
                     })
                 })
         );
+    }
+
+    open(message) {
+        this._message = message;
+        this._reason.value = "";
+        this._text.value = "";
+        this.show();
     }
 
     static REPORT_REF = "forum-report";

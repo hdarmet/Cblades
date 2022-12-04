@@ -24,6 +24,8 @@ public class Forum extends BaseEntity {
     ForumStatus status;
     @OneToOne
     ForumMessage lastMessage;
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Comment> comments = new ArrayList<>();
 
     public String getTitle() {
         return this.title;
@@ -73,4 +75,15 @@ public class Forum extends BaseEntity {
         return this;
     }
 
+    public List<Comment> getComments() {
+        return Collections.unmodifiableList(this.comments);
+    }
+    public Forum addComment(Comment comment) {
+        this.comments.add(comment);
+        return this;
+    }
+    public Forum removeComment(Comment comment) {
+        this.comments.remove(comment);
+        return this;
+    }
 }

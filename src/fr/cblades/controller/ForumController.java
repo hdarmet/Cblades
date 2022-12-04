@@ -33,12 +33,12 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json create(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Forum newForum = writeToForum(em, request, new Forum());
+			Forum newForum = writeToForumWithComments(em, request, new Forum());
 			ifAuthorized(
 				user->{
 					try {
 						persist(em, newForum);
-						result.set(readFromForum(newForum));
+						result.set(readFromForumWithComments(newForum));
 					} catch (PersistenceException pe) {
 						throw new SummerControllerException(409,
 							"Forum with title (%s) already exists",
@@ -81,13 +81,13 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 
 	@REST(url="/api/forum/load/:id", method=Method.GET)
-	public Json getForum(Map<String, Object> params, Json request) {
+	public Json loadForum(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			String id = (String)params.get("id");
 			Forum forum = findForum(em, new Long(id));
 			ifAuthorized(user->{
-				result.set(readFromForum(forum));
+				result.set(readFromForumWithComments(forum));
 			},
 			ADMIN);
 		});
@@ -188,9 +188,9 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			ifAuthorized(
 				user -> {
 					try {
-						writeToForum(em, request, forum);
+						writeToForumWithComments(em, request, forum);
 						flush(em);
-						result.set(readFromForum(forum));
+						result.set(readFromForumWithComments(forum));
 					} catch (PersistenceException pe) {
 						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 					}
@@ -296,6 +296,37 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 	}
 
+	Forum writeToForumWithComments(EntityManager em, Json json, Forum forum) {
+		try {
+			verify(json)
+				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
+				.checkPattern("title", "[\\d\\s\\w]+")
+				.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
+				.check("status", ForumStatus.byLabels().keySet())
+				.each("comments", cJson->verify(cJson)
+					.checkRequired("version")
+					.checkRequired("date")
+					.checkRequired("text")
+					.checkMinSize("text", 2)
+					.checkMaxSize("text", 19995)
+				)
+				.ensure();
+			sync(json, forum)
+				.write("version")
+				.write("title")
+				.write("description")
+				.write("status", label->ForumStatus.byLabels().get(label))
+				.syncEach("comments", (cJson, comment)->sync(cJson, comment)
+					.write("version")
+					.writeDate("date")
+					.write("text")
+				);
+			return forum;
+		} catch (SummerNotFoundException snfe) {
+			throw new SummerControllerException(404, snfe.getMessage());
+		}
+	}
+
 	ForumThread writeToProposedForumThread(EntityManager em, Json json, ForumThread thread) {
 		try {
 			verify(json)
@@ -316,9 +347,6 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			throw new SummerControllerException(404, snfe.getMessage());
 		}
 	}
-
-
-
 
 	Forum writeToForumStatus(EntityManager em, Json json, Forum forum) {
 		verify(json)
@@ -353,6 +381,23 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					.process((aJson, author)->aJson.put("rating", Account.getRatingLevel((Account)author)))
 				)
 		);
+		return json;
+	}
+
+	Json readFromForumWithComments(Forum forum) {
+		Json json = Json.createJsonObject();
+		sync(json, forum)
+			.read("id")
+			.read("version")
+			.read("title")
+			.read("description")
+			.read("status", ForumStatus::getLabel)
+			.readEach("comments", (hJson, hex)->sync(hJson, hex)
+				.read("id")
+				.read("version")
+				.readDate("date")
+				.read("text")
+			);
 		return json;
 	}
 
@@ -569,7 +614,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					} catch (PersistenceException pe) {
 						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 					} catch (SummerNotFoundException snfe) {
-						throw new SummerControllerException(404, snfe.getMessage());
+						throw new SummerControllerException(404, "Object Not Found.", snfe.getMessage());
 					}
 				},
 				verifyIfAdminOrOwner(thread)
@@ -589,4 +634,66 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			return false;
 		};
 	}
+
+	@REST(url="/api/forum/message/report", method=Method.POST)
+	public Json report(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			Report newReport = writeToForumMessageReport(em, request, new Report());
+			ifAuthorized(
+				user->{
+					try {
+						Account author = Account.find(em, user);
+						newReport.setAuthor(author).setSendDate(new Date());
+						persist(em, newReport);
+						result.set(readFromForumMessageReport(newReport));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(500, "Unexpected issue", pe.getMessage());
+					} catch (SummerNotFoundException snfe) {
+						throw new SummerControllerException(404, "User not found: "+user, snfe.getMessage());
+					}
+				}
+			);
+		});
+		return result.get();
+	}
+
+	Report writeToForumMessageReport(EntityManager em, Json json, Report report) {
+		try {
+			verify(json)
+				.checkRequired("reason").checkMinSize("reason", 2).checkMaxSize("reason", 200)
+				.checkPattern("title", "[\\d\\s\\w]+")
+				.checkRequired("text").checkMinSize("text", 2).checkMaxSize("text", 1000)
+				.checkInteger("target")
+				.ensure();
+			sync(json, report)
+				.write("version")
+				.write("reason")
+				.write("text")
+				.write("target");
+			return report;
+		} catch (SummerNotFoundException snfe) {
+			throw new SummerControllerException(404, snfe.getMessage());
+		}
+	}
+
+	Json readFromForumMessageReport(Report report) {
+		Json json = Json.createJsonObject();
+		sync(json, report)
+			.read("id")
+			.read("version")
+			.readDate("sendDate")
+			.read("reason")
+			.read("text")
+			.read("target")
+			.readLink("author", (pJson, account)->sync(pJson, account)
+				.read("id")
+				.read("login", "access.login")
+				.read("firstName")
+				.read("lastName")
+				.read("avatar")
+			);
+		return json;
+	}
+
 }

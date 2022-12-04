@@ -62,6 +62,9 @@ import {
 import {
     editRuleSet
 } from "./cba-ruleset.js";
+import {
+    vForumList
+} from "./cba-forum.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -154,6 +157,12 @@ export var vMenu = new VMainMenu({ref:"menu"})
         })
         .addMenu({ref:"scenario-presentation-menu", label:"Presentation de l'édition de scenarii", action:()=>{
                 window.vPageContent.showEditScenarioPresentation();
+            }
+        })
+    })
+    .addDropdownMenu({ref:"forum-menu", label:"Forum"}, $=>{$
+        .addMenu({ref:"list-forums-menu", label:"Les forums", action:()=>{
+                window.vPageContent.showForumList();
             }
         })
     })
@@ -601,6 +610,18 @@ export class CBAPageContent extends VPageContent {
     showEditScenarioPresentation() {
         this._showEditScenarioPresentation(false, ()=> {
                 historize("edit-scenario-presentation", "vPageContent._showEditScenarioPresentation(true);")
+            }
+        );
+    }
+
+    _showForumList(byHistory, historize) {
+        return this.changePage(null, vForumList, byHistory, historize);
+    }
+
+    showForumList() {
+        vForumList.loadForums();
+        this._showForumList(false, ()=> {
+                historize("forums", "vPageContent._showForumList(true);")
             }
         );
     }

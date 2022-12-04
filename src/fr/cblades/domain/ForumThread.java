@@ -3,6 +3,9 @@ package fr.cblades.domain;
 import org.summer.data.BaseEntity;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Entity
 @Table(indexes= {
@@ -21,6 +24,8 @@ public class ForumThread extends BaseEntity {
     Forum forum;
     @ManyToOne
     Account author;
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Comment> comments = new ArrayList<>();
     @OneToOne
     ForumMessage lastMessage;
 
@@ -88,4 +93,15 @@ public class ForumThread extends BaseEntity {
         return this;
     }
 
+    public List<Comment> getComments() {
+        return Collections.unmodifiableList(this.comments);
+    }
+    public ForumThread addComment(Comment comment) {
+        this.comments.add(comment);
+        return this;
+    }
+    public ForumThread removeComment(Comment comment) {
+        this.comments.remove(comment);
+        return this;
+    }
 }

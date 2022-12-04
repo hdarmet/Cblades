@@ -140,6 +140,21 @@ export var vForumThread = new VForumThread({
                 showMessage("Fail to Post Message", text);
             }
         );
+    },
+    sendReport:message=>{
+        sendReport({
+                target: message.message.id,
+                reason: message.reason,
+                text: message.text
+            },
+            text => {
+                vForumThread.closeReportMessageModal();
+                showMessage("Report sent", "Thank you for your kelp.");
+            },
+            text => {
+                showMessage("Fail to send report", text);
+            }
+        );
     }
 });
 
@@ -229,6 +244,20 @@ export function saveProposedThread(thread, success, failure) {
         },
         (text, status) => {
             requestLog("Thread proposal failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
+}
+
+export function sendReport(report, success, failure) {
+    sendPost("/api/forum/message/report/",
+        report,
+        (text, status) => {
+            requestLog("Message report success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            requestLog("Message report failure: " + text + ": " + status);
             failure(text, status);
         }
     );
