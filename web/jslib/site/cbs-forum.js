@@ -111,9 +111,9 @@ export var vForumThread = new VForumThread({
                     title: thread.title,
                     pageCount: Math.ceil(messagesSpec.count / messagesSpec.pageSize),
                     currentPage: messagesSpec.page,
-                    threadCount: messagesSpec.count,
-                    firstThread: messagesSpec.page * messagesSpec.pageSize + 1,
-                    lastThread: messagesSpec.page * messagesSpec.pageSize + messagesSpec.messages.length,
+                    messageCount: messagesSpec.count,
+                    firstMessage: messagesSpec.page * messagesSpec.pageSize + 1,
+                    lastMessage: messagesSpec.page * messagesSpec.pageSize + messagesSpec.messages.length,
                     messages
                 });
             }

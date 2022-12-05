@@ -9,7 +9,7 @@ import java.util.Date;
 public class ForumMessage extends BaseEntity {
 
     Date publishedDate;
-    @Column(length = 5000)
+    @Column(length = 10000)
     String text="";
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     LikePoll poll;

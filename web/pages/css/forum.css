@@ -306,33 +306,58 @@
     font-size: 14px;
 }
 
-.forum-thread-post-editor .form-input-textarea::-webkit-scrollbar {
+.message-editor .form-input-textarea {
+    height: 16em;
+}
+
+.message-editor .form-input-textarea::-webkit-scrollbar {
     width: 16px;
     height: 16px;
     background-color: #eeeeee;
 }
 
-.forum-thread-post-editor .form-input-textarea::-webkit-scrollbar-thumb {
+.message-editor .form-input-textarea::-webkit-scrollbar-thumb {
     background: #aaaaaa;
     border: solid 2px #eeeeee;
     border-radius: 8px;
 }
 
-.forum-thread-post-editor {
+.message-editor {
     padding: 20px;
     background-color: #e2e2e2;
     box-shadow: rgba(0, 0, 0, 0.2) 0 4px 8px 0;
     margin: 10px;
 }
 
-.forum-thread-post-editor blockquote {
+.forum-thread-container blockquote {
     background-color: #d0f0f0;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-bottom: 10px;
+    font-size: 14px;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-bottom: 5px;
 }
 
-.forum-thread-post-editor .cite {
+.forum-thread-container blockquote blockquote {
+    background-color: #f0d0f0;
+}
+
+.forum-thread-container blockquote blockquote blockquote {
+    background-color: #f0f0d0;
+}
+
+.forum-thread-container blockquote blockquote blockquote blockquote {
+    background-color: #e0f0f0;
+}
+
+.forum-thread-container blockquote blockquote blockquote blockquote blockquote {
+    background-color: #f0e0f0;
+}
+
+.forum-thread-container blockquote blockquote blockquote blockquote blockquote blockquote {
+    background-color: #f0f0e0;
+}
+
+.forum-thread-container .cite {
     color: #2c4762;
     font-size: 12px;
     font-style: italic;

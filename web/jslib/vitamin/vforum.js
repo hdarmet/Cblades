@@ -286,7 +286,6 @@ export class VForumThreadMessages extends VTable {
                 let messageCommands = new Div()
                     .add(heart)
                     .add(likeCount)
-                    .add(new P("Reply").addClass("quote-message").onMouseClick(event=>console.log("replied")))
                     .add(new P("Quote").addClass("quote-message").onMouseClick(event=>{
                         this._insertQuote(`<p class='cite'>${message.avatarIdentity} wrote: </p>${messageText.getInnerHTML()}`);
                     }))
@@ -337,7 +336,7 @@ export class VForumThreadMessages extends VTable {
 }
 
 export class EmojiPreference extends Vitamin(Div) {
-    constructor({ref, icons =[]}) {
+    constructor({ref, icons = []}) {
         super({ref});
         this.addClass("emoji-preferences");
         this._icons =icons;

@@ -29,42 +29,6 @@ import java.util.stream.Collectors;
 @Controller
 public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
 
-	@REST(url="/api/forum/create", method=Method.POST)
-	public Json create(Map<String, Object> params, Json request) {
-		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
-			Forum newForum = writeToForumWithComments(em, request, new Forum());
-			ifAuthorized(
-				user->{
-					try {
-						persist(em, newForum);
-						result.set(readFromForumWithComments(newForum));
-					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409,
-							"Forum with title (%s) already exists",
-							request.get("title"), null
-						);
-					}
-				},
-				ADMIN
-			);
-		});
-		return result.get();
-	}
-
-	@REST(url="/api/forum/all", method=Method.GET)
-	public Json getAll(Map<String, Object> params, Json request) {
-		Ref<Json> result = new Ref<>();
-		ifAuthorized(user->{
-			inTransaction(em->{
-				String queryString = "select f from Forum f";
-				Collection<Forum> forums = findForums(em.createQuery(queryString));
-				result.set(readFromForums(forums));
-			});
-		}, ADMIN);
-		return result.get();
-	}
-
 	@REST(url="/api/forum/live", method=Method.GET)
 	public Json getLive(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
@@ -76,20 +40,6 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			Collection<Forum> forums = findForums(em.createQuery(queryString),
 				"status", ForumStatus.LIVE);
 			result.set(readFromForums(forums));
-		});
-		return result.get();
-	}
-
-	@REST(url="/api/forum/load/:id", method=Method.GET)
-	public Json loadForum(Map<String, Object> params, Json request) {
-		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
-			String id = (String)params.get("id");
-			Forum forum = findForum(em, new Long(id));
-			ifAuthorized(user->{
-				result.set(readFromForumWithComments(forum));
-			},
-			ADMIN);
 		});
 		return result.get();
 	}
@@ -122,7 +72,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				.put("threads", readFromForumThreads(threads))
 				.put("count", threadCount)
 				.put("page", pageNo)
-				.put("pageSize", FactionController.FACTIONS_BY_PAGE)
+				.put("pageSize", ForumController.THREADS_BY_PAGE)
 			);
 		});
 		return result.get();
@@ -154,8 +104,58 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				.put("messages", readFromForumMessages(messages))
 				.put("count", messageCount)
 				.put("page", pageNo)
-				.put("pageSize", FactionController.FACTIONS_BY_PAGE)
+				.put("pageSize", ForumController.MESSAGES_BY_PAGE)
 			);
+		});
+		return result.get();
+	}
+
+	@REST(url="/api/forum/all", method=Method.GET)
+	public Json getAll(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
+			inTransaction(em->{
+				String queryString = "select f from Forum f";
+				Collection<Forum> forums = findForums(em.createQuery(queryString));
+				result.set(readFromForums(forums));
+			});
+		}, ADMIN);
+		return result.get();
+	}
+
+	@REST(url="/api/forum/create", method=Method.POST)
+	public Json create(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			Forum newForum = writeToForumWithComments(em, request, new Forum());
+			ifAuthorized(
+				user->{
+					try {
+						persist(em, newForum);
+						result.set(readFromForumWithComments(newForum));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409,
+								"Forum with title (%s) already exists",
+								request.get("title"), null
+						);
+					}
+				},
+				ADMIN
+			);
+		});
+		return result.get();
+	}
+
+	@REST(url="/api/forum/load/:id", method=Method.GET)
+	public Json loadForum(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			String id = (String)params.get("id");
+			Forum forum = findForum(em, new Long(id));
+			ifAuthorized(user->{
+				result.set(readFromForumWithComments(forum));
+			},
+			ADMIN);
 		});
 		return result.get();
 	}
@@ -168,6 +168,12 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			ifAuthorized(
 				user->{
 					try {
+						long threadCount = getSingleResult(em,
+							"select count(t) from ForumThread t where t.forum=:forum",
+							"forum", forum);
+						if (threadCount>0) {
+							throw new SummerControllerException(409, "Only empty forums may be deleted.");
+						}
 						remove(em, forum);
 					} catch (PersistenceException pe) {
 						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
@@ -223,6 +229,125 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return result.get();
 	}
 
+	@REST(url="/api/forum/thread/all", method=Method.GET)
+	public Json getAllThreads(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
+			inTransaction(em->{
+				String queryString = "select t from ForumThread t";
+				Collection<ForumThread> forumThreads = findForumThreads(em.createQuery(queryString));
+				result.set(readFromForumThreads(forumThreads));
+			});
+		}, ADMIN);
+		return result.get();
+	}
+
+	@REST(url="/api/forum/thread/create", method=Method.POST)
+	public Json createThread(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			ForumThread newThread = writeToForumThreadWithComments(em, request, new ForumThread());
+			ifAuthorized(
+				user->{
+					try {
+						persist(em, newThread);
+						result.set(readFromForumThreadWithComments(newThread));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409,
+							"Thread with title (%s) already exists inside the Forum",
+							request.get("title"), null
+						);
+					}
+				},
+				ADMIN
+			);
+		});
+		return result.get();
+	}
+
+	@REST(url="/api/forum/thread/load/:id", method=Method.GET)
+	public Json loadThread(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			String id = (String)params.get("id");
+			ForumThread thread = findForumThread(em, new Long(id));
+			ifAuthorized(user->{
+				result.set(readFromForumThreadWithComments(thread));
+			},
+			ADMIN);
+		});
+		return result.get();
+	}
+
+	@REST(url="/api/forum/thread/delete/:id", method=Method.GET)
+	public Json deleteThread(Map<String, Object> params, Json request) {
+		inTransaction(em->{
+			String id = (String)params.get("id");
+			ForumThread thread = findForumThread(em, new Long(id));
+			ifAuthorized(
+				user->{
+					try {
+						long threadCount = getSingleResult(em,
+							"select count(m) from ForumMessage m where m.thread=:thread",
+							"thread", thread);
+						if (threadCount>0) {
+							throw new SummerControllerException(409, "Only empty threads may be deleted.");
+						}
+						remove(em, thread);
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+					}
+				},
+				ADMIN
+			);
+		});
+		return Json.createJsonObject().put("deleted", "ok");
+	}
+
+	@REST(url="/api/forum/thread/update/:id", method=Method.POST)
+	public Json updateThread(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em-> {
+			String id = (String) params.get("id");
+			ForumThread thread = findForumThread(em, new Long(id));
+			ifAuthorized(
+				user -> {
+					try {
+						writeToForumThreadWithComments(em, request, thread);
+						flush(em);
+						result.set(readFromForumThreadWithComments(thread));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+					}
+				},
+				ADMIN
+			);
+		});
+		return result.get();
+	}
+
+	@REST(url="/api/forum/thread/update-status/:id", method=Method.POST)
+	public Json updateThreadStatus(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em-> {
+			String id = (String) params.get("id");
+			ForumThread thread = findForumThread(em, new Long(id));
+			ifAuthorized(
+				user -> {
+					try {
+						writeToForumThreadStatus(em, request, thread);
+						flush(em);
+						result.set(readFromForumThread(thread));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+					}
+				},
+				ADMIN
+			);
+		});
+		return result.get();
+	}
+
 	@REST(url="/api/forum/post", method=Method.POST)
 	public Json postMessage(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
@@ -265,7 +390,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	ForumMessage writeToForumMessage(EntityManager em, Json json, ForumMessage forumMessage) {
 		try {
 			verify(json)
-				.checkRequired("text").checkMinSize("text", 2).checkMaxSize("text", 2000)
+				.checkRequired("text").checkMinSize("text", 2).checkMaxSize("text", 10000)
 				.checkInteger("thread")
 				.ensure();
 			sync(json, forumMessage)
@@ -282,7 +407,8 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			verify(json)
 				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
+				.checkRequired("description")
+					.checkMinSize("description", 2).checkMaxSize("description", 2000)
 				.check("status", ForumStatus.byLabels().keySet())
 				.ensure();
 			sync(json, forum)
@@ -301,7 +427,8 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			verify(json)
 				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
+				.checkRequired("description")
+					.checkMinSize("description", 2).checkMaxSize("description", 2000)
 				.check("status", ForumStatus.byLabels().keySet())
 				.each("comments", cJson->verify(cJson)
 					.checkRequired("version")
@@ -327,12 +454,49 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 	}
 
+	ForumThread writeToForumThreadWithComments(EntityManager em, Json json, ForumThread thread) {
+		try {
+			verify(json)
+				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
+				.checkPattern("title", "[\\d\\s\\w]+")
+				.checkRequired("description")
+				.checkMinSize("description", 2).checkMaxSize("description", 2000)
+				.checkInteger("forum")
+				.check("status", ForumStatus.byLabels().keySet())
+				.checkInteger("author", "Not a valid author id")
+				.each("comments", cJson->verify(cJson)
+					.checkRequired("version")
+					.checkRequired("date")
+					.checkRequired("text")
+					.checkMinSize("text", 2)
+					.checkMaxSize("text", 19995)
+				)
+				.ensure();
+			sync(json, thread)
+				.write("version")
+				.write("title")
+				.write("description")
+				.writeRef("forum", (Integer id) -> find(em, Forum. class, (long)id))
+				.write("status", label->ForumThreadStatus.byLabels().get(label))
+				.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
+				.syncEach("comments", (cJson, comment)->sync(cJson, comment)
+					.write("version")
+					.writeDate("date")
+					.write("text")
+				);
+			return thread;
+		} catch (SummerNotFoundException snfe) {
+			throw new SummerControllerException(404, snfe.getMessage());
+		}
+	}
+
 	ForumThread writeToProposedForumThread(EntityManager em, Json json, ForumThread thread) {
 		try {
 			verify(json)
 				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
+				.checkRequired("description")
+					.checkMinSize("description", 2).checkMaxSize("description", 2000)
 				.checkInteger("forum")
 				.check("status", ForumStatus.byLabels().keySet())
 				.ensure();
@@ -356,6 +520,16 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		sync(json, forum)
 			.write("status", label->ForumStatus.byLabels().get(label));
 		return forum;
+	}
+
+	ForumThread writeToForumThreadStatus(EntityManager em, Json json, ForumThread thread) {
+		verify(json)
+			.checkRequired("id").checkInteger("id", "Not a valid id")
+			.check("status", ForumThreadStatus.byLabels().keySet())
+			.ensure();
+		sync(json, thread)
+			.write("status", label->ForumThreadStatus.byLabels().get(label));
+		return thread;
 	}
 
 	Json readFromForum(Forum forum) {
@@ -424,6 +598,32 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return json;
 	}
 
+	Json readFromForumThreadWithComments(ForumThread thread) {
+		Json json = Json.createJsonObject();
+		sync(json, thread)
+			.read("id")
+			.read("version")
+			.read("title")
+			.read("description")
+			.read("likeCount")
+			.read("messageCount")
+			.read("status", ForumThreadStatus::getLabel)
+			.readEach("comments", (hJson, hex)->sync(hJson, hex)
+				.read("id")
+				.read("version")
+				.readDate("date")
+				.read("text")
+			)
+			.readLink("author", (pJson, account)->sync(pJson, account)
+				.read("firstName")
+				.read("lastName")
+				.read("avatar")
+				.read("messageCount")
+				.process((aJson, author)->aJson.put("rating", Account.getRatingLevel((Account)author)))
+			);
+		return json;
+	}
+
 	Json readFromForumMessage(ForumMessage message) {
 		Json json = Json.createJsonObject();
 		sync(json, message)
@@ -473,6 +673,12 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return forums.stream().distinct().collect(Collectors.toList());
 	}
 
+	Collection<ForumThread> findForumThreads(Query query, Object... params) {
+		setParams(query, params);
+		List<ForumThread> threads = getResultList(query);
+		return threads.stream().distinct().collect(Collectors.toList());
+	}
+
 	Json readFromForums(Collection<Forum> forums) {
 		Json list = Json.createJsonArray();
 		forums.stream().forEach(forum->list.push(readFromForum(forum)));
@@ -493,13 +699,15 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	Collection<ForumThread> findPagedThreads(Query query, int page, Object... params) {
 		setParams(query, params);
-		List<ForumThread> threads = getPagedResultList(query, page* ForumController.THREADS_BY_PAGE, ForumController.THREADS_BY_PAGE);
+		List<ForumThread> threads = getPagedResultList(query,
+				page* ForumController.THREADS_BY_PAGE, ForumController.THREADS_BY_PAGE);
 		return threads.stream().distinct().collect(Collectors.toList());
 	}
 
 	Collection<ForumMessage> findPagedForumMessages(Query query, int page, Object... params) {
 		setParams(query, params);
-		List<ForumMessage> messages = getPagedResultList(query, page* ForumController.MESSAGES_BY_PAGE, ForumController.MESSAGES_BY_PAGE);
+		List<ForumMessage> messages = getPagedResultList(query,
+				page* ForumController.MESSAGES_BY_PAGE, ForumController.MESSAGES_BY_PAGE);
 		return messages.stream().distinct().collect(Collectors.toList());
 	}
 
@@ -663,7 +871,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			verify(json)
 				.checkRequired("reason").checkMinSize("reason", 2).checkMaxSize("reason", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkRequired("text").checkMinSize("text", 2).checkMaxSize("text", 1000)
+				.checkRequired("text").checkMinSize("text", 2).checkMaxSize("text", 5000)
 				.checkInteger("target")
 				.ensure();
 			sync(json, report)

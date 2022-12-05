@@ -32,7 +32,7 @@ import {
 
 export class CBAEditForum extends Undoable(VModal) {
 
-    constructor({ref, kind, saveForum, create, forum}) {
+    constructor({ref, kind, saveForum, deleteForum, create, forum}) {
         super({ref});
         this.addClass(kind);
         this._title = new VInputField({
@@ -150,7 +150,7 @@ export class CBAEditForum extends Undoable(VModal) {
 
     get forum() {
         return {
-            id: this._id,
+            id: this._forum.id,
             title: this._title.value,
             description: this._description.value,
             status: this._status.value,
@@ -189,7 +189,6 @@ export class CBAEditForum extends Undoable(VModal) {
 
     saved(forum) {
         this.forum = forum;
-        this._id = forum.id;
         this._deleteButton.enabled = true;
         showMessage("Forum saved.");
         this._clean();
@@ -294,6 +293,14 @@ export class CBAForumList extends VTable {
                     .setValue(forum.status)
                     .addClass("forum-status")
                     .onChange(event => saveForumStatus(getForum(line)));
+                let commands = new VButtons({ref: "map-buttons", vertical:false, buttons:[
+                    {
+                        ref:"threads", type: VButton.TYPES.NEUTRAL, label:"Threads",
+                        onClick:event=>{
+                            this.onComments();
+                        }
+                    }
+                ]});
                 line = {
                     id: forum.id,
                     title: title.getText(),
@@ -301,7 +308,7 @@ export class CBAForumList extends VTable {
                     status: status.getValue(),
                     author: forum.author
                 };
-                lines.push({source:line, cells:[title, description, status]});
+                lines.push({source:line, cells:[title, description, status, commands]});
             }
             let title = new Span(pageData.title)
                 .addClass("forum-title")
@@ -310,7 +317,7 @@ export class CBAForumList extends VTable {
                 .add(title);
             this.setContent({
                 summary,
-                columns: ["Title", "Description", "Status"],
+                columns: ["Title", "Description", "Status", "commands"],
                 lines
             });
         });

@@ -60,6 +60,22 @@ export class DComposed extends DComponent {
         return this._children ? this._children : [];
     }
 
+    _added() {
+        if (this._children) {
+            for (let component of this._children) {
+                component._added && component._added();
+            }
+        }
+    }
+
+    _removed() {
+        if (this._children) {
+            for (let component of this._children) {
+                component._removed && component._removed();
+            }
+        }
+    }
+
 }
 
 export function DOM(clazz) {

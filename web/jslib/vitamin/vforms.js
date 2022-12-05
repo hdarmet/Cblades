@@ -634,6 +634,10 @@ export class VButton extends Vitamin(Button) {
         }: null);
     }
 
+    get isInput() {
+        return true;
+    }
+
     static TYPES = {
         ACCEPT: "accept",
         REFUSE: "refuse",
@@ -718,6 +722,10 @@ export class VButtons extends Vitamin(Div) {
         for (let button of buttons) {
             this.add(new VButton(button));
         }
+    }
+
+    get isInput() {
+        return true;
     }
 
 }
