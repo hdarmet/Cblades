@@ -24,6 +24,8 @@ public class Forum extends BaseEntity {
     ForumStatus status;
     @OneToOne
     ForumMessage lastMessage;
+    @ManyToOne
+    Account author;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     List<Comment> comments = new ArrayList<>();
 
@@ -72,6 +74,14 @@ public class Forum extends BaseEntity {
     }
     public Forum setLastMessage(ForumMessage lastMessage) {
         this.lastMessage = lastMessage;
+        return this;
+    }
+
+    public Account getAuthor() {
+        return this.author;
+    }
+    public Forum setAuthor(Account author) {
+        this.author = author;
         return this;
     }
 

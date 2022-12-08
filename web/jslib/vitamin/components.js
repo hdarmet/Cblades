@@ -645,7 +645,7 @@ export class Img extends DOM(DComponent) {
 
     constructor(imgSrc, onLoad) {
         super("img");
-        this.setSrc(imgSrc);
+        imgSrc&&this.setSrc(imgSrc);
         this.root.onload = function(){
             for (let listener of Img._loaderListeners) {
                 listener.onImageLoaded(this);
@@ -662,6 +662,7 @@ export class Img extends DOM(DComponent) {
     }
 
     setSrc(imgSrc, trigger) {
+        console.assert(imgSrc)
         this._root.src = imgSrc;
         trigger && this.onEvent("load", trigger);
         return this;

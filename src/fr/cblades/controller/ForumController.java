@@ -59,7 +59,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				"where t.status=:status and t.forum=:forum"),
 				"status", ForumThreadStatus.LIVE,
 				"forum", forum);
-			Collection<ForumThread> threads = findPagedThreads(
+			Collection<ForumThread> threads = findPagedForumThreads(
 				em.createQuery("select t from ForumThread t " +
 				"left join fetch t.author w " +
 				"left join fetch w.access " +
@@ -229,14 +229,32 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return result.get();
 	}
 
-	@REST(url="/api/forum/thread/all", method=Method.GET)
+	@REST(url="/api/forum/thread/all/:forum", method=Method.GET)
 	public Json getAllThreads(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inTransaction(em->{
-				String queryString = "select t from ForumThread t";
-				Collection<ForumThread> forumThreads = findForumThreads(em.createQuery(queryString));
-				result.set(readFromForumThreads(forumThreads));
+				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
+				long forumId = getIntegerParam(params, "forum", "The forum ID is invalid (%s)");
+				Forum forum = findForum(em, forumId);
+				String countQuery = "select count(t) from ForumThread t" +
+					" where t.forum=:forum";
+				String queryString = "select t from ForumThread t" +
+					" left outer join fetch t.forum" +
+					" left outer join fetch t.author a" +
+					" left outer join fetch a.access" +
+					" where t.forum=:forum";
+				long threadCount = getSingleResult(em, countQuery,
+					"forum", forum);
+				Collection<ForumThread> threads =
+					findPagedForumThreads(em.createQuery(queryString), pageNo,
+							"forum", forum);
+				result.set(Json.createJsonObject()
+					.put("threads", 	readFromForumThreads(threads))
+					.put("count", threadCount)
+					.put("page", pageNo)
+					.put("pageSize", ForumController.THREADS_BY_PAGE)
+				);
 			});
 		}, ADMIN);
 		return result.get();
@@ -430,6 +448,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				.checkRequired("description")
 					.checkMinSize("description", 2).checkMaxSize("description", 2000)
 				.check("status", ForumStatus.byLabels().keySet())
+				.checkInteger("author", "Not a valid author id")
 				.each("comments", cJson->verify(cJson)
 					.checkRequired("version")
 					.checkRequired("date")
@@ -443,6 +462,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				.write("title")
 				.write("description")
 				.write("status", label->ForumStatus.byLabels().get(label))
+				.writeRef("author", (Integer id)-> Account.find(em, id))
 				.syncEach("comments", (cJson, comment)->sync(cJson, comment)
 					.write("version")
 					.writeDate("date")
@@ -461,6 +481,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				.checkPattern("title", "[\\d\\s\\w]+")
 				.checkRequired("description")
 				.checkMinSize("description", 2).checkMaxSize("description", 2000)
+				.checkRequired("forum")
 				.checkInteger("forum")
 				.check("status", ForumStatus.byLabels().keySet())
 				.checkInteger("author", "Not a valid author id")
@@ -478,7 +499,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				.write("description")
 				.writeRef("forum", (Integer id) -> find(em, Forum. class, (long)id))
 				.write("status", label->ForumThreadStatus.byLabels().get(label))
-				.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
+				.writeRef("author", (Integer id)-> Account.find(em, id))
 				.syncEach("comments", (cJson, comment)->sync(cJson, comment)
 					.write("version")
 					.writeDate("date")
@@ -566,6 +587,13 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("title")
 			.read("description")
 			.read("status", ForumStatus::getLabel)
+			.readLink("author", (pJson, account)->sync(pJson, account)
+				.read("id")
+				.read("login", "access.login")
+				.read("firstName")
+				.read("lastName")
+				.read("avatar")
+			)
 			.readEach("comments", (hJson, hex)->sync(hJson, hex)
 				.read("id")
 				.read("version")
@@ -615,6 +643,8 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				.read("text")
 			)
 			.readLink("author", (pJson, account)->sync(pJson, account)
+				.read("id")
+				.read("login", "access.login")
 				.read("firstName")
 				.read("lastName")
 				.read("avatar")
@@ -673,12 +703,6 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return forums.stream().distinct().collect(Collectors.toList());
 	}
 
-	Collection<ForumThread> findForumThreads(Query query, Object... params) {
-		setParams(query, params);
-		List<ForumThread> threads = getResultList(query);
-		return threads.stream().distinct().collect(Collectors.toList());
-	}
-
 	Json readFromForums(Collection<Forum> forums) {
 		Json list = Json.createJsonArray();
 		forums.stream().forEach(forum->list.push(readFromForum(forum)));
@@ -697,7 +721,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return list;
 	}
 
-	Collection<ForumThread> findPagedThreads(Query query, int page, Object... params) {
+	Collection<ForumThread> findPagedForumThreads(Query query, int page, Object... params) {
 		setParams(query, params);
 		List<ForumThread> threads = getPagedResultList(query,
 				page* ForumController.THREADS_BY_PAGE, ForumController.THREADS_BY_PAGE);

@@ -648,7 +648,7 @@ export class VButton extends Vitamin(Button) {
 
 export class VCommand extends Vitamin(Img) {
 
-    constructor({ref, imgEnabled, imgDisabled, enabled=true, onClick}) {
+    constructor({ref, imgEnabled, imgDisabled=imgEnabled, enabled=true, onClick}) {
         super(ref);
         this._imgEnabled = imgEnabled;
         this._imgDisabled = imgDisabled;
