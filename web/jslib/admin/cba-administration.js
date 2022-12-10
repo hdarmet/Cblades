@@ -63,7 +63,7 @@ import {
     editRuleSet
 } from "./cba-ruleset.js";
 import {
-    vForumList, vForumThreadList
+    vForumList, vForumThreadList, vForumMessageList
 } from "./cba-forum.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
@@ -633,7 +633,19 @@ export class CBAPageContent extends VPageContent {
 
     showForumThreadList(forum) {
         this._showForumThreadList(forum, false, ()=> {
-                historize("forums", `vPageContent._showForumList(${JSON.stringify(forum)}, true);`)
+                historize("forum-messages", `vPageContent._showForumThreadList(${JSON.stringify(forum)}, true);`)
+            }
+        );
+    }
+
+    _showForumMessageList(thread, byHistory, historize) {
+        vForumMessageList.setThread(thread);
+        return this.changePage(null, vForumMessageList, byHistory, historize);
+    }
+
+    showForumMessageList(thread) {
+        this._showForumMessageList(thread, false, ()=> {
+                historize("forum-messages", `vPageContent._showForumMessageList(${JSON.stringify(thread)}, true);`)
             }
         );
     }

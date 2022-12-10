@@ -755,12 +755,14 @@ export class CBAFactionList extends VTable {
         }
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
-            let saveFactionStatus = faction => this._saveFactionStatus(faction,
-                () => showMessage("Faction saved."),
-                text => showMessage("Unable to Save Faction.", text),
-            );
+            let saveFactionStatus = (faction, status) => {
+                faction.status = status;
+                this._saveFactionStatus(faction,
+                    () => showMessage("Faction saved."),
+                    text => showMessage("Unable to Save Faction.", text),
+                );
+            }
             for (let faction of pageData.factions) {
-                let line;
                 let name = new Span(faction.name).addClass("faction-name");
                 let description = new Span(faction.description).addClass("faction-description");
                 let illustration = new Img(faction.illustration).addClass("faction-illustration");
@@ -772,14 +774,8 @@ export class CBAFactionList extends VTable {
                 .addClass("form-input-select")
                 .setValue(faction.status)
                 .addClass("faction-status")
-                .onChange(event => saveFactionStatus(getFaction(line)));
-                line =  {
-                    id: faction.id,
-                    factionName: name.getText(),
-                    factionDescription: description.getText(),
-                    status: status.getValue()
-                };
-                lines.push({source:line, cells:[name, illustration, description, status]});
+                .onChange(event => saveFactionStatus(faction, status.getValue()));
+                lines.push({source:faction, cells:[name, illustration, description, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("faction-title")

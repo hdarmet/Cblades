@@ -178,10 +178,13 @@ export class CBAAnnouncementList extends VTable {
     setPage(pageIndex) {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
-            let saveAnnouncementStatus = annoucement => this._saveAnnouncementStatus(annoucement,
-                () => showMessage("Announcement saved."),
-                text => showMessage("Unable to Save Announcement.", text)
-            );
+            let saveAnnouncementStatus = (announcement, status) => {
+                announcement.status = status;
+                this._saveAnnouncementStatus(announcement,
+                    () => showMessage("Announcement saved."),
+                    text => showMessage("Unable to Save Announcement.", text)
+                );
+            }
             for (let announcement of pageData.announcements) {
                 let illustration = new Img(announcement.illustration).addClass("announcement-illustration")
                 let description = new P(announcement.description).addClass("announcement-description");
@@ -193,14 +196,8 @@ export class CBAAnnouncementList extends VTable {
                     .addClass("form-input-select")
                     .setValue(announcement.status)
                     .addClass("announcement-status")
-                    .onChange(event => saveAnnouncementStatus(line));
-                let line = {
-                    id: announcement.id,
-                    description: description.getText(),
-                    status: status.getValue(),
-                    illustration: illustration.getSrc()
-                };
-                lines.push({source:line, cells:[illustration, description, status]});
+                    .onChange(event => saveAnnouncementStatus(announcement, status.getValue()));
+                lines.push({source:announcement, cells:[illustration, description, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("announcement-title")
@@ -349,8 +346,7 @@ export function saveAnnouncementStatus(announcement, success, failure) {
         (text, status) => {
             requestLog("Announcement status saving failure: " + text + ": " + status);
             failure(text, status);
-        },
-        illustration
+        }
     );
 }
 

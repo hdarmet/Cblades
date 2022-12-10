@@ -449,12 +449,14 @@ export class CBAThemeList extends VTable {
     setPage(pageIndex) {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
-            let saveThemeStatus = theme => this._saveThemeStatus(theme,
-                () => showMessage("Theme saved."),
-                text => showMessage("Unable to Save Theme.", text),
-            );
+            let saveThemeStatus = (theme, status) => {
+                theme.status = status;
+                this._saveThemeStatus(theme,
+                    () => showMessage("Theme saved."),
+                    text => showMessage("Unable to Save Theme.", text),
+                );
+            }
             for (let theme of pageData.themes) {
-                let line;
                 let illustration = new Img(theme.illustration).addClass("theme-illustration");
                 let category = new Span(theme.category).addClass("theme-category");
                 let title = new Span(theme.title).addClass("theme-name");
@@ -467,17 +469,8 @@ export class CBAThemeList extends VTable {
                     .addClass("form-input-select")
                     .setValue(theme.status)
                     .addClass("theme-status")
-                    .onChange(event => saveThemeStatus(getTheme(line)));
-                line = {
-                    id: theme.id,
-                    category: category.getText(),
-                    title: title.getText(),
-                    description: description.getText(),
-                    status: status.getValue(),
-                    illustration: illustration.getSrc(),
-                    author: theme.author
-                };
-                lines.push({source:line, cells:[illustration, category, title, description, status]});
+                    .onChange(event => saveThemeStatus(theme, status.getValue()));
+                lines.push({source:theme, cells:[illustration, category, title, description, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("theme-title")

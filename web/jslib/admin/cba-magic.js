@@ -667,12 +667,14 @@ export class CBAMagicArtList extends VTable {
         }
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
-            let saveMagicArtStatus = magicArt => this._saveMagicArtStatus(magicArt,
-                () => showMessage("Magic Art saved."),
-                text => showMessage("Unable to Save Magic Art.", text),
-            );
+            let saveMagicArtStatus = (magicArt, status) => {
+                magicArt.status = status;
+                this._saveMagicArtStatus(magicArt,
+                    () => showMessage("Magic Art saved."),
+                    text => showMessage("Unable to Save Magic Art.", text),
+                );
+            }
             for (let magicArt of pageData.magicArts) {
-                let line;
                 let name = new Span(magicArt.name).addClass("magic-name");
                 let description = new Span(magicArt.description).addClass("magic-description");
                 let illustration = new Img(magicArt.illustration).addClass("magic-illustration");
@@ -684,14 +686,8 @@ export class CBAMagicArtList extends VTable {
                 .addClass("form-input-select")
                 .setValue(magicArt.status)
                 .addClass("magic-status")
-                .onChange(event => saveMagicArtStatus(getMagicArt(line)));
-                line = {
-                    id: magicArt.id,
-                    magicArtName: name.getText(),
-                    magicArtDescription: description.getText(),
-                    status: status.getValue()
-                };
-                lines.push({source:line, cells:[name, illustration, description, status]});
+                .onChange(event => saveMagicArtStatus(magicArt, status.getValue()));
+                lines.push({source:magicArt, cells:[name, illustration, description, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("magic-title")

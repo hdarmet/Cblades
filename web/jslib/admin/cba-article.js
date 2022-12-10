@@ -649,12 +649,14 @@ export class CBAArticleList extends VTable {
         }
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
-            let saveArticleStatus = article => this._saveArticleStatus(article,
-                () => showMessage("Article saved."),
-                text => showMessage("Unable to Save Article.", text),
-            );
+            let saveArticleStatus = (article, status) => {
+                article.status = status;
+                this._saveArticleStatus(article,
+                    () => showMessage("Article saved."),
+                    text => showMessage("Unable to Save Article.", text),
+                );
+            }
             for (let article of pageData.articles) {
-                let line;
                 let themes = new Span(article.themes.map(theme=>theme.title).join(", ")).addClass("article-themes");
                 let title = new Span(article.title).addClass("article-name");
                 let author = new Span(getAuthor(article)).addClass("article-name");
@@ -668,13 +670,8 @@ export class CBAArticleList extends VTable {
                     .addClass("form-input-select")
                     .setValue(article.status)
                     .addClass("article-status")
-                    .onChange(event => saveArticleStatus(line));
-                line = {
-                    id: article.id,
-                    articleTitle: title.getText(),
-                    status: status.getValue()
-                };
-                lines.push({source:line, cells:[themes, title, author, illustration, firstParagraph, status]});
+                    .onChange(event => saveArticleStatus(article, status.getValue()));
+                lines.push({source:article, cells:[themes, title, author, illustration, firstParagraph, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("article-title")

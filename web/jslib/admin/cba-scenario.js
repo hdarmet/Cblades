@@ -530,10 +530,13 @@ export class CBAScenarioList extends VTable {
     setPage(pageIndex) {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
-            let saveScenarioStatus = scenario => this._saveScenarioStatus(scenario,
-                () => showMessage("Scenario saved."),
-                text => showMessage("Unable to Save Scenario.", text),
-            );
+            let saveScenarioStatus = (scenario, status) => {
+                scenario.status = status;
+                this._saveScenarioStatus(scenario,
+                    () => showMessage("Scenario saved."),
+                    text => showMessage("Unable to Save Scenario.", text),
+                );
+            }
             for (let scenario of pageData.scenarios) {
                 let illustration = new Img(scenario.illustration).addClass("scenario-illustration");
                 let title = new Span(scenario.title).addClass("scenario-name");
@@ -546,16 +549,8 @@ export class CBAScenarioList extends VTable {
                     .addClass("form-input-select")
                     .setValue(scenario.status)
                     .addClass("scenario-status")
-                    .onChange(event => saveScenarioStatus(getScenario(line)));
-                let line = {
-                    id: scenario.id,
-                    title: title.getText(),
-                    story: story.getText(),
-                    status: status.getValue(),
-                    illustration: illustration.getSrc(),
-                    author: scenario.author
-                };
-                lines.push({source:line, cells:[illustration, title, story, status]});
+                    .onChange(event => saveScenarioStatus(scenario, status.getValue()));
+                lines.push({source:scenario, cells:[illustration, title, story, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("scenario-title")

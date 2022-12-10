@@ -378,12 +378,14 @@ export class CBABoardList extends VTable {
     setPage(pageIndex) {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
-            let saveBoardStatus = board => this._saveBoardStatus(board,
-                () => showMessage("Board saved."),
-                text => showMessage("Unable to Save Board.", text),
-            );
+            let saveBoardStatus = (board, status) => {
+                board.status = status;
+                this._saveBoardStatus(board,
+                    () => showMessage("Board saved."),
+                    text => showMessage("Unable to Save Board.", text),
+                );
+            }
             for (let board of pageData.boards) {
-                let line;
                 let icon = new Img(board.icon).addClass("board-icon");
                 let name = new Span(board.name).addClass("board-name");
                 let description = new P(board.description).addClass("board-description");
@@ -395,17 +397,8 @@ export class CBABoardList extends VTable {
                     .addClass("form-input-select")
                     .setValue(board.status)
                     .addClass("board-status")
-                    .onChange(event => saveBoardStatus(getBoard(line)));
-                line = {
-                    id: board.id,
-                    name: name.getText(),
-                    description: description.getText(),
-                    status: status.getValue(),
-                    icon: icon.getSrc(),
-                    path: board.path,
-                    author: board.author
-                };
-                lines.push({source:line, cells:[icon, name, description, status]});
+                    .onChange(event => saveBoardStatus(board, status.getValue()));
+                lines.push({source:board, cells:[icon, name, description, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("board-title")

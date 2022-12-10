@@ -274,10 +274,13 @@ export class CBAForumList extends VTable {
     setPage() {
         this._loadPage(pageData => {
             let lines = [];
-            let saveForumStatus = forum => this._saveForumStatus(forum,
-                () => showMessage("Forum saved."),
-                text => showMessage("Unable to Save Forum.", text),
-            );
+            let saveForumStatus = (forum, status) => {
+                forum.status = status;
+                this._saveForumStatus(forum,
+                    () => showMessage("Forum saved."),
+                    text => showMessage("Unable to Save Forum.", text),
+                );
+            }
             for (let forum of pageData.forums) {
                 let line;
                 let title = new Span(forum.title).addClass("forum-title");
@@ -290,7 +293,7 @@ export class CBAForumList extends VTable {
                     .addClass("form-input-select")
                     .setValue(forum.status)
                     .addClass("forum-status")
-                    .onChange(event => saveForumStatus(forum));
+                    .onChange(event => saveForumStatus(forum, status.getValue()));
                 let commands = new VButtons({ref: "map-buttons", vertical:false, buttons:[
                     {
                         ref:"threads", type: VButton.TYPES.NEUTRAL, label:"Threads",
@@ -718,10 +721,13 @@ export class CBAForumThreadList extends VTable {
     setPage(page) {
         this._loadPage(this._forum, page, pageData => {
             let lines = [];
-            let saveForumThreadStatus = thread => this._saveForumThreadStatus(thread,
-                () => showMessage("Forum Thread saved."),
-                text => showMessage("Unable to Save Forum Thread.", text),
-            );
+            let saveForumThreadStatus = (thread, status) => {
+                thread.status = status;
+                this._saveForumThreadStatus(thread,
+                    () => showMessage("Forum Thread saved."),
+                    text => showMessage("Unable to Save Forum Thread.", text),
+                );
+            }
             for (let thread of pageData.threads) {
                 let line;
                 let title = new Span(thread.title).addClass("forum-thread-title");
@@ -734,12 +740,12 @@ export class CBAForumThreadList extends VTable {
                     .addClass("form-input-select")
                     .setValue(thread.status)
                     .addClass("forum-thread-status")
-                    .onChange(event => saveForumThreadStatus(thread));
+                    .onChange(event => saveForumThreadStatus(thread, status.getValue()));
                 let commands = new VButtons({ref: "map-buttons", vertical:false, buttons:[
                     {
                         ref:"messages", type: VButton.TYPES.NEUTRAL, label:"Messages",
                         onClick:event=>{
-                            this.onComments();
+                            window.vPageContent.showForumMessageList(thread);
                         }
                     }
                 ]});
@@ -927,3 +933,216 @@ export var vForumThreadList = new CBAForumThreadListPage({
     saveForumThread,
     saveForumThreadStatus
 });
+
+//////////////////////////////////////////////////////////////////////////////////////
+
+export class CBAForumMessageList extends VTable {
+
+    constructor({loadPage, saveForumMessage, saveForumMessageStatus, deleteForumMessage}) {
+        super({
+            ref: "forum-message-list",
+            changePage: pageIndex => this.setPage(pageIndex)
+        });
+        this.addClass("forum-message-list");
+        this._loadPage = loadPage;
+        this._saveForumMessage = saveForumMessage;
+        this._deleteForumMessage = deleteForumMessage;
+        this._saveForumMessageStatus = saveForumMessageStatus;
+    }
+
+    loadForumMessages() {
+        this.setPage(0);
+        return this;
+    }
+
+    refresh() {
+        this.setPage(this._currentPage);
+    }
+
+    getThread() {
+        return this._thread;
+    }
+
+    setThread(thread) {
+        this._thread = thread;
+        this.loadForumMessages();
+        return this;
+    }
+
+    setPage(page) {
+        this._loadPage(this._thread, page, pageData => {
+            let lines = [];
+            let saveForumMessageStatus = (message, status) => {
+                message.status = status;
+                this._saveForumMessageStatus(message,
+                    () => showMessage("Forum Thread Message saved."),
+                    text => showMessage("Unable to Save Forum Thread Message.", text),
+                );
+            }
+            let deleteForumMessage = message=>{
+                this._deleteForumMessage(message,
+                    () => {
+                        showMessage("Forum Thread Message deleted.")
+                        this.refresh();
+                    },
+                    text => {
+                        showMessage("Fail to delete Forum Message", text);
+                    }
+                );
+            }
+            for (let message of pageData.messages) {
+                let publishedDate = new Span(new Date(message.publishedDate).toLocaleDateString()).addClass("forum-message-text");
+                let text = new P(message.text).addClass("forum-message-text");
+                let status = new Select().setOptions([
+                    {value: "live", text: "Live"},
+                    {value: "arc", text: "Archived"},
+                    {value: "blk", text: "Blocked"}
+                ])
+                    .addClass("form-input-select")
+                    .setValue(message.status)
+                    .addClass("forum-message-status")
+                    .onChange(event => {
+                        saveForumMessageStatus(message, status.getValue());
+                    });
+                let commands = new VButtons({ref: "forum-message-buttons", vertical:false, buttons:[
+                    {
+                        ref:"delete", type: VButton.TYPES.NEUTRAL, label:"Delete",
+                        onClick:event=>{
+                            new CBAConfirm().show({
+                                ref: "confirm-message-deletion",
+                                title: "Delete Message",
+                                message: "Do you really want to delete the Message ?",
+                                actionOk: event => deleteForumMessage(message)
+                            });
+                        }
+                    }
+                ]});
+                lines.push({source:message, cells:[publishedDate, text, status, commands]});
+            }
+            let title = new Span(pageData.title)
+                .addClass("forum-message-title");
+            let pageSummary = new Span()
+                .addClass("forum-message-pager")
+                .setText(pageData.messageCount ?
+                    String.format(CBAForumMessageList.SUMMARY,
+                        pageData.messageCount, pageData.firstMessage, pageData.lastMessage) :
+                    CBAForumMessageList.EMPTY_SUMMARY);
+            let summary = new Div()
+                .addClass("table-display")
+                .add(title)
+                .add(pageSummary);
+            this.setContent({
+                summary,
+                columns: ["Date", "Text", "Status", "commands"],
+                lines
+            });
+            this._currentPage = pageData.currentPage;
+            let first = pageData.pageCount <= 5 ? 0 : pageData.currentPage - 2;
+            if (first < 0) first = 0;
+            let last = pageData.pageCount <= 5 ? pageData.pageCount - 1 : pageData.currentPage + 2;
+            if (last >= pageData.pageCount) last = pageData.pageCount - 1;
+            this.setPagination({
+                first, last, current: pageData.currentPage
+            });
+        });
+    }
+
+    static SUMMARY = "Showing {1} to {2} of {0} messages(s)";
+    static EMPTY_SUMMARY = "There are no message to show";
+}
+
+export class CBAForumMessageListPage extends Vitamin(Div) {
+
+    constructor({loadPage, saveForumMessage, saveForumMessageStatus, deleteForumMessage}) {
+        super({ref: "forum-message-list-page"});
+        this._buttons = new Div().addClass("forum-messages-buttons");
+        this._create = new VButton({
+            ref: "forum-message-create", type: "neutral", label: "Create Forum Message",
+        }).addClass("right-button");
+        this._buttons.add(this._create);
+        this._table = new CBAForumMessageList({loadPage,
+            saveForumMessage, saveForumMessageStatus, deleteForumMessage});
+        this.add(this._buttons).add(this._table);
+    }
+
+    setThread(thread) {
+        this._table.setThread(thread);
+        return this;
+    }
+
+    refresh() {
+        this._table.refresh();
+        return this;
+    }
+
+}
+
+export var vForumMessageList = new CBAForumMessageListPage({
+    loadPage: loadForumMessages,
+    deleteForumMessage,
+    saveForumMessage,
+    saveForumMessageStatus
+});
+
+export function loadForumMessages(thread, pageNo, update) {
+    sendGet("/api/forum/message/all/"+thread.id+"?page="+pageNo,
+        (text, status) => {
+            requestLog("Load Forum Messages success: " + text + ": " + status);
+            let response = JSON.parse(text);
+            update({
+                title: "Forum Message List",
+                pageCount: Math.ceil(response.count / response.pageSize),
+                currentPage: response.page,
+                messageCount: response.count,
+                firstMessage: response.page * response.pageSize + 1,
+                lastMessage: response.page * response.pageSize + response.messages.length,
+                messages: response.messages
+            });
+        },
+        (text, status) => {
+            requestLog("Load Forum Messages failure: " + text + ": " + status);
+            showMessage("Unable to load Forum Messages", text);
+        }
+    );
+}
+
+export function saveForumMessage(message, success, failure) {
+    sendPost(message.id===undefined ? "/api/forum/message/create" : "/api/forum/message/update/" + message.id,
+        message,
+        (text, status) => {
+            requestLog("Forum Message saving success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            requestLog("Forum Message saving failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
+}
+
+export function saveForumMessageStatus(message, success, failure) {
+    sendPost("/api/forum/message/update-status/" + message.id,
+        message,
+        (text, status) => {
+            requestLog("Forum Message status saving success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            requestLog("Forum Message status saving failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
+}
+
+export function deleteForumMessage(message, success, failure) {
+    sendGet("/api/forum/message/delete/" + message.id,
+        (text, status) => {
+            requestLog("Forum Message delete success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            requestLog("Forum Message delete failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
+}

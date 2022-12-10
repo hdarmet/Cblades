@@ -15,6 +15,8 @@ public class ForumMessage extends BaseEntity {
     LikePoll poll;
     @ManyToOne
     ForumThread thread;
+    @Enumerated(EnumType.STRING)
+    ForumMessageStatus status=ForumMessageStatus.LIVE;
     @ManyToOne
     Account author;
 
@@ -47,6 +49,14 @@ public class ForumMessage extends BaseEntity {
     }
     public ForumMessage setForumThread(ForumThread thread) {
         this.thread = thread;
+        return this;
+    }
+
+    public ForumMessageStatus getStatus() {
+        return this.status;
+    }
+    public ForumMessage setStatus(ForumMessageStatus status) {
+        this.status = status;
         return this;
     }
 

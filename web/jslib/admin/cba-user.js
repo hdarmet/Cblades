@@ -93,7 +93,7 @@ export class CBAUserSelection extends VTable {
                     {value: "blk", text: "Blocked"}
                 ])
                     .addClass("user-status")
-                    .onMouseClick(event => selectUser(getUser(line)));
+                    .onMouseClick(event => selectUser(user));
                 let role = new Enum(user.role).setOptions([
                     {value: "std", text: "Standard"},
                     {value: "cnt", text: "Contributor"},
@@ -101,7 +101,7 @@ export class CBAUserSelection extends VTable {
                     {value: "tst", text: "Tester"}
                 ])
                     .addClass("user-role")
-                    .onMouseClick(event => selectUser(getUser(line)));
+                    .onMouseClick(event => selectUser(user));
                 line =  {
                     id: user.id,
                     login: login.getText(),
@@ -353,10 +353,20 @@ export class CBAUserList extends VTable {
     setPage(pageIndex) {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
-            let saveUser = user => this._updateUser(user, [],
-                () => showMessage("User saved."),
-                text => showMessage("Unable to Save User.", text),
-            );
+            let saveUserStatus = (user, status) => {
+                user.status = status;
+                this._updateUser(user, [],
+                    () => showMessage("User saved."),
+                    text => showMessage("Unable to Save User.", text),
+                );
+            }
+            let saveUserRole = (user, role) => {
+                user.role = role;
+                this._updateUser(user, [],
+                    () => showMessage("User saved."),
+                    text => showMessage("Unable to Save User.", text),
+                );
+            }
             for (let user of pageData.users) {
                 let line;
                 let login = new P(user.login).addClass("user-Login");
@@ -372,7 +382,7 @@ export class CBAUserList extends VTable {
                     .addClass("form-input-select")
                     .setValue(user.status)
                     .addClass("user-status")
-                    .onChange(event => saveUser(getUser(line)));
+                    .onChange(event => saveUserStatus(user, status.getValue()));
                 let role = new Select().setOptions([
                     {value: "std", text: "Standard"},
                     {value: "cnt", text: "Contributor"},
@@ -382,18 +392,8 @@ export class CBAUserList extends VTable {
                     .addClass("form-input-select")
                     .setValue(user.role)
                     .addClass("user-role")
-                    .onChange(event => saveUser(getUser(line)));
-                line = {
-                    id: user.id,
-                    login: login.getText(),
-                    firstName: firstName.getText(),
-                    lastName: lastName.getText(),
-                    avatar: avatar.getSrc(),
-                    email: email.getText(),
-                    role: role.getValue(),
-                    status: status.getValue()
-                };
-                lines.push({source:line, cells:[login, firstName, lastName, avatar, email, role, status]});
+                    .onChange(event => saveUserRole(user, role.getValue()));
+                lines.push({source:user, cells:[login, firstName, lastName, avatar, email, role, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("user-title")
@@ -494,7 +494,7 @@ export function loadUsers(pageIndex, search, update) {
                 userCount: response.count,
                 firstUser: response.page * response.pageSize + 1,
                 lastUser: response.page * response.pageSize + response.users.length,
-                users: response.users//getUsers(pageIndex)
+                users: response.users
             });
         },
         (text, status) => {

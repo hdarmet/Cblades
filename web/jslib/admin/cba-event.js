@@ -212,12 +212,14 @@ export class CBAEventList extends VTable {
     setPage(pageIndex) {
         this._loadPage(pageIndex, this._search, pageData => {
             let lines = [];
-            let saveEventStatus = event => this._saveEventStatus(event,
-                () => showMessage("Event saved."),
-                text => showMessage("Unable to Save Event.", text),
-            );
+            let saveEventStatus = (event, status) => {
+                event.status = status;
+                this._saveEventStatus(event,
+                    () => showMessage("Event saved."),
+                    text => showMessage("Unable to Save Event.", text),
+                );
+            }
             for (let event of pageData.events) {
-                let line;
                 let date = new Span(event.date).addClass("event-date");
                 let title = new Span(event.title).addClass("event-title");
                 let illustration = event.illustration ? new Img(event.illustration).addClass("event-illustration") : new Div();
@@ -230,17 +232,8 @@ export class CBAEventList extends VTable {
                     .addClass("form-input-select")
                     .setValue(event.status)
                     .addClass("event-status")
-                    .onChange(event => saveEventStatus(getEvent(line)));
-                line =  {
-                    id: event.id,
-                    date: date.getText(),
-                    title: title.getText(),
-                    description: description.getText(),
-                    status: status.getValue(),
-                    illustration: illustration.getSrc ? illustration.getSrc() : undefined,
-                    target: event.target
-                };
-                lines.push({source:line, cells:[date, title, illustration, description, status]});
+                    .onChange(evt => saveEventStatus(event, status.getValue()));
+                lines.push({source:event, cells:[date, title, illustration, description, status]});
             }
             let title = new Span(pageData.title)
                 .addClass("event-title")
