@@ -849,9 +849,6 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return getSingleResult(query);
 	}
 
-	static int THREADS_BY_PAGE = 16;
-	static int MESSAGES_BY_PAGE = 16;
-
 	@REST(url = "/api/forum/vote/:message", method = Method.POST)
 	public Json vote(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
@@ -976,18 +973,84 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		};
 	}
 
+	//////////////////////////
+
+	@REST(url="/api/forum/message/report/all", method=Method.GET)
+	public Json getAllReports(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
+			inTransaction(em->{
+				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
+				String search = (String)params.get("search");
+				String countQuery = "select count(r) from Report r where r.category=:category";
+				String queryString = "select r from Report r" +
+						" left outer join fetch r.author a" +
+						" left outer join fetch a.access" +
+						" where r.category=:category";
+				if (search!=null) {
+					/*
+					search = StringReplacer.replace(search,
+							"tester", "test");
+					 */
+					String whereClause =" and fts('pg_catalog.english', " +
+						"r.reason||' '||" +
+						"r.text||' '||" +
+						"r.status, :search) = true";
+					queryString+=whereClause;
+					countQuery+=whereClause;
+				}
+				queryString+=" order by r.sendDate desc";
+				long reportCount = (search == null) ?
+						getSingleResult(em, countQuery,
+								"category", ForumMessage.REPORT):
+						getSingleResult(em, countQuery,
+								"category", ForumMessage.REPORT,
+								"search", search);
+				Collection<Report> reports = (search == null) ?
+						findPagedReports(em.createQuery(queryString), pageNo,
+								"category", ForumMessage.REPORT):
+						findPagedReports(em.createQuery(queryString), pageNo,
+								"category", ForumMessage.REPORT,
+								"search", search);
+				result.set(Json.createJsonObject()
+						.put("reports", readFromReports(reports))
+						.put("count", reportCount)
+						.put("page", pageNo)
+						.put("pageSize", ForumController.REPORTS_BY_PAGE)
+				);
+			});
+		}, ADMIN);
+		return result.get();
+	}
+
+	@REST(url="/api/forum/message/report/load/:id", method=Method.GET)
+	public Json loadReport(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			ifAuthorized(user->{
+				String id = (String)params.get("id");
+				Report report = findReport(em, new Long(id));
+				ForumMessage message = findForumMessage(em, report.getTarget());
+				result.set(readFromReportAndMessage(report, message));
+			},
+			ADMIN);
+		});
+		return result.get();
+	}
+
 	@REST(url="/api/forum/message/report", method=Method.POST)
 	public Json report(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Report newReport = writeToForumMessageReport(em, request, new Report());
+			Report newReport = writeToReport(em, request, new Report());
 			ifAuthorized(
 				user->{
 					try {
 						Account author = Account.find(em, user);
 						newReport.setAuthor(author).setSendDate(new Date());
+						newReport.setCategory(ForumMessage.REPORT);
 						persist(em, newReport);
-						result.set(readFromForumMessageReport(newReport));
+						result.set(readFromReport(newReport));
 					} catch (PersistenceException pe) {
 						throw new SummerControllerException(500, "Unexpected issue", pe.getMessage());
 					} catch (SummerNotFoundException snfe) {
@@ -999,7 +1062,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return result.get();
 	}
 
-	Report writeToForumMessageReport(EntityManager em, Json json, Report report) {
+	Report writeToReport(EntityManager em, Json json, Report report) {
 		try {
 			verify(json)
 				.checkRequired("reason").checkMinSize("reason", 2).checkMaxSize("reason", 200)
@@ -1018,7 +1081,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 	}
 
-	Json readFromForumMessageReport(Report report) {
+	Json readFromReport(Report report) {
 		Json json = Json.createJsonObject();
 		sync(json, report)
 			.read("id")
@@ -1037,4 +1100,70 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return json;
 	}
 
+	Json readFromReportAndMessage(Report report, ForumMessage message) {
+		Json json = Json.createJsonObject();
+		sync(json, report)
+			.read("id")
+			.read("version")
+			.readDate("sendDate")
+			.read("reason")
+			.read("text")
+			.read("target")
+			.readLink("author", (pJson, account)->sync(pJson, account)
+				.read("id")
+				.read("login", "access.login")
+				.read("firstName")
+				.read("lastName")
+				.read("avatar")
+			);
+		json.put("message", Json.createJsonObject());
+		sync((Json)json.get("message"), message)
+			.read("id")
+			.read("version")
+			.readDate("publishedDate")
+			.read("text")
+			.readLink("thread", (mtJson, thread)->sync(mtJson, thread)
+				.read("id")
+				.read("title")
+				.readLink("forum", (mfJson, forum)->sync(mfJson, forum)
+					.read("id")
+					.read("title")
+				)
+			)
+			.readLink("author", (pJson, account)->sync(pJson, account)
+				.read("id")
+				.read("login", "access.login")
+				.read("firstName")
+				.read("lastName")
+				.read("avatar")
+			);
+		return json;
+	}
+
+	Collection<Report> findPagedReports(Query query, int page, Object... params) {
+		setParams(query, params);
+		List<Report> reports = getPagedResultList(query,
+				page* ForumController.REPORTS_BY_PAGE, ForumController.REPORTS_BY_PAGE);
+		return reports.stream().distinct().collect(Collectors.toList());
+	}
+
+	Json readFromReports(Collection<Report> reports) {
+		Json list = Json.createJsonArray();
+		reports.stream().forEach(report->list.push(readFromReport(report)));
+		return list;
+	}
+
+	Report findReport(EntityManager em, long id) {
+		Report report = find(em, Report.class, id);
+		if (report==null) {
+			throw new SummerControllerException(404,
+				"Unknown Report with id %d", id
+			);
+		}
+		return report;
+	}
+
+	static int THREADS_BY_PAGE = 16;
+	static int MESSAGES_BY_PAGE = 16;
+	static int REPORTS_BY_PAGE = 16;
 }

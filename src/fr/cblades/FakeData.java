@@ -564,6 +564,14 @@ public class FakeData {
                 data.persist(em, message);
                 thread.setLastMessage(message);
                 forum.setLastMessage(message);
+                Report report = new Report()
+                    .setSendDate(new Date())
+                    .setCategory(ForumMessage.REPORT)
+                    .setReason("off-topic")
+                    .setText(TINY_PARAGRAPH_TEXT)
+                    .setTarget(message.getId())
+                    .setAuthor(accounts.get((accountIndex++)%accounts.size()));
+                data.persist(em, report);
             }
         }
     }

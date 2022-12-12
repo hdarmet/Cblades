@@ -1170,3 +1170,50 @@ export class VRef extends VField {
     }
 
 }
+
+export class VOptionViewer extends Vitamin(Span) {
+
+    constructor({value, options}) {
+        super();
+        this.options = options;
+        this._value = value;
+        this._refresh();
+    }
+
+    get options() {
+        return this._options;
+    }
+
+    set options(options) {
+        this._options = options;
+        this._mapping = this._prepare(options);
+        this._refresh();
+    }
+
+    get value() {
+        return this._value;
+    }
+
+    set value(value) {
+        this._value = value;
+        this._refresh();
+    }
+
+    _prepare(options) {
+        let mapping = {};
+        for (let option of options) {
+            mapping[option.value] = option.text;
+        }
+        return mapping;
+    }
+
+    get text() {
+        return this._mapping[this.value];
+    }
+
+    _refresh() {
+        this.setText(this.text);
+    }
+
+}
+

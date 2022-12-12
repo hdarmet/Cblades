@@ -68,4 +68,5 @@ public class ForumMessage extends BaseEntity {
         return this;
     }
 
+    public static String REPORT = "forum-message";
 }

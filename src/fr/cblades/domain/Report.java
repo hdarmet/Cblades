@@ -8,14 +8,25 @@ import java.util.Date;
 @Entity
 public class Report extends BaseEntity {
 
+    String category;
     Date sendDate;
     @Column(length = 200)
     String reason="";
     @Column(length = 5000)
     String text="";
     long target;
+    @Enumerated(EnumType.STRING)
+    ReportStatus status = ReportStatus.IN_PROGRESS;
     @ManyToOne
     Account author;
+
+    public String getCategory() {
+        return this.category;
+    }
+    public Report setCategory(String category) {
+        this.category = category;
+        return this;
+    }
 
     public Date getSendDate() {
         return this.sendDate;
@@ -46,6 +57,14 @@ public class Report extends BaseEntity {
     }
     public Report setTarget(long target) {
         this.target = target;
+        return this;
+    }
+
+    public ReportStatus getStatus() {
+        return this.status;
+    }
+    public Report setStatus(ReportStatus status) {
+        this.status = status;
         return this;
     }
 

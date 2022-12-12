@@ -65,6 +65,9 @@ import {
 import {
     vForumList, vForumThreadList, vForumMessageList
 } from "./cba-forum.js";
+import {
+    vReportList
+} from "./cba-report.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -163,6 +166,10 @@ export var vMenu = new VMainMenu({ref:"menu"})
     .addDropdownMenu({ref:"forum-menu", label:"Forum"}, $=>{$
         .addMenu({ref:"list-forums-menu", label:"Les forums", action:()=>{
                 window.vPageContent.showForumList();
+            }
+        })
+        .addMenu({ref:"list-forum-reports-menu", label:"Signalements", action:()=>{
+                window.vPageContent.showForumReportList();
             }
         })
     })
@@ -615,11 +622,11 @@ export class CBAPageContent extends VPageContent {
     }
 
     _showForumList(byHistory, historize) {
+        vForumList.loadForums();
         return this.changePage(null, vForumList, byHistory, historize);
     }
 
     showForumList() {
-        vForumList.loadForums();
         this._showForumList(false, ()=> {
                 historize("forums", "vPageContent._showForumList(true);")
             }
@@ -646,6 +653,18 @@ export class CBAPageContent extends VPageContent {
     showForumMessageList(thread) {
         this._showForumMessageList(thread, false, ()=> {
                 historize("forum-messages", `vPageContent._showForumMessageList(${JSON.stringify(thread)}, true);`)
+            }
+        );
+    }
+
+    _showForumReportList(byHistory, historize) {
+        vReportList.loadReports();
+        return this.changePage(null, vReportList, byHistory, historize);
+    }
+
+    showForumReportList() {
+        this._showForumReportList(false, ()=> {
+                historize("forums", "vPageContent._showForumReportList(true);")
             }
         );
     }

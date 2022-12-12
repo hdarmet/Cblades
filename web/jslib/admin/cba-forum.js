@@ -1055,14 +1055,9 @@ export class CBAForumMessageListPage extends Vitamin(Div) {
 
     constructor({loadPage, saveForumMessage, saveForumMessageStatus, deleteForumMessage}) {
         super({ref: "forum-message-list-page"});
-        this._buttons = new Div().addClass("forum-messages-buttons");
-        this._create = new VButton({
-            ref: "forum-message-create", type: "neutral", label: "Create Forum Message",
-        }).addClass("right-button");
-        this._buttons.add(this._create);
         this._table = new CBAForumMessageList({loadPage,
             saveForumMessage, saveForumMessageStatus, deleteForumMessage});
-        this.add(this._buttons).add(this._table);
+        this.add(this._table);
     }
 
     setThread(thread) {
