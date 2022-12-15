@@ -1,6 +1,7 @@
 'use strict';
 
 import {
+    VContainer,
     VTable
 } from "../vitamin/vcontainer.js";
 import {
@@ -11,11 +12,123 @@ import {
     Vitamin, VModal, VSearch
 } from "../vitamin/vitamins.js";
 import {
-    VButtons, VOptionViewer
+    mandatory, range, VButton,
+    VButtons, VInputField, VInputTextArea, VOptionViewer, VRef, VSelectField
 } from "../vitamin/vforms.js";
 import {
     showMessage
 } from "../vitamin/vpage.js";
+import {
+    CBAConfirm
+} from "./cba-administration.js";
+
+
+export class CBAEditReportEvent extends Undoable(VModal) {
+
+    constructor({create, event, confirm, title}) {
+        super({ref:"edit-report-event", title});
+        this._target = new Div().addClass("user-ref")
+            .add(new Img(event.target.avatar).addClass("user-avatar"))
+            .add(new Div().setText(event.target.login).addClass("user-login"))
+            .add(new Div().setText(event.target.firstName).addClass("user-first-name"))
+            .add(new Div().setText(event.target.lastName).addClass("user-last-name"));
+        this.add(this._target);
+        this._title = new VInputField({
+            ref:"event-title-input", label:"Title",
+            validate: mandatory({validate: range({min:2, max:200})}),
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this.add(this._title);
+        this._description = new VInputTextArea({
+            ref:"event-description-input", label:"Description",
+            validate: mandatory({validate: range({min:2, max:4995})}),
+            onChange: event=>{
+                this._memorize();
+            }
+        });
+        this.add(this._description);
+        this._buttons = new VButtons({
+            ref: "buttons", buttons: [
+                {
+                    ref: "ok-event", type: "accept", label: "Ok",
+                    onClick: event => {
+                        if (this.validate()) {
+                            confirm(this.event);
+                            this.hide();
+                        }
+                    }
+                },
+                {
+                    ref: "close-event", type: "neutral", label: "Close",
+                    onClick: event => {
+                        this.tryToLeave(() => {
+                            this.hide();
+                        });
+                    }
+                }
+            ]
+        });
+        this._deleteButton = new VButton({
+            ref: "delete-event", type: "refuse", label: "Delete",
+            onClick: event => {
+                this.confirm = new CBAConfirm().show({
+                    ref: "confirm-event-deletion",
+                    title: "Delete Message",
+                    message: "Do you really want to delete the Message ?",
+                    actionOk: event => {
+                        confirm(null);
+                        this.hide();
+                    }
+                });
+            }
+        });
+        this._buttons.add(this._deleteButton);
+        this._deleteButton.enabled = !create;
+        this.add(this._buttons);
+        this.addClass("forum-modal");
+        this.event = event;
+    }
+
+    validate() {
+        return !this._title.validate()
+            & !this._description.validate();
+    }
+
+    tryToLeave(leave, notLeave) {
+        super.tryToLeave(leave, notLeave,"Message not saved. Do you want to Quit ?")
+    }
+
+    get event() {
+        return {
+            id: this._event.id,
+            title: this._title.value,
+            description: this._description.value,
+            target: this._event.target
+        }
+    }
+
+    set event(event) {
+        this._event = event;
+        this._title.value = event.title || "";
+        this._description.value = event.description || "";
+        this._clean();
+        this._memorize();
+    }
+
+    _register() {
+        return this.event;
+    }
+
+    _recover(event) {
+        if (event) {
+            this._title.value = event.name;
+            this._description.value = event.description;
+        }
+    }
+
+}
 
 export class CBAProcessReport extends Undoable(VModal) {
 
@@ -31,7 +144,22 @@ export class CBAProcessReport extends Undoable(VModal) {
             .add(new Div().setText(report.author.login).addClass("user-login"))
             .add(new Div().setText(report.author.firstName).addClass("user-first-name"))
             .add(new Div().setText(report.author.lastName).addClass("user-last-name"))
-            .add(new I("envelope-o").addClass("user-message"));
+            .add(new I("envelope-o").addClass("user-message").onMouseClick(
+                evt=>{
+                    new CBAEditReportEvent({
+                        title: "Message to Reporter",
+                        create: !report.authorEvent,
+                        event: report.authorEvent || {
+                            title: "Title",
+                            description: "Description",
+                            target: report.author
+                        },
+                        confirm: event=>{
+                            report.authorEvent = event
+                        }
+                    }).show();
+                }
+            ));
         this._text = new P(report.text).addClass("report-text");
         this._messageTitle = new Span("Related Message").addClass("report-message-title");
         this._messageForum = new Div().addClass("report-message-forum")
@@ -47,7 +175,22 @@ export class CBAProcessReport extends Undoable(VModal) {
             .add(new Div().setText(report.message.author.login).addClass("user-login"))
             .add(new Div().setText(report.message.author.firstName).addClass("user-first-name"))
             .add(new Div().setText(report.message.author.lastName).addClass("user-last-name"))
-            .add(new I("envelope-o").addClass("user-message"));
+            .add(new I("envelope-o").addClass("user-message").onMouseClick(
+                evt=>{
+                    new CBAEditReportEvent({
+                        title: "Message to Post Author",
+                        create: !report.targetEvent,
+                        event: report.targetEvent || {
+                            title: "Title",
+                            description: "Description",
+                            target: report.message.author
+                        },
+                        confirm: event=>{
+                            report.targetEvent = event
+                        }
+                    }).show();
+                }
+            ));
         this._message = new Div().addClass("report-message")
             .add(this._messageDate)
             .add(this._messageForum)

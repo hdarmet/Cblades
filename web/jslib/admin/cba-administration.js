@@ -68,6 +68,9 @@ import {
 import {
     vReportList
 } from "./cba-report.js";
+import {
+    vMessageModelList
+} from "./cba-message-model.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -168,8 +171,16 @@ export var vMenu = new VMainMenu({ref:"menu"})
                 window.vPageContent.showForumList();
             }
         })
-        .addMenu({ref:"list-forum-reports-menu", label:"Signalements", action:()=>{
+        .addMenu({ref:"list-forum-reports-menu", kind:"menu-separator", label:"Signalements", action:()=>{
                 window.vPageContent.showForumReportList();
+            }
+        })
+        .addMenu({ref:"list-report-model-menu", label:"Modèles de messages pour rapporteur", action:()=>{
+                window.vPageContent.showReportMessageModelList();
+            }
+        })
+        .addMenu({ref:"list-author-model-menu", label:"Modèles de messages pour auteur", action:()=>{
+                window.vPageContent.showAuthorMessageModelList();
             }
         })
     })
@@ -665,6 +676,32 @@ export class CBAPageContent extends VPageContent {
     showForumReportList() {
         this._showForumReportList(false, ()=> {
                 historize("forums", "vPageContent._showForumReportList(true);")
+            }
+        );
+    }
+
+    _showReportMessageModelList(byHistory, historize) {
+        vMessageModelList.category = "msgr";
+        vMessageModelList.loadMessageModels();
+        return this.changePage(null, vMessageModelList, byHistory, historize);
+    }
+
+    showReportMessageModelList() {
+        this._showReportMessageModelList(false, ()=> {
+                historize("report-message-models", "vPageContent._showReportMessageModelList(true);")
+            }
+        );
+    }
+
+    _showAuthorMessageModelList(byHistory, historize) {
+        vMessageModelList.category = "msga";
+        vMessageModelList.loadMessageModels();
+        return this.changePage(null, vMessageModelList, byHistory, historize);
+    }
+
+    showAuthorMessageModelList() {
+        this._showAuthorMessageModelList(false, ()=> {
+                historize("author-message-models", "vPageContent._showAuthorMessageModelList(true);")
             }
         );
     }

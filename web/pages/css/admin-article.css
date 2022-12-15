@@ -1,4 +1,10 @@
 
+.article-list .article-title {
+    font-size: 1.2em;
+    font-weight: bolder;
+    float: left;
+}
+
 .article-list td.column-3 img {
     width: 250px;
 }

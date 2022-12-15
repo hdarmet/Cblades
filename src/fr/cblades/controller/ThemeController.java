@@ -198,7 +198,9 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 			String category = (String)params.get("category");
 			String search = (String)params.get("search");
-			String queryString = "select t from Theme t where t.category=:category";
+			String queryString = "select t from Theme t" +
+				" where t.category=:category" +
+				" and t.status=:status";
 			if (search!=null) {
 				/*
 				search = StringReplacer.replace(search,
@@ -212,9 +214,13 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				queryString+=whereClause;
 			}
 			Collection<Theme> themes = (search == null) ?
-				findPagedThemes(em.createQuery(queryString), pageNo, "category", ThemeCategory.getByName(category)):
-				findPagedThemes(em.createQuery(queryString), pageNo, "category", ThemeCategory.getByName(category),
-						"search", search);
+				findPagedThemes(em.createQuery(queryString), pageNo, "category",
+					ThemeCategory.getByName(category),
+					"status", ThemeStatus.LIVE):
+				findPagedThemes(em.createQuery(queryString), pageNo, "category",
+					ThemeCategory.getByName(category),
+					"status", ThemeStatus.LIVE,
+					"search", search);
 			result.set(readFromPublishedThemes(themes));
 		});
 		return result.get();

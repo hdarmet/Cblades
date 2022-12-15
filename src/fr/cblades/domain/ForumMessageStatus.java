@@ -1,5 +1,8 @@
 package fr.cblades.domain;
 
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.Query;
 import java.util.HashMap;
 import java.util.Map;
 

@@ -15,6 +15,23 @@ public class FakeData {
     @Launch(order = 10)
     public static void createData() {
         DataSunbeam data = new DataSunbeam() {};
+        createGameData(data);
+        createAccounts(data);
+        createNotices(data);
+        createPresentations(data);
+        createAnnouncements(data);
+        createEvents(data);
+        createThemes(data);
+        createArticles(data);
+        createScenario(data);
+        createFactions(data);
+        createMagicArts(data);
+        createRulesAndMarkers(data);
+        createForums(data);
+        createMessageModel(data);
+    }
+
+    static void createGameData(DataSunbeam data) {
         data.inTransaction(em->{
             data.persist(em, new Board().setName("board1").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-1.png").setIcon("./../images/maps/map-1-icon.png")
                 .addComment(new Comment().setDate(new Date()).setText(TINY_PARAGRAPH_TEXT))
@@ -48,6 +65,9 @@ public class FakeData {
             data.persist(em, new Banner().setName("roughneck-banner-1").setPath("./../images/units/mercenaries/banners/banner1.png"));
             data.persist(em, new Banner().setName("roughneck-banner-2").setPath("./../images/units/mercenaries/banners/banner2.png"));
         });
+    }
+
+    static void createAccounts(DataSunbeam data) {
         data.inTransaction(em->{
             Account temrad = new Account()
                 .setFirstName("Henri").setLastName("Darmet").setEmail("hdarmet@gmail.com")
@@ -86,6 +106,9 @@ public class FakeData {
                 .setRating(1001).setMessageCount(120);
             data.persist(em, paul);
         });
+    }
+
+    static void createNotices(DataSunbeam data) {
         data.inTransaction(em->{
             Notice notice = new Notice()
                 .setCategory("forgot-password-mail").setTitle("Forgot My Password").setText("Reniew one more time %s")
@@ -96,12 +119,18 @@ public class FakeData {
                 .setNoticeVersion("0.3").setPublished(false);
             data.persist(em, notice);
         });
+    }
+
+    static void createPresentations(DataSunbeam data) {
         data.inTransaction(em->{
             Presentation presentation = new Presentation()
-                .setCategory("edit-board-presentation").setText("Another text to describe board contribution.")
-                .setPresentationVersion("0.2").setPublished(false);
+                    .setCategory("edit-board-presentation").setText("Another text to describe board contribution.")
+                    .setPresentationVersion("0.2").setPublished(false);
             data.persist(em, presentation);
         });
+    }
+
+    static void createAnnouncements(DataSunbeam data) {
         data.inTransaction(em-> {
             Announcement announcement = new Announcement()
                 .setDescription(PARAGRAPH_TEXT)
@@ -118,7 +147,9 @@ public class FakeData {
                 .setIllustration("../../images/maps/map-12.png")
                 .setStatus(AnnouncementStatus.LIVE);
             data.persist(em, announcement);
-        });
+        });    }
+
+    static void createEvents(DataSunbeam data) {
         data.inTransaction(em-> {
             long now = new Date().getTime();
             for (int index=0; index<10; index++) {
@@ -137,6 +168,9 @@ public class FakeData {
                 data.persist(em, event);
             }
         });
+    }
+
+    static void createThemes(DataSunbeam data) {
         data.inTransaction(em-> {
             Theme theme = new Theme()
                 .setDescription(SHORT_PARAGRAPH_TEXT)
@@ -195,6 +229,9 @@ public class FakeData {
                 .setStatus(ThemeStatus.LIVE);
             data.persist(em, theme);
         });
+    }
+
+    static void createArticles(DataSunbeam data) {
         data.inTransaction(em-> {
             for (int index=0; index<12; index++) {
                 Article article = new Article()
@@ -239,6 +276,9 @@ public class FakeData {
                 data.persist(em, article);
             }
         });
+    }
+
+    static void createScenario(DataSunbeam data) {
         data.inTransaction(em-> {
             Scenario scenario = new Scenario()
                 .setStory(PARAGRAPH_TEXT)
@@ -254,6 +294,9 @@ public class FakeData {
             scenario.getGame().setName(scenario.getTitle());
             data.persist(em, scenario);
         });
+    }
+
+    static void createFactions(DataSunbeam data) {
         data.inTransaction(em-> {
             Faction faction = new Faction()
                 .setName("Amarys")
@@ -346,6 +389,9 @@ public class FakeData {
             faction.buildDocument();
             data.persist(em, faction);
         });
+    }
+
+    static void createMagicArts(DataSunbeam data) {
         data.inTransaction(em-> {
             MagicArt magic = new MagicArt()
                 .setName("Arcanic Art")
@@ -433,6 +479,9 @@ public class FakeData {
             magic.buildDocument();
             data.persist(em, magic);
         });
+    }
+
+    static void createRulesAndMarkers(DataSunbeam data) {
         data.inTransaction(em-> {
             RuleSet.findByCategory(em,"rules")
                 .addSheet(new Sheet()
@@ -485,9 +534,12 @@ public class FakeData {
                     .setIcon("../images/site/markers/counters3b-icon.png")
                 );
         });
+    }
+
+    static void createForums(DataSunbeam data) {
         data.inTransaction(em->{
             List<Account> accounts = data.getResultList(em,
-                "select a from Account a left outer join fetch a.access w"
+                    "select a from Account a left outer join fetch a.access w"
             );
             Forum forum = new Forum()
                 .setTitle("Discussing Retailers")
@@ -533,6 +585,29 @@ public class FakeData {
                 .setMessageCount(25)
                 .setStatus(ForumStatus.LIVE);
             data.persist(em, forum);
+        });
+    }
+
+    static void createMessageModel(DataSunbeam data) {
+        data.inTransaction(em->{
+            for (int index=0; index<20; index++) {
+                MessageModel model = new MessageModel()
+                    .setCategory(MessageModelCategory.MESSAGE_AUTHOR)
+                    .setStatus(MessageModelStatus.LIVE)
+                    .setTitle("Model message author " + index)
+                    .setText(PARAGRAPH_TEXT);
+                data.persist(em, model);
+            }
+        });
+        data.inTransaction(em->{
+            for (int index=0; index<20; index++) {
+                MessageModel model = new MessageModel()
+                    .setCategory(MessageModelCategory.MESSAGE_REPORTER)
+                    .setStatus(MessageModelStatus.LIVE)
+                    .setTitle("Model message reporter " + index)
+                    .setText(PARAGRAPH_TEXT);
+                data.persist(em, model);
+            }
         });
     }
 

@@ -1,0 +1,48 @@
+
+.message-model-list .column-0 {
+    width: 25%;
+    font-weight: bolder;
+}
+.message-model-list .column-1 {
+    width: 60%;
+}
+.message-model-list .column-2 {
+    width: 15%;
+}
+
+.message-model-list .message-model-list-title {
+    font-size: 1.2em;
+    font-weight: bolder;
+    float: left;
+}
+
+.message-model-modal .form-input-textarea {
+    height: 100px;
+}
+
+.message-model-modal .user-ref-content {
+    display: table;
+}
+
+.message-model-modal .user-ref {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1em;
+    display: table;
+}
+
+.message-model-modal .user-ref div, .event-form .user-ref img {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.message-model-modal .user-ref .user-login {
+    font-weight: bolder;
+}
+
+.message-model-modal img.user-avatar {
+    width: 40px;
+    height: 40px;
+}

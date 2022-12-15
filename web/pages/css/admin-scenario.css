@@ -14,6 +14,12 @@
     width: 20%;
 }
 
+.scenario-list .scenario-title {
+    font-size: 1.2em;
+    font-weight: bolder;
+    float: left;
+}
+
 .scenario-editor-pane .scenario-title {
     --extends: ex-record-title;
 }

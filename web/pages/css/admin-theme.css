@@ -39,6 +39,12 @@
     margin: 0 auto 15% auto;
 }
 
+.theme-list .theme-title {
+    font-size: 1.2em;
+    font-weight: bolder;
+    float: left;
+}
+
 .theme {
     width: 450px;
     cursor: pointer;
