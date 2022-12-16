@@ -30,6 +30,180 @@ import {
     CBAEditComments
 } from "./cba-comment.js";
 
+export class CBAForumSelector extends VModal {
+    constructor({title, loadPage, selectForum}) {
+        super({"select-forum": "forum-selector", "title": title});
+        this.addClass("forum-modal");
+        this._table = new CBAForumSelection({
+            loadPage, selectForum,
+            modal: this
+        });
+        this.add(new VContainer({ ref:"forum-selection-modal" }).add(this._table));
+    }
+
+    loadForums() {
+        this._table.loadForums();
+        return this;
+    }
+
+}
+
+export class CBAForumThreadSelector extends VModal {
+    constructor({title, loadForums, loadThreads, selectThread}) {
+        super({"message-model": "message-model-selector", "title": title});
+        this.addClass("message-model-modal");
+        this._tableForums = new CBAForumSelection({
+            loadPage: loadForums,
+            selectForum: forum=>{
+                this._tableThreads.forum = forum;
+                this.loadThreads();
+            },
+            modal: this
+        });
+        this._tableThreads = new CBAForumThreadSelection({
+            loadPage: loadThreads,
+            selectThread,
+            modal: this
+        });
+        this._container = new VContainer({ ref:"thread-selection-modal" });
+        this.add(this._container.add(this._tableForums));
+    }
+
+    loadForums() {
+        this._tableForums.loadForums();
+        return this;
+    }
+
+    _reloadForums() {
+        this._tableForums.loadForums();
+        this._container.add(this._tableForums);
+        this._container.remove(this._tableThreads);
+        this.loadForums();
+        return this;
+    }
+
+    loadThreads() {
+        this._tableThreads.loadThreads();
+        this._container.remove(this._tableForums);
+        this._container.add(this._tableThreads);
+        return this;
+    }
+
+}
+
+export class CBAForumSelection extends VTable {
+
+    constructor({loadPage, selectForum, modal}) {
+        super({
+            ref: "forum-selection",
+            changePage: pageIndex => this.setPage(pageIndex),
+            select: messageModel => selectForum(messageModel)
+        });
+        this.addClass("forum-selection");
+        this._modal = modal;
+        this._loadPage = loadPage;
+    }
+
+    loadForums() {
+        this.setPage();
+        return this;
+    }
+
+    refresh() {
+        this.setPage(this._currentPage);
+    }
+
+    setPage() {
+        this._loadPage(pageData => {
+            let lines = [];
+            for (let forum of pageData.forums) {
+                let title = new P(forum.title).addClass("forum-title");
+                lines.push({source: forum, cells:[title]});
+            }
+            let title = new Span("Forums")
+                .addClass("forum-list-title");
+            let summary = new Div()
+                .addClass("table-display")
+                .add(title);
+            this.setContent({
+                summary,
+                columns: ["Title"],
+                lines
+            });
+        });
+    }
+
+}
+
+export class CBAForumThreadSelection extends VTable {
+
+    constructor({loadPage, selectThread, modal}) {
+        super({
+            ref: "forum-thread-selection",
+            changePage: pageIndex => this.setPage(pageIndex),
+            select: thread => selectThread(thread)
+        });
+        this.addClass("forum-thread-selection");
+        this._loadPage = loadPage;
+        this._modal = modal;
+    }
+
+    set forum(forum) {
+        this._forum = forum;
+    }
+
+    loadThreads() {
+        this.setPage(0);
+        return this;
+    }
+
+    refresh() {
+        this.setPage(this._currentPage);
+    }
+
+    setPage(pageIndex) {
+        this._loadPage(this._forum, pageIndex, pageData => {
+            let lines = [];
+            for (let forumThread of pageData.threads) {
+                let title = new P(forumThread.title).addClass("forum-thread-title");
+                lines.push({source: forumThread, cells:[title]});
+            }
+            let title = new Span("Forum: "+this._forum.title)
+                .addClass("forum-thread-list-title")
+                .onEvent("click",
+                    event=>{
+                        this._modal._reloadForums();
+                    }
+                );
+            let pageSummary = new Span()
+                .addClass("forum-thread-pager")
+                .setText(pageData.threadCount ?
+                    String.format(CBAForumThreadSelection.SUMMARY, pageData.threadCount, pageData.firstThread, pageData.lastThread) :
+                    CBAForumThreadSelection.EMPTY_SUMMARY);
+            let summary = new Div()
+                .addClass("table-display")
+                .add(title)
+                .add(pageSummary);
+            this.setContent({
+                summary,
+                columns: ["Title"],
+                lines
+            });
+            this._currentPage = pageData.currentPage;
+            let first = pageData.pageCount <= 5 ? 0 : pageData.currentPage - 2;
+            if (first < 0) first = 0;
+            let last = pageData.pageCount <= 5 ? pageData.pageCount - 1 : pageData.currentPage + 2;
+            if (last >= pageData.pageCount) last = pageData.pageCount - 1;
+            this.setPagination({
+                first, last, current: pageData.currentPage
+            });
+        });
+    }
+
+    static SUMMARY = "Showing {1} to {2} of {0} forum thread(s)";
+    static EMPTY_SUMMARY = "There are no forum threads to show";
+}
+
 export class CBAEditForum extends Undoable(VModal) {
 
     constructor({ref, kind, saveForum, deleteForum, create, forum}) {

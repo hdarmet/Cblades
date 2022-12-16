@@ -30,6 +30,91 @@ import {
     CBAEditComments
 } from "./cba-comment.js";
 
+export class CBAMessageModelSelector extends VModal {
+    constructor({title, loadPage, category, selectMessageModel}) {
+        super({"message-model": "message-model-selector", "title": title});
+        this.addClass("message-model-modal");
+        this._search = new VSearch({
+            ref: "message-model-list-search", searchAction: search => {
+                this.loadMessageModels();
+            }
+        });
+        this._table = new CBAMessageModelSelection({loadPage, category, selectMessageModel});
+        this.add(new VContainer({ ref:"message-model-selection-modal" }).add(this._search).add(this._table));
+    }
+
+    loadMessageModels() {
+        this._table.search = this._search.value;
+        this._table.loadMessageModels();
+        return this;
+    }
+
+}
+
+export class CBAMessageModelSelection extends VTable {
+
+    constructor({loadPage, category, selectMessageModel}) {
+        super({
+            ref: "message-model-selection",
+            changePage: pageIndex => this.setPage(pageIndex),
+            select: messageModel => selectMessageModel(messageModel)
+        });
+        this.addClass("message-model-selection");
+        this._category = category;
+        this._loadPage = loadPage;
+    }
+
+    set search(search) {
+        this._search = search;
+    }
+
+    loadMessageModels() {
+        this.setPage(0);
+        return this;
+    }
+
+    refresh() {
+        this.setPage(this._currentPage);
+    }
+
+    setPage(pageIndex) {
+        this._loadPage(this._category, pageIndex, this._search, pageData => {
+            let lines = [];
+            for (let messageModel of pageData.messageModels) {
+                let title = new P(messageModel.title).addClass("message-model-title");
+                lines.push({source: messageModel, cells:[title]});
+            }
+            let title = new Span(pageData.title)
+                .addClass("message-model-list-title")
+            let pageSummary = new Span()
+                .addClass("message-model-pager")
+                .setText(pageData.messageModelCount ?
+                    String.format(CBAMessageModelSelection.SUMMARY, pageData.messageModelCount, pageData.firstMessageModel, pageData.lastMessageModel) :
+                    CBAMessageModelSelection.EMPTY_SUMMARY);
+            let summary = new Div()
+                .addClass("table-display")
+                .add(title)
+                .add(pageSummary);
+            this.setContent({
+                summary,
+                columns: ["Title"],
+                lines
+            });
+            this._currentPage = pageData.currentPage;
+            let first = pageData.pageCount <= 5 ? 0 : pageData.currentPage - 2;
+            if (first < 0) first = 0;
+            let last = pageData.pageCount <= 5 ? pageData.pageCount - 1 : pageData.currentPage + 2;
+            if (last >= pageData.pageCount) last = pageData.pageCount - 1;
+            this.setPagination({
+                first, last, current: pageData.currentPage
+            });
+        });
+    }
+
+    static SUMMARY = "Showing {1} to {2} of {0} message model(s)";
+    static EMPTY_SUMMARY = "There are no message models to show";
+}
+
 export class CBAEditMessageModel extends Undoable(VModal) {
 
     constructor({ref, kind, saveMessageModel, deleteMessageModel, create, messageModel}) {

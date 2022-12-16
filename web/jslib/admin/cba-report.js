@@ -5,7 +5,7 @@ import {
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, requestLog, sendGet, Span, I
+    Div, Img, P, requestLog, sendGet, Span, I, Select
 } from "../vitamin/components.js";
 import {
     Undoable,
@@ -21,17 +21,36 @@ import {
 import {
     CBAConfirm
 } from "./cba-administration.js";
-
+import {
+    CBAMessageModelSelector, loadMessageModels
+} from "./cba-message-model.js";
+import {
+    CBAForumThreadSelector, loadForums, loadForumThreads
+} from "./cba-forum.js";
 
 export class CBAEditReportEvent extends Undoable(VModal) {
 
-    constructor({create, event, confirm, title}) {
+    constructor({category, create, event, confirm, title}) {
         super({ref:"edit-report-event", title});
         this._target = new Div().addClass("user-ref")
             .add(new Img(event.target.avatar).addClass("user-avatar"))
             .add(new Div().setText(event.target.login).addClass("user-login"))
             .add(new Div().setText(event.target.firstName).addClass("user-first-name"))
-            .add(new Div().setText(event.target.lastName).addClass("user-last-name"));
+            .add(new Div().setText(event.target.lastName).addClass("user-last-name"))
+            .add(new VButton({ref: "choose-model", label:"model", type:VButton.TYPES.NEUTRAL,
+            onClick: event=>{
+                let messageModelSelector = new CBAMessageModelSelector({
+                    title:"Select Message Model",
+                    category,
+                    loadPage:loadMessageModels,
+                    selectMessageModel: messageModel=>{
+                        this._title.value = messageModel.title;
+                        this._description.value = messageModel.text;
+                        messageModelSelector.hide();
+                    }
+                }).loadMessageModels().show();
+            }
+        }));
         this.add(this._target);
         this._title = new VInputField({
             ref:"event-title-input", label:"Title",
@@ -139,6 +158,8 @@ export class CBAProcessReport extends Undoable(VModal) {
                 {value: "rude", text:"Le propos est injurieux ou offensant."},
                 {value: "off-topic", text:"Le propos est hors sujet."}
             ]}).addClass("report-reason");
+        this._messageToReporter = new Div().addClass("message-to-user");
+        this._messageToTarget = new Div().addClass("message-to-user");
         this._author = new Div().addClass("user-ref")
             .add(new Img(report.author.avatar).addClass("user-avatar"))
             .add(new Div().setText(report.author.login).addClass("user-login"))
@@ -149,17 +170,25 @@ export class CBAProcessReport extends Undoable(VModal) {
                     new CBAEditReportEvent({
                         title: "Message to Reporter",
                         create: !report.authorEvent,
+                        category: "msgr",
                         event: report.authorEvent || {
                             title: "Title",
                             description: "Description",
                             target: report.author
                         },
                         confirm: event=>{
-                            report.authorEvent = event
+                            report.authorEvent = event;
+                            if (!event) {
+                                this._messageToReporter.clear();
+                            }
+                            else {
+                                this._messageToReporter.add(new Span(event.title));
+                            }
                         }
                     }).show();
                 }
-            ));
+            ))
+            .add(this._messageToReporter);
         this._text = new P(report.text).addClass("report-text");
         this._messageTitle = new Span("Related Message").addClass("report-message-title");
         this._messageForum = new Div().addClass("report-message-forum")
@@ -180,39 +209,79 @@ export class CBAProcessReport extends Undoable(VModal) {
                     new CBAEditReportEvent({
                         title: "Message to Post Author",
                         create: !report.targetEvent,
+                        category: "msga",
                         event: report.targetEvent || {
                             title: "Title",
                             description: "Description",
                             target: report.message.author
                         },
                         confirm: event=>{
-                            report.targetEvent = event
+                            report.targetEvent = event;
+                            if (!event) {
+                                this._messageToTarget.clear();
+                            }
+                            else {
+                                this._messageToTarget.add(new Span(event.title));
+                            }
                         }
                     }).show();
                 }
-            ));
+            ))
+            .add(this._messageToTarget);
         this._message = new Div().addClass("report-message")
             .add(this._messageDate)
             .add(this._messageForum)
             .add(this._messageThread)
             .add(this._messageText)
             .add(this._messageAuthor);
-        this._buttons = new VButtons({
-            ref: "buttons", buttons: [{
-                ref: "close-report", type: "neutral", label: "Close",
-                onClick: event => {
-                    this.tryToLeave(() => {
-                        this.hide();
-                    });
-                }
-            }]
+        this._close = new VButton({
+            ref: "close-report", type: VButton.TYPES.NEUTRAL, label: "Close",
+            onClick: event => {
+                this.tryToLeave(() => {
+                    this.hide();
+                });
+            }
         });
+        this._selectCommand = new Select().setOptions([
+            {value: "na", text: "Close Report as Not Applicable"},
+            {value: "ban", text: "Remove Message and Ban Message Author"},
+            {value: "wrn", text: "Remove Message and Warn Message Author"},
+            {value: "mv", text: "Move Message and Warn Message Author"}
+        ]).addClass("select-command").onEvent("change",
+            event=>{
+                let forumSelector = new CBAForumThreadSelector({
+                    title:"Select Thread",
+                    loadForums,
+                    loadThreads: loadForumThreads,
+                    selectThread: thread=>{
+                        this._thread = thread;
+                        this._threadSlot.clear();
+                        this._threadSlot.add(new Span(thread.title));
+                        forumSelector.hide();
+                    }
+                }).loadForums().show();
+            }
+        );
+        this._confirm = new VButton({
+            ref: "confirm-report", type: VButton.TYPES.ACCEPT, label: "Confirm",
+            onClick: event => {
+                this.tryToLeave(() => {
+                    this.hide();
+                });
+            }
+        });
+        this._threadSlot = new Div().addClass("report-thread");
+        this._commands = new Div().addClass("report-command")
+            .add(this._close)
+            .add(this._selectCommand)
+            .add(this._threadSlot)
+            .add(this._confirm);
         this.add(this._author)
             .add(this._sendDate)
             .add(this._reason)
             .add(this._text)
             .add(this._messageTitle).add(this._message)
-            .add(this._buttons);
+            .add(this._commands);
         this.addClass("report-modal");
     }
 

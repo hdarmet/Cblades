@@ -1,4 +1,30 @@
 
+.message-model-selection .message-model-title {
+    margin: 0;
+}
+
+.message-model-selection {
+    height: auto;
+}
+
+.message-model-selection .table-content {
+    height: auto;
+}
+
+.message-model-selection .table-content table tr th {
+    padding: 10px;
+}
+
+.message-model-modal .modal-content {
+    width: 50%;
+}
+
+.message-model-selection .message-model-list-title {
+    font-size: 1.2em;
+    font-weight: bolder;
+    float: left;
+}
+
 .message-model-list .column-0 {
     width: 25%;
     font-weight: bolder;

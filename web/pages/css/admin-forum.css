@@ -1,4 +1,57 @@
 
+.forum-selection .forum-title {
+    margin: 0;
+}
+
+.forum-selection {
+    height: auto;
+}
+
+.forum-selection .table-content {
+    height: auto;
+}
+
+.forum-selection .table-content table tr th {
+    padding: 10px;
+}
+
+.forum-modal .modal-content {
+    width: 50%;
+}
+
+.forum-selection .message-model-list-title, .forum-thread-selection .forum-thread-list-title {
+    font-size: 1.2em;
+    font-weight: bolder;
+    float: left;
+    cursor: pointer;
+}
+
+.forum-thread-selection .forum-thread-title {
+    margin: 0;
+}
+
+.forum-thread-selection {
+    height: auto;
+}
+
+.forum-thread-selection .table-content {
+    height: auto;
+}
+
+.forum-thread-selection .table-content table tr th {
+    padding: 10px;
+}
+
+.forum-thread-modal .modal-content {
+    width: 50%;
+}
+
+.forum-thread-selection .forum-list-title {
+    font-size: 1.2em;
+    font-weight: bolder;
+    float: left;
+}
+
 .forum-list .column-0 {
     width: 15%;
     font-weight: bolder;
