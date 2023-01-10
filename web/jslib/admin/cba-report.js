@@ -1,11 +1,10 @@
 'use strict';
 
 import {
-    VContainer,
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, requestLog, sendGet, Span, I, Select
+    Div, Img, P, requestLog, sendGet, sendPost, Span, I, Select
 } from "../vitamin/components.js";
 import {
     Undoable,
@@ -13,10 +12,10 @@ import {
 } from "../vitamin/vitamins.js";
 import {
     mandatory, range, VButton,
-    VButtons, VInputField, VInputTextArea, VOptionViewer, VRef, VSelectField
+    VButtons, VInputField, VInputTextArea, VOptionViewer
 } from "../vitamin/vforms.js";
 import {
-    showMessage
+    showMessage, VWarning
 } from "../vitamin/vpage.js";
 import {
     CBAConfirm
@@ -155,9 +154,9 @@ export class CBAProcessReport extends Undoable(VModal) {
         super({ref:"process-report-modal", title: "Process Report"});
         this._sendDate = new Span(new Date(report.sendDate).toLocaleDateString()).addClass("report-date");
         this._reason = new VOptionViewer({value: report.reason, options: [
-                {value: "rude", text:"Le propos est injurieux ou offensant."},
-                {value: "off-topic", text:"Le propos est hors sujet."}
-            ]}).addClass("report-reason");
+            {value: "rude", text:"Le propos est injurieux ou offensant."},
+            {value: "off-topic", text:"Le propos est hors sujet."}
+        ]}).addClass("report-reason");
         this._messageToReporter = new Div().addClass("message-to-user");
         this._messageToTarget = new Div().addClass("message-to-user");
         this._author = new Div().addClass("user-ref")
@@ -244,30 +243,42 @@ export class CBAProcessReport extends Undoable(VModal) {
         });
         this._selectCommand = new Select().setOptions([
             {value: "na", text: "Close Report as Not Applicable"},
-            {value: "ban", text: "Remove Message and Ban Message Author"},
-            {value: "wrn", text: "Remove Message and Warn Message Author"},
-            {value: "mv", text: "Move Message and Warn Message Author"}
+            {value: "ban", text: "Remove Message and Ban Author"},
+            {value: "wrn", text: "Remove Message and Warn Author"},
+            {value: "mv", text: "Move Message"}
         ]).addClass("select-command").onEvent("change",
-            event=>{
-                let forumSelector = new CBAForumThreadSelector({
-                    title:"Select Thread",
-                    loadForums,
-                    loadThreads: loadForumThreads,
-                    selectThread: thread=>{
-                        this._thread = thread;
-                        this._threadSlot.clear();
-                        this._threadSlot.add(new Span(thread.title));
-                        forumSelector.hide();
-                    }
-                }).loadForums().show();
+            event=> {
+                if (this._selectCommand.getValue()==="mv") {
+                    this._selectThread();
+                }
             }
         );
         this._confirm = new VButton({
             ref: "confirm-report", type: VButton.TYPES.ACCEPT, label: "Confirm",
             onClick: event => {
-                this.tryToLeave(() => {
-                    this.hide();
-                });
+                switch (this._selectCommand.getValue()) {
+                    case "na":
+                        this._closeReport(report);
+                        break;
+                    case "ban":
+                        if (report.targetEvent) {
+                            this._blockMessage(report, true);                        }
+                        else {
+                            showMessage("Ban Author", "To Ban an Account a message must be sent to him")
+                        }
+                        break;
+                    case "wrn":
+                        this._blockMessage(report, false);
+                        break;
+                    case "mv":
+                        if (this._thread) {
+                            this._moveMessage(report);
+                        }
+                        else {
+                            showMessage("Move Message", "A Target thread must be defined.")
+                        }
+                        break;
+                }
             }
         });
         this._threadSlot = new Div().addClass("report-thread");
@@ -283,6 +294,77 @@ export class CBAProcessReport extends Undoable(VModal) {
             .add(this._messageTitle).add(this._message)
             .add(this._commands);
         this.addClass("report-modal");
+    }
+
+    _closeReport(report) {
+        new CBAConfirm().show({
+            ref: "close-report-confirm",
+            title: "Close Report",
+            message: "Do you really want to close the report as Not Applicable ?",
+            actionOk: event => {
+                closeReport(
+                    report,
+                    report.authorEvent,
+                    report.targetEvent,
+                    ()=>{
+                        this.hide();
+                        showMessage("Report Closed");
+                    }
+                );
+            }
+        });
+    }
+
+    _blockMessage(report, ban) {
+        new CBAConfirm().show({
+            ref: "block-message-confirm",
+            title: "Block Message"+(ban?" and ban author":""),
+            message: "Do you really want to block the Forum Message ?",
+            actionOk: event => {
+                blockMessage(
+                    report, ban,
+                    report.authorEvent,
+                    report.targetEvent,
+                    ()=>{
+                        this.hide();
+                        showMessage("Message Blocked"+(ban?" and Author Banned":""));
+                    }
+                );
+            }
+        });
+    }
+
+    _moveMessage(report, thread) {
+        new CBAConfirm().show({
+            ref: "move-message-confirm",
+            title: "Move Message",
+            message: "Do you really want to move the Forum Message ?",
+            actionOk: event => {
+                moveMessage(
+                    report, this._thread.id,
+                    report.authorEvent,
+                    report.targetEvent,
+                    ()=>{
+                        this.hide();
+                        showMessage("Message Moved");
+                    }
+                );
+            }
+        });
+    }
+
+    _selectThread() {
+        let forumSelector = new CBAForumThreadSelector({
+            title: "Select Thread",
+            loadForums,
+            loadThreads: loadForumThreads,
+            selectThread: thread => {
+                this._thread = thread;
+                this._threadSlot.clear();
+                this._threadSlot.add(new Span(thread.title));
+                forumSelector.hide();
+            }
+        }).loadForums().show();
     }
 
     tryToLeave(leave, notLeave) {
@@ -444,7 +526,59 @@ export function loadReport(report, success) {
         },
         (text, status) => {
             requestLog("Load Report failure: " + text + ": " + status);
-            showMessage("Unable to load Theme of Id "+report.id, text);
+            showMessage("Unable to load Report of Id "+report.id, text);
+        }
+    );
+}
+
+export function closeReport(report, reporterEvent, authorEvent, success) {
+    sendPost("/api/forum/message/report/close/"+report.id,
+        {
+            reporter: reporterEvent,
+            author: authorEvent,
+        },
+        (text, status) => {
+            requestLog("Report closing success: " + text + ": " + status);
+            success(parseReport(text));
+        },
+        (text, status) => {
+            requestLog("Load Report failure: " + text + ": " + status);
+            showMessage("Unable to close Report of Id "+report.id, text);
+        }
+    );
+}
+
+export function blockMessage(report, ban, reporterEvent, authorEvent, success) {
+    sendPost("/api/forum/message/report/"+(ban?"block-and-ban":"block-message")+"/"+report.id,
+        {
+            reporter: reporterEvent,
+            author: authorEvent,
+        },
+        (text, status) => {
+            requestLog("Blocking message success: " + text + ": " + status);
+            success(parseReport(text));
+        },
+        (text, status) => {
+            requestLog("Blocking message failure: " + text + ": " + status);
+            showMessage("Unable to block message for report: "+report.id, text);
+        }
+    );
+}
+
+export function moveMessage(report, threadId, reporterEvent, authorEvent, success) {
+    sendPost("/api/forum/message/report/move-message/"+report.id,
+        {
+            reporter: reporterEvent,
+            author: authorEvent,
+            thread: threadId
+        },
+        (text, status) => {
+            requestLog("Moving message success: " + text + ": " + status);
+            success(parseReport(text));
+        },
+        (text, status) => {
+            requestLog("Moving message failure: " + text + ": " + status);
+            showMessage("Unable to move message for report: "+report.id, text);
         }
     );
 }

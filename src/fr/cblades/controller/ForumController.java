@@ -11,9 +11,11 @@ import org.summer.annotation.REST.Method;
 import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
+import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
 import org.summer.data.SummerPersistenceException;
+import org.summer.data.Synchronizer;
 import org.summer.security.SecuritySunbeam;
 
 import javax.persistence.EntityManager;
@@ -1166,4 +1168,130 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	static int THREADS_BY_PAGE = 16;
 	static int MESSAGES_BY_PAGE = 16;
 	static int REPORTS_BY_PAGE = 16;
+
+	@REST(url="/api/forum/message/report/close/:id", method=Method.POST)
+	public Json closeReport(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			ifAuthorized(user->{
+				String id = (String)params.get("id");
+				Report report = findReport(em, new Long(id));
+				ForumMessage message = findForumMessage(em, report.getTarget());
+				createEvents(em, report, message, request);
+				report.setStatus(ReportStatus.CANCELED);
+				result.set(readFromReportAndMessage(report, message));
+			},
+			ADMIN);
+		});
+		return result.get();
+	}
+
+	@REST(url="/api/forum/message/report/block-message/:id", method=Method.POST)
+	public Json removeMessage(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			ifAuthorized(user->{
+				String id = (String)params.get("id");
+				Report report = findReport(em, new Long(id));
+				ForumMessage message = findForumMessage(em, report.getTarget());
+				createEvents(em, report, message, request);
+				report.setStatus(ReportStatus.PROCESSED);
+				message.setStatus(ForumMessageStatus.BLOCKED);
+				result.set(readFromReportAndMessage(report, message));
+			},
+			ADMIN);
+		});
+		return result.get();
+	}
+
+	@REST(url="/api/forum/message/report/block-and-ban/:id", method=Method.POST)
+	public Json removeMessageAndBanAuthor(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			ifAuthorized(user->{
+				String id = (String)params.get("id");
+				Report report = findReport(em, new Long(id));
+				ForumMessage message = findForumMessage(em, report.getTarget());
+				createEvents(em, report, message, request);
+				report.setStatus(ReportStatus.PROCESSED);
+				message.setStatus(ForumMessageStatus.BLOCKED);
+				message.getAuthor().setStatus(AccountStatus.BLOCKED);
+				result.set(readFromReportAndMessage(report, message));
+			},
+			ADMIN);
+		});
+		return result.get();
+	}
+
+	@REST(url="/api/forum/message/report/move-message/:id", method=Method.POST)
+	public Json moveMessage(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			ifAuthorized(user->{
+				String id = (String)params.get("id");
+				Report report = findReport(em, new Long(id));
+				ForumMessage message = findForumMessage(em, report.getTarget());
+				createEvents(em, report, message, request);
+				report.setStatus(ReportStatus.PROCESSED);
+				Integer threadId = request.get("thread");
+				if (threadId==null) {
+					throw new SummerControllerException(400,
+						"selecting a target thread is required"
+					);
+				}
+				ForumThread thread = findForumThread(em, threadId);
+				if (thread==null) {
+					throw new SummerControllerException(404,
+						"Message thread not found: %d", threadId
+					);
+				}
+				message.setForumThread(thread);
+				result.set(readFromReportAndMessage(report, message));
+			},
+			ADMIN);
+		});
+		return result.get();
+	}
+
+	void createEvents(EntityManager em, Report report, ForumMessage message, Json request) {
+		Json reporterEvent = request.get("reporter");
+		if (reporterEvent!=null) {
+			Event event = new Event()
+				.setDate(new Date())
+				.setStatus(EventStatus.LIVE)
+				.setTarget(report.getAuthor());
+			writeToEvent(em, reporterEvent, event);
+			persist(em, event);
+		}
+		Json authorEvent = request.get("author");
+		if (authorEvent!=null) {
+			Event event = new Event()
+				.setDate(new Date())
+				.setStatus(EventStatus.LIVE)
+				.setTarget(message.getAuthor());
+			writeToEvent(em, authorEvent, event);
+			persist(em, event);
+		}
+	}
+
+	Event writeToEvent(EntityManager em, Json json, Event event) {
+		try {
+			Verifier verifier = verify(json)
+				.checkRequired("title")
+				.checkMinSize("title", 2)
+				.checkMaxSize("title", 19995)
+				.checkRequired("description")
+				.checkMinSize("description", 2)
+				.checkMaxSize("description", 19995);
+			verifier.ensure();
+			sync(json, event)
+				.write("title")
+				.write("description");
+			return event;
+		} catch (SummerNotFoundException snfe) {
+			throw new SummerControllerException(404, snfe.getMessage());
+		}
+	}
+
 }
+
