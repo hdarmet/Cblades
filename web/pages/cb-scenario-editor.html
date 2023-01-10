@@ -35,15 +35,6 @@
     game.setMap(map);
     new GameLoader(game, (name, path)=>new CBEditorPlayer(name, path)).load(getParameterByName("id"),
         ()=>{
-            let player1 = new CBEditorPlayer("orc-1", "./../images/units/players/orc-1.png");
-            game.addPlayer(player1);
-            let wing1 = new CBWing(player1, GoblinBanner1);
-            wing1.setRetreatZone(map.getSouthZone());
-            let player2 = new CBEditorPlayer("roughneck-1", "./../images/units/players/roughneck-1.png");
-            game.addPlayer(player2);
-            let wing2 = new CBWing(player2, RoughneckBanner1);
-            wing2.setRetreatZone(map.getNorthZone());
-
             game.fitWindow();
             document.body.appendChild(game.root);
             game.setMenu();

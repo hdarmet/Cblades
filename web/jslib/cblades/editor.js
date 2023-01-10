@@ -618,7 +618,9 @@ export class CBUnitsRosterHeader extends DElement {
             }
         );
         this.addArtifact(this._nextWingButton);
-        this._wingUpdate(0);
+        if (this.wings.length>0) {
+            this._wingUpdate(0);
+        }
     }
 
     setActive(active) {
@@ -648,6 +650,10 @@ export class CBUnitsRosterHeader extends DElement {
 
     _wingUpdate(shift) {
         this._parent.shiftWing(shift);
+        this.showCurrentWing();
+    }
+
+    showCurrentWing() {
         this.setPlayer(this.wing.player);
         this._wingArtifact.setWing(this.wing);
         this._playerArtifact.setPlayer(this.player);
@@ -1234,11 +1240,19 @@ export class CBUnitsRoster extends DPopup {
         this._buildRosterElement();
         this._buildPlayerSelector(playerIdentities);
         this._buildWingSelector(banners);
+        if (this.wings.length>0) {
+            this._header.showCurrentWing();
+        }
+        else {
+            this.showPlayerSelector();
+        }
     }
 
     shiftWing(shift) {
-        this._game.wingIndex+=shift;
-        this._wing = this.wings[this.game.wingIndex];
+        if (this.wings.length>0) {
+            this._game.wingIndex += shift;
+            this._wing = this.wings[this.game.wingIndex];
+        }
     }
 
     updateWingSelectionContent() {
