@@ -71,6 +71,12 @@ import {
 import {
     vMessageModelList
 } from "./cba-message-model.js";
+import {
+    vBannerList
+} from "./cba-banner.js";
+import {
+    vPlayerIdentityList
+} from "./cba-player-identity.js";
 
 export var vMenu = new VMainMenu({ref:"menu"})
     .addMenu({ref:"home", label:"Accueil", action:()=>{
@@ -192,6 +198,16 @@ export var vMenu = new VMainMenu({ref:"menu"})
                 VLoginHandler.login();
             }
         }
+    })
+    .addDropdownMenu({ref:"game-menu", kind:"right-menu", label:"Game"}, $=>{$
+        .addMenu({ref:"list-player-identities-menu", label:"Les identités joueurs", action:()=>{
+                window.vPageContent.showPlayerIdentityList();
+            }
+        })
+        .addMenu({ref:"list-banners-menu", label:"Les bannières", action:()=>{
+                window.vPageContent.showBannerList();
+            }
+        })
     });
 vMenu.onConnection = function({user}) {
     vMenu.get("login").label = user ? "logout" : "login";
@@ -702,6 +718,30 @@ export class CBAPageContent extends VPageContent {
     showAuthorMessageModelList() {
         this._showAuthorMessageModelList(false, ()=> {
                 historize("author-message-models", "vPageContent._showAuthorMessageModelList(true);")
+            }
+        );
+    }
+
+    _showPlayerIdentityList(byHistory, historize) {
+        vPlayerIdentityList.loadPlayerIdentities();
+        return this.changePage(null, vPlayerIdentityList, byHistory, historize);
+    }
+
+    showPlayerIdentityList() {
+        this._showPlayerIdentityList(false, ()=> {
+                historize("player-identity", "vPageContent._showPlayerIdentityList(true);")
+            }
+        );
+    }
+
+    _showBannerList(byHistory, historize) {
+        vBannerList.loadBanners();
+        return this.changePage(null, vBannerList, byHistory, historize);
+    }
+
+    showBannerList() {
+        this._showBannerList(false, ()=> {
+                historize("banner", "vPageContent._showBannerList(true);")
             }
         );
     }

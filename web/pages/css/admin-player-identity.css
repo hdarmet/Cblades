@@ -1,0 +1,81 @@
+.player-identity-list .event-title {
+    font-size: 1.2em;
+    font-weight: bolder;
+    float: left;
+}
+
+.player-identity-list img.player-identity-path {
+    width: 120px;
+    height: 120px;
+}
+
+.player-identity-list .column-0 {
+    width: 20%;
+}
+.player-identity-list .column-1 {
+    width: 60px;
+}
+.player-identity-list .column-2 {
+    width: 50%;
+}
+.player-identity-list .column-3 {
+    width: 20%;
+}
+
+.player-identity-modal .modal-content {
+    width: 600px;
+}
+
+.player-identity-modal .file-loader {
+    width:120px;
+    height:120px;
+    overflow: hidden;
+}
+
+.player-identity-modal .file-loader img {
+    width:100%;
+}
+
+.player-identity-modal .user-avatar img {
+    width: 40px;
+    height: 40px;
+}
+
+.player-identity-modal .user-ref-content {
+    display: table;
+}
+
+.player-identity-modal .user-ref {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1em;
+    display: table;
+}
+
+.player-identity-modal .user-ref div, .player-identity-form .user-ref img {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.player-identity-modal .user-ref .user-login {
+    font-weight: bolder;
+}
+
+.player-identity-modal img.user-avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.player-identity-modal .container-2columns.container-column0 {
+    width: 35%;
+}
+
+.player-identity-modal .container-2columns.container-column1 {
+    width: 65%;
+}
+
+.user-ref {
+    padding-right: 80px;
+}

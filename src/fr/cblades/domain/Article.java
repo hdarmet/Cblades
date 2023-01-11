@@ -26,6 +26,7 @@ public class Article extends BaseEntity {
     LikePoll poll;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     List<Paragraph> paragraphs = new ArrayList<>();
+    @Enumerated(EnumType.STRING)
     ArticleStatus status;
     @ManyToOne
     Account author;

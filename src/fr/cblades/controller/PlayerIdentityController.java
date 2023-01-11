@@ -1,7 +1,7 @@
 package fr.cblades.controller;
 
 import fr.cblades.StandardUsers;
-import fr.cblades.domain.PlayerIdentity;
+import fr.cblades.domain.*;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
 import org.summer.annotation.Controller;
@@ -31,7 +31,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					PlayerIdentity newPlayerIdentity = writeToPlayerIdentity(request, new PlayerIdentity());
+					PlayerIdentity newPlayerIdentity = writeToPlayerIdentity(em, request, new PlayerIdentity());
 					persist(em, newPlayerIdentity);
 					result.set(readFromPlayerIdentity(newPlayerIdentity));
 				});
@@ -49,15 +49,55 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 		return result.get();
 	}
 
-	@REST(url="/api/player-identity/all", method=Method.POST)
+	@REST(url="/api/player-identity/all", method=Method.GET)
 	public Json getAll(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inTransaction(em->{
-				Collection<PlayerIdentity> playerIdentities = findPlayerIdentities(em.createQuery("select pi from PlayerIdentity pi"));
-				result.set(readFromPlayerIdentities(playerIdentities));
+				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
+				String search = (String)params.get("search");
+				String countQuery = "select count(pi) from PlayerIdentity pi";
+				String queryString = "select pi from PlayerIdentity pi ";
+				if (search!=null) {
+					/*
+					search = StringReplacer.replace(search,
+							"tester", "test");
+					 */
+					String whereClause =" where fts('pg_catalog.english', " +
+						"pi.name||' '||" +
+						"pi.description ||' '||" +
+						"pi.status, :search) = true";
+					queryString+=whereClause;
+					countQuery+=whereClause;
+				}
+				long playerIdentityCount = (search == null) ?
+					getSingleResult(em.createQuery(countQuery)) :
+					getSingleResult(em.createQuery(countQuery)
+						.setParameter("search", search));
+				Collection<PlayerIdentity> playerIdentities = (search == null) ?
+					findPagedPlayerIdentities(em.createQuery(queryString), pageNo):
+					findPagedPlayerIdentities(em.createQuery(queryString), pageNo,
+						"search", search);
+				result.set(Json.createJsonObject()
+					.put("playerIdentities", readFromPlayerIdentities(playerIdentities))
+					.put("count", playerIdentityCount)
+					.put("page", pageNo)
+					.put("pageSize", PlayerIdentityController.PLAYER_IDENTITIES_BY_PAGE)
+				);
 			});
 		}, ADMIN);
+		return result.get();
+	}
+
+	@REST(url="/api/player-identity/live", method=Method.GET)
+	public Json getLive(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			Collection<PlayerIdentity> playerIdentities = findPlayerIdentities(
+				em.createQuery("select pi from PlayerIdentity pi where pi.status = :status")
+					.setParameter("status", PlayerIdentityStatus.LIVE));
+			result.set(readFromPublishedPlayerIdentities(playerIdentities));
+		});
 		return result.get();
 	}
 
@@ -81,7 +121,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 		return result.get();
 	}
 
-	@REST(url="/api/player-identity/find/:id", method=Method.POST)
+	@REST(url="/api/player-identity/load/:id", method=Method.GET)
 	public Json getById(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
@@ -94,7 +134,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 		return result.get();
 	}
 
-	@REST(url="/api/player-identity/delete/:id", method=Method.POST)
+	@REST(url="/api/player-identity/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
 		ifAuthorized(user->{
 			try {
@@ -118,7 +158,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					PlayerIdentity playerIdentity = findPlayerIdentity(em, new Long(id));
-					writeToPlayerIdentity(request, playerIdentity);
+					writeToPlayerIdentity(em, request, playerIdentity);
 					flush(em);
 					result.set(readFromPlayerIdentity(playerIdentity));
 				});
@@ -129,16 +169,65 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 		return result.get();
 	}
 
-	PlayerIdentity writeToPlayerIdentity(Json json, PlayerIdentity playerIdentity) {
+	@REST(url="/api/player-identity/update-status/:id", method=Method.POST)
+	public Json updateStatus(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em-> {
+			String id = (String) params.get("id");
+			PlayerIdentity playerIdentity = findPlayerIdentity(em, new Long(id));
+			ifAuthorized(
+				user -> {
+					try {
+						writeToPlayerIdentityStatus(request, playerIdentity);
+						flush(em);
+						result.set(readFromPlayerIdentity(playerIdentity));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+					}
+				},
+				ADMIN
+			);
+		});
+		return result.get();
+	}
+
+	PlayerIdentity writeToPlayerIdentityStatus(Json json, PlayerIdentity playerIdentity) {
+		verify(json)
+			.checkRequired("id").checkInteger("id", "Not a valid id")
+			.check("status", BannerStatus.byLabels().keySet())
+			.ensure();
+		sync(json, playerIdentity)
+			.write("status", label->BannerStatus.byLabels().get(label));
+		return playerIdentity;
+	}
+
+	PlayerIdentity writeToPlayerIdentity(EntityManager em, Json json, PlayerIdentity playerIdentity) {
 		verify(json)
 			.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 20)
 			.checkPattern("name", "[a-zA-Z0-9_\\-]+")
 			.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 200)
+			.checkMinSize("description", 2).checkMaxSize("description", 2000)
+			.check("status", PlayerIdentityStatus.byLabels().keySet())
+			.each("comments", cJson->verify(cJson)
+				.checkRequired("version")
+				.checkRequired("date")
+				.checkRequired("text")
+				.checkMinSize("text", 2)
+				.checkMaxSize("text", 19995)
+			)
 			.ensure();
 		sync(json, playerIdentity)
 			.write("version")
 			.write("name")
-			.write("path");
+			.write("path")
+			.write("description")
+			.write("status", label-> PlayerIdentityStatus.byLabels().get(label))
+			.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
+			.syncEach("comments", (cJson, comment)->sync(cJson, comment)
+				.write("version")
+				.writeDate("date")
+				.write("text")
+			);
 		return playerIdentity;
 	}
 
@@ -148,7 +237,34 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 			.read("id")
 			.read("version")
 			.read("name")
-			.read("path");
+			.read("path")
+			.read("description")
+			.read("status", PlayerIdentityStatus::getLabel)
+			.readLink("author", (pJson, account)->sync(pJson, account)
+				.read("id")
+				.read("login", "access.login")
+				.read("firstName")
+				.read("lastName")
+				.read("avatar")
+			)
+			.readEach("comments", (hJson, hex)->sync(hJson, hex)
+				.read("id")
+				.read("version")
+				.readDate("date")
+				.read("text")
+			);
+		return json;
+	}
+
+	Json readFromPublishedPlayerIdentity(PlayerIdentity playerIdentity) {
+		Json json = Json.createJsonObject();
+		sync(json, playerIdentity)
+			.read("id")
+			.read("version")
+			.read("name")
+			.read("path")
+			.read("description")
+			.read("status", PlayerIdentityStatus::getLabel);
 		return json;
 	}
 
@@ -174,4 +290,17 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 		return list;
 	}
 
+	Collection<PlayerIdentity> findPagedPlayerIdentities(Query query, int page, Object... params) {
+		setParams(query, params);
+		List<PlayerIdentity> playerIdentities = getPagedResultList(query, page* PlayerIdentityController.PLAYER_IDENTITIES_BY_PAGE, PlayerIdentityController.PLAYER_IDENTITIES_BY_PAGE);
+		return playerIdentities.stream().distinct().collect(Collectors.toList());
+	}
+
+	Json readFromPublishedPlayerIdentities(Collection<PlayerIdentity> playerIdentities) {
+		Json list = Json.createJsonArray();
+		playerIdentities.stream().forEach(playerIdentity->list.push(readFromPublishedPlayerIdentity(playerIdentity)));
+		return list;
+	}
+
+	static int PLAYER_IDENTITIES_BY_PAGE = 16;
 }

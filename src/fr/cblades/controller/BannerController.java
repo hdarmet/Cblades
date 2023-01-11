@@ -1,10 +1,7 @@
 package fr.cblades.controller;
 
 import fr.cblades.StandardUsers;
-import fr.cblades.domain.Banner;
-import fr.cblades.domain.Board;
-import fr.cblades.domain.HexSideType;
-import fr.cblades.domain.HexType;
+import fr.cblades.domain.*;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
 import org.summer.annotation.Controller;
@@ -31,7 +28,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					Banner newBanner = writeToBanner(request, new Banner());
+					Banner newBanner = writeToBanner(em, request, new Banner());
 					persist(em, newBanner);
 					result.set(readFromBanner(newBanner));
 				});
@@ -49,15 +46,55 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 		return result.get();
 	}
 
-	@REST(url="/api/banner/all", method=Method.POST)
+	@REST(url="/api/banner/all", method=Method.GET)
 	public Json getAll(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inTransaction(em->{
-				Collection<Banner> banners = findBanners(em.createQuery("select b from Banner b"));
-				result.set(readFromBanners(banners));
+				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
+				String search = (String)params.get("search");
+				String countQuery = "select count(b) from Banner b";
+				String queryString = "select b from Banner b ";
+				if (search!=null) {
+					/*
+					search = StringReplacer.replace(search,
+							"tester", "test");
+					 */
+					String whereClause =" where fts('pg_catalog.english', " +
+						"b.name||' '||" +
+						"b.description ||' '||" +
+						"b.status, :search) = true";
+					queryString+=whereClause;
+					countQuery+=whereClause;
+				}
+				long bannerCount = (search == null) ?
+					getSingleResult(em.createQuery(countQuery)) :
+					getSingleResult(em.createQuery(countQuery)
+						.setParameter("search", search));
+				Collection<Banner> banners = (search == null) ?
+					findPagedBanners(em.createQuery(queryString), pageNo):
+					findPagedBanners(em.createQuery(queryString), pageNo,
+						"search", search);
+				result.set(Json.createJsonObject()
+					.put("banners", readFromBanners(banners))
+					.put("count", bannerCount)
+					.put("page", pageNo)
+					.put("pageSize", BannerController.BANNERS_BY_PAGE)
+				);
 			});
 		}, ADMIN);
+		return result.get();
+	}
+
+	@REST(url="/api/banner/live", method=Method.GET)
+	public Json getLive(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			Collection<Banner> banners = findBanners(
+				em.createQuery("select b from Banner b where b.status = :status")
+					.setParameter("status", BannerStatus.LIVE));
+			result.set(readFromPublishedBanners(banners));
+		});
 		return result.get();
 	}
 
@@ -81,7 +118,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 		return result.get();
 	}
 
-	@REST(url="/api/banner/find/:id", method=Method.POST)
+	@REST(url="/api/banner/load/:id", method=Method.GET)
 	public Json getById(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
@@ -94,7 +131,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 		return result.get();
 	}
 
-	@REST(url="/api/banner/delete/:id", method=Method.POST)
+	@REST(url="/api/banner/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
 		ifAuthorized(user->{
 			try {
@@ -118,7 +155,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Banner banner = findBanner(em, new Long(id));
-					writeToBanner(request, banner);
+					writeToBanner(em, request, banner);
 					flush(em);
 					result.set(readFromBanner(banner));
 				});
@@ -129,16 +166,65 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 		return result.get();
 	}
 
-	Banner writeToBanner(Json json, Banner banner) {
+	@REST(url="/api/banner/update-status/:id", method=Method.POST)
+	public Json updateStatus(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em-> {
+			String id = (String) params.get("id");
+			Banner banner = findBanner(em, new Long(id));
+			ifAuthorized(
+				user -> {
+					try {
+						writeToBannerStatus(request, banner);
+						flush(em);
+						result.set(readFromBanner(banner));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+					}
+				},
+				ADMIN
+			);
+		});
+		return result.get();
+	}
+
+	Banner writeToBannerStatus(Json json, Banner banner) {
+		verify(json)
+			.checkRequired("id").checkInteger("id", "Not a valid id")
+			.check("status", BannerStatus.byLabels().keySet())
+			.ensure();
+		sync(json, banner)
+			.write("status", label->BannerStatus.byLabels().get(label));
+		return banner;
+	}
+
+	Banner writeToBanner(EntityManager em, Json json, Banner banner) {
 		verify(json)
 			.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 20)
 			.checkPattern("name", "[a-zA-Z0-9_\\-]+")
 			.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 200)
+			.checkMinSize("description", 2).checkMaxSize("description", 2000)
+			.check("status", BannerStatus.byLabels().keySet())
+			.each("comments", cJson->verify(cJson)
+				.checkRequired("version")
+				.checkRequired("date")
+				.checkRequired("text")
+				.checkMinSize("text", 2)
+				.checkMaxSize("text", 19995)
+			)
 			.ensure();
 		sync(json, banner)
 			.write("version")
 			.write("name")
-			.write("path");
+			.write("path")
+			.write("description")
+			.write("status", label->BannerStatus.byLabels().get(label))
+			.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
+			.syncEach("comments", (cJson, comment)->sync(cJson, comment)
+				.write("version")
+				.writeDate("date")
+				.write("text")
+			);
 		return banner;
 	}
 
@@ -148,7 +234,33 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 			.read("id")
 			.read("version")
 			.read("name")
-			.read("path");
+			.read("path")
+			.read("description")
+			.read("status", BannerStatus::getLabel)
+			.readLink("author", (pJson, account)->sync(pJson, account)
+				.read("id")
+				.read("login", "access.login")
+				.read("firstName")
+				.read("lastName")
+				.read("avatar")
+			)
+			.readEach("comments", (hJson, hex)->sync(hJson, hex)
+				.read("id")
+				.read("version")
+				.readDate("date")
+				.read("text")
+			);
+		return json;
+	}
+
+	Json readFromPublishedBanner(Banner banner) {
+		Json json = Json.createJsonObject();
+		sync(json, banner)
+			.read("id")
+			.read("version")
+			.read("name")
+			.read("path")
+			.read("description");
 		return json;
 	}
 
@@ -174,4 +286,17 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 		return list;
 	}
 
+	Collection<Banner> findPagedBanners(Query query, int page, Object... params) {
+		setParams(query, params);
+		List<Banner> banners = getPagedResultList(query, page* BannerController.BANNERS_BY_PAGE, BannerController.BANNERS_BY_PAGE);
+		return banners.stream().distinct().collect(Collectors.toList());
+	}
+
+	Json readFromPublishedBanners(Collection<Banner> banners) {
+		Json list = Json.createJsonArray();
+		banners.stream().forEach(banner->list.push(readFromPublishedBanner(banner)));
+		return list;
+	}
+
+	static int BANNERS_BY_PAGE = 16;
 }

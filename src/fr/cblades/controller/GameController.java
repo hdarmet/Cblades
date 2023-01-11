@@ -41,8 +41,8 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 			}
 			catch (PersistenceException pe) {
 				throw new SummerControllerException(500,
-						"Game with name (%s) already exists",
-						request.get("name"), null
+					"Game with name (%s) already exists",
+					request.get("name"), null
 				);
 			}
 		}, ADMIN);
@@ -233,10 +233,10 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 						)
 					)
 					.syncEach("locations", (lJson, location) -> sync(lJson, location)
-							.write("version")
-							.write("col")
-							.write("row")
-							.syncEach("units", ((Player) player)::getUnit)
+						.write("version")
+						.write("col")
+						.write("row")
+						.syncEach("units", ((Player) player)::getUnit)
 					)
 				);
 			return game;

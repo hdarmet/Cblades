@@ -1155,7 +1155,7 @@ export class VRef extends VField {
     }
 
     set value(value) {
-        this._value = value;
+        this._value = value ? value : null;
         this._refContent.clear();
         this._refCurrent.clear();
         if (value) {

@@ -745,8 +745,7 @@ export class PlayerIdentityListLoader {
     }
 
     load(action) {
-        sendPost("/api/player-identity/all",
-            {},
+        sendGet("/api/player-identity/live",
             (text, status) => {
                 let json = JSON.parse(text);
                 action(this.fromSpecs(json));
@@ -775,8 +774,7 @@ export class BannerListLoader {
     }
 
     load(action) {
-        sendPost("/api/banner/all",
-            {},
+        sendGet("/api/banner/live",
             (text, status) => {
                 let json = JSON.parse(text);
                 action(this.fromSpecs(json));

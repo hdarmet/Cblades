@@ -52,18 +52,18 @@ public class FakeData {
             data.persist(em, new Board().setName("board10").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-10.png").setIcon("./../images/maps/map-10-icon.png"));
         });
         data.inTransaction(em->{
-            data.persist(em, new PlayerIdentity().setName("orc-1").setPath("./../images/units/players/orc-1.png"));
-            data.persist(em, new PlayerIdentity().setName("orc-2").setPath("./../images/units/players/orc-2.png"));
-            data.persist(em, new PlayerIdentity().setName("roughneck-1").setPath("./../images/units/players/roughneck-1.png"));
-            data.persist(em, new PlayerIdentity().setName("roughneck-2").setPath("./../images/units/players/roughneck-2.png"));
+            data.persist(em, new PlayerIdentity().setStatus(PlayerIdentityStatus.LIVE).setName("orc-1").setPath("./../images/units/players/orc-1.png"));
+            data.persist(em, new PlayerIdentity().setStatus(PlayerIdentityStatus.LIVE).setName("orc-2").setPath("./../images/units/players/orc-2.png"));
+            data.persist(em, new PlayerIdentity().setStatus(PlayerIdentityStatus.LIVE).setName("roughneck-1").setPath("./../images/units/players/roughneck-1.png"));
+            data.persist(em, new PlayerIdentity().setStatus(PlayerIdentityStatus.LIVE).setName("roughneck-2").setPath("./../images/units/players/roughneck-2.png"));
         });
         data.inTransaction(em->{
-            data.persist(em, new Banner().setName("orc-banner-0").setPath("./../images/units/orcs/banners/banner0.png"));
-            data.persist(em, new Banner().setName("orc-banner-1").setPath("./../images/units/orcs/banners/banner1.png"));
-            data.persist(em, new Banner().setName("orc-banner-2").setPath("./../images/units/orcs/banners/banner2.png"));
-            data.persist(em, new Banner().setName("roughneck-banner-0").setPath("./../images/units/mercenaries/banners/banner0.png"));
-            data.persist(em, new Banner().setName("roughneck-banner-1").setPath("./../images/units/mercenaries/banners/banner1.png"));
-            data.persist(em, new Banner().setName("roughneck-banner-2").setPath("./../images/units/mercenaries/banners/banner2.png"));
+            data.persist(em, new Banner().setStatus(BannerStatus.LIVE).setName("orc-banner-0").setPath("./../images/units/orcs/banners/banner0.png"));
+            data.persist(em, new Banner().setStatus(BannerStatus.LIVE).setName("orc-banner-1").setPath("./../images/units/orcs/banners/banner1.png"));
+            data.persist(em, new Banner().setStatus(BannerStatus.LIVE).setName("orc-banner-2").setPath("./../images/units/orcs/banners/banner2.png"));
+            data.persist(em, new Banner().setStatus(BannerStatus.LIVE).setName("roughneck-banner-0").setPath("./../images/units/mercenaries/banners/banner0.png"));
+            data.persist(em, new Banner().setStatus(BannerStatus.LIVE).setName("roughneck-banner-1").setPath("./../images/units/mercenaries/banners/banner1.png"));
+            data.persist(em, new Banner().setStatus(BannerStatus.LIVE).setName("roughneck-banner-2").setPath("./../images/units/mercenaries/banners/banner2.png"));
         });
     }
 
