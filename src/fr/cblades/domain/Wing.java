@@ -67,4 +67,16 @@ public class Wing extends BaseEntity {
         return this;
     }
 
+    public Wing duplicate(EntityManager em, java.util.Map<BaseEntity, BaseEntity> duplications) {
+        Wing wing = new Wing().setBanner(this.banner);
+        for (Unit unit : this.units) {
+            this.addUnit(unit.duplicate(em, duplications));
+        }
+        for (TargetHex hex : this.retreatZone) {
+            this.addToRetreatZone(hex.duplicate(em, duplications));
+        }
+        duplications.put(this, wing);
+        em.persist(wing);
+        return wing;
+    }
 }

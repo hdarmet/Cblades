@@ -147,4 +147,26 @@ public class Unit extends BaseEntity {
         return this;
     }
 
+    public Unit duplicate(EntityManager em, java.util.Map<BaseEntity, BaseEntity> duplications) {
+        Unit unit = new Unit()
+            .setName(name)
+            .setCategory(category)
+            .setType(type)
+            .setAngle(angle)
+            .setPositionCol(positionCol)
+            .setPositionRow(positionRow)
+            .setPositionAngle(positionAngle)
+            .setSteps(steps)
+            .setTiredness(tiredness)
+            .setAmmunition(ammunition)
+            .setCohesion(cohesion)
+            .setCharging(charging)
+            .setContact(contact)
+            .setOrderGiven(orderGiven)
+            .setPlayed(played);
+        duplications.put(this, unit);
+        em.persist(unit);
+        return unit;
+    }
+
 }

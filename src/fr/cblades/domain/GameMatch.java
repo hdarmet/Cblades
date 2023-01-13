@@ -13,7 +13,7 @@ import java.util.*;
 })
 public class GameMatch extends BaseEntity {
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     Game game;
     @OneToOne
     Scenario scenario;

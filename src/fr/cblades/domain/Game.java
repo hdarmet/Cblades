@@ -5,10 +5,10 @@ import org.summer.data.BaseEntity;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 @Entity
-@Table(indexes=@Index(name="idx_game", unique=true, columnList="name"))
 public class Game extends BaseEntity {
 
     String name="";
@@ -50,4 +50,13 @@ public class Game extends BaseEntity {
         return this;
     }
 
+    public Game duplicate(EntityManager em, java.util.Map<BaseEntity, BaseEntity> duplications) {
+        Game game = new Game().setName(this.name).setMap(this.map);
+        for (Player player : players) {
+            game.addPlayer(player.duplicate(em, duplications));
+        }
+        duplications.put(this, game);
+        em.persist(game);
+        return game;
+    }
 }

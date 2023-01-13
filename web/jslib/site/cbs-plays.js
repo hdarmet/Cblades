@@ -4,7 +4,7 @@ import {
     VImage, Vitamin, VModal
 } from "../vitamin/vitamins.js";
 import {
-    Div, P, Span
+    Div, P, requestLog, sendPost, Span
 } from "../vitamin/components.js";
 import {
     VWall, VWallWithSearch
@@ -15,6 +15,9 @@ import {
 import {
     loadLiveScenarios
 } from "./cbs-scenario.js";
+import {
+    showMessage
+} from "../vitamin/vpage.js";
 
 export class CBSArmy extends Vitamin(Div) {
 
@@ -88,7 +91,7 @@ export class CBSAbstractGame extends Vitamin(Div) {
 
     constructor({
             ref,
-            title, img, story, victory, specialRules, participations,
+            id, title, img, story, victory, specialRules, participations,
             action
         }) {
         super({ref});
@@ -120,6 +123,7 @@ export class CBSAbstractGame extends Vitamin(Div) {
         this._content.add(this._specialRulesTitle);
         this._specialRules = new P(specialRules).addClass("game-special-rules");
         this._content.add(this._specialRules);
+        this._id = id;
         this.onEvent("click", ()=>{
             action && action(this);
         });
@@ -173,6 +177,7 @@ export class CBSAbstractGame extends Vitamin(Div) {
         }
         return {
             ref: this.ref.ref,
+            id: this._id,
             img: this._image ? this._image.src : null,
             title: this._title.getText(),
             story: this._story.getText(),
@@ -246,7 +251,11 @@ export class CBSConfirmProposal extends VModal {
                             {
                                 ref: "confirm-proposal-ok", enabled:false, type: VButton.TYPES.ACCEPT, label: "Ok",
                                 onClick: event => {
-                                    console.log(proposal);
+                                    console.log(proposal, this._armies);
+                                    proposeGame(proposal.id, this._armies.value,
+                                        (text, status)=>showMessage("Proposal submitted"),
+                                        (text, status)=>showMessage("Proposal denied", text)
+                                    );
                                     this.hide();
                                 }
                             },
@@ -271,12 +280,12 @@ export class CBSGameScenario extends CBSAbstractGame {
 
     constructor({
             ref,
-            title, img, story, victory, specialRules,
+            scenario, title, img, story, victory, specialRules,
             participations
         }) {
         super({
             ref,
-            title, img, story, victory, specialRules,
+            id:scenario, title, img, story, victory, specialRules,
             participations,
             action: ()=>{
                 new CBSConfirmProposal(this.specification).show();
@@ -380,38 +389,6 @@ export class CBSYourGamesWall extends VWall {
 
 }
 
-function getScenario() {
-    var paragrpahText = `
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-`;
-
-    return new CBSGameScenario({
-        ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
-        story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
-        turnNumber: 12,
-        participations: [
-            {
-                army: "Orc"
-            },
-            {
-                army: "Roughneck",
-            },
-            {
-                army: "Elves",
-            }
-        ]
-    });
-}
-
 export class CBSProposeGameWall extends VWallWithSearch {
 
     constructor() {
@@ -428,6 +405,7 @@ export class CBSProposeGameWall extends VWallWithSearch {
                     console.log(scenario);
                     this.addNote(new CBSGameScenario({
                         ref: "scen-"+scenario.id,
+                        scenario: scenario.id,
                         title: scenario.title,
                         img: scenario.illustration,
                         story: scenario.story,
@@ -460,4 +438,21 @@ export class CBSJoinGameWall extends VWallWithSearch {
 }
 
 export var vProposeGameWall = new CBSProposeGameWall();
+
+export function proposeGame(scenario, playerIdentity, success, failure) {
+    sendPost("/api/proposal/propose",
+        {
+            scenario,
+            "army": playerIdentity
+        },
+        (text, status) => {
+            requestLog("Proposal creation success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            requestLog("Proposal creation failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
+}
 

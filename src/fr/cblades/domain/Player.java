@@ -70,4 +70,16 @@ public class Player extends BaseEntity {
         return null;
     }
 
+    public Player duplicate(EntityManager em, java.util.Map<BaseEntity, BaseEntity> duplications) {
+        Player player = new Player().setIdentity(this.identity);
+        for (Wing wing : this.wings) {
+            player.addWing(wing.duplicate(em, duplications));
+        }
+        for (Location location : this.locations) {
+            player.addHex(location.duplicate(em, duplications));
+        }
+        duplications.put(this, player);
+        em.persist(player);
+        return player;
+    }
 }

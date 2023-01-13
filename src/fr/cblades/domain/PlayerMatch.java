@@ -25,7 +25,7 @@ public class PlayerMatch extends BaseEntity {
     public PlayerIdentity getPlayerIdentity() {
         return this.playerIdentity;
     }
-    public PlayerMatch setPlayerAccount(PlayerIdentity playerIdentity) {
+    public PlayerMatch setPlayerIdentity(PlayerIdentity playerIdentity) {
         this.playerIdentity = playerIdentity;
         return this;
     }

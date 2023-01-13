@@ -25,4 +25,13 @@ public class Map extends BaseEntity {
         return this;
     }
 
+    public Map duplicate(EntityManager em, java.util.Map<BaseEntity, BaseEntity> duplications) {
+        Map map = new Map();
+        for (BoardPlacement boardPlacement : boards) {
+            map.addBoardPlacement(boardPlacement);
+        }
+        duplications.put(this, map);
+        return map;
+    }
+
 }

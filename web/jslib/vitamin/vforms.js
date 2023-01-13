@@ -818,7 +818,7 @@ export class VCheckboxes extends Vitamin(Div) {
 
 export class VRadio extends Vitamin(Label) {
 
-    constructor({ref, title, name, enabled=true, checked=false, onInput, onChange}) {
+    constructor({ref, title, value=title, name, enabled=true, checked=false, onInput, onChange}) {
         super(ref);
         this.addClass("form-radio-container");
         this._label = new Div().addClass("form-radio-label").setText(title);
@@ -830,6 +830,7 @@ export class VRadio extends Vitamin(Label) {
         onChange&&this._input.onChange(onChange);
         this.add(this._label);
         this.add(this._span);
+        this._value = value;
         this.enabled = enabled;
     }
 
@@ -860,11 +861,11 @@ export class VRadio extends Vitamin(Label) {
     }
 
     get value() {
-        return this.checked ? this._input.getName() : null;
+        return this.checked ? this._value : null;
     }
 
     set value(value) {
-        this.checked = value === this._input.getName();
+        this.checked = value === this._value;
     }
 
 }
@@ -886,7 +887,7 @@ export class VRadios extends Vitamin(Div) {
 
     get value() {
         for (let radio of this._radios.children) {
-            if (radio.checked) return radio.ref;
+            if (radio.checked) return radio.value;
         }
         return null;
     }

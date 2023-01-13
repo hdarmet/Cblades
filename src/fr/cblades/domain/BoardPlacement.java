@@ -42,4 +42,15 @@ public class BoardPlacement extends BaseEntity {
         return this;
     }
 
+    public BoardPlacement duplicate(EntityManager em, java.util.Map<BaseEntity, BaseEntity> duplications) {
+        BoardPlacement boardPlacement = new BoardPlacement()
+            .setBoard(board)
+            .setCol(col)
+            .setRow(row)
+            .setInvert(invert);
+        duplications.put(this, boardPlacement);
+        em.persist(boardPlacement);
+        return boardPlacement;
+    }
+
 }
