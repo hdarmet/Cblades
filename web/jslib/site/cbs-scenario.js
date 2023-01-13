@@ -404,13 +404,12 @@ export function saveProposedScenario(scenario, images, success, failure) {
     );
 }
 
-export function loadLiveScenarios(update) {
-    sendGet("/api/scenario/live",
+export function loadLiveScenarios(page, search, update) {
+    sendGet("/api/scenario/live?page="+page+(search?"+search="+search:""),
         (text, status) => {
             requestLog("Load live Scenarios success: " + text + ": " + status);
-            let scenarios = JSON.parse(text);
-            let options = scenarios.map(scenario=>{return {value:scenario.id, label:scenario.title}});
-            update(options);
+            let page = JSON.parse(text);
+            update(page.scenarios);
         },
         (text, status) => {
             requestLog("Load Live Scenarios failure: " + text + ": " + status);

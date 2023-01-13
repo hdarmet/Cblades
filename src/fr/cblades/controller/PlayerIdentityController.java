@@ -2,15 +2,19 @@ package fr.cblades.controller;
 
 import fr.cblades.StandardUsers;
 import fr.cblades.domain.*;
+import org.summer.FileSpecification;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
 import org.summer.annotation.Controller;
+import org.summer.annotation.MIME;
 import org.summer.annotation.REST;
 import org.summer.annotation.REST.Method;
 import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.data.DataSunbeam;
+import org.summer.platform.FileSunbeam;
+import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
 
 import javax.persistence.EntityExistsException;
@@ -23,8 +27,34 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
-public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
-	
+public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers, FileSunbeam {
+
+	@MIME(url="/api/player-identity/images/:imagename")
+	public FileSpecification getImage(Map<String, Object> params) {
+		try {
+			String webName = (String)params.get("imagename");
+			int minusPos = webName.indexOf('-');
+			int pointPos = webName.indexOf('.');
+			String imageName = webName.substring(0, minusPos)+webName.substring(pointPos);
+			return new FileSpecification()
+				.setName(imageName)
+				.setStream(PlatformManager.get().getInputStream("/games/"+imageName));
+		} catch (PersistenceException pe) {
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+		}
+	}
+
+	void storePlayerIdentityImages(Map<String, Object> params, PlayerIdentity playerIdentity) {
+		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
+		if (files.length > 0) {
+			if (files.length!= 1) throw new SummerControllerException(400, "One player identity file must be loaded.");
+			String fileName = "playeridentity" + playerIdentity.getId() + "." + files[0].getExtension();
+			String webName = "playeridentity" + playerIdentity.getId() + "-" + System.currentTimeMillis() + "." + files[0].getExtension();
+			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/games/" + fileName));
+			playerIdentity.setPath("/api/player-identity/images/" + webName);
+		}
+	}
+
 	@REST(url="/api/player-identity/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
@@ -33,6 +63,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 				inTransaction(em->{
 					PlayerIdentity newPlayerIdentity = writeToPlayerIdentity(em, request, new PlayerIdentity());
 					persist(em, newPlayerIdentity);
+					storePlayerIdentityImages(params, newPlayerIdentity);
 					result.set(readFromPlayerIdentity(newPlayerIdentity));
 				});
 			}
@@ -159,6 +190,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 					String id = (String)params.get("id");
 					PlayerIdentity playerIdentity = findPlayerIdentity(em, new Long(id));
 					writeToPlayerIdentity(em, request, playerIdentity);
+					storePlayerIdentityImages(params, playerIdentity);
 					flush(em);
 					result.set(readFromPlayerIdentity(playerIdentity));
 				});

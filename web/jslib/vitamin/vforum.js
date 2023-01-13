@@ -532,5 +532,3 @@ export class VForumReport extends VModal {
     static REPORT_REF = "forum-report";
     static REPORT_TITLE = "Report";
 }
-
-

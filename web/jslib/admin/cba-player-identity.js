@@ -167,6 +167,12 @@ export class CBAEditPlayerIdentity extends Undoable(VModal) {
         this.playerIdentity = playerIdentity;
     }
 
+    get pathFile()  {
+        return this._path.files ? [
+            {key: "path", file: this._path.files[0]}
+        ] : undefined;
+    }
+
     validate() {
         return !this._name.validate()
             & !this._path.validate()
@@ -281,7 +287,7 @@ export class CBAPlayerIdentityList extends VTable {
                     title: "Edit Player Identity",
                     playerIdentity,
                     savePlayerIdentity: playerIdentity => this._savePlayerIdentity(playerIdentity,
-                        playerIdentityEditor.pathFiles,
+                        playerIdentityEditor.pathFile,
                         () => {
                             playerIdentityEditor.hide();
                             this.refresh();
@@ -381,7 +387,7 @@ export class CBAPlayerIdentityListPage extends Vitamin(Div) {
                         status: "prp"
                     },
                     savePlayerIdentity: playerIdentity => savePlayerIdentity(playerIdentity,
-                        this._createPlayerIdentityModal.pathFiles,
+                        this._createPlayerIdentityModal.pathFile,
                         () => {
                             this._createPlayerIdentityModal.hide();
                             this.refresh();

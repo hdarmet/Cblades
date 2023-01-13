@@ -2,7 +2,6 @@
 
 import {
     VContainer,
-    VSplitterPanel,
     VTable
 } from "../vitamin/vcontainer.js";
 import {
@@ -230,6 +229,12 @@ export class CBAEditBanner extends Undoable(VModal) {
         return true;
     }
 
+    get pathFile()  {
+        return this._path.files ? [
+            {key: "path", file: this._path.files[0]}
+        ] : undefined;
+    }
+
     set comments(comments) {
         this._comments = comments;
         this._memorize();
@@ -281,7 +286,7 @@ export class CBABannerList extends VTable {
                     title: "Edit Banner",
                     banner,
                     saveBanner: banner => this._saveBanner(banner,
-                        bannerEditor.pathFiles,
+                        bannerEditor.pathFile,
                         () => {
                             bannerEditor.hide();
                             this.refresh();
@@ -381,7 +386,7 @@ export class CBABannerListPage extends Vitamin(Div) {
                         status: "prp"
                     },
                     saveBanner: banner => saveBanner(banner,
-                        this._createBannerModal.pathFiles,
+                        this._createBannerModal.pathFile,
                         () => {
                             this._createBannerModal.hide();
                             this.refresh();

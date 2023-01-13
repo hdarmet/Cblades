@@ -385,22 +385,22 @@ public class Synchronizer implements DataSunbeam {
 		return this;
 	}
 
-	public <E extends BaseEntity> Synchronizer readLink(String jsonCollName, String targetCollName, BiConsumer<Json, E> reader) {
+	public <E extends BaseEntity> Synchronizer readLink(String jsonLinkName, String targetLinkName, BiConsumer<Json, E> reader) {
 		@SuppressWarnings("unchecked")
-		E entity = (targetCollName==null || targetCollName.isEmpty()) ? (E)this.target : ReflectUtil.get(this.target, targetCollName);
+		E entity = (targetLinkName==null || targetLinkName.isEmpty()) ? (E)this.target : ReflectUtil.get(this.target, targetLinkName);
 		if (entity!=null) {
-			Json json = (jsonCollName==null || jsonCollName.isEmpty()) ? this.json : this.json.search(jsonCollName);
+			Json json = (jsonLinkName==null || jsonLinkName.isEmpty()) ? this.json : this.json.search(jsonLinkName);
 			if (json==null) {
 				json = Json.createJsonObject();
-				this.json.put(jsonCollName, json);
+				this.json.put(jsonLinkName, json);
 			}
 			reader.accept(json, entity);
 		}
 		return this;
 	}
 
-	public <E extends BaseEntity> Synchronizer readLink(String collectionName, BiConsumer<Json, E> reader) {
-		return readLink(collectionName, collectionName, reader);
+	public <E extends BaseEntity> Synchronizer readLink(String linkName, BiConsumer<Json, E> reader) {
+		return readLink(linkName, linkName, reader);
 	}
 
 	public <E extends BaseEntity, J> Synchronizer readEachRef(String jsonCollName, String targetCollName, Function<E, J> reader) {

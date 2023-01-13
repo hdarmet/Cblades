@@ -759,5 +759,3 @@ export class CBAPageContent extends VPageContent {
 }
 
 window.vPageContent = new CBAPageContent();
-
-

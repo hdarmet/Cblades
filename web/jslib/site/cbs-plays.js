@@ -12,6 +12,9 @@ import {
 import {
     VButton, VButtons, VFormContainer, VRadios
 } from "../vitamin/vforms.js";
+import {
+    loadLiveScenarios
+} from "./cbs-scenario.js";
 
 export class CBSArmy extends Vitamin(Div) {
 
@@ -228,7 +231,10 @@ export class CBSConfirmProposal extends VModal {
             radios.push({ref:participation.ref, title:participation.name, name:"select-army"});
         }
         this._armies = new VRadios({
-            ref:CBSConfirmProposal.REF+"-armies", name: "armies", vertical:true, radios
+            ref:CBSConfirmProposal.REF+"-armies", name: "armies", vertical:true, radios,
+            onChange: event=>{
+                this.get("confirm-proposal-ok").enabled = true;
+            }
         });
         this.add(
             new VFormContainer({columns: 1})
@@ -236,9 +242,9 @@ export class CBSConfirmProposal extends VModal {
                 .addField({field: this._armies})
                 .addField({
                     field: new VButtons({
-                        ref: "confirm-proposal-buttons", verical: false, buttons: [
+                        ref: "confirm-proposal-buttons", vertical: false, buttons: [
                             {
-                                ref: "confirm-proposal-ok", type: VButton.TYPES.ACCEPT, label: "Ok",
+                                ref: "confirm-proposal-ok", enabled:false, type: VButton.TYPES.ACCEPT, label: "Ok",
                                 onClick: event => {
                                     console.log(proposal);
                                     this.hide();
@@ -374,11 +380,72 @@ export class CBSYourGamesWall extends VWall {
 
 }
 
+function getScenario() {
+    var paragrpahText = `
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
+`;
+
+    return new CBSGameScenario({
+        ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
+        story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
+        turnNumber: 12,
+        participations: [
+            {
+                army: "Orc"
+            },
+            {
+                army: "Roughneck",
+            },
+            {
+                army: "Elves",
+            }
+        ]
+    });
+}
+
 export class CBSProposeGameWall extends VWallWithSearch {
 
     constructor() {
-        super({ref:"propose-game", kind: "propose-game",
-            searchAction: text=>alert("search:"+text)});
+        super({
+            ref:"propose-game",
+            kind: "propose-game",
+            requestNotes: function (page, search) {
+                loadLiveScenarios(page, search, scenarios=>{
+                    this.loadNotes(scenarios);
+                });
+            },
+            receiveNotes: function(scenarios) {
+                for (let scenario of scenarios) {
+                    console.log(scenario);
+                    this.addNote(new CBSGameScenario({
+                        ref: "scen-"+scenario.id,
+                        title: scenario.title,
+                        img: scenario.illustration,
+                        story: scenario.story,
+                        victory: scenario.victoryConditions,
+                        specialRules: scenario.specialRules,
+                        turnNumber: 12,
+                        participations: scenario.game.players.map(player=>{
+                            return {
+                                "army": player.identity.name
+                            }
+                        })
+                    }));
+                }
+            },
+            searchAction: ()=>{
+                this.clearNotes()
+            }
+        });
     }
 
 }
@@ -391,4 +458,6 @@ export class CBSJoinGameWall extends VWallWithSearch {
     }
 
 }
+
+export var vProposeGameWall = new CBSProposeGameWall();
 

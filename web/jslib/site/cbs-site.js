@@ -47,8 +47,7 @@ import {
     loadBoards, vBoardsGallery, vBoardEditorPage, vBoardEditor, CBSBoard, loadProposedBoard
 } from "./cbs-board.js";
 import {
-    CBSGame, CBSGameProposal, CBSGameScenario, CBSJoinGameWall, CBSProposeGameWall,
-    CBSYourGamesWall
+    CBSGame, CBSGameProposal, CBSGameScenario, CBSJoinGameWall, CBSProposeGameWall, CBSYourGamesWall, vProposeGameWall
 } from "./cbs-plays.js";
 import {
     loadAnnouncement, vHome
@@ -411,31 +410,6 @@ export var vYourGamesWall = new CBSYourGamesWall()
     .addNote(getGame())
     .addNote(getGame())
     .addNote(getGame());
-
-function getScenario() {
-    return new CBSGameScenario({
-        ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
-        story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
-        turnNumber: 12,
-        participations: [
-            {
-                army: "Orc"
-            },
-            {
-                army: "Roughneck",
-            },
-            {
-                army: "Elves",
-            }
-        ]
-    });
-}
-
-export var vProposeGameWall = new CBSProposeGameWall()
-    .addNote(getScenario())
-    .addNote(getScenario())
-    .addNote(getScenario())
-    .addNote(getScenario());
 
 function getProposal() {
     return new CBSGameProposal({
@@ -873,6 +847,7 @@ class CBSPageContent extends VPageContent {
 
     _showProposeAGame(byHistory, historize) {
         vGamesTitle.setTitle("Propose A Game");
+        vProposeGameWall.clearNotes();
         return this.changePage(vGamesTitle, vProposeGameWall, byHistory, historize);
     }
 

@@ -23,7 +23,9 @@ public class FakeData {
         createEvents(data);
         createThemes(data);
         createArticles(data);
-        createScenario(data);
+        for (int index=0; index<20; index++) {
+            createScenario(data, index);
+        }
         createFactions(data);
         createMagicArts(data);
         createRulesAndMarkers(data);
@@ -278,20 +280,26 @@ public class FakeData {
         });
     }
 
-    static void createScenario(DataSunbeam data) {
+    static void createScenario(DataSunbeam data, int index) {
         data.inTransaction(em-> {
             Scenario scenario = new Scenario()
                 .setStory(PARAGRAPH_TEXT)
                 .setSetUp(PARAGRAPH_TEXT)
                 .setVictoryConditions(PARAGRAPH_TEXT)
                 .setSpecialRules(PARAGRAPH_TEXT)
-                .setTitle("Fierce fighting")
+                .setTitle("Fierce fighting "+index)
                 .setIllustration("../images/scenarii/scenario1.png")
                 .setStatus(ScenarioStatus.LIVE)
                 .setGame(new Game()
                     .setMap(new fr.cblades.domain.Map())
                 );
             scenario.getGame().setName(scenario.getTitle());
+            scenario.getGame().addPlayer(
+                new Player().setIdentity(PlayerIdentity.getByName(em, "orc-1"))
+            );
+            scenario.getGame().addPlayer(
+                new Player().setIdentity(PlayerIdentity.getByName(em, "roughneck-1"))
+            );
             data.persist(em, scenario);
         });
     }

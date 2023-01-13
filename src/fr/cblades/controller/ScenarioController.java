@@ -190,44 +190,46 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 	@REST(url="/api/scenario/live", method=Method.GET)
 	public Json getLive(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		ifAuthorized(user->{
-			inTransaction(em->{
-				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
-				String search = (String)params.get("search");
-				String countQuery = "select count(s) from Scenario s where s.status = :status";
-				String queryString = "select s from Scenario s where s.status = :status";
-				if (search!=null) {
-					/*
-					search = StringReplacer.replace(search,
-							"tester", "test");
-					 */
-					String whereClause =" and fts('pg_catalog.english', " +
-						"s.title||' '||" +
-						"s.story||' '||" +
-						"s.setUp||' '||" +
-						"s.victoryConditions||' '||" +
-						"s.specialRules||' '||" +
-						"s.status, :search) = true";
-					queryString+=whereClause;
-					countQuery+=whereClause;
-				}
-				long scenarioCount = (search == null) ?
-					getSingleResult(em, countQuery, "status", ScenarioStatus.LIVE) :
-					getSingleResult(em, countQuery, "status", ScenarioStatus.LIVE, "search", search);
-				Collection<Scenario> scenarios = (search == null) ?
-					findPagedScenarios(em.createQuery(queryString), pageNo,
-						"status", ScenarioStatus.LIVE):
-					findPagedScenarios(em.createQuery(queryString), pageNo,
-						"status", ScenarioStatus.LIVE,
-						"search", search);
-				result.set(Json.createJsonObject()
-					.put("scenarios", readFromScenarioSummaries(scenarios))
-					.put("count", scenarioCount)
-					.put("page", pageNo)
-					.put("pageSize", ScenarioController.SCENARIOS_BY_PAGE)
-				);
-			});
-		}, ADMIN);
+		inTransaction(em->{
+			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
+			String search = (String)params.get("search");
+			String countQuery = "select count(s) from Scenario s where s.status = :status";
+			String queryString = "select s from Scenario s" +
+					" left outer join fetch s.game g" +
+					" left outer join fetch g.players p" +
+					" left outer join fetch p.identity i" +
+					" where s.status = :status";
+			if (search!=null) {
+				/*
+				search = StringReplacer.replace(search,
+						"tester", "test");
+				 */
+				String whereClause =" and fts('pg_catalog.english', " +
+					"s.title||' '||" +
+					"s.story||' '||" +
+					"s.setUp||' '||" +
+					"s.victoryConditions||' '||" +
+					"s.specialRules||' '||" +
+					"s.status, :search) = true";
+				queryString+=whereClause;
+				countQuery+=whereClause;
+			}
+			long scenarioCount = (search == null) ?
+				getSingleResult(em, countQuery, "status", ScenarioStatus.LIVE) :
+				getSingleResult(em, countQuery, "status", ScenarioStatus.LIVE, "search", search);
+			Collection<Scenario> scenarios = (search == null) ?
+				findPagedScenarios(em.createQuery(queryString), pageNo,
+					"status", ScenarioStatus.LIVE):
+				findPagedScenarios(em.createQuery(queryString), pageNo,
+					"status", ScenarioStatus.LIVE,
+					"search", search);
+			result.set(Json.createJsonObject()
+				.put("scenarios", readFromPublishedScenarios(scenarios))
+				.put("count", scenarioCount)
+				.put("page", pageNo)
+				.put("pageSize", ScenarioController.SCENARIOS_BY_PAGE)
+			);
+		});
 		return result.get();
 	}
 
@@ -453,6 +455,29 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 		return json;
 	}
 
+	Json readFromPublishedScenario(Scenario scenario) {
+		Json json = Json.createJsonObject();
+		sync(json, scenario)
+			.read("id")
+			.read("version")
+			.read("title")
+			.read("story")
+			.read("setUp")
+			.read("victoryConditions")
+			.read("specialRules")
+			.read("illustration")
+			.readLink("game", (pJson, game)->sync(pJson, game)
+				.readEach("players", (hJson, hex)->sync(hJson, hex)
+					.readLink("identity", (piJson, pid)->sync(piJson, pid)
+					.read("id")
+					.read("name")
+					.read("description")
+				)
+			)
+		);
+		return json;
+	}
+
 	Scenario findScenario(EntityManager em, long id) {
 		Scenario scenario = find(em, Scenario.class, id);
 		if (scenario==null) {
@@ -472,6 +497,12 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 	Json readFromScenarioSummaries(Collection<Scenario> scenarios) {
 		Json list = Json.createJsonArray();
 		scenarios.stream().forEach(scenario->list.push(readFromScenarioSummary(scenario)));
+		return list;
+	}
+
+	Json readFromPublishedScenarios(Collection<Scenario> scenarios) {
+		Json list = Json.createJsonArray();
+		scenarios.stream().forEach(scenario->list.push(readFromPublishedScenario(scenario)));
 		return list;
 	}
 

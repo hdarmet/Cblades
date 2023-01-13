@@ -2,15 +2,19 @@ package fr.cblades.controller;
 
 import fr.cblades.StandardUsers;
 import fr.cblades.domain.*;
+import org.summer.FileSpecification;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
 import org.summer.annotation.Controller;
+import org.summer.annotation.MIME;
 import org.summer.annotation.REST;
 import org.summer.annotation.REST.Method;
 import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.data.DataSunbeam;
+import org.summer.platform.FileSunbeam;
+import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
 
 import javax.persistence.*;
@@ -20,8 +24,34 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
-public class BannerController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
-	
+public class BannerController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers, FileSunbeam {
+
+	@MIME(url="/api/banner/images/:imagename")
+	public FileSpecification getImage(Map<String, Object> params) {
+		try {
+			String webName = (String)params.get("imagename");
+			int minusPos = webName.indexOf('-');
+			int pointPos = webName.indexOf('.');
+			String imageName = webName.substring(0, minusPos)+webName.substring(pointPos);
+			return new FileSpecification()
+				.setName(imageName)
+				.setStream(PlatformManager.get().getInputStream("/games/"+imageName));
+		} catch (PersistenceException pe) {
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+		}
+	}
+
+	void storeBannerImages(Map<String, Object> params, Banner banner) {
+		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
+		if (files.length > 0) {
+			if (files.length!= 1) throw new SummerControllerException(400, "One banner file must be loaded.");
+			String fileName = "banner" + banner.getId() + "." + files[0].getExtension();
+			String webName = "banner" + banner.getId() + "-" + System.currentTimeMillis() + "." + files[0].getExtension();
+			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/games/" + fileName));
+			banner.setPath("/api/banner/images/" + webName);
+		}
+	}
+
 	@REST(url="/api/banner/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
@@ -30,6 +60,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 				inTransaction(em->{
 					Banner newBanner = writeToBanner(em, request, new Banner());
 					persist(em, newBanner);
+					storeBannerImages(params, newBanner);
 					result.set(readFromBanner(newBanner));
 				});
 			}
@@ -156,6 +187,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 					String id = (String)params.get("id");
 					Banner banner = findBanner(em, new Long(id));
 					writeToBanner(em, request, banner);
+					storeBannerImages(params, banner);
 					flush(em);
 					result.set(readFromBanner(banner));
 				});
