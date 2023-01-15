@@ -23,7 +23,7 @@ public class FakeData {
         createEvents(data);
         createThemes(data);
         createArticles(data);
-        for (int index=0; index<20; index++) {
+        for (int index=0; index<1; index++) {
             createScenario(data, index);
         }
         createFactions(data);
@@ -291,14 +291,76 @@ public class FakeData {
                 .setIllustration("../images/scenarii/scenario1.png")
                 .setStatus(ScenarioStatus.LIVE)
                 .setGame(new Game()
-                    .setMap(new fr.cblades.domain.Map())
+                    .setMap(
+                        new Map()
+                            .addBoardPlacement(
+                                new BoardPlacement().setCol(0).setRow(0)
+                                    .setBoard(Board.getByName(em, "board2"))
+                            )
+                    )
                 );
             scenario.getGame().setName(scenario.getTitle());
+            Unit unit1 = new Unit()
+                .setPositionRow(4).setPositionCol(2)
+                .setName("u1").setCategory(UnitCategory.CHARACTER)
+                .setType("Goblin Leader")
+                .setAngle(0)
+                .setSteps(1)
+                .setTiredness(Tiredness.FRESH)
+                .setAmmunition(Ammunition.PLENTIFUL)
+                .setCohesion(Cohesion.DISRUPTED)
+                .setContact(false)
+                .setOrderGiven(false)
+                .setPlayed(false)
+                .setCharging(false);
+            em.persist(unit1);
             scenario.getGame().addPlayer(
                 new Player().setIdentity(PlayerIdentity.getByName(em, "orc 1"))
+                    .addWing(
+                        new Wing().setBanner(
+                            Banner.getByName(em, "orc-banner-0")
+                        )
+                        .addToRetreatZone(
+                            new TargetHex().setRow(0).setCol(4)
+                        )
+                        .addUnit(unit1)
+                    )
+                    .addHex(new Location()
+                        .setCol(unit1.getPositionCol())
+                        .setRow(unit1.getPositionRow())
+                        .addUnit(unit1)
+                    )
             );
+            Unit unit2 = new Unit()
+                .setPositionRow(4).setPositionCol(4)
+                .setName("u2").setCategory(UnitCategory.CHARACTER)
+                .setType("Company Leader")
+                .setAngle(0)
+                .setSteps(1)
+                .setTiredness(Tiredness.FRESH)
+                .setAmmunition(Ammunition.PLENTIFUL)
+                .setCohesion(Cohesion.DISRUPTED)
+                .setContact(false)
+                .setOrderGiven(false)
+                .setPlayed(false)
+                .setCharging(false);
+            em.persist(unit2);
             scenario.getGame().addPlayer(
                 new Player().setIdentity(PlayerIdentity.getByName(em, "roughneck 1"))
+                    .addWing(
+                        new Wing().setBanner(
+                            Banner.getByName(em, "roughneck-banner-0")
+                        )
+                        .addToRetreatZone(
+                            new TargetHex().setRow(0).setCol(2)
+                        )
+                        .addUnit(unit2)
+                    )
+                    .addHex(new Location()
+                        .setCol(unit2.getPositionCol())
+                        .setRow(unit2.getPositionRow())
+                        .addUnit(unit2)
+                    )
             );
             data.persist(em, scenario);
         });

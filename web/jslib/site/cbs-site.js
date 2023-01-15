@@ -47,7 +47,11 @@ import {
     loadBoards, vBoardsGallery, vBoardEditorPage, vBoardEditor, CBSBoard, loadProposedBoard
 } from "./cbs-board.js";
 import {
-    CBSGame, CBSGameProposal, CBSGameScenario, CBSJoinGameWall, CBSProposeGameWall, CBSYourGamesWall, vProposeGameWall
+    CBSGame,
+    CBSGameProposal,
+    CBSJoinGameWall,
+    vProposeGameWall,
+    vYourGamesWall
 } from "./cbs-plays.js";
 import {
     loadAnnouncement, vHome
@@ -404,12 +408,6 @@ function getGame() {
         }
     });
 }
-
-export var vYourGamesWall = new CBSYourGamesWall()
-    .addNote(getGame())
-    .addNote(getGame())
-    .addNote(getGame())
-    .addNote(getGame());
 
 function getProposal() {
     return new CBSGameProposal({
@@ -836,6 +834,7 @@ class CBSPageContent extends VPageContent {
 
     _showYourGames(byHistory, historize) {
         vGamesTitle.setTitle("My Games");
+        vYourGamesWall.clearNotes();
         return this.changePage(vGamesTitle, vYourGamesWall, byHistory, historize);
     }
 

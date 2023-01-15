@@ -22,6 +22,8 @@ public class GameMatch extends BaseEntity {
     List<PlayerMatch> playerMatches = new ArrayList<>();
     @ManyToOne
     Account author;
+    @Enumerated(EnumType.STRING)
+    GameMatchStatus status;
 
     public Game getGame() {
         return this.game;
@@ -56,6 +58,14 @@ public class GameMatch extends BaseEntity {
     }
     public GameMatch setAuthor(Account author) {
         this.author = author;
+        return this;
+    }
+
+    public GameMatchStatus getStatus() {
+        return this.status;
+    }
+    public GameMatch setStatus(GameMatchStatus status) {
+        this.status = status;
         return this;
     }
 

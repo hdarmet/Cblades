@@ -5,7 +5,6 @@ import org.summer.data.BaseEntity;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 @Entity
@@ -13,7 +12,7 @@ public class Game extends BaseEntity {
 
     String name="";
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "game_id")
+    @OrderColumn(name = "order_player")
     List<Player> players = new ArrayList<>();
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     Map map;

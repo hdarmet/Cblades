@@ -4,7 +4,7 @@ import {
     VImage, Vitamin, VModal
 } from "../vitamin/vitamins.js";
 import {
-    Div, P, requestLog, sendPost, Span
+    Div, P, requestLog, sendGet, sendPost, Span
 } from "../vitamin/components.js";
 import {
     VWall, VWallWithSearch
@@ -45,9 +45,11 @@ export class CBSParticipation extends CBSArmy {
         this.addClass("participation-"+status);
         this._armySeparator = new Span("&nbsp;").addClass("participation-separator");
         this.add(this._armySeparator);
-        this.add(new Span("Player:").addClass("player-label"));
-        this._armyPlayer = new Span(player).addClass("player-name");
-        this.add(this._armyPlayer);
+        if (player) {
+            this.add(new Span("Player:").addClass("player-label"));
+            this._armyPlayer = new Span(player).addClass("player-name");
+            this.add(this._armyPlayer);
+        }
     }
 
     get specification() {
@@ -380,7 +382,48 @@ export class CBSGameProposal extends CBSAbstractGame {
 export class CBSYourGamesWall extends VWall {
 
     constructor() {
-        super({ref:"my-games", kind: "my-games"});
+        super({
+            ref:"my-games", kind: "my-games",
+            requestNotes: function (page, search) {
+                loadMyGameMatches(page, search, scenarios=>{
+                    this.loadNotes(scenarios);
+                });
+            },
+            receiveNotes: function(matches) {
+                for (let match of matches) {
+                    console.log(match);
+                    let players = {};
+                    for (let playerMatch of match.playerMatches) {
+                        players["s"+playerMatch.playerIdentity.id]=playerMatch.playerAccount.login;
+                    }
+                    let game = new CBSGame({
+                        ref: "scen-"+match.id,
+                        scenario: match.id,
+                        title: match.title,
+                        img: match.illustration,
+                        story: match.story,
+                        victory: match.victoryConditions,
+                        specialRules: match.specialRules,
+                        turnNumber: 12,
+                        participations: match.game.players.map(player=>{
+                            return {
+                                id: player.identity.id,
+                                army: player.identity.name,
+                                player: players["s"+player.identity.id],
+                                status: "active"
+                            }
+                        }),
+                        action:game=>{
+                            this.openInNewTab("./cblades.html");
+                        }
+                    });
+                    this.addNote(game);
+                }
+            },
+            searchAction: ()=>{
+                this.clearNotes()
+            }
+        });
     }
 
     openInNewTab(url) {
@@ -437,6 +480,7 @@ export class CBSJoinGameWall extends VWallWithSearch {
 
 }
 
+export var vYourGamesWall = new CBSYourGamesWall();
 export var vProposeGameWall = new CBSProposeGameWall();
 
 export function proposeGame(scenario, playerIdentity, success, failure) {
@@ -452,6 +496,20 @@ export function proposeGame(scenario, playerIdentity, success, failure) {
         (text, status) => {
             requestLog("Proposal creation failure: " + text + ": " + status);
             failure(text, status);
+        }
+    );
+}
+
+export function loadMyGameMatches(page, search, update) {
+    sendGet("/api/proposal/mine?page="+page+(search?"+search="+search:""),
+        (text, status) => {
+            requestLog("Load Game Matches success: " + text + ": " + status);
+            let page = JSON.parse(text);
+            update(page.matches);
+        },
+        (text, status) => {
+            requestLog("Load Game Matches failure: " + text + ": " + status);
+            showMessage("Unable to load Game Matches", text);
         }
     );
 }

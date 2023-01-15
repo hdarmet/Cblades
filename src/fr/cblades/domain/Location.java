@@ -47,7 +47,7 @@ public class Location extends BaseEntity {
     Location duplicate(EntityManager em, java.util.Map<BaseEntity, BaseEntity> duplications) {
         Location location = new Location().setCol(this.col).setRow(this.row);
         for (Unit unit: this.units) {
-            this.addUnit((Unit)duplications.get(unit));
+            location.addUnit((Unit)duplications.get(unit));
         }
         duplications.put(this, location);
         em.persist(location);

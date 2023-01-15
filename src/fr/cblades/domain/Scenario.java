@@ -1,5 +1,7 @@
 package fr.cblades.domain;
 
+import org.hibernate.annotations.LazyToOne;
+import org.hibernate.annotations.LazyToOneOption;
 import org.summer.data.BaseEntity;
 import org.summer.data.SummerNotFoundException;
 
@@ -26,7 +28,7 @@ public class Scenario extends BaseEntity {
     String illustration ="";
     @Enumerated(EnumType.STRING)
     ScenarioStatus status;
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     Game game;
     @ManyToOne
     Account author;

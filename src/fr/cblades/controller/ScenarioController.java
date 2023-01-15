@@ -152,7 +152,9 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(s) from Scenario s";
-				String queryString = "select s from Scenario s";
+				String queryString = "select s from Scenario s" +
+						" left outer join fetch s.game g" +
+						" left outer join fetch g.map m";
 				if (search!=null) {
 					/*
 					search = StringReplacer.replace(search,
@@ -196,6 +198,7 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 			String countQuery = "select count(s) from Scenario s where s.status = :status";
 			String queryString = "select s from Scenario s" +
 					" left outer join fetch s.game g" +
+					" left outer join fetch g.map m" +
 					" left outer join fetch g.players p" +
 					" left outer join fetch p.identity i" +
 					" where s.status = :status";

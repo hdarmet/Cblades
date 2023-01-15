@@ -114,4 +114,17 @@ public class Board extends BaseEntity {
         }
     }
 
+    public static Board getByName(EntityManager em, String name) {
+        Query query = em.createQuery("select b from Board b where b.name = :name");
+        query.setParameter("name", name);
+        try {
+            return (Board)query.getSingleResult();
+        }
+        catch (NoResultException enf) {
+            throw new SummerException(
+                    String.format("Unknown Board with name %s", name)
+            );
+        }
+    }
+
 }
