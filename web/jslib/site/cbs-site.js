@@ -49,9 +49,9 @@ import {
 import {
     CBSGame,
     CBSGameProposal,
-    CBSJoinGameWall,
     vProposeGameWall,
-    vYourGamesWall
+    vYourGamesWall,
+    vJoinGameWall
 } from "./cbs-plays.js";
 import {
     loadAnnouncement, vHome
@@ -276,19 +276,6 @@ export var vMarkersTitle = new VHeader({
     title: "Markers"
 }).addClass("markers-title");
 
-var paragrpahText = `
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit
-`;
-
 export var vContributeTitle = new VHeader({
     ref:"contribute-title",
     left:"../images/site/left-contribute.png", right:"../images/site/right-contribute.png"
@@ -385,55 +372,6 @@ export var vGamesTitle = new VHeader({
     ref:"games-title",
     left:"../images/site/left-games.png", right:"../images/site/right-games.png",
 }).addClass("games-title");
-
-function getGame() {
-    return new CBSGame({
-        ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
-        story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
-        turnNumber: 12,
-        participations: [
-            {
-                army: "Orc",
-                player: "Big-Cheftain",
-                status: "active"
-            },
-            {
-                army: "Roughneck",
-                player: "rearmor",
-                status: "passive"
-            }
-        ],
-        action:game=>{
-            vYourGamesWall.openInNewTab("./cblades.html");
-        }
-    });
-}
-
-function getProposal() {
-    return new CBSGameProposal({
-        ref: "art1", title: "A Fierce Fighting",img: `../images/scenarii/scenario1.png`,
-        story: paragrpahText, victory: paragrpahText, specialRules: paragrpahText,
-        turnNumber: 12,
-        participations: [
-            {
-                army: "Orc",
-                player: "Big-Cheftain"
-            },
-            {
-                army: "Roughneck",
-            },
-            {
-                army: "Elves",
-            }
-        ]
-    });
-}
-
-export var vJoinGameWall = new CBSJoinGameWall()
-    .addNote(getProposal())
-    .addNote(getProposal())
-    .addNote(getProposal())
-    .addNote(getProposal());
 
 export var vNewArticlesTitle = new VHeader({
     ref:"new-articles-title",
@@ -858,6 +796,7 @@ class CBSPageContent extends VPageContent {
 
     _showJoinAGame(byHistory, historize) {
         vGamesTitle.setTitle("Join A Game");
+        vJoinGameWall.clearNotes();
         return this.changePage(vGamesTitle, vJoinGameWall, byHistory, historize);
     }
 

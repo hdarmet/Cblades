@@ -1,6 +1,7 @@
 package fr.cblades.domain;
 
 import org.summer.data.BaseEntity;
+import org.summer.data.SummerNotFoundException;
 
 import javax.persistence.*;
 import java.util.Map;
@@ -69,4 +70,13 @@ public class GameMatch extends BaseEntity {
         return this;
     }
 
+    static public GameMatch find(EntityManager em, long id) {
+        GameMatch gameMatch = em.find(GameMatch.class, id);
+        if (gameMatch==null) {
+            throw new SummerNotFoundException(
+                    String.format("Unknown Game Match with id %d", id)
+            );
+        }
+        return gameMatch;
+    }
 }

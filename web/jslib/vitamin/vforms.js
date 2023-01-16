@@ -874,20 +874,22 @@ export class VRadios extends Vitamin(Div) {
 
     constructor({ref, label, vertical, name, onChange, onInput, radios}) {
         super(ref);
-        name=name?name:ref;
+        this._name=name?name:ref;
         this.addClass("form-field");
         this._label = new Label(label).addClass("form-label");
         this.add(this._label);
         this._radios = new Div().addClass(vertical ? "form-line-container" : "form-row-container");
         this.add(this._radios);
-        for (let radio of radios) {
-            this._radios.add(new VRadio({...radio, onChange, onInput, name}));
+        for (let radioSpec of radios) {
+            if (!radioSpec.name) radioSpec = {...radioSpec, name:this._name};
+            let radio = new VRadio({...radioSpec, onChange, onInput});
+            this._radios.add(radio);
         }
     }
 
     get value() {
         for (let radio of this._radios.children) {
-            if (radio.checked) return radio.value;
+            if (radio.name === this._name && radio.checked) return radio.value;
         }
         return null;
     }

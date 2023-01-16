@@ -235,7 +235,7 @@ export class CBSConfirmProposal extends VModal {
         this.addClass("confirm-proposal");
         let radios = [];
         for (let participation of proposal.participations) {
-            radios.push({ref:participation.ref, title:participation.name, name:"select-army"});
+            radios.push({ref:participation.ref, title:participation.name, name:"armies"});
         }
         this._armies = new VRadios({
             ref:CBSConfirmProposal.REF+"-armies", name: "armies", vertical:true, radios,
@@ -313,12 +313,19 @@ export class CBSConfirmJoin extends VModal {
         this.addClass("confirm-join");
         let radios = [];
         for (let participation of proposal.participations) {
-            let enabled = !participation.player && proposal.participations.length>2;
-            let checked = !participation.player && proposal.participations.length<=2;
-            radios.push({ref:participation.ref, title:participation.name, enabled, checked, name:"select-army"});
+            let enabled = !participation.player;
+            let checked = participation.player;
+            let name = "armies" + (participation.player ? "-"+participation.ref : "");
+            radios.push({
+                ref:participation.ref, title:participation.name,
+                enabled, checked, name
+            });
         }
         this._armies = new VRadios({
-            ref:CBSConfirmProposal.REF+"-armies", name: "armies", vertical:true, radios
+            ref:CBSConfirmProposal.REF+"-armies", name: "armies", vertical:true, radios,
+            onChange: event=>{
+                this.get("confirm-proposal-ok").enabled = true;
+            }
         });
         this.add(
             new VFormContainer({columns: 1})
@@ -328,10 +335,15 @@ export class CBSConfirmJoin extends VModal {
                     field: new VButtons({
                         ref: "confirm-proposal-buttons", verical: false, buttons: [
                             {
-                                ref: "confirm-proposal-ok", type: VButton.TYPES.ACCEPT, label: "Ok",
+                                ref: "confirm-proposal-ok", type: VButton.TYPES.ACCEPT, enabled: false, label: "Ok",
                                 onClick: event => {
-                                    console.log(proposal);
+                                    console.log(proposal, this._armies);
+                                    joinGame(proposal.id, this._armies.value,
+                                        (text, status)=>showMessage("Join submitted"),
+                                        (text, status)=>showMessage("Join denied", text)
+                                    );
                                     this.hide();
+                                    vJoinGameWall.clearNotes();
                                 }
                             },
                             {
@@ -355,12 +367,12 @@ export class CBSConfirmJoin extends VModal {
 export class CBSGameProposal extends CBSAbstractGame {
 
     constructor({
-                ref,
+                ref, proposal,
                 title, img, story, victory, specialRules,
                 participations
             }) {
         super({
-            ref,
+            ref, id:proposal,
             title, img, story, victory, specialRules,
             participations,
             action: ()=>{
@@ -389,7 +401,7 @@ export class CBSYourGamesWall extends VWall {
                     this.loadNotes(scenarios);
                 });
             },
-            receiveNotes: function(matches) {
+            receiveNotes: function (matches) {
                 for (let match of matches) {
                     console.log(match);
                     let players = {};
@@ -475,11 +487,51 @@ export class CBSJoinGameWall extends VWallWithSearch {
 
     constructor() {
         super({ref:"join-game", kind: "join-game",
-            searchAction: text=>alert("search:"+text)});
+            requestNotes: function (page, search) {
+                loadProposedGameMatches(page, search, scenarios=>{
+                    this.loadNotes(scenarios);
+                });
+            },
+            receiveNotes : function (matches) {
+                for (let match of matches) {
+                    console.log(match);
+                    let players = {};
+                    for (let playerMatch of match.playerMatches) {
+                        players["s"+playerMatch.playerIdentity.id]=playerMatch.playerAccount.login;
+                    }
+                    let game = new CBSGameProposal({
+                        ref: "scen-"+match.id,
+                        proposal: match.id,
+                        title: match.title,
+                        img: match.illustration,
+                        story: match.story,
+                        victory: match.victoryConditions,
+                        specialRules: match.specialRules,
+                        turnNumber: 12,
+                        participations: match.game.players.map(player=>{
+                            return {
+                                id: player.identity.id,
+                                army: player.identity.name,
+                                player: players["s"+player.identity.id],
+                                status: "active"
+                            }
+                        }),
+                        action:game=>{
+                            this.openInNewTab("./cblades.html");
+                        }
+                    });
+                    this.addNote(game);
+                }
+            },
+            searchAction: ()=>{
+                this.clearNotes()
+            }
+        });
     }
 
 }
 
+export var vJoinGameWall = new CBSJoinGameWall();
 export var vYourGamesWall = new CBSYourGamesWall();
 export var vProposeGameWall = new CBSProposeGameWall();
 
@@ -500,8 +552,39 @@ export function proposeGame(scenario, playerIdentity, success, failure) {
     );
 }
 
+export function joinGame(proposal, playerIdentity, success, failure) {
+    sendPost("/api/proposal/join",
+        {
+            proposal,
+            "army": playerIdentity
+        },
+        (text, status) => {
+            requestLog("Join Proposal success: " + text + ": " + status);
+            success(text, status);
+        },
+        (text, status) => {
+            requestLog("Join Proposal failure: " + text + ": " + status);
+            failure(text, status);
+        }
+    );
+}
+
 export function loadMyGameMatches(page, search, update) {
     sendGet("/api/proposal/mine?page="+page+(search?"+search="+search:""),
+        (text, status) => {
+            requestLog("Load Game Matches success: " + text + ": " + status);
+            let page = JSON.parse(text);
+            update(page.matches);
+        },
+        (text, status) => {
+            requestLog("Load Game Matches failure: " + text + ": " + status);
+            showMessage("Unable to load Game Matches", text);
+        }
+    );
+}
+
+export function loadProposedGameMatches(page, search, update) {
+    sendGet("/api/proposal/proposed?page="+page+(search?"+search="+search:""),
         (text, status) => {
             requestLog("Load Game Matches success: " + text + ": " + status);
             let page = JSON.parse(text);

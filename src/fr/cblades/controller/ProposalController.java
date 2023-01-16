@@ -74,6 +74,47 @@ public class ProposalController implements InjectorSunbeam, DataSunbeam, Securit
 			.ensure();
 	}
 
+	@REST(url="/api/proposal/join", method=Method.POST)
+	public Json join(Map<String, Object> params, Json request) {
+		inTransaction(em->{
+			ifAuthorized(
+				user->{
+					try {
+						Account author = Account.find(em, user);
+						checkJoin(request);
+						long proposalId = request.getLong("proposal");
+						String armyName = request.get("army");
+						GameMatch gameMatch = GameMatch.find(em, proposalId);
+						PlayerIdentity army = PlayerIdentity.getByName(em, armyName);
+						gameMatch.addPlayerMatch(
+							new PlayerMatch()
+								.setPlayerIdentity(army)
+								.setPlayerAccount(author)
+						);
+						if (gameMatch.getPlayerMatches().size()==gameMatch.getGame().getPlayers().size()) {
+							gameMatch.setStatus(GameMatchStatus.IN_PROGRESS);
+						}
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(500, pe.getMessage());
+					} catch (SummerNotFoundException snfe) {
+						throw new SummerControllerException(404, snfe.getMessage());
+					}
+				}
+			);
+		});
+		return Json.createJsonObject();
+	}
+
+	void checkJoin(Json json) {
+		verify(json)
+			.checkRequired("proposal").checkInteger("scenario")
+			.checkRequired("army")
+			.checkPattern("army", "[\\d\\s\\w]+")
+			.checkMinSize("army", 2)
+			.checkMaxSize("army", 200)
+			.ensure();
+	}
+
 	@REST(url="/api/proposal/mine", method=Method.GET)
 	public Json getMine(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
@@ -145,6 +186,76 @@ public class ProposalController implements InjectorSunbeam, DataSunbeam, Securit
 		return result.get();
 	}
 
+	@REST(url="/api/proposal/proposed", method=Method.GET)
+	public Json getProposed(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em->{
+			ifAuthorized(user->{
+				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
+				String search = (String)params.get("search");
+				String countQuery = "select count(gm) from GameMatch gm" +
+					" join gm.playerMatches pm" +
+					" where gm.status = :status";
+				String queryString = "select gm from GameMatch gm" +
+					" left outer join fetch gm.scenario s" +
+					" left outer join fetch s.game g" +
+					" left outer join fetch g.map m" +
+					" join gm.playerMatches pm" +
+					" where gm.status = :status";
+				String queryStringScenario = "select gm from GameMatch gm" +
+					" left outer join fetch gm.scenario s" +
+					" left outer join fetch s.game g" +
+					" left outer join fetch g.map m" +
+					" left outer join fetch g.players p" +
+					" left outer join fetch p.identity i" +
+					" where gm in :matches";
+				String queryStringPlayers = "select gm from GameMatch gm" +
+					" left outer join fetch gm.playerMatches pm" +
+					" left outer join fetch pm.playerAccount w" +
+					" left outer join fetch pm.playerIdentity ppi" +
+					" left outer join fetch w.access" +
+					" where gm in :matches";
+				if (search!=null) {
+					/*
+					search = StringReplacer.replace(search,
+							"tester", "test");
+					 */
+					String whereClause =" and fts('pg_catalog.english', " +
+						"s.title||' '||" +
+						"s.story||' '||" +
+						"s.setUp||' '||" +
+						"s.victoryConditions||' '||" +
+						"s.specialRules||' '||" +
+						"s.status, :search) = true";
+					queryString+=whereClause;
+					countQuery+=whereClause;
+				}
+				long gameMatchCount = (search == null) ?
+					getSingleResult(em, countQuery, "status", GameMatchStatus.PROPOSED) :
+					getSingleResult(em, countQuery, "status", GameMatchStatus.PROPOSED, "search", search);
+				Collection<GameMatch> gameMatches = (search == null) ?
+					findPagedGameMatches(em.createQuery(queryString), pageNo,
+						"status", GameMatchStatus.PROPOSED):
+					findPagedGameMatches(em.createQuery(queryString), pageNo,
+						"status", GameMatchStatus.PROPOSED,
+						"search", search);
+				if (gameMatches.size()>0) {
+					gameMatches = findGameMatches(em.createQuery(queryStringScenario),
+						"matches", gameMatches);
+					gameMatches = findGameMatches(em.createQuery(queryStringPlayers),
+						"matches", gameMatches);
+				}
+				result.set(Json.createJsonObject()
+					.put("matches", readFromPublishedGameMatches(gameMatches))
+					.put("count", gameMatchCount)
+					.put("page", pageNo)
+					.put("pageSize", ProposalController.PROPOSALS_BY_PAGE)
+				);
+			});
+		});
+		return result.get();
+	}
+
 	Collection<GameMatch> findPagedGameMatches(Query query, int page, Object... params) {
 		setParams(query, params);
 		List<GameMatch> gameMatches = getPagedResultList(
@@ -168,8 +279,9 @@ public class ProposalController implements InjectorSunbeam, DataSunbeam, Securit
 
 	Json readFromPublishedGameMatch(GameMatch gameMatch) {
 		Json json = Json.createJsonObject();
+		sync(json, gameMatch)
+			.read("id");
 		sync(json, gameMatch.getScenario())
-			.read("id")
 			.read("version")
 			.read("title")
 			.read("story")
