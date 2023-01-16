@@ -82,7 +82,7 @@
     registerInteractiveMagic();
     registerInteractiveMiscellaneous();
 
-    let game = new (BurningMixin(WeatherMixin(CBGame)))("Play");
+    let game = new (BurningMixin(WeatherMixin(CBGame)))(1);
     let map = new CBMap([
         {path:"./../images/maps/map-18.png", col:0, row:0, invert:true},
         {path:"./../images/maps/map-3.png", col:1, row:0}

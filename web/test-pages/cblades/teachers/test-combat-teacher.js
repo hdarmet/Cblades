@@ -84,7 +84,7 @@ describe("Combat teacher", ()=> {
     }
 
     function createTinyGame() {
-        let game = new CBGame("Test");
+        let game = new CBGame(1);
         var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);

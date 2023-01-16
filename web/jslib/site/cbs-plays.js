@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    VImage, Vitamin, VModal
+    VImage, Vitamin, VLoginHandler, VModal
 } from "../vitamin/vitamins.js";
 import {
     Div, P, requestLog, sendGet, sendPost, Span
@@ -196,7 +196,7 @@ export class CBSGame extends CBSAbstractGame {
     constructor({
         ref,
         title, img, story, victory, specialRules,
-        turnNumber, participations,
+        turnNumber, participations, gotoGame,
         action
     }) {
         super({
@@ -206,11 +206,14 @@ export class CBSGame extends CBSAbstractGame {
         });
         this._turnNumber = new Div()
             .add(new Span("Turn Number: ").addClass("turn-number-label"))
-            .add(new Span(turnNumber).addClass("turn-number-value"))
-            .add(new VButton({
-                ref: "goto-game", type: VButton.TYPES.ACCEPT, label: "Go to game",
-            }).addClass("game-command"))
-            .addClass("turn-number");
+            .add(new Span(turnNumber).addClass("turn-number-value"));
+        if (gotoGame) {
+            this._turnNumber
+                .add(new VButton({
+                    ref: "goto-game", type: VButton.TYPES.ACCEPT, label: "Go to game",
+                }).addClass("game-command"))
+                .addClass("turn-number");
+        }
         this._header.add(this._turnNumber);
     }
 
@@ -403,7 +406,7 @@ export class CBSYourGamesWall extends VWall {
             },
             receiveNotes: function (matches) {
                 for (let match of matches) {
-                    console.log(match);
+                    console.log(match, VLoginHandler._connection);
                     let players = {};
                     for (let playerMatch of match.playerMatches) {
                         players["s"+playerMatch.playerIdentity.id]=playerMatch.playerAccount.login;
@@ -417,16 +420,23 @@ export class CBSYourGamesWall extends VWall {
                         victory: match.victoryConditions,
                         specialRules: match.specialRules,
                         turnNumber: 12,
+                        gotoGame: match.status==="ipr",
                         participations: match.game.players.map(player=>{
                             return {
                                 id: player.identity.id,
                                 army: player.identity.name,
                                 player: players["s"+player.identity.id],
-                                status: "active"
+                                status: match.status==="ipr"?"active":"inactive"
                             }
                         }),
                         action:game=>{
-                            this.openInNewTab("./cblades.html");
+                            let actives = [];
+                            for (let playerMatch of match.playerMatches) {
+                                if (playerMatch.playerAccount.login===VLoginHandler.connection) {
+                                    actives.push(playerMatch.playerIdentity.name);
+                                }
+                            }
+                            this.openInNewTab("./cb-game.html?id="+match.game.id+"&actives="+encodeURI(actives.join(",")));
                         }
                     });
                     this.addNote(game);

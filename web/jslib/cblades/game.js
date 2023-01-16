@@ -489,9 +489,9 @@ export class CBCounterDisplay {
 
 export class CBAbstractGame {
 
-    constructor(name, levels) {
+    constructor(id, levels) {
         this._init();
-        this._name = name;
+        this._id = id;
         this._levels = levels;
         this._players = [];
         this._counterDisplay = new CBCounterDisplay(this);
@@ -588,8 +588,8 @@ export class CBAbstractGame {
         this._arbitrator.game = this;
     }
 
-    get name() {
-        return this._name;
+    get id() {
+        return this._id;
     }
 
     get counterDisplay() {

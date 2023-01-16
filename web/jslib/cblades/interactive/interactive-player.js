@@ -5,7 +5,7 @@ import {
     DDice, DIconMenu, DMultiImagesIndicator, DMask, DResult, DScene, DRotatableIndicator
 } from "../../widget.js";
 import {
-    Mechanisms, Memento
+    Mechanisms
 } from "../../mechanisms.js";
 import {
     CBAbstractGame

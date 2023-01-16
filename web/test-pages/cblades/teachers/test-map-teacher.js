@@ -43,7 +43,7 @@ describe("Map teacher", ()=> {
     let Arbitrator = mergeClasses(CBMapTeacher);
 
     function createTinyGame() {
-        let game = new CBGame("Test");
+        let game = new CBGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -123,7 +123,7 @@ describe("Map teacher", ()=> {
     }
 
     function create2Players4UnitsTinyGame() {
-        let game = new CBGame("Test");
+        let game = new CBGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
@@ -155,7 +155,7 @@ describe("Map teacher", ()=> {
     }
 
     function create2PlayersTinyFormationGame() {
-        let game = new CBGame("Test");
+        let game = new CBGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
@@ -333,7 +333,7 @@ describe("Map teacher", ()=> {
     });
 
     function create2Players1Formation2TroopsTinyGame() {
-        let game = new CBGame("Test");
+        let game = new CBGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");

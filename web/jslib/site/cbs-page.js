@@ -354,7 +354,7 @@ export class CBSLogin extends VModal {
             connect(login, password,
                 text=>{
                     this.hide();
-                    VLoginHandler.connection = JSON.parse(text);
+                    VLoginHandler.connection = login;
                 },
                 (text, status)=>{
                     showMessage(text);

@@ -442,13 +442,13 @@ public class SequenceControllerTest implements TestSeawave, CollectionSunbeam, D
 	@Test
 	public void getOneSequenceByNameAndCount() {
 		Sequence sequence = (Sequence)setEntityId(new Sequence()
-				.setCount(2).setGame("game"), 1);
+				.setCount(2).setGame(1L), 1);
 		dataManager.register("createQuery", null, null, "select s from Sequence s left outer join fetch s.elements where s.game = :game and s.count = :count");
-		dataManager.register("setParameter", null, null,"game", "game");
+		dataManager.register("setParameter", null, null,"game", 1L);
 		dataManager.register("setParameter", null, null,"count", 2L);
 		dataManager.register("getSingleResult", sequence, null);
 		securityManager.doConnect("admin", 0);
-		Json result = sequenceController.getByGameAndCount(params("game", "game", "count", "2"), null);
+		Json result = sequenceController.getByGameAndCount(params("game", 1, "count", "2"), null);
 		Assert.assertEquals(result.toString(),
 			"{\"game\":\"game\",\"elements\":[],\"count\":2,\"id\":1,\"version\":0}"
 		);
@@ -490,12 +490,12 @@ public class SequenceControllerTest implements TestSeawave, CollectionSunbeam, D
 	@Test
 	public void getOneBoardById() {
 		Sequence sequence = (Sequence)setEntityId(new Sequence()
-			.setCount(2).setGame("game"), 1);
+			.setCount(2).setGame(1L), 1);
 		dataManager.register("find", sequence,null, Sequence.class, 1L);
 		securityManager.doConnect("admin", 0);
 		Json result = sequenceController.getById(params("id", "1"), null);
 		Assert.assertEquals(result.toString(),
-				"{\"game\":\"game\",\"elements\":[],\"count\":2,\"id\":1,\"version\":0}"
+				"{\"game\":1,\"elements\":[],\"count\":2,\"id\":1,\"version\":0}"
 		);
 		dataManager.hasFinished();
 	}
@@ -534,7 +534,7 @@ public class SequenceControllerTest implements TestSeawave, CollectionSunbeam, D
 	@Test
 	public void deleteAGame() {
 		Sequence sequence = (Sequence)setEntityId(new Sequence()
-			.setCount(2).setGame("game"), 1);
+			.setCount(2).setGame(1L), 1);
 		dataManager.register("find", sequence, null, Sequence.class, 1L);
 		Ref<Sequence> rSequence = new Ref<>();
 		dataManager.register("merge", (Supplier)()->rSequence.get(), null,
@@ -615,7 +615,7 @@ public class SequenceControllerTest implements TestSeawave, CollectionSunbeam, D
 		SequenceElement.NextTurnSequenceElement element =
 			new SequenceElement.NextTurnSequenceElement();
 		Sequence sequence = new Sequence()
-			.setGame("game")
+			.setGame(1L)
 			.setCount(2)
 			.addElement(element);
 		Assert.assertEquals("game", sequence.getGame());

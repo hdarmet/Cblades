@@ -58,7 +58,7 @@ import {
 class CBTestGame extends CBAbstractGame {
 
     constructor() {
-        super("Test", [
+        super(1, [
             new DSimpleLevel("map"),
             new DSimpleLevel("grounds"),
             new DSimpleLevel("units"),
@@ -309,7 +309,6 @@ describe("Game", ()=> {
         when:
             loadAllImages();
         then:
-            assert(game.name).equalsTo("Test");
             assert(game.board).is(DBoard);
             assert(game.board.game).equalsTo(game);
             assert(arbitrator.game).equalsTo(game);

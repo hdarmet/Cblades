@@ -205,7 +205,7 @@ export class GameLoader {
                 (text, status) => consoleLog("FAILURE! " + text + ": " + status)
             );
         } else {
-            sendPost("/api/game/update/" + this._game._oid,
+            sendPost("/api/game/update/" + this._game.id,
                 json,
                 (text, status) => {
                     consoleLog("SUCCESS! " + text + ": " + status);
@@ -223,17 +223,16 @@ export class GameLoader {
                 let json = JSON.parse(text);
                 this.fromSpecs(json);
                 loaded();
-                consoleLog(`Game ${this._game.name} loaded : ${status}`)
+                consoleLog(`Game ${this._game.id} loaded : ${status}`)
             },
-            (text, status) => consoleLog(`Unable to load ${this._game.name} : ${status}`)
+            (text, status) => consoleLog(`Unable to load ${this._game._oid} : ${status}`)
         );
     }
 
     toSpecs() {
         let gameSpecs = {
-            id : this._game._oid,
+            id : this._game.id,
             version: this._game._oversion || 0,
-            name: this._game._name,
             players: []
         };
         let mapCompositionSpecs = {
@@ -339,10 +338,7 @@ export class GameLoader {
     fromSpecs(specs) {
         consoleLog(JSON.stringify(specs));
         this._game.clean();
-        this._game._oid = specs.id || 0;
         this._game._oversion = specs.version || 0;
-        this._game._name = specs.name;
-        if (specs.id) this._game._oid = specs.id;
         let configuration = [];
         if (specs.map.boards) {
             for (let boardSpec of specs.map.boards) {
@@ -533,16 +529,16 @@ export class SequenceLoader {
     }
 
     load(game, action) {
-        sendPost("/api/sequence/by-game/"+game.name+"/"+CBSequence.getCount(game),
+        sendPost("/api/sequence/by-game/"+game.id+"/"+CBSequence.getCount(game),
             {},
             (text, status) => {
                 let json = JSON.parse(text);
                 action(this.fromSpecs(json, game));
-                consoleLog(`Sequence of ${game.name} loaded : ${status}`)
+                consoleLog(`Sequence of ${game.id} loaded : ${status}`)
             },
             (text, status) => {
                 action();
-                consoleLog(`Unable to load sequence for game: ${game.name} : ${status}`);
+                consoleLog(`Unable to load sequence for game: ${game.id} : ${status}`);
             }
         );
     }
@@ -550,7 +546,7 @@ export class SequenceLoader {
     toSpecs(game, sequence) {
         let sequenceSpecs = {
             version: sequence._oversion || 0,
-            game: sequence._game.name,
+            game: sequence._game.id,
             count: sequence._validatedCount,
             elements: []
         };

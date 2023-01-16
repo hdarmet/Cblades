@@ -726,8 +726,8 @@ export class CBBasicPlayer extends CBAbstractPlayer {
 
 export class CBGame extends RetractableGameMixin(CBAbstractGame) {
 
-    constructor(name) {
-        super(name, new CBLevelBuilder().buildLevels());
+    constructor(id) {
+        super(id, new CBLevelBuilder().buildLevels());
         this._visibility = CBGame.FULL_VISIBILITY;
     }
 

@@ -43,7 +43,7 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					request.get("game"), null
 				);
 			}
-		}, ADMIN);
+		}/*, ADMIN*/);
 		return result.get();
 	}
 
@@ -52,19 +52,19 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inTransaction(em->{
-				String game = (String)params.get("game");
+				long game = Long.parseLong((String)params.get("game"));
 				long count = Long.parseLong((String)params.get("count"));
 				Sequence sequence = getSingleResult(em,
 						"select s from Sequence s left outer join fetch s.elements where s.game = :game and s.count = :count",
 						"game", game, "count", count);
 				if (sequence==null) {
 					throw new SummerControllerException(404,
-							"Unknown sequence of game %s and count %d", game, count
+							"Unknown sequence of game %d and count %d", game, count
 					);
 				}
 				result.set(readFromSequence(sequence));
 			});
-		}, ADMIN);
+		}/*, ADMIN*/);
 		return result.get();
 	}
 
@@ -77,7 +77,7 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 				Sequence sequence = findSequence(em, new Long(id));
 				result.set(readFromSequence(sequence));
 			});
-		}, ADMIN);
+		}/*, ADMIN*/);
 		return result.get();
 	}
 
@@ -93,14 +93,13 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			} catch (PersistenceException pe) {
 				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
 			}
-		}, ADMIN);
+		}/*, ADMIN*/);
 		return Json.createJsonObject().put("deleted", "ok");
 	}
 
 	Sequence writeToSequence(Json json, Sequence sequence) {
 		verify(json)
-			.checkRequired("game").checkMinSize("game", 2).checkMaxSize("game", 20)
-			.checkPattern("game", "[a-zA-Z0-9_\\-]+")
+			.checkRequired("game").checkInteger("game")
 			.checkRequired("count").checkMin("count", 0)
 			.each("elements", cJson->verify(cJson)
 				.checkRequired("version")

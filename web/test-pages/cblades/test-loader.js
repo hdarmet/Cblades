@@ -73,7 +73,7 @@ describe("Loader", ()=> {
 
     it("Create board", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
@@ -175,7 +175,7 @@ describe("Loader", ()=> {
 
     it("Fail to create board", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
@@ -193,7 +193,7 @@ describe("Loader", ()=> {
 
     it("Update board", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
@@ -223,7 +223,7 @@ describe("Loader", ()=> {
 
     it("Update board", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
@@ -243,7 +243,7 @@ describe("Loader", ()=> {
 
     it("Load board", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
@@ -275,7 +275,7 @@ describe("Loader", ()=> {
 
     it("Fails to load board", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
@@ -321,7 +321,7 @@ describe("Loader", ()=> {
 
     it("Create game", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var player = new CBUnitPlayer("Hector", "/players/hector.png");
@@ -389,7 +389,6 @@ describe("Loader", ()=> {
             requestContent.players[0].wings[0].units[0].version = 1;
             getDrawPlatform().requestSucceeds(JSON.stringify(requestContent), 200);
         then:
-            assert(game._oid).equalsTo(101);
             assert(game._oversion).equalsTo(1);
             assert(game.players[0]._oid).equalsTo(102);
             assert(game.players[0]._oversion).equalsTo(1);
@@ -401,7 +400,7 @@ describe("Loader", ()=> {
 
     it("Create game", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var player = new CBUnitPlayer("Hector", "/players/hector.png");
@@ -470,7 +469,7 @@ describe("Loader", ()=> {
 
     it("Fail to create game", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
@@ -482,14 +481,12 @@ describe("Loader", ()=> {
         when:
             getDrawPlatform().requestFails("Test Error", 500);
         then:
-            assert(game._oid).isNotDefined();
             assert(game._oversion).isNotDefined();
     });
 
     it("Update game", () => {
         given:
-            var game = new CBGame("Test");
-            game._oid = 101;
+            var game = new CBGame(1);
             game._oversion = 1;
             var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
@@ -510,14 +507,12 @@ describe("Loader", ()=> {
             requestContent.version = 2;
             getDrawPlatform().requestSucceeds(JSON.stringify(requestContent), 200);
         then:
-            assert(game._oid).equalsTo(101);
             assert(game._oversion).equalsTo(2);
     });
 
     it("Failed to update game", () => {
         given:
-            var game = new CBGame("Test");
-            game._oid = 101;
+            var game = new CBGame(1);
             game._oversion = 1;
             var map = new CBMap([{
                 _oid: 111, _oversion:3,
@@ -534,13 +529,12 @@ describe("Loader", ()=> {
         when:
             getDrawPlatform().requestFails("Test Error", 200);
         then:
-            assert(game._oid).equalsTo(101);
             assert(game._oversion).equalsTo(1);
     });
 
     it("Load game", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
             var player = new CBUnitPlayer("Hector", "/players/hector.png");
             game.addPlayer(player);
@@ -550,7 +544,6 @@ describe("Loader", ()=> {
                 "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
             ]);
         when:
-            game._oid = 101;
             game._oversion = 1;
             map._oid = 110;
             map._oversion = 2;
@@ -632,7 +625,6 @@ describe("Loader", ()=> {
         then:
             assert(game.players[1]).is(CBUnitPlayer);
             assert(game.players[1].name).equalsTo("Achilles");
-            assert(game._oid).equalsTo(101);
             assert(game._oversion).equalsTo(2);
             let specs = new GameLoader(game).toSpecs();
             specs.players[0].wings[0].units.sort((unit1, unit2)=>unit1.id-unit2.id);
@@ -641,7 +633,7 @@ describe("Loader", ()=> {
 
     it("Load game with formation and characters", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
             var player = new CBUnitPlayer("Hector", "/players/hector.png");
             game.addPlayer(player);
@@ -656,7 +648,6 @@ describe("Loader", ()=> {
                 "./../images/units/misc/leader.png", "./../images/units/misc/leaderb.png"
             ]);
         when:
-            game._oid = 101;
             game._oversion = 1;
             new GameLoader(game).load();
         then:
@@ -727,7 +718,6 @@ describe("Loader", ()=> {
             };
             getDrawPlatform().requestSucceeds(JSON.stringify(requestContent), 200);
         then:
-            assert(game._oid).equalsTo(101);
             assert(game._oversion).equalsTo(2);
             let specs = new GameLoader(game).toSpecs();
             specs.players[0].wings[0].units.sort((unit1, unit2)=>unit1.id-unit2.id);
@@ -737,7 +727,7 @@ describe("Loader", ()=> {
 
     it("Fails toad game", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var map = new CBMap([{
                 path: "./../images/maps/map.png",
                 icon: "./../images/maps/map-icon.png",
@@ -748,7 +738,6 @@ describe("Loader", ()=> {
             game.setMap(map);
             game.start();
         when:
-            game._oid = 101;
             game._oversion = 1;
             new GameLoader(game).load();
         then:
@@ -757,7 +746,6 @@ describe("Loader", ()=> {
         when:
             getDrawPlatform().requestFails("Test Error", 500);
         then:
-            assert(game._oid).equalsTo(101);
             assert(game._oversion).equalsTo(1);
     });
 

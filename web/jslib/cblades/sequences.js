@@ -432,7 +432,7 @@ export class CBNextTurnSequenceElement extends CBSequenceElement {
 
     _toString() {
         let result = super._toString();
-        if (this.game !== undefined) result+=", Game: "+this.game.name;
+        if (this.game !== undefined) result+=", Game: "+this.game.id;
         return result;
     }
 }

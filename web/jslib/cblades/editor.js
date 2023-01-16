@@ -2366,8 +2366,8 @@ export class CBEditorPlayer extends CBAbstractPlayer {
 
 export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
 
-    constructor(name) {
-        super(name, new CBLevelBuilder().buildLevels());
+    constructor() {
+        super(0, new CBLevelBuilder().buildLevels());
     }
 
     _buildBoard(map) {
@@ -2457,8 +2457,8 @@ export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
 
 export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
 
-    constructor(name) {
-        super(name, new CBLevelBuilder().buildLevels());
+    constructor(id) {
+        super(id, new CBLevelBuilder().buildLevels());
     }
 
     canSelectPlayable(playable) {

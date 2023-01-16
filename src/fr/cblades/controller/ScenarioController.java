@@ -345,7 +345,6 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 			.write("victoryConditions")
 			.write("specialRules")
 			.write("illustration");
-		scenario.getGame().setName(scenario.getTitle());
 		return scenario;
 	}
 
@@ -390,7 +389,6 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 					.writeDate("date")
 					.write("text")
 				);
-			scenario.getGame().setName(scenario.getTitle());
 			return scenario;
 		} catch (SummerNotFoundException snfe) {
 			throw new SummerControllerException(404, snfe.getMessage());

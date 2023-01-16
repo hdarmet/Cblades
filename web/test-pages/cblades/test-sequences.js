@@ -503,7 +503,7 @@ describe("Sequences", ()=> {
             var element = CBSequence.getElements(game)[0];
             assert(element.equalsTo({
                 type: "NextTurn",
-                game: new CBGame("OtherGame")
+                game: new CBGame(2)
             })).isFalse();
             assert(element.equalsTo({
                 type: "NextTurn",
@@ -533,7 +533,7 @@ describe("Sequences", ()=> {
         then:
             assert(element.equalsTo(model)).isTrue();
             assert(element.equalsTo({...model, type:"Other"})).isFalse();
-            assert(element.equalsTo({...model, game:new CBGame("OtherGame")})).isFalse();
+            assert(element.equalsTo({...model, game:new CBGame(2)})).isFalse();
     });
 
 });

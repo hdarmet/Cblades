@@ -299,7 +299,6 @@ public class FakeData {
                             )
                     )
                 );
-            scenario.getGame().setName(scenario.getTitle());
             Unit unit1 = new Unit()
                 .setPositionRow(4).setPositionCol(2)
                 .setName("u1").setCategory(UnitCategory.CHARACTER)

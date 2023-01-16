@@ -82,7 +82,7 @@ describe("Unit", ()=> {
     let dummyEvent = {offsetX:0, offsetY:0};
 
     function prepareTinyGame() {
-        var game = new CBGame("Test");
+        var game = new CBGame(1);
         var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         return {game, map};

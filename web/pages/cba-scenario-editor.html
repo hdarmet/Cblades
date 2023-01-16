@@ -30,7 +30,7 @@
         GameLoader
     } from "../jslib/cblades/loader.js";
 
-    let game = new CBScenarioEditorGame("scenario");
+    let game = new CBScenarioEditorGame(1);
 
     registerResponse("/api/player-identity/all", [
         {path:"./../images/units/players/orc-1.png", name:"orc-1"},
@@ -140,9 +140,11 @@
     registerResponse("/api/game/update/",
         requestContent=>JSON.stringify(requestContent)
     );
+    /*
     registerResponse("/api/game/by-name/scenario",
         requestContent=>JSON.stringify(new GameLoader(game, requestContent).toSpecs())
     );
+     */
 
     let map = new CBMap([
         {path:"./../images/maps/map-4.png", icon:"./../images/maps/map-4-icon.png", col:0, row:0, invert:true},

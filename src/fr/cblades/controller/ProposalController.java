@@ -280,7 +280,8 @@ public class ProposalController implements InjectorSunbeam, DataSunbeam, Securit
 	Json readFromPublishedGameMatch(GameMatch gameMatch) {
 		Json json = Json.createJsonObject();
 		sync(json, gameMatch)
-			.read("id");
+			.read("id")
+			.read("status", GameMatchStatus::getLabel);
 		sync(json, gameMatch.getScenario())
 			.read("version")
 			.read("title")
@@ -290,6 +291,7 @@ public class ProposalController implements InjectorSunbeam, DataSunbeam, Securit
 			.read("specialRules")
 			.read("illustration")
 			.readLink("game", (pJson, game)->sync(pJson, game)
+				.read("id")
 				.readEach("players", (hJson, hex)->sync(hJson, hex)
 					.readLink("identity", (piJson, pid)->sync(piJson, pid)
 						.read("id")
@@ -302,6 +304,7 @@ public class ProposalController implements InjectorSunbeam, DataSunbeam, Securit
 			.readEach("playerMatches", (hJson, pm)->sync(hJson, pm)
 				.readLink("playerIdentity", (piJson, pid)->sync(piJson, pid)
 					.read("id")
+					.read("name")
 				)
 				.readLink("playerAccount", (uJson, pid)->sync(uJson, pid)
 					.read("id")

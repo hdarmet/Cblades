@@ -94,7 +94,6 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 		dataManager.register("persist", null, null, (Predicate) entity->{
 			Assert.assertTrue(entity instanceof Game);
 			Game game = (Game) entity;
-			Assert.assertEquals("Test", game.getName());
 			Assert.assertEquals(1, game.getPlayers().size());
 			Map map = game.getMap();
 			Assert.assertEquals(1, map.getBoardPlacements().size());
@@ -333,109 +332,13 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 	}
 
 	@Test
-	public void listAllGames() {
-		dataManager.register("createQuery", null, null, "select g from Game g");
-		dataManager.register("getResultList", arrayList(
-			setEntityId(new Game().setName("game1"), 1),
-			setEntityId(new Game().setName("game2"), 2)
-		), null);
-		securityManager.doConnect("admin", 0);
-		Json result = gameController.getAll(params(), null);
-		Assert.assertEquals("[" +
-			"{\"name\":\"game1\",\"id\":1,\"version\":0}," +
-			"{\"name\":\"game2\",\"id\":2,\"version\":0}" +
-		"]",
-		result.toString());
-		dataManager.hasFinished();
-	}
-
-	@Test
-	public void tryToListAllGamessWithBadCredentials() {
-		securityManager.doConnect("someone", 0);
-		try {
-			gameController.getAll(params(), null);
-			Assert.fail("The request should fail");
-		}
-		catch (SummerControllerException sce) {
-			Assert.assertEquals(403, sce.getStatus());
-			Assert.assertEquals("Not authorized", sce.getMessage());
-		}
-		dataManager.hasFinished();
-	}
-
-	@Test
-	public void getOneGameByName() {
-		Game game = (Game)setEntityId(new Game().setName("game1"), 1);
-		dataManager.register("createQuery", null, null, "select g from Game g where g.name = :name");
-		dataManager.register("setParameter", null, null,"name", "game1");
-		dataManager.register("getResultList", arrayList(game), null);
-		dataManager.register("find", game, null, Game.class, 1L);
-		securityManager.doConnect("admin", 0);
-		Json result = gameController.getByName(params("name", "game1"), null);
-		Assert.assertEquals(result.toString(),
-			"{\"players\":[],\"name\":\"game1\",\"id\":1,\"version\":0}"
-		);
-		dataManager.hasFinished();
-	}
-
-	@Test
-	public void tryToFindByNameAnUnknownGame() {
-		dataManager.register("createQuery", null, null, "select g from Game g where g.name = :name");
-		dataManager.register("setParameter", null, null,"name", "game1");
-		dataManager.register("getResultList", arrayList(), null);
-		securityManager.doConnect("admin", 0);
-		try {
-			gameController.getByName(params("name", "game1"), null);
-			Assert.fail("The request should fail");
-		}
-		catch (SummerControllerException sce) {
-			Assert.assertEquals(404, sce.getStatus());
-			Assert.assertEquals("Unknown Game with name game1", sce.getMessage());
-		}
-		dataManager.hasFinished();
-	}
-
-	@Test
-	public void findTwoGamesWithTheSameName() {
-		Game game1 = (Game)setEntityId(new Game().setName("game1"), 1);
-		Game game2 = (Game)setEntityId(new Game().setName("game1"), 2);
-		dataManager.register("createQuery", null, null, "select g from Game g where g.name = :name");
-		dataManager.register("setParameter", null, null,"name", "game1");
-		dataManager.register("getResultList", arrayList(game1, game2), null);
-		securityManager.doConnect("admin", 0);
-		try {
-			gameController.getByName(params("name", "game1"), null);
-			Assert.fail("The request should fail");
-		}
-		catch (SummerControllerException sce) {
-			Assert.assertEquals(409, sce.getStatus());
-			Assert.assertEquals("query did not return a unique result: 2", sce.getMessage());
-		}
-		dataManager.hasFinished();
-	}
-
-	@Test
-	public void tryToFindByNameAGameWithBadCredentials() {
-		securityManager.doConnect("someone", 0);
-		try {
-			gameController.getByName(params("name", "game1"), null);
-			Assert.fail("The request should fail");
-		}
-		catch (SummerControllerException sce) {
-			Assert.assertEquals(403, sce.getStatus());
-			Assert.assertEquals("Not authorized", sce.getMessage());
-		}
-		dataManager.hasFinished();
-	}
-
-	@Test
 	public void getOneBoardById() {
-		Game game = (Game)setEntityId(new Game().setName("game1"), 1);
+		Game game = (Game)setEntityId(new Game(), 1);
 		dataManager.register("find", game,null, Game.class, 1L);
 		securityManager.doConnect("admin", 0);
 		Json result = gameController.getById(params("id", "1"), null);
 		Assert.assertEquals(result.toString(),
-			"{\"players\":[],\"name\":\"game1\",\"id\":1,\"version\":0}"		);
+			"{\"players\":[],\"id\":1,\"version\":0}"		);
 		dataManager.hasFinished();
 	}
 
@@ -472,7 +375,7 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 
 	@Test
 	public void deleteAGame() {
-		Game game = (Game)setEntityId(new Game().setName("game1"), 1);
+		Game game = (Game)setEntityId(new Game(), 1);
 		dataManager.register("find", game, null, Game.class, 1L);
 		Ref<Game> rGame = new Ref<>();
 		dataManager.register("merge", (Supplier)()->rGame.get(), null,
@@ -592,7 +495,7 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 		Location location = (Location)setEntityId(new Location().setRow(3).setCol(4).addUnit(unit), 106);
 		PlayerIdentity playerIdentity = (PlayerIdentity)setEntityId(new PlayerIdentity().setName("Achilles").setPath("/players/achilles.png"), 107);
 		Player player = (Player)setEntityId(new Player().setIdentity(playerIdentity).addWing(wing).addHex(location), 102);
-		Game game = (Game)setEntityId(new Game().setName("game1").addPlayer(player), 101);
+		Game game = (Game)setEntityId(new Game().addPlayer(player), 101);
 
 		dataManager.register("find", game, null, Game.class, 101L);
 		dataManager.register("createQuery", null, null,
@@ -824,9 +727,7 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 			.setIdentity(playerIdentity);
 		Game game = new Game()
 			.setMap(map)
-			.setName("game")
 			.addPlayer(player);
-		Assert.assertEquals("game", game.getName());
 		Assert.assertEquals(1, game.getPlayers().size());
 		Assert.assertEquals(player, game.getPlayers().get(0));
 		Assert.assertEquals(player, game.getPlayer("Hector"));

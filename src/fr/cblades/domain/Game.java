@@ -10,20 +10,11 @@ import java.util.List;
 @Entity
 public class Game extends BaseEntity {
 
-    String name="";
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn(name = "order_player")
     List<Player> players = new ArrayList<>();
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     Map map;
-
-    public String getName() {
-        return this.name;
-    }
-    public Game setName(String name) {
-        this.name = name;
-        return this;
-    }
 
     public List<Player> getPlayers() {
         return Collections.unmodifiableList(this.players);
@@ -50,7 +41,7 @@ public class Game extends BaseEntity {
     }
 
     public Game duplicate(EntityManager em, java.util.Map<BaseEntity, BaseEntity> duplications) {
-        Game game = new Game().setName(this.name).setMap(this.map);
+        Game game = new Game().setMap(this.map);
         for (Player player : players) {
             game.addPlayer(player.duplicate(em, duplications));
         }

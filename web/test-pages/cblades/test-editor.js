@@ -1161,7 +1161,7 @@ describe("Editor", ()=> {
             path: "./../images/units/red/banners/banner0.png"
         };
 
-        var game = new CBScenarioEditorGame();
+        var game = new CBScenarioEditorGame(1);
         let map = new CBMap([{
             path:"./../images/maps/map.png",
             icon:"./../images/maps/map-icon.png",
@@ -3100,7 +3100,7 @@ describe("Editor", ()=> {
 
     it("Checks global push menu button for Scenario Editor", () => {
         given:
-            var game = new CBScenarioEditorGame();
+            var game = new CBScenarioEditorGame(1);
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [commandsLayer] = getLayers(game.board, "widget-commands");
@@ -3233,7 +3233,7 @@ describe("Editor", ()=> {
 
     it("Checks undo/redo push menu button on Scenario editor", () => {
         given:
-            var game = new CBScenarioEditorGame("Scenario");
+            var game = new CBScenarioEditorGame(1);
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();
@@ -3264,7 +3264,7 @@ describe("Editor", ()=> {
 
     it("Checks full screen push menu button on Scenario editor", () => {
         given:
-            var game = new CBScenarioEditorGame("Scenario");
+            var game = new CBScenarioEditorGame(1);
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();
@@ -3371,7 +3371,7 @@ describe("Editor", ()=> {
 
     it("Checks connect/save/load from the Scenario editor", () => {
         given:
-            var game = new CBScenarioEditorGame("Scenario");
+            var game = new CBScenarioEditorGame(1);
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();

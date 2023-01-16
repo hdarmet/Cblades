@@ -9,17 +9,17 @@ import java.util.*;
 @Table(indexes=@Index(name="idx_sequence", columnList="game, count"))
 public class Sequence extends BaseEntity {
 
-    String game="";
+    long game;
     long count;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "sequence_id")
     @OrderColumn(name="sequenceIndex")
     List<SequenceElement> elements = new ArrayList<>();
 
-    public String getGame() {
+    public long getGame() {
         return this.game;
     }
-    public Sequence setGame(String game) {
+    public Sequence setGame(long game) {
         this.game = game;
         return this;
     }

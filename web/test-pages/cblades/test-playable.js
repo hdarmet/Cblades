@@ -318,7 +318,7 @@ class CBTestActionActuator extends CBActionActuator {
 }
 
 function createBasicGame() {
-    var game = new CBGame("Test");
+    var game = new CBGame(1);
     var arbitrator = new CBAbstractArbitrator();
     game.setArbitrator(arbitrator);
     var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -499,7 +499,7 @@ describe("Playable", ()=> {
 
     it("Checks global push menu button", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [commandsLayer] = getLayers(game.board, "widget-commands");
@@ -541,7 +541,7 @@ describe("Playable", ()=> {
 
     it("Checks undo/redo push menu button", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();
@@ -572,7 +572,7 @@ describe("Playable", ()=> {
 
     it("Checks full screen push menu button", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();
@@ -853,7 +853,7 @@ describe("Playable", ()=> {
 
     it("Checks visibility level management on insert", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [widgetsLevel] = getLayers(game.board, "widgets");
@@ -906,7 +906,7 @@ describe("Playable", ()=> {
 
     it("Checks visibility level management on abstract insert", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [widgetsLevel] = getLayers(game.board, "widgets");
@@ -947,7 +947,7 @@ describe("Playable", ()=> {
 
     it("Checks mask that depends on the visibility level", () => {
         given:
-            var game = new CBGame("Test");
+            var game = new CBGame(1);
             var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [widgetsLevel] = getLayers(game.board, "widgets");

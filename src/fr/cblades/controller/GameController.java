@@ -40,41 +40,8 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 				throw new SummerControllerException(500, enf.getMessage());
 			}
 			catch (PersistenceException pe) {
-				throw new SummerControllerException(500,
-					"Game with name (%s) already exists",
-					request.get("name"), null
-				);
+				throw new SummerControllerException(500, pe.getMessage());
 			}
-		}, ADMIN);
-		return result.get();
-	}
-
-	@REST(url="/api/game/all", method=Method.POST)
-	public Json getAll(Map<String, Object> params, Json request) {
-		Ref<Json> result = new Ref<>();
-		ifAuthorized(user->{
-			inTransaction(em->{
-				Collection<Game> games = findGames(em, "select g from Game g");
-				result.set(readFromGames(em, games));
-			});
-		}, ADMIN);
-		return result.get();
-	}
-
-	@REST(url="/api/game/by-name/:name", method=Method.POST)
-	public Json getByName(Map<String, Object> params, Json request) {
-		Ref<Json> result = new Ref<>();
-		ifAuthorized(user->{
-			inTransaction(em->{
-				String name = (String)params.get("name");
-				Game game = findOneGame(em, "select g from Game g where g.name = :name", "name", name);
-				if (game==null) {
-					throw new SummerControllerException(404,
-							"Unknown Game with name %s", name
-					);
-				}
-				result.set(readFromGame(em, game));
-			});
 		}, ADMIN);
 		return result.get();
 	}
@@ -131,7 +98,6 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 		try {
 			verify(json)
 				.checkRequired("version")
-				.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 200)
 				.inspect("map", mJson -> verify(mJson)
 					.checkRequired("version")
 					.each("boards", bJson -> verify(bJson)
@@ -191,7 +157,6 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 					.ensure();
 			sync(json, game)
 				.write("version")
-				.write("name")
 				.writeLink("map", (pJson, map) -> sync(pJson, map)
 					.write("version")
 					.syncEach("boards", (bJson, board) -> sync(bJson, board)
@@ -250,7 +215,6 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 		sync(json, game)
 			.read("id")
 			.read("version")
-			.read("name")
 			.readLink("map", (pJson, map)->sync(pJson, map)
 				.read("id")
 				.read("version")
@@ -319,8 +283,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 		Json json = Json.createJsonObject();
 		sync(json, game)
 			.read("id")
-			.read("version")
-			.read("name");
+			.read("version");
 		return json;
 	}
 

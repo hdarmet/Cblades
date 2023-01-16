@@ -98,7 +98,7 @@ describe("Units teacher", ()=> {
     }
 
     function create2PlayersTinyFormationGame() {
-        let game = new CBGame("Test");
+        let game = new CBGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");

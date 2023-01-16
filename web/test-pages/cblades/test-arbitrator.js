@@ -89,7 +89,7 @@ describe("Arbitrator", ()=> {
     }
 
     function createTinyGame() {
-        let game = new CBGame("Test");
+        let game = new CBGame(1);
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let arbitrator = new CBArbitrator();
@@ -130,7 +130,7 @@ describe("Arbitrator", ()=> {
     }
 
     function createTinyFormationGame() {
-        let game = new CBGame("Test");
+        let game = new CBGame(1);
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let arbitrator = new CBArbitrator();

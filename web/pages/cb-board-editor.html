@@ -25,7 +25,7 @@
     } from "../jslib/draw.js";
 
     new BoardLoader(new CBBoard()).load(getParameterByName("id"), map=>{
-        let game = new CBMapEditorGame("Map");
+        let game = new CBMapEditorGame();
         game.setMap(map);
         game.fitWindow();
         document.body.appendChild(game.root);

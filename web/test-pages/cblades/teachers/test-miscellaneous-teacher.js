@@ -63,7 +63,7 @@ describe("Miscellaneous teacher", ()=> {
     }
 
     function createBasicGame() {
-        let game = new CBGame("Test");
+        let game = new CBGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -73,7 +73,7 @@ describe("Miscellaneous teacher", ()=> {
     }
 
     function createTinyGame() {
-        let game = new CBGame("Test");
+        let game = new CBGame(1);
         var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let arbitrator = new Arbitrator();
@@ -88,7 +88,7 @@ describe("Miscellaneous teacher", ()=> {
     }
 
     function create2Players4UnitsTinyGame() {
-        let game = new CBGame("Test");
+        let game = new CBGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
