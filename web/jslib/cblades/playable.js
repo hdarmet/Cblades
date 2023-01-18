@@ -847,7 +847,7 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
     }
 
     turnIsFinishable() {
-        if (this._currentPlayer && !this._currentPlayer.canPlay()) return false;
+        //if (this._currentPlayer && !this._currentPlayer.canPlay()) return false;
         if (!this.canUnselectPlayable()) return false;
         if (this.playables) {
             for (let playable of this.playables) {

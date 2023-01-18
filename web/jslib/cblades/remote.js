@@ -9,6 +9,9 @@ import {
 import {
     getDrawPlatform
 } from "../draw.js";
+import {
+    CBSequence
+} from "./sequences.js";
 
 export class CBRemoteUnitPlayer extends CBUnitPlayer {
 
@@ -29,12 +32,16 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
     tryToLoadNewSequence() {
         if (this._activeMode) {
             getDrawPlatform().setTimeout(() => {
-                new SequenceLoader().load(this.game, sequence => {
-                    if (sequence) {
-                        this.game._sequence = sequence;
-                        sequence.replay(() => {
-                            this.tryToLoadNewSequence();
-                        });
+                new SequenceLoader().load(this.game, sequences => {
+                    if (sequences.length>0) {
+                        sequences.sort((s1, s2)=>s1.count-s2.count);
+                        this.game._sequence = new CBSequence(this.game, sequences[sequences.length-1].count+1);
+                        let tick = 0;
+                        for (let sequence of sequences) {
+                            tick = sequence.replay(tick, () => {
+                                sequence===this.game._sequence ? this.tryToLoadNewSequence() : null;
+                            });
+                        }
                     } else {
                         this.tryToLoadNewSequence();
                     }

@@ -68,6 +68,10 @@ public interface DataSunbeam {
 		return (List<E>)query.getResultList();
 	}
 
+	default <E> Set<E> getResultSet(Query query) {
+		return new HashSet<>(getResultList(query));
+	}
+
 	@SuppressWarnings("unchecked")
 	default <E> List<E> getPagedResultList(Query query, int firstRow, int maxRowCount) {
 		query.setFirstResult(firstRow);
@@ -79,6 +83,10 @@ public interface DataSunbeam {
 		Query query = em.createQuery(queryString);
 		setParams(query, params);
 		return getResultList(query);
+	}
+
+	default <E> Set<E> getResultSet(EntityManager em, String queryString, Object ... params) {
+		return new HashSet<>(getResultList(em, queryString, params));
 	}
 
 	default int executeUpdate(Query query) {

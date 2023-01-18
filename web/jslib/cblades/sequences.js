@@ -53,7 +53,6 @@ export class CBSequence {
         this._game = game;
         this._elements = [];
         this._count = count;
-        Mechanisms.addListener(this);
     }
 
     get count() {
@@ -110,19 +109,8 @@ export class CBSequence {
         return this._elements;
     }
 
-    _processGlobalEvent(source, event, value) {
-        if (!this._replayMode) {
-            if (event === CBGame.VALIDATION_EVENT) {
-                this.appendElement(new CBNextTurnSequenceElement(this._game));
-                new SequenceLoader().save(this._game, this);
-                Mechanisms.removeListener(this._game._sequence);
-            }
-        }
-    }
-
-    replay(action) {
+    replay(tick, action) {
         this._replayMode = true;
-        let tick = 0;
         let animation;
         for (let element of this._elements) {
             animation = element.apply(tick);
@@ -135,6 +123,7 @@ export class CBSequence {
                 delete this._replayMode;
             });
         }
+        return tick;
     }
 
 }

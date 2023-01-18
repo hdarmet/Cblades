@@ -586,63 +586,79 @@ export class SequenceLoader {
         return sequenceSpecs;
     }
 
-    fromSpecs(specs, game) {
-        consoleLog(JSON.stringify(specs));
-        let sequence = new CBSequence(game, specs.count+1);
-        let units = new Map();
-        for (let playable of game.playables) {
-            if (playable instanceof CBUnit) {
-                units.set(playable.name, playable);
+    fromSpecs(specList, game) {
+        consoleLog(JSON.stringify(specList));
+        let sequences = [];
+        for (let specs of specList) {
+            let sequence = new CBSequence(game, specs.count);
+            let units = new Map();
+            for (let playable of game.playables) {
+                if (playable instanceof CBUnit) {
+                    units.set(playable.name, playable);
+                }
             }
+            for (let elementSpec of specs.elements) {
+                let unit;
+                if (elementSpec.unit) {
+                    unit = units.get(elementSpec.unit);
+                }
+                let hexLocation;
+                if (elementSpec.hexCol !== undefined) {
+                    hexLocation = game.map.getHex(elementSpec.hexCol, elementSpec.hexRow);
+                    //if (elementSpec.hexAngle!==undefined) hexLocation = hexLocation.toward(elementSpec.hexAngle);
+                }
+                let stacking;
+                if (elementSpec.stacking !== undefined) {
+                    stacking = this.getStacking(elementSpec.stacking)
+                }
+                let element;
+                let angle = elementSpec.angle;
+                switch (elementSpec.type) {
+                    case "State":
+                        element = new CBStateSequenceElement(unit);
+                        break;
+                    case "Move":
+                        element = new CBMoveSequenceElement(unit, hexLocation, stacking);
+                        break;
+                    case "Rotate":
+                        element = new CBRotateSequenceElement(unit, angle);
+                        break;
+                    case "Reorient":
+                        element = new CBReorientSequenceElement(unit, angle);
+                        break;
+                    case "Turn":
+                        element = new CBTurnSequenceElement(unit, angle, hexLocation, stacking);
+                        break;
+                    case "NextTurn":
+                        element = new CBNextTurnSequenceElement(game);
+                        break;
+                }
+                if (elementSpec.tiredness !== undefined) {
+                    element.tiredness = this.getTiredness(elementSpec.tiredness);
+                }
+                if (elementSpec.cohesion !== undefined) {
+                    element.cohesion = this.getCohesion(elementSpec.cohesion);
+                }
+                if (elementSpec.ammunition !== undefined) {
+                    element.munitions = this.getMunitions(elementSpec.ammunition);
+                }
+                if (elementSpec.charging !== undefined) {
+                    element.charging = this.getCharging(elementSpec.charging);
+                }
+                if (elementSpec.engaging !== undefined) {
+                    element.engaging = elementSpec.engaging;
+                }
+                if (elementSpec.orderGiven !== undefined) {
+                    element.orderGiven = elementSpec.orderGiven;
+                }
+                if (elementSpec.played !== undefined) {
+                    element.played = elementSpec.played;
+                }
+                sequence.addElement(element);
+            }
+            sequences.push(sequence);
         }
-        for (let elementSpec of specs.elements) {
-            let unit;
-            if (elementSpec.unit) {
-                unit = units.get(elementSpec.unit);
-            }
-            let hexLocation;
-            if (elementSpec.hexCol!==undefined) {
-                hexLocation = game.map.getHex(elementSpec.hexCol, elementSpec.hexRow);
-                if (elementSpec.hexAngle!==undefined) hexLocation = hexLocation.toward(elementSpec.hexAngle);
-            }
-            let stacking;
-            if (elementSpec.stacking!==undefined) {
-                stacking = this.getStacking(elementSpec.stacking)
-            }
-            let element;
-            let angle = elementSpec.angle;
-            switch (elementSpec.type) {
-                case "State": element = new CBStateSequenceElement(unit); break;
-                case "Move": element = new CBMoveSequenceElement(unit, hexLocation, stacking); break;
-                case "Rotate": element = new CBRotateSequenceElement(unit, angle); break;
-                case "Reorient": element = new CBReorientSequenceElement(unit, angle); break;
-                case "Turn": element = new CBTurnSequenceElement(unit, angle, hexLocation, stacking); break;
-                case "NextTurn": element = new CBNextTurnSequenceElement(game); break;
-            }
-            if (elementSpec.tiredness!==undefined) {
-                element.tiredness = this.getTiredness(elementSpec.tiredness);
-            }
-            if (elementSpec.cohesion!==undefined) {
-                element.cohesion = this.getCohesion(elementSpec.cohesion);
-            }
-            if (elementSpec.ammunition!==undefined) {
-                element.munitions = this.getMunitions(elementSpec.ammunition);
-            }
-            if (elementSpec.charging!==undefined) {
-                element.charging = this.getCharging(elementSpec.charging);
-            }
-            if (elementSpec.engaging!==undefined) {
-                element.engaging = elementSpec.engaging;
-            }
-            if (elementSpec.orderGiven!==undefined) {
-                element.orderGiven = elementSpec.orderGiven;
-            }
-            if (elementSpec.played!==undefined) {
-                element.played = elementSpec.played;
-            }
-            sequence.addElement(element);
-        }
-        return sequence;
+        return sequences;
     }
 
     getTirednessCode(tiredness) {

@@ -22,6 +22,12 @@ import {
 import {
     CBUnitPlayer
 } from "../unit.js";
+import {
+    CBNextTurnSequenceElement, CBSequence
+} from "../sequences.js";
+import {
+    SequenceLoader
+} from "../loader.js";
 
 export class CBInteractivePlayer extends CBUnitPlayer {
 
@@ -133,6 +139,8 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     finishTurn(animation) {
         let playable = this.game.selectedPlayable;
         this.afterActivation(playable, ()=>{
+            CBSequence.appendElement(this.game, new CBNextTurnSequenceElement(this.game));
+            new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
             super.finishTurn(animation);
         });
     }

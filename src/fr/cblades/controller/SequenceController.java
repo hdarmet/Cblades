@@ -18,9 +18,7 @@ import org.summer.security.SecuritySunbeam;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -54,15 +52,10 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			inTransaction(em->{
 				long game = Long.parseLong((String)params.get("game"));
 				long count = Long.parseLong((String)params.get("count"));
-				Sequence sequence = getSingleResult(em,
-						"select s from Sequence s left outer join fetch s.elements where s.game = :game and s.count = :count",
+				Set<Sequence> sequences = getResultSet(em,
+						"select s from Sequence s left outer join fetch s.elements where s.game = :game and s.count >= :count",
 						"game", game, "count", count);
-				if (sequence==null) {
-					throw new SummerControllerException(404,
-							"Unknown sequence of game %d and count %d", game, count
-					);
-				}
-				result.set(readFromSequence(sequence));
+				result.set(readFromSequences(sequences));
 			});
 		}/*, ADMIN*/);
 		return result.get();
@@ -245,4 +238,9 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 		return sequence;
 	}
 
+	Json readFromSequences(Collection<Sequence> sequences) {
+		Json list = Json.createJsonArray();
+		sequences.stream().forEach(sequence->list.push(readFromSequence(sequence)));
+		return list;
+	}
 }
