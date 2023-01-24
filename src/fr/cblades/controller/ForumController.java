@@ -34,7 +34,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/forum/live", method=Method.GET)
 	public Json getLive(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String queryString = "select f from Forum f " +
 					"left join fetch f.lastMessage m " +
 					"left join fetch m.thread " +
@@ -49,7 +49,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/forum/threads/:id", method=Method.GET)
 	public Json readThreads(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String id = (String)params.get("id");
 			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 			Forum forum = findForum(em, new Long(id));
@@ -83,7 +83,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/forum/messages/:thread", method=Method.GET)
 	public Json readMessages(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String threadId = (String)params.get("thread");
 			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 			ForumThread forumThread = findForumThread(em, new Long(threadId));
@@ -119,7 +119,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/forum/message/all/:thread", method=Method.GET)
 	public Json readAllMessages(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em-> {
+		inReadTransaction(em-> {
 			ifAuthorized(
 				user -> {
 					String threadId = (String) params.get("thread");
@@ -155,7 +155,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json getAll(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				String queryString = "select f from Forum f";
 				Collection<Forum> forums = findForums(em.createQuery(queryString));
 				result.set(readFromForums(forums));
@@ -190,7 +190,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/forum/load/:id", method=Method.GET)
 	public Json loadForum(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String id = (String)params.get("id");
 			Forum forum = findForum(em, new Long(id));
 			ifAuthorized(user->{
@@ -274,7 +274,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json getAllThreads(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				long forumId = getIntegerParam(params, "forum", "The forum ID is invalid (%s)");
 				Forum forum = findForum(em, forumId);
@@ -327,7 +327,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/forum/thread/load/:id", method=Method.GET)
 	public Json loadThread(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String id = (String)params.get("id");
 			ForumThread thread = findForumThread(em, new Long(id));
 			ifAuthorized(user->{
@@ -975,13 +975,11 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		};
 	}
 
-	//////////////////////////
-
 	@REST(url="/api/forum/message/report/all", method=Method.GET)
 	public Json getAllReports(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(r) from Report r where r.category=:category";
@@ -1003,22 +1001,22 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				}
 				queryString+=" order by r.sendDate desc";
 				long reportCount = (search == null) ?
-						getSingleResult(em, countQuery,
-								"category", ForumMessage.REPORT):
-						getSingleResult(em, countQuery,
-								"category", ForumMessage.REPORT,
-								"search", search);
+					getSingleResult(em, countQuery,
+						"category", ForumMessage.REPORT):
+					getSingleResult(em, countQuery,
+						"category", ForumMessage.REPORT,
+						"search", search);
 				Collection<Report> reports = (search == null) ?
-						findPagedReports(em.createQuery(queryString), pageNo,
-								"category", ForumMessage.REPORT):
-						findPagedReports(em.createQuery(queryString), pageNo,
-								"category", ForumMessage.REPORT,
-								"search", search);
+					findPagedReports(em.createQuery(queryString), pageNo,
+						"category", ForumMessage.REPORT):
+					findPagedReports(em.createQuery(queryString), pageNo,
+						"category", ForumMessage.REPORT,
+						"search", search);
 				result.set(Json.createJsonObject()
-						.put("reports", readFromReports(reports))
-						.put("count", reportCount)
-						.put("page", pageNo)
-						.put("pageSize", ForumController.REPORTS_BY_PAGE)
+					.put("reports", readFromReports(reports))
+					.put("count", reportCount)
+					.put("page", pageNo)
+					.put("pageSize", ForumController.REPORTS_BY_PAGE)
 				);
 			});
 		}, ADMIN);
@@ -1028,7 +1026,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/forum/message/report/load/:id", method=Method.GET)
 	public Json loadReport(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			ifAuthorized(user->{
 				String id = (String)params.get("id");
 				Report report = findReport(em, new Long(id));

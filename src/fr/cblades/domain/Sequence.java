@@ -15,6 +15,8 @@ public class Sequence extends BaseEntity {
     @JoinColumn(name = "sequence_id")
     @OrderColumn(name="sequenceIndex")
     List<SequenceElement> elements = new ArrayList<>();
+    int currentPlayerIndex = -1;
+    int currentTurn = -1;
 
     public long getGame() {
         return this.game;
@@ -22,6 +24,9 @@ public class Sequence extends BaseEntity {
     public Sequence setGame(long game) {
         this.game = game;
         return this;
+    }
+    public Game getGame(EntityManager em) {
+        return Game.find(em, this.game);
     }
 
     public long getCount() {
@@ -44,4 +49,28 @@ public class Sequence extends BaseEntity {
         return this;
     }
 
+    public int getCurrentTurn() {
+        return this.currentTurn;
+    }
+    public Sequence setCurrentTurn(int currentTurn) {
+        this.currentTurn = currentTurn;
+        return this;
+    }
+
+    public int getCurrentPlayerIndex() {
+        return this.currentPlayerIndex;
+    }
+    public Sequence setCurrentPlayerIndex(int currentPlayerIndex) {
+        this.currentPlayerIndex = currentPlayerIndex;
+        return this;
+    }
+    public Player getPlayer(EntityManager em) {
+        if (currentPlayerIndex == -1) return null;
+        return this.getGame(em).getPlayers().get(currentPlayerIndex);
+    }
+
+    public boolean isTurnClosed() {
+        SequenceElement element = elements.get(elements.size()-1);
+        return element.isTurnClosed();
+    }
 }

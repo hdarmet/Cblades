@@ -39,6 +39,15 @@ public class Location extends BaseEntity {
         this.units.add(unit);
         return this;
     }
+    public Location addUnit(Unit unit, Stacking stacking) {
+        if (stacking==Stacking.BOTTOM) {
+            this.units.add(0, unit);
+        }
+        else {
+            this.units.add(unit);
+        }
+        return this;
+    }
     public Location removeUnit(Unit unit) {
         this.units.remove(unit);
         return this;

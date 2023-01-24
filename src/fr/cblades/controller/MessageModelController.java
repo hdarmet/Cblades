@@ -57,7 +57,7 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 	@REST(url="/api/message-model/category/:category", method=Method.GET)
 	public Json getByCategory(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			ifAuthorized(
 				user->{
 					int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
@@ -108,7 +108,7 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 	@REST(url="/api/message-model/category/live/:category", method=Method.GET)
 	public Json getByLiveCategory(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			ifAuthorized(
 				user->{
 					int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");

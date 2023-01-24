@@ -29,6 +29,14 @@ public interface DataManager {
 		ApplicationManager.get().getDataManager().executeInTransaction(executor);
 	}
 
+	public static void inReadTransaction(String persistenceUnitName, Executor executor) {
+		ApplicationManager.get().getDataManager().executeInReadTransaction(persistenceUnitName, executor);
+	}
+
+	public static void inReadTransaction(Executor executor) {
+		ApplicationManager.get().getDataManager().executeInReadTransaction(executor);
+	}
+
 	public static void inTransactionUntilSuccessful(Executor executor) {
 		ApplicationManager.get().getDataManager().executeInTransactionUntilSuccessful(executor);
 	}
@@ -85,6 +93,10 @@ public interface DataManager {
 	void executeInTransaction(String persistenceUnitName, Executor executor);
 
 	void executeInTransaction(Executor executor);
+
+	void executeInReadTransaction(String persistenceUnitName, Executor executor);
+
+	void executeInReadTransaction(Executor executor);
 
 	void openPersistenceUnit(
 			String persistenceUnitName,

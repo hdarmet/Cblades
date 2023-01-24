@@ -3,6 +3,7 @@ package fr.cblades.controllers;
 import fr.cblades.StandardUsers;
 import fr.cblades.controller.SequenceController;
 import fr.cblades.domain.*;
+import fr.cblades.game.SequenceVisitor;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -89,7 +90,11 @@ public class SequenceControllerTest implements TestSeawave, CollectionSunbeam, D
 
 	@Test
 	public void checkStateSequenceElementEntity() {
-		SequenceElement.StateSequenceElement element = new SequenceElement.StateSequenceElement();
+		SequenceElement.StateSequenceElement element = new SequenceElement.StateSequenceElement() {
+			@Override
+			public void accept(SequenceVisitor visitor) {
+			}
+		};
 		element.setTiredness(Tiredness.TIRED);
 		element.setCohesion(Cohesion.DISRUPTED);
 		element.setAmmunition(Ammunition.SCARCE);

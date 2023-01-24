@@ -20,29 +20,35 @@ import {
 export class CBSequence {
 
     static appendElement(game, sequence) {
-        if (!game._sequence) {
-            game._sequence = new CBSequence(game);
-        }
+        console.assert(game._sequence);
         game._sequence.appendElement(sequence);
     }
 
     static addElement(game, sequence) {
-        if (!game._sequence) {
-            game._sequence = new CBSequence(game);
-        }
+        console.assert(game._sequence);
         game._sequence.addElement(sequence);
     }
 
     static getCount(game) {
-        return game._sequence===undefined ? 0 : game._sequence.count;
+        console.assert(game._sequence);
+        return game._sequence.count;
+    }
+
+    static setCount(game, count) {
+        if (!game._sequence) {
+            game._sequence = new CBSequence(game, count);
+        }
+        game._sequence.count;
     }
 
     static getValidatedCount(game) {
-        return game._sequence===undefined ? 0 : game._sequence.validatedCount;
+        console.assert(game._sequence);
+        return game._sequence.validatedCount;
     }
 
     static getElements(game) {
-        return game._sequence===undefined ? [] : game._sequence.elements;
+        console.assert(game._sequence);
+        return game._sequence.elements;
     }
 
     static getSequence(game) {
@@ -57,6 +63,11 @@ export class CBSequence {
 
     get count() {
         return this._count;
+    }
+
+    set count(count) {
+        this._count = count;
+        this._validatedCount = count;
     }
 
     commit() {

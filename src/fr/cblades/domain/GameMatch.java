@@ -25,6 +25,8 @@ public class GameMatch extends BaseEntity {
     Account author;
     @Enumerated(EnumType.STRING)
     GameMatchStatus status;
+    int currentPlayerIndex = 0;
+    int currentTurn = 0;
 
     public Game getGame() {
         return this.game;
@@ -70,6 +72,30 @@ public class GameMatch extends BaseEntity {
         return this;
     }
 
+    public int getCurrentPlayerIndex() {
+        return this.currentPlayerIndex;
+    }
+    public GameMatch setCurrentPlayerIndex(int currentPlayerIndex) {
+        this.currentPlayerIndex = currentPlayerIndex;
+        return this;
+    }
+
+    public int getCurrentTurn() {
+        return this.currentTurn;
+    }
+    public GameMatch setCurrentTurn(int currentTurn) {
+        this.currentTurn = currentTurn;
+        return this;
+    }
+
+    public void advanceOnePlayerTurn() {
+        this.currentPlayerIndex++;
+        if (this.currentPlayerIndex==this.playerMatches.size()) {
+            this.currentPlayerIndex=0;
+            this.currentTurn++;
+        }
+    }
+
     static public GameMatch find(EntityManager em, long id) {
         GameMatch gameMatch = em.find(GameMatch.class, id);
         if (gameMatch==null) {
@@ -79,4 +105,16 @@ public class GameMatch extends BaseEntity {
         }
         return gameMatch;
     }
+
+    public static GameMatch getByGame(EntityManager em, long gameId) {
+        Query query = em.createQuery("select gm from GameMatch gm where gm.game.id = :gameId");
+        query.setParameter("gameId", gameId);
+        try {
+            return (GameMatch)query.getSingleResult();
+        }
+        catch (NoResultException nre) {
+            return null;
+        }
+    }
+
 }

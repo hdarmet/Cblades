@@ -141,7 +141,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json getAll(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(t) from Theme t";
@@ -181,7 +181,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/theme/live", method=Method.GET)
 	public Json getLive(Map<String, String> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			Collection<Theme> themes = findThemes(em.createQuery(
 					"select t from Theme t where t.status=:status"
 				),
@@ -194,7 +194,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/theme/category/:category", method=Method.GET)
 	public Json getByCategory(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 			String category = (String)params.get("category");
 			String search = (String)params.get("search");
@@ -229,7 +229,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/theme/by-title/:title", method=Method.GET)
 	public Json getByTitle(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String title = (String)params.get("title");
 			Theme theme = getSingleResult(em,
 				"select t from Theme t " +
@@ -253,7 +253,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/theme/load/:id", method=Method.GET)
 	public Json getThemeWithComments(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String id = (String)params.get("id");
 			Theme theme = findTheme(em, new Long(id));
 			ifAuthorized(user->{

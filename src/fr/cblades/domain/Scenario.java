@@ -120,13 +120,13 @@ public class Scenario extends BaseEntity {
     }
 
     static public Scenario find(EntityManager em, long id) {
-        Scenario theme = em.find(Scenario.class, id);
-        if (theme==null) {
+        Scenario scenario = em.find(Scenario.class, id);
+        if (scenario==null) {
             throw new SummerNotFoundException(
-                String.format("Unknown Theme with id %d", id)
+                String.format("Unknown Scenario with id %d", id)
             );
         }
-        return theme;
+        return scenario;
     }
 
 }

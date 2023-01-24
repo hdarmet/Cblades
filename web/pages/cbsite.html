@@ -34,6 +34,18 @@
     import {
         vFooter, vHeader
     } from "../jslib/site/cbs-site.js";
+    import {
+        connect
+    } from "../jslib/site/cbs-page.js";
+    import {
+        showMessage
+    } from "../jslib/vitamin/vpage.js";
+    import {
+        VLoginHandler
+    } from "../jslib/vitamin/vitamins.js";
+    import {
+        getParameterByName
+    } from "../jslib/draw.js";
 
     let app = new VApp()
         .setWidth("100%")
@@ -46,7 +58,18 @@
     document.body.style["height"] = "100%";
     document.body.style["margin"] = "0";
     document.body.appendChild(app.root);
-
+    let login = getParameterByName("login");
+    let password = getParameterByName("password");
+    if (login) {
+        connect(login, password,
+            text => {
+                VLoginHandler.connection = login;
+            },
+            (text, status) => {
+                showMessage("Connection refused", text);
+            }
+        );
+    }
 </script>
 </body>
 </html>

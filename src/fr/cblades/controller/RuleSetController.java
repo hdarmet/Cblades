@@ -68,7 +68,7 @@ public class RuleSetController implements InjectorSunbeam, DataSunbeam, Security
 	public Json getByCategory(Map<String, String> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				String name = params.get("category");
 				List<RuleSet> ruleSets = getResultList(em,
 					"select distinct r from RuleSet r " +
@@ -84,7 +84,7 @@ public class RuleSetController implements InjectorSunbeam, DataSunbeam, Security
 	@REST(url="/api/ruleset/published/:category", method=Method.GET)
 	public Json getPublished(Map<String, String> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String name = params.get("category");
 			RuleSet ruleSet = getSingleResult(em,
 		"select r from RuleSet r " +

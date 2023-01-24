@@ -84,7 +84,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 	public Json getAll(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(pi) from PlayerIdentity pi";
@@ -123,7 +123,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 	@REST(url="/api/player-identity/live", method=Method.GET)
 	public Json getLive(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			Collection<PlayerIdentity> playerIdentities = findPlayerIdentities(
 				em.createQuery("select pi from PlayerIdentity pi where pi.status = :status")
 					.setParameter("status", PlayerIdentityStatus.LIVE));
@@ -136,7 +136,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 	public Json getByName(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				String name = (String)params.get("name");
 				PlayerIdentity playerIdentity = getSingleResult(em,
 						"select pi from PlayerIdentity pi where pi.name = :name",
@@ -156,7 +156,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 	public Json getById(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				String id = (String)params.get("id");
 				PlayerIdentity playerIdentity = findPlayerIdentity(em, new Long(id));
 				result.set(readFromPlayerIdentity(playerIdentity));

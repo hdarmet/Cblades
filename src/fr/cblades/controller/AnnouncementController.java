@@ -82,7 +82,7 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 	public Json getAll(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(a) from Announcement a";
@@ -120,7 +120,7 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 	@REST(url="/api/announcement/live", method=Method.GET)
 	public Json getLive(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String queryString = "select a from Announcement a where a.status=:status";
 			Collection<Announcement> announcements =
 				findAnnouncements(em.createQuery(queryString),
@@ -136,7 +136,7 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 	public Json getById(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				String id = (String)params.get("id");
 				Announcement announcement = findAnnouncement(em, new Long(id));
 				result.set(readFromAnnouncement(announcement));

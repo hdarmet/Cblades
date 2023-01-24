@@ -26,7 +26,7 @@ public class PresentationController implements InjectorSunbeam, DataSunbeam, Sec
 	public Json getByCategory(Map<String, String> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				String name = params.get("category");
 				List<Presentation> presentations = getResultList(em,
 						"select p from Presentation p where p.category = :category",
@@ -40,7 +40,7 @@ public class PresentationController implements InjectorSunbeam, DataSunbeam, Sec
 	@REST(url="/api/presentation/published", method=Method.GET)
 	public Json getPublished(Map<String, String> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			List<Presentation> presentations = getResultList(em,
 					"select p from Presentation p where p.published = true");
 			result.set(readFromPresentations(presentations));

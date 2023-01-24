@@ -502,6 +502,7 @@ export class CBAbstractGame {
         this._actuators = [];
         this._playables = new Set();
         this._commands = new Set();
+        this._currentTurn = 0;
     }
 
     clean() {
@@ -606,6 +607,14 @@ export class CBAbstractGame {
 
     get zoomFactor() {
         return this.board.zoomFactor;
+    }
+
+    get currentTurn() {
+        return this._currentTurn;
+    }
+
+    set currentTurn(currentTurn) {
+        this._currentTurn = currentTurn;
     }
 
     setMap(map) {

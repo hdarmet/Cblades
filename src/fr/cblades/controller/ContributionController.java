@@ -31,7 +31,7 @@ public class ContributionController implements InjectorSunbeam, DataSunbeam, Sec
 		String search = (String)params.get("search");
 		List<BaseEntity> contributions = new ArrayList<>();
 		Json result = Json.createJsonArray();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			ifAuthorized(
 				user->{
 					Account author = Account.find(em, user);

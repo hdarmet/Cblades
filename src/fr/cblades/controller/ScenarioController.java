@@ -148,7 +148,7 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 	public Json getAll(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(s) from Scenario s";
@@ -192,7 +192,7 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 	@REST(url="/api/scenario/live", method=Method.GET)
 	public Json getLive(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 			String search = (String)params.get("search");
 			String countQuery = "select count(s) from Scenario s where s.status = :status";
@@ -239,7 +239,7 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 	@REST(url="/api/scenario/load/:id", method=Method.GET)
 	public Json getScenarioWithComments(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String id = (String)params.get("id");
 			Scenario scenario = findScenario(em, new Long(id));
 			ifAuthorized(user->{

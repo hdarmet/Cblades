@@ -2,10 +2,9 @@ package fr.cblades.controller;
 
 import fr.cblades.StandardUsers;
 import fr.cblades.domain.*;
-import org.hibernate.NonUniqueResultException;
+import fr.cblades.game.SequenceApplyer;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
-import org.summer.SummerException;
 import org.summer.annotation.Controller;
 import org.summer.annotation.REST;
 import org.summer.annotation.REST.Method;
@@ -17,8 +16,7 @@ import org.summer.data.SummerNotFoundException;
 import org.summer.security.SecuritySunbeam;
 
 import javax.persistence.*;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -46,11 +44,63 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 		return result.get();
 	}
 
-	@REST(url="/api/game/find/:id", method=Method.POST)
+	@REST(url="/api/game/play/load/:id", method=Method.POST)
+	public Json loadForPlay(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		ifAuthorized(user->{
+			inReadTransaction(em->{
+				String id = (String)params.get("id");
+				long gameId = Long.parseLong(id);
+				GameMatch gameMatch = GameMatch.getByGame(em, gameId);
+				if (gameMatch == null) {
+					throw new SummerControllerException(404, "GameMatch not found for game : %d", gameId);
+				}
+				Game game = gameMatch.getGame();
+
+				Set<String> activeIdentities = new HashSet<>();
+				for (int index=0; index<request.size(); index++) {
+					activeIdentities.add((String)request.get(index));
+				}
+				Set<PlayerIdentity> activesPlayers = new HashSet<>();
+				for (PlayerMatch playerMatch: gameMatch.getPlayerMatches()) {
+					if (activeIdentities.contains(playerMatch.getPlayerIdentity().getName())) {
+						activesPlayers.add(playerMatch.getPlayerIdentity());
+					}
+				}
+				int lastTurn = gameMatch.getCurrentTurn();
+				int lastPlayerIndex = gameMatch.getCurrentPlayerIndex()-1;
+				if (lastPlayerIndex<0) {
+					lastTurn--;
+					lastPlayerIndex = game.getPlayers().size()-1;
+				}
+				int turnCount = (gameMatch.getCurrentTurn()-gameMatch.getGame().getCurrentTurn())*gameMatch.getPlayerMatches().size()
+						+gameMatch.getCurrentPlayerIndex()-gameMatch.getGame().getCurrentPlayerIndex();
+				while(lastTurn>=0 &&
+					!activesPlayers.contains(game.getPlayers().get(lastPlayerIndex).getIdentity())
+				) {
+					lastPlayerIndex--;
+					if (lastPlayerIndex<0) {
+						lastTurn--;
+						lastPlayerIndex = game.getPlayers().size()-1;
+					}
+					turnCount--;
+				}
+				long sequenceCount = 0;
+				if (lastTurn>=0 && turnCount>0) {
+					sequenceCount = game.advancePlayerTurns(em, turnCount) +1;
+				}
+				result.set(readFromGame(em, game));
+				result.get().put("sequenceCount", sequenceCount);
+			});
+		});
+		return result.get();
+	}
+
+	@REST(url="/api/game/find/:id", method=Method.GET)
 	public Json getById(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				String id = (String)params.get("id");
 				Game game = findGame(em, new Long(id));
 				result.set(readFromGame(em, game));
@@ -109,6 +159,8 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 						.checkRequired("invert").checkBoolean("invert")
 					)
 				)
+				.checkRequired("currentPlayerIndex").checkInteger("currentPlayerIndex").checkMin("currentPlayerIndex", 0).checkMax("current", json.getJson("players").size())
+				.checkRequired("currentTurn").checkInteger("currentTurn").checkMin("currentTurn", 0)
 				.each("players", pJson -> verify(pJson)
 					.checkRequired("version")
 					.inspect("identity", bJson -> verify(bJson)
@@ -140,6 +192,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 							.checkRequired("ammunition").check("ammunition", Ammunition.byLabels().keySet())
 							.checkRequired("cohesion").check("cohesion", Cohesion.byLabels().keySet())
 							.checkRequired("charging")
+							.checkRequired("engaging")
 							.checkRequired("contact")
 							.checkRequired("orderGiven")
 							.checkRequired("played")
@@ -154,9 +207,10 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 						)
 					)
 				)
-					.ensure();
+				.ensure();
 			sync(json, game)
 				.write("version")
+				.write("currentTurn")
 				.writeLink("map", (pJson, map) -> sync(pJson, map)
 					.write("version")
 					.syncEach("boards", (bJson, board) -> sync(bJson, board)
@@ -192,6 +246,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 							.write("ammunition", label -> Ammunition.byLabels().get(label))
 							.write("cohesion", label -> Cohesion.byLabels().get(label))
 							.write("charging")
+							.write("engaging")
 							.write("contact")
 							.write("orderGiven")
 							.write("played")
@@ -204,6 +259,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 						.syncEach("units", ((Player) player)::getUnit)
 					)
 				);
+			game.setCurrentPlayerIndex(json.getInteger("currentPlayerIndex"));
 			return game;
 		} catch (SummerNotFoundException snfe) {
 			throw new SummerControllerException(404, snfe.getMessage());
@@ -215,6 +271,8 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 		sync(json, game)
 			.read("id")
 			.read("version")
+			.read("currentPlayerIndex")
+			.read("currentTurn")
 			.readLink("map", (pJson, map)->sync(pJson, map)
 				.read("id")
 				.read("version")
@@ -263,6 +321,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 						.read("ammunition", Ammunition::getLabel)
 						.read("cohesion", Cohesion::getLabel)
 						.read("charging")
+						.read("engaging")
 						.read("contact")
 						.read("orderGiven")
 						.read("played")

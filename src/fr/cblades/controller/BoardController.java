@@ -143,7 +143,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json getAll(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(b) from Board b";
@@ -182,7 +182,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/board/live", method=Method.GET)
 	public Json getLive(Map<String, String> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			Collection<Board> boards = findBoards(em.createQuery("select b from Board b where b.status=:status"),
 				"status", BoardStatus.LIVE);
 			result.set(readFromBoardSummaries(boards));
@@ -193,7 +193,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/board/by-name/:name", method=Method.POST)
 	public Json getByName(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String name = (String)params.get("name");
 			Board board = getSingleResult(em,
 				"select b from Board b left outer join fetch b.hexes left outer join fetch b.author a left outer join fetch a.access where b.name = :name",
@@ -215,7 +215,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json getContributions(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
-		inTransaction(em->{
+		inReadTransaction(em->{
 			ifAuthorized(
 				user->{
 					try {
@@ -242,7 +242,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/board/find/:id", method=Method.GET)
 	public Json getById(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String id = (String)params.get("id");
 			Board board = findBoard(em, new Long(id));
 			ifAuthorized(user->{
@@ -256,7 +256,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/board/load/:id", method=Method.GET)
 	public Json getBoardWithComments(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String id = (String)params.get("id");
 			Board board = findBoard(em, new Long(id));
 			ifAuthorized(user->{

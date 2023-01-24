@@ -1,6 +1,8 @@
 package fr.cblades;
 
 import fr.cblades.domain.*;
+import org.checkerframework.checker.units.qual.A;
+import org.summer.Ref;
 import org.summer.annotation.Job;
 import org.summer.annotation.Launch;
 import org.summer.data.DataSunbeam;
@@ -8,6 +10,7 @@ import org.summer.data.DataSunbeam;
 import javax.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 public class FakeData {
@@ -23,14 +26,14 @@ public class FakeData {
         createEvents(data);
         createThemes(data);
         createArticles(data);
-        for (int index=0; index<1; index++) {
-            createScenario(data, index);
-        }
         createFactions(data);
         createMagicArts(data);
         createRulesAndMarkers(data);
         createForums(data);
         createMessageModel(data);
+        Scenario scenario = createScenario(data, 0);
+        GameMatch gameMatch = createMatch(data, scenario);
+        createSequences(data, gameMatch);
     }
 
     static void createGameData(DataSunbeam data) {
@@ -280,9 +283,10 @@ public class FakeData {
         });
     }
 
-    static void createScenario(DataSunbeam data, int index) {
+    static Scenario createScenario(DataSunbeam data, int index) {
+        Ref<Scenario> scenario = new Ref<>();
         data.inTransaction(em-> {
-            Scenario scenario = new Scenario()
+            scenario.set(new Scenario()
                 .setStory(PARAGRAPH_TEXT)
                 .setSetUp(PARAGRAPH_TEXT)
                 .setVictoryConditions(PARAGRAPH_TEXT)
@@ -298,7 +302,8 @@ public class FakeData {
                                     .setBoard(Board.getByName(em, "board2"))
                             )
                     )
-                );
+                )
+            );
             Unit unit1 = new Unit()
                 .setPositionRow(4).setPositionCol(2)
                 .setName("u1").setCategory(UnitCategory.CHARACTER)
@@ -313,7 +318,7 @@ public class FakeData {
                 .setPlayed(false)
                 .setCharging(false);
             em.persist(unit1);
-            scenario.getGame().addPlayer(
+            scenario.get().getGame().addPlayer(
                 new Player().setIdentity(PlayerIdentity.getByName(em, "orc 1"))
                     .addWing(
                         new Wing().setBanner(
@@ -344,7 +349,7 @@ public class FakeData {
                 .setPlayed(false)
                 .setCharging(false);
             em.persist(unit2);
-            scenario.getGame().addPlayer(
+            scenario.get().getGame().addPlayer(
                 new Player().setIdentity(PlayerIdentity.getByName(em, "roughneck 1"))
                     .addWing(
                         new Wing().setBanner(
@@ -361,7 +366,63 @@ public class FakeData {
                         .addUnit(unit2)
                     )
             );
-            data.persist(em, scenario);
+            data.persist(em, scenario.get());
+        });
+        return scenario.get();
+    }
+
+    static GameMatch createMatch(DataSunbeam data, Scenario aScenario) {
+        Ref<GameMatch> gameMatch = new Ref<>();
+        data.inTransaction(em-> {
+            Scenario scenario = em.merge(aScenario);
+            Game game = scenario.getGame();
+            Account admin = Account.find(em, "admin");
+            Account temrad = Account.find(em, "temrad");
+            gameMatch.set(new GameMatch()
+                .setStatus(GameMatchStatus.IN_PROGRESS)
+                .setScenario(scenario)
+                .setGame(game.duplicate(em, new HashMap<>()))
+                .setAuthor(admin)
+                .addPlayerMatch(new PlayerMatch()
+                    .setPlayerAccount(admin)
+                    .setPlayerIdentity(game.getPlayers().get(0).getIdentity())
+                )
+                .addPlayerMatch(new PlayerMatch()
+                    .setPlayerAccount(temrad)
+                    .setPlayerIdentity(game.getPlayers().get(1).getIdentity())
+                )
+            );
+            data.persist(em, gameMatch.get());
+        });
+        return gameMatch.get();
+    }
+
+    static void createSequences(DataSunbeam data, GameMatch aGameMatch) {
+        data.inTransaction(em-> {
+            GameMatch gameMatch = data.merge(em, aGameMatch);
+            Sequence sequence = new Sequence()
+                .setGame(gameMatch.getGame().getId())
+                .setCount(0)
+                .addElement(
+                    new SequenceElement.MoveSequenceElement()
+                        .setHexAngle(0).setHexCol(2).setHexRow(3).setStacking(Stacking.TOP)
+                        .setUnit("u1").setCohesion(Cohesion.DISRUPTED)
+                )
+                .addElement(
+                    new SequenceElement.RotateSequenceElement()
+                        .setAngle(60)
+                        .setUnit("u1").setCohesion(Cohesion.DISRUPTED)
+                )
+                .addElement(
+                    new SequenceElement.MoveSequenceElement()
+                        .setHexAngle(0).setHexCol(3).setHexRow(3).setStacking(Stacking.TOP)
+                        .setUnit("u1").setCohesion(Cohesion.DISRUPTED)
+                )
+                .addElement(
+                    new SequenceElement.NextTurnSequenceElement()
+                );
+            data.persist(em, sequence);
+            gameMatch.advanceOnePlayerTurn();
         });
     }
 

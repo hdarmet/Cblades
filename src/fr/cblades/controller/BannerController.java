@@ -81,7 +81,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 	public Json getAll(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(b) from Banner b";
@@ -120,7 +120,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 	@REST(url="/api/banner/live", method=Method.GET)
 	public Json getLive(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			Collection<Banner> banners = findBanners(
 				em.createQuery("select b from Banner b where b.status = :status")
 					.setParameter("status", BannerStatus.LIVE));
@@ -133,7 +133,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 	public Json getByName(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				String name = (String)params.get("name");
 				Banner banner = getSingleResult(em,
 						"select b from Banner b where b.name = :name",
@@ -153,7 +153,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 	public Json getById(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				String id = (String)params.get("id");
 				Banner banner = findBanner(em, new Long(id));
 				result.set(readFromBanner(banner));

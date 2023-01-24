@@ -118,7 +118,7 @@ public class ProposalController implements InjectorSunbeam, DataSunbeam, Securit
 	@REST(url="/api/proposal/mine", method=Method.GET)
 	public Json getMine(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			ifAuthorized(user->{
 				Account author = Account.find(em, user);
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
@@ -189,7 +189,7 @@ public class ProposalController implements InjectorSunbeam, DataSunbeam, Securit
 	@REST(url="/api/proposal/proposed", method=Method.GET)
 	public Json getProposed(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			ifAuthorized(user->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
@@ -281,15 +281,7 @@ public class ProposalController implements InjectorSunbeam, DataSunbeam, Securit
 		Json json = Json.createJsonObject();
 		sync(json, gameMatch)
 			.read("id")
-			.read("status", GameMatchStatus::getLabel);
-		sync(json, gameMatch.getScenario())
-			.read("version")
-			.read("title")
-			.read("story")
-			.read("setUp")
-			.read("victoryConditions")
-			.read("specialRules")
-			.read("illustration")
+			.read("status", GameMatchStatus::getLabel)
 			.readLink("game", (pJson, game)->sync(pJson, game)
 				.read("id")
 				.readEach("players", (hJson, hex)->sync(hJson, hex)
@@ -299,8 +291,7 @@ public class ProposalController implements InjectorSunbeam, DataSunbeam, Securit
 						.read("description")
 					)
 				)
-			);
-		sync(json, gameMatch)
+			)
 			.readEach("playerMatches", (hJson, pm)->sync(hJson, pm)
 				.readLink("playerIdentity", (piJson, pid)->sync(piJson, pid)
 					.read("id")
@@ -314,6 +305,14 @@ public class ProposalController implements InjectorSunbeam, DataSunbeam, Securit
 					.read("avatar")
 				)
 			);
+		sync(json, gameMatch.getScenario())
+			.read("version")
+			.read("title")
+			.read("story")
+			.read("setUp")
+			.read("victoryConditions")
+			.read("specialRules")
+			.read("illustration");
 		return json;
 	}
 

@@ -83,7 +83,7 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 	public Json getAll(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(a) from Account a";
@@ -124,7 +124,7 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 	public Json getById(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				String id = (String)params.get("id");
 				Account account = findAccount(em, new Long(id));
 				result.set(readFromAccount(account));

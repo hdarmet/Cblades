@@ -13,6 +13,7 @@ public class PlayerMatch extends BaseEntity {
     Account playerAccount;
     @ManyToOne
     PlayerIdentity playerIdentity;
+    int playedTurns = 0;
 
     public Account getPlayerAccount() {
         return this.playerAccount;
@@ -27,6 +28,14 @@ public class PlayerMatch extends BaseEntity {
     }
     public PlayerMatch setPlayerIdentity(PlayerIdentity playerIdentity) {
         this.playerIdentity = playerIdentity;
+        return this;
+    }
+
+    public int getPlayedTurns() {
+        return this.playedTurns;
+    }
+    public PlayerMatch setPlayedTurns(int playedTurns) {
+        this.playedTurns = playedTurns;
         return this;
     }
 

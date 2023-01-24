@@ -161,7 +161,7 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 	public Json getAll(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(f) from Faction f";
@@ -201,7 +201,7 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 	@REST(url="/api/faction/live", method=Method.GET)
 	public Json getLive(Map<String, String> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			Collection<Faction> factions = findFactions(em.createQuery("select f from Faction f where f.status=:status"),
 				"status", FactionStatus.LIVE);
 			result.set(readFromFactionSummaries(factions));
@@ -212,7 +212,7 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 	@REST(url="/api/faction/by-name/:name", method=Method.GET)
 	public Json getByTitle(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String name = (String)params.get("name");
 			Faction faction = getSingleResult(em,
 				"select f from Faction f " +
@@ -237,7 +237,7 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 	@REST(url="/api/faction/load/:id", method=Method.GET)
 	public Json getFactionWithComments(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String id = (String)params.get("id");
 			Faction faction = findFaction(em, new Long(id));
 			ifAuthorized(user->{
@@ -315,7 +315,7 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 	@REST(url="/api/faction/published/:id", method=Method.GET)
 	public Json getPublishedFaction(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String id = (String)params.get("id");
 			Faction faction = findFaction(em, new Long(id));
 			if (faction.getStatus() != FactionStatus.LIVE) {

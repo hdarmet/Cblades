@@ -148,7 +148,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 	public Json getAll(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(a) from Article a";
@@ -190,7 +190,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 	@REST(url="/api/article/recent", method=Method.GET)
 	public Json getLiveNew(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 			String search = (String)params.get("search");
 			String queryString = "select a from Article a " +
@@ -219,7 +219,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 	@REST(url="/api/article/by-theme/:theme", method=Method.GET)
 	public Json getLiveByTheme(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 			long themeId = getIntegerParam(params, "theme", "The requested Theme Id is invalid (%s)");
 			String search = (String)params.get("search");
@@ -249,7 +249,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 	@REST(url="/api/article/by-title/:title", method=Method.GET)
 	public Json getByTitle(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String title = (String)params.get("title");
 			Article article = getSingleResult(em,
 				"select a from Article a " +
@@ -275,7 +275,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 	@REST(url="/api/article/load/:id", method=Method.GET)
 	public Json getArticleWithComments(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String id = (String)params.get("id");
 			Article article = findArticle(em, new Long(id));
 			ifAuthorized(user->{

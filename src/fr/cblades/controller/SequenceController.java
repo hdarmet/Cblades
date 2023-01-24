@@ -2,6 +2,7 @@ package fr.cblades.controller;
 
 import fr.cblades.StandardUsers;
 import fr.cblades.domain.*;
+import fr.cblades.game.SequenceApplyer;
 import org.summer.CollectionSunbeam;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
@@ -33,6 +34,18 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 				inTransaction(em->{
 					Sequence newSequence = writeToSequence(request, new Sequence());
 					persist(em, newSequence);
+					if (newSequence.isTurnClosed()) {
+						GameMatch gameMatch = GameMatch.getByGame(em, newSequence.getGame());
+						if (gameMatch==null) {
+							throw new SummerControllerException(404,
+								"Game Match of game (%d) doesn't exist", newSequence.getGame()
+							);
+						}
+						if (gameMatch.getCurrentTurn() > 0) {
+							gameMatch.getGame().advancePlayerTurns(em, 1);
+						}
+						gameMatch.advanceOnePlayerTurn();
+					}
 					result.set(readFromSequence(newSequence));
 				});
 			} catch (PersistenceException pe) {
@@ -49,7 +62,7 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 	public Json getByGameAndCount(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				long game = Long.parseLong((String)params.get("game"));
 				long count = Long.parseLong((String)params.get("count"));
 				Set<Sequence> sequences = getResultSet(em,
@@ -65,7 +78,7 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 	public Json getById(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				String id = (String)params.get("id");
 				Sequence sequence = findSequence(em, new Long(id));
 				result.set(readFromSequence(sequence));

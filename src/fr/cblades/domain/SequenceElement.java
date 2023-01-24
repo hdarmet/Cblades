@@ -1,5 +1,6 @@
 package fr.cblades.domain;
 
+import fr.cblades.game.SequenceVisitor;
 import org.summer.data.BaseEntity;
 
 import javax.persistence.*;
@@ -7,20 +8,20 @@ import javax.persistence.*;
 @Entity
 @Inheritance(strategy=InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name="type")
-public class SequenceElement extends BaseEntity {
+public abstract class SequenceElement extends BaseEntity {
 
     @Entity
     @DiscriminatorValue("State")
-    public static class StateSequenceElement extends SequenceElement {
+    public static abstract class StateSequenceElement extends SequenceElement {
 
         String unit;
-        Cohesion cohesion;
-        Tiredness tiredness;
-        Ammunition ammunition;
-        Charging charging;
-        boolean engaging;
-        boolean orderGiven;
-        boolean played;
+        Cohesion cohesion = Cohesion.GOOD_ORDER;
+        Tiredness tiredness = Tiredness.FRESH;
+        Ammunition ammunition = Ammunition.PLENTIFUL;
+        Charging charging = Charging.NONE;
+        boolean engaging = false;
+        boolean orderGiven = false;
+        boolean played = false;
 
         public String getUnit() { return this.unit; }
         public StateSequenceElement setUnit(String unit) {
@@ -127,6 +128,10 @@ public class SequenceElement extends BaseEntity {
             return this;
         }
 
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
     }
 
     @Entity
@@ -143,6 +148,10 @@ public class SequenceElement extends BaseEntity {
             return this;
         }
 
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
     }
 
     @Entity
@@ -157,6 +166,10 @@ public class SequenceElement extends BaseEntity {
         public ReorientSequenceElement setAngle(int angle) {
             this.angle = angle;
             return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
         }
 
     }
@@ -211,12 +224,30 @@ public class SequenceElement extends BaseEntity {
             return this;
         }
 
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
     }
 
     @Entity
     @DiscriminatorValue("NextTurn")
     public static class NextTurnSequenceElement extends SequenceElement {
 
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+        public boolean isTurnClosed() {
+            return true;
+        }
+
+    }
+
+    public abstract void accept(SequenceVisitor visitor);
+
+    public boolean isTurnClosed() {
+        return false;
     }
 
 }

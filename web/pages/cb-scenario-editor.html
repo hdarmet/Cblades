@@ -25,7 +25,8 @@
     let game = new CBScenarioEditorGame(gameId);
     let map = new CBMap([]);
     game.setMap(map);
-    new GameLoader(game, (name, path)=>new CBEditorPlayer(name, path)).load(gameId,
+    new GameLoader(game, (name, path)=>new CBEditorPlayer(name, path))
+        .loadForEdition(gameId,
         ()=>{
             game.fitWindow();
             document.body.appendChild(game.root);

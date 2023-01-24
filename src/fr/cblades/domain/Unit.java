@@ -19,6 +19,7 @@ public class Unit extends BaseEntity {
     Tiredness tiredness;
     Ammunition ammunition;
     Cohesion cohesion;
+    boolean engaging;
     boolean charging;
     boolean contact;
     boolean orderGiven;
@@ -112,6 +113,14 @@ public class Unit extends BaseEntity {
     }
     public Unit setCohesion(Cohesion cohesion) {
         this.cohesion = cohesion;
+        return this;
+    }
+
+    public boolean isEngaging() {
+        return this.engaging;
+    }
+    public Unit setEngaging(boolean engaging) {
+        this.engaging = engaging;
         return this;
     }
 

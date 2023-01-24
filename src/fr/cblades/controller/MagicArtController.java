@@ -161,7 +161,7 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 	public Json getAll(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(m) from MagicArt m";
@@ -201,7 +201,7 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 	@REST(url="/api/magicart/live", method=Method.GET)
 	public Json getLive(Map<String, String> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			Collection<MagicArt> magicArts = findMagicArts(em.createQuery("select m from MagicArt m where m.status=:status"),
 				"status", MagicArtStatus.LIVE);
 			result.set(readFromMagicArtSummaries(magicArts));
@@ -212,7 +212,7 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 	@REST(url="/api/magicart/by-name/:name", method=Method.GET)
 	public Json getByTitle(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String name = (String)params.get("name");
 			MagicArt magicArt = getSingleResult(em,
 				"select m from MagicArt m " +
@@ -237,7 +237,7 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 	@REST(url="/api/magicart/load/:id", method=Method.GET)
 	public Json getMagicArtWithComments(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			String id = (String)params.get("id");
 			MagicArt magicArt = findMagicArt(em, new Long(id));
 			ifAuthorized(user->{

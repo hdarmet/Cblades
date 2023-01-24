@@ -130,6 +130,15 @@ public class Json implements Iterable {
 		return value==null ? null : new Long(value);
 	}
 
+	public Integer getInteger(String name, String... aliases) {
+		Integer value = get(name, aliases);
+		return value==null ? null : new Integer(value);
+	}
+
+	public Json getJson(String name, String... aliases) {
+		return (Json)get(name, aliases);
+	}
+
 	public Json read(Object src, String... names) {
 		if (this.json==null) {
 			throw new SummerException("JSON Array instead of JSON Object");
@@ -225,6 +234,10 @@ public class Json implements Iterable {
 			Object value = this.jsonArray.get(index);
 			return jsonify(value);
 		}
+	}
+
+	public Json getJson(int index) {
+		return (Json)get(index);
 	}
 
 	public Json put(String name, Object value, String... aliases) {

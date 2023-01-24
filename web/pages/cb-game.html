@@ -56,8 +56,8 @@
     import {
         CBRemoteUnitPlayer
     } from "../jslib/cblades/remote.js";
-    import * as orcs from "../jslib/cblades/armies/orcs.js";
-    import * as roughneck from "../jslib/cblades/armies/roughnecks.js";
+    import {} from "../jslib/cblades/armies/orcs.js";
+    import {} from "../jslib/cblades/armies/roughnecks.js";
 
     registerInteractiveMovement();
     registerInteractiveCombat();
@@ -73,11 +73,12 @@
     game.setArbitrator(arbitrator);
     let map = new CBMap([]);
     game.setMap(map);
+    let actives = getParameterByName("actives").split(",");
     new GameLoader(game, (name, path)=> {
         console.log(name, path);
-        let actives = ","+getParameterByName("actives")+",";
-        return actives.indexOf(","+name+",")>=0 ? new CBInteractivePlayer(name, path) : new CBRemoteUnitPlayer(name, path)
-    }).load(gameId,
+        return actives.indexOf(name)>=0 ? new CBInteractivePlayer(name, path) : new CBRemoteUnitPlayer(name, path)
+    }).loadForPlay(gameId,
+        actives,
         ()=>{
             game.fitWindow();
             document.body.appendChild(game.root);

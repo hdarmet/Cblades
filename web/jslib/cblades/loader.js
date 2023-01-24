@@ -216,12 +216,25 @@ export class GameLoader {
         }
     }
 
-    load(id, loaded=()=>{}) {
-        sendPost("/api/game/find/" + id,
-            {},
+    loadForEdition(id, loaded=()=>{}) {
+        sendGet("/api/game/find/" + id,
             (text, status) => {
                 let json = JSON.parse(text);
                 this.fromSpecs(json);
+                loaded();
+                consoleLog(`Game ${this._game.id} loaded : ${status}`)
+            },
+            (text, status) => consoleLog(`Unable to load ${this._game._oid} : ${status}`)
+        );
+    }
+
+    loadForPlay(id, actives, loaded=()=>{}) {
+        sendPost("/api/game/play/load/" + id,
+            actives,
+            (text, status) => {
+                let json = JSON.parse(text);
+                this.fromSpecs(json);
+                CBSequence.setCount(this._game, json.sequenceCount);
                 loaded();
                 consoleLog(`Game ${this._game.id} loaded : ${status}`)
             },
@@ -233,6 +246,8 @@ export class GameLoader {
         let gameSpecs = {
             id : this._game.id,
             version: this._game._oversion || 0,
+            currentPlayerIndex : this._game.players.indexOf(this._game.currentPlayer),
+            currentTurn : this._game.currentTurn,
             players: []
         };
         let mapCompositionSpecs = {
@@ -339,6 +354,7 @@ export class GameLoader {
         consoleLog(JSON.stringify(specs));
         this._game.clean();
         this._game._oversion = specs.version || 0;
+        this._game.currentTurn = specs.currentTurn;
         let configuration = [];
         if (specs.map.boards) {
             for (let boardSpec of specs.map.boards) {
@@ -409,6 +425,7 @@ export class GameLoader {
             }
             this.showEntities(unitsMap, playerSpec);
         }
+        this._game.currentPlayer = this._game.players[specs.currentPlayerIndex];
     }
 
     showEntities(unitsMap, playerSpec) {

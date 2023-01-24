@@ -83,7 +83,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json getAll(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				String search = (String)params.get("search");
 				String countQuery = "select count(e) from Event e";
@@ -122,7 +122,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/event/live", method=Method.GET)
 	public Json getLive(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 			String queryString = "select e from Event e where e.status=:status and e.target is null order by e.date desc";
 			Collection<Event> events =
@@ -139,7 +139,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json getAccountLive(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user-> {
-			inTransaction(em -> {
+			inReadTransaction(em -> {
 				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
 				Account account = Login.findAccountByLogin(em, user);
 				if (account==null) {
@@ -162,7 +162,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json getById(Map<String, String> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				String id = params.get("id");
 				Event event = findEvent(em, new Long(id));
 				result.set(readFromEvent(event));

@@ -26,7 +26,7 @@ public class NoticeController implements InjectorSunbeam, DataSunbeam, SecurityS
 	public Json getByCategory(Map<String, String> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
-			inTransaction(em->{
+			inReadTransaction(em->{
 				String name = params.get("category");
 				List<Notice> notices = getResultList(em,
 						"select n from Notice n where n.category = :category",
@@ -40,9 +40,9 @@ public class NoticeController implements InjectorSunbeam, DataSunbeam, SecurityS
 	@REST(url="/api/notice/published", method=Method.GET)
 	public Json getPublished(Map<String, String> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em->{
+		inReadTransaction(em->{
 			List<Notice> notices = getResultList(em,
-					"select n from Notice n where n.published = true");
+				"select n from Notice n where n.published = true");
 			result.set(readFromNotices(notices));
 		});
 		return result.get();

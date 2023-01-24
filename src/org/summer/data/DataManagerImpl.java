@@ -54,8 +54,30 @@ public class DataManagerImpl implements DataManager {
 	}
 
 	@Override
+	public void executeInReadTransaction(String persistenceUnitName, Executor executor) {
+		EntityManagerFactory emf = emFactories.get(persistenceUnitName);
+		if (emf==null) {
+			throw new SummerException("Persistence unit not registered : "+persistenceUnitName);
+		}
+		EntityManager em = emf.createEntityManager();
+		em.getTransaction().begin();
+		try {
+			executor.run(em);
+		}
+		finally {
+			em.getTransaction().rollback();
+			em.close();
+		}
+	}
+
+	@Override
 	public void executeInTransaction(Executor executor) {
 		executeInTransaction(DataManager.DEFAULT_PERSISTENCE_UNIT, executor);
+	}
+
+	@Override
+	public void executeInReadTransaction(Executor executor) {
+		executeInReadTransaction(DataManager.DEFAULT_PERSISTENCE_UNIT, executor);
 	}
 
 	Map<String, EntityManagerFactory> emFactories = 

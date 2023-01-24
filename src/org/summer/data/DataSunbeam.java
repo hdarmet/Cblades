@@ -27,6 +27,14 @@ public interface DataSunbeam {
 		DataManager.inTransaction(executor);
 	}
 
+	default void inReadTransaction(String persistenceUnitName, Executor executor) {
+		DataManager.inReadTransaction(persistenceUnitName, executor);
+	}
+
+	default void inReadTransaction(Executor executor) {
+		DataManager.inReadTransaction(executor);
+	}
+
 	default void inTransactionUntilSuccessful(String persistenceUnitName, Executor executor) {
 		DataManager.inTransactionUntilSuccessful(persistenceUnitName, executor);
 	}
