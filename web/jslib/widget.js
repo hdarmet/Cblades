@@ -676,6 +676,17 @@ export class DDice extends DElement {
         animation.setFinalAction(()=>this.finalAction());
     }
 
+    cheat(dice) {
+        let animation = null;
+        this._result = [];
+        let index = 0;
+        for (let artifact of this._artifacts) {
+            this._result.push(dice[index]);
+            animation = new DDiceAnimation(artifact, 0, dice[index++]);
+        }
+        animation.setFinalAction(()=>this.finalAction());
+    }
+
     setFinalAction(action) {
         this._finalAction = action;
         return this;
@@ -1359,6 +1370,7 @@ export class DResult extends DElement {
         super();
         this._artifact = new ResultImageArtifact();
         this.addArtifact(this._artifact);
+        this._active = true;
     }
 
     setFinalAction(action) {
@@ -1408,9 +1420,19 @@ export class DResult extends DElement {
         Memento.clear();
     }
 
+    get active() {
+        return this._active;
+    }
+
+    set active(active) {
+        this._active = active;
+    }
+
     onMouseClick() {
-        this._finalAction && this._finalAction(this._success);
-        return true;
+        if (this.active) {
+            this._finalAction && this._finalAction(this._success);
+            return true;
+        }
     }
 
 }

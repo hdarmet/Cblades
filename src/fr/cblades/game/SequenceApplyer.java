@@ -105,6 +105,11 @@ public class SequenceApplyer implements SequenceVisitor  {
         this.game.setCurrentPlayerIndex(currentPlayerIndex);
     }
 
+    public void visit(SequenceElement.RestSequenceElement element) {
+        Unit unit = units.get(element.getUnit());
+        changeUnitState(unit, element);
+    }
+
     long count = -1;
     Map<String, Unit> units = null;
     Map<Unit, Player> players = null;

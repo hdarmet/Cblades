@@ -11,7 +11,6 @@ import javax.persistence.*;
 public abstract class SequenceElement extends BaseEntity {
 
     @Entity
-    @DiscriminatorValue("State")
     public static abstract class StateSequenceElement extends SequenceElement {
 
         String unit;
@@ -240,6 +239,35 @@ public abstract class SequenceElement extends BaseEntity {
 
         public boolean isTurnClosed() {
             return true;
+        }
+
+    }
+
+    @Entity
+    @DiscriminatorValue("Rest")
+    public static class RestSequenceElement extends StateSequenceElement {
+
+        int dice1;
+        int dice2;
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public RestSequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public RestSequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
         }
 
     }

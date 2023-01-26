@@ -33,6 +33,7 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			try {
 				inTransaction(em->{
 					Sequence newSequence = writeToSequence(request, new Sequence());
+					assert(newSequence.getElements().size()>0);
 					persist(em, newSequence);
 					if (newSequence.isTurnClosed()) {
 						GameMatch gameMatch = GameMatch.getByGame(em, newSequence.getGame());
@@ -138,6 +139,10 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					.checkRequired("angle").checkMin("angle", 0).checkMax("angle", 300)
 					.checkRequired("stacking").check("stacking", Stacking.byLabels().keySet())
 				)
+				.checkWhen(eJson->eJson.get("type").equals("Turn"), eJson->verify(eJson)
+					.checkRequired("dice1").checkInteger("dice1").checkMin("dice1", 1).checkMax("dice1", 6)
+					.checkRequired("dice2").checkInteger("dice2").checkMin("dice2", 1).checkMax("dice2", 6)
+				)
 			)
 			.ensure();
 		sync(json, sequence)
@@ -146,16 +151,16 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			.write("count")
 			.syncEach("elements",
 				new Synchronizer.EntityFactory<>(hashMap(
-					pair("State", SequenceElement.StateSequenceElement.class),
 					pair("Move", SequenceElement.MoveSequenceElement.class),
 					pair("Rotate", SequenceElement.RotateSequenceElement.class),
 					pair("Turn", SequenceElement.TurnSequenceElement.class),
 					pair("Reorient", SequenceElement.ReorientSequenceElement.class),
+					pair("Rest", SequenceElement.RestSequenceElement.class),
 					pair("NextTurn", SequenceElement.NextTurnSequenceElement.class)
 				), "type"),
 				(cJson, celem)->sync(cJson, celem)
 				.write("version")
-				.syncWhen((eJson, eelem)-> "|State|Move|Turn|Rotate|Reorient|".contains("|"+(String)eJson.get("type")+"|"), (eJson, eelem)->sync(eJson, eelem)
+				.syncWhen((eJson, eelem)-> "|Rest|Move|Turn|Rotate|Reorient|".contains("|"+(String)eJson.get("type")+"|"), (eJson, eelem)->sync(eJson, eelem)
 					.write("unit")
 					.write("tiredness", label->Tiredness.byLabels().get(label))
 					.write("cohesion", label->Cohesion.byLabels().get(label))
@@ -184,6 +189,10 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					.write("angle")
 					.write("stacking", label->Stacking.byLabels().get(label))
 				)
+				.syncWhen((eJson, eelem)->eJson.get("type").equals("Rest"), (eJson, eelem)->sync(eJson, eelem)
+					.write("dice1")
+					.write("dice2")
+				)
 			);
 		return sequence;
 	}
@@ -208,9 +217,6 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					.read("orderGiven")
 					.read("played")
 				)
-				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.StateSequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
-					.setInJson("type", "State")
-				)
 				.syncWhen((eJson, eelem)->eelem instanceof SequenceElement.MoveSequenceElement, (eJson, eelem)->sync(eJson, eelem)
 					.setInJson("type", "Move")
 					.read("hexCol")
@@ -234,8 +240,13 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					.read("angle")
 					.read("stacking", Stacking::getLabel)
 				)
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.RestSequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
+					.setInJson("type", "Rest")
+					.read("dice1")
+					.read("dice2")
+				)
 				.syncWhen((eJson, eelem)->eelem instanceof SequenceElement.NextTurnSequenceElement, (eJson, eelem)->sync(eJson, eelem)
-						.setInJson("type", "NextTurn")
+					.setInJson("type", "NextTurn")
 				)
 		);
 		return json;

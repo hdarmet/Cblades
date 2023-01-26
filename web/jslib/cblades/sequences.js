@@ -1,21 +1,17 @@
 'use strict'
 
 import {
-    Mechanisms,
     Memento
 } from "../mechanisms.js";
-import {
-    CBGame
-} from "./playable.js";
-import {
-    SequenceLoader
-} from "./loader.js";
 import {
     DAnimation
 } from "../draw.js";
 import {
     diffAngle, Point2D
 } from "../geometry.js";
+import {
+    InteractiveRestingAction
+} from "./interactive/interactive-recover.js";
 
 export class CBSequence {
 
@@ -212,10 +208,6 @@ export class CBStateSequenceElement extends CBSequenceElement {
         return result;
     }
 
-    apply(startTick) {
-        return new CBUnitAnimation(this.unit, startTick, this.delay, this);
-    }
-
     get delay() { return 0; }
 
     getUnit() {
@@ -233,7 +225,7 @@ export class CBMoveSequenceElement extends CBStateSequenceElement {
     }
 
     apply(startTick) {
-        return new CBUnitAnimation(this.unit, startTick, this.delay, this, undefined, this.hexLocation, this.stacking);
+        return new CBMoveAnimation(this.unit, startTick, this.delay, this, undefined, this.hexLocation, this.stacking);
     }
 
     get delay() { return 500; }
@@ -262,7 +254,7 @@ export class CBRotateSequenceElement extends CBStateSequenceElement {
     }
 
     apply(startTick) {
-        return new CBUnitAnimation(this.unit, startTick, this.delay, this, this.angle);
+        return new CBMoveAnimation(this.unit, startTick, this.delay, this, this.angle);
     }
 
     get delay() { return 500; }
@@ -289,7 +281,7 @@ export class CBReorientSequenceElement extends CBStateSequenceElement {
     }
 
     apply(startTick) {
-        return new CBUnitAnimation(this.unit, startTick, this.delay, this, this.angle);
+        return new CBMoveAnimation(this.unit, startTick, this.delay, this, this.angle);
     }
 
     get delay() { return 500; }
@@ -318,7 +310,7 @@ export class CBTurnSequenceElement extends CBStateSequenceElement {
     }
 
     apply(startTick) {
-        return new CBUnitAnimation(this.unit, startTick, this.delay, this, this.angle, this.hexLocation, this.stacking);
+        return new CBMoveAnimation(this.unit, startTick, this.delay, this, this.angle, this.hexLocation, this.stacking);
     }
 
     get delay() { return 500; }
@@ -343,15 +335,16 @@ export class CBTurnSequenceElement extends CBStateSequenceElement {
 
 export class CBUnitAnimation extends DAnimation {
 
-    constructor(unit, startTick, duration, state, angle, hexLocation, stacking) {
+    constructor(unit, startTick, duration, state) {
         super();
         this._unit = unit;
-        this._angle = angle;
-        this._hexLocation = hexLocation;
-        this._stacking = stacking;
         this._state = state;
         this._duration = duration;
-        this.play(startTick+1);
+        this._tick = startTick+1;
+    }
+
+    get tick() {
+        return this._tick;
     }
 
     _draw(count, ticks) {
@@ -366,6 +359,35 @@ export class CBUnitAnimation extends DAnimation {
     }
 
     init() {
+    }
+
+    _finalize() {
+        this._unit.setState(this._state);
+        delete this._unit._animation;
+    }
+
+    _factor(count) {
+        return (this._duration === 0) ? 0 : (count * 20)/this._duration;
+    }
+
+    draw(count, ticks) {
+        return count * 20 >= this._duration ? 0 : 1;
+    }
+
+}
+
+export class CBMoveAnimation extends CBUnitAnimation {
+
+    constructor(unit, startTick, duration, state, angle, hexLocation, stacking) {
+        super(unit, startTick, duration, state);
+        this._angle = angle;
+        this._hexLocation = hexLocation;
+        this._stacking = stacking;
+        this.play(this.tick);
+    }
+
+    init() {
+        super.init();
         if (this._angle!==undefined) {
             this._startAngle = this._unit.element.angle;
             this._unit._rotate(this._angle);
@@ -387,12 +409,7 @@ export class CBUnitAnimation extends DAnimation {
         if (this._stopLocation) {
             this._unit.element.setLocation(this._stopLocation);
         }
-        this._unit.setState(this._state);
-        delete this._unit._animation;
-    }
-
-    _factor(count) {
-        return (this._duration === 0) ? 0 : (count * 20)/this._duration;
+        super._finalize();
     }
 
     draw(count, ticks) {
@@ -404,9 +421,9 @@ export class CBUnitAnimation extends DAnimation {
             this._unit.element.setLocation(new Point2D(
                 this._startLocation.x + factor*(this._stopLocation.x-this._startLocation.x),
                 this._startLocation.y + factor*(this._stopLocation.y-this._startLocation.y)
-                ));
+            ));
         }
-        return count * 20 >= this._duration ? 0 : 1;
+        return super.draw(count, ticks);
     }
 
 }
@@ -451,6 +468,65 @@ export class CBNextTurnAnimation extends DAnimation {
             this._game.nextTurn(this._game._endOfTurnCommand.animation);
         }
         return false;
+    }
+
+}
+
+export class CBRestSequenceElement extends CBStateSequenceElement {
+
+    constructor(game, unit, dice) {
+        super(unit, "Rest");
+        this._game = game;
+        this._dice = dice;
+    }
+
+    apply(startTick) {
+        return new CBRecoverAnimation(this.unit, startTick, this.delay, this, this._game,
+            ()=>new InteractiveRestingAction(this._game, this.unit).replay(this.dice)
+        );
+    }
+
+    get dice() { return this._dice; }
+
+    get delay() { return 2500; }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        for (let index=0; index<this._dice.length; index++) {
+            if (element[index] !== this._dice[index]) return false;
+        }
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        for (let index=0; index<this._dice.length; index++) {
+            result+=`, dice${index}: `+this._dice[index];
+        }
+        return result;
+    }
+
+}
+
+export class CBRecoverAnimation extends CBUnitAnimation {
+
+    constructor(unit, startTick, duration, state, game, recoveringAnimation) {
+        super(unit, startTick, duration, state);
+        this._game = game;
+        this._recoveringAnimation = recoveringAnimation;
+        this.play(this.tick);
+    }
+
+    draw(count, ticks) {
+        if (count===0) {
+            this._recoveringAnimation();
+        }
+        return super.draw(count, ticks);
+    }
+
+    _finalize() {
+        this._game.closePopup();
+        super._finalize();
     }
 
 }

@@ -18,10 +18,10 @@ import {
 } from "./game.js";
 import {
     CBMoveSequenceElement, CBNextTurnSequenceElement,
-    CBReorientSequenceElement,
+    CBReorientSequenceElement, CBRestSequenceElement,
     CBRotateSequenceElement,
     CBSequence,
-    CBStateSequenceElement, CBTurnSequenceElement
+    CBTurnSequenceElement
 } from "./sequences.js";
 
 //let consoleLog = console.log;
@@ -572,7 +572,7 @@ export class SequenceLoader {
                 version: element._oversion || 0,
                 type: element.type,
             }
-            if ("|State|Move|Rotate|Reorient|Turn|".indexOf("|"+element.type+"|")>=0) {
+            if ("|Rest|Move|Rotate|Reorient|Turn|".indexOf("|"+element.type+"|")>=0) {
                 elementSpecs.unit = element.unit.name;
                 elementSpecs.cohesion = this.getCohesionCode(element.cohesion);
                 elementSpecs.tiredness = this.getTirednessCode(element.tiredness);
@@ -596,6 +596,10 @@ export class SequenceLoader {
             }
             if ("Rotate|Reorient|Turn".indexOf(element.type)>=0) {
                 elementSpecs.angle = element.angle;
+            }
+            if ("Rest".indexOf(element.type)>=0) {
+                elementSpecs.dice1 = element.dice[0];
+                elementSpecs.dice2 = element.dice[1];
             }
             sequenceSpecs.elements.push(elementSpecs);
         }
@@ -631,8 +635,8 @@ export class SequenceLoader {
                 let element;
                 let angle = elementSpec.angle;
                 switch (elementSpec.type) {
-                    case "State":
-                        element = new CBStateSequenceElement(unit);
+                    case "Rest":
+                        element = new CBRestSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
                         break;
                     case "Move":
                         element = new CBMoveSequenceElement(unit, hexLocation, stacking);

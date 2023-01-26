@@ -27,4 +27,8 @@ public interface SequenceVisitor {
         defaultVisit(element);
     }
 
+    default void visit(SequenceElement.RestSequenceElement element) {
+        defaultVisit(element);
+    }
+
 }

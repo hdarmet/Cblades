@@ -55,45 +55,50 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 				if (gameMatch == null) {
 					throw new SummerControllerException(404, "GameMatch not found for game : %d", gameId);
 				}
+				long sequenceCount = adjustGameAndReturnsSequenceCount(request, em, gameMatch);
 				Game game = gameMatch.getGame();
-
-				Set<String> activeIdentities = new HashSet<>();
-				for (int index=0; index<request.size(); index++) {
-					activeIdentities.add((String)request.get(index));
-				}
-				Set<PlayerIdentity> activesPlayers = new HashSet<>();
-				for (PlayerMatch playerMatch: gameMatch.getPlayerMatches()) {
-					if (activeIdentities.contains(playerMatch.getPlayerIdentity().getName())) {
-						activesPlayers.add(playerMatch.getPlayerIdentity());
-					}
-				}
-				int lastTurn = gameMatch.getCurrentTurn();
-				int lastPlayerIndex = gameMatch.getCurrentPlayerIndex()-1;
-				if (lastPlayerIndex<0) {
-					lastTurn--;
-					lastPlayerIndex = game.getPlayers().size()-1;
-				}
-				int turnCount = (gameMatch.getCurrentTurn()-gameMatch.getGame().getCurrentTurn())*gameMatch.getPlayerMatches().size()
-						+gameMatch.getCurrentPlayerIndex()-gameMatch.getGame().getCurrentPlayerIndex();
-				while(lastTurn>=0 &&
-					!activesPlayers.contains(game.getPlayers().get(lastPlayerIndex).getIdentity())
-				) {
-					lastPlayerIndex--;
-					if (lastPlayerIndex<0) {
-						lastTurn--;
-						lastPlayerIndex = game.getPlayers().size()-1;
-					}
-					turnCount--;
-				}
-				long sequenceCount = 0;
-				if (lastTurn>=0 && turnCount>0) {
-					sequenceCount = game.advancePlayerTurns(em, turnCount) +1;
-				}
 				result.set(readFromGame(em, game));
 				result.get().put("sequenceCount", sequenceCount);
 			});
 		});
 		return result.get();
+	}
+
+	long adjustGameAndReturnsSequenceCount(Json request, EntityManager em, GameMatch gameMatch) {
+		Game game = gameMatch.getGame();
+		Set<String> activeIdentities = new HashSet<>();
+		for (int index = 0; index< request.size(); index++) {
+			activeIdentities.add((String) request.get(index));
+		}
+		Set<PlayerIdentity> activesPlayers = new HashSet<>();
+		for (PlayerMatch playerMatch: gameMatch.getPlayerMatches()) {
+			if (activeIdentities.contains(playerMatch.getPlayerIdentity().getName())) {
+				activesPlayers.add(playerMatch.getPlayerIdentity());
+			}
+		}
+		int lastTurn = gameMatch.getCurrentTurn();
+		int lastPlayerIndex = gameMatch.getCurrentPlayerIndex()-1;
+		if (lastPlayerIndex<0) {
+			lastTurn--;
+			lastPlayerIndex = game.getPlayers().size()-1;
+		}
+		int turnCount = (gameMatch.getCurrentTurn()- gameMatch.getGame().getCurrentTurn())* gameMatch.getPlayerMatches().size()
+				+ gameMatch.getCurrentPlayerIndex()- gameMatch.getGame().getCurrentPlayerIndex();
+		while(lastTurn>=0 &&
+			!activesPlayers.contains(game.getPlayers().get(lastPlayerIndex).getIdentity())
+		) {
+			lastPlayerIndex--;
+			if (lastPlayerIndex<0) {
+				lastTurn--;
+				lastPlayerIndex = game.getPlayers().size()-1;
+			}
+			turnCount--;
+		}
+		long sequenceCount = 0;
+		if (lastTurn>=0 && turnCount>0) {
+			sequenceCount = game.advancePlayerTurns(em, turnCount) +1;
+		}
+		return sequenceCount;
 	}
 
 	@REST(url="/api/game/find/:id", method=Method.GET)

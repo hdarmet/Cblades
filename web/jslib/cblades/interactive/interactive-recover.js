@@ -4,7 +4,7 @@ import {
     Dimension2D, Point2D
 } from "../../geometry.js";
 import {
-    DDice, DIconMenuItem, DInsert, DMask, DResult, DScene
+    DDice, DIconMenuItem, DMask, DResult, DScene
 } from "../../widget.js";
 import {
     CBAction
@@ -22,6 +22,12 @@ import {
 import {
     CBCharge
 } from "../unit.js";
+import {
+    CBRestSequenceElement, CBSequence
+} from "../sequences.js";
+import {
+    SequenceLoader
+} from "../loader.js";
 
 export function registerInteractiveRecover() {
     CBInteractivePlayer.prototype.restUnit = function(unit, event) {
@@ -59,16 +65,13 @@ export class InteractiveRestingAction extends CBAction {
         return this.playable;
     }
 
-    play() {
-        this.game.closeActuators();
-        this.unit.setCharging(CBCharge.NONE);
-        let wingTiredness = this.game.arbitrator.getWingTiredness(this.unit);
+    createScene(finalAction) {
         let weather = this.game.arbitrator.getWeather(this.game);
-        let result = new DResult();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
+        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let mask = new DMask("#000000", 0.3);
-        let tirednessIndicator = new CBWingTirednessIndicator(this.unit.wing);
+        scene.tirednessIndicator = new CBWingTirednessIndicator(this.unit.wing);
+        scene.result = new DResult();
         let close = ()=>{
             this.game.closePopup();
         };
@@ -79,32 +82,53 @@ export class InteractiveRestingAction extends CBAction {
         ).addWidget(
             new CBCheckRestInsert(), new Point2D(-20, CBCheckRestInsert.DIMENSION.h/2)
         ).addWidget(
-            tirednessIndicator,
+            scene.tirednessIndicator,
             new Point2D(-CBRestInsert.DIMENSION.w/2-CBWingTirednessIndicator.DIMENSION.w/2-10, 0)
         ).addWidget(
             new CBWeatherIndicator(weather),
             new Point2D(CBRestInsert.DIMENSION.w/2+CBWeatherIndicator.DIMENSION.w/2-30, 200)
         ).addWidget(
-            dice.setFinalAction(()=>{
-                dice.active = false;
-                let {success, restingCapacity} = this._processRestResult(this.unit, dice.result);
+            scene.dice.setFinalAction(()=>{
+                scene.dice.active = false;
+                let {success, restingCapacity} = this._processRestResult(this.unit, scene.dice.result);
                 if (restingCapacity!==undefined) {
-                    tirednessIndicator.changeState(restingCapacity-4);
+                    scene.tirednessIndicator.changeState(restingCapacity-4);
                 }
                 if (success) {
-                    result.success().appear();
+                    scene.result.success().appear();
                 }
                 else {
-                    result.failure().appear();
+                    scene.result.failure().appear();
                 }
-                this.game.validate();
+                finalAction&&finalAction();
             }),
             new Point2D(CBRestInsert.DIMENSION.w/2+40, 0)
         ).addWidget(
-            result.setFinalAction(close),
+            scene.result.setFinalAction(close),
             new Point2D(0, 0)
         );
+        return scene;
+    }
+
+    play() {
+        this.game.closeActuators();
+        this.unit.setCharging(CBCharge.NONE);
+        let scene = this.createScene(
+            ()=>{
+                CBSequence.appendElement(this.game, new CBRestSequenceElement(this.game, this.unit, scene.dice.result));
+                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                this.game.validate();
+            }
+        );
         this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+    }
+
+    replay(dice) {
+        let scene = this.createScene();
+        scene.dice.active = false;
+        scene.result.active = false;
+        scene.dice.cheat(dice);
+        this.game.openPopup(scene, this.unit.viewportLocation);
     }
 
     _processRestResult(unit, diceResult) {

@@ -341,7 +341,7 @@ public class FakeData {
                 .setType("Company Leader")
                 .setAngle(0)
                 .setSteps(1)
-                .setTiredness(Tiredness.FRESH)
+                .setTiredness(Tiredness.TIRED)
                 .setAmmunition(Ammunition.PLENTIFUL)
                 .setCohesion(Cohesion.DISRUPTED)
                 .setContact(false)
