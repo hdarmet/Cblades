@@ -4,8 +4,7 @@ import fr.cblades.domain.SequenceElement;
 
 public interface SequenceVisitor {
 
-    default void defaultVisit(SequenceElement element) {
-    }
+    default void defaultVisit(SequenceElement element) {}
 
     default void visit(SequenceElement.MoveSequenceElement element) {
         defaultVisit(element);
@@ -28,6 +27,18 @@ public interface SequenceVisitor {
     }
 
     default void visit(SequenceElement.RestSequenceElement element) {
+        defaultVisit(element);
+    }
+
+    default void visit(SequenceElement.RefillSequenceElement element) {
+        defaultVisit(element);
+    }
+
+    default void visit(SequenceElement.RallySequenceElement element) {
+        defaultVisit(element);
+    }
+
+    default void visit(SequenceElement.ReorganizeSequenceElement element) {
         defaultVisit(element);
     }
 

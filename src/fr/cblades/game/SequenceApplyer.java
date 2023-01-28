@@ -110,6 +110,21 @@ public class SequenceApplyer implements SequenceVisitor  {
         changeUnitState(unit, element);
     }
 
+    public void visit(SequenceElement.RefillSequenceElement element) {
+        Unit unit = units.get(element.getUnit());
+        changeUnitState(unit, element);
+    }
+
+    public void visit(SequenceElement.RallySequenceElement element) {
+        Unit unit = units.get(element.getUnit());
+        changeUnitState(unit, element);
+    }
+
+    public void visit(SequenceElement.ReorganizeSequenceElement element) {
+        Unit unit = units.get(element.getUnit());
+        changeUnitState(unit, element);
+    }
+
     long count = -1;
     Map<String, Unit> units = null;
     Map<Unit, Player> players = null;

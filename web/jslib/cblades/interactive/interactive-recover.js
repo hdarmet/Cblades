@@ -23,6 +23,8 @@ import {
     CBCharge
 } from "../unit.js";
 import {
+    CBRallySequenceElement,
+    CBRefillSequenceElement, CBReorganizeSequenceElement,
     CBRestSequenceElement, CBSequence
 } from "../sequences.js";
 import {
@@ -156,12 +158,10 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
         return this.playable;
     }
 
-    play() {
-        this.game.closeActuators();
-        this.unit.setCharging(CBCharge.NONE);
-        let result = new DResult();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+    createScene(finalAction) {
         let scene = new DScene();
+        scene.result = new DResult();
+        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
             this.game.closePopup();
@@ -171,23 +171,44 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
         scene.addWidget(
             new CBReplenishMunitionsInsert(), new Point2D(0, -CBReplenishMunitionsInsert.DIMENSION.h/2+10)
         ).addWidget(
-            dice.setFinalAction(()=>{
-                dice.active = false;
-                let {success} = this._processReplenishMunitionsResult(this.unit, dice.result);
+            scene.dice.setFinalAction(()=>{
+                scene.dice.active = false;
+                let {success} = this._processReplenishMunitionsResult(this.unit, scene.dice.result);
                 if (success) {
-                    result.success().appear();
+                    scene.result.success().appear();
                 }
                 else {
-                    result.failure().appear();
+                    scene.result.failure().appear();
                 }
-                this.game.validate();
+                finalAction&&finalAction();
             }),
             new Point2D(CBReplenishMunitionsInsert.DIMENSION.w/2+40, 0)
         ).addWidget(
-            result.setFinalAction(close),
+            scene.result.setFinalAction(close),
             new Point2D(0, 0)
         );
+        return scene;
+    }
+
+    play() {
+        this.game.closeActuators();
+        this.unit.setCharging(CBCharge.NONE);
+        let scene = this.createScene(
+            ()=>{
+                CBSequence.appendElement(this.game, new CBRefillSequenceElement(this.game, this.unit, scene.dice.result));
+                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                this.game.validate();
+            }
+        );
         this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+    }
+
+    replay(dice) {
+        let scene = this.createScene();
+        scene.dice.active = false;
+        scene.result.active = false;
+        scene.dice.cheat(dice);
+        this.game.openPopup(scene, this.unit.viewportLocation);
     }
 
     _processReplenishMunitionsResult(unit, diceResult) {
@@ -212,12 +233,10 @@ export class InteractiveReorganizeAction extends CBAction {
         return this.playable;
     }
 
-    play() {
-        this.game.closeActuators();
-        this.unit.setCharging(CBCharge.NONE);
-        let result = new DResult();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+    createScene(finalAction) {
         let scene = new DScene();
+        scene.result = new DResult();
+        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
             this.game.closePopup();
@@ -232,23 +251,44 @@ export class InteractiveReorganizeAction extends CBAction {
             new CBMoralInsert(this.unit),
             new Point2D(-CBMoralInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            dice.setFinalAction(()=>{
-                dice.active = false;
-                let {success} = this._processReorganizeResult(this.unit, dice.result);
+            scene.dice.setFinalAction(()=>{
+                scene.dice.active = false;
+                let {success} = this._processReorganizeResult(this.unit, scene.dice.result);
                 if (success) {
-                    result.success().appear();
+                    scene.result.success().appear();
                 }
                 else {
-                    result.failure().appear();
+                    scene.result.failure().appear();
                 }
-                this.game.validate();
+                finalAction&&finalAction();
             }),
             new Point2D(50, 0)
         ).addWidget(
-            result.setFinalAction(close),
+            scene.result.setFinalAction(close),
             new Point2D(0, 0)
         );
+        return scene;
+    }
+
+    play() {
+        this.game.closeActuators();
+        this.unit.setCharging(CBCharge.NONE);
+        let scene = this.createScene(
+            ()=>{
+                CBSequence.appendElement(this.game, new CBReorganizeSequenceElement(this.game, this.unit, scene.dice.result));
+                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                this.game.validate();
+            }
+        );
         this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+    }
+
+    replay(dice) {
+        let scene = this.createScene();
+        scene.dice.active = false;
+        scene.result.active = false;
+        scene.dice.cheat(dice);
+        this.game.openPopup(scene, this.unit.viewportLocation);
     }
 
     _processReorganizeResult(unit, diceResult) {
@@ -273,12 +313,10 @@ export class InteractiveRallyAction extends CBAction {
         return this.playable;
     }
 
-    play() {
-        this.game.closeActuators();
-        this.unit.setCharging(CBCharge.NONE);
-        let result = new DResult();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+    createScene(finalAction) {
         let scene = new DScene();
+        scene.result = new DResult();
+        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
             this.game.closePopup();
@@ -293,23 +331,44 @@ export class InteractiveRallyAction extends CBAction {
             new CBMoralInsert(this.unit),
             new Point2D(-CBMoralInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            dice.setFinalAction(()=>{
-                dice.active = false;
-                let {success} = this._processRallyResult(this.unit, dice.result);
+            scene.dice.setFinalAction(()=>{
+                scene.dice.active = false;
+                let {success} = this._processRallyResult(this.unit, scene.dice.result);
                 if (success) {
-                    result.success().appear();
+                    scene.result.success().appear();
                 }
                 else {
-                    result.failure().appear();
+                    scene.result.failure().appear();
                 }
-                this.game.validate();
+                finalAction&&finalAction();
             }),
             new Point2D(50, 0)
         ).addWidget(
-            result.setFinalAction(close),
+            scene.result.setFinalAction(close),
             new Point2D(0, 0)
         );
+        return scene;
+    }
+
+    play() {
+        this.game.closeActuators();
+        this.unit.setCharging(CBCharge.NONE);
+        let scene = this.createScene(
+            ()=>{
+                CBSequence.appendElement(this.game, new CBRallySequenceElement(this.game, this.unit, scene.dice.result));
+                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                this.game.validate();
+            }
+        );
         this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+    }
+
+    replay(dice) {
+        let scene = this.createScene();
+        scene.dice.active = false;
+        scene.result.active = false;
+        scene.dice.cheat(dice);
+        this.game.openPopup(scene, this.unit.viewportLocation);
     }
 
     _processRallyResult(unit, diceResult) {

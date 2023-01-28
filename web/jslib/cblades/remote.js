@@ -35,11 +35,11 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
                 new SequenceLoader().load(this.game, sequences => {
                     if (sequences.length>0) {
                         sequences.sort((s1, s2)=>s1.count-s2.count);
-                        this.game._sequence = new CBSequence(this.game, sequences[sequences.length-1].count+1);
+                        this.game._sequence = new CBSequence(this.game, sequences.last().count+1);
                         let tick = 0;
                         for (let sequence of sequences) {
                             tick = sequence.replay(tick, () => {
-                                sequence===this.game._sequence ? this.tryToLoadNewSequence() : null;
+                                sequence===sequences.last() ? this.tryToLoadNewSequence() : null;
                             });
                         }
                     } else {

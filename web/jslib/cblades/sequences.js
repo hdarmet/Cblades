@@ -10,6 +10,8 @@ import {
     diffAngle, Point2D
 } from "../geometry.js";
 import {
+    InteractiveRallyAction, InteractiveReorganizeAction,
+    InteractiveReplenishMunitionsAction,
     InteractiveRestingAction
 } from "./interactive/interactive-recover.js";
 
@@ -483,6 +485,114 @@ export class CBRestSequenceElement extends CBStateSequenceElement {
     apply(startTick) {
         return new CBRecoverAnimation(this.unit, startTick, this.delay, this, this._game,
             ()=>new InteractiveRestingAction(this._game, this.unit).replay(this.dice)
+        );
+    }
+
+    get dice() { return this._dice; }
+
+    get delay() { return 2500; }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        for (let index=0; index<this._dice.length; index++) {
+            if (element[index] !== this._dice[index]) return false;
+        }
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        for (let index=0; index<this._dice.length; index++) {
+            result+=`, dice${index}: `+this._dice[index];
+        }
+        return result;
+    }
+
+}
+
+export class CBRefillSequenceElement extends CBStateSequenceElement {
+
+    constructor(game, unit, dice) {
+        super(unit, "Refill");
+        this._game = game;
+        this._dice = dice;
+    }
+
+    apply(startTick) {
+        return new CBRecoverAnimation(this.unit, startTick, this.delay, this, this._game,
+            ()=>new InteractiveReplenishMunitionsAction(this._game, this.unit).replay(this.dice)
+        );
+    }
+
+    get dice() { return this._dice; }
+
+    get delay() { return 2500; }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        for (let index=0; index<this._dice.length; index++) {
+            if (element[index] !== this._dice[index]) return false;
+        }
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        for (let index=0; index<this._dice.length; index++) {
+            result+=`, dice${index}: `+this._dice[index];
+        }
+        return result;
+    }
+
+}
+
+export class CBRallySequenceElement extends CBStateSequenceElement {
+
+    constructor(game, unit, dice) {
+        super(unit, "Rally");
+        this._game = game;
+        this._dice = dice;
+    }
+
+    apply(startTick) {
+        return new CBRecoverAnimation(this.unit, startTick, this.delay, this, this._game,
+            ()=>new InteractiveRallyAction(this._game, this.unit).replay(this.dice)
+        );
+    }
+
+    get dice() { return this._dice; }
+
+    get delay() { return 2500; }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        for (let index=0; index<this._dice.length; index++) {
+            if (element[index] !== this._dice[index]) return false;
+        }
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        for (let index=0; index<this._dice.length; index++) {
+            result+=`, dice${index}: `+this._dice[index];
+        }
+        return result;
+    }
+
+}
+
+export class CBReorganizeSequenceElement extends CBStateSequenceElement {
+
+    constructor(game, unit, dice) {
+        super(unit, "Reorganize");
+        this._game = game;
+        this._dice = dice;
+    }
+
+    apply(startTick) {
+        return new CBRecoverAnimation(this.unit, startTick, this.delay, this, this._game,
+            ()=>new InteractiveReorganizeAction(this._game, this.unit).replay(this.dice)
         );
     }
 

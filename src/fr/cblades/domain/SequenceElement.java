@@ -272,6 +272,93 @@ public abstract class SequenceElement extends BaseEntity {
 
     }
 
+    @Entity
+    @DiscriminatorValue("Refill")
+    public static class RefillSequenceElement extends StateSequenceElement {
+
+        int dice1;
+        int dice2;
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public RefillSequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public RefillSequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
+    @Entity
+    @DiscriminatorValue("Rally")
+    public static class RallySequenceElement extends StateSequenceElement {
+
+        int dice1;
+        int dice2;
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public RallySequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public RallySequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
+    @Entity
+    @DiscriminatorValue("Reorganize")
+    public static class ReorganizeSequenceElement extends StateSequenceElement {
+
+        int dice1;
+        int dice2;
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public ReorganizeSequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public ReorganizeSequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
     public abstract void accept(SequenceVisitor visitor);
 
     public boolean isTurnClosed() {
