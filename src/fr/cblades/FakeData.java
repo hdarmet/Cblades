@@ -304,6 +304,20 @@ public class FakeData {
                     )
                 )
             );
+            Unit unit0 = new Unit()
+                .setPositionRow(4).setPositionCol(1)
+                .setName("u0").setCategory(UnitCategory.CHARACTER)
+                .setType("Goblin Wolf Rider")
+                .setAngle(0)
+                .setSteps(1)
+                .setTiredness(Tiredness.FRESH)
+                .setAmmunition(Ammunition.PLENTIFUL)
+                .setCohesion(Cohesion.ROOTED)
+                .setContact(false)
+                .setOrderGiven(false)
+                .setPlayed(true)
+                .setCharging(false);
+            em.persist(unit0);
             Unit unit1 = new Unit()
                 .setPositionRow(4).setPositionCol(2)
                 .setName("u1").setCategory(UnitCategory.CHARACTER)
@@ -312,12 +326,26 @@ public class FakeData {
                 .setSteps(1)
                 .setTiredness(Tiredness.FRESH)
                 .setAmmunition(Ammunition.PLENTIFUL)
-                .setCohesion(Cohesion.DISRUPTED)
+                .setCohesion(Cohesion.GOOD_ORDER)
                 .setContact(false)
                 .setOrderGiven(false)
                 .setPlayed(false)
                 .setCharging(false);
             em.persist(unit1);
+            Unit unit3 = new Unit()
+                .setPositionRow(5).setPositionCol(1)
+                .setName("u3").setCategory(UnitCategory.CHARACTER)
+                .setType("Goblin Wolf Rider")
+                .setAngle(0)
+                .setSteps(1)
+                .setTiredness(Tiredness.FRESH)
+                .setAmmunition(Ammunition.PLENTIFUL)
+                .setCohesion(Cohesion.GOOD_ORDER)
+                .setContact(false)
+                .setOrderGiven(false)
+                .setPlayed(false)
+                .setCharging(false);
+            em.persist(unit3);
             scenario.get().getGame().addPlayer(
                 new Player().setIdentity(PlayerIdentity.getByName(em, "orc 1"))
                     .addWing(
@@ -327,12 +355,24 @@ public class FakeData {
                         .addToRetreatZone(
                             new TargetHex().setRow(0).setCol(4)
                         )
+                        .addUnit(unit0)
                         .addUnit(unit1)
+                        .addUnit(unit3)
+                    )
+                    .addHex(new Location()
+                        .setCol(unit0.getPositionCol())
+                        .setRow(unit0.getPositionRow())
+                        .addUnit(unit0)
                     )
                     .addHex(new Location()
                         .setCol(unit1.getPositionCol())
                         .setRow(unit1.getPositionRow())
                         .addUnit(unit1)
+                    )
+                    .addHex(new Location()
+                        .setCol(unit1.getPositionCol())
+                        .setRow(unit1.getPositionRow())
+                        .addUnit(unit3)
                     )
             );
             Unit unit2 = new Unit()
@@ -343,7 +383,7 @@ public class FakeData {
                 .setSteps(1)
                 .setTiredness(Tiredness.TIRED)
                 .setAmmunition(Ammunition.SCARCE)
-                .setCohesion(Cohesion.ROOTED)
+                .setCohesion(Cohesion.GOOD_ORDER)
                 .setContact(false)
                 .setOrderGiven(false)
                 .setPlayed(false)
@@ -417,10 +457,10 @@ public class FakeData {
                     new SequenceElement.MoveSequenceElement()
                         .setHexAngle(0).setHexCol(3).setHexRow(3).setStacking(Stacking.TOP)
                         .setUnit("u1").setCohesion(Cohesion.DISRUPTED)
-                )
+                )/*
                 .addElement(
                     new SequenceElement.NextTurnSequenceElement()
-                );
+                )*/;
             data.persist(em, sequence);
             gameMatch.advanceOnePlayerTurn();
         });

@@ -7,11 +7,12 @@ import javax.persistence.*;
 
 @Entity
 @Inheritance(strategy=InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name="type")
+@DiscriminatorColumn(name="type", length=63)
 public abstract class SequenceElement extends BaseEntity {
 
     @Entity
-    public static abstract class StateSequenceElement extends SequenceElement {
+    @DiscriminatorValue("State")
+    public static class StateSequenceElement extends SequenceElement {
 
         String unit;
         Cohesion cohesion = Cohesion.GOOD_ORDER;
@@ -82,6 +83,10 @@ public abstract class SequenceElement extends BaseEntity {
         public StateSequenceElement setPlayed(boolean played) {
             this.played = played;
             return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
         }
 
     }
@@ -349,6 +354,180 @@ public abstract class SequenceElement extends BaseEntity {
             return this.dice1;
         }
         public ReorganizeSequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
+    @Entity
+    @DiscriminatorValue("LossConsistency")
+    public static class LossConsistencySequenceElement extends StateSequenceElement {
+
+        int dice1;
+        int dice2;
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public LossConsistencySequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public LossConsistencySequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
+    @Entity
+    @DiscriminatorValue("Confront")
+    public static class ConfrontSequenceElement extends StateSequenceElement {
+
+        int dice1;
+        int dice2;
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public ConfrontSequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public ConfrontSequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
+    @Entity
+    @DiscriminatorValue("Crossing")
+    public static class CrossingSequenceElement extends StateSequenceElement {
+
+        int dice1;
+        int dice2;
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public CrossingSequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public CrossingSequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
+    @Entity
+    @DiscriminatorValue("AttackerEngagement")
+    public static class AttackerEngagementSequenceElement extends StateSequenceElement {
+
+        int dice1;
+        int dice2;
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public AttackerEngagementSequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public AttackerEngagementSequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
+    @Entity
+    @DiscriminatorValue("DefenderEngagement")
+    public static class DefenderEngagementSequenceElement extends StateSequenceElement {
+
+        int dice1;
+        int dice2;
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public DefenderEngagementSequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public DefenderEngagementSequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
+    @Entity
+    @DiscriminatorValue("Disengagement")
+    public static class DisengagementSequenceElement extends StateSequenceElement {
+
+        int dice1;
+        int dice2;
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public DisengagementSequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public DisengagementSequenceElement setDice2(int dice2) {
             this.dice2 = dice2;
             return this;
         }

@@ -39,10 +39,20 @@ import {
     stringifyHexLocations
 } from "../pathfinding.js";
 import {
-    CBMoveSequenceElement, CBReorientSequenceElement,
+    CBMoveSequenceElement,
+    CBReorientSequenceElement,
     CBRotateSequenceElement,
-    CBSequence, CBTurnSequenceElement, CBStateSequenceElement
+    CBSequence,
+    CBTurnSequenceElement,
+    CBStateSequenceElement,
+    CBConfrontSequenceElement,
+    CBAttackerEngagementSequenceElement,
+    CBDisengagementSequenceElement,
+    CBCrossingSequenceElement
 } from "../sequences.js";
+import {
+    SequenceLoader
+} from "../loader.js";
 
 export function registerInteractiveMovement() {
     CBInteractivePlayer.prototype.startMoveUnit = function (unit, moveMode, event) {
@@ -287,7 +297,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
     _checkIfANonRoutedCrossedUnitLoseCohesion(crossedUnits, processing, cancellable) {
         if (crossedUnits.length) {
             let crossedUnit = crossedUnits.pop();
-            this.checkIfACrossedUnitLoseCohesion(crossedUnit, () => {
+            new CBLoseCohesionForCrossingChecking(this.game, crossedUnit).play( () => {
                 this.game.validate();
                 this._checkIfANonRoutedCrossedUnitLoseCohesion(crossedUnits, processing, false);
             }, cancellable);
@@ -304,57 +314,6 @@ export class InteractiveAbstractMovementAction extends CBAction {
         else {
             processing();
         }
-    }
-
-    checkIfACrossedUnitLoseCohesion(unit, action, cancellable) {
-        let result = new DResult();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
-        let scene = new DScene();
-        let mask = new DMask("#000000", 0.3);
-        let close = ()=>{
-            if (cancellable) {
-                Memento.undo();
-            }
-            if (result.finished) {
-                if (!cancellable) {
-                    this.game.closePopup();
-                }
-                action();
-            }
-        }
-        mask.setAction(close);
-        this.game.openMask(mask);
-        let condition = this.game.arbitrator.getUnitCheckCrossCondition(unit);
-        scene.addWidget(
-            new CBCrossCheckCohesionInsert(condition), new Point2D(-CBCrossCheckCohesionInsert.DIMENSION.w/2, 0)
-        ).addWidget(
-            new CBMoralInsert(unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
-        ).addWidget(
-            dice.setFinalAction(()=>{
-                dice.active = false;
-                let {success} = this._processCohesionLostResult(unit, dice.result);
-                if (success) {
-                    result.success().appear();
-                }
-                else {
-                    result.failure().appear();
-                }
-                this.game.validate();
-            }),
-            new Point2D(70, 70)
-        ).addWidget(
-            result.setFinalAction(close),
-            new Point2D(0, 0)
-        );
-        this.game.openPopup(scene, unit.viewportLocation);
-    }
-
-    _processCohesionLostResult(unit, diceResult) {
-        let result = this.game.arbitrator.processCohesionLostResult(unit, diceResult);
-        if (!result.success) {
-            unit.addOneCohesionLevel();
-        }
-        return result;
     }
 
     _finishMove() {
@@ -812,7 +771,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
 
     _checkAttackerEngagement(engaging, action) {
         if (engaging && this.game.arbitrator.isUnitEngaged(this.unit, false)) {
-            this.checkAttackerEngagement(this.unit.viewportLocation, () => {
+            new CBAttackerEngagementChecking(this.game, this.unit).play(() => {
                 super.finalize(action);
                 this.game.validate();
             });
@@ -836,44 +795,6 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         }
     }
 
-    checkAttackerEngagement(point, action) {
-        let result = new DResult();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
-        let scene = new DScene();
-        let mask = new DMask("#000000", 0.3);
-        let close = ()=>{
-            this.game.closePopup();
-            if (result.finished) {
-                action();
-            }
-        }
-        mask.setAction(close);
-        this.game.openMask(mask);
-        let condition = this.game.arbitrator.getAttackerEngagementCondition(this.unit);
-        scene.addWidget(
-            new CBCheckAttackerEngagementInsert(condition), new Point2D(-CBCheckAttackerEngagementInsert.DIMENSION.w/2, 0)
-        ).addWidget(
-            new CBMoralInsert(this.unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
-        ).addWidget(
-            dice.setFinalAction(()=>{
-                dice.active = false;
-                let {success} = this._processAttackerEngagementResult(dice.result);
-                if (success) {
-                    result.success().appear();
-                }
-                else {
-                    result.failure().appear();
-                }
-                this.game.validate();
-            }),
-            new Point2D(70, 70)
-        ).addWidget(
-            result.setFinalAction(close),
-            new Point2D(0, 0)
-        );
-        this.game.openPopup(scene, point);
-    }
-
     showRules(point) {
         let scene = new DScene();
         let mask = new CBMask("#000000", 0.3);
@@ -888,15 +809,6 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
             new CBMovementInsert(), new Point2D(-CBMovementInsert.DIMENSION.w/2, CBMovementInsert.DIMENSION.h/2)
         );
         this.game.openPopup(scene, point);
-    }
-
-    _processAttackerEngagementResult(diceResult) {
-        let result = this.game.arbitrator.processAttackerEngagementResult(this.unit, diceResult);
-        if (!result.success) {
-            this.unit.addOneCohesionLevel();
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
-        }
-        return result;
     }
 
     moveUnit(hexId, angle, start) {
@@ -920,6 +832,309 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         this.unit.checkEngagement(this.game.arbitrator.doesUnitEngage(this.unit), mayCharge);
         let played = !this._createMovementActuators(false);
         this._markUnitActivationAfterMovement(played);
+    }
+
+}
+
+export class CBAttackerEngagementChecking {
+
+    constructor(game, unit) {
+        this.game = game;
+        this.unit = unit;
+    }
+
+    createScene(finalAction, closeAction) {
+        let scene = new DScene();
+        scene.result = new DResult();
+        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let mask = new DMask("#000000", 0.3);
+        closeAction&&mask.setAction(closeAction);
+        this.game.openMask(mask);
+        let condition = this.game.arbitrator.getDefenderEngagementCondition(this.unit);
+        scene.addWidget(
+            new CBCheckAttackerEngagementInsert(condition), new Point2D(-CBCheckAttackerEngagementInsert.DIMENSION.w/2, 0)
+        ).addWidget(
+            new CBMoralInsert(this.unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+        ).addWidget(
+            scene.dice.setFinalAction(()=>{
+                scene.dice.active = false;
+                let {success} = this._processAttackerEngagementResult(this.unit, scene.dice.result);
+                if (success) {
+                    scene.result.success().appear();
+                }
+                else {
+                    scene.result.failure().appear();
+                }
+                finalAction&&finalAction();
+            }),
+            new Point2D(70, 70)
+        ).addWidget(
+            scene.result.setFinalAction(closeAction),
+            new Point2D(0, 0)
+        );
+        this.game.openPopup(scene, this.unit.viewportLocation);
+        return scene;
+    }
+
+    play(action) {
+        let scene = this.createScene(
+            ()=>{
+                CBSequence.appendElement(this.game, new CBAttackerEngagementSequenceElement(this.game, this.unit, scene.dice.result));
+                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                this.game.validate();
+            },
+            ()=>{
+                this.game.closePopup();
+                if (scene.result.finished) {
+                    action();
+                }
+            }
+        );
+    }
+
+    replay(dice) {
+        let scene = this.createScene();
+        scene.dice.active = false;
+        scene.result.active = false;
+        scene.dice.cheat(dice);
+    }
+
+    _processAttackerEngagementResult(diceResult) {
+        let result = this.game.arbitrator.processAttackerEngagementResult(this.unit, diceResult);
+        if (!result.success) {
+            this.unit.addOneCohesionLevel();
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+        }
+        return result;
+    }
+
+}
+
+export class CBLoseCohesionForCrossingChecking {
+
+    constructor(game, unit) {
+        this.game = game;
+        this.unit = unit;
+    }
+
+    createScene(finalAction, closeAction) {
+        let scene = new DScene();
+        scene.result = new DResult();
+        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let mask = new DMask("#000000", 0.3);
+        closeAction&&mask.setAction(closeAction);
+        this.game.openMask(mask);
+        let condition = this.game.arbitrator.getDefenderEngagementCondition(this.unit);
+        scene.addWidget(
+            new CBCrossCheckCohesionInsert(condition), new Point2D(-CBCrossCheckCohesionInsert.DIMENSION.w/2, 0)
+        ).addWidget(
+            new CBMoralInsert(this.unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+        ).addWidget(
+            scene.dice.setFinalAction(()=>{
+                scene.dice.active = false;
+                let {success} = this._processCohesionLostResult(this.unit, scene.dice.result);
+                if (success) {
+                    scene.result.success().appear();
+                }
+                else {
+                    scene.result.failure().appear();
+                }
+                finalAction&&finalAction();
+            }),
+            new Point2D(70, 70)
+        ).addWidget(
+            scene.result.setFinalAction(closeAction),
+            new Point2D(0, 0)
+        );
+        this.game.openPopup(scene, this.unit.viewportLocation);
+        return scene;
+    }
+
+    play(action, cancellable) {
+        let scene = this.createScene(
+            ()=>{
+                CBSequence.appendElement(this.game, new CBCrossingSequenceElement(this.game, this.unit, scene.dice.result));
+                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                this.game.validate();
+            },
+            ()=>{
+                if (cancellable) {
+                    Memento.undo();
+                }
+                if (scene.result.finished) {
+                    if (!cancellable) {
+                        this.game.closePopup();
+                    }
+                    action();
+                }
+            }
+        );
+    }
+
+    replay(dice) {
+        let scene = this.createScene();
+        scene.dice.active = false;
+        scene.result.active = false;
+        scene.dice.cheat(dice);
+    }
+
+    _processCohesionLostResult(unit, diceResult) {
+        let result = this.game.arbitrator.processCohesionLostResult(unit, diceResult);
+        if (!result.success) {
+            unit.addOneCohesionLevel();
+        }
+        return result;
+    }
+
+}
+
+export class CBDisengagementChecking {
+
+    constructor(game, unit) {
+        this.game = game;
+        this.unit = unit;
+    }
+
+    createScene(finalAction, closeAction) {
+        this.game.closeActuators();
+        let scene = new DScene();
+        scene.result = new DResult();
+        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let mask = new DMask("#000000", 0.3);
+        closeAction&&mask.setAction(closeAction);
+        this.game.openMask(mask);
+        let condition = this.game.arbitrator.getDefenderEngagementCondition(this.unit);
+        scene.addWidget(
+            new CBCheckDisengagementInsert(), new Point2D(-CBCheckDisengagementInsert.DIMENSION.w/2, 0)
+        ).addWidget(
+            new CBMoralInsert(this.unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+        ).addWidget(
+            scene.dice.setFinalAction(()=>{
+                scene.dice.active = false;
+                let {success} = this._processDisengagementResult(this.unit, scene.dice.result);
+                if (success) {
+                    scene.result.success().appear();
+                }
+                else {
+                    scene.result.failure().appear();
+                }
+                finalAction&&finalAction();
+            }),
+            new Point2D(70, 70)
+        ).addWidget(
+            scene.result.setFinalAction(closeAction),
+            new Point2D(0, 0)
+        );
+        this.game.openPopup(scene, this.unit.viewportLocation);
+        return scene;
+    }
+
+    play(action) {
+        let scene = this.createScene(
+            ()=>{
+                CBSequence.appendElement(this.game, new CBDisengagementSequenceElement(this.game, this.unit, scene.dice.result));
+                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                this.game.validate();
+            },
+            ()=>{
+                this.game.closePopup();
+                if (scene.result.finished) {
+                    action();
+                }
+            }
+        );
+    }
+
+    replay(dice) {
+        let scene = this.createScene();
+        scene.dice.active = false;
+        scene.result.active = false;
+        scene.dice.cheat(dice);
+    }
+
+    _processDisengagementResult(diceResult) {
+        let result = this.game.arbitrator.processDisengagementResult(this.unit, diceResult);
+        if (!result.success) {
+            this.unit.addOneCohesionLevel();
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+        }
+        return result;
+    }
+
+}
+
+export class CBConfrontChecking {
+
+    constructor(game, unit) {
+        this.game = game;
+        this.unit = unit;
+    }
+
+    createScene(finalAction, closeAction) {
+        this.game.closeActuators();
+        let scene = new DScene();
+        scene.result = new DResult();
+        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        scene.mask = new DMask("#000000", 0.3);
+        closeAction&&mask.setAction(closeAction);
+        this.game.openMask(mask);
+        let condition = this.game.arbitrator.getDefenderEngagementCondition(this.unit);
+        scene.addWidget(
+            new CBCheckConfrontEngagementInsert(condition), new Point2D(-CBCheckConfrontEngagementInsert.DIMENSION.w/2, 0)
+        ).addWidget(
+            new CBMoralInsert(this.unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
+        ).addWidget(
+            scene.dice.setFinalAction(()=>{
+                scene.dice.active = false;
+                let {success} = this._processDisengagementResult(this.unit, scene.dice.result);
+                if (success) {
+                    scene.result.success().appear();
+                }
+                else {
+                    scene.result.failure().appear();
+                }
+                finalAction&&finalAction();
+            }),
+            new Point2D(70, 70)
+        ).addWidget(
+            scene.result.setFinalAction(closeAction),
+            new Point2D(0, 0)
+        );
+        this.game.openPopup(scene, this.unit.viewportLocation);
+        return scene;
+    }
+
+    play(action) {
+        let scene = this.createScene(
+            ()=>{
+                CBSequence.appendElement(this.game, new CBConfrontSequenceElement(this.game, this.unit, scene.dice.result));
+                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                this.game.validate();
+            },
+            ()=> {
+                scene.mask.close();
+                this.game.closePopup();
+                if (scene.result.finished) {
+                    action();
+                }
+            }
+        );
+    }
+
+    replay(dice) {
+        let scene = this.createScene();
+        scene.dice.active = false;
+        scene.result.active = false;
+        scene.dice.cheat(dice);
+    }
+
+    _processConfrontEngagementResult(diceResult) {
+        let result = this.game.arbitrator.processConfrontEngagementResult(this.unit, diceResult);
+        if (!result.success) {
+            this.unit.addOneCohesionLevel();
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+        }
+        return result;
     }
 
 }
@@ -983,7 +1198,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     finalize(action) {
         if (!this.isFinalized()) {
             if (this._unitMustCheckDisengagement) {
-                this.checkDisengagement(this.unit.viewportLocation, () => {
+                new CBDisengagementChecking(this.game, this.unit).play( () => {
                     super.finalize(action);
                     this.game.validate();
                 });
@@ -992,53 +1207,6 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
                 super.finalize(action);
             }
         }
-    }
-
-    checkDisengagement(point, action) {
-        this.game.closeActuators();
-        let result = new DResult();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
-        let scene = new DScene();
-        let mask = new DMask("#000000", 0.3);
-        let close = ()=>{
-            this.game.closePopup();
-            if (result.finished) {
-                action();
-            }
-        }
-        mask.setAction(close);
-        this.game.openMask(mask);
-        scene.addWidget(
-            new CBCheckDisengagementInsert(), new Point2D(-CBCheckDisengagementInsert.DIMENSION.w/2, 0)
-        ).addWidget(
-            new CBMoralInsert(this.unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
-        ).addWidget(
-            dice.setFinalAction(()=>{
-                dice.active = false;
-                let {success} = this._processDisengagementResult(dice.result);
-                if (success) {
-                    result.success().appear();
-                }
-                else {
-                    result.failure().appear();
-                }
-                this.game.validate();
-            }),
-            new Point2D(70, 70)
-        ).addWidget(
-            result.setFinalAction(close),
-            new Point2D(0, 0)
-        );
-        this.game.openPopup(scene, point);
-    }
-
-    _processDisengagementResult(diceResult) {
-        let result = this.game.arbitrator.processDisengagementResult(this.unit, diceResult);
-        if (!result.success) {
-            this.unit.addOneCohesionLevel();
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
-        }
-        return result;
     }
 
     _updateTirednessForRotation(cost, first) {
@@ -1089,7 +1257,7 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
     finalize(action) {
         if (!this.isFinalized()) {
             if (this._unitMustCheckDisengagement) {
-                this.checkDisengagement(this.unit.viewportLocation, () => {
+                new CBDisengagementChecking(this.unit).play( () => {
                     super.finalize(action);
                     this.game.validate();
                 });
@@ -1098,43 +1266,6 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
                 super.finalize(action);
             }
         }
-    }
-
-    checkDisengagement(point, action) {
-        let result = new DResult();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
-        let scene = new DScene();
-        let mask = new DMask("#000000", 0.3);
-        let close = ()=>{
-            this.game.closePopup();
-            if (result.finished) {
-                action();
-            }
-        }
-        mask.setAction(close);
-        this.game.openMask(mask);
-        scene.addWidget(
-            new CBCheckDisengagementInsert(), new Point2D(-CBCheckDisengagementInsert.DIMENSION.w/2, 0)
-        ).addWidget(
-            new CBMoralInsert(this.unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
-        ).addWidget(
-            dice.setFinalAction(()=>{
-                dice.active = false;
-                let {success} = this._processDisengagementResult(dice.result);
-                if (success) {
-                    result.success().appear();
-                }
-                else {
-                    result.failure().appear();
-                }
-                this.game.validate();
-            }),
-            new Point2D(70, 70)
-        ).addWidget(
-            result.setFinalAction(close),
-            new Point2D(0, 0)
-        );
-        this.game.openPopup(scene, point);
     }
 
     showRules(point) {
@@ -1152,15 +1283,6 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
             new CBMoveBackInsert(), new Point2D(-CBMoveBackInsert.DIMENSION.w/2, CBMoveBackInsert.DIMENSION.h/2)
         );
         this.game.openPopup(scene, point);
-    }
-
-    _processDisengagementResult(diceResult) {
-        let result = this.game.arbitrator.processDisengagementResult(this.unit, diceResult);
-        if (!result.success) {
-            this.unit.addOneCohesionLevel();
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
-        }
-        return result;
     }
 
     _getAllowedRotations(start) {
@@ -1199,7 +1321,7 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
 
     finalize(action) {
         if (!this.isFinalized()) {
-            this.checkConfrontEngagement(this.unit.viewportLocation, () => {
+            new CBConfrontChecking(this.game, this.unit).play( () => {
                 super.finalize(action);
                 this.game.validate();
             });
@@ -1208,45 +1330,6 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
 
     _continueAfterRotation() {
         return false
-    }
-
-    checkConfrontEngagement(point, action) {
-        let result = new DResult();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
-        let scene = new DScene();
-        let mask = new DMask("#000000", 0.3);
-        let close = ()=>{
-            mask.close();
-            this.game.closePopup();
-            if (result.finished) {
-                action();
-            }
-        }
-        mask.setAction(close);
-        mask.open(this.game.board, point);
-        let condition = this.game.arbitrator.getConfrontEngagementCondition(this.unit);
-        scene.addWidget(
-            new CBCheckConfrontEngagementInsert(condition), new Point2D(-CBCheckConfrontEngagementInsert.DIMENSION.w/2, 0)
-        ).addWidget(
-            new CBMoralInsert(this.unit), new Point2D(CBMoralInsert.DIMENSION.w/2-10, -CBMoralInsert.DIMENSION.h/2+10)
-        ).addWidget(
-            dice.setFinalAction(()=>{
-                dice.active = false;
-                let {success} = this._processConfrontEngagementResult(dice.result);
-                if (success) {
-                    result.success().appear();
-                }
-                else {
-                    result.failure().appear();
-                }
-                this.game.validate();
-            }),
-            new Point2D(70, 70)
-        ).addWidget(
-            result.setFinalAction(close),
-            new Point2D(0, 0)
-        );
-        this.game.openPopup(scene, point);
     }
 
     showRules(point) {
@@ -1262,15 +1345,6 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
             new CBToFaceInsert(), new Point2D(-CBToFaceInsert.DIMENSION.w/2, 0)
         );
         this.game.openPopup(scene, point);
-    }
-
-    _processConfrontEngagementResult(diceResult) {
-        let result = this.game.arbitrator.processConfrontEngagementResult(this.unit, diceResult);
-        if (!result.success) {
-            this.unit.addOneCohesionLevel();
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
-        }
-        return result;
     }
 
     _getAllowedMoves(start) {

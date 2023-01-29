@@ -17,6 +17,11 @@ import {
     CBStacking
 } from "./game.js";
 import {
+    CBAttackerEngagementSequenceElement,
+    CBConfrontSequenceElement, CBCrossingSequenceElement,
+    CBDefenderEngagementSequenceElement,
+    CBDisengagementSequenceElement,
+    CBLoseCohesionSequenceElement,
     CBMoveSequenceElement,
     CBNextTurnSequenceElement,
     CBRallySequenceElement,
@@ -25,7 +30,7 @@ import {
     CBReorientSequenceElement,
     CBRestSequenceElement,
     CBRotateSequenceElement,
-    CBSequence,
+    CBSequence, CBStateSequenceElement,
     CBTurnSequenceElement
 } from "./sequences.js";
 
@@ -421,7 +426,7 @@ export class GameLoader {
                         munitions: this.getUnitAmmunition(unitSpec.ammunition),
                         cohesion: this.getUnitCohesion(unitSpec.cohesion),
                         charging: unitSpec.charging ? CBCharge.CHARGING : CBCharge.NONE,
-                        engaging: unitSpec.contact,
+                        engaging: unitSpec.engaging,
                         orderGiven: unitSpec.orderGiven,
                         played: unitSpec.played
                     });
@@ -577,7 +582,10 @@ export class SequenceLoader {
                 version: element._oversion || 0,
                 type: element.type,
             }
-            if ("|Rest|Refill|Rally|Reorganize|Move|Rotate|Reorient|Turn|".indexOf("|"+element.type+"|")>=0) {
+            if (("|State|Rest|Refill|Rally|Reorganize|LossConsistency" +
+                "|Confront|Crossing|AttackerEngagement|DefenderEngagement" +
+                "|Disengagement|Move|Rotate|Reorient|Turn|")
+                .indexOf("|"+element.type+"|")>=0) {
                 elementSpecs.unit = element.unit.name;
                 elementSpecs.cohesion = this.getCohesionCode(element.cohesion);
                 elementSpecs.tiredness = this.getTirednessCode(element.tiredness);
@@ -602,7 +610,9 @@ export class SequenceLoader {
             if ("|Rotate|Reorient|Turn|".indexOf("|"+element.type+"|")>=0) {
                 elementSpecs.angle = element.angle;
             }
-            if ("|Rest|Refill|Rally|Reorganize|".indexOf("|"+element.type+"|")>=0) {
+            if (("|Rest|Refill|Rally|Reorganize|LossConsistency|Confront" +
+                "|Crossing|AttackerEngagement|DefenderEngagement|Disengagement|")
+                .indexOf("|"+element.type+"|")>=0) {
                 elementSpecs.dice1 = element.dice[0];
                 elementSpecs.dice2 = element.dice[1];
             }
@@ -640,6 +650,9 @@ export class SequenceLoader {
                 let element;
                 let angle = elementSpec.angle;
                 switch (elementSpec.type) {
+                    case "State":
+                        element = new CBStateSequenceElement(unit, hexLocation, stacking);
+                        break;
                     case "Move":
                         element = new CBMoveSequenceElement(unit, hexLocation, stacking);
                         break;
@@ -663,6 +676,24 @@ export class SequenceLoader {
                         break;
                     case "Reorganize":
                         element = new CBReorganizeSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
+                        break;
+                    case "LossConsistency":
+                        element = new CBLoseCohesionSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
+                        break;
+                    case "Confront":
+                        element = new CBConfrontSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
+                        break;
+                    case "Crossing":
+                        element = new CBCrossingSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
+                        break;
+                    case "AttackerEngagement":
+                        element = new CBAttackerEngagementSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
+                        break;
+                    case "DefenderEngagement":
+                        element = new CBDefenderEngagementSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
+                        break;
+                    case "Disengagement":
+                        element = new CBDisengagementSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
                         break;
                     case "NextTurn":
                         element = new CBNextTurnSequenceElement(game);

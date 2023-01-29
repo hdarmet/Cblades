@@ -105,6 +105,11 @@ public class SequenceApplyer implements SequenceVisitor  {
         this.game.setCurrentPlayerIndex(currentPlayerIndex);
     }
 
+    public void visit(SequenceElement.StateSequenceElement element) {
+        Unit unit = units.get(element.getUnit());
+        changeUnitState(unit, element);
+    }
+
     public void visit(SequenceElement.RestSequenceElement element) {
         Unit unit = units.get(element.getUnit());
         changeUnitState(unit, element);
@@ -121,6 +126,36 @@ public class SequenceApplyer implements SequenceVisitor  {
     }
 
     public void visit(SequenceElement.ReorganizeSequenceElement element) {
+        Unit unit = units.get(element.getUnit());
+        changeUnitState(unit, element);
+    }
+
+    public void visit(SequenceElement.LossConsistencySequenceElement element) {
+        Unit unit = units.get(element.getUnit());
+        changeUnitState(unit, element);
+    }
+
+    public void visit(SequenceElement.ConfrontSequenceElement element) {
+        Unit unit = units.get(element.getUnit());
+        changeUnitState(unit, element);
+    }
+
+    public void visit(SequenceElement.CrossingSequenceElement element) {
+        Unit unit = units.get(element.getUnit());
+        changeUnitState(unit, element);
+    }
+
+    public void visit(SequenceElement.AttackerEngagementSequenceElement element) {
+        Unit unit = units.get(element.getUnit());
+        changeUnitState(unit, element);
+    }
+
+    public void visit(SequenceElement.DefenderEngagementSequenceElement element) {
+        Unit unit = units.get(element.getUnit());
+        changeUnitState(unit, element);
+    }
+
+    public void visit(SequenceElement.DisengagementSequenceElement element) {
         Unit unit = units.get(element.getUnit());
         changeUnitState(unit, element);
     }

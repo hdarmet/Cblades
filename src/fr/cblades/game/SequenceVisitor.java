@@ -10,6 +10,10 @@ public interface SequenceVisitor {
         defaultVisit(element);
     }
 
+    default void visit(SequenceElement.StateSequenceElement element) {
+        defaultVisit(element);
+    }
+
     default void visit(SequenceElement.RotateSequenceElement element) {
         defaultVisit(element);
     }
@@ -39,6 +43,30 @@ public interface SequenceVisitor {
     }
 
     default void visit(SequenceElement.ReorganizeSequenceElement element) {
+        defaultVisit(element);
+    }
+
+    default void visit(SequenceElement.LossConsistencySequenceElement element) {
+        defaultVisit(element);
+    }
+
+    default void visit(SequenceElement.ConfrontSequenceElement element) {
+        defaultVisit(element);
+    }
+
+    default void visit(SequenceElement.CrossingSequenceElement element) {
+        defaultVisit(element);
+    }
+
+    default void visit(SequenceElement.AttackerEngagementSequenceElement element) {
+        defaultVisit(element);
+    }
+
+    default void visit(SequenceElement.DefenderEngagementSequenceElement element) {
+        defaultVisit(element);
+    }
+
+    default void visit(SequenceElement.DisengagementSequenceElement element) {
         defaultVisit(element);
     }
 

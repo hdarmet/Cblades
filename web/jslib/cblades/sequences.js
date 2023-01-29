@@ -14,6 +14,15 @@ import {
     InteractiveReplenishMunitionsAction,
     InteractiveRestingAction
 } from "./interactive/interactive-recover.js";
+import {
+    CBDefenderEngagementChecking, CBLoseCohesionChecking
+} from "./interactive/interactive-player.js";
+import {
+    CBAttackerEngagementChecking,
+    CBConfrontChecking,
+    CBDisengagementChecking,
+    CBLoseCohesionForCrossingChecking
+} from "./interactive/interactive-movement.js";
 
 export class CBSequence {
 
@@ -210,6 +219,10 @@ export class CBStateSequenceElement extends CBSequenceElement {
         return result;
     }
 
+    apply(startTick) {
+        return new CBUnitAnimation(this.unit, startTick, this.delay, this);
+    }
+
     get delay() { return 0; }
 
     getUnit() {
@@ -327,7 +340,7 @@ export class CBTurnSequenceElement extends CBStateSequenceElement {
 
     _toString() {
         let result = super._toString();
-        if (this.stacking !== undefined) result+=", HexLocation: "+this.hexLocation.location.toString();
+        if (this.hexLocation !== undefined) result+=", HexLocation: "+this.hexLocation.location.toString();
         if (this.stacking !== undefined) result+=", Stacking: "+this.stacking;
         if (this.angle !== undefined) result+=", Angle: "+this.angle;
         return result;
@@ -483,7 +496,7 @@ export class CBRestSequenceElement extends CBStateSequenceElement {
     }
 
     apply(startTick) {
-        return new CBRecoverAnimation(this.unit, startTick, this.delay, this, this._game,
+        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
             ()=>new InteractiveRestingAction(this._game, this.unit).replay(this.dice)
         );
     }
@@ -519,7 +532,7 @@ export class CBRefillSequenceElement extends CBStateSequenceElement {
     }
 
     apply(startTick) {
-        return new CBRecoverAnimation(this.unit, startTick, this.delay, this, this._game,
+        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
             ()=>new InteractiveReplenishMunitionsAction(this._game, this.unit).replay(this.dice)
         );
     }
@@ -555,7 +568,7 @@ export class CBRallySequenceElement extends CBStateSequenceElement {
     }
 
     apply(startTick) {
-        return new CBRecoverAnimation(this.unit, startTick, this.delay, this, this._game,
+        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
             ()=>new InteractiveRallyAction(this._game, this.unit).replay(this.dice)
         );
     }
@@ -591,7 +604,7 @@ export class CBReorganizeSequenceElement extends CBStateSequenceElement {
     }
 
     apply(startTick) {
-        return new CBRecoverAnimation(this.unit, startTick, this.delay, this, this._game,
+        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
             ()=>new InteractiveReorganizeAction(this._game, this.unit).replay(this.dice)
         );
     }
@@ -618,7 +631,223 @@ export class CBReorganizeSequenceElement extends CBStateSequenceElement {
 
 }
 
-export class CBRecoverAnimation extends CBUnitAnimation {
+export class CBLoseCohesionSequenceElement extends CBStateSequenceElement {
+
+    constructor(game, unit, dice) {
+        super(unit, "LossConsistency");
+        this._game = game;
+        this._dice = dice;
+    }
+
+    apply(startTick) {
+        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
+            ()=>new CBLoseCohesionChecking(this._game, this.unit).replay(this.dice)
+        );
+    }
+
+    get dice() { return this._dice; }
+
+    get delay() { return 2500; }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        for (let index=0; index<this._dice.length; index++) {
+            if (element[index] !== this._dice[index]) return false;
+        }
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        for (let index=0; index<this._dice.length; index++) {
+            result+=`, dice${index}: `+this._dice[index];
+        }
+        return result;
+    }
+
+}
+
+export class CBConfrontSequenceElement extends CBStateSequenceElement {
+
+    constructor(game, unit, dice) {
+        super(unit, "Confront");
+        this._game = game;
+        this._dice = dice;
+    }
+
+    apply(startTick) {
+        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
+            ()=>new CBConfrontChecking(this._game, this.unit).replay(this.dice)
+        );
+    }
+
+    get dice() { return this._dice; }
+
+    get delay() { return 2500; }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        for (let index=0; index<this._dice.length; index++) {
+            if (element[index] !== this._dice[index]) return false;
+        }
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        for (let index=0; index<this._dice.length; index++) {
+            result+=`, dice${index}: `+this._dice[index];
+        }
+        return result;
+    }
+
+}
+
+export class CBCrossingSequenceElement extends CBStateSequenceElement {
+
+    constructor(game, unit, dice) {
+        super(unit, "Crossing");
+        this._game = game;
+        this._dice = dice;
+    }
+
+    apply(startTick) {
+        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
+            ()=>new CBLoseCohesionForCrossingChecking(this._game, this.unit).replay(this.dice)
+        );
+    }
+
+    get dice() { return this._dice; }
+
+    get delay() { return 2500; }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        for (let index=0; index<this._dice.length; index++) {
+            if (element[index] !== this._dice[index]) return false;
+        }
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        for (let index=0; index<this._dice.length; index++) {
+            result+=`, dice${index}: `+this._dice[index];
+        }
+        return result;
+    }
+
+}
+
+export class CBAttackerEngagementSequenceElement extends CBStateSequenceElement {
+
+    constructor(game, unit, dice) {
+        super(unit, "AttackerEngagement");
+        this._game = game;
+        this._dice = dice;
+    }
+
+    apply(startTick) {
+        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
+            ()=>new CBAttackerEngagementChecking(this._game, this.unit).replay(this.dice)
+        );
+    }
+
+    get dice() { return this._dice; }
+
+    get delay() { return 2500; }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        for (let index=0; index<this._dice.length; index++) {
+            if (element[index] !== this._dice[index]) return false;
+        }
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        for (let index=0; index<this._dice.length; index++) {
+            result+=`, dice${index}: `+this._dice[index];
+        }
+        return result;
+    }
+
+}
+
+export class CBDefenderEngagementSequenceElement extends CBStateSequenceElement {
+
+    constructor(game, unit, dice) {
+        super(unit, "DefenderEngagement");
+        this._game = game;
+        this._dice = dice;
+    }
+
+    apply(startTick) {
+        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
+            ()=>new CBDefenderEngagementChecking(this._game, this.unit).replay(this.dice)
+        );
+    }
+
+    get dice() { return this._dice; }
+
+    get delay() { return 2500; }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        for (let index=0; index<this._dice.length; index++) {
+            if (element[index] !== this._dice[index]) return false;
+        }
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        for (let index=0; index<this._dice.length; index++) {
+            result+=`, dice${index}: `+this._dice[index];
+        }
+        return result;
+    }
+
+}
+
+export class CBDisengagementSequenceElement extends CBStateSequenceElement {
+
+    constructor(game, unit, dice) {
+        super(unit, "Disengagement");
+        this._game = game;
+        this._dice = dice;
+    }
+
+    apply(startTick) {
+        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
+            ()=>new CBDisengagementChecking(this._game, this.unit).replay(this.dice)
+        );
+    }
+
+    get dice() { return this._dice; }
+
+    get delay() { return 2500; }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        for (let index=0; index<this._dice.length; index++) {
+            if (element[index] !== this._dice[index]) return false;
+        }
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        for (let index=0; index<this._dice.length; index++) {
+            result+=`, dice${index}: `+this._dice[index];
+        }
+        return result;
+    }
+
+}
+
+export class CBSceneAnimation extends CBUnitAnimation {
 
     constructor(unit, startTick, duration, state, game, recoveringAnimation) {
         super(unit, startTick, duration, state);

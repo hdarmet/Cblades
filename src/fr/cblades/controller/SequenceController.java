@@ -110,7 +110,9 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			.checkRequired("count").checkMin("count", 0)
 			.each("elements", cJson->verify(cJson)
 				.checkRequired("version")
-				.checkWhen(eJson-> "|Rest|Refill|Rally|Reorganize|Move|Turn|Rotate|Reorient|".contains("|"+(String)eJson.get("type")+"|"), eJson->verify(eJson)
+				.checkWhen(eJson-> ("|State|Rest|Refill|Rally|Reorganize|Move|Turn|Rotate|Reorient" +
+						"|Reorganize|LossConsistency|Confront|Crossing|AttackerEngagement" +
+						"|DefenderEngagement|Disengagement|").contains("|"+(String)eJson.get("type")+"|"), eJson->verify(eJson)
 					.checkRequired("unit").checkMinSize("unit", 2).checkMaxSize("unit", 80)
 					.check("tiredness", Tiredness.byLabels().keySet())
 					.check("cohesion", Cohesion.byLabels().keySet())
@@ -139,7 +141,8 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					.checkRequired("angle").checkMin("angle", 0).checkMax("angle", 300)
 					.checkRequired("stacking").check("stacking", Stacking.byLabels().keySet())
 				)
-				.checkWhen(eJson-> "|Rest|Refill|Rally|Reorganize|".contains("|"+(String)eJson.get("type")+"|"),
+				.checkWhen(eJson-> ("|Rest|Refill|Rally|Reorganize|LossConsistency|Confront|" +
+								"Crossing|AttackerEngagement|DefenderEngagement|Disengagement|").contains("|"+(String)eJson.get("type")+"|"),
 					eJson->verify(eJson)
 					.checkRequired("dice1").checkInteger("dice1").checkMin("dice1", 1).checkMax("dice1", 6)
 					.checkRequired("dice2").checkInteger("dice2").checkMin("dice2", 1).checkMax("dice2", 6)
@@ -152,19 +155,26 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			.write("count")
 			.syncEach("elements",
 				new Synchronizer.EntityFactory<>(hashMap(
+					pair("State", SequenceElement.StateSequenceElement.class),
 					pair("Move", SequenceElement.MoveSequenceElement.class),
 					pair("Rotate", SequenceElement.RotateSequenceElement.class),
 					pair("Turn", SequenceElement.TurnSequenceElement.class),
 					pair("Reorient", SequenceElement.ReorientSequenceElement.class),
 					pair("Rest", SequenceElement.RestSequenceElement.class),
-					pair("Refill", SequenceElement.RestSequenceElement.class),
-					pair("Rally", SequenceElement.RestSequenceElement.class),
-					pair("Reorganize", SequenceElement.RestSequenceElement.class),
+					pair("Refill", SequenceElement.RefillSequenceElement.class),
+					pair("Rally", SequenceElement.RallySequenceElement.class),
+					pair("Reorganize", SequenceElement.ReorganizeSequenceElement.class),
+					pair("LossConsistency", SequenceElement.LossConsistencySequenceElement.class),
+					pair("Confront", SequenceElement.ConfrontSequenceElement.class),
+					pair("Crossing", SequenceElement.CrossingSequenceElement.class),
+					pair("AttackerEngagement", SequenceElement.AttackerEngagementSequenceElement.class),
+					pair("DefenderEngagement", SequenceElement.DefenderEngagementSequenceElement.class),
+					pair("Disengagement", SequenceElement.DisengagementSequenceElement.class),
 					pair("NextTurn", SequenceElement.NextTurnSequenceElement.class)
 				), "type"),
 				(cJson, celem)->sync(cJson, celem)
 				.write("version")
-				.syncWhen((eJson, eelem)-> "|Rest|Refill|Rally|Reorganize|Move|Turn|Rotate|Reorient|".contains("|"+(String)eJson.get("type")+"|"), (eJson, eelem)->sync(eJson, eelem)
+				.syncWhen((eJson, eelem)-> "|State|Rest|Refill|Rally|Reorganize|Move|Turn|Rotate|Reorient|LossConsistency|Confront|Crossing|AttackerEngagement|DefenderEngagement|Disengagement|".contains("|"+(String)eJson.get("type")+"|"), (eJson, eelem)->sync(eJson, eelem)
 					.write("unit")
 					.write("tiredness", label->Tiredness.byLabels().get(label))
 					.write("cohesion", label->Cohesion.byLabels().get(label))
@@ -193,7 +203,7 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					.write("angle")
 					.write("stacking", label->Stacking.byLabels().get(label))
 				)
-				.syncWhen((eJson, eelem)-> "|Rest|Refill|Rally|Reorganize|".contains("|"+(String)eJson.get("type")+"|"),
+				.syncWhen((eJson, eelem)-> "|Rest|Refill|Rally|Reorganize|LossConsistency|Confront|Crossing|AttackerEngagement|DefenderEngagement|Disengagement|".contains("|"+(String)eJson.get("type")+"|"),
 					(eJson, eelem)->sync(eJson, eelem)
 					.write("dice1")
 					.write("dice2")
@@ -221,6 +231,9 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					.read("engaging")
 					.read("orderGiven")
 					.read("played")
+				)
+				.syncWhen((eJson, eelem)->eelem.getClass()==SequenceElement.StateSequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
+					.setInJson("type", "State")
 				)
 				.syncWhen((eJson, eelem)->eelem instanceof SequenceElement.MoveSequenceElement, (eJson, eelem)->sync(eJson, eelem)
 					.setInJson("type", "Move")
@@ -250,18 +263,48 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					.read("dice1")
 					.read("dice2")
 				)
-				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.RestSequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
-					.setInJson("type", "Refit")
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.RefillSequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
+					.setInJson("type", "Refill")
 					.read("dice1")
 					.read("dice2")
 				)
-				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.RestSequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.RallySequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
 					.setInJson("type", "Rally")
 					.read("dice1")
 					.read("dice2")
 				)
-				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.RestSequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.ReorganizeSequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
 					.setInJson("type", "Reorganize")
+					.read("dice1")
+					.read("dice2")
+				)
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.LossConsistencySequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
+					.setInJson("type", "LossConsistency")
+					.read("dice1")
+					.read("dice2")
+				)
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.ConfrontSequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
+					.setInJson("type", "Confront")
+					.read("dice1")
+					.read("dice2")
+				)
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.CrossingSequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
+					.setInJson("type", "Crossing")
+					.read("dice1")
+					.read("dice2")
+				)
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.AttackerEngagementSequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
+					.setInJson("type", "AttackerEngagement")
+					.read("dice1")
+					.read("dice2")
+				)
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.DefenderEngagementSequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
+					.setInJson("type", "DefenderEngagement")
+					.read("dice1")
+					.read("dice2")
+				)
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.DisengagementSequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
+					.setInJson("type", "Disengagement")
 					.read("dice1")
 					.read("dice2")
 				)
