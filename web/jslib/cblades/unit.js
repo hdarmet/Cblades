@@ -1425,6 +1425,12 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._updatePlayedArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
         this._updateEngagementArtifact(this.setMarkerArtifact, this.setActivableMarkerArtifact, this.removeMarkerArtifact);
         this._updateCohesionArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
+        if (this.steps) {
+            this.steps = state.steps;
+        }
+        else {
+            this.removeFromMap();
+        }
     }
 
     _updateTirednessArtifact(setMarkerArtifact, removeMarkerArtifact) {

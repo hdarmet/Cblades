@@ -67,38 +67,20 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 	long adjustGameAndReturnsSequenceCount(Json request, EntityManager em, GameMatch gameMatch) {
 		Game game = gameMatch.getGame();
 		Set<String> activeIdentities = new HashSet<>();
+		long lastCount =-1;
 		for (int index = 0; index< request.size(); index++) {
 			activeIdentities.add((String) request.get(index));
 		}
-		Set<PlayerIdentity> activesPlayers = new HashSet<>();
 		for (PlayerMatch playerMatch: gameMatch.getPlayerMatches()) {
 			if (activeIdentities.contains(playerMatch.getPlayerIdentity().getName())) {
-				activesPlayers.add(playerMatch.getPlayerIdentity());
+				long playerLastCount = playerMatch.getLastSequenceCount();
+				if (lastCount<playerLastCount) lastCount=playerLastCount;
 			}
 		}
-		int lastTurn = gameMatch.getCurrentTurn();
-		int lastPlayerIndex = gameMatch.getCurrentPlayerIndex()-1;
-		if (lastPlayerIndex<0) {
-			lastTurn--;
-			lastPlayerIndex = game.getPlayers().size()-1;
+		if (lastCount>=0) {
+			game.applySequencesUntil(em, lastCount);
 		}
-		int turnCount = (gameMatch.getCurrentTurn()- gameMatch.getGame().getCurrentTurn())* gameMatch.getPlayerMatches().size()
-				+ gameMatch.getCurrentPlayerIndex()- gameMatch.getGame().getCurrentPlayerIndex();
-		while(lastTurn>=0 &&
-			!activesPlayers.contains(game.getPlayers().get(lastPlayerIndex).getIdentity())
-		) {
-			lastPlayerIndex--;
-			if (lastPlayerIndex<0) {
-				lastTurn--;
-				lastPlayerIndex = game.getPlayers().size()-1;
-			}
-			turnCount--;
-		}
-		long sequenceCount = 0;
-		if (lastTurn>=0 && turnCount>0) {
-			sequenceCount = game.advancePlayerTurns(em, turnCount) +1;
-		}
-		return sequenceCount;
+		return lastCount+1;
 	}
 
 	@REST(url="/api/game/find/:id", method=Method.GET)

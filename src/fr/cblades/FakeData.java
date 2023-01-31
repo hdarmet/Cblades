@@ -305,7 +305,7 @@ public class FakeData {
                 )
             );
             Unit unit0 = new Unit()
-                .setPositionRow(4).setPositionCol(1)
+                .setPositionRow(9).setPositionCol(1)
                 .setName("u0").setCategory(UnitCategory.CHARACTER)
                 .setType("Goblin Wolf Rider")
                 .setAngle(0)
@@ -319,7 +319,7 @@ public class FakeData {
                 .setCharging(false);
             em.persist(unit0);
             Unit unit1 = new Unit()
-                .setPositionRow(4).setPositionCol(2)
+                .setPositionRow(9).setPositionCol(2)
                 .setName("u1").setCategory(UnitCategory.CHARACTER)
                 .setType("Goblin Leader")
                 .setAngle(0)
@@ -333,7 +333,7 @@ public class FakeData {
                 .setCharging(false);
             em.persist(unit1);
             Unit unit3 = new Unit()
-                .setPositionRow(5).setPositionCol(1)
+                .setPositionRow(9).setPositionCol(1)
                 .setName("u3").setCategory(UnitCategory.CHARACTER)
                 .setType("Goblin Wolf Rider")
                 .setAngle(0)
@@ -376,7 +376,7 @@ public class FakeData {
                     )
             );
             Unit unit2 = new Unit()
-                .setPositionRow(4).setPositionCol(4)
+                .setPositionRow(9).setPositionCol(4)
                 .setName("u2").setCategory(UnitCategory.CHARACTER)
                 .setType("Company Leader")
                 .setAngle(0)
@@ -425,6 +425,7 @@ public class FakeData {
                 .setAuthor(admin)
                 .addPlayerMatch(new PlayerMatch()
                     .setPlayerAccount(admin)
+                    .setLastSequenceCount(0)
                     .setPlayerIdentity(game.getPlayers().get(0).getIdentity())
                 )
                 .addPlayerMatch(new PlayerMatch()
@@ -445,24 +446,24 @@ public class FakeData {
                 .setCount(0)
                 .addElement(
                     new SequenceElement.MoveSequenceElement()
-                        .setHexAngle(0).setHexCol(2).setHexRow(3).setStacking(Stacking.TOP)
-                        .setUnit("u1").setCohesion(Cohesion.DISRUPTED)
+                        .setHexAngle(0).setHexCol(2).setHexRow(8).setStacking(Stacking.TOP)
+                        .setUnit("u1").setCohesion(Cohesion.DISRUPTED).setSteps(1)
                 )
                 .addElement(
                     new SequenceElement.RotateSequenceElement()
                         .setAngle(60)
-                        .setUnit("u1").setCohesion(Cohesion.DISRUPTED)
+                        .setUnit("u1").setCohesion(Cohesion.DISRUPTED).setSteps(1)
                 )
                 .addElement(
                     new SequenceElement.MoveSequenceElement()
-                        .setHexAngle(0).setHexCol(3).setHexRow(3).setStacking(Stacking.TOP)
-                        .setUnit("u1").setCohesion(Cohesion.DISRUPTED)
+                        .setHexAngle(0).setHexCol(3).setHexRow(8).setStacking(Stacking.TOP)
+                        .setUnit("u1").setCohesion(Cohesion.DISRUPTED).setSteps(2)
                 )/*
                 .addElement(
                     new SequenceElement.NextTurnSequenceElement()
                 )*/;
             data.persist(em, sequence);
-            gameMatch.advanceOnePlayerTurn();
+            //gameMatch.advanceOnePlayerTurn();
         });
     }
 

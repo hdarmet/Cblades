@@ -156,7 +156,7 @@ let _targetPlatform = {
     },
 
     getContext(element, contextName) {
-        return element.getContext(contextName);
+        return element.getContext(contextName, { willReadFrequently: true });
     },
 
     getPixel(context, x, y) {

@@ -173,6 +173,7 @@ export class CBStateSequenceElement extends CBSequenceElement {
     constructor(unit, type="State") {
         super(type);
         this.unit = unit;
+        this.steps = unit.isOnHex() ? unit.steps : 0;
         this.cohesion = unit.cohesion;
         this.tiredness = unit.tiredness;
         this.munitions = unit.munitions;
@@ -183,6 +184,7 @@ export class CBStateSequenceElement extends CBSequenceElement {
     }
 
     setState(state) {
+        if (state.steps !== undefined) this.steps = state.steps;
         if (state.cohesion !== undefined) this.cohesion = state.cohesion;
         if (state.tiredness !== undefined) this.tiredness = state.tiredness;
         if (state.munitions !== undefined) this.munitions = state.munitions;
@@ -195,6 +197,7 @@ export class CBStateSequenceElement extends CBSequenceElement {
 
     equalsTo(element) {
         if (!super.equalsTo(element)) return false;
+        if (this.steps !== element.steps) return false;
         if (this.unit !== element.unit) return false;
         if (this.cohesion !== element.cohesion) return false;
         if (this.tiredness !== element.tiredness) return false;
@@ -209,6 +212,7 @@ export class CBStateSequenceElement extends CBSequenceElement {
     _toString() {
         let result = super._toString();
         if (this.unit !== undefined) result+=", Unit: "+this.unit.name;
+        if (this.steps !== undefined) result+=", Unit: "+this.unit.steps;
         if (this.cohesion !== undefined) result+=", Cohesion: "+this.cohesion;
         if (this.tiredness !== undefined) result+=", Tiredness: "+this.tiredness;
         if (this.munitions !== undefined) result+=", Munitions: "+this.munitions;

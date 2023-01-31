@@ -35,8 +35,9 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					Sequence newSequence = writeToSequence(request, new Sequence());
 					assert(newSequence.getElements().size()>0);
 					persist(em, newSequence);
+					GameMatch gameMatch = GameMatch.getByGame(em, newSequence.getGame());
+					gameMatch.getCurrentPlayerMatch().setLastSequenceCount(newSequence.getCount());
 					if (newSequence.isTurnClosed()) {
-						GameMatch gameMatch = GameMatch.getByGame(em, newSequence.getGame());
 						if (gameMatch==null) {
 							throw new SummerControllerException(404,
 								"Game Match of game (%d) doesn't exist", newSequence.getGame()
@@ -114,6 +115,8 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 						"|Reorganize|LossConsistency|Confront|Crossing|AttackerEngagement" +
 						"|DefenderEngagement|Disengagement|").contains("|"+(String)eJson.get("type")+"|"), eJson->verify(eJson)
 					.checkRequired("unit").checkMinSize("unit", 2).checkMaxSize("unit", 80)
+					.checkRequired("steps").checkInteger("steps")
+					.checkMin("steps", 0).checkMax("steps", 8)
 					.check("tiredness", Tiredness.byLabels().keySet())
 					.check("cohesion", Cohesion.byLabels().keySet())
 					.check("ammunition", Ammunition.byLabels().keySet())
@@ -176,6 +179,7 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 				.write("version")
 				.syncWhen((eJson, eelem)-> "|State|Rest|Refill|Rally|Reorganize|Move|Turn|Rotate|Reorient|LossConsistency|Confront|Crossing|AttackerEngagement|DefenderEngagement|Disengagement|".contains("|"+(String)eJson.get("type")+"|"), (eJson, eelem)->sync(eJson, eelem)
 					.write("unit")
+					.write("steps")
 					.write("tiredness", label->Tiredness.byLabels().get(label))
 					.write("cohesion", label->Cohesion.byLabels().get(label))
 					.write("ammunition", label->Ammunition.byLabels().get(label))
@@ -224,6 +228,7 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 				.read("version")
 				.syncWhen((eJson, eelem)->eelem instanceof SequenceElement.StateSequenceElement, (eJson, eelem)->sync(eJson, eelem)
 					.read("unit")
+					.read("steps")
 					.read("tiredness", Tiredness::getLabel)
 					.read("cohesion", Cohesion::getLabel)
 					.read("ammunition", Ammunition::getLabel)

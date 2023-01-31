@@ -13,7 +13,7 @@ public class PlayerMatch extends BaseEntity {
     Account playerAccount;
     @ManyToOne
     PlayerIdentity playerIdentity;
-    int playedTurns = 0;
+    long lastSequenceCount = -1;
 
     public Account getPlayerAccount() {
         return this.playerAccount;
@@ -31,11 +31,11 @@ public class PlayerMatch extends BaseEntity {
         return this;
     }
 
-    public int getPlayedTurns() {
-        return this.playedTurns;
+    public long getLastSequenceCount() {
+        return this.lastSequenceCount;
     }
-    public PlayerMatch setPlayedTurns(int playedTurns) {
-        this.playedTurns = playedTurns;
+    public PlayerMatch setLastSequenceCount(long lastSequenceCount) {
+        this.lastSequenceCount = lastSequenceCount;
         return this;
     }
 

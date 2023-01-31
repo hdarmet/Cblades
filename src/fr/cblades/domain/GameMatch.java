@@ -1,5 +1,6 @@
 package fr.cblades.domain;
 
+import org.summer.SummerException;
 import org.summer.data.BaseEntity;
 import org.summer.data.SummerNotFoundException;
 
@@ -54,6 +55,13 @@ public class GameMatch extends BaseEntity {
     public GameMatch removePlayerMatch(PlayerMatch playerMatch) {
         this.playerMatches.remove(playerMatch);
         return this;
+    }
+    public PlayerMatch getCurrentPlayerMatch() {
+        PlayerIdentity identity = this.getGame().getPlayers().get(this.currentPlayerIndex).getIdentity();
+        for (PlayerMatch playerMatch : this.getPlayerMatches()) {
+            if (playerMatch.getPlayerIdentity()==identity) return playerMatch;
+        }
+        throw new SummerException("Inconsistency between Game and GameMatch of id:"+this.getGame().getId());
     }
 
     public Account getAuthor() {

@@ -36,6 +36,9 @@ import {
 import {
     Memento
 } from "../../mechanisms.js";
+import {
+    CBSequence, CBStateSequenceElement
+} from "../sequences.js";
 
 export function registerInteractiveCombat() {
     CBInteractivePlayer.prototype.unitShockAttack = function (unit, event) {
@@ -53,6 +56,7 @@ export function registerInteractiveCombat() {
     CBInteractivePlayer.prototype.applyLossesToUnit = function(unit, losses, attacker, advance, continuation) {
         for (let loss=1; loss<losses; loss++) {
             unit.takeALoss();
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(unit));
         }
         if (!unit.isDestroyed()) {
             unit.launchAction(new InteractiveRetreatAction(this.game, unit, losses, attacker, advance, continuation));
@@ -1037,6 +1041,7 @@ export class CBRetreatActuator extends CBActionActuator {
     onMouseClick(trigger, event) {
         if (trigger.loss) {
             this.action.takeALossFromUnit(event);
+            CBSequence.appendElement(this.playable.game, new CBStateSequenceElement(this.playable));
         }
         else {
             this.action.retreatUnit(this.playable.hexLocation.getNearHex(trigger.angle), trigger.stacking);
@@ -1106,6 +1111,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
     onMouseClick(trigger, event) {
         if (trigger.loss) {
             this.action.takeALossFromUnit(event);
+            CBSequence.appendElement(this.playable.game, new CBStateSequenceElement(this.playable));
         }
         else if (trigger.rotate) {
             let hex1 = this.playable.hexLocation.getOtherHex(trigger.hex);

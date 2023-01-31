@@ -1,9 +1,6 @@
 'use strict'
 
 import {
-    CBPieceImageArtifact
-} from "./game.js";
-import {
     CBHexCounter, CBHexCounterArtifact, CBLevelBuilder, RetractableArtifactMixin, RetractablePieceMixin
 } from "./playable.js";
 import {
@@ -374,7 +371,9 @@ export class CBMagicArrowSpell extends UnitTargetedMixin(CBSpell) {
 
     resolve(diceResult) {
         this._result = this.game.arbitrator.resolveMagicArrow(this, diceResult);
-        if (this._result.losses) this.unit.takeALoss();
+        if (this._result.losses) {
+            this.unit.takeALoss();
+        }
         this.unit.deleteOption(this);
         return this._result;
     }
@@ -521,7 +520,9 @@ export class CBFireballSpell extends UnitTargetedMixin(CBSpell) {
 
     resolve(diceResult) {
         this._result = this.game.arbitrator.resolveFireball(this, diceResult);
-        if (this._result.losses) this.unit.takeALoss();
+        if (this._result.losses) {
+            this.unit.takeALoss();
+        }
         this.unit.deleteOption(this);
         return this._result;
     }

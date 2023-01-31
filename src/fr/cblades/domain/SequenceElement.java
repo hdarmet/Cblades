@@ -15,6 +15,7 @@ public abstract class SequenceElement extends BaseEntity {
     public static class StateSequenceElement extends SequenceElement {
 
         String unit;
+        int steps;
         Cohesion cohesion = Cohesion.GOOD_ORDER;
         Tiredness tiredness = Tiredness.FRESH;
         Ammunition ammunition = Ammunition.PLENTIFUL;
@@ -26,6 +27,14 @@ public abstract class SequenceElement extends BaseEntity {
         public String getUnit() { return this.unit; }
         public StateSequenceElement setUnit(String unit) {
             this.unit = unit;
+            return this;
+        }
+
+        public int getSteps() {
+            return this.steps;
+        }
+        public StateSequenceElement setSteps(int steps) {
+            this.steps = steps;
             return this;
         }
 

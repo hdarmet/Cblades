@@ -52,6 +52,13 @@ public class SequenceApplyer implements SequenceVisitor  {
         return this.count;
     }
 
+    public long applySequences(List<Sequence> sequences) {
+        for (Sequence sequence : sequences) {
+            apply(sequence);
+        }
+        return this.count;
+    }
+
     void changeUnitState(Unit unit, SequenceElement.StateSequenceElement element) {
         unit.setAmmunition(element.getAmmunition());
         unit.setCharging(element.getCharging()==Charging.CHARGING);
@@ -60,6 +67,12 @@ public class SequenceApplyer implements SequenceVisitor  {
         unit.setEngaging(element.isEngaging());
         unit.setOrderGiven(element.hasGivenOrder());
         unit.setPlayed(element.isPlayed());
+        unit.setSteps(element.getSteps());
+        if (unit.getSteps()==0) {
+            Location location = getLocation(unit);
+            location.removeUnit(unit);
+            locations.remove(new HexPos(unit));
+        }
     }
 
     public void visit(SequenceElement.MoveSequenceElement element) {
@@ -97,12 +110,7 @@ public class SequenceApplyer implements SequenceVisitor  {
     }
 
     public void visit(SequenceElement.NextTurnSequenceElement element) {
-        int currentPlayerIndex = this.game.getPlayers().indexOf(this.game.getCurrentPlayer())+1;
-        if (currentPlayerIndex == this.game.getPlayers().size()) {
-            this.game.setCurrentTurn(this.game.getCurrentTurn()+1);
-            currentPlayerIndex = 0;
-        }
-        this.game.setCurrentPlayerIndex(currentPlayerIndex);
+        this.game.advanceToNextPlayerTurn();
     }
 
     public void visit(SequenceElement.StateSequenceElement element) {

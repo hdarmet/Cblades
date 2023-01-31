@@ -422,6 +422,7 @@ export class GameLoader {
                     unit._game = this._game;
                     unit.angle = unitSpec.angle;
                     unit.setState({
+                        steps: unitSpec.steps,
                         tiredness: this.getUnitTiredness(unitSpec.tiredness),
                         munitions: this.getUnitAmmunition(unitSpec.ammunition),
                         cohesion: this.getUnitCohesion(unitSpec.cohesion),
@@ -587,6 +588,7 @@ export class SequenceLoader {
                 "|Disengagement|Move|Rotate|Reorient|Turn|")
                 .indexOf("|"+element.type+"|")>=0) {
                 elementSpecs.unit = element.unit.name;
+                elementSpecs.steps = element.unit.steps;
                 elementSpecs.cohesion = this.getCohesionCode(element.cohesion);
                 elementSpecs.tiredness = this.getTirednessCode(element.tiredness);
                 elementSpecs.ammunition = this.getMunitionsCode(element.munitions);
@@ -698,6 +700,9 @@ export class SequenceLoader {
                     case "NextTurn":
                         element = new CBNextTurnSequenceElement(game);
                         break;
+                }
+                if (elementSpec.steps !== undefined) {
+                    element.steps = elementSpec.steps;
                 }
                 if (elementSpec.tiredness !== undefined) {
                     element.tiredness = this.getTiredness(elementSpec.tiredness);

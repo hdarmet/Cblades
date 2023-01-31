@@ -78,16 +78,41 @@ public class Game extends BaseEntity {
         return game;
     }
 
+    public Game advanceToNextPlayerTurn() {
+        int currentPlayerIndex = this.getPlayers().indexOf(this.getCurrentPlayer())+1;
+        if (currentPlayerIndex == this.getPlayers().size()) {
+            this.setCurrentTurn(this.getCurrentTurn()+1);
+            currentPlayerIndex = 0;
+        }
+        this.setCurrentPlayerIndex(currentPlayerIndex);
+        System.out.println("Game advance to turn:"+this.getCurrentTurn()+" and player: "+this.getCurrentPlayerIndex());
+        return this;
+    }
+
     public long advancePlayerTurns(EntityManager em, int turns) {
         Query query = em.createQuery(
             "select s from Sequence s left outer join fetch s.elements where s.game = :game and s.currentTurn < 0")
                 .setParameter("game", this.getId());
+        List<Sequence> sequenceList = getFilterAndSortSequences(query);
+        return new SequenceApplyer(this).applyForPlayerTurns(sequenceList, turns);
+    }
+
+    public void applySequencesUntil(EntityManager em, long lastSequenceCount) {
+        Query query = em.createQuery(
+            "select s from Sequence s left outer join fetch s.elements where s.game = :game and s.currentTurn = -1 and s.count <= :count")
+            .setParameter("game", this.getId())
+            .setParameter("count", lastSequenceCount);
+        List<Sequence> sequenceList = getFilterAndSortSequences(query);
+        new SequenceApplyer(this).applySequences(sequenceList);
+    }
+
+    List<Sequence> getFilterAndSortSequences(Query query) {
         Set<Sequence> sequences = new HashSet<>(query.getResultList());
         List<Sequence> sequenceList = new ArrayList<>(sequences);
         Collections.sort(sequenceList,
-            (s1, s2)->(int)(s1.getCount()-s2.getCount())
+                (s1, s2) -> (int) (s1.getCount() - s2.getCount())
         );
-        return new SequenceApplyer(this).applyForPlayerTurns(sequenceList, turns);
+        return sequenceList;
     }
 
     static public Game find(EntityManager em, long id) {

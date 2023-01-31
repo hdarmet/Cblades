@@ -32,6 +32,9 @@ import {
 import {
     CBUnitActuatorTrigger, CBCharge
 } from "../unit.js";
+import {
+    CBSequence, CBStateSequenceElement
+} from "../sequences.js";
 
 export function registerInteractiveMagic() {
     CBInteractivePlayer.prototype.choseSpell = function(unit, event) {
@@ -391,6 +394,7 @@ CBFireballSpell.resolver = function(action) {
         dice.setFinalAction(()=>{
             dice.active = false;
             let report = this.resolve(dice.result);
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
             if (report.success) {
                 result.success().appear();
             }
@@ -434,6 +438,7 @@ CBMagicArrowSpell.resolver = function(action) {
         dice.setFinalAction(()=>{
             dice.active = false;
             let report = this.resolve(dice.result);
+            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
             if (report.success) {
                 result.success().appear();
             }
