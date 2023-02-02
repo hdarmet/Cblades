@@ -14,7 +14,7 @@ public class Unit extends BaseEntity {
     int angle;
     int positionCol;
     int positionRow;
-    int positionAngle;
+    Integer positionAngle;
     int steps;
     Tiredness tiredness;
     Ammunition ammunition;
@@ -79,7 +79,7 @@ public class Unit extends BaseEntity {
     public int getPositionAngle() {
         return this.positionAngle;
     }
-    public Unit setPositionAngle(int positionAngle) {
+    public Unit setPositionAngle(Integer positionAngle) {
         this.positionAngle = positionAngle;
         return this;
     }

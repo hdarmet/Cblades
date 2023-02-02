@@ -4,13 +4,10 @@ import {
     Dimension2D, Point2D
 } from "../../geometry.js";
 import {
-    DDice, DIconMenuItem, DInsert, DMask, DResult, DScene, DIconMenu, DMessage
+    DDice, DIconMenuItem, DMask, DResult, DScene, DIconMenu, DMessage
 } from "../../widget.js";
 import {
-    Memento
-} from "../../mechanisms.js";
-import {
-    CBAction, CBActuator, CBAbstractGame
+    CBAction, CBAbstractGame
 } from "../game.js";
 import {
     CBActionActuator, RetractableActuatorMixin, CBInsert, CBGame
@@ -25,6 +22,14 @@ import {
     CBUnitActuatorTrigger, CBCharge,
     CBOrderInstruction
 } from "../unit.js";
+import {
+    CBChangeOrderInstructionSequenceElement,
+    CBSequence,
+    CBTryChangeOrderInstructionSequenceElement
+} from "../sequences.js";
+import {
+    SequenceLoader
+} from "../loader.js";
 
 export function registerInteractiveCommand() {
     CBInteractivePlayer.prototype.tryToTakeCommand = function(unit, event) {
@@ -191,23 +196,13 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
         return this.playable;
     }
 
-    play() {
-        this.unit.setCharging(CBCharge.NONE);
-        this.game.closeActuators();
-        let result = new DResult();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+    createScene(finalAction, closeAction, point=this.unit.viewportLocation) {
         let scene = new DScene();
+        scene.result = new DResult();
+        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let mask = new DMask("#000000", 0.3);
-        let close = success=>{
-            this.game.closePopup();
-            if (success) {
-                this.unit.player.openOrderInstructionMenu(this.unit,
-                    this.unit.viewportLocation,
-                    this.game.arbitrator.getAllowedOrderInstructions(this.unit));
-                this.game.validate();
-            }
-        };
-        mask.setAction(close);
+        closeAction&&mask.setAction(closeAction);
+        mask.setAction(closeAction);
         this.game.openMask(mask);
         scene.addWidget(
             new CBChangeOrderInstructionInsert(),
@@ -215,23 +210,53 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
         ).addWidget(
             new CBCommandInsert(), new Point2D(-CBCommandInsert.DIMENSION.w/2, 0)
         ).addWidget(
-            dice.setFinalAction(()=>{
-                dice.active = false;
-                let {success} = this._processChangeOderInstructionResult(dice.result);
+            scene.dice.setFinalAction(()=>{
+                scene.dice.active = false;
+                let {success} = this._processChangeOderInstructionResult(scene.dice.result);
                 if (success) {
                     result.success().appear();
                 }
                 else {
                     result.failure().appear();
                 }
-                this.game.validate();
+                finalAction&&finalAction();
             }),
             new Point2D(70, 60)
         ).addWidget(
-            result.setFinalAction(close),
+            result.setFinalAction(closeAction),
             new Point2D(0, 0)
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openPopup(scene, point);
+        return scene;
+    }
+
+    play() {
+        let scene = this.createScene(
+            ()=>{
+                CBSequence.appendElement(this.game, new CBTryChangeOrderInstructionSequenceElement({
+                    game: this.game, unit: this.unit, dice: scene.dice.result
+                }));
+                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                this.game.validate();
+            },
+            success=>{
+                this.game.closePopup();
+                if (success) {
+                    this.unit.player.openOrderInstructionMenu(this.unit,
+                        this.unit.viewportLocation,
+                        this.game.arbitrator.getAllowedOrderInstructions(this.unit));
+                    this.game.validate();
+                }
+            },
+            new Point2D(this._event.offsetX, this._event.offsetY)
+        );
+    }
+
+    replay(dice) {
+        let scene = this.createScene();
+        scene.dice.active = false;
+        scene.result.active = false;
+        scene.dice.cheat(dice);
     }
 
     _processChangeOderInstructionResult(diceResult) {
@@ -367,6 +392,9 @@ export class CBOrderInstructionMenu extends DIconMenu {
         super(true, new DIconMenuItem("./../images/markers/attack.png","./../images/markers/attack-gray.png",
             0, 0, event => {
                 unit.player.changeOrderInstruction(unit, CBOrderInstruction.ATTACK, event);
+                CBSequence.appendElement(this.game, new CBChangeOrderInstructionSequenceElement({
+                    game: this.game, unit, instruction: CBOrderInstruction.ATTACK
+                }));
                 return true;
             }, "Attaque").setActive(allowedOrderInstructions.attack),
             new DIconMenuItem("./../images/markers/defend.png","./../images/markers/defend-gray.png",

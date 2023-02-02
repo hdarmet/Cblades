@@ -179,7 +179,7 @@ public class SequenceControllerTest implements TestSeawave, CollectionSunbeam, D
 		Assert.assertEquals("./../units/banner1.png-0", element.getUnit());
 		Assert.assertEquals(5, element.getHexCol());
 		Assert.assertEquals(8, element.getHexRow());
-		Assert.assertEquals(60, element.getHexAngle());
+		Assert.assertEquals(60, (int)element.getHexAngle());
 		Assert.assertEquals(Stacking.TOP, element.getStacking());
 	}
 
@@ -333,7 +333,7 @@ public class SequenceControllerTest implements TestSeawave, CollectionSunbeam, D
 			Assert.assertEquals(Charging.NONE, element.getCharging());
 			Assert.assertEquals(6, element.getHexCol());
 			Assert.assertEquals(8, element.getHexRow());
-			Assert.assertEquals(180, element.getHexAngle());
+			Assert.assertEquals(180, (int)element.getHexAngle());
 			Assert.assertFalse(element.isEngaging());
 			Assert.assertFalse(element.hasGivenOrder());
 			Assert.assertFalse(element.isPlayed());
@@ -371,7 +371,7 @@ public class SequenceControllerTest implements TestSeawave, CollectionSunbeam, D
 		Assert.assertEquals("./../units/banner1.png-1", element.getUnit());
 		Assert.assertEquals(5, element.getHexCol());
 		Assert.assertEquals(8, element.getHexRow());
-		Assert.assertEquals(180, element.getHexAngle());
+		Assert.assertEquals(180, (int)element.getHexAngle());
 		Assert.assertEquals(60, element.getAngle());
 		Assert.assertEquals(Stacking.TOP, element.getStacking());
 	}

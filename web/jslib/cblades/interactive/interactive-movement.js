@@ -291,7 +291,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this.unit.rotate(angle, cost);
         let played = !this._continueAfterRotation();
         this._markUnitActivationAfterMovement(played);
-        CBSequence.appendElement(this.game, new CBRotateSequenceElement(this.unit, angle));
+        CBSequence.appendElement(this.game, new CBRotateSequenceElement({game:this.game, unit: this.unit, angle}));
     }
 
     _checkIfANonRoutedCrossedUnitLoseCohesion(crossedUnits, processing, cancellable) {
@@ -333,7 +333,9 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this._checkActionProgession(cost.value);
         this.unit.move(hexLocation, cost, CBStacking.BOTTOM);
         this._continueAfterMove();
-        CBSequence.appendElement(this.game, new CBMoveSequenceElement(this.unit, hexLocation, CBStacking.BOTTOM));
+        CBSequence.appendElement(this.game, new CBMoveSequenceElement({
+            game:this.game, unit: this.unit, hexLocation, stacking: CBStacking.BOTTOM
+        }));
     }
 
     _turnUnit(angle, start, cost) {
@@ -342,7 +344,9 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this._checkActionProgession(cost.value);
         this.unit.turn(angle, cost, CBStacking.BOTTOM);
         this._continueAfterMove();
-        CBSequence.appendElement(this.game, new CBTurnSequenceElement(this.unit, angle, this.unit.hexLocation,  CBStacking.BOTTOM));
+        CBSequence.appendElement(this.game, new CBTurnSequenceElement({
+            game:this.game, unit: this.unit, angle, hexLocation: this.unit.hexLocation,  stacking: CBStacking.BOTTOM
+        }));
     }
 
     _collectUnitsToCross() {
@@ -746,7 +750,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         else {
             if (this.unit.charge !== CBCharge.NONE) {
                 this.unit.setCharging(CBCharge.NONE);
-                CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+                CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
             }
         }
     }
@@ -755,16 +759,20 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         let friends = this.game.arbitrator.getTroopsStackedWith(this.unit);
         if (friends.length && friends[0].angle !== this.unit.angle) {
             this.unit.reorient(friends[0].angle);
-            CBSequence.appendElement(this.game, new CBReorientSequenceElement(this.unit, friends[0].angle));
+            CBSequence.appendElement(this.game, new CBReorientSequenceElement({
+                game:this.game, unit: this.unit, angle: friends[0].angle
+            }));
             if (this.unit.troopNature && !this.unit.isRouted()) {
                 this.unit.addOneCohesionLevel();
-                CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+                CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
             }
         }
         else for (let playable of this.unit.hexLocation.playables) {
             if (playable.characterNature && playable !== this.unit && playable.angle !== this.unit.angle) {
                 playable.reorient(this.unit.angle);
-                CBSequence.appendElement(this.game, new CBReorientSequenceElement(this.playable, this.unit.angle));
+                CBSequence.appendElement(this.game, new CBReorientSequenceElement({
+                    game:this.game, unit: this.playable, angle: this.unit.angle
+                }));
             }
         }
     }
@@ -879,7 +887,9 @@ export class CBAttackerEngagementChecking {
     play(action) {
         let scene = this.createScene(
             ()=>{
-                CBSequence.appendElement(this.game, new CBAttackerEngagementSequenceElement(this.game, this.unit, scene.dice.result));
+                CBSequence.appendElement(this.game, new CBAttackerEngagementSequenceElement({
+                    game: this.game, unit: this.unit, dice: scene.dice.result
+                }));
                 new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                 this.game.validate();
             },
@@ -903,7 +913,7 @@ export class CBAttackerEngagementChecking {
         let result = this.game.arbitrator.processAttackerEngagementResult(this.unit, diceResult);
         if (!result.success) {
             this.unit.addOneCohesionLevel();
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+            CBSequence.appendElement(this.game, new CBStateSequenceElement({unit: this.unit}));
         }
         return result;
     }
@@ -953,7 +963,9 @@ export class CBLoseCohesionForCrossingChecking {
     play(action, cancellable) {
         let scene = this.createScene(
             ()=>{
-                CBSequence.appendElement(this.game, new CBCrossingSequenceElement(this.game, this.unit, scene.dice.result));
+                CBSequence.appendElement(this.game, new CBCrossingSequenceElement({
+                    game: this.game, unit: this.unit, dice: scene.dice.result
+                }));
                 new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                 this.game.validate();
             },
@@ -1032,7 +1044,9 @@ export class CBDisengagementChecking {
     play(action) {
         let scene = this.createScene(
             ()=>{
-                CBSequence.appendElement(this.game, new CBDisengagementSequenceElement(this.game, this.unit, scene.dice.result));
+                CBSequence.appendElement(this.game, new CBDisengagementSequenceElement({
+                    game: this.game, unit: this.unit, dice: scene.dice.result
+                }));
                 new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                 this.game.validate();
             },
@@ -1056,7 +1070,7 @@ export class CBDisengagementChecking {
         let result = this.game.arbitrator.processDisengagementResult(this.unit, diceResult);
         if (!result.success) {
             this.unit.addOneCohesionLevel();
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+            CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
         }
         return result;
     }
@@ -1107,7 +1121,9 @@ export class CBConfrontChecking {
     play(action) {
         let scene = this.createScene(
             ()=>{
-                CBSequence.appendElement(this.game, new CBConfrontSequenceElement(this.game, this.unit, scene.dice.result));
+                CBSequence.appendElement(this.game, new CBConfrontSequenceElement({
+                    game: this.game, unit: this.unit, dice: scene.dice.result
+                }));
                 new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                 this.game.validate();
             },
@@ -1132,7 +1148,7 @@ export class CBConfrontChecking {
         let result = this.game.arbitrator.processConfrontEngagementResult(this.unit, diceResult);
         if (!result.success) {
             this.unit.addOneCohesionLevel();
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+            CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
         }
         return result;
     }
@@ -1150,7 +1166,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     play() {
         if (this.unit.charge !== CBCharge.NONE) {
             this.unit.setCharging(CBCharge.NONE);
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+            CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
         }
         super.play();
     }
@@ -1229,7 +1245,7 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
     play() {
         if (this.unit.charge !== CBCharge.NONE) {
             this.unit.setCharging(CBCharge.NONE);
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+            CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
         }
         super.play();
     }
@@ -1247,7 +1263,9 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
         this._checkActionProgession(cost.value);
         this.unit.move(hexLocation, cost, CBStacking.TOP);
         this._continueAfterMove();
-        CBSequence.appendElement(this.game, new CBMoveSequenceElement(this.unit, hexLocation, CBStacking.TOP));
+        CBSequence.appendElement(this.game, new CBMoveSequenceElement({
+            game:this.game, unit: this.unit, hexLocation, stacking: CBStacking.TOP
+        }));
     }
 
     _finishMove() {
@@ -1314,7 +1332,7 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
     play() {
         if (this.unit.charge !== CBCharge.NONE) {
             this.unit.setCharging(CBCharge.NONE);
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+            CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
         }
         super.play();
     }

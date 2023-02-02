@@ -394,7 +394,7 @@ CBFireballSpell.resolver = function(action) {
         dice.setFinalAction(()=>{
             dice.active = false;
             let report = this.resolve(dice.result);
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+            CBSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit: this.unit}));
             if (report.success) {
                 result.success().appear();
             }
@@ -438,7 +438,7 @@ CBMagicArrowSpell.resolver = function(action) {
         dice.setFinalAction(()=>{
             dice.active = false;
             let report = this.resolve(dice.result);
-            CBSequence.appendElement(this.game, new CBStateSequenceElement(this.unit));
+            CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
             if (report.success) {
                 result.success().appear();
             }

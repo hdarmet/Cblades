@@ -106,7 +106,7 @@ public abstract class SequenceElement extends BaseEntity {
 
         int hexCol;
         int hexRow;
-        int hexAngle;
+        Integer hexAngle=null;
         Stacking stacking;
 
         public int getHexCol() {
@@ -125,10 +125,10 @@ public abstract class SequenceElement extends BaseEntity {
             return this;
         }
 
-        public int getHexAngle() {
+        public Integer getHexAngle() {
             return this.hexAngle;
         }
-        public MoveSequenceElement setHexAngle(int hexAngle) {
+        public MoveSequenceElement setHexAngle(Integer hexAngle) {
             this.hexAngle = hexAngle;
             return this;
         }
@@ -194,7 +194,7 @@ public abstract class SequenceElement extends BaseEntity {
         int angle;
         int hexCol;
         int hexRow;
-        int hexAngle;
+        Integer hexAngle=null;
         Stacking stacking;
 
         public int getAngle() {
@@ -221,10 +221,10 @@ public abstract class SequenceElement extends BaseEntity {
             return this;
         }
 
-        public int getHexAngle() {
+        public Integer getHexAngle() {
             return this.hexAngle;
         }
-        public TurnSequenceElement setHexAngle(int hexAngle) {
+        public TurnSequenceElement setHexAngle(Integer hexAngle) {
             this.hexAngle = hexAngle;
             return this;
         }

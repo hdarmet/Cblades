@@ -117,7 +117,9 @@ export class InteractiveRestingAction extends CBAction {
         this.unit.setCharging(CBCharge.NONE);
         let scene = this.createScene(
             ()=>{
-                CBSequence.appendElement(this.game, new CBRestSequenceElement(this.game, this.unit, scene.dice.result));
+                CBSequence.appendElement(this.game, new CBRestSequenceElement({
+                    game: this.game, unit: this.unit, dice: scene.dice.result
+                }));
                 new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                 this.game.validate();
             }
@@ -195,7 +197,9 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
         this.unit.setCharging(CBCharge.NONE);
         let scene = this.createScene(
             ()=>{
-                CBSequence.appendElement(this.game, new CBRefillSequenceElement(this.game, this.unit, scene.dice.result));
+                CBSequence.appendElement(this.game, new CBRefillSequenceElement({
+                    game: this.game, unit: this.unit, dice: scene.dice.result
+                }));
                 new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                 this.game.validate();
             }
@@ -275,7 +279,9 @@ export class InteractiveReorganizeAction extends CBAction {
         this.unit.setCharging(CBCharge.NONE);
         let scene = this.createScene(
             ()=>{
-                CBSequence.appendElement(this.game, new CBReorganizeSequenceElement(this.game, this.unit, scene.dice.result));
+                CBSequence.appendElement(this.game, new CBReorganizeSequenceElement({
+                    game: this.game, unit: this.unit, dice: scene.dice.result
+                }));
                 new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                 this.game.validate();
             }
@@ -355,7 +361,9 @@ export class InteractiveRallyAction extends CBAction {
         this.unit.setCharging(CBCharge.NONE);
         let scene = this.createScene(
             ()=>{
-                CBSequence.appendElement(this.game, new CBRallySequenceElement(this.game, this.unit, scene.dice.result));
+                CBSequence.appendElement(this.game, new CBRallySequenceElement({
+                    game: this.game, unit: this.unit, dice: scene.dice.result
+                }));
                 new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                 this.game.validate();
             }

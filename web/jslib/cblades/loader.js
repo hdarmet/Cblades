@@ -2,7 +2,7 @@
 
 import {
     CBBoard,
-    CBHex, CBHexSideId, CBMap
+    CBHex, CBMap
 } from "./map.js";
 import {
     sendGet,
@@ -14,24 +14,7 @@ import {
     CBWing
 } from "./unit.js";
 import {
-    CBStacking
-} from "./game.js";
-import {
-    CBAttackerEngagementSequenceElement,
-    CBConfrontSequenceElement, CBCrossingSequenceElement,
-    CBDefenderEngagementSequenceElement,
-    CBDisengagementSequenceElement,
-    CBLoseCohesionSequenceElement,
-    CBMoveSequenceElement,
-    CBNextTurnSequenceElement,
-    CBRallySequenceElement,
-    CBRefillSequenceElement,
-    CBReorganizeSequenceElement,
-    CBReorientSequenceElement,
-    CBRestSequenceElement,
-    CBRotateSequenceElement,
-    CBSequence, CBStateSequenceElement,
-    CBTurnSequenceElement
+    CBSequence
 } from "./sequences.js";
 
 //let consoleLog = console.log;
@@ -578,46 +561,10 @@ export class SequenceLoader {
             count: sequence._validatedCount,
             elements: []
         };
+        let context = {game: sequence._game};
         for (let element of sequence.validated) {
-            let elementSpecs = {
-                version: element._oversion || 0,
-                type: element.type,
-            }
-            if (("|State|Rest|Refill|Rally|Reorganize|LossConsistency" +
-                "|Confront|Crossing|AttackerEngagement|DefenderEngagement" +
-                "|Disengagement|Move|Rotate|Reorient|Turn|")
-                .indexOf("|"+element.type+"|")>=0) {
-                elementSpecs.unit = element.unit.name;
-                elementSpecs.steps = element.unit.steps;
-                elementSpecs.cohesion = this.getCohesionCode(element.cohesion);
-                elementSpecs.tiredness = this.getTirednessCode(element.tiredness);
-                elementSpecs.ammunition = this.getMunitionsCode(element.munitions);
-                elementSpecs.charging = this.getChargingCode(element.charging);
-                elementSpecs.engaging = element.engaging;
-                elementSpecs.orderGiven = element.orderGiven;
-                elementSpecs.played = element.played;
-            }
-            if ("|Move|Turn|".indexOf("|"+element.type+"|")>=0) {
-                if (element.hexLocation instanceof CBHexSideId) {
-                    elementSpecs.hexCol = element.hexLocation.fromHex.col;
-                    elementSpecs.hexRow = element.hexLocation.fromHex.row;
-                    elementSpecs.hexAngle = element.hexLocation.angle;
-                }
-                else {
-                    elementSpecs.hexCol = element.hexLocation.col;
-                    elementSpecs.hexRow = element.hexLocation.row;
-                }
-                elementSpecs.stacking = this.getStackingCode(element.stacking);
-            }
-            if ("|Rotate|Reorient|Turn|".indexOf("|"+element.type+"|")>=0) {
-                elementSpecs.angle = element.angle;
-            }
-            if (("|Rest|Refill|Rally|Reorganize|LossConsistency|Confront" +
-                "|Crossing|AttackerEngagement|DefenderEngagement|Disengagement|")
-                .indexOf("|"+element.type+"|")>=0) {
-                elementSpecs.dice1 = element.dice[0];
-                elementSpecs.dice2 = element.dice[1];
-            }
+            let elementSpecs = {};
+            element.toSpec(elementSpecs, context);
             sequenceSpecs.elements.push(elementSpecs);
         }
         consoleLog(JSON.stringify(sequenceSpecs));
@@ -629,195 +576,15 @@ export class SequenceLoader {
         let sequences = [];
         for (let specs of specList) {
             let sequence = new CBSequence(game, specs.count);
-            let units = new Map();
-            for (let playable of game.playables) {
-                if (playable instanceof CBUnit) {
-                    units.set(playable.name, playable);
-                }
-            }
+            let context = {game};
             for (let elementSpec of specs.elements) {
-                let unit;
-                if (elementSpec.unit) {
-                    unit = units.get(elementSpec.unit);
-                }
-                let hexLocation;
-                if (elementSpec.hexCol !== undefined) {
-                    hexLocation = game.map.getHex(elementSpec.hexCol, elementSpec.hexRow);
-                    //if (elementSpec.hexAngle!==undefined) hexLocation = hexLocation.toward(elementSpec.hexAngle);
-                }
-                let stacking;
-                if (elementSpec.stacking !== undefined) {
-                    stacking = this.getStacking(elementSpec.stacking)
-                }
-                let element;
-                let angle = elementSpec.angle;
-                switch (elementSpec.type) {
-                    case "State":
-                        element = new CBStateSequenceElement(unit, hexLocation, stacking);
-                        break;
-                    case "Move":
-                        element = new CBMoveSequenceElement(unit, hexLocation, stacking);
-                        break;
-                    case "Rotate":
-                        element = new CBRotateSequenceElement(unit, angle);
-                        break;
-                    case "Reorient":
-                        element = new CBReorientSequenceElement(unit, angle);
-                        break;
-                    case "Turn":
-                        element = new CBTurnSequenceElement(unit, angle, hexLocation, stacking);
-                        break;
-                    case "Rest":
-                        element = new CBRestSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
-                        break;
-                    case "Refill":
-                        element = new CBRefillSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
-                        break;
-                    case "Rally":
-                        element = new CBRallySequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
-                        break;
-                    case "Reorganize":
-                        element = new CBReorganizeSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
-                        break;
-                    case "LossConsistency":
-                        element = new CBLoseCohesionSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
-                        break;
-                    case "Confront":
-                        element = new CBConfrontSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
-                        break;
-                    case "Crossing":
-                        element = new CBCrossingSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
-                        break;
-                    case "AttackerEngagement":
-                        element = new CBAttackerEngagementSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
-                        break;
-                    case "DefenderEngagement":
-                        element = new CBDefenderEngagementSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
-                        break;
-                    case "Disengagement":
-                        element = new CBDisengagementSequenceElement(game, unit, [elementSpec.dice1, elementSpec.dice2]);
-                        break;
-                    case "NextTurn":
-                        element = new CBNextTurnSequenceElement(game);
-                        break;
-                }
-                if (elementSpec.steps !== undefined) {
-                    element.steps = elementSpec.steps;
-                }
-                if (elementSpec.tiredness !== undefined) {
-                    element.tiredness = this.getTiredness(elementSpec.tiredness);
-                }
-                if (elementSpec.cohesion !== undefined) {
-                    element.cohesion = this.getCohesion(elementSpec.cohesion);
-                }
-                if (elementSpec.ammunition !== undefined) {
-                    element.munitions = this.getMunitions(elementSpec.ammunition);
-                }
-                if (elementSpec.charging !== undefined) {
-                    element.charging = this.getCharging(elementSpec.charging);
-                }
-                if (elementSpec.engaging !== undefined) {
-                    element.engaging = elementSpec.engaging;
-                }
-                if (elementSpec.orderGiven !== undefined) {
-                    element.orderGiven = elementSpec.orderGiven;
-                }
-                if (elementSpec.played !== undefined) {
-                    element.played = elementSpec.played;
-                }
+                let element = CBSequence.createElement(elementSpec.type);
+                element.fromSpec(elementSpec, context);
                 sequence.addElement(element);
             }
             sequences.push(sequence);
         }
         return sequences;
-    }
-
-    getTirednessCode(tiredness) {
-        if (tiredness===CBTiredness.TIRED) return "T";
-        else if (tiredness===CBTiredness.EXHAUSTED) return "E";
-        else return "F";
-    }
-
-    getMunitionsCode(munitions) {
-        if (munitions===CBMunitions.SCARCE) return "S";
-        else if (munitions===CBMunitions.EXHAUSTED) return "E";
-        else return "P";
-    }
-
-    getCohesionCode(cohesion) {
-        if (cohesion===CBCohesion.DISRUPTED) return "D";
-        else if (cohesion===CBCohesion.ROUTED) return "R";
-        else if (cohesion===CBCohesion.DESTROYED) return "X";
-        else return "GO";
-    }
-
-    getChargingCode(charging) {
-        if (charging===CBCharge.CHARGING) return "C";
-        else if (charging===CBCharge.BEGIN_CHARGE) return "BC";
-        else if (charging===CBCharge.CAN_CHARGE) return "CC";
-        else return "N";
-    }
-
-    getStackingCode(stacking) {
-        if (stacking===CBStacking.TOP) return "T";
-        else return "B";
-    }
-
-    getTiredness(code) {
-        switch (code) {
-            case "F":
-                return CBTiredness.NONE;
-            case "T":
-                return CBTiredness.TIRED;
-            case "E":
-                return CBTiredness.EXHAUSTED;
-        }
-    }
-
-    getMunitions(code) {
-        switch (code) {
-            case "P":
-                return CBMunitions.NONE;
-            case "S":
-                return CBMunitions.SCARCE;
-            case "E":
-                return CBMunitions.EXHAUSTED;
-        }
-    }
-
-    getCohesion(code) {
-        switch (code) {
-            case "GO":
-                return CBCohesion.GOOD_ORDER;
-            case "D":
-                return CBCohesion.DISRUPTED;
-            case "R":
-                return CBCohesion.ROUTED;
-            case "X":
-                return CBCohesion.DESTROYED;
-        }
-    }
-
-    getCharging(code) {
-        switch (code) {
-            case "BC":
-                return CBCharge.BEGIN_CHARGE;
-            case "CC":
-                return CBCharge.CAN_CHARGE;
-            case "C":
-                return CBCharge.CHARGING;
-            case "N":
-                return CBCharge.NONE;
-        }
-    }
-
-    getStacking(code) {
-        switch (code) {
-            case "T":
-                return CBStacking.TOP;
-            case "B":
-                return CBStacking.BOTTOM;
-        }
     }
 
 }

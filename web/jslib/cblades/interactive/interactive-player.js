@@ -141,7 +141,7 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     finishTurn(animation) {
         let playable = this.game.selectedPlayable;
         this.afterActivation(playable, ()=>{
-            CBSequence.appendElement(this.game, new CBNextTurnSequenceElement(this.game));
+            CBSequence.appendElement(this.game, new CBNextTurnSequenceElement({game: this.game}));
             new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
             super.finishTurn(animation);
         });
@@ -202,7 +202,9 @@ export class CBDefenderEngagementChecking {
     play(action) {
         let scene = this.createScene(
             ()=>{
-                CBSequence.appendElement(this.game, new CBDefenderEngagementSequenceElement(this.game, this.unit, scene.dice.result));
+                CBSequence.appendElement(this.game, new CBDefenderEngagementSequenceElement({
+                    game: this.game, unit:this.unit, dice: scene.dice.result
+                }));
                 new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                 this.game.validate();
             },
@@ -275,7 +277,9 @@ export class CBLoseCohesionChecking {
     play(action, cancellable) {
         let scene = this.createScene(
             ()=>{
-                CBSequence.appendElement(this.game, new CBLoseCohesionSequenceElement(this.game, this.unit, scene.dice.result));
+                CBSequence.appendElement(this.game, new CBLoseCohesionSequenceElement({
+                    game: this.game, unit: this.unit, dice: scene.dice.result
+                }));
                 new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                 this.game.validate();
             },

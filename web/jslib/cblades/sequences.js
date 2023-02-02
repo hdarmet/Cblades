@@ -23,6 +23,18 @@ import {
     CBDisengagementChecking,
     CBLoseCohesionForCrossingChecking
 } from "./interactive/interactive-movement.js";
+import {
+    InteractiveChangeOrderInstructionAction
+} from "./interactive/interactive-command.js";
+import {
+    CBCharge, CBCohesion, CBMunitions, CBOrderInstruction, CBTiredness, CBUnit
+} from "./unit.js";
+import {
+    CBStacking
+} from "./game.js";
+import {
+    CBHexSideId
+} from "./map.js";
 
 export class CBSequence {
 
@@ -60,6 +72,15 @@ export class CBSequence {
 
     static getSequence(game) {
         return game._sequence;
+    }
+
+    static _constructors = new Map();
+    static register(label, seqConstructor) {
+        CBSequence._constructors.set(label, seqConstructor);
+    }
+
+    static createElement(label) {
+        return new (CBSequence._constructors.get(label))({});
     }
 
     constructor(game, count=0) {
@@ -148,12 +169,14 @@ export class CBSequence {
 
 export class CBSequenceElement {
 
-    constructor(type) {
+    constructor({type, game}) {
         this.type = type;
+        this.game = game;
     }
 
     equalsTo(element) {
         if (this.type !== element.type) return false;
+        if (this.game !== element.game) return false;
         return true;
     }
 
@@ -162,16 +185,27 @@ export class CBSequenceElement {
     }
 
     _toString() {
-        let result = "Type: "+this.type;
-        return result;
+        return "Type: "+this.type;
     }
 
+    toSpec(spec, context) {
+        spec.version = this._oversion || 0;
+        spec.type = this.type;
+    }
+
+    fromSpec(spec, context) {
+        this.game = context.game;
+    }
 }
 
 export class CBStateSequenceElement extends CBSequenceElement {
 
-    constructor(unit, type="State") {
-        super(type);
+    constructor({unit, game, type="State"}) {
+        super({type, game});
+        if (unit) this.setUnit(unit);
+    }
+
+    setUnit(unit) {
         this.unit = unit;
         this.steps = unit.isOnHex() ? unit.steps : 0;
         this.cohesion = unit.cohesion;
@@ -224,139 +258,303 @@ export class CBStateSequenceElement extends CBSequenceElement {
     }
 
     apply(startTick) {
-        return new CBUnitAnimation(this.unit, startTick, this.delay, this);
+        return new CBUnitAnimation({unit:this.unit, startTick, duration:this.delay, state:this});
     }
 
     get delay() { return 0; }
 
-    getUnit() {
-        return this.unit;
+    toSpec(spec, context) {
+        super.toSpec(spec, context);
+        spec.unit = this.unit.name;
+        spec.steps = this.unit.steps;
+        spec.cohesion = this.getCohesionCode(this.cohesion);
+        spec.tiredness = this.getTirednessCode(this.tiredness);
+        spec.ammunition = this.getMunitionsCode(this.munitions);
+        spec.charging = this.getChargingCode(this.charging);
+        spec.engaging = this.engaging;
+        spec.orderGiven = this.orderGiven;
+        spec.played = this.played;
+    }
+
+    fromSpec(spec, context) {
+        super.fromSpec(spec, context);
+        if (!context.units) {
+            context.units = new Map();
+            for (let playable of context.game.playables) {
+                if (playable instanceof CBUnit) {
+                    context.units.set(playable.name, playable);
+                }
+            }
+        }
+        let unit = context.units.get(spec.unit);
+        if (unit) {
+            this.setUnit(unit);
+        }
+        if (spec.steps !== undefined) {
+            this.steps = spec.steps;
+        }
+        if (spec.tiredness !== undefined) {
+            this.tiredness = this.getTiredness(spec.tiredness);
+        }
+        if (spec.cohesion !== undefined) {
+            this.cohesion = this.getCohesion(spec.cohesion);
+        }
+        if (spec.ammunition !== undefined) {
+            this.munitions = this.getMunitions(spec.ammunition);
+        }
+        if (spec.charging !== undefined) {
+            this.charging = this.getCharging(spec.charging);
+        }
+        if (spec.engaging !== undefined) {
+            this.engaging = spec.engaging;
+        }
+        if (spec.orderGiven !== undefined) {
+            this.orderGiven = spec.orderGiven;
+        }
+        if (spec.played !== undefined) {
+            this.played = spec.played;
+        }
+    }
+
+    getTirednessCode(tiredness) {
+        if (tiredness===CBTiredness.TIRED) return "T";
+        else if (tiredness===CBTiredness.EXHAUSTED) return "E";
+        else return "F";
+    }
+
+    getMunitionsCode(munitions) {
+        if (munitions===CBMunitions.SCARCE) return "S";
+        else if (munitions===CBMunitions.EXHAUSTED) return "E";
+        else return "P";
+    }
+
+    getCohesionCode(cohesion) {
+        if (cohesion===CBCohesion.DISRUPTED) return "D";
+        else if (cohesion===CBCohesion.ROUTED) return "R";
+        else if (cohesion===CBCohesion.DESTROYED) return "X";
+        else return "GO";
+    }
+
+    getChargingCode(charging) {
+        if (charging===CBCharge.CHARGING) return "C";
+        else if (charging===CBCharge.BEGIN_CHARGE) return "BC";
+        else if (charging===CBCharge.CAN_CHARGE) return "CC";
+        else return "N";
+    }
+
+    getTiredness(code) {
+        switch (code) {
+            case "F": return CBTiredness.NONE;
+            case "T": return CBTiredness.TIRED;
+            case "E": return CBTiredness.EXHAUSTED;
+        }
+    }
+
+    getMunitions(code) {
+        switch (code) {
+            case "P": return CBMunitions.NONE;
+            case "S": return CBMunitions.SCARCE;
+            case "E": return CBMunitions.EXHAUSTED;
+        }
+    }
+
+    getCohesion(code) {
+        switch (code) {
+            case "GO": return CBCohesion.GOOD_ORDER;
+            case "D": return CBCohesion.DISRUPTED;
+            case "R": return CBCohesion.ROUTED;
+            case "X": return CBCohesion.DESTROYED;
+        }
+    }
+
+    getCharging(code) {
+        switch (code) {
+            case "BC": return CBCharge.BEGIN_CHARGE;
+            case "CC": return CBCharge.CAN_CHARGE;
+            case "C": return CBCharge.CHARGING;
+            case "N": return CBCharge.NONE;
+        }
+    }
+
+}
+CBSequence.register("State", CBStateSequenceElement);
+
+export function HexLocated(clazz) {
+
+    return class extends clazz {
+
+        constructor({hexLocation, stacking, ...params}) {
+            super(params);
+            this.hexLocation = hexLocation;
+            this.stacking = stacking;
+        }
+
+        get delay() { return 500; }
+
+        equalsTo(element) {
+            if (!super.equalsTo(element)) return false;
+            if (this.hexLocation.location.toString() !== element.hexLocation.location.toString()) return false;
+            if (this.stacking !== element.stacking) return false;
+            return true;
+        }
+
+        _toString() {
+            let result = super._toString();
+            if (this.hexLocation !== undefined) result+=", HexLocation: "+this.hexLocation.location.toString();
+            if (this.stacking !== undefined) result+=", Stacking: "+this.stacking;
+            return result;
+        }
+
+        toSpec(spec, context) {
+            super.toSpec(spec, context);
+            if (this.hexLocation instanceof CBHexSideId) {
+                spec.hexCol = this.hexLocation.fromHex.col;
+                spec.hexRow = this.hexLocation.fromHex.row;
+                spec.hexAngle = this.hexLocation.angle;
+            }
+            else {
+                spec.hexCol = this.hexLocation.col;
+                spec.hexRow = this.hexLocation.row;
+            }
+            spec.stacking = this.getStackingCode(this.stacking);
+        }
+
+        fromSpec(spec, context) {
+            super.fromSpec(spec, context);
+            if (spec.hexCol !== undefined) {
+                this.hexLocation = context.game.map.getHex(spec.hexCol, spec.hexRow);
+                if (spec.hexAngle!==undefined) {
+                    this.hexLocation = this.hexLocation.toward(spec.hexAngle);
+                }
+            }
+            if (spec.stacking !== undefined) {
+                this.stacking = this.getStacking(spec.stacking)
+            }
+        }
+
+        getStackingCode(stacking) {
+            if (stacking===CBStacking.TOP) return "T";
+            else return "B";
+        }
+
+        getStacking(code) {
+            switch (code) {
+                case "T": return CBStacking.TOP;
+                case "B": return CBStacking.BOTTOM;
+            }
+        }
+
     }
 
 }
 
-export class CBMoveSequenceElement extends CBStateSequenceElement {
+export class CBMoveSequenceElement extends HexLocated(CBStateSequenceElement) {
 
-    constructor(unit, hexLocation, stacking) {
-        super(unit, "Move");
-        this.hexLocation = hexLocation;
-        this.stacking = stacking;
+    constructor({game, unit, hexLocation, hexAngle, stacking}) {
+        super({type: "Move", game, unit, hexLocation, hexAngle, stacking});
     }
 
     apply(startTick) {
-        return new CBMoveAnimation(this.unit, startTick, this.delay, this, undefined, this.hexLocation, this.stacking);
+        return new CBMoveAnimation({
+            unit:this.unit, startTick, duration:this.delay,
+            state:this, hexLocation:this.hexLocation, stacking:this.stacking
+        });
     }
 
-    get delay() { return 500; }
+}
+CBSequence.register("Move", CBMoveSequenceElement);
 
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        if (this.hexLocation.location.toString() !== element.hexLocation.location.toString()) return false;
-        if (this.stacking !== element.stacking) return false;
-        return true;
-    }
+export function Oriented(clazz) {
 
-    _toString() {
-        let result = super._toString();
-        if (this.stacking !== undefined) result+=", HexLocation: "+this.hexLocation.location.toString();
-        if (this.stacking !== undefined) result+=", Stacking: "+this.stacking;
-        return result;
+    return class extends clazz {
+
+        constructor({angle, ...params}) {
+            super(params);
+            this.angle = angle;
+        }
+
+        get delay() { return 500; }
+
+        equalsTo(element) {
+            if (!super.equalsTo(element)) return false;
+            if (this.angle !== element.angle) return false;
+            return true;
+        }
+
+        _toString() {
+            let result = super._toString();
+            if (this.angle !== undefined) result+=", Angle: "+this.angle;
+            return result;
+        }
+
+        toSpec(spec, context) {
+            super.toSpec(spec, context);
+            spec.angle = this.angle;
+        }
+
+        fromSpec(spec, context) {
+            super.fromSpec(spec, context);
+            if (spec.angle !== undefined) {
+                this.angle = spec.angle;
+            }
+        }
+
     }
 
 }
 
-export class CBRotateSequenceElement extends CBStateSequenceElement {
+export class CBRotateSequenceElement extends Oriented(CBStateSequenceElement) {
 
-    constructor(unit, angle) {
-        super(unit, "Rotate");
-        this.angle = angle;
+    constructor({game, unit, angle}) {
+        super({type: "Rotate", game, unit, angle});
     }
 
     apply(startTick) {
-        return new CBMoveAnimation(this.unit, startTick, this.delay, this, this.angle);
-    }
-
-    get delay() { return 500; }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        if (this.angle !== element.angle) return false;
-        return true;
-    }
-
-    _toString() {
-        let result = super._toString();
-        if (this.angle !== undefined) result+=", Angle: "+this.angle;
-        return result;
+        return new CBMoveAnimation({
+            unit: this.unit, startTick, duration:this.delay, state:this, angle:this.angle
+        });
     }
 
 }
+CBSequence.register("Rotate", CBRotateSequenceElement);
 
-export class CBReorientSequenceElement extends CBStateSequenceElement {
+export class CBReorientSequenceElement extends Oriented(CBStateSequenceElement) {
 
-    constructor(unit, angle) {
-        super(unit, "Reorient");
-        this.angle = angle;
+    constructor({game, unit, angle}) {
+        super({type: "Reorient", game, unit, angle});
     }
 
     apply(startTick) {
-        return new CBMoveAnimation(this.unit, startTick, this.delay, this, this.angle);
+        return new CBMoveAnimation({
+            unit: this.unit, startTick, duration: this.delay, state:this, angle:this.angle
+        });
     }
 
-    get delay() { return 500; }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        if (this.angle !== element.angle) return false;
-        return true;
-    }
-
-    _toString() {
-        let result = super._toString();
-        if (this.angle !== undefined) result+=", Angle: "+this.angle;
-        return result;
-    }
 }
+CBSequence.register("Reorient", CBReorientSequenceElement);
 
-export class CBTurnSequenceElement extends CBStateSequenceElement {
+export class CBTurnSequenceElement extends Oriented(HexLocated(CBStateSequenceElement)) {
 
-    constructor(unit, angle, hexLocation, stacking) {
-        super(unit);
-        this.type = "Turn";
-        this.angle = angle;
-        this.hexLocation = hexLocation;
-        this.stacking = stacking;
+    constructor({game, unit, angle, hexLocation, stacking}) {
+        super({type:"Turn", game, unit, angle, hexLocation, stacking});
     }
 
     apply(startTick) {
-        return new CBMoveAnimation(this.unit, startTick, this.delay, this, this.angle, this.hexLocation, this.stacking);
-    }
-
-    get delay() { return 500; }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        if (this.hexLocation.location.toString() !== element.hexLocation.location.toString()) return false;
-        if (this.stacking !== element.stacking) return false;
-        if (this.angle !== element.angle) return false;
-        return true;
-    }
-
-    _toString() {
-        let result = super._toString();
-        if (this.hexLocation !== undefined) result+=", HexLocation: "+this.hexLocation.location.toString();
-        if (this.stacking !== undefined) result+=", Stacking: "+this.stacking;
-        if (this.angle !== undefined) result+=", Angle: "+this.angle;
-        return result;
+        return new CBMoveAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, angle:
+            this.angle, hexLocation: this.hexLocation, stacking: this.stacking
+        });
     }
 
 }
+CBSequence.register("Turn", CBTurnSequenceElement);
 
 export class CBUnitAnimation extends DAnimation {
 
-    constructor(unit, startTick, duration, state) {
+    constructor({unit, game, startTick, duration, state}) {
         super();
         this._unit = unit;
+        this._game = game;
         this._state = state;
         this._duration = duration;
         this._tick = startTick+1;
@@ -364,6 +562,10 @@ export class CBUnitAnimation extends DAnimation {
 
     get tick() {
         return this._tick;
+    }
+
+    get game() {
+        return this._game;
     }
 
     _draw(count, ticks) {
@@ -397,8 +599,8 @@ export class CBUnitAnimation extends DAnimation {
 
 export class CBMoveAnimation extends CBUnitAnimation {
 
-    constructor(unit, startTick, duration, state, angle, hexLocation, stacking) {
-        super(unit, startTick, duration, state);
+    constructor({unit, startTick, duration, state, angle, hexLocation, stacking}) {
+        super({unit, startTick, duration, state});
         this._angle = angle;
         this._hexLocation = hexLocation;
         this._stacking = stacking;
@@ -449,13 +651,12 @@ export class CBMoveAnimation extends CBUnitAnimation {
 
 export class CBNextTurnSequenceElement extends CBSequenceElement {
 
-    constructor(game) {
-        super("NextTurn");
-        this.game = game;
+    constructor({game}) {
+        super({type: "NextTurn", game});
     }
 
     apply(startTick) {
-        return new CBNextTurnAnimation(this.game, startTick, this.delay);
+        return new CBNextTurnAnimation({game: this.game, startTick, duration: this.delay});
     }
 
     get delay() { return 500; }
@@ -471,11 +672,13 @@ export class CBNextTurnSequenceElement extends CBSequenceElement {
         if (this.game !== undefined) result+=", Game: "+this.game.id;
         return result;
     }
+
 }
+CBSequence.register("NextTurn", CBNextTurnSequenceElement);
 
 export class CBNextTurnAnimation extends DAnimation {
 
-    constructor(game, startTick, duration) {
+    constructor({game, startTick, duration}) {
         super();
         this._game = game;
         this._duration = duration;
@@ -491,385 +694,317 @@ export class CBNextTurnAnimation extends DAnimation {
 
 }
 
-export class CBRestSequenceElement extends CBStateSequenceElement {
+function WithDiceRoll(clazz) {
 
-    constructor(game, unit, dice) {
-        super(unit, "Rest");
-        this._game = game;
-        this._dice = dice;
-    }
+    return class extends clazz {
 
-    apply(startTick) {
-        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
-            ()=>new InteractiveRestingAction(this._game, this.unit).replay(this.dice)
-        );
-    }
-
-    get dice() { return this._dice; }
-
-    get delay() { return 2500; }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        for (let index=0; index<this._dice.length; index++) {
-            if (element[index] !== this._dice[index]) return false;
+        constructor({dice, ...params}) {
+            super(params);
+            this.dice = dice;
         }
-        return true;
-    }
 
-    _toString() {
-        let result = super._toString();
-        for (let index=0; index<this._dice.length; index++) {
-            result+=`, dice${index}: `+this._dice[index];
+        get delay() { return 2500; }
+
+        equalsTo(element) {
+            if (!super.equalsTo(element)) return false;
+            for (let index=0; index<this.dice.length; index++) {
+                if (element[index] !== this.dice[index]) return false;
+            }
+            return true;
         }
-        return result;
+
+        _toString() {
+            let result = super._toString();
+            for (let index=0; index<this.dice.length; index++) {
+                result+=`, dice${index}: `+this.dice[index];
+            }
+            return result;
+        }
+
+        toSpec(spec, context) {
+            super.toSpec(spec, context);
+            for (let index=0;  index<this.dice.length; index++) {
+                spec["dice"+(index+1)] = this.dice[index];
+            }
+        }
+
+        fromSpec(spec, context) {
+            super.fromSpec(spec, context);
+            this.dice = [spec.dice1, spec.dice2];
+        }
     }
 
 }
 
-export class CBRefillSequenceElement extends CBStateSequenceElement {
+export class CBRestSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
-    constructor(game, unit, dice) {
-        super(unit, "Refill");
-        this._game = game;
-        this._dice = dice;
+    constructor({game, unit, dice}) {
+        super({type:"Rest", game, unit, dice});
     }
 
     apply(startTick) {
-        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
-            ()=>new InteractiveReplenishMunitionsAction(this._game, this.unit).replay(this.dice)
-        );
-    }
-
-    get dice() { return this._dice; }
-
-    get delay() { return 2500; }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        for (let index=0; index<this._dice.length; index++) {
-            if (element[index] !== this._dice[index]) return false;
-        }
-        return true;
-    }
-
-    _toString() {
-        let result = super._toString();
-        for (let index=0; index<this._dice.length; index++) {
-            result+=`, dice${index}: `+this._dice[index];
-        }
-        return result;
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new InteractiveRestingAction(this.game, this.unit).replay(this.dice)
+        });
     }
 
 }
+CBSequence.register("Rest", CBRestSequenceElement);
 
-export class CBRallySequenceElement extends CBStateSequenceElement {
+export class CBRefillSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
-    constructor(game, unit, dice) {
-        super(unit, "Rally");
-        this._game = game;
-        this._dice = dice;
+    constructor({game, unit, dice}) {
+        super({type:"Refill", game, unit, dice});
     }
 
     apply(startTick) {
-        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
-            ()=>new InteractiveRallyAction(this._game, this.unit).replay(this.dice)
-        );
-    }
-
-    get dice() { return this._dice; }
-
-    get delay() { return 2500; }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        for (let index=0; index<this._dice.length; index++) {
-            if (element[index] !== this._dice[index]) return false;
-        }
-        return true;
-    }
-
-    _toString() {
-        let result = super._toString();
-        for (let index=0; index<this._dice.length; index++) {
-            result+=`, dice${index}: `+this._dice[index];
-        }
-        return result;
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new InteractiveReplenishMunitionsAction(this.game, this.unit).replay(this.dice)
+        });
     }
 
 }
+CBSequence.register("Refill", CBRefillSequenceElement);
 
-export class CBReorganizeSequenceElement extends CBStateSequenceElement {
+export class CBRallySequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
-    constructor(game, unit, dice) {
-        super(unit, "Reorganize");
-        this._game = game;
-        this._dice = dice;
+    constructor({game, unit, dice}) {
+        super({type:"Rally", game, unit, dice});
     }
 
     apply(startTick) {
-        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
-            ()=>new InteractiveReorganizeAction(this._game, this.unit).replay(this.dice)
-        );
-    }
-
-    get dice() { return this._dice; }
-
-    get delay() { return 2500; }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        for (let index=0; index<this._dice.length; index++) {
-            if (element[index] !== this._dice[index]) return false;
-        }
-        return true;
-    }
-
-    _toString() {
-        let result = super._toString();
-        for (let index=0; index<this._dice.length; index++) {
-            result+=`, dice${index}: `+this._dice[index];
-        }
-        return result;
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: ()=>new InteractiveRallyAction(this.game, this.unit).replay(this.dice)
+        });
     }
 
 }
+CBSequence.register("Rally", CBRallySequenceElement);
 
-export class CBLoseCohesionSequenceElement extends CBStateSequenceElement {
+export class CBReorganizeSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
-    constructor(game, unit, dice) {
-        super(unit, "LossConsistency");
-        this._game = game;
-        this._dice = dice;
+    constructor({game, unit, dice}) {
+        super({type:"Reorganize", game, unit, dice});
     }
 
     apply(startTick) {
-        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
-            ()=>new CBLoseCohesionChecking(this._game, this.unit).replay(this.dice)
-        );
-    }
-
-    get dice() { return this._dice; }
-
-    get delay() { return 2500; }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        for (let index=0; index<this._dice.length; index++) {
-            if (element[index] !== this._dice[index]) return false;
-        }
-        return true;
-    }
-
-    _toString() {
-        let result = super._toString();
-        for (let index=0; index<this._dice.length; index++) {
-            result+=`, dice${index}: `+this._dice[index];
-        }
-        return result;
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: ()=>new InteractiveReorganizeAction(this.game, this.unit).replay(this.dice)
+        });
     }
 
 }
+CBSequence.register("Reorganize", CBReorganizeSequenceElement);
 
-export class CBConfrontSequenceElement extends CBStateSequenceElement {
+export class CBLoseCohesionSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
-    constructor(game, unit, dice) {
-        super(unit, "Confront");
-        this._game = game;
-        this._dice = dice;
+    constructor({game, unit, dice}) {
+        super({type:"LossConsistency", game, unit, dice});
     }
 
     apply(startTick) {
-        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
-            ()=>new CBConfrontChecking(this._game, this.unit).replay(this.dice)
-        );
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new CBLoseCohesionChecking(this.game, this.unit).replay(this.dice)
+        });
     }
-
-    get dice() { return this._dice; }
-
-    get delay() { return 2500; }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        for (let index=0; index<this._dice.length; index++) {
-            if (element[index] !== this._dice[index]) return false;
-        }
-        return true;
-    }
-
-    _toString() {
-        let result = super._toString();
-        for (let index=0; index<this._dice.length; index++) {
-            result+=`, dice${index}: `+this._dice[index];
-        }
-        return result;
-    }
-
 }
+CBSequence.register("LossConsistency", CBLoseCohesionSequenceElement);
 
-export class CBCrossingSequenceElement extends CBStateSequenceElement {
+export class CBConfrontSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
-    constructor(game, unit, dice) {
-        super(unit, "Crossing");
-        this._game = game;
-        this._dice = dice;
+    constructor({game, unit, dice}) {
+        super({ type: "Confront", game, unit, dice});
     }
 
     apply(startTick) {
-        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
-            ()=>new CBLoseCohesionForCrossingChecking(this._game, this.unit).replay(this.dice)
-        );
-    }
-
-    get dice() { return this._dice; }
-
-    get delay() { return 2500; }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        for (let index=0; index<this._dice.length; index++) {
-            if (element[index] !== this._dice[index]) return false;
-        }
-        return true;
-    }
-
-    _toString() {
-        let result = super._toString();
-        for (let index=0; index<this._dice.length; index++) {
-            result+=`, dice${index}: `+this._dice[index];
-        }
-        return result;
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new CBConfrontChecking(this.game, this.unit).replay(this.dice)
+        });
     }
 
 }
+CBSequence.register("Confront", CBConfrontSequenceElement);
 
-export class CBAttackerEngagementSequenceElement extends CBStateSequenceElement {
+export class CBCrossingSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
-    constructor(game, unit, dice) {
-        super(unit, "AttackerEngagement");
-        this._game = game;
-        this._dice = dice;
+    constructor({game, unit, dice}) {
+        super({ type:"Crossing", game, unit, dice});
     }
 
     apply(startTick) {
-        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
-            ()=>new CBAttackerEngagementChecking(this._game, this.unit).replay(this.dice)
-        );
-    }
-
-    get dice() { return this._dice; }
-
-    get delay() { return 2500; }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        for (let index=0; index<this._dice.length; index++) {
-            if (element[index] !== this._dice[index]) return false;
-        }
-        return true;
-    }
-
-    _toString() {
-        let result = super._toString();
-        for (let index=0; index<this._dice.length; index++) {
-            result+=`, dice${index}: `+this._dice[index];
-        }
-        return result;
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new CBLoseCohesionForCrossingChecking(this.game, this.unit).replay(this.dice)
+        });
     }
 
 }
+CBSequence.register("Crossing", CBCrossingSequenceElement);
 
-export class CBDefenderEngagementSequenceElement extends CBStateSequenceElement {
+export class CBAttackerEngagementSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
-    constructor(game, unit, dice) {
-        super(unit, "DefenderEngagement");
-        this._game = game;
-        this._dice = dice;
+    constructor({game, unit, dice}) {
+        super({ type:"AttackerEngagement", game, unit, dice});
     }
 
     apply(startTick) {
-        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
-            ()=>new CBDefenderEngagementChecking(this._game, this.unit).replay(this.dice)
-        );
-    }
-
-    get dice() { return this._dice; }
-
-    get delay() { return 2500; }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        for (let index=0; index<this._dice.length; index++) {
-            if (element[index] !== this._dice[index]) return false;
-        }
-        return true;
-    }
-
-    _toString() {
-        let result = super._toString();
-        for (let index=0; index<this._dice.length; index++) {
-            result+=`, dice${index}: `+this._dice[index];
-        }
-        return result;
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new CBAttackerEngagementChecking(this.game, this.unit).replay(this.dice)
+        });
     }
 
 }
+CBSequence.register("AttackerEngagement", CBAttackerEngagementSequenceElement);
 
-export class CBDisengagementSequenceElement extends CBStateSequenceElement {
+export class CBDefenderEngagementSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
-    constructor(game, unit, dice) {
-        super(unit, "Disengagement");
-        this._game = game;
-        this._dice = dice;
+    constructor({game, unit, dice}) {
+        super({ type:"DefenderEngagement", game, unit, dice});
     }
 
     apply(startTick) {
-        return new CBSceneAnimation(this.unit, startTick, this.delay, this, this._game,
-            ()=>new CBDisengagementChecking(this._game, this.unit).replay(this.dice)
-        );
-    }
-
-    get dice() { return this._dice; }
-
-    get delay() { return 2500; }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        for (let index=0; index<this._dice.length; index++) {
-            if (element[index] !== this._dice[index]) return false;
-        }
-        return true;
-    }
-
-    _toString() {
-        let result = super._toString();
-        for (let index=0; index<this._dice.length; index++) {
-            result+=`, dice${index}: `+this._dice[index];
-        }
-        return result;
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new CBDefenderEngagementChecking(this.game, this.unit).replay(this.dice)
+        });
     }
 
 }
+CBSequence.register("DefenderEngagement", CBDefenderEngagementSequenceElement);
+
+export class CBDisengagementSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
+
+    constructor({game, unit, dice}) {
+        super({ type:"Disengagement", game, unit, dice});
+    }
+
+    apply(startTick) {
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new CBDisengagementChecking(this.game, this.unit).replay(this.dice)
+        });
+    }
+
+}
+CBSequence.register("Disengagement", CBDisengagementSequenceElement);
 
 export class CBSceneAnimation extends CBUnitAnimation {
 
-    constructor(unit, startTick, duration, state, game, recoveringAnimation) {
-        super(unit, startTick, duration, state);
-        this._game = game;
-        this._recoveringAnimation = recoveringAnimation;
+    constructor({unit, startTick, duration, state, game, animation}) {
+        super({unit, game, startTick, duration, state});
+        this._animation = animation;
         this.play(this.tick);
     }
 
     draw(count, ticks) {
         if (count===0) {
-            this._recoveringAnimation();
+            this._animation();
         }
         return super.draw(count, ticks);
     }
 
     _finalize() {
-        this._game.closePopup();
+        this.game.closePopup();
         super._finalize();
+    }
+
+}
+
+export class CBTryChangeOrderInstructionSequenceElement extends WithDiceRoll(CBSequenceElement) {
+
+    constructor({game, leader, dice}) {
+        super({type: "Try2ChangeOrderInst", game, dice});
+        this.leader = leader;
+    }
+
+    apply(startTick) {
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new InteractiveChangeOrderInstructionAction(this.game, this._leader).replay(this.dice)
+        });
+    }
+
+}
+CBSequence.register("Try2ChangeOrderInst", CBTryChangeOrderInstructionSequenceElement);
+
+export class CBChangeOrderInstructionSequenceElement extends WithOrderInstruction(CBSequenceElement) {
+
+    constructor({game, leader, instruction}) {
+        super({type: "ChangeOrderInst", game, leader});
+        this._instruction = instruction;
+    }
+
+    apply(startTick) {
+        return new CBChangeOrderAnimation({
+            game: this.game, leader:this._leader, instruction: this._instruction, startTick, duration:200
+        });
+    }
+
+}
+CBSequence.register("ChangeOrderInst", CBChangeOrderInstructionSequenceElement);
+
+export function WithOrderInstruction(clazz) {
+
+    return class extends clazz {
+
+        constructor({orderInstruction, ...params}) {
+            super(params);
+            this.orderInstruction = orderInstruction;
+        }
+
+        get delay() { return 500; }
+
+        equalsTo(element) {
+            if (!super.equalsTo(element)) return false;
+            if (this.orderInstruction !== element.orderInstruction) return false;
+            return true;
+        }
+
+        _toString() {
+            let result = super._toString();
+            if (this.orderInstruction !== undefined) result+=", Order Instruction: "+this.orderInstruction;
+            return result;
+        }
+
+        toSpec(spec, context) {
+            super.toSpec(spec, context);
+            spec.orderInstruction = this.orderInstruction;
+        }
+
+        fromSpec(spec, context) {
+            super.fromSpec(spec, context);
+            if (spec.orderInstruction !== undefined) {
+                this.orderInstruction = spec.orderInstruction;
+            }
+        }
+
+    }
+
+}
+
+export class CBChangeOrderAnimation extends DAnimation {
+
+    constructor({game, leader, orderInstruction, startTick, duration}) {
+        super();
+        this._game = game;
+        this._leader = leader;
+        this._duration = duration;
+        this._orderInstruction = orderInstruction;
+        this.play(startTick+1);
+    }
+
+    _draw(count, ticks) {
+        if (count===0) {
+            this._leader.changeOrderInstruction(this._orderInstruction);
+        }
+        return false;
     }
 
 }

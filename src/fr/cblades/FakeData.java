@@ -446,7 +446,7 @@ public class FakeData {
                 .setCount(0)
                 .addElement(
                     new SequenceElement.MoveSequenceElement()
-                        .setHexAngle(0).setHexCol(2).setHexRow(8).setStacking(Stacking.TOP)
+                        .setHexCol(2).setHexRow(8).setStacking(Stacking.TOP)
                         .setUnit("u1").setCohesion(Cohesion.DISRUPTED).setSteps(1)
                 )
                 .addElement(
@@ -456,8 +456,8 @@ public class FakeData {
                 )
                 .addElement(
                     new SequenceElement.MoveSequenceElement()
-                        .setHexAngle(0).setHexCol(3).setHexRow(8).setStacking(Stacking.TOP)
-                        .setUnit("u1").setCohesion(Cohesion.DISRUPTED).setSteps(2)
+                        .setHexCol(3).setHexRow(8).setStacking(Stacking.TOP)
+                        .setUnit("u1").setCohesion(Cohesion.DISRUPTED).setSteps(1)
                 )/*
                 .addElement(
                     new SequenceElement.NextTurnSequenceElement()
