@@ -1275,7 +1275,7 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
     finalize(action) {
         if (!this.isFinalized()) {
             if (this._unitMustCheckDisengagement) {
-                new CBDisengagementChecking(this.unit).play( () => {
+                new CBDisengagementChecking(this.game, this.unit).play( () => {
                     super.finalize(action);
                     this.game.validate();
                 });
