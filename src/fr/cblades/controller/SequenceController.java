@@ -173,6 +173,8 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					pair("AttackerEngagement", SequenceElement.AttackerEngagementSequenceElement.class),
 					pair("DefenderEngagement", SequenceElement.DefenderEngagementSequenceElement.class),
 					pair("Disengagement", SequenceElement.DisengagementSequenceElement.class),
+					pair("Try2ChangeOrderInst", SequenceElement.Try2ChangeOrderInstructionSequenceElement.class),
+					pair("ChangeOrderInst", SequenceElement.ChangeOrderInstructionSequenceElement.class),
 					pair("NextTurn", SequenceElement.NextTurnSequenceElement.class)
 				), "type"),
 				(cJson, celem)->sync(cJson, celem)
@@ -207,10 +209,15 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					.write("angle")
 					.write("stacking", label->Stacking.byLabels().get(label))
 				)
-				.syncWhen((eJson, eelem)-> "|Rest|Refill|Rally|Reorganize|LossConsistency|Confront|Crossing|AttackerEngagement|DefenderEngagement|Disengagement|".contains("|"+(String)eJson.get("type")+"|"),
+				.syncWhen((eJson, eelem)-> "|ChangeOrderInst|Try2ChangeOrderInst|Rest|Refill|Rally|Reorganize|LossConsistency|Confront|Crossing|AttackerEngagement|DefenderEngagement|Disengagement|".contains("|"+(String)eJson.get("type")+"|"),
 					(eJson, eelem)->sync(eJson, eelem)
+					.write("leader")
 					.write("dice1")
 					.write("dice2")
+				)
+				.syncWhen((eJson, eelem)->eJson.get("type").equals("ChangeOrderInst"), (eJson, eelem)->sync(eJson, eelem)
+					.write("leader")
+					.write("orderInstruction", label->OrderInstruction.byLabels().get(label))
 				)
 			);
 		return sequence;
@@ -312,6 +319,17 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					.setInJson("type", "Disengagement")
 					.read("dice1")
 					.read("dice2")
+				)
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.Try2ChangeOrderInstructionSequenceElement.class, (eJson, eelem)->sync(eJson, eelem)
+					.setInJson("type", "Try2ChangeOrderInst")
+					.read("leader")
+					.read("dice1")
+					.read("dice2")
+				)
+				.syncWhen((eJson, eelem)->eelem instanceof SequenceElement.ChangeOrderInstructionSequenceElement, (eJson, eelem)->sync(eJson, eelem)
+					.setInJson("type", "ChangeOrderInst")
+					.read("leader")
+					.read("orderInstruction", OrderInstruction::getLabel)
 				)
 				.syncWhen((eJson, eelem)->eelem instanceof SequenceElement.NextTurnSequenceElement, (eJson, eelem)->sync(eJson, eelem)
 					.setInJson("type", "NextTurn")

@@ -214,16 +214,16 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
                 scene.dice.active = false;
                 let {success} = this._processChangeOderInstructionResult(scene.dice.result);
                 if (success) {
-                    result.success().appear();
+                    scene.result.success().appear();
                 }
                 else {
-                    result.failure().appear();
+                    scene.result.failure().appear();
                 }
                 finalAction&&finalAction();
             }),
             new Point2D(70, 60)
         ).addWidget(
-            result.setFinalAction(closeAction),
+            scene.result.setFinalAction(closeAction),
             new Point2D(0, 0)
         );
         this.game.openPopup(scene, point);
@@ -234,7 +234,7 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
         let scene = this.createScene(
             ()=>{
                 CBSequence.appendElement(this.game, new CBTryChangeOrderInstructionSequenceElement({
-                    game: this.game, unit: this.unit, dice: scene.dice.result
+                    game: this.game, leader: this.unit, dice: scene.dice.result
                 }));
                 new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                 this.game.validate();
@@ -391,25 +391,34 @@ export class CBOrderInstructionMenu extends DIconMenu {
     constructor(game, unit, allowedOrderInstructions) {
         super(true, new DIconMenuItem("./../images/markers/attack.png","./../images/markers/attack-gray.png",
             0, 0, event => {
-                unit.player.changeOrderInstruction(unit, CBOrderInstruction.ATTACK, event);
-                CBSequence.appendElement(this.game, new CBChangeOrderInstructionSequenceElement({
-                    game: this.game, unit, instruction: CBOrderInstruction.ATTACK
-                }));
-                return true;
-            }, "Attaque").setActive(allowedOrderInstructions.attack),
+                    unit.player.changeOrderInstruction(unit, CBOrderInstruction.ATTACK, event);
+                    CBSequence.appendElement(game, new CBChangeOrderInstructionSequenceElement({
+                        game, leader: unit, orderInstruction: CBOrderInstruction.ATTACK
+                    }));
+                    return true;
+                }, "Attaque").setActive(allowedOrderInstructions.attack),
             new DIconMenuItem("./../images/markers/defend.png","./../images/markers/defend-gray.png",
                 1, 0, event => {
                     unit.player.changeOrderInstruction(unit, CBOrderInstruction.DEFEND, event);
+                    CBSequence.appendElement(game, new CBChangeOrderInstructionSequenceElement({
+                        game, leader: unit, orderInstruction: CBOrderInstruction.DEFEND
+                    }));
                     return true;
                 }, "Défense").setActive(allowedOrderInstructions.defend),
             new DIconMenuItem("./../images/markers/regroup.png","./../images/markers/regroup-gray.png",
                 0, 1, event => {
                     unit.player.changeOrderInstruction(unit, CBOrderInstruction.REGROUP, event);
+                    CBSequence.appendElement(game, new CBChangeOrderInstructionSequenceElement({
+                        game, leader: unit, orderInstruction: CBOrderInstruction.REGROUP
+                    }));
                     return true;
                 }, "Regroupement").setActive(allowedOrderInstructions.regroup),
             new DIconMenuItem("./../images/markers/retreat.png","./../images/markers/retreat-gray.png",
                 1, 1, event => {
                     unit.player.changeOrderInstruction(unit, CBOrderInstruction.RETREAT, event);
+                    CBSequence.appendElement(game, new CBChangeOrderInstructionSequenceElement({
+                        game, leader: unit, orderInstruction: CBOrderInstruction.RETREAT
+                    }));
                     return true;
                 }, "Retraite").setActive(allowedOrderInstructions.retreat)
         );

@@ -340,11 +340,13 @@ public class Synchronizer implements DataSunbeam {
 	@SafeVarargs
 	final public <T, R> Synchronizer read(String jsonFieldName, String targetFieldName, Function<T, R> ... functions) {
 		Object readValue = ReflectUtil.get(this.target, targetFieldName);
-		for (Function function: functions) {
-			readValue = function.apply(readValue);
-		}
 		if (readValue!=null) {
-			this.json.put(jsonFieldName, readValue);
+			for (Function function : functions) {
+				readValue = function.apply(readValue);
+			}
+			if (readValue != null) {
+				this.json.put(jsonFieldName, readValue);
+			}
 		}
 		return this;
 	}
@@ -352,12 +354,14 @@ public class Synchronizer implements DataSunbeam {
 	@SafeVarargs
 	final public <T, R> Synchronizer readDate(String jsonFieldName, String targetFieldName, Function<T, R> ... functions) {
 		Object readValue = ReflectUtil.get(this.target, targetFieldName);
-		for (Function function: functions) {
-			readValue = function.apply(readValue);
-		}
 		if (readValue!=null) {
-			String value = new SimpleDateFormat("yyyy-MM-dd").format(readValue);
-			this.json.put(jsonFieldName, value);
+			for (Function function : functions) {
+				readValue = function.apply(readValue);
+			}
+			if (readValue != null) {
+				String value = new SimpleDateFormat("yyyy-MM-dd").format(readValue);
+				this.json.put(jsonFieldName, value);
+			}
 		}
 		return this;
 	}
@@ -376,11 +380,13 @@ public class Synchronizer implements DataSunbeam {
 	@SafeVarargs
 	final public <T, R> Synchronizer readGetter(String jsonFieldName, Supplier<R> getter, Function<T, R> ... functions) {
 		Object readValue = getter.get();
-		for (Function function: functions) {
-			readValue = function.apply(readValue);
-		}
 		if (readValue!=null) {
-			this.json.put(jsonFieldName, readValue);
+			for (Function function : functions) {
+				readValue = function.apply(readValue);
+			}
+			if (readValue != null) {
+				this.json.put(jsonFieldName, readValue);
+			}
 		}
 		return this;
 	}

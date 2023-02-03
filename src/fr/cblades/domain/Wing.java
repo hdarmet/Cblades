@@ -1,6 +1,7 @@
 package fr.cblades.domain;
 
 import org.summer.data.BaseEntity;
+import org.summer.data.SummerNotFoundException;
 
 import javax.persistence.*;
 import java.util.*;
@@ -20,6 +21,12 @@ public class Wing extends BaseEntity {
     List<TargetHex> retreatZone = new ArrayList<>();
     @Transient
     Map<String, Unit> unitsByName;
+    int tiredness = 12;
+    int moral = 12;
+    @OneToOne
+    Unit leader = null;
+    @Enumerated(EnumType.STRING)
+    OrderInstruction orderInstruction;
 
     public Banner getBanner() {
         return this.banner;
@@ -67,17 +74,73 @@ public class Wing extends BaseEntity {
         return this;
     }
 
+    public int getTiredness() {
+        return this.tiredness;
+    }
+    public Wing setTiredness(int tiredness) {
+        this.tiredness = tiredness;
+        return this;
+    }
+
+    public int getMoral() {
+        return this.moral;
+    }
+    public Wing setMoral(int moral) {
+        this.moral = moral;
+        return this;
+    }
+
+    public Unit getLeader() {
+        return this.leader;
+    }
+    public Wing setLeader(Unit leader) {
+        this.leader = leader;
+        return this;
+    }
+
+    public OrderInstruction getOrderInstruction() {
+        return this.orderInstruction;
+    }
+    public Wing setOrderInstruction(OrderInstruction orderInstruction) {
+        this.orderInstruction = orderInstruction;
+        return this;
+    }
+
     public Wing duplicate(EntityManager em, java.util.Map<BaseEntity, BaseEntity> duplications) {
-        Wing wing = new Wing().setBanner(this.banner);
+        Wing wing = new Wing()
+            .setBanner(this.banner)
+            .setMoral(this.moral)
+            .setTiredness(this.tiredness)
+            .setOrderInstruction(this.orderInstruction);
         for (Unit unit : this.units) {
             wing.addUnit(unit.duplicate(em, duplications));
         }
         for (TargetHex hex : this.retreatZone) {
             wing.addToRetreatZone(hex.duplicate(em, duplications));
         }
+        wing.setLeader((Unit)duplications.get(this.leader));
         duplications.put(this, wing);
         em.persist(wing);
         return wing;
     }
 
+    static public Wing findWing(EntityManager em, Unit unit) {
+        Wing wing = (Wing)em.createQuery("select w from Wing w where :unit member of w.units")
+            .setParameter("unit", unit).getSingleResult();
+        if (wing==null) {
+            throw new SummerNotFoundException(
+                String.format("No Wing contains unit of %d", unit.getId())
+            );
+        }
+        return wing;
+    }
+
+    static public Wing findWing(Game game, Unit unit) {
+        for (Player player : game.getPlayers()) {
+            for (Wing wing : player.getWings()) {
+                if (wing.getUnits().contains(unit)) return wing;
+            }
+        }
+        return null;
+    }
 }

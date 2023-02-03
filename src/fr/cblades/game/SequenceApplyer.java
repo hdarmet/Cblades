@@ -2,6 +2,7 @@ package fr.cblades.game;
 
 import fr.cblades.domain.*;
 
+import javax.persistence.EntityManager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -166,6 +167,15 @@ public class SequenceApplyer implements SequenceVisitor  {
     public void visit(SequenceElement.DisengagementSequenceElement element) {
         Unit unit = units.get(element.getUnit());
         changeUnitState(unit, element);
+    }
+
+    public void visit(SequenceElement.Try2ChangeOrderInstructionSequenceElement element) {
+    }
+
+    public void visit(SequenceElement.ChangeOrderInstructionSequenceElement element) {
+        Unit leader = units.get(element.getLeader());
+        Wing wing = Wing.findWing(this.game, leader);
+        wing.setOrderInstruction(element.getOrderInstruction());
     }
 
     long count = -1;

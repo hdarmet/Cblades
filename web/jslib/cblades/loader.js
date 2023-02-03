@@ -10,7 +10,7 @@ import {
 } from "../draw.js";
 import {
     CBCharge, CBCohesion, CBFormation,
-    CBMunitions, CBTiredness, CBUnit, CBUnitType,
+    CBMunitions, CBOrderInstruction, CBTiredness, CBUnit, CBUnitType,
     CBWing
 } from "./unit.js";
 import {
@@ -279,6 +279,9 @@ export class GameLoader {
                 let wingSpecs = {
                     id : wing._oid,
                     version: wing._oversion || 0,
+                    leader: wing.leader,
+                    moral: wing.moral,
+                    tiredness: wing.tiredness,
                     banner: {
                         id: wing.banner._oid,
                         version: wing.banner._oversion,
@@ -286,7 +289,8 @@ export class GameLoader {
                         path: wing.banner.path
                     },
                     units: [],
-                    retreatZone: []
+                    retreatZone: [],
+                    orderInstruction: this.getUnitCategoryCode(wing)
                 }
                 for (let retreatHex of wing.retreatZone) {
                     let retreatHexSpecs = {
@@ -390,12 +394,15 @@ export class GameLoader {
                 });
                 wing._oid = wingSpec.id;
                 wing._oversion = wingSpec.version;
+                wing.setMoral(wingSpec.moral);
+                wing.setTiredness(wingSpec.tiredness);
                 let retreatZone = [];
                 for (let retreatHexSpec of wingSpec.retreatZone) {
                     let hexId = this._game.map.getHex(retreatHexSpec.col, retreatHexSpec.row);
                     retreatZone.push(hexId);
                 }
                 wing.setRetreatZone(retreatZone);
+                let leader = null;
                 for (let unitSpec of wingSpec.units) {
                     let unitType = this.getUnitType(unitSpec.type);
                     let unit = unitType.createUnit(wing, unitSpec.steps);
@@ -415,7 +422,12 @@ export class GameLoader {
                         played: unitSpec.played
                     });
                     unitsMap.set(unit.name, {unit, unitSpec});
+                    if (unit.name == wingSpec.leader) {
+                        leader = unit;
+                    }
                 }
+                leader&&wing.setLeader(leader);
+                wing.setOrderInstruction(this.getOrderInstruction(wingSpec.orderInstruction))
             }
             this.showEntities(unitsMap, playerSpec);
         }
@@ -470,6 +482,15 @@ export class GameLoader {
         return CBUnitType.getType(code);
     }
 
+    getOrderInstructionCode(wing) {
+        switch (wing.orderInstruction) {
+            case "A": return CBOrderInstruction.ATTACK;
+            case "D": return CBOrderInstruction.DEFEND;
+            case "G": return CBOrderInstruction.REGROUP;
+            case "R": return CBOrderInstruction.RETREAT;
+        }
+    }
+
     getUnitTirednessCode(unit) {
         if (unit.isTired()) return "T";
         else if (unit.isExhausted()) return "E";
@@ -490,36 +511,37 @@ export class GameLoader {
 
     getUnitTiredness(code) {
         switch (code) {
-            case "F":
-                return CBTiredness.NONE;
-            case "T":
-                return CBTiredness.TIRED;
-            case "E":
-                return CBTiredness.EXHAUSTED;
+            case "F": return CBTiredness.NONE;
+            case "T": return CBTiredness.TIRED;
+            case "E": return CBTiredness.EXHAUSTED;
         }
     }
 
     getUnitAmmunition(code) {
         switch (code) {
-            case "P":
-                return CBMunitions.NONE;
-            case "S":
-                return CBMunitions.SCARCE;
-            case "E":
-                return CBMunitions.EXHAUSTED;
+            case "P": return CBMunitions.NONE;
+            case "S": return CBMunitions.SCARCE;
+            case "E": return CBMunitions.EXHAUSTED;
         }
     }
 
     getUnitCohesion(code) {
         switch (code) {
-            case "GO":
-                return CBCohesion.GOOD_ORDER;
-            case "D":
-                return CBCohesion.DISRUPTED;
-            case "R":
-                return CBCohesion.ROUTED;
+            case "GO": return CBCohesion.GOOD_ORDER;
+            case "D": return CBCohesion.DISRUPTED;
+            case "R": return CBCohesion.ROUTED;
         }
     }
+
+    getOrderInstruction(code) {
+        switch (code) {
+            case "A": return CBOrderInstruction.ATTACK;
+            case "D": return CBOrderInstruction.DEFEND;
+            case "G": return CBOrderInstruction.REGROUP;
+            case "R": return CBOrderInstruction.RETREAT;
+        }
+    }
+
 }
 
 export class SequenceLoader {

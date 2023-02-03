@@ -16,9 +16,13 @@ public abstract class SequenceElement extends BaseEntity {
 
         String unit;
         int steps;
+        @Enumerated(EnumType.STRING)
         Cohesion cohesion = Cohesion.GOOD_ORDER;
+        @Enumerated(EnumType.STRING)
         Tiredness tiredness = Tiredness.FRESH;
+        @Enumerated(EnumType.STRING)
         Ammunition ammunition = Ammunition.PLENTIFUL;
+        @Enumerated(EnumType.STRING)
         Charging charging = Charging.NONE;
         boolean engaging = false;
         boolean orderGiven = false;
@@ -195,6 +199,7 @@ public abstract class SequenceElement extends BaseEntity {
         int hexCol;
         int hexRow;
         Integer hexAngle=null;
+        @Enumerated(EnumType.STRING)
         Stacking stacking;
 
         public int getAngle() {
@@ -546,6 +551,75 @@ public abstract class SequenceElement extends BaseEntity {
         }
 
     }
+
+    @Entity
+    @DiscriminatorValue("Try2ChangeOInst")
+    public static class Try2ChangeOrderInstructionSequenceElement extends SequenceElement {
+
+        String leader;
+        int dice1;
+        int dice2;
+
+        public String getLeader() {
+            return this.leader;
+        }
+        public Try2ChangeOrderInstructionSequenceElement setLeader(String leader) {
+            this.leader = leader;
+            return this;
+        }
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public Try2ChangeOrderInstructionSequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public Try2ChangeOrderInstructionSequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
+    @Entity
+    @DiscriminatorValue("ChangeOInst")
+    public static class ChangeOrderInstructionSequenceElement extends SequenceElement {
+
+        String leader;
+        @Enumerated(EnumType.STRING)
+        OrderInstruction orderInstruction;
+
+        public String getLeader() {
+            return this.leader;
+        }
+        public ChangeOrderInstructionSequenceElement setLeader(String leader) {
+            this.leader = leader;
+            return this;
+        }
+
+        public OrderInstruction getOrderInstruction() {
+            return this.orderInstruction;
+        }
+        public ChangeOrderInstructionSequenceElement setOrderInstruction(OrderInstruction orderInstruction) {
+            this.orderInstruction = orderInstruction;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
 
     public abstract void accept(SequenceVisitor visitor);
 

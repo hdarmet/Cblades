@@ -70,4 +70,8 @@ public interface SequenceVisitor {
         defaultVisit(element);
     }
 
+    default void visit(SequenceElement.Try2ChangeOrderInstructionSequenceElement element) { defaultVisit(element);  }
+
+    default void visit(SequenceElement.ChangeOrderInstructionSequenceElement element) { defaultVisit(element);  }
+
 }

@@ -9,6 +9,7 @@ import javax.persistence.*;
 public class Unit extends BaseEntity {
 
     String name;
+    @Enumerated(EnumType.STRING)
     UnitCategory category;
     String type;
     int angle;
@@ -16,8 +17,11 @@ public class Unit extends BaseEntity {
     int positionRow;
     Integer positionAngle;
     int steps;
+    @Enumerated(EnumType.STRING)
     Tiredness tiredness;
+    @Enumerated(EnumType.STRING)
     Ammunition ammunition;
+    @Enumerated(EnumType.STRING)
     Cohesion cohesion;
     boolean engaging;
     boolean charging;
