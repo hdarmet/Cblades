@@ -24,7 +24,10 @@ import {
     CBLoseCohesionForCrossingChecking
 } from "./interactive/interactive-movement.js";
 import {
-    InteractiveChangeOrderInstructionAction
+    InteractiveChangeOrderInstructionAction,
+    InteractiveDismissCommandAction,
+    InteractiveGiveOrdersAction,
+    InteractiveTakeCommandAction
 } from "./interactive/interactive-command.js";
 import {
     CBCharge, CBCohesion, CBMunitions, CBOrderInstruction, CBTiredness, CBUnit
@@ -281,7 +284,7 @@ export class CBStateSequenceElement extends CBSequenceElement {
 
     constructor({unit, game, type="State"}) {
         super({type, game});
-        if (unit) this.setUnit(unit);
+        unit&&this.setUnit(unit);
     }
 
     setUnit(unit) {
@@ -943,11 +946,35 @@ export function SceneAnimation(clazz) {
 
 }
 
-export class CBTryChangeOrderInstructionSequenceElement extends WithDiceRoll(CBSequenceElement) {
+function WithLeader(clazz) {
+
+    return class extends clazz {
+
+        constructor({leader, ...params}) {
+            super(params);
+            this.leader = leader;
+        }
+
+        toSpec(spec, context) {
+            super.toSpec(spec, context);
+            this.leader && (spec.leader = this.leader.name);
+        }
+
+        fromSpec(spec, context) {
+            super.fromSpec(spec, context);
+            if (spec.leader !== undefined) {
+                this.leader = getUnitFromContext(context, spec.leader);
+            }
+        }
+
+    }
+
+}
+
+export class CBTry2ChangeOrderInstructionSequenceElement extends WithLeader(WithDiceRoll(CBSequenceElement)) {
 
     constructor({game, leader, dice}) {
-        super({type: "Try2ChangeOrderInst", game, dice});
-        this.leader = leader;
+        super({type: "Try2ChangeOrderInst", game, leader, dice});
     }
 
     apply(startTick) {
@@ -957,44 +984,19 @@ export class CBTryChangeOrderInstructionSequenceElement extends WithDiceRoll(CBS
         });
     }
 
-    toSpec(spec, context) {
-        super.toSpec(spec, context);
-        this.leader && (spec.leader = this.leader.name);
-    }
-
-    fromSpec(spec, context) {
-        super.fromSpec(spec, context);
-        if (spec.leader !== undefined) {
-            this.leader = getUnitFromContext(context, spec.leader);
-        }
-    }
-
 }
-CBSequence.register("Try2ChangeOrderInst", CBTryChangeOrderInstructionSequenceElement);
+CBSequence.register("Try2ChangeOrderInst", CBTry2ChangeOrderInstructionSequenceElement);
 
-export class CBChangeOrderInstructionSequenceElement extends WithOrderInstruction(CBSequenceElement) {
+export class CBChangeOrderInstructionSequenceElement extends WithLeader(WithOrderInstruction(CBSequenceElement)) {
 
     constructor({game, leader, orderInstruction}) {
-        super({type: "ChangeOrderInst", orderInstruction, game});
-        this.leader = leader;
+        super({type: "ChangeOrderInst", leader, orderInstruction, game});
     }
 
     apply(startTick) {
         return new CBChangeOrderAnimation({
             game: this.game, leader:this.leader, orderInstruction: this.orderInstruction, startTick, duration:200
         });
-    }
-
-    toSpec(spec, context) {
-        super.toSpec(spec, context);
-        this.leader && (spec.leader = this.leader.name);
-    }
-
-    fromSpec(spec, context) {
-        super.fromSpec(spec, context);
-        if (spec.leader !== undefined) {
-            this.leader = getUnitFromContext(context, spec.leader);
-        }
     }
 
 }
@@ -1069,6 +1071,123 @@ export class CBChangeOrderAnimation extends DAnimation {
     _draw(count, ticks) {
         if (count===0 && this._leader) {
             this._leader.wing.changeOrderInstruction(this._orderInstruction);
+        }
+        return false;
+    }
+
+}
+
+export class CBTry2TakeCommandSequenceElement extends WithLeader(WithDiceRoll(CBSequenceElement)) {
+
+    constructor({game, leader, dice}) {
+        super({type: "Try2TakeCommand", game, leader, dice});
+    }
+
+    apply(startTick) {
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new InteractiveTakeCommandAction(this.game, this.leader).replay(this.dice)
+        });
+    }
+
+}
+CBSequence.register("Try2TakeCommand", CBTry2TakeCommandSequenceElement);
+
+export class CBTry2DismissCommandSequenceElement extends WithLeader(WithDiceRoll(CBSequenceElement)) {
+
+    constructor({game, leader, dice}) {
+        super({type: "Try2DismissCommand", game, leader, dice});
+    }
+
+    apply(startTick) {
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new InteractiveDismissCommandAction(this.game, this.leader).replay(this.dice)
+        });
+    }
+
+}
+CBSequence.register("Try2DismissCommand", CBTry2DismissCommandSequenceElement);
+
+export class CBGiveOrdersSequenceElement extends WithLeader(WithDiceRoll(CBSequenceElement)) {
+
+    constructor({game, leader, dice}) {
+        super({type: "GiveOrders", game, leader, dice});
+    }
+
+    apply(startTick) {
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new InteractiveGiveOrdersAction(this.game, this.leader).replay(this.dice)
+        });
+    }
+
+}
+CBSequence.register("GiveOrders", CBGiveOrdersSequenceElement);
+
+function WithInCommand(clazz) {
+
+    return class extends clazz {
+
+        constructor({inCommand, ...params}) {
+            super(params);
+            this.inCommand = inCommand;
+        }
+
+        get delay() { return 200; }
+
+        equalsTo(element) {
+            if (!super.equalsTo(element)) return false;
+            if (element.inCommand !== this.inCommand) return false;
+            return true;
+        }
+
+        _toString() {
+            return super._toString() + `, inCommand: `+this.inCommand;
+        }
+
+        toSpec(spec, context) {
+            super.toSpec(spec, context);
+            spec.inCommand = this.inCommand;
+        }
+
+        fromSpec(spec, context) {
+            super.fromSpec(spec, context);
+            this.inCommand = spec.inCommand;
+        }
+    }
+
+}
+
+export class CBManageCommandSequenceElement extends WithLeader(WithInCommand(CBSequenceElement)) {
+
+    constructor({game, leader, inCommand}) {
+        super({type: "ManageCommand", leader, inCommand, game});
+    }
+
+    apply(startTick) {
+        return new CBManageCommandAnimation({
+            game: this.game, leader:this.leader, inCommand: this.inCommand, startTick, duration:200
+        });
+    }
+
+}
+CBSequence.register("ManageCommand", CBManageCommandSequenceElement);
+
+export class CBManageCommandAnimation extends DAnimation {
+
+    constructor({game, leader, inCommand, startTick, duration}) {
+        super();
+        this._game = game;
+        this._leader = leader;
+        this._duration = duration;
+        this._inCommand = inCommand;
+        this.play(startTick+1);
+    }
+
+    _draw(count, ticks) {
+        if (count===0) {
+            this._leader.wing.setLeader(this._inCommand ? this._leader : null);
         }
         return false;
     }

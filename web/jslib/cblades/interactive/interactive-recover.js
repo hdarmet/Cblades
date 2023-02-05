@@ -102,7 +102,7 @@ export class InteractiveRestingAction extends CBAction {
                 else {
                     scene.result.failure().appear();
                 }
-                finalAction&&finalAction();
+                finalAction&&finalAction(success);
             }),
             new Point2D(CBRestInsert.DIMENSION.w/2+40, 0)
         ).addWidget(
@@ -182,7 +182,7 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
                 else {
                     scene.result.failure().appear();
                 }
-                finalAction&&finalAction();
+                finalAction&&finalAction(success);
             }),
             new Point2D(CBReplenishMunitionsInsert.DIMENSION.w/2+40, 0)
         ).addWidget(
@@ -264,7 +264,7 @@ export class InteractiveReorganizeAction extends CBAction {
                 else {
                     scene.result.failure().appear();
                 }
-                finalAction&&finalAction();
+                finalAction&&finalAction(success);
             }),
             new Point2D(50, 0)
         ).addWidget(
@@ -346,7 +346,7 @@ export class InteractiveRallyAction extends CBAction {
                 else {
                     scene.result.failure().appear();
                 }
-                finalAction&&finalAction();
+                finalAction&&finalAction(success);
             }),
             new Point2D(50, 0)
         ).addWidget(

@@ -21,8 +21,8 @@ public class Wing extends BaseEntity {
     List<TargetHex> retreatZone = new ArrayList<>();
     @Transient
     Map<String, Unit> unitsByName;
-    int tiredness = 12;
-    int moral = 12;
+    int tiredness = 11;
+    int moral = 11;
     @OneToOne
     Unit leader = null;
     @Enumerated(EnumType.STRING)

@@ -1,5 +1,7 @@
 package org.summer.controller;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -109,6 +111,22 @@ public class Verifier {
 				field,
 				json.get(field)+" must matches one of ["+
 				String.join(", ", values.stream().map(item->item.toString()).collect(Collectors.toList())
+		)+"]");
+	}
+
+	public <T> Verifier check(String field, T ... values) {
+		return check(
+			json->{
+				if (json.get(field)==null) return true;
+				T fieldValue = json.get(field);
+				for (T value : values) {
+					if (fieldValue.equals(value)) return true;
+				}
+				return false;
+			},
+			field,
+			json.get(field)+" must matches one of ["+
+			String.join(", ", Arrays.stream(values).map(item->item.toString()).collect(Collectors.toList())
 		)+"]");
 	}
 

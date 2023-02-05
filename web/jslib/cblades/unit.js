@@ -465,8 +465,15 @@ export class CBWing {
     }
 
     setLeader(character) {
-        this._leader = character;
-        this._leader.setOrderInstructionArtifact();
+        if (character !== this._leader) {
+            if (this._leader) {
+                this._leader.unsetOrderInstructionArtifact();
+            }
+            if (character) {
+                character.setOrderInstructionArtifact();
+            }
+            this._leader = character;
+        }
     }
 
     appointLeader(character) {
@@ -1693,9 +1700,15 @@ export class CBCharacter extends CBUnit {
     }
 
     setOrderInstructionArtifact() {
-        if (this._wing.leader === this) {
-            this._orderInstructionArtifact = this.createOrderInstructionArtifact(this._wing.orderInstruction);
-            this._element.addArtifact(this._orderInstructionArtifact);
+        this.unsetOrderInstructionArtifact();
+        this._orderInstructionArtifact = this.createOrderInstructionArtifact(this._wing.orderInstruction);
+        this._element.addArtifact(this._orderInstructionArtifact);
+    }
+
+    unsetOrderInstructionArtifact() {
+        if (this._orderInstructionArtifact) {
+            this._element.removeArtifact(this._orderInstructionArtifact);
+            delete this._orderInstructionArtifact;
         }
     }
 

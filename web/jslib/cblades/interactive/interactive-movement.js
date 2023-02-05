@@ -873,7 +873,7 @@ export class CBAttackerEngagementChecking {
                 else {
                     scene.result.failure().appear();
                 }
-                finalAction&&finalAction();
+                finalAction&&finalAction(success);
             }),
             new Point2D(70, 70)
         ).addWidget(
@@ -949,7 +949,7 @@ export class CBLoseCohesionForCrossingChecking {
                 else {
                     scene.result.failure().appear();
                 }
-                finalAction&&finalAction();
+                finalAction&&finalAction(success);
             }),
             new Point2D(70, 70)
         ).addWidget(
@@ -1030,7 +1030,7 @@ export class CBDisengagementChecking {
                 else {
                     scene.result.failure().appear();
                 }
-                finalAction&&finalAction();
+                finalAction&&finalAction(success);
             }),
             new Point2D(70, 70)
         ).addWidget(
@@ -1091,7 +1091,7 @@ export class CBConfrontChecking {
         scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         scene.mask = new DMask("#000000", 0.3);
         closeAction&&mask.setAction(closeAction);
-        this.game.openMask(mask);
+        this.game.openMask(scene.mask);
         let condition = this.game.arbitrator.getDefenderEngagementCondition(this.unit);
         scene.addWidget(
             new CBCheckConfrontEngagementInsert(condition), new Point2D(-CBCheckConfrontEngagementInsert.DIMENSION.w/2, 0)
@@ -1107,7 +1107,7 @@ export class CBConfrontChecking {
                 else {
                     scene.result.failure().appear();
                 }
-                finalAction&&finalAction();
+                finalAction&&finalAction(success);
             }),
             new Point2D(70, 70)
         ).addWidget(

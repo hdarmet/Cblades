@@ -806,7 +806,7 @@ export class DElement extends LocalisationAware(Object) {
         this._artifacts.remove(artifact);
         artifact._attach(null);
         if (this._board) {
-            artifact.hide();
+            artifact.hide(this._board);
         }
         return this;
     }

@@ -188,7 +188,7 @@ export class CBDefenderEngagementChecking {
                 else {
                     scene.result.failure().appear();
                 }
-                finalAction&&finalAction();
+                finalAction&&finalAction(success);
             }),
             new Point2D(70, 70)
         ).addWidget(
@@ -263,7 +263,7 @@ export class CBLoseCohesionChecking {
                 else {
                     scene.result.failure().appear();
                 }
-                finalAction&&finalAction();
+                finalAction&&finalAction(success);
             }),
             new Point2D(70, 70)
         ).addWidget(

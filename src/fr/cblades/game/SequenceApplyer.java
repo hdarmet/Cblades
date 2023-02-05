@@ -178,6 +178,21 @@ public class SequenceApplyer implements SequenceVisitor  {
         wing.setOrderInstruction(element.getOrderInstruction());
     }
 
+    public void visit(SequenceElement.Try2TakeCommandSequenceElement element) {
+    }
+
+    public void visit(SequenceElement.Try2DismissCommandSequenceElement element) {
+    }
+
+    public void visit(SequenceElement.GiveOrdersSequenceElement element) {
+    }
+
+    public void visit(SequenceElement.ManageCommandSequenceElement element) {
+        Unit leader = units.get(element.getLeader());
+        Wing wing = Wing.findWing(this.game, leader);
+        wing.setLeader(element.getInCommand() ? leader : null);
+    }
+
     long count = -1;
     Map<String, Unit> units = null;
     Map<Unit, Player> players = null;

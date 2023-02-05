@@ -591,6 +591,149 @@ public abstract class SequenceElement extends BaseEntity {
     }
 
     @Entity
+    @DiscriminatorValue("Try2TakeCommand")
+    public static class Try2TakeCommandSequenceElement extends SequenceElement {
+
+        String leader;
+        int dice1;
+        int dice2;
+
+        public String getLeader() {
+            return this.leader;
+        }
+        public Try2TakeCommandSequenceElement setLeader(String leader) {
+            this.leader = leader;
+            return this;
+        }
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public Try2TakeCommandSequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public Try2TakeCommandSequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
+    @Entity
+    @DiscriminatorValue("Try2DismissCommand")
+    public static class Try2DismissCommandSequenceElement extends SequenceElement {
+
+        String leader;
+        int dice1;
+        int dice2;
+
+        public String getLeader() {
+            return this.leader;
+        }
+        public Try2DismissCommandSequenceElement setLeader(String leader) {
+            this.leader = leader;
+            return this;
+        }
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public Try2DismissCommandSequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public Try2DismissCommandSequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
+    @Entity
+    @DiscriminatorValue("GiveOrders")
+    public static class GiveOrdersSequenceElement extends SequenceElement {
+
+        String leader;
+        int dice1;
+        int dice2;
+
+        public String getLeader() {
+            return this.leader;
+        }
+        public GiveOrdersSequenceElement setLeader(String leader) {
+            this.leader = leader;
+            return this;
+        }
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public GiveOrdersSequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public GiveOrdersSequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
+    @Entity
+    @DiscriminatorValue("ManageCommand")
+    public static class ManageCommandSequenceElement extends SequenceElement {
+
+        String leader;
+        boolean inCommand;
+
+        public String getLeader() {
+            return this.leader;
+        }
+        public ManageCommandSequenceElement setLeader(String leader) {
+            this.leader = leader;
+            return this;
+        }
+
+        public boolean getInCommand() {
+            return this.inCommand;
+        }
+        public ManageCommandSequenceElement setInCommand(boolean inCommand) {
+            this.inCommand = inCommand;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
+    @Entity
     @DiscriminatorValue("ChangeOInst")
     public static class ChangeOrderInstructionSequenceElement extends SequenceElement {
 
