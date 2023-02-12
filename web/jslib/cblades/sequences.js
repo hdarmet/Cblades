@@ -4,6 +4,7 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
+    ADELAY,
     DAnimation
 } from "../draw.js";
 import {
@@ -38,6 +39,13 @@ import {
 import {
     CBHexSideId
 } from "./map.js";
+import {
+    InteractiveRetreatAction,
+    InteractiveShockAttackAction
+} from "./interactive/interactive-combat.js";
+import {
+    SequenceLoader
+} from "./loader.js";
 
 export class CBSequence {
 
@@ -102,12 +110,11 @@ export class CBSequence {
     }
 
     commit() {
-        if (!this._validated) {
-            this._validated = this._elements;
-            this._validatedCount = this._count;
-            this._count++;
-            this._elements = [];
-        }
+        console.assert(!this._validated);
+        this._validated = this._elements;
+        this._validatedCount = this._count;
+        this._count++;
+        this._elements = [];
         return this;
     }
 
@@ -199,6 +206,8 @@ export class CBSequenceElement {
     fromSpec(spec, context) {
         this.game = context.game;
     }
+
+    get delay() { return 0; }
 }
 
 function getUnitFromContext(context, spec) {
@@ -220,6 +229,7 @@ export class CBAnimation extends DAnimation {
         this._game = game;
         this._duration = duration;
         this._tick = startTick+1;
+        this.play(this.tick);
     }
 
     get tick() {
@@ -241,11 +251,11 @@ export class CBAnimation extends DAnimation {
     }
 
     _factor(count) {
-        return (this._duration === 0) ? 0 : (count * 20)/this._duration;
+        return (this._duration === 0) ? 0 : (count * ADELAY)/this._duration;
     }
 
     draw(count, ticks) {
-        return count * 20 >= this._duration ? 0 : 1;
+        return count * ADELAY >= this._duration ? 0 : 1;
     }
 
 }
@@ -464,8 +474,6 @@ export function HexLocated(clazz) {
             this.stacking = stacking;
         }
 
-        get delay() { return 500; }
-
         equalsTo(element) {
             if (!super.equalsTo(element)) return false;
             if (this.hexLocation.location.toString() !== element.hexLocation.location.toString()) return false;
@@ -529,7 +537,10 @@ export class CBMoveSequenceElement extends HexLocated(CBStateSequenceElement) {
         super({type: "Move", game, unit, hexLocation, hexAngle, stacking});
     }
 
+    get delay() { return 500; }
+
     apply(startTick) {
+        this.game.centerOn(this.unit.viewportLocation);
         return new CBMoveAnimation({
             unit:this.unit, startTick, duration:this.delay,
             state:this, hexLocation:this.hexLocation, stacking:this.stacking
@@ -547,8 +558,6 @@ export function Oriented(clazz) {
             super(params);
             this.angle = angle;
         }
-
-        get delay() { return 500; }
 
         equalsTo(element) {
             if (!super.equalsTo(element)) return false;
@@ -584,6 +593,8 @@ export class CBRotateSequenceElement extends Oriented(CBStateSequenceElement) {
         super({type: "Rotate", game, unit, angle});
     }
 
+    get delay() { return 500; }
+
     apply(startTick) {
         return new CBMoveAnimation({
             unit: this.unit, startTick, duration:this.delay, state:this, angle:this.angle
@@ -599,6 +610,8 @@ export class CBReorientSequenceElement extends Oriented(CBStateSequenceElement) 
         super({type: "Reorient", game, unit, angle});
     }
 
+    get delay() { return 500; }
+
     apply(startTick) {
         return new CBMoveAnimation({
             unit: this.unit, startTick, duration: this.delay, state:this, angle:this.angle
@@ -613,6 +626,8 @@ export class CBTurnSequenceElement extends Oriented(HexLocated(CBStateSequenceEl
     constructor({game, unit, angle, hexLocation, stacking}) {
         super({type:"Turn", game, unit, angle, hexLocation, stacking});
     }
+
+    get delay() { return 500; }
 
     apply(startTick) {
         return new CBMoveAnimation({
@@ -631,7 +646,6 @@ export class CBMoveAnimation extends CBUnitAnimation {
         this._angle = angle;
         this._hexLocation = hexLocation;
         this._stacking = stacking;
-        this.play(this.tick);
     }
 
     init() {
@@ -662,10 +676,11 @@ export class CBMoveAnimation extends CBUnitAnimation {
 
     draw(count, ticks) {
         let factor = this._factor(count);
-        if (this._startAngle) {
+        if (this._startAngle!==undefined) {
+            console.log(this._startAngle + factor*diffAngle(this._startAngle, this._stopAngle));
             this._unit.element.setAngle(this._startAngle + factor*diffAngle(this._startAngle, this._stopAngle));
         }
-        if (this._startLocation) {
+        if (this._startLocation!==undefined) {
             this._unit.element.setLocation(new Point2D(
                 this._startLocation.x + factor*(this._stopLocation.x-this._startLocation.x),
                 this._startLocation.y + factor*(this._stopLocation.y-this._startLocation.y)
@@ -730,8 +745,6 @@ function WithDiceRoll(clazz) {
             this.dice = dice;
         }
 
-        get delay() { return 2500; }
-
         equalsTo(element) {
             if (!super.equalsTo(element)) return false;
             for (let index=0; index<this.dice.length; index++) {
@@ -769,6 +782,8 @@ export class CBRestSequenceElement extends WithDiceRoll(CBStateSequenceElement) 
         super({type:"Rest", game, unit, dice});
     }
 
+    get delay() { return 1500; }
+
     apply(startTick) {
         return new CBUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
@@ -784,6 +799,8 @@ export class CBRefillSequenceElement extends WithDiceRoll(CBStateSequenceElement
     constructor({game, unit, dice}) {
         super({type:"Refill", game, unit, dice});
     }
+
+    get delay() { return 1500; }
 
     apply(startTick) {
         return new CBUnitSceneAnimation({
@@ -801,6 +818,8 @@ export class CBRallySequenceElement extends WithDiceRoll(CBStateSequenceElement)
         super({type:"Rally", game, unit, dice});
     }
 
+    get delay() { return 1500; }
+
     apply(startTick) {
         return new CBUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
@@ -816,6 +835,8 @@ export class CBReorganizeSequenceElement extends WithDiceRoll(CBStateSequenceEle
     constructor({game, unit, dice}) {
         super({type:"Reorganize", game, unit, dice});
     }
+
+    get delay() { return 1500; }
 
     apply(startTick) {
         return new CBUnitSceneAnimation({
@@ -833,6 +854,8 @@ export class CBLoseCohesionSequenceElement extends WithDiceRoll(CBStateSequenceE
         super({type:"LossConsistency", game, unit, dice});
     }
 
+    get delay() { return 1500; }
+
     apply(startTick) {
         return new CBUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
@@ -847,6 +870,8 @@ export class CBConfrontSequenceElement extends WithDiceRoll(CBStateSequenceEleme
     constructor({game, unit, dice}) {
         super({ type: "Confront", game, unit, dice});
     }
+
+    get delay() { return 1500; }
 
     apply(startTick) {
         return new CBUnitSceneAnimation({
@@ -864,6 +889,8 @@ export class CBCrossingSequenceElement extends WithDiceRoll(CBStateSequenceEleme
         super({ type:"Crossing", game, unit, dice});
     }
 
+    get delay() { return 1500; }
+
     apply(startTick) {
         return new CBUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
@@ -879,6 +906,8 @@ export class CBAttackerEngagementSequenceElement extends WithDiceRoll(CBStateSeq
     constructor({game, unit, dice}) {
         super({ type:"AttackerEngagement", game, unit, dice});
     }
+
+    get delay() { return 1500; }
 
     apply(startTick) {
         return new CBUnitSceneAnimation({
@@ -896,6 +925,8 @@ export class CBDefenderEngagementSequenceElement extends WithDiceRoll(CBStateSeq
         super({ type:"DefenderEngagement", game, unit, dice});
     }
 
+    get delay() { return 1500; }
+
     apply(startTick) {
         return new CBUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
@@ -911,6 +942,8 @@ export class CBDisengagementSequenceElement extends WithDiceRoll(CBStateSequence
     constructor({game, unit, dice}) {
         super({ type:"Disengagement", game, unit, dice});
     }
+
+    get delay() { return 1500; }
 
     apply(startTick) {
         return new CBUnitSceneAnimation({
@@ -928,7 +961,6 @@ export function SceneAnimation(clazz) {
         constructor({animation, ...params}) {
             super(params);
             this._animation = animation;
-            this.play(this.tick);
         }
 
         draw(count, ticks) {
@@ -977,6 +1009,8 @@ export class CBTry2ChangeOrderInstructionSequenceElement extends WithLeader(With
         super({type: "Try2ChangeOrderInst", game, leader, dice});
     }
 
+    get delay() { return 1500; }
+
     apply(startTick) {
         return new CBSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
@@ -1010,8 +1044,6 @@ export function WithOrderInstruction(clazz) {
             super(params);
             this.orderInstruction = orderInstruction;
         }
-
-        get delay() { return 500; }
 
         equalsTo(element) {
             if (!super.equalsTo(element)) return false;
@@ -1083,6 +1115,8 @@ export class CBTry2TakeCommandSequenceElement extends WithLeader(WithDiceRoll(CB
         super({type: "Try2TakeCommand", game, leader, dice});
     }
 
+    get delay() { return 1500; }
+
     apply(startTick) {
         return new CBSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
@@ -1099,6 +1133,8 @@ export class CBTry2DismissCommandSequenceElement extends WithLeader(WithDiceRoll
         super({type: "Try2DismissCommand", game, leader, dice});
     }
 
+    get delay() { return 1500; }
+
     apply(startTick) {
         return new CBSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
@@ -1114,6 +1150,8 @@ export class CBGiveOrdersSequenceElement extends WithLeader(WithDiceRoll(CBSeque
     constructor({game, leader, dice}) {
         super({type: "GiveOrders", game, leader, dice});
     }
+
+    get delay() { return 1500; }
 
     apply(startTick) {
         return new CBSceneAnimation({
@@ -1133,8 +1171,6 @@ function WithInCommand(clazz) {
             super(params);
             this.inCommand = inCommand;
         }
-
-        get delay() { return 200; }
 
         equalsTo(element) {
             if (!super.equalsTo(element)) return false;
@@ -1190,6 +1226,222 @@ export class CBManageCommandAnimation extends DAnimation {
             this._leader.wing.setLeader(this._inCommand ? this._leader : null);
         }
         return false;
+    }
+
+}
+
+function WithCombat(clazz) {
+
+    return class extends clazz {
+
+        constructor({attackerHex, defender, defenderHex, supported, advantage, ...params}) {
+            super(params);
+            this.attackerHex = attackerHex;
+            this.defender = defender;
+            this.defenderHex = defenderHex;
+            this.supported = supported;
+            this.advantage = advantage;
+        }
+
+        equalsTo(element) {
+            if (!super.equalsTo(element)) return false;
+            if (element.attackerHex.location.toString() !== this.attackerHex.location.toString()) return false;
+            if (element.defender !== this.defender) return false;
+            if (element.defenderHex.location.toString() !== this.defenderHex.location.toString()) return false;
+            if (element.supported !== this.supported) return false;
+            if (element.advantage !== this.advantage) return false;
+            return true;
+        }
+
+        _toString() {
+            let result = super._toString();
+            result+=`, attackerHex: `+this.attackerHex.location.toString();
+            result+=`, defender: `+this.defender;
+            result+=`, defenderHex: `+this.defenderHex.location.toString();
+            result+=`, supported: `+this.supported;
+            result+=`, advantage: `+this.advantage;
+            return result;
+        }
+
+        toSpec(spec, context) {
+            super.toSpec(spec, context);
+            spec.attackerHexCol = this.attackerHex.col;
+            spec.attackerHexRow = this.attackerHex.row;
+            spec.defender = this.defender.name;
+            spec.defenderHexCol = this.defenderHex.col;
+            spec.defenderHexRow = this.defenderHex.row;
+            spec.supported = this.supported;
+            spec.advantage = this.advantage;
+        }
+
+        fromSpec(spec, context) {
+            super.fromSpec(spec, context);
+            this.attackerHex = context.game.map.getHex(spec.attackerHexCol, spec.attackerHexRow);
+            this.defender = getUnitFromContext(context, spec.defender);
+            this.defenderHex = context.game.map.getHex(spec.defenderHexCol, spec.defenderHexRow);
+            this.supported = spec.supported;
+            this.advantage = spec.advantage;
+        }
+
+    }
+
+}
+
+export class CBShockAttackSequenceElement extends WithCombat(WithDiceRoll(CBStateSequenceElement)) {
+
+    constructor({game, unit, attackerHex, defender, defenderHex, supported, advantage, dice}) {
+        super({type: "ShockAttack", game, unit, attackerHex, defender, defenderHex, supported, advantage, dice});
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new InteractiveShockAttackAction(this.game, this.unit)
+                .replay(this.attackerHex, this.defender, this.defenderHex, this.supported, this.advantage, this.dice)
+        });
+    }
+
+}
+CBSequence.register("ShockAttack", CBShockAttackSequenceElement);
+
+export class CBFireAttackSequenceElement extends WithCombat(WithDiceRoll(CBStateSequenceElement)) {
+
+    constructor({game, unit, firerHex, target, targetHex, advantage, dice}) {
+        super({
+            type: "FireAttack", game, unit, attackerHex:firerHex, defender:target, defenderHex:targetHex,
+            supported:false, advantage, dice
+        });
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new InteractiveFireAttackAction(this.game, this.unit)
+                .replay(this.attackerHex, this.defender, this.defenderHex, this.advantage, this.dice)
+        });
+    }
+
+}
+CBSequence.register("FireAttack", CBFireAttackSequenceElement);
+
+export class CBAsk4RetreatSequenceElement extends CBSequenceElement {
+
+    constructor({game, unit, losses, attacker, advance}) {
+        super({type: "Ask4Retreat", game});
+        console.log(unit, losses, attacker, advance);
+        this.unit = unit;
+        this.attacker = attacker;
+        this.losses = losses;
+        this.advance = advance;
+        this.id = 0;
+    }
+
+    get delay() { return 0; }
+
+    apply(startTick) {
+        return new CBAsk4RetreatAnimation({
+            game:this.game, unit:this.unit, id:this.id, losses:this.losses, attacker:this.attacker, startTick
+        });
+    }
+
+    toSpec(spec, context) {
+        super.toSpec(spec, context);
+        spec.unit = this.unit.name;
+        spec.attacker = this.attacker.name;
+        spec.losses = this.losses;
+        spec.advance = this.advance;
+    }
+
+    fromSpec(spec, context) {
+        super.fromSpec(spec, context);
+        this.unit = getUnitFromContext(context, spec.unit);
+        this.attacker = getUnitFromContext(context, spec.attacker);
+        this.losses = spec.losses;
+        this.advance = spec.advance;
+        this.id = spec.id;
+    }
+
+}
+CBSequence.register("Ask4Retreat", CBAsk4RetreatSequenceElement);
+
+export class CBRetreatSequenceElement extends HexLocated(CBStateSequenceElement) {
+
+    constructor({game, unit, hexLocation, askRequest}) {
+        super({type: "Retreat", unit, hexLocation, stacking:CBStacking.TOP, game});
+        this.askRequest = askRequest;
+    }
+
+    get delay() { return 500; }
+
+    apply(startTick) {
+        return new CBRetreatAnimation({
+            unit:this.unit, startTick, duration:this.delay, state:this,
+            angle:this.unit.angle, hexLocation:this.hexLocation, stacking:this.stacking
+        });
+    }
+
+    toSpec(spec, context) {
+        super.toSpec(spec, context);
+        spec.askRequest = this.askRequest;
+    }
+
+    fromSpec(spec, context) {
+        super.fromSpec(spec, context);
+        this.askrequest = spec.askRequest;
+    }
+
+}
+CBSequence.register("Retreat", CBRetreatSequenceElement);
+
+export class CBAsk4RetreatAnimation extends DAnimation {
+
+    constructor({game, id, unit, losses, attacker, startTick}) {
+        super();
+        this._game = game;
+        this._unit = unit;
+        this._losses = losses;
+        this._attacker = attacker;
+        this._id = id;
+        this.play(startTick+1);
+    }
+
+    _draw(count, ticks) {
+        if (count===0) {
+            this._unit.launchAction(new InteractiveRetreatAction(this._game, this._unit, this._losses, this._attacker, false,
+                ()=>{
+                    CBSequence.appendElement(this._game,
+                        new CBRetreatSequenceElement({game: this._game, unit:this._unit, hexLocation:this._unit.hexLocation, askRequest:this._id})
+                    );
+                    new SequenceLoader().save(this._game, CBSequence.getSequence(this._game));
+                    this._game.validate();
+                }
+            ));
+        }
+        return false;
+    }
+
+}
+
+export class CBRetreatAnimation extends CBMoveAnimation {
+
+    constructor({unit, startTick, duration, state, angle, hexLocation, stacking}) {
+        super({unit, startTick, duration, state, angle, hexLocation, stacking});
+    }
+
+    _draw(count, ticks) {
+        if (count===0) {
+            this._unit.game.closeActuators();
+        }
+        return super._draw(count, ticks);
+    }
+
+    _finalize() {
+        this._unit.player.continueLossApplication(this._unit, this._hexLocation, this._stacking);
+        return super._finalize();
     }
 
 }

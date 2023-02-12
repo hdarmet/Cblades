@@ -10,8 +10,12 @@ import {
     getDrawPlatform
 } from "../draw.js";
 import {
-    CBSequence
+    CBAsk4RetreatSequenceElement,
+    CBSequence, CBStateSequenceElement
 } from "./sequences.js";
+import {
+    InteractiveRetreatAction
+} from "./interactive/interactive-combat.js";
 
 export class CBRemoteUnitPlayer extends CBUnitPlayer {
 
@@ -20,12 +24,20 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
 
     beginTurn() {
         super.beginTurn();
-        this._activeMode = true;
-        this.tryToLoadNewSequence();
+        this.getFocus();
     }
 
     endTurn() {
         super.endTurn();
+        this.releaseFocus();
+    }
+
+    getFocus() {
+        this._activeMode = true;
+        this.tryToLoadNewSequence();
+    }
+
+    releaseFocus() {
         delete this._activeMode;
     }
 
@@ -47,6 +59,43 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
                     }
                 });
             }, 4000);
+        }
+    }
+
+    continueLossApplication(unit, hexLocation, stacking) {
+        unit.action && unit.action.retreatUnit(hexLocation, stacking);
+    }
+
+    applyLossesToUnit(unit, losses, attacker, advance, continuation) {
+        losses = 2;
+        let lossSustained = false;
+        for (let loss=1; loss<losses; loss++) {
+            unit.takeALoss();
+            lossSustained = true;
+        }
+        if (lossSustained) {
+            CBSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit}));
+        }
+        if (!unit.isDestroyed()) {
+            let enhancedContinuation = ()=>{
+                this.releaseFocus();
+                continuation();
+            }
+            this.getFocus();
+            unit.launchAction(new InteractiveRetreatAction(
+                this.game, unit, losses, attacker, advance, enhancedContinuation,
+                false
+            ));
+            CBSequence.appendElement(this.game,
+                new CBAsk4RetreatSequenceElement({game: this.game, unit, losses, attacker, advance})
+            );
+            new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+        }
+        else {
+            if (lossSustained) {
+                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+            }
+            continuation();
         }
     }
 

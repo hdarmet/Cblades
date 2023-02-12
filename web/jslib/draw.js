@@ -811,6 +811,8 @@ export class DAnimation {
     }
 }
 
+export let ADELAY = 20;
+
 export class DAnimator {
 
     constructor() {
@@ -846,7 +848,7 @@ export class DAnimator {
     }
 
     _launch() {
-        this._token = _platform.setTimeout(()=>this.play(), 20);
+        this._token = _platform.setTimeout(()=>this.play(), ADELAY);
     }
 
     register(animation, startTick) {

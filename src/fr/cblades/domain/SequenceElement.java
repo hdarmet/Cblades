@@ -763,6 +763,281 @@ public abstract class SequenceElement extends BaseEntity {
 
     }
 
+    @Entity
+    @DiscriminatorValue("ShockAttack")
+    public static class ShockAttackSequenceElement extends StateSequenceElement {
+
+        int attackerHexCol;
+        int attackerHexRow;
+        String defender;
+        int defenderHexCol;
+        int defenderHexRow;
+        boolean supported;
+        int advantage;
+        int dice1;
+        int dice2;
+
+        public int getAttackerHexCol() {
+            return this.attackerHexCol;
+        }
+        public ShockAttackSequenceElement setAttackerHexCol(int attackerHexCol) {
+            this.attackerHexCol = attackerHexCol;
+            return this;
+        }
+
+        public int getAttackerHexRow() {
+            return this.attackerHexRow;
+        }
+        public ShockAttackSequenceElement setAttackerHexRow(int attackerHexRow) {
+            this.attackerHexRow = attackerHexRow;
+            return this;
+        }
+
+        public String getDefender() {
+            return this.defender;
+        }
+        public ShockAttackSequenceElement setDefender(String defender) {
+            this.defender = defender;
+            return this;
+        }
+
+        public int getDefenderHexCol() {
+            return this.defenderHexCol;
+        }
+        public ShockAttackSequenceElement setDefenderHexCol(int defenderHexCol) {
+            this.defenderHexCol = defenderHexCol;
+            return this;
+        }
+
+        public int getDefenderHexRow() {
+            return this.defenderHexRow;
+        }
+        public ShockAttackSequenceElement setDefenderHexRow(int defenderHexRow) {
+            this.defenderHexRow = defenderHexRow;
+            return this;
+        }
+
+        public int getAdvantage() {
+            return this.advantage;
+        }
+        public ShockAttackSequenceElement setAdvantage(int advantage) {
+            this.advantage = advantage;
+            return this;
+        }
+
+        public boolean getSupported() {
+            return this.supported;
+        }
+        public ShockAttackSequenceElement setSupported(boolean supported) {
+            this.supported = supported;
+            return this;
+        }
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public ShockAttackSequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public ShockAttackSequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+    }
+
+    @Entity
+    @DiscriminatorValue("FireAttack")
+    public static class FireAttackSequenceElement extends StateSequenceElement {
+
+        int attackerHexCol;
+        int attackerHexRow;
+        String defender;
+        int defenderHexCol;
+        int defenderHexRow;
+        int advantage;
+        int dice1;
+        int dice2;
+
+        public int getAttackerHexCol() {
+            return this.attackerHexCol;
+        }
+        public FireAttackSequenceElement setAttackerHexCol(int attackerHexCol) {
+            this.attackerHexCol = attackerHexCol;
+            return this;
+        }
+
+        public int getAttackerHexRow() {
+            return this.attackerHexRow;
+        }
+        public FireAttackSequenceElement setAttackerHexRow(int attackerHexRow) {
+            this.attackerHexRow = attackerHexRow;
+            return this;
+        }
+
+        public String getDefender() {
+            return this.defender;
+        }
+        public FireAttackSequenceElement setDefender(String defender) {
+            this.defender = defender;
+            return this;
+        }
+
+        public int getDefenderHexCol() {
+            return this.defenderHexCol;
+        }
+        public FireAttackSequenceElement setDefenderHexCol(int defenderHexCol) {
+            this.defenderHexCol = defenderHexCol;
+            return this;
+        }
+
+        public int getDefenderHexRow() {
+            return this.defenderHexRow;
+        }
+        public FireAttackSequenceElement setDefenderHexRow(int defenderHexRow) {
+            this.defenderHexRow = defenderHexRow;
+            return this;
+        }
+
+        public int getAdvantage() {
+            return this.advantage;
+        }
+        public FireAttackSequenceElement setAdvantage(int advantage) {
+            this.advantage = advantage;
+            return this;
+        }
+
+        public int getDice1() {
+            return this.dice1;
+        }
+        public FireAttackSequenceElement setDice1(int dice1) {
+            this.dice1 = dice1;
+            return this;
+        }
+
+        public int getDice2() {
+            return this.dice1;
+        }
+        public FireAttackSequenceElement setDice2(int dice2) {
+            this.dice2 = dice2;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+    }
+
+    @Entity
+    @DiscriminatorValue("Ask4Retreat")
+    public static class Ask4RetreatSequenceElement extends SequenceElement {
+
+        String unit;
+        String attacker;
+        int losses;
+        boolean advance;
+
+        public String getUnit() {
+            return this.unit;
+        }
+        public Ask4RetreatSequenceElement setUnit(String unit) {
+            this.unit = unit;
+            return this;
+        }
+
+        public String getAttacker() {
+            return this.attacker;
+        }
+        public Ask4RetreatSequenceElement setAttacker(String attacker) {
+            this.attacker = attacker;
+            return this;
+        }
+
+        public int getLosses() {
+            return this.losses;
+        }
+        public Ask4RetreatSequenceElement setLosses(int losses) {
+            this.losses = losses;
+            return this;
+        }
+
+        public boolean getAdvance() {
+            return this.advance;
+        }
+        public Ask4RetreatSequenceElement setAdvance(boolean advance) {
+            this.advance = advance;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
+
+    @Entity
+    @DiscriminatorValue("Retreat")
+    public static class RetreatSequenceElement extends StateSequenceElement {
+
+        int hexCol;
+        int hexRow;
+        Integer hexAngle=null;
+        Stacking stacking;
+        long askRequest;
+
+        public int getHexCol() {
+            return this.hexCol;
+        }
+        public RetreatSequenceElement setHexCol(int hexCol) {
+            this.hexCol = hexCol;
+            return this;
+        }
+
+        public int getHexRow() {
+            return this.hexRow;
+        }
+        public RetreatSequenceElement setHexRow(int hexRow) {
+            this.hexRow = hexRow;
+            return this;
+        }
+
+        public Integer getHexAngle() {
+            return this.hexAngle;
+        }
+        public RetreatSequenceElement setHexAngle(Integer hexAngle) {
+            this.hexAngle = hexAngle;
+            return this;
+        }
+
+        public Stacking getStacking() {
+            return this.stacking;
+        }
+        public RetreatSequenceElement setStacking(Stacking stacking) {
+            this.stacking = stacking;
+            return this;
+        }
+
+        public long getAskRequest() {
+            return this.askRequest;
+        }
+        public RetreatSequenceElement setAskRequest(long askRequest) {
+            this.askRequest = askRequest;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
+
+    }
 
     public abstract void accept(SequenceVisitor visitor);
 

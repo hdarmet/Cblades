@@ -701,6 +701,10 @@ export class DDice extends DElement {
         return this._result;
     }
 
+    set result(result) {
+        this._result = result;
+    }
+
     get trigger() {
         return this._artifacts;
     }

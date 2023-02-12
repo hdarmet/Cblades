@@ -866,7 +866,7 @@ export class CBAttackerEngagementChecking {
         ).addWidget(
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
-                let {success} = this._processAttackerEngagementResult(this.unit, scene.dice.result);
+                let {success} = this.game.arbitrator.processAttackerEngagementResult(this.unit, scene.dice.result);
                 if (success) {
                     scene.result.success().appear();
                 }
@@ -885,8 +885,13 @@ export class CBAttackerEngagementChecking {
     }
 
     play(action) {
-        let scene = this.createScene(
+        let scene;
+        scene = this.createScene(
             ()=>{
+                if (!scene.result.success) {
+                    this.unit.addOneCohesionLevel();
+                    CBSequence.appendElement(this.game, new CBStateSequenceElement({unit: this.unit}));
+                }
                 CBSequence.appendElement(this.game, new CBAttackerEngagementSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
@@ -907,15 +912,6 @@ export class CBAttackerEngagementChecking {
         scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
-    }
-
-    _processAttackerEngagementResult(diceResult) {
-        let result = this.game.arbitrator.processAttackerEngagementResult(this.unit, diceResult);
-        if (!result.success) {
-            this.unit.addOneCohesionLevel();
-            CBSequence.appendElement(this.game, new CBStateSequenceElement({unit: this.unit}));
-        }
-        return result;
     }
 
 }

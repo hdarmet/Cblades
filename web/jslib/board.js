@@ -4,6 +4,7 @@ import {
     Matrix2D, Point2D, Area2D, Dimension2D
 } from "./geometry.js";
 import {
+    ADELAY,
     DAnimation, DAnimator,
     DDraw, DLayer, DStaticLayer
 } from "./draw.js";
@@ -1511,6 +1512,38 @@ export class DStaticLevel extends DBasicLevel {
 
 }
 
+export class DScrollBoardAnimation extends DAnimation {
+
+    constructor(board, targetLocation, duration=200) {
+        super();
+        this._board = board;
+        if (this._board._scrollAnimation) this._board._scrollAnimation.cancel();
+        this._board._scrollAnimation = this;
+        this._currentCenter = this._board.location;
+        this._targetLocation = targetLocation;
+        this._duration = duration;
+        this.play(1);
+    }
+
+    _draw(count, ticks) {
+        let factor = this._factor(count);
+        let location = new Point2D(
+            (1-factor)*this._currentCenter.x + factor*this._targetLocation.x,
+            (1-factor)*this._currentCenter.y + factor*this._targetLocation.y
+        );
+        this._board.center(location);
+        return count * ADELAY >= this._duration ? 0 : 1;
+    }
+
+    _factor(count) {
+        return (count * ADELAY)/this._duration;
+    }
+
+    _finalize() {
+        delete this._board._scrollAnimation;
+    }
+
+}
 
 /**
  * Playing board. Accept elements. Dispatch element's artifacts on its own levels.
@@ -1659,9 +1692,11 @@ export class DBoard {
     }
 
     paint() {
+        //let t = Date.now();
         for (let level of this._levels.values()) {
             level.paint();
         }
+        //console.log(Date.now() - t);
     }
 
     repaint() {
@@ -1743,6 +1778,11 @@ export class DBoard {
     recenter(vpoint) {
         let point = this.getBoardPoint(vpoint);
         this.center(point);
+    }
+
+    centerOn(vpoint) {
+        let point = this.getBoardPoint(vpoint);
+        new DScrollBoardAnimation(this, point);
     }
 
     setScrollSettings(scrollIncrement, borderWidth) {
@@ -2044,7 +2084,7 @@ export class DBoard {
     static DEFAULT_MAX_ZOOM_FACTOR = 10;
     static DEFAULT_ZOOM_INCREMENT = 1.5;
     static DEFAULT_BORDER_WIDTH = 10;
-    static DEFAULT_SCROLL_INCREMENT = 10;
+    static DEFAULT_SCROLL_INCREMENT = 20;
     static SCROLL_EVENT = "board-scroll";
     static ZOOM_EVENT = "board-zoom";
     static RESIZE_EVENT = "board-resize";
@@ -2095,7 +2135,7 @@ export class DArtifactRotateAnimation extends DArtifactAnimation {
     }
 
     _factor(count) {
-        return this._clockWise ? (count * 20) / this._duration : (this._duration - count * 20)/this._duration;
+        return this._clockWise ? (count * ADELAY) / this._duration : (this._duration - count * ADELAY)/this._duration;
     }
 
     init() {
@@ -2104,7 +2144,7 @@ export class DArtifactRotateAnimation extends DArtifactAnimation {
 
     draw(count, ticks) {
         this._artifact.pangle = this._pangle + this._factor(count)*this._angle;
-        return count * 20 >= this._duration ? 0 : 1;
+        return count * ADELAY >= this._duration ? 0 : 1;
     }
 
     close() {
@@ -2126,12 +2166,12 @@ export class DArtifactAlphaAnimation extends DArtifactAnimation {
     }
 
     _factor(count) {
-        return (count * 20) / this._duration;
+        return (count * ADELAY) / this._duration;
     }
 
     draw(count, ticks) {
         this._artifact.alpha = this._initAlpha + (this._alpha - this._initAlpha)*this._factor(count);
-        return count * 20 >= this._duration ? 0 : 1;
+        return count * ADELAY >= this._duration ? 0 : 1;
     }
 
     close() {

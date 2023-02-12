@@ -181,7 +181,7 @@ export class CBDefenderEngagementChecking {
         ).addWidget(
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
-                let {success} = this._processDefenderEngagementResult(this.unit, scene.dice.result);
+                let {success} = this.game.arbitrator.processDefenderEngagementResult(this.unit, scene.dice.result);
                 if (success) {
                     scene.result.success().appear();
                 }
@@ -200,8 +200,12 @@ export class CBDefenderEngagementChecking {
     }
 
     play(action) {
-        let scene = this.createScene(
+        let scene;
+        scene = this.createScene(
             ()=>{
+                if (!scene.result.success) {
+                    this.unit.addOneCohesionLevel();
+                }
                 CBSequence.appendElement(this.game, new CBDefenderEngagementSequenceElement({
                     game: this.game, unit:this.unit, dice: scene.dice.result
                 }));
@@ -222,14 +226,6 @@ export class CBDefenderEngagementChecking {
         scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
-    }
-
-    _processDefenderEngagementResult(unit, diceResult) {
-        let result = this.game.arbitrator.processDefenderEngagementResult(unit, diceResult);
-        if (!result.success) {
-            unit.addOneCohesionLevel();
-        }
-        return result;
     }
 
 }

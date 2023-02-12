@@ -94,7 +94,7 @@ public class Game extends BaseEntity {
             "select s from Sequence s left outer join fetch s.elements where s.game = :game and s.currentTurn < 0")
                 .setParameter("game", this.getId());
         List<Sequence> sequenceList = getFilterAndSortSequences(query);
-        return new SequenceApplyer(this).applyForPlayerTurns(sequenceList, turns);
+        return new SequenceApplyer(em, this).applyForPlayerTurns(sequenceList, turns);
     }
 
     public void applySequencesUntil(EntityManager em, long lastSequenceCount) {
@@ -103,7 +103,7 @@ public class Game extends BaseEntity {
             .setParameter("game", this.getId())
             .setParameter("count", lastSequenceCount);
         List<Sequence> sequenceList = getFilterAndSortSequences(query);
-        new SequenceApplyer(this).applySequences(sequenceList);
+        new SequenceApplyer(em,this).applySequences(sequenceList);
     }
 
     List<Sequence> getFilterAndSortSequences(Query query) {

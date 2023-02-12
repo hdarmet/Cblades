@@ -347,7 +347,7 @@ public class FakeData {
                 .setCharging(false);
             em.persist(unit3);
             Unit unit4 = new Unit()
-                .setPositionRow(8).setPositionCol(2)
+                .setPositionRow(7).setPositionCol(2)
                 .setName("u4").setCategory(UnitCategory.CHARACTER)
                 .setType("Goblin Leader")
                 .setAngle(0)

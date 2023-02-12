@@ -10,8 +10,9 @@ import java.util.Objects;
 
 public class SequenceApplyer implements SequenceVisitor  {
 
-    public SequenceApplyer(Game game) {
+    public SequenceApplyer(EntityManager em, Game game) {
         this.game = game;
+        this.em = em;
         this.units = new HashMap<>();
         this.players = new HashMap<>();
         for (Player player: this.game.getPlayers()) {
@@ -31,6 +32,7 @@ public class SequenceApplyer implements SequenceVisitor  {
     }
 
     Game game;
+    EntityManager em;
 
     public long apply(Sequence sequence) {
         this.count = sequence.getCount();
@@ -191,6 +193,33 @@ public class SequenceApplyer implements SequenceVisitor  {
         Unit leader = units.get(element.getLeader());
         Wing wing = Wing.findWing(this.game, leader);
         wing.setLeader(element.getInCommand() ? leader : null);
+    }
+
+    public void visit(SequenceElement.ShockAttackSequenceElement element) {
+        Unit unit = units.get(element.getUnit());
+        changeUnitState(unit, element);
+    }
+
+    public void visit(SequenceElement.FireAttackSequenceElement element) {
+        Unit unit = units.get(element.getUnit());
+        changeUnitState(unit, element);
+    }
+
+    public void visit(SequenceElement.Ask4RetreatSequenceElement element) {
+    }
+
+    public void visit(SequenceElement.RetreatSequenceElement element) {
+        Unit unit = units.get(element.getUnit());
+        Location location = getLocation(unit);
+        location.removeUnit(unit);
+        locations.remove(new HexPos(unit));
+        changeUnitState(unit, element);
+        unit.setPositionAngle(element.getHexAngle());
+        unit.setPositionCol(element.getHexCol());
+        unit.setPositionRow(element.getHexRow());
+        location = getLocation(unit);
+        location.addUnit(unit, element.getStacking());
+        em.remove(em.find(SequenceElement.class, element.getAskRequest()));
     }
 
     long count = -1;

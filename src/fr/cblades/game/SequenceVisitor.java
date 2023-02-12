@@ -81,4 +81,13 @@ public interface SequenceVisitor {
     default void visit(SequenceElement.GiveOrdersSequenceElement element) { defaultVisit(element);  }
 
     default void visit(SequenceElement.ManageCommandSequenceElement element) { defaultVisit(element);  }
+
+    default void visit(SequenceElement.ShockAttackSequenceElement element) { defaultVisit(element);  }
+
+    default void visit(SequenceElement.FireAttackSequenceElement element) { defaultVisit(element);  }
+
+    default void visit(SequenceElement.Ask4RetreatSequenceElement element) { defaultVisit(element);  }
+
+    default void visit(SequenceElement.RetreatSequenceElement element) { defaultVisit(element);  }
+
 }

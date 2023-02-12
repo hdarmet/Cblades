@@ -529,7 +529,7 @@ export class CBAbstractGame {
         this._board = new DBoard(map.dimension, new Dimension2D(1000, 800), ...this._levels);
         this._board.game = this;
         this._board.setZoomSettings(1.5, 1);
-        this._board.setScrollSettings(20, 10);
+        this._board.setScrollSettings(5, 10);
         this._board.scrollOnBordersOnMouseMove();
         this._board.zoomInOutOnMouseWheel();
         this._board.scrollOnKeyDown()
@@ -577,6 +577,10 @@ export class CBAbstractGame {
                 this.setSelectedPlayable(null);
             }
         }
+    }
+
+    centerOn(vpoint) {
+        this._board.centerOn(vpoint);
     }
 
     recenter(vpoint) {

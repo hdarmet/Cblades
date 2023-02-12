@@ -162,6 +162,39 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 		return verifier.checkRequired("inCommand").checkBoolean("inCommand");
 	}
 
+	Verifier checkCombatSpecs(Verifier verifier) {
+		return verifier
+			.checkRequired("attackerHexCol").checkMin("attackerHexCol", 0).checkMax("attackerHexCol", 200)
+			.checkRequired("attackerHexRow").checkMin("attackerHexRow", 0).checkMax("attackerHexRow", 200)
+			.checkRequired("defender").checkMinSize("defender", 2).checkMaxSize("defender", 80)
+			.checkRequired("defenderHexCol").checkMin("defenderHexCol", 0).checkMax("defenderHexCol", 200)
+			.checkRequired("defenderHexRow").checkMin("defenderHexRow", 0).checkMax("defenderHexRow", 200)
+			.checkRequired("advantage").checkInteger("advantage")
+				.checkMin("advantage", -40).checkMax("advantage", 48);
+	}
+
+	Verifier checkShockAttackSpecs(Verifier verifier) {
+		verifier = this.checkCombatSpecs(verifier);
+		return verifier.checkRequired("supported").checkBoolean("supported");
+	}
+
+	Verifier checkFireAttackSpecs(Verifier verifier) {
+		return this.checkCombatSpecs(verifier);
+	}
+
+	Verifier checkLossesSpecs(Verifier verifier) {
+		return verifier
+			.checkRequired("unit").checkMinSize("unit", 2).checkMaxSize("unit", 80)
+			.checkRequired("attacker").checkMinSize("attacker", 2).checkMaxSize("attacker", 80)
+			.checkRequired("losses").checkInteger("losses").checkMin("losses", 0).checkMax("losses", 10)
+			.checkRequired("advance").checkBoolean("advance");
+	}
+
+	Verifier checkAskRequestSpecs(Verifier verifier) {
+		return verifier
+			.checkRequired("askRequest").checkInteger("askRequest").checkMin("askRequest", 0);
+	}
+
 	void writeUnitState(Synchronizer sync) {
 		sync.write("unit")
 			.write("steps")
@@ -204,6 +237,35 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 
 	void writeInCommand(Synchronizer sync) {
 		sync.write("inCommand");
+	}
+
+	void writeCombat(Synchronizer sync) {
+		sync.write("attackerHexCol")
+			.write("attackerHexRow")
+			.write("defender")
+			.write("defenderHexCol")
+			.write("defenderHexRow")
+			.write("advantage");
+	}
+
+	void writeShockAttack(Synchronizer sync) {
+		this.writeCombat(sync);
+		sync.write("supported");
+	}
+
+	void writeFireAttack(Synchronizer sync) {
+		this.writeCombat(sync);
+	}
+
+	void writeLosses(Synchronizer sync) {
+		sync.write("unit")
+			.write("attacker")
+			.write("losses")
+			.write("advance");
+	}
+
+	void writeAskRequest(Synchronizer sync) {
+		sync.write("askRequest");
 	}
 
 	Sequence writeToSequence(Json json, Sequence sequence) {
@@ -366,6 +428,36 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 						return verifier;
 					}
 				)
+				.checkWhen(eJson->eJson.get("type").equals("ShockAttack"), eJson-> {
+						Verifier verifier = verify(eJson);
+						verifier = this.checkUnitStateSpecs(verifier);
+						verifier = this.checkDiceSpecs(verifier);
+						verifier = this.checkShockAttackSpecs(verifier);
+						return verifier;
+					}
+				)
+				.checkWhen(eJson->eJson.get("type").equals("FireAttack"), eJson-> {
+						Verifier verifier = verify(eJson);
+						verifier = this.checkUnitStateSpecs(verifier);
+						verifier = this.checkDiceSpecs(verifier);
+						verifier = this.checkFireAttackSpecs(verifier);
+						return verifier;
+					}
+				)
+				.checkWhen(eJson->eJson.get("type").equals("Ask4Retreat"), eJson-> {
+						Verifier verifier = verify(eJson);
+						verifier = this.checkLossesSpecs(verifier);
+						return verifier;
+					}
+				)
+				.checkWhen(eJson->eJson.get("type").equals("Retreat"), eJson-> {
+						Verifier verifier = verify(eJson);
+						verifier = this.checkUnitStateSpecs(verifier);
+						verifier = this.checkHexLocationSpecs(verifier);
+						verifier = this.checkAskRequestSpecs(verifier);
+						return verifier;
+					}
+				)
 			)
 			.ensure();
 		sync(json, sequence)
@@ -395,6 +487,10 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					pair("Try2DismissCommand", SequenceElement.Try2DismissCommandSequenceElement.class),
 					pair("GiveOrders", SequenceElement.GiveOrdersSequenceElement.class),
 					pair("ManageCommand", SequenceElement.ManageCommandSequenceElement.class),
+					pair("ShockAttack", SequenceElement.ShockAttackSequenceElement.class),
+					pair("FireAttack", SequenceElement.FireAttackSequenceElement.class),
+					pair("Ask4Retreat", SequenceElement.Ask4RetreatSequenceElement.class),
+					pair("Retreat", SequenceElement.RetreatSequenceElement.class),
 					pair("NextTurn", SequenceElement.NextTurnSequenceElement.class)
 				), "type"),
 				(cJson, celem)->sync(cJson, celem)
@@ -525,6 +621,32 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 						this.writeInCommand(writer);
 					}
 				)
+				.syncWhen((eJson, eelem)->eJson.get("type").equals("ShockAttack"), (eJson, eelem)->{
+						Synchronizer writer = sync(eJson, eelem);
+						this.writeUnitState(writer);
+						this.writeDice(writer);
+						this.writeShockAttack(writer);
+					}
+				)
+				.syncWhen((eJson, eelem)->eJson.get("type").equals("FireAttack"), (eJson, eelem)->{
+						Synchronizer writer = sync(eJson, eelem);
+						this.writeUnitState(writer);
+						this.writeDice(writer);
+						this.writeFireAttack(writer);
+					}
+				)
+				.syncWhen((eJson, eelem)->eJson.get("type").equals("Ask4Retreat"), (eJson, eelem)->{
+						Synchronizer writer = sync(eJson, eelem);
+						this.writeLosses(writer);
+					}
+				)
+				.syncWhen((eJson, eelem)->eJson.get("type").equals("Retreat"), (eJson, eelem)->{
+						Synchronizer writer = sync(eJson, eelem);
+						this.writeUnitState(writer);
+						this.writeHexLocation(writer);
+						this.writeAskRequest(writer);
+					}
+				)
 			);
 		return sequence;
 	}
@@ -573,6 +695,36 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 		sync.read("inCommand");
 	}
 
+	void readCombat(Synchronizer sync) {
+		sync.read("attackerHexCol")
+			.read("attackerHexRow")
+			.read("defender")
+			.read("defenderHexCol")
+			.read("defenderHexRow")
+			.read("advantage");
+	}
+
+	void readShockAttack(Synchronizer sync) {
+		this.readCombat(sync);
+		sync.read("supported");
+	}
+
+	void readFireAttack(Synchronizer sync) {
+		this.readCombat(sync);
+	}
+
+	void readLosses(Synchronizer sync) {
+		sync.read("unit")
+			.read("attacker")
+			.read("losses")
+			.read("advance")
+			.read("id");
+	}
+
+	void readAskRequest(Synchronizer sync) {
+		sync.read("askRequest");
+	}
+
 	Json readFromSequence(Sequence sequence) {
 		Json json = Json.createJsonObject();
 		sync(json, sequence)
@@ -586,148 +738,178 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 				.syncWhen((eJson, eelem)->eelem.getClass()==SequenceElement.StateSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "State");
-						readUnitState(reader);
+						this.readUnitState(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem instanceof SequenceElement.MoveSequenceElement, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "Move");
-						readUnitState(reader);
-						readHexLocation(reader);
+						this.readUnitState(reader);
+						this.readHexLocation(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem instanceof SequenceElement.RotateSequenceElement, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "Rotate");
-						readUnitState(reader);
-						readAngle(reader);
+						this.readUnitState(reader);
+						this.readAngle(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem instanceof SequenceElement.ReorientSequenceElement, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "Reorient");
-						readUnitState(reader);
-						readAngle(reader);
+						this.readUnitState(reader);
+						this.readAngle(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem instanceof SequenceElement.TurnSequenceElement, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "Turn");
-						readUnitState(reader);
-						readHexLocation(reader);
-						readAngle(reader);
+						this.readUnitState(reader);
+						this.readHexLocation(reader);
+						this.readAngle(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.RestSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "Rest");
-						readUnitState(reader);
-						readDice(reader);
+						this.readUnitState(reader);
+						this.readDice(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.RefillSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "Refill");
-						readUnitState(reader);
-						readDice(reader);
+						this.readUnitState(reader);
+						this.readDice(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.RallySequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "Rally");
-						readUnitState(reader);
-						readDice(reader);
+						this.readUnitState(reader);
+						this.readDice(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.ReorganizeSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "Reorganize");
-						readUnitState(reader);
-						readDice(reader);
+						this.readUnitState(reader);
+						this.readDice(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.LossConsistencySequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "LossConsistency");
-						readUnitState(reader);
-						readDice(reader);
+						this.readUnitState(reader);
+						this.readDice(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.ConfrontSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "Confront");
-						readUnitState(reader);
-						readDice(reader);
+						this.readUnitState(reader);
+						this.readDice(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.CrossingSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "Crossing");
-						readUnitState(reader);
-						readDice(reader);
+						this.readUnitState(reader);
+						this.readDice(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.AttackerEngagementSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "AttackerEngagement");
-						readUnitState(reader);
-						readDice(reader);
+						this.readUnitState(reader);
+						this.readDice(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.DefenderEngagementSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "DefenderEngagement");
-						readUnitState(reader);
-						readDice(reader);
+						this.readUnitState(reader);
+						this.readDice(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.DisengagementSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "Disengagement");
-						readUnitState(reader);
-						readDice(reader);
+						this.readUnitState(reader);
+						this.readDice(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.Try2ChangeOrderInstructionSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "Try2ChangeOrderInst");
-						readLeader(reader);
-						readDice(reader);
+						this.readLeader(reader);
+						this.readDice(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.Try2TakeCommandSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "Try2TakeCommand");
-						readLeader(reader);
-						readDice(reader);
+						this.readLeader(reader);
+						this.readDice(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.Try2DismissCommandSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "Try2DismissCommand");
-						readLeader(reader);
-						readDice(reader);
+						this.readLeader(reader);
+						this.readDice(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.GiveOrdersSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "GiveOrders");
-						readLeader(reader);
-						readDie(reader);
+						this.readLeader(reader);
+						this.readDie(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.ChangeOrderInstructionSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "ChangeOrderInst");
-						readLeader(reader);
-						readOrderInstruction(reader);
+						this.readLeader(reader);
+						this.readOrderInstruction(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.ManageCommandSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "ManageCommand");
-						readLeader(reader);
-						readInCommand(reader);
+						this.readLeader(reader);
+						this.readInCommand(reader);
+					}
+				)
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.ShockAttackSequenceElement.class, (eJson, eelem)->{
+						Synchronizer reader = sync(eJson, eelem);
+						reader.setInJson("type", "ShockAttack");
+						this.readUnitState(reader);
+						this.readDice(reader);
+						this.readShockAttack(reader);
+					}
+				)
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.FireAttackSequenceElement.class, (eJson, eelem)->{
+						Synchronizer reader = sync(eJson, eelem);
+						reader.setInJson("type", "FireAttack");
+						this.readUnitState(reader);
+						this.readDice(reader);
+						this.readFireAttack(reader);
+					}
+				)
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.Ask4RetreatSequenceElement.class, (eJson, eelem)->{
+						Synchronizer reader = sync(eJson, eelem);
+						reader.setInJson("type", "Ask4Retreat");
+						this.readLosses(reader);
+					}
+				)
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.RetreatSequenceElement.class, (eJson, eelem)->{
+						Synchronizer reader = sync(eJson, eelem);
+						reader.setInJson("type", "Retreat");
+						this.readUnitState(reader);
+						this.readHexLocation(reader);
+						this.readAskRequest(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem instanceof SequenceElement.NextTurnSequenceElement, (eJson, eelem)->sync(eJson, eelem)
