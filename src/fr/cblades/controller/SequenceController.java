@@ -117,6 +117,11 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			.check("charging", Charging.byLabels().keySet())
 			.checkBoolean("engaging")
 			.checkBoolean("orderGiven")
+			.checkBoolean("disruptChecked")
+			.checkBoolean("routChecked")
+			.checkBoolean("neighborsCohesionLoss")
+			.checkBoolean("defenderEngagementChecking")
+			.checkBoolean("attackerEngagementChecking")
 			.checkBoolean("played");
 	}
 
@@ -204,6 +209,11 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			.write("charging", label->Charging.byLabels().get(label))
 			.write("engaging")
 			.write("orderGiven")
+			.write("disruptChecked")
+			.write("routChecked")
+			.write("neighborsCohesionLoss")
+			.write("defenderEngagementChecking")
+			.write("attackerEngagementChecking")
 			.write("played");
 	}
 
@@ -659,6 +669,11 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			.read("ammunition", Ammunition::getLabel)
 			.read("charging", Charging::getLabel)
 			.read("engaging")
+			.read("disruptChecked")
+			.read("routChecked")
+			.read("neighborsCohesionLoss")
+			.read("defenderEngagementChecking")
+			.read("attackerEngagementChecking")
 			.read("orderGiven")
 			.read("played");
 	}

@@ -30,10 +30,10 @@ import {
     CBCombatResultTableInsert
 } from "./interactive-combat.js";
 import {
-    CBUnitActuatorTrigger, CBCharge
+    CBUnitActuatorTrigger, CBCharge, CBStateSequenceElement
 } from "../unit.js";
 import {
-    CBSequence, CBStateSequenceElement
+    CBSequence
 } from "../sequences.js";
 
 export function registerInteractiveMagic() {

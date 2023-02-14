@@ -23,8 +23,12 @@ import {
     CBPlayableActuatorTrigger, CBBasicPlayer
 } from "./playable.js";
 import {
-    CBHexLocation
+    CBHexLocation, CBHexSideId
 } from "./map.js";
+import {
+    CBAnimation,
+    CBSequence, CBSequenceElement, SceneAnimation
+} from "./sequences.js";
 
 export let CBMovement = {
     NORMAL : "normal",
@@ -750,6 +754,11 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._charging=CBCharge.NONE;
         this._lossSteps = 0;
         this._orderGiven = false;
+        this._disruptChecked = false;
+        this._routChecked = false;
+        this._neighborsCohesionLoss = false;
+        this._defenderEngagementChecking = false;
+        this._attackerEngagementChecking = false;
         this.artifact.setImage(this._lossSteps);
     }
 
@@ -848,6 +857,11 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
             charging: this._charging,
             engagingArtifact: this._engagingArtifact,
             orderGiven: this._orderGiven,
+            disruptChecked: this._disruptChecked,
+            routChecked: this._routChecked,
+            neighborsCohesionLoss: this._neighborsCohesionLoss,
+            defenderEngagementChecking: this._defenderEngagementChecking,
+            attackerEngagementChecking: this._attackerEngagementChecking,
             lossSteps: this._lossSteps,
             carried: [...this._carried],
             options: [...this._options]
@@ -869,6 +883,11 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._charging = memento.charging;
         this._engagingArtifact = memento.engagingArtifact;
         this._orderGiven = memento.orderGiven;
+        this._disruptChecked = memento.disruptChecked;
+        this._routChecked = memento.routChecked;
+        this._neighborsCohesionLoss = memento.neighborsCohesionLoss;
+        this._defenderEngagementChecking = memento.defenderEngagementChecking;
+        this._attackerEngagementChecking = memento.attackerEngagementChecking;
         this._lossSteps = memento.lossSteps;
         this._carried = memento.carried;
         this._options = memento.options;
@@ -1031,6 +1050,46 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         return this._options;
     }
 
+    get disruptChecked() {
+        return this._disruptChecked;
+    }
+    set disruptChecked(disruptChecked) {
+        console.assert(disruptChecked!==undefined);
+        this._disruptChecked = disruptChecked;
+    }
+
+    get routChecked() {
+        return this._routChecked;
+    }
+    set routChecked(routChecked) {
+        console.assert(routChecked!==undefined);
+        this._routChecked = routChecked;
+    }
+
+    get neighborsCohesionLoss() {
+        return this._neighborsCohesionLoss;
+    }
+    set neighborsCohesionLoss(neighborsCohesionLoss) {
+        console.assert(neighborsCohesionLoss!==undefined);
+        this._neighborsCohesionLoss = neighborsCohesionLoss;
+    }
+
+    get defenderEngagementChecking() {
+        return this._defenderEngagementChecking;
+    }
+    set defenderEngagementChecking(defenderEngagementChecking) {
+        console.assert(defenderEngagementChecking!==undefined);
+        this._defenderEngagementChecking = defenderEngagementChecking;
+    }
+
+    get attackerEngagementChecking() {
+        return this._attackerEngagementChecking;
+    }
+    set attackerEngagementChecking(attackerEngagementChecking) {
+        console.assert(attackerEngagementChecking!==undefined);
+        this._attackerEngagementChecking = attackerEngagementChecking;
+    }
+
     receivesOrder(order) {
         console.assert(order===true || order===false);
         Memento.register(this);
@@ -1046,6 +1105,16 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         super.reactivate();
         this._orderGiven = false;
         this._updatePlayedArtifact(this.deleteMarkerArtifact, this.removeMarkerArtifact);
+    }
+
+    finish() {
+        this._disruptChecked = false;
+        this._routChecked = false;
+        this._neighborsCohesionLoss = false;
+        this._defenderEngagementChecking = false;
+        this._attackerEngagementChecking = false;
+        CBSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit: this}));
+        super.finish();
     }
 
     _updatePlayed() {
@@ -1426,6 +1495,17 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._charging = state.charging;
         this._engaging = state.engaging;
         this._orderGiven = state.orderGiven;
+        this._disruptChecked = state.disruptChecked;
+        this._routChecked = state.routChecked;
+        this._neighborsCohesionLoss = state.neighborsCohesionLoss;
+        this._defenderEngagementChecking = state.defenderEngagementChecking;
+        this._attackerEngagementChecking = state.attackerEngagementChecking;
+        if (this._disruptChecked  || this._routChecked || this._neighborsCohesionLoss || this._defenderEngagementChecking || this._attackerEngagementChecking) {
+            this.game.setFocusedPlayable(this);
+        }
+        else if (this.game.focusedPlayable===this) {
+            this.game.setFocusedPlayable(null);
+        }
         this.played = state.played;
         this._updateTirednessArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
         this._updateMunitionsArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
@@ -1780,3 +1860,352 @@ export class CBCharacter extends CBUnit {
         "./../images/markers/retreat.png"
     ];
 }
+
+export function getUnitFromContext(context, spec) {
+    if (!context.units) {
+        context.units = new Map();
+        for (let playable of context.game.playables) {
+            if (playable instanceof CBUnit) {
+                context.units.set(playable.name, playable);
+            }
+        }
+    }
+    return context.units.get(spec);
+}
+
+export class CBUnitAnimation extends CBAnimation {
+
+    constructor({unit, state, ...params}) {
+        super(params);
+        this._unit = unit;
+        this._state = state;
+    }
+
+    _draw(count, ticks) {
+        if (count===0) {
+            if (this._unit._animation) {
+                this._unit._animation.cancel();
+            }
+            this._unit._animation = this;
+            this.init && this.init();
+        }
+        return super._draw(count, ticks);
+    }
+
+    _finalize() {
+        super._finalize();
+        this._unit.setState(this._state);
+        delete this._unit._animation;
+    }
+
+}
+
+export let CBUnitSceneAnimation = SceneAnimation(CBUnitAnimation);
+
+export class CBStateSequenceElement extends CBSequenceElement {
+
+    constructor({unit, game, type="State"}) {
+        super({type, game});
+        unit&&this.setUnit(unit);
+    }
+
+    setUnit(unit) {
+        this.unit = unit;
+        this.steps = unit.isOnHex() ? unit.steps : 0;
+        this.cohesion = unit.cohesion;
+        this.tiredness = unit.tiredness;
+        this.munitions = unit.munitions;
+        this.charging = unit.charge;
+        this.engaging = unit.isEngaging();
+        this.orderGiven = unit.hasReceivedOrder();
+        this.disruptChecked = unit.disruptChecked;
+        this.routChecked = unit.routChecked;
+        this.neighborsCohesionLoss = unit.neighborsCohesionLoss;
+        this.defenderEngagementChecking = unit.defenderEngagementChecking;
+        this.attackerEngagementChecking = unit.attackerEngagementChecking;
+        this.played = unit.isPlayed();
+    }
+
+    setState(state) {
+        if (state.steps !== undefined) this.steps = state.steps;
+        if (state.cohesion !== undefined) this.cohesion = state.cohesion;
+        if (state.tiredness !== undefined) this.tiredness = state.tiredness;
+        if (state.munitions !== undefined) this.munitions = state.munitions;
+        if (state.charging !== undefined) this.charging = state.charging;
+        if (state.engaging !== undefined) this.engaging = state.engaging;
+        if (state.orderGiven !== undefined) this.orderGiven = state.orderGiven;
+        if (state.disruptChecked !== undefined) this.disruptChecked = state.disruptChecked;
+        if (state.routChecked !== undefined) this.routChecked = state.routChecked;
+        if (state.neighborsCohesionLoss !== undefined) this.neighborsCohesionLoss = state.neighborsCohesionLoss;
+        if (state.defenderEngagementChecking !== undefined) this.defenderEngagementChecking = state.defenderEngagementChecking;
+        if (state.attackerEngagementChecking !== undefined) this.attackerEngagementChecking = state.attackerEngagementChecking;
+        if (state.played !== undefined) this.played = state.played;
+        return this;
+    }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        if (this.steps !== element.steps) return false;
+        if (this.unit !== element.unit) return false;
+        if (this.cohesion !== element.cohesion) return false;
+        if (this.tiredness !== element.tiredness) return false;
+        if (this.munitions !== element.munitions) return false;
+        if (this.charging !== element.charging) return false;
+        if (this.engaging !== element.engaging) return false;
+        if (this.orderGiven !== element.orderGiven) return false;
+        if (this.disruptChecked !== element.disruptChecked) return false;
+        if (this.routChecked !== element.routChecked) return false;
+        if (this.neighborsCohesionLoss !== element.neighborsCohesionLoss) return false;
+        if (this.defenderEngagementChecking !== element.defenderEngagementChecking) return false;
+        if (this.attackerEngagementChecking !== element.attackerEngagementChecking) return false;
+        if (this.played !== element.played) return false;
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        if (this.unit !== undefined) result+=", Unit: "+this.unit.name;
+        if (this.steps !== undefined) result+=", Unit: "+this.unit.steps;
+        if (this.cohesion !== undefined) result+=", Cohesion: "+this.cohesion;
+        if (this.tiredness !== undefined) result+=", Tiredness: "+this.tiredness;
+        if (this.munitions !== undefined) result+=", Munitions: "+this.munitions;
+        if (this.charging !== undefined) result+=", Charging: "+this.charging;
+        if (this.engaging !== undefined) result+=", Engaging: "+this.engaging;
+        if (this.orderGiven !== undefined) result+=", OrderGiven: "+this.orderGiven;
+        if (this.disruptChecked !== undefined) result+=", DisruptChecked: "+this.disruptChecked;
+        if (this.routChecked !== undefined) result+=", RoutChecked: "+this.routChecked;
+        if (this.neighborsCohesionLoss !== undefined) result+=", NeighborsCohesionLoss: "+this.neighborsCohesionLoss;
+        if (this.defenderEngagementChecking !== undefined) result+=", DefenderEngagementChecking: "+this.defenderEngagementChecking;
+        if (this.attackerEngagementChecking !== undefined) result+=", AttackerEngagementChecking: "+this.attackerEngagementChecking;
+        if (this.played !== undefined) result+=", Played: "+this.played;
+        return result;
+    }
+
+    apply(startTick) {
+        return new CBUnitAnimation({unit:this.unit, startTick, duration:this.delay, state:this});
+    }
+
+    get delay() { return 0; }
+
+    toSpec(spec, context) {
+        super.toSpec(spec, context);
+        spec.unit = this.unit.name;
+        spec.steps = this.unit.steps;
+        spec.cohesion = this.getCohesionCode(this.cohesion);
+        spec.tiredness = this.getTirednessCode(this.tiredness);
+        spec.ammunition = this.getMunitionsCode(this.munitions);
+        spec.charging = this.getChargingCode(this.charging);
+        spec.engaging = this.engaging;
+        spec.orderGiven = this.orderGiven;
+        spec.disruptChecked = this.disruptChecked;
+        spec.routChecked = this.routChecked;
+        spec.neighborsCohesionLoss = this.neighborsCohesionLoss;
+        spec.defenderEngagementChecking = this.defenderEngagementChecking;
+        spec.attackerEngagementChecking = this.attackerrEngagementChecking;
+        spec.played = this.played;
+    }
+
+    fromSpec(spec, context) {
+        super.fromSpec(spec, context);
+        let unit = getUnitFromContext(context, spec.unit);
+        if (unit) {
+            this.setUnit(unit);
+        }
+        if (spec.steps !== undefined) this.steps = spec.steps;
+        if (spec.tiredness !== undefined) this.tiredness = this.getTiredness(spec.tiredness);
+        if (spec.cohesion !== undefined) this.cohesion = this.getCohesion(spec.cohesion);
+        if (spec.ammunition !== undefined) this.munitions = this.getMunitions(spec.ammunition);
+        if (spec.charging !== undefined) this.charging = this.getCharging(spec.charging);
+        if (spec.engaging !== undefined) this.engaging = spec.engaging;
+        if (spec.orderGiven !== undefined) this.orderGiven = spec.orderGiven;
+        if (spec.disruptChecked !== undefined) this.disruptChecked = spec.disruptChecked;
+        if (spec.routChecked !== undefined) this.routChecked = spec.routChecked;
+        if (spec.neighborsCohesionLoss !== undefined) this.neighborsCohesionLoss = spec.neighborsCohesionLoss;
+        if (spec.defenderEngagementChecking !== undefined) this.defenderEngagementChecking = spec.defenderEngagementChecking;
+        if (spec.attackerEngagementChecking !== undefined) this.attackerEngagementChecking = spec.attackerEngagementChecking;
+        if (spec.played !== undefined) this.played = spec.played;
+    }
+
+    getTirednessCode(tiredness) {
+        if (tiredness===CBTiredness.TIRED) return "T";
+        else if (tiredness===CBTiredness.EXHAUSTED) return "E";
+        else return "F";
+    }
+
+    getMunitionsCode(munitions) {
+        if (munitions===CBMunitions.SCARCE) return "S";
+        else if (munitions===CBMunitions.EXHAUSTED) return "E";
+        else return "P";
+    }
+
+    getCohesionCode(cohesion) {
+        if (cohesion===CBCohesion.DISRUPTED) return "D";
+        else if (cohesion===CBCohesion.ROUTED) return "R";
+        else if (cohesion===CBCohesion.DESTROYED) return "X";
+        else return "GO";
+    }
+
+    getChargingCode(charging) {
+        if (charging===CBCharge.CHARGING) return "C";
+        else if (charging===CBCharge.BEGIN_CHARGE) return "BC";
+        else if (charging===CBCharge.CAN_CHARGE) return "CC";
+        else return "N";
+    }
+
+    getTiredness(code) {
+        switch (code) {
+            case "F": return CBTiredness.NONE;
+            case "T": return CBTiredness.TIRED;
+            case "E": return CBTiredness.EXHAUSTED;
+        }
+    }
+
+    getMunitions(code) {
+        switch (code) {
+            case "P": return CBMunitions.NONE;
+            case "S": return CBMunitions.SCARCE;
+            case "E": return CBMunitions.EXHAUSTED;
+        }
+    }
+
+    getCohesion(code) {
+        switch (code) {
+            case "GO": return CBCohesion.GOOD_ORDER;
+            case "D": return CBCohesion.DISRUPTED;
+            case "R": return CBCohesion.ROUTED;
+            case "X": return CBCohesion.DESTROYED;
+        }
+    }
+
+    getCharging(code) {
+        switch (code) {
+            case "BC": return CBCharge.BEGIN_CHARGE;
+            case "CC": return CBCharge.CAN_CHARGE;
+            case "C": return CBCharge.CHARGING;
+            case "N": return CBCharge.NONE;
+        }
+    }
+
+}
+CBSequence.register("State", CBStateSequenceElement);
+
+export function HexLocated(clazz) {
+
+    return class extends clazz {
+
+        constructor({hexLocation, stacking, ...params}) {
+            super(params);
+            this.hexLocation = hexLocation;
+            this.stacking = stacking;
+        }
+
+        equalsTo(element) {
+            if (!super.equalsTo(element)) return false;
+            if (this.hexLocation.location.toString() !== element.hexLocation.location.toString()) return false;
+            if (this.stacking !== element.stacking) return false;
+            return true;
+        }
+
+        _toString() {
+            let result = super._toString();
+            if (this.hexLocation !== undefined) result+=", HexLocation: "+this.hexLocation.location.toString();
+            if (this.stacking !== undefined) result+=", Stacking: "+this.stacking;
+            return result;
+        }
+
+        toSpec(spec, context) {
+            super.toSpec(spec, context);
+            if (this.hexLocation instanceof CBHexSideId) {
+                spec.hexCol = this.hexLocation.fromHex.col;
+                spec.hexRow = this.hexLocation.fromHex.row;
+                spec.hexAngle = this.hexLocation.angle;
+            }
+            else {
+                spec.hexCol = this.hexLocation.col;
+                spec.hexRow = this.hexLocation.row;
+            }
+            spec.stacking = this.getStackingCode(this.stacking);
+        }
+
+        fromSpec(spec, context) {
+            super.fromSpec(spec, context);
+            if (spec.hexCol !== undefined) {
+                this.hexLocation = context.game.map.getHex(spec.hexCol, spec.hexRow);
+                if (spec.hexAngle!==undefined) {
+                    this.hexLocation = this.hexLocation.toward(spec.hexAngle);
+                }
+            }
+            if (spec.stacking !== undefined) {
+                this.stacking = this.getStacking(spec.stacking)
+            }
+        }
+
+        getStackingCode(stacking) {
+            if (stacking===CBStacking.TOP) return "T";
+            else return "B";
+        }
+
+        getStacking(code) {
+            switch (code) {
+                case "T": return CBStacking.TOP;
+                case "B": return CBStacking.BOTTOM;
+            }
+        }
+
+    }
+
+}
+
+export class CBDisplaceAnimation extends CBUnitAnimation {
+
+    constructor({unit, startTick, duration, state, angle, hexLocation, stacking}) {
+        super({unit, startTick, duration, state});
+        this._angle = angle;
+        this._hexLocation = hexLocation;
+        this._stacking = stacking;
+    }
+
+    init() {
+        super.init();
+        if (this._angle!==undefined) {
+            this._startAngle = this._unit.element.angle;
+            this._unit._rotate(this._angle);
+            this._stopAngle = this._unit.element.angle;
+            this._unit.element.setAngle(this._startAngle);
+        }
+        if (this._hexLocation!==undefined) {
+            this._startLocation = this._unit.element.location;
+            this._unit._move(this._hexLocation, this._stacking);
+            this._stopLocation = this._unit.element.location;
+            this._unit.element.setLocation(this._startLocation);
+        }
+    }
+
+    _finalize() {
+        if (this._stopAngle) {
+            this._unit.element.setAngle(this._stopAngle);
+        }
+        if (this._stopLocation) {
+            this._unit.element.setLocation(this._stopLocation);
+        }
+        super._finalize();
+    }
+
+    draw(count, ticks) {
+        let factor = this._factor(count);
+        if (this._startAngle!==undefined) {
+            console.log(this._startAngle + factor*diffAngle(this._startAngle, this._stopAngle));
+            this._unit.element.setAngle(this._startAngle + factor*diffAngle(this._startAngle, this._stopAngle));
+        }
+        if (this._startLocation!==undefined) {
+            this._unit.element.setLocation(new Point2D(
+                this._startLocation.x + factor*(this._stopLocation.x-this._startLocation.x),
+                this._startLocation.y + factor*(this._stopLocation.y-this._startLocation.y)
+            ));
+        }
+        return super.draw(count, ticks);
+    }
+
+}
+
+

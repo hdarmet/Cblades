@@ -17,19 +17,20 @@ import {
     CBInteractivePlayer,
     CBWeatherIndicator,
     CBWingTirednessIndicator,
-    CBMoralInsert
+    CBMoralInsert, CBLoseCohesionChecking
 } from "./interactive-player.js";
 import {
-    CBCharge
+    CBCharge, CBUnitSceneAnimation, CBStateSequenceElement
 } from "../unit.js";
 import {
-    CBRallySequenceElement,
-    CBRefillSequenceElement, CBReorganizeSequenceElement,
-    CBRestSequenceElement, CBSequence
+    CBSequence, WithDiceRoll
 } from "../sequences.js";
 import {
     SequenceLoader
 } from "../loader.js";
+import {
+    CBConfrontChecking, CBLoseCohesionForCrossingChecking
+} from "./interactive-movement.js";
 
 export function registerInteractiveRecover() {
     CBInteractivePlayer.prototype.restUnit = function(unit, event) {
@@ -477,3 +478,113 @@ export class CBCheckRallyInsert extends CBInsert {
 
 }
 CBCheckRallyInsert.DIMENSION = new Dimension2D(444, 268);
+
+
+export class CBRestSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
+
+    constructor({game, unit, dice}) {
+        super({type:"Rest", game, unit, dice});
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBUnitSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new InteractiveRestingAction(this.game, this.unit).replay(this.dice)
+        });
+    }
+
+}
+CBSequence.register("Rest", CBRestSequenceElement);
+
+export class CBRefillSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
+
+    constructor({game, unit, dice}) {
+        super({type:"Refill", game, unit, dice});
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBUnitSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new InteractiveReplenishMunitionsAction(this.game, this.unit).replay(this.dice)
+        });
+    }
+
+}
+CBSequence.register("Refill", CBRefillSequenceElement);
+
+export class CBRallySequenceElement extends WithDiceRoll(CBStateSequenceElement) {
+
+    constructor({game, unit, dice}) {
+        super({type:"Rally", game, unit, dice});
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBUnitSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: ()=>new InteractiveRallyAction(this.game, this.unit).replay(this.dice)
+        });
+    }
+
+}
+CBSequence.register("Rally", CBRallySequenceElement);
+
+export class CBReorganizeSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
+
+    constructor({game, unit, dice}) {
+        super({type:"Reorganize", game, unit, dice});
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBUnitSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: ()=>new InteractiveReorganizeAction(this.game, this.unit).replay(this.dice)
+        });
+    }
+
+}
+CBSequence.register("Reorganize", CBReorganizeSequenceElement);
+
+export class CBConfrontSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
+
+    constructor({game, unit, dice}) {
+        super({ type: "Confront", game, unit, dice});
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBUnitSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new CBConfrontChecking(this.game, this.unit).replay(this.dice)
+        });
+    }
+
+}
+CBSequence.register("Confront", CBConfrontSequenceElement);
+
+export class CBCrossingSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
+
+    constructor({game, unit, dice}) {
+        super({ type:"Crossing", game, unit, dice});
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBUnitSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new CBLoseCohesionForCrossingChecking(this.game, this.unit).replay(this.dice)
+        });
+    }
+
+}
+CBSequence.register("Crossing", CBCrossingSequenceElement);
+

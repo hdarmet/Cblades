@@ -10,7 +10,7 @@ import {
 } from "../draw.js";
 import {
     CBCharge, CBCohesion, CBFormation,
-    CBMunitions, CBOrderInstruction, CBTiredness, CBUnit, CBUnitType,
+    CBMunitions, CBOrderInstruction, CBTiredness, CBUnitType,
     CBWing
 } from "./unit.js";
 import {
@@ -419,6 +419,11 @@ export class GameLoader {
                         charging: unitSpec.charging ? CBCharge.CHARGING : CBCharge.NONE,
                         engaging: unitSpec.engaging,
                         orderGiven: unitSpec.orderGiven,
+                        disruptChecked: unitSpec.disruptChecked,
+                        routChecked: unitSpec.routChecked,
+                        neighborsCohesionLoss: unitSpec.neighborsCohesionLoss,
+                        defenderEngagementChecking: unitSpec.defenderEngagementChecking,
+                        attackerEngagementChecking: unitSpec.attackerEngagementChecking,
                         played: unitSpec.played
                     });
                     unitsMap.set(unit.name, {unit, unitSpec});

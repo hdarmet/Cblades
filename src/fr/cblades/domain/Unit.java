@@ -27,6 +27,11 @@ public class Unit extends BaseEntity {
     boolean charging;
     boolean contact;
     boolean orderGiven;
+    boolean disruptChecked = false;
+    boolean routChecked = false;
+    boolean neighborsCohesionLoss = false;
+    boolean defenderEngagementChecking = false;
+    boolean attackerEngagementChecking = false;
     boolean played;
     @Transient
     Wing wing;
@@ -149,6 +154,46 @@ public class Unit extends BaseEntity {
     }
     public Unit setOrderGiven(boolean orderGiven) {
         this.orderGiven = orderGiven;
+        return this;
+    }
+
+    public boolean isDisruptChecked() {
+        return this.disruptChecked;
+    }
+    public Unit setDisruptChecked(boolean disruptChecked) {
+        this.disruptChecked = disruptChecked;
+        return this;
+    }
+
+    public boolean isRoutChecked() {
+        return this.routChecked;
+    }
+    public Unit setRoutChecked(boolean routChecked) {
+        this.routChecked = routChecked;
+        return this;
+    }
+
+    public boolean isNeighborsCohesionLoss() {
+        return this.neighborsCohesionLoss;
+    }
+    public Unit setNeighborsCohesionLoss(boolean neighborsCohesionLoss) {
+        this.neighborsCohesionLoss = neighborsCohesionLoss;
+        return this;
+    }
+
+    public boolean isDefenderEngagementChecking() {
+        return this.defenderEngagementChecking;
+    }
+    public Unit setDefenderEngagementChecking(boolean defenderEngagementChecking) {
+        this.defenderEngagementChecking = defenderEngagementChecking;
+        return this;
+    }
+
+    public boolean isAttackerEngagementChecking() {
+        return this.attackerEngagementChecking;
+    }
+    public Unit setAttackerEngagementChecking(boolean attackerEngagementChecking) {
+        this.attackerEngagementChecking = attackerEngagementChecking;
         return this;
     }
 

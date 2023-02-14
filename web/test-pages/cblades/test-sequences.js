@@ -22,13 +22,8 @@ import {
     CBStacking
 } from "../../jslib/cblades/game.js";
 import {
-    CBMoveSequenceElement,
     CBNextTurnSequenceElement,
-    CBReorientSequenceElement,
-    CBRotateSequenceElement,
-    CBSequence,
-    CBStateSequenceElement,
-    CBTurnSequenceElement
+    CBSequence
 } from "../../jslib/cblades/sequences.js";
 import {
     CBCharge, CBCohesion, CBMunitions, CBTiredness

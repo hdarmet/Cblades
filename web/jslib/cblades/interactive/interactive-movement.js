@@ -2,7 +2,7 @@
 
 import {
     Area2D,
-    canonizeAngle,
+    canonizeAngle, diffAngle,
     Dimension2D, invertAngle, Point2D, sumAngle
 } from "../../geometry.js";
 import {
@@ -24,7 +24,8 @@ import {
 } from "../playable.js";
 import {
     CBCharge,
-    CBMovement, CBMoveProfile
+    CBMovement, CBMoveProfile, CBStateSequenceElement, CBUnitAnimation,
+    CBUnitSceneAnimation, HexLocated, CBDisplaceAnimation
 } from "../unit.js";
 import {
     DImage
@@ -39,16 +40,8 @@ import {
     stringifyHexLocations
 } from "../pathfinding.js";
 import {
-    CBMoveSequenceElement,
-    CBReorientSequenceElement,
-    CBRotateSequenceElement,
     CBSequence,
-    CBTurnSequenceElement,
-    CBStateSequenceElement,
-    CBConfrontSequenceElement,
-    CBAttackerEngagementSequenceElement,
-    CBDisengagementSequenceElement,
-    CBCrossingSequenceElement
+    WithDiceRoll
 } from "../sequences.js";
 import {
     SequenceLoader
@@ -778,7 +771,8 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
     }
 
     _checkAttackerEngagement(engaging, action) {
-        if (engaging && this.game.arbitrator.isUnitEngaged(this.unit, false)) {
+        if (!this.unit.defenderEngagementChecking && engaging && this.game.arbitrator.isUnitEngaged(this.unit, false)) {
+            this.unit.defenderEngagementChecking = true;
             new CBAttackerEngagementChecking(this.game, this.unit).play(() => {
                 super.finalize(action);
                 this.game.validate();
@@ -1902,3 +1896,147 @@ export class CBCrossCheckCohesionInsert extends CBInsert {
 
     static DIMENSION = new Dimension2D(444, 249);
 }
+
+export class CBMoveSequenceElement extends HexLocated(CBStateSequenceElement) {
+
+    constructor({game, unit, hexLocation, hexAngle, stacking}) {
+        super({type: "Move", game, unit, hexLocation, hexAngle, stacking});
+    }
+
+    get delay() { return 500; }
+
+    apply(startTick) {
+        this.game.centerOn(this.unit.viewportLocation);
+        return new CBDisplaceAnimation({
+            unit:this.unit, startTick, duration:this.delay,
+            state:this, hexLocation:this.hexLocation, stacking:this.stacking
+        });
+    }
+
+}
+CBSequence.register("Move", CBMoveSequenceElement);
+
+export function Oriented(clazz) {
+
+    return class extends clazz {
+
+        constructor({angle, ...params}) {
+            super(params);
+            this.angle = angle;
+        }
+
+        equalsTo(element) {
+            if (!super.equalsTo(element)) return false;
+            if (this.angle !== element.angle) return false;
+            return true;
+        }
+
+        _toString() {
+            let result = super._toString();
+            if (this.angle !== undefined) result+=", Angle: "+this.angle;
+            return result;
+        }
+
+        toSpec(spec, context) {
+            super.toSpec(spec, context);
+            spec.angle = this.angle;
+        }
+
+        fromSpec(spec, context) {
+            super.fromSpec(spec, context);
+            if (spec.angle !== undefined) {
+                this.angle = spec.angle;
+            }
+        }
+
+    }
+
+}
+
+export class CBRotateSequenceElement extends Oriented(CBStateSequenceElement) {
+
+    constructor({game, unit, angle}) {
+        super({type: "Rotate", game, unit, angle});
+    }
+
+    get delay() { return 500; }
+
+    apply(startTick) {
+        return new CBDisplaceAnimation({
+            unit: this.unit, startTick, duration:this.delay, state:this, angle:this.angle
+        });
+    }
+
+}
+CBSequence.register("Rotate", CBRotateSequenceElement);
+
+export class CBReorientSequenceElement extends Oriented(CBStateSequenceElement) {
+
+    constructor({game, unit, angle}) {
+        super({type: "Reorient", game, unit, angle});
+    }
+
+    get delay() { return 500; }
+
+    apply(startTick) {
+        return new CBDisplaceAnimation({
+            unit: this.unit, startTick, duration: this.delay, state:this, angle:this.angle
+        });
+    }
+
+}
+CBSequence.register("Reorient", CBReorientSequenceElement);
+
+export class CBTurnSequenceElement extends Oriented(HexLocated(CBStateSequenceElement)) {
+
+    constructor({game, unit, angle, hexLocation, stacking}) {
+        super({type:"Turn", game, unit, angle, hexLocation, stacking});
+    }
+
+    get delay() { return 500; }
+
+    apply(startTick) {
+        return new CBDisplaceAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, angle:
+            this.angle, hexLocation: this.hexLocation, stacking: this.stacking
+        });
+    }
+
+}
+CBSequence.register("Turn", CBTurnSequenceElement);
+
+export class CBDisengagementSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
+
+    constructor({game, unit, dice}) {
+        super({ type:"Disengagement", game, unit, dice});
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBUnitSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new CBDisengagementChecking(this.game, this.unit).replay(this.dice)
+        });
+    }
+
+}
+CBSequence.register("Disengagement", CBDisengagementSequenceElement);
+
+export class CBAttackerEngagementSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
+
+    constructor({game, unit, dice}) {
+        super({ type:"AttackerEngagement", game, unit, dice});
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBUnitSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new CBAttackerEngagementChecking(this.game, this.unit).replay(this.dice)
+        });
+    }
+
+}
+CBSequence.register("AttackerEngagement", CBAttackerEngagementSequenceElement);

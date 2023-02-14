@@ -19,13 +19,14 @@ import {
     CBHexSideId
 } from "../map.js";
 import {
-    CBCharge, CBUnitActuatorTrigger
+    CBCharge, CBDisplaceAnimation, CBUnitActuatorTrigger, HexLocated, CBStateSequenceElement
 } from "../unit.js";
 import {
     CBActionMenu,
     CBInteractivePlayer
 } from "./interactive-player.js";
 import {
+    DAnimation,
     DImage
 } from "../../draw.js";
 import {
@@ -35,10 +36,8 @@ import {
     Memento
 } from "../../mechanisms.js";
 import {
-    CBFireAttackSequenceElement,
-    CBMoveSequenceElement,
-    CBReorientSequenceElement,
-    CBSequence, CBShockAttackSequenceElement, CBStateSequenceElement
+    CBSceneAnimation,
+    CBSequence, CBSequenceElement, WithDiceRoll
 } from "../sequences.js";
 import {
     SequenceLoader
@@ -1412,5 +1411,223 @@ export class CBWeaponTableInsert extends CBAbstractInsert {
     static MARGIN_PAGE_DIMENSION = new Dimension2D(CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.PAGE_DIMENSION.h);
     static CONTENT_DIMENSION = new Dimension2D(CBWeaponTableInsert.DIMENSION.w-CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.DIMENSION.h);
     static CONTENT_PAGE_DIMENSION = new Dimension2D(CBWeaponTableInsert.PAGE_DIMENSION.w-CBWeaponTableInsert.MARGIN, CBWeaponTableInsert.PAGE_DIMENSION.h);
+
+}
+
+
+
+export function WithCombat(clazz) {
+
+    return class extends clazz {
+
+        constructor({attackerHex, defender, defenderHex, supported, advantage, ...params}) {
+            super(params);
+            this.attackerHex = attackerHex;
+            this.defender = defender;
+            this.defenderHex = defenderHex;
+            this.supported = supported;
+            this.advantage = advantage;
+        }
+
+        equalsTo(element) {
+            if (!super.equalsTo(element)) return false;
+            if (element.attackerHex.location.toString() !== this.attackerHex.location.toString()) return false;
+            if (element.defender !== this.defender) return false;
+            if (element.defenderHex.location.toString() !== this.defenderHex.location.toString()) return false;
+            if (element.supported !== this.supported) return false;
+            if (element.advantage !== this.advantage) return false;
+            return true;
+        }
+
+        _toString() {
+            let result = super._toString();
+            result+=`, attackerHex: `+this.attackerHex.location.toString();
+            result+=`, defender: `+this.defender;
+            result+=`, defenderHex: `+this.defenderHex.location.toString();
+            result+=`, supported: `+this.supported;
+            result+=`, advantage: `+this.advantage;
+            return result;
+        }
+
+        toSpec(spec, context) {
+            super.toSpec(spec, context);
+            spec.attackerHexCol = this.attackerHex.col;
+            spec.attackerHexRow = this.attackerHex.row;
+            spec.defender = this.defender.name;
+            spec.defenderHexCol = this.defenderHex.col;
+            spec.defenderHexRow = this.defenderHex.row;
+            spec.supported = this.supported;
+            spec.advantage = this.advantage;
+        }
+
+        fromSpec(spec, context) {
+            super.fromSpec(spec, context);
+            this.attackerHex = context.game.map.getHex(spec.attackerHexCol, spec.attackerHexRow);
+            this.defender = getUnitFromContext(context, spec.defender);
+            this.defenderHex = context.game.map.getHex(spec.defenderHexCol, spec.defenderHexRow);
+            this.supported = spec.supported;
+            this.advantage = spec.advantage;
+        }
+
+    }
+
+}
+
+export class CBShockAttackSequenceElement extends WithCombat(WithDiceRoll(CBStateSequenceElement)) {
+
+    constructor({game, unit, attackerHex, defender, defenderHex, supported, advantage, dice}) {
+        super({type: "ShockAttack", game, unit, attackerHex, defender, defenderHex, supported, advantage, dice});
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new InteractiveShockAttackAction(this.game, this.unit)
+                .replay(this.attackerHex, this.defender, this.defenderHex, this.supported, this.advantage, this.dice)
+        });
+    }
+
+}
+CBSequence.register("ShockAttack", CBShockAttackSequenceElement);
+
+export class CBFireAttackSequenceElement extends WithCombat(WithDiceRoll(CBStateSequenceElement)) {
+
+    constructor({game, unit, firerHex, target, targetHex, advantage, dice}) {
+        super({
+            type: "FireAttack", game, unit, attackerHex:firerHex, defender:target, defenderHex:targetHex,
+            supported:false, advantage, dice
+        });
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new InteractiveFireAttackAction(this.game, this.unit)
+                .replay(this.attackerHex, this.defender, this.defenderHex, this.advantage, this.dice)
+        });
+    }
+
+}
+CBSequence.register("FireAttack", CBFireAttackSequenceElement);
+
+export class CBAsk4RetreatSequenceElement extends CBSequenceElement {
+
+    constructor({game, unit, losses, attacker, advance}) {
+        super({type: "Ask4Retreat", game});
+        console.log(unit, losses, attacker, advance);
+        this.unit = unit;
+        this.attacker = attacker;
+        this.losses = losses;
+        this.advance = advance;
+        this.id = 0;
+    }
+
+    get delay() { return 0; }
+
+    apply(startTick) {
+        return new CBAsk4RetreatAnimation({
+            game:this.game, unit:this.unit, id:this.id, losses:this.losses, attacker:this.attacker, startTick
+        });
+    }
+
+    toSpec(spec, context) {
+        super.toSpec(spec, context);
+        spec.unit = this.unit.name;
+        spec.attacker = this.attacker.name;
+        spec.losses = this.losses;
+        spec.advance = this.advance;
+    }
+
+    fromSpec(spec, context) {
+        super.fromSpec(spec, context);
+        this.unit = getUnitFromContext(context, spec.unit);
+        this.attacker = getUnitFromContext(context, spec.attacker);
+        this.losses = spec.losses;
+        this.advance = spec.advance;
+        this.id = spec.id;
+    }
+
+}
+CBSequence.register("Ask4Retreat", CBAsk4RetreatSequenceElement);
+
+export class CBRetreatSequenceElement extends HexLocated(CBStateSequenceElement) {
+
+    constructor({game, unit, hexLocation, askRequest}) {
+        super({type: "Retreat", unit, hexLocation, stacking:CBStacking.TOP, game});
+        this.askRequest = askRequest;
+    }
+
+    get delay() { return 500; }
+
+    apply(startTick) {
+        return new CBRetreatAnimation({
+            unit:this.unit, startTick, duration:this.delay, state:this,
+            angle:this.unit.angle, hexLocation:this.hexLocation, stacking:this.stacking
+        });
+    }
+
+    toSpec(spec, context) {
+        super.toSpec(spec, context);
+        spec.askRequest = this.askRequest;
+    }
+
+    fromSpec(spec, context) {
+        super.fromSpec(spec, context);
+        this.askrequest = spec.askRequest;
+    }
+
+}
+CBSequence.register("Retreat", CBRetreatSequenceElement);
+
+export class CBAsk4RetreatAnimation extends DAnimation {
+
+    constructor({game, id, unit, losses, attacker, startTick}) {
+        super();
+        this._game = game;
+        this._unit = unit;
+        this._losses = losses;
+        this._attacker = attacker;
+        this._id = id;
+        this.play(startTick+1);
+    }
+
+    _draw(count, ticks) {
+        if (count===0) {
+            this._unit.launchAction(new InteractiveRetreatAction(this._game, this._unit, this._losses, this._attacker, false,
+                ()=>{
+                    CBSequence.appendElement(this._game,
+                        new CBRetreatSequenceElement({game: this._game, unit:this._unit, hexLocation:this._unit.hexLocation, askRequest:this._id})
+                    );
+                    new SequenceLoader().save(this._game, CBSequence.getSequence(this._game));
+                    this._game.validate();
+                }
+            ));
+        }
+        return false;
+    }
+
+}
+
+export class CBRetreatAnimation extends CBDisplaceAnimation {
+
+    constructor({unit, startTick, duration, state, angle, hexLocation, stacking}) {
+        super({unit, startTick, duration, state, angle, hexLocation, stacking});
+    }
+
+    _draw(count, ticks) {
+        if (count===0) {
+            this._unit.game.closeActuators();
+        }
+        return super._draw(count, ticks);
+    }
+
+    _finalize() {
+        this._unit.player.continueLossApplication(this._unit, this._hexLocation, this._stacking);
+        return super._finalize();
+    }
 
 }

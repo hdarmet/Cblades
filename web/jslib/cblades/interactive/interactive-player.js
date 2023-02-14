@@ -20,12 +20,11 @@ import {
     CBInsert
 } from "../playable.js";
 import {
-    CBUnitPlayer
+    CBStateSequenceElement,
+    CBUnitPlayer, CBUnitSceneAnimation
 } from "../unit.js";
 import {
-    CBDefenderEngagementSequenceElement,
-    CBLoseCohesionSequenceElement,
-    CBNextTurnSequenceElement, CBSequence
+    CBNextTurnSequenceElement, CBSequence, WithDiceRoll
 } from "../sequences.js";
 import {
     SequenceLoader
@@ -48,12 +47,13 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _doDisruptChecking(unit, processing, cancellable) {
-        if (this.game.arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit)) {
+        if (!unit.disruptChecked && this.game.arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit)) {
             new CBLoseCohesionChecking(this.game, unit).play( () => {
+                unit.disruptChecked = true;
                 this._selectAndFocusPlayable(unit);
-                this.game.validate();
-                processing();
-            }, cancellable);
+            },
+            processing,
+            cancellable);
         }
         else {
             processing();
@@ -61,12 +61,14 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _doRoutChecking(unit, processing, cancellable) {
-        if (this.game.arbitrator.doesARoutedUnitHaveNonRoutedNeighbors(unit)) {
+        if (!unit.routChecked && this.game.arbitrator.doesARoutedUnitHaveNonRoutedNeighbors(unit)) {
             this._checkIfNeighborsLoseCohesion(unit, unit.hexLocation, () => {
+                unit.routCkecked = true;
                 this._selectAndFocusPlayable(unit);
                 this.game.validate();
                 this._doDisruptChecking(unit, processing, false);
-            }, cancellable);
+            },
+            cancellable);
         }
         else {
             this._doDisruptChecking(unit, processing, cancellable);
@@ -74,12 +76,13 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable) {
-        if (neighbors.length) {
+        if (!unit.neighborsCohesionLoss && neighbors.length) {
             let neighbor = neighbors.pop();
             new CBLoseCohesionChecking(this.game, neighbor).play( () => {
-                this.game.validate();
-                this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, false);
-            }, cancellable);
+                unit.neighborsCohesionLoss = true;
+            },
+            ()=>this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, false),
+            cancellable);
         }
         else {
             processing();
@@ -92,8 +95,9 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _doEngagementChecking(unit, processing) {
-        if (this.game.arbitrator.isUnitEngaged(unit, true)) {
+        if (!unit.attackerEngagementChecking && this.game.arbitrator.isUnitEngaged(unit, true)) {
             new CBDefenderEngagementChecking(this.game, unit).play(() => {
+                unit.attackerEngagementChecking = true;
                 let hexLocation = unit.hexLocation;
                 if (unit.isOnHex()) {
                     this._selectAndFocusPlayable(unit);
@@ -141,6 +145,7 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     finishTurn(animation) {
         let playable = this.game.selectedPlayable;
         this.afterActivation(playable, ()=>{
+            playable.finish();
             CBSequence.appendElement(this.game, new CBNextTurnSequenceElement({game: this.game}));
             new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
             super.finishTurn(animation);
@@ -270,9 +275,10 @@ export class CBLoseCohesionChecking {
         return scene;
     }
 
-    play(action, cancellable) {
+    play(action, processing, cancellable) {
         let scene = this.createScene(
             ()=>{
+                action();
                 CBSequence.appendElement(this.game, new CBLoseCohesionSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
@@ -287,7 +293,7 @@ export class CBLoseCohesionChecking {
                     if (!cancellable) {
                         this.game.closePopup();
                     }
-                    action();
+                    processing();
                 }
             }
         );
@@ -510,3 +516,37 @@ export class CBMoralInsert extends CBInsert {
     static DIMENSION = new Dimension2D(444, 389);
 }
 
+export class CBDefenderEngagementSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
+
+    constructor({game, unit, dice}) {
+        super({ type:"DefenderEngagement", game, unit, dice});
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBUnitSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new CBDefenderEngagementChecking(this.game, this.unit).replay(this.dice)
+        });
+    }
+
+}
+CBSequence.register("DefenderEngagement", CBDefenderEngagementSequenceElement);
+
+export class CBLoseCohesionSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
+
+    constructor({game, unit, dice}) {
+        super({type:"LossConsistency", game, unit, dice});
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBUnitSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new CBLoseCohesionChecking(this.game, this.unit).replay(this.dice)
+        });
+    }
+}
+CBSequence.register("LossConsistency", CBLoseCohesionSequenceElement);

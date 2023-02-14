@@ -69,6 +69,11 @@ public class SequenceApplyer implements SequenceVisitor  {
         unit.setTiredness(element.getTiredness());
         unit.setEngaging(element.isEngaging());
         unit.setOrderGiven(element.hasGivenOrder());
+        unit.setDisruptChecked(element.isDisruptChecked());
+        unit.setRoutChecked(element.isRoutChecked());
+        unit.setDefenderEngagementChecking(element.isDefenderEngagementChecking());
+        unit.setAttackerEngagementChecking(element.isAttackerEngagementChecking());
+        unit.setNeighborsCohesionLoss(element.isNeighborsCohesionLoss());
         unit.setPlayed(element.isPlayed());
         unit.setSteps(element.getSteps());
         if (unit.getSteps()==0) {
@@ -174,12 +179,6 @@ public class SequenceApplyer implements SequenceVisitor  {
     public void visit(SequenceElement.Try2ChangeOrderInstructionSequenceElement element) {
     }
 
-    public void visit(SequenceElement.ChangeOrderInstructionSequenceElement element) {
-        Unit leader = units.get(element.getLeader());
-        Wing wing = Wing.findWing(this.game, leader);
-        wing.setOrderInstruction(element.getOrderInstruction());
-    }
-
     public void visit(SequenceElement.Try2TakeCommandSequenceElement element) {
     }
 
@@ -187,6 +186,12 @@ public class SequenceApplyer implements SequenceVisitor  {
     }
 
     public void visit(SequenceElement.GiveOrdersSequenceElement element) {
+    }
+
+    public void visit(SequenceElement.ChangeOrderInstructionSequenceElement element) {
+        Unit leader = units.get(element.getLeader());
+        Wing wing = Wing.findWing(this.game, leader);
+        wing.setOrderInstruction(element.getOrderInstruction());
     }
 
     public void visit(SequenceElement.ManageCommandSequenceElement element) {

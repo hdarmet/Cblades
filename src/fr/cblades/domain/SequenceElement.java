@@ -11,8 +11,16 @@ import javax.persistence.*;
 public abstract class SequenceElement extends BaseEntity {
 
     @Entity
+    public static abstract class ExecutableSequenceElement extends SequenceElement {
+    }
+
+    @Entity
+    public static abstract class AskSequenceElement extends SequenceElement {
+    }
+
+    @Entity
     @DiscriminatorValue("State")
-    public static class StateSequenceElement extends SequenceElement {
+    public static class StateSequenceElement extends ExecutableSequenceElement {
 
         String unit;
         int steps;
@@ -26,6 +34,11 @@ public abstract class SequenceElement extends BaseEntity {
         Charging charging = Charging.NONE;
         boolean engaging = false;
         boolean orderGiven = false;
+        boolean disruptChecked = false;
+        boolean routChecked = false;
+        boolean neighborsCohesionLoss = false;
+        boolean defenderEngagementChecking = false;
+        boolean attackerEngagementChecking = false;
         boolean played = false;
 
         public String getUnit() { return this.unit; }
@@ -87,6 +100,46 @@ public abstract class SequenceElement extends BaseEntity {
         }
         public StateSequenceElement setGivenOrder(boolean orderGiven) {
             this.orderGiven = orderGiven;
+            return this;
+        }
+
+        public boolean isDisruptChecked() {
+            return this.disruptChecked;
+        }
+        public StateSequenceElement setDisruptChecked(boolean disruptChecked) {
+            this.disruptChecked = disruptChecked;
+            return this;
+        }
+
+        public boolean isRoutChecked() {
+            return this.routChecked;
+        }
+        public StateSequenceElement setRoutChecked(boolean routChecked) {
+            this.routChecked = routChecked;
+            return this;
+        }
+
+        public boolean isNeighborsCohesionLoss() {
+            return this.neighborsCohesionLoss;
+        }
+        public StateSequenceElement setNeighborsCohesionLoss(boolean neighborsCohesionLoss) {
+            this.neighborsCohesionLoss = neighborsCohesionLoss;
+            return this;
+        }
+
+        public boolean isDefenderEngagementChecking() {
+            return this.defenderEngagementChecking;
+        }
+        public StateSequenceElement setDefenderEngagementChecking(boolean defenderEngagementChecking) {
+            this.defenderEngagementChecking = defenderEngagementChecking;
+            return this;
+        }
+
+        public boolean isAttackerEngagementChecking() {
+            return this.attackerEngagementChecking;
+        }
+        public StateSequenceElement setAttackerEngagementChecking(boolean attackerEngagementChecking) {
+            this.attackerEngagementChecking = attackerEngagementChecking;
             return this;
         }
 
@@ -250,7 +303,7 @@ public abstract class SequenceElement extends BaseEntity {
 
     @Entity
     @DiscriminatorValue("NextTurn")
-    public static class NextTurnSequenceElement extends SequenceElement {
+    public static class NextTurnSequenceElement extends ExecutableSequenceElement {
 
         public void accept(SequenceVisitor visitor) {
             visitor.visit(this);
@@ -554,7 +607,7 @@ public abstract class SequenceElement extends BaseEntity {
 
     @Entity
     @DiscriminatorValue("Try2ChangeOInst")
-    public static class Try2ChangeOrderInstructionSequenceElement extends SequenceElement {
+    public static class Try2ChangeOrderInstructionSequenceElement extends AskSequenceElement {
 
         String leader;
         int dice1;
@@ -592,7 +645,7 @@ public abstract class SequenceElement extends BaseEntity {
 
     @Entity
     @DiscriminatorValue("Try2TakeCommand")
-    public static class Try2TakeCommandSequenceElement extends SequenceElement {
+    public static class Try2TakeCommandSequenceElement extends ExecutableSequenceElement {
 
         String leader;
         int dice1;
@@ -630,7 +683,7 @@ public abstract class SequenceElement extends BaseEntity {
 
     @Entity
     @DiscriminatorValue("Try2DismissCommand")
-    public static class Try2DismissCommandSequenceElement extends SequenceElement {
+    public static class Try2DismissCommandSequenceElement extends ExecutableSequenceElement {
 
         String leader;
         int dice1;
@@ -668,7 +721,7 @@ public abstract class SequenceElement extends BaseEntity {
 
     @Entity
     @DiscriminatorValue("GiveOrders")
-    public static class GiveOrdersSequenceElement extends SequenceElement {
+    public static class GiveOrdersSequenceElement extends ExecutableSequenceElement {
 
         String leader;
         int dice1;
@@ -706,7 +759,7 @@ public abstract class SequenceElement extends BaseEntity {
 
     @Entity
     @DiscriminatorValue("ManageCommand")
-    public static class ManageCommandSequenceElement extends SequenceElement {
+    public static class ManageCommandSequenceElement extends ExecutableSequenceElement {
 
         String leader;
         boolean inCommand;
@@ -735,7 +788,7 @@ public abstract class SequenceElement extends BaseEntity {
 
     @Entity
     @DiscriminatorValue("ChangeOInst")
-    public static class ChangeOrderInstructionSequenceElement extends SequenceElement {
+    public static class ChangeOrderInstructionSequenceElement extends ExecutableSequenceElement {
 
         String leader;
         @Enumerated(EnumType.STRING)
@@ -938,7 +991,7 @@ public abstract class SequenceElement extends BaseEntity {
 
     @Entity
     @DiscriminatorValue("Ask4Retreat")
-    public static class Ask4RetreatSequenceElement extends SequenceElement {
+    public static class Ask4RetreatSequenceElement extends AskSequenceElement {
 
         String unit;
         String attacker;

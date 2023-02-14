@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    CBUnitPlayer
+    CBUnitPlayer, CBStateSequenceElement
 } from "./unit.js";
 import {
     SequenceLoader
@@ -10,11 +10,11 @@ import {
     getDrawPlatform
 } from "../draw.js";
 import {
-    CBAsk4RetreatSequenceElement,
-    CBSequence, CBStateSequenceElement
+    CBSequence
 } from "./sequences.js";
 import {
-    InteractiveRetreatAction
+    InteractiveRetreatAction,
+    CBAsk4RetreatSequenceElement
 } from "./interactive/interactive-combat.js";
 
 export class CBRemoteUnitPlayer extends CBUnitPlayer {
