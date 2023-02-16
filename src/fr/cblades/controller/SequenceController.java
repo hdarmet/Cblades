@@ -468,6 +468,13 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 						return verifier;
 					}
 				)
+				.checkWhen(eJson->eJson.get("type").equals("Advance"), eJson-> {
+						Verifier verifier = verify(eJson);
+						verifier = this.checkUnitStateSpecs(verifier);
+						verifier = this.checkHexLocationSpecs(verifier);
+						return verifier;
+					}
+				)
 			)
 			.ensure();
 		sync(json, sequence)
@@ -486,7 +493,6 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					pair("Rally", SequenceElement.RallySequenceElement.class),
 					pair("Reorganize", SequenceElement.ReorganizeSequenceElement.class),
 					pair("LossConsistency", SequenceElement.LossConsistencySequenceElement.class),
-					pair("Confront", SequenceElement.ConfrontSequenceElement.class),
 					pair("Crossing", SequenceElement.CrossingSequenceElement.class),
 					pair("AttackerEngagement", SequenceElement.AttackerEngagementSequenceElement.class),
 					pair("DefenderEngagement", SequenceElement.DefenderEngagementSequenceElement.class),
@@ -501,6 +507,7 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					pair("FireAttack", SequenceElement.FireAttackSequenceElement.class),
 					pair("Ask4Retreat", SequenceElement.Ask4RetreatSequenceElement.class),
 					pair("Retreat", SequenceElement.RetreatSequenceElement.class),
+					pair("Advance", SequenceElement.AdvanceSequenceElement.class),
 					pair("NextTurn", SequenceElement.NextTurnSequenceElement.class)
 				), "type"),
 				(cJson, celem)->sync(cJson, celem)
@@ -655,6 +662,12 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 						this.writeUnitState(writer);
 						this.writeHexLocation(writer);
 						this.writeAskRequest(writer);
+					}
+				)
+				.syncWhen((eJson, eelem)->eJson.get("type").equals("Advance"), (eJson, eelem)->{
+						Synchronizer writer = sync(eJson, eelem);
+						this.writeUnitState(writer);
+						this.writeHexLocation(writer);
 					}
 				)
 			);
@@ -820,13 +833,6 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 						this.readDice(reader);
 					}
 				)
-				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.ConfrontSequenceElement.class, (eJson, eelem)->{
-						Synchronizer reader = sync(eJson, eelem);
-						reader.setInJson("type", "Confront");
-						this.readUnitState(reader);
-						this.readDice(reader);
-					}
-				)
 				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.CrossingSequenceElement.class, (eJson, eelem)->{
 						Synchronizer reader = sync(eJson, eelem);
 						reader.setInJson("type", "Crossing");
@@ -925,6 +931,13 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 						this.readUnitState(reader);
 						this.readHexLocation(reader);
 						this.readAskRequest(reader);
+					}
+				)
+				.syncWhen((eJson, eelem)->eelem.getClass() == SequenceElement.AdvanceSequenceElement.class, (eJson, eelem)->{
+						Synchronizer reader = sync(eJson, eelem);
+						reader.setInJson("type", "Advance");
+						this.readUnitState(reader);
+						this.readHexLocation(reader);
 					}
 				)
 				.syncWhen((eJson, eelem)->eelem instanceof SequenceElement.NextTurnSequenceElement, (eJson, eelem)->sync(eJson, eelem)

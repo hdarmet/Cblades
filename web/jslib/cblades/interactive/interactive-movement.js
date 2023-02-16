@@ -2,7 +2,7 @@
 
 import {
     Area2D,
-    canonizeAngle, diffAngle,
+    canonizeAngle,
     Dimension2D, invertAngle, Point2D, sumAngle
 } from "../../geometry.js";
 import {
@@ -24,7 +24,7 @@ import {
 } from "../playable.js";
 import {
     CBCharge,
-    CBMovement, CBMoveProfile, CBStateSequenceElement, CBUnitAnimation,
+    CBMovement, CBMoveProfile, CBStateSequenceElement,
     CBUnitSceneAnimation, HexLocated, CBDisplaceAnimation
 } from "../unit.js";
 import {
@@ -48,17 +48,17 @@ import {
 } from "../loader.js";
 
 export function registerInteractiveMovement() {
-    CBInteractivePlayer.prototype.startMoveUnit = function (unit, moveMode, event) {
-        unit.launchAction(new InteractiveMovementAction(this.game, unit, moveMode, event));
+    CBInteractivePlayer.prototype.startMoveUnit = function (unit, moveMode) {
+        unit.launchAction(new InteractiveMovementAction(this.game, unit, moveMode));
     }
-    CBInteractivePlayer.prototype.startRoutUnit = function (unit, event) {
-        unit.launchAction(new InteractiveRoutAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.startRoutUnit = function (unit) {
+        unit.launchAction(new InteractiveRoutAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.startMoveBackUnit = function (unit, event) {
-        unit.launchAction(new InteractiveMoveBackAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.startMoveBackUnit = function (unit) {
+        unit.launchAction(new InteractiveMoveBackAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.startConfrontUnit = function (unit, event) {
-        unit.launchAction(new InteractiveConfrontAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.startConfrontUnit = function (unit) {
+        unit.launchAction(new InteractiveConfrontAction(this.game, unit));
     }
     CBActionMenu.menuBuilders.push(
         createMovementMenuItems
@@ -75,9 +75,8 @@ export function unregisterInteractiveMovement() {
 
 export class InteractiveAbstractMovementAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
         this._movementCost = 0;
         this._moves = 0;
     }
@@ -668,8 +667,8 @@ export class RetreatMovementConstraint extends ControlledAreaMovementConstraint 
 
 export class InteractiveMovementAction extends InteractiveAbstractMovementAction {
 
-    constructor(game, unit, moveMode, event) {
-        super(game, unit, event);
+    constructor(game, unit, moveMode) {
+        super(game, unit);
         this._moveMode = moveMode;
     }
 
@@ -1013,7 +1012,7 @@ export class CBDisengagementChecking {
         ).addWidget(
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
-                let {success} = this._processDisengagementResult(this.unit, scene.dice.result);
+                let {success} = this.game.arbitrator.processDisengagementResult(this.unit, scene.dice.result);
                 if (success) {
                     scene.result.success().appear();
                 }
@@ -1032,8 +1031,12 @@ export class CBDisengagementChecking {
     }
 
     play(action) {
-        let scene = this.createScene(
+        let scene;
+        scene = this.createScene(
             ()=>{
+                if (!scene.result.success) {
+                    this.unit.addOneCohesionLevel();
+                }
                 CBSequence.appendElement(this.game, new CBDisengagementSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
@@ -1056,15 +1059,6 @@ export class CBDisengagementChecking {
         scene.dice.cheat(dice);
     }
 
-    _processDisengagementResult(diceResult) {
-        let result = this.game.arbitrator.processDisengagementResult(this.unit, diceResult);
-        if (!result.success) {
-            this.unit.addOneCohesionLevel();
-            CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
-        }
-        return result;
-    }
-
 }
 
 export class CBConfrontChecking {
@@ -1080,7 +1074,7 @@ export class CBConfrontChecking {
         scene.result = new DResult();
         scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         scene.mask = new DMask("#000000", 0.3);
-        closeAction&&mask.setAction(closeAction);
+        closeAction&&scene.mask.setAction(closeAction);
         this.game.openMask(scene.mask);
         let condition = this.game.arbitrator.getDefenderEngagementCondition(this.unit);
         scene.addWidget(
@@ -1090,7 +1084,7 @@ export class CBConfrontChecking {
         ).addWidget(
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
-                let {success} = this._processDisengagementResult(this.unit, scene.dice.result);
+                let {success} = this._processConfrontEngagementResult(scene.dice.result);
                 if (success) {
                     scene.result.success().appear();
                 }
@@ -1111,14 +1105,9 @@ export class CBConfrontChecking {
     play(action) {
         let scene = this.createScene(
             ()=>{
-                CBSequence.appendElement(this.game, new CBConfrontSequenceElement({
-                    game: this.game, unit: this.unit, dice: scene.dice.result
-                }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                 this.game.validate();
             },
             ()=> {
-                scene.mask.close();
                 this.game.closePopup();
                 if (scene.result.finished) {
                     action();
@@ -1147,8 +1136,8 @@ export class CBConfrontChecking {
 
 export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
 
-    constructor(game, unit, event) {
-        super(game, unit, event);
+    constructor(game, unit) {
+        super(game, unit);
         this._unitMustCheckDisengagement = this.game.arbitrator.isUnitEngaged(this.unit, true);
         this.minMovementCost = this.game.arbitrator.getMinCostForAttackMove(this.unit);
     }
@@ -1227,8 +1216,8 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
 
 export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction {
 
-    constructor(game, unit, event) {
-        super(game, unit, event);
+    constructor(game, unit) {
+        super(game, unit);
         this._unitMustCheckDisengagement = this.game.arbitrator.isUnitEngaged(this.unit, true);
     }
 
@@ -1315,8 +1304,8 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
 
 export class InteractiveConfrontAction extends InteractiveAbstractMovementAction {
 
-    constructor(game, unit, event) {
-        super(game, unit, event);
+    constructor(game, unit) {
+        super(game, unit);
     }
 
     play() {
@@ -1378,22 +1367,22 @@ function createMovementMenuItems(unit, actions) {
     return [
         new DIconMenuItem("./../images/icons/move.png","./../images/icons/move-gray.png",
             0, 0, event => {
-                unit.player.startMoveUnit(unit, actions.moveMode, event);
+                unit.player.startMoveUnit(unit, actions.moveMode);
                 return true;
             }, "Bouger normalement").setActive(actions.moveForward),
         new DIconMenuItem("./../images/icons/move-back.png", "./../images/icons/move-back-gray.png",
             1, 0, event => {
-                unit.player.startMoveBackUnit(unit, event);
+                unit.player.startMoveBackUnit(unit);
                 return true;
             }, "Reculer").setActive(actions.moveBack),
         new DIconMenuItem("./../images/icons/escape.png", "./../images/icons/escape-gray.png",
             2, 0, event => {
-                unit.player.startRoutUnit(unit, event);
+                unit.player.startRoutUnit(unit);
                 return true;
             }, "Fuir").setActive(actions.escape),
         new DIconMenuItem("./../images/icons/to-face.png", "./../images/icons/to-face-gray.png",
             3, 0, event => {
-                unit.player.startConfrontUnit(unit, event);
+                unit.player.startConfrontUnit(unit);
                 return true;
             }, "Faire face").setActive(actions.confront)
     ];
@@ -2040,3 +2029,4 @@ export class CBAttackerEngagementSequenceElement extends WithDiceRoll(CBStateSeq
 
 }
 CBSequence.register("AttackerEngagement", CBAttackerEngagementSequenceElement);
+

@@ -19,7 +19,7 @@ import {
     CBHexSideId
 } from "../map.js";
 import {
-    CBCharge, CBDisplaceAnimation, CBUnitActuatorTrigger, HexLocated, CBStateSequenceElement
+    CBCharge, CBDisplaceAnimation, CBUnitActuatorTrigger, HexLocated, CBStateSequenceElement, getUnitFromContext
 } from "../unit.js";
 import {
     CBActionMenu,
@@ -47,17 +47,17 @@ import {
 } from "../../board.js";
 
 export function registerInteractiveCombat() {
-    CBInteractivePlayer.prototype.unitShockAttack = function (unit, event) {
-        unit.launchAction(new InteractiveShockAttackAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.unitShockAttack = function (unit) {
+        unit.launchAction(new InteractiveShockAttackAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.unitFireAttack = function (unit, event) {
-        unit.launchAction(new InteractiveFireAttackAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.unitFireAttack = function (unit) {
+        unit.launchAction(new InteractiveFireAttackAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.unitDuelAttack = function (unit, event) {
-        unit.launchAction(new InteractiveDuelAttackAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.unitDuelAttack = function (unit) {
+        unit.launchAction(new InteractiveDuelAttackAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.unitDuelFire = function (unit, event) {
-        unit.launchAction(new InteractiveDuelFireAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.unitDuelFire = function (unit) {
+        unit.launchAction(new InteractiveDuelFireAction(this.game, unit));
     }
     CBInteractivePlayer.prototype.applyLossesToUnit = function(unit, losses, attacker, advance, continuation) {
         let lossSustained = false;
@@ -116,7 +116,6 @@ export class InteractiveAdvanceAction extends CBAction {
     }
 
     advanceUnit(hexLocation) {
-        let actualHex = this.unit.hexLocation;
         this.game.closeActuators();
         this.unit.advance(hexLocation);
         this._finalizeAction();
@@ -125,7 +124,7 @@ export class InteractiveAdvanceAction extends CBAction {
     _finalizeAction() {
         this.markAsFinished();
         this.unit.removeAction();
-        this._continuation();
+        this._continuation(this.unit.hexLocation);
     }
 
     createAdvanceActuator(directions) {
@@ -175,12 +174,19 @@ export class InteractiveRetreatAction extends CBAction {
             for (let sangle in directions) {
                 hexes.push(directions[sangle].hex);
             }
+            let enhancedContinuation = hexLocation=> {
+                CBSequence.appendElement(this._game,
+                    new CBAdvanceSequenceElement({game: this.game, unit:this._attacker, hexLocation})
+                );
+                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                continuation();
+            };
             if (hexes.length === 1) {
                 this._attacker.advance(hexes[0]);
-                continuation();
+                enhancedContinuation(hexes[0]);
             }
             else {
-                this._attacker.player.advanceAttacker(this._attacker, directions, continuation);
+                this._attacker.player.advanceAttacker(this._attacker, directions, enhancedContinuation);
             }
         }
         else {
@@ -189,11 +195,10 @@ export class InteractiveRetreatAction extends CBAction {
         }
     }
 
-    retreatUnit(hexLocation, stacking) {
-        let actualHex = this.unit.hexLocation;
+    retreatUnit(actualLocation, hexLocation, stacking) {
         this.game.closeActuators();
         this.unit.retreat(hexLocation, stacking);
-        this.advanceAttacker(actualHex, () => {
+        this.advanceAttacker(actualLocation, () => {
             this._finalizeAction();
         });
     }
@@ -231,9 +236,8 @@ export class InteractiveRetreatAction extends CBAction {
 
 export class InteractiveAbstractShockAttackAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
         this._attackHex = unit.formationNature ? unit.hexLocation.fromHex : unit.hexLocation;
         this._attackHexes = new Set();
     }
@@ -311,7 +315,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         return this._attackHexes.size===(this.unit.formationNature ? 2 : 1);
     }
 
-    createScene(attackerHex, defender, defenderHex, supported, advantage, closeAction, finalAction, point=this.unit.viewportLocation) { // LA
+    createScene(attackerHex, defender, defenderHex, supported, advantage, finalAction, closeAction) { // LA
         let scene = new DScene();
         scene.result = new DResult();
         scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
@@ -326,7 +330,9 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
                 scene.dice.result = [3, 4];
-                scene.result.report = this._processShockAttackResult(attackerHex, defender, defenderHex, supported, scene.dice.result);
+                scene.result.report = this.game.arbitrator.processShockAttackResult(
+                    this.unit, attackerHex, defender, defenderHex, supported, scene.dice.result
+                );
                 let success = scene.result.report.success;
                 if (success) {
                     scene.result.success().appear();
@@ -341,15 +347,24 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
             scene.result.setFinalAction(closeAction),
             new Point2D(0, 0)
         );
-        this.game.openPopup(scene, point);
+        this.game.openPopup(scene, this.unit.viewportLocation);
         return scene;
     }
 
-    shockAttackUnit(attackerHex, defender, defenderHex, supported, advantage, event) { // LA
+    shockAttackUnit(attackerHex, defender, defenderHex, supported, advantage) { // LA
         this.game.closeActuators();
         let scene;
         scene = this.createScene(
             attackerHex, defender, defenderHex, supported, advantage,
+            success=>{
+                this._processShockAttackResult(success, attackerHex);
+                CBSequence.appendElement(this.game, new CBShockAttackSequenceElement({
+                    unit: this.unit, attackerHex, defender, defenderHex, supported, advantage: advantage.advantage,
+                    game: this.game, dice: scene.dice.result
+                }));
+                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                this.game.validate();
+            },
             success=>{
                 this.game.closePopup();
                 if (scene.result.finished) {
@@ -367,16 +382,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
                         continuation();
                     }
                 }
-            },
-            ()=>{
-                CBSequence.appendElement(this.game, new CBShockAttackSequenceElement({
-                    unit: this.unit, attackerHex, defender, defenderHex, supported, advantage: advantage.advantage,
-                    game: this.game, dice: scene.dice.result
-                }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
-                this.game.validate();
-            },
-            new Point2D(event.offsetX, event.offsetY)
+            }
         );
     }
 
@@ -388,8 +394,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         scene.dice.cheat(dice);
     }
 
-    _processShockAttackResult(attackerHex, defender, defenderHex, supported, diceResult) { // LA
-        let result = this.game.arbitrator.processShockAttackResult(this.unit, attackerHex, defender, defenderHex, supported, diceResult);
+    _processShockAttackResult(result, attackerHex) { // LA
         this._attackHexes.add(attackerHex);
         for (let hex of this.unit.hexLocation.hexes) {
             if (!this._attackHexes.has(hex)) {
@@ -408,7 +413,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         return this.game.arbitrator.getShockWeaponCell(this.unit, foe);
     }
 
-    showRules(foe, supported, advantage, event) {
+    showRules(foe, supported, advantage) {
         let advantageCell = this._getAdvantageCell(foe);
         let scene = new DScene();
         let mask = new CBMask("#000000", 0.3);
@@ -424,7 +429,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
                 advantageCell.col, advantageCell.row),
             new Point2D(CBWeaponTableInsert.DIMENSION.w/2-20, CBWeaponTableInsert.DIMENSION.h/2)
         );
-        this.game.openPopup(scene, new Point2D(event.offsetX, event.offsetY));
+        this.game.openPopup(scene, foe.viewportLocation);
     }
 
     createShockHexActuator() {
@@ -443,8 +448,8 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
 
 export class InteractiveShockAttackAction extends InteractiveAbstractShockAttackAction {
 
-    constructor(game, unit, event) {
-        super(game, unit, event);
+    constructor(game, unit) {
+        super(game, unit);
     }
 
     _getFoes(unit) {
@@ -455,8 +460,8 @@ export class InteractiveShockAttackAction extends InteractiveAbstractShockAttack
 
 export class InteractiveDuelAttackAction extends InteractiveAbstractShockAttackAction {
 
-    constructor(game, unit, event) {
-        super(game, unit, event);
+    constructor(game, unit) {
+        super(game, unit);
     }
 
     _getFoes(unit) {
@@ -467,9 +472,8 @@ export class InteractiveDuelAttackAction extends InteractiveAbstractShockAttackA
 
 export class InteractiveAbstractFireAttackAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
         this._attackHex = unit.formationNature ? unit.hexLocation.fromHex : unit.hexLocation;
         this._attackHexes = new Set();
     }
@@ -549,7 +553,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         return false;
     }
 
-    createScene(closeAction, finalAction, firerHex, target, targetHex, advantage, point = this.unit.viewportLocation) {
+    createScene(firerHex, target, targetHex, advantage, finalAction, closeAction) {
         let scene = new DScene();
         scene.result = new DResult();
         scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
@@ -563,7 +567,9 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         ).addWidget(
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
-                scene.result.report = this._processFireAttackResult(firerHex, target, targetHex, scene.dice.result);
+                scene.result.report = this.game.arbitrator.processFireAttackResult(
+                    this.unit, firerHex, target, targetHex, scene.dice.result
+                );
                 let success = scene.result.report.success;
                 if (success) {
                     scene.result.success().appear();
@@ -578,16 +584,25 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
             scene.result.setFinalAction(closeAction),
             new Point2D(0, 0)
         );
-        this.game.openPopup(scene, point);
+        this.game.openPopup(scene, this.unit.viewportLocation);
         return scene;
     }
 
-    fireAttackUnit(firerHex, target, targetHex, advantage, event) {
+    fireAttackUnit(firerHex, target, targetHex, advantage) {
         this.game.closeActuators();
         let scene;
         scene = this.createScene(
             firerHex, target, targetHex, advantage,
-            ()=>{
+            success=>{
+                this._processFireAttackResult(success, firerHex);
+                CBSequence.appendElement(this.game, new CBFireAttackSequenceElement({
+                    unit: this.unit, firerHex, target, targetHex, advantage: advantage.advantage,
+                    game: this.game, dice: scene.dice.result
+                }));
+                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                this.game.validate();
+            },
+            success=>{
                 this.game.closePopup();
                 if (scene.result.finished) {
                     let continuation = () => {
@@ -602,15 +617,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
                     }
                 }
             },
-            ()=>{
-                CBSequence.appendElement(this.game, new CBFireAttackSequenceElement({
-                    unit: this.unit, firerHex, target, targetHex, advantage: advantage.advantage,
-                    game: this.game, dice: scene.dice.result
-                }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
-                this.game.validate();
-            },
-            new Point2D(event.offsetX, event.offsetY)
+            target.viewportLocation
         );
     }
 
@@ -622,8 +629,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         scene.dice.cheat(dice);
     }
 
-    _processFireAttackResult(firerHex, target, targetHex, diceResult) {
-        let result = this.game.arbitrator.processFireAttackResult(this.unit, firerHex, target, targetHex, diceResult);
+    _processFireAttackResult(result, firerHex) {
         this._attackHexes.add(firerHex);
         for (let hex of this.unit.hexLocation.hexes) {
             if (!this._attackHexes.has(hex)) {
@@ -678,8 +684,8 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
 
 export class InteractiveFireAttackAction extends InteractiveAbstractFireAttackAction {
 
-    constructor(game, unit, event) {
-        super(game, unit, event);
+    constructor(game, unit) {
+        super(game, unit);
     }
 
     _getFoes(unit, hexId) {
@@ -690,8 +696,8 @@ export class InteractiveFireAttackAction extends InteractiveAbstractFireAttackAc
 
 export class InteractiveDuelFireAction extends InteractiveAbstractFireAttackAction {
 
-    constructor(game, unit, event) {
-        super(game, unit, event);
+    constructor(game, unit) {
+        super(game, unit);
     }
 
     _getFoes(unit, hexId) {
@@ -704,22 +710,22 @@ function createCombatMenuItems(unit, actions) {
     return [
         new DIconMenuItem("./../images/icons/shock-attack.png", "./../images/icons/shock-attack-gray.png",
             0, 1, event => {
-                unit.player.unitShockAttack(unit, event);
+                unit.player.unitShockAttack(unit);
                 return true;
             }, "Attaquer au choc").setActive(actions.shockAttack),
         new DIconMenuItem("./../images/icons/fire-attack.png", "./../images/icons/fire-attack-gray.png",
             1, 1, event => {
-                unit.player.unitFireAttack(unit, event);
+                unit.player.unitFireAttack(unit);
                 return true;
             }, "Attaquer au tir").setActive(actions.fireAttack),
         new DIconMenuItem("./../images/icons/shock-duel.png", "./../images/icons/shock-duel-gray.png",
             2, 1, event => {
-                unit.player.unitDuelAttack(unit, event);
+                unit.player.unitDuelAttack(unit);
                 return true;
             }, "Provoquer un duel au choc").setActive(actions.shockDuel),
         new DIconMenuItem("./../images/icons/fire-duel.png", "./../images/icons/fire-duel-gray.png",
             3, 1, event => {
-                unit.player.unitDuelFire(unit, event);
+                unit.player.unitDuelFire(unit);
                 return true;
             }, "Provoquer un duel au tir").setActive(actions.fireDuel)
     ];
@@ -853,7 +859,7 @@ export class CBShockAttackActuator extends RetractableActuatorMixin(CBActionActu
     }
 
     onMouseClick(trigger, event) {
-        this.action.shockAttackUnit(trigger.attackHex, trigger.unit, trigger.attackedHex, trigger.supported, trigger.advantage, event);
+        this.action.shockAttackUnit(trigger.attackHex, trigger.unit, trigger.attackedHex, trigger.supported, trigger.advantage);
     }
 
 }
@@ -898,7 +904,7 @@ export class CBFireAttackActuator extends RetractableActuatorMixin(CBActionActua
     }
 
     onMouseClick(trigger, event) {
-        this.action.fireAttackUnit(trigger.attackHex, trigger.unit, trigger.attackedHex, trigger.advantage, event);
+        this.action.fireAttackUnit(trigger.attackHex, trigger.unit, trigger.attackedHex, trigger.advantage);
     }
 
 }
@@ -1121,7 +1127,10 @@ export class CBRetreatActuator extends CBActionActuator {
             CBSequence.appendElement(this.playable.game, new CBStateSequenceElement({game:this.playable.game, unit: this.playable}));
         }
         else {
-            this.action.retreatUnit(this.playable.hexLocation.getNearHex(trigger.angle), trigger.stacking);
+            this.action.retreatUnit(
+                this.playable.hexLocation,
+                this.playable.hexLocation.getNearHex(trigger.angle),
+                trigger.stacking);
         }
     }
 
@@ -1200,7 +1209,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
                 game:this.playable.game, unit: this.playable, angle
             }));
             let hexLocation = new CBHexSideId(hex1, hex2);
-            this.action.retreatUnit(hexLocation, trigger.stacking);
+            this.action.retreatUnit(this.playable.hexLocation, hexLocation, trigger.stacking);
             CBSequence.appendElement(this.game, new CBMoveSequenceElement({
                 game:this.playable.game, unit: this.playable, hexLocation, stacking: trigger.stacking
             }));
@@ -1209,7 +1218,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
             let hex1 = this.playable.hexLocation.fromHex.getNearHex(trigger.angle);
             let hex2 = this.playable.hexLocation.toHex.getNearHex(trigger.angle);
             let hexLocation = new CBHexSideId(hex1, hex2);
-            this.action.retreatUnit(hexLocation, trigger.stacking);
+            this.action.retreatUnit(this.playable.hexLocation, hexLocation, trigger.stacking);
             CBSequence.appendElement(this.game, new CBMoveSequenceElement({
                 game:this.playable.game, unit: this.playable, hexLocation, stacking: trigger.stacking
             }));
@@ -1616,6 +1625,7 @@ export class CBRetreatAnimation extends CBDisplaceAnimation {
 
     constructor({unit, startTick, duration, state, angle, hexLocation, stacking}) {
         super({unit, startTick, duration, state, angle, hexLocation, stacking});
+        this._actualLocation = unit.hexLocation;
     }
 
     _draw(count, ticks) {
@@ -1626,8 +1636,50 @@ export class CBRetreatAnimation extends CBDisplaceAnimation {
     }
 
     _finalize() {
-        this._unit.player.continueLossApplication(this._unit, this._hexLocation, this._stacking);
+        this._unit.player.continueLossApplication &&
+            this._unit.player.continueLossApplication(this._unit, this._actualLocation, this._stacking);
         return super._finalize();
     }
+
+}
+
+export class CBAdvanceSequenceElement extends HexLocated(CBStateSequenceElement) {
+
+    constructor({game, unit, hexLocation}) {
+        super({type: "Advance", unit, hexLocation, stacking:CBStacking.TOP, game});
+    }
+
+    get delay() { return 500; }
+
+    apply(startTick) {
+        return new CBAdvanceAnimation({
+            unit:this.unit, startTick, duration:this.delay, state:this,
+            angle:this.unit.angle, hexLocation:this.hexLocation, stacking:this.stacking
+        });
+    }
+
+}
+CBSequence.register("Advance", CBAdvanceSequenceElement);
+
+export class CBAdvanceAnimation extends CBDisplaceAnimation {
+
+    constructor({unit, startTick, duration, state, angle, hexLocation, stacking}) {
+        super({unit, startTick, duration, state, angle, hexLocation, stacking});
+        this._actualLocation = unit.hexLocation;
+    }
+
+    _draw(count, ticks) {
+        if (count===0) {
+            this._unit.game.closeActuators();
+        }
+        return super._draw(count, ticks);
+    }
+
+    /*
+    _finalize() {
+        this._unit.player.continueLossApplication(this._unit, this._actualLocation, this._stacking);
+        return super._finalize();
+    }
+     */
 
 }

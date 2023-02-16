@@ -39,78 +39,78 @@ import {
 } from "../../draw.js";
 
 export function registerInteractiveMiscellaneous() {
-    CBInteractivePlayer.prototype.mergeUnits = function(unit, event) {
-        unit.launchAction(new InteractiveMergeUnitAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.mergeUnits = function(unit) {
+        unit.launchAction(new InteractiveMergeUnitAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.choseMiscAction = function(unit, event) {
+    CBInteractivePlayer.prototype.choseMiscAction = function(unit) {
         let allowedActions = this.game.arbitrator.getAllowedMiscellaneousActions(unit);
         let popup = new CBMiscellaneousActionsMenu(this.game, unit, allowedActions);
-        let offset = Point2D.getEventPoint(event);
+        let offset = unit.viewportLocation;
         this.game.openPopup(popup, new Point2D(
             offset.x - popup.dimension.w/2 + CBAbstractGame.POPUP_MARGIN,
             offset.y - popup.dimension.h/2 + CBAbstractGame.POPUP_MARGIN)
         );
     }
-    CBInteractivePlayer.prototype.tryToSetFire = function(unit, event) {
-        unit.launchAction(new InteractiveSetFireAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.tryToSetFire = function(unit) {
+        unit.launchAction(new InteractiveSetFireAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.tryToExtinguishFire = function(unit, event) {
-        unit.launchAction(new InteractiveExtinguishFireAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.tryToExtinguishFire = function(unit) {
+        unit.launchAction(new InteractiveExtinguishFireAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.tryToSetStakes = function(unit, event) {
-        unit.launchAction(new InteractiveSetStakesAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.tryToSetStakes = function(unit) {
+        unit.launchAction(new InteractiveSetStakesAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.tryToRemoveStakes = function(unit, event) {
-        unit.launchAction(new InteractiveRemoveStakesAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.tryToRemoveStakes = function(unit) {
+        unit.launchAction(new InteractiveRemoveStakesAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.playWeather = function(counter, event) {
+    CBInteractivePlayer.prototype.playWeather = function(counter) {
         if (this.game.canUnselectPlayable()) {
-            let action = new InteractivePlayWeatherAction(this.game, counter, event);
+            let action = new InteractivePlayWeatherAction(this.game, counter);
             let unit = this.game.selectedPlayable;
             this.afterActivation(unit, () => {
                 counter.launchAction(action);
             });
         }
     }
-    CBInteractivePlayer.prototype.playFog = function(counter, event) {
+    CBInteractivePlayer.prototype.playFog = function(counter) {
         if (this.game.canUnselectPlayable()) {
-            let action = new InteractivePlayFogAction(this.game, counter, event);
+            let action = new InteractivePlayFogAction(this.game, counter);
             let unit = this.game.selectedPlayable;
             this.afterActivation(unit, () => {
                 counter.launchAction(action);
             });
         }
     }
-    CBInteractivePlayer.prototype.playWindDirection = function(counter, event) {
+    CBInteractivePlayer.prototype.playWindDirection = function(counter) {
         if (this.game.canUnselectPlayable()) {
-            let action = new InteractivePlayWindDirectionAction(this.game, counter, event);
+            let action = new InteractivePlayWindDirectionAction(this.game, counter);
             let unit = this.game.selectedPlayable;
             this.afterActivation(unit, () => {
                 counter.launchAction(action);
             });
         }
     }
-    CBInteractivePlayer.prototype.playTiredness = function(counter, event) {
+    CBInteractivePlayer.prototype.playTiredness = function(counter) {
         if (this.game.canUnselectPlayable()) {
-            let action = new InteractivePlayTirednessAction(this.game, counter, event);
+            let action = new InteractivePlayTirednessAction(this.game, counter);
             let unit = this.game.selectedPlayable;
             this.afterActivation(unit, () => {
                 counter.launchAction(action);
             });
         }
     }
-    CBInteractivePlayer.prototype.playMoral = function(counter, event) {
+    CBInteractivePlayer.prototype.playMoral = function(counter) {
         if (this.game.canUnselectPlayable()) {
-            let action = new InteractivePlayMoralAction(this.game, counter, event);
+            let action = new InteractivePlayMoralAction(this.game, counter);
             let unit = this.game.selectedPlayable;
             this.afterActivation(unit, () => {
                 counter.launchAction(action);
             });
         }
     }
-    CBInteractivePlayer.prototype.playSmokeAndFire = function(counter, event) {
+    CBInteractivePlayer.prototype.playSmokeAndFire = function(counter) {
         if (this.game.canUnselectPlayable()) {
-            let action = new InteractivePlaySmokeAndFireAction(this.game, counter, event);
+            let action = new InteractivePlaySmokeAndFireAction(this.game, counter);
             let unit = this.game.selectedPlayable;
             this.afterActivation(unit, () => {
                 counter.launchAction(action);
@@ -128,9 +128,8 @@ export function unregisterInteractiveMiscellaneous() {
 
 export class InteractiveMergeUnitAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
     }
 
     get unit() {
@@ -170,9 +169,8 @@ function deleteStartFireCounter(game, hexLocation) {
 
 export class InteractiveSetFireAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
     }
 
     get unit() {
@@ -217,7 +215,7 @@ export class InteractiveSetFireAction extends CBAction {
             result.setFinalAction(close),
             new Point2D(0, 0)
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openPopup(scene, this.unit.viewportLocation);
     }
 
     _processSetFireResult(unit, diceResult) {
@@ -233,9 +231,8 @@ export class InteractiveSetFireAction extends CBAction {
 
 export class InteractiveExtinguishFireAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
     }
 
     get unit() {
@@ -280,7 +277,7 @@ export class InteractiveExtinguishFireAction extends CBAction {
             result.setFinalAction(close),
             new Point2D(0, 0)
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openPopup(scene, this.unit.viewportLocation);
     }
 
     _processExtinguishFireResult(unit, diceResult) {
@@ -296,9 +293,8 @@ export class InteractiveExtinguishFireAction extends CBAction {
 
 export class InteractiveSetStakesAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
     }
 
     get unit() {
@@ -339,7 +335,7 @@ export class InteractiveSetStakesAction extends CBAction {
             result.setFinalAction(close),
             new Point2D(0, 0)
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openPopup(scene, this.unit.viewportLocation);
     }
 
     _processSetStakesResult(unit, diceResult) {
@@ -357,9 +353,8 @@ export class InteractiveSetStakesAction extends CBAction {
 
 export class InteractiveRemoveStakesAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
     }
 
     get unit() {
@@ -400,7 +395,7 @@ export class InteractiveRemoveStakesAction extends CBAction {
             result.setFinalAction(close),
             new Point2D(0, 0)
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openPopup(scene, this.playable.viewportLocation);
     }
 
     _processRemoveStakesResult(unit, diceResult) {
@@ -419,9 +414,8 @@ export class InteractiveRemoveStakesAction extends CBAction {
 
 export class InteractivePlayWeatherAction extends CBAction {
 
-    constructor(game, counter, event) {
+    constructor(game, counter) {
         super(game, counter);
-        this._event = event;
     }
 
     play() {
@@ -466,7 +460,7 @@ export class InteractivePlayWeatherAction extends CBAction {
             swipeResult.setFinalAction(close),
             new Point2D(0, 0)
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openPopup(scene, this.playable.viewportLocation);
     }
 
     _processPlayWeatherResult(game, diceResult) {
@@ -480,9 +474,8 @@ export class InteractivePlayWeatherAction extends CBAction {
 
 export class InteractivePlayFogAction extends CBAction {
 
-    constructor(game, counter, event) {
+    constructor(game, counter) {
         super(game, counter);
-        this._event = event;
     }
 
     play() {
@@ -527,7 +520,7 @@ export class InteractivePlayFogAction extends CBAction {
             swipeResult.setFinalAction(close),
             new Point2D(0, 0)
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openPopup(scene, this.playable.viewportLocation);
     }
 
     _processPlayFogResult(game, diceResult) {
@@ -541,9 +534,8 @@ export class InteractivePlayFogAction extends CBAction {
 
 export class InteractivePlayWindDirectionAction extends CBAction {
 
-    constructor(game, counter, event) {
+    constructor(game, counter) {
         super(game, counter);
-        this._event = event;
     }
 
     play() {
@@ -588,7 +580,7 @@ export class InteractivePlayWindDirectionAction extends CBAction {
             swipeResult.setFinalAction(close),
             new Point2D(0, 0)
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openPopup(scene, this.playable.viewportLocation);
     }
 
     _processPlayWindDirectionResult(game, diceResult) {
@@ -603,9 +595,8 @@ export class InteractivePlayWindDirectionAction extends CBAction {
 
 export class InteractivePlayTirednessAction extends CBAction {
 
-    constructor(game, counter, event) {
+    constructor(game, counter) {
         super(game, counter);
-        this._event = event;
     }
 
     play() {
@@ -645,7 +636,7 @@ export class InteractivePlayTirednessAction extends CBAction {
             swipeResult.setFinalAction(close),
             new Point2D(0, 0)
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openPopup(scene, this.playable.viewportLocation);
     }
 
     _processPlayTirednessResult(game, diceResult) {
@@ -661,9 +652,8 @@ export class InteractivePlayTirednessAction extends CBAction {
 
 export class InteractivePlayMoralAction extends CBAction {
 
-    constructor(game, counter, event) {
+    constructor(game, counter) {
         super(game, counter);
-        this._event = event;
     }
 
     play() {
@@ -696,7 +686,6 @@ export class InteractivePlayMoralAction extends CBAction {
                 else {
                     swipeResult.noSwipe().appear();
                 }
-
                 this.game.validate();
             }),
             new Point2D(60, -100)
@@ -704,7 +693,7 @@ export class InteractivePlayMoralAction extends CBAction {
             swipeResult.setFinalAction(close),
             new Point2D(0, 0)
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openPopup(scene, this.playable.viewportLocation);
     }
 
     _processPlayMoralResult(game, diceResult) {
@@ -720,9 +709,8 @@ export class InteractivePlayMoralAction extends CBAction {
 
 export class InteractivePlaySmokeAndFireAction extends CBAction {
 
-    constructor(game, counter, event) {
+    constructor(game, counter) {
         super(game, counter);
-        this._event = event;
     }
 
     play() {
@@ -760,7 +748,7 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
             result.setFinalAction(close),
             new Point2D(0, 0)
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openPopup(scene, this.playable.viewportLocation);
     }
 
     isPlayed() {
@@ -975,12 +963,12 @@ function createMiscellaneousMenuItems(unit, actions) {
     return [
         new DIconMenuItem("./../images/icons/do-fusion.png", "./../images/icons/do-fusion-gray.png",
             2, 5, event => {
-                unit.player.mergeUnits(unit, event);
+                unit.player.mergeUnits(unit);
                 return true;
             }, "Fusionner les troupes").setActive(actions.mergeUnit),
         new DIconMenuItem("./../images/icons/do-many.png", "./../images/icons/do-many-gray.png",
             3, 5, event => {
-                unit.player.choseMiscAction(unit, event);
+                unit.player.choseMiscAction(unit);
                 return true;
             }, "Actions diverses").setActive(actions.miscActions)
     ];
@@ -991,22 +979,22 @@ export class CBMiscellaneousActionsMenu extends DIconMenu {
     constructor(game, unit, allowedMiscellaneousActions) {
         super(false, new DIconMenuItem("./../images/actions/start-fire.png","./../images/actions/start-fire-gray.png",
             0, 0, event => {
-                unit.player.tryToSetFire(unit, event);
+                unit.player.tryToSetFire(unit);
                 return true;
             }, "Mêttre le feu").setActive(allowedMiscellaneousActions.setFire),
             new DIconMenuItem("./../images/actions/extinguish-fire.png","./../images/actions/extinguish-fire-gray.png",
                 1, 0, event => {
-                    unit.player.tryToExtinguishFire(unit, event);
+                    unit.player.tryToExtinguishFire(unit);
                     return true;
                 }, "Eteindre le feu").setActive(allowedMiscellaneousActions.extinguishFire),
             new DIconMenuItem("./../images/actions/set-stakes.png","./../images/actions/set-stakes-gray.png",
                 0, 1, event => {
-                    unit.player.tryToSetStakes(unit, event);
+                    unit.player.tryToSetStakes(unit);
                     return true;
                 }, "Poser des pieux").setActive(allowedMiscellaneousActions.setStakes),
             new DIconMenuItem("./../images/actions/remove-stakes.png","./../images/actions/remove-stakes-gray.png",
                 1, 1, event => {
-                    unit.player.tryToRemoveStakes(unit, event);
+                    unit.player.tryToRemoveStakes(unit);
                     return true;
                 }, "Retirer les pieux").setActive(allowedMiscellaneousActions.removeStakes)
         );

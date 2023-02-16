@@ -16,7 +16,7 @@ import {
     RetractableActuatorMixin, NeighborActuatorMixin, NeighborActuatorArtifactMixin
 } from "../playable.js";
 import {
-    Dimension2D, inside,
+    Dimension2D,
     Point2D
 } from "../../geometry.js";
 import {
@@ -37,14 +37,14 @@ import {
 } from "../sequences.js";
 
 export function registerInteractiveMagic() {
-    CBInteractivePlayer.prototype.choseSpell = function(unit, event) {
-        unit.launchAction(new InteractiveChoseSpellAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.choseSpell = function(unit) {
+        unit.launchAction(new InteractiveChoseSpellAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.tryToCastSpell = function(unit, event) {
-        unit.launchAction(new InteractiveTryToCastSpellAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.tryToCastSpell = function(unit) {
+        unit.launchAction(new InteractiveTryToCastSpellAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.castSpell = function(unit, event) {
-        unit.launchAction(new InteractiveCastSpellAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.castSpell = function(unit) {
+        unit.launchAction(new InteractiveCastSpellAction(this.game, unit));
     }
     CBInteractivePlayer.prototype.openMagicMenu = function(unit, offset, allowedSpells) {
         let popup = new CBSpellsMenu(this.game, unit, allowedSpells);
@@ -63,9 +63,8 @@ export function unregisterInteractiveMagic() {
 
 export class InteractiveChoseSpellAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
     }
 
     get unit() {
@@ -84,9 +83,8 @@ export class InteractiveChoseSpellAction extends CBAction {
 
 export class InteractiveTryToCastSpellAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
     }
 
     get unit() {
@@ -123,7 +121,7 @@ export class InteractiveTryToCastSpellAction extends CBAction {
             result.setFinalAction(close),
             new Point2D(0, 0)
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openPopup(scene, this.unit.viewportLocation);
     }
 
     _processCastSpellResult(wizard, diceResult) {
@@ -139,9 +137,8 @@ export class InteractiveTryToCastSpellAction extends CBAction {
 
 export class InteractiveCastSpellAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
         this.markAsFinished();
         this._spell = this.unit.chosenSpell;
     }
@@ -315,12 +312,12 @@ function createMagicMenuItems(unit, actions) {
     return [
         new DIconMenuItem("./../images/icons/select-spell.png", "./../images/icons/select-spell-gray.png",
             0, 5, event => {
-                unit.player.choseSpell(unit, event);
+                unit.player.choseSpell(unit);
                 return true;
             }, "Choisir un sort").setActive(actions.prepareSpell),
         new DIconMenuItem("./../images/icons/cast-spell.png", "./../images/icons/cast-spell-gray.png",
             1, 5, event => {
-                unit.player.tryToCastSpell(unit, event);
+                unit.player.tryToCastSpell(unit);
                 return true;
             }, "Lancer le sort choisi").setActive(actions.castSpell)
     ];

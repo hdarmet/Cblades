@@ -412,7 +412,7 @@ public class FakeData {
                 .setContact(false)
                 .setOrderGiven(false)
                 .setPlayed(false)
-                .setCharging(false);
+                .setCharging(true);
             em.persist(unit2);
             scenario.get().getGame().addPlayer(
                 new Player().setIdentity(PlayerIdentity.getByName(em, "roughneck 1"))

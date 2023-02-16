@@ -26,17 +26,17 @@ import {
 } from "../unit.js";
 
 export function registerInteractiveFormation() {
-    CBInteractivePlayer.prototype.createFormation = function (unit, event) {
-        unit.launchAction(new InteractiveCreateFormationAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.createFormation = function (unit) {
+        unit.launchAction(new InteractiveCreateFormationAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.includeTroops = function (unit, event) {
-        unit.launchAction(new InteractiveIncludeTroopsAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.includeTroops = function (unit) {
+        unit.launchAction(new InteractiveIncludeTroopsAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.releaseTroops = function (unit, event) {
-        unit.launchAction(new InteractiveReleaseTroopsAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.releaseTroops = function (unit) {
+        unit.launchAction(new InteractiveReleaseTroopsAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.breakFormation = function (unit, event) {
-        unit.launchAction(new InteractiveBreakFormationAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.breakFormation = function (unit) {
+        unit.launchAction(new InteractiveBreakFormationAction(this.game, unit));
     }
     CBActionMenu.menuBuilders.push(
         createFormationMenuItems
@@ -52,9 +52,8 @@ export function unregisterInteractiveFormation() {
 
 export class InteractiveBreakFormationAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
     }
 
     get unit() {
@@ -79,9 +78,8 @@ export class InteractiveBreakFormationAction extends CBAction {
 
 export class InteractiveCreateFormationAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
     }
 
     get unit() {
@@ -124,9 +122,8 @@ export class InteractiveCreateFormationAction extends CBAction {
 
 export class InteractiveReleaseTroopsAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
     }
 
     get unit() {

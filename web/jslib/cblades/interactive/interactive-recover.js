@@ -17,7 +17,7 @@ import {
     CBInteractivePlayer,
     CBWeatherIndicator,
     CBWingTirednessIndicator,
-    CBMoralInsert, CBLoseCohesionChecking
+    CBMoralInsert
 } from "./interactive-player.js";
 import {
     CBCharge, CBUnitSceneAnimation, CBStateSequenceElement
@@ -29,21 +29,21 @@ import {
     SequenceLoader
 } from "../loader.js";
 import {
-    CBConfrontChecking, CBLoseCohesionForCrossingChecking
+    CBLoseCohesionForCrossingChecking
 } from "./interactive-movement.js";
 
 export function registerInteractiveRecover() {
-    CBInteractivePlayer.prototype.restUnit = function(unit, event) {
-        unit.launchAction(new InteractiveRestingAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.restUnit = function(unit) {
+        unit.launchAction(new InteractiveRestingAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.replenishUnitMunitions = function(unit, event) {
-        unit.launchAction(new InteractiveReplenishMunitionsAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.replenishUnitMunitions = function(unit) {
+        unit.launchAction(new InteractiveReplenishMunitionsAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.reorganizeUnit = function(unit, event) {
-        unit.launchAction(new InteractiveReorganizeAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.reorganizeUnit = function(unit) {
+        unit.launchAction(new InteractiveReorganizeAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.rallyUnit = function(unit, event) {
-        unit.launchAction(new InteractiveRallyAction(this.game, unit, event));
+    CBInteractivePlayer.prototype.rallyUnit = function(unit) {
+        unit.launchAction(new InteractiveRallyAction(this.game, unit));
     }
     CBActionMenu.menuBuilders.push(
         createRecoverMenuItems
@@ -59,9 +59,8 @@ export function unregisterInteractiveRecover() {
 
 export class InteractiveRestingAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
     }
 
     get unit() {
@@ -93,7 +92,7 @@ export class InteractiveRestingAction extends CBAction {
         ).addWidget(
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
-                let {success, restingCapacity} = this._processRestResult(this.unit, scene.dice.result);
+                let {success, restingCapacity} = this.game.arbitrator.processRestResult(this.unit, scene.dice.result);
                 if (restingCapacity!==undefined) {
                     scene.tirednessIndicator.changeState(restingCapacity-4);
                 }
@@ -103,13 +102,14 @@ export class InteractiveRestingAction extends CBAction {
                 else {
                     scene.result.failure().appear();
                 }
-                finalAction&&finalAction(success);
+                finalAction&&finalAction({success, restingCapacity});
             }),
             new Point2D(CBRestInsert.DIMENSION.w/2+40, 0)
         ).addWidget(
             scene.result.setFinalAction(close),
             new Point2D(0, 0)
         );
+        this.game.openPopup(scene, this.unit.viewportLocation);
         return scene;
     }
 
@@ -117,7 +117,8 @@ export class InteractiveRestingAction extends CBAction {
         this.game.closeActuators();
         this.unit.setCharging(CBCharge.NONE);
         let scene = this.createScene(
-            ()=>{
+            result=>{
+                this._processRestResult(result);
                 CBSequence.appendElement(this.game, new CBRestSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
@@ -125,7 +126,6 @@ export class InteractiveRestingAction extends CBAction {
                 this.game.validate();
             }
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     replay(dice) {
@@ -133,11 +133,9 @@ export class InteractiveRestingAction extends CBAction {
         scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
-        this.game.openPopup(scene, this.unit.viewportLocation);
     }
 
-    _processRestResult(unit, diceResult) {
-        let result = this.game.arbitrator.processRestResult(this.unit, diceResult);
+    _processRestResult(result) {
         if (result.success) {
             this.unit.removeOneTirednessLevel();
         }
@@ -152,9 +150,8 @@ export class InteractiveRestingAction extends CBAction {
 
 export class InteractiveReplenishMunitionsAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
     }
 
     get unit() {
@@ -176,7 +173,7 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
         ).addWidget(
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
-                let {success} = this._processReplenishMunitionsResult(this.unit, scene.dice.result);
+                let {success} = this.game.arbitrator.processReplenishMunitionsResult(this.unit, scene.dice.result);
                 if (success) {
                     scene.result.success().appear();
                 }
@@ -190,6 +187,7 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
             scene.result.setFinalAction(close),
             new Point2D(0, 0)
         );
+        this.game.openPopup(scene, this.unit.viewportLocation);
         return scene;
     }
 
@@ -197,7 +195,8 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
         this.game.closeActuators();
         this.unit.setCharging(CBCharge.NONE);
         let scene = this.createScene(
-            ()=>{
+            result=>{
+                this._processReplenishMunitionsResult(result);
                 CBSequence.appendElement(this.game, new CBRefillSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
@@ -205,7 +204,6 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
                 this.game.validate();
             }
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     replay(dice) {
@@ -213,11 +211,9 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
         scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
-        this.game.openPopup(scene, this.unit.viewportLocation);
     }
 
-    _processReplenishMunitionsResult(unit, diceResult) {
-        let result = this.game.arbitrator.processReplenishMunitionsResult(this.unit, diceResult);
+    _processReplenishMunitionsResult(result) {
         if (result.success) {
             this.unit.replenishMunitions();
         }
@@ -229,9 +225,8 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
 
 export class InteractiveReorganizeAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
     }
 
     get unit() {
@@ -258,7 +253,7 @@ export class InteractiveReorganizeAction extends CBAction {
         ).addWidget(
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
-                let {success} = this._processReorganizeResult(this.unit, scene.dice.result);
+                let {success} = this.game.arbitrator.processReorganizeResult(this.unit, scene.dice.result);
                 if (success) {
                     scene.result.success().appear();
                 }
@@ -272,6 +267,7 @@ export class InteractiveReorganizeAction extends CBAction {
             scene.result.setFinalAction(close),
             new Point2D(0, 0)
         );
+        this.game.openPopup(scene, this.unit.viewportLocation);
         return scene;
     }
 
@@ -279,7 +275,8 @@ export class InteractiveReorganizeAction extends CBAction {
         this.game.closeActuators();
         this.unit.setCharging(CBCharge.NONE);
         let scene = this.createScene(
-            ()=>{
+            result=>{
+                this._processReorganizeResult(result);
                 CBSequence.appendElement(this.game, new CBReorganizeSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
@@ -287,7 +284,6 @@ export class InteractiveReorganizeAction extends CBAction {
                 this.game.validate();
             }
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
     }
 
     replay(dice) {
@@ -295,11 +291,9 @@ export class InteractiveReorganizeAction extends CBAction {
         scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
-        this.game.openPopup(scene, this.unit.viewportLocation);
     }
 
-    _processReorganizeResult(unit, diceResult) {
-        let result = this.game.arbitrator.processReorganizeResult(this.unit, diceResult);
+    _processReorganizeResult(result) {
         if (result.success) {
             this.unit.reorganize();
         }
@@ -311,9 +305,8 @@ export class InteractiveReorganizeAction extends CBAction {
 
 export class InteractiveRallyAction extends CBAction {
 
-    constructor(game, unit, event) {
+    constructor(game, unit) {
         super(game, unit);
-        this._event = event;
     }
 
     get unit() {
@@ -340,7 +333,7 @@ export class InteractiveRallyAction extends CBAction {
         ).addWidget(
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
-                let {success} = this._processRallyResult(this.unit, scene.dice.result);
+                let {success} = this.game.arbitrator.processRallyResult(this.unit, scene.dice.result);
                 if (success) {
                     scene.result.success().appear();
                 }
@@ -361,7 +354,8 @@ export class InteractiveRallyAction extends CBAction {
         this.game.closeActuators();
         this.unit.setCharging(CBCharge.NONE);
         let scene = this.createScene(
-            ()=>{
+            result=>{
+                this._processRallyResult(result);
                 CBSequence.appendElement(this.game, new CBRallySequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
@@ -369,7 +363,7 @@ export class InteractiveRallyAction extends CBAction {
                 this.game.validate();
             }
         );
-        this.game.openPopup(scene, new Point2D(this._event.offsetX, this._event.offsetY));
+        this.game.openPopup(scene, this.unit.viewportLocation);
     }
 
     replay(dice) {
@@ -377,11 +371,9 @@ export class InteractiveRallyAction extends CBAction {
         scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
-        this.game.openPopup(scene, this.unit.viewportLocation);
     }
 
-    _processRallyResult(unit, diceResult) {
-        let result = this.game.arbitrator.processRallyResult(this.unit, diceResult);
+    _processRallyResult(result) {
         if (result.success) {
             this.unit.rally();
         }
@@ -395,22 +387,22 @@ function createRecoverMenuItems(unit, actions) {
     return [
         new DIconMenuItem("./../images/icons/do-rest.png", "./../images/icons/do-rest-gray.png",
             0, 2, event => {
-                unit.player.restUnit(unit, event);
+                unit.player.restUnit(unit);
                 return true;
             },"Se reposer").setActive(actions.rest),
         new DIconMenuItem("./../images/icons/do-reload.png", "./../images/icons/do-reload-gray.png",
             1, 2, event => {
-                unit.player.replenishUnitMunitions(unit, event);
+                unit.player.replenishUnitMunitions(unit);
                 return true;
             }, "Se ravitailler en munitions").setActive(actions.reload),
         new DIconMenuItem("./../images/icons/do-reorganize.png", "./../images/icons/do-reorganize-gray.png",
             2, 2, event => {
-                unit.player.reorganizeUnit(unit, event);
+                unit.player.reorganizeUnit(unit);
                 return true;
             }, "Se réorganiser").setActive(actions.reorganize),
         new DIconMenuItem("./../images/icons/do-rally.png", "./../images/icons/do-rally-gray.png",
             3, 2, event => {
-                unit.player.rallyUnit(unit, event);
+                unit.player.rallyUnit(unit);
                 return true;
             }, "Se rallier").setActive(actions.rally)
     ];
@@ -551,24 +543,6 @@ export class CBReorganizeSequenceElement extends WithDiceRoll(CBStateSequenceEle
 
 }
 CBSequence.register("Reorganize", CBReorganizeSequenceElement);
-
-export class CBConfrontSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
-
-    constructor({game, unit, dice}) {
-        super({ type: "Confront", game, unit, dice});
-    }
-
-    get delay() { return 1500; }
-
-    apply(startTick) {
-        return new CBUnitSceneAnimation({
-            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
-            animation: () => new CBConfrontChecking(this.game, this.unit).replay(this.dice)
-        });
-    }
-
-}
-CBSequence.register("Confront", CBConfrontSequenceElement);
 
 export class CBCrossingSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 

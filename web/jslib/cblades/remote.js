@@ -14,7 +14,7 @@ import {
 } from "./sequences.js";
 import {
     InteractiveRetreatAction,
-    CBAsk4RetreatSequenceElement
+    CBAsk4RetreatSequenceElement, InteractiveAdvanceAction
 } from "./interactive/interactive-combat.js";
 
 export class CBRemoteUnitPlayer extends CBUnitPlayer {
@@ -62,8 +62,8 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
         }
     }
 
-    continueLossApplication(unit, hexLocation, stacking) {
-        unit.action && unit.action.retreatUnit(hexLocation, stacking);
+    continueLossApplication(unit, actualLocation, stacking) {
+        unit.action && unit.action.retreatUnit(actualLocation, unit.hexLocation, stacking);
     }
 
     applyLossesToUnit(unit, losses, attacker, advance, continuation) {
@@ -87,7 +87,7 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
                 false
             ));
             CBSequence.appendElement(this.game,
-                new CBAsk4RetreatSequenceElement({game: this.game, unit, losses, attacker, advance})
+                new CBAsk4RetreatSequenceElement({game: this.game, unit, losses, attacker})
             );
             new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
         }
@@ -99,4 +99,14 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
         }
     }
 
+    /*
+    advanceAttacker(unit, directions, continuation) {
+        unit.launchAction(new InteractiveAdvanceAction(this.game, unit, directions, continuation,
+            false));
+        CBSequence.appendElement(this.game,
+            new CBAsk4AdvanceSequenceElement({game: this.game, unit, directions})
+        );
+        new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+    }
+*/
 }

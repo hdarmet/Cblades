@@ -896,7 +896,9 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     addToMap(hexId, stacking) {
         let nameMustBeDefined = !this._name || this._wing.hasUnitName(this._name);
         super.addToMap(hexId, stacking);
-        if (nameMustBeDefined) this._name = this._wing.getNextUnitName();
+        if (nameMustBeDefined) {
+            this._name = this._wing.getNextUnitName();
+        }
         for (let carried of this._carried) {
             carried.addToMap(hexId, stacking);
         }
@@ -904,7 +906,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     removeFromMap() {
         super.removeFromMap();
-        delete this._name;
+        //delete this._name;
         for (let carried of this._carried) {
             carried.removeFromMap();
         }
@@ -921,7 +923,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     deleteFromMap() {
         super.deleteFromMap();
-        delete this._name;
+        //delete this._name;
         for (let carried of this._carried) {
             carried.deleteFromMap();
         }
@@ -1518,6 +1520,10 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         else {
             this.removeFromMap();
         }
+        /*
+        this._movementPoints = state.movementPoints;
+        this._extendedMovementPoints = state.extendedMovementPoints;
+         */
     }
 
     _updateTirednessArtifact(setMarkerArtifact, removeMarkerArtifact) {
@@ -2008,9 +2014,7 @@ export class CBStateSequenceElement extends CBSequenceElement {
     fromSpec(spec, context) {
         super.fromSpec(spec, context);
         let unit = getUnitFromContext(context, spec.unit);
-        if (unit) {
-            this.setUnit(unit);
-        }
+        this.setUnit(unit);
         if (spec.steps !== undefined) this.steps = spec.steps;
         if (spec.tiredness !== undefined) this.tiredness = this.getTiredness(spec.tiredness);
         if (spec.cohesion !== undefined) this.cohesion = this.getCohesion(spec.cohesion);

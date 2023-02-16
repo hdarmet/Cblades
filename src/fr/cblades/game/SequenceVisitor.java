@@ -50,10 +50,6 @@ public interface SequenceVisitor {
         defaultVisit(element);
     }
 
-    default void visit(SequenceElement.ConfrontSequenceElement element) {
-        defaultVisit(element);
-    }
-
     default void visit(SequenceElement.CrossingSequenceElement element) {
         defaultVisit(element);
     }
@@ -89,5 +85,7 @@ public interface SequenceVisitor {
     default void visit(SequenceElement.Ask4RetreatSequenceElement element) { defaultVisit(element);  }
 
     default void visit(SequenceElement.RetreatSequenceElement element) { defaultVisit(element);  }
+
+    default void visit(SequenceElement.AdvanceSequenceElement element) { defaultVisit(element);  }
 
 }

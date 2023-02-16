@@ -461,35 +461,6 @@ public abstract class SequenceElement extends BaseEntity {
     }
 
     @Entity
-    @DiscriminatorValue("Confront")
-    public static class ConfrontSequenceElement extends StateSequenceElement {
-
-        int dice1;
-        int dice2;
-
-        public int getDice1() {
-            return this.dice1;
-        }
-        public ConfrontSequenceElement setDice1(int dice1) {
-            this.dice1 = dice1;
-            return this;
-        }
-
-        public int getDice2() {
-            return this.dice1;
-        }
-        public ConfrontSequenceElement setDice2(int dice2) {
-            this.dice2 = dice2;
-            return this;
-        }
-
-        public void accept(SequenceVisitor visitor) {
-            visitor.visit(this);
-        }
-
-    }
-
-    @Entity
     @DiscriminatorValue("Crossing")
     public static class CrossingSequenceElement extends StateSequenceElement {
 
@@ -1089,7 +1060,52 @@ public abstract class SequenceElement extends BaseEntity {
         public void accept(SequenceVisitor visitor) {
             visitor.visit(this);
         }
+    }
 
+    @Entity
+    @DiscriminatorValue("Advance")
+    public static class AdvanceSequenceElement extends StateSequenceElement {
+
+        int hexCol;
+        int hexRow;
+        Integer hexAngle=null;
+        Stacking stacking;
+
+        public int getHexCol() {
+            return this.hexCol;
+        }
+        public AdvanceSequenceElement setHexCol(int hexCol) {
+            this.hexCol = hexCol;
+            return this;
+        }
+
+        public int getHexRow() {
+            return this.hexRow;
+        }
+        public AdvanceSequenceElement setHexRow(int hexRow) {
+            this.hexRow = hexRow;
+            return this;
+        }
+
+        public Integer getHexAngle() {
+            return this.hexAngle;
+        }
+        public AdvanceSequenceElement setHexAngle(Integer hexAngle) {
+            this.hexAngle = hexAngle;
+            return this;
+        }
+
+        public Stacking getStacking() {
+            return this.stacking;
+        }
+        public AdvanceSequenceElement setStacking(Stacking stacking) {
+            this.stacking = stacking;
+            return this;
+        }
+
+        public void accept(SequenceVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 
     public abstract void accept(SequenceVisitor visitor);

@@ -18,8 +18,8 @@ public class SequenceApplyer implements SequenceVisitor  {
         for (Player player: this.game.getPlayers()) {
             for (Wing wing: player.getWings()) {
                 for (Unit unit: wing.getUnits()) {
-                    units.put(unit.getName(), unit);
-                    players.put(unit, player);
+                    this.units.put(unit.getName(), unit);
+                    this.players.put(unit, player);
                 }
             }
         }
@@ -118,6 +118,9 @@ public class SequenceApplyer implements SequenceVisitor  {
     }
 
     public void visit(SequenceElement.NextTurnSequenceElement element) {
+        for (Unit unit : this.units.values()) {
+            unit.setPlayed(false);
+        }
         this.game.advanceToNextPlayerTurn();
     }
 
@@ -147,11 +150,6 @@ public class SequenceApplyer implements SequenceVisitor  {
     }
 
     public void visit(SequenceElement.LossConsistencySequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        changeUnitState(unit, element);
-    }
-
-    public void visit(SequenceElement.ConfrontSequenceElement element) {
         Unit unit = units.get(element.getUnit());
         changeUnitState(unit, element);
     }
@@ -225,6 +223,19 @@ public class SequenceApplyer implements SequenceVisitor  {
         location = getLocation(unit);
         location.addUnit(unit, element.getStacking());
         em.remove(em.find(SequenceElement.class, element.getAskRequest()));
+    }
+
+    public void visit(SequenceElement.AdvanceSequenceElement element) {
+        Unit unit = units.get(element.getUnit());
+        Location location = getLocation(unit);
+        location.removeUnit(unit);
+        locations.remove(new HexPos(unit));
+        changeUnitState(unit, element);
+        unit.setPositionAngle(element.getHexAngle());
+        unit.setPositionCol(element.getHexCol());
+        unit.setPositionRow(element.getHexRow());
+        location = getLocation(unit);
+        location.addUnit(unit, element.getStacking());
     }
 
     long count = -1;
