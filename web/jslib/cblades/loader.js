@@ -372,6 +372,7 @@ export class GameLoader {
         map._oversion = specs.map.version;
         this._game.changeMap(map);
         for (let playerSpec of specs.players) {
+            let action;
             let player = this._game.getPlayer(playerSpec.identity.name);
             if (!player) {
                 player = this._playerCreator(playerSpec.identity.name, playerSpec.identity.path);
@@ -424,10 +425,19 @@ export class GameLoader {
                         neighborsCohesionLoss: unitSpec.neighborsCohesionLoss,
                         defenderEngagementChecking: unitSpec.defenderEngagementChecking,
                         attackerEngagementChecking: unitSpec.attackerEngagementChecking,
+                        movementPoints: unitSpec.movementPoints,
+                        extendedMovementPoints: unitSpec.extendedMovementPoints,
                         played: unitSpec.played
                     });
+                    if (unitSpec.actionType) {
+                        action = {
+                            unit,
+                            actionType: unitSpec.actionType,
+                            actionMode: unitSpec.actionMode
+                        }
+                    }
                     unitsMap.set(unit.name, {unit, unitSpec});
-                    if (unit.name == wingSpec.leader) {
+                    if (unit.name === wingSpec.leader) {
                         leader = unit;
                     }
                 }
@@ -435,6 +445,7 @@ export class GameLoader {
                 wing.setOrderInstruction(this.getOrderInstruction(wingSpec.orderInstruction))
             }
             this.showEntities(unitsMap, playerSpec);
+            action && action.unit.setAction(action);
         }
         this._game.currentPlayer = this._game.players[specs.currentPlayerIndex];
     }

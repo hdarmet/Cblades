@@ -151,6 +151,7 @@ export class InteractiveMergeUnitAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveMergeUnitAction", InteractiveMergeUnitAction);
 
 function createStartFireCounter(game, hexLocation) {
     let fireStart = new CBFireCounter();
@@ -228,6 +229,7 @@ export class InteractiveSetFireAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveSetFireAction", InteractiveSetFireAction);
 
 export class InteractiveExtinguishFireAction extends CBAction {
 
@@ -290,6 +292,7 @@ export class InteractiveExtinguishFireAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveExtinguishFireAction", InteractiveExtinguishFireAction);
 
 export class InteractiveSetStakesAction extends CBAction {
 
@@ -350,6 +353,7 @@ export class InteractiveSetStakesAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveSetStakesAction", InteractiveSetStakesAction);
 
 export class InteractiveRemoveStakesAction extends CBAction {
 
@@ -411,6 +415,7 @@ export class InteractiveRemoveStakesAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveRemoveStakesAction", InteractiveRemoveStakesAction);
 
 export class InteractivePlayWeatherAction extends CBAction {
 
@@ -471,6 +476,7 @@ export class InteractivePlayWeatherAction extends CBAction {
     }
 
 }
+CBAction.register("InteractivePlayWeatherAction", InteractivePlayWeatherAction);
 
 export class InteractivePlayFogAction extends CBAction {
 
@@ -531,6 +537,7 @@ export class InteractivePlayFogAction extends CBAction {
     }
 
 }
+CBAction.register("InteractivePlayFogAction", InteractivePlayFogAction);
 
 export class InteractivePlayWindDirectionAction extends CBAction {
 
@@ -592,6 +599,7 @@ export class InteractivePlayWindDirectionAction extends CBAction {
     }
 
 }
+CBAction.register("InteractivePlayWindDirectionAction", InteractivePlayWindDirectionAction);
 
 export class InteractivePlayTirednessAction extends CBAction {
 
@@ -649,6 +657,7 @@ export class InteractivePlayTirednessAction extends CBAction {
     }
 
 }
+CBAction.register("InteractivePlayTirednessAction", InteractivePlayTirednessAction);
 
 export class InteractivePlayMoralAction extends CBAction {
 
@@ -706,6 +715,7 @@ export class InteractivePlayMoralAction extends CBAction {
     }
 
 }
+CBAction.register("InteractivePlayMoralAction", InteractivePlayMoralAction);
 
 export class InteractivePlaySmokeAndFireAction extends CBAction {
 
@@ -904,6 +914,7 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
         this.openPlayFireActuator(this._options);
     }
 }
+CBAction.register("InteractivePlaySmokeAndFireAction", InteractivePlaySmokeAndFireAction);
 
 class PlayFireTrigger extends CBPlayableActuatorTrigger {
 

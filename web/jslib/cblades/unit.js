@@ -11,7 +11,14 @@ import {
     Memento
 } from "../mechanisms.js";
 import {
-    CBPieceImageArtifact, CBStacking, HexLocatableMixin, BelongsToPlayerMixin, PlayableMixin, CBPiece, CBAbstractPlayer
+    CBPieceImageArtifact,
+    CBStacking,
+    HexLocatableMixin,
+    BelongsToPlayerMixin,
+    PlayableMixin,
+    CBPiece,
+    CBAbstractPlayer,
+    CBAction
 } from "./game.js";
 import {
     RetractableArtifactMixin,
@@ -753,12 +760,6 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._engaging=false;
         this._charging=CBCharge.NONE;
         this._lossSteps = 0;
-        this._orderGiven = false;
-        this._disruptChecked = false;
-        this._routChecked = false;
-        this._neighborsCohesionLoss = false;
-        this._defenderEngagementChecking = false;
-        this._attackerEngagementChecking = false;
         this.artifact.setImage(this._lossSteps);
     }
 
@@ -1004,8 +1005,14 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     init() {
-        this._movementPoints=this._type.getMovementPoints(this.steps);
-        this._extendedMovementPoints=this._type.getExtendedMovementPoints(this.steps);
+        if (this._orderGiven === undefined) this._orderGiven = false;
+        if (this._disruptChecked === undefined) this._disruptChecked = false;
+        if (this._routChecked === undefined) this._routChecked = false;
+        if (this._neighborsCohesionLoss === undefined) this._neighborsCohesionLoss = false;
+        if (this._defenderEngagementChecking === undefined) this._defenderEngagementChecking = false;
+        if (this._attackerEngagementChecking === undefined) this._attackerEngagementChecking = false;
+        if (this._movementPoints === undefined) this._movementPoints = this._type.getMovementPoints(this.steps);
+        if (this._extendedMovementPoints === undefined) this._extendedMovementPoints = this._type.getExtendedMovementPoints(this.steps);
     }
 
     get carried() {
@@ -1110,11 +1117,13 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     finish() {
-        this._disruptChecked = false;
-        this._routChecked = false;
-        this._neighborsCohesionLoss = false;
-        this._defenderEngagementChecking = false;
-        this._attackerEngagementChecking = false;
+        delete this._disruptChecked;
+        delete this._routChecked;
+        delete this._neighborsCohesionLoss;
+        delete this._defenderEngagementChecking;
+        delete this._attackerEngagementChecking;
+        delete this._movementPoints;
+        delete this._extendedMovementPoints;
         CBSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit: this}));
         super.finish();
     }
@@ -1502,10 +1511,9 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._neighborsCohesionLoss = state.neighborsCohesionLoss;
         this._defenderEngagementChecking = state.defenderEngagementChecking;
         this._attackerEngagementChecking = state.attackerEngagementChecking;
-        if (this._disruptChecked  || this._routChecked || this._neighborsCohesionLoss || this._defenderEngagementChecking || this._attackerEngagementChecking) {
+        if (this._disruptChecked || this._routChecked || this._neighborsCohesionLoss || this._defenderEngagementChecking || this._attackerEngagementChecking) {
             this.game.setFocusedPlayable(this);
-        }
-        else if (this.game.focusedPlayable===this) {
+        } else if (this.game.focusedPlayable === this) {
             this.game.setFocusedPlayable(null);
         }
         this.played = state.played;
@@ -1514,16 +1522,21 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._updatePlayedArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
         this._updateEngagementArtifact(this.setMarkerArtifact, this.setActivableMarkerArtifact, this.removeMarkerArtifact);
         this._updateCohesionArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
-        if (this.steps) {
+        if (state.steps) {
             this.steps = state.steps;
-        }
-        else {
+        } else {
             this.removeFromMap();
         }
-        /*
         this._movementPoints = state.movementPoints;
         this._extendedMovementPoints = state.extendedMovementPoints;
-         */
+    }
+
+    setAction(state) {
+        if (state.actionType) {
+            let action = CBAction.createAction(state.actionType, this.game, this, state.actionMode);
+            this.launchAction(action);
+            action.status = CBAction.STARTED;
+        }
     }
 
     _updateTirednessArtifact(setMarkerArtifact, removeMarkerArtifact) {
@@ -1929,6 +1942,12 @@ export class CBStateSequenceElement extends CBSequenceElement {
         this.neighborsCohesionLoss = unit.neighborsCohesionLoss;
         this.defenderEngagementChecking = unit.defenderEngagementChecking;
         this.attackerEngagementChecking = unit.attackerEngagementChecking;
+        this.movementPoints = unit.movementPoints;
+        this.extendedMovementPoints = unit.extendedMovementPoints;
+        if (unit.action && !unit.action.isFinished()) {
+            this.actionType = unit.action.constructor.name;
+            this.actionMode = unit.action.mode;
+        }
         this.played = unit.isPlayed();
     }
 
@@ -1945,6 +1964,10 @@ export class CBStateSequenceElement extends CBSequenceElement {
         if (state.neighborsCohesionLoss !== undefined) this.neighborsCohesionLoss = state.neighborsCohesionLoss;
         if (state.defenderEngagementChecking !== undefined) this.defenderEngagementChecking = state.defenderEngagementChecking;
         if (state.attackerEngagementChecking !== undefined) this.attackerEngagementChecking = state.attackerEngagementChecking;
+        if (state.movementPoints !== undefined) this.movementPoints = state.movementPoints;
+        if (state.extendedMovementPoints !== undefined) this.extendedMovementPoints = state.extendedMovementPoints;
+        if (state.actionType !== undefined) this.actionType = state.actionType;
+        if (state.actionMode !== undefined) this.actionMode = state.actionMode;
         if (state.played !== undefined) this.played = state.played;
         return this;
     }
@@ -1964,6 +1987,10 @@ export class CBStateSequenceElement extends CBSequenceElement {
         if (this.neighborsCohesionLoss !== element.neighborsCohesionLoss) return false;
         if (this.defenderEngagementChecking !== element.defenderEngagementChecking) return false;
         if (this.attackerEngagementChecking !== element.attackerEngagementChecking) return false;
+        if (this.movementPoints !== element.movementPoints) return false;
+        if (this.extendedMovementPoints !== element.extendedMovementPoints) return false;
+        if (this.actionType !== element.actionType) return false;
+        if (this.actionMode !== element.actionMode) return false;
         if (this.played !== element.played) return false;
         return true;
     }
@@ -1983,6 +2010,10 @@ export class CBStateSequenceElement extends CBSequenceElement {
         if (this.neighborsCohesionLoss !== undefined) result+=", NeighborsCohesionLoss: "+this.neighborsCohesionLoss;
         if (this.defenderEngagementChecking !== undefined) result+=", DefenderEngagementChecking: "+this.defenderEngagementChecking;
         if (this.attackerEngagementChecking !== undefined) result+=", AttackerEngagementChecking: "+this.attackerEngagementChecking;
+        if (this.movementPoints !== undefined) result+=", MovementPoints: "+this.movementPoints;
+        if (this.extendedMovementPoints !== undefined) result+=", ExtendedMovementPoints: "+this.extendedMovementPoints;
+        if (this.actionType !== undefined) result+=", AttackerEngagementChecking: "+this.actionType;
+        if (this.actionMode !== undefined) result+=", AttackerEngagementChecking: "+this.actionMode;
         if (this.played !== undefined) result+=", Played: "+this.played;
         return result;
     }
@@ -2007,7 +2038,11 @@ export class CBStateSequenceElement extends CBSequenceElement {
         spec.routChecked = this.routChecked;
         spec.neighborsCohesionLoss = this.neighborsCohesionLoss;
         spec.defenderEngagementChecking = this.defenderEngagementChecking;
-        spec.attackerEngagementChecking = this.attackerrEngagementChecking;
+        spec.attackerEngagementChecking = this.attackerEngagementChecking;
+        spec.movementPoints = this.movementPoints;
+        spec.extendedMovementPoints = this.extendedMovementPoints;
+        spec.actionType = this.actionType;
+        spec.actionMode = this.actionMode;
         spec.played = this.played;
     }
 
@@ -2027,6 +2062,10 @@ export class CBStateSequenceElement extends CBSequenceElement {
         if (spec.neighborsCohesionLoss !== undefined) this.neighborsCohesionLoss = spec.neighborsCohesionLoss;
         if (spec.defenderEngagementChecking !== undefined) this.defenderEngagementChecking = spec.defenderEngagementChecking;
         if (spec.attackerEngagementChecking !== undefined) this.attackerEngagementChecking = spec.attackerEngagementChecking;
+        if (spec.movementPoints !== undefined) this.movementPoints = spec.movementPoints;
+        if (spec.extendedMovementPoints !== undefined) this.extendedMovementPoints = spec.extendedMovementPoints;
+        if (spec.actionType !== undefined) this.actionType = spec.actionType;
+        if (spec.actionMode !== undefined) this.actionMode = spec.actionMode;
         if (spec.played !== undefined) this.played = spec.played;
     }
 

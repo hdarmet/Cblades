@@ -198,19 +198,29 @@ public class RouteManager {
 				RouteRecord nextRecord = currentRecord.params.get(segment);
 				if (nextRecord!=null) {
 					currentRecord = nextRecord;
+					if (index==path.length-1) {
+						currentRecord.route = route;
+						return;
+					}
 				}
 				else {
 					registerSegment(segment, path, index, route, currentRecord.params);
+					log.info("Path : "+uri+" installed.");
 					return;
 				}
 			}
 			else {
 				RouteRecord nextRecord = currentRecord.next.get(segment);
-				if (nextRecord!=null) {
+				if (nextRecord!=null && index<path.length-1) {
 					currentRecord = nextRecord;
+					if (index==path.length-1) {
+						currentRecord.route = route;
+						return;
+					}
 				}
 				else {
 					registerSegment(segment, path, index, route, currentRecord.next);
+					log.info("Path : "+uri+" installed.");
 					return;
 				}
 			}

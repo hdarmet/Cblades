@@ -64,7 +64,7 @@ public class SequenceApplyer implements SequenceVisitor  {
 
     void changeUnitState(Unit unit, SequenceElement.StateSequenceElement element) {
         unit.setAmmunition(element.getAmmunition());
-        unit.setCharging(element.getCharging()==Charging.CHARGING);
+        unit.setCharging(element.getCharging() == Charging.CHARGING);
         unit.setCohesion(element.getCohesion());
         unit.setTiredness(element.getTiredness());
         unit.setEngaging(element.isEngaging());
@@ -76,11 +76,15 @@ public class SequenceApplyer implements SequenceVisitor  {
         unit.setNeighborsCohesionLoss(element.isNeighborsCohesionLoss());
         unit.setPlayed(element.isPlayed());
         unit.setSteps(element.getSteps());
-        if (unit.getSteps()==0) {
+        if (unit.getSteps() == 0) {
             Location location = getLocation(unit);
             location.removeUnit(unit);
             locations.remove(new HexPos(unit));
         }
+        if (element.getMovementPoints()!=null) unit.setMovementPoints(element.getMovementPoints());
+        if (element.getExtendedMovementPoints()!=null) unit.setExtendedMovementPoints(element.getExtendedMovementPoints());
+        if (element.getActionType()!=null) unit.setActionType(element.getActionType());
+        if (element.getActionMode()!=null) unit.setActionMode(element.getActionMode());
     }
 
     public void visit(SequenceElement.MoveSequenceElement element) {

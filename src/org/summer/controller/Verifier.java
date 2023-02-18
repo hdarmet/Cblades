@@ -175,9 +175,14 @@ public class Verifier {
 			(json.get(field) instanceof Integer), field, message);
 	}
 
+	public Verifier checkString(String field, String message) {
+		return check(json->json.get(field)==null||
+			(json.get(field) instanceof String), field, message);
+	}
+
 	public Verifier checkLong(String field, String message) {
 		return check(json->json.get(field)==null||
-				(json.get(field) instanceof Long), field, message);
+			(json.get(field) instanceof Long), field, message);
 	}
 
 	public Verifier checkFloat(String field, String message) {
@@ -192,6 +197,18 @@ public class Verifier {
 
 	public Verifier checkInteger(String field) {
 		return checkInteger(field, "not a valid integer");
+	}
+
+	public Verifier checkFloat(String field) {
+		return checkFloat(field, "not a valid float");
+	}
+
+	public Verifier checkDouble(String field) {
+		return checkDouble(field, "not a valid double");
+	}
+
+	public Verifier checkString(String field) {
+		return checkString(field, "not a valid string");
 	}
 
 	public Verifier checkEmail(String field, String message) {

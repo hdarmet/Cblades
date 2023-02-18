@@ -51,7 +51,9 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
                         let tick = 0;
                         for (let sequence of sequences) {
                             tick = sequence.replay(tick, () => {
-                                sequence===sequences.last() ? this.tryToLoadNewSequence() : null;
+                                if (sequence===sequences.last()) {
+                                    this.tryToLoadNewSequence();
+                                }
                             });
                         }
                     } else {

@@ -28,9 +28,6 @@ import {
 import {
     SequenceLoader
 } from "../loader.js";
-import {
-    CBLoseCohesionForCrossingChecking
-} from "./interactive-movement.js";
 
 export function registerInteractiveRecover() {
     CBInteractivePlayer.prototype.restUnit = function(unit) {
@@ -147,6 +144,7 @@ export class InteractiveRestingAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveRestingAction", InteractiveRestingAction);
 
 export class InteractiveReplenishMunitionsAction extends CBAction {
 
@@ -222,6 +220,7 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveReplenishMunitionsAction", InteractiveReplenishMunitionsAction);
 
 export class InteractiveReorganizeAction extends CBAction {
 
@@ -302,6 +301,7 @@ export class InteractiveReorganizeAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveReorganizeAction", InteractiveReorganizeAction);
 
 export class InteractiveRallyAction extends CBAction {
 
@@ -382,6 +382,7 @@ export class InteractiveRallyAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveRallyAction", InteractiveRallyAction);
 
 function createRecoverMenuItems(unit, actions) {
     return [
@@ -544,21 +545,4 @@ export class CBReorganizeSequenceElement extends WithDiceRoll(CBStateSequenceEle
 }
 CBSequence.register("Reorganize", CBReorganizeSequenceElement);
 
-export class CBCrossingSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
-
-    constructor({game, unit, dice}) {
-        super({ type:"Crossing", game, unit, dice});
-    }
-
-    get delay() { return 1500; }
-
-    apply(startTick) {
-        return new CBUnitSceneAnimation({
-            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
-            animation: () => new CBLoseCohesionForCrossingChecking(this.game, this.unit).replay(this.dice)
-        });
-    }
-
-}
-CBSequence.register("Crossing", CBCrossingSequenceElement);
 

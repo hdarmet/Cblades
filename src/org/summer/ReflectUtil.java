@@ -129,10 +129,28 @@ public class ReflectUtil {
 		}
 	}
 
+	static Object convert(Object value, Class<?> type) {
+		if (value==null) return null;
+		if (type.isInstance(value)) return value;
+		if ((type == Float.class || type == Float.TYPE) && value instanceof Number) {
+			return ((Number)value).floatValue();
+		}
+		if ((type == Double.class || type == Double.TYPE) && value instanceof Number) {
+			return ((Number)value).doubleValue();
+		}
+		if ((type == Integer.class || type == Integer.TYPE) && value instanceof Number) {
+			return ((Number)value).intValue();
+		}
+		if ((type == Long.class || type == Long.TYPE) && value instanceof Number) {
+			return ((Number)value).longValue();
+		}
+		return value;
+	}
+
 	public static <T, E> void set(E thisEntity, Field field, T value) {
 		field.setAccessible(true);
 		try {
-			field.set(thisEntity, value);
+			field.set(thisEntity, convert(value, field.getType()));
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			throw new SummerException("Unexpected exception. Probably a bug", e);
 		}

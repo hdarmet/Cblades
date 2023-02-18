@@ -276,6 +276,17 @@ export class CBAction {
     static CANCELLED = -1;
     static PROGRESSION_EVENT = "action-progression";
     static FINISHABLE = 1;
+
+    static types = new Map();
+
+    static register(label, actionType) {
+        CBAction.types.set(label, actionType);
+    }
+
+    static createAction(label, game, unit, mode) {
+        return new (CBAction.types.get(label))(game, unit, mode);
+    }
+
 }
 
 export class CBActuator {

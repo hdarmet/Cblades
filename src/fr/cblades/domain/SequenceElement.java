@@ -32,14 +32,18 @@ public abstract class SequenceElement extends BaseEntity {
         Ammunition ammunition = Ammunition.PLENTIFUL;
         @Enumerated(EnumType.STRING)
         Charging charging = Charging.NONE;
-        boolean engaging = false;
-        boolean orderGiven = false;
-        boolean disruptChecked = false;
-        boolean routChecked = false;
-        boolean neighborsCohesionLoss = false;
-        boolean defenderEngagementChecking = false;
-        boolean attackerEngagementChecking = false;
-        boolean played = false;
+        Boolean engaging = false;
+        Boolean orderGiven = false;
+        Boolean disruptChecked = false;
+        Boolean routChecked = false;
+        Boolean neighborsCohesionLoss = false;
+        Boolean defenderEngagementChecking = false;
+        Boolean attackerEngagementChecking = false;
+        Boolean played = false;
+        Double movementPoints;
+        Double extendedMovementPoints;
+        String actionType;
+        Integer actionMode;
 
         public String getUnit() { return this.unit; }
         public StateSequenceElement setUnit(String unit) {
@@ -87,67 +91,99 @@ public abstract class SequenceElement extends BaseEntity {
             return this;
         }
 
-        public boolean isEngaging() {
+        public Boolean isEngaging() {
             return this.engaging;
         }
-        public StateSequenceElement setEngaging(boolean engaging) {
+        public StateSequenceElement setEngaging(Boolean engaging) {
             this.engaging = engaging;
             return this;
         }
 
-        public boolean hasGivenOrder() {
+        public Boolean hasGivenOrder() {
             return this.orderGiven;
         }
-        public StateSequenceElement setGivenOrder(boolean orderGiven) {
+        public StateSequenceElement setGivenOrder(Boolean orderGiven) {
             this.orderGiven = orderGiven;
             return this;
         }
 
-        public boolean isDisruptChecked() {
+        public Boolean isDisruptChecked() {
             return this.disruptChecked;
         }
-        public StateSequenceElement setDisruptChecked(boolean disruptChecked) {
+        public StateSequenceElement setDisruptChecked(Boolean disruptChecked) {
             this.disruptChecked = disruptChecked;
             return this;
         }
 
-        public boolean isRoutChecked() {
+        public Boolean isRoutChecked() {
             return this.routChecked;
         }
-        public StateSequenceElement setRoutChecked(boolean routChecked) {
+        public StateSequenceElement setRoutChecked(Boolean routChecked) {
             this.routChecked = routChecked;
             return this;
         }
 
-        public boolean isNeighborsCohesionLoss() {
+        public Boolean isNeighborsCohesionLoss() {
             return this.neighborsCohesionLoss;
         }
-        public StateSequenceElement setNeighborsCohesionLoss(boolean neighborsCohesionLoss) {
+        public StateSequenceElement setNeighborsCohesionLoss(Boolean neighborsCohesionLoss) {
             this.neighborsCohesionLoss = neighborsCohesionLoss;
             return this;
         }
 
-        public boolean isDefenderEngagementChecking() {
+        public Boolean isDefenderEngagementChecking() {
             return this.defenderEngagementChecking;
         }
-        public StateSequenceElement setDefenderEngagementChecking(boolean defenderEngagementChecking) {
+        public StateSequenceElement setDefenderEngagementChecking(Boolean defenderEngagementChecking) {
             this.defenderEngagementChecking = defenderEngagementChecking;
             return this;
         }
 
-        public boolean isAttackerEngagementChecking() {
+        public Boolean isAttackerEngagementChecking() {
             return this.attackerEngagementChecking;
         }
-        public StateSequenceElement setAttackerEngagementChecking(boolean attackerEngagementChecking) {
+        public StateSequenceElement setAttackerEngagementChecking(Boolean attackerEngagementChecking) {
             this.attackerEngagementChecking = attackerEngagementChecking;
             return this;
         }
 
-        public boolean isPlayed() {
+        public Boolean isPlayed() {
             return this.played;
         }
-        public StateSequenceElement setPlayed(boolean played) {
+        public StateSequenceElement setPlayed(Boolean played) {
             this.played = played;
+            return this;
+        }
+
+        public Double getMovementPoints() {
+            return this.movementPoints;
+        }
+        public StateSequenceElement setMovementPoints(Double movementPoints) {
+            this.movementPoints = movementPoints;
+            return this;
+        }
+
+        public Double getExtendedMovementPoints() {
+            return this.extendedMovementPoints;
+        }
+        public StateSequenceElement setExtendedMovementPoints(Double extendedMovementPoints) {
+            this.extendedMovementPoints = extendedMovementPoints;
+            return this;
+        }
+
+        public String getActionType() {
+            return this.actionType;
+        }
+        public StateSequenceElement setActionType(String actionType) {
+            this.actionType = actionType;
+            return this;
+        }
+
+        public Integer getActionMode() {
+            return this.actionMode;
+        }
+        public StateSequenceElement setActionMode(Integer actionMode) {
+            this.actionMode = actionMode;
             return this;
         }
 

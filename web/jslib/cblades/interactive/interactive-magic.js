@@ -80,6 +80,7 @@ export class InteractiveChoseSpellAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveChoseSpellAction", InteractiveChoseSpellAction);
 
 export class InteractiveTryToCastSpellAction extends CBAction {
 
@@ -134,6 +135,7 @@ export class InteractiveTryToCastSpellAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveTryToCastSpellAction", InteractiveTryToCastSpellAction);
 
 export class InteractiveCastSpellAction extends CBAction {
 
@@ -224,6 +226,7 @@ export class InteractiveCastSpellAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveCastSpellAction", InteractiveCastSpellAction);
 
 export class CBSpellTargetFoesActuator extends RetractableActuatorMixin(CBActionActuator) {
 

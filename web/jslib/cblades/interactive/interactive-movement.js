@@ -683,6 +683,10 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         this._moveMode = memento.moveMode;
     }
 
+    get mode() {
+        return this._moveMode;
+    }
+
     isFinishable() {
         return super.isFinishable() || this.game.arbitrator.doesUnitEngage(this.unit);
     }
@@ -836,6 +840,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
     }
 
 }
+CBAction.register("InteractiveMovementAction", InteractiveMovementAction);
 
 export class CBAttackerEngagementChecking {
 
@@ -1213,6 +1218,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
         this._markUnitActivationAfterMovement(played);
     }
 }
+CBAction.register("InteractiveRoutAction", InteractiveRoutAction);
 
 export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction {
 
@@ -1301,6 +1307,7 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
     }
 
 }
+CBAction.register("InteractiveMoveBackAction", InteractiveMoveBackAction);
 
 export class InteractiveConfrontAction extends InteractiveAbstractMovementAction {
 
@@ -1362,6 +1369,7 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
     }
 
 }
+CBAction.register("InteractiveConfrontAction", InteractiveConfrontAction);
 
 function createMovementMenuItems(unit, actions) {
     return [
@@ -2029,4 +2037,22 @@ export class CBAttackerEngagementSequenceElement extends WithDiceRoll(CBStateSeq
 
 }
 CBSequence.register("AttackerEngagement", CBAttackerEngagementSequenceElement);
+
+export class CBCrossingSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
+
+    constructor({game, unit, dice}) {
+        super({ type:"Crossing", game, unit, dice});
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBUnitSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new CBLoseCohesionForCrossingChecking(this.game, this.unit).replay(this.dice)
+        });
+    }
+
+}
+CBSequence.register("Crossing", CBCrossingSequenceElement);
 

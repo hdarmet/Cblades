@@ -150,6 +150,7 @@ export class InteractiveTakeCommandAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveTakeCommandAction", InteractiveTakeCommandAction);
 
 export class InteractiveDismissCommandAction extends CBAction {
 
@@ -232,6 +233,7 @@ export class InteractiveDismissCommandAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveDismissCommandAction", InteractiveDismissCommandAction);
 
 export class InteractiveChangeOrderInstructionAction extends CBAction {
 
@@ -313,6 +315,7 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveChangeOrderInstructionAction", InteractiveChangeOrderInstructionAction);
 
 export class InteractiveGiveOrdersAction extends CBAction {
 
@@ -428,6 +431,7 @@ export class InteractiveGiveOrdersAction extends CBAction {
         this._selectUnitsToGiveOrders();
     }
 }
+CBAction.register("InteractiveGiveOrdersAction", InteractiveGiveOrdersAction);
 
 function createCommandMenuItems(unit, actions) {
     return [

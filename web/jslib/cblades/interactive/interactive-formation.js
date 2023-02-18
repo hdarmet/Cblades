@@ -75,6 +75,7 @@ export class InteractiveBreakFormationAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveBreakFormationAction", InteractiveBreakFormationAction);
 
 export class InteractiveCreateFormationAction extends CBAction {
 
@@ -119,6 +120,7 @@ export class InteractiveCreateFormationAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveCreateFormationAction", InteractiveCreateFormationAction);
 
 export class InteractiveReleaseTroopsAction extends CBAction {
 
@@ -165,6 +167,7 @@ export class InteractiveReleaseTroopsAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveReleaseTroopsAction", InteractiveReleaseTroopsAction);
 
 export class InteractiveIncludeTroopsAction extends CBAction {
 
@@ -192,6 +195,7 @@ export class InteractiveIncludeTroopsAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveIncludeTroopsAction", InteractiveIncludeTroopsAction);
 
 export class CBCreateFormationActuator extends CBActionActuator {
 

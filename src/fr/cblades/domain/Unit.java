@@ -26,15 +26,23 @@ public class Unit extends BaseEntity {
     boolean engaging;
     boolean charging;
     boolean contact;
-    boolean orderGiven;
-    boolean disruptChecked = false;
-    boolean routChecked = false;
-    boolean neighborsCohesionLoss = false;
-    boolean defenderEngagementChecking = false;
-    boolean attackerEngagementChecking = false;
+    Boolean orderGiven;
+    Boolean disruptChecked = false;
+    Boolean routChecked = false;
+    Boolean neighborsCohesionLoss = false;
+    Boolean defenderEngagementChecking = false;
+    Boolean attackerEngagementChecking = false;
     boolean played;
     @Transient
     Wing wing;
+    @Transient
+    Double movementPoints;
+    @Transient
+    Double extendedMovementPoints;
+    @Transient
+    String actionType;
+    @Transient
+    Integer actionMode;
 
     public String getName() {
         return this.name;
@@ -149,50 +157,50 @@ public class Unit extends BaseEntity {
         return this;
     }
 
-    public boolean isOrderGiven() {
+    public Boolean isOrderGiven() {
         return this.orderGiven;
     }
-    public Unit setOrderGiven(boolean orderGiven) {
+    public Unit setOrderGiven(Boolean orderGiven) {
         this.orderGiven = orderGiven;
         return this;
     }
 
-    public boolean isDisruptChecked() {
+    public Boolean isDisruptChecked() {
         return this.disruptChecked;
     }
-    public Unit setDisruptChecked(boolean disruptChecked) {
+    public Unit setDisruptChecked(Boolean disruptChecked) {
         this.disruptChecked = disruptChecked;
         return this;
     }
 
-    public boolean isRoutChecked() {
+    public Boolean isRoutChecked() {
         return this.routChecked;
     }
-    public Unit setRoutChecked(boolean routChecked) {
+    public Unit setRoutChecked(Boolean routChecked) {
         this.routChecked = routChecked;
         return this;
     }
 
-    public boolean isNeighborsCohesionLoss() {
+    public Boolean isNeighborsCohesionLoss() {
         return this.neighborsCohesionLoss;
     }
-    public Unit setNeighborsCohesionLoss(boolean neighborsCohesionLoss) {
+    public Unit setNeighborsCohesionLoss(Boolean neighborsCohesionLoss) {
         this.neighborsCohesionLoss = neighborsCohesionLoss;
         return this;
     }
 
-    public boolean isDefenderEngagementChecking() {
+    public Boolean isDefenderEngagementChecking() {
         return this.defenderEngagementChecking;
     }
-    public Unit setDefenderEngagementChecking(boolean defenderEngagementChecking) {
+    public Unit setDefenderEngagementChecking(Boolean defenderEngagementChecking) {
         this.defenderEngagementChecking = defenderEngagementChecking;
         return this;
     }
 
-    public boolean isAttackerEngagementChecking() {
+    public Boolean isAttackerEngagementChecking() {
         return this.attackerEngagementChecking;
     }
-    public Unit setAttackerEngagementChecking(boolean attackerEngagementChecking) {
+    public Unit setAttackerEngagementChecking(Boolean attackerEngagementChecking) {
         this.attackerEngagementChecking = attackerEngagementChecking;
         return this;
     }
@@ -225,6 +233,36 @@ public class Unit extends BaseEntity {
         duplications.put(this, unit);
         em.persist(unit);
         return unit;
+    }
+
+    public Double getMovementPoints() {
+        return this.movementPoints;
+    }
+    public Unit setMovementPoints(Double movementPoints) {
+        this.movementPoints = movementPoints;
+        return this;
+    }
+
+    public Double getExtendedMovementPoints() {
+        return this.extendedMovementPoints;
+    }
+    public Unit setExtendedMovementPoints(Double extendedMovementPoints) {
+        this.extendedMovementPoints = extendedMovementPoints;
+        return this;
+    }
+
+    public String getActionType() { return this.actionType; }
+    public Unit setActionType(String actionType) {
+        this.actionType = actionType;
+        return this;
+    }
+
+    public Integer getActionMode() {
+        return this.actionMode;
+    }
+    public Unit setActionMode(Integer actionMode) {
+        this.actionMode = actionMode;
+        return this;
     }
 
 }

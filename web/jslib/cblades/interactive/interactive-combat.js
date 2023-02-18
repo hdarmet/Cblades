@@ -132,6 +132,7 @@ export class InteractiveAdvanceAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveAdvanceAction", InteractiveAdvanceAction);
 
 export class InteractiveRetreatAction extends CBAction {
 
@@ -233,6 +234,7 @@ export class InteractiveRetreatAction extends CBAction {
     }
 
 }
+CBAction.register("InteractiveRetreatAction", InteractiveRetreatAction);
 
 export class InteractiveAbstractShockAttackAction extends CBAction {
 
@@ -457,6 +459,7 @@ export class InteractiveShockAttackAction extends InteractiveAbstractShockAttack
     }
 
 }
+CBAction.register("InteractiveShockAttackAction", InteractiveShockAttackAction);
 
 export class InteractiveDuelAttackAction extends InteractiveAbstractShockAttackAction {
 
@@ -469,6 +472,7 @@ export class InteractiveDuelAttackAction extends InteractiveAbstractShockAttackA
     }
 
 }
+CBAction.register("InteractiveDuelAttackAction", InteractiveDuelAttackAction);
 
 export class InteractiveAbstractFireAttackAction extends CBAction {
 
@@ -693,6 +697,7 @@ export class InteractiveFireAttackAction extends InteractiveAbstractFireAttackAc
     }
 
 }
+CBAction.register("InteractiveAbstractFireAttackAction", InteractiveAbstractFireAttackAction);
 
 export class InteractiveDuelFireAction extends InteractiveAbstractFireAttackAction {
 
@@ -705,6 +710,7 @@ export class InteractiveDuelFireAction extends InteractiveAbstractFireAttackActi
     }
 
 }
+CBAction.register("InteractiveDuelFireAction", InteractiveDuelFireAction);
 
 function createCombatMenuItems(unit, actions) {
     return [

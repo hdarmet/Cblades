@@ -122,6 +122,13 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			.checkBoolean("neighborsCohesionLoss")
 			.checkBoolean("defenderEngagementChecking")
 			.checkBoolean("attackerEngagementChecking")
+			.checkRequired("movementPoints").checkDouble("movementPoints")
+			.checkMin("movementPoints", 0).checkMax("movementPoints", 6)
+			.checkRequired("extendedMovementPoints").checkDouble("extendedMovementPoints")
+			.checkMin("extendedMovementPoints", 0).checkMax("extendedMovementPoints", 9)
+			.checkString("actionType").checkMinSize("actionType", 2).checkMaxSize("actionType", 80)
+			.checkInteger("actionMode")
+			.checkMin("actionMode", 0).checkMax("actionMode", 9)
 			.checkBoolean("played");
 	}
 
@@ -214,6 +221,10 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			.write("neighborsCohesionLoss")
 			.write("defenderEngagementChecking")
 			.write("attackerEngagementChecking")
+			.write("movementPoints")
+			.write("extendedMovementPoints")
+			.write("actionType")
+			.write("actionMode")
 			.write("played");
 	}
 
@@ -688,6 +699,10 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			.read("defenderEngagementChecking")
 			.read("attackerEngagementChecking")
 			.read("orderGiven")
+			.read("movementPoints")
+			.read("extendedMovementPoints")
+			.read("actionType")
+			.read("actionMode")
 			.read("played");
 	}
 

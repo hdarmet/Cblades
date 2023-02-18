@@ -169,6 +169,7 @@ export class CBSequenceElement {
     }
 
     get delay() { return 0; }
+
 }
 
 export class CBAnimation extends DAnimation {
