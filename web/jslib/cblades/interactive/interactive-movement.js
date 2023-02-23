@@ -287,16 +287,18 @@ export class InteractiveAbstractMovementAction extends CBAction {
     }
 
     _checkIfANonRoutedCrossedUnitLoseCohesion(crossedUnits, processing, cancellable) {
-        if (crossedUnits.length) {
+        while (crossedUnits.length) {
             let crossedUnit = crossedUnits.pop();
-            new CBLoseCohesionForCrossingChecking(this.game, crossedUnit).play( () => {
-                this.game.validate();
-                this._checkIfANonRoutedCrossedUnitLoseCohesion(crossedUnits, processing, false);
-            }, cancellable);
+            if (!crossedUnit.isRouted()) {
+                new CBLoseCohesionForCrossingChecking(this.game, crossedUnit).play(
+                    () => {
+                    this.game.validate();
+                    this._checkIfANonRoutedCrossedUnitLoseCohesion(crossedUnits, processing, false);
+                }, cancellable);
+                return;
+            }
         }
-        else {
-            processing();
-        }
+        processing();
     }
 
     _doCrossChecking(processing) {
@@ -774,8 +776,8 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
     }
 
     _checkAttackerEngagement(engaging, action) {
-        if (!this.unit.defenderEngagementChecking && engaging && this.game.arbitrator.isUnitEngaged(this.unit, false)) {
-            this.unit.defenderEngagementChecking = true;
+        if (!this.unit.attackerEngagementChecking && engaging && this.game.arbitrator.isUnitEngaged(this.unit, false)) {
+            this.unit.attackerEngagementChecking = true;
             new CBAttackerEngagementChecking(this.game, this.unit).play(() => {
                 super.finalize(action);
                 this.game.validate();
@@ -885,8 +887,8 @@ export class CBAttackerEngagementChecking {
     play(action) {
         let scene;
         scene = this.createScene(
-            ()=>{
-                if (!scene.result.success) {
+            success=>{
+                if (!success) {
                     this.unit.addOneCohesionLevel();
                     CBSequence.appendElement(this.game, new CBStateSequenceElement({unit: this.unit}));
                 }
@@ -936,7 +938,8 @@ export class CBLoseCohesionForCrossingChecking {
         ).addWidget(
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
-                let {success} = this._processCohesionLostResult(this.unit, scene.dice.result);
+                scene.dice.result = [5, 6];
+                let {success} = this.game.arbitrator.processCohesionLostResult(this.unit, scene.dice.result);
                 if (success) {
                     scene.result.success().appear();
                 }
@@ -955,8 +958,12 @@ export class CBLoseCohesionForCrossingChecking {
     }
 
     play(action, cancellable) {
-        let scene = this.createScene(
-            ()=>{
+        let scene;
+        scene = this.createScene(
+            success=>{
+                if (!success) {
+                    this.unit.addOneCohesionLevel();
+                }
                 CBSequence.appendElement(this.game, new CBCrossingSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
@@ -964,13 +971,11 @@ export class CBLoseCohesionForCrossingChecking {
                 this.game.validate();
             },
             ()=>{
-                if (cancellable) {
+                if (cancellable && !scene.result.finished) {
                     Memento.undo();
                 }
-                if (scene.result.finished) {
-                    if (!cancellable) {
-                        this.game.closePopup();
-                    }
+                else if (scene.result.finished) {
+                    this.game.closePopup();
                     action();
                 }
             }
@@ -982,14 +987,6 @@ export class CBLoseCohesionForCrossingChecking {
         scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
-    }
-
-    _processCohesionLostResult(unit, diceResult) {
-        let result = this.game.arbitrator.processCohesionLostResult(unit, diceResult);
-        if (!result.success) {
-            unit.addOneCohesionLevel();
-        }
-        return result;
     }
 
 }
@@ -1038,8 +1035,8 @@ export class CBDisengagementChecking {
     play(action) {
         let scene;
         scene = this.createScene(
-            ()=>{
-                if (!scene.result.success) {
+            success=>{
+                if (!success) {
                     this.unit.addOneCohesionLevel();
                 }
                 CBSequence.appendElement(this.game, new CBDisengagementSequenceElement({
@@ -1897,7 +1894,7 @@ export class CBCrossCheckCohesionInsert extends CBInsert {
 export class CBMoveSequenceElement extends HexLocated(CBStateSequenceElement) {
 
     constructor({game, unit, hexLocation, hexAngle, stacking}) {
-        super({type: "Move", game, unit, hexLocation, hexAngle, stacking});
+        super({type: "move", game, unit, hexLocation, hexAngle, stacking});
     }
 
     get delay() { return 500; }
@@ -1911,7 +1908,7 @@ export class CBMoveSequenceElement extends HexLocated(CBStateSequenceElement) {
     }
 
 }
-CBSequence.register("Move", CBMoveSequenceElement);
+CBSequence.register("move", CBMoveSequenceElement);
 
 export function Oriented(clazz) {
 
@@ -1934,13 +1931,13 @@ export function Oriented(clazz) {
             return result;
         }
 
-        toSpec(spec, context) {
-            super.toSpec(spec, context);
+        _toSpec(spec, context) {
+            super._toSpec(spec, context);
             spec.angle = this.angle;
         }
 
-        fromSpec(spec, context) {
-            super.fromSpec(spec, context);
+        _fromSpec(spec, context) {
+            super._fromSpec(spec, context);
             if (spec.angle !== undefined) {
                 this.angle = spec.angle;
             }
@@ -1953,7 +1950,7 @@ export function Oriented(clazz) {
 export class CBRotateSequenceElement extends Oriented(CBStateSequenceElement) {
 
     constructor({game, unit, angle}) {
-        super({type: "Rotate", game, unit, angle});
+        super({type: "rotate", game, unit, angle});
     }
 
     get delay() { return 500; }
@@ -1965,12 +1962,12 @@ export class CBRotateSequenceElement extends Oriented(CBStateSequenceElement) {
     }
 
 }
-CBSequence.register("Rotate", CBRotateSequenceElement);
+CBSequence.register("rotate", CBRotateSequenceElement);
 
 export class CBReorientSequenceElement extends Oriented(CBStateSequenceElement) {
 
     constructor({game, unit, angle}) {
-        super({type: "Reorient", game, unit, angle});
+        super({type: "reorient", game, unit, angle});
     }
 
     get delay() { return 500; }
@@ -1982,12 +1979,12 @@ export class CBReorientSequenceElement extends Oriented(CBStateSequenceElement) 
     }
 
 }
-CBSequence.register("Reorient", CBReorientSequenceElement);
+CBSequence.register("reorient", CBReorientSequenceElement);
 
 export class CBTurnSequenceElement extends Oriented(HexLocated(CBStateSequenceElement)) {
 
     constructor({game, unit, angle, hexLocation, stacking}) {
-        super({type:"Turn", game, unit, angle, hexLocation, stacking});
+        super({type:"turn", game, unit, angle, hexLocation, stacking});
     }
 
     get delay() { return 500; }
@@ -2000,12 +1997,12 @@ export class CBTurnSequenceElement extends Oriented(HexLocated(CBStateSequenceEl
     }
 
 }
-CBSequence.register("Turn", CBTurnSequenceElement);
+CBSequence.register("turn", CBTurnSequenceElement);
 
 export class CBDisengagementSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
     constructor({game, unit, dice}) {
-        super({ type:"Disengagement", game, unit, dice});
+        super({ type:"disengagement", game, unit, dice});
     }
 
     get delay() { return 1500; }
@@ -2018,12 +2015,12 @@ export class CBDisengagementSequenceElement extends WithDiceRoll(CBStateSequence
     }
 
 }
-CBSequence.register("Disengagement", CBDisengagementSequenceElement);
+CBSequence.register("disengagement", CBDisengagementSequenceElement);
 
 export class CBAttackerEngagementSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
     constructor({game, unit, dice}) {
-        super({ type:"AttackerEngagement", game, unit, dice});
+        super({ type:"attacker-engagement", game, unit, dice});
     }
 
     get delay() { return 1500; }
@@ -2036,12 +2033,12 @@ export class CBAttackerEngagementSequenceElement extends WithDiceRoll(CBStateSeq
     }
 
 }
-CBSequence.register("AttackerEngagement", CBAttackerEngagementSequenceElement);
+CBSequence.register("attacker-engagement", CBAttackerEngagementSequenceElement);
 
 export class CBCrossingSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
     constructor({game, unit, dice}) {
-        super({ type:"Crossing", game, unit, dice});
+        super({ type:"crossing", game, unit, dice});
     }
 
     get delay() { return 1500; }
@@ -2054,5 +2051,5 @@ export class CBCrossingSequenceElement extends WithDiceRoll(CBStateSequenceEleme
     }
 
 }
-CBSequence.register("Crossing", CBCrossingSequenceElement);
+CBSequence.register("crossing", CBCrossingSequenceElement);
 

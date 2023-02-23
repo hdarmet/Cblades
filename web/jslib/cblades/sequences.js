@@ -162,11 +162,18 @@ export class CBSequenceElement {
     toSpec(spec, context) {
         spec.version = this._oversion || 0;
         spec.type = this.type;
+        spec.content = {}
+        this._toSpec(spec.content, context);
     }
+
+    _toSpec(spec, context) {}
 
     fromSpec(spec, context) {
         this.game = context.game;
+        this._fromSpec(spec.content, context);
     }
+
+    _fromSpec(spec, context) {}
 
     get delay() { return 0; }
 
@@ -215,7 +222,7 @@ export let CBSceneAnimation = SceneAnimation(CBAnimation);
 export class CBNextTurnSequenceElement extends CBSequenceElement {
 
     constructor({game}) {
-        super({type: "NextTurn", game});
+        super({type: "next-turn", game});
     }
 
     apply(startTick) {
@@ -237,7 +244,7 @@ export class CBNextTurnSequenceElement extends CBSequenceElement {
     }
 
 }
-CBSequence.register("NextTurn", CBNextTurnSequenceElement);
+CBSequence.register("next-turn", CBNextTurnSequenceElement);
 
 export class CBNextTurnAnimation extends DAnimation {
 
@@ -282,17 +289,18 @@ export function WithDiceRoll(clazz) {
             return result;
         }
 
-        toSpec(spec, context) {
-            super.toSpec(spec, context);
+        _toSpec(spec, context) {
+            super._toSpec(spec, context);
             for (let index=0;  index<this.dice.length; index++) {
                 spec["dice"+(index+1)] = this.dice[index];
             }
         }
 
-        fromSpec(spec, context) {
-            super.fromSpec(spec, context);
+        _fromSpec(spec, context) {
+            super._fromSpec(spec, context);
             this.dice = [spec.dice1, spec.dice2];
         }
+
     }
 
 }

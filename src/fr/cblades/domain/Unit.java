@@ -3,6 +3,9 @@ package fr.cblades.domain;
 import org.summer.data.BaseEntity;
 
 import javax.persistence.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 @Entity
 @Table(indexes=@Index(name="idx_unit", unique=true, columnList="wing_id, name"))
@@ -26,23 +29,12 @@ public class Unit extends BaseEntity {
     boolean engaging;
     boolean charging;
     boolean contact;
-    Boolean orderGiven;
-    Boolean disruptChecked = false;
-    Boolean routChecked = false;
-    Boolean neighborsCohesionLoss = false;
-    Boolean defenderEngagementChecking = false;
-    Boolean attackerEngagementChecking = false;
+    boolean orderGiven;
     boolean played;
     @Transient
     Wing wing;
     @Transient
-    Double movementPoints;
-    @Transient
-    Double extendedMovementPoints;
-    @Transient
-    String actionType;
-    @Transient
-    Integer actionMode;
+    Map<String, Object> attributes = new HashMap<>();
 
     public String getName() {
         return this.name;
@@ -157,51 +149,11 @@ public class Unit extends BaseEntity {
         return this;
     }
 
-    public Boolean isOrderGiven() {
+    public boolean isOrderGiven() {
         return this.orderGiven;
     }
-    public Unit setOrderGiven(Boolean orderGiven) {
+    public Unit setOrderGiven(boolean orderGiven) {
         this.orderGiven = orderGiven;
-        return this;
-    }
-
-    public Boolean isDisruptChecked() {
-        return this.disruptChecked;
-    }
-    public Unit setDisruptChecked(Boolean disruptChecked) {
-        this.disruptChecked = disruptChecked;
-        return this;
-    }
-
-    public Boolean isRoutChecked() {
-        return this.routChecked;
-    }
-    public Unit setRoutChecked(Boolean routChecked) {
-        this.routChecked = routChecked;
-        return this;
-    }
-
-    public Boolean isNeighborsCohesionLoss() {
-        return this.neighborsCohesionLoss;
-    }
-    public Unit setNeighborsCohesionLoss(Boolean neighborsCohesionLoss) {
-        this.neighborsCohesionLoss = neighborsCohesionLoss;
-        return this;
-    }
-
-    public Boolean isDefenderEngagementChecking() {
-        return this.defenderEngagementChecking;
-    }
-    public Unit setDefenderEngagementChecking(Boolean defenderEngagementChecking) {
-        this.defenderEngagementChecking = defenderEngagementChecking;
-        return this;
-    }
-
-    public Boolean isAttackerEngagementChecking() {
-        return this.attackerEngagementChecking;
-    }
-    public Unit setAttackerEngagementChecking(Boolean attackerEngagementChecking) {
-        this.attackerEngagementChecking = attackerEngagementChecking;
         return this;
     }
 
@@ -235,33 +187,28 @@ public class Unit extends BaseEntity {
         return unit;
     }
 
-    public Double getMovementPoints() {
-        return this.movementPoints;
-    }
-    public Unit setMovementPoints(Double movementPoints) {
-        this.movementPoints = movementPoints;
+    public java.util.Map<String, Object> getAttrs() { return this.attributes; }
+    public Unit setAttrs(java.util.Map<String, Object> attrs) {
+        this.attributes = attrs;
         return this;
     }
-
-    public Double getExtendedMovementPoints() {
-        return this.extendedMovementPoints;
+    public Object getAttr(String path) {
+        Map<String, Object> attrs = this.attributes;
+        String[] names = path.split("\\.");
+        for (int index=0; index<names.length-1; index++) {
+            attrs = (Map<String, Object>) attrs.get(names[index]);
+            if (attrs==null) return null;
+        }
+        return attrs.get(names[names.length-1]);
     }
-    public Unit setExtendedMovementPoints(Double extendedMovementPoints) {
-        this.extendedMovementPoints = extendedMovementPoints;
-        return this;
-    }
-
-    public String getActionType() { return this.actionType; }
-    public Unit setActionType(String actionType) {
-        this.actionType = actionType;
-        return this;
-    }
-
-    public Integer getActionMode() {
-        return this.actionMode;
-    }
-    public Unit setActionMode(Integer actionMode) {
-        this.actionMode = actionMode;
+    public Unit setAttr(String path, Object value) {
+        Map<String, Object> attrs = this.attributes;
+        String[] names = path.split("\\.");
+        for (int index=0; index<names.length-1; index++) {
+            attrs = (Map<String, Object>) attrs.get(names[index]);
+            if (attrs==null) attrs=new HashMap<>();
+        }
+        attrs.put(names[names.length-1], value);
         return this;
     }
 

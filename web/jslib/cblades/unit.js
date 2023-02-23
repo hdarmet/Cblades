@@ -760,6 +760,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._engaging=false;
         this._charging=CBCharge.NONE;
         this._lossSteps = 0;
+        this._orderGiven = false;
         this.artifact.setImage(this._lossSteps);
     }
 
@@ -863,6 +864,8 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
             neighborsCohesionLoss: this._neighborsCohesionLoss,
             defenderEngagementChecking: this._defenderEngagementChecking,
             attackerEngagementChecking: this._attackerEngagementChecking,
+            firstAttack: this._firstAttack,
+            secondAttack: this._secondAttack,
             lossSteps: this._lossSteps,
             carried: [...this._carried],
             options: [...this._options]
@@ -889,6 +892,8 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._neighborsCohesionLoss = memento.neighborsCohesionLoss;
         this._defenderEngagementChecking = memento.defenderEngagementChecking;
         this._attackerEngagementChecking = memento.attackerEngagementChecking;
+        this._firstAttack = memento.firstAttack;
+        this._secondAttack = memento.secondAttack;
         this._lossSteps = memento.lossSteps;
         this._carried = memento.carried;
         this._options = memento.options;
@@ -1006,11 +1011,6 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     init() {
         if (this._orderGiven === undefined) this._orderGiven = false;
-        if (this._disruptChecked === undefined) this._disruptChecked = false;
-        if (this._routChecked === undefined) this._routChecked = false;
-        if (this._neighborsCohesionLoss === undefined) this._neighborsCohesionLoss = false;
-        if (this._defenderEngagementChecking === undefined) this._defenderEngagementChecking = false;
-        if (this._attackerEngagementChecking === undefined) this._attackerEngagementChecking = false;
         if (this._movementPoints === undefined) this._movementPoints = this._type.getMovementPoints(this.steps);
         if (this._extendedMovementPoints === undefined) this._extendedMovementPoints = this._type.getExtendedMovementPoints(this.steps);
     }
@@ -1099,6 +1099,22 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._attackerEngagementChecking = attackerEngagementChecking;
     }
 
+    get firstAttack() {
+        return this._firstAttack;
+    }
+    set firstAttack(firstAttack) {
+        console.assert(firstAttack!==undefined);
+        this._firstAttack = firstAttack;
+    }
+
+    get secondAttack() {
+        return this._secondAttack;
+    }
+    set secondAttack(secondAttack) {
+        console.assert(secondAttack!==undefined);
+        this._secondAttack = secondAttack;
+    }
+
     receivesOrder(order) {
         console.assert(order===true || order===false);
         Memento.register(this);
@@ -1114,18 +1130,6 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         super.reactivate();
         this._orderGiven = false;
         this._updatePlayedArtifact(this.deleteMarkerArtifact, this.removeMarkerArtifact);
-    }
-
-    finish() {
-        delete this._disruptChecked;
-        delete this._routChecked;
-        delete this._neighborsCohesionLoss;
-        delete this._defenderEngagementChecking;
-        delete this._attackerEngagementChecking;
-        delete this._movementPoints;
-        delete this._extendedMovementPoints;
-        CBSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit: this}));
-        super.finish();
     }
 
     _updatePlayed() {
@@ -1506,34 +1510,34 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._charging = state.charging;
         this._engaging = state.engaging;
         this._orderGiven = state.orderGiven;
-        this._disruptChecked = state.disruptChecked;
-        this._routChecked = state.routChecked;
-        this._neighborsCohesionLoss = state.neighborsCohesionLoss;
-        this._defenderEngagementChecking = state.defenderEngagementChecking;
-        this._attackerEngagementChecking = state.attackerEngagementChecking;
-        if (this._disruptChecked || this._routChecked || this._neighborsCohesionLoss || this._defenderEngagementChecking || this._attackerEngagementChecking) {
-            this.game.setFocusedPlayable(this);
-        } else if (this.game.focusedPlayable === this) {
-            this.game.setFocusedPlayable(null);
-        }
         this.played = state.played;
         this._updateTirednessArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
         this._updateMunitionsArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
         this._updatePlayedArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
         this._updateEngagementArtifact(this.setMarkerArtifact, this.setActivableMarkerArtifact, this.removeMarkerArtifact);
         this._updateCohesionArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
+        this.attrs = state.attrs;
         if (state.steps) {
             this.steps = state.steps;
+            this._movementPoints = this.attrs.movementPoints;
+            this._extendedMovementPoints = this.attrs.extendedMovementPoints;
+            if (this.attrs.disruptChecked || this.attrs.routChecked ||
+                this.attrs.neighborsCohesionLoss ||
+                this.attrs.defenderEngagementChecking ||
+                this.attrs.attackerEngagementChecking ||
+                this.attrs.firstAttack || this.attrs.secondAttack) {
+                this.game.setFocusedPlayable(this);
+            } else if (this.game.focusedPlayable === this) {
+                this.game.setFocusedPlayable(null);
+            }
         } else {
             this.removeFromMap();
         }
-        this._movementPoints = state.movementPoints;
-        this._extendedMovementPoints = state.extendedMovementPoints;
     }
 
-    setAction(state) {
-        if (state.actionType) {
-            let action = CBAction.createAction(state.actionType, this.game, this, state.actionMode);
+    setAction(actionSpec) {
+        if (actionSpec.actionType) {
+            let action = CBAction.createAction(actionSpec.actionType, this.game, this, actionSpec.actionMode);
             this.launchAction(action);
             action.status = CBAction.STARTED;
         }
@@ -1923,7 +1927,7 @@ export let CBUnitSceneAnimation = SceneAnimation(CBUnitAnimation);
 
 export class CBStateSequenceElement extends CBSequenceElement {
 
-    constructor({unit, game, type="State"}) {
+    constructor({unit, game, type="state"}) {
         super({type, game});
         unit&&this.setUnit(unit);
     }
@@ -1942,6 +1946,8 @@ export class CBStateSequenceElement extends CBSequenceElement {
         this.neighborsCohesionLoss = unit.neighborsCohesionLoss;
         this.defenderEngagementChecking = unit.defenderEngagementChecking;
         this.attackerEngagementChecking = unit.attackerEngagementChecking;
+        this.firstAttack = unit.firstAttack;
+        this.secondAttack = unit.secondAttack;
         this.movementPoints = unit.movementPoints;
         this.extendedMovementPoints = unit.extendedMovementPoints;
         if (unit.action && !unit.action.isFinished()) {
@@ -1964,6 +1970,8 @@ export class CBStateSequenceElement extends CBSequenceElement {
         if (state.neighborsCohesionLoss !== undefined) this.neighborsCohesionLoss = state.neighborsCohesionLoss;
         if (state.defenderEngagementChecking !== undefined) this.defenderEngagementChecking = state.defenderEngagementChecking;
         if (state.attackerEngagementChecking !== undefined) this.attackerEngagementChecking = state.attackerEngagementChecking;
+        if (state.firstAttack !== undefined) this.firstAttack = state.firstAttack;
+        if (state.secondAttack !== undefined) this.secondAttack = state.secondAttack;
         if (state.movementPoints !== undefined) this.movementPoints = state.movementPoints;
         if (state.extendedMovementPoints !== undefined) this.extendedMovementPoints = state.extendedMovementPoints;
         if (state.actionType !== undefined) this.actionType = state.actionType;
@@ -1987,6 +1995,8 @@ export class CBStateSequenceElement extends CBSequenceElement {
         if (this.neighborsCohesionLoss !== element.neighborsCohesionLoss) return false;
         if (this.defenderEngagementChecking !== element.defenderEngagementChecking) return false;
         if (this.attackerEngagementChecking !== element.attackerEngagementChecking) return false;
+        if (this.firstAttack !== element.firstAttack) return false;
+        if (this.secondAttack !== element.secondAttack) return false;
         if (this.movementPoints !== element.movementPoints) return false;
         if (this.extendedMovementPoints !== element.extendedMovementPoints) return false;
         if (this.actionType !== element.actionType) return false;
@@ -2010,10 +2020,14 @@ export class CBStateSequenceElement extends CBSequenceElement {
         if (this.neighborsCohesionLoss !== undefined) result+=", NeighborsCohesionLoss: "+this.neighborsCohesionLoss;
         if (this.defenderEngagementChecking !== undefined) result+=", DefenderEngagementChecking: "+this.defenderEngagementChecking;
         if (this.attackerEngagementChecking !== undefined) result+=", AttackerEngagementChecking: "+this.attackerEngagementChecking;
+        if (this.firstAttack !== undefined) result+=", FirstAttack: "+this.firstAttack;
+        if (this.secondAttack !== undefined) result+=", SecondAttack: "+this.secondAttack;
         if (this.movementPoints !== undefined) result+=", MovementPoints: "+this.movementPoints;
         if (this.extendedMovementPoints !== undefined) result+=", ExtendedMovementPoints: "+this.extendedMovementPoints;
-        if (this.actionType !== undefined) result+=", AttackerEngagementChecking: "+this.actionType;
-        if (this.actionMode !== undefined) result+=", AttackerEngagementChecking: "+this.actionMode;
+        if (this.firstAttack !== undefined) result+=", FirstAttack: "+this.firstAttack;
+        if (this.secondAttack !== undefined) result+=", SecondAttack: "+this.secondAttack;
+        if (this.actionType !== undefined) result+=", ActionType: "+this.actionType;
+        if (this.actionMode !== undefined) result+=", ActionMode: "+this.actionMode;
         if (this.played !== undefined) result+=", Played: "+this.played;
         return result;
     }
@@ -2024,8 +2038,8 @@ export class CBStateSequenceElement extends CBSequenceElement {
 
     get delay() { return 0; }
 
-    toSpec(spec, context) {
-        super.toSpec(spec, context);
+    _toSpec(spec, context) {
+        super._toSpec(spec, context);
         spec.unit = this.unit.name;
         spec.steps = this.unit.steps;
         spec.cohesion = this.getCohesionCode(this.cohesion);
@@ -2039,6 +2053,8 @@ export class CBStateSequenceElement extends CBSequenceElement {
         spec.neighborsCohesionLoss = this.neighborsCohesionLoss;
         spec.defenderEngagementChecking = this.defenderEngagementChecking;
         spec.attackerEngagementChecking = this.attackerEngagementChecking;
+        spec.firstAttack = this.firstAttack;
+        spec.secondAttack = this.secondAttack;
         spec.movementPoints = this.movementPoints;
         spec.extendedMovementPoints = this.extendedMovementPoints;
         spec.actionType = this.actionType;
@@ -2046,8 +2062,8 @@ export class CBStateSequenceElement extends CBSequenceElement {
         spec.played = this.played;
     }
 
-    fromSpec(spec, context) {
-        super.fromSpec(spec, context);
+    _fromSpec(spec, context) {
+        super._fromSpec(spec, context);
         let unit = getUnitFromContext(context, spec.unit);
         this.setUnit(unit);
         if (spec.steps !== undefined) this.steps = spec.steps;
@@ -2062,6 +2078,8 @@ export class CBStateSequenceElement extends CBSequenceElement {
         if (spec.neighborsCohesionLoss !== undefined) this.neighborsCohesionLoss = spec.neighborsCohesionLoss;
         if (spec.defenderEngagementChecking !== undefined) this.defenderEngagementChecking = spec.defenderEngagementChecking;
         if (spec.attackerEngagementChecking !== undefined) this.attackerEngagementChecking = spec.attackerEngagementChecking;
+        if (spec.firstAttack !== undefined) this.firstAttack = spec.firstAttack;
+        if (spec.secondAttack !== undefined) this.secondAttack = spec.secondAttack;
         if (spec.movementPoints !== undefined) this.movementPoints = spec.movementPoints;
         if (spec.extendedMovementPoints !== undefined) this.extendedMovementPoints = spec.extendedMovementPoints;
         if (spec.actionType !== undefined) this.actionType = spec.actionType;
@@ -2130,7 +2148,7 @@ export class CBStateSequenceElement extends CBSequenceElement {
     }
 
 }
-CBSequence.register("State", CBStateSequenceElement);
+CBSequence.register("state", CBStateSequenceElement);
 
 export function HexLocated(clazz) {
 
@@ -2156,8 +2174,8 @@ export function HexLocated(clazz) {
             return result;
         }
 
-        toSpec(spec, context) {
-            super.toSpec(spec, context);
+        _toSpec(spec, context) {
+            super._toSpec(spec, context);
             if (this.hexLocation instanceof CBHexSideId) {
                 spec.hexCol = this.hexLocation.fromHex.col;
                 spec.hexRow = this.hexLocation.fromHex.row;
@@ -2170,8 +2188,8 @@ export function HexLocated(clazz) {
             spec.stacking = this.getStackingCode(this.stacking);
         }
 
-        fromSpec(spec, context) {
-            super.fromSpec(spec, context);
+        _fromSpec(spec, context) {
+            super._fromSpec(spec, context);
             if (spec.hexCol !== undefined) {
                 this.hexLocation = context.game.map.getHex(spec.hexCol, spec.hexRow);
                 if (spec.hexAngle!==undefined) {

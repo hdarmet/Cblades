@@ -420,20 +420,14 @@ export class GameLoader {
                         charging: unitSpec.charging ? CBCharge.CHARGING : CBCharge.NONE,
                         engaging: unitSpec.engaging,
                         orderGiven: unitSpec.orderGiven,
-                        disruptChecked: unitSpec.disruptChecked,
-                        routChecked: unitSpec.routChecked,
-                        neighborsCohesionLoss: unitSpec.neighborsCohesionLoss,
-                        defenderEngagementChecking: unitSpec.defenderEngagementChecking,
-                        attackerEngagementChecking: unitSpec.attackerEngagementChecking,
-                        movementPoints: unitSpec.movementPoints,
-                        extendedMovementPoints: unitSpec.extendedMovementPoints,
+                        attrs: unitSpec.attributes,
                         played: unitSpec.played
                     });
-                    if (unitSpec.actionType) {
+                    if (unitSpec.attributes.actionType) {
                         action = {
                             unit,
-                            actionType: unitSpec.actionType,
-                            actionMode: unitSpec.actionMode
+                            actionType: unitSpec.attributes.actionType,
+                            actionMode: unitSpec.attributes.actionMode
                         }
                     }
                     unitsMap.set(unit.name, {unit, unitSpec});

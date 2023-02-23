@@ -476,7 +476,7 @@ CBCheckRallyInsert.DIMENSION = new Dimension2D(444, 268);
 export class CBRestSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
     constructor({game, unit, dice}) {
-        super({type:"Rest", game, unit, dice});
+        super({type:"rest", game, unit, dice});
     }
 
     get delay() { return 1500; }
@@ -489,12 +489,12 @@ export class CBRestSequenceElement extends WithDiceRoll(CBStateSequenceElement) 
     }
 
 }
-CBSequence.register("Rest", CBRestSequenceElement);
+CBSequence.register("rest", CBRestSequenceElement);
 
 export class CBRefillSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
     constructor({game, unit, dice}) {
-        super({type:"Refill", game, unit, dice});
+        super({type:"refill", game, unit, dice});
     }
 
     get delay() { return 1500; }
@@ -507,12 +507,12 @@ export class CBRefillSequenceElement extends WithDiceRoll(CBStateSequenceElement
     }
 
 }
-CBSequence.register("Refill", CBRefillSequenceElement);
+CBSequence.register("refill", CBRefillSequenceElement);
 
 export class CBRallySequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
     constructor({game, unit, dice}) {
-        super({type:"Rally", game, unit, dice});
+        super({type:"rally", game, unit, dice});
     }
 
     get delay() { return 1500; }
@@ -525,12 +525,12 @@ export class CBRallySequenceElement extends WithDiceRoll(CBStateSequenceElement)
     }
 
 }
-CBSequence.register("Rally", CBRallySequenceElement);
+CBSequence.register("rally", CBRallySequenceElement);
 
 export class CBReorganizeSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
     constructor({game, unit, dice}) {
-        super({type:"Reorganize", game, unit, dice});
+        super({type:"reorganize", game, unit, dice});
     }
 
     get delay() { return 1500; }
@@ -543,6 +543,6 @@ export class CBReorganizeSequenceElement extends WithDiceRoll(CBStateSequenceEle
     }
 
 }
-CBSequence.register("Reorganize", CBReorganizeSequenceElement);
+CBSequence.register("reorganize", CBReorganizeSequenceElement);
 
 

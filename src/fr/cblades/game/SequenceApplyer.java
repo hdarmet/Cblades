@@ -8,13 +8,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class SequenceApplyer implements SequenceVisitor  {
+public class SequenceApplyer implements SequenceElement.SequenceVisitor {
 
     public SequenceApplyer(EntityManager em, Game game) {
         this.game = game;
         this.em = em;
         this.units = new HashMap<>();
         this.players = new HashMap<>();
+        this.locations = new HashMap<>();
         for (Player player: this.game.getPlayers()) {
             for (Wing wing: player.getWings()) {
                 for (Unit unit: wing.getUnits()) {
@@ -22,9 +23,6 @@ public class SequenceApplyer implements SequenceVisitor  {
                     this.players.put(unit, player);
                 }
             }
-        }
-        this.locations = new HashMap<>();
-        for (Player player: this.game.getPlayers()) {
             for (Location location: player.getLocations()) {
                 locations.put(new HexPos(location.getCol(), location.getRow()), location);
             }
@@ -62,184 +60,151 @@ public class SequenceApplyer implements SequenceVisitor  {
         return this.count;
     }
 
-    void changeUnitState(Unit unit, SequenceElement.StateSequenceElement element) {
-        unit.setAmmunition(element.getAmmunition());
-        unit.setCharging(element.getCharging() == Charging.CHARGING);
-        unit.setCohesion(element.getCohesion());
-        unit.setTiredness(element.getTiredness());
-        unit.setEngaging(element.isEngaging());
-        unit.setOrderGiven(element.hasGivenOrder());
-        unit.setDisruptChecked(element.isDisruptChecked());
-        unit.setRoutChecked(element.isRoutChecked());
-        unit.setDefenderEngagementChecking(element.isDefenderEngagementChecking());
-        unit.setAttackerEngagementChecking(element.isAttackerEngagementChecking());
-        unit.setNeighborsCohesionLoss(element.isNeighborsCohesionLoss());
-        unit.setPlayed(element.isPlayed());
-        unit.setSteps(element.getSteps());
-        if (unit.getSteps() == 0) {
+    void changeUnitState(SequenceElement element) {
+        Unit unit = units.get(element.getAttr("unit"));
+        unit.setAmmunition(Ammunition.byLabels().get(element.getAttr("ammunition")));
+        unit.setCharging(Charging.byLabels().get(element.getAttr("charging")) == Charging.CHARGING);
+        unit.setCohesion(Cohesion.byLabels().get(element.getAttr("cohesion")));
+        unit.setTiredness(Tiredness.byLabels().get(element.getAttr("tiredness")));
+        unit.setEngaging((boolean)element.getAttr("engaging"));
+        unit.setOrderGiven((boolean)element.getAttr("orderGiven"));
+        unit.setPlayed((boolean)element.getAttr("played"));
+        unit.setSteps((int)element.getAttr("steps"));
+        if (unit.getSteps() == 0 || unit.getCohesion() == Cohesion.DELETED) {
             Location location = getLocation(unit);
             location.removeUnit(unit);
             locations.remove(new HexPos(unit));
         }
-        if (element.getMovementPoints()!=null) unit.setMovementPoints(element.getMovementPoints());
-        if (element.getExtendedMovementPoints()!=null) unit.setExtendedMovementPoints(element.getExtendedMovementPoints());
-        if (element.getActionType()!=null) unit.setActionType(element.getActionType());
-        if (element.getActionMode()!=null) unit.setActionMode(element.getActionMode());
+        unit.setAttrs(element.getAttrs());
     }
 
-    public void visit(SequenceElement.MoveSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
+    @Override
+    public void visit(SequenceElement element) {
+        if (element.getType().equals("move")) {
+            changeUnitState(element);
+            changeUnitLocation(element);
+        }
+        else if (element.getType().equals("rotate")) {
+            changeUnitState(element);
+            changeUnitAngle(element);
+        }
+        else if (element.getType().equals("reorient")) {
+            changeUnitState(element);
+            changeUnitAngle(element);
+        }
+        else if (element.getType().equals("turn")) {
+            changeUnitState(element);
+            changeUnitLocation(element);
+            changeUnitAngle(element);
+        }
+        else if (element.getType().equals("confront")) {
+            changeUnitState(element);
+            changeUnitAngle(element);
+        }
+        else if (element.getType().equals("state")) {
+            changeUnitState(element);
+        }
+        else if (element.getType().equals("rest")) {
+            changeUnitState(element);
+        }
+        else if (element.getType().equals("refill")) {
+            changeUnitState(element);
+        }
+        else if (element.getType().equals("rally")) {
+            changeUnitState(element);
+        }
+        else if (element.getType().equals("reorganize")) {
+            changeUnitState(element);
+        }
+        else if (element.getType().equals("rout-checking")) {
+            changeUnitState(element);
+        }
+        else if (element.getType().equals("crossing")) {
+            changeUnitState(element);
+        }
+        else if (element.getType().equals("attacker-engagement")) {
+            changeUnitState(element);
+        }
+        else if (element.getType().equals("defender-engagement")) {
+            changeUnitState(element);
+        }
+        else if (element.getType().equals("try2-order-instructions")) {
+        }
+        else if (element.getType().equals("order-instructions")) {
+            changeOrderInstructions(element);
+        }
+        else if (element.getType().equals("try2-take-command")) {
+        }
+        else if (element.getType().equals("take-command")) {
+            changeManageCommand(element, true);
+        }
+        else if (element.getType().equals("try2-dismiss-command")) {
+        }
+        else if (element.getType().equals("dismiss-command")) {
+            changeManageCommand(element, false);
+        }
+        else if (element.getType().equals("give-orders")) {
+        }
+        else if (element.getType().equals("shock-attack")) {
+            changeUnitState(element);
+        }
+        else if (element.getType().equals("fire-attack")) {
+            changeUnitState(element);
+        }
+        else if (element.getType().equals("ask4-retreat")) {
+        }
+        if (element.getType().equals("retreat")) {
+            changeUnitState(element);
+            changeUnitLocation(element);
+            changeUnitAngle(element);
+        }
+        if (element.getType().equals("advance")) {
+            changeUnitState(element);
+            changeUnitLocation(element);
+            changeUnitAngle(element);
+        }
+        else if (element.getType().equals("next-turn")) {
+            changeTurn(element);
+        }
+    }
+
+    void changeUnitLocation(SequenceElement element) {
+        Unit unit = units.get(element.getAttr("unit"));
+        unit.setAttrs(element.getAttrs());
         Location location = getLocation(unit);
         location.removeUnit(unit);
         locations.remove(new HexPos(unit));
-        changeUnitState(unit, element);
-        unit.setPositionAngle(element.getHexAngle());
-        unit.setPositionCol(element.getHexCol());
-        unit.setPositionRow(element.getHexRow());
+        Integer hexAngle = (Integer)element.getAttr("hexAngle");
+        if (hexAngle!=null) unit.setPositionAngle((int)hexAngle);
+        unit.setPositionCol((int)element.getAttr("hexCol"));
+        unit.setPositionRow((int)element.getAttr("hexRow"));
         location = getLocation(unit);
-        location.addUnit(unit, element.getStacking());
+        location.addUnit(unit, Stacking.byLabels().get(element.getAttr("stacking")));
     }
 
-    public void visit(SequenceElement.RotateSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        unit.setAngle(element.getAngle());
+    void changeUnitAngle(SequenceElement element) {
+        Unit unit = units.get(element.getAttr("unit"));
+        unit.setAngle((int)element.getAttr("angle"));
     }
 
-    public void visit(SequenceElement.ReorientSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        unit.setAngle(element.getAngle());
-    }
-
-    public void visit(SequenceElement.TurnSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        Location location = getLocation(unit);
-        location.removeUnit(unit);
-        locations.remove(new HexPos(unit));
-        changeUnitState(unit, element);
-        unit.setAngle(element.getAngle());
-        location = getLocation(unit);
-        location.addUnit(unit, element.getStacking());
-    }
-
-    public void visit(SequenceElement.NextTurnSequenceElement element) {
+    void changeTurn(SequenceElement element) {
         for (Unit unit : this.units.values()) {
+            unit.setAttrs(null);
             unit.setPlayed(false);
         }
         this.game.advanceToNextPlayerTurn();
     }
 
-    public void visit(SequenceElement.StateSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        changeUnitState(unit, element);
-    }
-
-    public void visit(SequenceElement.RestSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        changeUnitState(unit, element);
-    }
-
-    public void visit(SequenceElement.RefillSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        changeUnitState(unit, element);
-    }
-
-    public void visit(SequenceElement.RallySequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        changeUnitState(unit, element);
-    }
-
-    public void visit(SequenceElement.ReorganizeSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        changeUnitState(unit, element);
-    }
-
-    public void visit(SequenceElement.LossConsistencySequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        changeUnitState(unit, element);
-    }
-
-    public void visit(SequenceElement.CrossingSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        changeUnitState(unit, element);
-    }
-
-    public void visit(SequenceElement.AttackerEngagementSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        changeUnitState(unit, element);
-    }
-
-    public void visit(SequenceElement.DefenderEngagementSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        changeUnitState(unit, element);
-    }
-
-    public void visit(SequenceElement.DisengagementSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        changeUnitState(unit, element);
-    }
-
-    public void visit(SequenceElement.Try2ChangeOrderInstructionSequenceElement element) {
-    }
-
-    public void visit(SequenceElement.Try2TakeCommandSequenceElement element) {
-    }
-
-    public void visit(SequenceElement.Try2DismissCommandSequenceElement element) {
-    }
-
-    public void visit(SequenceElement.GiveOrdersSequenceElement element) {
-    }
-
-    public void visit(SequenceElement.ChangeOrderInstructionSequenceElement element) {
-        Unit leader = units.get(element.getLeader());
+    void changeOrderInstructions(SequenceElement element) {
+        Unit leader = units.get(element.getAttr("leader"));
         Wing wing = Wing.findWing(this.game, leader);
-        wing.setOrderInstruction(element.getOrderInstruction());
+        wing.setOrderInstruction(OrderInstruction.byLabels().get(element.getAttr("order-instruction")));
     }
 
-    public void visit(SequenceElement.ManageCommandSequenceElement element) {
-        Unit leader = units.get(element.getLeader());
+    void changeManageCommand(SequenceElement element, boolean inCommand) {
+        Unit leader = units.get(element.getAttr("leader"));
         Wing wing = Wing.findWing(this.game, leader);
-        wing.setLeader(element.getInCommand() ? leader : null);
-    }
-
-    public void visit(SequenceElement.ShockAttackSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        changeUnitState(unit, element);
-    }
-
-    public void visit(SequenceElement.FireAttackSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        changeUnitState(unit, element);
-    }
-
-    public void visit(SequenceElement.Ask4RetreatSequenceElement element) {
-    }
-
-    public void visit(SequenceElement.RetreatSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        Location location = getLocation(unit);
-        location.removeUnit(unit);
-        locations.remove(new HexPos(unit));
-        changeUnitState(unit, element);
-        unit.setPositionAngle(element.getHexAngle());
-        unit.setPositionCol(element.getHexCol());
-        unit.setPositionRow(element.getHexRow());
-        location = getLocation(unit);
-        location.addUnit(unit, element.getStacking());
-        em.remove(em.find(SequenceElement.class, element.getAskRequest()));
-    }
-
-    public void visit(SequenceElement.AdvanceSequenceElement element) {
-        Unit unit = units.get(element.getUnit());
-        Location location = getLocation(unit);
-        location.removeUnit(unit);
-        locations.remove(new HexPos(unit));
-        changeUnitState(unit, element);
-        unit.setPositionAngle(element.getHexAngle());
-        unit.setPositionCol(element.getHexCol());
-        unit.setPositionRow(element.getHexRow());
-        location = getLocation(unit);
-        location.addUnit(unit, element.getStacking());
+        wing.setLeader(inCommand ? leader : null);
     }
 
     long count = -1;

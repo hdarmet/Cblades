@@ -56,6 +56,30 @@ public class Synchronizer implements DataSunbeam {
 		return this;
 	}
 
+	Map<String, Object> writeMap(Json readValue) {
+		Map<String, Object> map = new HashMap<>();
+		for (String key: readValue.keys()) {
+			Object value = readValue.get(key) instanceof Json ?
+				writeMap((Json)readValue.get(key)) : readValue.get(key);
+			map.put(key, value);
+		}
+		return map;
+	}
+
+	@SafeVarargs
+	final public <T, R> Synchronizer writeMap(String jsonFieldName, String targetFieldName, Function<T, R> ... functions) {
+		Object readValue = this.json.search(jsonFieldName);
+		if (readValue!=null) {
+			for (Function function : functions) {
+				readValue = function.apply(readValue);
+			}
+			if (readValue != null) {
+				ReflectUtil.set(this.target, targetFieldName, writeMap((Json)readValue));
+			}
+		}
+		return this;
+	}
+
 	public Synchronizer writeDate(String jsonFieldName, String targetFieldName, Function ... functions) {
 		Object readValue = this.json.search(jsonFieldName);
 		for (Function function: functions) {
@@ -366,6 +390,30 @@ public class Synchronizer implements DataSunbeam {
 		return this;
 	}
 
+	Json readMap(Map<String, Object> readValue) {
+		json = Json.createJsonObject();
+		for (Map.Entry<String, Object> entry: readValue.entrySet()) {
+			Object value = entry.getValue() instanceof Map ?
+				readMap((Map<String, Object>)entry.getValue()) : entry.getValue();
+			json.put(entry.getKey(), value);
+		}
+		return json;
+	}
+
+	@SafeVarargs
+	final public <T, R> Synchronizer readMap(String jsonFieldName, String targetFieldName, Function<T, R> ... functions) {
+		Object readValue = ReflectUtil.get(this.target, targetFieldName);
+		if (readValue!=null) {
+			for (Function function : functions) {
+				readValue = function.apply(readValue);
+			}
+			if (readValue != null) {
+				this.json.put(jsonFieldName, readMap((Map<String, Object>)readValue));
+			}
+		}
+		return this;
+	}
+
 	@SafeVarargs
 	final public <T, R> Synchronizer read(String fieldName, Function<T, R> ... functions) {
 		return read(fieldName, fieldName, functions);
@@ -374,6 +422,11 @@ public class Synchronizer implements DataSunbeam {
 	@SafeVarargs
 	final public <T, R> Synchronizer readDate(String fieldName, Function<T, R> ... functions) {
 		return readDate(fieldName, fieldName, functions);
+	}
+
+	@SafeVarargs
+	final public <T, R> Synchronizer readMap(String fieldName, Function<T, R> ... functions) {
+		return readMap(fieldName, fieldName, functions);
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })

@@ -662,13 +662,13 @@ export function WithLeader(clazz) {
             this.leader = leader;
         }
 
-        toSpec(spec, context) {
-            super.toSpec(spec, context);
+        _toSpec(spec, context) {
+            super._toSpec(spec, context);
             this.leader && (spec.leader = this.leader.name);
         }
 
-        fromSpec(spec, context) {
-            super.fromSpec(spec, context);
+        _fromSpec(spec, context) {
+            super._fromSpec(spec, context);
             if (spec.leader !== undefined) {
                 this.leader = getUnitFromContext(context, spec.leader);
             }
@@ -681,7 +681,7 @@ export function WithLeader(clazz) {
 export class CBTry2ChangeOrderInstructionSequenceElement extends WithLeader(WithDiceRoll(CBSequenceElement)) {
 
     constructor({game, leader, dice}) {
-        super({type: "Try2ChangeOrderInst", game, leader, dice});
+        super({type: "try2-order-instructions", game, leader, dice});
     }
 
     get delay() { return 1500; }
@@ -694,12 +694,12 @@ export class CBTry2ChangeOrderInstructionSequenceElement extends WithLeader(With
     }
 
 }
-CBSequence.register("Try2ChangeOrderInst", CBTry2ChangeOrderInstructionSequenceElement);
+CBSequence.register("try2-order-instructions", CBTry2ChangeOrderInstructionSequenceElement);
 
 export class CBChangeOrderInstructionSequenceElement extends WithLeader(WithOrderInstruction(CBSequenceElement)) {
 
     constructor({game, leader, orderInstruction}) {
-        super({type: "ChangeOrderInst", leader, orderInstruction, game});
+        super({type: "change-instructions", leader, orderInstruction, game});
     }
 
     apply(startTick) {
@@ -709,7 +709,7 @@ export class CBChangeOrderInstructionSequenceElement extends WithLeader(WithOrde
     }
 
 }
-CBSequence.register("ChangeOrderInst", CBChangeOrderInstructionSequenceElement);
+CBSequence.register("change-instructions", CBChangeOrderInstructionSequenceElement);
 
 export function WithOrderInstruction(clazz) {
 
@@ -732,13 +732,13 @@ export function WithOrderInstruction(clazz) {
             return result;
         }
 
-        toSpec(spec, context) {
-            super.toSpec(spec, context);
+        _toSpec(spec, context) {
+            super._toSpec(spec, context);
             spec.orderInstruction = this.getOrderInstructionCode(this.orderInstruction);
         }
 
-        fromSpec(spec, context) {
-            super.fromSpec(spec, context);
+        _fromSpec(spec, context) {
+            super._fromSpec(spec, context);
             if (spec.orderInstruction !== undefined) {
                 this.orderInstruction = this.getOrderInstruction(spec.orderInstruction);
             }
@@ -787,7 +787,7 @@ export class CBChangeOrderAnimation extends DAnimation {
 export class CBTry2TakeCommandSequenceElement extends WithLeader(WithDiceRoll(CBSequenceElement)) {
 
     constructor({game, leader, dice}) {
-        super({type: "Try2TakeCommand", game, leader, dice});
+        super({type: "try2-take-command", game, leader, dice});
     }
 
     get delay() { return 1500; }
@@ -800,12 +800,12 @@ export class CBTry2TakeCommandSequenceElement extends WithLeader(WithDiceRoll(CB
     }
 
 }
-CBSequence.register("Try2TakeCommand", CBTry2TakeCommandSequenceElement);
+CBSequence.register("try2-take-command", CBTry2TakeCommandSequenceElement);
 
 export class CBTry2DismissCommandSequenceElement extends WithLeader(WithDiceRoll(CBSequenceElement)) {
 
     constructor({game, leader, dice}) {
-        super({type: "Try2DismissCommand", game, leader, dice});
+        super({type: "try2-dismiss-command", game, leader, dice});
     }
 
     get delay() { return 1500; }
@@ -818,12 +818,12 @@ export class CBTry2DismissCommandSequenceElement extends WithLeader(WithDiceRoll
     }
 
 }
-CBSequence.register("Try2DismissCommand", CBTry2DismissCommandSequenceElement);
+CBSequence.register("try2-dismiss-command", CBTry2DismissCommandSequenceElement);
 
 export class CBGiveOrdersSequenceElement extends WithLeader(WithDiceRoll(CBSequenceElement)) {
 
     constructor({game, leader, dice}) {
-        super({type: "GiveOrders", game, leader, dice});
+        super({type: "give-orders", game, leader, dice});
     }
 
     get delay() { return 1500; }
@@ -836,7 +836,7 @@ export class CBGiveOrdersSequenceElement extends WithLeader(WithDiceRoll(CBSeque
     }
 
 }
-CBSequence.register("GiveOrders", CBGiveOrdersSequenceElement);
+CBSequence.register("give-orders", CBGiveOrdersSequenceElement);
 
 export function WithInCommand(clazz) {
 
@@ -857,13 +857,13 @@ export function WithInCommand(clazz) {
             return super._toString() + `, inCommand: `+this.inCommand;
         }
 
-        toSpec(spec, context) {
-            super.toSpec(spec, context);
+        _toSpec(spec, context) {
+            super._toSpec(spec, context);
             spec.inCommand = this.inCommand;
         }
 
-        fromSpec(spec, context) {
-            super.fromSpec(spec, context);
+        _fromSpec(spec, context) {
+            super._fromSpec(spec, context);
             this.inCommand = spec.inCommand;
         }
     }
@@ -873,7 +873,7 @@ export function WithInCommand(clazz) {
 export class CBManageCommandSequenceElement extends WithLeader(WithInCommand(CBSequenceElement)) {
 
     constructor({game, leader, inCommand}) {
-        super({type: "ManageCommand", leader, inCommand, game});
+        super({type: "manage-command", leader, inCommand, game});
     }
 
     apply(startTick) {
@@ -883,7 +883,7 @@ export class CBManageCommandSequenceElement extends WithLeader(WithInCommand(CBS
     }
 
 }
-CBSequence.register("ManageCommand", CBManageCommandSequenceElement);
+CBSequence.register("manage-command", CBManageCommandSequenceElement);
 
 export class CBManageCommandAnimation extends DAnimation {
 

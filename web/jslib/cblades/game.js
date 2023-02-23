@@ -12,6 +12,12 @@ import {
 import {
     DBoard, DElement, DMultiImagesArtifact
 } from "../board.js";
+import {
+    CBSequence
+} from "./sequences.js";
+import {
+    CBStateSequenceElement
+} from "./unit.js";
 
 export let CBStacking = {
     BOTTOM: 0,
@@ -255,6 +261,9 @@ export class CBAction {
             this._game.closeWidgets();
             action && action();
             this.playable.finish();
+            if (this.playable === this.game.focusedPlayable) {
+                this.game.setFocusedPlayable(null);
+            }
             Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINALIZED);
         }
     }
@@ -1025,6 +1034,35 @@ export class CBPiece {
         return this._getPieces();
     }
 
+    set attrs(attrs) {
+        this._attrs = attrs;
+    }
+
+    get attrs() {
+        return this._attrs ? this._attrs : {};
+    }
+
+    getAttr(path, value) {
+        let attrs = this.attrs;
+        let names = path.split(".");
+        for (let index=0; index<names.length; index++) {
+            if (!attrs) return null;
+            attrs = attrs[names[index]];
+        }
+        return attrs;
+    }
+    setAttr(path, value) {
+        !this._attrs && (this._attrs={});
+        let attrs = this._attrs;
+        let names = path.split(".");
+        for (let index=0; index<names.length-1; index++) {
+            if (!attrs[names[index]]) {
+                attrs[names[index]] = {}
+            }
+            attrs = attrs[names[index]];
+        }
+        return attrs[names[names.length-1]];
+    }
 }
 
 export function DisplayLocatableMixin(clazz) {
@@ -1257,6 +1295,8 @@ export function PlayableMixin(clazz) {
 
         finish() {
             this._updatePlayed && this._updatePlayed();
+            this.attrs = {};
+            CBSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit: this}));
         }
     }
 

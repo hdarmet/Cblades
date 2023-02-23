@@ -5,7 +5,7 @@ import {
     DDice, DIconMenu, DMultiImagesIndicator, DMask, DResult, DScene, DRotatableIndicator
 } from "../../widget.js";
 import {
-    Mechanisms
+    Mechanisms, Memento
 } from "../../mechanisms.js";
 import {
     CBAbstractGame
@@ -47,9 +47,10 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _doDisruptChecking(unit, processing, cancellable) {
-        if (!unit.disruptChecked && this.game.arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit)) {
-            new CBLoseCohesionChecking(this.game, unit).play( () => {
-                unit.disruptChecked = true;
+        if (!unit.attrs.disruptChecked && this.game.arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit)) {
+            new CBLoseCohesionChecking(this.game, unit).play(
+            () => {
+                unit.attrs.disruptChecked = true;
                 this._selectAndFocusPlayable(unit);
             },
             processing,
@@ -61,9 +62,9 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _doRoutChecking(unit, processing, cancellable) {
-        if (!unit.routChecked && this.game.arbitrator.doesARoutedUnitHaveNonRoutedNeighbors(unit)) {
+        if (!unit.attrs.routChecked && this.game.arbitrator.doesARoutedUnitHaveNonRoutedNeighbors(unit)) {
             this._checkIfNeighborsLoseCohesion(unit, unit.hexLocation, () => {
-                unit.routCkecked = true;
+                unit.attrs.routCkecked = true;
                 this._selectAndFocusPlayable(unit);
                 this.game.validate();
                 this._doDisruptChecking(unit, processing, false);
@@ -76,10 +77,31 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable) {
-        if (!unit.neighborsCohesionLoss && neighbors.length) {
+        if (!unit.attrs.disruptChecked && neighbors.length) {
             let neighbor = neighbors.pop();
-            new CBLoseCohesionChecking(this.game, neighbor).play( () => {
-                unit.neighborsCohesionLoss = true;
+            new CBLoseCohesionChecking(this.game, neighbor).play(
+                () => {
+                    neighbor.attrs.disruptChecked = true;
+                },
+                ()=>this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, false),
+                cancellable);
+        }
+        else {
+            processing();
+        }
+    }
+
+    _checkIfAFirstNonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable) {
+        if (!unit.attrs.neighborsCohesionLoss && neighbors.length) {
+            let neighbor = neighbors.pop();
+            new CBLoseCohesionChecking(this.game, neighbor).play(
+            () => {
+                neighbor.attrs.disruptChecked = true;
+                unit.attrs.neighborsCohesionLoss = true;
+                CBSequence.appendElement(this.game, new CBStateSequenceElement({
+                    game: this.game, unit: this.unit
+                }));
+                this._selectAndFocusPlayable(unit);
             },
             ()=>this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, false),
             cancellable);
@@ -91,13 +113,13 @@ export class CBInteractivePlayer extends CBUnitPlayer {
 
     _checkIfNeighborsLoseCohesion(unit, hexLocation, processing, cancellable) {
         let neighbors = this.game.arbitrator.getFriendNonRoutedNeighbors(unit, hexLocation);
-        this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable);
+        this._checkIfAFirstNonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable);
     }
 
     _doEngagementChecking(unit, processing) {
-        if (!unit.attackerEngagementChecking && this.game.arbitrator.isUnitEngaged(unit, true)) {
+        if (!unit.attrs.defenderEngagementChecking && this.game.arbitrator.isUnitEngaged(unit, true)) {
             new CBDefenderEngagementChecking(this.game, unit).play(() => {
-                unit.attackerEngagementChecking = true;
+                unit.attrs.defenderEngagementChecking = true;
                 let hexLocation = unit.hexLocation;
                 if (unit.isOnHex()) {
                     this._selectAndFocusPlayable(unit);
@@ -116,6 +138,7 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _selectAndFocusPlayable(unit) {
+        unit.attrs.focused = true;
         this.game.setSelectedPlayable(unit);
         this.game.setFocusedPlayable(unit);
     }
@@ -207,8 +230,8 @@ export class CBDefenderEngagementChecking {
     play(action) {
         let scene;
         scene = this.createScene(
-            ()=>{
-                if (!scene.result.success) {
+            success=>{
+                if (!success) {
                     this.unit.addOneCohesionLevel();
                 }
                 CBSequence.appendElement(this.game, new CBDefenderEngagementSequenceElement({
@@ -257,7 +280,7 @@ export class CBLoseCohesionChecking {
         ).addWidget(
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
-                let {success} = this._processCohesionLostResult(this.unit, scene.dice.result);
+                let {success} = this.game.arbitrator.processCohesionLostResult(this.unit, scene.dice.result);
                 if (success) {
                     scene.result.success().appear();
                 }
@@ -276,9 +299,13 @@ export class CBLoseCohesionChecking {
     }
 
     play(action, processing, cancellable) {
-        let scene = this.createScene(
-            ()=>{
+        let scene
+        scene = this.createScene(
+            success=>{
                 action();
+                if (!success) {
+                    this.unit.addOneCohesionLevel();
+                }
                 CBSequence.appendElement(this.game, new CBLoseCohesionSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
@@ -286,13 +313,11 @@ export class CBLoseCohesionChecking {
                 this.game.validate();
             },
             ()=>{
-                if (cancellable) {
-                    this.game.closePopup();
+                if (cancellable && !scene.result.finished) {
+                    Memento.undo();
                 }
-                if (scene.result.finished) {
-                    if (!cancellable) {
-                        this.game.closePopup();
-                    }
+                else if (scene.result.finished) {
+                    this.game.closePopup();
                     processing();
                 }
             }
@@ -304,14 +329,6 @@ export class CBLoseCohesionChecking {
         scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
-    }
-
-    _processCohesionLostResult(unit, diceResult) {
-        let result = this.game.arbitrator.processCohesionLostResult(unit, diceResult);
-        if (!result.success) {
-            unit.addOneCohesionLevel();
-        }
-        return result;
     }
 
 }
@@ -519,7 +536,7 @@ export class CBMoralInsert extends CBInsert {
 export class CBDefenderEngagementSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
     constructor({game, unit, dice}) {
-        super({ type:"DefenderEngagement", game, unit, dice});
+        super({ type:"defender-engagement", game, unit, dice});
     }
 
     get delay() { return 1500; }
@@ -532,12 +549,12 @@ export class CBDefenderEngagementSequenceElement extends WithDiceRoll(CBStateSeq
     }
 
 }
-CBSequence.register("DefenderEngagement", CBDefenderEngagementSequenceElement);
+CBSequence.register("defender-engagement", CBDefenderEngagementSequenceElement);
 
 export class CBLoseCohesionSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
     constructor({game, unit, dice}) {
-        super({type:"LossConsistency", game, unit, dice});
+        super({type:"rout-checking", game, unit, dice});
     }
 
     get delay() { return 1500; }
@@ -549,4 +566,4 @@ export class CBLoseCohesionSequenceElement extends WithDiceRoll(CBStateSequenceE
         });
     }
 }
-CBSequence.register("LossConsistency", CBLoseCohesionSequenceElement);
+CBSequence.register("rout-checking", CBLoseCohesionSequenceElement);

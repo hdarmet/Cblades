@@ -33,7 +33,6 @@ public class FakeData {
         createMessageModel(data);
         Scenario scenario = createScenario(data, 0);
         GameMatch gameMatch = createMatch(data, scenario);
-        createSequences(data, gameMatch);
     }
 
     static void createGameData(DataSunbeam data) {
@@ -462,35 +461,6 @@ public class FakeData {
             data.persist(em, gameMatch.get());
         });
         return gameMatch.get();
-    }
-
-    static void createSequences(DataSunbeam data, GameMatch aGameMatch) {
-        data.inTransaction(em-> {
-            GameMatch gameMatch = data.merge(em, aGameMatch);
-            Sequence sequence = new Sequence()
-                .setGame(gameMatch.getGame().getId())
-                .setCount(0)
-                .addElement(
-                    new SequenceElement.MoveSequenceElement()
-                        .setHexCol(2).setHexRow(8).setStacking(Stacking.TOP)
-                        .setUnit("u1").setCohesion(Cohesion.DISRUPTED).setSteps(1)
-                )
-                .addElement(
-                    new SequenceElement.RotateSequenceElement()
-                        .setAngle(60)
-                        .setUnit("u1").setCohesion(Cohesion.DISRUPTED).setSteps(1)
-                )
-                .addElement(
-                    new SequenceElement.MoveSequenceElement()
-                        .setHexCol(3).setHexRow(8).setStacking(Stacking.TOP)
-                        .setUnit("u1").setCohesion(Cohesion.DISRUPTED).setSteps(1)
-                )/*
-                .addElement(
-                    new SequenceElement.NextTurnSequenceElement()
-                )*/;
-            data.persist(em, sequence);
-            //gameMatch.advanceOnePlayerTurn();
-        });
     }
 
     static void createFactions(DataSunbeam data) {

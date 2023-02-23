@@ -6,10 +6,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -329,7 +326,14 @@ public class Json implements Iterable {
 		}
 		return new JsonIterator(this.jsonArray.iterator());
 	}
-	
+
+	public Set<String> keys() {
+		if (this.json==null) {
+			throw new SummerException("JSON Array instead of JSON Object");
+		}
+		return this.json.keySet();
+	}
+
 	@Override
 	public String toString() {
 		return this.json==null ? this.jsonArray.toString() : this.json.toString();
