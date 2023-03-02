@@ -55,6 +55,12 @@ export class CBSequence {
         return new (CBSequence._constructors.get(label))({});
     }
 
+    static launch(unit, label, specs, context) {
+        if (label && (CBSequence._constructors.get(label)).launch) {
+            (CBSequence._constructors.get(label)).launch(unit, specs, context);
+        }
+    }
+
     constructor(game, count=0) {
         this._game = game;
         this._elements = [];
@@ -177,6 +183,17 @@ export class CBSequenceElement {
 
     get delay() { return 0; }
 
+    static getUnits(names, context) {
+        let units = [];
+        for (let name of names) {
+            units.push(context.get(name));
+        }
+        return units;
+    }
+
+    static getUnit(name, context) {
+        return context.get(name)
+    }
 }
 
 export class CBAnimation extends DAnimation {

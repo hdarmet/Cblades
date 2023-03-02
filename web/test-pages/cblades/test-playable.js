@@ -75,12 +75,12 @@ class CBTestPlayer extends CBBasicPlayer {
         this.actionClass = actionClass;
     }
 
-    launchPlayableAction(playable, event) {
+    launchPlayableAction(playable, point) {
         if (this.actionClass) {
             playable.launchAction(new this.actionClass(this.game, playable));
         }
         this.launched++;
-        super.launchPlayableAction(playable, event);
+        super.launchPlayableAction(playable, point);
     }
 
 }
@@ -1312,7 +1312,7 @@ describe("Playable", ()=> {
             var { game, player, playable } = createTinyGame();
             var [unitsLayer] = getLayers(game.board, "units-0");
             var actionLaunched = false;
-            player.launchPlayableAction = function(playable, event) {
+            player.launchPlayableAction = function(playable, point) {
                 actionLaunched = true;
             }
         when:
@@ -1499,7 +1499,7 @@ describe("Playable", ()=> {
     it("Checks played status of a playable when selection is changed or turn is changed", () => {
         given:
             var {game, player, playable1, playable2} = create2PlayablesTinyGame();
-            player.launchPlayableAction = function(playable, event) {
+            player.launchPlayableAction = function(playable, point) {
                 playable.launchAction(new CBAction(game, playable));
             }
             player.canPlay = function() { return true; };

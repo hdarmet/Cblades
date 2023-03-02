@@ -2,7 +2,6 @@ package fr.cblades.controller;
 
 import fr.cblades.StandardUsers;
 import fr.cblades.domain.*;
-import fr.cblades.game.SequenceApplyer;
 import org.summer.CollectionSunbeam;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
@@ -14,15 +13,12 @@ import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
-import org.summer.data.Synchronizer;
 import org.summer.security.SecuritySunbeam;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
-import javax.persistence.Query;
 import java.util.*;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Controller
 public class SequenceController implements InjectorSunbeam, CollectionSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
@@ -118,18 +114,10 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			.checkBoolean("engaging")
 			.checkBoolean("orderGiven")
 			.checkBoolean("disruptChecked")
-			.checkBoolean("routChecked")
-			.checkBoolean("neighborsCohesionLoss")
-			.checkBoolean("defenderEngagementChecking")
-			.checkBoolean("attackerEngagementChecking")
-			.checkBoolean("firstAttack")
-			.checkBoolean("secondAttack")
 			.checkRequired("movementPoints").checkDouble("movementPoints")
 			.checkMin("movementPoints", 0).checkMax("movementPoints", 6)
 			.checkRequired("extendedMovementPoints").checkDouble("extendedMovementPoints")
 			.checkMin("extendedMovementPoints", 0).checkMax("extendedMovementPoints", 9)
-			.checkString("actionType").checkMinSize("actionType", 2).checkMaxSize("actionType", 80)
-			.checkInteger("actionMode")
 			.checkMin("actionMode", 0).checkMax("actionMode", 9)
 			.checkBoolean("played");
 	}

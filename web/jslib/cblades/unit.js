@@ -17,7 +17,6 @@ import {
     BelongsToPlayerMixin,
     PlayableMixin,
     CBPiece,
-    CBAbstractPlayer,
     CBAction
 } from "./game.js";
 import {
@@ -1540,6 +1539,14 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
             let action = CBAction.createAction(actionSpec.actionType, this.game, this, actionSpec.actionMode);
             this.launchAction(action);
             action.status = CBAction.STARTED;
+            this._game.selectedPlayable = this;
+        }
+        else if (actionSpec.routNeighbors) {
+            this.game.currentPlayer.routNeighborsChecking(this, actionSpec.neighbors);
+        }
+        else if (actionSpec.focused) {
+            this._game.selectedPlayable = this;
+            this._game.focusedPlayable = this;
         }
     }
 
@@ -1933,6 +1940,7 @@ export class CBStateSequenceElement extends CBSequenceElement {
     }
 
     setUnit(unit) {
+        this.attrs = unit.attrs;
         this.unit = unit;
         this.steps = unit.isOnHex() ? unit.steps : 0;
         this.cohesion = unit.cohesion;
@@ -1941,13 +1949,6 @@ export class CBStateSequenceElement extends CBSequenceElement {
         this.charging = unit.charge;
         this.engaging = unit.isEngaging();
         this.orderGiven = unit.hasReceivedOrder();
-        this.disruptChecked = unit.disruptChecked;
-        this.routChecked = unit.routChecked;
-        this.neighborsCohesionLoss = unit.neighborsCohesionLoss;
-        this.defenderEngagementChecking = unit.defenderEngagementChecking;
-        this.attackerEngagementChecking = unit.attackerEngagementChecking;
-        this.firstAttack = unit.firstAttack;
-        this.secondAttack = unit.secondAttack;
         this.movementPoints = unit.movementPoints;
         this.extendedMovementPoints = unit.extendedMovementPoints;
         if (unit.action && !unit.action.isFinished()) {
@@ -1958,25 +1959,7 @@ export class CBStateSequenceElement extends CBSequenceElement {
     }
 
     setState(state) {
-        if (state.steps !== undefined) this.steps = state.steps;
-        if (state.cohesion !== undefined) this.cohesion = state.cohesion;
-        if (state.tiredness !== undefined) this.tiredness = state.tiredness;
-        if (state.munitions !== undefined) this.munitions = state.munitions;
-        if (state.charging !== undefined) this.charging = state.charging;
-        if (state.engaging !== undefined) this.engaging = state.engaging;
-        if (state.orderGiven !== undefined) this.orderGiven = state.orderGiven;
-        if (state.disruptChecked !== undefined) this.disruptChecked = state.disruptChecked;
-        if (state.routChecked !== undefined) this.routChecked = state.routChecked;
-        if (state.neighborsCohesionLoss !== undefined) this.neighborsCohesionLoss = state.neighborsCohesionLoss;
-        if (state.defenderEngagementChecking !== undefined) this.defenderEngagementChecking = state.defenderEngagementChecking;
-        if (state.attackerEngagementChecking !== undefined) this.attackerEngagementChecking = state.attackerEngagementChecking;
-        if (state.firstAttack !== undefined) this.firstAttack = state.firstAttack;
-        if (state.secondAttack !== undefined) this.secondAttack = state.secondAttack;
-        if (state.movementPoints !== undefined) this.movementPoints = state.movementPoints;
-        if (state.extendedMovementPoints !== undefined) this.extendedMovementPoints = state.extendedMovementPoints;
-        if (state.actionType !== undefined) this.actionType = state.actionType;
-        if (state.actionMode !== undefined) this.actionMode = state.actionMode;
-        if (state.played !== undefined) this.played = state.played;
+        Object.assign(state, this);
         return this;
     }
 
@@ -1990,13 +1973,6 @@ export class CBStateSequenceElement extends CBSequenceElement {
         if (this.charging !== element.charging) return false;
         if (this.engaging !== element.engaging) return false;
         if (this.orderGiven !== element.orderGiven) return false;
-        if (this.disruptChecked !== element.disruptChecked) return false;
-        if (this.routChecked !== element.routChecked) return false;
-        if (this.neighborsCohesionLoss !== element.neighborsCohesionLoss) return false;
-        if (this.defenderEngagementChecking !== element.defenderEngagementChecking) return false;
-        if (this.attackerEngagementChecking !== element.attackerEngagementChecking) return false;
-        if (this.firstAttack !== element.firstAttack) return false;
-        if (this.secondAttack !== element.secondAttack) return false;
         if (this.movementPoints !== element.movementPoints) return false;
         if (this.extendedMovementPoints !== element.extendedMovementPoints) return false;
         if (this.actionType !== element.actionType) return false;
@@ -2015,17 +1991,8 @@ export class CBStateSequenceElement extends CBSequenceElement {
         if (this.charging !== undefined) result+=", Charging: "+this.charging;
         if (this.engaging !== undefined) result+=", Engaging: "+this.engaging;
         if (this.orderGiven !== undefined) result+=", OrderGiven: "+this.orderGiven;
-        if (this.disruptChecked !== undefined) result+=", DisruptChecked: "+this.disruptChecked;
-        if (this.routChecked !== undefined) result+=", RoutChecked: "+this.routChecked;
-        if (this.neighborsCohesionLoss !== undefined) result+=", NeighborsCohesionLoss: "+this.neighborsCohesionLoss;
-        if (this.defenderEngagementChecking !== undefined) result+=", DefenderEngagementChecking: "+this.defenderEngagementChecking;
-        if (this.attackerEngagementChecking !== undefined) result+=", AttackerEngagementChecking: "+this.attackerEngagementChecking;
-        if (this.firstAttack !== undefined) result+=", FirstAttack: "+this.firstAttack;
-        if (this.secondAttack !== undefined) result+=", SecondAttack: "+this.secondAttack;
         if (this.movementPoints !== undefined) result+=", MovementPoints: "+this.movementPoints;
         if (this.extendedMovementPoints !== undefined) result+=", ExtendedMovementPoints: "+this.extendedMovementPoints;
-        if (this.firstAttack !== undefined) result+=", FirstAttack: "+this.firstAttack;
-        if (this.secondAttack !== undefined) result+=", SecondAttack: "+this.secondAttack;
         if (this.actionType !== undefined) result+=", ActionType: "+this.actionType;
         if (this.actionMode !== undefined) result+=", ActionMode: "+this.actionMode;
         if (this.played !== undefined) result+=", Played: "+this.played;
@@ -2040,6 +2007,7 @@ export class CBStateSequenceElement extends CBSequenceElement {
 
     _toSpec(spec, context) {
         super._toSpec(spec, context);
+        Object.assign(spec, this.attrs);
         spec.unit = this.unit.name;
         spec.steps = this.unit.steps;
         spec.cohesion = this.getCohesionCode(this.cohesion);
@@ -2048,13 +2016,6 @@ export class CBStateSequenceElement extends CBSequenceElement {
         spec.charging = this.getChargingCode(this.charging);
         spec.engaging = this.engaging;
         spec.orderGiven = this.orderGiven;
-        spec.disruptChecked = this.disruptChecked;
-        spec.routChecked = this.routChecked;
-        spec.neighborsCohesionLoss = this.neighborsCohesionLoss;
-        spec.defenderEngagementChecking = this.defenderEngagementChecking;
-        spec.attackerEngagementChecking = this.attackerEngagementChecking;
-        spec.firstAttack = this.firstAttack;
-        spec.secondAttack = this.secondAttack;
         spec.movementPoints = this.movementPoints;
         spec.extendedMovementPoints = this.extendedMovementPoints;
         spec.actionType = this.actionType;
@@ -2064,27 +2025,14 @@ export class CBStateSequenceElement extends CBSequenceElement {
 
     _fromSpec(spec, context) {
         super._fromSpec(spec, context);
-        let unit = getUnitFromContext(context, spec.unit);
-        this.setUnit(unit);
-        if (spec.steps !== undefined) this.steps = spec.steps;
+        Object.assign(this, spec);
+        this.unit = getUnitFromContext(context, spec.unit);
+        //this.setUnit(unit);
         if (spec.tiredness !== undefined) this.tiredness = this.getTiredness(spec.tiredness);
         if (spec.cohesion !== undefined) this.cohesion = this.getCohesion(spec.cohesion);
         if (spec.ammunition !== undefined) this.munitions = this.getMunitions(spec.ammunition);
         if (spec.charging !== undefined) this.charging = this.getCharging(spec.charging);
-        if (spec.engaging !== undefined) this.engaging = spec.engaging;
-        if (spec.orderGiven !== undefined) this.orderGiven = spec.orderGiven;
-        if (spec.disruptChecked !== undefined) this.disruptChecked = spec.disruptChecked;
-        if (spec.routChecked !== undefined) this.routChecked = spec.routChecked;
-        if (spec.neighborsCohesionLoss !== undefined) this.neighborsCohesionLoss = spec.neighborsCohesionLoss;
-        if (spec.defenderEngagementChecking !== undefined) this.defenderEngagementChecking = spec.defenderEngagementChecking;
-        if (spec.attackerEngagementChecking !== undefined) this.attackerEngagementChecking = spec.attackerEngagementChecking;
-        if (spec.firstAttack !== undefined) this.firstAttack = spec.firstAttack;
-        if (spec.secondAttack !== undefined) this.secondAttack = spec.secondAttack;
-        if (spec.movementPoints !== undefined) this.movementPoints = spec.movementPoints;
-        if (spec.extendedMovementPoints !== undefined) this.extendedMovementPoints = spec.extendedMovementPoints;
-        if (spec.actionType !== undefined) this.actionType = spec.actionType;
-        if (spec.actionMode !== undefined) this.actionMode = spec.actionMode;
-        if (spec.played !== undefined) this.played = spec.played;
+
     }
 
     getTirednessCode(tiredness) {
@@ -2145,6 +2093,13 @@ export class CBStateSequenceElement extends CBSequenceElement {
             case "C": return CBCharge.CHARGING;
             case "N": return CBCharge.NONE;
         }
+    }
+
+    static launch(unit, {actionType, actionMode}) {
+        let action = CBAction.createAction(actionType, unit.game, unit, actionMode);
+        unit.launchAction(action);
+        action.status = CBAction.STARTED;
+        unit.game.selectedPlayable = this;
     }
 
 }

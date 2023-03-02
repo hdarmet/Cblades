@@ -122,6 +122,10 @@ public class Json implements Iterable {
 		return (T)value;
 	}
 
+	public boolean isArray() {
+		return jsonArray != null;
+	}
+
 	public Long getLong(String name, String... aliases) {
 		Integer value = get(name, aliases);
 		return value==null ? null : new Long(value);

@@ -371,8 +371,8 @@ export class GameLoader {
         map._oid = specs.map.id;
         map._oversion = specs.map.version;
         this._game.changeMap(map);
+        let context = new Map();
         for (let playerSpec of specs.players) {
-            let action;
             let player = this._game.getPlayer(playerSpec.identity.name);
             if (!player) {
                 player = this._playerCreator(playerSpec.identity.name, playerSpec.identity.path);
@@ -423,23 +423,22 @@ export class GameLoader {
                         attrs: unitSpec.attributes,
                         played: unitSpec.played
                     });
-                    if (unitSpec.attributes.actionType) {
-                        action = {
-                            unit,
-                            actionType: unitSpec.attributes.actionType,
-                            actionMode: unitSpec.attributes.actionMode
-                        }
-                    }
                     unitsMap.set(unit.name, {unit, unitSpec});
                     if (unit.name === wingSpec.leader) {
                         leader = unit;
                     }
+                    context.set(unit.name, unit);
                 }
                 leader&&wing.setLeader(leader);
                 wing.setOrderInstruction(this.getOrderInstruction(wingSpec.orderInstruction))
             }
             this.showEntities(unitsMap, playerSpec);
-            action && action.unit.setAction(action);
+            for (let wingSpec of playerSpec.wings) {
+                for (let unitSpec of wingSpec.units) {
+                    let unit = unitsMap.get(unitSpec.name).unit;
+                    CBSequence.launch(unit, unitSpec.attributes.sequenceElement, unitSpec.attributes, context);
+                }
+            }
         }
         this._game.currentPlayer = this._game.players[specs.currentPlayerIndex];
     }

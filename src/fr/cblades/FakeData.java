@@ -1,14 +1,11 @@
 package fr.cblades;
 
 import fr.cblades.domain.*;
-import org.checkerframework.checker.units.qual.A;
 import org.summer.Ref;
-import org.summer.annotation.Job;
 import org.summer.annotation.Launch;
 import org.summer.data.DataSunbeam;
 
 import javax.persistence.EntityManager;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -314,7 +311,7 @@ public class FakeData {
                 .setCohesion(Cohesion.ROOTED)
                 .setContact(false)
                 .setOrderGiven(false)
-                .setPlayed(true)
+                .setPlayed(false/*true*/)
                 .setCharging(false);
             em.persist(unit0);
             Unit unit1 = new Unit()

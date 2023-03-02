@@ -1,4 +1,5 @@
 import {
+    diffAngle,
     Dimension2D, Point2D
 } from "../../geometry.js";
 import {
@@ -20,11 +21,11 @@ import {
     CBInsert
 } from "../playable.js";
 import {
-    CBStateSequenceElement,
+    CBStateSequenceElement, CBUnitAnimation,
     CBUnitPlayer, CBUnitSceneAnimation
 } from "../unit.js";
 import {
-    CBNextTurnSequenceElement, CBSequence, WithDiceRoll
+    CBNextTurnSequenceElement, CBSequence, CBSequenceElement, WithDiceRoll
 } from "../sequences.js";
 import {
     SequenceLoader
@@ -47,13 +48,14 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _doDisruptChecking(unit, processing, cancellable) {
-        if (!unit.attrs.disruptChecked && this.game.arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit)) {
+        if (!unit.attrs.routChecked && this.game.arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit)) {
             new CBLoseCohesionChecking(this.game, unit).play(
             () => {
-                unit.attrs.disruptChecked = true;
+                unit.attrs.routChecked = true;
                 this._selectAndFocusPlayable(unit);
             },
             processing,
+            CBRoutCheckingSequenceElement,
             cancellable);
         }
         else {
@@ -62,9 +64,8 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _doRoutChecking(unit, processing, cancellable) {
-        if (!unit.attrs.routChecked && this.game.arbitrator.doesARoutedUnitHaveNonRoutedNeighbors(unit)) {
+        if (this.game.arbitrator.doesARoutedUnitHaveNonRoutedNeighbors(unit)) {
             this._checkIfNeighborsLoseCohesion(unit, unit.hexLocation, () => {
-                unit.attrs.routCkecked = true;
                 this._selectAndFocusPlayable(unit);
                 this.game.validate();
                 this._doDisruptChecking(unit, processing, false);
@@ -76,14 +77,26 @@ export class CBInteractivePlayer extends CBUnitPlayer {
         }
     }
 
+    routNeighborsChecking(unit, neighbors) {
+        this._checkIfAFirstNonRoutedNeighborLoseCohesion(unit, neighbors,
+            () => {
+                this._selectAndFocusPlayable(unit);
+                this.game.validate();
+                this._doDisruptChecking(unit, () => {
+                    this.launchPlayableAction(unit, unit.viewportLocation);
+                }, false);
+            }, false);
+    }
+
     _checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable) {
-        if (!unit.attrs.disruptChecked && neighbors.length) {
+        if (neighbors.length) {
             let neighbor = neighbors.pop();
             new CBLoseCohesionChecking(this.game, neighbor).play(
                 () => {
-                    neighbor.attrs.disruptChecked = true;
+                    neighbor.attrs.routChecked = true;
                 },
                 ()=>this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, false),
+                CBNeighborRoutCheckingSequenceElement,
                 cancellable);
         }
         else {
@@ -92,19 +105,23 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _checkIfAFirstNonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable) {
+        neighbors = neighbors.filter(neighbor=>!neighbor.attrs.routChecked);
         if (!unit.attrs.neighborsCohesionLoss && neighbors.length) {
             let neighbor = neighbors.pop();
             new CBLoseCohesionChecking(this.game, neighbor).play(
             () => {
-                neighbor.attrs.disruptChecked = true;
-                unit.attrs.neighborsCohesionLoss = true;
-                CBSequence.appendElement(this.game, new CBStateSequenceElement({
-                    game: this.game, unit: this.unit
-                }));
+                neighbor.attrs.routChecked = true;
+                if (!unit.attrs.neighborsRootChecked) {
+                    unit.attrs.neighborsRootChecked = true;
+                    CBSequence.appendElement(this.game, new CBRootNeighborsCohesionSequenceElement({
+                        unit, game: this.game, neighbors
+                    }));
+                }
                 this._selectAndFocusPlayable(unit);
             },
             ()=>this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, false),
-            cancellable);
+                CBNeighborRoutCheckingSequenceElement,
+                cancellable);
         }
         else {
             processing();
@@ -112,8 +129,10 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _checkIfNeighborsLoseCohesion(unit, hexLocation, processing, cancellable) {
-        let neighbors = this.game.arbitrator.getFriendNonRoutedNeighbors(unit, hexLocation);
-        this._checkIfAFirstNonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable);
+        if (!unit.attrs.neighborsRootChecked) {
+            let neighbors = this.game.arbitrator.getFriendNonRoutedNeighbors(unit, hexLocation);
+            this._checkIfAFirstNonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable);
+        }
     }
 
     _doEngagementChecking(unit, processing) {
@@ -150,15 +169,14 @@ export class CBInteractivePlayer extends CBUnitPlayer {
         this._doPreliminaryActions(unit, ()=> super.startActivation(unit, action));
     }
 
-    launchPlayableAction(playable, event) {
+    launchPlayableAction(playable, point) {
         if (playable.unitNature) {
             if (!playable.isDestroyed()) {
-                this.openActionMenu(playable,
-                    new Point2D(event.offsetX, event.offsetY),
+                this.openActionMenu(playable, point,
                     this.game.arbitrator.getAllowedActions(playable));
             }
         }
-        super.launchPlayableAction(playable, event);
+        super.launchPlayableAction(playable, point);
     }
 
     canFinishPlayable(playable) {
@@ -298,7 +316,7 @@ export class CBLoseCohesionChecking {
         return scene;
     }
 
-    play(action, processing, cancellable) {
+    play(action, processing, sequenceElement, cancellable) {
         let scene
         scene = this.createScene(
             success=>{
@@ -306,7 +324,7 @@ export class CBLoseCohesionChecking {
                 if (!success) {
                     this.unit.addOneCohesionLevel();
                 }
-                CBSequence.appendElement(this.game, new CBLoseCohesionSequenceElement({
+                CBSequence.appendElement(this.game, new sequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
                 new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
@@ -551,7 +569,7 @@ export class CBDefenderEngagementSequenceElement extends WithDiceRoll(CBStateSeq
 }
 CBSequence.register("defender-engagement", CBDefenderEngagementSequenceElement);
 
-export class CBLoseCohesionSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
+export class CBRoutCheckingSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
     constructor({game, unit, dice}) {
         super({type:"rout-checking", game, unit, dice});
@@ -560,10 +578,106 @@ export class CBLoseCohesionSequenceElement extends WithDiceRoll(CBStateSequenceE
     get delay() { return 1500; }
 
     apply(startTick) {
+        this.unit.setAttr("routChecked", true);
         return new CBUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new CBLoseCohesionChecking(this.game, this.unit).replay(this.dice)
         });
     }
+
+    static launch(unit, specs) {
+        unit.setAttr("rootChecked", true);
+        unit.game.selectedPlayable = unit;
+        unit.game.focusedPlayable = unit;
+    }
+
 }
-CBSequence.register("rout-checking", CBLoseCohesionSequenceElement);
+CBSequence.register("rout-checking", CBRoutCheckingSequenceElement);
+
+export class CBNeighborRoutCheckingSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
+
+    constructor({game, unit, dice}) {
+        super({type:"neighbor-rout-checking", game, unit, dice});
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        this.unit.setAttr("routChecked", true);
+        return new CBUnitSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new CBLoseCohesionChecking(this.game, this.unit).replay(this.dice)
+        });
+    }
+
+    static launch(unit, specs) {
+        unit.setAttr("routChecked", true);
+    }
+
+}
+CBSequence.register("neighbor-rout-checking", CBNeighborRoutCheckingSequenceElement);
+
+export class CBRootNeighborsCohesionSequenceElement extends CBStateSequenceElement {
+
+    constructor({game, unit, neighbors}) {
+        super({type:"neighbors-rout-checking", game, unit});
+        this.neighbors = neighbors;
+    }
+
+    get delay() { return 0; }
+
+    apply(startTick) {
+        this.unit.setAttr("neighborsRootChecked", true);
+        /*
+        return new CBRootNeighborsCohesionAnimation({
+            unit: this.unit, startTick, duration: this.delay,
+            state: this, game: this.game,
+            neighbors: this.neighbors
+        });
+         */
+        return new CBUnitAnimation({
+            unit: this.unit, startTick, duration: this.delay,
+            state: this, game: this.game
+        });
+    }
+
+    _toSpec(spec, context) {
+        super._toSpec(spec, context);
+        spec.neighbors = [];
+        for (let neighbor of this.neighbors) {
+            spec.neighbors.push(neighbor.name);
+        }
+    }
+
+    _fromSpec(spec, context) {
+        super._fromSpec(spec, context);
+        this.neighbors = [];
+        for (let neighbor of spec.neighbors) {
+            this.neighbors.push(context.units.get(neighbor));
+        }
+    }
+
+    static launch(unit, {neighbors}, context) {
+        let units = CBSequenceElement.getUnits(neighbors, context);
+        unit.game.currentPlayer.routNeighborsChecking(unit, units);
+    }
+}
+CBSequence.register("neighbors-rout-checking", CBRootNeighborsCohesionSequenceElement);
+/*
+export class CBRootNeighborsCohesionAnimation extends CBAnimation {
+
+    constructor({unit, startTick, duration, state, neighbors}) {
+        super({startTick, duration, state});
+        this._unit = unit;
+        this._neighbors = neighbors;
+    }
+
+    _finalize() {
+        this._unit.game.currentPlayer.routNeighborsChecking(this._unit, this._neighbors);
+        super._finalize();
+    }
+
+}
+*/
+
+

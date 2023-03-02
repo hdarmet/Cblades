@@ -1199,7 +1199,7 @@ describe("Unit", ()=> {
             var {game, player, unit1, unit2} = create2UnitsTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
             player.canPlay = function() { return true; };
-            player.launchPlayableAction = function(unit, event) {
+            player.launchPlayableAction = function(unit, point) {
                 unit.launchAction(new CBAction(game, unit));
             }
         when:

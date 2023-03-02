@@ -205,8 +205,12 @@ public class Unit extends BaseEntity {
         Map<String, Object> attrs = this.attributes;
         String[] names = path.split("\\.");
         for (int index=0; index<names.length-1; index++) {
-            attrs = (Map<String, Object>) attrs.get(names[index]);
-            if (attrs==null) attrs=new HashMap<>();
+            Map<String, Object> lattrs = (Map<String, Object>) attrs.get(names[index]);
+            if (lattrs==null) {
+                lattrs=new HashMap<>();
+                attrs.put(names[index], lattrs);
+            }
+            attrs = lattrs;
         }
         attrs.put(names[names.length-1], value);
         return this;

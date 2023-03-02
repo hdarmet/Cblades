@@ -390,12 +390,31 @@ public class Synchronizer implements DataSunbeam {
 		return this;
 	}
 
+	Object translateValue(Object value) {
+		if (value instanceof Map) {
+			return readMap((Map)value);
+		}
+		else if (value instanceof List) {
+			return readList((List)value);
+		}
+		else {
+			return value;
+		}
+	}
+
+	Json readList(List<Object> readValue) {
+		Json json = Json.createJsonArray();
+		for (Object value: readValue) {
+			json.push(translateValue(value));
+		}
+		return json;
+	}
+
 	Json readMap(Map<String, Object> readValue) {
-		json = Json.createJsonObject();
+		Json json = Json.createJsonObject();
 		for (Map.Entry<String, Object> entry: readValue.entrySet()) {
-			Object value = entry.getValue() instanceof Map ?
-				readMap((Map<String, Object>)entry.getValue()) : entry.getValue();
-			json.put(entry.getKey(), value);
+			System.out.println(entry.getKey());
+			json.put(entry.getKey(), translateValue(entry.getValue()));
 		}
 		return json;
 	}
@@ -408,7 +427,7 @@ public class Synchronizer implements DataSunbeam {
 				readValue = function.apply(readValue);
 			}
 			if (readValue != null) {
-				this.json.put(jsonFieldName, readMap((Map<String, Object>)readValue));
+				this.json.put(jsonFieldName, translateValue(readValue));
 			}
 		}
 		return this;

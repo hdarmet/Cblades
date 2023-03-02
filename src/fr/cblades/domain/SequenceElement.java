@@ -4,7 +4,9 @@ import org.summer.controller.Json;
 import org.summer.data.BaseEntity;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Entity
@@ -39,18 +41,40 @@ public class SequenceElement extends BaseEntity {
     @Transient
     Map<String, Object> attributes = null;
 
-    Map<String, Object> buildAttributes(Json json) {
+    Object buildValue(Object value) {
+        if (value instanceof Json) {
+            if (((Json)value).isArray()) {
+                return buildList((Json) value);
+            }
+            else {
+                return buildMap((Json) value);
+            }
+        }
+        else {
+            return value;
+        }
+    }
+
+    Map<String, Object> buildMap(Json json) {
         Map<String, Object> attrs = new HashMap<>();
         for (String attrName : json.keys()) {
             Object value = json.get(attrName);
-            attrs.put(attrName, value instanceof Json ? buildAttributes((Json)value): value);
+            attrs.put(attrName, buildValue(value));
+        }
+        return attrs;
+    }
+
+    List<Object> buildList(Json json) {
+        List<Object> attrs = new ArrayList<>();
+        for (Object value : json) {
+            attrs.add(buildValue(value));
         }
         return attrs;
     }
 
     Map<String, Object> buildAttributes() {
         Json json = Json.createJsonFromString(this.content);
-        return buildAttributes(json);
+        return buildMap(json);
     }
 
     public java.util.Map<String, Object> getAttrs() {
@@ -72,12 +96,15 @@ public class SequenceElement extends BaseEntity {
         return attrs.get(names[names.length-1]);
     }
     public SequenceElement setAttr(String path, Object value) {
-        if (this.attributes == null) this.attributes = buildAttributes();
-        java.util.Map<String, Object> attrs = this.attributes;
+        Map<String, Object> attrs = this.attributes;
         String[] names = path.split("\\.");
         for (int index=0; index<names.length-1; index++) {
-            attrs = (Map<String, Object>) attrs.get(names[index]);
-            if (attrs==null) attrs=new HashMap<>();
+            Map<String, Object> lattrs = (Map<String, Object>) attrs.get(names[index]);
+            if (lattrs==null) {
+                lattrs=new HashMap<>();
+                attrs.put(names[index], lattrs);
+            }
+            attrs = lattrs;
         }
         attrs.put(names[names.length-1], value);
         return this;

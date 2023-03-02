@@ -106,10 +106,10 @@ export class CBAbstractPlayer {
         if (this.acceptActivation(playable)) {
             if (currentSelectedPlayable !== playable) {
                 this.startActivation(playable, () => {
-                    this.launchPlayableAction(playable, event);
+                    this.launchPlayableAction(playable, new Point2D(event.offsetX, event.offsetY));
                 });
             } else {
-                this.launchPlayableAction(playable, event);
+                this.launchPlayableAction(playable, new Point2D(event.offsetX, event.offsetY));
             }
         }
     }
@@ -134,7 +134,7 @@ export class CBAbstractPlayer {
         action();
     }
 
-    launchPlayableAction(playable, event) {
+    launchPlayableAction(playable, point) {
     }
 
     afterActivation(playable, action) {
@@ -760,22 +760,12 @@ export class CBAbstractGame {
 
     setSelectedPlayable(playable) {
         Memento.register(this);
-        if (playable) {
-            this._selectedPlayable = playable;
-        }
-        else {
-            delete this._selectedPlayable;
-        }
+        this.selectedPlayable = playable;
     }
 
     setFocusedPlayable(playable) {
         Memento.register(this);
-        if (playable && playable.isOnHex()) {
-            this._focusedPlayable = playable;
-        }
-        else {
-            delete this._focusedPlayable;
-        }
+        this.focusedPlayable = playable;
     }
 
     get selectedPlayable() {
@@ -784,6 +774,24 @@ export class CBAbstractGame {
 
     get focusedPlayable() {
         return this._focusedPlayable;
+    }
+
+    set selectedPlayable(playable) {
+        if (playable) {
+            this._selectedPlayable = playable;
+        }
+        else {
+            delete this._selectedPlayable;
+        }
+    }
+
+    set focusedPlayable(playable) {
+        if (playable && playable.isOnHex()) {
+            this._focusedPlayable = playable;
+        }
+        else {
+            delete this._focusedPlayable;
+        }
     }
 
     showCommand(command) {

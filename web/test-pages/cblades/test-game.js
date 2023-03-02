@@ -84,12 +84,12 @@ class CBTestPlayer extends CBAbstractPlayer {
         this.actionClass = actionClass;
     }
 
-    launchPlayableAction(playable, event) {
+    launchPlayableAction(playable, point) {
         if (this.actionClass) {
             playable.launchAction(new this.actionClass(this.game, playable));
         }
         this.launched++;
-        super.launchPlayableAction(playable, event);
+        super.launchPlayableAction(playable, point);
     }
 
 }

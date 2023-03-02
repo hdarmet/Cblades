@@ -29,7 +29,7 @@ import {
 import {
     D2StatesIconMenuItem, DDownNavigation,
     DIconMenu, DIconMenuItem, DCancel,
-    DLeftNavigation, DMinus, DMultiStatePushButton, DNextNavigation, DOk, DPlus,
+    DLeftNavigation, DMultiStatePushButton, DNextNavigation, DOk, DPlus,
     DPopup, DPrevNavigation, DPushButton, DRightNavigation, DUpNavigation
 } from "../widget.js";
 import {
@@ -2356,10 +2356,9 @@ export class CBEditorPlayer extends CBAbstractPlayer {
             offset.y - popup.dimension.h/2 + CBAbstractGame.POPUP_MARGIN));
     }
 
-    launchPlayableAction(playable, event) {
-        this.openEditUnitMenu(playable,
-            new Point2D(event.offsetX, event.offsetY));
-        super.launchPlayableAction(playable, event);
+    launchPlayableAction(playable, point) {
+        this.openEditUnitMenu(playable, point);
+        super.launchPlayableAction(playable, point);
     }
 
 }
