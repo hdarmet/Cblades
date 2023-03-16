@@ -59,18 +59,19 @@ export function registerInteractiveCombat() {
     CBInteractivePlayer.prototype.unitDuelFire = function (unit) {
         unit.launchAction(new InteractiveDuelFireAction(this.game, unit));
     }
-    CBInteractivePlayer.prototype.applyLossesToUnit = function(unit, losses, attacker, advance, continuation) {
-        let lossSustained = false;
+    CBInteractivePlayer.prototype.applyLossesToUnit = function(unit, losses, attacker) {
         for (let loss=1; loss<losses; loss++) {
             unit.takeALoss();
-            lossSustained = true;
         }
-        if (lossSustained) {
+        if (losses>1) {
             CBSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit}));
-            new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
         }
+    }
+    CBInteractivePlayer.prototype.ask4LossesToUnit = function(unit, attacker, losses, defenderLocation, advance, continuation) {
         if (!unit.isDestroyed()) {
-            unit.launchAction(new InteractiveRetreatAction(this.game, unit, losses, attacker, advance, continuation));
+            unit.launchAction(new InteractiveRetreatAction(
+                this.game, unit, losses, attacker, advance, continuation, defenderLocation)
+            );
         }
         else {
             continuation();
@@ -136,10 +137,11 @@ CBAction.register("InteractiveAdvanceAction", InteractiveAdvanceAction);
 
 export class InteractiveRetreatAction extends CBAction {
 
-    constructor(game, unit, losses, attacker, advance, continuation, active=true) {
+    constructor(game, unit, losses, attacker, advance, continuation, defenderLocation, active=true) {
         super(game, unit);
         this._losses = losses;
         this._attacker = attacker;
+        this._defenderLocation = defenderLocation;
         this._advance = advance;
         this._continuation = continuation;
         this._active = active;
@@ -150,9 +152,16 @@ export class InteractiveRetreatAction extends CBAction {
     }
 
     play() {
-        this.unit.setCharging(CBCharge.NONE);
-        this.game.setFocusedPlayable(this.unit);
-        this._createRetreatActuator();
+        if (this.unit.getAttr("retreated")) {
+            this.advanceAttacker(() => {
+                this._finalizeAction();
+            });
+        }
+        else {
+            this.unit.setCharging(CBCharge.NONE);
+            this.game.setFocusedPlayable(this.unit);
+            this._createRetreatActuator();
+        }
     }
 
     _createRetreatActuator() {
@@ -168,8 +177,8 @@ export class InteractiveRetreatAction extends CBAction {
         }
     }
 
-    advanceAttacker(hexLocation, continuation) {
-        let directions = this.game.arbitrator.getAdvanceZones(this._attacker, hexLocation.hexes);
+    advanceAttacker(continuation) {
+        let directions = this.game.arbitrator.getAdvanceZones(this._attacker, this._defenderLocation.hexes);
         if (this._advance && this._attacker.isCharging() && directions.length>0) {
             let hexes = [];
             for (let sangle in directions) {
@@ -196,10 +205,10 @@ export class InteractiveRetreatAction extends CBAction {
         }
     }
 
-    retreatUnit(actualLocation, hexLocation, stacking) {
+    retreatUnit(hexLocation, stacking) {
         this.game.closeActuators();
         this.unit.retreat(hexLocation, stacking);
-        this.advanceAttacker(actualLocation, () => {
+        this.advanceAttacker(() => {
             this._finalizeAction();
         });
     }
@@ -210,10 +219,9 @@ export class InteractiveRetreatAction extends CBAction {
 
     takeALossFromUnit(event) {
         if (this._active) {
-            let actualHex = this.unit.hexLocation;
             this.game.closeActuators();
             this.unit.takeALoss();
-            this.advanceAttacker(actualHex, () => {
+            this.advanceAttacker(this._defenderLocation, () => {
                 this._finalizeAction();
             });
         }
@@ -249,11 +257,38 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
     }
 
     play() {
-        if (!this.unit.firstAttack) {
+        if (!this.unit.getAttr("firstAttack")) {
             this._createShockAttackActuator(this.unit);
         }
         else {
-            //this.shockAttackUnit(attackerHex, defender, defenderHex, supported, advantage);
+            let attackerHex = this.game.map.getHex(
+                this.unit.getAttr("attackerHexCol"),
+                this.unit.getAttr("attackerHexRow")
+            );
+            let defenderHex = this.game.map.getHex(
+                this.unit.getAttr("defenderHexCol"),
+                this.unit.getAttr("defenderHexRow")
+            );
+            let defender = this.game.getUnit(this.unit.getAttr("defender"));
+            let report = this.game.arbitrator.processShockAttackResult(
+                this.unit, attackerHex, defender, defenderHex,
+                this.unit.getAttr("supported"),
+                [this.unit.getAttr("dice1"), this.unit.getAttr("dice2")]
+            );
+            this._attackHexes.add(attackerHex);
+            for (let hex of this.unit.hexLocation.hexes) {
+                if (!this._attackHexes.has(hex)) {
+                    this._attackHex = hex;
+                    break;
+                }
+            }
+            this.markAsStarted();
+            let continuation = () => {
+                if (this._hasPlayed() || !this._createShockAttackActuator(this.unit)) {
+                    this.markAsFinished();
+                }
+            }
+            defender.player.ask4LossesToUnit(defender, this.unit, report.lossesForDefender, defenderHex, true, continuation);
         }
     }
 
@@ -377,6 +412,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
                         unit: this.unit, attackerHex, defender, defenderHex, supported, advantage: advantage.advantage,
                         game: this.game, dice: scene.dice.result
                     }));
+                    defender.player.applyLossesToUnit(defender, scene.result.report.lossesForDefender, this.unit, true, continuation);
                     new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                     this.game.validate();
                 },
@@ -384,7 +420,8 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
                     this.game.closePopup();
                     if (scene.result.finished) {
                         if (success) {
-                            defender.player.applyLossesToUnit(defender, scene.result.report.lossesForDefender, this.unit, true, continuation);
+                            defender.player.ask4LossesToUnit(defender, this.unit,  scene.result.report.lossesForDefender, defender.hexLocation, true, continuation);
+                            //defender.player.applyLossesToUnit(defender, scene.result.report.lossesForDefender, this.unit, true, continuation);
                         } else {
                             this.unit.setCharging(CBCharge.NONE);
                             continuation();
@@ -627,7 +664,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
                     this.game.closePopup();
                     if (scene.result.finished) {
                         if (scene.result.report.success) {
-                            target.player.applyLossesToUnit(target, scene.result.report.lossesForDefender, this.unit, false, continuation);
+                            target.player.applyLossesToUnit(target, scene.result.report.lossesForDefender, this.unit);
                         } else {
                             continuation();
                         }
@@ -1150,9 +1187,9 @@ export class CBRetreatActuator extends CBActionActuator {
         }
         else {
             this.action.retreatUnit(
-                this.playable.hexLocation,
                 this.playable.hexLocation.getNearHex(trigger.angle),
-                trigger.stacking);
+                trigger.stacking
+            );
         }
     }
 
@@ -1231,7 +1268,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
                 game:this.playable.game, unit: this.playable, angle
             }));
             let hexLocation = new CBHexSideId(hex1, hex2);
-            this.action.retreatUnit(this.playable.hexLocation, hexLocation, trigger.stacking);
+            this.action.retreatUnit(hexLocation, trigger.stacking);
             CBSequence.appendElement(this.game, new CBMoveSequenceElement({
                 game:this.playable.game, unit: this.playable, hexLocation, stacking: trigger.stacking
             }));
@@ -1240,7 +1277,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
             let hex1 = this.playable.hexLocation.fromHex.getNearHex(trigger.angle);
             let hex2 = this.playable.hexLocation.toHex.getNearHex(trigger.angle);
             let hexLocation = new CBHexSideId(hex1, hex2);
-            this.action.retreatUnit(this.playable.hexLocation, hexLocation, trigger.stacking);
+            this.action.retreatUnit(hexLocation, trigger.stacking);
             CBSequence.appendElement(this.game, new CBMoveSequenceElement({
                 game:this.playable.game, unit: this.playable, hexLocation, stacking: trigger.stacking
             }));
@@ -1635,7 +1672,8 @@ export class CBAsk4RetreatAnimation extends DAnimation {
                     );
                     new SequenceLoader().save(this._game, CBSequence.getSequence(this._game));
                     this._game.validate();
-                }
+                },
+                this._unit.hexLocation
             ));
         }
         return false;
@@ -1647,7 +1685,6 @@ export class CBRetreatAnimation extends CBDisplaceAnimation {
 
     constructor({unit, startTick, duration, state, angle, hexLocation, stacking}) {
         super({unit, startTick, duration, state, angle, hexLocation, stacking});
-        this._actualLocation = unit.hexLocation;
     }
 
     _draw(count, ticks) {
@@ -1659,7 +1696,7 @@ export class CBRetreatAnimation extends CBDisplaceAnimation {
 
     _finalize() {
         this._unit.player.continueLossApplication &&
-            this._unit.player.continueLossApplication(this._unit, this._actualLocation, this._stacking);
+            this._unit.player.continueLossApplication(this._unit, this._unit.hexLocation, this._stacking);
         return super._finalize();
     }
 
@@ -1687,7 +1724,6 @@ export class CBAdvanceAnimation extends CBDisplaceAnimation {
 
     constructor({unit, startTick, duration, state, angle, hexLocation, stacking}) {
         super({unit, startTick, duration, state, angle, hexLocation, stacking});
-        this._actualLocation = unit.hexLocation;
     }
 
     _draw(count, ticks) {
@@ -1696,12 +1732,5 @@ export class CBAdvanceAnimation extends CBDisplaceAnimation {
         }
         return super._draw(count, ticks);
     }
-
-    /*
-    _finalize() {
-        this._unit.player.continueLossApplication(this._unit, this._actualLocation, this._stacking);
-        return super._finalize();
-    }
-     */
 
 }

@@ -64,20 +64,26 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
         }
     }
 
-    continueLossApplication(unit, actualLocation, stacking) {
-        unit.action && unit.action.retreatUnit(actualLocation, unit.hexLocation, stacking);
+    continueLossApplication(unit, finalLocation, stacking) {
+        unit.action && unit.action.retreatUnit(finalLocation, stacking);
     }
 
-    applyLossesToUnit(unit, losses, attacker, advance, continuation) {
+    applyLossesToUnit(unit, losses, attacker) {
         losses = 2;
-        let lossSustained = false;
         for (let loss=1; loss<losses; loss++) {
             unit.takeALoss();
-            lossSustained = true;
         }
-        if (lossSustained) {
+        if (losses>1) {
             CBSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit}));
+            if (!unit.isDestroyed()) {
+                CBSequence.appendElement(this.game,
+                    new CBAsk4RetreatSequenceElement({game: this.game, unit, losses, attacker})
+                );
+            }
         }
+    }
+
+    ask4LossesToUnit(unit, attacker, losses, defenderLocation, advance, continuation) {
         if (!unit.isDestroyed()) {
             let enhancedContinuation = ()=>{
                 this.releaseFocus();
@@ -85,18 +91,11 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
             }
             this.getFocus();
             unit.launchAction(new InteractiveRetreatAction(
-                this.game, unit, losses, attacker, advance, enhancedContinuation,
+                this.game, unit, losses, attacker, advance, enhancedContinuation, defenderLocation,
                 false
             ));
-            CBSequence.appendElement(this.game,
-                new CBAsk4RetreatSequenceElement({game: this.game, unit, losses, attacker})
-            );
-            new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
         }
         else {
-            if (lossSustained) {
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
-            }
             continuation();
         }
     }

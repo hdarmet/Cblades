@@ -90,6 +90,12 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         unit.setAttr("sequenceElement", element.getType());
     }
 
+    void finishUnitAction(SequenceElement element) {
+        Unit unit = units.get(element.getAttr("unit"));
+        unit.setAttr("actionType", null);
+        unit.setPlayed(true);
+    }
+
     @Override
     public void visit(SequenceElement element) {
         if (element.getType().equals("move")) {
@@ -142,9 +148,12 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         }
         else if (element.getType().equals("attacker-engagement")) {
             changeUnitState(element);
+            setUnitAttr(element, "attackerEngagementChecking", true);
+            finishUnitAction(element);
         }
         else if (element.getType().equals("defender-engagement")) {
             changeUnitState(element);
+            setUnitAttr(element, "defenderEngagementChecking", true);
         }
         else if (element.getType().equals("try2-order-instructions")) {
             setUnitSequenceElement(element);
@@ -169,6 +178,7 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         }
         else if (element.getType().equals("shock-attack")) {
             changeUnitState(element);
+            setUnitAttr(element, "firstAttack", true);
         }
         else if (element.getType().equals("fire-attack")) {
             changeUnitState(element);
@@ -179,12 +189,13 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         if (element.getType().equals("retreat")) {
             changeUnitState(element);
             changeUnitLocation(element);
-            changeUnitAngle(element);
+            setUnitAttr(element, "retreated", true);
+            //changeUnitAngle(element);
         }
         if (element.getType().equals("advance")) {
             changeUnitState(element);
             changeUnitLocation(element);
-            changeUnitAngle(element);
+            //changeUnitAngle(element);
         }
         else if (element.getType().equals("next-turn")) {
             changeTurn(element);

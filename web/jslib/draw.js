@@ -61,6 +61,17 @@ Object.defineProperty(Array.prototype, "last", {
     enumerable: false
 });
 
+Object.defineProperty(Set.prototype, "filter", {
+    value: function (predicate) {
+        let result = [];
+        for (let record of this) {
+            if (predicate(record)) result.push(record);
+        }
+        return result;
+    },
+    enumerable: false
+});
+
 /**
  * _platform is a facade used to abstract the real (DOM) platform. Useful when this platform has to be replaced by a
  * fake one for tests purposes.

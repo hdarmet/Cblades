@@ -2096,10 +2096,12 @@ export class CBStateSequenceElement extends CBSequenceElement {
     }
 
     static launch(unit, {actionType, actionMode}) {
-        let action = CBAction.createAction(actionType, unit.game, unit, actionMode);
-        unit.launchAction(action);
-        action.status = CBAction.STARTED;
-        unit.game.selectedPlayable = this;
+        if (actionType) {
+            let action = CBAction.createAction(actionType, unit.game, unit, actionMode);
+            unit.launchAction(action);
+            action.status = CBAction.STARTED;
+            unit.game.selectedPlayable = unit;
+        }
     }
 
 }

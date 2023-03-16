@@ -226,8 +226,8 @@ export class GameLoader {
             actives,
             (text, status) => {
                 let json = JSON.parse(text);
-                this.fromSpecs(json);
                 CBSequence.setCount(this._game, json.sequenceCount);
+                this.fromSpecs(json);
                 loaded();
                 consoleLog(`Game ${this._game.id} loaded : ${status}`)
             },
@@ -372,20 +372,19 @@ export class GameLoader {
         map._oversion = specs.map.version;
         this._game.changeMap(map);
         let context = new Map();
+        let unitsMap = new Map();
         for (let playerSpec of specs.players) {
             let player = this._game.getPlayer(playerSpec.identity.name);
             if (!player) {
                 player = this._playerCreator(playerSpec.identity.name, playerSpec.identity.path);
                 this._game.addPlayer(player);
-            }
-            else {
+            } else {
                 player.setIdentity(playerSpec.identity);
             }
             player._oid = playerSpec.id;
             player._oversion = playerSpec.version;
             player._identity._oid = playerSpec.identity.id;
             player._identity._oversion = playerSpec.identity.version;
-            let unitsMap = new Map();
             for (let wingSpec of playerSpec.wings) {
                 let wing = new CBWing(player, {
                     _oid: wingSpec.banner.id,
@@ -429,27 +428,33 @@ export class GameLoader {
                     }
                     context.set(unit.name, unit);
                 }
-                leader&&wing.setLeader(leader);
+                leader && wing.setLeader(leader);
                 wing.setOrderInstruction(this.getOrderInstruction(wingSpec.orderInstruction))
             }
-            this.showEntities(unitsMap, playerSpec);
+        }
+        this.showEntities(unitsMap, specs);
+        this._game.currentPlayer = this._game.players[specs.currentPlayerIndex];
+        for (let playerSpec of specs.players) {
             for (let wingSpec of playerSpec.wings) {
                 for (let unitSpec of wingSpec.units) {
-                    let unit = unitsMap.get(unitSpec.name).unit;
-                    CBSequence.launch(unit, unitSpec.attributes.sequenceElement, unitSpec.attributes, context);
+                    if (unitSpec.attributes) {
+                        let unit = unitsMap.get(unitSpec.name).unit;
+                        CBSequence.launch(unit, unitSpec.attributes.sequenceElement, unitSpec.attributes, context);
+                    }
                 }
             }
         }
-        this._game.currentPlayer = this._game.players[specs.currentPlayerIndex];
     }
 
-    showEntities(unitsMap, playerSpec) {
+    showEntities(unitsMap, specs) {
         let namesToShow = new Set(unitsMap.keys());
         let shown = new Set();
         let dependencies = [];
-        for (let locationsSpec of playerSpec.locations) {
-            for (let index = 0; index < locationsSpec.units.length - 1; index++) {
-                dependencies.push([locationsSpec.units[index], locationsSpec.units[index + 1]]);
+        for (let playerSpec of specs.players) {
+            for (let locationsSpec of playerSpec.locations) {
+                for (let index = 0; index < locationsSpec.units.length - 1; index++) {
+                    dependencies.push([locationsSpec.units[index], locationsSpec.units[index + 1]]);
+                }
             }
         }
         while (namesToShow.size) {

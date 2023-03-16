@@ -708,6 +708,11 @@ export class CBAbstractGame {
         return [...this._playables];
     }
 
+    getUnit(name) {
+        let unit = this._playables.filter(unit=>unit.name === name);
+        return unit.length>0 ? unit[0] : null;
+    }
+
     openActuator(actuator) {
         Memento.register(this);
         actuator.game = this;

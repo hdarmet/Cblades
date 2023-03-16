@@ -87,7 +87,7 @@ public class Synchronizer implements DataSunbeam {
 		}
 		try {
 			if (readValue!=null && !readValue.equals("")) {
-				System.out.println(readValue);
+				//System.out.println(readValue);
 				Date value = new SimpleDateFormat("yyyy-MM-dd").parse((String)readValue);
 				ReflectUtil.set(this.target, targetFieldName, value);
 			}
@@ -413,7 +413,7 @@ public class Synchronizer implements DataSunbeam {
 	Json readMap(Map<String, Object> readValue) {
 		Json json = Json.createJsonObject();
 		for (Map.Entry<String, Object> entry: readValue.entrySet()) {
-			System.out.println(entry.getKey());
+			//System.out.println(entry.getKey());
 			json.put(entry.getKey(), translateValue(entry.getValue()));
 		}
 		return json;

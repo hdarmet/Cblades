@@ -300,6 +300,7 @@ public class FakeData {
                     )
                 )
             );
+            /*
             Unit unit0 = new Unit()
                 .setPositionRow(8).setPositionCol(1)
                 .setName("u0").setCategory(UnitCategory.TROOP)
@@ -311,15 +312,16 @@ public class FakeData {
                 .setCohesion(Cohesion.ROOTED)
                 .setContact(false)
                 .setOrderGiven(false)
-                .setPlayed(false/*true*/)
+                .setPlayed(false)
                 .setCharging(false);
             em.persist(unit0);
+            */
             Unit unit1 = new Unit()
                 .setPositionRow(8).setPositionCol(2)
                 .setName("u1").setCategory(UnitCategory.CHARACTER)
                 .setType("Goblin Leader")
                 .setAngle(0)
-                .setSteps(1)
+                .setSteps(2)
                 .setTiredness(Tiredness.FRESH)
                 .setAmmunition(Ammunition.PLENTIFUL)
                 .setCohesion(Cohesion.GOOD_ORDER)
@@ -328,6 +330,7 @@ public class FakeData {
                 .setPlayed(false)
                 .setCharging(false);
             em.persist(unit1);
+            /*
             Unit unit3 = new Unit()
                 .setPositionRow(9).setPositionCol(1)
                 .setName("u3").setCategory(UnitCategory.TROOP)
@@ -356,6 +359,7 @@ public class FakeData {
                 .setPlayed(false)
                 .setCharging(false);
             em.persist(unit4);
+             */
             scenario.get().getGame().addPlayer(
                 new Player().setIdentity(PlayerIdentity.getByName(em, "orc 1"))
                     .addWing(
@@ -365,25 +369,28 @@ public class FakeData {
                         .addToRetreatZone(
                             new TargetHex().setRow(0).setCol(4)
                         )
-                        .addUnit(unit0)
+                        //.addUnit(unit0)
                         .addUnit(unit1)
-                        .addUnit(unit3)
-                        .addUnit(unit4)
+                        //.addUnit(unit3)
+                        //.addUnit(unit4)
                         .setLeader(unit1)
                         .setMoral(10)
                         .setTiredness(10)
                         .setOrderInstruction(OrderInstruction.DEFEND)
                     )
+                        /*
                     .addHex(new Location()
                         .setCol(unit0.getPositionCol())
                         .setRow(unit0.getPositionRow())
                         .addUnit(unit0)
                     )
+                         */
                     .addHex(new Location()
                         .setCol(unit1.getPositionCol())
                         .setRow(unit1.getPositionRow())
                         .addUnit(unit1)
                     )
+                        /*
                     .addHex(new Location()
                         .setCol(unit3.getPositionCol())
                         .setRow(unit3.getPositionRow())
@@ -394,6 +401,7 @@ public class FakeData {
                         .setRow(unit4.getPositionRow())
                         .addUnit(unit4)
                     )
+                         */
             );
             Unit unit2 = new Unit()
                 .setPositionRow(9).setPositionCol(4)
