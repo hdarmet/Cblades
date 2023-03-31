@@ -1074,7 +1074,7 @@ export class CBPiece {
             }
             attrs = attrs[names[index]];
         }
-        return attrs[names[names.length-1]];
+        attrs[names[names.length-1]] = value;
     }
 }
 

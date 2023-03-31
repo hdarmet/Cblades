@@ -1612,6 +1612,24 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         }
     }
 
+    get attackCount() {
+        let attackCount = this.getAttr("attackCount");
+        return attackCount===undefined ? 0 : attackCount;
+    }
+
+    set attackCount(attackCount) {
+        this.setAttr("attackCount", attackCount);
+    }
+
+    get resolvedAttackCount() {
+        let resolvedAttackCount = this.getAttr("resolvedAttackCount");
+        return resolvedAttackCount===undefined ? 0 : resolvedAttackCount;
+    }
+
+    set resolvedAttackCount(resolvedAttackCount) {
+        this.setAttr("resolvedAttackCount", resolvedAttackCount);
+    }
+
 }
 
 Object.defineProperty(CBHexLocation.prototype, "units", {
@@ -1654,6 +1672,10 @@ export class CBTroop extends CBUnit {
         return true;
     }
 
+    get allowedAttackCount() {
+        return 1;
+    }
+
 }
 
 export class FormationImageArtifact extends UnitImageArtifact {
@@ -1686,6 +1708,10 @@ export class CBFormation extends CBUnit {
         let copy = new CBFormation(this.type, this.wing);
         this.copy(copy);
         return copy;
+    }
+
+    get allowedAttackCount() {
+        return 2;
     }
 
     get maxStepCount() {
@@ -2032,7 +2058,6 @@ export class CBStateSequenceElement extends CBSequenceElement {
         if (spec.cohesion !== undefined) this.cohesion = this.getCohesion(spec.cohesion);
         if (spec.ammunition !== undefined) this.munitions = this.getMunitions(spec.ammunition);
         if (spec.charging !== undefined) this.charging = this.getCharging(spec.charging);
-
     }
 
     getTirednessCode(tiredness) {
@@ -2133,29 +2158,14 @@ export function HexLocated(clazz) {
 
         _toSpec(spec, context) {
             super._toSpec(spec, context);
-            if (this.hexLocation instanceof CBHexSideId) {
-                spec.hexCol = this.hexLocation.fromHex.col;
-                spec.hexRow = this.hexLocation.fromHex.row;
-                spec.hexAngle = this.hexLocation.angle;
-            }
-            else {
-                spec.hexCol = this.hexLocation.col;
-                spec.hexRow = this.hexLocation.row;
-            }
+            spec.hexLocation = CBHexLocation.toSpec(this.hexLocation);
             spec.stacking = this.getStackingCode(this.stacking);
         }
 
         _fromSpec(spec, context) {
             super._fromSpec(spec, context);
-            if (spec.hexCol !== undefined) {
-                this.hexLocation = context.game.map.getHex(spec.hexCol, spec.hexRow);
-                if (spec.hexAngle!==undefined) {
-                    this.hexLocation = this.hexLocation.toward(spec.hexAngle);
-                }
-            }
-            if (spec.stacking !== undefined) {
-                this.stacking = this.getStacking(spec.stacking)
-            }
+            this.hexLocation =  CBHexLocation.fromSpec(context.game.map, this.hexLocation);
+            this.stacking = this.getStacking(spec.stacking);
         }
 
         getStackingCode(stacking) {

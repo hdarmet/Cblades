@@ -96,6 +96,11 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         unit.setPlayed(true);
     }
 
+    void countAttacks(SequenceElement element) {
+        Unit unit = units.get(element.getAttr("unit"));
+        Integer count = (Integer)unit.getAttr("attackCount");
+        unit.setAttr("attackCount", count==null? 1 : count+1);
+    }
     @Override
     public void visit(SequenceElement element) {
         if (element.getType().equals("move")) {
@@ -178,7 +183,6 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         }
         else if (element.getType().equals("shock-attack")) {
             changeUnitState(element);
-            setUnitAttr(element, "firstAttack", true);
         }
         else if (element.getType().equals("fire-attack")) {
             changeUnitState(element);
@@ -210,8 +214,9 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         locations.remove(new HexPos(unit));
         Integer hexAngle = (Integer)element.getAttr("hexAngle");
         if (hexAngle!=null) unit.setPositionAngle((int)hexAngle);
-        unit.setPositionCol((int)element.getAttr("hexCol"));
-        unit.setPositionRow((int)element.getAttr("hexRow"));
+        unit.setPositionCol((int)element.getAttr("hexLocation.col"));
+        unit.setPositionRow((int)element.getAttr("hexLocation.row"));
+        unit.setPositionAngle((Integer)element.getAttr("hexLocation.angle"));
         location = getLocation(unit);
         location.addUnit(unit, Stacking.byLabels().get(element.getAttr("stacking")));
     }

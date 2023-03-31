@@ -280,6 +280,7 @@ public class FakeData {
     }
 
     static Scenario createScenario(DataSunbeam data, int index) {
+        java.util.Map context = new HashMap();
         Ref<Scenario> scenario = new Ref<>();
         data.inTransaction(em-> {
             scenario.set(new Scenario()
@@ -320,7 +321,7 @@ public class FakeData {
                 .setPositionRow(8).setPositionCol(2)
                 .setName("u1").setCategory(UnitCategory.CHARACTER)
                 .setType("Goblin Leader")
-                .setAngle(0)
+                .setAngle(90)
                 .setSteps(2)
                 .setTiredness(Tiredness.FRESH)
                 .setAmmunition(Ammunition.PLENTIFUL)
@@ -330,13 +331,12 @@ public class FakeData {
                 .setPlayed(false)
                 .setCharging(false);
             em.persist(unit1);
-            /*
             Unit unit3 = new Unit()
-                .setPositionRow(9).setPositionCol(1)
+                .setPositionRow(10).setPositionCol(2)
                 .setName("u3").setCategory(UnitCategory.TROOP)
                 .setType("Goblin Wolf Rider")
-                .setAngle(0)
-                .setSteps(1)
+                .setAngle(90)
+                .setSteps(2)
                 .setTiredness(Tiredness.FRESH)
                 .setAmmunition(Ammunition.PLENTIFUL)
                 .setCohesion(Cohesion.GOOD_ORDER)
@@ -345,6 +345,7 @@ public class FakeData {
                 .setPlayed(false)
                 .setCharging(false);
             em.persist(unit3);
+            /*
             Unit unit4 = new Unit()
                 .setPositionRow(7).setPositionCol(2)
                 .setName("u4").setCategory(UnitCategory.CHARACTER)
@@ -360,49 +361,6 @@ public class FakeData {
                 .setCharging(false);
             em.persist(unit4);
              */
-            scenario.get().getGame().addPlayer(
-                new Player().setIdentity(PlayerIdentity.getByName(em, "orc 1"))
-                    .addWing(
-                        new Wing().setBanner(
-                            Banner.getByName(em, "orc-banner-0")
-                        )
-                        .addToRetreatZone(
-                            new TargetHex().setRow(0).setCol(4)
-                        )
-                        //.addUnit(unit0)
-                        .addUnit(unit1)
-                        //.addUnit(unit3)
-                        //.addUnit(unit4)
-                        .setLeader(unit1)
-                        .setMoral(10)
-                        .setTiredness(10)
-                        .setOrderInstruction(OrderInstruction.DEFEND)
-                    )
-                        /*
-                    .addHex(new Location()
-                        .setCol(unit0.getPositionCol())
-                        .setRow(unit0.getPositionRow())
-                        .addUnit(unit0)
-                    )
-                         */
-                    .addHex(new Location()
-                        .setCol(unit1.getPositionCol())
-                        .setRow(unit1.getPositionRow())
-                        .addUnit(unit1)
-                    )
-                        /*
-                    .addHex(new Location()
-                        .setCol(unit3.getPositionCol())
-                        .setRow(unit3.getPositionRow())
-                        .addUnit(unit3)
-                    )
-                    .addHex(new Location()
-                        .setCol(unit4.getPositionCol())
-                        .setRow(unit4.getPositionRow())
-                        .addUnit(unit4)
-                    )
-                         */
-            );
             Unit unit2 = new Unit()
                 .setPositionRow(9).setPositionCol(4)
                 .setName("u2").setCategory(UnitCategory.CHARACTER)
@@ -418,6 +376,20 @@ public class FakeData {
                 .setPlayed(false)
                 .setCharging(true);
             em.persist(unit2);
+            Unit unit5 = new Unit()
+                .setPositionRow(9).setPositionCol(3).setPositionAngle(180)
+                .setName("u5").setCategory(UnitCategory.FORMATION)
+                .setType("Company Lancet")
+                .setAngle(270)
+                .setSteps(4)
+                .setTiredness(Tiredness.FRESH)
+                .setAmmunition(Ammunition.PLENTIFUL)
+                .setCohesion(Cohesion.GOOD_ORDER)
+                .setContact(false)
+                .setOrderGiven(false)
+                .setPlayed(false)
+                .setCharging(false);
+            em.persist(unit5);
             scenario.get().getGame().addPlayer(
                 new Player().setIdentity(PlayerIdentity.getByName(em, "roughneck 1"))
                     .addWing(
@@ -427,14 +399,56 @@ public class FakeData {
                         .addToRetreatZone(
                             new TargetHex().setRow(0).setCol(2)
                         )
-                        .addUnit(unit2)
+                        //.addUnit(unit2)
+                        .addUnit(unit5)
                         .setOrderInstruction(OrderInstruction.DEFEND)
                     )
-                    .addHex(new Location()
-                        .setCol(unit2.getPositionCol())
-                        .setRow(unit2.getPositionRow())
+                        /*
+                    .addHex(Location.getUnitLocation(context, unit2)
                         .addUnit(unit2)
                     )
+                         */
+                    .addHex(Location.getUnitLocation(context, unit5)
+                        .addUnit(unit5)
+                    )
+                    .addHex(Location.getFormationAltLocation(context, unit5)
+                        .addUnit(unit5)
+                    )
+            );
+            scenario.get().getGame().addPlayer(
+                new Player().setIdentity(PlayerIdentity.getByName(em, "orc 1"))
+                    .addWing(
+                        new Wing().setBanner(
+                                Banner.getByName(em, "orc-banner-0")
+                            )
+                            .addToRetreatZone(
+                                new TargetHex().setRow(0).setCol(4)
+                            )
+                            //.addUnit(unit0)
+                            .addUnit(unit1)
+                            .addUnit(unit3)
+                            //.addUnit(unit4)
+                            .setLeader(unit1)
+                            .setMoral(10)
+                            .setTiredness(10)
+                            .setOrderInstruction(OrderInstruction.ATTACK)
+                    )
+                        /*
+                    .addHex(Location.getUnitLocation(context, unit0)
+                        .addUnit(unit0)
+                    )
+                         */
+                    .addHex(Location.getUnitLocation(context, unit1)
+                        .addUnit(unit1)
+                    )
+                    /*
+                .addHex(Location.getUnitLocation(context, unit3)
+                    .addUnit(unit3)
+                )
+                .addHex(Location.getUnitLocation(context, unit4)
+                    .addUnit(unit4)
+                )
+                     */
             );
             data.persist(em, scenario.get());
         });

@@ -69,11 +69,11 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
     }
 
     applyLossesToUnit(unit, losses, attacker) {
-        losses = 2;
+        //losses = 2;
         for (let loss=1; loss<losses; loss++) {
             unit.takeALoss();
         }
-        if (losses>1) {
+        if (losses>0) {
             CBSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit}));
             if (!unit.isDestroyed()) {
                 CBSequence.appendElement(this.game,

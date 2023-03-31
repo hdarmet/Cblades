@@ -54,6 +54,13 @@ export class CBHexLocation {
         return atan2(loc2.x-loc1.x, loc2.y-loc1.y);
     }
 
+    static fromSpec(map, spec) {
+        return CBHexId.fromSpec(map, spec) || CBHexSideId.fromSpec(map, spec) || CBHexVertexId.fromSpec(map, spec);
+    }
+
+    static toSpec(hexLocation) {
+        return hexLocation.toSpec();
+    }
 }
 
 export class CBHexId extends CBHexLocation{
@@ -200,13 +207,32 @@ export class CBHexId extends CBHexLocation{
     }
 
     toward(angle) {
-        return new CBHexSideId(this, this.getNearHex(angle));
+        if (!(angle%60)) {
+            return new CBHexSideId(
+                this,
+                this.getNearHex(angle)
+            );
+        }
+        else {
+            return new CBHexVertexId(
+                this,
+                this.getNearHex(sumAngle(angle, 30)),
+                this.getNearHex(sumAngle(angle, -30))
+            );
+        }
     }
 
     to(hex) {
         return new CBHexSideId(this, hex);
     }
 
+    toSpec() {
+        return { col: this.col, row: this.row };
+    }
+
+    static fromSpec(map, spec) {
+        return spec.angle!==undefined ? null : new CBHexId(map, spec.col, spec.row);
+    }
 }
 
 export class CBHexSideId extends CBHexLocation {
@@ -393,6 +419,15 @@ export class CBHexSideId extends CBHexLocation {
         return `Hexside(${this.fromHex}, ${this.toHex})`;
     }
 
+    toSpec() {
+        let spec = this.fromHex.toSpec();
+        spec.angle = this.angle;
+        return spec;
+    }
+
+    static fromSpec(map, spec) {
+        return spec.angle===undefined && !(spec.angle%60) ? null : CBHexId.fromSpec(map, spec).toward(spec.angle);
+    }
 }
 
 export class CBHexVertexId extends CBHexLocation {
@@ -417,8 +452,26 @@ export class CBHexVertexId extends CBHexLocation {
         return this === hexVertex || (this.fromHex.equalsTo(hexVertex.fromHex) && this.toHexSide.equalsTo(hexVertex.toHexSide));
     }
 
+    get firstHex() {
+        return this._hexId1;
+    }
+
+    get secondHex() {
+        return this._hexId2;
+    }
+
+    get thirdHex() {
+        return this._hexId3;
+    }
+
     get fromHex() {
         return this._hexId1;
+    }
+
+    get angle() {
+        let angle1 = this._hexId1.getAngle(this._hexId2);
+        let angle2 = this._hexId1.getAngle(this._hexId3);
+        return (angle1===0||angle2===0)&&(angle1===300||angle2===3000)?330:(angle1+angle2)/2
     }
 
     get toHexSide() {
@@ -497,6 +550,18 @@ export class CBHexVertexId extends CBHexLocation {
 
     get playables() {
         return [...new Set([...this.toHexSide.playables, ...this.fromHex.playables])];
+    }
+
+    toSpec() {
+        return {
+            firstHex: this.firstHex.toSpec(),
+            secondHex: this.secondHex.toSpec(),
+            thirdHex: this.thirdHex.toSpec()
+        };
+    }
+
+    static fromSpec(map, spec) {
+        return spec.angle===undefined && (spec.angle%60)!==30 ? null : CBHexId.fromSpec(map, spec).toward(spec.angle);
     }
 }
 

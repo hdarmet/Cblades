@@ -339,7 +339,11 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this.unit.turn(angle, cost, CBStacking.BOTTOM);
         this._continueAfterMove();
         CBSequence.appendElement(this.game, new CBTurnSequenceElement({
-            game:this.game, unit: this.unit, angle, hexLocation: this.unit.hexLocation,  stacking: CBStacking.BOTTOM
+            game:this.game,
+            unit: this.unit,
+            angle: this.unit.angle,
+            hexLocation: this.unit.hexLocation,
+            stacking: CBStacking.BOTTOM
         }));
     }
 
@@ -1991,8 +1995,13 @@ export class CBTurnSequenceElement extends Oriented(HexLocated(CBStateSequenceEl
 
     apply(startTick) {
         return new CBDisplaceAnimation({
-            unit: this.unit, startTick, duration: this.delay, state: this, angle:
-            this.angle, hexLocation: this.hexLocation, stacking: this.stacking
+            unit: this.unit,
+            startTick,
+            duration: this.delay,
+            state: this,
+            angle: this.angle,
+            hexLocation: this.hexLocation,
+            stacking: this.stacking
         });
     }
 
