@@ -377,9 +377,9 @@ public class FakeData {
                 .setCharging(true);
             em.persist(unit2);
             Unit unit5 = new Unit()
-                .setPositionRow(9).setPositionCol(3).setPositionAngle(180)
+                .setPositionRow(9).setPositionCol(4).setPositionAngle(180)
                 .setName("u5").setCategory(UnitCategory.FORMATION)
-                .setType("Company Lancet")
+                .setType("Company Crossbowman")
                 .setAngle(270)
                 .setSteps(4)
                 .setTiredness(Tiredness.FRESH)

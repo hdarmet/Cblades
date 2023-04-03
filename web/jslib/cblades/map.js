@@ -231,7 +231,7 @@ export class CBHexId extends CBHexLocation{
     }
 
     static fromSpec(map, spec) {
-        return spec.angle!==undefined ? null : new CBHexId(map, spec.col, spec.row);
+        return spec.angle!==undefined ? null : map.getHex(spec.col, spec.row);
     }
 }
 
