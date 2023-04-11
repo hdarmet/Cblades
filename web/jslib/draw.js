@@ -797,6 +797,7 @@ export class DAnimation {
             if (!this._startTick) {
                 this._startTick = ticks;
                 this._count = 0;
+                this._init && this._init();
             } else {
                 this._count++;
             }

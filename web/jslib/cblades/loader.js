@@ -9,8 +9,7 @@ import {
     sendPost
 } from "../draw.js";
 import {
-    CBCharge, CBCohesion, CBFormation,
-    CBMunitions, CBOrderInstruction, CBTiredness, CBUnitType,
+    CBOrderInstruction, CBUnit,
     CBWing
 } from "./unit.js";
 import {
@@ -290,7 +289,7 @@ export class GameLoader {
                     },
                     units: [],
                     retreatZone: [],
-                    orderInstruction: this.getUnitCategoryCode(wing)
+                    orderInstruction: this.getOrderInstructionCode(wing)
                 }
                 for (let retreatHex of wing.retreatZone) {
                     let retreatHexSpecs = {
@@ -301,27 +300,7 @@ export class GameLoader {
                     wingSpecs.retreatZone.push(retreatHexSpecs);
                 }
                 for (let unit of wing.playables) {
-                    let position = unit instanceof CBFormation ? unit.hexLocation.fromHex : unit.hexLocation;
-                    let positionAngle = unit instanceof CBFormation ? unit.hexLocation.angle : 0;
-                    let unitSpecs = {
-                        id : unit._oid,
-                        version: unit._oversion || 0,
-                        name: unit.name,
-                        category: this.getUnitCategoryCode(unit),
-                        type: this.getUnitTypeCode(unit),
-                        angle: unit.angle,
-                        positionCol: position.col,
-                        positionRow: position.row,
-                        positionAngle: positionAngle,
-                        steps: unit.steps,
-                        tiredness: this.getUnitTirednessCode(unit),
-                        ammunition: this.getUnitAmmunitionCode(unit),
-                        cohesion: this.getUnitCohesionCode(unit),
-                        charging: unit.isCharging(),
-                        contact: unit.isEngaging(),
-                        orderGiven: unit.hasReceivedOrder(),
-                        played: unit.isPlayed()
-                    }
+                    let unitSpecs = unit.toSpec();
                     wingSpecs.units.push(unitSpecs);
                     for (let hexId of unit.hexLocation.hexes) {
                         locations.add(hexId);
@@ -404,24 +383,7 @@ export class GameLoader {
                 wing.setRetreatZone(retreatZone);
                 let leader = null;
                 for (let unitSpec of wingSpec.units) {
-                    let unitType = this.getUnitType(unitSpec.type);
-                    let unit = unitType.createUnit(wing, unitSpec.steps);
-                    unit._oid = unitSpec.id;
-                    unit._oversion = unitSpec.version;
-                    unit._name = unitSpec.name;
-                    unit._game = this._game;
-                    unit.angle = unitSpec.angle;
-                    unit.setState({
-                        steps: unitSpec.steps,
-                        tiredness: this.getUnitTiredness(unitSpec.tiredness),
-                        munitions: this.getUnitAmmunition(unitSpec.ammunition),
-                        cohesion: this.getUnitCohesion(unitSpec.cohesion),
-                        charging: unitSpec.charging ? CBCharge.CHARGING : CBCharge.NONE,
-                        engaging: unitSpec.engaging,
-                        orderGiven: unitSpec.orderGiven,
-                        attrs: unitSpec.attributes,
-                        played: unitSpec.played
-                    });
+                    let unit = CBUnit.fromSpec(wing, unitSpec);
                     unitsMap.set(unit.name, {unit, unitSpec});
                     if (unit.name === wingSpec.leader) {
                         leader = unit;
@@ -482,68 +444,12 @@ export class GameLoader {
         }
     }
 
-    getUnitCategoryCode(unit) {
-        if (unit.formationNature) return "F";
-        else if (unit.characterNature) return "C"
-        else return "T";
-    }
-
-    getUnitTypeCode(unit) {
-        return unit.type.name;
-    }
-
-    getUnitType(code) {
-        return CBUnitType.getType(code);
-    }
-
     getOrderInstructionCode(wing) {
         switch (wing.orderInstruction) {
             case "A": return CBOrderInstruction.ATTACK;
             case "D": return CBOrderInstruction.DEFEND;
             case "G": return CBOrderInstruction.REGROUP;
             case "R": return CBOrderInstruction.RETREAT;
-        }
-    }
-
-    getUnitTirednessCode(unit) {
-        if (unit.isTired()) return "T";
-        else if (unit.isExhausted()) return "E";
-        else return "F";
-    }
-
-    getUnitAmmunitionCode(unit) {
-        if (unit.areMunitionsScarce()) return "S";
-        else if (unit.areMunitionsExhausted()) return "E";
-        else return "P";
-    }
-
-    getUnitCohesionCode(unit) {
-        if (unit.isDisrupted()) return "D";
-        else if (unit.isRouted()) return "R";
-        else return "GO";
-    }
-
-    getUnitTiredness(code) {
-        switch (code) {
-            case "F": return CBTiredness.NONE;
-            case "T": return CBTiredness.TIRED;
-            case "E": return CBTiredness.EXHAUSTED;
-        }
-    }
-
-    getUnitAmmunition(code) {
-        switch (code) {
-            case "P": return CBMunitions.NONE;
-            case "S": return CBMunitions.SCARCE;
-            case "E": return CBMunitions.EXHAUSTED;
-        }
-    }
-
-    getUnitCohesion(code) {
-        switch (code) {
-            case "GO": return CBCohesion.GOOD_ORDER;
-            case "D": return CBCohesion.DISRUPTED;
-            case "R": return CBCohesion.ROUTED;
         }
     }
 
@@ -555,7 +461,6 @@ export class GameLoader {
             case "R": return CBOrderInstruction.RETREAT;
         }
     }
-
 }
 
 export class SequenceLoader {

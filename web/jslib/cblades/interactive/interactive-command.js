@@ -21,7 +21,7 @@ import {
 } from "./interactive-player.js";
 import {
     CBUnitActuatorTrigger, CBCharge,
-    CBOrderInstruction
+    CBOrderInstruction, getUnitFromContext, CBStateSequenceElement
 } from "../unit.js";
 import {
     CBSceneAnimation,
@@ -904,4 +904,3 @@ export class CBManageCommandAnimation extends DAnimation {
     }
 
 }
-

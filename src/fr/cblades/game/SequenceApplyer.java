@@ -71,6 +71,12 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         unit.setAttr("sequenceElement", element.getType());
     }
 
+    void setLeaderSequenceElement(SequenceElement element) {
+        Unit unit = units.get(element.getAttr("leader"));
+        unit.setAttrs(element.getAttrs());
+        unit.setAttr("sequenceElement", element.getType());
+    }
+
     void changeUnitState(SequenceElement element) {
         Unit unit = units.get(element.getAttr("unit"));
         unit.setAmmunition(Ammunition.byLabels().get(element.getAttr("ammunition")));
@@ -161,25 +167,25 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
             setUnitAttr(element, "defenderEngagementChecking", true);
         }
         else if (element.getType().equals("try2-order-instructions")) {
-            setUnitSequenceElement(element);
+            setLeaderSequenceElement(element);
         }
         else if (element.getType().equals("order-instructions")) {
             changeOrderInstructions(element);
         }
         else if (element.getType().equals("try2-take-command")) {
-            setUnitSequenceElement(element);
+            setLeaderSequenceElement(element);
         }
         else if (element.getType().equals("take-command")) {
             changeManageCommand(element, true);
         }
         else if (element.getType().equals("try2-dismiss-command")) {
-            setUnitSequenceElement(element);
+            setLeaderSequenceElement(element);
         }
         else if (element.getType().equals("dismiss-command")) {
             changeManageCommand(element, false);
         }
         else if (element.getType().equals("give-orders")) {
-            setUnitSequenceElement(element);
+            setLeaderSequenceElement(element);
         }
         else if (element.getType().equals("shock-attack")) {
             changeUnitState(element);

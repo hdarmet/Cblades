@@ -29,7 +29,7 @@ import {
     CBPlayableActuatorTrigger, CBBasicPlayer
 } from "./playable.js";
 import {
-    CBHexLocation, CBHexSideId
+    CBHexLocation
 } from "./map.js";
 import {
     CBAnimation,
@@ -917,12 +917,12 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         }
     }
 
-    appendToMap(hexId, stacking) {
+    appendToMap(hexLocation, stacking) {
         let nameMustBeDefined = !this._name || this._wing.hasUnitName(this._name);
-        super.appendToMap(hexId, stacking);
+        super.appendToMap(hexLocation, stacking);
         if (nameMustBeDefined) this._name = this._wing.getNextUnitName();
         for (let carried of this._carried) {
-            carried.appendToMap(hexId, stacking);
+            carried.appendToMap(hexLocation, stacking);
         }
     }
 
@@ -1518,8 +1518,12 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this.attrs = state.attrs;
         if (state.steps) {
             this.steps = state.steps;
-            this._movementPoints = this.attrs.movementPoints;
-            this._extendedMovementPoints = this.attrs.extendedMovementPoints;
+            if (this.attrs.movementPoints!==undefined) {
+                this._movementPoints = this.attrs.movementPoints;
+            }
+            if (this.attrs.extendedMovementPoints!==undefined) {
+                this._extendedMovementPoints = this.attrs.extendedMovementPoints;
+            }
             if (this.attrs.disruptChecked || this.attrs.routChecked ||
                 this.attrs.neighborsCohesionLoss ||
                 this.attrs.defenderEngagementChecking ||
@@ -1630,6 +1634,100 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this.setAttr("resolvedAttackCount", resolvedAttackCount);
     }
 
+    toSpec() {
+        return {
+            id : this._oid,
+            version: this._oversion || 0,
+            name: this.name,
+            category: this.getUnitCategoryCode(),
+            type: this.type.name,
+            angle: this.angle,
+            positionCol: this.getUnitPosition().col,
+            positionRow: this.getUnitPosition().row,
+            positionAngle: this.getUnitPosition().angle,
+            steps: this.steps,
+            tiredness: this.getUnitTirednessCode(),
+            ammunition: this.getUnitAmmunitionCode(),
+            cohesion: this.getUnitCohesionCode(),
+            charging: this.isCharging(),
+            contact: this.isEngaging(),
+            orderGiven: this.hasReceivedOrder(),
+            played: this.isPlayed()
+        }
+
+    }
+
+    getUnitPosition() {
+        return {
+            col: this.hexLocation.col,
+            row: this.hexLocation.row
+        };
+    }
+
+    getUnitTirednessCode() {
+        if (this.isTired()) return "T";
+        else if (this.isExhausted()) return "E";
+        else return "F";
+    }
+
+    getUnitAmmunitionCode() {
+        if (this.areMunitionsScarce()) return "S";
+        else if (this.areMunitionsExhausted()) return "E";
+        else return "P";
+    }
+
+    getUnitCohesionCode(unit) {
+        if (this.isDisrupted()) return "D";
+        else if (this.isRouted()) return "R";
+        else return "GO";
+    }
+
+    static fromSpec(wing, unitSpec) {
+        let unitType =  CBUnitType.getType(unitSpec.type);
+        let unit = unitType.createUnit(wing, unitSpec.steps);
+        unit._oid = unitSpec.id;
+        unit._oversion = unitSpec.version;
+        unit._name = unitSpec.name;
+        unit._game = wing.player.game;
+        unit.angle = unitSpec.angle;
+        unit.setState({
+            steps: unitSpec.steps,
+            tiredness: CBUnit.getUnitTiredness(unitSpec.tiredness),
+            munitions: CBUnit.getUnitAmmunition(unitSpec.ammunition),
+            cohesion: CBUnit.getUnitCohesion(unitSpec.cohesion),
+            charging: unitSpec.charging ? CBCharge.CHARGING : CBCharge.NONE,
+            engaging: unitSpec.engaging||false,
+            orderGiven: unitSpec.orderGiven||false,
+            attrs: unitSpec.attributes,
+            played: unitSpec.played||false
+        });
+        return unit;
+    }
+
+    static getUnitTiredness(code) {
+        switch (code) {
+            case "F": return CBTiredness.NONE;
+            case "T": return CBTiredness.TIRED;
+            case "E": return CBTiredness.EXHAUSTED;
+        }
+    }
+
+    static getUnitAmmunition(code) {
+        switch (code) {
+            case "P": return CBMunitions.NONE;
+            case "S": return CBMunitions.SCARCE;
+            case "E": return CBMunitions.EXHAUSTED;
+        }
+    }
+
+    static getUnitCohesion(code) {
+        switch (code) {
+            case "GO": return CBCohesion.GOOD_ORDER;
+            case "D": return CBCohesion.DISRUPTED;
+            case "R": return CBCohesion.ROUTED;
+        }
+    }
+
 }
 
 Object.defineProperty(CBHexLocation.prototype, "units", {
@@ -1676,6 +1774,9 @@ export class CBTroop extends CBUnit {
         return 1;
     }
 
+    getUnitCategoryCode(unit) {
+        return "T";
+    }
 }
 
 export class FormationImageArtifact extends UnitImageArtifact {
@@ -1775,6 +1876,18 @@ export class CBFormation extends CBUnit {
         for (let replacement of replacementOnToHex) {
             replacement.appendToMap(hexLocation.toHex, CBStacking.TOP);
         }
+    }
+
+    getUnitCategoryCode(unit) {
+        return "F";
+    }
+
+    getUnitPosition() {
+        return {
+            col: this.hexLocation.fromHex.col,
+            row: this.hexLocation.fromHex.row,
+            angle: this.hexLocation.angle
+        };
     }
 
     static DIMENSION = new Dimension2D(CBUnit.DIMENSION.w*2, CBUnit.DIMENSION.h);
@@ -1907,6 +2020,10 @@ export class CBCharacter extends CBUnit {
         return artifacts;
     }
 
+    getUnitCategoryCode(unit) {
+        return "C";
+    }
+
     static DIMENSION = new Dimension2D(120, 120);
     static ORDER_INSTRUCTION_DIMENSION = new Dimension2D(80, 80);
     static ORDER_INSTRUCTION_PATHS = [
@@ -1917,7 +2034,7 @@ export class CBCharacter extends CBUnit {
     ];
 }
 
-export function getUnitFromContext(context, spec) {
+function loadUnitsToContext(context) {
     if (!context.units) {
         context.units = new Map();
         for (let playable of context.game.playables) {
@@ -1926,7 +2043,17 @@ export function getUnitFromContext(context, spec) {
             }
         }
     }
-    return context.units.get(spec);
+    return context;
+}
+
+export function getUnitFromContext(context, spec) {
+    let unit = loadUnitsToContext(context).units.get(spec);
+    console.assert(unit);
+    return unit;
+}
+
+export function setUnitToContext(context, spec, unit) {
+    loadUnitsToContext(context).units.set(spec, unit);
 }
 
 export class CBUnitAnimation extends CBAnimation {
@@ -1937,8 +2064,11 @@ export class CBUnitAnimation extends CBAnimation {
         this._state = state;
     }
 
+    _init() {
+    }
+
     _draw(count, ticks) {
-        if (count===0) {
+        if (count===0 && this._unit) {
             if (this._unit._animation) {
                 this._unit._animation.cancel();
             }
@@ -1950,8 +2080,10 @@ export class CBUnitAnimation extends CBAnimation {
 
     _finalize() {
         super._finalize();
-        this._unit.setState(this._state);
-        delete this._unit._animation;
+        if (this._unit) {
+            this._unit.setState(this._state);
+            delete this._unit._animation;
+        }
     }
 
 }

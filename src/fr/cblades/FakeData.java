@@ -362,7 +362,7 @@ public class FakeData {
             em.persist(unit4);
              */
             Unit unit2 = new Unit()
-                .setPositionRow(9).setPositionCol(4)
+                .setPositionRow(10).setPositionCol(5)
                 .setName("u2").setCategory(UnitCategory.CHARACTER)
                 .setType("Company Leader")
                 .setAngle(0)
@@ -374,7 +374,7 @@ public class FakeData {
                 .setContact(false)
                 .setOrderGiven(false)
                 .setPlayed(false)
-                .setCharging(true);
+                .setCharging(false);
             em.persist(unit2);
             Unit unit5 = new Unit()
                 .setPositionRow(9).setPositionCol(4).setPositionAngle(180)
@@ -390,6 +390,20 @@ public class FakeData {
                 .setPlayed(false)
                 .setCharging(false);
             em.persist(unit5);
+            Unit unit6 = new Unit()
+                .setPositionRow(9).setPositionCol(5)
+                .setName("u6").setCategory(UnitCategory.TROOP)
+                .setType("Company Crossbowman")
+                .setAngle(270)
+                .setSteps(2)
+                .setTiredness(Tiredness.FRESH)
+                .setAmmunition(Ammunition.PLENTIFUL)
+                .setCohesion(Cohesion.GOOD_ORDER)
+                .setContact(false)
+                .setOrderGiven(false)
+                .setPlayed(false)
+                .setCharging(false);
+            em.persist(unit6);
             scenario.get().getGame().addPlayer(
                 new Player().setIdentity(PlayerIdentity.getByName(em, "roughneck 1"))
                     .addWing(
@@ -399,20 +413,22 @@ public class FakeData {
                         .addToRetreatZone(
                             new TargetHex().setRow(0).setCol(2)
                         )
-                        //.addUnit(unit2)
+                        .addUnit(unit2)
                         .addUnit(unit5)
+                        .addUnit(unit6)
                         .setOrderInstruction(OrderInstruction.DEFEND)
                     )
-                        /*
                     .addHex(Location.getUnitLocation(context, unit2)
                         .addUnit(unit2)
                     )
-                         */
                     .addHex(Location.getUnitLocation(context, unit5)
                         .addUnit(unit5)
                     )
                     .addHex(Location.getFormationAltLocation(context, unit5)
                         .addUnit(unit5)
+                    )
+                    .addHex(Location.getUnitLocation(context, unit5)
+                        .addUnit(unit6)
                     )
             );
             scenario.get().getGame().addPlayer(

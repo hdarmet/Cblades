@@ -7,6 +7,7 @@ import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
+    CBHexLocation,
     CBHexSideId
 } from "../map.js";
 import {
@@ -22,8 +23,11 @@ import {
     DImage
 } from "../../draw.js";
 import {
-    CBCharge
+    CBCharge, CBStateSequenceElement, CBUnit, CBUnitAnimation, getUnitFromContext, setUnitToContext
 } from "../unit.js";
+import {
+    CBSequence, CBSequenceElement
+} from "../sequences.js";
 
 export function registerInteractiveFormation() {
     CBInteractivePlayer.prototype.createFormation = function (unit) {
@@ -65,6 +69,9 @@ export class InteractiveBreakFormationAction extends CBAction {
         this.game.closeActuators();
         let {fromHex, toHex} = this.game.arbitrator.getTroopsAfterFormationBreak(this.unit);
         this.unit.breakFormation(fromHex, toHex);
+        CBSequence.appendElement(this.game, new CBBreakFormationSequenceElement({
+            game: this.game, formation: this.unit, troops: [...fromHex, ...toHex]
+        }));
         for (let replacement of fromHex) {
             replacement.setPlayed();
         }
@@ -151,6 +158,9 @@ export class InteractiveReleaseTroopsAction extends CBAction {
         let {stepCount, troop} = this.game.arbitrator.releaseTroop(this.unit, hexId, steps);
         troop.appendToMap(hexId, stacking);
         troop.angle = this.unit.angle;
+        CBSequence.appendElement(this.game, new CBLeaveFormationSequenceElement({
+            game: this.game, formation: this.unit, troop, stacking
+        }));
         troop.setPlayed();
         this.unit.fixRemainingLossSteps(stepCount);
         if (this.game.arbitrator.isAllowedToReleaseTroops(this.unit)) {
@@ -188,6 +198,9 @@ export class InteractiveIncludeTroopsAction extends CBAction {
         this.unit.setTiredness(tired);
         this.unit.setMunitions(munitions);
         this.unit.setPlayed();
+        CBSequence.appendElement(this.game, new CBJoinFormationSequenceElement({
+            game: this.game, formation: this.unit, troops: removed
+        }));
         for (let removedUnit of removed) {
             removedUnit.deleteFromMap();
         }
@@ -291,4 +304,233 @@ function createFormationMenuItems(unit, actions) {
     ];
 }
 
+export class CBLeaveFormationSequenceElement extends CBStateSequenceElement {
 
+    constructor({game, formation, troop, stacking}) {
+        super({type: "leave", game, unit: formation});
+        if (troop) {
+            this.unitRecord = {
+                unit: troop,
+                hexLocation: troop.hexLocation,
+                stacking
+            };
+        }
+    }
+
+    get delay() { return 500; }
+
+    apply(startTick) {
+        this.game.centerOn(this.unit.viewportLocation);
+        return new CBAppearAnimation({
+            unit:this.unit, appear:[this.unitRecord], startTick, duration:this.delay, state:this
+        });
+    }
+
+    _toSpec(spec, context) {
+        super._toSpec(spec, context);
+        spec.troop = {
+            unit: this.unitRecord.unit.toSpec(),
+            stacking: this.unitRecord.stacking
+        }
+    }
+
+    _fromSpec(spec, context) {
+        super._fromSpec(spec, context);
+        let unit = CBUnit.fromSpec(this.unit.wing, spec.troop.unit);
+        setUnitToContext(context, spec.troop.unit.name, unit);
+        this.unitRecord = {
+            unit,
+            hexLocation: CBHexLocation.fromSpec(this.unit.game.map, {
+                col: spec.troop.unit.positionCol,
+                row: spec.troop.unit.positionRow,
+                angle: spec.troop.unit.positionAngle
+            }),
+            stacking: spec.troop.stacking
+        };
+    }
+}
+CBSequence.register("leave", CBLeaveFormationSequenceElement);
+
+export class CBJoinFormationSequenceElement extends CBStateSequenceElement {
+
+    constructor({game, formation, troops, stacking}) {
+        super({type: "join", game, unit: formation});
+        this.joinedUnits = troops;
+    }
+
+    get delay() { return 500; }
+
+    apply(startTick) {
+        this.game.centerOn(this.unit.viewportLocation);
+        return new CBAppearAnimation({
+            unit:this.unit, disappear:[...this.joinedUnits], startTick, duration:this.delay, state:this
+        });
+    }
+
+    _toSpec(spec, context) {
+        super._toSpec(spec, context);
+        spec.troops = this.joinedUnits.map(unit=>unit.name);
+    }
+
+    _fromSpec(spec, context) {
+        super._fromSpec(spec, context);
+        this.joinedUnits = spec.troops.map(name=>getUnitToContext(context, name));
+    }
+}
+CBSequence.register("join", CBJoinFormationSequenceElement);
+
+export class CBBreakFormationSequenceElement extends CBSequenceElement {
+
+    constructor({game, formation, troops}) {
+        super({type: "break", game, unit: formation});
+        this.unit = formation;
+        if (troops) {
+            this.unitRecords = [];
+            for (let troop of troops) {
+                this.unitRecords.push(this.unitRecord = {
+                    unit: troop,
+                    hexLocation: troop.hexLocation
+                });
+            }
+        }
+    }
+
+    get delay() { return 500; }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        if (this.unit !== element.unit) return false;
+        for (let index=0; index<this.unitRecords.length; index++) {
+            if (this.unitRecords[index].unit !== element.unitRecords[index].unit) return false;
+            if (this.unitRecords[index].hexLocation.equalsTo(element.unitRecords[index].hexLocation)) return false;
+        }
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        if (this.unit !== undefined) result+=", Formation: "+this.unit.name;
+        if (this.unitRecords[0] !== undefined) result+=", Troops: "+this.unitRecords[0].name;
+        for (let index=1; index<this.unitRecords.length; index++) {
+            if (this.unitRecords[index] !== undefined) result+=", "+this.unitRecords[index].name;
+        }
+        return result;
+    }
+
+    apply(startTick) {
+        this.game.centerOn(this.unit.viewportLocation);
+        return new CBAppearAnimation({
+            disappear:[this.unit], appear:this.unitRecords, startTick, duration:this.delay, state:this
+        });
+    }
+
+    _toSpec(spec, context) {
+        super._toSpec(spec, context);
+        spec.unit = this.unit.name;
+        spec.troops = [];
+        for (let index=0; index<this.unitRecords.length; index++) {
+            spec.troops.push({
+                unit: this.unitRecords[index].unit.toSpec()
+            });
+        }
+    }
+
+    _fromSpec(spec, context) {
+        super._fromSpec(spec, context);
+        this.unit = getUnitFromContext(context, spec.unit);
+        this.unitRecords = [];
+        for (let troopSpec of spec.troops) {
+            let unit = CBUnit.fromSpec(this.unit.wing, troopSpec.unit);
+            setUnitToContext(context, troopSpec.unit.name, unit);
+            this.unitRecords.push({
+                unit,
+                hexLocation: CBHexLocation.fromSpec(this.unit.game.map, {
+                    col: troopSpec.unit.positionCol,
+                    row: troopSpec.unit.positionRow,
+                    angle: troopSpec.unit.positionAngle
+                })
+            });
+        }
+    }
+}
+CBSequence.register("break", CBBreakFormationSequenceElement);
+
+export class CBAppearAnimation extends CBUnitAnimation {
+
+    constructor({unit, appear, disappear, startTick, duration, state}) {
+        if (appear && disappear) duration*=2;
+        console.assert(appear || disappear);
+        super({unit, startTick, duration, state});
+        this._appear = appear;
+        this._disappear = disappear;
+        this._config = this._appear ? this._disappear ? "1app" : "app" : "dis";
+    }
+
+    _init() {
+        super._init();
+        if (this._config !== "dis") {
+            this._addAppear();
+        }
+        if (this._config !== "app") {
+            this._setDisappearAlpha(this._disappear, 1);
+        }
+    }
+
+    _finalize() {
+        this._setAppearAlpha(this._appear, 1);
+        if (this._config === "1app") {
+            this._removeDisappear();
+        }
+        super._finalize();
+    }
+
+    draw(count, ticks) {
+        let factor = this._factor(count);
+        if (this._config === "dis") {
+            this._setDisappearAlpha(this._disappear, 1 - factor);
+        }
+        else if (this._config === "1app") {
+            this._setDisappearAlpha(this._disappear, 1 - factor*2);
+        }
+        if (this._config === "1app" && factor > 0.5) {
+            this._removeDisappear();
+            this._addAppear();
+            this._config = "2app"
+        }
+        if (this._config === "app") {
+            this._setAppearAlpha(this._appear, factor);
+        }
+        else if (this._config === "2app") {
+            this._setAppearAlpha(this._appear, (factor-0.5)*2);
+        }
+        return super.draw(count, ticks);
+    }
+
+    _setAppearAlpha(units, alpha) {
+        for (let unitRecord of units) {
+            unitRecord.unit.alpha = alpha;
+        }
+    }
+
+    _setDisappearAlpha(units, alpha) {
+        for (let unitRecord of units) {
+            unitRecord.alpha = alpha;
+        }
+    }
+
+    _addAppear() {
+        for (let unitRecord of this._appear) {
+            unitRecord.unit.alpha = 0;
+            let stacking = unitRecord.stacking===undefined ? CBStacking.TOP : unitRecord.stacking;
+            unitRecord.unit.addToMap(unitRecord.hexLocation, stacking);
+        }
+    }
+
+    _removeDisappear() {
+        for (let unit of this._disappear) {
+            unit.alpha = 0;
+            unit.removeFromMap();
+        }
+    }
+
+}

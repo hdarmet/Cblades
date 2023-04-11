@@ -995,6 +995,14 @@ export class CBPiece {
         this._setLocation(location);
     }
 
+    get alpha() {
+        return this._element.alpha;
+    }
+
+    set alpha(alpha) {
+        this._element.alpha = alpha;
+    }
+
     get element() {
         return this._element;
     }
