@@ -282,6 +282,7 @@ public class FakeData {
     static Scenario createScenario(DataSunbeam data, int index) {
         java.util.Map context = new HashMap();
         Ref<Scenario> scenario = new Ref<>();
+        Game game = new Game();
         data.inTransaction(em-> {
             scenario.set(new Scenario()
                 .setStory(PARAGRAPH_TEXT)
@@ -291,7 +292,7 @@ public class FakeData {
                 .setTitle("Fierce fighting "+index)
                 .setIllustration("../images/scenarii/scenario1.png")
                 .setStatus(ScenarioStatus.LIVE)
-                .setGame(new Game()
+                .setGame(game
                     .setMap(
                         new Map()
                             .addBoardPlacement(
@@ -377,11 +378,13 @@ public class FakeData {
                 .setCharging(false);
             em.persist(unit2);
             Unit unit5 = new Unit()
-                .setPositionRow(9).setPositionCol(4).setPositionAngle(180)
-                .setName("u5").setCategory(UnitCategory.FORMATION)
+                .setPositionRow(10).setPositionCol(4).setPositionAngle(180)
+                //.setName("u5").setCategory(UnitCategory.FORMATION)
+                .setName("u5").setCategory(UnitCategory.TROOP)
                 .setType("Company Crossbowman")
                 .setAngle(270)
-                .setSteps(4)
+                //.setSteps(4)
+                .setSteps(2)
                 .setTiredness(Tiredness.FRESH)
                 .setAmmunition(Ammunition.PLENTIFUL)
                 .setCohesion(Cohesion.GOOD_ORDER)
@@ -391,7 +394,7 @@ public class FakeData {
                 .setCharging(false);
             em.persist(unit5);
             Unit unit6 = new Unit()
-                .setPositionRow(9).setPositionCol(5)
+                .setPositionRow(9).setPositionCol(4)
                 .setName("u6").setCategory(UnitCategory.TROOP)
                 .setType("Company Crossbowman")
                 .setAngle(270)
@@ -404,6 +407,10 @@ public class FakeData {
                 .setPlayed(false)
                 .setCharging(false);
             em.persist(unit6);
+            Token token1 = new Token()
+                .setPositionRow(9).setPositionCol(9)
+                .setType("stakes");
+            em.persist(token1);
             scenario.get().getGame().addPlayer(
                 new Player().setIdentity(PlayerIdentity.getByName(em, "roughneck 1"))
                     .addWing(
@@ -418,18 +425,6 @@ public class FakeData {
                         .addUnit(unit6)
                         .setOrderInstruction(OrderInstruction.DEFEND)
                     )
-                    .addHex(Location.getUnitLocation(context, unit2)
-                        .addUnit(unit2)
-                    )
-                    .addHex(Location.getUnitLocation(context, unit5)
-                        .addUnit(unit5)
-                    )
-                    .addHex(Location.getFormationAltLocation(context, unit5)
-                        .addUnit(unit5)
-                    )
-                    .addHex(Location.getUnitLocation(context, unit5)
-                        .addUnit(unit6)
-                    )
             );
             scenario.get().getGame().addPlayer(
                 new Player().setIdentity(PlayerIdentity.getByName(em, "orc 1"))
@@ -442,30 +437,46 @@ public class FakeData {
                             )
                             //.addUnit(unit0)
                             .addUnit(unit1)
-                            .addUnit(unit3)
+                            //.addUnit(unit3)
                             //.addUnit(unit4)
                             .setLeader(unit1)
                             .setMoral(10)
                             .setTiredness(10)
                             .setOrderInstruction(OrderInstruction.ATTACK)
                     )
-                        /*
-                    .addHex(Location.getUnitLocation(context, unit0)
-                        .addUnit(unit0)
-                    )
-                         */
-                    .addHex(Location.getUnitLocation(context, unit1)
-                        .addUnit(unit1)
-                    )
-                    /*
-                .addHex(Location.getUnitLocation(context, unit3)
-                    .addUnit(unit3)
-                )
-                .addHex(Location.getUnitLocation(context, unit4)
-                    .addUnit(unit4)
-                )
-                     */
             );
+            game.addLocation(Location.getLocation(context, unit2)
+                    .addPiece(unit2)
+                )
+                .addLocation(Location.getLocation(context, unit5)
+                    .addPiece(unit5)
+                )
+                .addLocation(Location.getFormationAltLocation(context, unit5)
+                    .addPiece(unit5)
+                )
+                .addLocation(Location.getLocation(context, unit6)
+                    .addPiece(unit6)
+                )
+                /*
+                .addLocation(Location.getLocation(context, unit0)
+                    .addUnit(unit0)
+                )
+                 */
+                .addLocation(Location.getLocation(context, unit1)
+                    .addPiece(unit1)
+                )
+                /*
+                .addLocation(Location.getLocation(context, unit3)
+                    .addPiece(unit3)
+                )
+                .addLocation(Location.getLocation(context, unit4)
+                    .addPiece(unit4)
+                )
+                 */
+                .addLocation(Location.getLocation(context, token1)
+                    .addPiece(token1)
+                )
+            ;
             data.persist(em, scenario.get());
         });
         return scenario.get();
