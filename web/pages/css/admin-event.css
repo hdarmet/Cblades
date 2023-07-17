@@ -1,0 +1,75 @@
+.event-list .event-title {
+    font-size: 1.2em;
+    font-weight: bolder;
+    float: left;
+}
+
+.event-list img.event-illustration {
+    width: 200px;
+}
+
+.event-list .column-0 {
+    width: 10%;
+}
+.event-list .column-1 {
+    width: 20%;
+}
+.event-list .column-2 {
+    width: 20%;
+}
+.event-list .column-3 {
+    width: 40%;
+}
+.event-list .column-4 {
+    width: 10%;
+}
+
+.event-form .modal-content {
+    width: 800px;
+}
+
+.event-form .file-loader {
+    width:200px;
+    height:100px;
+    overflow: hidden;
+}
+
+.event-form .file-loader img {
+    width:100%;
+}
+
+.event-form .user-avatar img {
+    width: 40px;
+    height: 40px;
+}
+
+.event-form .user-ref-content {
+    display: table;
+}
+
+.event-form .user-ref {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1em;
+    display: table;
+}
+
+.event-form .user-ref div, .event-form .user-ref img {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.event-form .user-ref .user-login {
+    font-weight: bolder;
+}
+
+.event-form img.user-avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.user-ref {
+    padding-right: 80px;
+}

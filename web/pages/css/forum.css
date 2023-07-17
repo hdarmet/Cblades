@@ -1,0 +1,436 @@
+
+.ex-forum-command {
+    font-family: sans-serif;
+    display: inline;
+    border: solid 1px grey;
+    border-radius: 16px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-left: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.forum-page-title {
+    --extends: ex-page-header-container;
+    background-color: #f0f0ff;
+}
+
+.forum-page-title .header-text {
+    --extends: ex-header-text
+}
+
+.forum-page-title .header-left-image {
+    --extends: ex-page-header-left-image;
+}
+
+.forum-page-title .header-right-image {
+    --extends: ex-page-header-right-image;
+}
+
+.forums-container {
+    background-color: #f0f0ff;
+    height: 100%;
+    border: solid 2px transparent;
+}
+
+.forums-container .table-frame {
+    font-size: 14px;
+    width: calc(100% - 20px);
+    height: auto;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 4px 8px 0;
+    margin: 10px;
+}
+
+.forums-container tr {
+    user-select: none;
+    cursor: pointer;
+}
+
+.forums-container .forum-title {
+    font-weight: bolder;
+}
+.forums-container .forum-text {
+    font-size: 14px;
+}
+.forums-container td.column-0 {
+    width: 55%;
+}
+
+.forums-container i {
+    width: 15px;
+    padding: 0 0 5px 0;
+}
+
+.forums-container .forum-threads-count {
+    font-size: 14px;
+}
+.forums-container .forum-replies-count {
+    font-size: 14px;
+}
+.forums-container td.column-1 {
+    width: 15%;
+}
+
+.forums-container .forum-message-post {
+    font-size: 12px;
+    color: grey;
+}
+.forums-container .forum-message-date {
+    font-size: 14px;
+}
+.forums-container .forum-message-thread {
+    font-weight: bolder;
+    font-size: 14px;
+}
+.forums-container .forum-message-author {
+    font-style: italic;
+    font-size: 14px;
+}
+.forums-container td.column-2 {
+    width: 30%;
+}
+
+/* */
+.forum-container {
+    background-color: #f0f0ff;
+    height: 100%;
+    border: solid 2px transparent;
+}
+
+.forum-container .table-frame {
+    font-size: 14px;
+    width: calc(100% - 20px);
+    height: auto;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 4px 8px 0;
+    margin: 10px;
+}
+
+.forum-container tr {
+    user-select: none;
+    cursor: pointer;
+}
+
+.forum-container .threads-title {
+    font-weight: bolder;
+}
+.forum-container .threads-description {
+    font-size: 14px;
+}
+.forum-container td.column-0 {
+    width: 60%;
+}
+
+.forum-container i {
+    width: 15px;
+    padding: 0 0 5px 0;
+}
+.forum-container .thread-title {
+    font-weight: bolder;
+}
+.forum-container .thread-text {
+    font-size: 14px;
+}
+.forum-container .threads-like-count {
+    font-size: 14px;
+}
+.forum-container .thread-message-count {
+    font-size: 14px;
+}
+.forum-container td.column-1 {
+    width: 15%;
+}
+
+.forum-container .thread-message-post {
+    font-size: 12px;
+    color: grey;
+}
+.forum-container .thread-message-date {
+    font-size: 14px;
+}
+.forum-container .thread-message-thread {
+    font-weight: bolder;
+    font-size: 14px;
+}
+.forum-container .thread-message-author {
+    font-style: italic;
+    font-size: 14px;
+}
+.forum-container td.column-2 {
+    width: 15%;
+}
+
+.propose-thread {
+    --extends: ex-forum-command;
+    float: left;
+}
+.propose-thread:hover {
+    opacity: 0.5;
+}
+/* */
+
+.forum-thread-container {
+    background-color: #f0f0ff;
+    height: 100%;
+    border: solid 2px transparent;
+}
+
+.forum-thread-container .table-frame {
+    background-color: #f0f0ff;
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
+    box-shadow: rgba(0, 0, 0, 0.2) 0 4px 8px 0;
+    margin: 10px;
+}
+
+.forum-thread-container .table-content {
+    background-color: #f0f0f0;
+}
+
+.forum-thread-container .table-content .column-1 {
+    vertical-align: top;
+    font-size: 14px;
+    width: 100%;
+}
+
+.avatar-image img {
+    width: 80px;
+    height: 80px;
+}
+
+.avatar div {
+    font-size: 12px;
+    text-align: center;
+}
+
+.avatar p {
+    margin: 0;
+}
+
+.avatar-identity p {
+    font-weight: bolder;
+}
+
+.avatar-level p {
+    font-style: italic;
+}
+
+.avatar-message-count i {
+    padding: 0;
+    margin: 0;
+    width: 20px;
+}
+
+.message-content {
+    height: 100%;
+}
+
+.message-date {
+    height: 20px;
+    margin: 0;
+}
+
+.message-date p {
+    margin-left: 0;
+    margin-top: 0;
+}
+
+.message-date {
+    color: grey;
+    font-size: 12px;
+}
+
+.message-text {
+    min-height: 100px;
+    margin: 0;
+}
+
+.message-commands {
+    float: right;
+    height: 40px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    overflow: hidden;
+}
+
+.message-commands p {
+    margin-bottom: 0;
+}
+
+.message-commands .fa-heart:before {
+    font-size: 20px;
+}
+
+.message-liked.fa-heart:before {
+    color: #ff4336;
+}
+
+.message-not-liked.fa-heart:before {
+    color: #aa0000;
+}
+
+.like-message {
+    width: 20px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.like-message-count {
+    display: inline;
+    font-weight: bold;
+    padding-left: 0;
+    margin-left: 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+.quote-message {
+    --extends: ex-forum-command;
+}
+
+.quote-message:hover, .like-message-count:hover {
+    opacity: 0.5;
+}
+
+.forum-thread-container .thread-title {
+    float: left;
+    font-size: 20px;
+    font-weight: bolder;
+    font-style: italic;
+}
+
+.forum-thread-container .thread-pager {
+    color: grey;
+    font-size: 14px;
+}
+
+.message-editor .form-input-textarea {
+    height: 16em;
+}
+
+.message-editor .form-input-textarea::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+    background-color: #eeeeee;
+}
+
+.message-editor .form-input-textarea::-webkit-scrollbar-thumb {
+    background: #aaaaaa;
+    border: solid 2px #eeeeee;
+    border-radius: 8px;
+}
+
+.message-editor {
+    padding: 20px;
+    background-color: #e2e2e2;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 4px 8px 0;
+    margin: 10px;
+}
+
+.forum-thread-container blockquote {
+    background-color: #d0f0f0;
+    font-size: 14px;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-bottom: 5px;
+}
+
+.forum-thread-container blockquote blockquote {
+    background-color: #f0d0f0;
+}
+
+.forum-thread-container blockquote blockquote blockquote {
+    background-color: #f0f0d0;
+}
+
+.forum-thread-container blockquote blockquote blockquote blockquote {
+    background-color: #e0f0f0;
+}
+
+.forum-thread-container blockquote blockquote blockquote blockquote blockquote {
+    background-color: #f0e0f0;
+}
+
+.forum-thread-container blockquote blockquote blockquote blockquote blockquote blockquote {
+    background-color: #f0f0e0;
+}
+
+.forum-thread-container .cite {
+    color: #2c4762;
+    font-size: 12px;
+    font-style: italic;
+    padding-bottom: 5px;
+}
+
+.emoji-list {
+    font-size: 50px;
+}
+
+.table-title h2 {
+    margin: 0;
+    padding: 0;
+}
+
+.forum-emoji {
+    font-size: 24px;
+}
+
+.forum-emoji input {
+    display: none;
+}
+.forum-emoji input + label {             /* box with rounded corner */
+    border: 1px solid #999999;
+    background: #eeeeee;
+    padding: 4px 12px;
+    border-radius: 4px 4px 0 0;
+    position: relative;
+    top: 1px;
+}
+.forum-emoji input:checked + label {     /* white background for selected tab */
+    background: #ffffff;
+    border-bottom: 1px solid transparent;
+}
+.forum-emoji input + label:hover {     /* white background for selected tab */
+    opacity: 0.5;
+}
+.forum-emoji-bar {          /* grey line between tab and contents */
+    height: 36px;
+}
+.forum-emoji-content {          /* grey line between tab and contents */
+    border: 1px solid #999999;
+    padding: 12px;
+    background: #ffffff;
+}
+.forum-emoji-content .emoji-icon {
+    cursor: pointer;
+    user-select: none;
+}
+
+.forum-emoji-bar .emoji-preferences {
+    border: solid 1px #999999;
+    background: #ffffff;
+    height: 32px;
+    float: right;
+    width: 200px;
+    display: flex;
+    align-items: center;
+}
+.forum-emoji-bar .emoji-icon {
+    cursor: pointer;
+    vertical-align: center;
+    user-select: none;
+    padding-bottom: 2px;
+}
+
+.forum-send-command {
+    --extends: ex-forum-command;
+    float: right;
+    font-size: 14px;
+    margin: 35px 10px 0  0;
+    background-color: #ffffff;
+}
+.forum-send-command:hover {
+    opacity: 0.5;
+}

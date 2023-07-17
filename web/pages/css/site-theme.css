@@ -1,0 +1,67 @@
+
+.theme-header {
+    position: relative;
+    text-align: center;
+}
+
+.theme-header .theme-title {
+    --extends: ex-header-text;
+    position: absolute;
+    width: 80%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.theme {
+    --extends: ex-record-container, ex-record-down-clip;
+}
+
+.theme-editor-page .description {
+    --extends: ex-info-page-description;
+}
+
+.theme-editor {
+    --extends: ex-info-container;
+}
+
+.theme-editor .splitter-left-pane {
+    min-width: 500px;
+    padding: 0;
+}
+
+.theme-editor .splitter-right-pane {
+    padding-right: 30px;
+}
+
+.theme-editor .file-loader {
+    --extends: ex-file-loader;
+    width: 450px;
+    height: 150px;
+}
+
+.theme-editor .editor-toolbar {
+    --extends: ex-editor-toolbar;
+}
+
+.theme-editor .form-input-text, .theme-editor .form-input-select, .theme-editor .form-input-textarea {
+    --extends: ex-input-text;
+}
+
+.theme-editor .form-input-textarea::-webkit-scrollbar {
+    --extends: ex-scrollbar
+}
+
+.theme-editor .form-input-textarea::-webkit-scrollbar-thumb {
+    --extends: ex-scrollbar-thumb
+}
+
+.theme-editor .form-input-textarea {
+    height: 300px;
+}
+
+.theme-editor .theme {
+    margin: auto;
+    width: 450px;
+    overflow-wrap: break-word;
+}

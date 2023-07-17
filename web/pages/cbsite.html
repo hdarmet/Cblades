@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="css/cblades.css" rel="stylesheet" type="text/css">
+    <link href="css/dropdown_topnav.css" rel="stylesheet" type="text/css">
+    <link href="css/modal.css" rel="stylesheet" type="text/css">
+    <link href="css/form.css" rel="stylesheet" type="text/css">
+    <link href="css/home.css" rel="stylesheet" type="text/css">
+    <link href="css/gallery.css" rel="stylesheet" type="text/css">
+    <link href="css/wall.css" rel="stylesheet" type="text/css">
+    <link href="css/header-footer.css" rel="stylesheet" type="text/css">
+    <link href="css/page.css" rel="stylesheet" type="text/css">
+    <link href="css/player.css" rel="stylesheet" type="text/css">
+    <link href="css/table.css" rel="stylesheet" type="text/css">
+    <link href="css/forum.css" rel="stylesheet" type="text/css">
+    <link href="css/plays.css" rel="stylesheet" type="text/css">
+    <link href="css/site.css" rel="stylesheet" type="text/css">
+    <link href="css/comments.css" rel="stylesheet" type="text/css">
+    <link href="css/site-board.css" rel="stylesheet" type="text/css">
+    <link href="css/site-theme.css" rel="stylesheet" type="text/css">
+    <link href="css/site-article.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Cursed Blades</title>
+</head>
+<body>
+
+<script type="module">
+
+    import {
+        VApp
+    } from "../jslib/vitamin/vitamins.js";
+
+    import {
+        vFooter, vHeader
+    } from "../jslib/site/cbs-site.js";
+    import {
+        connect
+    } from "../jslib/site/cbs-page.js";
+    import {
+        showMessage
+    } from "../jslib/vitamin/vpage.js";
+    import {
+        VLoginHandler
+    } from "../jslib/vitamin/vitamins.js";
+    import {
+        getParameterByName
+    } from "../jslib/draw.js";
+
+    let app = new VApp()
+        .setWidth("100%")
+        .setColor("#E0E0E0")
+        .addStyle("padding-bottom", "50px")
+        .add(vHeader)
+        .add(window.vPageContent)
+        .add(vFooter);
+    document.body.parentElement.style["height"] = "100%";
+    document.body.style["height"] = "100%";
+    document.body.style["margin"] = "0";
+    document.body.appendChild(app.root);
+    let login = getParameterByName("login");
+    let password = getParameterByName("password");
+    if (login) {
+        connect(login, password,
+            text => {
+                VLoginHandler.connection = login;
+            },
+            (text, status) => {
+                showMessage("Connection refused", text);
+            }
+        );
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+
+body::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+    background-color: #eeeeee;
+}
+
+body::-webkit-scrollbar-thumb {
+    background: #aaaaaa;
+    border: solid 2px #eeeeee;
+    border-radius: 8px;
+}
+
+@font-face {
+    font-family: 'Carolingia';
+    src: url('../carolingia.ttf');
+}
+
+@font-face {
+    font-family: 'CenturyGothicStd';
+    src: url('CenturyGothicStdRegular.otf');
+}
+
+.page-container {
+}
+
+.container-row {
+    display: flex;
+}
+
+.container-1column {
+    padding: 0;
+}
+
+.container-2columns {
+    width: 50%;
+    padding: 0;
+}
+
+.container-3columns {
+    width: 33.333%;
+    padding: 0;
+}
+
+.container-4columns {
+    width: 25%;
+    padding: 0;
+}
+
+.subsequent-column {
+    border-left:2px solid white;
+    padding:0 0 0 10px;
+}
+
+.file-loader {
+    background-color: #f0f0f0;
+    box-shadow: inset 0 0 2px 2px #a0a0a0a0;
+    width:  200px;
+    height: 200px;
+}
+
+.display-content {
+    font-family: CenturyGothicStd, Arial, Helvetica, sans-serif;
+    font-size: 1em;
+    height: 30em;
+    overflow: auto;
+}
+
+.display-content::-webkit-scrollbar {
+    width: 12px;
+    height: 8px;
+    background-color: #eeeeee;
+    border-radius: 6px;
+}
+
+.display-content::-webkit-scrollbar-thumb {
+    background: #aaaaaa;
+    border-radius: 6px;
+}
+
+.message-modal .display-content {
+    height: auto; /* Could be more or less, depending on screen size */
+}
+
+/* Modal Content/Box */
+.message-modal .modal-content {
+    width: 300px; /* Could be more or less, depending on screen size */
+    overflow: auto;
+}
+
+.confirm-modal .modal-content {
+    width: 300px; /* Could be more or less, depending on screen size */
+    overflow: auto;
+}
+
+.confirm-modal .display-content {
+    height: auto; /* Could be more or less, depending on screen size */
+}
+
+.splitter-panel {
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+
+.splitter-separator {
+    cursor: col-resize;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='30'><path d='M2 0 v30 M5 0 v30 M8 0 v30' fill='none' stroke='black'/></svg>");
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 10px;
+    background-color: #55555522;
+    /* Prevent the browser's built-in drag from interfering */
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.splitter-left-pane {
+    height: 100%;
+    min-width: 10%;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.splitter-right-pane {
+    height: 100%;
+    min-width: 10%;
+    padding-left: 10px;
+    padding-right: 10px;
+}

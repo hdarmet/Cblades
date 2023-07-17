@@ -1,0 +1,81 @@
+.banner-list .event-title {
+    font-size: 1.2em;
+    font-weight: bolder;
+    float: left;
+}
+
+.banner-list img.banner-path {
+    width: 50px;
+    height: 120px;
+}
+
+.banner-list .column-0 {
+    width: 20%;
+}
+.banner-list .column-1 {
+    width: 60px;
+}
+.banner-list .column-2 {
+    width: 50%;
+}
+.banner-list .column-3 {
+    width: 20%;
+}
+
+.banner-modal .modal-content {
+    width: 600px;
+}
+
+.banner-modal .file-loader {
+    width:50px;
+    height:120px;
+    overflow: hidden;
+}
+
+.banner-modal .file-loader img {
+    width:100%;
+}
+
+.banner-modal .user-avatar img {
+    width: 40px;
+    height: 40px;
+}
+
+.banner-modal .user-ref-content {
+    display: table;
+}
+
+.banner-modal .user-ref {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1em;
+    display: table;
+}
+
+.banner-modal .user-ref div, .banner-form .user-ref img {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.banner-modal .user-ref .user-login {
+    font-weight: bolder;
+}
+
+.banner-modal img.user-avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.banner-modal .container-2columns.container-column0 {
+    width: 25%;
+}
+
+.banner-modal .container-2columns.container-column1 {
+    width: 75%;
+}
+
+.user-ref {
+    padding-right: 80px;
+}

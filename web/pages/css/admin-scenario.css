@@ -1,0 +1,119 @@
+
+.scenario-list td.column-0 img {
+    width: 250px;
+}
+
+.scenario-list .column-1 {
+    width: 10%;
+    font-weight: bolder;
+}
+.scenario-list .column-2 {
+    width: 50%;
+}
+.scenario-list .column-3 {
+    width: 20%;
+}
+
+.scenario-list .scenario-title {
+    font-size: 1.2em;
+    font-weight: bolder;
+    float: left;
+}
+
+.scenario-editor-pane .scenario-title {
+    --extends: ex-record-title;
+}
+
+.scenario-editor-pane .scenario {
+    --extends: ex-record-container;
+    max-height: 1300px;
+    max-width: 670px;
+    overflow: auto;
+}
+
+.scenario-editor-pane img {
+    width: 100%;
+    max-width: 650px;
+}
+
+.scenario-editor-pane .scenario-story-title {
+    --extends: ex-paragraph-title;
+}
+
+.scenario-editor-pane .scenario-setup-title {
+    --extends: ex-paragraph-title;
+}
+
+.scenario-editor-pane .scenario-victory-conditions-title {
+    --extends: ex-paragraph-title;
+}
+
+.scenario-editor-pane .scenario-special-rules-title {
+    --extends: ex-paragraph-title;
+}
+
+.scenario-modal .modal-content {
+    min-width: 1300px;
+    margin: 0 auto 15% auto;
+}
+
+.scenario::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+    background-color: #eeeeee;
+}
+
+.scenario::-webkit-scrollbar-thumb {
+    background: #aaaaaa;
+    border: solid 2px #eeeeee;
+    border-radius: 8px;
+}
+
+.scenario-editor-pane .splitter-left-pane {
+    padding-right: 30px;
+    min-width: 500px;
+}
+
+.scenario-editor-pane .splitter-right-pane {
+    padding-right: 30px;
+    min-width: 500px;
+    width: 100%;
+}
+
+.scenario-editor-pane .file-loader {
+    width: 450px;
+    height: auto;
+    min-height: 150px;
+    border: solid rgb(85, 85, 85);
+}
+
+.scenario-editor-pane .form-input-textarea {
+    height: 100px;
+}
+
+.scenario-editor-pane .user-ref-content {
+    display: table;
+}
+
+.scenario-editor-pane .user-ref {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1em;
+    display: table;
+}
+
+.scenario-editor-pane .user-ref div, .event-form .user-ref img {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.scenario-editor-pane .user-ref .user-login {
+    font-weight: bolder;
+}
+
+.scenario-editor-pane img.user-avatar {
+    width: 40px;
+    height: 40px;
+}

@@ -1,0 +1,326 @@
+
+.scenario-editor .scenario-title {
+    --extends: ex-record-title;
+}
+
+.scenario-editor .scenario {
+    --extends: ex-record-container;
+}
+
+.scenario-editor img {
+    width: 100%;
+    max-width: 650px;
+}
+
+.scenario-editor .file-loader {
+    width: 450px;
+    height: auto;
+    min-height: 150px;
+    border: solid rgb(85, 85, 85);
+}
+
+.scenario-editor .scenario-illustration {
+    width: 600px;
+}
+
+.scenario-editor .scenario-story-title {
+    --extends: ex-paragraph-title;
+}
+
+.scenario-editor .scenario-setup-title {
+    --extends: ex-paragraph-title;
+}
+
+.scenario-editor .scenario-victory-conditions-title {
+    --extends: ex-paragraph-title;
+}
+
+.scenario-editor .scenario-special-rules-title {
+    --extends: ex-paragraph-title;
+}
+
+.scenario-editor .splitter-left-pane {
+    padding-right: 30px;
+    min-width: 500px;
+}
+
+.scenario-editor .splitter-right-pane {
+    padding-right: 30px;
+    min-width: 500px;
+    width: 100%;
+}
+
+.newspaper-title.header-container {
+    --extends: ex-info-header-container;
+}
+
+.newspaper-title .header-left-image {
+    --extends: ex-page-header-left-image;
+}
+
+.newspaper-title .header-right-image {
+    --extends: ex-page-header-right-image;
+}
+
+.newspaper-title .header-text {
+    --extends: ex-header-text
+}
+
+.newspaper {
+    --extends: ex-info-container;
+}
+
+.newspaper-container {
+    --extends: ex-record-background;
+    min-height: 200px;
+}
+
+@media screen and (max-width: 900px) {
+    .newspaper-container {
+        column-count: 1;
+    }
+}
+
+@media screen and (min-width: 900px) and (max-width: 1500px) {
+    .newspaper-container {
+        column-count: 2;
+    }
+}
+
+@media screen and (min-width: 1500px) {
+    .newspaper-container {
+        column-count: 3;
+    }
+}
+
+.newspaper .article-title {
+    display: none;
+}
+
+.newspaper .paragraph-title {
+    --extends: ex-paragraph-title;
+}
+
+.newspaper .paragraph-image {
+    --extends: ex-paragraph-image;
+}
+
+.newspaper .image-on-left.paragraph-image {
+    --extends: ex-paragraph-image-on-left;
+}
+
+.newspaper .image-on-right.paragraph-image {
+    --extends: ex-paragraph-image-on-right;
+}
+
+.newspaper .poll-container {
+    text-align: center;
+}
+
+.newspaper .show-poll {
+    display: inline-block;
+    margin: auto
+}
+
+.newspaper .likes-icon {
+    --extends: ex-likes-icon;
+}
+
+.newspaper .likes-value {
+    --extends: ex-vote-values;
+}
+
+.newspaper .dislikes-icon {
+    --extends: ex-dislikes-icon;
+}
+
+.newspaper .likes-icon:hover {
+    --extends: ex-vote-icon-hover;
+}
+
+.newspaper .dislikes-icon:hover {
+    --extends: ex-vote-icon-hover;
+}
+
+.newspaper .dislikes-value {
+    --extends: ex-vote-values;
+}
+
+.contribute-title.header-container {
+    --extends: ex-info-header-container;
+}
+
+.contribute-title .header-left-image {
+    --extends: ex-page-header-left-image;
+}
+
+.contribute-title .header-right-image {
+    --extends: ex-page-header-right-image;
+}
+
+.contribute-title .header-text {
+    --extends: ex-header-text
+}
+
+.scenario-editor-page .description {
+    --extends: ex-info-page-description;
+}
+
+.scenario-editor {
+    --extends: ex-info-container;
+}
+
+.scenario-editor .splitter-left-pane {
+    min-width: 650px;
+    padding: 0;
+}
+
+.scenario-editor .splitter-right-pane .form-field {
+    margin: auto;
+}
+
+.scenario-editor .editor-toolbar {
+    --extends: ex-editor-toolbar;
+}
+
+.scenario-editor .form-input-text, .scenario-editor .form-input-textarea {
+    --extends: ex-input-text;
+}
+
+.scenario-editor .form-input-textarea {
+    height: 150px;
+}
+
+.scenario-editor .form-input-textarea::-webkit-scrollbar {
+    --extends: ex-scrollbar
+}
+
+.scenario-editor .form-input-textarea::-webkit-scrollbar-thumb {
+    --extends: ex-scrollbar-thumb
+}
+
+.your-proposals .search {
+    --extends: ex-info-background-color;
+}
+
+.your-proposals .search-input-text {
+    --extends: ex-search-input-text;
+}
+
+.your-proposals-title.header-container {
+    --extends: ex-info-header-container;
+}
+
+.your-proposals-title .header-left-image {
+    --extends: ex-page-header-left-image;
+}
+
+.your-proposals-title .header-right-image {
+    --extends: ex-page-header-right-image;
+}
+
+.your-proposals-title .header-text {
+    --extends: ex-header-text
+}
+
+.your-proposals-content {
+    --extends: ex-record-content, ex-info-background-color;
+}
+
+.your-proposals-content .article-title {
+    --extends: ex-record-title;
+}
+
+.your-proposals-content .paragraph-title {
+    --extends: ex-paragraph-title;
+}
+
+.your-proposals-content .article {
+    --extends: ex-record-container, ex-record-down-clip;
+}
+
+.your-proposals-content .article .paragraph::after {
+    --extends: ex-record-end-mask;
+}
+
+.your-proposals-content .article .paragraph-image {
+    --extends: ex-paragraph-image;
+}
+
+.your-proposals-content .article .image-on-left .paragraph-image {
+    --extends: ex-paragraph-image-on-left;
+}
+
+.your-proposals-content .article .image-on-right .paragraph-image {
+    --extends: ex-paragraph-image-on-right;
+}
+
+.your-proposals-content .article .paragraph-container {
+    --extends: ex-paragraph-container;
+}
+
+.your-proposals-content .scenario-title {
+    --extends: ex-record-title;
+}
+
+.your-proposals-content .scenario {
+    --extends: ex-record-container;
+    position: relative;
+}
+
+.your-proposals-content .scenario-image {
+    width: 100%;
+}
+
+.your-proposals-content .scenario-story-title {
+    --extends: ex-paragraph-title;
+}
+
+.your-proposals-content .scenario-victory-title {
+    --extends: ex-paragraph-title;
+}
+
+.your-proposals-content .scenario-special-rules-title {
+    --extends: ex-paragraph-title;
+}
+
+.your-proposals-content .scenario-content {
+    max-height: 300px;
+    overflow: hidden;
+}
+
+.your-proposals-content .scenario-content::after {
+    --extends: ex-record-end-mask;
+}
+
+.your-proposals-content .map {
+    --extends: ex-record-container;
+    position: relative;
+}
+
+.your-proposals-content .board {
+    font-family: Arial, Helvetica, sans-serif;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    background-color: #fff8f4;
+    padding: 15px;
+    max-width: 600px;
+    position: relative;
+}
+
+.your-proposals-content .board-name {
+    font-weight: bolder;
+}
+
+.your-proposals-content .board-image {
+    width:100%;
+}
+
+.your-proposals-content .board-description {
+    overflow: hidden;
+    position: relative;
+    min-height: 50px;
+}
+
+.your-proposals-content .board-description::after {
+    --extends: ex-record-end-mask;
+}
