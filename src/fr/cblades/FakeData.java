@@ -451,9 +451,11 @@ public class FakeData {
                 .addLocation(Location.getLocation(context, unit5)
                     .addPiece(unit5)
                 )
+                /*
                 .addLocation(Location.getFormationAltLocation(context, unit5)
                     .addPiece(unit5)
                 )
+                */
                 .addLocation(Location.getLocation(context, unit6)
                     .addPiece(unit6)
                 )
