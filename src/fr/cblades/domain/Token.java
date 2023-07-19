@@ -44,7 +44,7 @@ public class Token extends Piece {
     public Boolean getDensity() {
         return this.density;
     }
-    public Token setDensity(boolean density) {
+    public Token setDensity(Boolean density) {
         this.density = density;
         return this;
     }
@@ -52,7 +52,7 @@ public class Token extends Piece {
     public Boolean getFire() {
         return this.fire;
     }
-    public Token setFire(boolean fire) {
+    public Token setFire(Boolean fire) {
         this.fire = fire;
         return this;
     }

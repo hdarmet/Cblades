@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cursed Blades</title>
+</head>
+<body>
+
+<script type="module">
+
+    import {
+        CBMapEditorGame
+    } from "../jslib/cblades/editor.js";
+    import {
+        CBArbitrator
+    } from "../jslib/cblades/arbitrator.js";
+    import {
+        CBBoard
+    } from "../jslib/cblades/map.js";
+    import {
+        BoardLoader
+    } from "../jslib/cblades/loader.js";
+    import {
+        getParameterByName
+    } from "../jslib/draw.js";
+
+    new BoardLoader(new CBBoard()).load(getParameterByName("id"), map=>{
+        let game = new CBMapEditorGame();
+        game.setMap(map);
+        game.fitWindow();
+        document.body.appendChild(game.root);
+        let arbitrator = new CBArbitrator();
+        game.setArbitrator(arbitrator);
+        game.setMenu();
+        game.start();
+    });
+
+</script>
+</body>
+</html>

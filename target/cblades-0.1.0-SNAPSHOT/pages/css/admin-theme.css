@@ -1,0 +1,112 @@
+
+.theme-list td.column-0 img {
+    width: 250px;
+}
+
+.theme-list .column-1 {
+    width: 10%;
+    font-weight: bolder;
+}
+.theme-list .column-2 {
+    width: 25%;
+    font-weight: bolder;
+}
+.theme-list .column-3 {
+    width: 40%;
+}
+.theme-list .column-4 {
+    width: 15%;
+}
+
+.theme-header {
+    position: relative;
+    text-align: center;
+}
+
+.theme-header .theme-title {
+    position: absolute;
+    width: 80%; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 3em; color: rgb(0, 0, 0);
+    text-shadow: rgb(255, 255, 255) 1px 1px 0px, rgb(255, 255, 255) -1px -1px 0px, rgb(255, 255, 255) -1px 1px 0.1em, rgb(255, 255, 255) 1px -1px 0.1em, rgb(255, 255, 255) 1px -1px 0.2em, rgb(255, 255, 255) -1px 1px 0.2em, rgb(255, 255, 255) -1px 1px 0.3em, rgb(255, 255, 255) 1px -1px 0.3em;
+    z-index: 11;
+}
+
+.theme-modal .modal-content {
+    width: 1200px;
+    max-width: 1200px;
+    margin: 0 auto 15% auto;
+}
+
+.theme-list .theme-title {
+    font-size: 1.2em;
+    font-weight: bolder;
+    float: left;
+}
+
+.theme {
+    width: 450px;
+    cursor: pointer;
+    font-family: Arial, Helvetica, sans-serif;
+    box-shadow: rgba(0, 0, 0, 0.2) 0px 4px 8px 0px;
+    padding: 15px;
+    background-color: rgb(255, 248, 244);
+    position: relative;
+    max-height: 600px;
+    overflow: hidden;
+    overflow-wrap: break-word;
+}
+
+.theme-editor-pane .splitter-left-pane {
+    padding-right: 30px;
+    min-width: 500px;
+}
+
+.theme-editor-pane .splitter-right-pane {
+    padding-right: 30px;
+    min-width: 500px;
+    width: 100%;
+}
+
+.theme-editor-pane .file-loader {
+    width: 450px;
+    height: 150px;
+    border: solid rgb(85, 85, 85);
+}
+
+.theme-editor-pane .form-input-textarea {
+    height: 100px;
+}
+
+.theme-editor-pane .user-avatar img {
+    width: 40px;
+    height: 40px;
+}
+
+.theme-editor-pane .user-ref-content {
+    display: table;
+}
+
+.theme-editor-pane .user-ref {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1em;
+    display: table;
+}
+
+.theme-editor-pane .user-ref div, .event-form .user-ref img {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.theme-editor-pane .user-ref .user-login {
+    font-weight: bolder;
+}
+
+.theme-editor-pane img.user-avatar {
+    width: 40px;
+    height: 40px;
+}

@@ -1,0 +1,42 @@
+
+/* Set a style for all buttons */
+.form-button {
+    display: flex;
+    flex-direction: row-reverse;
+    color: black;
+    padding: 5px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: Carolingia, Arial, Helvetica, sans-serif;
+    font-size: 1.2em;
+    text-shadow: 1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white;
+    text-align: left;
+    width: 150px;
+    height: 50px;
+}
+
+.form-button-accept.vitamin-active {
+    background-image: url("../../images/site/buttons/green.png");
+}
+
+.form-button-refuse.vitamin-active {
+    background-image: url("../../images/site/buttons/red.png");
+}
+
+.form-button-neutral.vitamin-active {
+    background-image: url("../../images/site/buttons/blue.png");
+}
+
+.form-button.vitamin-inactive {
+    background-image: url("../../images/site/buttons/inactive.png");
+}
+
+.form-line-container .form-button {
+    margin: 5px;
+}
+
+.form-button.vitamin-active:hover {
+    opacity: 0.8;
+}

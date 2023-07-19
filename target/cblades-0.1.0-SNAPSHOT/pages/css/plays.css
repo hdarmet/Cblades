@@ -1,0 +1,273 @@
+.ex-play-background-color {
+    background-color: #eefbcd;
+}
+
+.games-title.header-container {
+    --extends: ex-page-header-container, ex-play-background-color;
+}
+
+.games-title .header-left-image {
+    --extends: ex-page-header-left-image;
+}
+
+.games-title .header-right-image {
+    --extends: ex-page-header-right-image;
+}
+
+.games-title .header-text {
+    --extends: ex-header-text
+}
+
+.my-games {
+    --extends: ex-record-content, ex-play-background-color;
+}
+
+.my-games .game-title {
+    --extends: ex-record-title;
+}
+
+.my-games .game {
+    --extends: ex-record-container;
+    position: relative;
+}
+
+.my-games .game-image {
+    width: 100%;
+}
+
+.my-games .game-story-title {
+    --extends: ex-paragraph-title;
+}
+
+.my-games .game-victory-title {
+    --extends: ex-paragraph-title;
+}
+
+.my-games .game-special-rules-title {
+    --extends: ex-paragraph-title;
+}
+
+.my-games .game-command {
+    float: right;
+}
+
+.my-games .turn-number {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.my-games .turn-number-label {
+    font-weight: bolder;
+}
+
+.my-games .turn-number-value {
+    font-family: CenturyGothicStd, Arial, Helvetica, sans-serif;
+    font-size: 14px;
+}
+
+.my-games .army-label {
+    font-weight: bolder;
+}
+
+.my-games .army-name {
+    font-family: CenturyGothicStd, Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    padding: 5px;
+}
+
+.my-games .player-label {
+    font-weight: bolder;
+}
+
+.my-games .player-name {
+    font-family: CenturyGothicStd, Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    padding: 5px;
+}
+
+.my-games .participation-active {
+    color: #17a82f;
+}
+
+.my-games .participation-passive {
+    color: #aaaaaa;
+}
+
+.propose-game-content {
+    --extends: ex-record-content, ex-play-background-color;
+}
+
+.propose-game .search {
+    --extends: ex-play-background-color;
+}
+
+.propose-game-content .game-title {
+    --extends: ex-record-title;
+}
+
+.propose-game-content .game {
+    --extends: ex-record-container;
+    position: relative;
+}
+
+.propose-game-content .game-image {
+    width: 100%;
+}
+
+.propose-game-content .game-story-title {
+    --extends: ex-paragraph-title;
+}
+
+.propose-game-content .game-victory-title {
+    --extends: ex-paragraph-title;
+}
+
+.propose-game-content .game-special-rules-title {
+    --extends: ex-paragraph-title;
+}
+
+.propose-game-content .game-command {
+    float: right;
+}
+
+.propose-game-content .army-label {
+    font-weight: bolder;
+}
+
+.propose-game-content .army-name {
+    font-family: CenturyGothicStd, Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    padding: 5px;
+}
+
+.join-game-content {
+    --extends: ex-record-content, ex-play-background-color;
+}
+
+.join-game .search {
+    --extends: ex-play-background-color;
+}
+
+.join-game-content .game-title {
+    --extends: ex-record-title;
+}
+
+.join-game-content .game {
+    --extends: ex-record-container;
+    position: relative;
+}
+
+.join-game-content .game-image {
+    width: 100%;
+}
+
+.join-game-content .game-story-title {
+    --extends: ex-paragraph-title;
+}
+
+.join-game-content .game-victory-title {
+    --extends: ex-paragraph-title;
+}
+
+.join-game-content .game-special-rules-title {
+    --extends: ex-paragraph-title;
+}
+
+.join-game-content .game-command {
+    float: right;
+}
+
+.join-game-content .army-label {
+    font-weight: bolder;
+}
+
+.join-game-content .army-name {
+    font-family: CenturyGothicStd, Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    padding: 5px;
+}
+
+.join-game-content .player-label {
+    font-weight: bolder;
+}
+
+.join-game-content .player-name {
+    font-family: CenturyGothicStd, Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    padding: 5px;
+}
+
+.join-game-content .army-available {
+    color: #0f1588;
+}
+
+.join-game-content .army-not-available {
+    color: #aaaaaa;
+}
+
+.confirm-proposal .modal-content {
+    --extends: ex-play-background-color;
+    width: 250px;
+}
+
+
+.confirm-proposal .form-radio {
+    background-color: #a7d13d;
+}
+
+.confirm-proposal .form-radio-container.vitamin-active:hover input ~ .form-radio {
+    background-color: #b9e842;
+}
+
+.confirm-proposal .form-radio-container.vitamin-active:hover input:checked ~ .form-radio {
+    background-color: #74912b;
+}
+
+.confirm-proposal .form-radio-container.vitamin-active input:checked ~ .form-radio {
+    background-color: #627b24;
+}
+
+.confirm-proposal .form-radio-container .form-radio:after {
+    background: #b9e842;
+}
+
+.confirm-join .modal-content {
+    --extends: ex-play-background-color;
+    width: 250px;
+}
+
+.confirm-join .vitamin-active .form-radio {
+    background-color: #a7d13d;
+}
+
+.confirm-join .form-radio-container.vitamin-active:hover input ~ .form-radio {
+    background-color: #b9e842;
+}
+
+.confirm-join .form-radio-container.vitamin-active:hover input:checked ~ .form-radio {
+    background-color: #74912b;
+}
+
+.confirm-join .form-radio-container.vitamin-active input:checked ~ .form-radio {
+    background-color: #627b24;
+}
+
+.confirm-join .form-radio-container .form-radio:after {
+    background: #b9e842;
+}
+
+.confirm-join .vitamin-inactive .form-radio {
+    background-color: #aaaaaa;
+}
+
+.confirm-join .form-radio-container.vitamin-inactive .form-radio-label {
+    color: #aaaaaa;
+}
+
+.confirm-join .form-radio-container.vitamin-inactive input:checked ~ .form-radio {
+    background-color: #777777;
+}
+
+.confirm-join .form-radio-container.vitamin-inactive .form-radio:after {
+    background: #aaaaaa;
+}

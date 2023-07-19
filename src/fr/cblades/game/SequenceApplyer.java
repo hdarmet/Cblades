@@ -108,6 +108,11 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         }
     }
 
+    void addTokenToLocation(Token token) {
+        Location location = Location.getLocation(new HashMap(), token);
+        Location.addPieceToLocation(this.locations, location, token, this.game, Stacking.BOTTOM);
+    }
+
     void finishUnitAction(SequenceElement element) {
         Unit unit = units.get(element.getAttr("unit"));
         unit.setAttr("actionType", null);
@@ -168,6 +173,20 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         for (Map<String, Object> troop : (List<Map<String, Object>>) element.getAttr(field)) {
             Map<String, Object> attrs = (Map<String, Object>)troop.get("unit");
             buildUnit(sourceUnit, attrs, Stacking.TOP);
+        }
+    }
+
+    void createToken(SequenceElement element) {
+        if (element.getAttr("token")!=null) {
+            Token token = new Token()
+                .setType((String) element.getAttr("token.type"))
+                .setAngle((int) element.getAttr("token.angle"))
+                .setLevel((Integer) element.getAttr("token.level"))
+                .setDensity((Boolean) element.getAttr("token.density"))
+                .setFire((Boolean) element.getAttr("token.fire"))
+                .setPositionCol((int) element.getAttr("token.positionCol"))
+                .setPositionRow((int) element.getAttr("token.positionRow"));
+            this.addTokenToLocation(token);
         }
     }
 
@@ -287,6 +306,12 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
             Unit sourceUnit = units.get(((List<String>)element.getAttr("troops")).get(0));
             createUnit(sourceUnit, element, "formation");
             removeUnits(element, "troops");
+        }
+        else if (element.getType().equals("set-fire")) {
+            createToken(element);
+        }
+        else if (element.getType().equals("set-stakes")) {
+            createToken(element);
         }
         else if (element.getType().equals("next-turn")) {
             changeTurn(element);

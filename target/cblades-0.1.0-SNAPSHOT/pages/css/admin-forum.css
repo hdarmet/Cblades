@@ -1,0 +1,151 @@
+
+.forum-selection .forum-title {
+    margin: 0;
+}
+
+.forum-selection {
+    height: auto;
+}
+
+.forum-selection .table-content {
+    height: auto;
+}
+
+.forum-selection .table-content table tr th {
+    padding: 10px;
+}
+
+.forum-modal .modal-content {
+    width: 50%;
+}
+
+.forum-selection .message-model-list-title, .forum-thread-selection .forum-thread-list-title {
+    font-size: 1.2em;
+    font-weight: bolder;
+    float: left;
+    cursor: pointer;
+}
+
+.forum-thread-selection .forum-thread-title {
+    margin: 0;
+}
+
+.forum-thread-selection {
+    height: auto;
+}
+
+.forum-thread-selection .table-content {
+    height: auto;
+}
+
+.forum-thread-selection .table-content table tr th {
+    padding: 10px;
+}
+
+.forum-thread-modal .modal-content {
+    width: 50%;
+}
+
+.forum-thread-selection .forum-list-title {
+    font-size: 1.2em;
+    font-weight: bolder;
+    float: left;
+}
+
+.forum-list .column-0 {
+    width: 15%;
+    font-weight: bolder;
+}
+
+.forum-list .column-1 {
+    width: 50%;
+}
+
+.forum-list .column-2 {
+    width: 15%;
+}
+
+.forum-list .column-3 {
+    width: 10%;
+}
+
+.forum-modal .user-avatar img {
+    width: 40px;
+    height: 40px;
+}
+
+.forum-modal .user-ref-content {
+    display: table;
+}
+
+.forum-modal .user-ref {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1em;
+    display: table;
+}
+
+.forum-modal .user-ref div, .event-form .user-ref img {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.forum-modal .user-ref .user-login {
+    font-weight: bolder;
+}
+
+.forum-modal img.user-avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.forum-thread-list .column-0 {
+    width: 15%;
+    font-weight: bolder;
+}
+
+.forum-thread-list .column-1 {
+    width: 50%;
+}
+
+.forum-thread-list .column-2 {
+    width: 15%;
+}
+
+.forum-thread-list .column-3 {
+    width: 10%;
+}
+
+.forum-thread-modal .user-avatar img {
+    width: 40px;
+    height: 40px;
+}
+
+.forum-thread-modal .user-ref-content {
+    display: table;
+}
+
+.forum-thread-modal .user-ref {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1em;
+    display: table;
+}
+
+.forum-thread-modal .user-ref div, .event-form .user-ref img {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.forum-thread-modal .user-ref .user-login {
+    font-weight: bolder;
+}
+
+.forum-thread-modal img.user-avatar {
+    width: 40px;
+    height: 40px;
+}
