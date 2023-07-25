@@ -119,20 +119,22 @@ export class CBBurningCounter extends RetractablePieceMixin(CBHexCounter) {
     }
 
     toSpecs() {
-        return {
+        let specs = {
             id: this._oid,
             version: this._oversion || 0,
-            angle: this.angle,
-            positionCol: this.getPosition().col,
-            positionRow: this.getPosition().row
+            angle: this.angle
+        }
+        if (this.getPosition()) {
+            specs.positionCol = this.getPosition().col;
+            specs.positionRow = this.getPosition().row;
         }
     }
 
     getPosition() {
-        return {
+        return this.hexLocation ? {
             col: this.hexLocation.col,
             row: this.hexLocation.row
-        };
+        } : null;
     }
 
     static DIMENSION = new Dimension2D(142, 142);
@@ -259,20 +261,27 @@ class StakesArtifact extends CBHexCounterArtifact {
 export class CBObstacleCounter extends RetractablePieceMixin(CBHexCounter) {
 
     toSpecs() {
-        return {
+        let specs = {
             id: this._oid,
             version: this._oversion || 0,
-            angle: this.angle,
-            positionCol: this.getPosition().col,
-            positionRow: this.getPosition().row
+            angle: this.angle
         }
+        if (this.getPosition()) {
+            specs.positionCol = this.getPosition().col;
+            specs.positionRow = this.getPosition().row;
+        }
+        return specs;
     }
 
     getPosition() {
-        return {
+        return this.hexLocation ? {
             col: this.hexLocation.col,
             row: this.hexLocation.row
-        };
+        } : null;
+    }
+
+    isFinishable() {
+        return true;
     }
 
 }

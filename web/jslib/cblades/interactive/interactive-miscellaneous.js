@@ -174,6 +174,7 @@ function deleteStartFireCounter(game, hexLocation) {
     if (fireStart) {
         fireStart.removeFromMap();
     }
+    return fireStart;
 }
 
 export class InteractiveSetFireAction extends CBAction {
@@ -324,9 +325,9 @@ export class InteractiveExtinguishFireAction extends CBAction {
         this.unit.setCharging(CBCharge.NONE);
         let scene = this.createScene(
             result=>{
-                this._processExtinguishFireResult(result);
+                let token = this._processExtinguishFireResult(result);
                 CBSequence.appendElement(this.game, new CBExtinguishFireSequenceElement({
-                    game: this.game, unit: this.unit, dice: scene.dice.result
+                    game: this.game, unit: this.unit, dice: scene.dice.result, token
                 }));
                 new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                 this.game.validate();
@@ -346,11 +347,12 @@ export class InteractiveExtinguishFireAction extends CBAction {
     }
 
     _processExtinguishFireResult(result) {
+        let token = undefined;
         if (result.success) {
-            deleteStartFireCounter(this.game, this.unit.hexLocation);
+            token = deleteStartFireCounter(this.game, this.unit.hexLocation);
         }
         this.markAsFinished();
-        return result;
+        return token;
     }
 
 }
@@ -454,11 +456,11 @@ export class InteractiveRemoveStakesAction extends CBAction {
         return this.playable;
     }
 
-    play() {
+    createScene(finalAction) {
         this.game.closeActuators();
-        let result = new DResult();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
+        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        scene.result = new DResult();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
             this.game.closePopup();
@@ -472,35 +474,62 @@ export class InteractiveRemoveStakesAction extends CBAction {
             new CBRemoveStakesInsert(),
             new Point2D(CBRemoveStakesInsert.DIMENSION.w/2, -CBRemoveStakesInsert.DIMENSION.h/2)
         ).addWidget(
-            dice.setFinalAction(()=>{
-                dice.active = false;
-                let {success} = this._processRemoveStakesResult(this.unit, dice.result);
-                if (success) {
-                    result.success().appear();
+            scene.dice.setFinalAction(()=>{
+                scene.dice.active = false;
+                let result = this.game.arbitrator.processRemoveStakesResult(this.unit, scene.dice.result);
+                if (result.success) {
+                    scene.result.success().appear();
                 }
                 else {
-                    result.failure().appear();
+                    scene.result.failure().appear();
                 }
-                this.game.validate();
+                finalAction&&finalAction(result);
             }),
             new Point2D(50, 70)
         ).addWidget(
-            result.setFinalAction(close),
+            scene.result.setFinalAction(close),
             new Point2D(0, 0)
         );
         this.game.openPopup(scene, this.playable.viewportLocation);
+        return scene;
     }
 
-    _processRemoveStakesResult(unit, diceResult) {
-        let result = this.game.arbitrator.processRemoveStakesResult(this.unit, diceResult);
+    play() {
+        this.game.closePopup();
+        this.unit.setCharging(CBCharge.NONE);
+        let scene = this.createScene(
+            result=>{
+                let token = this._processRemoveStakesResult(result);
+                CBSequence.appendElement(this.game, new CBRemoveStakesSequenceElement({
+                    game: this.game, unit: this.unit, dice: scene.dice.result, token
+                }));
+                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                this.game.validate();
+            }
+        );
+    }
+
+    replay(dice) {
+        let scene = this.createScene(
+            result=>{
+                this._processRemoveStakesResult(result);
+            }
+        );
+        scene.dice.active = false;
+        scene.result.active = false;
+        scene.dice.cheat(dice);
+    }
+
+    _processRemoveStakesResult(result) {
+        let token = undefined;
         if (result.success) {
-            let stakes = PlayableMixin.getOneByType(unit.hexLocation, CBStakesCounter);
-            if (stakes) {
-                stakes.removeFromMap();
+            token = PlayableMixin.getOneByType(this.unit.hexLocation, CBStakesCounter);
+            if (token) {
+                token.removeFromMap();
             }
         }
         this.markAsFinished();
-        return result;
+        return token;
     }
 
 }
@@ -1265,7 +1294,7 @@ export class CBSetFireSequenceElement extends WithDiceRoll(CBStateSequenceElemen
 
     constructor({id, game, unit, dice, token}) {
         super({id, type:"set-fire", game, unit, dice});
-        this._token = token;
+        this.token = token;
     }
 
     get delay() { return 1500; }
@@ -1279,7 +1308,7 @@ export class CBSetFireSequenceElement extends WithDiceRoll(CBStateSequenceElemen
 
     _toSpecs(spec, context) {
         super._toSpecs(spec, context);
-        if (this._token) {
+        if (this.token) {
             spec.token = this._token.toSpecs();
         }
     }
@@ -1289,8 +1318,9 @@ CBSequence.register("set-fire", CBSetFireSequenceElement);
 
 export class CBExtinguishFireSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
-    constructor({id, game, unit, dice}) {
+    constructor({id, game, unit, dice, token}) {
         super({id, type:"extinguish-fire", game, unit, dice});
+        this.token = token;
     }
 
     get delay() { return 1500; }
@@ -1302,6 +1332,13 @@ export class CBExtinguishFireSequenceElement extends WithDiceRoll(CBStateSequenc
         });
     }
 
+    _toSpecs(spec, context) {
+        super._toSpecs(spec, context);
+        if (this.token) {
+            spec.token = this.token.toSpecs();
+        }
+    }
+
 }
 CBSequence.register("extinguish-fire", CBExtinguishFireSequenceElement);
 
@@ -1309,7 +1346,7 @@ export class CBSetStakesSequenceElement extends WithDiceRoll(CBStateSequenceElem
 
     constructor({id, game, unit, dice, token}) {
         super({id, type:"set-stakes", game, unit, dice});
-        this._token = token;
+        this.token = token;
     }
 
     get delay() { return 1500; }
@@ -1323,13 +1360,39 @@ export class CBSetStakesSequenceElement extends WithDiceRoll(CBStateSequenceElem
 
     _toSpecs(spec, context) {
         super._toSpecs(spec, context);
-        if (this._token) {
-            spec.token = this._token.toSpecs();
+        if (this.token) {
+            spec.token = this.token.toSpecs();
         }
     }
 
 }
 CBSequence.register("set-stakes", CBSetStakesSequenceElement);
+
+export class CBRemoveStakesSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
+
+    constructor({id, game, unit, dice, token}) {
+        super({id, type:"remove-stakes", game, unit, dice});
+        this.token = token;
+    }
+
+    get delay() { return 1500; }
+
+    apply(startTick) {
+        return new CBUnitSceneAnimation({
+            unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
+            animation: () => new InteractiveRemoveStakesAction(this.game, this.unit).replay(this.dice)
+        });
+    }
+
+    _toSpecs(spec, context) {
+        super._toSpecs(spec, context);
+        if (this.token) {
+            spec.token = this.token.toSpecs();
+        }
+    }
+
+}
+CBSequence.register("remove-stakes", CBRemoveStakesSequenceElement);
 
 export class CBPlaySmokeAndFireSequenceElement extends WithDiceRoll(CBSequenceElement) {
 

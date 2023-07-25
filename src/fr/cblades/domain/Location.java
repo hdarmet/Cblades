@@ -52,17 +52,19 @@ public class Location extends BaseEntity {
         return this;
     }
 
-    public static void getLocationContext(Map context, List<Location> locations) {
-        for (Location location: locations) {
-            context.put(new LocationId(location.getCol(), location.getRow()), location);
+    public Token getToken(String tokenType) {
+        for (Piece piece : this.pieces) {
+            if (piece instanceof Token && ((Token) piece).getType().equals(tokenType)) {
+                return (Token)piece;
+            }
         }
+        return null;
     }
-
     public static Location getLocation(Map context, int col, int row) {
         Location location = (Location)context.get(new LocationId(col, row));
         if (location==null) {
             location = new Location().setCol(col).setRow(row);
-            context.put(new LocationId(col, row), location);
+            context.put(location.getId(), location);
         }
         return location;
     }
@@ -96,8 +98,11 @@ public class Location extends BaseEntity {
         }
     }
 
+    public LocationId getLocationId() {
+        return new LocationId(this.getCol(), this.getRow());
+    }
     public static void addPieceToLocation(Map context, Location location, Piece piece, Game game, Stacking stacking) {
-        LocationId locationId = new LocationId(location.getCol(), location.getRow());
+        LocationId locationId = location.getLocationId();
         location.addPiece(piece, stacking);
         if (context.get(locationId) != null) {
             game.addLocation(location);
@@ -106,12 +111,20 @@ public class Location extends BaseEntity {
     }
 
     public static void removePieceFromLocation(Map context, Location location, Piece piece, Game game) {
-        LocationId locationId = new LocationId(location.getCol(), location.getRow());
+        LocationId locationId = location.getLocationId();
         location.removePiece(piece);
         if (context.get(locationId) == null) {
             game.removeLocation(location);
             context.remove(locationId);
         }
+    }
+
+    public static Map<LocationId, Location> getLocations(Game game) {
+        Map<LocationId, Location> locations = new HashMap<>();
+        for (Location location: game.getLocations()) {
+            locations.put(location.getLocationId(), location);
+        }
+        return locations;
     }
 
     Location duplicate(EntityManager em, java.util.Map<BaseEntity, BaseEntity> duplications) {

@@ -13,7 +13,7 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         this.game = game;
         this.em = em;
         this.units = new HashMap<>();
-        this.locations = new HashMap<>();
+        this.locations = Location.getLocations(game);
         for (Player player: this.game.getPlayers()) {
             for (Wing wing: player.getWings()) {
                 for (Unit unit: wing.getUnits()) {
@@ -21,7 +21,6 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
                 }
             }
         }
-        Location.getLocationContext(this.locations, game.getLocations());
     }
 
     Game game;
@@ -109,8 +108,13 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
     }
 
     void addTokenToLocation(Token token) {
-        Location location = Location.getLocation(new HashMap(), token);
+        Location location = Location.getLocation(this.locations, token);
         Location.addPieceToLocation(this.locations, location, token, this.game, Stacking.BOTTOM);
+    }
+
+    void removeTokenFromLocation(Token token) {
+        Location location = Location.getLocation(this.locations, token);
+        Location.removePieceFromLocation(this.locations, location, token, this.game);
     }
 
     void finishUnitAction(SequenceElement element) {
@@ -188,6 +192,16 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
                 .setPositionRow((int) element.getAttr("token.positionRow"));
             this.addTokenToLocation(token);
         }
+    }
+
+    void removeToken(SequenceElement element) {
+        String unitName = (String)element.getAttr("unit");
+        Unit unit = this.units.get(unitName);
+        Location unitLocation = this.locations.get(new LocationId(unit.getPositionCol(), unit.getPositionRow()));
+        assert(unitLocation!=null);
+        String tokenType = (String)element.getAttr("token.type");
+        Token token = unitLocation.getToken(tokenType);
+        this.removeTokenFromLocation(token);
     }
 
     @Override
@@ -310,8 +324,14 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         else if (element.getType().equals("set-fire")) {
             createToken(element);
         }
+        else if (element.getType().equals("extinguish-fire")) {
+            removeToken(element);
+        }
         else if (element.getType().equals("set-stakes")) {
             createToken(element);
+        }
+        else if (element.getType().equals("remove-stakes")) {
+            removeToken(element);
         }
         else if (element.getType().equals("next-turn")) {
             changeTurn(element);
@@ -358,6 +378,6 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
 
     long count = -1;
     Map<String, Unit> units = null;
-    Map locations = null;
+    Map<LocationId, Location> locations = null;
 
 }

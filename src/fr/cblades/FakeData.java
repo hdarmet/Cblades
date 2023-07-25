@@ -408,8 +408,9 @@ public class FakeData {
                 .setCharging(false);
             em.persist(unit6);
             Token token1 = new Token()
-                .setPositionRow(9).setPositionCol(9)
-                .setType("stakes");
+                .setPositionRow(9).setPositionCol(4/*9*/)
+                .setType("fire")
+                .setFire(false);
             em.persist(token1);
             scenario.get().getGame().addPlayer(
                 new Player().setIdentity(PlayerIdentity.getByName(em, "roughneck 1"))
@@ -457,6 +458,7 @@ public class FakeData {
                 )
                 */
                 .addLocation(Location.getLocation(context, unit6)
+                    .addPiece(token1)
                     .addPiece(unit6)
                 )
                 /*
@@ -475,9 +477,11 @@ public class FakeData {
                     .addPiece(unit4)
                 )
                  */
+                /*
                 .addLocation(Location.getLocation(context, token1)
                     .addPiece(token1)
                 )
+                */
             ;
             data.persist(em, scenario.get());
         });
