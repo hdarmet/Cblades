@@ -66,9 +66,6 @@ import {
 import {
     RoughneckLance
 } from "../../jslib/cblades/armies/roughnecks.js";
-import {
-    requester
-} from "../../jslib/request.js";
 
 describe("Editor", ()=> {
 

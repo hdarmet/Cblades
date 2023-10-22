@@ -861,6 +861,7 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
         ).addWidget(
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
+                scene.dice.result = [6];
                 let result = this.game.arbitrator.processPlayFireResult(this.game, scene.dice.result);
                 if (result.playFire) {
                     scene.result.success().appear();
@@ -883,10 +884,12 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
         this.game.closePopup();
         let scene = this.createScene(
             result=>{
-                let ranges = this._createRange();
-                this._processPlayFireResult(this.game, result, ranges);
+                result.options = this.createOptions(
+                    PlayableMixin.getAllByType(this.game, CBFireCounter),
+                );
+                this._processPlayFireResult(this.game, result);
                 CBSequence.appendElement(this.game, new CBPlaySmokeAndFireSequenceElement({
-                    game: this.game, dice: scene.dice.result, ranges
+                    game: this.game, dice: scene.dice.result, options: result.options
                 }));
                 new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                 this.game.validate();
@@ -894,41 +897,53 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
         );
     }
 
-    replay(dice, ranges) {
+    replay(dice, options) {
         let scene = this.createScene(
             result=>{
-                this._processPlayFireResult(this.game, result, ranges);
+                this._processReplayFireResult(this.game, result);
             }
         );
         scene.dice.active = false;
         scene.result.active = false;
+        scene.result.options = options;
+        for (let option of options) {
+
+        }
         scene.dice.cheat(dice);
     }
 
-    _createRange() {
-        let ranges = [];
-        for (let counter of counters) {
-            let random = getDrawPlatform().random();
-            ranges.push(Math.floor(random * (this._fireCount + this._noFireCount)));
+    _createFires(counters, fireCount, noFireCount) {
+        let lotCount = Math.ceil(counters.length/30);
+        let fires = [];
+        for (let lot=0; lot<lotCount; lot++) {
+            let lotFireCount = fireCount;
+            let lotNoFireCount = noFireCount;
+            while(lotCount+lotNoFireCount>0) {
+                let random = getDrawPlatform().random();
+                let range = Math.floor(random * (lotFireCount + lotNoFireCount));
+                if (range < lotFireCount) {
+                    fires.push(true);
+                    lotFireCount--;
+                } else {
+                    fires.push(false);
+                    lotNoFireCount--;
+                }
+            }
         }
-        return ranges;
+        return fires;
     }
 
     isPlayed() {
         return true;
     }
 
-    _processPlayFireResult(game, result, ranges) {
+    _processPlayFireResult(game, result) {
         this.game.setFocusedPlayable(this.playable);
         this.updateSmokes();
         this.putDenseSmoke();
         this.markBurningAsFinished();
         if (result.playFire) {
-            this._options = this.createOptions(
-                PlayableMixin.getAllByType(this.game, CBFireCounter),
-                ranges
-            );
-            this.openPlayFireActuator(this._options);
+            this.openPlayFireActuator(result.options);
         }
         else {
             this.markAsFinished();
@@ -937,46 +952,41 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
         return result;
     }
 
-    _getIsFire(range) {
-        let isFire = true;
-        if (range < this._fireCount) {
-            this._fireCount--;
-        } else {
-            isFire = false;
-            this._noFireCount--;
-        }
-        return isFire;
+    _processReplayFireResult(game, result) {
+        this.updateSmokes();
+        this.putDenseSmoke();
+        this.markBurningAsFinished();
+        this.playAllOptions(result.options);
+        this.game.validate();
+        return result;
     }
 
-    createOptions(counters, ranges) {
-        let lotCount = Math.ceil(counters.length/30);
-        return this._putOptions(counters,  lotCount * 15, ranges);
+    createOptions(counters) {
+        return this._createOptions(counters,  15, 15);
     }
 
-    _putOptions(counters, count, ranges) {
-        this._fireCount = count;
-        this._noFireCount = count;
+    _createOptions(counters, fireCount, noFireCount) {
+        let fires = this._createFires(counters, fireCount, noFireCount);
         let options = [];
         for (let counter of counters) {
-            let range = ranges.pop();
             if (counter.isFire()) {
                 let hexLocation = counter.hexLocation.getNearHex(this.game.windDirection);
                 let fireCounter = PlayableMixin.getOneByType(hexLocation, CBFireCounter);
                 if (!fireCounter) {
-                    let isFire = this._getIsFire(range);
                     options.push({
                         fireCounter: counter,
                         hexLocation,
-                        isFire
+                        isFirstFire: fires.pop(),
+                        isSecondFire: fires.pop()
                     });
                 }
             }
             else {
-                let isFire = this._getIsFire(range);
                 options.push({
                     fireCounter: counter,
                     hexLocation: counter.hexLocation,
-                    isFire
+                    isFirstFire: fires.pop(),
+                    isSecondFire: fires.pop()
                 });
             }
         }
@@ -1049,27 +1059,38 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
         this.openPlayFireActuator(this._options);
     }
 
-    playOption(option) {
-        this.game.closeActuators();
+    _playOption(option) {
         option.played = true;
         if (option.hexLocation === option.fireCounter.hexLocation) {
-            if (option.isFire) {
+            if (option.isFirstFire && option.isSecondFire) {
                 option.fireCounter.setFire();
                 let smokeCounter = PlayableMixin.getOneByType(option.hexLocation, CBSmokeCounter);
                 if (smokeCounter) {
                     smokeCounter.removeFromMap();
                 }
             }
-            else {
+            else if (!option.isFirstFire && !option.isSecondFire) {
                 deleteStartFireCounter(this.game, option.hexLocation);
             }
         }
         else {
-            if (option.isFire) {
+            if (option.isFirstFire && option.isSecondFire) {
                 createStartFireCounter(this.game, option.hexLocation);
             }
         }
+    }
+
+    playOption(option) {
+        this.game.closeActuators();
+        this._playOption(option);
         this.openPlayFireActuator(this._options);
+    }
+
+    playAllOptions(options) {
+        this.game.closeActuators();
+        for (let option of options) {
+            this._playOption(option);
+        }
     }
 
 }
@@ -1396,18 +1417,26 @@ CBSequence.register("remove-stakes", CBRemoveStakesSequenceElement);
 
 export class CBPlaySmokeAndFireSequenceElement extends WithDiceRoll(CBSequenceElement) {
 
-    constructor({id, game, dice, ranges}) {
+    constructor({id, game, dice, options}) {
         super({id, type:"fire-and-smoke", game, dice});
-        this.ranges = ranges;
+        this.options = options;
     }
 
-    get delay() { return 500*this.ranges.length; }
+    get delay() { return 50*this.options.length; }
 
     apply(startTick) {
         return new CBSceneAnimation({
             startTick, duration: this.delay, state: this, game: this.game,
-            animation: () => new InteractivePlaySmokeAndFireAction(this.game).replay(this.dice, this.ranges)
+            animation: () => new InteractivePlaySmokeAndFireAction(this.game).replay(this.dice)
         });
+    }
+
+    _toSpecs(spec, context) {
+        super._toSpecs(spec, context);
+
+        if (this.options) {
+            spec.options = this.options.toSpecs();
+        }
     }
 
 }

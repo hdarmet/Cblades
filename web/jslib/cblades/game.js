@@ -930,7 +930,6 @@ export class CBPieceImageArtifact extends DMultiImagesArtifact {
 }
 
 export class CBPiece {
-
     constructor(levelName, paths, dimension) {
         this._levelName = levelName;
         this._images = [];

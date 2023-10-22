@@ -2,26 +2,34 @@
 export let requester = {
     decodeURIComponent,
     fetch: fetch.bind(window),
-    locationOrigin: document.defaultView.location.origin
+    locationOrigin: document.defaultView.location.origin,
+    date: Date,
+    formData: FormData,
+    fileReader: FileReader
 }
 export function completeRequester() {
     Object.defineProperty(requester, "cookie", {
         get: function () {
             return document.cookie;
         },
+        set: function (cookie) {
+            document.cookie = cookie;
+        },
         configurable: true
     });
 }
 completeRequester();
 
-/*
-export function setCookie(cname, cvalue, exdays) {
-    let date = new Date();
+export function setCookie(exdays, ...values) {
+    let date = new requester.date();
     date.setTime(date.getTime() + (exdays*24*60*60*1000));
     let expires = "expires="+ date.toUTCString();
-    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+    let cookie = "";
+    for (let value of values) {
+        cookie += value.name + "=" + value.value+ ";";
+    }
+    requester.cookie = cookie + expires + ";path=/";
 }
-*/
 
 export function getCookie(cname) {
     let name = cname + "=";
@@ -40,7 +48,7 @@ export function getCookie(cname) {
 }
 
 export function loadFile(object, field, file) {
-    let reader  = new FileReader();
+    let reader  = new requester.fileReader();
     reader.addEventListener("loadend", function () {
         object[field] = reader.result;
     }, false);
@@ -53,7 +61,7 @@ export function requestServer(uri, requestContent, success, failure, files, meth
     let body;
     let headers;
     if (files) {
-        body = new FormData();
+        body = new requester.formData();
         if (requestContent) {
             body.append('request-part', JSON.stringify(requestContent));
         }

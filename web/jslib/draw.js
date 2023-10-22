@@ -10,17 +10,31 @@ import {
     requestServer
 } from "./request.js";
 
+/**
+ * Add an item (or a list of items) at the end of an array if (and only if) these items are not already present in the
+ * array. When an item is already present, this method just ignore it.
+ * @method Array.add
+ * @param elements a list or an array of objects
+ * @return nothing
+ */
 Object.defineProperty(Array.prototype, "add", {
-    value: function(element) {
-        let index = this.indexOf(element);
-        if (index<0) {
-            this.push(element);
+    value: function(...elements) {
+        for (let element of elements) {
+            let index = this.indexOf(element);
+            if (index < 0) {
+                this.push(element);
+            }
         }
-        return index;
     },
     enumerable: false
 });
 
+/**
+ * Removes an item from an array. If the item is not present in the array, this method just ignore it.
+ * @method Array.remove
+ * @param element the item to remove
+ * @return the index of the item before being removed. -1 id the item is not present in the array.
+ */
 Object.defineProperty(Array.prototype, "remove", {
     value: function(element) {
         let index = this.indexOf(element);
@@ -32,6 +46,12 @@ Object.defineProperty(Array.prototype, "remove", {
     enumerable: false
 });
 
+/**
+ * Tells if an array contains an item.
+ * @method Array.contains
+ * @param element the item to check
+ * @returns true if the array contains the item, false otherwise
+ */
 Object.defineProperty(Array.prototype, "contains", {
     value: function(element) {
         return this.indexOf(element)>=0;
@@ -48,12 +68,23 @@ Object.defineProperty(Array.prototype, "insert", {
     enumerable: false
 });
 
+/**
+ * Returns the first element of an array.
+ * @method Array.first
+ * @returns the first item of the array, null if the array is empty
+ */
 Object.defineProperty(Array.prototype, "first", {
     value: function () {
         return this.length>0 ? this[0] : null;
     },
     enumerable: false
 });
+
+/**
+ * Returns the last element of an array.
+ * @method Array.last
+ * @returns the last item of the array, null if the array is empty
+ */
 Object.defineProperty(Array.prototype, "last", {
     value: function () {
         return this.length>0 ? this[this.length-1] : null;
@@ -61,6 +92,14 @@ Object.defineProperty(Array.prototype, "last", {
     enumerable: false
 });
 
+/**
+ * Returns a subset of an array by selecting the included items that verify a given predicate.
+ * @method Array.filter
+ * @param predicate the predicate that checks every item in the list. This predicate accepts only the item and returns
+ * truthy when the item is successfully checked
+ * @returns a new array containing only the relevant items. When no item fits the given predicate, an empty array
+ * is returned.
+ */
 Object.defineProperty(Set.prototype, "filter", {
     value: function (predicate) {
         let result = [];
@@ -79,6 +118,11 @@ Object.defineProperty(Set.prototype, "filter", {
  */
 let _targetPlatform = {
 
+    /**
+     * Returns the Canvas Context associated to the platform. Note that this method create a Canvas DOM object when
+     * none is already defined
+     * @returns {CanvasRenderingContext2D}
+     */
     getDefaultContext() {
         if (!this._defaultCanvas) {
             this._defaultCanvas = document.createElement('canvas');
@@ -86,54 +130,123 @@ let _targetPlatform = {
         return this._defaultCanvas.getContext('2d');
     },
 
+    /**
+     * Returns the "now" timestamp in millis.
+     * @return {number}
+     */
     getTime() {
         return new Date().getTime();
     },
 
+    /**
+     * Requests the DOM to use the fullscreen mode.
+     */
     requestFullscreen() {
         window.document.documentElement.requestFullscreen();
     },
 
+    /**
+     * Requests the DOM to exit the fullscreen mode.
+     */
     exitFullscreen() {
         window.document.exitFullscreen();
     },
 
+    /**
+     * Create a DOM object. Note that this object is not inserted in the DOM structure by this method.
+     * @param tagName name (type) of the DOM object to create. ie: "P", "Div", "UL", etc.
+     * @returns the created DOM object
+     */
     createElement(tagName) {
         return document.createElement(tagName);
     },
 
+    /**
+     * Add a style to the style attribute of a DOM object. If this style attribute was present when this method is
+     * invoked, it is overwritten.
+     * @param element DOM element to update
+     * @param attrName name of the style to add or to set
+     * @param attrValue value to set. If this value is undefined (or null ?) the style is unset
+     */
     setStyleAttribute(element, attrName, attrValue) {
         element.style[attrName] = attrValue;
     },
 
+    getAttribute(element, attrName, attrValue) {
+        return element.getAttribute(attrName, attrValue);
+    },
+
+    /**
+     * set an attribute of a DOM object
+     * @param element DOM object to modify
+     * @param attrName name of the attribute to set
+     * @param attrValue value to set of the attribute
+     */
     setAttribute(element, attrName, attrValue) {
         element.setAttribute(attrName, attrValue);
     },
 
+    /**
+     * get the value of an attribute of a DOM object
+     * @param element DOM object to request
+     * @param attrName name of the attribute to request
+     */
     removeAttribute(element, attrName) {
         element.removeAttribute(attrName);
     },
 
+    /**
+     * get the text part of a DOM object
+     * @param element DOM object to request
+     * @return text contained in the DOMObject
+     */
     getText(element) {
         return element.innerHTML;
     },
 
+    /**
+     * set the text part of a DOM object
+     * @param element DOM object to request
+     * @param text text to set
+     */
     setText(element, text) {
         element.innerHTML = text;
     },
 
+    /**
+     * set style of the navigator's page
+     * @param attrName name of the style
+     * @param attrValue value to set
+     */
     setWindowStyleAttribute(attrName, attrValue) {
         window.document.body.style[attrName] = attrValue;
     },
 
+    /**
+     * gets the navigator's page content dimension
+     * @return dimension of the navigator's page
+     */
     getWindowDimension() {
         return new Dimension2D(window.innerWidth-2, window.innerHeight-2);
     },
 
+    /**
+     * add an event listener to the navigator's window
+     * @param event name of the event to listen
+     * @param func function f(event) triggered by the event
+     * @param option option (bubbling or not) of the registration. Defaulted to true
+     */
     addWindowEventListener(event, func, option=true) {
         window.addEventListener(event, func, option);
     },
 
+    /**
+     * add an event listener to a DOM object
+     * @param element element to listen
+     * @param event name of the event to listen
+     * @param func function f(event) triggered by the event
+     * @param option option (bubbling or not) of the registration. Defaulted to true
+     */
     addEventListener(element, event, func, option=true) {
         element.addEventListener(event, func, option);
     },
@@ -170,30 +283,67 @@ let _targetPlatform = {
         return element.getContext(contextName, { willReadFrequently: true });
     },
 
+    /**
+     * returns the pixel on a given position in a canvas
+     * @param context context of the canvas
+     * @param x value of the position on the x axis in canvas coordinates
+     * @param y value of the position on the y axis in canvas coordinates
+     * @return an array of ints: [r, g, b, a]
+     */
     getPixel(context, x, y) {
         return context.getImageData(x, y, 1, 1).data;
     },
 
+    /**
+     * set the canvas line width
+     * @param context context of the canvas
+     * @param width line width to set
+     */
     setLineWidth(context, width) {
         context.lineWidth = width;
     },
 
+    /**
+     * set the canvas stroke style
+     * @param context context of the canvas
+     * @param stroke style line width to set
+     */
     setStrokeStyle(context, style) {
         context.strokeStyle = style;
     },
 
+    /**
+     * set the canvas fill style
+     * @param context context of the canvas
+     * @param style fill style to set
+     */
     setFillStyle(context, style) {
         context.fillStyle = style;
     },
 
+    /**
+     * set the canvas shadow color
+     * @param context context of the canvas
+     * @param color shadow color to set
+     */
     setShadowColor(context, color) {
         context.shadowColor = color
     },
 
-    setShadowBlur(context, width) {
-        context.shadowBlur = width;
+    /**
+     * set the canvas shadow blur
+     * @param context context of the canvas
+     * @param blur shadow blur to set
+     */
+    setShadowBlur(context, blur) {
+        context.shadowBlur = blur;
     },
 
+    /**
+     * set the canvas global alpha
+     * @param context context of the canvas
+     * @param alpha global alpha to set
+     */
     setGlobalAlpha(context, alpha) {
         context.globalAlpha = alpha;
     },
@@ -266,7 +416,7 @@ let _targetPlatform = {
 let _platform = _targetPlatform;
 
 /**
- * Returns the target platform
+ * Returns the target platform. It's a true DOM based platform in normal case and a Mock based platform for testing.
  */
 export function targetPlatform() {
     return _targetPlatform;
@@ -294,12 +444,17 @@ export function resetContext(context) {
 export function getDrawPlatform() {
     return _platform;
 }
-
 export function setDrawPlatform(platform) {
     _platform = platform;
     _platform.init && _platform.init();
 }
 
+/**
+ * gets the dimension of a text in the screen. Note line breaks are ignored. The text must be one line high.
+ * @param text text to measure
+ * @param font font used (type and size) given as a css directive (ex: "15px serif")
+ * @return a TextMetrics object
+ */
 export function measureText(text, font) {
     let context = _platform.getDefaultContext();
     saveContext(context);
@@ -309,6 +464,12 @@ export function measureText(text, font) {
     return measure;
 }
 
+/**
+ * gets a query parameter of an URL (defaulting the URL with the one used to invoke the application)
+ * @param name name of the parameter
+ * @param url url from where the parameter retrieved. By default its the one used to invoke the application
+ * @return value of the parameter if exists, null otherwise
+ */
 export function getParameterByName(name, url = window.location.href) {
     name = name.replace(/[\[\]]/g, '\\$&');
     var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
@@ -318,6 +479,13 @@ export function getParameterByName(name, url = window.location.href) {
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
+/**
+ * sends GET request
+ * @param uri URI of the request
+ * @param success
+ * @param failure
+ * @param files files to include in the message as
+ */
 export function sendGet(uri, success, failure, files) {
     getDrawPlatform().requestServer(uri, null, success, failure, files, 'GET');
 }
@@ -388,7 +556,10 @@ export class DImage {
 }
 
 /**
- * A DLayer is where drawing are really made. It is essentially a wrapper of a DOM Canvas.
+ * Base class for Layers. A DLayer is where drawing are really made. It is essentially a wrapper of a DOM Canvas. A layer cannot be used
+ * directly: it must be inserted in a DDraw viewport.
+ * <br>Even if this class is not abstract, real layers are instances of subclasses of DLayer, not direct instances of
+ * DLayer.
  */
 export class DLayer {
 
@@ -399,7 +570,12 @@ export class DLayer {
         _platform.setAttribute(this._root, "style", "position: absolute");
     }
 
-    setDraw(draw) {
+    /**
+     * Sets the internal reference of the DDraw that the layer belongs to.
+     * @param draw DDraw owner of the layer
+     * @private
+     */
+    _setDraw(draw) {
         this._draw = draw;
         this._updateSize();
     }
@@ -617,7 +793,7 @@ export class DTranslateLayer extends DLayer {
 }
 
 /**
- * A DLayer that does not update its transform when Board transform is modified
+ * A DLayer that does not update its transform when the DDraw transform is modified
  */
 export class DStaticLayer extends DLayer {
 
@@ -627,23 +803,35 @@ export class DStaticLayer extends DLayer {
     }
 
     updateTransform(matrix) {}
-
 }
 /**
- * DDraw is the viewport where the drawing is shown. It is essentially a stack of layers.
+ * DDraw is the viewport where the drawing is shown. It is essentially a stack of layers. The order of the layers decide
+ * the priority for drawing of their contents (likes layers in Photoshop).
+ * The "higher" a layer, is the more it is visible. A layer is "higher" than another one if its index in the DDraw's
+ * layers array is higher
  */
 export class DDraw {
 
+    /**
+     * Initializes the DDraw viewport
+     * @param dimension initial dimension of the viewport (the visible portion of the viewport in the screen, not
+     * the size of the scrollable content)
+     */
     constructor(dimension) {
         this._root = _platform.createElement("div");
         this._layers = new Map();
         this._layersArray = [];
-        _platform.setAttribute(this.root, "style", `border: 1px solid; position: relative, overflow: hidden`);
+        _platform.setAttribute(this.root, "style",
+            `border: 1px solid; position: relative, overflow: hidden`);
         _platform.setAttribute(this.root, "tabindex", "0");
         this._setSize(dimension);
         this._transform = Matrix2D.IDENTITY;
     }
 
+    /**
+     * Requests the DDraw viewport to completely fills the navigator page and to react accordingly when the window is
+     * resized by the user.
+     */
     fitWindow() {
         let resize= ()=>{
             _platform.setWindowStyleAttribute("margin", "0px");
@@ -654,12 +842,24 @@ export class DDraw {
         _platform.addWindowEventListener('resize', resize, false);
     }
 
+    /**
+     * Creates a new layer and add it on the top of the DDraw viewport. This is not the most common way to add layers
+     * to a DDraw viewport because the added layer is a very basic one with no additional capabilities. Mainly used
+     * for testing.
+     * @param name identification of the new layer
+     * @return the created layer
+     */
     createLayer(name) {
         return this.addLayer(new DLayer(name));
     }
 
+    /**
+     * Add an existing layer on the top of the DDraw viewport
+     * @param layer layer to put on the top of the viewport
+     * @return the created layer
+     */
     addLayer(layer) {
-        layer.setDraw(this);
+        layer._setDraw(this);
         _platform.appendChild(this._root, layer.root);
         this._layers.set(layer.name, layer);
         this._layersArray.push(layer);
@@ -667,33 +867,79 @@ export class DDraw {
         return layer;
     }
 
+    /**
+     * Add a layer at a given place inside the DDraw viewport's layer array. The above layers (starting with
+     * the one which occupies the index position) are leveled up. This method CANNOT be used to move an already present
+     * layer in the DDraw viewport. The layer must be removed first.
+     * @param layer to add in the viewport
+     * @param index of the layer in the layer array (0 for the base layer) after the insertion. The index must be lower
+     * or equals to the layer array size.
+     * @return the inserted layer
+     */
     setLayer(layer, index) {
-        layer.setDraw(this, this);
-        _platform.insertBefore(this._root, layer.root, this._layersArray[index].root);
+        console.assert(!layer._draw);
+        console.assert(index<=this._layersArray.length);
+        layer._setDraw(this);
+        if (index===this._layersArray.length) {
+            _platform.appendChild(this._root, layer.root);
+        }
+        else {
+            _platform.insertBefore(this._root, layer.root, this._layersArray[index].root);
+        }
         this._layers.set(layer.name, layer);
         this._layersArray.insert(index, layer);
         layer.updateTransform(this._transform);
         return layer;
     }
 
+    /**
+     * Add a layer just below a given layer. This reference layer (beforeLayer) MUST be present in the DDraw viewport.
+     * This method CANNOT be used to move an already present layer in the DDraw viewport. The layer must be removed
+     * first.
+     * @param layer layer to add in the viewport
+     * @param beforeLayer the layer just below which the inserted layer must be placed
+     * @return the inserted layer
+     */
     insertLayerBefore(layer, beforeLayer) {
         let index = this._layersArray.indexOf(beforeLayer);
         return this.setLayer(layer, index);
     }
 
+    /**
+     * Add a layer just above a given layer. This reference layer (previousLayer) MUST be present in the DDraw viewport.
+     * This method CANNOT be used to move an already present layer in the DDraw viewport. The layer must be removed
+     * first.
+     * @param layer layer to add in the viewport
+     * @param previousLayer the layer just above which the inserted layer must be placed
+     * @return the inserted layer
+     */
     insertLayerAfter(layer, previousLayer) {
         let index = this._layersArray.indexOf(previousLayer);
-        return index===this._layersArray.length-1 ? this.addLayer(layer) : this.setLayer(layer, index+1);
+        return this.setLayer(layer, index+1);
     }
 
+    /**
+     * Retrieves a layer by its name
+     * @param name name that identifies the requested layer
+     * @return the layer if it exists in the Viewport, null otherwise
+     */
     getLayer(name) {
         return this._layers.get(name);
     }
 
+    /**
+     * gets all the viewport's layers. Layers are ordered in this array like they are in the viewport.
+     * @return an array of layers
+     */
     getLayers() {
-        return [...this._layers.values()];
+        return [...this._layersArray];
     }
 
+    /**
+     * Set a transform to the whole viewport. This transform will be applied to all contained layers
+     * @param matrix transform to apply to all layers inside de viewport.
+     * @return the viewport
+     */
     setTransform(matrix) {
         this._transform = matrix.clone();
         for (let layer of this._layers.values()) {
@@ -702,22 +948,43 @@ export class DDraw {
         return this;
     }
 
+    /**
+     * Set a translation transform to the whole viewport. This translation will be applied to all contained layers
+     * @param point the {x, y} indicating the move to be done (ie. the (0, 0) point would be moved to this position).
+     * @return the viewport
+     */
     setTranslate(point) {
         return this.setTransform(Matrix2D.translate(point));
     }
 
+    /**
+     * gets the DIV DOM object that roots all the DOM tree associated to the viewport.
+     */
     get root() {
         return this._root;
     }
 
+    /**
+     * gets the size of the viewport (this is the size of navigator's portion area dedicated to the DDraw, ie. the
+     * "visible" area).
+     * @return a dimension {w, y} object
+     */
     get dimension() {
         return this._dimension;
     }
 
+    /**
+     * gets the transform matrix associated to the DDraw viewport
+     */
     get transform() {
         return this._transform;
     }
 
+    /**
+     * Set the internals of the DDraw viewport to change its dimension
+     * @param dimension dimension to set
+     * @private
+     */
     _setSize(dimension) {
         this._dimension = dimension;
         this._root.width = this._dimension.w;
@@ -727,32 +994,58 @@ export class DDraw {
         }
     }
 
+    /**
+     * Change the dimension of the  DDraw viewport. Note that an event is emitted on the general bus at the ens of the
+     * process. The type of the event is DDraw.RESIZE_EVENT, the value is the final dimension of the DDraw viewport.
+     * @param dimension dimension to set
+     */
     setSize(dimension) {
         this._setSize(dimension);
         Mechanisms.fire(this, DDraw.RESIZE_EVENT, this._dimension);
     }
 
+    /**
+     * clears the content (the portion of the navigator page) of the DDraw viewport. This clearing is done by
+     * requesting the layers to clear themselves.
+     */
     clear() {
         for (let layer of this._layers.values()) {
             layer.clear();
         }
     }
 
+    /**
+     * Set the event listener that should be triggered when a mouse click event is received by the DDraw viewport.
+     * @param func event listener to set. Cannot be null.
+     */
     onMouseClick(func) {
+        console.assert(func!==null);
         _platform.addEventListener(this.root, 'click', event => {
             func(event);
             event.preventDefault();
         }, true);
     }
 
+    /**
+     * Set the event listener that should be triggered when a keydown event is received by the DDraw viewport.
+     * @param func event listener to set. Cannot be null.
+     */
     onKeyDown(func) {
+        console.assert(func!==null);
         _platform.addEventListener(this.root, 'keydown', event => {
             func(event);
             event.preventDefault();
         }, true);
     }
 
+    /**
+     * Set the event listener that should be triggered when a mouse move event is received by the DDraw viewport. Note
+     * that this listener is invoked regularly (every 15 ms) while the mouse is inside the DDraw viewport, even if the
+     * mouse is not really moving.
+     * @param func event listener to set. Cannot be null.
+     */
     onMouseMove(func) {
+        console.assert(func!==null);
         let mouseMoveToken;
         _platform.addEventListener(this.root, 'mousemove', event => {
             let funcWrapper = event => {
@@ -769,7 +1062,12 @@ export class DDraw {
         }, true);
     }
 
+    /**
+     * Set the event listener that should be triggered when a mouse move wheel is received by the DDraw viewport.
+     * @param func event listener to set. Cannot be null.
+     */
     onMouseWheel(func) {
+        console.assert(func!==null);
         _platform.addEventListener(this._root, 'wheel', event => {
             func(event);
             event.preventDefault();

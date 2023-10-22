@@ -102,6 +102,8 @@ public class Token extends Piece {
             .setPositionAngle(token.getPositionAngle())
             .setAngle(token.getAngle())
             .setLevel(token.getLevel())
+            .setFire(token.getFire())
+            .setDensity(token.getDensity())
             .setWizard(token.getWizard());
         return this;
     }

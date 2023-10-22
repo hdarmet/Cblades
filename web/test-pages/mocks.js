@@ -105,8 +105,16 @@ export let mockPlatform = {
         return {tagName, style:{}, children:[]};
     },
 
+    getAttribute(element, attrName) {
+        return element[attrName];
+    },
+
     setAttribute(element, attrName, attrValue) {
         element[attrName] = attrValue;
+    },
+
+    removeAttribute(element, attrName) {
+        delete element[attrName];
     },
 
     appendChild(parent, child) {

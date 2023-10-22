@@ -13,7 +13,7 @@ import {
     DAnimation,
     DAnimator,
     DLayer,
-    DTranslateLayer, measureText, saveContext, restoreContext, resetContext, sendGet, sendPost
+    DTranslateLayer, measureText, saveContext, restoreContext, resetContext, sendGet, sendPost, getParameterByName
 } from "../jslib/draw.js";
 import {
     Point2D, Matrix2D, Dimension2D
@@ -43,6 +43,34 @@ describe("Drawing fundamentals", ()=> {
     function resetDirectives(layer) {
         resetContextDirectives(layer._context);
     }
+
+    it("Checks array and set improvements", () => {
+        given:
+            var array = [];
+        when:
+            array.add("1", "2", "3");
+        then:
+            assert(array).objectEqualsTo(["1", "2", "3"]);
+            assert(array.contains("2")).isTrue();
+            assert(array.contains("4")).isFalse();
+        when:
+            var index = array.remove("2");
+        then:
+            assert(array).objectEqualsTo(["1", "3"]);
+            assert(index).equalsTo(1);
+        when:
+            array.insert(1, "2");
+        then:
+            assert(array).objectEqualsTo(["1", "2", "3"]);
+            assert(array.first()).equalsTo("1");
+            assert(array.last()).equalsTo("3");
+            assert([].first()).isNotDefined();
+            assert([].last()).isNotDefined();
+        when:
+            var aSet = new Set(["1", "2", "3"]);
+            assert(aSet.filter(v=>v<"3")).objectEqualsTo(["1", "2"]);
+            assert(aSet.filter(v=>v>"3")).objectEqualsTo([]);
+    });
 
     it("Checks save/restore/reset context", () => {
         given:
@@ -441,12 +469,35 @@ describe("Drawing fundamentals", ()=> {
             assert(keyDown).isTrue();
     });
 
+    it("Checks getParameterByName", () => {
+        when:
+            var value = getParameterByName("param", "http://mysite/myapp/myendpoint?param=value");
+        then:
+            assert(value).equalsTo("value");
+        when:
+            value = getParameterByName("param1", "http://mysite/myapp/myendpoint?param1=value1&param2=value2&param3=value3");
+        then:
+            assert(value).equalsTo("value1");
+        when:
+            value = getParameterByName("param2", "http://mysite/myapp/myendpoint?param1=value1&param2=value2&param3=value3");
+        then:
+            assert(value).equalsTo("value2");
+        when:
+            value = getParameterByName("param3", "http://mysite/myapp/myendpoint?param1=value1&param2=value2&param3=value3");
+        then:
+            assert(value).equalsTo("value3");
+        when:
+            value = getParameterByName("param4", "http://mysite/myapp/myendpoint?param1=value1&param2=value2&param3=value3");
+        then:
+            assert(value).isNotDefined();
+    });
+
     it("Checks sendGet", () => {
         given:
             var answerStatus;
             var answerText;
         when:
-            sendGet("/api/uri", "{\"message\":\"Request Content\"}",
+            sendGet("/api/uri",
                 (text, status)=>{answerStatus=status; answerText=text;},
                 ()=>{}
             );
@@ -454,13 +505,12 @@ describe("Drawing fundamentals", ()=> {
         then:
             assert(getDrawPlatform().getRequest()).objectEqualsTo({
                 uri: "/api/uri",
-                requestContent:"{\"message\":\"Request Content\"}",
                 method:'GET'
             });
             assert(answerStatus).equalsTo(200);
             assert(answerText).equalsTo("{\"message\":\"Response Content\"}");
         when:
-            sendGet("/api/uri", "{\"message\":\"Request Content\"}",
+            sendGet("/api/uri",
                 ()=>{},
                 (text, status)=>{answerStatus=status; answerText=text;},
             );
@@ -499,7 +549,87 @@ describe("Drawing fundamentals", ()=> {
             assert(answerText).equalsTo("{\"message\":\"Failure Content\"}");
     });
 
+    it("Checks basic DOM Manipulation on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
+        when:
+            var div = getDrawPlatform().createElement("div");
+        then:
+            assert(div).is(HTMLDivElement);
+            assert(div.nodeName.toUpperCase()).equalsTo("DIV");
+        when:
+            getDrawPlatform().setAttribute(div, "width", "100px");
+            var width =  getDrawPlatform().getAttribute(div, "width");
+        then:
+            assert(width).equalsTo("100px");
+        when:
+            getDrawPlatform().removeAttribute(div, "width", "100px");
+            width =  getDrawPlatform().getAttribute(div, "width");
+        then:
+            assert(width).isNotDefined();
+        when:
+            getDrawPlatform().setText(div, "my text");
+            var text =  getDrawPlatform().getText(div);
+        then:
+            assert(text).equalsTo("my text");
+        given:
+            var subDiv1 = getDrawPlatform().createElement("div");
+            getDrawPlatform().setText(subDiv1, "s1");
+            var subDiv2 = getDrawPlatform().createElement("div");
+            getDrawPlatform().setText(subDiv2, "s2");
+            var subDiv3 = getDrawPlatform().createElement("div");
+            getDrawPlatform().setText(subDiv3, "s3");
+        when:
+            getDrawPlatform().appendChild(div, subDiv1);
+        then:
+            assert(div.outerHTML).equalsTo("<div>my text<div>s1</div></div>");
+        when:
+            getDrawPlatform().replaceChildren(div, subDiv2, subDiv3);
+        then:
+            assert(div.outerHTML).equalsTo("<div><div>s2</div><div>s3</div></div>");
+        when:
+            getDrawPlatform().removeChild(div, subDiv2);
+        then:
+            assert(div.outerHTML).equalsTo("<div><div>s3</div></div>");
+    });
 
+    it("Checks basic DOM event registration on the target platform", () => {
+        given:
+            setDrawPlatform(targetPlatform());
+            var div = getDrawPlatform().createElement("div");
+        given:
+            var trigger = function() {}
+            var target = null;
+            var listener = null;
+            var addEventListenerInvoked = false;
+            EventTarget.prototype.addEventListener = function(eventType, eventListener, ...args) {
+                assert(eventType).equalsTo("click");
+                target = this;
+                listener = eventListener;
+                assert(args).arrayEqualsTo([true]);
+                addEventListenerInvoked = true;
+            }
+        when:
+            getDrawPlatform().addEventListener(div, "click", trigger, true);
+        then:
+            assert(addEventListenerInvoked).isTrue();
+            assert(target).equalsTo(div);
+            assert(listener).equalsTo(trigger);
+        given:
+            var removeEventListenerInvoked = false;
+            EventTarget.prototype.removeEventListener = function(eventType, eventListener, ...args) {
+                assert(eventType).equalsTo("click");
+                target = this;
+                listener = eventListener;
+                removeEventListenerInvoked = true;
+            }
+        when:
+            getDrawPlatform().removeEventListener(div, "click", trigger);
+        then:
+            assert(addEventListenerInvoked).isTrue();
+            assert(target).equalsTo(div);
+            assert(listener).equalsTo(trigger);
+    });
 
     it("Checks requestFullscreen function call on the target platform", () => {
         given:
@@ -953,7 +1083,7 @@ describe("Drawing fundamentals", ()=> {
             assert(clearTimeoutInvoked).isTrue();
     });
 
-    it("Checks addEventListener of the target platform", () => {
+    it("Checks onMouseClick of the target platform", () => {
         given:
             setDrawPlatform(targetPlatform());
             var addEventListenerInvoked = false;

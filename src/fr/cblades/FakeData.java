@@ -408,10 +408,24 @@ public class FakeData {
                 .setCharging(false);
             em.persist(unit6);
             Token token1 = new Token()
-                .setPositionRow(9).setPositionCol(4/*9*/)
+                .setPositionRow(5).setPositionCol(4)
                 .setType("fire")
-                .setFire(false);
+                .setFire(true);
             em.persist(token1);
+            Token token2 = new Token()
+                .setPositionRow(5).setPositionCol(3)
+                .setType("fire")
+                .setFire(true);
+            Token token3 = new Token()
+                .setPositionRow(5).setPositionCol(2)
+                .setType("fire")
+                .setFire(true);
+            em.persist(token3);
+            Token token4 = new Token()
+                .setPositionRow(5).setPositionCol(1)
+                .setType("fire")
+                .setFire(true);
+            em.persist(token4);
             scenario.get().getGame().addPlayer(
                 new Player().setIdentity(PlayerIdentity.getByName(em, "roughneck 1"))
                     .addWing(
@@ -458,7 +472,6 @@ public class FakeData {
                 )
                 */
                 .addLocation(Location.getLocation(context, unit6)
-                    .addPiece(token1)
                     .addPiece(unit6)
                 )
                 /*
@@ -477,11 +490,18 @@ public class FakeData {
                     .addPiece(unit4)
                 )
                  */
-                /*
                 .addLocation(Location.getLocation(context, token1)
                     .addPiece(token1)
                 )
-                */
+                .addLocation(Location.getLocation(context, token2)
+                    .addPiece(token2)
+                )
+                .addLocation(Location.getLocation(context, token3)
+                    .addPiece(token3)
+                )
+                .addLocation(Location.getLocation(context, token4)
+                    .addPiece(token4)
+                )
             ;
             data.persist(em, scenario.get());
         });
