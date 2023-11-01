@@ -11,7 +11,13 @@ public class SummerControllerException extends SummerException {
 		super(String.format(message, params));
 		this.status = status;
 	}
-	
+
+	public SummerControllerException(int status, String message, Exception e) {
+		super(String.format(message, e.getMessage()));
+		e.printStackTrace();
+		this.status = status;
+	}
+
 	public SummerControllerException(int status, Json response) {
 		super(response==null ? "" :response.toString());
 		this.status = status;

@@ -43,7 +43,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			    .setName(imageName)
 				.setStream(PlatformManager.get().getInputStream("/events/"+imageName));
 		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 		}
 	}
 
@@ -181,7 +181,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					remove(em, event);
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return Json.createJsonObject().put("deleted", "ok");
@@ -201,7 +201,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					result.set(readFromEvent(event));
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return result.get();
@@ -220,7 +220,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					result.set(readFromEvent(event));
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return result.get();

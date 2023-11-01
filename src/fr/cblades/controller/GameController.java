@@ -108,7 +108,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 					remove(em, game);
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return Json.createJsonObject().put("deleted", "ok");
@@ -127,7 +127,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 					result.set(readFromGame(em, game));
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return result.get();

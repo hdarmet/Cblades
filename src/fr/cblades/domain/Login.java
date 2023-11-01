@@ -111,7 +111,7 @@ public class Login extends BaseEntity {
         }
         catch (NoSuchAlgorithmException e)
         {
-            throw new SummerControllerException(403, "Unexpected issue. Please report : %s", e.getMessage());
+            throw new SummerControllerException(403, "Unexpected issue. Please report : %s", e);
         }
     }
 

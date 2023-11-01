@@ -30,7 +30,7 @@ public class Map extends BaseEntity {
         if (map == null) {
             map = new Map();
             for (BoardPlacement boardPlacement : boards) {
-                map.addBoardPlacement(boardPlacement);
+                map.addBoardPlacement(boardPlacement.duplicate(em, duplications));
             }
             duplications.put(this, map);
         }

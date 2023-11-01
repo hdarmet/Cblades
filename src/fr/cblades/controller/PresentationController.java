@@ -61,7 +61,7 @@ public class PresentationController implements InjectorSunbeam, DataSunbeam, Sec
 					remove(em, presentation);
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return Json.createJsonObject().put("deleted", "ok");
@@ -93,7 +93,7 @@ public class PresentationController implements InjectorSunbeam, DataSunbeam, Sec
 					result.set(readFromPresentation(presentation));
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return result.get();

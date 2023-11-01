@@ -275,7 +275,9 @@ export class CBAEditArticlePane extends DetailedForm(Undoable(VSplitterPanel)) {
             }
         });
         this.addOnRight(this._illustration);
-        this._illustrationPosition = new VSwitch({ref:"paragraph-image-pos", kind:"paragraph-position",
+        this._illustrationPosition = new VSwitch({
+            ref:"paragraph-image-pos",
+            kind:"paragraph-position",
             options:[
                 {title: "left", value: "left"},
                 {title:"center", value:"center"},

@@ -96,7 +96,7 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 					remove(em, sequence);
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}/*, ADMIN*/);
 		return Json.createJsonObject().put("deleted", "ok");

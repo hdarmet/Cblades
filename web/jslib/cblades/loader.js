@@ -2,22 +2,15 @@
 
 import {
     CBBoard,
-    CBHex, CBMap
+    CBHex
 } from "./map.js";
 import {
     sendGet,
     sendPost
 } from "../draw.js";
 import {
-    CBOrderInstruction, CBUnit,
-    CBWing
-} from "./unit.js";
-import {
     CBSequence
 } from "./sequences.js";
-import {
-    CBHexCounter
-} from "./playable.js";
 
 //let consoleLog = console.log;
 let consoleLog = ()=>{};
@@ -238,257 +231,27 @@ export class GameLoader {
     }
 
     toSpecs() {
-        function toWingSpecs(wing, context) {
-            let wingSpecs = {
-                id: wing._oid,
-                version: wing._oversion || 0,
-                leader: wing.leader ? wing.leader.name : undefined,
-                moral: wing.moral,
-                tiredness: wing.tiredness,
-                banner: {
-                    id: wing.banner._oid,
-                    version: wing.banner._oversion,
-                    name: wing.banner.name,
-                    path: wing.banner.path
-                },
-                units: [],
-                retreatZone: [],
-                orderInstruction: this.getOrderInstructionCode(wing)
-            }
-            for (let retreatHex of wing.retreatZone) {
-                let retreatHexSpecs = {
-                    id: retreatHex.hex._oid,
-                    version: retreatHex.hex._oversion,
-                    col: retreatHex.col,
-                    row: retreatHex.row
-                }
-                wingSpecs.retreatZone.push(retreatHexSpecs);
-            }
-            for (let unit of wing.playables) {
-                let unitSpecs = unit.toSpecs(context);
-                wingSpecs.units.push(unitSpecs);
-            }
-            return wingSpecs;
-        }
-
-        function toPlayerSpecs(player, context) {
-            let playerSpecs = {
-                id: player._oid,
-                version: player._oversion || 0,
-                identity: {
-                    id: player.identity._oid,
-                    version: player.identity._oversion || 0,
-                    name: player.identity.name,
-                    path: player.identity.path
-                },
-                wings: []
-            }
-            for (let wing of player.wings) {
-                let wingSpecs = toWingSpecs.call(this, wing, context);
-                playerSpecs.wings.push(wingSpecs);
-            }
-            return playerSpecs;
-        }
-
         let context = new Map();
-        let gameSpecs = {
-            id : this._game.id,
-            version: this._game._oversion || 0,
-            currentPlayerIndex : this._game.players.indexOf(this._game.currentPlayer),
-            currentTurn : this._game.currentTurn,
-            players: []
-        };
-        gameSpecs.map = this._game.map.toSpecs(context);
-        for (let player of this._game.players) {
-            let playerSpecs = toPlayerSpecs.call(this, player, context);
-            gameSpecs.players.push(playerSpecs);
-        }
-        gameSpecs.locations = [];
-        for (let hexId of this._game.map.hexes) {
-            if (hexId.playables.length>0) {
-                let locationSpecs = {
-                    id: hexId.hex._oid,
-                    version: hexId.hex._oversion || 0,
-                    col: hexId.col,
-                    row: hexId.row,
-                    pieces: []
-                }
-                for (let playable of hexId.playables) {
-                    if (playable instanceof CBUnit) {
-                        locationSpecs.pieces.push({
-                            id: playable._oid,
-                            version: playable._oversion || 0,
-                            name:playable.name
-                        });
-                    }
-                    else {
-                        locationSpecs.pieces.push(playable.toSpecs());
-                    }
-                }
-                gameSpecs.locations.push(locationSpecs);
-            }
-        }
-        consoleLog(JSON.stringify(gameSpecs));
-        return gameSpecs;
+        return this._game.toSpecs(context);
     }
 
     fromSpecs(specs) {
         consoleLog(JSON.stringify(specs));
-        this._game.clean();
-        this._game._oversion = specs.version || 0;
-        this._game.currentTurn = specs.currentTurn;
-        let configuration = [];
-        if (specs.map.boards) {
-            for (let boardSpec of specs.map.boards) {
-                let board = {
-                    _oid: boardSpec.id,
-                    _oversion: boardSpec.version ,
-                    col: boardSpec.col,
-                    row: boardSpec.row,
-                    path: boardSpec.path,
-                    icon: boardSpec.icon
-                }
-                if (boardSpec.invert) board.invert = true;
-                configuration.push(board);
-            }
-        }
-        let map = new CBMap(configuration);
-        map._oid = specs.map.id;
-        map._oversion = specs.map.version;
-        this._game.changeMap(map);
         let context = new Map();
-        let unitsMap = new Map();
-        for (let playerSpec of specs.players) {
-            let player = this._game.getPlayer(playerSpec.identity.name);
-            if (!player) {
-                player = this._playerCreator(playerSpec.identity.name, playerSpec.identity.path);
-                this._game.addPlayer(player);
-            } else {
-                player.setIdentity(playerSpec.identity);
-            }
-            player._oid = playerSpec.id;
-            player._oversion = playerSpec.version;
-            player._identity._oid = playerSpec.identity.id;
-            player._identity._oversion = playerSpec.identity.version;
-            for (let wingSpec of playerSpec.wings) {
-                let wing = new CBWing(player, {
-                    _oid: wingSpec.banner.id,
-                    _oversion: wingSpec.banner.version,
-                    name: wingSpec.banner.name,
-                    path: wingSpec.banner.path
-                });
-                wing._oid = wingSpec.id;
-                wing._oversion = wingSpec.version;
-                wing.setMoral(wingSpec.moral);
-                wing.setTiredness(wingSpec.tiredness);
-                let retreatZone = [];
-                for (let retreatHexSpec of wingSpec.retreatZone) {
-                    let hexId = this._game.map.getHex(retreatHexSpec.col, retreatHexSpec.row);
-                    retreatZone.push(hexId);
-                }
-                wing.setRetreatZone(retreatZone);
-                let leader = null;
-                for (let unitSpecs of wingSpec.units) {
-                    let unit = CBUnit.fromSpecs(wing, unitSpecs);
-                    unitsMap.set(unit.name, {piece:unit, specs:unitSpecs});
-                    if (unit.name === wingSpec.leader) {
-                        leader = unit;
-                    }
-                    context.set(unit.name, unit);
-                }
-                leader && wing.setLeader(leader);
-                wing.setOrderInstruction(this.getOrderInstruction(wingSpec.orderInstruction))
-            }
-        }
-        this.showEntities(unitsMap, specs);
-        this._game.currentPlayer = this._game.players[specs.currentPlayerIndex];
-
+        context.playerCreator = this._playerCreator;
+        this._game.fromSpecs(specs, context);
         for (let playerSpec of specs.players) {
             for (let wingSpec of playerSpec.wings) {
                 for (let unitSpec of wingSpec.units) {
                     if (unitSpec.attributes) {
-                        let unit = unitsMap.get(unitSpec.name).piece;
+                        let unit = context.pieceMap.get(unitSpec.name).piece;
                         CBSequence.launch(unit, unitSpec.attributes.sequenceElement, unitSpec.attributes, context);
                     }
                 }
             }
         }
-
     }
 
-    showEntities(piecesMap, specs) {
-        let tokenCount = 0;
-        let namesToShow = new Set(piecesMap.keys());
-        for (let locationsSpec of specs.locations) {
-            for (let index = 0; index < locationsSpec.pieces.length; index++) {
-                let hexLocation = this._game.map.getHex(locationsSpec.col, locationsSpec.row);
-                hexLocation.hex._oid = locationsSpec.id;
-                hexLocation.hex._oversion = locationsSpec.version;
-                if (!locationsSpec.pieces[index].name) {
-                    locationsSpec.pieces[index].name = "t"+tokenCount++;
-                    let piece = CBHexCounter.fromSpecs(locationsSpec.pieces[index], piecesMap);
-                    piecesMap.set(locationsSpec.pieces[index].name, {
-                        specs: locationsSpec.pieces[index],
-                        piece, hexLocation
-                    })
-                }
-                else {
-                    let pieceDef = piecesMap.get(locationsSpec.pieces[index].name);
-                    if (pieceDef.piece.formationNature) {
-                        hexLocation = hexLocation.toward(pieceDef.specs.positionAngle);
-                    }
-                    pieceDef.hexLocation = hexLocation;
-                }
-                namesToShow.add(locationsSpec.pieces[index].name);
-            }
-        }
-        let shown = new Set();
-        let dependencies = [];
-        for (let locationsSpec of specs.locations) {
-            for (let index = 0; index < locationsSpec.pieces.length - 1; index++) {
-                dependencies.push([locationsSpec.pieces[index].name, locationsSpec.pieces[index + 1].name]);
-            }
-        }
-        while (namesToShow.size) {
-            let excluded = new Set();
-            for (let dependency of dependencies) {
-                excluded.add(dependency[1]);
-            }
-            for (let name of namesToShow) {
-                if (!excluded.has(name)) {
-                    shown.add(name);
-                    let pieceDef = piecesMap.get(name);
-                    pieceDef.piece.appendToMap(pieceDef.hexLocation);
-                }
-            }
-            let remainingDependencies = [];
-            for (let dependency of dependencies) {
-                if (!shown.has(dependency[0])) {
-                    remainingDependencies.push(dependency);
-                }
-            }
-            namesToShow = excluded;
-            dependencies = remainingDependencies;
-        }
-    }
-
-    getOrderInstructionCode(wing) {
-        switch (wing.orderInstruction) {
-            case CBOrderInstruction.ATTACK: return "A";
-            case CBOrderInstruction.DEFEND: return "D";
-            case CBOrderInstruction.REGROUP: return "G";
-            case CBOrderInstruction.RETREAT: return "R";
-        }
-    }
-
-    getOrderInstruction(code) {
-        switch (code) {
-            case "A": return CBOrderInstruction.ATTACK;
-            case "D": return CBOrderInstruction.DEFEND;
-            case "G": return CBOrderInstruction.REGROUP;
-            case "R": return CBOrderInstruction.RETREAT;
-        }
-    }
 }
 
 export class SequenceLoader {

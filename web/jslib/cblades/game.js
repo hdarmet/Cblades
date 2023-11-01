@@ -12,6 +12,9 @@ import {
 import {
     DBoard, DElement, DMultiImagesArtifact
 } from "../board.js";
+import {
+    CBMap
+} from "./map.js";
 
 export let CBStacking = {
     BOTTOM: 0,
@@ -164,6 +167,34 @@ export class CBAbstractPlayer {
         this._game = game;
     }
 
+    toSpecs(context) {
+        let playerSpecs = {
+            id: this._oid,
+            version: this._oversion || 0,
+            identity: {
+                id: this.identity._oid,
+                version: this.identity._oversion || 0,
+                name: this.identity.name,
+                path: this.identity.path
+            },
+        }
+        return playerSpecs;
+    }
+
+    static fromSpecs(game, specs, context) {
+        let player = context.playerCreator(specs.identity.name, specs.identity.path);
+        return player.fromSpecs(game, specs, context);
+    }
+
+    fromSpecs(game, specs, context) {
+        game.addPlayer(this);
+        this._oid = specs.id;
+        this._oversion = specs.version;
+        this._identity._oid = specs.identity.id;
+        this._identity._oversion = specs.identity.version;
+        return this;
+    }
+
 }
 
 export class CBAction {
@@ -279,26 +310,34 @@ export class CBAction {
     static CANCELLED = -1;
     static PROGRESSION_EVENT = "action-progression";
     static FINISHABLE = 1;
-
     static types = new Map();
-
     static register(label, actionType) {
         CBAction.types.set(label, actionType);
     }
-
     static createAction(label, game, unit, mode) {
         return new (CBAction.types.get(label))(game, unit, mode);
     }
 
 }
 
+/**
+ * base class of actuators. An actuator is a non-permanent graphical feature that gives the player the opportunity to
+ * interact with the game to do something with an item of the game (a unit, a marker, etc...).
+ * <p> An actuator contains one (at least) or (generally) more "triggers". A trigger is a subpart of an actuator that
+ * can be activated by simply clicking on it. The trigger warns the activator that it is activated, allowing the
+ * actuator to react accordingly.
+ * <p> At a given time, only ONE actuator may be present on the board.
+ */
 export class CBActuator {
 
     constructor() {
-        this._shown = false;
         this._closeAllowed = true;
     }
 
+    /**
+     * returns the triggers owned by the actuator.
+     * @return a list of triggers
+     */
     get triggers() {
         return this._triggers;
     }
@@ -887,6 +926,39 @@ export class CBAbstractGame {
         this._mask.open(this._board);
     }
 
+    toSpecs(context) {
+        let gameSpecs = {
+            id : this.id,
+            version: this._oversion || 0,
+            currentPlayerIndex : this.players.indexOf(this.currentPlayer),
+            currentTurn : this.currentTurn,
+            players: []
+        };
+        gameSpecs.map = this.map.toSpecs(context);
+        gameSpecs.locations = [];
+        for (let player of this.players) {
+            let playerSpecs = player.toSpecs(context);
+            gameSpecs.players.push(playerSpecs);
+        }
+        console.log(JSON.stringify(gameSpecs));
+        return gameSpecs;
+    }
+
+    fromSpecs(specs, context) {
+        console.log(JSON.stringify(specs));
+        this.clean();
+        context.game = this;
+        this._oversion = specs.version || 0;
+        this.currentTurn = specs.currentTurn;
+        let map = CBMap.fromSpecs(specs.map, context);
+        this.changeMap(map);
+        context.pieceMap = new Map();
+        for (let playerSpecs of specs.players) {
+            CBAbstractPlayer.fromSpecs(this, playerSpecs, context);
+        }
+        this.currentPlayer = this.players[specs.currentPlayerIndex];
+    }
+
     static STARTED_EVENT = "started-event";
     static SETTINGS_EVENT = "settings-event";
     static POPUP_MARGIN = 10;
@@ -918,11 +990,9 @@ export class CBPieceImageArtifact extends DMultiImagesArtifact {
             level.setShadowSettings("#000000", 10);
         }
     }
-
     onMouseEnter(event) {
         return true;
     }
-
     onMouseLeave(event) {
         return true;
     }
@@ -1324,6 +1394,11 @@ export function PlayableMixin(clazz) {
             this._updatePlayed && this._updatePlayed();
             this.attrs = {};
         }
+
+        toReferenceSpecs(context) {
+            return this.toSpecs(context);
+        }
+
     }
 
 }

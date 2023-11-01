@@ -40,7 +40,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 				.setName(imageName)
 				.setStream(PlatformManager.get().getInputStream("/games/"+imageName));
 		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 		}
 	}
 
@@ -175,7 +175,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 					remove(em, playerIdentity);
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return Json.createJsonObject().put("deleted", "ok");
@@ -195,7 +195,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 					result.set(readFromPlayerIdentity(playerIdentity));
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return result.get();
@@ -214,7 +214,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 						flush(em);
 						result.set(readFromPlayerIdentity(playerIdentity));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN

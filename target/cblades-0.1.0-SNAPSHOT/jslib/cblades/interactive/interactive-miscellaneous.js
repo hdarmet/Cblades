@@ -251,7 +251,6 @@ export class InteractiveSetFireAction extends CBAction {
                 this._processSetFireResult(result);
             }
         );
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -341,7 +340,6 @@ export class InteractiveExtinguishFireAction extends CBAction {
                 this._processExtinguishFireResult(result);
             }
         );
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -427,7 +425,6 @@ export class InteractiveSetStakesAction extends CBAction {
                 this._processSetStakesResult(result);
             }
         );
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -515,7 +512,6 @@ export class InteractiveRemoveStakesAction extends CBAction {
                 this._processRemoveStakesResult(result);
             }
         );
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -884,25 +880,31 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
         this.game.closePopup();
         let scene = this.createScene(
             result=>{
+                result.options = this.createOptions(
+                    PlayableMixin.getAllByType(this.game, CBFireCounter),
+                );
                 this._processPlayFireResult(this.game, result);
                 CBSequence.appendElement(this.game, new CBPlaySmokeAndFireSequenceElement({
-                    game: this.game, dice: scene.dice.result, options: this._options
+                    game: this.game, dice: scene.dice.result, options: result.options
                 }));
-                //new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
                 this.game.validate();
             }
         );
     }
 
-    replay(dice) {
+    replay(dice, options) {
         let scene = this.createScene(
             result=>{
-                this._processPlayFireResult(this.game, result);
+                this._processReplayFireResult(this.game, result);
             }
         );
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
+        scene.result.options = options;
+        for (let option of options) {
+
+        }
     }
 
     _createFires(counters, fireCount, noFireCount) {
@@ -936,10 +938,7 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
         this.putDenseSmoke();
         this.markBurningAsFinished();
         if (result.playFire) {
-            this._options = this.createOptions(
-                PlayableMixin.getAllByType(this.game, CBFireCounter),
-            );
-            this.openPlayFireActuator(this._options);
+            this.openPlayFireActuator(result.options);
         }
         else {
             this.markAsFinished();
@@ -948,11 +947,20 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
         return result;
     }
 
-    createOptions(counters) {
-        return this._putOptions(counters,  15, 15);
+    _processReplayFireResult(game, result) {
+        this.updateSmokes();
+        this.putDenseSmoke();
+        this.markBurningAsFinished();
+        this.playAllOptions(result.options);
+        this.game.validate();
+        return result;
     }
 
-    _putOptions(counters, fireCount, noFireCount) {
+    createOptions(counters) {
+        return this._createOptions(counters,  15, 15);
+    }
+
+    _createOptions(counters, fireCount, noFireCount) {
         let fires = this._createFires(counters, fireCount, noFireCount);
         let options = [];
         for (let counter of counters) {
@@ -1046,8 +1054,7 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
         this.openPlayFireActuator(this._options);
     }
 
-    playOption(option) {
-        this.game.closeActuators();
+    _playOption(option) {
         option.played = true;
         if (option.hexLocation === option.fireCounter.hexLocation) {
             if (option.isFirstFire && option.isSecondFire) {
@@ -1066,7 +1073,19 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
                 createStartFireCounter(this.game, option.hexLocation);
             }
         }
+    }
+
+    playOption(option) {
+        this.game.closeActuators();
+        this._playOption(option);
         this.openPlayFireActuator(this._options);
+    }
+
+    playAllOptions(options) {
+        this.game.closeActuators();
+        for (let option of options) {
+            this._playOption(option);
+        }
     }
 
 }
@@ -1409,6 +1428,7 @@ export class CBPlaySmokeAndFireSequenceElement extends WithDiceRoll(CBSequenceEl
 
     _toSpecs(spec, context) {
         super._toSpecs(spec, context);
+
         if (this.options) {
             spec.options = this.options.toSpecs();
         }

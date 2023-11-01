@@ -37,7 +37,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 				.setName(imageName)
 				.setStream(PlatformManager.get().getInputStream("/games/"+imageName));
 		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 		}
 	}
 
@@ -172,7 +172,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 					remove(em, banner);
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return Json.createJsonObject().put("deleted", "ok");
@@ -192,7 +192,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 					result.set(readFromBanner(banner));
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return result.get();
@@ -211,7 +211,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 						flush(em);
 						result.set(readFromBanner(banner));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN

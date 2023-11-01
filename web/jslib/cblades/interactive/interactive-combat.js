@@ -470,7 +470,6 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
         this._attackHexes = new Set([...attackHexes]);
         let advantage = this.game.arbitrator.getShockAttackAdvantage(this.unit, attackerHex, defender, defenderHex, supported);
         let scene = this.createScene(attackerHex, defender, defenderHex, supported, advantage);
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -772,7 +771,6 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
         this._attackHexes = new Set([...firerHexes]);
         let advantage = this.game.arbitrator.getFireAttackAdvantage(this.unit, firerHex, target, targetHex);
         let scene = this.createScene(firerHex, target, targetHex, advantage);
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }

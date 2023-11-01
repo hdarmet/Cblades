@@ -184,7 +184,7 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 					try {
 						remove(em, messageModel);
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				verifyIfAdminOrOwner(messageModel)
@@ -206,7 +206,7 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 						flush(em);
 						result.set(readFromMessageModelWithComments(messageModel));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN
@@ -228,7 +228,7 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 						flush(em);
 						result.set(readFromMessageModel(messageModel));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN

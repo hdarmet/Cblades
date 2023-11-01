@@ -127,7 +127,6 @@ export class InteractiveRestingAction extends CBAction {
 
     replay(dice) {
         let scene = this.createScene();
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -206,7 +205,6 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
 
     replay(dice) {
         let scene = this.createScene();
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -287,7 +285,6 @@ export class InteractiveReorganizeAction extends CBAction {
 
     replay(dice) {
         let scene = this.createScene();
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -368,7 +365,6 @@ export class InteractiveRallyAction extends CBAction {
 
     replay(dice) {
         let scene = this.createScene();
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }

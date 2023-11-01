@@ -217,7 +217,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						}
 						remove(em, forum);
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN
@@ -239,7 +239,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						flush(em);
 						result.set(readFromForumWithComments(forum));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN
@@ -261,7 +261,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						flush(em);
 						result.set(readFromForum(forum));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN
@@ -354,7 +354,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						}
 						remove(em, thread);
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN
@@ -381,7 +381,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						}
 						remove(em, message);
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN
@@ -403,7 +403,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						flush(em);
 						result.set(readFromForumThreadWithComments(thread));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN
@@ -425,7 +425,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						flush(em);
 						result.set(readFromForumThread(thread));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN
@@ -486,7 +486,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						flush(em);
 						result.set(readFromForumMessage(message));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN
@@ -952,7 +952,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						flush(em);
 						result.set(readFromForumThread(thread));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					} catch (SummerNotFoundException snfe) {
 						throw new SummerControllerException(404, "Object Not Found.", snfe.getMessage());
 					}
@@ -1052,7 +1052,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						persist(em, newReport);
 						result.set(readFromReport(newReport));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(500, "Unexpected issue", pe.getMessage());
+						throw new SummerControllerException(500, "Unexpected issue. Please report: %s", pe);
 					} catch (SummerNotFoundException snfe) {
 						throw new SummerControllerException(404, "User not found: "+user, snfe.getMessage());
 					}

@@ -42,7 +42,7 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 			    .setName(imageName)
 				.setStream(PlatformManager.get().getInputStream("/avatars/"+imageName));
 		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 		}
 	}
 
@@ -147,7 +147,7 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 					remove(em, account);
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return Json.createJsonObject().put("deleted", "ok");
@@ -167,7 +167,7 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 					result.set(readFromAccount(account));
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return result.get();

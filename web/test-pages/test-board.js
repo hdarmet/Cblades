@@ -26,8 +26,7 @@ import {
     DStackedLevel,
     DRectArtifact,
     DComposedImageArtifact,
-    DArtifact,
-    DPedestalArtifact, DComposedElement
+    DPedestalArtifact, DComposedElement, DScrollBoardAnimation
 } from "../jslib/board.js";
 import {
     mockPlatform, getDirectives, resetDirectives, createEvent, loadAllImages, getLayers, assertDirectives
@@ -1925,7 +1924,7 @@ describe("Board", ()=> {
             board.scrollOnLeft();
             board.paint();
         then:
-            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 260, 150)");
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 270, 150)");
             assertLayerIsCleared(0, layer)
         when:
             resetDirectives(layer);
@@ -1939,7 +1938,7 @@ describe("Board", ()=> {
             board.scrollOnTop();
             board.paint();
         then:
-            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 250, 160)");
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 250, 170)");
             assertLayerIsCleared(0, layer)
         when:
             resetDirectives(layer);
@@ -2286,7 +2285,7 @@ describe("Board", ()=> {
             let event = createEvent("mousemove", {offsetX: 5, offsetY: 5});
             mockPlatform.dispatchEvent(board.root, "mousemove", event);
         then:
-            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 260, 160)");
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 270, 170)");
             assertLayerIsCleared(0, layer)
         when:
             resetDirectives(layer);
@@ -2313,7 +2312,7 @@ describe("Board", ()=> {
             let event = createEvent("keydown", {key: 'ArrowLeft'});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
-            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 260, 150)");
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 270, 150)");
             assertLayerIsCleared(0, layer)
             assert(nothingDone).isFalse();
         when:
@@ -2321,7 +2320,7 @@ describe("Board", ()=> {
             event = createEvent("keydown", {key: 'ArrowUp'});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
-            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 260, 160)");
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 270, 170)");
             assertLayerIsCleared(0, layer)
             assert(nothingDone).isFalse();
         when:
@@ -2329,7 +2328,7 @@ describe("Board", ()=> {
             event = createEvent("keydown", {key: 'ArrowRight'});
             mockPlatform.dispatchEvent(board.root, "keydown", event);
         then:
-            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 250, 160)");
+            assert(getDirectives(layer)).arrayContains("setTransform(0.75, 0, 0, 0.75, 250, 170)");
             assertLayerIsCleared(0, layer)
             assert(nothingDone).isFalse();
         when:
@@ -2634,6 +2633,43 @@ describe("Board", ()=> {
             ]);
     });
 
+    it("Checks artifact scrolling animation", () => {
+        given:
+            var {board, layer} = createBoardWithOneCounter();
+            board.zoomOut(new Point2D(250, 150)); // Mandatory to have space to move
+        when:
+            resetDirectives(layer);
+            new DScrollBoardAnimation(board, new Point2D(120, 100), 60);
+            executeTimeouts();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1.5, 0, 0, 1.5, 250, 150)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(layer);
+            executeTimeouts();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1.5, 0, 0, 1.5, 190, 100)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(layer);
+            executeTimeouts();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1.5, 0, 0, 1.5, 130, 75)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
     it("Checks artifact animation overriding", () => {
         given:
             var { layer, artifact } = createBoardWithOneCounter();
@@ -2677,6 +2713,24 @@ describe("Board", ()=> {
                 "save()",
                     "setTransform(-0.7071, -0.7071, 0.7071, -0.7071, 250, 150)",
                     "drawImage(../images/unit.png, -25, -25, 50, 50)",
+                "restore()"
+            ]);
+    });
+
+    it("Checks board animated centering", () => {
+        given:
+            var {board, layer} = createBoardWithOneCounter();
+            board.zoomOut(new Point2D(250, 150)); // Mandatory to have space to move
+        when:
+            board.centerOn(new Point2D(120, 100));
+            for (let index=0; index<9; index++) executeTimeouts();
+            resetDirectives(layer);
+            executeTimeouts();
+        then:
+            assert(getDirectives(layer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1.5, 0, 0, 1.5, 367, 195)",
+                "drawImage(../images/unit.png, -25, -25, 50, 50)",
                 "restore()"
             ]);
     });

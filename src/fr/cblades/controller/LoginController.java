@@ -83,7 +83,7 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					remove(em, login);
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return Json.createJsonObject().put("deleted", "ok");
@@ -102,7 +102,7 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					result.set(readFromLogin(login));
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return result.get();
@@ -136,7 +136,7 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			});
 			return Json.createJsonObject();
 		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 		}
 	}
 	
@@ -179,7 +179,7 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			});
 			return Json.createJsonObject();
 		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 		}
 
 	}

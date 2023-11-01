@@ -42,7 +42,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					.setName(imageName)
 					.setStream(PlatformManager.get().getInputStream("/boards/"+imageName));
 		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 		}
 	}
 
@@ -104,7 +104,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						flush(em);
 						result.set(readFromBoard(board));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					} catch (SummerNotFoundException snfe) {
 						throw new SummerControllerException(404, snfe.getMessage());
 					}
@@ -231,7 +231,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 							"author", Account.find(em, user));
 						result.set(readFromBoardSummaries(boards));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				}
 			);
@@ -277,7 +277,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					try {
 						remove(em, board);
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				verifyIfAdminOrOwner(board)
@@ -300,7 +300,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						flush(em);
 						result.set(readFromBoard(board));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN
@@ -322,7 +322,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						flush(em);
 						result.set(readFromBoard(board));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN
@@ -344,7 +344,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 						flush(em);
 						result.set(readFromBoardAndHexes(board));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				verifyIfAdminOrOwner(board)

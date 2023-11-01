@@ -913,7 +913,6 @@ export class CBAttackerEngagementChecking {
 
     replay(dice) {
         let scene = this.createScene();
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -988,7 +987,6 @@ export class CBLoseCohesionForCrossingChecking {
 
     replay(dice) {
         let scene = this.createScene();
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -1060,7 +1058,6 @@ export class CBDisengagementChecking {
 
     replay(dice) {
         let scene = this.createScene();
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -1124,7 +1121,6 @@ export class CBConfrontChecking {
 
     replay(dice) {
         let scene = this.createScene();
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }

@@ -128,6 +128,7 @@ export class CBBurningCounter extends RetractablePieceMixin(CBHexCounter) {
             specs.positionCol = this.getPosition().col;
             specs.positionRow = this.getPosition().row;
         }
+        return specs;
     }
 
     getPosition() {
@@ -176,6 +177,8 @@ export class CBSmokeCounter extends CBBurningCounter {
         let counter = new CBSmokeCounter();
         if (specs.density) counter.densify();
         counter.angle = specs.angle;
+        counter._oid = specs.id;
+        counter._oversion = specs.version;
         return counter;
     }
 
@@ -211,6 +214,8 @@ export class CBFireCounter extends CBBurningCounter {
         let counter = new CBFireCounter();
         if (specs.fire) counter.setFire();
         counter.angle = specs.angle;
+        counter._oid = specs.id;
+        counter._oversion = specs.version;
         return counter;
     }
 
@@ -319,6 +324,8 @@ export class CBStakesCounter extends CBObstacleCounter {
     static fromSpecs(specs, context) {
         let counter = new CBStakesCounter();
         counter.angle = specs.angle;
+        counter._oid = specs.id;
+        counter._oversion = specs.version;
         return counter;
     }
 

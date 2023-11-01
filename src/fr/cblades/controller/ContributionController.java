@@ -81,7 +81,7 @@ public class ContributionController implements InjectorSunbeam, DataSunbeam, Sec
 			List<Theme> themes = getPagedResultList(query, 0, ContributionController.ITEMS_BY_LOAD);
 			return themes.stream().distinct().collect(Collectors.toList());
 		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 		}
 	}
 
@@ -102,7 +102,7 @@ public class ContributionController implements InjectorSunbeam, DataSunbeam, Sec
 			List<Board> boards = getPagedResultList(query, 0, ContributionController.ITEMS_BY_LOAD);
 			return boards.stream().distinct().collect(Collectors.toList());
 		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 		}
 	}
 
@@ -126,7 +126,7 @@ public class ContributionController implements InjectorSunbeam, DataSunbeam, Sec
 			List<Article> articles = getPagedResultList(query, 0, ContributionController.ITEMS_BY_LOAD);
 			return articles.stream().distinct().collect(Collectors.toList());
 		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 		}
 	}
 
@@ -150,7 +150,7 @@ public class ContributionController implements InjectorSunbeam, DataSunbeam, Sec
 			List<Scenario> scenarios = getPagedResultList(query, 0, ContributionController.ITEMS_BY_LOAD);
 			return scenarios.stream().distinct().collect(Collectors.toList());
 		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 		}
 	}
 

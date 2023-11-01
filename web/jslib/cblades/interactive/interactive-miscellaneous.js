@@ -251,7 +251,6 @@ export class InteractiveSetFireAction extends CBAction {
                 this._processSetFireResult(result);
             }
         );
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -341,7 +340,6 @@ export class InteractiveExtinguishFireAction extends CBAction {
                 this._processExtinguishFireResult(result);
             }
         );
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -427,7 +425,6 @@ export class InteractiveSetStakesAction extends CBAction {
                 this._processSetStakesResult(result);
             }
         );
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -515,7 +512,6 @@ export class InteractiveRemoveStakesAction extends CBAction {
                 this._processRemoveStakesResult(result);
             }
         );
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -903,13 +899,12 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
                 this._processReplayFireResult(this.game, result);
             }
         );
-        scene.dice.active = false;
         scene.result.active = false;
+        scene.dice.cheat(dice);
         scene.result.options = options;
         for (let option of options) {
 
         }
-        scene.dice.cheat(dice);
     }
 
     _createFires(counters, fireCount, noFireCount) {

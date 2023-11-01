@@ -61,7 +61,7 @@ public class NoticeController implements InjectorSunbeam, DataSunbeam, SecurityS
 					remove(em, notice);
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return Json.createJsonObject().put("deleted", "ok");
@@ -93,7 +93,7 @@ public class NoticeController implements InjectorSunbeam, DataSunbeam, SecurityS
 					result.set(readFromNotice(notice));
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return result.get();

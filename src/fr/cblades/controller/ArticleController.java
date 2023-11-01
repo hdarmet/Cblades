@@ -46,7 +46,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 				.setName(imageName)
 				.setStream(PlatformManager.get().getInputStream("/articles/"+imageName));
 		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 		}
 	}
 
@@ -108,7 +108,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 						flush(em);
 						result.set(readFromArticle(article));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					} catch (SummerNotFoundException snfe) {
 						throw new SummerControllerException(404, snfe.getMessage());
 					}
@@ -296,7 +296,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 					try {
 						remove(em, article);
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				verifyIfAdminOrOwner(article)
@@ -318,7 +318,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 						flush(em);
 						result.set(readFromArticle(article));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN
@@ -341,7 +341,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 						flush(em);
 						result.set(readFromArticle(article));
 					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN

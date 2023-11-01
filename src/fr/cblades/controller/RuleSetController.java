@@ -39,7 +39,7 @@ public class RuleSetController implements InjectorSunbeam, DataSunbeam, Security
 				.setName(docName)
 				.setStream(PlatformManager.get().getInputStream("/rules/"+docName));
 		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 		}
 	}
 
@@ -109,7 +109,7 @@ public class RuleSetController implements InjectorSunbeam, DataSunbeam, Security
 					remove(em, ruleSet);
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return Json.createJsonObject().put("deleted", "ok");
@@ -142,7 +142,7 @@ public class RuleSetController implements InjectorSunbeam, DataSunbeam, Security
 					result.set(readFromRuleSet(ruleSet));
 				});
 			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe.getMessage());
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 			}
 		}, ADMIN);
 		return result.get();

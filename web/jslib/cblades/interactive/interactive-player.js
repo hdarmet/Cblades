@@ -269,7 +269,6 @@ export class CBDefenderEngagementChecking {
 
     replay(dice) {
         let scene = this.createScene();
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }
@@ -344,7 +343,6 @@ export class CBLoseCohesionChecking {
 
     replay(dice) {
         let scene = this.createScene();
-        scene.dice.active = false;
         scene.result.active = false;
         scene.dice.cheat(dice);
     }

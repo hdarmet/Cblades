@@ -51,9 +51,6 @@ import {
     zoomAndRotate0,
     showMap, showMask, executeAllAnimations
 } from "./interactive-tools.js";
-import {
-    CBGame
-} from "../../jslib/cblades/playable.js";
 
 class CBTestGame extends CBAbstractGame {
 
@@ -153,7 +150,6 @@ class CBTestActuator extends CBActuator {
 
     setVisibility(level) {
         super.setVisibility(level);
-        this.trigger.alpha = (level===CBGame.FULL_VISIBILITY ? 1:0);
     }
 
 }

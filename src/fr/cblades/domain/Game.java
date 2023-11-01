@@ -84,7 +84,7 @@ public class Game extends BaseEntity {
     public Game duplicate(EntityManager em, java.util.Map<BaseEntity, BaseEntity> duplications) {
         Game game = (Game)duplications.get(this);
         if (game == null) {
-            game = new Game().setMap(this.map)
+            game = new Game().setMap(this.map.duplicate(em, duplications))
                     .setCurrentPlayerIndex(this.currentPlayerIndex)
                     .setCurrentTurn(this.currentTurn);
             for (Player player : players) {

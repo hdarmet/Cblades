@@ -2042,11 +2042,11 @@ export class CBMapComposer extends DPopup {
     _updateSelection(selector) {
         if (this._selected !== selector) {
             if (this._selected) {
-                this._selected._unselect();
+                this._selected.unselect();
             }
             this._selected = selector;
             if (this._selected) {
-                this._selected._select();
+                this._selected.select();
             }
         }
     }
@@ -2513,6 +2513,24 @@ export class CBEditorPlayer extends CBAbstractPlayer {
 
     playToken(token, point) {
         this.openEditTokenMenu(token, point);
+    }
+
+    toSpecs(context) {
+        let playerSpecs = super.toSpecs(context);
+        playerSpecs.wings = [];
+        for (let wing of this.wings) {
+            let wingSpecs = wing.toSpecs(context);
+            playerSpecs.wings.push(wingSpecs);
+        }
+        return playerSpecs;
+    }
+
+    fromSpecs(game, specs, context) {
+        super.fromSpecs(game, specs, context);
+        for (let wingSpecs of specs.wings) {
+            CBWing.fromSpecs(this, wingSpecs, context);
+        }
+        return this;
     }
 
 }
