@@ -313,14 +313,24 @@ export class CBHexCounter extends RetractablePieceMixin(HexLocatableMixin(Playab
         return true;
     }
 
+    static resetTokenType() {
+        hexCounterCreators.clear();
+    }
+
     static registerTokenType(type, clazz) {
         hexCounterCreators.set(type, clazz);
     }
 
-    static fromSpecs(specs, context) {
-        let counter = hexCounterCreators.get(specs.type).fromSpecs(specs, context);
-        counter._oid = specs.id;
-        counter._oversion = specs.version;
+    fromSpecs(specs, context) {
+        this._oid = specs.id;
+        this._oversion = specs.version;
+        return this;
+    }
+
+    static fromSpecs(game, specs, context) {
+        let counter = new (hexCounterCreators.get(specs.type))();
+        counter.game = game;
+        counter.fromSpecs(specs, context);
         return counter;
     }
 
@@ -570,6 +580,7 @@ export class CBActionActuator extends VisibilityMixin(CBActuator) {
     constructor(action) {
         super();
         this._action = action;
+        this._shown = false;
     }
 
     get action() {
@@ -705,6 +716,83 @@ export function RetractableGameMixin(gameClass) {
             }
         }
 
+        toSpecs(context) {
+            let gameSpecs = super.toSpecs(context);
+            for (let hexId of this.map.hexes) {
+                if (hexId.playables.length>0) {
+                    let locationSpecs = {
+                        id: hexId.hex._oid,
+                        version: hexId.hex._oversion || 0,
+                        col: hexId.col,
+                        row: hexId.row,
+                        pieces: []
+                    }
+                    for (let playable of hexId.playables) {
+                        locationSpecs.pieces.push(playable.toReferenceSpecs(context));
+                    }
+                    gameSpecs.locations.push(locationSpecs);
+                }
+            }
+            console.log(JSON.stringify(gameSpecs));
+            return gameSpecs;
+        }
+
+        fromSpecs(specs, context) {
+            super.fromSpecs(specs, context);
+            let tokenCount = 0;
+            let namesToShow = new Set(context.pieceMap.keys());
+            for (let locationsSpec of specs.locations) {
+                let hexLocation = this.map.getHex(locationsSpec.col, locationsSpec.row);
+                hexLocation.hex._oid = locationsSpec.id;
+                hexLocation.hex._oversion = locationsSpec.version;
+                for (let index = 0; index < locationsSpec.pieces.length; index++) {
+                    let pieceSpec = locationsSpec.pieces[index];
+                    if (!pieceSpec.name) {
+                        pieceSpec.name = "t"+tokenCount++;
+                        let piece = CBHexCounter.fromSpecs(this, pieceSpec, context.pieceMap);
+                        context.pieceMap.set(pieceSpec.name, {
+                            specs: pieceSpec,
+                            piece,
+                            hexLocation
+                        })
+                    }
+                    else {
+                        let pieceDef = context.pieceMap.get(pieceSpec.name);
+                        pieceDef.hexLocation = pieceDef.piece.hexLocation;
+                    }
+                    namesToShow.add(pieceSpec.name);
+                }
+            }
+            let shown = new Set();
+            let dependencies = [];
+            for (let locationsSpec of specs.locations) {
+                for (let index = 0; index < locationsSpec.pieces.length - 1; index++) {
+                    dependencies.push([locationsSpec.pieces[index].name, locationsSpec.pieces[index + 1].name]);
+                }
+            }
+            while (namesToShow.size) {
+                let excluded = new Set();
+                for (let dependency of dependencies) {
+                    excluded.add(dependency[1]);
+                }
+                for (let name of namesToShow) {
+                    if (!excluded.has(name)) {
+                        shown.add(name);
+                        let pieceDef = context.pieceMap.get(name);
+                        pieceDef.piece.appendToMap(pieceDef.hexLocation);
+                    }
+                }
+                let remainingDependencies = [];
+                for (let dependency of dependencies) {
+                    if (!shown.has(dependency[0])) {
+                        remainingDependencies.push(dependency);
+                    }
+                }
+                namesToShow = excluded;
+                dependencies = remainingDependencies;
+            }
+        }
+
     }
 
 }
@@ -731,9 +819,6 @@ export class CBBasicPlayer extends CBAbstractPlayer {
         }
     }
 
-    canPlay() {
-        return false;
-    }
 }
 
 export class CBGame extends RetractableGameMixin(CBAbstractGame) {
@@ -859,7 +944,6 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
     }
 
     turnIsFinishable() {
-        //if (this._currentPlayer && !this._currentPlayer.canPlay()) return false;
         if (!this.canUnselectPlayable()) return false;
         if (this.playables) {
             for (let playable of this.playables) {

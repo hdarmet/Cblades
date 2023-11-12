@@ -85,9 +85,8 @@ public class SequenceElement extends BaseEntity {
         this.attributes = attrs;
         return this;
     }
-    public Object getAttr(String path) {
-        if (this.attributes == null) this.attributes = buildAttributes();
-        java.util.Map<String, Object> attrs = this.attributes;
+
+    public static Object getAttr(java.util.Map<String, Object> attrs, String path) {
         String[] names = path.split("\\.");
         for (int index=0; index<names.length-1; index++) {
             attrs = (java.util.Map<String, Object>) attrs.get(names[index]);
@@ -95,8 +94,8 @@ public class SequenceElement extends BaseEntity {
         }
         return attrs.get(names[names.length-1]);
     }
-    public SequenceElement setAttr(String path, Object value) {
-        Map<String, Object> attrs = this.attributes;
+
+    public void setAttr(java.util.Map<String, Object> attrs, String path, Object value) {
         String[] names = path.split("\\.");
         for (int index=0; index<names.length-1; index++) {
             Map<String, Object> lattrs = (Map<String, Object>) attrs.get(names[index]);
@@ -107,6 +106,15 @@ public class SequenceElement extends BaseEntity {
             attrs = lattrs;
         }
         attrs.put(names[names.length-1], value);
+    }
+
+    public Object getAttr(String path) {
+        if (this.attributes == null) this.attributes = buildAttributes();
+        return getAttr(this.attributes, path);
+    }
+
+    public SequenceElement setAttr(String path, Object value) {
+        setAttr(this.attributes, path, value);
         return this;
     }
 

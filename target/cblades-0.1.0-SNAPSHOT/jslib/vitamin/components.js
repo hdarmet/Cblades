@@ -4,8 +4,232 @@ import {
     getDrawPlatform
 } from "../draw.js";
 
+/**
+ * Base class for component. These objects are DOM handlers, not subclasses of DOM objects. The DOM object managed by
+ * component is referenced by the _root attribute. This DOM object "knows" its element counterpart thanks to a
+ * _component attribute added to it. This "back" reference is useful to find the corresponding element when a user
+ * event is received by the DOM object
+ */
 export class DComponent {
+    /**
+     * Element constructor. This method also creates the corresponding DOM object.
+     * @param domType type of the DOM object : DIV, A, LI, etc;
+     */
+    constructor(domType) {
+        this._domType = domType;
+        this._root = getDrawPlatform().createElement(domType);
+        this._root._component = this;
+    }
 
+    getParent() {
+        let parentNode = this._root.parentNode;
+        while (parentNode !== null && parentNode._component === null) {
+            parentNode = parentNode.parentNode;
+        }
+        return parentNode===null ? parentNode : parentNode._component;
+    }
+
+    addStyle(name, value) {
+        if (!this._styles) {
+            this._styles = new Map();
+        }
+        this._styles.set(name, value);
+        getDrawPlatform().setStyleAttribute(this._root, name, value);
+        return this;
+    }
+
+    getStyle(style) {
+        return this._styles ? this._styles.get(style) : null;
+    }
+
+    setAttribute(name, value) {
+        if (!this._attributes) {
+            this._attributes = new Map();
+        }
+        this._attributes.set(name, value);
+        getDrawPlatform().setAttribute(this._root, name, value);
+        return this;
+    }
+
+    removeAttribute(name, value) {
+        if (this._attributes) {
+            this._attributes.delete(name, value);
+            getDrawPlatform().removeAttribute(this._root, name);
+        }
+        return this;
+    }
+
+    getAttribute(attribute) {
+        return this._attributes ? this._attributes.get(attribute) : null;
+    }
+
+    setWidth(width) {
+        return this.addStyle("width", width);
+    }
+
+    getWidth() {
+        return this.getStyle("width");
+    }
+
+    setHeight(height) {
+        return this.addStyle("height", height);
+    }
+
+    getHeight() {
+        return this.getStyle("height");
+    }
+
+    setBorder(border) {
+        return this.addStyle("border", border);
+    }
+
+    getBorder() {
+        return this.getStyle("border");
+    }
+
+    setColor(color) {
+        return this.addStyle("background-color", color);
+    }
+
+    getColor() {
+        return this.getStyle("background-color");
+    }
+
+    setFloating(float) {
+        return this.addStyle("float", float);
+    }
+
+    getFloating() {
+        return this.getStyle("float");
+    }
+
+    setOverflow(overflow) {
+        return this.addStyle("overflow", overflow);
+    }
+
+    getOverflow() {
+        return this.getStyle("overflow");
+    }
+
+    containsClass(clazz) {
+        return this._classes.indexOf(clazz)>=0;
+    }
+
+    addClass(clazz) {
+        if (!this._classes) {
+            this._classes = [];
+        }
+        if (this._classes.indexOf(clazz)<0) {
+            this._classes.push(clazz);
+            getDrawPlatform().setAttribute(this._root, "class", this._classes.join(" "));
+        }
+        return this;
+    }
+
+    removeClass(clazz) {
+        if (this._classes && this._classes.remove(clazz)>=0) {
+            getDrawPlatform().setAttribute(this._root, "class", this._classes.join(" "));
+        }
+        return this;
+    }
+
+    getClasses() {
+        return this._classes;
+    }
+
+    setText(text) {
+        this._text = text;
+        text!==undefined&&getDrawPlatform().setText(this._root, text);
+        return this;
+    }
+
+    getText() {
+        return this._text;
+    }
+
+    getInnerHTML() {
+        return getDrawPlatform().getText(this._root);
+    }
+
+    setAlt(alt) {
+        this.setAttribute("alt", alt);
+        return this;
+    }
+
+    getAlt() {
+        return this.getAttribute("alt");
+    }
+
+    setId(id) {
+        this.setAttribute("id", id);
+        return this;
+    }
+
+    getId() {
+        return this.getAttribute("id");
+    }
+
+    setType(type) {
+        this.setAttribute("type", type);
+        return this;
+    }
+
+    getType() {
+        return this.getAttribute("type");
+    }
+
+    setName(name) {
+        this.setAttribute("name", name);
+        return this;
+    }
+
+    getName() {
+        return this.getAttribute("name");
+    }
+
+    get offsetWidth() {
+        return this._root.offsetWidth;
+    }
+
+    get offsetHeight() {
+        return this._root.offsetHeight;
+    }
+
+    get offsetTop() {
+        return this._root.offsetTop;
+    }
+
+    get offsetLeft() {
+        return this._root.offsetLeft;
+    }
+
+    get root() {
+        return this._root;
+    }
+
+    onEvent(event, action) {
+        if (this["_"+event]) {
+            getDrawPlatform().removeEventListener(this._root, event, this["_"+event]);
+            delete this["_"+event];
+        }
+        if (action) {
+            this["_"+event] = action;
+            getDrawPlatform().addEventListener(this._root, event, action, false);
+        }
+        return this;
+    }
+
+    onChange(changeAction) {
+        return this.onEvent("change", changeAction);
+    }
+
+    onInput(inputAction) {
+        return this.onEvent("input", inputAction);
+    }
+
+    onMouseClick(clickAction) {
+        return this.onEvent("click", clickAction);
+    }
 }
 
 export function isComponent(any) {
@@ -13,6 +237,10 @@ export function isComponent(any) {
 }
 
 export class DComposed extends DComponent {
+
+    constructor(domType) {
+        super(domType);
+    }
 
     add(component) {
         if (!this._children) {
@@ -78,231 +306,7 @@ export class DComposed extends DComponent {
 
 }
 
-export function DOM(clazz) {
-
-    return class extends clazz {
-
-        constructor(domType) {
-            super();
-            this._domType = domType;
-            this._root = getDrawPlatform().createElement(domType);
-            this._root._component = this;
-        }
-
-        addStyle(name, value) {
-            if (!this._styles) {
-                this._styles = new Map();
-            }
-            this._styles.set(name, value);
-            getDrawPlatform().setStyleAttribute(this._root, name, value);
-            return this;
-        }
-
-        getParent() {
-            let parentNode = this._root.parentNode;
-            while (parentNode !== null && parentNode._component === null) {
-                parentNode = parentNode.parentNode;
-            }
-            return parentNode===null ? parentNode : parentNode._component;
-        }
-
-        getStyle(style) {
-            return this._styles ? this._styles.get(style) : null;
-        }
-
-        setAttribute(name, value) {
-            if (!this._attributes) {
-                this._attributes = new Map();
-            }
-            this._attributes.set(name, value);
-            getDrawPlatform().setAttribute(this._root, name, value);
-            return this;
-        }
-
-        removeAttribute(name, value) {
-            if (this._attributes) {
-                this._attributes.delete(name, value);
-                getDrawPlatform().removeAttribute(this._root, name);
-            }
-            return this;
-        }
-
-        getAttribute(attribute) {
-            return this._attributes ? this._attributes.get(attribute) : null;
-        }
-
-        setWidth(width) {
-            return this.addStyle("width", width);
-        }
-
-        getWidth() {
-            return this.getStyle("width");
-        }
-
-        setHeight(height) {
-            return this.addStyle("height", height);
-        }
-
-        getHeight() {
-            return this.getStyle("height");
-        }
-
-        setBorder(border) {
-            return this.addStyle("border", border);
-        }
-
-        getBorder() {
-            return this.getStyle("border");
-        }
-
-        setColor(color) {
-            return this.addStyle("background-color", color);
-        }
-
-        getColor() {
-            return this.getStyle("background-color");
-        }
-
-        setFloating(float) {
-            return this.addStyle("float", float);
-        }
-
-        getFloating() {
-            return this.getStyle("float");
-        }
-
-        setOverflow(overflow) {
-            return this.addStyle("overflow", overflow);
-        }
-
-        getOverflow() {
-            return this.getStyle("overflow");
-        }
-
-        containsClass(clazz) {
-            return this._classes.indexOf(clazz)>=0;
-        }
-
-        addClass(clazz) {
-            if (!this._classes) {
-                this._classes = [];
-            }
-            if (this._classes.indexOf(clazz)<0) {
-                this._classes.push(clazz);
-                getDrawPlatform().setAttribute(this._root, "class", this._classes.join(" "));
-            }
-            return this;
-        }
-
-        removeClass(clazz) {
-            if (this._classes && this._classes.remove(clazz)>=0) {
-                getDrawPlatform().setAttribute(this._root, "class", this._classes.join(" "));
-            }
-            return this;
-        }
-
-        getClasses() {
-            return this._classes;
-        }
-
-        setText(text) {
-            this._text = text;
-            text!==undefined&&getDrawPlatform().setText(this._root, text);
-            return this;
-        }
-
-        getText() {
-            return this._text;
-        }
-
-        getInnerHTML() {
-            return getDrawPlatform().getText(this._root);
-        }
-
-        setAlt(alt) {
-            this.setAttribute("alt", alt);
-            return this;
-        }
-
-        getAlt() {
-            return this.getAttribute("alt");
-        }
-
-        setId(id) {
-            this.setAttribute("id", id);
-            return this;
-        }
-
-        getId() {
-            return this.getAttribute("id");
-        }
-
-        setType(type) {
-            this.setAttribute("type", type);
-            return this;
-        }
-
-        getType() {
-            return this.getAttribute("type");
-        }
-
-        setName(name) {
-            this.setAttribute("name", name);
-            return this;
-        }
-
-        getName() {
-            return this.getAttribute("name");
-        }
-
-        get offsetWidth() {
-            return this._root.offsetWidth;
-        }
-
-        get offsetHeight() {
-            return this._root.offsetHeight;
-        }
-
-        get offsetTop() {
-            return this._root.offsetTop;
-        }
-
-        get offsetLeft() {
-            return this._root.offsetLeft;
-        }
-
-        get root() {
-            return this._root;
-        }
-
-        onEvent(event, action) {
-            if (this["_"+event]) {
-                getDrawPlatform().removeEventListener(this._root, event, this["_"+event]);
-                delete this["_"+event];
-            }
-            if (action) {
-                this["_"+event] = action;
-                getDrawPlatform().addEventListener(this._root, event, action, false);
-            }
-            return this;
-        }
-
-        onChange(changeAction) {
-            return this.onEvent("change", changeAction);
-        }
-
-        onInput(inputAction) {
-            return this.onEvent("input", inputAction);
-        }
-
-        onMouseClick(clickAction) {
-            return this.onEvent("click", clickAction);
-        }
-    }
-
-}
-
-export class A extends DOM(DComposed) {
+export class A extends DComposed {
 
     constructor(text, href) {
         super("a");
@@ -321,7 +325,7 @@ export class A extends DOM(DComposed) {
 
 }
 
-export class LI extends DOM(DComposed) {
+export class LI extends DComposed {
 
     constructor(text) {
         super("li");
@@ -330,7 +334,7 @@ export class LI extends DOM(DComposed) {
 
 }
 
-export class UL extends DOM(DComposed) {
+export class UL extends DComposed {
 
     constructor() {
         super("ul");
@@ -342,7 +346,7 @@ export class UL extends DOM(DComposed) {
     }
 }
 
-export class Nav extends DOM(DComposed) {
+export class Nav extends DComposed {
 
     constructor() {
         super("nav");
@@ -350,7 +354,7 @@ export class Nav extends DOM(DComposed) {
 
 }
 
-export class Button extends DOM(DComposed) {
+export class Button extends DComposed {
 
     constructor(text) {
         super("button");
@@ -359,7 +363,7 @@ export class Button extends DOM(DComposed) {
 
 }
 
-export class Div extends DOM(DComposed) {
+export class Div extends DComposed {
 
     constructor(text) {
         super("div");
@@ -368,7 +372,7 @@ export class Div extends DOM(DComposed) {
 
 }
 
-export class Form extends DOM(DComposed) {
+export class Form extends DComposed {
 
     constructor() {
         super("form");
@@ -376,7 +380,7 @@ export class Form extends DOM(DComposed) {
 
 }
 
-export class Label extends DOM(DComposed) {
+export class Label extends DComposed {
 
     constructor(label) {
         super("label");
@@ -393,7 +397,7 @@ export class Label extends DOM(DComposed) {
     }
 }
 
-export class Span extends DOM(DComposed) {
+export class Span extends DComposed {
 
     constructor(text) {
         super("span");
@@ -402,7 +406,7 @@ export class Span extends DOM(DComposed) {
 
 }
 
-export class P extends DOM(DComposed) {
+export class P extends DComposed {
 
     constructor(text) {
         super("p");
@@ -411,7 +415,7 @@ export class P extends DOM(DComposed) {
 
 }
 
-export class Blockquote extends DOM(DComposed) {
+export class Blockquote extends DComposed {
 
     constructor(innerHTML) {
         super("blockquote");
@@ -420,7 +424,7 @@ export class Blockquote extends DOM(DComposed) {
 
 }
 
-export class I extends DOM(DComposed) {
+export class I extends DComposed {
 
     constructor(icon) {
         super("i");
@@ -429,7 +433,7 @@ export class I extends DOM(DComposed) {
 
 }
 
-export class TR extends DOM(DComposed) {
+export class TR extends DComposed {
 
     constructor() {
         super("tr");
@@ -437,7 +441,7 @@ export class TR extends DOM(DComposed) {
 
 }
 
-export class Table extends DOM(DComposed) {
+export class Table extends DComposed {
 
     constructor() {
         super("table");
@@ -445,7 +449,7 @@ export class Table extends DOM(DComposed) {
 
 }
 
-export class Thead extends DOM(DComposed) {
+export class Thead extends DComposed {
 
     constructor() {
         super("thead");
@@ -453,7 +457,7 @@ export class Thead extends DOM(DComposed) {
 
 }
 
-export class TBody extends DOM(DComposed) {
+export class TBody extends DComposed {
 
     constructor() {
         super("tbody");
@@ -461,7 +465,7 @@ export class TBody extends DOM(DComposed) {
 
 }
 
-export class TH extends DOM(DComposed) {
+export class TH extends DComposed {
 
     constructor(text) {
         super("th");
@@ -470,7 +474,7 @@ export class TH extends DOM(DComposed) {
 
 }
 
-export class TD extends DOM(DComposed) {
+export class TD extends DComposed {
 
     constructor(text) {
         super("td");
@@ -514,7 +518,7 @@ export function InputMixin(clazz) {
 
 }
 
-export class Option extends DOM(DComposed) {
+export class Option extends DComposed {
 
     constructor(value, text) {
         super("option");
@@ -532,7 +536,7 @@ export class Option extends DOM(DComposed) {
 
 }
 
-export class Select extends InputMixin(DOM(DComposed)) {
+export class Select extends InputMixin(DComposed) {
 
     constructor() {
         super("select");
@@ -597,7 +601,7 @@ export class Enum extends Span {
 
 }
 
-export class Input extends InputMixin(DOM(DComposed)) {
+export class Input extends InputMixin(DComposed) {
 
     constructor() {
         super("input");
@@ -633,7 +637,7 @@ export class Radio extends Input {
 
 }
 
-export class TextArea extends InputMixin(DOM(DComposed)) {
+export class TextArea extends InputMixin(DComposed) {
 
     constructor() {
         super("textarea");
@@ -641,7 +645,7 @@ export class TextArea extends InputMixin(DOM(DComposed)) {
 
 }
 
-export class Img extends DOM(DComponent) {
+export class Img extends DComponent {
 
     constructor(imgSrc, onLoad) {
         super("img");

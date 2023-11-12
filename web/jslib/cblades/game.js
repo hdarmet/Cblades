@@ -72,23 +72,6 @@ export class CBAbstractPlayer {
         return this._identity.path;
     }
 
-    changeSelection(playable, event) {
-        if (this.game.mayChangeSelection(playable)) {
-            let lastPlayable = this.game.selectedPlayable;
-            if (lastPlayable) {
-                lastPlayable.afterActivation(() => {
-                    if (lastPlayable !== playable && lastPlayable === this.game.selectedPlayable) {
-                        lastPlayable.unselect();
-                    }
-                    this.selectPlayable(playable, event);
-                });
-            }
-            else {
-                this.selectPlayable(playable, event);
-            }
-        }
-    }
-
     _memento() {
         return {};
     }
@@ -142,9 +125,11 @@ export class CBAbstractPlayer {
                 });
             }
             else if (!playable.action.isFinalized()) {
-                playable.action.finalize(() => {
-                    action();
-                });
+                if (playable.action.isFinishable()) {
+                    playable.action.finalize(() => {
+                        action();
+                    });
+                }
             }
             else {
                 action();
@@ -565,7 +550,7 @@ export class CBAbstractGame {
         for (let playable of this._playables) {
             playable.cancel();
         }
-        this.map.clean();
+        this.map && this.map.clean();
         this._counterDisplay.clean();
         this._init();
     }
@@ -582,7 +567,7 @@ export class CBAbstractGame {
         this._board = new DBoard(map.dimension, new Dimension2D(1000, 800), ...this._levels);
         this._board.game = this;
         this._board.setZoomSettings(1.5, 1);
-        this._board.setScrollSettings(5, 10);
+        this._board.setScrollSettings(20, 20);
         this._board.scrollOnBordersOnMouseMove();
         this._board.zoomInOutOnMouseWheel();
         this._board.scrollOnKeyDown()
@@ -783,6 +768,27 @@ export class CBAbstractGame {
         return !this.selectedPlayable || this.selectedPlayable===playable || this.canUnselectPlayable();
     }
 
+    changeSelection(playable, event) {
+        if (this.mayChangeSelection(playable)) {
+            let lastPlayable = this.selectedPlayable;
+            if (lastPlayable) {
+                lastPlayable.afterActivation(() => {
+                    if (lastPlayable !== playable && lastPlayable === this.selectedPlayable) {
+                        lastPlayable.unselect();
+                    }
+                    this._currentPlayer.selectPlayable(playable, event);
+                });
+            }
+            else {
+                this._currentPlayer.selectPlayable(playable, event);
+            }
+        }
+    }
+
+    onMouseClick(playable, event) {
+        this.changeSelection(playable, event);
+    }
+
     canUnselectPlayable() {
         return !this.focusedPlayable && (
             !this.selectedPlayable ||
@@ -940,7 +946,7 @@ export class CBAbstractGame {
             let playerSpecs = player.toSpecs(context);
             gameSpecs.players.push(playerSpecs);
         }
-        console.log(JSON.stringify(gameSpecs));
+        //console.log(JSON.stringify(gameSpecs));
         return gameSpecs;
     }
 
@@ -951,7 +957,7 @@ export class CBAbstractGame {
         this._oversion = specs.version || 0;
         this.currentTurn = specs.currentTurn;
         let map = CBMap.fromSpecs(specs.map, context);
-        this.changeMap(map);
+        this.map ? this.changeMap(map) : this.setMap(map);
         context.pieceMap = new Map();
         for (let playerSpecs of specs.players) {
             CBAbstractPlayer.fromSpecs(this, playerSpecs, context);
@@ -1076,6 +1082,9 @@ export class CBPiece {
 
     get game() {
         return this._game;
+    }
+    set game(game) {
+        this._game = game;
     }
 
     isShown() {
@@ -1316,16 +1325,15 @@ export function PlayableMixin(clazz) {
         }
 
         afterActivation(action) {
-            action();
-            return true;
+            return this.game.currentPlayer.afterActivation(this, action);
         }
 
         select() {
-            this._select();
+            this.game.currentPlayer.selectPlayable(this);
         }
 
         unselect() {
-            this._unselect();
+            this.game.currentPlayer.unselectPlayable(this);
         }
 
         _select() {
@@ -1385,8 +1393,8 @@ export function PlayableMixin(clazz) {
         }
 
         onMouseClick(event) {
-            if (!this.played && this.play) {
-                this.play(event);
+            if (!this.played) {
+                this.game.onMouseClick(this, event);
             }
         }
 
@@ -1429,10 +1437,6 @@ export function BelongsToPlayerMixin(clazz) {
             Mechanisms.fire(this, PlayableMixin.DESTROYED_EVENT);
         }
 
-        onMouseClick(event) {
-            this.player.changeSelection(this, event);
-        }
-
         isCurrentPlayer() {
             return this.player === this.game.currentPlayer;
         }
@@ -1446,18 +1450,6 @@ export function BelongsToPlayerMixin(clazz) {
             if (this.isCurrentPlayer()) {
                 super.finish && super.finish();
             }
-        }
-
-        afterActivation(action) {
-            return this.player.afterActivation(this, action);
-        }
-
-        select() {
-            this.player.selectPlayable(this);
-        }
-
-        unselect() {
-            this.player.unselectPlayable(this);
         }
 
     }

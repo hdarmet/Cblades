@@ -677,6 +677,7 @@ export class DDice extends DElement {
     }
 
     cheat(dice) {
+        this.active = false;
         let animation = null;
         this._result = [];
         let index = 0;
@@ -703,6 +704,9 @@ export class DDice extends DElement {
 
     set result(result) {
         this._result = result;
+        for (let index=0; index<this._artifacts.length; index++) {
+            this._artifacts[index].setImage(result[index]-1);
+        }
     }
 
     get trigger() {
@@ -1441,6 +1445,9 @@ export class DResult extends DElement {
 
 }
 
+/**
+ * A widget that shows a "progress" indicator in a scene. The progress is
+ */
 class SwipeImageArtifact extends DMultiImagesArtifact {
 
     constructor(image, dimension) {

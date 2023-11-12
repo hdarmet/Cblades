@@ -16,6 +16,7 @@ public class Token extends Piece {
     Integer level;
     Boolean density;
     Boolean fire;
+    boolean played;
 
     public String getType() {
         return this.type;
@@ -73,6 +74,15 @@ public class Token extends Piece {
         super.setPositionAngle(positionAngle);
         return this;
     }
+
+    public Boolean getPlayed() {
+        return this.played;
+    }
+    public Token setPlayed(Boolean played) {
+        this.played = played;
+        return this;
+    }
+
     public Token setAttrs(Map<String, Object> attrs) {
         super.setAttrs(attrs);
         return this;
@@ -107,4 +117,7 @@ public class Token extends Piece {
             .setWizard(token.getWizard());
         return this;
     }
+
+    public static String FIRE = "fire";
+    public static String SMOKE = "smoke";
 }

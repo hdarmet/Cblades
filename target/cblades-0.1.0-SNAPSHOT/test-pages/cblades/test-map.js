@@ -15,7 +15,14 @@ import {
 import {
     CBMap,
     CBHexSideId,
-    CBHexVertexId, CBHex, CBHexId, distanceFromHexToHex, distanceFromHexLocationToHexLocation, MapImageArtifact, CBBoard
+    CBHexVertexId,
+    CBHex,
+    CBHexId,
+    distanceFromHexToHex,
+    distanceFromHexLocationToHexLocation,
+    MapImageArtifact,
+    CBBoard,
+    CBHexLocation
 } from "../../jslib/cblades/map.js";
 import {
     DBoard, DSimpleLevel
@@ -269,6 +276,10 @@ describe("Map", ()=> {
                 [map.getHex(4, 4), 120], [map.getHex(3, 5), 180],
                 [map.getHex(2, 4), 240], [map.getHex(2, 3), 300]
             ]);
+            assert(hexId.toSpecs()).objectEqualsTo({col: 3, row: 4});
+            assert(CBHexId.fromSpecs(map,{col: 3, row: 4})).equalsTo(hexId);
+            assert(CBHexLocation.toSpecs(hexId)).objectEqualsTo({col: 3, row: 4});
+            assert(CBHexLocation.fromSpecs(map,{col: 3, row: 4})).equalsTo(hexId);
             assert(stringifyArray(hexId.borders)).arrayEqualsTo([
                 'point(-568.3333, -984.375)', 'point(-454.6667, -984.375)',
                 'point(-397.8333, -885.9375)', 'point(-454.6667, -787.5)',
@@ -324,6 +335,11 @@ describe("Map", ()=> {
             assert(nearSide.fromHex).equalsTo(hexId);
             assert(nearSide.toHex).equalsTo(map.getHex(4, 3));
         when:
+            var nearVertex = hexId.toward(90);
+        then:
+            assert(nearVertex.fromHex).equalsTo(hexId);
+            assert(nearVertex.angle).equalsTo(90);
+        when:
             nearSide = hexId.to(map.getHex(4, 3));
         then:
             assert(nearSide.fromHex).equalsTo(hexId);
@@ -377,6 +393,11 @@ describe("Map", ()=> {
         then:
             assert(nearSide.fromHex).equalsTo(hexId);
             assert(nearSide.toHex).equalsTo(map.getHex(5, 3));
+        when:
+            var nearSide = hexId.toward(90);
+        then:
+            assert(nearSide.fromHex).equalsTo(hexId);
+            assert(nearSide.angle).equalsTo(90);
     });
 
     it("Checks when hexes are NOT near", () => {
@@ -450,11 +471,15 @@ describe("Map", ()=> {
                 [map.getHex(6, 2), 60], [map.getHex(6, 3), 120],
                 [map.getHex(5, 4), 150], [map.getHex(4, 4), 180],
                 [map.getHex(3, 4), 240], [map.getHex(3, 3), 300]
-        ]);
+            ]);
             assert(stringifyArray(hexSide.borders)).arrayEqualsTo([
                 'point(-341, -984.375)', 'point(-284.1667, -1082.8125)',
                 'point(-170.5, -1082.8125)', 'point(-227.3333, -984.375)'
             ]);
+            assert(hexSide.toSpecs()).objectEqualsTo({col: 4, row: 3, angle: 60});
+            assert(CBHexSideId.fromSpecs(map,{col: 4, row: 3, angle: 60})).equalsTo(hexSide);
+            assert(CBHexLocation.toSpecs(hexSide)).objectEqualsTo({col: 4, row: 3, angle: 60});
+            assert(CBHexLocation.fromSpecs(map,{col: 4, row: 3, angle: 60})).equalsTo(hexSide);
         when:
             var hexSide11 = hexId1.toward(60);
             var hexId4 = map.getHex(-1, 4);
@@ -522,6 +547,9 @@ describe("Map", ()=> {
         then:
             assert(hexVertex.map).equalsTo(map);
             assert(hexVertex.hexes).arrayEqualsTo([hexId1, hexId2, hexId3]);
+            assert(hexVertex.firstHex).equalsTo(hexId1);
+            assert(hexVertex.secondHex).equalsTo(hexId2);
+            assert(hexVertex.thirdHex).equalsTo(hexId3);
             assert(hexVertex.fromHex).equalsTo(hexId1);
             assert(hexVertex.toHexSide.similar(new CBHexSideId(hexId2, hexId3))).isTrue();
             assert(hexVertex.angle).equalsTo(90);
@@ -541,6 +569,11 @@ describe("Map", ()=> {
                 [map.getHex(4, 4), 210], [map.getHex(3, 4), 240],
                 [map.getHex(3, 3), 300]
             ]);
+            var vertexSpecs = {col: 4, row: 3, angle: 90};
+            assert(hexVertex.toSpecs()).objectEqualsTo(vertexSpecs);
+            assert(CBHexVertexId.fromSpecs(map, vertexSpecs)).equalsTo(hexVertex);
+            assert(CBHexLocation.toSpecs(hexVertex)).objectEqualsTo(vertexSpecs);
+            assert(CBHexLocation.fromSpecs(map,vertexSpecs)).equalsTo(hexVertex);
         when:
             var hexVertex2 = map.getHex(-1, 4).getNearHexVertex(90);
         then:
@@ -1039,4 +1072,33 @@ describe("Map", ()=> {
             assert(hexId.playables).arrayEqualsTo([]);
     });
 
+    it("Checks Map specs in and out", () => {
+        given:
+            var specs = {
+                "id":12,"version":2,
+                "boards":[
+                    {"id":13,"version":3,"col":0,"row":0,"path":"./../images/maps/map1.png","invert":false},
+                    {"id":14,"version":4,"col":0,"row":1,"path":"./../images/maps/map2.png","invert":true}
+                ]
+            };
+        when:
+            var map = new CBMap([
+                {path:"./../images/maps/map1.png", col:0, row:0},
+                {path:"./../images/maps/map2.png", col:0, row:1, invert:true}
+            ]);
+            map._oid = 12;
+            map._oversion = 2;
+            map.mapBoards[0]._oid = 13;
+            map.mapBoards[0]._oversion = 3;
+            map.mapBoards[1]._oid = 14;
+            map.mapBoards[1]._oversion = 4;
+            var context = new Map();
+        then:
+            assert(map.toSpecs(context)).objectEqualsTo(specs);
+            assert(context.get(map)).objectEqualsTo(specs);
+        given:
+            var newMap = CBMap.fromSpecs(specs, context);
+        then:
+            assert(newMap.toSpecs(context)).objectEqualsTo(specs);
+    });
 });

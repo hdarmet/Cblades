@@ -1,6 +1,7 @@
 'use strict'
 
 import {
+    after,
     assert,
     before, describe, executeTimeouts, it
 } from "../../jstest/jtest.js";
@@ -50,7 +51,7 @@ import {
     showFormation, showGameCommand, showGameInactiveCommand, showInsert, showMask, showOverFormation,
     showOverTroop, showSelectedActuatorTrigger, showSelectedTroop,
     showTroop,
-    zoomAndRotate0, zoomAndRotate60, zoomAndRotate90
+    zoomAndRotate0, zoomAndRotate60, zoomAndRotate90, showOverActuatorTrigger
 } from "./interactive-tools.js";
 import {
     CBHexSideId, CBMap
@@ -393,7 +394,7 @@ function showActiveFakePiece(image, [a, b, c, d, e, f], s=50) {
     return [
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            "shadowColor = #00FFFF", "shadowBlur = 10",
+            "shadowBlur = 0",
             `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
         "restore()"
     ];
@@ -464,6 +465,10 @@ describe("Playable", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
+    });
+
+    after(() => {
+        CBHexCounter.resetTokenType();
     });
 
     it("Checks that actuator is hidden if the game visibility level is lowered", () => {
@@ -717,7 +722,7 @@ describe("Playable", ()=> {
             mouseMoveOnTrigger(game, actuator.getTrigger());
         then:
             assertClearDirectives(actuatorsLayer);
-            assertDirectives(actuatorsLayer, showSelectedActuatorTrigger("test", 50, 50, zoomAndRotate0(416.6667, 351.8878)))
+            assertDirectives(actuatorsLayer, showOverActuatorTrigger("test", 50, 50, zoomAndRotate0(416.6667, 351.8878)))
             assertNoMoreDirectives(actuatorsLayer);
         when:
             resetDirectives(actuatorsLayer);
@@ -802,7 +807,7 @@ describe("Playable", ()=> {
             assertClearDirectives(actuatorsLayer);
             assertDirectives(actuatorsLayer, showActuatorTrigger("hex", 50, 50, zoomAndRotate0(333.3333, 15.1026)));
             assertDirectives(actuatorsLayer, showActuatorTrigger("hex", 50, 50, zoomAndRotate0(333.3333, 111.327)));
-            assertDirectives(actuatorsLayer, showSelectedActuatorTrigger("hex", 50, 50, zoomAndRotate0(416.6667, 63.2148)));
+            assertDirectives(actuatorsLayer, showOverActuatorTrigger("hex", 50, 50, zoomAndRotate0(416.6667, 63.2148)));
             assertDirectives(actuatorsLayer, showActuatorTrigger("hex", 50, 50, zoomAndRotate0(416.6667, 159.4391)));
             assertDirectives(actuatorsLayer, showActuatorTrigger("hex", 50, 50, zoomAndRotate0(500, 15.1026)));
             assertDirectives(actuatorsLayer, showActuatorTrigger("hex", 50, 50, zoomAndRotate0(500, 111.327)));
@@ -831,7 +836,7 @@ describe("Playable", ()=> {
         then:
             assert(trigger.mayCaptureEvent({})).isTrue();
             assertClearDirectives(actuatorsLayer);
-            assertDirectives(actuatorsLayer, showSelectedActuatorTrigger("hex", 50, 50, zoomAndRotate0(416.6667, 63.2148)));
+            assertDirectives(actuatorsLayer, showOverActuatorTrigger("hex", 50, 50, zoomAndRotate0(416.6667, 63.2148)));
             assertNoMoreDirectives(actuatorsLayer);
         when:
             var otherTrigger = actuator.getHexTrigger(map.getHex(5, 6));
@@ -839,7 +844,7 @@ describe("Playable", ()=> {
             mouseMoveOnTrigger(game, otherTrigger);
         then:
             assertClearDirectives(actuatorsLayer);
-            assertDirectives(actuatorsLayer, showSelectedActuatorTrigger("hex", 50, 50, zoomAndRotate0(416.6667, 159.4391)));
+            assertDirectives(actuatorsLayer, showOverActuatorTrigger("hex", 50, 50, zoomAndRotate0(416.6667, 159.4391)));
             assertNoMoreDirectives(actuatorsLayer);
     });
 
@@ -1552,7 +1557,38 @@ describe("Playable", ()=> {
             assert(game.turnIsFinishable()).isTrue();
      });
 
-    it("Checks playable sorting on Hex", () => {
+    it("Checks CBHexCounter features", () => {
+        given:
+            var { game, map } = createBasicGame();
+            var TestBlaze = class extends CBHexCounter {
+                constructor() {super("ground", ["./../images/units/misc/blaze.png"], new Dimension2D(50, 50));}
+                static fromSpecs(specs, context) {
+                    return new TestBlaze("ground", [
+                        "/image/blaze.png"
+                    ], new Dimension2D(142, 142));
+                }
+            }
+            var TestMagic = class extends CBHexCounter {
+                constructor() {super("ground", ["./../images/units/misc/spell.png"], new Dimension2D(50, 50));}
+                static fromSpecs(specs, context) {
+                    return new TestMagic("ground", [
+                        "/image/magic.png"
+                    ], new Dimension2D(142, 142));
+                }
+            }
+        when:
+            CBHexCounter.registerTokenType("blaze", TestBlaze);
+            CBHexCounter.registerTokenType("magic", TestMagic);
+            let context = new Map();
+            var blaze = CBHexCounter.fromSpecs({type:"blaze", id:2, version:3}, context);
+        then:
+            assert(blaze._oid).equalsTo(2);
+            assert(blaze._oversion).equalsTo(3);
+            assert(blaze.artifact.images[0].path).equalsTo( "./../images/units/misc/blaze.png");
+            assert(blaze.artifact.dimension).objectEqualsTo( {w:50, h:50});
+        });
+
+        it("Checks playable sorting on Hex", () => {
         given:
             var { game, map } = createBasicGame();
             var spell = new CBHexCounter("ground", ["./../images/units/misc/spell.png"], new Dimension2D(50, 50));

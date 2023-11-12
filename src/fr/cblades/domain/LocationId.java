@@ -11,6 +11,9 @@ public class LocationId {
         this.row = row;
     }
 
+    public int getCol() { return this.col; }
+    public int getRow() { return this.row; }
+
     @Override
     public boolean equals(Object locationId) {
         if (this == locationId) return true;
@@ -49,6 +52,10 @@ public class LocationId {
         else {
             return row+1;
         }
+    }
+
+    public static LocationId getNear(int col, int row, int angle) {
+        return new LocationId(findNearCol(col, row, angle), findNearRow(col, row, angle));
     }
 
 }

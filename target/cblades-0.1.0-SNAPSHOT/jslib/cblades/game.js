@@ -12,6 +12,9 @@ import {
 import {
     DBoard, DElement, DMultiImagesArtifact
 } from "../board.js";
+import {
+    CBMap
+} from "./map.js";
 
 export let CBStacking = {
     BOTTOM: 0,
@@ -69,23 +72,6 @@ export class CBAbstractPlayer {
         return this._identity.path;
     }
 
-    changeSelection(playable, event) {
-        if (this.game.mayChangeSelection(playable)) {
-            let lastPlayable = this.game.selectedPlayable;
-            if (lastPlayable) {
-                lastPlayable.afterActivation(() => {
-                    if (lastPlayable !== playable && lastPlayable === this.game.selectedPlayable) {
-                        lastPlayable.unselect();
-                    }
-                    this.selectPlayable(playable, event);
-                });
-            }
-            else {
-                this.selectPlayable(playable, event);
-            }
-        }
-    }
-
     _memento() {
         return {};
     }
@@ -139,9 +125,11 @@ export class CBAbstractPlayer {
                 });
             }
             else if (!playable.action.isFinalized()) {
-                playable.action.finalize(() => {
-                    action();
-                });
+                if (playable.action.isFinishable()) {
+                    playable.action.finalize(() => {
+                        action();
+                    });
+                }
             }
             else {
                 action();
@@ -162,6 +150,34 @@ export class CBAbstractPlayer {
 
     set game(game) {
         this._game = game;
+    }
+
+    toSpecs(context) {
+        let playerSpecs = {
+            id: this._oid,
+            version: this._oversion || 0,
+            identity: {
+                id: this.identity._oid,
+                version: this.identity._oversion || 0,
+                name: this.identity.name,
+                path: this.identity.path
+            },
+        }
+        return playerSpecs;
+    }
+
+    static fromSpecs(game, specs, context) {
+        let player = context.playerCreator(specs.identity.name, specs.identity.path);
+        return player.fromSpecs(game, specs, context);
+    }
+
+    fromSpecs(game, specs, context) {
+        game.addPlayer(this);
+        this._oid = specs.id;
+        this._oversion = specs.version;
+        this._identity._oid = specs.identity.id;
+        this._identity._oversion = specs.identity.version;
+        return this;
     }
 
 }
@@ -279,26 +295,34 @@ export class CBAction {
     static CANCELLED = -1;
     static PROGRESSION_EVENT = "action-progression";
     static FINISHABLE = 1;
-
     static types = new Map();
-
     static register(label, actionType) {
         CBAction.types.set(label, actionType);
     }
-
     static createAction(label, game, unit, mode) {
         return new (CBAction.types.get(label))(game, unit, mode);
     }
 
 }
 
+/**
+ * base class of actuators. An actuator is a non-permanent graphical feature that gives the player the opportunity to
+ * interact with the game to do something with an item of the game (a unit, a marker, etc...).
+ * <p> An actuator contains one (at least) or (generally) more "triggers". A trigger is a subpart of an actuator that
+ * can be activated by simply clicking on it. The trigger warns the activator that it is activated, allowing the
+ * actuator to react accordingly.
+ * <p> At a given time, only ONE actuator may be present on the board.
+ */
 export class CBActuator {
 
     constructor() {
-        this._shown = false;
         this._closeAllowed = true;
     }
 
+    /**
+     * returns the triggers owned by the actuator.
+     * @return a list of triggers
+     */
     get triggers() {
         return this._triggers;
     }
@@ -526,7 +550,7 @@ export class CBAbstractGame {
         for (let playable of this._playables) {
             playable.cancel();
         }
-        this.map.clean();
+        this.map && this.map.clean();
         this._counterDisplay.clean();
         this._init();
     }
@@ -543,7 +567,7 @@ export class CBAbstractGame {
         this._board = new DBoard(map.dimension, new Dimension2D(1000, 800), ...this._levels);
         this._board.game = this;
         this._board.setZoomSettings(1.5, 1);
-        this._board.setScrollSettings(5, 10);
+        this._board.setScrollSettings(20, 20);
         this._board.scrollOnBordersOnMouseMove();
         this._board.zoomInOutOnMouseWheel();
         this._board.scrollOnKeyDown()
@@ -744,6 +768,27 @@ export class CBAbstractGame {
         return !this.selectedPlayable || this.selectedPlayable===playable || this.canUnselectPlayable();
     }
 
+    changeSelection(playable, event) {
+        if (this.mayChangeSelection(playable)) {
+            let lastPlayable = this.selectedPlayable;
+            if (lastPlayable) {
+                lastPlayable.afterActivation(() => {
+                    if (lastPlayable !== playable && lastPlayable === this.selectedPlayable) {
+                        lastPlayable.unselect();
+                    }
+                    this._currentPlayer.selectPlayable(playable, event);
+                });
+            }
+            else {
+                this._currentPlayer.selectPlayable(playable, event);
+            }
+        }
+    }
+
+    onMouseClick(playable, event) {
+        this.changeSelection(playable, event);
+    }
+
     canUnselectPlayable() {
         return !this.focusedPlayable && (
             !this.selectedPlayable ||
@@ -887,6 +932,39 @@ export class CBAbstractGame {
         this._mask.open(this._board);
     }
 
+    toSpecs(context) {
+        let gameSpecs = {
+            id : this.id,
+            version: this._oversion || 0,
+            currentPlayerIndex : this.players.indexOf(this.currentPlayer),
+            currentTurn : this.currentTurn,
+            players: []
+        };
+        gameSpecs.map = this.map.toSpecs(context);
+        gameSpecs.locations = [];
+        for (let player of this.players) {
+            let playerSpecs = player.toSpecs(context);
+            gameSpecs.players.push(playerSpecs);
+        }
+        //console.log(JSON.stringify(gameSpecs));
+        return gameSpecs;
+    }
+
+    fromSpecs(specs, context) {
+        console.log(JSON.stringify(specs));
+        this.clean();
+        context.game = this;
+        this._oversion = specs.version || 0;
+        this.currentTurn = specs.currentTurn;
+        let map = CBMap.fromSpecs(specs.map, context);
+        this.map ? this.changeMap(map) : this.setMap(map);
+        context.pieceMap = new Map();
+        for (let playerSpecs of specs.players) {
+            CBAbstractPlayer.fromSpecs(this, playerSpecs, context);
+        }
+        this.currentPlayer = this.players[specs.currentPlayerIndex];
+    }
+
     static STARTED_EVENT = "started-event";
     static SETTINGS_EVENT = "settings-event";
     static POPUP_MARGIN = 10;
@@ -918,11 +996,9 @@ export class CBPieceImageArtifact extends DMultiImagesArtifact {
             level.setShadowSettings("#000000", 10);
         }
     }
-
     onMouseEnter(event) {
         return true;
     }
-
     onMouseLeave(event) {
         return true;
     }
@@ -930,7 +1006,6 @@ export class CBPieceImageArtifact extends DMultiImagesArtifact {
 }
 
 export class CBPiece {
-
     constructor(levelName, paths, dimension) {
         this._levelName = levelName;
         this._images = [];
@@ -1007,6 +1082,9 @@ export class CBPiece {
 
     get game() {
         return this._game;
+    }
+    set game(game) {
+        this._game = game;
     }
 
     isShown() {
@@ -1247,16 +1325,15 @@ export function PlayableMixin(clazz) {
         }
 
         afterActivation(action) {
-            action();
-            return true;
+            return this.game.currentPlayer.afterActivation(this, action);
         }
 
         select() {
-            this._select();
+            this.game.currentPlayer.selectPlayable(this);
         }
 
         unselect() {
-            this._unselect();
+            this.game.currentPlayer.unselectPlayable(this);
         }
 
         _select() {
@@ -1316,8 +1393,8 @@ export function PlayableMixin(clazz) {
         }
 
         onMouseClick(event) {
-            if (!this.played && this.play) {
-                this.play(event);
+            if (!this.played) {
+                this.game.onMouseClick(this, event);
             }
         }
 
@@ -1325,6 +1402,11 @@ export function PlayableMixin(clazz) {
             this._updatePlayed && this._updatePlayed();
             this.attrs = {};
         }
+
+        toReferenceSpecs(context) {
+            return this.toSpecs(context);
+        }
+
     }
 
 }
@@ -1355,10 +1437,6 @@ export function BelongsToPlayerMixin(clazz) {
             Mechanisms.fire(this, PlayableMixin.DESTROYED_EVENT);
         }
 
-        onMouseClick(event) {
-            this.player.changeSelection(this, event);
-        }
-
         isCurrentPlayer() {
             return this.player === this.game.currentPlayer;
         }
@@ -1372,18 +1450,6 @@ export function BelongsToPlayerMixin(clazz) {
             if (this.isCurrentPlayer()) {
                 super.finish && super.finish();
             }
-        }
-
-        afterActivation(action) {
-            return this.player.afterActivation(this, action);
-        }
-
-        select() {
-            this.player.selectPlayable(this);
-        }
-
-        unselect() {
-            this.player.unselectPlayable(this);
         }
 
     }

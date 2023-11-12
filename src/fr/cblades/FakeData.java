@@ -409,21 +409,21 @@ public class FakeData {
             em.persist(unit6);
             Token token1 = new Token()
                 .setPositionRow(5).setPositionCol(4)
-                .setType("fire")
+                .setType(Token.FIRE)
                 .setFire(true);
             em.persist(token1);
             Token token2 = new Token()
                 .setPositionRow(5).setPositionCol(3)
-                .setType("fire")
+                .setType(Token.FIRE)
                 .setFire(true);
             Token token3 = new Token()
                 .setPositionRow(5).setPositionCol(2)
-                .setType("fire")
+                .setType(Token.FIRE)
                 .setFire(true);
             em.persist(token3);
             Token token4 = new Token()
                 .setPositionRow(5).setPositionCol(1)
-                .setType("fire")
+                .setType(Token.FIRE)
                 .setFire(true);
             em.persist(token4);
             scenario.get().getGame().addPlayer(
@@ -460,10 +460,10 @@ public class FakeData {
                             .setOrderInstruction(OrderInstruction.ATTACK)
                     )
             );
-            game.addLocation(Location.getLocation(context, unit2)
+            game.addLocation(Location.getLocation(game, context, unit2)
                     .addPiece(unit2)
                 )
-                .addLocation(Location.getLocation(context, unit5)
+                .addLocation(Location.getLocation(game, context, unit5)
                     .addPiece(unit5)
                 )
                 /*
@@ -471,7 +471,7 @@ public class FakeData {
                     .addPiece(unit5)
                 )
                 */
-                .addLocation(Location.getLocation(context, unit6)
+                .addLocation(Location.getLocation(game, context, unit6)
                     .addPiece(unit6)
                 )
                 /*
@@ -479,7 +479,7 @@ public class FakeData {
                     .addUnit(unit0)
                 )
                  */
-                .addLocation(Location.getLocation(context, unit1)
+                .addLocation(Location.getLocation(game, context, unit1)
                     .addPiece(unit1)
                 )
                 /*
@@ -490,16 +490,16 @@ public class FakeData {
                     .addPiece(unit4)
                 )
                  */
-                .addLocation(Location.getLocation(context, token1)
+                .addLocation(Location.getLocation(game, context, token1)
                     .addPiece(token1)
                 )
-                .addLocation(Location.getLocation(context, token2)
+                .addLocation(Location.getLocation(game, context, token2)
                     .addPiece(token2)
                 )
-                .addLocation(Location.getLocation(context, token3)
+                .addLocation(Location.getLocation(game, context, token3)
                     .addPiece(token3)
                 )
-                .addLocation(Location.getLocation(context, token4)
+                .addLocation(Location.getLocation(game, context, token4)
                     .addPiece(token4)
                 )
             ;

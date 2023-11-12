@@ -216,8 +216,8 @@ export class CBHexId extends CBHexLocation{
         else {
             return new CBHexVertexId(
                 this,
-                this.getNearHex(sumAngle(angle, 30)),
-                this.getNearHex(sumAngle(angle, -30))
+                this.getNearHex(sumAngle(angle, -30)),
+                this.getNearHex(sumAngle(angle, 30))
             );
         }
     }
@@ -231,7 +231,7 @@ export class CBHexId extends CBHexLocation{
     }
 
     static fromSpecs(map, spec) {
-        return spec.angle!==undefined ? null : map.getHex(spec.col, spec.row);
+        return spec.col===undefined || spec.angle!==undefined ? null : map.getHex(spec.col, spec.row);
     }
 }
 
@@ -426,7 +426,7 @@ export class CBHexSideId extends CBHexLocation {
     }
 
     static fromSpecs(map, spec) {
-        return (spec.angle===undefined && !(spec.angle%60)) ? null : map.getHex(spec.col, spec.row).toward(spec.angle);
+        return (spec.angle===undefined || spec.angle%60) ? null : map.getHex(spec.col, spec.row).toward(spec.angle);
     }
 }
 
@@ -466,12 +466,6 @@ export class CBHexVertexId extends CBHexLocation {
 
     get fromHex() {
         return this._hexId1;
-    }
-
-    get angle() {
-        let angle1 = this._hexId1.getAngle(this._hexId2);
-        let angle2 = this._hexId1.getAngle(this._hexId3);
-        return (angle1===0||angle2===0)&&(angle1===300||angle2===3000)?330:(angle1+angle2)/2
     }
 
     get toHexSide() {
@@ -554,14 +548,15 @@ export class CBHexVertexId extends CBHexLocation {
 
     toSpecs() {
         return {
-            firstHex: this.firstHex.toSpecs(),
-            secondHex: this.secondHex.toSpecs(),
-            thirdHex: this.thirdHex.toSpecs()
+            col: this.firstHex.col,
+            row: this.firstHex.row,
+            angle: this.angle
         };
     }
 
     static fromSpecs(map, spec) {
-        return (spec.angle===undefined && (spec.angle%60)!==30) ? null : CBHexId.fromSpecs(map, spec).toward(spec.angle);
+        return (spec.angle===undefined || (spec.angle%60)!==30) ? null :
+            map.getHex(spec.col, spec.row).toward(spec.angle);
     }
 }
 
@@ -1170,12 +1165,12 @@ export class CBMap extends CBAbstractMap {
     }
 
     toSpecs(context) {
-        let mapCompositionSpecs = {
-            id: this._game.map._oid,
-            version: this._game.map._oversion || 0,
+        let mapSpecs = {
+            id: this._oid,
+            version: this._oversion || 0,
             boards: []
         }
-        for (let board of this._game.map.mapBoards) {
+        for (let board of this.mapBoards) {
             let boardSpec = {
                 id: board._oid,
                 version: board._oversion || 0,
@@ -1185,9 +1180,34 @@ export class CBMap extends CBAbstractMap {
                 icon: board.icon,
                 invert: !!board.invert
             };
-            mapCompositionSpecs.boards.push(boardSpec);
+            mapSpecs.boards.push(boardSpec);
         }
-        return mapCompositionSpecs;
+        context.set(this, mapSpecs)
+        return mapSpecs;
     }
+
+    static fromSpecs(specs, context) {
+        let configuration = [];
+        if (specs.boards) {
+            for (let boardSpec of specs.boards) {
+                let board = {
+                    _oid: boardSpec.id,
+                    _oversion: boardSpec.version ,
+                    col: boardSpec.col,
+                    row: boardSpec.row,
+                    path: boardSpec.path,
+                    icon: boardSpec.icon
+                }
+                if (boardSpec.invert) board.invert = true;
+                configuration.push(board);
+            }
+        }
+        let map = new CBMap(configuration);
+        map._oid = specs.id;
+        map._oversion = specs.version;
+        context.map = map;
+        return map;
+    }
+
 }
 

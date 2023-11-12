@@ -11,7 +11,6 @@ import {
 import {
     ActivableArtifactMixin,
     CBHexCounter, CBHexCounterArtifact, CBLevelBuilder,
-    RetractableArtifactMixin,
     RetractablePieceMixin
 } from "./playable.js";
 import {
@@ -86,18 +85,14 @@ export class CBBurningCounter extends RetractablePieceMixin(CBHexCounter) {
         }
     }
 
-    onMouseClick(event) {
-        this.play(event);
-    }
-
-    play(event) {
+    play(point) {
         if (!this.isPlayed()) {
-            this._play(event);
+            this._play(point);
         }
     }
 
-    _play(event) {
-        this.game.currentPlayer.playSmokeAndFire(this, event);
+    _play(point) {
+        this.game.currentPlayer.playSmokeAndFire(this);
     }
 
     _processGlobalEvent(source, event, value) {
@@ -118,16 +113,26 @@ export class CBBurningCounter extends RetractablePieceMixin(CBHexCounter) {
         }
     }
 
+    fromSpecs(specs, context) {
+        this.angle = specs.angle;
+        this._oid = specs.id;
+        this._oversion = specs.version;
+        if (specs.played) this.setPlayed();
+        return this;
+    }
+
     toSpecs() {
         let specs = {
             id: this._oid,
             version: this._oversion || 0,
-            angle: this.angle
+            angle: this.angle,
+            played: this.played
         }
         if (this.getPosition()) {
             specs.positionCol = this.getPosition().col;
             specs.positionRow = this.getPosition().row;
         }
+        return specs;
     }
 
     getPosition() {
@@ -172,11 +177,10 @@ export class CBSmokeCounter extends CBBurningCounter {
         }
     }
 
-    static fromSpecs(specs, context) {
-        let counter = new CBSmokeCounter();
-        if (specs.density) counter.densify();
-        counter.angle = specs.angle;
-        return counter;
+    fromSpecs(specs, context) {
+        super.fromSpecs(specs, context);
+        if (specs.density) this.densify();
+        return this;
     }
 
 }
@@ -195,6 +199,10 @@ export class CBFireCounter extends CBBurningCounter {
         this.artifact.changeImage(1);
     }
 
+    afterActivation(action) {
+        return super.afterActivation(action);
+    }
+
     isFire() {
         return this.artifact.imageIndex>0;
     }
@@ -207,11 +215,10 @@ export class CBFireCounter extends CBBurningCounter {
         }
     }
 
-    static fromSpecs(specs, context) {
-        let counter = new CBFireCounter();
-        if (specs.fire) counter.setFire();
-        counter.angle = specs.angle;
-        return counter;
+    fromSpecs(specs, context) {
+        super.fromSpecs(specs, context);
+        if (specs.fire) this.setFire();
+        return this;
     }
 
 }
@@ -273,6 +280,13 @@ export class CBObstacleCounter extends RetractablePieceMixin(CBHexCounter) {
         return specs;
     }
 
+    fromSpecs(specs, context) {
+        this.angle = specs.angle;
+        this._oid = specs.id;
+        this._oversion = specs.version;
+        return this;
+    }
+
     getPosition() {
         return this.hexLocation ? {
             col: this.hexLocation.col,
@@ -316,10 +330,12 @@ export class CBStakesCounter extends CBObstacleCounter {
         }
     }
 
-    static fromSpecs(specs, context) {
-        let counter = new CBStakesCounter();
-        counter.angle = specs.angle;
-        return counter;
+    fromSpecs(specs, context) {
+        super.fromSpecs(specs, context);
+        this.angle = specs.angle;
+        this._oid = specs.id;
+        this._oversion = specs.version;
+        return this;
     }
 
 }
@@ -372,9 +388,9 @@ export class CBDisplayableCounter extends PlayableMixin(DisplayLocatableMixin(CB
         }
     }
 
-    play(event) {
+    play(point) {
         if (!this.isPlayed()) {
-            this._play(event);
+            this._play(point);
         }
     }
 
@@ -405,8 +421,8 @@ export class CBWeatherCounter extends CBDisplayableCounter {
         }
     }
 
-    _play(event) {
-        this.game.currentPlayer.playWeather(this, event);
+    _play(point) {
+        this.game.currentPlayer.playWeather(this);
     }
 
 }
@@ -433,8 +449,8 @@ export class CBFogCounter extends CBDisplayableCounter {
         }
     }
 
-    _play(event) {
-        this.game.currentPlayer.playFog(this, event);
+    _play(point) {
+        this.game.currentPlayer.playFog(this);
     }
 
 }
@@ -458,8 +474,8 @@ export class CBWindDirectionCounter extends CBDisplayableCounter {
         }
     }
 
-    _play(event) {
-        this.game.currentPlayer.playWindDirection(this, event);
+    _play(point) {
+        this.game.currentPlayer.playWindDirection(this);
     }
 
 }
@@ -504,9 +520,9 @@ export class CBWingDisplayablePlayable extends CBDisplayableCounter {
         return this.wing.player!==this.game.currentPlayer || super.isFinishable();
     }
 
-    play(event) {
+    play(point) {
         if (!this.isPlayed()) {
-            this._play(event);
+            this._play(point);
         }
     }
 
@@ -533,12 +549,12 @@ export class CBWingTirednessCounter extends CBWingDisplayablePlayable {
         return wing.tiredness-4
     }
 
-    _play(event) {
+    _play(point) {
         if (this.wing.tiredness===11) {
             this.setPlayed();
         }
         else {
-            this.game.currentPlayer.playTiredness(this, event);
+            this.game.currentPlayer.playTiredness(this);
         }
     }
 
@@ -573,12 +589,12 @@ export class CBWingMoralCounter extends CBWingDisplayablePlayable {
         return wing.moral-4
     }
 
-    _play(event) {
+    _play(point) {
         if (this.wing.moral===11) {
             this.setPlayed();
         }
         else {
-            this.game.currentPlayer.playMoral(this, event);
+            this.game.currentPlayer.playMoral(this);
         }
     }
 

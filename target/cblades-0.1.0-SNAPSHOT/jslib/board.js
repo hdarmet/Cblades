@@ -12,7 +12,6 @@ import {
     Mechanisms,
     Memento
 } from "./mechanisms.js";
-//import {DisplayablePlayableArtifact} from "./cblades/miscellaneous.js";
 
 /**
  * Mixin for classes whose instances deals with location and orientation on the board. DElements and their contained
@@ -57,10 +56,17 @@ export function LocalisationAware(clazz) {
 }
 
 /**
- * Wrap something that can be shown on a given layer
+ * Base class that can be shown on a board level
  */
 export class DArtifact extends LocalisationAware(Object) {
 
+    /**
+     * initializes the artifact
+     * @param levelName name of the level on which the artifact is going to put on
+     * @param position position on the board (in board content coordinate) of the "anchor" (generally the center) of
+     * the artifact
+     * @param pangle angle of the artifact
+     */
     constructor(levelName, position = new Point2D(0, 0), pangle=0) {
         super();
         this._levelName = levelName;
@@ -71,6 +77,11 @@ export class DArtifact extends LocalisationAware(Object) {
         this._angle = pangle;
     }
 
+    /**
+     * sets a reference to the element the artifact belongs to. This operation CANNOT be undoed.
+     * @param element owner of the artifact
+     * @private
+     */
     _setElement(element) {
         if (element) {
             this._element = element;
@@ -81,6 +92,11 @@ export class DArtifact extends LocalisationAware(Object) {
         }
     }
 
+    /**
+     * sets a reference to the element the artifact belongs to. This operation CAN be undoed.
+     * @param element owner of the artifact
+     * @private
+     */
     _attach(element) {
         Memento.register(this);
         if (element) {
@@ -92,6 +108,11 @@ export class DArtifact extends LocalisationAware(Object) {
         }
     }
 
+    /**
+     * builds a record containing the base
+     * @return a record containing the base
+     * @private
+     */
     _memento() {
         let memento = {
             levelName: this._levelName,
@@ -1130,6 +1151,10 @@ export class DLevel {
         this._dirty = true;
     }
 
+    /**
+     * registers an artifact on the level. This registration CANNOT be undoed
+     * @param artifact artifact to register. This artifact MUST NOT BE registered prior of this call
+     */
     addArtifact(artifact) {
         console.assert(!this._artifacts.has(artifact));
         this._artifacts.add(artifact);
@@ -1140,6 +1165,10 @@ export class DLevel {
         this._dirty = true;
     }
 
+    /**
+     * unregisters an artifact on the level. This registration CANNOT be undoed
+     * @param artifact artifact to unregister. This artifact MUST BE registered prior of this call
+     */
     removeArtifact(artifact) {
         console.assert(this._artifacts.has(artifact));
         this._artifacts.delete(artifact);
@@ -1149,16 +1178,28 @@ export class DLevel {
         this._dirty = true;
     }
 
+    /**
+     * registers an artifact on the level. This registration CAN be undoed
+     * @param artifact artifact to register. This artifact MUST NOT BE registered prior of this call
+     */
     showArtifact(artifact) {
         Memento.register(this);
         this.addArtifact(artifact);
     }
 
+    /**
+     * unregisters an artifact on the level. This registration CAN be undoed
+     * @param artifact artifact to unregister. This artifact MUST BE registered prior of this call
+     */
     hideArtifact(artifact) {
         Memento.register(this);
         this.removeArtifact(artifact);
     }
 
+    /**
+     * invalidates the level if the artifact given as a parameter intersects the visible part of this level
+     * @param artifact artifact to check
+     */
     refreshArtifact(artifact) {
         console.assert(this._artifacts.has(artifact));
         if (this._visibleArtifacts) {
@@ -1174,15 +1215,26 @@ export class DLevel {
         this._dirty = true;
     }
 
+    /**
+     * forces the invalidation of the level.
+     */
     invalidate() {
         delete this._visibleArtifacts;
         this._dirty = true;
     }
 
+    /**
+     * gets all the artifacts registered on the level
+     * @return list of artifacts
+     */
     get artifacts() {
         return this._artifacts;
     }
 
+    /**
+     * gets all the artifacts registered on the level and intersects with the visible part of this level
+     * @return list of visible artifacts
+     */
     get visibleArtifacts() {
         if (!this._visibleArtifacts) {
             let levelArea = this.visibleArea;
@@ -1197,6 +1249,9 @@ export class DLevel {
         return this._visibleArtifacts.values();
     }
 
+    /**
+     * paints the level if it is not validated
+     */
     paint() {
         if (this._dirty) {
             this.clear();
@@ -1212,6 +1267,12 @@ export class DLevel {
         }
     }
 
+    /**
+     * gets the pixel
+     * @param artifact
+     * @param point
+     * @return {*}
+     */
     getPixel(artifact, point) {
         this.forArtifact(artifact);
         return this.layer.getPixel(point);
@@ -1546,10 +1607,19 @@ export class DScrollBoardAnimation extends DAnimation {
 }
 
 /**
- * Playing board. Accept elements. Dispatch element's artifacts on its own levels.
+ * Playing board. Wraps (and hide) a DDraw Viewport and define its content. Essentially a Board shows "Elements" on
+ * "Levels". A level is a wrapper of a DDraw's layer. Its is invisible by itself and contains the Elements. Elements
+ * are used to group Artifacts. The Artifacts are the visible objects on the screen.
  */
 export class DBoard {
 
+    /**
+     * Create a board.
+     * @param dimension dimension of the displayable content of the board (which can exceeds largely the visible part
+     * of the board).
+     * @param viewportDimension dimension of the displayed content of the board (ie. the visible part of the board).
+     * @param levels levels where the artifacts are displayed.
+     */
     constructor(dimension, viewportDimension, ...levels) {
         this._draw = new DDraw(viewportDimension);
         this._dimension = dimension;
@@ -1569,21 +1639,46 @@ export class DBoard {
         Mechanisms.addListener(this);
     }
 
+    /**
+     * Request the Navigator to enter the full screen mode.
+     */
     fitWindow() {
         this._draw.fitWindow();
     }
 
+    /**
+     * gets the dimension (the displayABLE part) of the board content.
+     */
+    get dimension() {
+        return this._dimension;
+    }
+
+    /**
+     * sets the dimension (the displayABLE part) of the board content.
+     * @param dimension
+     */
     set dimension(dimension) {
         this._dimension = dimension;
         this._resize();
     }
 
+    /**
+     * processing by the board of global event. Boards only process resize events (received when user resize manually
+     * the size of the navigator's page.
+     * @param source source of the event (not used here)
+     * @param event event type (only DDraw.RESIZE_EVENT are processed)
+     * @param value event data (not used here)
+     */
     _processGlobalEvent(source, event, value) {
         if (event === DDraw.RESIZE_EVENT) {
             this._resize();
         }
     }
 
+    /**
+     * Adjust Board internals when navigator's page is resized.
+     * @private
+     */
     _resize() {
         this._adjust();
         this._requestRepaint();
@@ -1591,6 +1686,11 @@ export class DBoard {
         this.paint();
     }
 
+    /**
+     * registers a list of levels inside the internals of the Board.
+     * @param levels levels to register
+     * @private
+     */
     _registerLevels(levels) {
         this._levels = new Map();
         this._levelsArray = []
@@ -1601,6 +1701,14 @@ export class DBoard {
         }
     }
 
+    /**
+     * sets mouse click events processing. Essentially this method sets an event listener that receive mouse click events,
+     * looks for the artefact the event points to, and passes it the received mouse event. Not that the artifact has to
+     * acknowledge the event to let the board considering that the event is proceeded. If not, the board looks for the
+     * next artifact just "below" and repeats the operation on it.
+     * <br> Note that a mouse click automatically opens a Memento transaction, so it can be later un-doed.
+     * @private
+     */
     _initMouseClickActions() {
         this._mouseClickActions = [];
         this._draw.onMouseClick(event => {
@@ -1633,6 +1741,16 @@ export class DBoard {
         });
     }
 
+    /**
+     * sets mouse move events processing. Essentially this method sets an event listener that receive mouse move events,
+     * looks for the artefact the event points to, and passes it the mouse event. Not that the artifact has to
+     * acknowledge the event to let the board considering that the event is proceeded. If not, the board looks for the
+     * next artifact just "below" and repeats the operation on it.
+     * <br> Note that this method generates internal mouseEnter ans mouseLeaves calls on artifacts to simulate the
+     * behavior of mouseEnter and mouseLeave DOM events, on artifacts (which are NOT DOM objects !)
+     * <br> Note that a mouse move does NOT open a Memento transaction.
+     * @private
+     */
     _initMouseMoveActions() {
         this._mouseMoveActions = [];
         this._draw.onMouseMove(event => {
@@ -1670,6 +1788,13 @@ export class DBoard {
         });
     }
 
+    /**
+     * sets key events processing. Essentially this method sets an event listener that receive key down events,
+     * and passes the key events to the "focused" artifact. The focused artifact is the last one which had processed a
+     * mouse click event.
+     * <br> Note that a key down event automatically opens a Memento transaction, so it can be later un-doed.
+     * @private
+     */
     _initKeyDownActions() {
         this._keyDownActions = [];
         this._draw.onKeyDown(event => {
@@ -1691,6 +1816,11 @@ export class DBoard {
         });
     }
 
+    /**
+     * paints the board content. Notes that only the invalidated levels of the board is repainted. If none of them are
+     * invalidated, this method does nothing. Generally a level if invalidated when an artifact is added to it or
+     * removed from it or is modified inside it.
+     */
     paint() {
         //let t = Date.now();
         for (let level of this._levels.values()) {
@@ -1699,16 +1829,29 @@ export class DBoard {
         //console.log(Date.now() - t);
     }
 
+    /**
+     * forces a complete repaint operation: all levels are invalidated and a paint operation is executed
+     */
     repaint() {
         this._adjust();
         this._requestRepaint();
         this.paint();
     }
 
+    /**
+     * gets a board level by its name
+     * @param levelName name that identifies the level to retrieve
+     * @return the corresponding level if exists. null otherwise
+     */
     getLevel(levelName) {
         return this._levels.get(levelName);
     }
 
+    /**
+     * requests the board to redraw completely its content. Note that this method does not make the painting. This will
+     * be done during the next painting operation.
+     * @private
+     */
     _requestRepaint() {
         let boardCenter = this.getViewPortPoint(new Point2D(0, 0));
         let matrix =
@@ -1721,18 +1864,33 @@ export class DBoard {
         }
     }
 
+    /**
+     * translate a point from viewport coordinates to board content coordinates
+     * @param vpoint viewport point
+     * @return board content point
+     */
     getBoardPoint(vpoint) {
         let x = (vpoint.x-this.viewportDimension.w/2)/this._zoomFactor+this._location.x;
         let y = (vpoint.y-this.viewportDimension.h/2)/this._zoomFactor+this._location.y;
         return new Point2D(x, y);
     }
 
+    /**
+     * translate a point from board point coordinates to viewport coordinates
+     * @param point board content point
+     * @return viewport point
+     */
     getViewPortPoint(point) {
         let vx = (point.x-this._location.x)*this._zoomFactor + this.viewportDimension.w/2;
         let vy = (point.y-this._location.y)*this._zoomFactor + this.viewportDimension.h/2;
         return new Point2D(vx, vy);
     }
 
+    /**
+     * executes a zoom operation
+     * @param vpoint central point (in viewport coordinate) of the zoom operation
+     * @param zoomFactor zoom factor: >0, >1 means zoom in, <1 means zoom out
+     */
     zoom(vpoint, zoomFactor) {
         let anchor = this.getBoardPoint(vpoint);
         this._zoomFactor = zoomFactor;
@@ -1744,27 +1902,53 @@ export class DBoard {
         Mechanisms.fire(this, DBoard.ZOOM_EVENT);
     }
 
+    /**
+     * sets the zoom parameters
+     * @param zoomIncrement zoom increment (applied each time a zoom in/zoom out operation)
+     * @param maxZoomFactor maximum value for the zoom factor (ie. tha max "zoom in" factor)
+     */
     setZoomSettings(zoomIncrement, maxZoomFactor) {
         this._zoomIncrement = zoomIncrement;
         this._maxZoomFactor = maxZoomFactor;
     }
 
+    /**
+     * gets the zoom increment (applied each time a zoom in/zoom out operation)
+     * @return {number}
+     */
     get zoomIncrement() {
         return this._zoomIncrement;
     }
 
+    /**
+     * gets the minimum value for the zoom factor (ie. tha max "zoom out" factor). This value is reached when the board
+     * content is entirely visible (the lesser of the values on x or y axis).
+     * @return minimum possible value of the zoom factor
+     */
     get minZoomFactor() {
         return Math.max(this.viewportDimension.w/this.dimension.w, this.viewportDimension.h/this.dimension.h);
     }
 
+    /**
+     * gets the maximum value for the zoom factor (ie. tha max "zoom in" factor).
+     * @return minimum possible value of the zoom factor
+     */
     get maxZoomFactor() {
         return this._maxZoomFactor;
     }
 
+    /**
+     * executes a zoom in operation
+     * @param vpoint central point (in viewport coordinate) of the zoom operation
+     */
     zoomIn(vpoint) {
         this.zoom(vpoint, this.zoomFactor/this.zoomIncrement);
     }
 
+    /**
+     * executes a zoom out operation
+     * @param vpoint central point (in viewport coordinate) of the zoom operation
+     */
     zoomOut(vpoint) {
         this.zoom(vpoint, this.zoomFactor*this.zoomIncrement);
     }
@@ -1790,22 +1974,55 @@ export class DBoard {
         this._borderWidth = borderWidth;
     }
 
+    /**
+     * indicates if a viewport point is "near" the left border of the board viewport. This method is used to triggers
+     * automatically a scroll to the left when the mouse is positioned near the left side of the board. "Near" means
+     * inside a small margin (defaulted to 10 points) from the board side.
+     * @param vpoint viewport point
+     * @return true if the point is near the left side of the board.
+     */
     isOnLeftBorder(vpoint) {
         return vpoint.x <= this._borderWidth;
     }
 
+    /**
+     * indicates if a viewport point is "near" the right border of the board viewport. This method is used to triggers
+     * automatically a scroll to the right when the mouse is positioned near the right side of the board. "Near" means
+     * inside a small margin (defaulted to 10 points) from the board side.
+     * @param vpoint viewport point
+     * @return true if the point is near the right side of the board.
+     */
     isOnRightBorder(vpoint) {
         return this.viewportDimension.w-vpoint.x <= this._borderWidth;
     }
 
+    /**
+     * indicates if a viewport point is "near" the top border of the board viewport. This method is used to triggers
+     * automatically a scroll to the top when the mouse is positioned near the top side of the board. "Near" means
+     * inside a small margin (defaulted to 10 points) from the board side.
+     * @param vpoint viewport point
+     * @return true if the point is near the top side of the board.
+     */
     isOnTopBorder(vpoint) {
         return vpoint.y <= this._borderWidth;
     }
 
+    /**
+     * indicates if a viewport point is "near" the bottom border of the board viewport. This method is used to triggers
+     * automatically a scroll to the bottom when the mouse is positioned near the bottom side of the board. "Near" means
+     * inside a small margin (defaulted to 10 points) from the board side.
+     * @param vpoint viewport point
+     * @return true if the point is near the bottom side of the board.
+     */
     isOnBottomBorder(vpoint) {
         return this.viewportDimension.h-vpoint.y <= this._borderWidth;
     }
 
+    /**
+     * execute a scroll.
+     * @param dpoint displacement (given in viewport coordinate) of the scroll
+     * @private
+     */
     _scroll(dpoint) {
         this._location = new Point2D(
             this._location.x + dpoint.x/this.zoomFactor,
@@ -1815,22 +2032,39 @@ export class DBoard {
         Mechanisms.fire(this, DBoard.SCROLL_EVENT);
     }
 
+    /**
+     * scrolls the table to the left, one scroll increment.
+     */
     scrollOnLeft() {
         this._scroll(new Point2D(-this._scrollIncrement, 0));
     }
 
+    /**
+     * scrolls the table to the right, one scroll increment.
+     */
     scrollOnRight() {
         this._scroll(new Point2D(this._scrollIncrement, 0));
     }
 
+    /**
+     * scrolls the table to the top, one scroll increment.
+     */
     scrollOnTop() {
         this._scroll(new Point2D(0, -this._scrollIncrement));
     }
 
+    /**
+     * scrolls the table to the bottom, one scroll increment.
+     */
     scrollOnBottom() {
         this._scroll(new Point2D(0, this._scrollIncrement));
     }
 
+    /**
+     * adjust current board content zoom factor and position to ensure that the "visible" window of the board does not
+     * exceed the board content.
+     * @private
+     */
     _adjust() {
         if (this._zoomFactor<this.minZoomFactor) {
             this._zoomFactor=this.minZoomFactor;
@@ -1874,32 +2108,48 @@ export class DBoard {
         }
     }
 
+    /**
+     * indicates if the viewport window has reached the left side of the board content.
+     * @return true if the left border of the board content is visible. False otherwise
+     */
     get onLeft() {
         return !!this._onLeft;
     }
 
+    /**
+     * indicates if the viewport window has reached the right side of the board content.
+     * @return true if the right border of the board content is visible. False otherwise
+     */
     get onRight() {
         return !!this._onRight;
     }
 
+    /**
+     * indicates if the viewport window has reached the top side of the board content.
+     * @return true if the top border of the board content is visible. False otherwise
+     */
     get onTop() {
         return !!this._onTop;
     }
 
+    /**
+     * indicates if the viewport window has reached the bottom side of the board content.
+     * @return true if the bottom border of the board content is visible. False otherwise
+     */
     get onBottom() {
         return !!this._onBottom;
     }
 
+    /**
+     * gets the zoom factor
+     * @return the zoom factor
+     */
     get zoomFactor() {
         return this._zoomFactor;
     }
 
     get location() {
         return this._location;
-    }
-
-    get dimension() {
-        return this._dimension;
     }
 
     get viewportDimension() {
@@ -2084,7 +2334,7 @@ export class DBoard {
     static DEFAULT_MAX_ZOOM_FACTOR = 10;
     static DEFAULT_ZOOM_INCREMENT = 1.5;
     static DEFAULT_BORDER_WIDTH = 10;
-    static DEFAULT_SCROLL_INCREMENT = 20;
+    static DEFAULT_SCROLL_INCREMENT = 80;
     static SCROLL_EVENT = "board-scroll";
     static ZOOM_EVENT = "board-zoom";
     static RESIZE_EVENT = "board-resize";

@@ -313,14 +313,24 @@ export class CBHexCounter extends RetractablePieceMixin(HexLocatableMixin(Playab
         return true;
     }
 
+    static resetTokenType() {
+        hexCounterCreators.clear();
+    }
+
     static registerTokenType(type, clazz) {
         hexCounterCreators.set(type, clazz);
     }
 
-    static fromSpecs(specs, context) {
-        let counter = hexCounterCreators.get(specs.type).fromSpecs(specs, context);
-        counter._oid = specs.id;
-        counter._oversion = specs.version;
+    fromSpecs(specs, context) {
+        this._oid = specs.id;
+        this._oversion = specs.version;
+        return this;
+    }
+
+    static fromSpecs(game, specs, context) {
+        let counter = new (hexCounterCreators.get(specs.type))();
+        counter.game = game;
+        counter.fromSpecs(specs, context);
         return counter;
     }
 
@@ -739,7 +749,7 @@ export function RetractableGameMixin(gameClass) {
                     let pieceSpec = locationsSpec.pieces[index];
                     if (!pieceSpec.name) {
                         pieceSpec.name = "t"+tokenCount++;
-                        let piece = CBHexCounter.fromSpecs(pieceSpec, context.pieceMap);
+                        let piece = CBHexCounter.fromSpecs(this, pieceSpec, context.pieceMap);
                         context.pieceMap.set(pieceSpec.name, {
                             specs: pieceSpec,
                             piece,
@@ -809,9 +819,6 @@ export class CBBasicPlayer extends CBAbstractPlayer {
         }
     }
 
-    canPlay() {
-        return false;
-    }
 }
 
 export class CBGame extends RetractableGameMixin(CBAbstractGame) {
@@ -937,7 +944,6 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
     }
 
     turnIsFinishable() {
-        //if (this._currentPlayer && !this._currentPlayer.canPlay()) return false;
         if (!this.canUnselectPlayable()) return false;
         if (this.playables) {
             for (let playable of this.playables) {

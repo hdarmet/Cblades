@@ -3,8 +3,7 @@ package fr.cblades.game;
 import fr.cblades.domain.*;
 
 import javax.persistence.EntityManager;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.Map;
 
 public class SequenceApplyer implements SequenceElement.SequenceVisitor {
@@ -94,27 +93,37 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
     }
 
     void removeUnitFromLocation(Unit unit) {
-        Location[] locations = Location.getUnitLocations(this.locations, unit);
+        Location[] locations = Location.getUnitLocations(this.game, this.locations, unit);
         for (Location location: locations) {
-            Location.removePieceFromLocation(this.locations, location, unit, this.game);
+            Location.removePieceFromLocation(this.game, this.locations, location, unit);
         }
     }
 
     void addUnitToLocation(Unit unit, Stacking stacking) {
-        Location[] locations = Location.getUnitLocations(this.locations, unit);
+        Location[] locations = Location.getUnitLocations(this.game, this.locations, unit);
         for (Location location: locations) {
-            Location.addPieceToLocation(this.locations, location, unit, this.game, stacking);
+            Location.addPieceToLocation(this.game, this.locations, location, unit, stacking);
         }
     }
 
+    Token getFire(int col, int row) {
+        Location location = Location.getLocation(this.game, this.locations, col, row);
+        return location.getToken(Token.FIRE);
+    }
+
+    Token getSmoke(int col, int row) {
+        Location location = Location.getLocation(this.game, this.locations, col, row);
+        return location.getToken(Token.SMOKE);
+    }
+
     void addTokenToLocation(Token token) {
-        Location location = Location.getLocation(this.locations, token);
-        Location.addPieceToLocation(this.locations, location, token, this.game, Stacking.BOTTOM);
+        Location location = Location.getLocation(this.game, this.locations, token);
+        Location.addPieceToLocation(this.game, this.locations, location, token, Stacking.BOTTOM);
     }
 
     void removeTokenFromLocation(Token token) {
-        Location location = Location.getLocation(this.locations, token);
-        Location.removePieceFromLocation(this.locations, location, token, this.game);
+        Location location = Location.getLocation(this.game, this.locations, token);
+        Location.removePieceFromLocation(this.game, this.locations, location, token);
     }
 
     void finishUnitAction(SequenceElement element) {
@@ -333,6 +342,9 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         else if (element.getType().equals("remove-stakes")) {
             removeToken(element);
         }
+        else if (element.getType().equals("fire-and-smoke")) {
+            updateFires(element);
+        }
         else if (element.getType().equals("next-turn")) {
             changeTurn(element);
         }
@@ -374,6 +386,140 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         Unit leader = units.get(element.getAttr("leader"));
         Wing wing = Wing.findWing(this.game, leader);
         wing.setLeader(inCommand ? leader : null);
+    }
+
+    void removeLightSmokes() {
+        Collection<Token> smokes = getSmokes(false);
+        for (Token smoke : smokes) {
+            this.removeTokenFromLocation(smoke);
+        }
+    }
+
+    void disperseHeavySmokes() {
+        Collection<Token> denseSmokes = getSmokes(true);
+        for (Token denseSmoke : denseSmokes) {
+            LocationId targetLocation = LocationId.getNear(
+                denseSmoke.getPositionCol(),
+                denseSmoke.getPositionRow(),
+                this.game.getWindDirection()
+            );
+            Token fire = getSmoke(targetLocation.getCol(), targetLocation.getRow());
+            if (!fire.getFire()) {
+                if (getSmoke(targetLocation.getCol(), targetLocation.getRow()) == null) {
+                    Token smoke = new Token().setType(Token.SMOKE).setDensity(false)
+                        .setPositionCol(targetLocation.getCol())
+                        .setPositionRow(targetLocation.getRow());
+                    this.addTokenToLocation(smoke);
+                }
+                denseSmoke.setDensity(false);
+            }
+        }
+    }
+
+    void createHeavySmokes() {
+        Collection<Token> denseFires = getFires(true);
+        for (Token denseFire : denseFires) {
+            LocationId targetLocation = LocationId.getNear(
+                denseFire.getPositionCol(),
+                denseFire.getPositionRow(),
+                this.game.getWindDirection()
+            );
+            Token fire = getFire(targetLocation.getCol(), targetLocation.getRow());
+            if (fire==null || !fire.getFire()) {
+                Token smoke = getSmoke(targetLocation.getCol(), targetLocation.getRow());
+                if (smoke == null) {
+                    smoke = new Token().setType(Token.SMOKE).setDensity(true)
+                        .setPositionCol(targetLocation.getCol())
+                        .setPositionRow(targetLocation.getRow());
+                    this.addTokenToLocation(smoke);
+                } else {
+                    smoke.setDensity(true);
+                }
+            }
+        }
+    }
+
+    void startFires(List<Map<String, Object>> options) {
+        for (Map<String, Object> option : options) {
+            boolean firstFire = (boolean)option.get("isFirstFire");
+            boolean secondFire = (boolean)option.get("isSecondFire");
+            int positionCol = (int)SequenceElement.getAttr(option, "hexLocation.col");
+            int positionRow = (int)SequenceElement.getAttr(option,"hexLocation.row");
+            if (firstFire && secondFire) {
+                Token fire = getFire(positionCol, positionRow);
+                if (fire != null) {
+                    if (!fire.getFire()) {
+                        fire.setFire(true);
+                        Token smoke = getSmoke(positionCol, positionRow);
+                        if (smoke != null) {
+                            removeTokenFromLocation(smoke);
+                        }
+                    }
+                }
+                else {
+                    fire = new Token().setType(Token.FIRE).setFire(false)
+                        .setPositionCol(positionCol)
+                        .setPositionRow(positionRow);
+                    addTokenToLocation(fire);
+                }
+            }
+            else if (!firstFire && !secondFire) {
+                Token fire = getFire(positionCol, positionRow);
+                if (fire!=null && !fire.getFire()) {
+                    removeTokenFromLocation(fire);
+                }
+            }
+        }
+    }
+
+    void getFireAndSmokesPlayed() {
+        Collection<Piece> pieces = this.game.getPieces();
+        List<Token> tokens = new ArrayList<>();
+        for (Piece piece : pieces) {
+            if (piece instanceof Token) {
+                Token token = (Token)piece;
+                if (token.getType().equals(Token.FIRE) || token.getType().equals(Token.SMOKE)) {
+                    token.setPlayed(true);
+                }
+            }
+        }
+    }
+
+    void updateFires(SequenceElement element) {
+        List<Map<String, Object>> options = (List<Map<String, Object>>)element.getAttr("options");
+        removeLightSmokes();
+        disperseHeavySmokes();
+        createHeavySmokes();
+        startFires(options);
+        getFireAndSmokesPlayed();
+    }
+
+    Collection<Token> getSmokes(boolean isDense) {
+        Collection<Piece> pieces = this.game.getPieces();
+        List<Token> tokens = new ArrayList<>();
+        for (Piece piece : pieces) {
+            if (piece instanceof Token) {
+                Token token = (Token)piece;
+                if (token.getType().equals(Token.SMOKE) && token.getDensity()==isDense) {
+                    tokens.add(token);
+                }
+            }
+        }
+        return tokens;
+    }
+
+    Collection<Token> getFires(boolean isFire) {
+        Collection<Piece> pieces = this.game.getPieces();
+        List<Token> tokens = new ArrayList<>();
+        for (Piece piece : pieces) {
+            if (piece instanceof Token) {
+                Token token = (Token)piece;
+                if (token.getType().equals(Token.FIRE) && token.getFire()==isFire) {
+                    tokens.add(token);
+                }
+            }
+        }
+        return tokens;
     }
 
     long count = -1;

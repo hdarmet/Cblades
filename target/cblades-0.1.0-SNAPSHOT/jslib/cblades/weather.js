@@ -24,6 +24,44 @@ export let CBFog = {
     DENSE_FOG : 4
 }
 
+export function getWeatherCode(weather) {
+    if (weather===CBWeather.HOT) return "H";
+    else if (weather===CBWeather.CLEAR) return "C";
+    else if (weather===CBWeather.CLOUDY) return "N";
+    else if (weather===CBWeather.OVERCAST) return "O";
+    else if (weather===CBWeather.RAIN) return "R";
+    else return "S";
+}
+
+export function getWeather(code) {
+    switch (code) {
+        case "H": return CBWeather.HOT;
+        case "C": return CBWeather.CLEAR;
+        case "N": return CBWeather.CLOUDY;
+        case "O": return CBWeather.OVERCAST;
+        case "R": return CBWeather.RAIN;
+        default: CBWeather.STORM;
+    }
+}
+
+export function getFogCode(fog) {
+    if (fog===CBFog.NO_FOG) return "NF";
+    else if (fog===CBFog.MIST) return "M";
+    else if (fog===CBFog.DENSE_MIST) return "DM";
+    else if (fog===CBFog.FOG) return "F";
+    else return "DF";
+}
+
+export function getFog(code) {
+    switch (code) {
+        case "NF": return CBFog.NO_FOG;
+        case "M": return CBFog.MIST;
+        case "DM": return CBFog.DENSE_MIST;
+        case "F": return CBFog.FOG;
+        default: CBFog.DENSE_FOG;
+    }
+}
+
 export function WeatherMixin(gameClass) {
 
     return class extends gameClass {
@@ -94,6 +132,21 @@ export function WeatherMixin(gameClass) {
             Memento.register(this);
             this._weatherSettings._windDirection = windDirection;
             Mechanisms.fire(this, CBAbstractGame.SETTINGS_EVENT, {windDirection});
+        }
+
+        toSpecs(context) {
+            let gameSpecs = super.toSpecs(context);
+            gameSpecs.windDirection = this.windDirection;
+            gameSpecs.weather = getWeather(this.weather);
+            gameSpecs.fog = getFog(this.fog);
+            return gameSpecs;
+        }
+
+        fromSpecs(specs, context) {
+            super.fromSpecs(specs, context)
+            this.windDirection = specs.windDirection;
+            this.weather = getWeatherCode(specs.weather);
+            this.fog = getFogCode(specs.fog);
         }
 
     }

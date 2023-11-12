@@ -60,40 +60,41 @@ public class Location extends BaseEntity {
         }
         return null;
     }
-    public static Location getLocation(Map context, int col, int row) {
+    public static Location getLocation(Game game, Map context, int col, int row) {
         Location location = (Location)context.get(new LocationId(col, row));
         if (location==null) {
             location = new Location().setCol(col).setRow(row);
+            game.addLocation(location);
             context.put(location.getId(), location);
         }
         return location;
     }
 
-    public static Location getLocation(Map context, Piece piece) {
+    public static Location getLocation(Game game, Map context, Piece piece) {
         int col = piece.getPositionCol();
         int row = piece.getPositionRow();
-        return getLocation(context, col, row);
+        return getLocation(game, context, col, row);
     }
 
-    public static Location getFormationAltLocation(Map context, Unit unit) {
+    public static Location getFormationAltLocation(Game game, Map context, Unit unit) {
         int col = unit.getPositionCol();
         int row = unit.getPositionRow();
         int angle = unit.getPositionAngle();
-        return getLocation(context,
+        return getLocation(game, context,
             LocationId.findNearCol(col, row, angle),
             LocationId.findNearRow(col, row, angle)
         );
     }
 
-    public static Location[] getUnitLocations(Map context, Unit unit) {
+    public static Location[] getUnitLocations(Game game, Map context, Unit unit) {
         if (unit.getPositionAngle() == null) {
             return new Location[] {
-                getLocation(context, unit)
+                getLocation(game, context, unit)
             };
         }
         else {
             return new Location[] {
-                getLocation(context, unit), getFormationAltLocation(context, unit)
+                getLocation(game, context, unit), getFormationAltLocation(game, context, unit)
             };
         }
     }
@@ -101,16 +102,16 @@ public class Location extends BaseEntity {
     public LocationId getLocationId() {
         return new LocationId(this.getCol(), this.getRow());
     }
-    public static void addPieceToLocation(Map context, Location location, Piece piece, Game game, Stacking stacking) {
+    public static void addPieceToLocation(Game game, Map context, Location location, Piece piece, Stacking stacking) {
         LocationId locationId = location.getLocationId();
         location.addPiece(piece, stacking);
         if (context.get(locationId) != null) {
-            game.addLocation(location);
+            if (location.getId()<1) game.addLocation(location);
             context.put(locationId, location);
         }
     }
 
-    public static void removePieceFromLocation(Map context, Location location, Piece piece, Game game) {
+    public static void removePieceFromLocation(Game game, Map context, Location location, Piece piece) {
         LocationId locationId = location.getLocationId();
         location.removePiece(piece);
         if (context.get(locationId) == null) {

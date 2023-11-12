@@ -148,6 +148,9 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 						.checkRequired("invert").checkBoolean("invert")
 					)
 				)
+				.checkRequired("windDirection").checkInteger("windDirection").checkMin("windDirection", 0).checkMax("windDirection", 300)
+				.checkRequired("fog").check("fog", FogType.byLabels().keySet())
+				.checkRequired("weather").check("weather", WeatherType.byLabels().keySet())
 				.checkRequired("currentPlayerIndex").checkInteger("currentPlayerIndex").checkMin("currentPlayerIndex", 0).checkMax("current", json.getJson("players").size())
 				.checkRequired("currentTurn").checkInteger("currentTurn").checkMin("currentTurn", 0)
 				.each("players", pJson -> verify(pJson)
@@ -203,9 +206,11 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 							)
 							.checkWhen(eJson->eJson.get("type").equals("smoke"), eJson->
 								verify(eJson).checkEnum("density", Boolean.TRUE, Boolean.FALSE)
+									.checkRequired("played").checkBoolean("played")
 							)
 							.checkWhen(eJson->eJson.get("type").equals("fire"), eJson->
 								verify(eJson).checkEnum("fire", Boolean.TRUE, Boolean.FALSE)
+									.checkRequired("played").checkBoolean("played")
 							)
 							.checkWhen(eJson->eJson.get("name")!=null, eJson->
 								verify(eJson)
@@ -218,6 +223,9 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 			sync(json, game)
 				.write("version")
 				.write("currentTurn")
+				.write("windDirection")
+				.write("weather", label -> WeatherType.byLabels().get(label))
+				.write("fog", label -> FogType.byLabels().get(label))
 				.writeLink("map", (pJson, map) -> sync(pJson, map)
 					.write("version")
 					.syncEach("boards", (bJson, board) -> sync(bJson, board)
@@ -290,6 +298,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 							(t2Json, t2oken)->t2oken instanceof Token,
 							(t2Json, t2oken)->sync(t2Json, t2oken)
 								.write("type")
+								.write("played")
 								.syncWhen(
 									(t3Json, t3oken)->((Token)t3oken).getType().equals("smoke"),
 									(t3Json, t3oken)->sync(t3Json, t3oken)
@@ -303,6 +312,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 						)
 					)
 				);
+			game.setWindDirection(json.getInteger("windDirection"));
 			game.setCurrentPlayerIndex(json.getInteger("currentPlayerIndex"));
 			return game;
 		} catch (SummerNotFoundException snfe) {
@@ -315,6 +325,9 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 		sync(json, game)
 			.read("id")
 			.read("version")
+			.read("windDirection")
+			.read("fog", FogType::getLabel)
+			.read("weather", WeatherType::getLabel)
 			.read("currentPlayerIndex")
 			.read("currentTurn")
 			.readLink("map", (pJson, map)->sync(pJson, map)
@@ -390,6 +403,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 						(t2Json, t2oken)->token instanceof Token,
 						(t2Json, t2oken)->sync(t2Json, t2oken)
 							.read("type")
+							.read("played")
 							.syncWhen(
 								(t3Json, t3oken)->((Token)t3oken).getType().equals("smoke"),
 								(t3Json, t3oken)->sync(t3Json, t3oken)

@@ -21,6 +21,10 @@ public class Game extends BaseEntity {
     @JoinColumn(name = "game_id")
     List<Location> locations = new ArrayList<>();
 
+    int windDirection = 0;
+    FogType fog = FogType.NO_FOG;
+    WeatherType weather = WeatherType.CLEAR;
+
     public List<Player> getPlayers() {
         return Collections.unmodifiableList(this.players);
     }
@@ -54,6 +58,30 @@ public class Game extends BaseEntity {
     }
     public Game removeLocation(Location location) {
         this.locations.remove(location);
+        return this;
+    }
+
+    public int getWindDirection() {
+        return this.windDirection;
+    }
+    public Game setWindDirection(int windDirection) {
+        this.windDirection = windDirection;
+        return this;
+    }
+
+    public WeatherType getWeather() {
+        return this.weather;
+    }
+    public Game setWeather(WeatherType weather) {
+        this.weather = weather;
+        return this;
+    }
+
+    public FogType getFog() {
+        return this.fog;
+    }
+    public Game setFog(FogType fog) {
+        this.fog = fog;
         return this;
     }
 
@@ -136,6 +164,14 @@ public class Game extends BaseEntity {
         return sequenceList;
     }
 
+    public Collection<Piece> getPieces() {
+        Set<Piece> pieces = new HashSet<>();
+        for (Location location : this.locations) {
+            pieces.addAll(location.getPieces());
+        }
+        return pieces;
+    }
+
     public Unit getUnitByName(String name) {
         for (Player player : this.getPlayers()) {
             Unit unit = player.getUnit(name);
@@ -148,7 +184,7 @@ public class Game extends BaseEntity {
         Game game = em.find(Game.class, id);
         if (game==null) {
             throw new SummerNotFoundException(
-                    String.format("Unknown Game with id %d", id)
+                String.format("Unknown Game with id %d", id)
             );
         }
         return game;

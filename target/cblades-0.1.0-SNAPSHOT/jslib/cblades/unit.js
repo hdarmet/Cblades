@@ -102,6 +102,24 @@ export class CBUnitPlayer extends CBBasicPlayer {
         return this.game.playables.filter(playable=>playable.unitNature && playable.player === this);
     }
 
+    toSpecs(context) {
+        let playerSpecs = super.toSpecs(context);
+        playerSpecs.wings = [];
+        for (let wing of this.wings) {
+            let wingSpecs = wing.toSpecs(context);
+            playerSpecs.wings.push(wingSpecs);
+        }
+        return playerSpecs;
+    }
+
+     fromSpecs(game, specs, context) {
+        super.fromSpecs(game, specs, context);
+        for (let wingSpecs of specs.wings) {
+            CBWing.fromSpecs(this, wingSpecs, context);
+        }
+        return this;
+    }
+
 }
 
 export class CBUnitActuatorTrigger extends CBPlayableActuatorTrigger {
@@ -569,6 +587,87 @@ export class CBWing {
             if (unitNames.has(name)) number+=1;
             else return name;
         }
+    }
+
+    getOrderInstructionCode() {
+        switch (this.orderInstruction) {
+            case CBOrderInstruction.ATTACK: return "A";
+            case CBOrderInstruction.DEFEND: return "D";
+            case CBOrderInstruction.REGROUP: return "G";
+            case CBOrderInstruction.RETREAT: return "R";
+        }
+    }
+
+    static getOrderInstruction(code) {
+        switch (code) {
+            case "A": return CBOrderInstruction.ATTACK;
+            case "D": return CBOrderInstruction.DEFEND;
+            case "G": return CBOrderInstruction.REGROUP;
+            case "R": return CBOrderInstruction.RETREAT;
+        }
+    }
+
+    toSpecs(context) {
+        let wingSpecs = {
+            id: this._oid,
+            version: this._oversion || 0,
+            leader: this.leader ? this.leader.name : undefined,
+            moral: this.moral,
+            tiredness: this.tiredness,
+            banner: {
+                id: this.banner._oid,
+                version: this.banner._oversion,
+                name: this.banner.name,
+                path: this.banner.path
+            },
+            units: [],
+            retreatZone: [],
+            orderInstruction: this.getOrderInstructionCode()
+        }
+        for (let retreatHex of this.retreatZone) {
+            let retreatHexSpecs = {
+                id: retreatHex.hex._oid,
+                version: retreatHex.hex._oversion,
+                col: retreatHex.col,
+                row: retreatHex.row
+            }
+            wingSpecs.retreatZone.push(retreatHexSpecs);
+        }
+        for (let unit of this.playables) {
+            let unitSpecs = unit.toSpecs(context);
+            wingSpecs.units.push(unitSpecs);
+        }
+        return wingSpecs;
+    }
+
+    static fromSpecs(player, specs, context) {
+        let wing = new CBWing(player, {
+            _oid: specs.banner.id,
+            _oversion: specs.banner.version,
+            name: specs.banner.name,
+            path: specs.banner.path
+        });
+        wing._oid = specs.id;
+        wing._oversion = specs.version;
+        wing.setMoral(specs.moral);
+        wing.setTiredness(specs.tiredness);
+        let retreatZone = [];
+        for (let retreatHexSpec of specs.retreatZone) {
+            let hexId = player.game.map.getHex(retreatHexSpec.col, retreatHexSpec.row);
+            retreatZone.push(hexId);
+        }
+        wing.setRetreatZone(retreatZone);
+        let leader = null;
+        for (let unitSpecs of specs.units) {
+            let unit = CBUnit.fromSpecs(wing, unitSpecs, context);
+            context.pieceMap.set(unit.name, {piece:unit, specs:unitSpecs});
+            if (unit.name === specs.leader) {
+                leader = unit;
+            }
+        }
+        leader && wing.setLeader(leader);
+        wing.setOrderInstruction(this.getOrderInstruction(specs.orderInstruction));
+        return wing;
     }
 
     static MORAL_EVENT = "moral-event";
@@ -1640,30 +1739,6 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this.setAttr("resolvedAttackCount", resolvedAttackCount);
     }
 
-    toSpecs(context) {
-        let unitSpec = {
-            id : this._oid,
-            version: this._oversion || 0,
-            name: this.name,
-            category: this.getUnitCategoryCode(),
-            type: this.type.name,
-            angle: this.angle,
-            positionCol: this.getPosition().col,
-            positionRow: this.getPosition().row,
-            positionAngle: this.getPosition().angle,
-            steps: this.steps,
-            tiredness: this.getTirednessCode(),
-            ammunition: this.getAmmunitionCode(),
-            cohesion: this.getCohesionCode(),
-            charging: this.isCharging(),
-            contact: this.isEngaging(),
-            orderGiven: this.hasReceivedOrder(),
-            played: this.isPlayed()
-        }
-        context.set(this, unitSpec);
-        return unitSpec;
-    }
-
     getPosition() {
         return {
             col: this.hexLocation.col,
@@ -1689,7 +1764,39 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         else return "GO";
     }
 
-    static fromSpecs(wing, unitSpec) {
+    toReferenceSpecs(context) {
+        return {
+            id: this._oid,
+            version: this._oversion || 0,
+            name:this.name
+        }
+    }
+
+    toSpecs(context) {
+        let unitSpec = {
+            id : this._oid,
+            version: this._oversion || 0,
+            name: this.name,
+            category: this.getUnitCategoryCode(),
+            type: this.type.name,
+            angle: this.angle,
+            positionCol: this.getPosition().col,
+            positionRow: this.getPosition().row,
+            positionAngle: this.getPosition().angle,
+            steps: this.steps,
+            tiredness: this.getTirednessCode(),
+            ammunition: this.getAmmunitionCode(),
+            cohesion: this.getCohesionCode(),
+            charging: this.isCharging(),
+            contact: this.isEngaging(),
+            orderGiven: this.hasReceivedOrder(),
+            played: this.isPlayed()
+        }
+        context.set(this, unitSpec);
+        return unitSpec;
+    }
+
+    static fromSpecs(wing, unitSpec, context) {
         let unitType =  CBUnitType.getType(unitSpec.type);
         let unit = unitType.createUnit(wing, unitSpec.steps);
         unit._oid = unitSpec.id;
@@ -1697,6 +1804,11 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         unit._name = unitSpec.name;
         unit._game = wing.player.game;
         unit.angle = unitSpec.angle;
+        unit._hexLocation = CBHexLocation.fromSpecs(context.map, {
+            col: unitSpec.positionCol,
+            row: unitSpec.positionRow,
+            angle: unitSpec.positionAngle
+        });
         unit.setState({
             steps: unitSpec.steps,
             tiredness: CBUnit.getUnitTiredness(unitSpec.tiredness),

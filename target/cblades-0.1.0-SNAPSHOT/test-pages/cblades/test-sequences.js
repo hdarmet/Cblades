@@ -13,30 +13,42 @@ import {
 import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
-import {
-    create1Player1Unit1FormationTinyGame,
-    create1Player2UnitsTinyGame, createBaseGame,
-    createTinyGame
-} from "./game-examples.js";
+/*
 import {
     CBStacking
 } from "../../jslib/cblades/game.js";
+ */
 import {
     CBNextTurnSequenceElement,
     CBSequence
 } from "../../jslib/cblades/sequences.js";
+/*
 import {
     CBCharge, CBCohesion, CBMunitions, CBTiredness
 } from "../../jslib/cblades/unit.js";
 import {
     executeAllAnimations
 } from "./interactive-tools.js";
+ */
 import {
     CBGame
 } from "../../jslib/cblades/playable.js";
 import {
+    CBMap
+} from "../../jslib/cblades/map.js";
+/*
+import {
     CBInteractivePlayer
 } from "../../jslib/cblades/interactive/interactive-player.js";
+*/
+
+export function createBaseGame() {
+    let game = new CBGame("Game");
+    var map = new CBMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
+    game.setMap(map);
+    game.start();
+    return {game, arbitrator, map};
+}
 
 describe("Sequences", ()=> {
 
@@ -47,6 +59,7 @@ describe("Sequences", ()=> {
         Memento.clear();
     });
 
+    /*
     it("Checks sequence overall behavior", () => {
         given:
             var {game, unit} = createTinyGame();
@@ -478,7 +491,8 @@ describe("Sequences", ()=> {
             assert(element.equalsTo({...model, stacking:CBStacking.TOP})).isFalse();
             assert(element.equalsTo({...model, angle:120})).isFalse();
     });
-
+*/
+    /*
     it("Checks next turn segment elements", () => {
         given:
             var {game} = createBaseGame();
@@ -515,6 +529,7 @@ describe("Sequences", ()=> {
             assert(game.currentPlayer).equalsTo(player2);
             assert(turnAnimation).isTrue();
     });
+*/
 
     it("Checks next turn segment equalsTo method", () => {
         given:

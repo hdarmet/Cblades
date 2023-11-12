@@ -22,9 +22,7 @@ import {
 } from "../../jslib/cblades/game.js";
 import {
     CBActionActuator,
-    CBGame, RetractableActuatorMixin
-} from "../../jslib/cblades/playable.js";
-import {
+    CBGame, RetractableActuatorMixin,
     CBHexCounter, CBLevelBuilder
 } from "../../jslib/cblades/playable.js";
 import {
@@ -68,7 +66,7 @@ import {
 } from "./interactive-tools.js";
 import {
     banner, banner1, banner2, banner3
-} from "./game-examples.js";
+} from "./game-elements.js";
 
 describe("Unit", ()=> {
 

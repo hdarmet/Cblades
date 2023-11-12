@@ -223,8 +223,18 @@ export function showActuatorTrigger(image, w, h, [a, b, c, d, e, f]) {
     return [
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            "shadowColor = #00FFFF", "shadowBlur = 10",
+            "shadowBlur = 0",
             `drawImage(./../images/actuators/${image}.png, -${w/2}, -${h/2}, ${w}, ${h})`,
+        "restore()"
+    ]
+}
+
+export function showOverActuatorTrigger(image, w, h, [a, b, c, d, e, f]) {
+    return [
+        "save()",
+        `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+        "shadowColor = #00FFFF", "shadowBlur = 10",
+        `drawImage(./../images/actuators/${image}.png, -${w/2}, -${h/2}, ${w}, ${h})`,
         "restore()"
     ]
 }

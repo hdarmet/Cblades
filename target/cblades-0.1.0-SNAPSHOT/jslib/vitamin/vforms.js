@@ -11,6 +11,104 @@ import {
     VContainer
 } from "./vcontainer.js";
 
+
+export function mandatory({message, validate}) {
+    return function(field, quit) {
+        if (field.value === undefined || field.value === null || (field.value.trim && field.value.trim() === "")) {
+            return message ? message : field.label + " cannot be empty";
+        }
+        if (validate) {
+            return validate(field, quit);
+        }
+        return "";
+    }
+}
+
+export function range({message, min, max}) {
+    return function(field, quit) {
+        if (field.value === undefined || field.value === null || field.value.trim() === "") {
+            return "";
+        }
+        if (quit) {
+            if (min && field.value.length<min) return message ? message : field.label + " must contain at least "+min+" characters.";
+            if (max && field.value.length>max) return message ? message : field.label + " must contain at most "+max+" characters.";
+        }
+        return "";
+    }
+}
+
+export function isValid(container) {
+    let result = true;
+    container.visitDown(field=>{
+        if (field instanceof VField) {
+            result = !field.validate() && result;
+        }
+        return true;
+    });
+    return result;
+}
+
+export function or({message, validators}) {
+    return function(field, quit) {
+        for (let validator of validators) {
+            if (!validator(field, quit)) return "";
+        }
+        return message ? message : "Not valid.";
+    }
+}
+
+export function and({message, validators}) {
+    return function(field, quit) {
+        for (let validator of validators) {
+            let result = validator(field, quit);
+            if (result) return message ? message : result;
+        }
+        return "";
+    }
+}
+
+export function matches({regex, message}) {
+    return function(field, quit) {
+        if (field.value === undefined || field.value === null || field.value.trim() === "") {
+            return "";
+        }
+        if (quit) {
+            if (field.value.trim().match(regex)) return "";
+            return message;
+        }
+        return "";
+    }
+}
+
+export function matchesLogin({message}) {
+    return matches({regex:/^[\w.-]{0,19}[0-9a-zA-Z]$/u,
+        message: message ? message : "Not a valid login"});
+}
+
+export function matchesEmail({message}) {
+    return matches({regex:/^([a-zA-Z0-9_\-.]+)@([a-zA-Z0-9_\-.]+)\.([a-zA-Z]{2,5})$/,
+        message: message ? message : "Not an email"});
+}
+
+export function matchesName({message}) {
+    return matches({regex:/^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð ,.'-]+$/u,
+        message: message ? message : "Not a name"});
+}
+
+export function matchesPassword({message}) {
+    return matches({regex:/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*.]).{8,}$/gm,
+        message: message ? message : "Must contains at least a lowercase and an uppercase letter, a number and a special character."});
+}
+
+/**
+ * A component that represents an on/off state, materialized by two dots in a horizontal line.
+ * The user can switch between these two states by clicking on the corresponding dot.
+ * <p> The vitamin is composed of a Label (css class kind? and "form-toggle") containing:
+ * <ul>
+ *  <li> an Input (no css class)
+ *  <li> a slide (a Span element with "slider" and "round" css classes)
+ * </ul>
+ */
 export class VToggleSwitch extends Vitamin(Label) {
 
     constructor({ref, kind}) {
@@ -22,17 +120,46 @@ export class VToggleSwitch extends Vitamin(Label) {
             .add(new Span().addClass("slider").addClass("round"));
     }
 
+    /**
+     * indicates if the toggle is on
+     * @return true if the toggle is "on", false otherwise
+     */
     get checked() {
         return this._input.getChecked();
     }
 
+    /**
+     * switch the value of the toggle
+     * @param checked true to set the toggle to "on", false to set the toggle to "off"
+     */
     set checked(checked) {
         this._input.setChecked(checked);
     }
 }
 
+/**
+ * A component that represents a set of (more tha two) states, each one materialized by a big dot on a horizontal line.
+ * The user can switch between these states by clicking on the corresponding dot.
+ * <p>The DOM counterpart of this vitamin is a DIV (css class kind? and "form-switch-wrapper") witch is an invisible
+ * wrapper.
+ * <p>It contains another DIV ("form-switch-radio") which is a graphical container (it defines color,
+ * font, etc). This container owns:
+ * <ul>
+ *     <li> a slider (a DIV with css associated css class : "form-switch-option-slider")
+ *     <li> for each option: an Input and a Label (no css class associated)
+ * </ul>
+ */
 export class VSwitch extends Vitamin(Div) {
 
+    /**
+     * Constructor of the switch
+     * @param ref vitamin reference
+     * @param kind eventual css class that can be associated with all DOM objects inside the component.
+     * @param options list of available states, each one described by a {title, value, checked} object.
+     * @param onInput function called each time a new value is "validated"
+     * @param onChange function called each time the component value is modified (in the case of a switch onInput and
+     * onChange are always called jointly, there are both defined for API consistency)
+     */
     constructor({ref, kind, options, onInput, onChange}) {
         super(ref);
         this._inputAction = onInput;
@@ -67,14 +194,27 @@ export class VSwitch extends Vitamin(Div) {
         this._content.add(this._slider);
     }
 
+    /**
+     * Moves a slider on a given option (=state)
+     * @param pos index of the option (= state) the slider is going to move on
+     * @private
+     */
     _moveSlider(pos) {
         this._slider.addStyle("left", `${(this._sliderWidth+4)*pos+2}%`);
     }
 
+    /**
+     * returns the value associated with the selected option
+     * @return {*}
+     */
     get value() {
         return this._current;
     }
 
+    /**
+     * sets the value of the option to select. Notes that this method redraws the component on the page
+     * @param value value of the option to be selected
+     */
     set value(value) {
         if (value !== this._current) {
             this._current !== undefined && this._input[this._current].setChecked(false);
@@ -239,94 +379,6 @@ export class VDropdownList extends Vitamin(Div) {
         this._anchor.setText(this._labels.length>0?this._labels.join(", "):this._placeholder);
     }
 
-}
-
-export function mandatory({message, validate}) {
-    return function(field, quit) {
-        if (field.value === undefined || field.value === null || (field.value.trim && field.value.trim() === "")) {
-            return message ? message : field.label + " cannot be empty";
-        }
-        if (validate) {
-            return validate(field, quit);
-        }
-        return "";
-    }
-}
-
-export function range({message, min, max}) {
-    return function(field, quit) {
-        if (field.value === undefined || field.value === null || field.value.trim() === "") {
-            return "";
-        }
-        if (quit) {
-            if (min && field.value.length<min) return message ? message : field.label + " must contain at least "+min+" characters.";
-            if (max && field.value.length>max) return message ? message : field.label + " must contain at most "+max+" characters.";
-        }
-        return "";
-    }
-}
-
-export function isValid(container) {
-    let result = true;
-    container.visitDown(field=>{
-        if (field instanceof VField) {
-            result = !field.validate() && result;
-        }
-        return true;
-    });
-    return result;
-}
-
-export function or({message, validators}) {
-    return function(field, quit) {
-        for (let validator of validators) {
-            if (!validator(field, quit)) return "";
-        }
-        return message ? message : "Not valid.";
-    }
-}
-
-export function and({message, validators}) {
-    return function(field, quit) {
-        for (let validator of validators) {
-            let result = validator(field, quit);
-            if (result) return message ? message : result;
-        }
-        return "";
-    }
-}
-
-export function matches({regex, message}) {
-    return function(field, quit) {
-        if (field.value === undefined || field.value === null || field.value.trim() === "") {
-            return "";
-        }
-        if (quit) {
-            if (field.value.trim().match(regex)) return "";
-            return message;
-        }
-        return "";
-    }
-}
-
-export function matchesLogin({message}) {
-    return matches({regex:/^[\w.-]{0,19}[0-9a-zA-Z]$/u,
-        message: message ? message : "Not a valid login"});
-}
-
-export function matchesEmail({message}) {
-    return matches({regex:/^([a-zA-Z0-9_\-.]+)@([a-zA-Z0-9_\-.]+)\.([a-zA-Z]{2,5})$/,
-        message: message ? message : "Not an email"});
-}
-
-export function matchesName({message}) {
-    return matches({regex:/^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð ,.'-]+$/u,
-        message: message ? message : "Not a name"});
-}
-
-export function matchesPassword({message}) {
-    return matches({regex:/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*.]).{8,}$/gm,
-        message: message ? message : "Must contains at least a lowercase and an uppercase letter, a number and a special character."});
 }
 
 export class VField extends Vitamin(Div) {

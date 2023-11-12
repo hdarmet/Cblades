@@ -51,9 +51,6 @@ import {
     zoomAndRotate0,
     showMap, showMask, executeAllAnimations
 } from "./interactive-tools.js";
-import {
-    CBGame
-} from "../../jslib/cblades/playable.js";
 
 class CBTestGame extends CBAbstractGame {
 
@@ -153,7 +150,6 @@ class CBTestActuator extends CBActuator {
 
     setVisibility(level) {
         super.setVisibility(level);
-        this.trigger.alpha = (level===CBGame.FULL_VISIBILITY ? 1:0);
     }
 
 }
@@ -179,23 +175,35 @@ class TestPlayableArtifact extends CBPieceImageArtifact {
 
 }
 
-class CBTestPlayable extends BelongsToPlayerMixin(HexLocatableMixin(PlayableMixin(CBPiece))) {
+class CBTestPlayable extends HexLocatableMixin(PlayableMixin(CBPiece)) {
 
-    constructor(layerName, player, paths, dimension = new Dimension2D(142, 142), nature="unit") {
+    constructor(layerName, paths, dimension = new Dimension2D(142, 142)) {
         super(layerName, paths, dimension);
-        this.player = player;
-    }
-
-    _updatePlayed() {
-        this.updated = true;
     }
 
     createArtifact(levelName, images, position, dimension) {
         return new TestPlayableArtifact(this, levelName, images, position, dimension);
     }
 
+    play(point) {
+        this.played = point;
+    }
+
     get slot() {
         return this.hexLocation.playables.indexOf(this);
+    }
+
+}
+
+class CBTestBelongsToPlayerPlayable extends BelongsToPlayerMixin(CBTestPlayable) {
+
+    constructor(layerName, player, paths, dimension = new Dimension2D(142, 142)) {
+        super(layerName, paths, dimension);
+        this.player = player;
+    }
+
+    _updatePlayed() {
+        this.updated = true;
     }
 
 }
@@ -231,11 +239,24 @@ function createTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
     var player = new CBTestPlayer("player1");
     game.addPlayer(player);
-    let playable = new CBTestPlayable("units", player, ["./../images/units/misc/unit.png"]);
+    let playable = new CBTestBelongsToPlayerPlayable("units", player, ["./../images/units/misc/unit.png"]);
     playable.addToMap(map.getHex(5, 8));
     repaint(game);
     loadAllImages();
     return { game, arbitrator, player, map, playable };
+}
+
+function createSmallGame() {
+    var { game, map, arbitrator } = createBasicGame();
+    var player = new CBTestPlayer("player1");
+    game.addPlayer(player);
+    let playable1 = new CBTestPlayable("units", ["./../images/units/misc/unit.png"]);
+    let playable2 = new CBTestPlayable("units", ["./../images/units/misc/unit.png"]);
+    playable1.addToMap(map.getHex(5, 8));
+    playable2.addToMap(map.getHex(5, 9));
+    repaint(game);
+    loadAllImages();
+    return { game, arbitrator, map, playable1, playable2 };
 }
 
 function create2PlayersTinyGame() {
@@ -244,11 +265,11 @@ function create2PlayersTinyGame() {
     game.addPlayer(player1);
     let player2 = new CBTestPlayer("player2", "./players/player2.png");
     game.addPlayer(player2);
-    let playable0 = new CBTestPlayable("units", player1, ["./../images/units/misc/unit0.png"]);
+    let playable0 = new CBTestBelongsToPlayerPlayable("units", player1, ["./../images/units/misc/unit0.png"]);
     playable0.addToMap(map.getHex(5, 8));
-    let playable1 = new CBTestPlayable("units", player1, ["./../images/units/misc/unit1.png"]);
+    let playable1 = new CBTestBelongsToPlayerPlayable("units", player1, ["./../images/units/misc/unit1.png"]);
     playable1.addToMap(map.getHex(5, 8));
-    let playable2 = new CBTestPlayable("units", player2, ["./../images/units/misc/unit2.png"]);
+    let playable2 = new CBTestBelongsToPlayerPlayable("units", player2, ["./../images/units/misc/unit2.png"]);
     playable2.addToMap(map.getHex(5, 7));
     game.start();
     loadAllImages();
@@ -259,9 +280,9 @@ function create2PiecesTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
     var player = new CBTestPlayer("player1");
     game.addPlayer(player);
-    let playable1 = new CBTestPlayable("units", player,["./../images/units/misc/unit1.png"]);
+    let playable1 = new CBTestBelongsToPlayerPlayable("units", player,["./../images/units/misc/unit1.png"]);
     playable1.addToMap(map.getHex(5, 6));
-    let playable2 = new CBTestPlayable("units", player,["./../images/units/misc/unit2.png"]);
+    let playable2 = new CBTestBelongsToPlayerPlayable("units", player,["./../images/units/misc/unit2.png"]);
     playable2.addToMap(map.getHex(5, 7));
     repaint(game);
     loadAllImages();
@@ -377,6 +398,23 @@ describe("Game", ()=> {
                     "drawImage(./../images/units/misc/unit.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
+    });
+
+    it("Checks playable basic features", () => {
+        given:
+            var {game, playable1, playable2} = createSmallGame();
+        when:
+            playable1.select();
+        then:
+            assert(game.selectedPlayable).equalsTo(playable1);
+        when:
+            clickOnPiece(game, playable2);
+        then:
+            assert(game.selectedPlayable).equalsTo(playable2);
+        when:
+            playable2.unselect();
+        then:
+            assert(game.selectedPlayable).isNotDefined();
     });
 
     it("Checks player basic features", () => {
@@ -867,7 +905,7 @@ describe("Game", ()=> {
             var { game, map } = createBasicGame();
             var player = new CBTestPlayer("player1");
             game.addPlayer(player);
-            let playable = new CBTestPlayable("units", player, ["./../images/units/misc/unit1.png"]);
+            let playable = new CBTestBelongsToPlayerPlayable("units", player, ["./../images/units/misc/unit1.png"]);
             let markerImage = DImage.getImage("./../images/markers/misc/markers1.png");
             let marker = new CBTestMarker(playable, "units", [markerImage], new Point2D(0, 0), new Dimension2D(64, 64));
             playable._element.addArtifact(marker);
@@ -882,7 +920,7 @@ describe("Game", ()=> {
     it("Checks playable addition and removing on a Hex (not undoable)", () => {
         given:
             var { game, map, player } = createTinyGame();
-            let playable = new CBTestPlayable("grounds", player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBTestBelongsToPlayerPlayable("grounds", player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "grounds");
             var hexId = map.getHex(4, 5);
@@ -908,7 +946,7 @@ describe("Game", ()=> {
     it("Checks playable addition and removing on a Hex (undoable)", () => {
         given:
             var { game, map, player } = createTinyGame();
-            let playable = new CBTestPlayable("grounds", player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBTestBelongsToPlayerPlayable("grounds", player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "grounds");
             var hexId = map.getHex(4, 5);
@@ -952,9 +990,9 @@ describe("Game", ()=> {
     it("Checks getOneByType method", () => {
         given:
             var { map, player, playable } = createTinyGame();
-            class PlayableOne extends CBTestPlayable {};
-            class PlayableTwo extends CBTestPlayable {};
-            class PlayableThree extends CBTestPlayable {};
+            class PlayableOne extends CBTestBelongsToPlayerPlayable {};
+            class PlayableTwo extends CBTestBelongsToPlayerPlayable {};
+            class PlayableThree extends CBTestBelongsToPlayerPlayable {};
             var playable1 = new PlayableOne("grounds", player,["./../images/units/misc/one.png"], new Dimension2D(50, 50));
             var playable2 = new PlayableTwo("grounds", player,["./../images/units/misc/two.png"], new Dimension2D(50, 50));
             var hexId = map.getHex(4, 5);
@@ -970,9 +1008,9 @@ describe("Game", ()=> {
     it("Checks getAllByType method", () => {
         given:
             var { game, map, player, playable } = createTinyGame();
-            class PlayableOne extends CBTestPlayable {};
-            class PlayableTwo extends CBTestPlayable {};
-            class PlayableThree extends CBTestPlayable {};
+            class PlayableOne extends CBTestBelongsToPlayerPlayable {};
+            class PlayableTwo extends CBTestBelongsToPlayerPlayable {};
+            class PlayableThree extends CBTestBelongsToPlayerPlayable {};
             var playable1 = new PlayableOne("grounds", player,["./../images/units/misc/one.png"], new Dimension2D(50, 50));
             var playable2 = new PlayableOne("grounds", player,["./../images/units/misc/two.png"], new Dimension2D(50, 50));
             var playable3 = new PlayableTwo("grounds", player,["./../images/units/misc/three.png"], new Dimension2D(50, 50));
@@ -991,7 +1029,7 @@ describe("Game", ()=> {
     it("Checks playable addition and removing on a Hex Side (not undoable)", () => {
         given:
             var { game, map, player } = createTinyGame();
-            let playable = new CBTestPlayable("grounds", player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBTestBelongsToPlayerPlayable("grounds", player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "grounds");
             var hexId1 = map.getHex(4, 5);
@@ -1021,7 +1059,7 @@ describe("Game", ()=> {
     it("Checks playable addition and removing on a Hex Side (undoable)", () => {
         given:
             var { game, map, player } = createTinyGame();
-            let playable = new CBTestPlayable("grounds", player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBTestBelongsToPlayerPlayable("grounds", player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "grounds");
             var hexId1 = map.getHex(4, 5);
@@ -1399,7 +1437,7 @@ describe("Game", ()=> {
     it("Checks cleanup", () => {
         given:
             var {game, player, map} = createDisplayTinyGame();
-            let playable1 = new CBTestPlayable("units", player,["./../images/units/misc/unit1.png"]);
+            let playable1 = new CBTestBelongsToPlayerPlayable("units", player,["./../images/units/misc/unit1.png"]);
             playable1.addToMap(map.getHex(5, 6));
             var [countersLayer, unitsLayer] = getLayers(game.board, "counters", "units");
         when:
@@ -1592,4 +1630,45 @@ describe("Game", ()=> {
             assertNoMoreDirectives(actuatorsLayer);
             assert(game._actuators).arrayEqualsTo([]);
     });
+
+    it("Checks game specs export", () => {
+        given:
+            var {game} = createTinyGame();
+        when:
+            var context = new Map();
+            var specs = game.toSpecs(context);
+        then:
+            assert(specs).objectEqualsTo({
+                "id":1,"version":0,
+                "currentPlayerIndex":0,
+                "currentTurn":0,
+                "players":[{"version":0,"identity":{"version":0,"name":"player1"}}],
+                "map":{"version":0,
+                    "boards":[{"version":0,"col":0,"row":0,"path":"./../images/maps/map.png","invert":false}]
+                },
+                "locations":[]
+            });
+    });
+
+    it("Checks game specs import", () => {
+        given:
+            var game = new CBTestGame();
+            var specs = {
+                "id": 1, "version": 0,
+                "currentPlayerIndex": 0,
+                "currentTurn": 0,
+                "players": [{"version": 0, "identity": {"version": 0, "name": "player1"}}],
+                "map": {
+                    "version": 0,
+                    "boards": [{"version": 0, "col": 0, "row": 0, "path": "./../images/maps/map.png", "invert": false}]
+                }
+            };
+        when:
+            var context = new Map();
+            context.playerCreator = (name, path)=>new CBTestPlayer(name, path);
+            game.fromSpecs(specs, context);
+        then:
+            assert(game.toSpecs(new Map())).objectEqualsTo(specs);
+    });
+
 });

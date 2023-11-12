@@ -156,27 +156,33 @@ export class CBInteractivePlayer extends CBUnitPlayer {
         this._doEngagementChecking(unit, processing);
     }
 
-    _selectAndFocusPlayable(unit) {
-        unit.attrs.focused = true;
-        this.game.setSelectedPlayable(unit);
-        this.game.setFocusedPlayable(unit);
+    _selectAndFocusPlayable(playable) {
+        playable.attrs.focused = true;
+        this.game.setSelectedPlayable(playable);
+        this.game.setFocusedPlayable(playable);
     }
 
-    startActivation(unit, action) {
-        if (unit.isEngaging()) {
-            unit.setEngaging(false);
+    startActivation(playable, action) {
+        if (playable.unitNature) {
+            if (playable.isEngaging()) {
+                playable.setEngaging(false);
+            }
+            this._doPreliminaryActions(playable, () => super.startActivation(playable, action));
         }
-        this._doPreliminaryActions(unit, ()=> super.startActivation(unit, action));
+        else {
+            action();
+        }
     }
 
     launchPlayableAction(playable, point) {
         if (playable.unitNature) {
             if (!playable.isDestroyed()) {
-                this.openActionMenu(playable, point,
-                    this.game.arbitrator.getAllowedActions(playable));
+                this.openActionMenu(playable, point, this.game.arbitrator.getAllowedActions(playable));
             }
         }
-        super.launchPlayableAction(playable, point);
+        else {
+            playable.play(point);
+        }
     }
 
     canFinishPlayable(playable) {
@@ -200,9 +206,6 @@ export class CBInteractivePlayer extends CBUnitPlayer {
             offset.y - popup.dimension.h/2 + CBAbstractGame.POPUP_MARGIN));
     }
 
-    canPlay() {
-        return true;
-    }
 }
 
 export class CBDefenderEngagementChecking {

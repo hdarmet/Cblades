@@ -925,6 +925,7 @@ describe("Widget", ()=> {
             ]);
         when:
             resetDirectives(itemsLayer);
+            getDrawPlatform().resetRandoms();
             for (let index=0; index<40; index++) {
                 getDrawPlatform().setRandoms(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9);
             }
@@ -1035,6 +1036,144 @@ describe("Widget", ()=> {
                     "resetTransform()", "clearRect(0, 0, 500, 300)",
                 "restore()"
             ]);
+    });
+
+    it("Checks force result on dice widget", () => {
+        given:
+            var { board, itemsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+            let finished = false;
+            dice.setFinalAction(()=>{
+                dice.result = [5, 6];
+                finished = true;
+            })
+            loadAllImages();
+        when:
+            dice.open(board, new Point2D(10, 20));
+            getDrawPlatform().resetRandoms();
+            for (let index=0; index<40; index++) {
+                getDrawPlatform().setRandoms(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9);
+            }
+            var diceVPLocation = dice.trigger[0].viewportLocation;
+            var event = createEvent("click", {offsetX:diceVPLocation.x, offsetY:diceVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+            var directives = executeAllAnimations(itemsLayer);
+        then:
+            assert(finished).isTrue();
+            assert(directives).arrayEqualsTo([
+                "save()",
+                "resetTransform()", "clearRect(0, 0, 500, 300)",
+                "restore()",
+                "save()",
+                "setTransform(1, 0, 0, 1, 40, -10)",
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(./../images/dice/d5.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                "setTransform(1, 0, 0, 1, -20, 50)",
+                "shadowColor = #00FFFF", "shadowBlur = 10",
+                "drawImage(./../images/dice/d6.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(dice.result).arrayEqualsTo([5, 6]);
+    });
+
+    it("Checks inactive dice widget", () => {
+        given:
+            var { board, itemsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+            let finished = false;
+            dice.setFinalAction(()=>{finished = true;});
+            dice.active = false;
+            loadAllImages();
+        when:
+            resetDirectives(itemsLayer);
+            dice.open(board, new Point2D(10, 20));
+            board.paint();
+        then:
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1, 0, 0, 1, 40, -10)",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                "setTransform(1, 0, 0, 1, -20, 50)",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(itemsLayer);
+            var diceVPLocation = dice.trigger[0].viewportLocation;
+            var event = createEvent("click", {offsetX:diceVPLocation.x, offsetY:diceVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+            var directives = executeAllAnimations(itemsLayer);
+        then:
+            assert(dice.active).isFalse();
+            assert(directives).arrayEqualsTo([]);
+            assert(finished).isFalse();
+    });
+
+    it("Checks cheating dice widget", () => {
+        given:
+            var { board, itemsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+            dice.cheat([1, 3]);
+            let finished = false;
+            dice.setFinalAction(()=>{finished = true;})
+            loadAllImages();
+        when:
+            resetDirectives(itemsLayer);
+            dice.open(board, new Point2D(10, 20));
+            board.paint();
+        then:
+            assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
+                "save()",
+                "setTransform(1, 0, 0, 1, 40, -10)",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                "setTransform(1, 0, 0, 1, -20, 50)",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+        when:
+            resetDirectives(itemsLayer);
+            for (let index=0; index<40; index++) {
+                getDrawPlatform().setRandoms(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9);
+            }
+            var diceVPLocation = dice.trigger[0].viewportLocation;
+            var event = createEvent("click", {offsetX:diceVPLocation.x, offsetY:diceVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            assert(dice.active).isFalse();
+            assert(finished).isFalse();
+        when:
+            var directives = executeAllAnimations(itemsLayer);
+        then:
+            assert(finished).isTrue();
+            assert(directives).arrayEqualsTo([
+                "save()",
+                "resetTransform()", "clearRect(0, 0, 500, 300)",
+                "restore()",
+                "save()",
+                "setTransform(1, 0, 0, 1, 40, -10)",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
+                "restore()",
+                "save()",
+                "setTransform(1, 0, 0, 1, -20, 50)",
+                "shadowColor = #000000", "shadowBlur = 10",
+                "drawImage(./../images/dice/d3.png, -50, -44.5, 100, 89)",
+                "restore()"
+            ]);
+            assert(dice.result).arrayEqualsTo([1, 3]);
     });
 
     it("Checks indicator widget basic features", () => {
@@ -1598,7 +1737,7 @@ describe("Widget", ()=> {
             assert(counter).equalsTo(1);
     });
 
-    it("Checks plus button", () => {
+    it("Checks minus button", () => {
         given:
             var { board, widgetsLayer} = createBoardWithWidgetLevel(1000, 600, 500, 300);
             var counter = 0;
@@ -1848,7 +1987,28 @@ describe("Widget", ()=> {
         when: // Test animation when widget is closed
             var directives = executeAllAnimations(commandsLayer);
         then:
-            assert(directives).arrayEqualsTo([]);
+            assert(result.isShown()).isFalse();
+    });
+
+    it("Checks inactive result widget behavior", () => {
+        given:
+            var { board, commandsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            board.paint();
+            let clicked = false;
+            let result = new DResult().success().setFinalAction(()=>{
+                clicked = true;
+            });
+            result.open(board, new Point2D(10, 20));
+            result.appear();
+            executeAllAnimations(commandsLayer);
+            var resultVPLocation = result.trigger.viewportLocation;
+        when:
+            result.active = false;
+            var event = createEvent("click", {offsetX:resultVPLocation.x, offsetY:resultVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+        then:
+            assert(clicked).isFalse();
+            assert(result.isShown()).isTrue();
     });
 
     it("Checks swipe widget with no swipe", () => {

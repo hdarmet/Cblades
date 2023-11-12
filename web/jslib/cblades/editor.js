@@ -2508,7 +2508,6 @@ export class CBEditorPlayer extends CBAbstractPlayer {
 
     launchPlayableAction(playable, point) {
         this.openEditUnitMenu(playable, point);
-        super.launchPlayableAction(playable, point);
     }
 
     playToken(token, point) {
