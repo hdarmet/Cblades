@@ -101,6 +101,17 @@ function showFakePiece(image, [a, b, c, d, e, f], s=50) {
     ];
 }
 
+function showFakeTransparentPiece(image, alpha, [a, b, c, d, e, f], s=50) {
+    return [
+        "save()",
+        `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+        "shadowColor = #000000", "shadowBlur = 10",
+        `globalAlpha = ${alpha}`,
+        `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
+        "restore()"
+    ];
+}
+
 function showFakeInsert(x, y, w, h) {
     return [
         "save()",
@@ -477,7 +488,7 @@ describe("Game", ()=> {
 
     it("Checks that playable may be marked playable without defining an action", () => {
         given:
-            var {game, playable} = createTinyGame();
+            var {playable} = createTinyGame();
         when:
             playable.played = true;
         then:
@@ -722,6 +733,24 @@ describe("Game", ()=> {
             assert(getDirectives(mapLayer)).arrayContains("setTransform(0.4888, 0, 0, 0.4888, 500, 390)");
     });
 
+    it("Checks re-centering ", () => {
+        given:
+            var game = new CBTestGame();
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            game.setMap(map);
+            game.start();
+            var [mapLayer] = getLayers(game.board, "map");
+            loadAllImages();
+        then:
+            assert(getDirectives(mapLayer)).arrayContains("setTransform(0.4888, 0, 0, 0.4888, 500, 400)");
+        when:
+            resetDirectives(mapLayer);
+            game.centerOn(new Point2D(500, 410));
+            executeAllAnimations();
+        then:
+            assert(getDirectives(mapLayer)).arrayContains("setTransform(0.4888, 0, 0, 0.4888, 500, 390)");
+    });
+
     function getTestActuator(game) {
         for (let actuator of game.actuators) {
             if (actuator instanceof CBTestActuator) return actuator;
@@ -844,6 +873,7 @@ describe("Game", ()=> {
             game.start();
             loadAllImages();
             piece.angle = 45;
+            piece.alpha = 0.3;
             var [hexLayer] = getLayers(game.board, "grounds");
         when:
             resetDirectives(hexLayer);
@@ -852,6 +882,7 @@ describe("Game", ()=> {
             assert(piece.isShown()).isTrue();
             assert(piece.game).equalsTo(game);
             assert(piece.angle).equalsTo(45);
+            assert(piece.alpha).equalsTo(0.3);
             assert(piece.element).is(DElement);
             assert(piece.element.artifacts[0]).equalsTo(piece.artifact);
             assert(piece.location.toString()).equalsTo("point(100, 200)");
@@ -859,7 +890,7 @@ describe("Game", ()=> {
             assert(piece.pieces).arrayEqualsTo([piece]);
             assert(piece.allArtifacts).arrayEqualsTo([piece.artifact]);
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakePiece("misc/piece", [0.3456, 0.3456, -0.3456, 0.3456, 548.8759, 497.7517]));
+            assertDirectives(hexLayer, showFakeTransparentPiece("misc/piece", 0.3, [0.3456, 0.3456, -0.3456, 0.3456, 548.8759, 497.7517]));
             assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
@@ -869,7 +900,7 @@ describe("Game", ()=> {
             assert(piece.location.toString()).equalsTo("point(10, 20)");
             assert(piece.viewportLocation.toString()).equalsTo("point(504.8876, 409.7752)");
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakePiece("misc/piece", [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752]));
+            assertDirectives(hexLayer, showFakeTransparentPiece("misc/piece", 0.3, [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752]));
             assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
@@ -882,10 +913,14 @@ describe("Game", ()=> {
             paint(game);
         then:
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakePiece("misc/piece", [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752]));
+            assertDirectives(hexLayer, showFakeTransparentPiece("misc/piece", 0.3, [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752]));
             assertNoMoreDirectives(hexLayer);
         when:
             clickOnPiece(game, piece); // checks that tests does not crash
+        when:
+            piece.setAttr("one.two.three", 3);
+        then:
+            assert(piece.getAttr("one.two.three")).equalsTo(3);
     });
 
     class CBTestMarker extends CBPieceImageArtifact {
@@ -1109,38 +1144,53 @@ describe("Game", ()=> {
     it("Checks that selected/focused playable destruction release selection/focus", () => {
         given:
             var { game, playable1, playable2 } = create2PiecesTinyGame();
-        playable1._select();
-        game.setFocusedPlayable(playable1);
+            playable1._select();
+            game.setFocusedPlayable(playable1);
         then:
             assert(playable1.isOnHex()).isTrue();
-        assert(game.focusedPlayable).equalsTo(playable1);
-        assert(game.selectedPlayable).equalsTo(playable1);
+            assert(game.focusedPlayable).equalsTo(playable1);
+            assert(game.selectedPlayable).equalsTo(playable1);
         when:
             playable1.destroy();
         then:
             assert(playable1.isOnHex()).isFalse();
-        assert(game.focusedPlayable).isNotDefined();
-        assert(game.selectedPlayable).isNotDefined();
+            assert(game.focusedPlayable).isNotDefined();
+            assert(game.selectedPlayable).isNotDefined();
+    });
+
+    it("Checks that selected/focused playable finalization of action release game selection/focus", () => {
+        given:
+            var { game, playable1, playable2 } = create2PiecesTinyGame();
+            playable1._select();
+            game.setFocusedPlayable(playable1);
+        when:
+            var action = new CBAction(game, playable1);
+            action.markAsStarted();
+            playable1.launchAction(action);
+            action.finalize();
+        then:
+            assert(game.focusedPlayable).isNotDefined();
+            assert(game.selectedPlayable).equalsTo(playable1);
     });
 
     it("Checks the displacement of a hex located playable", () => {
         given:
             var {game, playable} = createTinyGame();
-        var playableHex = playable.hexLocation;
-        var nearHex = playableHex.getNearHex(0);
+            var playableHex = playable.hexLocation;
+            var nearHex = playableHex.getNearHex(0);
         then:
             assert(playableHex.playables).contains(playable);
         when:
             playable.hexLocation = nearHex;
         then:
             assert(playable.hexLocation).equalsTo(nearHex);
-        assert(playableHex.playables).doesNotContain(playable);
-        assert(nearHex.playables).contains(playable);
+            assert(playableHex.playables).doesNotContain(playable);
+            assert(nearHex.playables).contains(playable);
         when:
             playable.hexLocation = null;
         then:
             assert(playable.hexLocation).isNotDefined();
-        assert(nearHex.playables).doesNotContain(playable);
+            assert(nearHex.playables).doesNotContain(playable);
     });
 
     it("Checks the removing of a playable belonging to a player", () => {

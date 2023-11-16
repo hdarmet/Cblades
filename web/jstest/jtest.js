@@ -4,6 +4,9 @@ export function stringify(element) {
     return element.toString();
 }
 
+export function clean(object) {
+    return JSON.parse(JSON.stringify(object));
+}
 export function stringifyArray(array) {
     let result = [];
     for (let element of array) {

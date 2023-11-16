@@ -81,19 +81,38 @@ export function SelectableArtifactMixin(clazz) {
 
 }
 
+/**
+ * Mixin to makes an (actuator's) artifact invisible but selectable when the mouse is not inside the zone covered by the
+ * artifact (in reality, the artifact is 0.1% visible)
+ * @param clazz artiifact class to enhance.
+ * @return enhanced class
+ */
 export function GhostArtifactMixin(clazz) {
 
     return class extends clazz {
 
+        /**
+         * Polymorphic constructor for the mixin
+         */
         constructor(...args) {
             super(...args);
             this.alpha = 0.001;
         }
 
+        /**
+         * indicates that the artifact is active
+         * @param event
+         * @return {boolean}
+         */
         mayCaptureEvent(event) {
             return true;
         }
 
+        /**
+         * when the mouse enters the zone covered by the artifact, it becomes visible
+         * @param event mouse move event
+         * @return true to indicates that the event is processed
+         */
         onMouseEnter(event) {
             super.onMouseEnter(event);
             this.alpha = 1;
@@ -101,6 +120,11 @@ export function GhostArtifactMixin(clazz) {
             return true;
         }
 
+        /**
+         * when the mouse leaves the zone covered by the artifact, it reverts invisible
+         * @param event mouse move event
+         * @return true to indicates that the event is processed
+         */
         onMouseLeave(event) {
             super.onMouseLeave(event);
             this.alpha = 0.001;
@@ -321,15 +345,9 @@ export class CBHexCounter extends RetractablePieceMixin(HexLocatableMixin(Playab
         hexCounterCreators.set(type, clazz);
     }
 
-    fromSpecs(specs, context) {
-        this._oid = specs.id;
-        this._oversion = specs.version;
-        return this;
-    }
-
     static fromSpecs(game, specs, context) {
         let counter = new (hexCounterCreators.get(specs.type))();
-        counter.game = game;
+        counter._game = game;
         counter.fromSpecs(specs, context);
         return counter;
     }
@@ -342,10 +360,23 @@ Object.defineProperty(CBHexLocation.prototype, "counters", {
     }
 });
 
+/**
+ * Mixin that makes an Element class sensible to the game "visible" level. This level is useful to simplify the UI for
+ * experienced players, hiding some Elements (inserts likes tables, user help...) to him.
+ * @param clazz class to enhance
+ * @return enhanced class
+ */
 export function VisibilityMixin(clazz) {
 
     return class extends clazz {
 
+        /**
+         * processes the game event that indicates that the visibility level has changed.
+         * @param source source of the event (not used here)
+         * @param event event (if not CBGame.VISIBILITY_EVENT, the event is ignored by this method)
+         * @param value new level of visibility.
+         * @private
+         */
         _processGlobalEvent(source, event, value) {
             if (event === CBGame.VISIBILITY_EVENT) {
                 this.setVisibility(value);
@@ -716,112 +747,72 @@ export function RetractableGameMixin(gameClass) {
             }
         }
 
-        toSpecs(context) {
-            let gameSpecs = super.toSpecs(context);
-            for (let hexId of this.map.hexes) {
-                if (hexId.playables.length>0) {
-                    let locationSpecs = {
-                        id: hexId.hex._oid,
-                        version: hexId.hex._oversion || 0,
-                        col: hexId.col,
-                        row: hexId.row,
-                        pieces: []
-                    }
-                    for (let playable of hexId.playables) {
-                        locationSpecs.pieces.push(playable.toReferenceSpecs(context));
-                    }
-                    gameSpecs.locations.push(locationSpecs);
-                }
-            }
-            console.log(JSON.stringify(gameSpecs));
-            return gameSpecs;
-        }
-
-        fromSpecs(specs, context) {
-            super.fromSpecs(specs, context);
-            let tokenCount = 0;
-            let namesToShow = new Set(context.pieceMap.keys());
-            for (let locationsSpec of specs.locations) {
-                let hexLocation = this.map.getHex(locationsSpec.col, locationsSpec.row);
-                hexLocation.hex._oid = locationsSpec.id;
-                hexLocation.hex._oversion = locationsSpec.version;
-                for (let index = 0; index < locationsSpec.pieces.length; index++) {
-                    let pieceSpec = locationsSpec.pieces[index];
-                    if (!pieceSpec.name) {
-                        pieceSpec.name = "t"+tokenCount++;
-                        let piece = CBHexCounter.fromSpecs(this, pieceSpec, context.pieceMap);
-                        context.pieceMap.set(pieceSpec.name, {
-                            specs: pieceSpec,
-                            piece,
-                            hexLocation
-                        })
-                    }
-                    else {
-                        let pieceDef = context.pieceMap.get(pieceSpec.name);
-                        pieceDef.hexLocation = pieceDef.piece.hexLocation;
-                    }
-                    namesToShow.add(pieceSpec.name);
-                }
-            }
-            let shown = new Set();
-            let dependencies = [];
-            for (let locationsSpec of specs.locations) {
-                for (let index = 0; index < locationsSpec.pieces.length - 1; index++) {
-                    dependencies.push([locationsSpec.pieces[index].name, locationsSpec.pieces[index + 1].name]);
-                }
-            }
-            while (namesToShow.size) {
-                let excluded = new Set();
-                for (let dependency of dependencies) {
-                    excluded.add(dependency[1]);
-                }
-                for (let name of namesToShow) {
-                    if (!excluded.has(name)) {
-                        shown.add(name);
-                        let pieceDef = context.pieceMap.get(name);
-                        pieceDef.piece.appendToMap(pieceDef.hexLocation);
-                    }
-                }
-                let remainingDependencies = [];
-                for (let dependency of dependencies) {
-                    if (!shown.has(dependency[0])) {
-                        remainingDependencies.push(dependency);
-                    }
-                }
-                namesToShow = excluded;
-                dependencies = remainingDependencies;
-            }
-        }
-
     }
 
 }
 
+/**
+ * Player in a classical game (a game with turns). The game is able to give hand to its players. The players react to
+ * turns lifecycle events.
+ */
 export class CBBasicPlayer extends CBAbstractPlayer {
 
+    /**
+     * Requests the player to finish the turns. Note that in a derived class, the player may refuse to finish the turn.
+     * In this basic implementation, it just asks the game to finish the (player) turn.
+     * @param animation animation to launch if the player accepts to finish the turn.
+     */
     finishTurn(animation) {
         this.game.nextTurn(animation);
     }
 
-    get playables() {
-        return this.game.playables.filter(playable=>playable.player === this);
-    }
-
+    /**
+     * warns the player that a new turn begins for him. The player requests its playable place to initialize (execute
+     * the playable.init() mathod).
+     */
     beginTurn() {
         for (let playable of this.playables) {
             playable.init && playable.init();
         }
     }
 
+    /**
+     * warns the player that his turn had ended. The player requests its playable place to reset (execute
+     * the playable.reset() mathod).
+     */
     endTurn() {
         for (let playable of this.playables) {
             playable.reset && playable.reset();
         }
     }
 
+    /**
+     * Indicates if the player is allowed to play (only an "interactive" player is allowed to play when he is the owner
+     * of the current turn). By default, a player is NOT allowed to play.
+     * @return indicates if the player is allowed to play
+     */
+    canPlay() {
+        return false;
+    }
+
 }
 
-export class CBGame extends RetractableGameMixin(CBAbstractGame) {
+export function StandardGameMixin(clazz) {
+
+    return class extends clazz {
+
+        _preparePiece(pieceSpec, hexLocation, context) {
+            if (context.tokenCount===undefined) context.tokenCount=0;
+            if (!pieceSpec.name) {
+                pieceSpec.name = "t"+context.tokenCount++;
+                let piece = CBHexCounter.fromSpecs(this, pieceSpec, context);
+                context.pieceMap.set(pieceSpec.name, piece)
+            }
+        }
+
+    }
+}
+export class CBGame extends StandardGameMixin(RetractableGameMixin(CBAbstractGame)) {
 
     constructor(id) {
         super(id, new CBLevelBuilder().buildLevels());
@@ -944,6 +935,7 @@ export class CBGame extends RetractableGameMixin(CBAbstractGame) {
     }
 
     turnIsFinishable() {
+        if (this._currentPlayer && !this._currentPlayer.canPlay()) return false;
         if (!this.canUnselectPlayable()) return false;
         if (this.playables) {
             for (let playable of this.playables) {

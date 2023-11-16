@@ -3,7 +3,7 @@
 import {
     after,
     assert,
-    before, describe, executeTimeouts, it
+    before, clean, describe, executeTimeouts, it
 } from "../../jstest/jtest.js";
 import {
     DAnimator,
@@ -82,6 +82,25 @@ class CBTestPlayer extends CBBasicPlayer {
         }
         this.launched++;
         super.launchPlayableAction(playable, point);
+    }
+
+    toSpecs(context) {
+        let playerSpecs = super.toSpecs(context);
+        playerSpecs.playables = [];
+        for (let playable of this.playables) {
+            playerSpecs.playables.push(playable.toSpecs(context));
+        }
+        return playerSpecs;
+    }
+
+    fromSpecs(game, specs, context) {
+        super.fromSpecs(game, specs, context);
+        for (let playableSpecs of specs.playables) {
+            let playable = new CBTestPlayable(this, playableSpecs.name, playableSpecs.paths);
+            playable.fromSpecs(playableSpecs, context);
+            context.pieceMap.set(playableSpecs.name, playable);
+        }
+        return this;
     }
 
 }
@@ -168,19 +187,51 @@ class TestPlayableImageArtifact extends RetractableArtifactMixin(SelectableArtif
 
 class CBTestPlayable extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(CBPiece)))) {
 
-    constructor(player, paths) {
+    constructor(player, name, paths) {
         super("units", paths, new Dimension2D(142, 142));
         this.player = player;
+        this.name = name;
+        this.paths = paths;
     }
 
     createArtifact(levelName, images, position, dimension) {
         return new TestPlayableImageArtifact(this, levelName, images, position, dimension);
     }
 
+    toReferenceSpecs(context) {
+        return this.toSpecs(context);
+    }
+
     get slot() {
         return this.hexLocation.playables.indexOf(this);
     }
 
+    toSpecs(context) {
+        let pieceSpecs = super.toSpecs(context);
+        pieceSpecs.name = this.name;
+        pieceSpecs.paths = this.paths;
+        return pieceSpecs;
+    }
+
+    fromSpecs(specs, context) {
+        super.fromSpecs(specs, context);
+        this.name = specs.name;
+        return this;
+    }
+
+}
+
+class CBTestHexCounter extends CBHexCounter {
+
+    constructor() {
+        super("ground", ["./../images/units/misc/counter.png"], new Dimension2D(50, 50));
+    }
+
+    toSpecs(context) {
+        let specs = super.toSpecs(context);
+        specs.type = "counter";
+        return specs;
+    }
 }
 
 class TestCounterImageArtifact extends RetractableArtifactMixin(SelectableArtifactMixin(CBPieceImageArtifact)) {
@@ -333,7 +384,7 @@ function createTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
     var player = new CBTestPlayer("player1");
     game.addPlayer(player);
-    let playable = new CBTestPlayable(player, ["./../images/units/misc/unit.png"]);
+    let playable = new CBTestPlayable(player, "u1", ["./../images/units/misc/unit.png"]);
     playable.addToMap(map.getHex(5, 8));
     repaint(game);
     loadAllImages();
@@ -344,9 +395,9 @@ function create2PlayablesTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
     var player = new CBTestPlayer("player1");
     game.addPlayer(player);
-    let playable1 = new CBTestPlayable(player,["./../images/units/misc/unit1.png"]);
+    let playable1 = new CBTestPlayable(player, "u1", ["./../images/units/misc/unit1.png"]);
     playable1.addToMap(map.getHex(5, 6));
-    let playable2 = new CBTestPlayable(player,["./../images/units/misc/unit2.png"]);
+    let playable2 = new CBTestPlayable(player, "u2", ["./../images/units/misc/unit2.png"]);
     playable2.addToMap(map.getHex(5, 7));
     repaint(game);
     loadAllImages();
@@ -359,11 +410,11 @@ function create2PlayersTinyGame() {
     game.addPlayer(player1);
     let player2 = new CBTestPlayer();
     game.addPlayer(player2);
-    let unit0 = new CBTestPlayable(player1, ["./../images/units/misc/unit0.png"]);
+    let unit0 = new CBTestPlayable(player1, "u1",  ["./../images/units/misc/unit0.png"]);
     unit0.addToMap(map.getHex(5, 8));
-    let unit1 = new CBTestPlayable(player1, ["./../images/units/misc/unit1.png"]);
+    let unit1 = new CBTestPlayable(player1, "u2",  ["./../images/units/misc/unit1.png"]);
     unit1.addToMap(map.getHex(5, 8));
-    let unit2 = new CBTestPlayable(player2, ["./../images/units/misc/unit2.png"]);
+    let unit2 = new CBTestPlayable(player2, "u3", ["./../images/units/misc/unit2.png"]);
     unit2.addToMap(map.getHex(5, 7));
     game.start();
     loadAllImages();
@@ -1081,9 +1132,9 @@ describe("Playable", ()=> {
             var { game, map } = createBasicGame();
             var player = new CBTestPlayer("player1");
             game.addPlayer(player);
-            let counter1 = new CBTestPlayable(player, ["./../images/units/misc/counter1.png"]);
-            let counter2 = new CBTestPlayable(player, ["./../images/units/misc/counter2.png"]);
-            let counter3 = new CBTestPlayable(player, ["./../images/units/misc/counter3.png"]);
+            let counter1 = new CBTestPlayable(player, "u1",  ["./../images/units/misc/counter1.png"]);
+            let counter2 = new CBTestPlayable(player, "u2",  ["./../images/units/misc/counter2.png"]);
+            let counter3 = new CBTestPlayable(player, "u3", ["./../images/units/misc/counter3.png"]);
             counter1.addToMap(map.getHex(4, 5));
             counter2.addToMap(map.getHex(4, 5));
             counter3.addToMap(map.getHex(4, 5));
@@ -1131,8 +1182,8 @@ describe("Playable", ()=> {
             var { game, map } = createBasicGame();
             var player = new CBTestPlayer("player1");
             game.addPlayer(player);
-            let counter1 = new CBTestPlayable(player, ["./../images/units/misc/counter1.png"]);
-            let counter2 = new CBTestPlayable(player, ["./../images/units/misc/counter2.png"]);
+            let counter1 = new CBTestPlayable(player, "u1",  ["./../images/units/misc/counter1.png"]);
+            let counter2 = new CBTestPlayable(player, "u2", ["./../images/units/misc/counter2.png"]);
             counter1.addToMap(map.getHex(4, 5));
             counter2.addToMap(map.getHex(4, 5));
             repaint(game);
@@ -1161,8 +1212,8 @@ describe("Playable", ()=> {
             var { game, map } = createBasicGame();
             var player = new CBTestPlayer("player1");
             game.addPlayer(player);
-            let counter1 = new CBTestPlayable(player, ["./../images/units/misc/counter1.png"]);
-            let counter2 = new CBTestPlayable(player, ["./../images/units/misc/counter2.png"]);
+            let counter1 = new CBTestPlayable(player, "u1", ["./../images/units/misc/counter1.png"]);
+            let counter2 = new CBTestPlayable(player, "u2", ["./../images/units/misc/counter2.png"]);
             counter1.addToMap(map.getHex(4, 5));
             counter2.addToMap(map.getHex(4, 5));
             mouseMove(game, 333-71/2+5, 111-71/2+5); // On counter0 but not counter1
@@ -1273,8 +1324,8 @@ describe("Playable", ()=> {
             game.addPlayer(player);
             let formation1 = new CBTestFormation(player, ["./../images/units/misc/formation1.png"]);
             formation1.angle = 90;
-            let counter2 = new CBTestPlayable(player, ["./../images/units/misc/counter2.png"]);
-            let counter3 = new CBTestPlayable(player, ["./../images/units/misc/counter3.png"]);
+            let counter2 = new CBTestPlayable(player,  "u1",["./../images/units/misc/counter2.png"]);
+            let counter3 = new CBTestPlayable(player,  "u2", ["./../images/units/misc/counter3.png"]);
             formation1.addToMap(new CBHexSideId(map.getHex(4, 5), map.getHex(4, 6)));
             counter2.addToMap(map.getHex(4, 5));
             counter3.addToMap(map.getHex(4, 6));
@@ -1385,12 +1436,12 @@ describe("Playable", ()=> {
             var { game, map } = createBasicGame();
             var player = new CBTestPlayer("player1");
             game.addPlayer(player);
-            let playable1 = new CBTestPlayable(player, ["./../images/units/misc/unit1.png"]);
+            let playable1 = new CBTestPlayable(player,  "u1", ["./../images/units/misc/unit1.png"]);
             let markerImage = DImage.getImage("./../images/markers/misc/markers1.png");
             let marker = new CBTestMarker(playable1, "units", [markerImage],
                 new Point2D(0, 0), new Dimension2D(64, 64));
             playable1._element.addArtifact(marker);
-            let playable2 = new CBTestPlayable(player, ["./../images/units/misc/unit2.png"]);
+            let playable2 = new CBTestPlayable(player,  "u2", ["./../images/units/misc/unit2.png"]);
             let spell = new CBTestCounter(playable2, ["./../images/units/misc/spell.png"]);
             let option = new CBTestOption(playable2, "units",  ["./../images/units/misc/option.png"], new Dimension2D(142, 142));
             option.artifact.option = option;
@@ -1509,7 +1560,7 @@ describe("Playable", ()=> {
             }
             player.canPlay = function() { return true; };
         when:
-            player.changeSelection(playable1, dummyEvent);
+            game.changeSelection(playable1, dummyEvent);
             playable1.action.markAsStarted();
         then:
             assert(playable1.isActivated()).isTrue();
@@ -1563,24 +1614,20 @@ describe("Playable", ()=> {
             var TestBlaze = class extends CBHexCounter {
                 constructor() {super("ground", ["./../images/units/misc/blaze.png"], new Dimension2D(50, 50));}
                 static fromSpecs(specs, context) {
-                    return new TestBlaze("ground", [
-                        "/image/blaze.png"
-                    ], new Dimension2D(142, 142));
+                    return new TestBlaze();
                 }
             }
             var TestMagic = class extends CBHexCounter {
                 constructor() {super("ground", ["./../images/units/misc/spell.png"], new Dimension2D(50, 50));}
                 static fromSpecs(specs, context) {
-                    return new TestMagic("ground", [
-                        "/image/magic.png"
-                    ], new Dimension2D(142, 142));
+                    return new TestMagic();
                 }
             }
         when:
             CBHexCounter.registerTokenType("blaze", TestBlaze);
             CBHexCounter.registerTokenType("magic", TestMagic);
             let context = new Map();
-            var blaze = CBHexCounter.fromSpecs({type:"blaze", id:2, version:3}, context);
+            var blaze = CBHexCounter.fromSpecs(game, {type:"blaze", id:2, version:3}, context);
         then:
             assert(blaze._oid).equalsTo(2);
             assert(blaze._oversion).equalsTo(3);
@@ -1697,6 +1744,103 @@ describe("Playable", ()=> {
         then:
             assertClearDirectives(groundLayer);
             assertDirectives(groundLayer, showActiveFakePiece("misc/blaze", zoomAndRotate0(333.3333, 121.1022)));
+    });
+
+    function createPlayableAndCounterTinyGame() {
+        var { game, map, arbitrator } = createBasicGame();
+        var player = new CBTestPlayer("player1");
+        game.addPlayer(player);
+        let playable = new CBTestPlayable(player, "u1", ["./../images/units/misc/unit1.png"]);
+        playable.addToMap(map.getHex(5, 6));
+        let counter = new CBTestHexCounter();
+        counter.addToMap(map.getHex(5, 7));
+        loadAllImages();
+        return {game, map, arbitrator, playable, counter, player};
+    }
+
+    it("Checks game export", () => {
+        given:
+            var {game} = createPlayableAndCounterTinyGame();
+            var context = new Map();
+            var specs = {
+                "id":1,"version":0,
+                "currentPlayerIndex":0,"currentTurn":0,
+                "players":[{
+                    "version":0,"identity":{"version":0,"name":"player1"},
+                    "playables":[{
+                        "version":0,"positionCol":5,"positionRow":6,"name":"u1",
+                        "paths":["./../images/units/misc/unit1.png"]
+                    }]
+                }],
+                "map":{
+                    "version":0,
+                    "boards":[{
+                        "version":0,"col":0,"row":0,"path":"./../images/maps/map.png","invert":false
+                    }]
+                },
+                "locations":[{
+                    "version":0,"col":5,"row":6,
+                    "pieces":[{
+                        "version":0,"positionCol":5,"positionRow":6,"name":"u1",
+                        "paths":["./../images/units/misc/unit1.png"]
+                    }]
+                },{
+                    "version":0,"col":5,"row":7,
+                    "pieces":[{
+                        "version":0,"positionCol":5,"positionRow":7, "type": "counter"
+                    }]
+                }]
+            };
+        then:
+            //console.log(JSON.stringify(game.toSpecs(context)));
+            //console.log(JSON.stringify(specs));
+            assert(clean(game.toSpecs(context))).objectEqualsTo(specs);
+    });
+
+    it("Checks game import", () => {
+        given:
+            CBHexCounter.registerTokenType("counter", CBTestHexCounter);
+            var game = new CBGame(1);
+            var context = new Map();
+            var specs = {
+                "id":1,"version":0,
+                "currentPlayerIndex":0,"currentTurn":0,
+                "players":[{
+                    "version":0,"identity":{"version":0,"name":"player1"},
+                    "playables":[{
+                        "version":0,"positionCol":5,"positionRow":6,"name":"u1",
+                        "paths":["./../images/units/misc/unit1.png"]
+                    }]
+                }],
+                "map":{
+                    "version":0,
+                    "boards":[{
+                        "version":0,"col":0,"row":0,"path":"./../images/maps/map.png","invert":false
+                    }]
+                },
+                "locations":[{
+                    "version":0,"col":5,"row":6,
+                    "pieces":[{
+                        "version":0,"positionCol":5,"positionRow":6,"name":"u1",
+                        "paths":["./../images/units/misc/unit1.png"]
+                    }]
+                },{
+                    "version":0,"col":5,"row":7,
+                    "pieces":[{
+                        "version":0,"positionCol":5,"positionRow":7, "type": "counter"
+                    }]
+                }]
+            };
+        when:
+            context.playerCreator = (name, path)=> {
+                return new CBTestPlayer(name, path);
+            }
+            game.fromSpecs(clean(specs), context);
+        then:
+            //console.log(JSON.stringify(clean(game.toSpecs(context))));
+            //console.log(JSON.stringify(specs));
+            context = new Map();
+            assert(clean(game.toSpecs(context))).objectEqualsTo(specs);
     });
 
 });

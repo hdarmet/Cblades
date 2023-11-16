@@ -244,7 +244,7 @@ export class GameLoader {
             for (let wingSpec of playerSpec.wings) {
                 for (let unitSpec of wingSpec.units) {
                     if (unitSpec.attributes) {
-                        let unit = context.pieceMap.get(unitSpec.name).piece;
+                        let unit = context.pieceMap.get(unitSpec.name);
                         CBSequence.launch(unit, unitSpec.attributes.sequenceElement, unitSpec.attributes, context);
                     }
                 }

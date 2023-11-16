@@ -13,7 +13,7 @@ import {
     CBActuatorImageTrigger,
     GhostArtifactMixin,
     CBLevelBuilder,
-    RetractableGameMixin, CBHexCounter
+    RetractableGameMixin, CBHexCounter, StandardGameMixin
 } from "./playable.js";
 import {
     DImage, getDrawPlatform
@@ -2625,7 +2625,7 @@ export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
 
 }
 
-export class CBScenarioEditorGame extends RetractableGameMixin(CBAbstractGame) {
+export class CBScenarioEditorGame extends StandardGameMixin(RetractableGameMixin(CBAbstractGame)) {
 
     constructor(id) {
         super(id, new CBLevelBuilder().buildLevels());

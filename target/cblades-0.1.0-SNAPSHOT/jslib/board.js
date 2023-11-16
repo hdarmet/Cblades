@@ -2334,7 +2334,7 @@ export class DBoard {
     static DEFAULT_MAX_ZOOM_FACTOR = 10;
     static DEFAULT_ZOOM_INCREMENT = 1.5;
     static DEFAULT_BORDER_WIDTH = 10;
-    static DEFAULT_SCROLL_INCREMENT = 80;
+    static DEFAULT_SCROLL_INCREMENT =20;
     static SCROLL_EVENT = "board-scroll";
     static ZOOM_EVENT = "board-zoom";
     static RESIZE_EVENT = "board-resize";

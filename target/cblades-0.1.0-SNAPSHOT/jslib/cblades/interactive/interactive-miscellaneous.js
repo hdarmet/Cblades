@@ -1422,10 +1422,9 @@ export class CBPlaySmokeAndFireSequenceElement extends WithDiceRoll(CBSequenceEl
         super({id, type:"fire-and-smoke", game, dice});
         this.options = options;
         this.location = location;
-        this._delay = this.options ? 50*this.options.length : 0;
     }
 
-    get delay() { return this._delay; }
+    get delay() { return 500; }
 
     apply(startTick) {
         return new CBSceneAnimation({

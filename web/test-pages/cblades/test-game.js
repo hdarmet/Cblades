@@ -67,6 +67,15 @@ class CBTestGame extends CBAbstractGame {
         ]);
     }
 
+    _preparePiece(pieceSpec, hexLocation, context) {
+        super._preparePiece(pieceSpec, hexLocation, context);
+        if (context.tokenCount===undefined) context.tokenCount=0;
+        pieceSpec.name = "t"+context.tokenCount++;
+        let piece = new CBTestPlayable("units", pieceSpec.paths);
+        piece.fromSpecs(pieceSpec, context);
+        context.pieceMap.set(pieceSpec.name, piece);
+    }
+
 }
 
 class CBTestPlayer extends CBAbstractPlayer {
@@ -96,6 +105,17 @@ function showFakePiece(image, [a, b, c, d, e, f], s=50) {
         "save()",
         `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
         "shadowColor = #000000", "shadowBlur = 10",
+        `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
+        "restore()"
+    ];
+}
+
+function showFakeTransparentPiece(image, alpha, [a, b, c, d, e, f], s=50) {
+    return [
+        "save()",
+        `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+        "shadowColor = #000000", "shadowBlur = 10",
+        `globalAlpha = ${alpha}`,
         `drawImage(./../images/units/${image}.png, -${s/2}, -${s/2}, ${s}, ${s})`,
         "restore()"
     ];
@@ -179,6 +199,7 @@ class CBTestPlayable extends HexLocatableMixin(PlayableMixin(CBPiece)) {
 
     constructor(layerName, paths, dimension = new Dimension2D(142, 142)) {
         super(layerName, paths, dimension);
+        super._paths = paths;
     }
 
     createArtifact(levelName, images, position, dimension) {
@@ -191,6 +212,17 @@ class CBTestPlayable extends HexLocatableMixin(PlayableMixin(CBPiece)) {
 
     get slot() {
         return this.hexLocation.playables.indexOf(this);
+    }
+
+    toSpecs(context) {
+        let pieceSpecs = super.toSpecs(context);
+        pieceSpecs.paths = this._paths;
+        return pieceSpecs;
+    }
+
+    fromSpecs(specs, context) {
+        super.fromSpecs(specs, context);
+        return this;
     }
 
 }
@@ -257,6 +289,21 @@ function createSmallGame() {
     repaint(game);
     loadAllImages();
     return { game, arbitrator, map, playable1, playable2 };
+}
+
+function createOneStackGame() {
+    var { game, map, arbitrator } = createBasicGame();
+    var player = new CBTestPlayer("player1");
+    game.addPlayer(player);
+    let playable1 = new CBTestPlayable("units", ["./../images/units/misc/unit1.png"]);
+    let playable2 = new CBTestPlayable("units", ["./../images/units/misc/unit2.png"]);
+    let playable3 = new CBTestPlayable("units", ["./../images/units/misc/unit3.png"]);
+    playable3.addToMap(map.getHex(5, 9));
+    playable2.addToMap(map.getHex(5, 9));
+    playable1.addToMap(map.getHex(5, 9));
+    repaint(game);
+    loadAllImages();
+    return { game, arbitrator, map, playable1, playable2, playable3 };
 }
 
 function create2PlayersTinyGame() {
@@ -477,7 +524,7 @@ describe("Game", ()=> {
 
     it("Checks that playable may be marked playable without defining an action", () => {
         given:
-            var {game, playable} = createTinyGame();
+            var {playable} = createTinyGame();
         when:
             playable.played = true;
         then:
@@ -722,6 +769,24 @@ describe("Game", ()=> {
             assert(getDirectives(mapLayer)).arrayContains("setTransform(0.4888, 0, 0, 0.4888, 500, 390)");
     });
 
+    it("Checks re-centering ", () => {
+        given:
+            var game = new CBTestGame();
+            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            game.setMap(map);
+            game.start();
+            var [mapLayer] = getLayers(game.board, "map");
+            loadAllImages();
+        then:
+            assert(getDirectives(mapLayer)).arrayContains("setTransform(0.4888, 0, 0, 0.4888, 500, 400)");
+        when:
+            resetDirectives(mapLayer);
+            game.centerOn(new Point2D(500, 410));
+            executeAllAnimations();
+        then:
+            assert(getDirectives(mapLayer)).arrayContains("setTransform(0.4888, 0, 0, 0.4888, 500, 390)");
+    });
+
     function getTestActuator(game) {
         for (let actuator of game.actuators) {
             if (actuator instanceof CBTestActuator) return actuator;
@@ -844,6 +909,7 @@ describe("Game", ()=> {
             game.start();
             loadAllImages();
             piece.angle = 45;
+            piece.alpha = 0.3;
             var [hexLayer] = getLayers(game.board, "grounds");
         when:
             resetDirectives(hexLayer);
@@ -852,6 +918,7 @@ describe("Game", ()=> {
             assert(piece.isShown()).isTrue();
             assert(piece.game).equalsTo(game);
             assert(piece.angle).equalsTo(45);
+            assert(piece.alpha).equalsTo(0.3);
             assert(piece.element).is(DElement);
             assert(piece.element.artifacts[0]).equalsTo(piece.artifact);
             assert(piece.location.toString()).equalsTo("point(100, 200)");
@@ -859,7 +926,7 @@ describe("Game", ()=> {
             assert(piece.pieces).arrayEqualsTo([piece]);
             assert(piece.allArtifacts).arrayEqualsTo([piece.artifact]);
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakePiece("misc/piece", [0.3456, 0.3456, -0.3456, 0.3456, 548.8759, 497.7517]));
+            assertDirectives(hexLayer, showFakeTransparentPiece("misc/piece", 0.3, [0.3456, 0.3456, -0.3456, 0.3456, 548.8759, 497.7517]));
             assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
@@ -869,7 +936,7 @@ describe("Game", ()=> {
             assert(piece.location.toString()).equalsTo("point(10, 20)");
             assert(piece.viewportLocation.toString()).equalsTo("point(504.8876, 409.7752)");
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakePiece("misc/piece", [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752]));
+            assertDirectives(hexLayer, showFakeTransparentPiece("misc/piece", 0.3, [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752]));
             assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
@@ -882,10 +949,14 @@ describe("Game", ()=> {
             paint(game);
         then:
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakePiece("misc/piece", [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752]));
+            assertDirectives(hexLayer, showFakeTransparentPiece("misc/piece", 0.3, [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752]));
             assertNoMoreDirectives(hexLayer);
         when:
             clickOnPiece(game, piece); // checks that tests does not crash
+        when:
+            piece.setAttr("one.two.three", 3);
+        then:
+            assert(piece.getAttr("one.two.three")).equalsTo(3);
     });
 
     class CBTestMarker extends CBPieceImageArtifact {
@@ -1109,38 +1180,53 @@ describe("Game", ()=> {
     it("Checks that selected/focused playable destruction release selection/focus", () => {
         given:
             var { game, playable1, playable2 } = create2PiecesTinyGame();
-        playable1._select();
-        game.setFocusedPlayable(playable1);
+            playable1._select();
+            game.setFocusedPlayable(playable1);
         then:
             assert(playable1.isOnHex()).isTrue();
-        assert(game.focusedPlayable).equalsTo(playable1);
-        assert(game.selectedPlayable).equalsTo(playable1);
+            assert(game.focusedPlayable).equalsTo(playable1);
+            assert(game.selectedPlayable).equalsTo(playable1);
         when:
             playable1.destroy();
         then:
             assert(playable1.isOnHex()).isFalse();
-        assert(game.focusedPlayable).isNotDefined();
-        assert(game.selectedPlayable).isNotDefined();
+            assert(game.focusedPlayable).isNotDefined();
+            assert(game.selectedPlayable).isNotDefined();
+    });
+
+    it("Checks that selected/focused playable finalization of action release game selection/focus", () => {
+        given:
+            var { game, playable1, playable2 } = create2PiecesTinyGame();
+            playable1._select();
+            game.setFocusedPlayable(playable1);
+        when:
+            var action = new CBAction(game, playable1);
+            action.markAsStarted();
+            playable1.launchAction(action);
+            action.finalize();
+        then:
+            assert(game.focusedPlayable).isNotDefined();
+            assert(game.selectedPlayable).equalsTo(playable1);
     });
 
     it("Checks the displacement of a hex located playable", () => {
         given:
             var {game, playable} = createTinyGame();
-        var playableHex = playable.hexLocation;
-        var nearHex = playableHex.getNearHex(0);
+            var playableHex = playable.hexLocation;
+            var nearHex = playableHex.getNearHex(0);
         then:
             assert(playableHex.playables).contains(playable);
         when:
             playable.hexLocation = nearHex;
         then:
             assert(playable.hexLocation).equalsTo(nearHex);
-        assert(playableHex.playables).doesNotContain(playable);
-        assert(nearHex.playables).contains(playable);
+            assert(playableHex.playables).doesNotContain(playable);
+            assert(nearHex.playables).contains(playable);
         when:
             playable.hexLocation = null;
         then:
             assert(playable.hexLocation).isNotDefined();
-        assert(nearHex.playables).doesNotContain(playable);
+            assert(nearHex.playables).doesNotContain(playable);
     });
 
     it("Checks the removing of a playable belonging to a player", () => {
@@ -1633,40 +1719,59 @@ describe("Game", ()=> {
 
     it("Checks game specs export", () => {
         given:
-            var {game} = createTinyGame();
+            var {game} = createOneStackGame();
         when:
             var context = new Map();
             var specs = game.toSpecs(context);
         then:
+            //console.log(JSON.stringify(specs));
             assert(specs).objectEqualsTo({
                 "id":1,"version":0,
-                "currentPlayerIndex":0,
-                "currentTurn":0,
-                "players":[{"version":0,"identity":{"version":0,"name":"player1"}}],
-                "map":{"version":0,
-                    "boards":[{"version":0,"col":0,"row":0,"path":"./../images/maps/map.png","invert":false}]
-                },
-                "locations":[]
-            });
+                "currentPlayerIndex":0,"currentTurn":0,
+                "players":[{
+                    "version":0,"identity":{"version":0,"name":"player1"}
+                }],
+                "map":{
+                    "version":0,"boards":[
+                        {"version":0,"col":0,"row":0,"path":"./../images/maps/map.png","invert":false}
+                    ]},
+                    "locations":[{
+                        "version":0,"col":5,"row":9,"pieces":[
+                            {"version":0,"positionCol":5,"positionRow":9,"paths":["./../images/units/misc/unit3.png"]},
+                            {"version":0,"positionCol":5,"positionRow":9,"paths":["./../images/units/misc/unit2.png"]},
+                            {"version":0,"positionCol":5,"positionRow":9,"paths":["./../images/units/misc/unit1.png"]}
+                        ]
+                    }]
+                }
+            );
     });
 
     it("Checks game specs import", () => {
         given:
             var game = new CBTestGame();
             var specs = {
-                "id": 1, "version": 0,
-                "currentPlayerIndex": 0,
-                "currentTurn": 0,
-                "players": [{"version": 0, "identity": {"version": 0, "name": "player1"}}],
-                "map": {
-                    "version": 0,
-                    "boards": [{"version": 0, "col": 0, "row": 0, "path": "./../images/maps/map.png", "invert": false}]
-                }
+                "id":1,"version":0,
+                "currentPlayerIndex":0,"currentTurn":0,
+                "players":[{
+                    "version":0,"identity":{"version":0,"name":"player1"}
+                }],
+                "map":{
+                    "version":0,"boards":[
+                        {"version":0,"col":0,"row":0,"path":"./../images/maps/map.png","invert":false}
+                    ]
+                },
+                "locations":[{
+                    "version":0,"col":5,"row":9,"pieces":[
+                        {"version":0,"positionCol":5,"positionRow":9,"paths":["./../images/units/misc/unit3.png"]},
+                        {"version":0,"positionCol":5,"positionRow":9,"paths":["./../images/units/misc/unit2.png"]},
+                        {"version":0,"positionCol":5,"positionRow":9,"paths":["./../images/units/misc/unit1.png"]}
+                    ]
+                }]
             };
         when:
             var context = new Map();
             context.playerCreator = (name, path)=>new CBTestPlayer(name, path);
-            game.fromSpecs(specs, context);
+            game.fromSpecs(JSON.parse(JSON.stringify(specs)), context);
         then:
             assert(game.toSpecs(new Map())).objectEqualsTo(specs);
     });

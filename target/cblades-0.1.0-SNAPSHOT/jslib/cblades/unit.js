@@ -36,6 +36,14 @@ import {
     CBSequence, CBSequenceElement, SceneAnimation
 } from "./sequences.js";
 
+CBAction.types = new Map();
+CBAction.register = function(label, actionType) {
+    CBAction.types.set(label, actionType);
+}
+CBAction.createAction = function(label, game, unit, mode) {
+    return new (CBAction.types.get(label))(game, unit, mode);
+}
+
 export let CBMovement = {
     NORMAL : "normal",
     EXTENDED : "extended",
@@ -1872,6 +1880,11 @@ Object.defineProperty(CBGame.prototype, "units", {
         return units;
     }
 });
+
+CBGame.prototype.getUnit = function(name) {
+    let unit = this._playables.filter(unit=>unit.name === name);
+    return unit.length>0 ? unit[0] : null;
+}
 
 export class CBTroop extends CBUnit {
 

@@ -86,10 +86,14 @@ export class CBAbstractPlayer {
         if (this.acceptActivation(playable)) {
             if (currentSelectedPlayable !== playable) {
                 this.startActivation(playable, () => {
-                    this.launchPlayableAction(playable, new Point2D(event.offsetX, event.offsetY));
+                    this.launchPlayableAction(
+                        playable, event ? new Point2D(event.offsetX, event.offsetY) : playable.viewportLocation
+                    );
                 });
             } else {
-                this.launchPlayableAction(playable, new Point2D(event.offsetX, event.offsetY));
+                this.launchPlayableAction(
+                    playable, event ? new Point2D(event.offsetX, event.offsetY) : playable.viewportLocation
+                );
             }
         }
     }
@@ -295,13 +299,6 @@ export class CBAction {
     static CANCELLED = -1;
     static PROGRESSION_EVENT = "action-progression";
     static FINISHABLE = 1;
-    static types = new Map();
-    static register(label, actionType) {
-        CBAction.types.set(label, actionType);
-    }
-    static createAction(label, game, unit, mode) {
-        return new (CBAction.types.get(label))(game, unit, mode);
-    }
 
 }
 
@@ -724,11 +721,6 @@ export class CBAbstractGame {
 
     get playables() {
         return [...this._playables];
-    }
-
-    getUnit(name) {
-        let unit = this._playables.filter(unit=>unit.name === name);
-        return unit.length>0 ? unit[0] : null;
     }
 
     openActuator(actuator) {
@@ -1401,10 +1393,6 @@ export function PlayableMixin(clazz) {
         finish() {
             this._updatePlayed && this._updatePlayed();
             this.attrs = {};
-        }
-
-        toReferenceSpecs(context) {
-            return this.toSpecs(context);
         }
 
     }

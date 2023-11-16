@@ -334,6 +334,10 @@ export class CBHexCounter extends RetractablePieceMixin(HexLocatableMixin(Playab
         return counter;
     }
 
+    toReferenceSpecs(context) {
+        return this.toSpecs(context);
+    }
+
 }
 
 Object.defineProperty(CBHexLocation.prototype, "counters", {
