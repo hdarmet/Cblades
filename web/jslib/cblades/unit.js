@@ -33,7 +33,7 @@ import {
 } from "./map.js";
 import {
     CBAnimation,
-    CBSequence, CBSequenceElement, SceneAnimation
+    CBSequence, CBSequenceElement
 } from "./sequences.js";
 
 CBAction.types = new Map();
@@ -1120,7 +1120,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         }
     }
 
-    init() {
+    _init() {
         if (this._orderGiven === undefined) this._orderGiven = false;
         if (this._movementPoints === undefined) this._movementPoints = this._type.getMovementPoints(this.steps);
         if (this._extendedMovementPoints === undefined) this._extendedMovementPoints = this._type.getExtendedMovementPoints(this.steps);
@@ -1782,15 +1782,11 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     toSpecs(context) {
         let unitSpec = {
-            id : this._oid,
-            version: this._oversion || 0,
+            ... super.toSpecs(context),
             name: this.name,
             category: this.getUnitCategoryCode(),
             type: this.type.name,
             angle: this.angle,
-            positionCol: this.getPosition().col,
-            positionRow: this.getPosition().row,
-            positionAngle: this.getPosition().angle,
             steps: this.steps,
             tiredness: this.getTirednessCode(),
             ammunition: this.getAmmunitionCode(),
@@ -1805,30 +1801,28 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     static fromSpecs(wing, unitSpec, context) {
-        let unitType =  CBUnitType.getType(unitSpec.type);
+        let unitType = CBUnitType.getType(unitSpec.type);
         let unit = unitType.createUnit(wing, unitSpec.steps);
-        unit._oid = unitSpec.id;
-        unit._oversion = unitSpec.version;
-        unit._name = unitSpec.name;
-        unit._game = wing.player.game;
-        unit.angle = unitSpec.angle;
-        unit._hexLocation = CBHexLocation.fromSpecs(context.map, {
-            col: unitSpec.positionCol,
-            row: unitSpec.positionRow,
-            angle: unitSpec.positionAngle
-        });
-        unit.setState({
-            steps: unitSpec.steps,
-            tiredness: CBUnit.getUnitTiredness(unitSpec.tiredness),
-            munitions: CBUnit.getUnitAmmunition(unitSpec.ammunition),
-            cohesion: CBUnit.getUnitCohesion(unitSpec.cohesion),
-            charging: unitSpec.charging ? CBCharge.CHARGING : CBCharge.NONE,
-            engaging: unitSpec.engaging||false,
-            orderGiven: unitSpec.orderGiven||false,
-            attrs: unitSpec.attributes,
-            played: unitSpec.played||false
-        });
+        unit.fromSpecs(unitSpec, context);
         return unit;
+    }
+
+    fromSpecs(specs, context) {
+        super.fromSpecs(specs, context);
+        this._name = specs.name;
+        this._game = this.wing.player.game;
+        this.angle = specs.angle;
+        this.setState({
+            steps: specs.steps,
+            tiredness: CBUnit.getUnitTiredness(specs.tiredness),
+            munitions: CBUnit.getUnitAmmunition(specs.ammunition),
+            cohesion: CBUnit.getUnitCohesion(specs.cohesion),
+            charging: specs.charging ? CBCharge.CHARGING : CBCharge.NONE,
+            engaging: specs.engaging||false,
+            orderGiven: specs.orderGiven||false,
+            attrs: specs.attributes,
+            played: specs.played||false
+        });
     }
 
     static getUnitTiredness(code) {
@@ -2205,7 +2199,6 @@ export class CBUnitAnimation extends CBAnimation {
                 this._unit._animation.cancel();
             }
             this._unit._animation = this;
-            this.init && this.init();
         }
         return super._draw(count, ticks);
     }
@@ -2440,7 +2433,7 @@ export function HexLocated(clazz) {
 
         _fromSpecs(spec, context) {
             super._fromSpecs(spec, context);
-            this.hexLocation =  CBHexLocation.fromSpecs(context.game.map, this.hexLocation);
+            this.hexLocation =  CBHexLocation.fromSpecs(context.game.map, spec.hexLocation);
             this.stacking = getStacking(spec.stacking);
         }
 
@@ -2457,8 +2450,8 @@ export class CBDisplaceAnimation extends CBUnitAnimation {
         this._stacking = stacking;
     }
 
-    init() {
-        super.init();
+    _init() {
+        super._init();
         if (this._angle!==undefined) {
             this._startAngle = this._unit.element.angle;
             this._unit._rotate(this._angle);
@@ -2500,4 +2493,28 @@ export class CBDisplaceAnimation extends CBUnitAnimation {
 
 }
 
+export let CBSceneAnimation = SceneAnimation(CBAnimation);
+
+export function SceneAnimation(clazz) {
+
+    return class extends clazz {
+        constructor({animation, ...params}) {
+            super(params);
+            this._animation = animation;
+        }
+
+        draw(count, ticks) {
+            if (count === 0) {
+                this._animation();
+            }
+            return super.draw(count, ticks);
+        }
+
+        _finalize() {
+            this.game.closePopup();
+            super._finalize();
+        }
+    }
+
+}
 

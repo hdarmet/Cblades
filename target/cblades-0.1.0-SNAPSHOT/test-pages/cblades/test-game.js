@@ -67,6 +67,15 @@ class CBTestGame extends CBAbstractGame {
         ]);
     }
 
+    _preparePiece(pieceSpec, hexLocation, context) {
+        super._preparePiece(pieceSpec, hexLocation, context);
+        if (context.tokenCount===undefined) context.tokenCount=0;
+        pieceSpec.name = "t"+context.tokenCount++;
+        let piece = new CBTestPlayable("units", pieceSpec.paths);
+        piece.fromSpecs(pieceSpec, context);
+        context.pieceMap.set(pieceSpec.name, piece);
+    }
+
 }
 
 class CBTestPlayer extends CBAbstractPlayer {
@@ -190,6 +199,7 @@ class CBTestPlayable extends HexLocatableMixin(PlayableMixin(CBPiece)) {
 
     constructor(layerName, paths, dimension = new Dimension2D(142, 142)) {
         super(layerName, paths, dimension);
+        super._paths = paths;
     }
 
     createArtifact(levelName, images, position, dimension) {
@@ -202,6 +212,17 @@ class CBTestPlayable extends HexLocatableMixin(PlayableMixin(CBPiece)) {
 
     get slot() {
         return this.hexLocation.playables.indexOf(this);
+    }
+
+    toSpecs(context) {
+        let pieceSpecs = super.toSpecs(context);
+        pieceSpecs.paths = this._paths;
+        return pieceSpecs;
+    }
+
+    fromSpecs(specs, context) {
+        super.fromSpecs(specs, context);
+        return this;
     }
 
 }
@@ -268,6 +289,21 @@ function createSmallGame() {
     repaint(game);
     loadAllImages();
     return { game, arbitrator, map, playable1, playable2 };
+}
+
+function createOneStackGame() {
+    var { game, map, arbitrator } = createBasicGame();
+    var player = new CBTestPlayer("player1");
+    game.addPlayer(player);
+    let playable1 = new CBTestPlayable("units", ["./../images/units/misc/unit1.png"]);
+    let playable2 = new CBTestPlayable("units", ["./../images/units/misc/unit2.png"]);
+    let playable3 = new CBTestPlayable("units", ["./../images/units/misc/unit3.png"]);
+    playable3.addToMap(map.getHex(5, 9));
+    playable2.addToMap(map.getHex(5, 9));
+    playable1.addToMap(map.getHex(5, 9));
+    repaint(game);
+    loadAllImages();
+    return { game, arbitrator, map, playable1, playable2, playable3 };
 }
 
 function create2PlayersTinyGame() {
@@ -1683,40 +1719,59 @@ describe("Game", ()=> {
 
     it("Checks game specs export", () => {
         given:
-            var {game} = createTinyGame();
+            var {game} = createOneStackGame();
         when:
             var context = new Map();
             var specs = game.toSpecs(context);
         then:
+            //console.log(JSON.stringify(specs));
             assert(specs).objectEqualsTo({
                 "id":1,"version":0,
-                "currentPlayerIndex":0,
-                "currentTurn":0,
-                "players":[{"version":0,"identity":{"version":0,"name":"player1"}}],
-                "map":{"version":0,
-                    "boards":[{"version":0,"col":0,"row":0,"path":"./../images/maps/map.png","invert":false}]
-                },
-                "locations":[]
-            });
+                "currentPlayerIndex":0,"currentTurn":0,
+                "players":[{
+                    "version":0,"identity":{"version":0,"name":"player1"}
+                }],
+                "map":{
+                    "version":0,"boards":[
+                        {"version":0,"col":0,"row":0,"path":"./../images/maps/map.png","invert":false}
+                    ]},
+                    "locations":[{
+                        "version":0,"col":5,"row":9,"pieces":[
+                            {"version":0,"positionCol":5,"positionRow":9,"paths":["./../images/units/misc/unit3.png"]},
+                            {"version":0,"positionCol":5,"positionRow":9,"paths":["./../images/units/misc/unit2.png"]},
+                            {"version":0,"positionCol":5,"positionRow":9,"paths":["./../images/units/misc/unit1.png"]}
+                        ]
+                    }]
+                }
+            );
     });
 
     it("Checks game specs import", () => {
         given:
             var game = new CBTestGame();
             var specs = {
-                "id": 1, "version": 0,
-                "currentPlayerIndex": 0,
-                "currentTurn": 0,
-                "players": [{"version": 0, "identity": {"version": 0, "name": "player1"}}],
-                "map": {
-                    "version": 0,
-                    "boards": [{"version": 0, "col": 0, "row": 0, "path": "./../images/maps/map.png", "invert": false}]
-                }
+                "id":1,"version":0,
+                "currentPlayerIndex":0,"currentTurn":0,
+                "players":[{
+                    "version":0,"identity":{"version":0,"name":"player1"}
+                }],
+                "map":{
+                    "version":0,"boards":[
+                        {"version":0,"col":0,"row":0,"path":"./../images/maps/map.png","invert":false}
+                    ]
+                },
+                "locations":[{
+                    "version":0,"col":5,"row":9,"pieces":[
+                        {"version":0,"positionCol":5,"positionRow":9,"paths":["./../images/units/misc/unit3.png"]},
+                        {"version":0,"positionCol":5,"positionRow":9,"paths":["./../images/units/misc/unit2.png"]},
+                        {"version":0,"positionCol":5,"positionRow":9,"paths":["./../images/units/misc/unit1.png"]}
+                    ]
+                }]
             };
         when:
             var context = new Map();
             context.playerCreator = (name, path)=>new CBTestPlayer(name, path);
-            game.fromSpecs(specs, context);
+            game.fromSpecs(JSON.parse(JSON.stringify(specs)), context);
         then:
             assert(game.toSpecs(new Map())).objectEqualsTo(specs);
     });

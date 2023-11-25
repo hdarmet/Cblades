@@ -51,14 +51,12 @@ export class CBSequence {
         CBSequence._constructors.set(label, seqConstructor);
     }
 
-    static createElement(id, label) {
-        return new (CBSequence._constructors.get(label))({id});
+    static getLauncher(label) {
+        return (CBSequence._constructors.get(label)).launch;
     }
 
-    static launch(unit, label, specs, context) {
-        if (label && (CBSequence._constructors.get(label)).launch) {
-            (CBSequence._constructors.get(label)).launch(unit, specs, context);
-        }
+    static createElement(id, label) {
+        return new (CBSequence._constructors.get(label))({id});
     }
 
     constructor(game, count=0) {
@@ -86,7 +84,7 @@ export class CBSequence {
     }
 
     get validated() {
-        return this._validated;
+        return this._validated || [];
     }
 
     get validatedCount() {
@@ -142,6 +140,32 @@ export class CBSequence {
         return tick;
     }
 
+    toSpecs(game) {
+        let sequenceSpecs = {
+            version: this._oversion || 0,
+            game: this._game.id,
+            count: this._validatedCount,
+            elements: []
+        };
+        let context = {game: this._game};
+        for (let element of this.validated) {
+            let elementSpecs = {};
+            element.toSpecs(elementSpecs, context);
+            sequenceSpecs.elements.push(elementSpecs);
+        }
+        //consoleLog(JSON.stringify(sequenceSpecs));
+        return sequenceSpecs;
+    }
+
+    fromSpecs(sequenceSpecs, context) {
+        //consoleLog(JSON.stringify(specList));
+        this.count = sequenceSpecs.count;
+        for (let elementSpec of sequenceSpecs.elements) {
+            let element = CBSequence.createElement(elementSpec.id, elementSpec.type);
+            element.fromSpecs(elementSpec, context);
+            this.addElement(element);
+        }
+    }
 }
 
 export class CBSequenceElement {
@@ -184,17 +208,6 @@ export class CBSequenceElement {
 
     get delay() { return 0; }
 
-    static getUnits(names, context) {
-        let units = [];
-        for (let name of names) {
-            units.push(context.get(name));
-        }
-        return units;
-    }
-
-    static getUnit(name, context) {
-        return context.get(name)
-    }
 }
 
 export class CBAnimation extends DAnimation {
@@ -219,7 +232,7 @@ export class CBAnimation extends DAnimation {
         return this.draw(count, ticks);
     }
 
-    init() {
+    _init() {
     }
 
     _finalize() {
@@ -234,8 +247,6 @@ export class CBAnimation extends DAnimation {
     }
 
 }
-
-export let CBSceneAnimation = SceneAnimation(CBAnimation);
 
 export class CBNextTurnSequenceElement extends CBSequenceElement {
 
@@ -282,66 +293,3 @@ export class CBNextTurnAnimation extends DAnimation {
 
 }
 
-export function WithDiceRoll(clazz) {
-
-    return class extends clazz {
-
-        constructor({dice, ...params}) {
-            super(params);
-            this.dice = dice;
-        }
-
-        equalsTo(element) {
-            if (!super.equalsTo(element)) return false;
-            for (let index=0; index<this.dice.length; index++) {
-                if (element[index] !== this.dice[index]) return false;
-            }
-            return true;
-        }
-
-        _toString() {
-            let result = super._toString();
-            for (let index=0; index<this.dice.length; index++) {
-                result+=`, dice${index}: `+this.dice[index];
-            }
-            return result;
-        }
-
-        _toSpecs(spec, context) {
-            super._toSpecs(spec, context);
-            for (let index=0;  index<this.dice.length; index++) {
-                spec["dice"+(index+1)] = this.dice[index];
-            }
-        }
-
-        _fromSpecs(spec, context) {
-            super._fromSpecs(spec, context);
-            this.dice = [spec.dice1, spec.dice2];
-        }
-
-    }
-
-}
-
-export function SceneAnimation(clazz) {
-
-    return class extends clazz {
-        constructor({animation, ...params}) {
-            super(params);
-            this._animation = animation;
-        }
-
-        draw(count, ticks) {
-            if (count === 0) {
-                this._animation();
-            }
-            return super.draw(count, ticks);
-        }
-
-        _finalize() {
-            this.game.closePopup();
-            super._finalize();
-        }
-    }
-
-}

@@ -22,7 +22,7 @@ function write(context, directive) {
 
 export let mockPlatform = {
 
-    init() {
+    _init() {
         this._pixel = [255, 255, 255, 255];
         this._defaultContext = this.getContext();
         this._time = 100;

@@ -20,11 +20,18 @@ import {
     CBHexSideId
 } from "../map.js";
 import {
-    CBCharge, CBDisplaceAnimation, CBUnitActuatorTrigger, HexLocated, CBStateSequenceElement, getUnitFromContext
+    CBCharge,
+    CBDisplaceAnimation,
+    CBUnitActuatorTrigger,
+    HexLocated,
+    CBStateSequenceElement,
+    getUnitFromContext,
+    CBSceneAnimation
 } from "../unit.js";
 import {
     CBActionMenu,
-    CBInteractivePlayer
+    CBInteractivePlayer,
+    WithDiceRoll
 } from "./interactive-player.js";
 import {
     DAnimation,
@@ -37,8 +44,7 @@ import {
     Memento
 } from "../../mechanisms.js";
 import {
-    CBSceneAnimation,
-    CBSequence, CBSequenceElement, WithDiceRoll
+    CBSequence, CBSequenceElement
 } from "../sequences.js";
 import {
     SequenceLoader

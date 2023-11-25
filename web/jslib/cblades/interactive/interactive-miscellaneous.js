@@ -6,7 +6,7 @@ import {
     DIconMenuItem, DMask, DResult, DScene, DSwipe
 } from "../../widget.js";
 import {
-    CBAction, CBStacking, PlayableMixin, CBAbstractGame, CBActuator
+    CBAction, CBStacking, PlayableMixin, CBAbstractGame
 } from "../game.js";
 import {
     CBActionActuator, CBPlayableActuatorTrigger,
@@ -19,10 +19,11 @@ import {
     CBFogIndicator,
     CBWindDirectionIndicator,
     CBWingTirednessIndicator,
-    CBWingMoralIndicator
+    CBWingMoralIndicator,
+    WithDiceRoll
 } from "./interactive-player.js";
 import {
-    CBCharge, CBStateSequenceElement, CBUnitSceneAnimation
+    CBCharge, CBSceneAnimation, CBStateSequenceElement, CBUnitSceneAnimation
 } from "../unit.js";
 import {
     Dimension2D, Point2D
@@ -37,8 +38,7 @@ import {
     DImage, getDrawPlatform
 } from "../../draw.js";
 import {
-    CBSceneAnimation,
-    CBSequence, CBSequenceElement, WithDiceRoll
+    CBSequence, CBSequenceElement
 } from "../sequences.js";
 import {
     SequenceLoader
@@ -1063,6 +1063,7 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
     }
 
     isFinishable() {
+        if (!this._options) return false;
         for (let option of this._options) {
             if (!option.revealed) return false;
         }
@@ -1424,7 +1425,7 @@ export class CBPlaySmokeAndFireSequenceElement extends WithDiceRoll(CBSequenceEl
         this.location = location;
     }
 
-    get delay() { return 500; }
+    get delay() { return 2500; }
 
     apply(startTick) {
         return new CBSceneAnimation({
@@ -1436,7 +1437,6 @@ export class CBPlaySmokeAndFireSequenceElement extends WithDiceRoll(CBSequenceEl
 
     _fromSpecs(specs, context) {
         super._fromSpecs(specs, context);
-        this._delay = 50*specs.options.length;
         this.location = specs.location;
         this.options = [];
         for (let option of specs.options) {

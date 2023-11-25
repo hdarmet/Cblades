@@ -13,6 +13,7 @@ import {
     DBoard, DElement, DMultiImagesArtifact
 } from "../board.js";
 import {
+    CBHexLocation,
     CBMap
 } from "./map.js";
 
@@ -938,12 +939,27 @@ export class CBAbstractGame {
             let playerSpecs = player.toSpecs(context);
             gameSpecs.players.push(playerSpecs);
         }
+        for (let hexId of this.map.hexes) {
+            if (hexId.playables.length>0) {
+                let locationSpecs = {
+                    id: hexId.hex._oid,
+                    version: hexId.hex._oversion || 0,
+                    col: hexId.col,
+                    row: hexId.row,
+                    pieces: []
+                }
+                for (let playable of hexId.playables) {
+                    locationSpecs.pieces.push(playable.toReferenceSpecs(context));
+                }
+                gameSpecs.locations.push(locationSpecs);
+            }
+        }
         //console.log(JSON.stringify(gameSpecs));
         return gameSpecs;
     }
 
     fromSpecs(specs, context) {
-        console.log(JSON.stringify(specs));
+        //console.log(JSON.stringify(specs));
         this.clean();
         context.game = this;
         this._oversion = specs.version || 0;
@@ -955,6 +971,52 @@ export class CBAbstractGame {
             CBAbstractPlayer.fromSpecs(this, playerSpecs, context);
         }
         this.currentPlayer = this.players[specs.currentPlayerIndex];
+        this._showPieces(specs, context)
+    }
+
+    _showPieces(specs, context) {
+        let namesToShow = new Set(context.pieceMap.keys());
+        for (let locationsSpec of specs.locations) {
+            let hexLocation = this.map.getHex(locationsSpec.col, locationsSpec.row);
+            hexLocation.hex._oid = locationsSpec.id;
+            hexLocation.hex._oversion = locationsSpec.version;
+            for (let index = 0; index < locationsSpec.pieces.length; index++) {
+                let pieceSpec = locationsSpec.pieces[index];
+                this._preparePiece(pieceSpec, hexLocation, context);
+                namesToShow.add(pieceSpec.name);
+            }
+        }
+        let shown = new Set();
+        let dependencies = [];
+        for (let locationsSpec of specs.locations) {
+            for (let index = 0; index < locationsSpec.pieces.length - 1; index++) {
+                dependencies.push([locationsSpec.pieces[index].name, locationsSpec.pieces[index + 1].name]);
+            }
+        }
+        while (namesToShow.size) {
+            let excluded = new Set();
+            for (let dependency of dependencies) {
+                excluded.add(dependency[1]);
+            }
+            for (let name of namesToShow) {
+                if (!excluded.has(name)) {
+                    shown.add(name);
+                    let piece = context.pieceMap.get(name);
+                    piece.appendToMap(piece.hexLocation);
+                }
+            }
+            let remainingDependencies = [];
+            for (let dependency of dependencies) {
+                if (!shown.has(dependency[0])) {
+                    remainingDependencies.push(dependency);
+                }
+            }
+            namesToShow = excluded;
+            dependencies = remainingDependencies;
+        }
+    }
+
+    _preparePiece(pieceSpec, hexLocation, context) {
     }
 
     static STARTED_EVENT = "started-event";
@@ -998,6 +1060,7 @@ export class CBPieceImageArtifact extends DMultiImagesArtifact {
 }
 
 export class CBPiece {
+
     constructor(levelName, paths, dimension) {
         this._levelName = levelName;
         this._images = [];
@@ -1075,9 +1138,6 @@ export class CBPiece {
     get game() {
         return this._game;
     }
-    set game(game) {
-        this._game = game;
-    }
 
     isShown() {
         return this._element.isShown();
@@ -1148,6 +1208,26 @@ export class CBPiece {
         }
         attrs[names[names.length-1]] = value;
     }
+
+    toSpecs(context) {
+        let pieceSpec = {
+            id : this._oid,
+            version: this._oversion || 0,
+        }
+        context.set(this, pieceSpec);
+        return pieceSpec;
+    }
+
+    fromSpecs(specs, context) {
+        this._oid = specs.id;
+        this._oversion = specs.version;
+        return this;
+    }
+
+    toReferenceSpecs(context) {
+        return this.toSpecs(context);
+    }
+
 }
 
 export function DisplayLocatableMixin(clazz) {
@@ -1217,7 +1297,6 @@ export function HexLocatableMixin(clazz) {
         }
 
         addToMap(hexLocation, stacking = CBStacking.TOP) {
-            console.assert(!this._hexLocation);
             this._hexLocation = hexLocation;
             this._addPlayable(hexLocation, stacking);
             this._setOnGame(hexLocation.map.game);
@@ -1232,7 +1311,6 @@ export function HexLocatableMixin(clazz) {
         }
 
         appendToMap(hexLocation, stacking = CBStacking.TOP) {
-            console.assert(!this._hexLocation);
             Memento.register(this);
             this._hexLocation = hexLocation;
             this._appendPlayable(hexLocation, stacking);
@@ -1263,6 +1341,23 @@ export function HexLocatableMixin(clazz) {
 
         isOnHex() {
             return !!this._hexLocation;
+        }
+
+        toSpecs(context) {
+            let pieceSpec = super.toSpecs(context);
+            pieceSpec.positionCol = this.hexLocation.col;
+            pieceSpec.positionRow = this.hexLocation.row;
+            pieceSpec.positionAngle = this.hexLocation.angle;
+            return pieceSpec;
+        }
+
+        fromSpecs(pieceSpec, context) {
+            super.fromSpecs(pieceSpec, context);
+            this._hexLocation = CBHexLocation.fromSpecs(context.map, {
+                col: pieceSpec.positionCol,
+                row: pieceSpec.positionRow,
+                angle: pieceSpec.positionAngle
+            });
         }
 
     }

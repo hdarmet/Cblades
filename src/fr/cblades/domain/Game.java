@@ -60,6 +60,9 @@ public class Game extends BaseEntity {
         this.locations.remove(location);
         return this;
     }
+    public boolean containsLocation(Location location) {
+        return this.locations.contains(location);
+    }
 
     public int getWindDirection() {
         return this.windDirection;

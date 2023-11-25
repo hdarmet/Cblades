@@ -16,37 +16,63 @@ import {
 /**
  * Mixin for classes whose instances deals with location and orientation on the board. DElements and their contained
  * DArtifacts are localization aware.
- * @param clazz
- * @returns {{new(...[*]): {readonly angle: *, getPosition(*=): *, readonly transform: *|null, getLocation(*=): *, readonly location: *}, prototype: {readonly angle: *, getPosition(*=): *, readonly transform: *|null, getLocation(*=): *, readonly location: *}}}
- * @constructor
+ * @param clazz to enhance
+ * @returns enhanced class
  */
 export function LocalisationAware(clazz) {
 
     return class extends clazz {
 
+        /**
+         * Polymorphic constructor
+         * @param args
+         */
         constructor(...args) {
             super(...args);
         }
 
+        /**
+         * location of (the center of) the object in the parent's coordinate system
+         * @return {*}
+         */
         get location() {
             return this._location;
         }
 
+        /**
+         * rotation associated to the object
+         * @return angle of the rotation
+         */
         get angle() {
             return this._angle;
         }
 
+        /**
+         * gets the transform associated to the object (which conjugates the translation and the orientation of the
+         * object)
+         * @return corresponding transform
+         */
         get transform() {
             let translation = this._location.x || this._location.y ? Matrix2D.translate(this.location) : null;
             let rotation = this.angle ? Matrix2D.rotate(this.angle, this.location) : null;
             return translation ? rotation ? translation.concat(rotation) : translation : rotation;
         }
 
+        /**
+         * converts a point from the object coordinate to the parent coordinate system.
+         * @param lpoint point (in object's coordinates) to convert
+         * @return same point (in parent's coordinates)
+         */
         getLocation(lpoint) {
             let transform = this.transform;
             return transform ? this.transform.point(lpoint) : lpoint;
         }
 
+        /**
+         * converts a point from the parent coordinate to the local coordinate system.
+         * @param point point (in parent's coordinates) to convert
+         * @return same point (in object's coordinates)
+         */
         getPosition(point) {
             let transform = this.transform;
             return transform ? this.transform.invert().point(point) : point;
@@ -109,8 +135,8 @@ export class DArtifact extends LocalisationAware(Object) {
     }
 
     /**
-     * builds a record containing the base
-     * @return a record containing the base
+     * builds a record containing the base properties of the artifact
+     * @return a record containing the base properties of the artifact
      * @private
      */
     _memento() {
@@ -130,6 +156,11 @@ export class DArtifact extends LocalisationAware(Object) {
         return memento;
     }
 
+    /**
+     * reverts to a previous artifact state (basic properties here)
+     * @param memento previous artifact state to revert to
+     * @private
+     */
     _revert(memento) {
         this._levelName = memento.levelName;
         this._level && this._level.invalidate();
@@ -676,10 +707,16 @@ export class DMultiImagesArtifact extends DImageAbstractArtifact {
 }
 
 /**
- * Class of artifacts that are composed of several images (or parts of)
+ * Class of artifacts that are composed of several images (or parts of images)
  */
 export class DComposedImageArtifact extends AreaArtifact(DArtifact) {
 
+    /**
+     * builds a composed mage artifact
+     * @param levelName name of the board's level where the artifact is shown
+     * @param position position of the center of the artifact (level's coordinate system)
+     * @param dimension dimension of the artifact (level's coordinate system)
+     */
     constructor(levelName, position, dimension) {
         super(dimension, levelName, position, 0);
         this._compositions = [];
@@ -2363,7 +2400,7 @@ export class DArtifactAnimation extends DAnimation {
                 this._artifact._animation.cancel();
             }
             this._artifact._animation = this;
-            this.init && this.init();
+            this._init && this._init();
         }
         return this.draw(count, ticks);
     }
@@ -2388,7 +2425,7 @@ export class DArtifactRotateAnimation extends DArtifactAnimation {
         return this._clockWise ? (count * ADELAY) / this._duration : (this._duration - count * ADELAY)/this._duration;
     }
 
-    init() {
+    _init() {
         this._pangle = this._artifact.pangle;
     }
 
@@ -2411,7 +2448,7 @@ export class DArtifactAlphaAnimation extends DArtifactAnimation {
         this._duration = duration;
     }
 
-    init() {
+    _init() {
         this._initAlpha = this._artifact.alpha;
     }
 

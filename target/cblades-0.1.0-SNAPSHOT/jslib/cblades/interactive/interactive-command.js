@@ -17,16 +17,14 @@ import {
     DImage
 } from "../../draw.js";
 import {
-    CBActionMenu, CBInteractivePlayer
+    CBActionMenu, CBInteractivePlayer, WithDiceRoll
 } from "./interactive-player.js";
 import {
     CBUnitActuatorTrigger, CBCharge,
-    CBOrderInstruction, getUnitFromContext, CBStateSequenceElement
+    CBOrderInstruction, getUnitFromContext, CBStateSequenceElement, CBSceneAnimation
 } from "../unit.js";
 import {
-    CBSceneAnimation,
     CBSequence, CBSequenceElement,
-    WithDiceRoll
 } from "../sequences.js";
 import {
     SequenceLoader

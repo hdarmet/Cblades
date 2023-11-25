@@ -763,7 +763,9 @@ export class CBBasicPlayer extends CBAbstractPlayer {
      * @param animation animation to launch if the player accepts to finish the turn.
      */
     finishTurn(animation) {
-        this.game.nextTurn(animation);
+        if (this.game.turnIsFinishable()) {
+            this.game.nextTurn(animation);
+        }
     }
 
     /**
@@ -772,7 +774,7 @@ export class CBBasicPlayer extends CBAbstractPlayer {
      */
     beginTurn() {
         for (let playable of this.playables) {
-            playable.init && playable.init();
+            playable._init && playable._init();
         }
     }
 
@@ -806,6 +808,7 @@ export function StandardGameMixin(clazz) {
             if (!pieceSpec.name) {
                 pieceSpec.name = "t"+context.tokenCount++;
                 let piece = CBHexCounter.fromSpecs(this, pieceSpec, context);
+                piece._hexLocation = hexLocation;
                 context.pieceMap.set(pieceSpec.name, piece)
             }
         }
@@ -849,6 +852,7 @@ export class CBGame extends StandardGameMixin(RetractableGameMixin(CBAbstractGam
         this._endOfTurnCommand._processGlobalEvent = (source, event)=>{
             if (event === CBAbstractGame.STARTED_EVENT ||
                 event === CBGame.TURN_EVENT ||
+                event === CBGame.LOADED_EVENT ||
                 event === CBAction.PROGRESSION_EVENT ||
                 event === PlayableMixin.DESTROYED_EVENT) {
                 this._endOfTurnCommand.active = this.turnIsFinishable();
@@ -951,20 +955,19 @@ export class CBGame extends StandardGameMixin(RetractableGameMixin(CBAbstractGam
     }
 
     nextTurn(animation) {
-        if (this.turnIsFinishable()) {
-            this.closeWidgets();
-            this._currentPlayer.endTurn();
-            this._reset(animation);
-            let indexPlayer = this._players.indexOf(this._currentPlayer);
-            this._currentPlayer = this._players[(indexPlayer + 1) % this._players.length];
-            this._currentPlayer.beginTurn();
-            this.validate();
-            Mechanisms.fire(this, CBGame.TURN_EVENT);
-        }
+        this.closeWidgets();
+        this._currentPlayer.endTurn();
+        this._reset(animation);
+        let indexPlayer = this._players.indexOf(this._currentPlayer);
+        this._currentPlayer = this._players[(indexPlayer + 1) % this._players.length];
+        this._currentPlayer.beginTurn();
+        this.validate();
+        Mechanisms.fire(this, CBGame.TURN_EVENT);
     }
 
     static START_EVENT = "game-start";
     static TURN_EVENT = "game-turn";
+    static LOADED_EVENT = "game-loaded";
     static FULL_VISIBILITY = 2;
     static VISIBILITY_EVENT = "game-visibility";
     static VALIDATION_EVENT = "game-validation";

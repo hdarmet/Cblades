@@ -2400,7 +2400,7 @@ export class DArtifactAnimation extends DAnimation {
                 this._artifact._animation.cancel();
             }
             this._artifact._animation = this;
-            this.init && this.init();
+            this._init && this._init();
         }
         return this.draw(count, ticks);
     }
@@ -2425,7 +2425,7 @@ export class DArtifactRotateAnimation extends DArtifactAnimation {
         return this._clockWise ? (count * ADELAY) / this._duration : (this._duration - count * ADELAY)/this._duration;
     }
 
-    init() {
+    _init() {
         this._pangle = this._artifact.pangle;
     }
 
@@ -2448,7 +2448,7 @@ export class DArtifactAlphaAnimation extends DArtifactAnimation {
         this._duration = duration;
     }
 
-    init() {
+    _init() {
         this._initAlpha = this._artifact.alpha;
     }
 

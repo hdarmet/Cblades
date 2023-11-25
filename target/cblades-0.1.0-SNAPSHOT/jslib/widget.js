@@ -733,7 +733,7 @@ export class DDiceAnimation extends DArtifactAnimation {
         this._duration = 1000;
     }
 
-    init() {
+    _init() {
         this._position = this._artifact.position;
     }
 

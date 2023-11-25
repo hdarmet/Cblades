@@ -2225,7 +2225,7 @@ describe("Interactive Movement", ()=> {
                 actions.moveMode = CBMoveMode.ATTACK;
                 return actions;
             });
-            game.nextTurn(null);
+            game.nextTurn();
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
             clickOnPiece(game, formation2);
@@ -2261,7 +2261,7 @@ describe("Interactive Movement", ()=> {
                 actions.moveMode = CBMoveMode.ATTACK;
                 return actions;
             });
-            game.nextTurn(null);
+            game.nextTurn();
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
             clickOnPiece(game, formation2);
@@ -2387,7 +2387,7 @@ describe("Interactive Movement", ()=> {
                 actions.moveMode = CBMoveMode.DEFEND;
                 return actions;
             });
-            game.nextTurn(null);
+            game.nextTurn();
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
             clickOnPiece(game, formation2);
@@ -2463,7 +2463,7 @@ describe("Interactive Movement", ()=> {
                 return actions;
             });
             unit1.played = true;
-            game.nextTurn(null);
+            game.nextTurn();
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
             clickOnPiece(game, formation2);
@@ -2533,7 +2533,7 @@ describe("Interactive Movement", ()=> {
                 return actions;
             });
             unit1.played = true;
-            game.nextTurn(null);
+            game.nextTurn();
             var [actuatorLayer] = getLayers(game.board,"actuators");
         when:
             clickOnPiece(game, formation2);

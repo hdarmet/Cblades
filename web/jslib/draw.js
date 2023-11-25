@@ -446,7 +446,7 @@ export function getDrawPlatform() {
 }
 export function setDrawPlatform(platform) {
     _platform = platform;
-    _platform.init && _platform.init();
+    _platform._init && _platform._init();
 }
 
 /**
@@ -1186,12 +1186,15 @@ export class DAnimation {
             if (!this._startTick) {
                 this._startTick = ticks;
                 this._count = 0;
-                this._init && this._init();
+                this._init();
             } else {
                 this._count++;
             }
             return this._draw(this._count, ticks - this._startTick);
         }
+    }
+
+    _init() {
     }
 
     finalize() {

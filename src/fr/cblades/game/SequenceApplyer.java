@@ -403,16 +403,16 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
                 denseSmoke.getPositionRow(),
                 this.game.getWindDirection()
             );
-            Token fire = getSmoke(targetLocation.getCol(), targetLocation.getRow());
-            if (!fire.getFire()) {
+            Token fire = getFire(targetLocation.getCol(), targetLocation.getRow());
+            if (fire==null || !fire.getFire()) {
                 if (getSmoke(targetLocation.getCol(), targetLocation.getRow()) == null) {
                     Token smoke = new Token().setType(Token.SMOKE).setDensity(false)
                         .setPositionCol(targetLocation.getCol())
                         .setPositionRow(targetLocation.getRow());
                     this.addTokenToLocation(smoke);
                 }
-                denseSmoke.setDensity(false);
             }
+            denseSmoke.setDensity(false);
         }
     }
 

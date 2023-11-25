@@ -1717,7 +1717,7 @@ describe("Board", ()=> {
         when:
             var artifact = new DRectArtifact("markers",
                 new Point2D(10, 15), new Dimension2D(50, 50),
-                "#FF0000", "#00FF00", "#0000FF", 5);
+                1, "#FF0000", "#00FF00", 5);
             var element = new DElement(artifact);
             resetDirectives(layer);
             element.setOnBoard(board);
@@ -1726,9 +1726,9 @@ describe("Board", ()=> {
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.9962, 0.0872, -0.0872, 0.9962, 260, 165)",
-                    "fillStyle = #0000FF",
+                    "fillStyle = #00FF00",
                     "fillRect(-25, -25, 50, 50)",
-                    "strokeStyle = #00FF00", "lineWidth = #FF0000",
+                    "strokeStyle = #FF0000", "lineWidth = 1",
                     "strokeRect(-25, -25, 50, 50)",
                 "restore()"
             ]);
@@ -1740,8 +1740,8 @@ describe("Board", ()=> {
             assert(getDirectives(layer, 4)).arrayEqualsTo([
                 'save()',
                     'setTransform(0.9962, 0.0872, -0.0872, 0.9962, 260, 165)',
-                    'fillStyle = #0000FF', 'fillRect(-50, -12.5, 100, 25)',
-                    'strokeStyle = #00FF00', 'lineWidth = #FF0000',
+                    'fillStyle = #00FF00', 'fillRect(-50, -12.5, 100, 25)',
+                    'strokeStyle = #FF0000', 'lineWidth = 1',
                     'strokeRect(-50, -12.5, 100, 25)',
                 'restore()'
             ]);

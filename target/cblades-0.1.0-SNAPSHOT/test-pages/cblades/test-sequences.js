@@ -2,9 +2,10 @@
 
 import {
     assert,
-    before, describe, it
+    before, clean, describe, executeTimeouts, it
 } from "../../jstest/jtest.js";
 import {
+    DAnimation,
     DImage, setDrawPlatform
 } from "../../jslib/draw.js";
 import {
@@ -13,41 +14,88 @@ import {
 import {
     Mechanisms, Memento
 } from "../../jslib/mechanisms.js";
-/*
 import {
-    CBStacking
-} from "../../jslib/cblades/game.js";
- */
-import {
+    CBAnimation,
     CBNextTurnSequenceElement,
-    CBSequence
+    CBSequence, CBSequenceElement
 } from "../../jslib/cblades/sequences.js";
-/*
 import {
-    CBCharge, CBCohesion, CBMunitions, CBTiredness
-} from "../../jslib/cblades/unit.js";
-import {
-    executeAllAnimations
-} from "./interactive-tools.js";
- */
-import {
+    CBBasicPlayer,
     CBGame
 } from "../../jslib/cblades/playable.js";
 import {
     CBMap
 } from "../../jslib/cblades/map.js";
-/*
 import {
-    CBInteractivePlayer
-} from "../../jslib/cblades/interactive/interactive-player.js";
-*/
+    executeAllAnimations
+} from "./interactive-tools.js";
 
-export function createBaseGame() {
+export function createTinyGame() {
     let game = new CBGame("Game");
     var map = new CBMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
     game.setMap(map);
     game.start();
-    return {game, arbitrator, map};
+    return {game, map};
+}
+
+export class CBTestSequenceElement extends CBSequenceElement {
+
+    constructor({id, game, data, type="test"}) {
+        super({id, type, game});
+        this.data = data;
+    }
+
+    equalsTo(element) {
+        if (!super.equalsTo(element)) return false;
+        if (this.data !== element.data) return false;
+        return true;
+    }
+
+    _toString() {
+        let result = super._toString();
+        if (this.data !== undefined) result+=", Data: "+this.data;
+        return result;
+    }
+
+    apply(startTick) {
+        this._animation = new CBTestAnimation({ game:this.game, startTick, duration:this.delay });
+        return this._animation;
+    }
+
+    get delay() {
+        assert(super.delay).equalsTo(0);
+        return 200;
+    }
+
+    _toSpecs(spec, context) {
+        super._toSpecs(spec, context);
+        spec.data = this.data;
+    }
+
+    _fromSpecs(spec, context) {
+        super._fromSpecs(spec, context);
+        this.data = spec.data;
+    }
+
+    static launch(playable, specs) {
+        playable.specs = specs;
+    }
+
+}
+CBSequence.register("test", CBTestSequenceElement);
+
+export class CBTestAnimation extends CBAnimation {
+
+    constructor({game, startTick, duration}) {
+        super({game, startTick, duration});
+        this.factor = 0;
+    }
+
+    draw(count, ticks) {
+        this.factor = this._factor(count);
+        return super.draw(count, ticks);
+    }
+
 }
 
 describe("Sequences", ()=> {
@@ -59,15 +107,19 @@ describe("Sequences", ()=> {
         Memento.clear();
     });
 
-    /*
-    it("Checks sequence overall behavior", () => {
+    it("Checks sequence overall behavior (not undoable)", () => {
         given:
-            var {game, unit} = createTinyGame();
+            var {game} = createTinyGame();
+            CBSequence.setCount(game, 0);
         when:
-            var element1 = new CBStateSequenceElement(unit);
-            var element2 = new CBStateSequenceElement(unit);
+            var element1 = new CBTestSequenceElement({game, data:"d1"});
+            var element2 = new CBTestSequenceElement({game, data:"d2"});
             CBSequence.addElement(game, element1);
             CBSequence.addElement(game, element2);
+            var elements = CBSequence.getElements(game);
+        then:
+            assert(elements).arrayEqualsTo([element1, element2]);
+        when:
             CBSequence.getSequence(game).commit();
         then:
             assert(CBSequence.getSequence(game).validated).arrayEqualsTo([
@@ -84,10 +136,11 @@ describe("Sequences", ()=> {
 
     it("Checks sequence undo/redo behavior", () => {
         given:
-            var {game, unit} = createTinyGame();
+            var {game} = createTinyGame();
+            CBSequence.setCount(game, 0);
         when:
-            var element1 = new CBStateSequenceElement(unit);
-            var element2 = new CBStateSequenceElement(unit);
+            var element1 = new CBTestSequenceElement({game, data:"d1"});
+            var element2 = new CBTestSequenceElement({game, data:"d2"});
             CBSequence.addElement(game, element1);
             Memento.open()
             CBSequence.appendElement(game, element2);
@@ -111,39 +164,75 @@ describe("Sequences", ()=> {
 
     it("Checks replay behavior", () => {
         given:
-            var {game, unit} = createTinyGame();
+            var {game} = createTinyGame();
+            CBSequence.setCount(game, 0);
         when:
-            var element1 = new CBStateSequenceElement(unit).setState({ cohesion:CBCohesion.DISRUPTED });
-            var element2 = new CBStateSequenceElement(unit).setState({ cohesion:CBCohesion.GOOD_ORDER, tiredness:CBTiredness.TIRED });
+            var element1 = new CBTestSequenceElement({game, data:"d1"});
+            var element2 = new CBTestSequenceElement({game, data:"d2"});
             CBSequence.addElement(game, element1);
             CBSequence.addElement(game, element2);
             var finishReplay = false;
-            CBSequence.getSequence(game).replay(()=>{ finishReplay = true; });
+            CBSequence.getSequence(game).replay(0, ()=>{ finishReplay = true; });
+            executeTimeouts();
+        then:
+            assert(element1._animation.factor).equalsTo(0);
+            assert(element1._animation.game).equalsTo(game);
+        when:
+            executeTimeouts();
+        then:
+            assert(element1._animation.factor).equalsTo(0.1);
+        when:
             executeAllAnimations();
         then:
-            assert(unit.cohesion).equalsTo(CBCohesion.GOOD_ORDER);
-            assert(unit.tiredness).equalsTo(CBTiredness.TIRED);
+            assert(element1._animation.factor).equalsTo(1);
             assert(finishReplay).isTrue();
     });
 
-    it("Checks that a replay animations cancel any running animation on the targeted unit", () => {
+    it("Checks sequence toSpecs", () => {
         given:
-            var {game, unit} = createTinyGame();
-            var cancelled = false;
-            unit._animation = {
-                cancel: function () {
-                    cancelled = true;
-                }
-            }
+            var {game} = createTinyGame();
+            CBSequence.setCount(game, 0);
+            var element = new CBTestSequenceElement({game, data:"d1"});
+            CBSequence.addElement(game, element);
+            CBSequence.getSequence(game).commit();
         when:
-            var element1 = new CBStateSequenceElement(unit).setState({ cohesion:CBCohesion.DISRUPTED });
-            CBSequence.addElement(game, element1);
-            CBSequence.getSequence(game).replay();
-            executeAllAnimations();
+            var specs = CBSequence.getSequence(game).toSpecs();
         then:
-            assert(cancelled).isTrue();
+            assert(specs).objectEqualsTo({
+                "version":0,
+                "game":"Game", "count":0,
+                "elements":[{
+                    "version":0,"type":"test","content":{"data":"d1"}}
+                ]}
+            );
     });
 
+    it("Checks sequence fromSpecs", () => {
+        given:
+            var game = new CBGame("Game");
+            var specs = {
+                "version":0,
+                "game":"Game", "count":0,
+                "elements":[{
+                    "version":0,"type":"test","content":{"data":"d1"}}
+            ]};
+        when:
+            CBSequence.setCount(game, 0);
+            var sequence = CBSequence.getSequence(game);
+            var context = new Map();
+            context.game = game;
+            sequence.fromSpecs(specs, context);
+            sequence.commit();
+        then:
+            assert(clean(sequence.toSpecs())).objectEqualsTo(specs);
+    });
+
+    it("Checks sequence fromSpecs", () => {
+        then:
+            assert(CBSequence.getLauncher("test")).isDefined();
+            assert(CBSequence.getLauncher("next-turn")).isNotDefined();
+    });
+            /**
     it("Checks unit state segment elements", () => {
         given:
             var {game, unit} = createTinyGame();
@@ -492,14 +581,15 @@ describe("Sequences", ()=> {
             assert(element.equalsTo({...model, angle:120})).isFalse();
     });
 */
-    /*
+
     it("Checks next turn segment elements", () => {
         given:
-            var {game} = createBaseGame();
-            let player1 = new CBInteractivePlayer("player1");
+            var {game} = createTinyGame();
+            let player1 = new CBBasicPlayer("player1", "p1.png");
             game.addPlayer(player1);
-            let player2 = new CBInteractivePlayer("player2");
+            let player2 = new CBBasicPlayer("player2", "p2.png");
             game.addPlayer(player2);
+            CBSequence.setCount(game, 0);
             var turnAnimation= false;
             game._endOfTurnCommand = {
                 animation() {turnAnimation = true;}
@@ -511,15 +601,15 @@ describe("Sequences", ()=> {
         then:
             var element = CBSequence.getElements(game)[0];
             assert(element.equalsTo({
-                type: "NextTurn",
+                type: "next-turn",
                 game: new CBGame(2)
             })).isFalse();
             assert(element.equalsTo({
-                type: "NextTurn",
+                type: "next-turn",
                 game: game
             })).isTrue();
             assert(element.toString()).equalsTo(
-                "{ Type: NextTurn, Game: Game }"
+                "{ Type: next-turn, Game: Game }"
             );
             assert(element.delay).equalsTo(500);
         when:
@@ -529,15 +619,14 @@ describe("Sequences", ()=> {
             assert(game.currentPlayer).equalsTo(player2);
             assert(turnAnimation).isTrue();
     });
-*/
 
     it("Checks next turn segment equalsTo method", () => {
         given:
-            var {game} = createBaseGame();
+            var {game} = createTinyGame();
         when:
-            var element = new CBNextTurnSequenceElement(game);
+            var element = new CBNextTurnSequenceElement({game});
             var model = {
-                type: "NextTurn",
+                type: "next-turn",
                 game: game
             }
         then:

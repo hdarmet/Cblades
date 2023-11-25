@@ -31,7 +31,7 @@ import {
     DImage
 } from "../../draw.js";
 import {
-    CBActionMenu, CBCheckEngagementInsert, CBInteractivePlayer, CBMoralInsert
+    CBActionMenu, CBCheckEngagementInsert, CBInteractivePlayer, CBMoralInsert, WithDiceRoll
 } from "./interactive-player.js";
 import {
     DImageArtifact
@@ -40,8 +40,7 @@ import {
     stringifyHexLocations
 } from "../pathfinding.js";
 import {
-    CBSequence,
-    WithDiceRoll
+    CBSequence
 } from "../sequences.js";
 import {
     SequenceLoader

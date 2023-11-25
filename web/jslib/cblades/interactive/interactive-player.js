@@ -25,7 +25,7 @@ import {
     CBUnitPlayer, CBUnitSceneAnimation
 } from "../unit.js";
 import {
-    CBNextTurnSequenceElement, CBSequence, CBSequenceElement, WithDiceRoll
+    CBNextTurnSequenceElement, CBSequence, CBSequenceElement
 } from "../sequences.js";
 import {
     SequenceLoader
@@ -191,12 +191,20 @@ export class CBInteractivePlayer extends CBUnitPlayer {
 
     finishTurn(animation) {
         let playable = this.game.selectedPlayable;
-        this.afterActivation(playable, ()=>{
-            playable.finish();
+        let finishTurn = () => {
             CBSequence.appendElement(this.game, new CBNextTurnSequenceElement({game: this.game}));
             new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
             super.finishTurn(animation);
-        });
+        }
+        if (playable) {
+            this.afterActivation(playable, () => {
+                playable.finish();
+                finishTurn();
+            });
+        }
+        else {
+            finishTurn();
+        }
     }
 
     openActionMenu(unit, offset, actions) {
@@ -583,7 +591,7 @@ export class CBRoutCheckingSequenceElement extends WithDiceRoll(CBStateSequenceE
     get delay() { return 1500; }
 
     apply(startTick) {
-        this.unit.setAttr("routChecked", true);
+        this.unit.setAttr("rout-checked", true);
         return new CBUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new CBLoseCohesionChecking(this.game, this.unit).replay(this.dice)
@@ -591,7 +599,7 @@ export class CBRoutCheckingSequenceElement extends WithDiceRoll(CBStateSequenceE
     }
 
     static launch(unit, specs) {
-        unit.setAttr("rootChecked", true);
+        unit.setAttr("root-checked", true);
         unit.game.selectedPlayable = unit;
         unit.game.focusedPlayable = unit;
     }
@@ -608,7 +616,7 @@ export class CBNeighborRoutCheckingSequenceElement extends WithDiceRoll(CBStateS
     get delay() { return 1500; }
 
     apply(startTick) {
-        this.unit.setAttr("routChecked", true);
+        this.unit.setAttr("rout-checked", true);
         return new CBUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new CBLoseCohesionChecking(this.game, this.unit).replay(this.dice)
@@ -616,7 +624,7 @@ export class CBNeighborRoutCheckingSequenceElement extends WithDiceRoll(CBStateS
     }
 
     static launch(unit, specs) {
-        unit.setAttr("routChecked", true);
+        unit.setAttr("rout-checked", true);
     }
 
 }
@@ -663,11 +671,65 @@ export class CBRootNeighborsCohesionSequenceElement extends CBStateSequenceEleme
     }
 
     static launch(unit, {neighbors}, context) {
-        let units = CBSequenceElement.getUnits(neighbors, context);
+        let units = CBRootNeighborsCohesionSequenceElement.getPlayables(neighbors, context);
         unit.game.currentPlayer.routNeighborsChecking(unit, units);
+    }
+
+    static getPlayables(names, context) {
+        let playables = [];
+        for (let name of names) {
+            playables.push(CBRootNeighborsCohesionSequenceElement.getPlayable(name, context));
+        }
+        return playables;
+    }
+
+    static getPlayable(name, context) {
+        return context.get(name)
     }
 }
 CBSequence.register("neighbors-rout-checking", CBRootNeighborsCohesionSequenceElement);
+
+export function WithDiceRoll(clazz) {
+
+    return class extends clazz {
+
+        constructor({dice, ...params}) {
+            super(params);
+            this.dice = dice;
+        }
+
+        equalsTo(element) {
+            if (!super.equalsTo(element)) return false;
+            for (let index=0; index<this.dice.length; index++) {
+                if (element[index] !== this.dice[index]) return false;
+            }
+            return true;
+        }
+
+        _toString() {
+            let result = super._toString();
+            for (let index=0; index<this.dice.length; index++) {
+                result+=`, dice${index}: `+this.dice[index];
+            }
+            return result;
+        }
+
+        _toSpecs(spec, context) {
+            super._toSpecs(spec, context);
+            for (let index=0;  index<this.dice.length; index++) {
+                spec["dice"+(index+1)] = this.dice[index];
+            }
+        }
+
+        _fromSpecs(spec, context) {
+            super._fromSpecs(spec, context);
+            this.dice = [spec.dice1, spec.dice2];
+        }
+
+    }
+
+}
+
 /*
 export class CBRootNeighborsCohesionAnimation extends CBAnimation {
 

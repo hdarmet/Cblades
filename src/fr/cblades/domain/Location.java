@@ -65,7 +65,7 @@ public class Location extends BaseEntity {
         if (location==null) {
             location = new Location().setCol(col).setRow(row);
             game.addLocation(location);
-            context.put(location.getId(), location);
+            context.put(location.getLocationId(), location);
         }
         return location;
     }
@@ -105,16 +105,12 @@ public class Location extends BaseEntity {
     public static void addPieceToLocation(Game game, Map context, Location location, Piece piece, Stacking stacking) {
         LocationId locationId = location.getLocationId();
         location.addPiece(piece, stacking);
-        if (context.get(locationId) != null) {
-            if (location.getId()<1) game.addLocation(location);
-            context.put(locationId, location);
-        }
     }
 
     public static void removePieceFromLocation(Game game, Map context, Location location, Piece piece) {
-        LocationId locationId = location.getLocationId();
         location.removePiece(piece);
-        if (context.get(locationId) == null) {
+        if (location.getPieces().size() == 0) {
+            LocationId locationId = location.getLocationId();
             game.removeLocation(location);
             context.remove(locationId);
         }

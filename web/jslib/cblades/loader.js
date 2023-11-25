@@ -11,6 +11,12 @@ import {
 import {
     CBSequence
 } from "./sequences.js";
+import {
+    Mechanisms
+} from "../mechanisms.js";
+import {
+    CBGame
+} from "./playable.js";
 
 //let consoleLog = console.log;
 let consoleLog = ()=>{};
@@ -209,6 +215,7 @@ export class GameLoader {
             (text, status) => {
                 let json = JSON.parse(text);
                 this.fromSpecs(json);
+                Mechanisms.fire(this._game, CBGame.LOADED_EVENT);
                 loaded();
                 consoleLog(`Game ${this._game.id} loaded : ${status}`)
             },
@@ -223,6 +230,7 @@ export class GameLoader {
                 let json = JSON.parse(text);
                 CBSequence.setCount(this._game, json.sequenceCount);
                 this.fromSpecs(json);
+                Mechanisms.fire(this._game, CBGame.LOADED_EVENT);
                 loaded();
                 consoleLog(`Game ${this._game.id} loaded : ${status}`)
             },
@@ -245,10 +253,16 @@ export class GameLoader {
                 for (let unitSpec of wingSpec.units) {
                     if (unitSpec.attributes) {
                         let unit = context.pieceMap.get(unitSpec.name);
-                        CBSequence.launch(unit, unitSpec.attributes.sequenceElement, unitSpec.attributes, context);
+                        this.launch(unit, unitSpec.attributes.sequenceElement, unitSpec.attributes, context);
                     }
                 }
             }
+        }
+    }
+
+    launch(playable, label, specs, context) {
+        if (label && CBSequence.getLauncher(label)) {
+            (CBSequence.getLauncher(label))(playable, specs, context);
         }
     }
 
@@ -287,33 +301,16 @@ export class SequenceLoader {
     }
 
     toSpecs(game, sequence) {
-        let sequenceSpecs = {
-            version: sequence._oversion || 0,
-            game: sequence._game.id,
-            count: sequence._validatedCount,
-            elements: []
-        };
-        let context = {game: sequence._game};
-        for (let element of sequence.validated) {
-            let elementSpecs = {};
-            element.toSpecs(elementSpecs, context);
-            sequenceSpecs.elements.push(elementSpecs);
-        }
-        consoleLog(JSON.stringify(sequenceSpecs));
-        return sequenceSpecs;
+        return sequence.toSpecs(game);
     }
 
     fromSpecs(specList, game) {
-        consoleLog(JSON.stringify(specList));
         let sequences = [];
         for (let specs of specList) {
             let sequence = new CBSequence(game, specs.count);
-            let context = {game};
-            for (let elementSpec of specs.elements) {
-                let element = CBSequence.createElement(elementSpec.id, elementSpec.type);
-                element.fromSpecs(elementSpec, context);
-                sequence.addElement(element);
-            }
+            let context = new Map();
+            context.game = game;
+            sequence.fromSpecs(specs, context);
             sequences.push(sequence);
         }
         return sequences;

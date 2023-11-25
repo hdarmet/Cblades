@@ -17,13 +17,14 @@ import {
     CBInteractivePlayer,
     CBWeatherIndicator,
     CBWingTirednessIndicator,
-    CBMoralInsert
+    CBMoralInsert,
+    WithDiceRoll
 } from "./interactive-player.js";
 import {
     CBCharge, CBUnitSceneAnimation, CBStateSequenceElement
 } from "../unit.js";
 import {
-    CBSequence, WithDiceRoll
+    CBSequence
 } from "../sequences.js";
 import {
     SequenceLoader

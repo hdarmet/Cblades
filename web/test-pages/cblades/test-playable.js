@@ -1827,7 +1827,7 @@ describe("Playable", ()=> {
                 },{
                     "version":0,"col":5,"row":7,
                     "pieces":[{
-                        "version":0,"positionCol":5,"positionRow":7, "type": "counter"
+                        "version":0, "type": "counter"
                     }]
                 }]
             };

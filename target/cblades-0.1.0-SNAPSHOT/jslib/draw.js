@@ -446,7 +446,7 @@ export function getDrawPlatform() {
 }
 export function setDrawPlatform(platform) {
     _platform = platform;
-    _platform.init && _platform.init();
+    _platform._init && _platform._init();
 }
 
 /**
@@ -499,11 +499,17 @@ export function sendPost(uri, requestContent, success, failure, files) {
  */
 let _images = new Map();
 /**
- * DImage is a wrapper class on DOM Image, used essentially to optimize (with an image cache) and simplify (hide
- * asynchronous behavior) image management.
+ * DImage is a wrapper class on DOM Image, used essentially to optimize (with an image cache) and simplify (hiding
+ * asynchronous behavior) image management. For a given path, only one such object should be created. It can be reused
+ * by many graphical objects. The main mecanism of this class is to block/unblock layers rendering before/when the
+ * associated image is loaded.
  */
 export class DImage {
 
+    /**
+     * builds an image wrapper.
+     * @param path image file to load
+     */
     constructor(path) {
         console.assert(path);
         this._root = _platform.createElement("img");
@@ -517,10 +523,20 @@ export class DImage {
         }
     }
 
+    /**
+     * Path of the image to load. This path identifies the image.
+     * @return the image path
+     */
     get path() {
         return this._root.src;
     }
 
+    /**
+     * request a layer to draws the image (or to defer it until the image is not loaded)
+     * @param layer layer that has to draw the image in its associated canvas
+     * @param params params of the drawing
+     * @return this image
+     */
     draw(layer, ...params) {
         let todo = ()=>{
             _platform.drawImage(layer._context, this._root, ...params);
@@ -537,10 +553,21 @@ export class DImage {
         return this;
     }
 
+    /**
+     * Clears the DImage cache. This method should only be used for testing purposes.
+     */
     static resetCache() {
         _images.clear();
     }
 
+    /**
+     * gets an image from the image registry. This method creates (and registers) a corresponding new DImage if such
+     * object does not already exist.
+     * Only this method should be used to retrieve/create a DImage object for performance reason (but its safe to
+     * create an orphan DImage object).
+     * @param path path that identifies the requested DImage
+     * @return the corresponding DImage
+     */
     static getImage(path) {
         let image = _images.get(path);
         if (!image) {
@@ -550,6 +577,10 @@ export class DImage {
         return image;
     }
 
+    /**
+     * Image registry
+     * @return {Map<any, any>}
+     */
     static get images() {
         return _images;
     }
@@ -563,6 +594,10 @@ export class DImage {
  */
 export class DLayer {
 
+    /**
+     * builds a layer
+     * @param name name that identifies the layer
+     */
     constructor(name) {
         this._name = name;
         this._root = _platform.createElement("canvas");
@@ -580,11 +615,22 @@ export class DLayer {
         this._updateSize();
     }
 
+    /**
+     * Sets the dimension of the associated canvas
+     * @param dimension dimension to set
+     * @private
+     */
     _setSize(dimension) {
         this._root.width = dimension.w;
         this._root.height = dimension.h;
     }
 
+    /**
+     * executes a graphical action if possible (i.e. if the layer is not in deferred mode). If the layer is in deferred
+     * mode, the action is deferred to the end of the current deferred action list of the layer.
+     * @param todo drawing action (a javascript action) to execute (or defer)
+     * @private
+     */
     _execute(todo) {
         if (this._todos) {
             this._todos.push(todo);
@@ -594,6 +640,12 @@ export class DLayer {
         }
     }
 
+    /**
+     * defers a graphical action. If the layer is already in deferred mode, the action is added at the end of the
+     * current deferred action list of the layer.
+     * @param todo action to defer
+     * @private
+     */
     _defer(todo) {
         if (!this._todos) {
             this._todos = [];
@@ -602,6 +654,13 @@ export class DLayer {
         this._todos.push(todo);
     }
 
+    /**
+     * Try to "continue" the level's painting. This method is invoked by a graphical object when it is ready to be
+     * painted (when an image is loaded for example). If the action given as a parameter was "blocking" the layer
+     * painting, this painting is resumed until another blocking action is encountered (an action with a deferred flag).
+     * @param todo action to unblock.
+     * @private
+     */
     _continue(todo) {
         delete todo._deferred;
         if (this._todos && this._todos[0]===todo) {
@@ -625,6 +684,11 @@ export class DLayer {
         }
     }
 
+    /**
+     * Executes an action with setting preservations (save/restore canvas actions before and after the "normal"
+     * action)
+     * @param action action to execute in a preserved graphical settings
+     */
     withSettings(action) {
         this._execute(()=>{
             saveContext(this._context);
@@ -635,10 +699,20 @@ export class DLayer {
         });
     }
 
+    /**
+     * gets a pixel
+     * @param point position of the pixel (in viewport coordinates).
+     * @return an array of 4 integers: [red, green, blue, alpha]
+     */
     getPixel(point) {
         return _platform.getPixel(this._context, point.x, point.y);
     }
 
+    /**
+     * sets the transform settings (as an action that can be deferred if needed)
+     * @param matrix transform matrix to be applied
+     * @return this layer
+     */
     setTransformSettings(matrix) {
         this._execute(()=> {
             let transform = this.transform && matrix ? matrix.concat(this.transform) : this.transform || matrix;
@@ -647,6 +721,12 @@ export class DLayer {
         return this;
     }
 
+    /**
+     * sets the stroke settings (as an action that can be deferred if needed)
+     * @param color stroke color (may be undefined)
+     * @param width stroke width
+     * @return this layer
+     */
     setStrokeSettings(color, width) {
         this._execute(()=> {
             if (color) {
@@ -657,6 +737,11 @@ export class DLayer {
         return this;
     }
 
+    /**
+     * sets the fill settings (as an action that can be deferred if needed)
+     * @param color fill color
+     * @return this layer
+     */
     setFillSettings(color) {
         this._execute(()=> {
             _platform.setFillStyle(this._context, color);
@@ -664,6 +749,12 @@ export class DLayer {
         return this;
     }
 
+    /**
+     * sets the shadow settings (as an action that can be deferred if needed)
+     * @param color shadow color (may be undefined)
+     * @param width shadow width
+     * @return this layer
+     */
     setShadowSettings(color, width) {
         this._execute(()=> {
             if (width && color) {
@@ -793,7 +884,7 @@ export class DTranslateLayer extends DLayer {
 }
 
 /**
- * A DLayer that does not update its transform when the DDraw transform is modified
+ * A DLayer that ignores any DDraw transform settings (the identity matrix is applied)
  */
 export class DStaticLayer extends DLayer {
 
@@ -1095,12 +1186,15 @@ export class DAnimation {
             if (!this._startTick) {
                 this._startTick = ticks;
                 this._count = 0;
-                this._init && this._init();
+                this._init();
             } else {
                 this._count++;
             }
             return this._draw(this._count, ticks - this._startTick);
         }
+    }
+
+    _init() {
     }
 
     finalize() {
@@ -1121,6 +1215,10 @@ export class DAnimation {
     }
 }
 
+/**
+ * Delay between two animation redraw attempts
+ * @type {number}
+ */
 export let ADELAY = 20;
 
 export class DAnimator {
