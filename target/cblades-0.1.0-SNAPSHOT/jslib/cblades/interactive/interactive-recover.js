@@ -171,14 +171,14 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
         ).addWidget(
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
-                let {success} = this.game.arbitrator.processReplenishMunitionsResult(this.unit, scene.dice.result);
-                if (success) {
+                let result = this.game.arbitrator.processReplenishMunitionsResult(this.unit, scene.dice.result);
+                if (result.success) {
                     scene.result.success().appear();
                 }
                 else {
                     scene.result.failure().appear();
                 }
-                finalAction&&finalAction(success);
+                finalAction&&finalAction(result);
             }),
             new Point2D(CBReplenishMunitionsInsert.DIMENSION.w/2+40, 0)
         ).addWidget(
@@ -251,14 +251,14 @@ export class InteractiveReorganizeAction extends CBAction {
         ).addWidget(
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
-                let {success} = this.game.arbitrator.processReorganizeResult(this.unit, scene.dice.result);
-                if (success) {
+                let result = this.game.arbitrator.processReorganizeResult(this.unit, scene.dice.result);
+                if (result.success) {
                     scene.result.success().appear();
                 }
                 else {
                     scene.result.failure().appear();
                 }
-                finalAction&&finalAction(success);
+                finalAction&&finalAction(result);
             }),
             new Point2D(50, 0)
         ).addWidget(
@@ -331,14 +331,14 @@ export class InteractiveRallyAction extends CBAction {
         ).addWidget(
             scene.dice.setFinalAction(()=>{
                 scene.dice.active = false;
-                let {success} = this.game.arbitrator.processRallyResult(this.unit, scene.dice.result);
-                if (success) {
+                let result = this.game.arbitrator.processRallyResult(this.unit, scene.dice.result);
+                if (result.success) {
                     scene.result.success().appear();
                 }
                 else {
                     scene.result.failure().appear();
                 }
-                finalAction&&finalAction(success);
+                finalAction&&finalAction(result);
             }),
             new Point2D(50, 0)
         ).addWidget(

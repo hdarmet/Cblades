@@ -248,22 +248,13 @@ export class GameLoader {
         let context = new Map();
         context.playerCreator = this._playerCreator;
         this._game.fromSpecs(specs, context);
-        for (let playerSpec of specs.players) {
-            for (let wingSpec of playerSpec.wings) {
-                for (let unitSpec of wingSpec.units) {
-                    if (unitSpec.attributes) {
-                        let unit = context.pieceMap.get(unitSpec.name);
-                        this.launch(unit, unitSpec.attributes.sequenceElement, unitSpec.attributes, context);
-                    }
-                }
-            }
+        for (let seqSpec of specs.sequenceElements) {
+            this.launch(seqSpec, context);
         }
     }
 
-    launch(playable, label, specs, context) {
-        if (label && CBSequence.getLauncher(label)) {
-            (CBSequence.getLauncher(label))(playable, specs, context);
-        }
+    launch(specs, context) {
+        (CBSequence.getLauncher(specs.type))(specs, context);
     }
 
 }

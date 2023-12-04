@@ -9,7 +9,7 @@ import java.util.Map;
 
 @Entity
 @DiscriminatorValue("unit")
-public class Unit extends Piece {
+public class Unit extends Piece implements Playable {
 
     String type;
     String name;
@@ -29,8 +29,6 @@ public class Unit extends Piece {
     boolean played;
     @Transient
     Wing wing;
-    @Transient
-    Map<String, Object> attributes = new HashMap<>();
 
     public String getType() {
         return this.type;
@@ -121,9 +119,11 @@ public class Unit extends Piece {
         return this;
     }
 
+    @Override
     public boolean isPlayed() {
         return this.played;
     }
+    @Override
     public Unit setPlayed(boolean played) {
         this.played = played;
         return this;

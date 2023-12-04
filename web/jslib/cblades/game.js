@@ -1179,36 +1179,6 @@ export class CBPiece {
         return this._getPieces();
     }
 
-    set attrs(attrs) {
-        this._attrs = attrs;
-    }
-
-    get attrs() {
-        return this._attrs ? this._attrs : {};
-    }
-
-    getAttr(path, value) {
-        let attrs = this.attrs;
-        let names = path.split(".");
-        for (let index=0; index<names.length; index++) {
-            if (!attrs) return null;
-            attrs = attrs[names[index]];
-        }
-        return attrs;
-    }
-    setAttr(path, value) {
-        !this._attrs && (this._attrs={});
-        let attrs = this._attrs;
-        let names = path.split(".");
-        for (let index=0; index<names.length-1; index++) {
-            if (!attrs[names[index]]) {
-                attrs[names[index]] = {}
-            }
-            attrs = attrs[names[index]];
-        }
-        attrs[names[names.length-1]] = value;
-    }
-
     toSpecs(context) {
         let pieceSpec = {
             id : this._oid,
@@ -1464,6 +1434,7 @@ export function PlayableMixin(clazz) {
         }
 
         reset() {
+            this.attrs = {};
             this.reactivate()
         }
 
@@ -1483,6 +1454,39 @@ export function PlayableMixin(clazz) {
             if (!this.played) {
                 this.game.onMouseClick(this, event);
             }
+        }
+
+        set attrs(attrs) {
+            this._attrs = attrs;
+        }
+
+        get attrs() {
+            return this._attrs ? this._attrs : {};
+        }
+
+        useAttr(path) {
+            let attrs = this.attrs;
+            let names = path.split(".");
+            for (let index=0; index<names.length-1; index++) {
+                if (!attrs) return null;
+                attrs = attrs[names[index]];
+            }
+            if (!attrs) return null;
+            let value = attrs[names[names.length-1]];
+            attrs[names[names.length-1]] = undefined;
+            return value;
+        }
+        setAttr(path, value) {
+            !this._attrs && (this._attrs={});
+            let attrs = this._attrs;
+            let names = path.split(".");
+            for (let index=0; index<names.length-1; index++) {
+                if (!attrs[names[index]]) {
+                    attrs[names[index]] = {}
+                }
+                attrs = attrs[names[index]];
+            }
+            attrs[names[names.length-1]] = value;
         }
 
         finish() {

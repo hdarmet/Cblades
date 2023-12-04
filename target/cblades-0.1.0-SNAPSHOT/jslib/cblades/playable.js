@@ -780,11 +780,11 @@ export class CBBasicPlayer extends CBAbstractPlayer {
 
     /**
      * warns the player that his turn had ended. The player requests its playable place to reset (execute
-     * the playable.reset() mathod).
+     * the playable.reset() method).
      */
     endTurn() {
         for (let playable of this.playables) {
-            playable.reset && playable.reset();
+            playable.reset();
         }
     }
 
@@ -833,7 +833,7 @@ export class CBGame extends StandardGameMixin(RetractableGameMixin(CBAbstractGam
         }
         for (let playable of this.playables) {
             if (!playable._player) {
-                playable.reset && playable.reset();
+                playable.reset();
             }
         }
         animation && animation();

@@ -9,7 +9,7 @@ import java.util.Map;
 @Entity
 @Inheritance
 @DiscriminatorValue("token")
-public class Token extends Piece {
+public class Token extends Piece implements Playable {
 
     String type;
     String wizard;
@@ -75,10 +75,12 @@ public class Token extends Piece {
         return this;
     }
 
-    public Boolean getPlayed() {
+    @Override
+    public boolean isPlayed() {
         return this.played;
     }
-    public Token setPlayed(Boolean played) {
+    @Override
+    public Token setPlayed(boolean played) {
         this.played = played;
         return this;
     }

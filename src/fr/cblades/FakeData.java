@@ -29,7 +29,9 @@ public class FakeData {
         createForums(data);
         createMessageModel(data);
         Scenario scenario = createScenario(data, 0);
-        GameMatch gameMatch = createMatch(data, scenario);
+        for (int indice=0; indice<4; indice++) {
+            createMatch(data, scenario);
+        }
     }
 
     static void createGameData(DataSunbeam data) {
@@ -319,7 +321,7 @@ public class FakeData {
             em.persist(unit0);
             */
             Unit unit1 = new Unit()
-                .setPositionRow(8).setPositionCol(2)
+                .setPositionRow(9).setPositionCol(2)
                 .setName("u1").setCategory(UnitCategory.CHARACTER)
                 .setType("Goblin Leader")
                 .setAngle(90)

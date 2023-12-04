@@ -347,8 +347,8 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 				.read("id")
 				.read("version")
 				.readLink("identity", (bJson, map)->sync(bJson, map)
-						.read("name")
-						.read("path")
+					.read("name")
+					.read("path")
 				)
 				.readEach("wings", (wJson, wing)->sync(wJson, wing)
 					.read("id")
@@ -382,7 +382,6 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 						.read("contact")
 						.read("orderGiven")
 						.read("played")
-						.readMap("attributes")
 					)
 					.read("moral")
 					.read("tiredness")
@@ -421,7 +420,14 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 							.read("name")
 					)
 				)
-			);
+			)
+			.readEach("sequenceElements", (cJson, celem)->sync(cJson, celem)
+				.read("id")
+				.read("version")
+				.read("type")
+				.read("content", (String content)->Json.createJsonFromString(content)
+			)
+		);
 		return json;
 	}
 

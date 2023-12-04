@@ -30,6 +30,9 @@ import {
 import {
     SequenceLoader
 } from "../loader.js";
+import {
+    CBWeather, CBFog
+} from "../weather.js";
 
 export class CBInteractivePlayer extends CBUnitPlayer {
 
@@ -467,7 +470,16 @@ export class CBWeatherIndicator extends DMultiImagesIndicator {
             `./../images/inserts/meteo4.png`,
             `./../images/inserts/meteo5.png`,
             `./../images/inserts/meteo6.png`
-        ], CBWeatherIndicator.DIMENSION, weather);
+        ], CBWeatherIndicator.DIMENSION, CBWeatherIndicator.getCode(weather));
+    }
+
+    static getCode(weather) {
+        if (weather === CBWeather.HOT) return 0;
+        else if (weather === CBWeather.CLEAR) return 1;
+        else if (weather === CBWeather.CLOUDY) return 2;
+        else if (weather === CBWeather.OVERCAST) return 3;
+        else if (weather === CBWeather.RAIN) return 4;
+        else return 5;
     }
 
     static DIMENSION = new Dimension2D(142, 142);
@@ -482,6 +494,14 @@ export class CBFogIndicator extends DMultiImagesIndicator {
             `./../images/inserts/fog2.png`,
             `./../images/inserts/fog3.png`
         ], CBFogIndicator.DIMENSION, fog);
+    }
+
+    static getCode(fog) {
+        if (fog === CBFog.NO_FOG) return 0;
+        else if (fog === CBFog.MIST) return 1;
+        else if (fog === CBFog.DENSE_MIST) return 2;
+        else if (fog === CBFog.FOG) return 3;
+        else return 4;
     }
 
     static DIMENSION = new Dimension2D(142, 142);

@@ -2400,7 +2400,7 @@ export class DArtifactAnimation extends DAnimation {
                 this._artifact._animation.cancel();
             }
             this._artifact._animation = this;
-            this._init && this._init();
+            //this._init && this._init();
         }
         return this.draw(count, ticks);
     }

@@ -25,6 +25,9 @@ public class Game extends BaseEntity {
     FogType fog = FogType.NO_FOG;
     WeatherType weather = WeatherType.CLEAR;
 
+    @Transient
+    List<SequenceElement> sequenceElements = new ArrayList<>();
+
     public List<Player> getPlayers() {
         return Collections.unmodifiableList(this.players);
     }
@@ -173,6 +176,26 @@ public class Game extends BaseEntity {
             pieces.addAll(location.getPieces());
         }
         return pieces;
+    }
+
+    public List<SequenceElement> getSequenceElements() {
+        return Collections.unmodifiableList(this.sequenceElements);
+    }
+
+    public Game addSequenceElement(SequenceElement element) {
+        this.sequenceElements.add(element);
+        return this;
+    }
+
+    public Game setSequenceElement(SequenceElement element) {
+        this.sequenceElements.clear();
+        this.sequenceElements.add(element);
+        return this;
+    }
+
+    public Game resetSequenceElements() {
+        this.sequenceElements.clear();
+        return this;
     }
 
     public Unit getUnitByName(String name) {

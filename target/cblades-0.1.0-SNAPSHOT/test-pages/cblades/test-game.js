@@ -956,7 +956,7 @@ describe("Game", ()=> {
         when:
             piece.setAttr("one.two.three", 3);
         then:
-            assert(piece.getAttr("one.two.three")).equalsTo(3);
+            assert(piece.useAttr("one.two.three")).equalsTo(3);
     });
 
     class CBTestMarker extends CBPieceImageArtifact {

@@ -73,4 +73,12 @@ public class Sequence extends BaseEntity {
         SequenceElement element = elements.get(elements.size()-1);
         return element.isTurnClosed();
     }
+
+    public Sequence setLastSequence() {
+        if (this.elements.size()!=0) {
+            SequenceElement element = this.elements.get(this.elements.size() - 1);
+            element.setLast(true);
+        }
+        return this;
+    }
 }

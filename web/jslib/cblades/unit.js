@@ -1334,9 +1334,11 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         }
     }
 
-    retreat(hexLocation, stacking) {
+    retreat(hexLocation, stacking, adjustCohesion=true) {
         this._changeLocation(hexLocation, stacking);
-        this.addOneCohesionLevel();
+        if (adjustCohesion) {
+            this.addOneCohesionLevel();
+        }
         this.setEngaging(false);
     }
 
@@ -1637,6 +1639,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
             if (this.attrs.extendedMovementPoints!==undefined) {
                 this._extendedMovementPoints = this.attrs.extendedMovementPoints;
             }
+            /*
             if (this.attrs.disruptChecked || this.attrs.routChecked ||
                 this.attrs.neighborsCohesionLoss ||
                 this.attrs.defenderEngagementChecking ||
@@ -1646,8 +1649,11 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
             } else if (this.game.focusedPlayable === this) {
                 this.game.setFocusedPlayable(null);
             }
+             */
         } else {
-            this.removeFromMap();
+            if (this.hexLocation) {
+                this.removeFromMap();
+            }
         }
     }
 
@@ -1727,24 +1733,6 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         else if (this._cohesion === CBCohesion.ROUTED) {
             this._cohesionArtifact = setMarkerArtifact.call(this, "./../images/markers/fleeing.png", 3);
         }
-    }
-
-    get attackCount() {
-        let attackCount = this.getAttr("attackCount");
-        return attackCount===undefined ? 0 : attackCount;
-    }
-
-    set attackCount(attackCount) {
-        this.setAttr("attackCount", attackCount);
-    }
-
-    get resolvedAttackCount() {
-        let resolvedAttackCount = this.getAttr("resolvedAttackCount");
-        return resolvedAttackCount===undefined ? 0 : resolvedAttackCount;
-    }
-
-    set resolvedAttackCount(resolvedAttackCount) {
-        this.setAttr("resolvedAttackCount", resolvedAttackCount);
     }
 
     getPosition() {
@@ -2185,7 +2173,7 @@ export function setUnitToContext(context, spec, unit) {
 export class CBUnitAnimation extends CBAnimation {
 
     constructor({unit, state, ...params}) {
-        super(params);
+        super({game: unit.game, ...params});
         this._unit = unit;
         this._state = state;
     }
@@ -2193,21 +2181,25 @@ export class CBUnitAnimation extends CBAnimation {
     _init() {
     }
 
+    get unit() {
+        return this._unit;
+    }
+
     _draw(count, ticks) {
-        if (count===0 && this._unit) {
-            if (this._unit._animation) {
-                this._unit._animation.cancel();
+        if (count===0 && this.unit) {
+            if (this.unit._animation) {
+                this.unit._animation.cancel();
             }
-            this._unit._animation = this;
+            this.unit._animation = this;
         }
         return super._draw(count, ticks);
     }
 
     _finalize() {
         super._finalize();
-        if (this._unit) {
-            this._unit.setState(this._state);
-            delete this._unit._animation;
+        if (this.unit) {
+            this.unit.setState(this._state);
+            delete this.unit._animation;
         }
     }
 
@@ -2377,9 +2369,10 @@ export class CBStateSequenceElement extends CBSequenceElement {
         }
     }
 
-    static launch(unit, {actionType, actionMode}) {
-        if (actionType) {
-            let action = CBAction.createAction(actionType, unit.game, unit, actionMode);
+    static launch(specs, content) {
+        if (specs.content.actionType) {
+            let unit = content.pieceMap.get(specs.content.unit);
+            let action = CBAction.createAction(specs.content.actionType, unit.game, unit, specs.content.actionMode);
             unit.launchAction(action);
             action.status = CBAction.STARTED;
             unit.game.selectedPlayable = unit;
@@ -2427,13 +2420,17 @@ export function HexLocated(clazz) {
 
         _toSpecs(spec, context) {
             super._toSpecs(spec, context);
-            spec.hexLocation = CBHexLocation.toSpecs(this.hexLocation);
+            if (this.hexLocation) {
+                spec.hexLocation = CBHexLocation.toSpecs(this.hexLocation);
+            }
             spec.stacking = getStackingCode(this.stacking);
         }
 
         _fromSpecs(spec, context) {
             super._fromSpecs(spec, context);
-            this.hexLocation =  CBHexLocation.fromSpecs(context.game.map, spec.hexLocation);
+            if (spec.hexLocation) {
+                this.hexLocation = CBHexLocation.fromSpecs(context.game.map, spec.hexLocation);
+            }
             this.stacking = getStacking(spec.stacking);
         }
 
@@ -2453,25 +2450,25 @@ export class CBDisplaceAnimation extends CBUnitAnimation {
     _init() {
         super._init();
         if (this._angle!==undefined) {
-            this._startAngle = this._unit.element.angle;
-            this._unit._rotate(this._angle);
-            this._stopAngle = this._unit.element.angle;
-            this._unit.element.setAngle(this._startAngle);
+            this._startAngle = this.unit.element.angle;
+            this.unit._rotate(this._angle);
+            this._stopAngle = this.unit.element.angle;
+            this.unit.element.setAngle(this._startAngle);
         }
         if (this._hexLocation!==undefined) {
-            this._startLocation = this._unit.element.location;
-            this._unit._move(this._hexLocation, this._stacking);
-            this._stopLocation = this._unit.element.location;
-            this._unit.element.setLocation(this._startLocation);
+            this._startLocation = this.unit.element.location;
+            this.unit._move(this._hexLocation, this._stacking);
+            this._stopLocation = this.unit.element.location;
+            this.unit.element.setLocation(this._startLocation);
         }
     }
 
     _finalize() {
         if (this._stopAngle) {
-            this._unit.element.setAngle(this._stopAngle);
+            this.unit.element.setAngle(this._stopAngle);
         }
         if (this._stopLocation) {
-            this._unit.element.setLocation(this._stopLocation);
+            this.unit.element.setLocation(this._stopLocation);
         }
         super._finalize();
     }
@@ -2480,13 +2477,15 @@ export class CBDisplaceAnimation extends CBUnitAnimation {
         let factor = this._factor(count);
         if (this._startAngle!==undefined) {
             console.log(this._startAngle + factor*diffAngle(this._startAngle, this._stopAngle));
-            this._unit.element.setAngle(this._startAngle + factor*diffAngle(this._startAngle, this._stopAngle));
+            this.unit.element.setAngle(this._startAngle + factor*diffAngle(this._startAngle, this._stopAngle));
         }
         if (this._startLocation!==undefined) {
-            this._unit.element.setLocation(new Point2D(
+            let location = new Point2D(
                 this._startLocation.x + factor*(this._stopLocation.x-this._startLocation.x),
                 this._startLocation.y + factor*(this._stopLocation.y-this._startLocation.y)
-            ));
+            );
+            console.log(location);
+            this.unit.element.setLocation(location);
         }
         return super.draw(count, ticks);
     }

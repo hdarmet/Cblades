@@ -192,11 +192,6 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			.checkRequired("advance").checkBoolean("advance");
 	}
 
-	Verifier checkAskRequestSpecs(Verifier verifier) {
-		return verifier
-			.checkRequired("askRequest").checkInteger("askRequest").checkMin("askRequest", 0);
-	}
-
 	Sequence writeToSequence(Json json, Sequence sequence) {
 		verify(json)
 			.checkRequired("game").checkInteger("game")
@@ -383,7 +378,6 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 						Verifier verifier = verify((Json)eJson.get("content"));
 						verifier = this.checkUnitStateSpecs(verifier);
 						verifier = this.checkHexLocationSpecs(verifier);
-						verifier = this.checkAskRequestSpecs(verifier);
 						return verifier;
 					}
 				)

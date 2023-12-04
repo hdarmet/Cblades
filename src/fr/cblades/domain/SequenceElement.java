@@ -39,6 +39,9 @@ public class SequenceElement extends BaseEntity {
     }
 
     @Transient
+    boolean last;
+
+    @Transient
     Map<String, Object> attributes = null;
 
     Object buildValue(Object value) {
@@ -120,6 +123,14 @@ public class SequenceElement extends BaseEntity {
 
     public boolean isTurnClosed() {
         return type.equals(TYPE_NEXT_TURN);
+    }
+
+    public SequenceElement setLast(boolean last) {
+        this.last = last;
+        return this;
+    }
+    public boolean isLast() {
+        return last;
     }
 
     public static String TYPE_NEXT_TURN = "next-turn";

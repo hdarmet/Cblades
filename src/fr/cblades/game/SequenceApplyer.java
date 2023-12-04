@@ -53,23 +53,6 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         return this.count;
     }
 
-    void setUnitAttr(SequenceElement element, String path, Object value) {
-        Unit unit = units.get(element.getAttr("unit"));
-        unit.setAttr(path, value);
-    }
-
-    void setUnitSequenceElement(SequenceElement element) {
-        Unit unit = units.get(element.getAttr("unit"));
-        unit.setAttrs(element.getAttrs());
-        unit.setAttr("sequenceElement", element.getType());
-    }
-
-    void setLeaderSequenceElement(SequenceElement element) {
-        Unit unit = units.get(element.getAttr("leader"));
-        unit.setAttrs(element.getAttrs());
-        unit.setAttr("sequenceElement", element.getType());
-    }
-
     void changeUnitState(SequenceElement element) {
         Unit unit = units.get(element.getAttr("unit"));
         unit.setAmmunition(Ammunition.byLabels().get(element.getAttr("ammunition")));
@@ -83,13 +66,13 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         if (unit.getSteps() == 0 || unit.getCohesion() == Cohesion.DELETED) {
             deleteUnit(unit);
         }
-        unit.setAttrs(element.getAttrs());
-        unit.setAttr("sequenceElement", element.getType());
     }
 
     void deleteUnit(Unit unit) {
-        unit.getWing().removeUnit(unit);
-        removeUnitFromLocation(unit);
+        if (unit.getWing() != null) {
+            unit.getWing().removeUnit(unit);
+            removeUnitFromLocation(unit);
+        }
     }
 
     void removeUnitFromLocation(Unit unit) {
@@ -130,12 +113,6 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         Unit unit = units.get(element.getAttr("unit"));
         unit.setAttr("actionType", null);
         unit.setPlayed(true);
-    }
-
-    void countAttacks(SequenceElement element) {
-        Unit unit = units.get(element.getAttr("unit"));
-        Integer count = (Integer)unit.getAttr("attackCount");
-        unit.setAttr("attackCount", count==null? 1 : count+1);
     }
 
     void removeUnit(SequenceElement element, String field) {
@@ -218,41 +195,49 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         if (element.getType().equals("move")) {
             changeUnitState(element);
             changeUnitLocation(element);
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("rotate")) {
             changeUnitState(element);
             changeUnitAngle(element);
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("reorient")) {
             changeUnitState(element);
             changeUnitAngle(element);
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("turn")) {
             changeUnitState(element);
             changeUnitLocation(element);
             changeUnitAngle(element);
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("confront")) {
             changeUnitState(element);
             changeUnitAngle(element);
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("state")) {
             changeUnitState(element);
         }
         else if (element.getType().equals("rest")) {
             changeUnitState(element);
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("refill")) {
             changeUnitState(element);
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("rally")) {
             changeUnitState(element);
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("reorganize")) {
             changeUnitState(element);
         }
         else if (element.getType().equals("neighbors-rout-checking")) {
-            setUnitSequenceElement(element);
+            this.game.setSequenceElement(element);
         }
         else if (element.getType().equals("rout-checking")) {
             changeUnitState(element);
@@ -265,47 +250,51 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
         }
         else if (element.getType().equals("attacker-engagement")) {
             changeUnitState(element);
-            setUnitAttr(element, "attackerEngagementChecking", true);
+            this.game.setSequenceElement(element);
             finishUnitAction(element);
         }
         else if (element.getType().equals("defender-engagement")) {
             changeUnitState(element);
-            setUnitAttr(element, "defenderEngagementChecking", true);
+            this.game.setSequenceElement(element);
         }
         else if (element.getType().equals("try2-order-instructions")) {
-            setLeaderSequenceElement(element);
+//            this.game.setSequenceElement(element);
         }
         else if (element.getType().equals("order-instructions")) {
             changeOrderInstructions(element);
         }
         else if (element.getType().equals("try2-take-command")) {
-            setLeaderSequenceElement(element);
+//            this.game.setSequenceElement(element);
         }
         else if (element.getType().equals("take-command")) {
             changeManageCommand(element, true);
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("try2-dismiss-command")) {
-            setLeaderSequenceElement(element);
+//            this.game.setSequenceElement(element);
         }
         else if (element.getType().equals("dismiss-command")) {
             changeManageCommand(element, false);
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("give-orders")) {
-            setLeaderSequenceElement(element);
+            this.game.setSequenceElement(element);
         }
         else if (element.getType().equals("shock-attack")) {
             changeUnitState(element);
+            this.game.setSequenceElement(element);
         }
         else if (element.getType().equals("fire-attack")) {
             changeUnitState(element);
+            this.game.setSequenceElement(element);
         }
         else if (element.getType().equals("ask4-retreat")) {
-            setUnitSequenceElement(element);
+            //this.game.addSequenceElement(element);
         }
         else if (element.getType().equals("retreat")) {
             changeUnitState(element);
             changeUnitLocation(element);
-            setUnitAttr(element, "retreated", true);
+            this.game.addSequenceElement(element);
         }
         else if (element.getType().equals("advance")) {
             changeUnitState(element);
@@ -315,52 +304,63 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
             changeUnitState(element);
             Unit sourceUnit = units.get(element.getAttr("unit"));
             createUnit(sourceUnit, element, "troop");
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("break")) {
             Unit sourceUnit = units.get(element.getAttr("unit"));
             createUnits(sourceUnit, element, "troops");
             removeUnit(element, "unit");
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("join")) {
             changeUnitState(element);
             removeUnits(element, "troops");
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("create")) {
             Unit sourceUnit = units.get(((List<String>)element.getAttr("troops")).get(0));
             createUnit(sourceUnit, element, "formation");
             removeUnits(element, "troops");
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("set-fire")) {
             createToken(element);
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("extinguish-fire")) {
             removeToken(element);
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("set-stakes")) {
             createToken(element);
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("remove-stakes")) {
             removeToken(element);
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("fire-and-smoke")) {
             updateFires(element);
+            this.game.resetSequenceElements();
         }
         else if (element.getType().equals("next-turn")) {
             changeTurn(element);
+            this.game.resetSequenceElements();
         }
     }
 
     void changeUnitLocation(SequenceElement element) {
         Unit unit = units.get(element.getAttr("unit"));
-        unit.setAttrs(element.getAttrs());
         removeUnitFromLocation(unit);
-        Integer hexAngle = (Integer)element.getAttr("hexAngle");
-        if (hexAngle!=null) unit.setPositionAngle((int)hexAngle);
-        unit.setPositionCol((int)element.getAttr("hexLocation.col"));
-        unit.setPositionRow((int)element.getAttr("hexLocation.row"));
-        unit.setPositionAngle((Integer)element.getAttr("hexLocation.angle"));
-        Stacking stacking = Stacking.byLabels().get(element.getAttr("stacking"));
-        addUnitToLocation(unit, stacking);
+        if (element.getAttr("hexLocation")!=null) {
+            Integer hexAngle = (Integer) element.getAttr("hexAngle");
+            if (hexAngle != null) unit.setPositionAngle((int) hexAngle);
+            unit.setPositionCol((int) element.getAttr("hexLocation.col"));
+            unit.setPositionRow((int) element.getAttr("hexLocation.row"));
+            unit.setPositionAngle((Integer) element.getAttr("hexLocation.angle"));
+            Stacking stacking = Stacking.byLabels().get(element.getAttr("stacking"));
+            addUnitToLocation(unit, stacking);
+        }
     }
 
     void changeUnitAngle(SequenceElement element) {
@@ -369,9 +369,10 @@ public class SequenceApplyer implements SequenceElement.SequenceVisitor {
     }
 
     void changeTurn(SequenceElement element) {
-        for (Unit unit : this.units.values()) {
-            unit.setAttrs(null);
-            unit.setPlayed(false);
+        for (Piece piece : this.game.getPieces()) {
+            if (piece instanceof Playable) {
+                ((Playable)piece).setPlayed(false);
+            }
         }
         this.game.advanceToNextPlayerTurn();
     }

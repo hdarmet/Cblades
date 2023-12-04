@@ -64,8 +64,8 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
         }
     }
 
-    continueLossApplication(unit, finalLocation, stacking) {
-        unit.action && unit.action.retreatUnit(finalLocation, stacking);
+    continueLossApplication(unit) {
+        unit.action && unit.action.continueLossApplication();
     }
 
     applyLossesToUnit(unit, losses, attacker) {
