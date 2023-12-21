@@ -4,7 +4,7 @@ import {
     Dimension2D, Point2D
 } from "../../geometry.js";
 import {
-    DDice, DIconMenuItem, DMask, DResult, DScene
+    DDice6, DIconMenuItem, DMask, DResult, DScene
 } from "../../widget.js";
 import {
     CBAction
@@ -68,7 +68,7 @@ export class InteractiveRestingAction extends CBAction {
     createScene(finalAction) {
         let weather = this.game.arbitrator.getWeather(this.game);
         let scene = new DScene();
-        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        scene.dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         let mask = new DMask("#000000", 0.3);
         scene.tirednessIndicator = new CBWingTirednessIndicator(this.unit.wing);
         scene.result = new DResult();
@@ -159,7 +159,7 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
     createScene(finalAction) {
         let scene = new DScene();
         scene.result = new DResult();
-        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        scene.dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
             this.game.closePopup();
@@ -234,7 +234,7 @@ export class InteractiveReorganizeAction extends CBAction {
     createScene(finalAction) {
         let scene = new DScene();
         scene.result = new DResult();
-        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        scene.dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
             this.game.closePopup();
@@ -314,7 +314,7 @@ export class InteractiveRallyAction extends CBAction {
     createScene(finalAction) {
         let scene = new DScene();
         scene.result = new DResult();
-        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        scene.dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
             this.game.closePopup();

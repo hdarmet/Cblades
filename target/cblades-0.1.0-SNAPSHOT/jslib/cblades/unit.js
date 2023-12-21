@@ -401,8 +401,8 @@ export class CBCharacterType extends CBUnitType {
         return 1;
     }
 
-    createUnit(wing, steps= 2) {
-        let unit = new CBCharacter(this, wing);
+    createUnit(game, wing, steps= 2) {
+        let unit = new CBCharacter(game, this, wing);
         unit.steps = steps;
         return unit;
     }
@@ -432,8 +432,8 @@ export class CBTroopType extends CBUnitType {
         return (this._formationPaths.length/this._stepsByFigure)+1;
     }
 
-    createUnit(wing, steps = 2) {
-        let unit = steps<=this.getFigureStepCount() ? new CBTroop(this, wing) : new CBFormation(this, wing);
+    createUnit(game, wing, steps = 2) {
+        let unit = steps<=this.getFigureStepCount() ? new CBTroop(game, this, wing) : new CBFormation(game, this, wing);
         unit.steps = steps;
         return unit;
     }
@@ -852,8 +852,8 @@ export class UnitImageArtifact extends RetractableArtifactMixin(SelectableArtifa
 
 export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(CBPiece)))) {
 
-    constructor(type, paths, wing, dimension=CBUnit.DIMENSION) {
-        super("units", paths, dimension);
+    constructor(game, type, paths, wing, dimension=CBUnit.DIMENSION) {
+        super("units", game, paths, dimension);
         this._carried = [];
         this._options = [];
         this._type = type;
@@ -880,6 +880,14 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     get slot() {
         return this.hexLocation.units.indexOf(this);
+    }
+
+    getAttackHex(type) {
+        return type ? null : this._hexLocation;
+    }
+
+    getAttackHexType(hex) {
+        return hex===this.hexLocation ? "F" : null;
     }
 
     copy(unit) {
@@ -1023,7 +1031,6 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     removeFromMap() {
         super.removeFromMap();
-        //delete this._name;
         for (let carried of this._carried) {
             carried.removeFromMap();
         }
@@ -1040,7 +1047,6 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     deleteFromMap() {
         super.deleteFromMap();
-        //delete this._name;
         for (let carried of this._carried) {
             carried.deleteFromMap();
         }
@@ -1271,13 +1277,19 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         return this.maxStepCount - this.lossSteps;
     }
 
+    get visible() {
+        return this.steps>0;
+    }
+
     set steps(steps) {
         this.lossSteps = this.maxStepCount - steps;
     }
 
     set lossSteps(lossSteps) {
         this._lossSteps = lossSteps;
-        this.artifact.setImage(this._lossSteps);
+        if (this._lossSteps<this.maxStepCount) {
+            this.artifact.setImage(this._lossSteps);
+        }
     }
 
     destroy() {
@@ -1651,7 +1663,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
             }
              */
         } else {
-            if (this.hexLocation) {
+            if (this.isOnHex()) {
                 this.removeFromMap();
             }
         }
@@ -1790,7 +1802,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     static fromSpecs(wing, unitSpec, context) {
         let unitType = CBUnitType.getType(unitSpec.type);
-        let unit = unitType.createUnit(wing, unitSpec.steps);
+        let unit = unitType.createUnit(context.game, wing, unitSpec.steps);
         unit.fromSpecs(unitSpec, context);
         return unit;
     }
@@ -1870,12 +1882,12 @@ CBGame.prototype.getUnit = function(name) {
 
 export class CBTroop extends CBUnit {
 
-    constructor(type, wing) {
-        super(type, type.getTroopPaths(), wing);
+    constructor(game, type, wing) {
+        super(game, type, type.getTroopPaths(), wing);
     }
 
     clone() {
-        let copy = new CBTroop(this.type, this.wing);
+        let copy = new CBTroop(this.game, this.type, this.wing);
         this.copy(copy);
         return copy;
     }
@@ -1907,8 +1919,8 @@ export class FormationImageArtifact extends UnitImageArtifact {
 
 export class CBFormation extends CBUnit {
 
-    constructor(type, wing) {
-        super(type, type.getFormationPaths(), wing, CBFormation.DIMENSION);
+    constructor(game, type, wing) {
+        super(game, type, type.getFormationPaths(), wing, CBFormation.DIMENSION);
     }
 
     get troopNature() {
@@ -1920,7 +1932,7 @@ export class CBFormation extends CBUnit {
     }
 
     clone() {
-        let copy = new CBFormation(this.type, this.wing);
+        let copy = new CBFormation(this.game, this.type, this.wing);
         this.copy(copy);
         return copy;
     }
@@ -1935,6 +1947,14 @@ export class CBFormation extends CBUnit {
 
     get formationNature() {
         return true;
+    }
+
+    getAttackHex(type) {
+        return type ? null : type==="T" ? this.hexLocation.fromHex : this.hexLocation.toHex;
+    }
+
+    getAttackHexType(hex) {
+        return hex===this.hexLocation.toHex ? "T" : hex===this.hexLocation.fromHex ? "F" : null;
     }
 
     get slot() {
@@ -2017,13 +2037,13 @@ export class CBFormation extends CBUnit {
 
 export class CBCharacter extends CBUnit {
 
-    constructor(type, wing) {
-        super(type, type.getTroopPaths(), wing, CBCharacter.DIMENSION);
+    constructor(game, type, wing) {
+        super(game, type, type.getTroopPaths(), wing, CBCharacter.DIMENSION);
         this._commandPoints = 0;
     }
 
     clone() {
-        let copy = new CBCharacter(this.type, this.wing);
+        let copy = new CBCharacter(this.game, this.type, this.wing);
         this.copy(copy);
         return copy;
     }
@@ -2178,21 +2198,17 @@ export class CBUnitAnimation extends CBAnimation {
         this._state = state;
     }
 
-    _init() {
-    }
-
     get unit() {
         return this._unit;
     }
 
-    _draw(count, ticks) {
-        if (count===0 && this.unit) {
+    _init() {
+        if (this.unit) {
             if (this.unit._animation) {
                 this.unit._animation.cancel();
             }
             this.unit._animation = this;
         }
-        return super._draw(count, ticks);
     }
 
     _finalize() {
@@ -2370,13 +2386,6 @@ export class CBStateSequenceElement extends CBSequenceElement {
     }
 
     static launch(specs, content) {
-        if (specs.content.actionType) {
-            let unit = content.pieceMap.get(specs.content.unit);
-            let action = CBAction.createAction(specs.content.actionType, unit.game, unit, specs.content.actionMode);
-            unit.launchAction(action);
-            action.status = CBAction.STARTED;
-            unit.game.selectedPlayable = unit;
-        }
     }
 
 }
@@ -2473,7 +2482,7 @@ export class CBDisplaceAnimation extends CBUnitAnimation {
         super._finalize();
     }
 
-    draw(count, ticks) {
+    _draw(count, ticks) {
         let factor = this._factor(count);
         if (this._startAngle!==undefined) {
             console.log(this._startAngle + factor*diffAngle(this._startAngle, this._stopAngle));
@@ -2487,7 +2496,7 @@ export class CBDisplaceAnimation extends CBUnitAnimation {
             console.log(location);
             this.unit.element.setLocation(location);
         }
-        return super.draw(count, ticks);
+        return super._draw(count, ticks);
     }
 
 }
@@ -2502,11 +2511,11 @@ export function SceneAnimation(clazz) {
             this._animation = animation;
         }
 
-        draw(count, ticks) {
+        _draw(count, ticks) {
             if (count === 0) {
                 this._animation();
             }
-            return super.draw(count, ticks);
+            return super._draw(count, ticks);
         }
 
         _finalize() {

@@ -135,20 +135,20 @@ describe("Map teacher", ()=> {
         let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
-        let unit11 = new CBTroop(unitType1, wing1);
+        let unit11 = new CBTroop(game, unitType1, wing1);
         unit11.addToMap(map.getHex(5, 8));
-        let unit12 = new CBTroop(unitType1, wing1);
+        let unit12 = new CBTroop(game, unitType1, wing1);
         unit12.addToMap(map.getHex(5, 7));
         let leaderType1 = new CBTestUnitType("leader1", ["./../images/units/misc/leader1.png", "./../images/units/misc/leader1b.png"])
-        let leader11 = new CBCharacter(leaderType1, wing1);
+        let leader11 = new CBCharacter(game, leaderType1, wing1);
         leader11.addToMap(map.getHex(6, 7));
         let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
-        let unit21 = new CBTroop(unitType2, wing2);
+        let unit21 = new CBTroop(game, unitType2, wing2);
         unit21.addToMap(map.getHex(7, 8));
-        let unit22 = new CBTroop(unitType2, wing2);
+        let unit22 = new CBTroop(game, unitType2, wing2);
         unit22.addToMap(map.getHex(7, 7));
         let leaderType2 = new CBTestUnitType("leader2", ["./../images/units/misc/leader2.png", "./../images/units/misc/leader2b.png"])
-        let leader21 = new CBCharacter(leaderType2, wing2);
+        let leader21 = new CBCharacter(game, leaderType2, wing2);
         leader21.addToMap(map.getHex(8, 7));
         game.start();
         return {game, arbitrator, map, player1, wing1, wing2, unit11, unit12, leader11, player2, unit21, unit22, leader21};
@@ -166,15 +166,15 @@ describe("Map teacher", ()=> {
         game.setMap(map);
         let wing1 = new CBWing(player1, banner1);
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"]);
-        let unit1 = new CBTroop(unitType1, wing1);
+        let unit1 = new CBTroop(game, unitType1, wing1);
         unit1.addToMap(map.getHex(5, 8));
-        let unit2 = new CBTroop(unitType1, wing1);
+        let unit2 = new CBTroop(game, unitType1, wing1);
         unit2.addToMap(map.getHex(5, 6));
         let wing2 = new CBWing(player2, banner2);
         let unitType2 = new CBTestUnitType("unit2",
             ["./../images/units/misc/unit2.png", "./../images/units/misc/unit2b.png"],
             ["./../)images/units/misc/formation2.png", "./../images/units/misc/formation2b.png"]);
-        let formation2 = new CBFormation(unitType2, wing2);
+        let formation2 = new CBFormation(game, unitType2, wing2);
         formation2.angle = 90;
         formation2.addToMap(new CBHexSideId(map.getHex(6, 8), map.getHex(6, 7)));
         game.start();
@@ -351,19 +351,19 @@ describe("Map teacher", ()=> {
                 "./../images/units/misc/formation2.png", "./../images/units/misc/formation2b.png",
                 "./../images/units/misc/formation3.png", "./../images/units/misc/formation3b.png"
             ])
-        let formation1 = new CBFormation(unitType1, wing1);
+        let formation1 = new CBFormation(game, unitType1, wing1);
         formation1.addToMap(new CBHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
         formation1.angle = 90;
         let leaderType1 = new CBTestUnitType("leader1", ["./../images/units/misc/leader1.png", "./../images/units/misc/leader1b.png"])
-        let leader11 = new CBCharacter(leaderType1, wing1);
+        let leader11 = new CBCharacter(game, leaderType1, wing1);
         leader11.addToMap(map.getHex(6, 7));
         let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
-        let unit21 = new CBTroop(unitType2, wing2);
+        let unit21 = new CBTroop(game, unitType2, wing2);
         unit21.addToMap(map.getHex(7, 8));
-        let unit22 = new CBTroop(unitType2, wing2);
+        let unit22 = new CBTroop(game, unitType2, wing2);
         unit22.addToMap(map.getHex(7, 7));
         let leaderType2 = new CBTestUnitType("leader2", ["./../images/units/misc/leader2.png", "./../images/units/misc/leader2b.png"])
-        let leader21 = new CBCharacter(leaderType2, wing2);
+        let leader21 = new CBCharacter(game, leaderType2, wing2);
         leader21.addToMap(map.getHex(8, 7));
         game.start();
         return {game, arbitrator, map, player1, formation1, leader11, player2, unit21, unit22, leader21};

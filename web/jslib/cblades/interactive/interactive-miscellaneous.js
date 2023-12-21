@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    DDice,
+    DDice6,
     DIconMenu,
     DIconMenuItem, DMask, DResult, DScene, DSwipe
 } from "../../widget.js";
@@ -133,7 +133,7 @@ export class InteractiveMergeUnitAction extends CBAction {
 CBAction.register("InteractiveMergeUnitAction", InteractiveMergeUnitAction);
 
 function createStartFireCounter(game, hexLocation) {
-    let fireStart = new CBFireCounter();
+    let fireStart = new CBFireCounter(game);
     fireStart.appendToMap(hexLocation);
     if (game.firePlayed) {
         fireStart.setPlayed();
@@ -183,7 +183,7 @@ export class InteractiveSetFireAction extends CBAction {
         this.game.closeActuators();
         let weather = this.game.arbitrator.getWeather(this.game);
         let scene = new DScene();
-        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        scene.dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         scene.result = new DResult();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
@@ -273,7 +273,7 @@ export class InteractiveExtinguishFireAction extends CBAction {
         this.game.closeActuators();
         let weather = this.game.arbitrator.getWeather(this.game);
         let scene = new DScene();
-        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        scene.dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         scene.result = new DResult();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
@@ -361,7 +361,7 @@ export class InteractiveSetStakesAction extends CBAction {
     createScene(finalAction) {
         this.game.closeActuators();
         let scene = new DScene();
-        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        scene.dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         scene.result = new DResult();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
@@ -448,7 +448,7 @@ export class InteractiveRemoveStakesAction extends CBAction {
     createScene(finalAction) {
         this.game.closeActuators();
         let scene = new DScene();
-        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        scene.dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         scene.result = new DResult();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
@@ -534,7 +534,7 @@ export class InteractivePlayWeatherAction extends CBAction {
         this.game.closeActuators();
         let weather = this.game.arbitrator.getWeather(this.game);
         let swipeResult = new DSwipe();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         let weatherIndicator = new CBWeatherIndicator(weather);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
@@ -595,7 +595,7 @@ export class InteractivePlayFogAction extends CBAction {
         this.game.closeActuators();
         let fog = this.game.arbitrator.getFog(this.game);
         let swipeResult = new DSwipe();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         let weatherIndicator = new CBFogIndicator(fog);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
@@ -656,7 +656,7 @@ export class InteractivePlayWindDirectionAction extends CBAction {
         this.game.closeActuators();
         let windDirection = this.game.arbitrator.getWindDirection(this.game);
         let swipeResult = new DSwipe();
-        let dice = new DDice([new Point2D(0, 0)]);
+        let dice = new DDice6([new Point2D(0, 0)]);
         let windDirectionIndicator = new CBWindDirectionIndicator(windDirection);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
@@ -717,7 +717,7 @@ export class InteractivePlayTirednessAction extends CBAction {
         this.game.closePopup();
         this.game.closeActuators();
         let swipeResult = new DSwipe();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         let tirednessIndicator = new CBWingTirednessIndicator(this.playable.wing);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
@@ -775,7 +775,7 @@ export class InteractivePlayMoralAction extends CBAction {
         this.game.closePopup();
         this.game.closeActuators();
         let swipeResult = new DSwipe();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         let moralIndicator = new CBWingMoralIndicator(this.playable.wing);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
@@ -833,7 +833,7 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
     createScene(finalAction) {
         this.game.closeActuators();
         let scene = new DScene();
-        scene.dice = new DDice([new Point2D(0, 0)]);
+        scene.dice = new DDice6([new Point2D(0, 0)]);
         scene.result = new DResult();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
@@ -1004,7 +1004,7 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
                 if (!fireCounter || !fireCounter.isFire()) {
                     let smokeCounter = PlayableMixin.getOneByType(hexLocation, CBSmokeCounter);
                     if (!smokeCounter) {
-                        smokeCounter = new CBSmokeCounter();
+                        smokeCounter = new CBSmokeCounter(this.game);
                         smokeCounter.appendToMap(hexLocation);
                     }
                 }
@@ -1025,7 +1025,7 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
                     if (smokeCounter) {
                         smokeCounter.removeFromMap();
                     }
-                    smokeCounter = new CBSmokeCounter().densify();
+                    smokeCounter = new CBSmokeCounter(this.game).densify();
                     smokeCounter.appendToMap(hexLocation);
                 }
             }

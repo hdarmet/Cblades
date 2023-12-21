@@ -182,14 +182,8 @@ public class Game extends BaseEntity {
         return Collections.unmodifiableList(this.sequenceElements);
     }
 
-    public Game addSequenceElement(SequenceElement element) {
-        this.sequenceElements.add(element);
-        return this;
-    }
-
-    public Game setSequenceElement(SequenceElement element) {
-        this.sequenceElements.clear();
-        this.sequenceElements.add(element);
+    public Game addSequenceElements(List<SequenceElement> elements) {
+        this.sequenceElements.addAll(elements);
         return this;
     }
 

@@ -3,7 +3,7 @@ import {
     Dimension2D, Point2D
 } from "../../geometry.js";
 import {
-    DDice, DIconMenu, DMultiImagesIndicator, DMask, DResult, DScene, DRotatableIndicator
+    DDice6, DIconMenu, DMultiImagesIndicator, DMask, DResult, DScene, DRotatableIndicator
 } from "../../widget.js";
 import {
     Mechanisms, Memento
@@ -141,6 +141,7 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     _doEngagementChecking(unit, processing) {
         if (!unit.attrs.defenderEngagementChecking && this.game.arbitrator.isUnitEngaged(unit, true)) {
             new CBDefenderEngagementChecking(this.game, unit).play(() => {
+                unit.setEngaging(false);
                 unit.attrs.defenderEngagementChecking = true;
                 let hexLocation = unit.hexLocation;
                 if (unit.isOnHex()) {
@@ -167,9 +168,6 @@ export class CBInteractivePlayer extends CBUnitPlayer {
 
     startActivation(playable, action) {
         if (playable.unitNature) {
-            if (playable.isEngaging()) {
-                playable.setEngaging(false);
-            }
             this._doPreliminaryActions(playable, () => super.startActivation(playable, action));
         }
         else {
@@ -233,7 +231,7 @@ export class CBDefenderEngagementChecking {
     createScene(finalAction, closeAction) {
         let scene = new DScene();
         scene.result = new DResult();
-        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        scene.dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         let mask = new DMask("#000000", 0.3);
         closeAction&&mask.setAction(closeAction);
         this.game.openMask(mask);
@@ -303,7 +301,7 @@ export class CBLoseCohesionChecking {
     createScene(finalAction, closeAction) {
         let scene = new DScene();
         scene.result = new DResult();
-        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        scene.dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         let mask = new DMask("#000000", 0.3);
         closeAction&&mask.setAction(closeAction);
         this.game.openMask(mask);

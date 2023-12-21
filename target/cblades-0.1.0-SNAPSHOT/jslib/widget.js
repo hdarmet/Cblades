@@ -622,27 +622,23 @@ export class DMultiStatePushButton extends DAbstractPushButton {
 
 class DiceArtifact extends CoupledActivableArtifactMixin(DMultiImagesArtifact) {
 
-    constructor(images, point) {
-        super("widget-items", images, point, new Dimension2D(100, 89), 0);
+    constructor(images, width, height, point) {
+        super("widget-items", images, point, new Dimension2D(width, height), 0);
     }
 
 }
 
 export class DDice extends DElement {
 
-    constructor(points) {
+    constructor(points, images, firstFace, step, width, height) {
         super();
         for (let point of points) {
-            this.addArtifact(new DiceArtifact([
-                DImage.getImage("./../images/dice/d1.png"),
-                DImage.getImage("./../images/dice/d2.png"),
-                DImage.getImage("./../images/dice/d3.png"),
-                DImage.getImage("./../images/dice/d4.png"),
-                DImage.getImage("./../images/dice/d5.png"),
-                DImage.getImage("./../images/dice/d6.png")
-            ], point));
+            this.addArtifact(new DiceArtifact(images, width, height, point));
         }
         this._active = true;
+        this._faceCount = images.length;
+        this._firstFace = firstFace;
+        this._step = step;
     }
 
     open(board, location) {
@@ -662,16 +658,25 @@ export class DDice extends DElement {
             return parseInt(keyValue);
         }
         */
-        return Math.floor(value*6)+1;
+        return (Math.floor(value*this._faceCount));
+    }
+
+    getValue(face) {
+        return (face+this._firstFace)*this._step;
+    }
+
+    getFace(value) {
+        return (value/this._step) - this._firstFace;
     }
 
     action() {
         let animation = null;
         this._result = [];
         for (let artifact of this._artifacts) {
-            let value = this.rollDie();
+            let face = this.rollDie();
+            let value = this.getValue(face);
             this._result.push(value);
-            animation = new DDiceAnimation(artifact, 0, value);
+            animation = new DDiceAnimation(artifact, 0, face);
         }
         animation.setFinalAction(()=>this.finalAction());
     }
@@ -683,7 +688,7 @@ export class DDice extends DElement {
         let index = 0;
         for (let artifact of this._artifacts) {
             this._result.push(dice[index]);
-            animation = new DDiceAnimation(artifact, 0, dice[index++]);
+            animation = new DDiceAnimation(artifact, 0, this.getFace(dice[index++]));
         }
         animation.setFinalAction(()=>this.finalAction());
     }
@@ -725,6 +730,88 @@ export class DDice extends DElement {
     }
 }
 
+export class DDice6 extends DDice {
+
+    constructor(points) {
+        super(points,[
+                DImage.getImage("./../images/dice/d6c-1.png"),
+                DImage.getImage("./../images/dice/d6c-2.png"),
+                DImage.getImage("./../images/dice/d6c-3.png"),
+                DImage.getImage("./../images/dice/d6c-4.png"),
+                DImage.getImage("./../images/dice/d6c-5.png"),
+                DImage.getImage("./../images/dice/d6c-6.png")
+            ], 1, 1, 100, 96);
+    }
+
+}
+
+export class DDice20 extends DDice {
+
+    constructor(points) {
+        super(points,[
+            DImage.getImage("./../images/dice/d20-1.png"),
+            DImage.getImage("./../images/dice/d20-2.png"),
+            DImage.getImage("./../images/dice/d20-3.png"),
+            DImage.getImage("./../images/dice/d20-4.png"),
+            DImage.getImage("./../images/dice/d20-5.png"),
+            DImage.getImage("./../images/dice/d20-6.png"),
+            DImage.getImage("./../images/dice/d20-7.png"),
+            DImage.getImage("./../images/dice/d20-8.png"),
+            DImage.getImage("./../images/dice/d20-9.png"),
+            DImage.getImage("./../images/dice/d20-10.png"),
+            DImage.getImage("./../images/dice/d20-11.png"),
+            DImage.getImage("./../images/dice/d20-12.png"),
+            DImage.getImage("./../images/dice/d20-13.png"),
+            DImage.getImage("./../images/dice/d20-14.png"),
+            DImage.getImage("./../images/dice/d20-15.png"),
+            DImage.getImage("./../images/dice/d20-16.png"),
+            DImage.getImage("./../images/dice/d20-17.png"),
+            DImage.getImage("./../images/dice/d20-18.png"),
+            DImage.getImage("./../images/dice/d20-19.png"),
+            DImage.getImage("./../images/dice/d20-20.png")
+        ], 1, 1, 100, 96);
+    }
+
+}
+
+export class DDice10 extends DDice {
+
+    constructor(points) {
+        super(points,[
+            DImage.getImage("./../images/dice/d10-0.png"),
+            DImage.getImage("./../images/dice/d10-1.png"),
+            DImage.getImage("./../images/dice/d10-2.png"),
+            DImage.getImage("./../images/dice/d10-3.png"),
+            DImage.getImage("./../images/dice/d10-4.png"),
+            DImage.getImage("./../images/dice/d10-5.png"),
+            DImage.getImage("./../images/dice/d10-6.png"),
+            DImage.getImage("./../images/dice/d10-7.png"),
+            DImage.getImage("./../images/dice/d10-8.png"),
+            DImage.getImage("./../images/dice/d10-9.png")
+        ], 0, 1, 100, 96);
+    }
+
+}
+
+export class DDice10x10 extends DDice {
+
+    constructor(points) {
+        super(points,[
+            DImage.getImage("./../images/dice/d10-00.png"),
+            DImage.getImage("./../images/dice/d10-10.png"),
+            DImage.getImage("./../images/dice/d10-20.png"),
+            DImage.getImage("./../images/dice/d10-30.png"),
+            DImage.getImage("./../images/dice/d10-40.png"),
+            DImage.getImage("./../images/dice/d10-50.png"),
+            DImage.getImage("./../images/dice/d10-60.png"),
+            DImage.getImage("./../images/dice/d10-70.png"),
+            DImage.getImage("./../images/dice/d10-80.png"),
+            DImage.getImage("./../images/dice/d10-90.png")
+        ], 0, 10, 100, 96);
+    }
+
+}
+
 export class DDiceAnimation extends DArtifactAnimation {
 
     constructor(diceArtifact, startTick, value) {
@@ -737,9 +824,9 @@ export class DDiceAnimation extends DArtifactAnimation {
         this._position = this._artifact.position;
     }
 
-    draw(count, ticks) {
+    _draw(count, ticks) {
         this._artifact.pangle = Math.floor(getDrawPlatform().random()*360);
-        this._artifact.setImage(Math.floor(getDrawPlatform().random()*6));
+        this._artifact.setImage(Math.floor(getDrawPlatform().random()*this._artifact.imageCount));
         this._artifact.position = new Point2D(
             this._position.x + Math.floor(getDrawPlatform().random()*30-15),
             this._position.y + Math.floor(getDrawPlatform().random()*50-50)
@@ -749,7 +836,7 @@ export class DDiceAnimation extends DArtifactAnimation {
 
     close() {
         this._artifact.pangle = 0;
-        this._artifact.setImage(this._value-1);
+        this._artifact.setImage(this._value);
         this._artifact.position = this._position;
     }
 }

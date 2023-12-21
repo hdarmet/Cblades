@@ -11,12 +11,21 @@ import java.util.Map;
 @DiscriminatorColumn(name="pieceType")
 public abstract class Piece extends BaseEntity {
 
+    String type;
     int angle;
     int positionCol;
     int positionRow;
     Integer positionAngle;
-    @Transient
-    Map<String, Object> attributes = new HashMap<>();
+
+    public abstract String getName();
+
+    public String getType() {
+        return this.type;
+    }
+    public Piece setType(String type) {
+        this.type = type;
+        return this;
+    }
 
     public int getAngle() {
         return this.angle;
@@ -51,39 +60,12 @@ public abstract class Piece extends BaseEntity {
     }
 
     protected Piece copy(Piece piece) {
-        this.setAngle(piece.angle)
+        this
+            .setAngle(piece.angle)
+            .setType(piece.type)
             .setPositionCol(piece.positionCol)
             .setPositionRow(piece.positionRow)
             .setPositionAngle(piece.positionAngle);
-        return this;
-    }
-
-    public Map<String, Object> getAttrs() { return this.attributes; }
-    public Piece setAttrs(Map<String, Object> attrs) {
-        this.attributes = attrs;
-        return this;
-    }
-    public Object getAttr(String path) {
-        Map<String, Object> attrs = this.attributes;
-        String[] names = path.split("\\.");
-        for (int index=0; index<names.length-1; index++) {
-            attrs = (Map<String, Object>) attrs.get(names[index]);
-            if (attrs==null) return null;
-        }
-        return attrs.get(names[names.length-1]);
-    }
-    public Piece setAttr(String path, Object value) {
-        Map<String, Object> attrs = this.attributes;
-        String[] names = path.split("\\.");
-        for (int index=0; index<names.length-1; index++) {
-            Map<String, Object> lattrs = (Map<String, Object>) attrs.get(names[index]);
-            if (lattrs==null) {
-                lattrs=new HashMap<>();
-                attrs.put(names[index], lattrs);
-            }
-            attrs = lattrs;
-        }
-        attrs.put(names[names.length-1], value);
         return this;
     }
 

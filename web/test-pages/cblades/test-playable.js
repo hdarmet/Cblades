@@ -187,8 +187,8 @@ class TestPlayableImageArtifact extends RetractableArtifactMixin(SelectableArtif
 
 class CBTestPlayable extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(CBPiece)))) {
 
-    constructor(player, name, paths) {
-        super("units", paths, new Dimension2D(142, 142));
+    constructor(game, player, name, paths) {
+        super("units", game, paths, new Dimension2D(142, 142));
         this.player = player;
         this.name = name;
         this.paths = paths;
@@ -256,8 +256,8 @@ class TestCounterImageArtifact extends RetractableArtifactMixin(SelectableArtifa
 
 class CBTestCounter extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(CBPiece)))) {
 
-    constructor(owner, paths) {
-        super("units", paths, new Dimension2D(142, 142));
+    constructor(game, owner, paths) {
+        super("units", game, paths, new Dimension2D(142, 142));
         this.owner = owner;
     }
 
@@ -300,8 +300,8 @@ class CBTestMarker extends CBPieceImageArtifact {
 
 class CBTestFormation extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(CBPiece)))) {
 
-    constructor(player, paths) {
-        super("units", paths, new Dimension2D(142*2, 142));
+    constructor(game, player, paths) {
+        super("units", game, paths, new Dimension2D(142*2, 142));
         this.player = player;
         Object.defineProperty(this.artifact, "layer", {
             get: function () {
@@ -1627,7 +1627,8 @@ describe("Playable", ()=> {
             CBHexCounter.registerTokenType("blaze", TestBlaze);
             CBHexCounter.registerTokenType("magic", TestMagic);
             let context = new Map();
-            var blaze = CBHexCounter.fromSpecs(game, {type:"blaze", id:2, version:3}, context);
+            context.game = game;
+            var blaze = CBHexCounter.fromSpecs({type:"blaze", id:2, version:3}, context);
         then:
             assert(blaze._oid).equalsTo(2);
             assert(blaze._oversion).equalsTo(3);
@@ -1695,8 +1696,8 @@ describe("Playable", ()=> {
 
     class CBTestActivableCounter extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(CBPiece)))) {
 
-        constructor(layer, paths, dimension) {
-            super(layer, paths, dimension);
+        constructor(layer, game, paths, dimension) {
+            super(layer, game, paths, dimension);
         }
 
         createArtifact(levelName, images, position, dimension) {

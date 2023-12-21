@@ -321,7 +321,7 @@ public class FakeData {
             em.persist(unit0);
             */
             Unit unit1 = new Unit()
-                .setPositionRow(9).setPositionCol(2)
+                .setPositionRow(10).setPositionCol(3)
                 .setName("u1").setCategory(UnitCategory.CHARACTER)
                 .setType("Goblin Leader")
                 .setAngle(90)
@@ -334,8 +334,9 @@ public class FakeData {
                 .setPlayed(false)
                 .setCharging(false);
             em.persist(unit1);
+            /*
             Unit unit3 = new Unit()
-                .setPositionRow(10).setPositionCol(2)
+                .setPositionRow(11).setPositionCol(3)
                 .setName("u3").setCategory(UnitCategory.TROOP)
                 .setType("Goblin Wolf Rider")
                 .setAngle(90)
@@ -343,11 +344,14 @@ public class FakeData {
                 .setTiredness(Tiredness.FRESH)
                 .setAmmunition(Ammunition.PLENTIFUL)
                 .setCohesion(Cohesion.GOOD_ORDER)
-                .setContact(false)
+                .setEngaging(true)
+                .setContact(true)
                 .setOrderGiven(false)
                 .setPlayed(false)
                 .setCharging(false);
             em.persist(unit3);
+
+             */
             /*
             Unit unit4 = new Unit()
                 .setPositionRow(7).setPositionCol(2)
@@ -390,7 +394,6 @@ public class FakeData {
                 .setTiredness(Tiredness.FRESH)
                 .setAmmunition(Ammunition.PLENTIFUL)
                 .setCohesion(Cohesion.GOOD_ORDER)
-                .setContact(false)
                 .setOrderGiven(false)
                 .setPlayed(false)
                 .setCharging(false);

@@ -247,14 +247,16 @@ export class GameLoader {
         consoleLog(JSON.stringify(specs));
         let context = new Map();
         context.playerCreator = this._playerCreator;
+        context.sequenceElements = specs.sequenceElements;
         this._game.fromSpecs(specs, context);
+        let index = 0;
         for (let seqSpec of specs.sequenceElements) {
-            this.launch(seqSpec, context);
+            this.launch(seqSpec, context, index++);
         }
     }
 
-    launch(specs, context) {
-        (CBSequence.getLauncher(specs.type))(specs, context);
+    launch(specs, context, index) {
+        (CBSequence.getLauncher(specs.type))(specs, context, index);
     }
 
 }

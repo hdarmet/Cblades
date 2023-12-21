@@ -197,8 +197,8 @@ class TestPlayableArtifact extends CBPieceImageArtifact {
 
 class CBTestPlayable extends HexLocatableMixin(PlayableMixin(CBPiece)) {
 
-    constructor(layerName, paths, dimension = new Dimension2D(142, 142)) {
-        super(layerName, paths, dimension);
+    constructor(layerName, game, paths, dimension = new Dimension2D(142, 142)) {
+        super(layerName, game, paths, dimension);
         super._paths = paths;
     }
 
@@ -242,8 +242,8 @@ class CBTestBelongsToPlayerPlayable extends BelongsToPlayerMixin(CBTestPlayable)
 
 class CBTestDisplayPlayable extends DisplayLocatableMixin(PlayableMixin(CBPiece)) {
 
-    constructor(layerName, paths, dimension = new Dimension2D(142, 142)) {
-        super(layerName, paths, dimension);
+    constructor(layerName, game, paths, dimension = new Dimension2D(142, 142)) {
+        super(layerName, game, paths, dimension);
     }
 
     createArtifact(levelName, images, position, dimension) {

@@ -11,19 +11,15 @@ import java.util.Map;
 @DiscriminatorValue("token")
 public class Token extends Piece implements Playable {
 
-    String type;
     String wizard;
     Integer level;
     Boolean density;
     Boolean fire;
     boolean played;
 
-    public String getType() {
-        return this.type;
-    }
-    public Token setType(String type) {
-        this.type = type;
-        return this;
+    @Override
+    public String getName() {
+        return getType()+"("+getPositionCol()+","+getPositionRow()+")";
     }
 
     public String getWizard() {
@@ -58,6 +54,10 @@ public class Token extends Piece implements Playable {
         return this;
     }
 
+    public Token setType(String type) {
+        super.setType(type);
+        return this;
+    }
     public Token setAngle(int angle) {
         super.setAngle(angle);
         return this;
@@ -85,15 +85,6 @@ public class Token extends Piece implements Playable {
         return this;
     }
 
-    public Token setAttrs(Map<String, Object> attrs) {
-        super.setAttrs(attrs);
-        return this;
-    }
-    public Token setAttr(String path, Object value) {
-        super.setAttr(path, value);
-        return this;
-    }
-
     @Override
     public Token duplicate(EntityManager em, java.util.Map<BaseEntity, BaseEntity> duplications) {
         Token token = (Token)duplications.get(this);
@@ -108,11 +99,6 @@ public class Token extends Piece implements Playable {
     protected Token copy(Token token) {
         super.copy(token);
         this
-            .setType(token.type)
-            .setPositionCol(token.getPositionCol())
-            .setPositionRow(token.getPositionRow())
-            .setPositionAngle(token.getPositionAngle())
-            .setAngle(token.getAngle())
             .setLevel(token.getLevel())
             .setFire(token.getFire())
             .setDensity(token.getDensity())

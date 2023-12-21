@@ -98,21 +98,21 @@ export function setWeaponBonuses(unitType, step, attackBonus, defenseBonus, fire
 }
 
 export function createTroop(game, map, unitType, wing, angle, x, y) {
-    let troop = new CBTroop(unitType, wing);
+    let troop = new CBTroop(game, 9unitType, wing);
     troop.angle = angle;
     troop.addToMap(map.getHex(x, y));
     return troop;
 }
 
 export function createFormation(game, map, unitType, wing, angle, x1, y1, x2, y2) {
-    let formation = new CBFormation(unitType, wing);
+    let formation = new CBFormation(game, unitType, wing);
     formation.angle = angle;
     formation.addToMap(new CBHexSideId(map.getHex(x1, y1), map.getHex(x2, y2)));
     return formation;
 }
 
 export function createCharacter(game, map, unitType, wing, angle, x, y) {
-    let leader = new CBCharacter(unitType, wing);
+    let leader = new CBCharacter(game, unitType, wing);
     leader.angle = angle;
     leader.addToMap(map.getHex(x, y));
     return leader;

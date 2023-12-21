@@ -1,7 +1,7 @@
 'use strict'
 
 import {
-    DDice, DIconMenu,
+    DDice6, DIconMenu,
     DIconMenuItem, DInsert, DMask, DResult, DScene
 } from "../../widget.js";
 import {
@@ -95,7 +95,7 @@ export class InteractiveTryToCastSpellAction extends CBAction {
     play() {
         this.unit.setCharging(CBCharge.NONE);
         let result = new DResult();
-        let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        let dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         let scene = new DScene();
         let mask = new DMask("#000000", 0.3);
         let close = ()=>{
@@ -379,7 +379,7 @@ CBCastSpellInsert.PAGE_DIMENSION = new Dimension2D(444, 1100);
 CBFireballSpell.resolver = function(action) {
     this.game.closeActuators();
     let result = new DResult();
-    let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+    let dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
     let scene = new DScene();
     let mask = new DMask("#000000", 0.3);
     let close = ()=>{
@@ -423,7 +423,7 @@ export class CBFireballInsert extends CBInsert {
 CBMagicArrowSpell.resolver = function(action) {
     this.game.closeActuators();
     let result = new DResult();
-    let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+    let dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
     let scene = new DScene();
     let mask = new DMask("#000000", 0.3);
     let close = ()=>{

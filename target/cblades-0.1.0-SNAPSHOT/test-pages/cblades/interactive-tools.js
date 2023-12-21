@@ -10,7 +10,7 @@ import {
     executeTimeouts
 } from "../../jstest/jtest.js";
 import {
-    DDice, DMessage, DResult, DSwipe
+    DDice6, DMessage, DResult, DSwipe
 } from "../../jslib/widget.js";
 import {
     Point2D
@@ -151,7 +151,7 @@ export function clickOnMessage(game) {
 export function getDice(game) {
     var itemsLevel = game.board.getLevel("widget-items");
     for (let item of itemsLevel.artifacts) {
-        if (item.element instanceof DDice) {
+        if (item.element instanceof DDice6) {
             return item;
         }
     }

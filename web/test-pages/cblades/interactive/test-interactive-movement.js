@@ -19,7 +19,7 @@ import {
     Mechanisms, Memento
 } from "../../../jslib/mechanisms.js";
 import {
-    DDice, DResult
+    DDice6, DResult
 } from "../../../jslib/widget.js";
 import {
     CBFormationMoveActuator, CBMovementHelpActuator,
@@ -894,7 +894,7 @@ describe("Interactive Movement", ()=> {
     function clickOnDice(game) {
         var itemsLevel = game.board.getLevel("widget-items");
         for (let item of itemsLevel.artifacts) {
-            if (item.element instanceof DDice) {
+            if (item.element instanceof DDice6) {
                 let itemLocation = item.viewportLocation;
                 var mouseEvent = createEvent("click", {offsetX:itemLocation.x, offsetY:itemLocation.y});
                 item.onMouseClick(mouseEvent);

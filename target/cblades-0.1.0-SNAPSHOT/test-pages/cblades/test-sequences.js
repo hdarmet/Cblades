@@ -91,9 +91,9 @@ export class CBTestAnimation extends CBAnimation {
         this.factor = 0;
     }
 
-    draw(count, ticks) {
+    _draw(count, ticks) {
         this.factor = this._factor(count);
-        return super.draw(count, ticks);
+        return super._draw(count, ticks);
     }
 
 }

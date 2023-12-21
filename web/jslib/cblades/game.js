@@ -85,17 +85,11 @@ export class CBAbstractPlayer {
         playable._select();
         this.game.closeWidgets();
         if (this.acceptActivation(playable)) {
-            if (currentSelectedPlayable !== playable) {
-                this.startActivation(playable, () => {
-                    this.launchPlayableAction(
-                        playable, event ? new Point2D(event.offsetX, event.offsetY) : playable.viewportLocation
-                    );
-                });
-            } else {
+            this.startActivation(playable, () => {
                 this.launchPlayableAction(
                     playable, event ? new Point2D(event.offsetX, event.offsetY) : playable.viewportLocation
                 );
-            }
+            });
         }
     }
 
@@ -1002,7 +996,7 @@ export class CBAbstractGame {
                 if (!excluded.has(name)) {
                     shown.add(name);
                     let piece = context.pieceMap.get(name);
-                    piece.appendToMap(piece.hexLocation);
+                    if (piece.visible) piece.appendToMap(piece.hexLocation);
                 }
             }
             let remainingDependencies = [];
@@ -1061,7 +1055,9 @@ export class CBPieceImageArtifact extends DMultiImagesArtifact {
 
 export class CBPiece {
 
-    constructor(levelName, paths, dimension) {
+    constructor(levelName, game, paths, dimension) {
+        console.assert(game);
+        this._game = game;
         this._levelName = levelName;
         this._images = [];
         for (let path of paths) {
@@ -1114,6 +1110,10 @@ export class CBPiece {
         this._setLocation(location);
     }
 
+    get visible() {
+        return true;
+    }
+
     setLocation(location) {
         Memento.register(this);
         this._setLocation(location);
@@ -1143,9 +1143,8 @@ export class CBPiece {
         return this._element.isShown();
     }
 
-    _setOnGame(game) {
-        this._element.setOnBoard(game.board);
-        this._game = game;
+    _setOnGame() {
+        this._element.setOnBoard(this.game.board);
     }
 
     _removeFromGame() {
@@ -1244,25 +1243,25 @@ export function HexLocatableMixin(clazz) {
 
         _addPlayable(hexLocation, stacking) {
             console.assert(stacking !== undefined);
-            hexLocation.game._registerPlayable(this);
+            this.game._registerPlayable(this);
             stacking===CBStacking.BOTTOM ? hexLocation._unshiftPlayable(this) : hexLocation._pushPlayable(this);
         }
 
         _removePlayable(hexLocation) {
             console.assert(hexLocation.game === this.game);
-            hexLocation.game._removePlayable(this);
+            this.game._removePlayable(this);
             hexLocation._removePlayable(this);
         }
 
         _appendPlayable(hexLocation, stacking) {
             console.assert(stacking !== undefined);
-            hexLocation.game._appendPlayable(this);
+            this.game._appendPlayable(this);
             stacking===CBStacking.BOTTOM ? hexLocation._appendPlayableOnBottom(this) : hexLocation._appendPlayableOnTop(this);
         }
 
         _deletePlayable(hexLocation) {
             console.assert(hexLocation.game === this.game);
-            hexLocation.game._deletePlayable(this);
+            this.game._deletePlayable(this);
             hexLocation._deletePlayable(this);
         }
 
@@ -1310,7 +1309,7 @@ export function HexLocatableMixin(clazz) {
         }
 
         isOnHex() {
-            return !!this._hexLocation;
+            return this._hexLocation && this._hexLocation.hasPlayable(this);
         }
 
         toSpecs(context) {
@@ -1461,7 +1460,8 @@ export function PlayableMixin(clazz) {
         }
 
         get attrs() {
-            return this._attrs ? this._attrs : {};
+            if (!this._attrs) this.attrs = {};
+            return this._attrs;
         }
 
         useAttr(path) {

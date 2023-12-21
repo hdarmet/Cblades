@@ -48,6 +48,10 @@ export class CBHexLocation {
         return this.location.equalsTo(hexLocation.location);
     }
 
+    hasPlayable(playable) {
+        return this.playables.contains(playable);
+    }
+
     getAngle(hexLocation) {
         let loc1 = this.location;
         let loc2 = hexLocation.location;

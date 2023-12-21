@@ -25,7 +25,7 @@ import {
     DIconMenu,
     DIconMenuItem,
     DPushButton,
-    DDice,
+    DDice6,
     DMultiImagesIndicator,
     DInsert,
     DResult,
@@ -902,7 +902,7 @@ describe("Widget", ()=> {
         given:
             var { board, itemsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
-            let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+            let dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
             let finished = false;
             dice.setFinalAction(()=>{finished = true;})
             loadAllImages();
@@ -1042,7 +1042,7 @@ describe("Widget", ()=> {
         given:
             var { board, itemsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
-            let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+            let dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
             let finished = false;
             dice.setFinalAction(()=>{
                 dice.result = [5, 6];
@@ -1083,7 +1083,7 @@ describe("Widget", ()=> {
         given:
             var { board, itemsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
-            let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+            let dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
             let finished = false;
             dice.setFinalAction(()=>{finished = true;});
             dice.active = false;
@@ -1121,7 +1121,7 @@ describe("Widget", ()=> {
         given:
             var { board, itemsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             board.paint();
-            let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+            let dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
             dice.cheat([1, 3]);
             let finished = false;
             dice.setFinalAction(()=>{finished = true;})
@@ -2420,7 +2420,7 @@ describe("Widget", ()=> {
             var { board, widgetsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
             let indicator = new DMultiImagesIndicator(["./../images/indicators/indicator1.png"], new Dimension2D(50, 50));
             let insert = new DInsert("./../images/inserts/insert.png", new Dimension2D(200, 190));
-            let dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+            let dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
             let scene = new DScene()
                 .addWidget(indicator, new Point2D(-100, -100))
                 .addWidget(insert, new Point2D(-100, 100))

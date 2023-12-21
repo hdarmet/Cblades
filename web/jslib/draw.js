@@ -1169,7 +1169,6 @@ export class DDraw {
 }
 
 export class DAnimation {
-
     constructor() {
     }
 
@@ -1186,7 +1185,7 @@ export class DAnimation {
             if (!this._startTick) {
                 this._startTick = ticks;
                 this._count = 0;
-                this._init();
+                this.init();
             } else {
                 this._count++;
             }
@@ -1197,9 +1196,29 @@ export class DAnimation {
     _init() {
     }
 
+    _draw(count, tick) {
+        return false;
+    }
+
+    _finalize() {
+    }
+
+    start() {
+        if (!this._canceled) {
+            this._start();
+        }
+    }
+
+    init() {
+        if (!this._canceled) {
+            this._init();
+            this._initAction && this._initAction();
+        }
+    }
+
     finalize() {
         if (!this._canceled) {
-            this._finalize && this._finalize();
+            this._finalize();
             this._finalAction && this._finalAction();
         }
     }
@@ -1209,10 +1228,16 @@ export class DAnimation {
         this._canceled = true;
     }
 
+    setInitAction(action) {
+        this._initAction = action;
+        return this;
+    }
+
     setFinalAction(action) {
         this._finalAction = action;
         return this;
     }
+
 }
 
 /**

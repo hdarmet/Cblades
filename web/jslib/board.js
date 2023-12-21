@@ -679,6 +679,10 @@ export class DMultiImagesArtifact extends DImageAbstractArtifact {
         return this._index;
     }
 
+    get imageCount() {
+        return this._images.length;
+    }
+
     setImage(index) {
         console.assert(index >= 0 && index < this._images.length);
         this._index = index;
@@ -2394,15 +2398,11 @@ export class DArtifactAnimation extends DAnimation {
         this.play(startTick+1);
     }
 
-    _draw(count, ticks) {
-        if (count===0) {
-            if (this._artifact._animation) {
-                this._artifact._animation.cancel();
-            }
-            this._artifact._animation = this;
-            //this._init && this._init();
+    _init() {
+        if (this._artifact._animation) {
+            this._artifact._animation.cancel();
         }
-        return this.draw(count, ticks);
+        this._artifact._animation = this;
     }
 
     _finalize() {
@@ -2429,7 +2429,7 @@ export class DArtifactRotateAnimation extends DArtifactAnimation {
         this._pangle = this._artifact.pangle;
     }
 
-    draw(count, ticks) {
+    _draw(count, ticks) {
         this._artifact.pangle = this._pangle + this._factor(count)*this._angle;
         return count * ADELAY >= this._duration ? 0 : 1;
     }
@@ -2456,7 +2456,7 @@ export class DArtifactAlphaAnimation extends DArtifactAnimation {
         return (count * ADELAY) / this._duration;
     }
 
-    draw(count, ticks) {
+    _draw(count, ticks) {
         this._artifact.alpha = this._initAlpha + (this._alpha - this._initAlpha)*this._factor(count);
         return count * ADELAY >= this._duration ? 0 : 1;
     }

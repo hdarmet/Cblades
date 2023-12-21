@@ -82,7 +82,7 @@ describe("Miscellaneous teacher", ()=> {
         game.addPlayer(player);
         let wing = new CBWing(player, banner);
         let unitType = new CBTestUnitType("unit", ["./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"])
-        let unit = new CBTroop(unitType, wing);
+        let unit = new CBTroop(game, unitType, wing);
         game.start();
         return {game, arbitrator, map, player, wing, unit};
     }
@@ -100,20 +100,20 @@ describe("Miscellaneous teacher", ()=> {
         var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
-        let unit11 = new CBTroop(unitType1, wing1);
+        let unit11 = new CBTroop(game, unitType1, wing1);
         unit11.addToMap(map.getHex(5, 8));
-        let unit12 = new CBTroop(unitType1, wing1);
+        let unit12 = new CBTroop(game, unitType1, wing1);
         unit12.addToMap(map.getHex(5, 7));
         let leaderType1 = new CBTestUnitType("leader1", ["./../images/units/misc/leader1.png", "./../images/units/misc/leader1b.png"])
-        let leader11 = new CBCharacter(leaderType1, wing1);
+        let leader11 = new CBCharacter(game, leaderType1, wing1);
         leader11.addToMap(map.getHex(6, 7));
         let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
-        let unit21 = new CBTroop(unitType2, wing2);
+        let unit21 = new CBTroop(game, unitType2, wing2);
         unit21.addToMap(map.getHex(7, 8));
-        let unit22 = new CBTroop(unitType2, wing2);
+        let unit22 = new CBTroop(game, unitType2, wing2);
         unit22.addToMap(map.getHex(7, 7));
         let leaderType2 = new CBTestUnitType("leader2", ["./../images/units/misc/leader2.png", "./../images/units/misc/leader2b.png"])
-        let leader21 = new CBCharacter(leaderType2, wing2);
+        let leader21 = new CBCharacter(game, leaderType2, wing2);
         leader21.addToMap(map.getHex(8, 7));
         game.start();
         return {game, arbitrator, map, player1, wing1, wing2, unit11, unit12, leader11, player2, unit21, unit22, leader21};

@@ -4,7 +4,7 @@ import {
     Dimension2D, Point2D
 } from "../../geometry.js";
 import {
-    DDice, DIconMenuItem, DMask, DResult, DScene, DIconMenu, DMessage
+    DDice6, DIconMenuItem, DMask, DResult, DScene, DIconMenu, DMessage
 } from "../../widget.js";
 import {
     CBAction, CBAbstractGame, CBStacking
@@ -79,7 +79,7 @@ export class InteractiveTakeCommandAction extends CBAction {
     createScene(finalAction, closeAction) {
         let scene = new DScene();
         scene.result = new DResult();
-        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        scene.dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         let mask = new DMask("#000000", 0.3);
         closeAction&&mask.setAction(closeAction);
         mask.setAction(closeAction);
@@ -162,7 +162,7 @@ export class InteractiveDismissCommandAction extends CBAction {
     createScene(finalAction, closeAction) {
         let scene = new DScene();
         scene.result = new DResult();
-        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        scene.dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         let mask = new DMask("#000000", 0.3);
         closeAction&&mask.setAction(closeAction);
         mask.setAction(closeAction);
@@ -244,7 +244,7 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
     createScene(finalAction, closeAction) {
         let scene = new DScene();
         scene.result = new DResult();
-        scene.dice = new DDice([new Point2D(30, -30), new Point2D(-30, 30)]);
+        scene.dice = new DDice6([new Point2D(30, -30), new Point2D(-30, 30)]);
         let mask = new DMask("#000000", 0.3);
         closeAction&&mask.setAction(closeAction);
         mask.setAction(closeAction);
@@ -325,7 +325,7 @@ export class InteractiveGiveOrdersAction extends CBAction {
     createScene(finalAction, closeAction) {
         let scene = new DScene();
         scene.result = new DMessage();
-        scene.dice = new DDice([new Point2D(0, 0)]);
+        scene.dice = new DDice6([new Point2D(0, 0)]);
         let mask = new DMask("#000000", 0.3);
         closeAction&&mask.setAction(closeAction);
         mask.setAction(closeAction);
@@ -778,11 +778,10 @@ export class CBChangeOrderAnimation extends DAnimation {
         this.play(startTick+1);
     }
 
-    _draw(count, ticks) {
-        if (count===0 && this._leader) {
+    _init() {
+        if (this._leader) {
             this._leader.wing.changeOrderInstruction(this._orderInstruction);
         }
-        return false;
     }
 
 }
@@ -903,11 +902,8 @@ export class CBManageCommandAnimation extends DAnimation {
         this.play(startTick+1);
     }
 
-    _draw(count, ticks) {
-        if (count===0) {
-            this._leader.wing.setLeader(this._inCommand ? this._leader : null);
-        }
-        return false;
+    _init() {
+        this._leader.wing.setLeader(this._inCommand ? this._leader : null);
     }
 
 }

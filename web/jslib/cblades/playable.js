@@ -345,9 +345,8 @@ export class CBHexCounter extends RetractablePieceMixin(HexLocatableMixin(Playab
         hexCounterCreators.set(type, clazz);
     }
 
-    static fromSpecs(game, specs, context) {
-        let counter = new (hexCounterCreators.get(specs.type))();
-        counter._game = game;
+    static fromSpecs(specs, context) {
+        let counter = new (hexCounterCreators.get(specs.type))(context.game);
         counter.fromSpecs(specs, context);
         return counter;
     }
@@ -807,7 +806,7 @@ export function StandardGameMixin(clazz) {
             if (context.tokenCount===undefined) context.tokenCount=0;
             if (!pieceSpec.name) {
                 pieceSpec.name = "t"+context.tokenCount++;
-                let piece = CBHexCounter.fromSpecs(this, pieceSpec, context);
+                let piece = CBHexCounter.fromSpecs(pieceSpec, context);
                 piece._hexLocation = hexLocation;
                 context.pieceMap.set(pieceSpec.name, piece)
             }

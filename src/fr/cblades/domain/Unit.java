@@ -11,7 +11,6 @@ import java.util.Map;
 @DiscriminatorValue("unit")
 public class Unit extends Piece implements Playable {
 
-    String type;
     String name;
     @Enumerated(EnumType.STRING)
     UnitCategory category;
@@ -30,17 +29,11 @@ public class Unit extends Piece implements Playable {
     @Transient
     Wing wing;
 
-    public String getType() {
-        return this.type;
-    }
-    public Unit setType(String type) {
-        this.type = type;
-        return this;
-    }
-
+    @Override
     public String getName() {
         return this.name;
     }
+
     public Unit setName(String name) {
         this.name = name;
         if (wing!=null) wing.unitsByName = null;
@@ -147,7 +140,6 @@ public class Unit extends Piece implements Playable {
     protected Unit copy(Unit unit) {
         super.copy(unit);
         this
-            .setType(unit.type)
             .setName(unit.name)
             .setCategory(unit.category)
             .setSteps(unit.steps)
@@ -155,12 +147,17 @@ public class Unit extends Piece implements Playable {
             .setAmmunition(unit.ammunition)
             .setCohesion(unit.cohesion)
             .setCharging(unit.charging)
+            .setEngaging(unit.engaging)
             .setContact(unit.contact)
             .setOrderGiven(unit.orderGiven)
             .setPlayed(unit.played);
         return this;
     }
 
+    public Unit setType(String type) {
+        super.setType(type);
+        return this;
+    }
     public Unit setAngle(int angle) {
         super.setAngle(angle);
         return this;
@@ -175,14 +172,6 @@ public class Unit extends Piece implements Playable {
     }
     public Unit setPositionAngle(Integer positionAngle) {
         super.setPositionAngle(positionAngle);
-        return this;
-    }
-    public Unit setAttrs(Map<String, Object> attrs) {
-        super.setAttrs(attrs);
-        return this;
-    }
-    public Unit setAttr(String path, Object value) {
-        super.setAttr(path, value);
         return this;
     }
 

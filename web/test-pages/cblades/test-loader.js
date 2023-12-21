@@ -337,7 +337,7 @@ describe("Loader", ()=> {
             let unitType = new CBTestTroopType("unit", [
                 "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
             ]);
-            var troop1 = new CBTroop(unitType, wing);
+            var troop1 = new CBTroop(game, unitType, wing);
             troop1.addToMap(map.getHex(0, 0));
             game.start();
         when:
@@ -416,17 +416,17 @@ describe("Loader", ()=> {
             let unitType = new CBTestTroopType("unit", [
                 "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
             ]);
-            var troop1 = new CBTroop(unitType, wing);
+            var troop1 = new CBTroop(game, unitType, wing);
             troop1.addToMap(map.getHex(0, 0));
             troop1.setPlayed();
-            var troop2 = new CBTroop(unitType, wing);
+            var troop2 = new CBTroop(game, unitType, wing);
             troop2.addToMap(map.getHex(0, 1));
             troop2.setTiredness(CBTiredness.TIRED);
             troop2.setCohesion(CBCohesion.DISRUPTED);
             troop2.setMunitions(CBMunitions.SCARCE);
             troop2.setCharging(CBCharge.CHARGING);
             troop2.receivesOrder(true);
-            var troop3 = new CBTroop(unitType, wing);
+            var troop3 = new CBTroop(game, unitType, wing);
             troop3.addToMap(map.getHex(0, 1));
             troop3.setTiredness(CBTiredness.EXHAUSTED);
             troop3.setCohesion(CBCohesion.ROUTED);

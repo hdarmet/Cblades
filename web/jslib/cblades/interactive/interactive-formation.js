@@ -569,7 +569,7 @@ export class CBAppearAnimation extends CBUnitAnimation {
         super._finalize();
     }
 
-    draw(count, ticks) {
+    _draw(count, ticks) {
         let factor = this._factor(count);
         if (this._config === "dis") {
             this._setDisappearAlpha(this._disappear, 1 - factor);
@@ -588,7 +588,7 @@ export class CBAppearAnimation extends CBUnitAnimation {
         else if (this._config === "2app") {
             this._setAppearAlpha(this._appear, (factor-0.5)*2);
         }
-        return super.draw(count, ticks);
+        return super._draw(count, ticks);
     }
 
     _setAppearAlpha(units, alpha) {

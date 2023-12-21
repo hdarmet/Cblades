@@ -166,6 +166,14 @@ export class CBSequence {
             this.addElement(element);
         }
     }
+
+    static getSequenceElement(elements, type) {
+        for (let element of elements) {
+            if (element.type === type) return element;
+        }
+        return null;
+    }
+
 }
 
 export class CBSequenceElement {
@@ -228,21 +236,11 @@ export class CBAnimation extends DAnimation {
         return this._game;
     }
 
-    _draw(count, ticks) {
-        return this.draw(count, ticks);
-    }
-
-    _init() {
-    }
-
-    _finalize() {
-    }
-
     _factor(count) {
         return (this._duration === 0) ? 0 : (count * ADELAY)/this._duration;
     }
 
-    draw(count, ticks) {
+    _draw(count, ticks) {
         return count * ADELAY >= this._duration ? 0 : 1;
     }
 
@@ -284,11 +282,8 @@ export class CBNextTurnAnimation extends DAnimation {
         this.play(startTick+1);
     }
 
-    _draw(count, ticks) {
-        if (count===0) {
-            this._game.nextTurn(this._game._endOfTurnCommand.animation);
-        }
-        return false;
+    _init() {
+        this._game.nextTurn(this._game._endOfTurnCommand.animation);
     }
 
 }
