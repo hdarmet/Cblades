@@ -268,12 +268,21 @@ export class CBPiecePlacementActuator extends CBActuator {
 
     constructor(map) {
         super();
+        this._map = map;
         let artifacts = [];
         for (let hex of map.hexes) {
             let triggerUnit = new CBPiecePlacementTrigger(this, hex);
             artifacts.push(triggerUnit);
         }
         this.initElement(artifacts);
+    }
+
+    get map() {
+        return this._map;
+    }
+
+    get game() {
+        return this.map.game;
     }
 
     getTrigger(hexLocation) {
@@ -293,7 +302,7 @@ export class CBUnitCreationActuator extends CBPiecePlacementActuator {
     }
 
     action(hex, angle) {
-        let counter = this._type.createUnit(this._wing, this._steps);
+        let counter = this._type.createUnit(this.game, this._wing, this._steps);
         counter.appendToMap(hex);
         counter.angle = angle;
     }
@@ -386,7 +395,7 @@ export class CBFormationCreationActuator extends CBFormationPlacementActuator {
     }
 
     action(hexSide, angle) {
-        let counter = this._type.createUnit(this._wing, this._steps);
+        let counter = this._type.createUnit(this.game, this._wing, this._steps);
         counter.appendToMap(hexSide);
         counter.angle = angle;
     }
@@ -421,7 +430,9 @@ export class CBTokenCreationActuator extends CBPiecePlacementActuator {
     }
 
     action(hex, angle) {
-        let counter = CBHexCounter.fromSpecs(this._specs);
+        let context = new Map();
+        context.game = this.game;
+        let counter = CBHexCounter.fromSpecs(this._specs, context);
         counter.appendToMap(hex);
         counter.angle = angle;
     }

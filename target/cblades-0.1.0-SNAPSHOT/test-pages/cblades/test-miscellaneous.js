@@ -56,7 +56,7 @@ describe("Miscellaneous", ()=> {
             var [groundLayer] = getLayers(game.board,"hex-0");
             var hexId = map.getHex(7,8);
         when:
-            var fire = new CBFireCounter();
+            var fire = new CBFireCounter(game);
             fire.addToMap(hexId);
             repaint(game);
         then:
@@ -102,7 +102,7 @@ describe("Miscellaneous", ()=> {
             var [groundLayer] = getLayers(game.board,"hex-0");
             var hexId = map.getHex(7,8);
         when:
-            var smoke = new CBSmokeCounter();
+            var smoke = new CBSmokeCounter(game);
             smoke.addToMap(hexId);
             repaint(game);
         then:
@@ -156,8 +156,8 @@ describe("Miscellaneous", ()=> {
             var {game, player, map} = create1PlayerBaseGame();
             var [groundMarkerLayer] = getLayers(game.board,"hmarkers-0");
         when:
-            var burning1 = new CBFireCounter();
-            var burning2 = new CBSmokeCounter();
+            var burning1 = new CBFireCounter(game);
+            var burning2 = new CBSmokeCounter(game);
             burning1.addToMap(map.getHex(7,8));
             burning1.launchAction(new CBAction(game, burning1));
             burning2.addToMap(map.getHex(8,8));
@@ -225,7 +225,7 @@ describe("Miscellaneous", ()=> {
             var {game, player, map} = createTinyGame();
             var [groundLayer] = getLayers(game.board,"hex-0");
         when:
-            var burning1 = new CBFireCounter();
+            var burning1 = new CBFireCounter(game);
             burning1.addToMap(map.getHex(7,8));
             repaint(game);
         then:

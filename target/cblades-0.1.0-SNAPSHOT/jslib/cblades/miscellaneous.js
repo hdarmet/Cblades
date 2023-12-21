@@ -48,8 +48,8 @@ class BurningArtifact extends ActivableArtifactMixin(CBHexCounterArtifact) {
 
 export class CBBurningCounter extends RetractablePieceMixin(CBHexCounter) {
 
-    constructor(images) {
-        super("ground", images, CBBurningCounter.DIMENSION);
+    constructor(game, images) {
+        super("ground", game, images, CBBurningCounter.DIMENSION);
         Mechanisms.addListener(this);
     }
 
@@ -148,8 +148,8 @@ export class CBBurningCounter extends RetractablePieceMixin(CBHexCounter) {
 
 export class CBSmokeCounter extends CBBurningCounter {
 
-    constructor() {
-        super([
+    constructor(game) {
+        super(game, [
             "./../images/counters/light-smoke.png",
             "./../images/counters/heavy-smoke.png"
         ]);
@@ -188,8 +188,8 @@ CBHexCounter.registerTokenType("smoke", CBSmokeCounter);
 
 export class CBFireCounter extends CBBurningCounter {
 
-    constructor() {
-        super([
+    constructor(game) {
+        super(game, [
             "./../images/counters/start-fire.png",
             "./../images/counters/fire.png"
         ]);
@@ -360,8 +360,8 @@ export class DisplayablePlayableArtifact extends ActivableArtifactMixin(CBPieceI
 
 export class CBDisplayableCounter extends PlayableMixin(DisplayLocatableMixin(CBPiece)) {
 
-    constructor(paths) {
-        super("counters", paths, CBDisplayableCounter.DIMENSION);
+    constructor(game, paths) {
+        super("counters", game, paths, CBDisplayableCounter.DIMENSION);
         Mechanisms.addListener(this);
     }
 

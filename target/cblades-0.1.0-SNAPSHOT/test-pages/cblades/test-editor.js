@@ -2181,7 +2181,7 @@ describe("Editor", ()=> {
         given:
             var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
-            let unit1 = new CBTroop(GoblinWolfRider, wing1);
+            let unit1 = new CBTroop(game, GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
         when:
             clickOnPiece(game, unit1);
@@ -2219,7 +2219,7 @@ describe("Editor", ()=> {
         given:
             var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
-            let unit1 = new CBTroop(GoblinWolfRider, wing1);
+            let unit1 = new CBTroop(game, GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
         when:
             clickOnPiece(game, unit1);
@@ -2267,7 +2267,7 @@ describe("Editor", ()=> {
         given:
             var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
-            let unit1 = new CBTroop(GoblinWolfRider, wing1);
+            let unit1 = new CBTroop(game, GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
         when:
             clickOnPiece(game, unit1);
@@ -2315,7 +2315,7 @@ describe("Editor", ()=> {
         given:
             var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
-            let unit1 = new CBTroop(GoblinWolfRider, wing1);
+            let unit1 = new CBTroop(game, GoblinWolfRider, wing1);
             unit1.addToMap(map.getHex(5, 6));
         when:
             clickOnPiece(game, unit1);
@@ -2730,7 +2730,7 @@ describe("Editor", ()=> {
         given:
             var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer, actuatorsLayer, formations0Layer] = getLayers(game.board, "widgets", "widget-items", "actuators", "formations-0");
-            let formation1 = new CBFormation(RoughneckLance, wing1);
+            let formation1 = new CBFormation(game, RoughneckLance, wing1);
             formation1.addToMap(map.getHex(5, 6).toward(0));
         when:
             clickOnPiece(game, formation1);
@@ -2780,7 +2780,7 @@ describe("Editor", ()=> {
         given:
             var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
-            let unit1 = new CBCharacter(GoblinLeader, wing1);
+            let unit1 = new CBCharacter(game, GoblinLeader, wing1);
             unit1.addToMap(map.getHex(5, 6));
         when:
             clickOnPiece(game, unit1);
@@ -2829,7 +2829,7 @@ describe("Editor", ()=> {
         given:
             var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
-            let unit1 = new CBCharacter(GoblinLeader, wing1);
+            let unit1 = new CBCharacter(game, GoblinLeader, wing1);
             unit1.addToMap(map.getHex(5, 6));
         when:
             clickOnPiece(game, unit1);
@@ -2878,7 +2878,7 @@ describe("Editor", ()=> {
         given:
             var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
-            let unit1 = new CBCharacter(GoblinLeader, wing1);
+            let unit1 = new CBCharacter(game, GoblinLeader, wing1);
             unit1.addToMap(map.getHex(5, 6));
         when:
             clickOnPiece(game, unit1);
@@ -2927,7 +2927,7 @@ describe("Editor", ()=> {
         given:
             var { game, map, wing1 } = buildScenarioEditorGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board, "widgets", "widget-items");
-            let unit1 = new CBCharacter(GoblinLeader, wing1);
+            let unit1 = new CBCharacter(game, GoblinLeader, wing1);
             unit1.addToMap(map.getHex(5, 6));
         when:
             clickOnPiece(game, unit1);
@@ -3332,7 +3332,7 @@ describe("Editor", ()=> {
     it("Checks edit units button", () => {
         given:
             var { game, map, wing1 } = buildScenarioEditorGame();
-            let unit1 = new CBCharacter(GoblinLeader, wing1);
+            let unit1 = new CBCharacter(game, GoblinLeader, wing1);
             unit1.addToMap(map.getHex(5, 6));
         when:
             clickOnPiece(game, unit1);

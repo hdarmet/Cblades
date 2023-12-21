@@ -109,14 +109,14 @@
     wing1.setTiredness(10);
     wing1.setMoral(10);
     wing1.setRetreatZone(map.getSouthZone());
-    let character11 = new CBCharacter(GoblinLeader, wing1);
+    let character11 = new CBCharacter(game, GoblinLeader, wing1);
     wing1.setLeader(character11);
-    let character12 = new CBCharacter(WizardLeader, wing1);
-    let counter11 = new CBTroop(GoblinWolfRider, wing1);
+    let character12 = new CBCharacter(game, WizardLeader, wing1);
+    let counter11 = new CBTroop(game, GoblinWolfRider, wing1);
     counter11.lossSteps = 1;
-    let counter12 = new CBTroop(GoblinWolfRider, wing1);
+    let counter12 = new CBTroop(game, GoblinWolfRider, wing1);
     counter12.lossSteps = 1;
-    let counter13 = new CBTroop(GoblinSkirmisher, wing1);
+    let counter13 = new CBTroop(game, GoblinSkirmisher, wing1);
 
     character11.addToMap(map.getHex(4, 11));
     character12.addToMap(map.getHex(5, 11));
@@ -130,21 +130,21 @@
     //new CBWingMoralCounter(wing1).registerOnGame(game);
     let wing2 = new CBWing(player2, RoughneckBanner1);
     wing2.setRetreatZone(map.getNorthZone());
-    let character21 = new CBCharacter(RoughneckLeader, wing2);
+    let character21 = new CBCharacter(game, RoughneckLeader, wing2);
     wing2.setLeader(character21);
     character21.angle = 180;
-    let character22 = new CBCharacter(RoughneckSorceressCharacter, wing2);
+    let character22 = new CBCharacter(game, RoughneckSorceressCharacter, wing2);
     character22.angle = 180;
-    let counter21 = new CBTroop(RoughneckKnight, wing2);
+    let counter21 = new CBTroop(game, RoughneckKnight, wing2);
     counter21.angle = 180;
-    let counter22 = new CBTroop(RoughneckKnight, wing2);
+    let counter22 = new CBTroop(game, RoughneckKnight, wing2);
     counter22.angle = 180;
-    let counter23 = new CBFormation(RoughneckLance, wing2, 2);
+    let counter23 = new CBFormation(game, RoughneckLance, wing2, 2);
     counter23.angle = 210;
     counter23.lossSteps = 4;
-    let counter24 = new CBFormation(RoughneckLance, wing2, 2);
+    let counter24 = new CBFormation(game, RoughneckLance, wing2, 2);
     counter24.angle = 210;
-    let counter25 = new CBFormation(RoughneckCrossbowman, wing2, 2);
+    let counter25 = new CBFormation(game, RoughneckCrossbowman, wing2, 2);
     counter25.angle = 210;
     /*
     counter25.addToMap(new CBHexSideId( map.getHex(9, 6),  map.getHex(10, 6)));

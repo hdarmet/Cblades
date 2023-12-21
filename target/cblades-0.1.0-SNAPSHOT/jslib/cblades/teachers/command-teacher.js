@@ -136,7 +136,7 @@ export class CBCommandTeacher {
         function createTroops(steps) {
             let troops = [];
             while (steps) {
-                let troop = new CBTroop(formation.type, formation.wing);
+                let troop = new CBTroop(formation.game, formation.type, formation.wing);
                 troop.angle = formation.angle;
                 let maxSteps = formation.type.getFigureStepCount();
                 let unitSteps = steps>=maxSteps?maxSteps:steps;
@@ -205,7 +205,7 @@ export class CBCommandTeacher {
         for (let troop of replaced) {
             stepCount += troop.steps;
         }
-        let replacement = new CBFormation(unit.type, unit.wing, Math.ceil(stepCount/2));
+        let replacement = new CBFormation(unit.game, unit.type, unit.wing, Math.ceil(stepCount/2));
         for (let troop of replaced) {
             if (troop.isTired()&& !replacement.isTired()) replacement.setTiredness(CBTiredness.TIRED);
             if (troop.munitions > replacement.munitions) replacement.setMunitions(troop.munitions);
@@ -255,7 +255,7 @@ export class CBCommandTeacher {
     }
 
     releaseTroop(formation, hex, steps) {
-        let troop = new CBTroop(formation.type, formation.wing);
+        let troop = new CBTroop(formation.game, formation.type, formation.wing);
         troop.fixRemainingLossSteps(steps);
         let stepCount = formation.steps - steps;
         if (formation.isTired()) troop.setTiredness(CBTiredness.TIRED);

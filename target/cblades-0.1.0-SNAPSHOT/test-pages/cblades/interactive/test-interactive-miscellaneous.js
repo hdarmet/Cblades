@@ -345,7 +345,7 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
-            var fireStart = new CBFireCounter();
+            var fireStart = new CBFireCounter(game);
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             clickOnPiece(game, unit1);
@@ -376,7 +376,7 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
-            var fireStart = new CBFireCounter();
+            var fireStart = new CBFireCounter(game);
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             clickOnPiece(game, unit1);
@@ -410,7 +410,7 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
-            var fireStart = new CBFireCounter();
+            var fireStart = new CBFireCounter(game);
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             clickOnPiece(game, unit1);
@@ -1264,7 +1264,7 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map} = createTinyGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
-            var counter = new CBFireCounter();
+            var counter = new CBFireCounter(game);
             counter.addToMap(map.getHex(5, 5));
             repaint(game);
         when:
@@ -1293,7 +1293,7 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map} = createTinyGame();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
-            var counter = new CBFireCounter();
+            var counter = new CBFireCounter(game);
             counter.addToMap(map.getHex(5, 5));
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnPiece(game, counter);
@@ -1328,7 +1328,7 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map} = createTinyGame();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
-            var counter = new CBFireCounter();
+            var counter = new CBFireCounter(game);
             counter.addToMap(map.getHex(5, 5));
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnPiece(game, counter);
@@ -1371,12 +1371,12 @@ describe("Interactive Miscellaneous", ()=> {
             var {game, map} = createTinyGame();
             game.windDirection = 0;
             var [actuatorLayer] = getLayers(game.board,"actuators");
-            var fireStartCounter = new CBFireCounter();
+            var fireStartCounter = new CBFireCounter(game);
             fireStartCounter.addToMap(map.getHex(5, 5));
-            var fireCounterWithFireCounterInWindDirection = new CBFireCounter();
+            var fireCounterWithFireCounterInWindDirection = new CBFireCounter(game);
             fireCounterWithFireCounterInWindDirection.setFire();
             fireCounterWithFireCounterInWindDirection.addToMap(map.getHex(5, 6));
-            var fireCounterWithNoFireCounterInWindDirection = new CBFireCounter();
+            var fireCounterWithNoFireCounterInWindDirection = new CBFireCounter(game);
             fireCounterWithNoFireCounterInWindDirection.setFire();
             fireCounterWithNoFireCounterInWindDirection.addToMap(map.getHex(6, 6));
             clickOnPiece(game, fireStartCounter);
@@ -1439,7 +1439,7 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map} = createTinyGame();
             game.windDirection = 0;
-            var fireCounter = new CBFireCounter();
+            var fireCounter = new CBFireCounter(game);
             fireCounter.setFire();
             fireCounter.addToMap(map.getHex(6, 6));
             clickOnPiece(game, fireCounter);
@@ -1472,7 +1472,7 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map} = createTinyGame();
             game.windDirection = 0;
-            var fireCounter = new CBFireCounter();
+            var fireCounter = new CBFireCounter(game);
             fireCounter.setFire();
             fireCounter.addToMap(map.getHex(6, 6));
             clickOnPiece(game, fireCounter);
@@ -1503,7 +1503,7 @@ describe("Interactive Miscellaneous", ()=> {
     it("Checks when start fire counter become a fire counter", () => {
         given:
             var {game, map} = createTinyGame();
-            var fireCounter = new CBFireCounter();
+            var fireCounter = new CBFireCounter(game);
             fireCounter.addToMap(map.getHex(6, 6));
             clickOnPiece(game, fireCounter);
             rollFor1Die(6);
@@ -1533,7 +1533,7 @@ describe("Interactive Miscellaneous", ()=> {
     it("Checks no start fire creation in the wind direction of a fire counter", () => {
         given:
             var {game, map} = createTinyGame();
-            var fireCounter = new CBFireCounter();
+            var fireCounter = new CBFireCounter(game);
             fireCounter.addToMap(map.getHex(6, 6));
             clickOnPiece(game, fireCounter);
             rollFor1Die(6);
@@ -1563,14 +1563,14 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map} = createTinyGame();
             game.windDirection = 0;
-            var fireStartCounter = new CBFireCounter();
+            var fireStartCounter = new CBFireCounter(game);
             fireStartCounter.addToMap(map.getHex(5, 5));
-            var fireCounter = new CBFireCounter();
+            var fireCounter = new CBFireCounter(game);
             fireCounter.setFire();
             fireCounter.addToMap(map.getHex(6, 5));
-            var lightSmokeCounter = new CBSmokeCounter();
+            var lightSmokeCounter = new CBSmokeCounter(game);
             lightSmokeCounter.addToMap(map.getHex(7, 5));
-            var denseSmokeCounter = new CBSmokeCounter();
+            var denseSmokeCounter = new CBSmokeCounter(game);
             denseSmokeCounter.densify();
             denseSmokeCounter.addToMap(map.getHex(8, 5));
             clickOnPiece(game, fireStartCounter);
@@ -1595,10 +1595,10 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map} = createTinyGame();
             game.windDirection = 0;
-            var fireCounter = new CBFireCounter();
+            var fireCounter = new CBFireCounter(game);
             fireCounter.setFire();
             fireCounter.addToMap(map.getHex(6, 7));
-            var denseSmokeCounter = new CBSmokeCounter();
+            var denseSmokeCounter = new CBSmokeCounter(game);
             denseSmokeCounter.densify();
             denseSmokeCounter.addToMap(map.getHex(6, 6));
             clickOnPiece(game, fireCounter);
